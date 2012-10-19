@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<scenario xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns="urn:xmlns:jboss.org:rhq-perftest">
+
+   <!--
+        Sets up "omega servers" that have three kinds of child services, "alpha", "beta" and "gamma".
+        
+        This is currently for simple services, not all of the service featured are exposed, only numeric metrics.
+
+        Example:
+
+        -Drhq.perftest.scenario=configurable-7
+        -Drhq.perftest.server-omega-count=10
+        -Drhq.perftest.service-alpha-count=25
+        -Drhq.perftest.service-beta-count=2
+        -Drhq.perftest.service-gamma-count=10        
+   -->
+
+   <resource type="server-omega">
+      <simpleResourceGenerator property="rhq.perftest.server-omega-count"/>
+      <simpleNumericMeasurementGenerator/>
+   </resource>
+
+   <resource type="service-alpha">
+      <simpleResourceGenerator property="rhq.perftest.service-alpha-count"/>
+      <simpleNumericMeasurementGenerator/>
+   </resource>
+
+   <resource type="service-beta">
+      <simpleResourceGenerator property="rhq.perftest.service-beta-count"/>
+      <simpleNumericMeasurementGenerator/>
+   </resource>
+
+   <resource type="service-gamma">
+      <simpleResourceGenerator property="rhq.perftest.service-gamma-count"/>
+      <simpleNumericMeasurementGenerator/>
+   </resource>
+
+</scenario>

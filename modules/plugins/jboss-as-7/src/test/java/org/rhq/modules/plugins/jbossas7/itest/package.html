@@ -1,0 +1,35 @@
+<html>
+<body>
+<h1>Integration tests</h1>
+This package contains the integration tests that run against JBoss AS 7 / EAP6 servers in standalone and domain mode.
+<h2>Running</h2>
+You can start the tests like this:
+<pre>
+    mvn verify -DskipTests=false -Pas7.itest -Das7.version=7.1.2.Final-redhat-1
+</pre>
+<br/>
+If you have downloaded the server server already to a local directory, you can also point the test at the existing server by
+passing <code>-Das7.url</code> like this:<br/>
+<pre>
+    mvn verify -DskipTests=false -Pas7.itest -Das7.url=file:///devel/jboss-eap-6.0.0.ER8.zip -Das7.version=7.1.2.Final-redhat-1
+</pre>
+<h3>Flags in detail</h3>
+<ul>
+    <li>-Ditest.debug: To remotely debug integration tests, you can pass <code>-Ditest.debug</code></li>
+    <li>-DskipTests=false: do not skip tests</li>
+    <li>-Pas7.itest: run the integration test (otherwise only the unit tests are run)</li>
+    <li>-Das7.version: version that the server is reporting</li>
+    <li>-Das7.url: url to fetch the server distro from. By default the server is fetched from remote and stored in a temporary directory. Giving this
+    flag instructs maven to fetch from the given url.</li>
+</ul>
+<h2>Subdirectories</h2>
+<ul>
+    <li>domain: test against a domain mode server</li>
+    <li>nonpc : tests that don't go through the full plugin-container/resource container; copied over from older integration tests</li>
+    <li>standalone: tests against a standalone server</li>
+</ul>
+<h2>Further reading</h2>
+See also this the wiki page at
+<a href="http://rhq-project.org/display/RHQ/Notes#Notes-IntegrationTests">http://rhq-project.org/display/RHQ/Notes#Notes-IntegrationTests</a> for more information
+</body>
+</html>

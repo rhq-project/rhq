@@ -1,0 +1,92 @@
+{
+  "outcome" : "success",
+  "result" : [ {
+    "org.jboss.as.arquillian.service" : {
+      "module" : "org.jboss.as.arquillian.service"
+    }
+  }, {
+    "org.jboss.as.clustering" : {
+      "module" : "org.jboss.as.clustering"
+    }
+  }, {
+    "org.jboss.as.connector" : {
+      "module" : "org.jboss.as.connector"
+    }
+  }, {
+    "org.jboss.as.deployment-scanner" : {
+      "module" : "org.jboss.as.deployment-scanner"
+    }
+  }, {
+    "org.jboss.as.ee" : {
+      "module" : "org.jboss.as.ee"
+    }
+  }, {
+    "org.jboss.as.ejb3" : {
+      "module" : "org.jboss.as.ejb3"
+    }
+  }, {
+    "org.jboss.as.jaxrs" : {
+      "module" : "org.jboss.as.jaxrs"
+    }
+  }, {
+    "org.jboss.as.jmx" : {
+      "module" : "org.jboss.as.jmx"
+    }
+  }, {
+    "org.jboss.as.jpa" : {
+      "module" : "org.jboss.as.jpa"
+    }
+  }, {
+    "org.jboss.as.logging" : {
+      "module" : "org.jboss.as.logging"
+    }
+  }, {
+    "org.jboss.as.messaging" : {
+      "module" : "org.jboss.as.messaging"
+    }
+  }, {
+    "org.jboss.as.modcluster" : {
+      "module" : "org.jboss.as.modcluster"
+    }
+  }, {
+    "org.jboss.as.naming" : {
+      "module" : "org.jboss.as.naming"
+    }
+  }, {
+    "org.jboss.as.osgi" : {
+      "module" : "org.jboss.as.osgi"
+    }
+  }, {
+    "org.jboss.as.remoting" : {
+      "module" : "org.jboss.as.remoting"
+    }
+  }, {
+    "org.jboss.as.sar" : {
+      "module" : "org.jboss.as.sar"
+    }
+  }, {
+    "org.jboss.as.security" : {
+      "module" : "org.jboss.as.security"
+    }
+  }, {
+    "org.jboss.as.threads" : {
+      "module" : "org.jboss.as.threads"
+    }
+  }, {
+    "org.jboss.as.transactions" : {
+      "module" : "org.jboss.as.transactions"
+    }
+  }, {
+    "org.jboss.as.web" : {
+      "module" : "org.jboss.as.web"
+    }
+  }, {
+    "org.jboss.as.webservices" : {
+      "module" : "org.jboss.as.webservices"
+    }
+  }, {
+    "org.jboss.as.weld" : {
+      "module" : "org.jboss.as.weld"
+    }
+  } ]
+}

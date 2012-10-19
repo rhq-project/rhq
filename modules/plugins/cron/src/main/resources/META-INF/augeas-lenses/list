@@ -1,0 +1,6 @@
+# augeas defs we need for the cron lens
+util.aug
+shellvars.aug
+build.aug
+rx.aug
+cron.aug

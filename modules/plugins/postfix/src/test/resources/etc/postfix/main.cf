@@ -1,0 +1,11 @@
+myhostname = virtual.domain.tld
+myorigin = $myhostname
+mynetworks = 168.100.189.0/28, 127.0.0.0/8
+mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain,
+inet_interfaces = localhost
+smtpd_banner = $myhostname ESMTP
+disable_vrfy_command = no
+smtpd_helo_required = no
+smtp_always_send_ehlo = yes
+in_flow_delay=100
+local_destination_concurrency_limit = 2

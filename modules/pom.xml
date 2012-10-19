@@ -38,6 +38,7 @@
          <modules>
             <module>core</module>
             <module>common</module>
+            <module>plugins</module>
             <module>helpers</module>
             <module>enterprise</module>
          </modules>
@@ -155,6 +156,7 @@
                <module>helpers</module>
                <module>core</module>
                <module>common</module>
+               <module>plugins</module>
 
                <!-- these two are needed by the rhq-agent plugin -->
                <module>enterprise/agent</module>

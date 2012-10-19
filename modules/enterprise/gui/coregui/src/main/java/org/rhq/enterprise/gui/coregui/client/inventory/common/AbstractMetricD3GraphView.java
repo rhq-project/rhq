@@ -210,8 +210,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
     }
 
     public String getXAxisTitle(){
-       //@todo: i18n
-       return "Time";
+       return MSG.view_charts_time_axis_label();
     }
 
     public String getJsonMetrics(){

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<scenario xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns="urn:xmlns:jboss.org:rhq-perftest">
+
+   <!--
+        This scenario will create a number of servers, each with plugin configuration and resource
+        configuration with all types of properties.
+        The following should be passed to the agent:
+           -Drhq.perftest.scenario=all-config -Drhq.perftest.server-config=10
+   -->
+
+   <resource type="server-config">
+      <simpleResourceGenerator property="rhq.perftest.server-config"/>
+   </resource>
+
+</scenario>

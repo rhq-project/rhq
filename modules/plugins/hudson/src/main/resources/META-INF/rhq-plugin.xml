@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<plugin name="hudson"
+        displayName="hudson"
+        package="org.rhq.plugins.hudson"
+        description="Monitoring of Hudson integration build servers"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+    
+    
+    <server name="Hudson Server"
+        discovery="HudsonDiscoveryComponent"
+        class="HudsonServerComponent"
+        supportsManualAdd="true">
+
+        <plugin-configuration>
+            <c:simple-property name="urlBase" description="The root url path to your hudson server interface (e.g. http://hudson.jboss.org/hudson/)"/>
+        </plugin-configuration>
+        
+        <service name="Hudson Project"
+            discovery="HudsonProjectDiscoveryComponent"
+            class="HudsonProjectComponent">
+            
+            <metric property="lastSuccessfulBuildNumber" dataType="trait" displayType="summary"/>
+
+            <metric property="lastSuccessfulBuildTime" dataType="trait" units="epoch_milliseconds"/>
+
+            <metric property="lastBuildNumber" dataType="trait"/>
+            <metric property="lastBuildTime" dataType="trait" units="epoch_milliseconds"/>
+
+
+            <metric property="lastBuildResult" dataType="trait" displayType="summary"/>
+
+            <metric property="healthScore" units="percentage" displayType="summary"/>
+
+            <metric property="lastBuildDuration" units="milliseconds" displayType="summary"/>
+
+        </service>
+        
+    </server>
+
+</plugin>

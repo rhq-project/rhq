@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="RawConfigTest"
+        displayName="Raw Config Test Plugin"
+        package="org.rhq.plugins.test.rawconfig"
+        version="1.0"
+        ampsVersion="2.1"
+        description="A plugin for testing raw configuration"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+  <server name="Structured and Raw Server"
+          class="StructuredAndRawServer"
+          discovery="StructuredAndRawDiscoveryComponent"
+          description="A fake server component that supports both structured and raw configuration">
+    <resource-configuration configurationFormat="both">
+      <c:simple-property name="x"/>
+      <c:simple-property name="y"/>
+      <c:simple-property name="z"/>
+      <c:simple-property name="username"/>
+      <c:simple-property name="password"/>
+      <c:simple-property name="rhq.server.hostname"/>
+      <c:simple-property name="rhq.server.port"/>
+    </resource-configuration>
+  </server>
+
+  <server name="Raw Server"
+          class="RawServer"
+          discovery="RawDiscoveryComponent"
+          description="A fake server component that supports raw configuration">
+    <resource-configuration configurationFormat="raw"/>    
+  </server>
+
+  <server name="Structured Server"
+          class="StructuredServer"
+          discovery="StructuredDiscoveryComponent"
+          description="A fake server component that supports structured configuration">
+    <resource-configuration configurationFormat="structured">
+      <c:simple-property name="foo"/>
+      <c:simple-property name="bar"/>
+      <c:simple-property name="bam"/>
+    </resource-configuration>
+  </server>
+</plugin>

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ RHQ Management Platform
+  ~ Copyright (C) 2005-2012 Red Hat, Inc.
+  ~ All rights reserved.
+  ~
+  ~ This program is free software; you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation version 2 of the License.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program; if not, write to the Free Software
+  ~ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-plugins-parent</artifactId>
+    <version>4.6.0-SNAPSHOT</version>
+  </parent>
+
+  <groupId>org.rhq</groupId>
+  <artifactId>rhq-no-op-plugin</artifactId>
+  <packaging>jar</packaging>
+
+  <name>RHQ No-op Plugin</name>
+  <description>An abstract plugin for plugins defining resource types without java-agent support.</description>
+
+  <profiles>
+
+    <profile>
+      <id>dev</id>
+
+      <properties>
+        <rhq.rootDir>../../..</rhq.rootDir>
+        <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+        <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.earName}/rhq-downloads/rhq-plugins
+        </rhq.deploymentDir>
+      </properties>
+
+      <build>
+        <plugins>
+
+          <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+
+              <execution>
+                <id>deploy</id>
+                <phase>compile</phase>
+                <configuration>
+                  <target>
+                    <mkdir dir="${rhq.deploymentDir}"/>
+                    <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                    <echo>*** Updating ${deployment.file}...</echo>
+                    <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}"/>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+
+              <execution>
+                <id>deploy-jar-meta-inf</id>
+                <phase>package</phase>
+                <configuration>
+                  <target>
+                    <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                    <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
+                    <unjar src="${project.build.directory}/${project.build.finalName}.jar"
+                           dest="${project.build.outputDirectory}">
+                      <patternset>
+                        <include name="META-INF/**"/>
+                      </patternset>
+                    </unjar>
+                    <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF"
+                         update="true">
+                    </jar>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+
+              <execution>
+                <id>undeploy</id>
+                <phase>clean</phase>
+                <configuration>
+                  <target>
+                    <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                    <echo>*** Deleting ${deployment.file}...</echo>
+                    <delete file="${deployment.file}"/>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+
+            </executions>
+          </plugin>
+
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>

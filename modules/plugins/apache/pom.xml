@@ -1,0 +1,405 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-plugins-parent</artifactId>
+      <version>4.6.0-SNAPSHOT</version>
+   </parent>
+
+   <groupId>org.rhq</groupId>
+   <artifactId>rhq-apache-plugin</artifactId>
+   <packaging>jar</packaging>
+
+   <name>RHQ Apache Plugin</name>
+   <description>a plugin for managing Apache web servers (1.3 and later)</description>
+
+   <properties>
+      <ant.contrib.version>1.0b3</ant.contrib.version>
+   </properties>
+
+   <dependencies>
+
+     <dependency>
+         <groupId>ant-contrib</groupId>
+         <artifactId>ant-contrib</artifactId>
+         <version>${ant.contrib.version}</version>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.snmp4j</groupId>
+         <artifactId>snmp4j</artifactId>
+         <version>1.8.2</version>
+      </dependency>
+
+      <dependency>
+         <groupId>net.java.dev.jna</groupId>
+         <artifactId>jna</artifactId>
+         <version>${jna.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-platform-plugin</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.rhq</groupId>
+        <artifactId>rhq-augeas-plugin</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.hyperic</groupId>
+        <artifactId>sigar</artifactId>
+        <version>${sigar.version}</version>
+        <scope>provided</scope>
+      </dependency>
+
+       <dependency>
+         <groupId>xerces</groupId>
+         <artifactId>xercesImpl</artifactId>
+         <version>${xercesImpl.version}</version>
+         <scope>test</scope>
+      </dependency>
+
+   </dependencies>
+
+   <build>
+      <plugins>
+
+         <plugin>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>copy-rhq-plugins</id>
+                  <phase>process-resources</phase>
+                  <goals>
+                     <goal>copy</goal>
+                  </goals>
+                  <configuration>
+                     <artifactItems>
+
+                        <artifactItem>
+                           <groupId>org.snmp4j</groupId>
+                           <artifactId>snmp4j</artifactId>
+                           <version>1.8.2</version>
+                        </artifactItem>
+
+                     </artifactItems>
+                     <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+
+          <plugin>
+               <artifactId>maven-surefire-plugin</artifactId>
+               <configuration>
+                  <skip>true</skip>
+               </configuration>
+            </plugin>
+      </plugins>
+   </build>
+
+   <profiles>
+      <profile>
+         <id>integration-tests</id>
+
+           <activation>
+              <property>
+                 <name>maven.test.skip</name>
+                 <value>!true</value>
+              </property>
+           </activation>
+         <build>
+            <plugins>
+               <!-- Integration testing voodoo to load and test this plugin with its plugin dependencies -->
+               <plugin>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <phase>pre-integration-test</phase>
+                        <configuration>
+                           <target>
+                              <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+                                 <classpath>
+                                    <pathelement location="${settings.localRepository}/ant-contrib/ant-contrib/${ant.contrib.version}/ant-contrib-${ant.contrib.version}.jar" />
+                                 </classpath>
+                              </taskdef>
+                              <echo>Setting up plugin dependencies for ${project.artifactId}-${project.version}.jar...</echo>
+                              <property name="settings.localRepository" location="${user.home}/.m2/repository/" />
+                              <mkdir dir="target/itest" />
+                              <mkdir dir="target/itest/plugins" />
+                              <mkdir dir="target/itest/lib" />
+                              <mkdir dir="target/itest/httpd" />
+                              <copy toDir="target/itest/plugins" flatten="true">
+                                 <fileset dir="${settings.localRepository}/">
+                                    <include name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar" />
+                                    <include name="org/rhq/rhq-augeas-plugin/${project.version}/rhq-augeas-plugin-${project.version}.jar" />
+                                 </fileset>
+                                 <fileset dir="${project.build.directory}">
+                                    <include name="${project.artifactId}-${project.version}.jar" />
+                                 </fileset>
+                              </copy>
+                              <!-- We need deterministic names (i.e. that would not change with the project version)
+                                  so that we can statically reference them in the test classes -->
+                              <move todir="target/itest/plugins">
+                                 <fileset dir="target/itest/plugins" />
+                                 <mapper type="regexp" from="^(.*)-${project.version}\.jar$$" to="\1-for-apache-test.jar" />
+                              </move>    
+                              <unzip dest="target/itest/lib">
+                                 <fileset dir="${settings.localRepository}/org/hyperic/sigar-dist/${sigar.version}" includes="*.zip" />
+                                 <patternset>
+                                    <include name="**/lib/sigar.jar" />
+                                    <include name="**/lib/bcel*.jar" />
+                                    <include name="**/lib/*.so" />
+                                    <include name="**/lib/*.sl" />
+                                    <include name="**/lib/*.dll" />
+                                    <include name="**/lib/*.dylib" />
+                                 </patternset>
+                              </unzip>
+                              <move todir="target/itest/lib" flatten="true">
+                                 <fileset dir="target/itest/lib/hyperic-sigar-${sigar.zip.version}">
+                                    <include name="**/lib/*" />
+                                 </fileset>
+                              </move>
+                              <delete dir="target/itest/lib/hyperic-sigar-${sigar.zip.version}" />
+                              
+                              <unzip dest="target/itest/lib">
+                                 <fileset dir="${augeas.zip.location}" includes="${augeas.zip.mask}" />
+                                 <patternset>
+                                    <include name="**/lib*/*.so" />
+                                    <include name="**/lib*/*.so.*" />
+                                 </patternset>
+                              </unzip>                              
+                              <!-- by default deploy the 32bit augeas libs -->
+                              <move todir="target/itest/lib/">
+                                <fileset dir="target/itest/lib/augeas-native-${augeas.zip.version}/lib">
+                                    <include name="**/*.so" />
+                                    <include name="**/*.so.*" />
+                                </fileset>
+                              </move>
+                              <if>
+                                  <or>
+                                      <os family="unix" arch="x86_64" />
+                                      <os family="unix" arch="amd64" />
+                                   </or>   
+                                  <then>
+                                      <!-- overwrite with 64bits if needed -->
+                                      <move todir="target/itest/lib/">
+                                        <fileset dir="target/itest/lib/augeas-native-${augeas.zip.version}/lib64">
+                                            <include name="**/*.so" />
+                                            <include name="**/*.so.*" />
+                                        </fileset>
+                                      </move>
+                                  </then>
+                              </if> 
+                              <delete dir="target/itest/lib/augeas-native-${augeas.zip.version}" />                                 
+                           </target>
+                        </configuration>
+                        <goals>
+                           <goal>run</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+               </plugin>
+
+               <plugin>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <configuration>
+                     <skip>true</skip>
+                  </configuration>
+                  <executions>
+                     <execution>
+                        <id>surefire-it</id>
+                        <phase>integration-test</phase>
+                        <goals>
+                           <goal>test</goal>
+                        </goals>
+                        <configuration>
+                           <skip>${maven.test.skip}</skip>
+                           <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
+                           <useSystemClassLoader>true</useSystemClassLoader>
+                           <!--<argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>-->
+                           <environmentVariables>
+                              <LD_LIBRARY_PATH>${basedir}/target/itest/lib:${env.LD_LIBRARY_PATH}</LD_LIBRARY_PATH>
+                           </environmentVariables>                           
+                           <systemPropertyVariables>
+                              <org.hyperic.sigar.path>${basedir}/target/itest/lib</org.hyperic.sigar.path>
+                              <project.artifactId>${project.artifactId}</project.artifactId>
+                              <project.version>${project.version}</project.version>                              
+                           </systemPropertyVariables>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+
+            </plugins>
+
+         </build>
+      </profile>
+
+      <profile>
+         <id>dev</id>
+
+         <properties>
+            <rhq.rootDir>../../..</rhq.rootDir>
+            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.earName}/rhq-downloads/rhq-plugins</rhq.deploymentDir>
+         </properties>
+
+         <build>
+            <plugins>
+
+               <plugin>
+                 <artifactId>maven-antrun-plugin</artifactId>
+                 <executions>
+
+                     <execution>
+                        <id>deploy</id>
+                        <phase>compile</phase>
+                        <configuration>
+                          <target>
+                            <mkdir dir="${rhq.deploymentDir}" />
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                            <echo>*** Updating ${deployment.file}...</echo>
+                            <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" update="true" />
+                          </target>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>deploy-jar-meta-inf</id>
+                        <phase>package</phase>
+                        <configuration>
+                          <target>
+                             <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                             <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
+                             <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${project.build.outputDirectory}">
+                               <patternset><include name="META-INF/**" /></patternset>
+                             </unjar>
+                             <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">
+                             </jar>
+                          </target>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>undeploy</id>
+                        <phase>clean</phase>
+                        <configuration>
+                          <target>
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                            <echo>*** Deleting ${deployment.file}...</echo>
+                            <delete file="${deployment.file}" />
+                          </target>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                   </executions>
+               </plugin>
+
+            </plugins>
+         </build>
+      </profile>
+
+    <profile>
+      <id>cobertura-plugins</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+        <build>
+         <plugins>
+           <plugin>
+             <artifactId>maven-antrun-plugin</artifactId>
+              <dependencies>
+               <dependency>
+                 <groupId>net.sourceforge.cobertura</groupId>
+                 <artifactId>cobertura</artifactId>
+                 <version>${cobertura.version}</version>
+               </dependency>
+             </dependencies>
+             <executions>
+              <execution>
+               <id>cobertura-instrument</id>
+               <phase>pre-integration-test</phase>
+                 <configuration>
+                   <target>
+                   <!-- prepare directory structure for cobertura-->
+                   <mkdir dir="target/cobertura" />
+                   <mkdir dir="target/cobertura/backup" />
+                   <!-- backup all classes so that we can instrument the original classes-->
+                   <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
+                      <fileset dir="target/classes">
+                         <include name="**/*.class" />
+                      </fileset>
+                   </copy>
+                   <!-- create a properties file and save there location of cobertura data file-->
+                   <touch file="target/classes/cobertura.properties" />
+                   <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
+                   <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
+                   <!-- instrument all classes in target/classes directory -->
+                   <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
+                     <fileset dir="${project.build.directory}/classes">
+                        <include name="**/*.class" />
+                      </fileset>
+                    </cobertura-instrument>
+                   </target>
+                 </configuration>
+               <goals>
+                 <goal>run</goal>
+               </goals>
+              </execution>
+              <execution>
+               <id>cobertura-report</id>
+               <phase>post-integration-test</phase>
+                 <configuration>
+                   <target>
+                     <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
+                     <!-- prepare directory structure for cobertura-->
+                     <mkdir dir="target/cobertura" />
+                     <mkdir dir="target/site/cobertura" />
+                     <!-- restore classes from backup folder to classes folder -->
+                     <copy toDir="target/classes" verbose="true" overwrite="true">
+                      <fileset dir="target/cobertura/backup">
+                         <include name="**/*.class" />
+                      </fileset>
+                     </copy>
+                     <!-- delete backup folder-->
+                     <delete dir="target/cobertura/backup" />
+                     <!-- create a code coverage report -->
+                     <cobertura-report format="html" datafile="${project.build.directory}/cobertura/cobertura.ser" destdir="${project.build.directory}/site/cobertura">
+                      <fileset dir="${basedir}/src/main/java">
+                         <include name="**/*.java" />
+                      </fileset>
+                     </cobertura-report>
+                     <!-- delete cobertura.properties file -->
+                     <delete file="target/classes/cobertura.properties" />
+                   </target>
+                 </configuration>
+               <goals>
+                 <goal>run</goal>
+               </goals>
+               </execution>
+            </executions>
+           </plugin>
+          </plugins>
+       </build>
+     </profile>
+   </profiles>
+
+</project>

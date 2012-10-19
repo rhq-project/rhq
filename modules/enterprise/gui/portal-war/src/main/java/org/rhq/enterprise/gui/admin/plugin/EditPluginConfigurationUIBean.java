@@ -24,15 +24,6 @@ import java.util.List;
 
 import javax.faces.application.FacesMessage;
 
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.Create;
-import org.jboss.seam.annotations.In;
-import org.jboss.seam.annotations.Logger;
-import org.jboss.seam.annotations.Name;
-import org.jboss.seam.annotations.Scope;
-import org.jboss.seam.annotations.web.RequestParameter;
-import org.jboss.seam.log.Log;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -42,12 +33,12 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-@Scope(ScopeType.PAGE)
-@Name("editPluginConfigurationUIBean")
+//@Scope(ScopeType.PAGE)
+//@Name("editPluginConfigurationUIBean")
 public class EditPluginConfigurationUIBean extends AbstractPluginConfigurationUIBean implements Serializable {
 
-    @Logger
-    private Log log;
+    //    @Logger
+    //    private Log log;
 
     private Configuration currentConfiguration;
     private ConfigurationDefinition currentConfigurationDefinition;
@@ -60,7 +51,7 @@ public class EditPluginConfigurationUIBean extends AbstractPluginConfigurationUI
         return currentConfigurationDefinition;
     }
 
-    @Create
+    //    @Create
     public void init() {
         checkPermission();
         lookupConfigDefinitions();
@@ -69,14 +60,14 @@ public class EditPluginConfigurationUIBean extends AbstractPluginConfigurationUI
     // The superclass holds the plugin instance variable, but in this
     // case we want it injected via the PluginFactory - so this serves as
     // the injection point
-    @In(value = "plugin", required = false)
+    //    @In(value = "plugin", required = false)
     public void setCurrentPlugin(ServerPlugin currentPlugin) {
         if (currentPlugin != null) {
             setPlugin(currentPlugin);
         }
     }
 
-    @RequestParameter("listName")
+    //    @RequestParameter("listName")
     public void setListName(String listName) {
         ServerPlugin plugin = getPlugin();
 
@@ -123,7 +114,7 @@ public class EditPluginConfigurationUIBean extends AbstractPluginConfigurationUI
 
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Configuration settings saved.");
         } catch (Exception e) {
-            log.error("Error updating the plugin configurations.", e);
+            //            log.error("Error updating the plugin configurations.", e);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
                 "There was an error changing the configuration settings.", e);
 

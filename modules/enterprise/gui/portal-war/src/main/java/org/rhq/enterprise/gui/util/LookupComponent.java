@@ -20,15 +20,7 @@ package org.rhq.enterprise.gui.util;
 
 import java.beans.Introspector;
 import java.lang.reflect.Method;
-import org.jboss.seam.Component;
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.Create;
-import org.jboss.seam.annotations.In;
-import org.jboss.seam.annotations.Name;
-import org.jboss.seam.annotations.Scope;
-import org.jboss.seam.annotations.Startup;
-import org.jboss.seam.contexts.Context;
-import org.jboss.seam.core.Init;
+
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -52,18 +44,18 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  * @author Justin Harris
  */
-@Startup
-@Scope(ScopeType.APPLICATION)
-@Name("lookupComponent")
+//@Startup
+//@Scope(ScopeType.APPLICATION)
+//@Name("lookupComponent")
 public class LookupComponent {
 
-    @In
-    private Init init;
+    //@In
+    //private Init init;
 
-    @In
-    private Context applicationContext;
+    //@In
+    //private Context applicationContext;
 
-    @Create
+    //@Create
     public void scanComponents() {
         for (Method method : LookupUtil.class.getDeclaredMethods()) {
             String methodName = method.getName();
@@ -95,17 +87,17 @@ public class LookupComponent {
      */
     private void addComponent(String componentName, Method creationMethod) {
         LookupUtilComponent component = new LookupUtilComponent(componentName, creationMethod);
-        this.applicationContext.set(componentName + ".component", component);
+        //this.applicationContext.set(componentName + ".component", component);
 
         // set the new component to @AutoCreate
-        this.init.addAutocreateVariable(componentName);
+        //this.init.addAutocreateVariable(componentName);
     }
 
     /**
      * Custom Seam component that delegates component intantiation to a creation
      * method.  This is similar in concept to Seam @Factory methods.
      */
-    class LookupUtilComponent extends Component {
+    class LookupUtilComponent /*extends Component*/{
 
         private Method creationMethod;
 
@@ -114,12 +106,12 @@ public class LookupComponent {
         }
 
         private LookupUtilComponent(String name, Method creationMethod) {
-            super(Object.class, name);
+            //super(Object.class, name);
 
             this.creationMethod = creationMethod;
         }
 
-        @Override
+        //@Override
         protected Object instantiate() throws Exception {
             return this.creationMethod.invoke(null);
         }

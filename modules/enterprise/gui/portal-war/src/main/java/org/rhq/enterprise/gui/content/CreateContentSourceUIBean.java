@@ -41,7 +41,6 @@ import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.content.ContentException;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
-import org.rhq.enterprise.server.perspective.PerspectiveManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class CreateContentSourceUIBean extends PagedDataTableUIBean {
@@ -49,7 +48,7 @@ public class CreateContentSourceUIBean extends PagedDataTableUIBean {
 
     private ContentSourceManagerLocal contentSourceManager = LookupUtil.getContentSourceManager();
 
-    private PerspectiveManagerLocal perspectiveManager = LookupUtil.getPerspectiveManager();
+    //private PerspectiveManagerLocal perspectiveManager = LookupUtil.getPerspectiveManager();
 
     private ContentSource newContentSource = new ContentSource();
     private ContentSourceType selectedContentSourceType = null;
@@ -203,14 +202,15 @@ public class CreateContentSourceUIBean extends PagedDataTableUIBean {
         }
     }
 
-    public String getCreateContentProviderPageLink(String typeName) {
+    public String getCreateContentProviderPageLink() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
-        String link = perspectiveManager.getPageLink(subject, "createContentProvider", typeName, null);
+        String link = null;//perspectiveManager.getPageLink(subject, "createContentProvider", typeName, null);
 
         if (null == link) {
-            link = "/rhq/content/createContentProvider-plain.xhtml?mode=new&typeName=" + typeName;
+            //link = "/rhq/content/createContentProvider-plain.xhtml?mode=new&typeName=" + typeName;
+            link = "/rhq/content/createContentProvider-plain.xhtml";
         } else {
-            link += "&mode=new&typeName=" + typeName;
+            //link += "&mode=new&typeName=" + typeName;
         }
 
         return link;

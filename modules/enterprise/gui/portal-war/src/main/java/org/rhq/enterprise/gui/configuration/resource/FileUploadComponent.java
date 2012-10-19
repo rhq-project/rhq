@@ -23,16 +23,13 @@
 
 package org.rhq.enterprise.gui.configuration.resource;
 
+import java.io.IOException;
+
 import org.apache.commons.io.FileUtils;
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.In;
-import org.jboss.seam.annotations.Name;
-import org.jboss.seam.annotations.Scope;
-import org.rhq.enterprise.gui.common.upload.FileUploadUIBean;
 import org.richfaces.event.UploadEvent;
 import org.richfaces.model.UploadItem;
 
-import java.io.IOException;
+import org.rhq.enterprise.gui.common.upload.FileUploadUIBean;
 
 /**
  * <p>
@@ -45,8 +42,8 @@ import java.io.IOException;
  * upload which is implemented using RichFaces and Seam together. 
  * </p>
  */
-@Name("fileUploader")
-@Scope(ScopeType.PAGE)
+//@Name("fileUploader")
+//@Scope(ScopeType.PAGE)
 public class FileUploadComponent {
 
     private FileUploadUIBean uploadBean = new FileUploadUIBean();
@@ -54,7 +51,7 @@ public class FileUploadComponent {
     /**
      * Represents the currently selected file in the raw config editor
      */
-    @In
+    //    @In
     private RawConfigUIBean selectedRawUIBean;
 
     public UploadItem getUploadItem() {

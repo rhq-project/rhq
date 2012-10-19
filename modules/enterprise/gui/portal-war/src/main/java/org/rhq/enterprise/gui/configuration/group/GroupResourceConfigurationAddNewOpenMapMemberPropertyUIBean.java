@@ -21,19 +21,14 @@ package org.rhq.enterprise.gui.configuration.group;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.enterprise.gui.configuration.AbstractAddNewOpenMapMemberPropertyUIBean;
 
-import org.jboss.seam.annotations.Name;
-import org.jboss.seam.annotations.Scope;
-import org.jboss.seam.annotations.In;
-import org.jboss.seam.ScopeType;
-
 /**
  * @author Ian Springer
  */
-@Name("GroupResourceConfigurationAddNewOpenMapMemberPropertyUIBean")
-@Scope(ScopeType.PAGE)
+//@Name("GroupResourceConfigurationAddNewOpenMapMemberPropertyUIBean")
+//@Scope(ScopeType.PAGE)
 public class GroupResourceConfigurationAddNewOpenMapMemberPropertyUIBean extends
     AbstractAddNewOpenMapMemberPropertyUIBean {
-    @In(value = "EditGroupResourceConfigurationUIBean")
+    //@In(value = "EditGroupResourceConfigurationUIBean")
     EditGroupResourceConfigurationUIBean editGroupResourceConfigurationUIBean;
 
     protected Configuration getConfiguration() {

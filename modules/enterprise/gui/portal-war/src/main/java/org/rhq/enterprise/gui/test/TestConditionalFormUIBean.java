@@ -6,12 +6,8 @@ import java.util.List;
 import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.Name;
-import org.jboss.seam.annotations.Scope;
-
-@Scope(ScopeType.PAGE)
-@Name("TestConditionalFormUIBean")
+//@Scope(ScopeType.PAGE)
+//@Name("TestConditionalFormUIBean")
 public class TestConditionalFormUIBean {
 
     private String currentType = "";

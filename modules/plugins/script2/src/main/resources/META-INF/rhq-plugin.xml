@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<plugin name="script2"
+        displayName="script2Plugin"
+        description="Plugin that allows monitoring via scripting languages (Ruby, Python)"
+        package="org.rhq.modules.plugins.script2"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+
+   <server name="Script2"
+            discovery="ScriptDiscovery"
+            class="ScriptComponent"
+            supportsManualAdd="true"
+
+          >
+       <plugin-configuration>
+           <c:simple-property name="language" default="jruby">
+               <c:property-options>
+                   <c:option value="jruby" name="Ruby"/>
+<!--                   <c:option value="jython" name="Python"/> -->
+                   <c:option value="JavaScript" name="JavaScript"/>
+               </c:property-options>
+           </c:simple-property>
+           <c:simple-property name="scriptName" displayName="Name of the script" type="directory" required="true"/>
+       </plugin-configuration>
+
+
+<!--
+           <operation name="dummyOperation">
+               TODO supply parameters and return values
+           </operation>
+-->
+       <metric property="metric1" />
+       <metric property="metric2" />
+       <metric property="metric3" />
+       <metric property="metric4" />
+
+       <metric property="trait1" dataType="trait" />
+
+
+
+   </server>
+
+</plugin>

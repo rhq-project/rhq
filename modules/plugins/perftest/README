@@ -1,0 +1,12 @@
+Usage
+=============================
+
+- Deploy the perftest plugin to the JON server (by default, the agent will download the plugin on startup)
+- The scenario to use is specified to the agent through a system property. The value of this property should be the
+  name of the XML file without the .xml extension. The property name is on.perftest.scenario. For example (remove
+  the quotes)
+
+    "-Don.perftest.scenario=high-servers-1000"
+
+- Some scenarios may be configurable and require other system properties to dictate its behavior. Check the
+  scenario itself for more details.

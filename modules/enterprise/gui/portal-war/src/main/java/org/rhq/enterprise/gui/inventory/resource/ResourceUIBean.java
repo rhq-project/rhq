@@ -28,10 +28,6 @@ import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.Name;
-import org.jboss.seam.annotations.Scope;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -50,7 +46,6 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
-import org.rhq.enterprise.server.perspective.PerspectiveManagerLocal;
 import org.rhq.enterprise.server.perspective.Tab;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -63,8 +58,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  * @author Ian Springer
  */
-@Name(ResourceUIBean.MANAGED_BEAN_NAME)
-@Scope(ScopeType.EVENT)
+//@Name(ResourceUIBean.MANAGED_BEAN_NAME)
+//@Scope(ScopeType.EVENT)
 public class ResourceUIBean {
 
     protected final Log log = LogFactory.getLog(ResourceUIBean.class);
@@ -84,7 +79,7 @@ public class ResourceUIBean {
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
     private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
     private AuthorizationManagerLocal authorizationManager = LookupUtil.getAuthorizationManager();
-    private PerspectiveManagerLocal perspectiveManager = LookupUtil.getPerspectiveManager();
+    //private PerspectiveManagerLocal perspectiveManager = LookupUtil.getPerspectiveManager();
 
     private String message;
 
@@ -112,7 +107,7 @@ public class ResourceUIBean {
             .getId());
         this.permissions = new ResourcePermission(resourcePerms);
         this.facets = this.resourceTypeManager.getResourceFacets(getResourceType().getId());
-        this.tabs = this.perspectiveManager.getResourceTabs(subject, this.resource);
+        //this.tabs = this.perspectiveManager.getResourceTabs(subject, this.resource);
 
         //parent can be viewed by user only if he is allowed to see it
         if (parent != null)

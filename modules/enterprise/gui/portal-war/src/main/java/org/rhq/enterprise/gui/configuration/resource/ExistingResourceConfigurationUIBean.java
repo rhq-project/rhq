@@ -38,8 +38,6 @@ import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
 import org.richfaces.model.UploadItem;
 
-import org.jboss.seam.annotations.Create;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
@@ -84,7 +82,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
             ExistingResourceConfigurationUIBean.class);
     }
 
-    @Create
+    //@Create
     public void begin() {
         if (isRawSupported() || isStructuredAndRawSupported()) {
             initConfigDirectories();

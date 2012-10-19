@@ -18,10 +18,6 @@
  */
 package org.rhq.enterprise.gui.admin.plugin;
 
-import org.jboss.seam.annotations.Factory;
-import org.jboss.seam.annotations.Name;
-import org.jboss.seam.annotations.web.RequestParameter;
-
 import org.rhq.core.domain.plugin.AbstractPlugin;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginDeploymentType;
@@ -36,17 +32,17 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  * @author jharris
  */
-@Name("pluginFactory")
+//@Name("pluginFactory")
 public class PluginFactory {
 
-    @RequestParameter("plugin")
+    //@RequestParameter("plugin")
     private String name;
-    @RequestParameter("deployment")
+    //@RequestParameter("deployment")
     private PluginDeploymentType deployment;
-    @RequestParameter("pluginType")
+    //@RequestParameter("pluginType")
     private String pluginType;
 
-    @Factory(value = "plugin", autoCreate = true)
+    //@Factory(value = "plugin", autoCreate = true)
     public AbstractPlugin lookupPlugin() {
         if (this.deployment == PluginDeploymentType.AGENT) {
             return LookupUtil.getPluginManager().getPlugin(this.name);

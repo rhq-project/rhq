@@ -19,8 +19,7 @@
 package org.rhq.enterprise.gui.admin.plugin;
 
 import javax.faces.application.FacesMessage;
-import org.jboss.seam.annotations.Logger;
-import org.jboss.seam.log.Log;
+
 import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -38,8 +37,8 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDe
 public abstract class AbstractPluginConfigurationUIBean {
 
     protected final ServerPluginsLocal serverPluginsBean = LookupUtil.getServerPlugins();
-    @Logger
-    private Log log;
+    //    @Logger
+    //    private Log log;
 
     private ServerPlugin plugin;
     private ConfigurationDefinition pluginConfigurationDefinition;
@@ -89,7 +88,7 @@ public abstract class AbstractPluginConfigurationUIBean {
                 this.scheduledJobsDefinition = ConfigurationMetadataParser.parse("jobs:" + pluginKey.getPluginName(), descriptor.getScheduledJobs());
             } catch (Exception e) {
                 String err = "Cannot determine what the plugin configuration or scheduled jobs configuration looks like";
-                log.error(err + " - Cause: " + e);
+                // log.error(err + " - Cause: " + e);
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, err, e);
             }
         }

@@ -35,12 +35,6 @@ import javax.faces.application.FacesMessage;
 import javax.faces.event.ValueChangeEvent;
 import javax.servlet.http.HttpServletResponse;
 
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.In;
-import org.jboss.seam.annotations.Name;
-import org.jboss.seam.annotations.Out;
-import org.jboss.seam.annotations.Scope;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
@@ -53,8 +47,8 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-@Name("configurationViewer")
-@Scope(ScopeType.PAGE)
+//@Name("configurationViewer")
+//@Scope(ScopeType.PAGE)
 public class ResourceConfigurationViewer {
 
     public static final boolean STRUCTURED_MODE = true;
@@ -62,19 +56,19 @@ public class ResourceConfigurationViewer {
 
     private boolean mode = STRUCTURED_MODE;
 
-    @In("webUser")
+    //    @In("webUser")
     protected WebUser loggedInUser;
 
-    @Out(required = false)
+    //    @Out(required = false)
     protected Configuration resourceConfiguration;
 
-    @Out(required = false)
+    //    @Out(required = false)
     protected ConfigurationDefinition resourceConfigurationDefinition;
 
-    @Out(required = false)
+    //    @Out(required = false)
     protected Collection<RawConfigDirectory> rawConfigDirectories;
 
-    @Out(required = false)
+    //    @Out(required = false)
     protected RawConfigUIBean selectedRawUIBean;
 
     protected Integer resourceId;

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="FileTemplateBundlePlugin"
+        displayName="File Template Bundle Plugin"
+        package="org.rhq.plugins.filetemplate"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+
+   <server name="File Template Bundle Handler Server"
+           discovery="FileTemplateBundlePluginDiscoveryComponent"
+           class="FileTemplateBundlePluginServerComponent"
+           singleton="true"
+           description="This plugin is used to process File Template bundles">
+
+      <bundle type="File Template" />
+
+   </server>
+</plugin>

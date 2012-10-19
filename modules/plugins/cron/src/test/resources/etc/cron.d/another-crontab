@@ -1,0 +1,4 @@
+#another crontab file loaded from under cron.d
+SHELLVAR=value
+
+1  0  *  *  * root echo "tmp"

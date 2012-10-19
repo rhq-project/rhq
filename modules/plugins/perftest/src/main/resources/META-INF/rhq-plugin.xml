@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="PerfTest"
+        displayName="Performance Test Plugin"
+        package="org.rhq.plugins.perftest"
+        description="A utility plugin for testing the performance of the RHQ Server and Agent Subsystems"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <platform name="platform-a" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Test Platform A">
+   </platform>
+   
+   <!-- try to make server-a and its children representative of "average" resources -->
+   <server name="server-omega" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Test Server Omega">
+
+      <plugin-configuration>
+         <c:simple-property name="omega-property0"/>
+         <c:simple-property name="omega-property1"/>
+         <c:simple-property name="omega-property2"/>
+         <c:simple-property name="omega-property3"/>
+         <c:simple-property name="omega-property4"/>
+      </plugin-configuration>
+
+      <metric displayName="Omega Metric 0" property="omega-metric0" defaultOn="false"/>
+      <metric displayName="Omega Metric 1" property="omega-metric1" defaultOn="true" displayType="summary"/>
+      <metric displayName="Omega Metric 2" property="omega-metric2" defaultOn="true" displayType="summary"/>
+      <metric displayName="Omega Metric 3" property="omega-metric3" defaultOn="true" displayType="summary"/>
+      <metric displayName="Omega Metric 4" property="omega-metric4" defaultOn="true" displayType="summary"/>
+      <metric displayName="Omega Metric 5" property="omega-metric5" defaultOn="true" displayType="summary"/>
+      <metric displayName="Omega Metric 6" property="omega-metric6" defaultOn="true" displayType="detail"/>
+      <metric displayName="Omega Metric 7" property="omega-metric7" defaultOn="true" displayType="detail"/>
+      <metric displayName="Omega Metric 8" property="omega-metric8" defaultOn="true" displayType="detail"/>
+      <metric displayName="Omega Metric 9" property="omega-metric9" defaultOn="true" displayType="detail"/>
+      <metric displayName="Omega Metric 10" property="omega-metric10" defaultOn="true" displayType="detail"/>
+
+      <event name="OmegaEventType" description="a test event type for omega server"/>
+
+      <content displayName="Omega Content 0" name="omega-content0" category="configuration"/>
+      <content displayName="Omega Content 1" name="omega-content1" category="configuration"/>
+      <content displayName="Omega Content 2" name="omega-content2" category="configuration"/>
+      <content displayName="Omega Content 3" name="omega-content3" category="configuration"/>
+      <content displayName="Omega Content 4" name="omega-content4" category="configuration"/>
+
+      <service name="service-alpha" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Omega Service Alpha">
+         
+         <plugin-configuration>
+            <c:simple-property name="alpha-property0"/>
+            <c:simple-property name="alpha-property1"/>
+            <c:simple-property name="alpha-property2"/>
+         </plugin-configuration>
+
+         <operation name="createEvents">
+            <parameters>
+               <c:simple-property name="source" required="true" type="string" description="The event source"/>
+               <c:simple-property name="details" required="true" type="string" description="The event details"/>
+               <c:simple-property name="severity" required="true" type="string" description="The event severity"/>
+               <c:simple-property name="count" required="true" type="integer" default="1" description="The number of events to create"/>
+            </parameters>
+            <results>
+               <c:simple-property name="succeeded" type="string" description="A flag that indicates whether or not the operation succeeded"/>
+            </results>
+         </operation>   
+         
+         <metric displayName="Alpha Metric 0" property="alpha-metric0" defaultOn="false"/>
+         <metric displayName="Alpha Metric 1" property="alpha-metric1" defaultOn="true" displayType="summary"/>
+         <metric displayName="Alpha Metric 2" property="alpha-metric2" defaultOn="true" displayType="summary"/>
+         <metric displayName="Alpha Metric 3" property="alpha-metric3" defaultOn="true" displayType="detail"/>
+         <metric displayName="Alpha Metric 4" property="alpha-metric4" defaultOn="true" displayType="detail"/>
+         <metric displayName="Alpha Metric 5" property="alpha-metric5" defaultOn="true" displayType="detail"/>
+
+         <event name="service-alpha-event" description="An event for the service-alpha service"/>
+         
+         <content displayName="Alpha Content 0" name="alpha-content0" category="configuration"/>
+         
+      </service>
+
+      <service name="service-beta" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Omega Service Beta">
+         
+         <plugin-configuration>
+            <c:simple-property name="beta-property0"/>
+         </plugin-configuration>
+
+         <operation name="createEvents">
+            <parameters>
+               <c:simple-property name="source" required="true" type="string" description="The event source"/>
+               <c:simple-property name="details" required="true" type="string" description="The event details"/>
+               <c:simple-property name="severity" required="true" type="string" description="The event severity"/>
+               <c:simple-property name="count" required="true" type="integer" default="1" description="The number of events to create"/>
+            </parameters>
+            <results>
+               <c:simple-property name="succeeded" type="boolean" description="A flag that indicates whether or not the operation succeeded"/>
+            </results>
+         </operation>
+         
+         <metric displayName="Beta Metric 0" property="beta-metric0" defaultOn="false"/>
+         <metric displayName="Beta Metric 1" property="beta-metric1" defaultOn="true" displayType="summary"/>
+         <metric displayName="Beta Metric 2" property="beta-metric2" defaultOn="true" displayType="summary"/>
+         <metric displayName="Beta Metric 3" property="beta-metric3" defaultOn="true" displayType="summary"/>
+         <metric displayName="Beta Metric 4" property="beta-metric4" defaultOn="true" displayType="summary"/>
+         <metric displayName="Beta Metric 5" property="beta-metric5" defaultOn="true" displayType="summary"/>
+         <metric displayName="Beta Metric 6" property="beta-metric6" defaultOn="true" displayType="detail"/>
+         <metric displayName="Beta Metric 7" property="beta-metric7" defaultOn="true" displayType="detail"/>
+         <metric displayName="Beta Metric 8" property="beta-metric8" defaultOn="true" displayType="detail"/>
+         <metric displayName="Beta Metric 9" property="beta-metric9" defaultOn="true" displayType="detail"/>
+         <metric displayName="Beta Metric 10" property="beta-metric10" defaultOn="true" displayType="detail"/>
+
+         <event name="service-beta-event" description="An event for the service-beta event"/>
+         
+         <resource-configuration>
+            <c:simple-property name="beta-config0"/>
+            <c:simple-property name="beta-config1"/>
+            <c:simple-property name="beta-config2"/>
+         </resource-configuration>
+      </service>
+      
+   </server>
+   
+   <!-- try to make server-a and its children representative of "average" resources -->
+   <server name="server-a" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Test Server A">
+
+      <plugin-configuration>
+         <c:simple-property name="property0"/>
+         <c:simple-property name="property1"/>
+         <c:simple-property name="property2"/>
+         <c:simple-property name="property3"/>
+         <c:simple-property name="property4"/>
+      </plugin-configuration>
+
+      <metric displayName="Metric 0" property="metric0" defaultOn="false"/>
+      <metric displayName="Metric 1" property="metric1" defaultOn="false"/>
+      <metric displayName="Metric 2" property="metric2" defaultOn="false"/>
+      <metric displayName="Metric 3" property="metric3" defaultOn="false"/>
+      <metric displayName="Metric 4" property="metric4" defaultOn="true" displayType="detail"/>
+      <metric displayName="Metric 5" property="metric5" defaultOn="true" displayType="detail"/>
+      <metric displayName="Metric 6" property="metric6" defaultOn="true" displayType="detail"/>
+      <metric displayName="Metric 7" property="metric7" defaultOn="true" displayType="summary"/>
+      <metric displayName="Metric 8" property="metric8" defaultOn="true" displayType="summary"/>
+      <metric displayName="Metric 9" property="metric9" defaultOn="true" displayType="summary"/>
+
+      <event name="PerfTestEventType" description="a test event type"/>
+
+      <content name="artifact0" displayName="Artifact 0" category="configuration"/>
+      <content name="artifact1" displayName="Artifact 1" category="configuration"/>
+      <content name="artifact2" displayName="Artifact 2" category="configuration"/>
+      <content name="artifact3" displayName="Artifact 3" category="configuration"/>
+      <content name="artifact4" displayName="Artifact 4" category="configuration"/>
+
+      <service name="service-a" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Nested Service A">
+         
+         <plugin-configuration>
+            <c:simple-property name="childProperty0"/>
+            <c:simple-property name="childProperty1"/>
+            <c:simple-property name="childProperty2"/>
+         </plugin-configuration>
+         
+         <metric property="childMetric0" defaultOn="false"/>
+         <metric property="childMetric1" defaultOn="true" displayType="detail"/>
+         <metric property="childMetric2" defaultOn="true" displayType="summary"/>
+
+         <content name="childArtifact0" displayName="Child Artifact 0" category="configuration"/>
+
+         <resource-configuration>
+
+              <!-- This group contains a sampling of all of the various types of properties. -->
+              <c:group name="group1" displayName="Group 1">
+                  <c:simple-property name="string" type="string"/>
+                  <c:simple-property name="longString" type="longString"/>
+                  <c:simple-property name="password" type="password"/>
+                  <c:simple-property name="boolean" type="boolean"/>
+                  <c:simple-property name="integer" type="integer"/>
+                  <c:simple-property name="long" type="long"/>
+                  <c:simple-property name="float" type="float"/>
+                  <c:simple-property name="double" type="double"/>
+                  <c:simple-property name="file" type="file"/>
+                  <c:simple-property name="directory" type="directory"/>
+
+                  <c:simple-property name="enum">
+                      <c:property-options>
+                          <c:option value="red" name="Red"/>
+                          <c:option value="blue" name="Blue" default="true"/>
+                          <c:option value="green" name="Green"/>
+                      </c:property-options>
+                  </c:simple-property>
+
+                  <c:simple-property name="optional" required="false"/>
+                  <c:simple-property name="readOnly" readOnly="true"/>
+
+                  <c:map-property name="openMap"/>
+
+                  <c:map-property name="map">
+                      <c:simple-property name="mapMember1"/>
+                      <c:simple-property name="mapMember2"/>
+                      <c:simple-property name="mapMember3"/>
+                  </c:map-property>
+
+                  <c:list-property name="listOfMaps">
+                      <c:map-property name="listMember">
+                          <c:simple-property name="mapInListMember1"/>
+                          <c:simple-property name="mapInListMember2"/>
+                          <c:simple-property name="mapInListMember3"/>
+                      </c:map-property>
+                  </c:list-property>
+              </c:group>
+
+              <!-- This group just contains a whole bunch of props to give this config some bulk. -->
+              <c:group name="group2" displayName="Group 2">
+                  <c:simple-property name="string1"/>
+                  <c:simple-property name="string2"/>
+                  <c:simple-property name="string3"/>
+                  <c:simple-property name="string4"/>
+                  <c:simple-property name="string5"/>
+                  <c:simple-property name="string6"/>
+                  <c:simple-property name="string7"/>
+                  <c:simple-property name="string8"/>
+                  <c:simple-property name="string9"/>
+                  <c:simple-property name="string10"/>
+                  <c:simple-property name="string11"/>
+                  <c:simple-property name="string12"/>
+                  <c:simple-property name="string13"/>
+                  <c:simple-property name="string14"/>
+                  <c:simple-property name="string15"/>
+                  <c:simple-property name="string16"/>
+                  <c:simple-property name="string17"/>
+                  <c:simple-property name="string18"/>
+                  <c:simple-property name="string19"/>
+                  <c:simple-property name="string20"/>
+              </c:group>
+
+              <!-- Throw in a couple templates too. -->
+              <c:template name="template1" description="Template 1">
+                  <c:simple-property name="string" default="template1Value"/>
+              </c:template>
+
+              <c:template name="template2" description="Template 2">
+                  <c:simple-property name="string" default="template2Value"/>
+              </c:template>
+
+         </resource-configuration>
+
+         <service name="service-ab" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Nested Service A-B">
+            <plugin-configuration>
+               <c:simple-property name="grandchildProperty0"/>
+            </plugin-configuration>
+            <metric property="grandchildMetric0" defaultOn="true" displayType="detail"/>
+         </service>
+         
+      </service>
+      
+   </server>
+
+   <server name="server-b" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Test Server B">
+
+      <metric displayName="Metric 00" property="metric00" defaultOn="true" displayType="summary"/>
+      <metric displayName="Metric 01" property="metric01" defaultOn="true" displayType="summary"/>
+      <metric displayName="Metric 02" property="metric02" defaultOn="true" displayType="summary"/>
+      <metric displayName="Metric 03" property="metric03" defaultOn="true" displayType="summary"/>
+      <metric displayName="Metric 04" property="metric04" defaultOn="true" displayType="summary"/>
+      <metric displayName="Metric 05" property="metric05" defaultOn="true" displayType="summary"/>
+      <metric displayName="Metric 06" property="metric06" defaultOn="true" displayType="summary"/>
+      <metric displayName="Metric 07" property="metric07" defaultOn="true" displayType="summary"/>
+      <metric displayName="Metric 08" property="metric08" defaultOn="true" displayType="summary"/>
+      <metric displayName="Metric 09" property="metric09" defaultOn="true" displayType="summary"/>
+
+      <metric displayName="Metric 10" property="metric10" defaultOn="true"/>
+      <metric displayName="Metric 11" property="metric11" defaultOn="true"/>
+      <metric displayName="Metric 12" property="metric12" defaultOn="true"/>
+      <metric displayName="Metric 13" property="metric13" defaultOn="true"/>
+      <metric displayName="Metric 14" property="metric14" defaultOn="true"/>
+      <metric displayName="Metric 15" property="metric15" defaultOn="true"/>
+      <metric displayName="Metric 16" property="metric16" defaultOn="true"/>
+      <metric displayName="Metric 17" property="metric17" defaultOn="true"/>
+      <metric displayName="Metric 18" property="metric18" defaultOn="true"/>
+      <metric displayName="Metric 19" property="metric19" defaultOn="true"/>
+
+      <event name="PerfTestEventType" description="a test event type"/>
+
+      <service name="service-b" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Nested Service B"/>
+
+      <service name="service-b-metrics" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Nested Service B With Metrics">
+         <metric property="metric000" defaultOn="true" displayType="summary"/>
+         <metric property="metric001" defaultOn="true" displayType="summary"/>
+         <metric property="metric002" defaultOn="true" displayType="summary"/>
+         <metric property="metric003" defaultOn="true" displayType="summary"/>
+         <metric property="metric004" defaultOn="true" displayType="summary"/>
+         <metric property="metric005" defaultOn="true" displayType="summary"/>
+         <metric property="metric006" defaultOn="true" displayType="summary"/>
+         <metric property="metric007" defaultOn="true" displayType="summary"/>
+         <metric property="metric008" defaultOn="true" displayType="summary"/>
+         <metric property="metric009" defaultOn="true" displayType="summary"/>
+   
+         <metric property="metric010" defaultOn="true"/>
+         <metric property="metric011" defaultOn="true"/>
+         <metric property="metric012" defaultOn="true"/>
+         <metric property="metric013" defaultOn="true"/>
+         <metric property="metric014" defaultOn="true"/>
+         <metric property="metric015" defaultOn="true"/>
+         <metric property="metric016" defaultOn="true"/>
+         <metric property="metric017" defaultOn="true"/>
+         <metric property="metric018" defaultOn="true"/>
+         <metric property="metric019" defaultOn="true"/>
+      </service>
+
+   </server>
+   
+   <server name="server-c" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Test Server C"/>
+
+   <!-- used to perftest measurement collection -->
+   <server name="server-d" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Test Server D">
+      <service name="service-d-metrics" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Nested Service D With Metrics">
+         <metric property="metric000" defaultOn="true" displayType="summary"/>
+         <metric property="metric001" defaultOn="true" displayType="summary"/>
+         <metric property="metric002" defaultOn="true" displayType="summary"/>
+         <metric property="metric003" defaultOn="true" displayType="summary"/>
+         <metric property="metric004" defaultOn="true" displayType="summary"/>
+      </service>
+   </server>
+
+   <server name="server-e" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Test Server E">
+      <service name="service-e-metrics" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Nested Service E With Metrics">
+         <metric property="metric000" defaultOn="true" displayType="summary"/>
+         <metric property="metric001" defaultOn="true" displayType="summary"/>
+         <metric property="metric002" defaultOn="true" displayType="summary"/>
+         <metric property="metric003" defaultOn="true" displayType="summary"/>
+         <metric property="metric004" defaultOn="true" displayType="summary"/>
+      </service>
+   </server>
+
+   <server name="server-rogue"
+           class="PerfTestRogueComponent"
+           discovery="PerfTestRogueDiscoveryComponent"
+           description="Test Server That Behaves Badly">
+      <!-- 
+      <plugin-configuration>
+         <c:simple-property name="avail" type="string" description="Set to true if the resource should be UP, false if DOWN. Anything else, throw an exception"/>
+      </plugin-configuration>
+       -->
+      <operation name="op1">
+         <parameters>
+            <c:simple-property name="sleep" default="1000" required="true" type="long" description="Set to a number to force the component to sleep that number of milliseconds"/>
+            <c:simple-property name="status" default="success" required="true" description="Set to 'success' or 'failure' for the op status. Any other value throws an exception"/>
+         </parameters>
+      </operation>
+      <resource-configuration>
+         <c:simple-property name="updateSleep" default="1000" required="true" type="long" description="Set to a number to force the component to sleep that number of milliseconds when updating the config"/>
+         <c:simple-property name="updateStatus" default="success" required="true" description="Set to 'success' or 'failure' for the update status. Any other value throws an exception"/>
+         <c:simple-property name="loadSleep" default="1000" required="true" type="long" description="Set to a number to force the component to sleep that number of milliseconds when loading the config"/>
+         <c:simple-property name="loadStatus" default="success" required="true" description="Set to 'success' or 'failure' for the load status (failure throws an exception during load)"/>
+      </resource-configuration>
+   </server>
+
+   <help>
+      <![CDATA[
+         <p>To enable the perftest plugin, start the agent with <tt>-Don.perftest.scenario=scenario-name</tt> where the 
+         scenario name matches one of the included scenario files for an inventory structure you would like to 
+         simulated.</p>
+
+         <p>The following setup, for example, will use some typical server and service configurations resulting in 10 
+         servers each with 25 child services and each of those will have 2 child-child services.<p>
+      
+         <code><pre>
+            -Don.perftest.scenario=configurable-average
+            -Don.perftest.server-a-count=10
+            -Don.perftest.service-a-count=25
+            -Don.perftest.service-ab-count=2
+         </pre></code>
+      ]]>
+   </help>
+
+</plugin>

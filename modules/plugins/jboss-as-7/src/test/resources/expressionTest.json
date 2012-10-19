@@ -1,0 +1,12 @@
+{
+  "outcome" : "success",
+  "result" :
+
+
+    {"foo":123,
+     "bar":456,
+     "foo2":{
+         "EXPRESSION_VALUE":"${foo2:42}"
+     }
+    }
+}

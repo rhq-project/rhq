@@ -1,0 +1,9 @@
+{
+  "outcome" : "success",
+  "result" : {
+    "default-workmanager-short-running-thread-pool" : "jca-short-running",
+    "default-workmanager-long-running-thread-pool" : "jca-long-running",
+    "bean-validation-enabled" : true,
+    "archive-validation-enabled" : true
+  }
+}

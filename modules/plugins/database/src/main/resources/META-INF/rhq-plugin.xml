@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="Database"
+        displayName="Abstract Database"
+        description="Abstract plugin supporting concrete database plugins"
+        package="org.rhq.plugins.database"
+        pluginLifecycleListener="DatabasePluginLifecycleListener"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin">
+
+<!-- Example use: Create a plugin to query from an Oracle database.
+
+    <depends plugin="Oracle" useClasses="true"/>
+
+    <server name="Generic Query" class="org.rhq.plugins.database.CustomTableComponent"
+        discovery="org.rhq.plugins.database.CustomTableDiscoveryComponent"
+        description="Query the database for various results"
+        supportsManualAdd="true" singleton="false"
+        createDeletePolicy="both">
+        <runs-inside>
+            ... note: this works for any database component that implements 'org.rhq.plugins.database.DatabaseComponent'
+            <parent-resource-type name="Oracle Server" plugin="Oracle"/>
+        </runs-inside>
+        <plugin-configuration>
+            <c:simple-property name="table" type="string" default="sometable"/>
+            ... table is optional; if table is not defined discovery will be skipped
+            <c:simple-property name="metricQuery" type="string" default="select a, b from sometable"/>
+            <c:simple-property name="column" type="boolean" default="true"/>
+            ... use column default='false' for data appearing like:
+            col1 col2
+            ~~~~~~~~
+            a    123
+            b    323
+
+            and query 'select col1, col2 from sometable'
+        </plugin-configuration>
+        ... columns from Oracle appear uppercase ...
+        <metric property="A" displayName="A results" displayType="summary"
+            description="Number appearing in A column"
+            units="none" dataType="measurement"/>
+        <metric property="B" displayName="B results" displayType="summary"
+            description="Number appearing in B column"
+            units="none" dataType="measurement"/>
+    </server>
+
+    ... select rows from a database and create sub-components based on that key
+
+    <service name="Oracle User"
+        discovery="org.rhq.plugins.database.CustomTableRowDiscoveryComponent"
+        class="org.rhq.plugins.oracle.OracleUserComponent">
+
+        <plugin-configuration>
+            <c:simple-property name="table" default="DBA_USERS"/>
+            <c:simple-property name="metricQuery" default="SELECT {key} FROM DBA_USERS"/>
+            <c:simple-property name="keyColumn" default="username"/>
+            <c:simple-property name="name" default="{key}"/>
+            <c:simple-property name="description" default="Oracle User"/>
+        </plugin-configuration>
+
+          <metric property="connections" displayName="Total Connections" displayType="summary"/>
+          <metric property="active" displayName="Active Connections" displayType="summary"/>
+
+    </service>
+
+-->
+
+</plugin>

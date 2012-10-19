@@ -1,0 +1,852 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE plugin [
+
+<!ENTITY AddDefaultCharset '
+    <c:simple-property name="AddDefaultCharset" default="Off" required="false">
+        <c:description>
+            This directive specifies a default value for the media type charset parameter (the name of a character encoding) to be added to a response if and only if the response&#39;s content-type is either text/plain or text/html.
+            Value "Off" disables this functionality. "On" enables a default charset of iso-8859-1. Any other value is assumed to be the charset to be used, which should be one of the IANA registered charset values for use in MIME media types.         
+        </c:description>
+    </c:simple-property>
+'>
+
+<!ENTITY Aliases '
+    <c:list-property name="Alias">
+        <c:description>
+            The Alias directive allows documents to be stored in the local filesystem other than under the DocumentRoot.
+            With " Alias /image /ftp/pub/image", a request for http://myserver/image/foo.gif would cause the server to return the file /ftp/pub/image/foo.gif. Only complete path segments are matched, so the above alias would not match a request for http://myserver/imagefoo.gif.
+            Note that you may need to specify additional &lt;Directory&gt; sections which cover the destination of aliases.
+            In particular, if you are creating an Alias to a directory outside of your DocumentRoot, you may need to explicitly permit access to the target directory.
+        </c:description>
+        <c:map-property name="Alias">
+            <c:simple-property name="URL" description="URLs with a (&#37;-decoded) path beginning with this value will be mapped to local files beginning with directory-path. The value is case-sensitive, even on case-insensitive file systems."/>
+            <c:simple-property name="directory" description="The path on the filesystem that will serve content for given url-path."/>
+        </c:map-property> 
+    </c:list-property>
+'>
+
+<!ENTITY CustomLogs '
+    <c:list-property name="CustomLog" displayName="Request logs">
+        <c:description>
+        Configure the logging of requests to the server.
+        </c:description>
+        <c:map-property name="CustomLog">
+            <c:simple-property name="Destination">
+                <c:description>
+                    Either a file path relative to the ServerRoot or a &#39;|&#39; followed by the name of program to receive the log information on its standard input.
+                    Note that the program will be run by the same user that started httpd.
+                </c:description>
+            </c:simple-property>
+            <c:simple-property name="format">
+                <c:description>
+                    The log entry format is documented fully in the Apache documentation http://httpd.apache.org/docs/2.2/mod/mod_log_config.html#formats.
+                </c:description>
+            </c:simple-property>
+            <c:simple-property name="_index" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+        </c:map-property>
+    </c:list-property>
+'>
+
+<!ENTITY IfModulePosition '
+    <c:list-property name="IfModules" readOnly="true" displayName="IfModule Conditions">
+        <c:description>
+        List of modules which must be loaded to use directive configuration.
+        </c:description>
+        <c:map-property name="IfModule" readOnly="true">
+            <c:simple-property readOnly="true" name="condition">
+                <c:description>
+                 Name of module which must be loaded to use the configuration.
+                </c:description>
+            </c:simple-property>
+        </c:map-property>
+    </c:list-property>
+'>
+
+<!ENTITY DefaultType '
+    <c:simple-property name="DefaultType" default="text/plain" required="false">
+        <c:description>
+           There will be times when the server is asked to provide a document whose type cannot be determined by its MIME types mappings.
+           The server SHOULD inform the client of the content-type of the document. If the server is unable to determine this by normal means, it will set it to the configured DefaultType.
+        </c:description>
+    </c:simple-property>
+'>
+
+<!ENTITY DirectoryIndex '
+    <c:list-property name="DirectoryIndex" required="false">
+        <c:description>
+            Sets the list of resources to look for, when the client requests an index of the directory by specifying a / at the end of the directory name.
+            Note that the documents do not need to be relative to the directory.
+        </c:description>
+        <c:map-property name="DirectoryIndex">
+            <c:simple-property name="host"/>
+            <c:simple-property name="_index"  required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+        </c:map-property>
+    </c:list-property>
+'>   
+<!ENTITY DocumentRoot '
+    <c:simple-property name="DocumentRoot">
+        <c:description>
+            This directive sets the directory from which httpd  will serve files. Unless matched by a directive like Alias, the server appends the path from the requested URL to the document root to make the path to the document.
+            If the directory-path is not absolute then it is assumed to be relative to the ServerRoot.
+            The DocumentRoot should be specified without a trailing slash. 
+        </c:description>
+    </c:simple-property>
+'>
+
+<!ENTITY ErrorDocuments '
+    <c:list-property name="ErrorDocument">
+        <c:description>
+            In the event of a problem or error, Apache can be configured to do one of four things,
+               1. output a simple hardcoded error message,
+               2. output a customized message,
+               3. redirect to a local URL-path to handle the problem/error,
+               4. redirect to an external URL to handle the problem/error.
+            The first option is the default, while options 2-4 are configured using the ErrorDocument directive, which is followed by the HTTP response code and a URL or a message. Apache will sometimes offer additional information regarding the problem/error.
+        </c:description>
+        <c:map-property name="ErrorDocument">
+            <c:simple-property name="responseCode" displayName="HTTP Response Code" description="HTTP response code of the error." type="integer" />
+            <c:simple-property name="document" description="URLs can begin with a slash (/) for local web-paths (relative to the DocumentRoot), or be a full URL which the client can resolve. Alternatively, a message can be provided to be displayed by the browser." />
+        </c:map-property>
+    </c:list-property>
+'>
+
+<!ENTITY ErrorLog '
+    <c:simple-property name="ErrorLog" required="false" default="logs/error_log">
+        <c:description>
+            Sets the name of the file to which the server will log any errors it encounters. If the file-path is not absolute then it is assumed to be relative to the ServerRoot.
+            If the file-path  begins with a pipe (|) then it is assumed to be a command to spawn to handle the error log.
+            Using syslog instead of a filename enables logging via syslogd(8) if the system supports it. The default is to use syslog facility local7, but you can override this by using the syslog:facility syntax where facility can be one of the names usually documented in syslog(1).
+        </c:description>
+    </c:simple-property>
+'>
+
+<!ENTITY ServerAdmin '
+    <c:simple-property name="ServerAdmin" required="false" description="The email address or URL to contact the server administrator in case of errors. This address is used in various Apache generated error messages." />
+'>
+
+<!ENTITY ServerName '
+    <c:simple-property name="ServerName" required="false" readOnly="true">
+        <c:description>
+            Sets the request scheme, hostname and port that the server uses to identify itself. This is used when creating redirection URLs.
+            If no ServerName is specified, then the server attempts to deduce the hostname by performing a reverse lookup on the IP address. If no port is specified in the ServerName, then the server will use the port from the incoming request. For optimal reliability and predictability, you should specify an explicit hostname and port using the ServerName directive.
+            If you are using name-based virtual hosts, the ServerName inside a &lt;VirtualHost&gt;  section specifies what hostname must appear in the request&#39;s Host: header to match this virtual host.
+        </c:description>
+    </c:simple-property>
+'>
+
+<!ENTITY Timeout '
+    <c:simple-property name="Timeout" type="integer" required="false" default="300">
+        <c:description>
+            The TimeOut directive defines the length of time Apache will wait for I/O in various circumstances.
+        </c:description>
+    </c:simple-property>
+'>
+
+<!ENTITY UseCanonicalName '
+    <c:simple-property name="UseCanonicalName" required="false" default="Off">
+        <c:description>
+            With UseCanonicalName On Apache will use the hostname and port specified in the ServerName  directive to construct the canonical name for the server. This name is used in all self-referential URLs, and for the values of SERVER_NAME and SERVER_PORT in CGIs.
+            With UseCanonicalName Off Apache will form self-referential URLs using the hostname and port supplied by the client if any are supplied (otherwise it will use the canonical name, as defined above).
+            UseCanonicalName DNS is intended for use with mass IP-based virtual hosting to support ancient clients that do not provide a Host: header. With this option Apache does a reverse DNS lookup on the server IP address that the client connected to in order to work out self-referential URLs.
+        </c:description>
+        <c:property-options>
+            <c:option value="Off"/>
+            <c:option value="On"/>
+            <c:option value="DNS"/>
+        </c:property-options>
+    </c:simple-property>
+'>
+
+<!ENTITY UseCanonicalPhysicalPort '
+    <c:simple-property name="UseCanonicalPhysicalPort" required="false" default="Off">
+        <c:description>
+            In many situations Apache must construct a self-referential  URL -- that is, a URL that refers back to the same server. With UseCanonicalPhysicalPort On Apache will, when constructing the canonical port for the server to honor the UseCanonicalName directive, provide the actual physical port number being used by this request as a potential port. With UseCanonicalPhysicalPort Off  Apache will not ever use the actual physical port number, instead relying on all configured information to construct a valid port number.
+        </c:description>
+        <c:property-options>
+            <c:option value="Off"/>
+            <c:option value="On"/>
+        </c:property-options>
+    </c:simple-property>
+'>
+
+<!ENTITY Options '
+    <c:list-property name="Options" required="false">
+        <c:description>
+            The Options directive controls which server features are available in a particular directory.
+        </c:description>
+        <c:map-property name="Options">
+            <c:simple-property name="Mode" default="Set">
+                <c:property-options>
+                    <c:option value="Set"/>
+                    <c:option value="Add"/>
+                    <c:option value="Remove"/>
+                </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="Option" default="All">
+                <c:property-options>
+                    <c:option value="All"/>
+                    <c:option value="None"/>
+                    <c:option value="ExecCGI"/>
+                    <c:option value="FollowSymLinks"/>
+                    <c:option value="Includes"/>
+                    <c:option value="IncludesNOEXEC"/>
+                    <c:option value="Indexes"/>
+                    <c:option value="MultiViews"/>
+                    <c:option value="SymLinksIfOwnerMatch"/>
+                </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="_index" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+        </c:map-property>
+    </c:list-property>
+'>
+
+<!ENTITY Order '
+    <c:simple-property name="Order" required="false">
+        <c:description>
+            The Order directive, along with the Allow and Deny directives, controls a three-pass access control system. The first pass processes either all Allow or all Deny directives, as specified by the Order directive. The second pass parses the rest of the directives (Deny or Allow). The third pass applies to all requests which do not match either of the first two.
+        </c:description>
+        <c:property-options>
+            <c:option value="Allow,Deny"/>
+            <c:option value="Deny,Allow"/>
+        </c:property-options>
+    </c:simple-property>
+'>
+
+<!ENTITY Allow '
+    <c:list-property name="Allow" required="false">
+        <c:description>
+            The Allow directive affects which hosts can access an area of the server. Access can be controlled by hostname, IP address, IP address range.
+            The environment variables settings are not supported in the user interface.
+        </c:description>
+        <c:map-property name="Allow">
+            <c:simple-property name="host"/>
+            <c:simple-property name="_index"  required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+        </c:map-property>
+    </c:list-property>
+'>                
+
+<!ENTITY Deny '
+    <c:list-property name="Deny" required="false">
+        <c:description>
+            The arguments for the Deny directive are identical to the arguments for the Allow directive.
+        </c:description>
+        <c:map-property name="Deny">
+            <c:simple-property name="host"/>
+            <c:simple-property name="_index" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+        </c:map-property>
+    </c:list-property>
+'>
+
+]>
+
+<plugin name="Apache"
+        displayName="Apache HTTP Server"
+        description="Management of Apache web servers"
+        package="org.rhq.plugins.apache"
+        pluginLifecycleListener="ApachePluginLifecycleListener"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="Augeas" useClasses="true"/>
+   
+   <server name="Apache HTTP Server" discovery="ApacheServerDiscoveryComponent" class="ApacheServerComponent"
+           supportsManualAdd="true"
+           description="an Apache HTTP Server instance">
+
+      <!-- Plugin config props are values that the plugin components need to connect and interact with the managed
+           resource. -->
+      <plugin-configuration>
+         <!-- Defaults:
+               type: string
+               required: true
+               readOnly: false
+               activationPolicy: immediate
+         -->
+         <c:simple-property name="serverRoot" required="true"
+                            description="the absolute path of the Apache server root directory"/>
+         <c:simple-property name="executablePath" required="false"
+                            description="the path to the Apache executable - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default value is 'bin/httpd' on UNIX or 'bin\Apache.exe' on Windows"/>
+         <c:simple-property name="controlScriptPath" required="false"
+                            description="the path to the Apache control script - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default will be 'bin/apachectl' on UNIX or the Apache executable on Windows"/>
+         <!-- TODO need to add a comment about the file location on Win* -->
+         <c:simple-property name="configFile" required="true" readOnly="true"
+                             description="the path to the httpd.conf file - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default will be 'conf/httpd.conf' on UNIX"/>
+         <c:simple-property name="url" displayName="URL" required="false"
+                            description="The http or https URL that will be used to check availability for this Apache
+                                server; if not set, availablity will be determined based on whether plugin can connect
+                                to the Apache server's SNMP agent. Note that SSL certificate validation is disabled
+                                during availability checks if this is an HTTPS URL."/>
+         <c:simple-property name="snmpAgentHost" displayName="SNMP Agent Host" default="127.0.0.1"
+                            description="the host name or IP address of the Apache SNMP agent (typically '127.0.0.1')"/>
+         <c:simple-property name="snmpAgentPort" displayName="SNMP Agent Port" type="integer" default="1610"
+                            description="the UDP port of the Apache SNMP agent (typically '1610')"/>
+         <c:simple-property name="snmpAgentCommunity" displayName="SNMP Agent Community" default="public"
+                            description="the SNMP community of the Apache SNMP agent (typically 'public')"/>
+
+         <c:simple-property name="restartAfterConfigurationUpdate" type="boolean" default="true" required="true">
+            <c:description>
+                If set to true, each configuration update of the server or any underlying virtual host or
+                directory is followed by the restart of the Apache instance so that the configuration changes
+                are applied immediately. If set to false, you have to manually restart the server (for example
+                using the restart operation in the operations tab) once all the configuration updates are finished.
+            </c:description>
+         </c:simple-property>
+          
+          <!-- Augeas Configuration -->
+          <c:group name="Augeas Configuration">
+              <c:simple-property name="augeasEnabled" displayName="Enable augeas support" description="Enable augeas support" default="no">
+                   <c:property-options>
+                     <c:option value="yes" name="Yes"/>
+                     <c:option value="no" name="No"/>
+                   </c:property-options>
+              </c:simple-property>
+              
+              <c:simple-property name="augeasModuleName" displayName="Augeas Module Name" default="Httpd" required="true" readOnly="true"
+                                            description="the name of the Augeas module/lens to use for loading and updating this resource's configuration"/>
+              <c:simple-property name="configurationFilesInclusionPatterns" 
+                  displayName="Httpd config file" required="true" readOnly="true"
+                                              default="/etc/httpd/conf/httpd.conf" 
+              description="Location of the Apache main configuration file."/>
+          
+          </c:group>
+         
+          <c:group name="Virtual Hosts">
+                <c:simple-property name="vhostCreationPolicy" displayName="Virtual Hosts Configuration Placement"
+                                   description="How should the new virtual host definitions be put in the configuration" default="vhost-per-file">
+                   <c:property-options>
+                     <c:option value="single-file" name="In the main configuration file"/>
+                     <c:option value="vhost-per-file" name="Each Virtual Host in a standalone file"/>
+                   </c:property-options>
+                </c:simple-property>
+
+               <c:simple-property name="vhostFilesMask" displayName="Path To Contain Virtual Hosts Files">
+                  <c:description>
+                    If the new virtual hosts should be created in standalone files, this mask determines where
+                    to create those files. The '*' in the path is replaced by the name of the virtual host.
+                    If the path is relative, it is considered relative to server root.
+                  </c:description>
+               </c:simple-property>
+          </c:group>
+          
+         <c:group name="errorLog">
+              <!-- TODO this is now part of the resource configuration... -->
+              <c:simple-property name="errorLogFilePath" type="file" required="false"
+                                 description="The absolute path to the error log file - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default will be 'logs/error_log' on UNIX or 'logs\error.log' on Windows."/>
+              <c:simple-property name="errorLogEventsEnabled" type="boolean"
+                                 description="A flag indicating whether or not generation of Events for new error log entries is enabled." default="false"/>
+              <c:simple-property name="errorLogMinimumSeverity" required="false" default="error"
+                                 description="The minimum severity of error log entry Events that should be collected.
+                                              If not specified, there is no minimum severity (i.e. all
+                                              events will be collected).">
+                  <c:property-options>
+                     <c:option name="debug"  value="debug"/>
+                     <c:option name="info"   value="info"/>
+                     <c:option name="warn"   value="warn"/>
+                     <c:option name="error"  value="error"/>
+                     <c:option name="fatal"  value="fatal"/>
+                  </c:property-options>
+              </c:simple-property>
+              <c:simple-property name="errorLogIncludesPattern" required="false"
+                                 description="A regular expression against which an error log entry's detail is matched
+                                              to determine if an Event should be fired for that entry. If not
+                                              specified, no filtering of log entries will be done based on their
+                                              detail."/>
+
+          </c:group>
+
+          <c:group name="Advanced">
+              <c:list-property name="customModuleNames">
+                  <c:description>
+                    Apache can use 2 values to identify a module. Either its module name that is used in the LoadModule directive
+                    or its source file that can be used in the IfModule directive (as of Apache 2.1 the IfModule directive can but doesn't have to
+                    use the module name, too).
+                    
+                    The plugin contains the mappings of the module names to module files for all the standard apache modules mentioned
+                    on the http://httpd.apache.org/docs/current/mod/ plus the SNMP module and mod_jk.
+                    
+                    If you use any non-standard modules and use their source file in the IfModule directives, you have to add the module-name-to-module-file
+                    mapping to this list so that the plugin can determine the correct runtime configuration of the apache instance.
+                  </c:description>
+                  <c:map-property name="moduleMapping">
+                      <c:simple-property name="moduleSourceFile" description="The source file of the module (as used in IfModule directives)"/>
+                      <c:simple-property name="moduleName" description="The name of the module (as used in LoadModule directives)"/>
+                  </c:map-property>
+              </c:list-property>  
+          </c:group>
+      </plugin-configuration>
+
+      <!-- all httpd processes that are not child processes of another httpd process -->
+      <process-scan name="HttpdOnUnix"     query="process|basename|match=httpd.*,process|basename|nomatch|parent=httpd.*"/>
+      <!-- all apache2 processes that are not child processes of another apache2 process -->
+      <process-scan name="Apache2OnUnix"   query="process|basename|match=apache2,process|basename|nomatch|parent=apache2"/>
+      <!-- all Apache.exe processes that are child processes of another Apache.exe process -->
+      <process-scan name="ApacheOnWindows" query="process|basename|match=(?i)Apache.exe,process|basename|match|parent=(?i)Apache.exe"/>
+      <!-- all httpd.exe processes that are child processes of another httpd.exe process -->
+      <process-scan name="HttpdOnWindows"  query="process|basename|match=(?i)httpd.exe,process|basename|match|parent=(?i)httpd.exe"/>
+
+      <operation name="start"
+                 description="Starts this Apache server, or returns an error if it is already running.
+                              The control script used is specified in the Connection Properties.">
+         <results>
+            <c:simple-property name="exitCode" type="integer" description="the control script's exit code (0 indicates success, any other value indicates failure)"/>
+            <c:simple-property name="output" type="longString" description="the control script's output (stdout and stderr interleaved)"/>
+         </results>
+      </operation>
+
+      <operation name="stop"
+                 description="Stops this Apache server, or returns an error if it is not running.
+                              The control script used is specified in the Connection Properties.">
+         <results>
+            <c:simple-property name="exitCode" type="integer" description="the control script's exit code (0 indicates success, any other value indicates failure)"/>
+            <c:simple-property name="output" type="longString" description="the control script's output (stdout and stderr interleaved)"/>
+         </results>
+      </operation>
+
+      <operation name="restart"
+                 description="Restarts the Apache server by sending its process a SIGHUP. If the server is not running,
+                              it is started. This command automatically checks the server's configuration files via
+                              configtest before initiating the restart to make sure Apache doesn't die. The control script
+                              used is specified in the Connection Properties. Only supported on UNIX platforms.">
+         <results>
+            <c:simple-property name="exitCode" type="integer" description="the control script's exit code (0 indicates success, any other value indicates failure)"/>
+            <c:simple-property name="output" type="longString" description="the control script's output (stdout and stderr interleaved)"/>
+         </results>
+      </operation>
+
+      <operation name="start_ssl" displayName="Start with SSL Support"
+                 description="Starts this Apache server with support for SSL.
+                              The control script used is specified in the Connection Properties. Only supported on Apache 1.3.">
+         <results>
+            <c:simple-property name="exitCode" type="integer" description="the control script's exit code (0 indicates success, any other value indicates failure)"/>
+            <c:simple-property name="output" type="longString" description="the control script's output (stdout and stderr interleaved)"/>
+         </results>
+      </operation>
+
+      <operation name="graceful_restart" displayName="Restart Gracefully"
+                 description="Gracefully restarts the Apache server by sending it a SIGUSR1. If the daemon is not running, it
+                              is started.  This differs from a normal  restart in  that  currently  open  connections  are  not
+                              aborted.  A side effect is that  old  log  files will not be closed immediately.  This means that
+                              if used in a log rotation script, a  substantial delay  may  be  necessary to ensure that the old
+                              log files are  closed  before  processing  them. This command automatically checks the
+                              configuration files via configtest before initiating  the restart to make sure Apache doesn't die.
+                              The control script used is specified in the Connection Properties.">
+         <results>
+            <c:simple-property name="exitCode" type="integer" description="the control script's exit code (0 indicates success, any other value indicates failure)"/>
+            <c:simple-property name="output" type="longString" description="the control script's output (stdout and stderr interleaved)"/>
+         </results>
+      </operation>
+
+      <operation name="config_test" displayName="Check Configuration File Syntax"
+                 description="Run a configuration file syntax test. It  parses the  configuration files and either reports
+                              Syntax Ok or detailed information about the particular syntax error. The control script
+                              used is specified in the Connection Properties. Only supported on UNIX platforms.">
+         <results>
+            <c:simple-property name="exitCode" type="integer" description="the control script's exit code (0 indicates success, any other value indicates failure)"/>
+            <c:simple-property name="output" type="longString" description="the control script's output (stdout and stderr interleaved)"/>
+         </results>
+      </operation>
+
+      <operation name="install_mod_jk" displayName="Install mod_jk configuration"
+                 description="Tries to install a mod_jk configuration in httpd.conf if none is detected.
+                              This includes a workers.properties file and urimap file">
+         <parameters>
+             <c:simple-property name="install status worker" displayName="Install Status Worker"
+                                description="Should the mod_jk status worker be installed at /jkstatus?"
+                                type="boolean" required="false" default="false"/>
+         </parameters>
+         <results>
+             <c:simple-property name="output" type="string" description="The outcome of this operation"/>
+         </results>
+
+      </operation>
+
+       <metric displayName="Number of Concurrent Connections" property="applInboundAssociations"
+               destinationType="The number of current connections to this application"
+               defaultOn="true" defaultInterval="300000" displayType="summary" units="none"/>
+
+      <!-- traits determined via "httpd -V" -->
+
+      <metric displayName="Server Built" property="serverBuilt"
+              description="the date and time this Apache server's binary was compiled"
+              dataType="trait" defaultOn="true" displayType="summary"/>
+
+      <!-- traits determined via SNMP (format for property attribute is "MIB_column_name") -->
+
+      <metric displayName="Start Time" property="wwwServiceStartTime"
+              description="the date and time this Apache server was last started"
+              dataType="trait" defaultOn="true" displayType="summary"/>
+
+      <!-- Metric collected by pinging availability over http -->
+      <metric property="rhq_avail_ping_time" displayType="summary" units="milliseconds"
+              displayName="Time to ping the server for availability"
+              description="Time it took to ping the server for availability over http; this includes DNS lookup time."/>
+
+      <event name="errorLogEntry" description="an entry in the error log file"/>
+
+      <resource-configuration>
+        <c:list-property name="Listen">
+            <c:map-property name="Listen">
+                <c:simple-property name="ip" required="false"/>
+                <c:simple-property name="port">
+                    <c:constraint><c:integer-constraint minimum="0" maximum="65535"/></c:constraint>
+                </c:simple-property>
+                <c:simple-property name="scheme" required="false"/>
+            </c:map-property>
+        </c:list-property>
+          <c:list-property name="NameVirtualHost" required="false">
+             <c:description>
+                 A required directive if you want to configure name-based virtual hosts.
+                 Although the value can be hostname it is recommended that you always use an IP address.
+                 IPv6 addresses must be enclosed in square brackets.
+                 To receive requests on all interfaces, you can set the value to *.
+                 Note that the IP address of a name-based virtual host must exactly match the value of this property.
+                 The address may be optionally followed by the port specification to further limit the directive effect.                
+             </c:description>
+            <c:map-property name="NameVirtualHost">
+                <c:simple-property name="address" description="A hostname, an IP address (recommended), or a * optionally followed by the port specification."/>
+                <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+            </c:map-property>
+        </c:list-property>
+      </resource-configuration>
+      
+      <service name="Apache Virtual Host" discovery="ApacheVirtualHostServiceDiscoveryComponent" class="ApacheVirtualHostServiceComponent" createDeletePolicy="both">
+
+         <plugin-configuration>
+            <c:simple-property name="url" displayName="URL"
+                               description="The http or https URL that will be used to check availability for this
+                                virtual host. Note that SSL certificate validation is disabled during availability
+                                checks if this is an HTTPS URL."/>
+            <c:group name="ResponseTime">
+               <c:simple-property name="responseTimeLogFile" required="false"
+                                  description="the full path to the log file containing response-time stats for this virtual host"/>
+               <c:simple-property name="responseTimeUrlExcludes" required="false"
+                                  description="a space-delimited list of regular expressions specifying URLs that should be excluded from response-time stats collection"/>
+               <c:simple-property name="responseTimeUrlTransforms" required="false"
+                                  description="a space-delimited list of Perl-style substitution expressions that should be applied to all URLs for which response-time stats are collected (e.g. |^/dept/finance/.*|/dept/finance/*|)"/>
+            </c:group>
+         </plugin-configuration>
+
+         <!-- server info traits - determined via SNMP
+              (format for property attribute is "MIB_column_name") -->
+
+         <metric displayName="Host" property="wwwServiceName"
+                 description="the host name or IP address of this virtual host"
+                 dataType="trait" defaultOn="true" displayType="summary"/>
+
+         <metric displayName="Port" property="wwwServiceProtocol"
+                 description="the TCP port of this virtual host"
+                 dataType="trait" defaultOn="true" displayType="summary"/>
+
+         <metric displayName="Administrator" property="wwwServiceContact"
+                 description="the administrator of this virtual host"
+                 dataType="trait" defaultOn="true" displayType="summary"/>
+
+         <!-- summary metrics for requests - determined via SNMP
+              (format for property attribute is "MIB_column_name") -->
+
+         <metric displayName="Total Number of Requests" property="wwwSummaryInRequests"
+                 description="The number of inbound requests on the service"
+                 defaultOn="true" defaultInterval="300000" displayType="summary"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Total Number of Bytes Received" property="wwwSummaryInLowBytes"
+                 description="The number of bytes received by the service"
+                 defaultOn="true" defaultInterval="300000" displayType="summary"
+                 units="bytes" measurementType="trendsup"/>
+
+         <!-- summary metrics for responses  - determined via SNMP
+              (format for property attribute is "MIB_column_name") -->
+
+         <metric displayName="Total Number of Responses" property="wwwSummaryOutResponses"
+                 description="The number of outbound requests on the service"
+                 defaultOn="true" defaultInterval="300000" displayType="summary"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Total Number of Bytes Sent" property="wwwSummaryOutLowBytes"
+                 description="The number of bytes sent by the service"
+                 defaultOn="true" defaultInterval="300000" displayType="summary"
+                 units="bytes" measurementType="trendsup"/>
+
+         <!-- per-request-method metrics - determined via SNMP
+              (format for property attribute is "MIB_column_name.HTTP_request_method") -->
+
+         <metric displayName="Number of GET Requests" property="wwwRequestInRequests.GET"
+                 description="The number of inbound GET requests on the service"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Number of HEAD Requests" property="wwwRequestInRequests.HEAD"
+                 description="The number of inbound HEAD requests on the service"
+                 defaultOn="false" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Number of POST Requests" property="wwwRequestInRequests.POST"
+                 description="The number of inbound POST requests on the service"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Number of PUT Requests" property="wwwRequestInRequests.PUT"
+                 description="The number of inbound PUT requests on the service"
+                 defaultOn="false" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Bytes Received for GET Requests" property="wwwRequestInBytes.GET"
+                 description="The number of bytes received by GET requests on the service"
+                 defaultOn="true" defaultInterval="300000"
+                 units="bytes" measurementType="trendsup"/>
+
+         <metric displayName="Bytes Received for HEAD Requests" property="wwwRequestInBytes.HEAD"
+                 description="The number of bytes received by HEAD requests on the service"
+                 defaultOn="false" defaultInterval="300000"
+                 units="bytes" measurementType="trendsup"/>
+
+         <metric displayName="Bytes Received for POST Requests" property="wwwRequestInBytes.POST"
+                 description="The number of bytes received by POST requests on the service"
+                 defaultOn="true" defaultInterval="300000"
+                 units="bytes" measurementType="trendsup"/>
+
+         <metric displayName="Bytes Received for PUT Requests" property="wwwRequestInBytes.PUT"
+                 description="The number of bytes received by PUT requests on the service"
+                 defaultOn="false" defaultInterval="300000"
+                 units="bytes" measurementType="trendsup"/>
+
+         <!-- per-response-status-code metrics - determined via SNMP
+             (format for property attribute is "MIB_column_name.HTTP_response_status_code") -->
+
+         <metric displayName="Number of 200 Responses" property="wwwResponseOutResponses.200"
+                 description="The number of 200 responses generated by this service"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Number of 301 Responses" property="wwwResponseOutResponses.301"
+                 description="The number of 301 responses generated by this service"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Number of 302 Responses" property="wwwResponseOutResponses.302"
+                 description="The number of 302 responses generated by this service"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Number of 401 Responses" property="wwwResponseOutResponses.401"
+                 description="The number of 401 responses generated by this service"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Number of 403 Responses" property="wwwResponseOutResponses.403"
+                 description="The number of 403 responses generated by this service"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Number of 404 Responses" property="wwwResponseOutResponses.404"
+                 description="The number of 404 responses generated by this service"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Number of 500 Responses" property="wwwResponseOutResponses.500"
+                 description="The number of 500 responses generated by this service"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Bytes Sent for 200 Responses" property="wwwResponseOutBytes.200"
+                 description="The number of bytes sent for 200 responses generated by this service"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Bytes Sent for 301 Responses" property="wwwResponseOutBytes.301"
+                 description="The number of bytes sent for 301 responses generated by this service"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Bytes Sent for 302 Responses" property="wwwResponseOutBytes.302"
+                 description="The number of bytes sent for 302 responses generated by this service"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Bytes Sent for 401 Responses" property="wwwResponseOutBytes.401"
+                 description="The number of bytes sent for 401 responses generated by this service"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Bytes Sent for 403 Responses" property="wwwResponseOutBytes.403"
+                 description="The number of bytes sent for 403 responses generated by this service"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Bytes Sent for 404 Responses" property="wwwResponseOutBytes.404"
+                 description="The number of bytes sent for 404 responses generated by this service"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <metric displayName="Bytes Sent for 500 Responses" property="wwwResponseOutBytes.500"
+                 description="The number of bytes sent for 500 responses generated by this service"
+                 defaultOn="true" defaultInterval="300000"
+                 units="none" measurementType="trendsup"/>
+
+         <!-- response-time metric - determined by parsing the RT logfile that's specified in the plugin config -->
+
+         <metric property="ResponseTime" displayName="HTTP Response Time"
+                 dataType="calltime" defaultOn="false" units="milliseconds" destinationType="URL"
+                 description="The minimum, maximum, and average response times for HTTP requests serviced by this virtual host"/>
+
+         <resource-configuration>
+            &ServerName;
+            <c:list-property name="ServerAlias">
+                <c:map-property name="ServerAlias">
+                    <c:simple-property name="hostname"/>
+                    <c:simple-property name="_index" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+                </c:map-property>
+            </c:list-property>
+            &ServerAdmin;
+            &DocumentRoot;
+            &AddDefaultCharset;
+            &Aliases;
+            &DefaultType;
+            &DirectoryIndex;
+            &ErrorDocuments;
+            &Timeout;
+            &Options;
+            &UseCanonicalName;
+            &UseCanonicalPhysicalPort;
+            <c:group name="Logging">
+                &ErrorLog;
+                &CustomLogs;
+            </c:group>        
+         </resource-configuration>
+         
+         <service name="Directory" class="ApacheDirectoryComponent" discovery="ApacheDirectoryDiscoveryComponent" createDeletePolicy="both">
+            <plugin-configuration>
+                <c:simple-property name="directiveIndex" readOnly="true" required="true" type="integer"/>
+                <c:simple-property name="regexp" displayName="Regular Expression" type="boolean" default="false" readOnly="true"
+                                   description="Does the name of this directory denote a regular expression?"/>
+            </plugin-configuration>
+            <resource-configuration>
+                &IfModulePosition;
+                &Order;
+                &Allow;
+                &Deny;
+                <c:list-property name="AllowOverride" required="false">
+                  <c:map-property name="AllowOverride" required="false">
+                      <c:description>
+                          When the server finds an .htaccess file (as specified by AccessFileName) it needs to know which directives declared in that file can override earlier configuration directives.
+                      </c:description>
+                      <c:simple-property name="param" required="false" description="Any directive which has the .htaccess Context is allowed in .htaccess files" />
+                      <c:simple-property name="_index" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+                  </c:map-property>
+                </c:list-property>
+                &AddDefaultCharset;
+                &DefaultType;
+                &DirectoryIndex;
+                &ErrorDocuments;
+                &Options;
+                &UseCanonicalName;
+                &UseCanonicalPhysicalPort;
+            </resource-configuration>
+           <service name="IfModule Parameters" discovery="ApacheIfModuleDirectoryDiscoveryComponent" class="ApacheIfModuleDirectoryComponent">
+              <resource-configuration>
+                &IfModulePosition;
+                &Order;
+                &Allow;
+                &Deny;
+                <c:list-property name="AllowOverride" required="false">
+                  <c:map-property name="AllowOverride" required="false">
+                      <c:description>
+                          When the server finds an .htaccess file (as specified by AccessFileName) it needs to know which directives declared in that file can override earlier configuration directives.
+                      </c:description>
+                      <c:simple-property name="param" required="false" description="Any directive which has the .htaccess Context is allowed in .htaccess files" />
+                      <c:simple-property name="_index" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+                  </c:map-property>
+                </c:list-property>
+                &AddDefaultCharset;
+                &DefaultType;
+                &DirectoryIndex;
+                &ErrorDocuments;
+                &Options;
+                &UseCanonicalName;
+                &UseCanonicalPhysicalPort;
+            </resource-configuration>
+         </service>
+         </service>
+         <service name="IfModule" discovery="ApacheIfModuleDiscoveryComponent" class="ApacheIfModuleComponent" createDeletePolicy="both">
+              <resource-configuration>
+                &IfModulePosition;
+                &Order;
+                &Allow;
+                &Deny;
+                <c:list-property name="AllowOverride" required="false">
+                  <c:map-property name="AllowOverride" required="false">
+                      <c:description>
+                          When the server finds an .htaccess file (as specified by AccessFileName) it needs to know which directives declared in that file can override earlier configuration directives.
+                      </c:description>
+                      <c:simple-property name="param" required="false" description="Any directive which has the .htaccess Context is allowed in .htaccess files" />
+                      <c:simple-property name="_index" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+                  </c:map-property>
+                </c:list-property>
+                &AddDefaultCharset;
+                &DefaultType;
+                &DirectoryIndex;
+                &ErrorDocuments;
+                &Options;
+                &UseCanonicalName;
+                &UseCanonicalPhysicalPort;
+            </resource-configuration>
+         </service>
+   <!--     <service name="Files" class="ApacheFilesComponent" createDeletePolicy="both">
+            <plugin-configuration>
+                <c:simple-property name="directiveIndex" readOnly="true" required="true" type="integer"/>
+            </plugin-configuration>
+            <resource-configuration>
+                <c:simple-property name="regexp" type="boolean" default="false"/>
+                &Order;
+                &Allow;
+                &Deny;
+                &AddDefaultCharset;
+                &DefaultType;
+                &DirectoryIndex;
+                &ErrorDocuments;
+                &Options;
+                &UseCanonicalName;
+                &UseCanonicalPhysicalPort;
+            </resource-configuration>
+         </service>
+         
+         <service name="Location" class="ApacheLocationComponent" createDeletePolicy="both">
+            <plugin-configuration>
+                <c:simple-property name="directiveIndex" readOnly="true" required="true" type="integer"/>
+            </plugin-configuration>
+            <resource-configuration>
+                <c:simple-property name="regexp" type="boolean" default="false"/>
+                &Order;
+                &Allow;
+                &Deny;
+                &AddDefaultCharset;
+                &DefaultType;
+                &DirectoryIndex;
+                &ErrorDocuments;
+                &UseCanonicalName;
+                &UseCanonicalPhysicalPort;
+            </resource-configuration>
+         </service>
+ -->
+
+      </service>
+      <service name="Mod JK" description="Management of mod_jk"
+               discovery="ModJKDiscoveryComponent"
+               class="ModJKComponent"
+               singleton="true">
+
+          <plugin-configuration>
+              <c:simple-property name="workerFile" displayName="Path to workers.properties"
+                                 description="The path to the file containing worker properties. If this is a relative path, it will be looked up in the server root of the parent Apache server"
+                                 required="false"/>
+              <c:simple-property name="uriWorkerFile" displayName="Path to the uriworkers file"
+                                 description="The path to the file containing uri to worker mappings. If this is a relative path, it will be looked up in the server root of the parent Apache server"
+                                 required="false"/>
+          </plugin-configuration>
+
+      </service>
+      
+   </server>
+
+</plugin>

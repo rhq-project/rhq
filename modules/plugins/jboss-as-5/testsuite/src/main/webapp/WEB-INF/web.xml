@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!DOCTYPE web-app
+        PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+        "http://java.sun.com/dtd/web-app_2_3.dtd">
+
+<web-app>
+
+    <!-- Cactus Servlets =================== -->
+
+    <servlet>
+        <servlet-name>ServletRedirector</servlet-name>
+        <servlet-class>org.apache.cactus.server.ServletTestRedirector</servlet-class>
+        <init-param>
+            <param-name>param1</param-name>
+            <param-value>value1 used for testing</param-value>
+        </init-param>
+    </servlet>
+
+    <servlet>
+        <servlet-name>ServletTestRunner</servlet-name>
+        <servlet-class>org.apache.cactus.server.runner.ServletTestRunner</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>Bootstrap</servlet-name>
+        <servlet-class>org.rhq.plugins.jbossas5.BootstrapServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <!-- Cactus Servlet Mappings =================== -->
+
+    <servlet-mapping>
+        <servlet-name>ServletRedirector</servlet-name>
+        <url-pattern>/ServletRedirector</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>ServletTestRunner</servlet-name>
+        <url-pattern>/ServletTestRunner</url-pattern>
+    </servlet-mapping>
+
+</web-app>

@@ -174,7 +174,7 @@ public class JndiAccessTest extends AbstractEJB3Test {
         
     private ScriptEngine getEngine(Subject subject) throws ScriptException, IOException {
         StandardBindings bindings = new StandardBindings(new PrintWriter(System.out), new LocalClient(subject));
-        return ScriptEngineFactory.getSecuredScriptEngine("JavaScript", new PackageFinder(Collections.<File>emptyList()), bindings, new StandardScriptPermissions());
+        return ScriptEngineFactory.getSecuredScriptEngine("javascript", new PackageFinder(Collections.<File>emptyList()), bindings, new StandardScriptPermissions());
     }
     
     private static void checkIsDesiredSecurityException(ScriptException e) {

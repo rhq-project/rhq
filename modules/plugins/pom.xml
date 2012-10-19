@@ -1,0 +1,218 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-parent</artifactId>
+      <version>4.6.0-SNAPSHOT</version>
+      <relativePath>../../pom.xml</relativePath>
+   </parent>
+
+   <groupId>org.rhq</groupId>
+   <artifactId>rhq-plugins-parent</artifactId>
+   <packaging>pom</packaging>
+
+   <name>RHQ Plugins</name>
+   <description>parent POM for all RHQ plugins</description>
+
+   <dependencies>
+
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-core-domain</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope> <!-- by PC -->
+      </dependency>
+
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-core-plugin-api</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope> <!-- by PC -->
+      </dependency>
+
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-core-native-system</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope> <!-- by PC -->
+      </dependency>
+
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-core-plugin-container</artifactId>
+         <version>${project.version}</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-core-plugin-container</artifactId>
+         <version>${project.version}</version>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>test-utils</artifactId>
+         <version>${project.version}</version>
+         <scope>test</scope>
+      </dependency>
+
+      <!--
+         TODO: This is a fix for the Javac bug requiring annotations to be available when compiling dependent classes.
+         It is fixed in JDK 6.
+      -->
+      <dependency>
+         <groupId>javax.persistence</groupId>
+         <artifactId>persistence-api</artifactId>
+         <version>1.0</version>
+         <scope>provided</scope> <!-- by RHQ container -->
+      </dependency>
+
+      <!--
+         TODO: This is a fix for the Javac bug requiring annotations to be available when compiling dependent classes;
+         it is fixed in JDK 6.
+      -->
+      <dependency>
+         <groupId>jboss.jboss-embeddable-ejb3</groupId>
+         <artifactId>hibernate-all</artifactId>
+         <version>1.0.0.Alpha9</version>
+         <scope>provided</scope> <!-- by RHQ container -->
+      </dependency>
+
+   </dependencies>
+
+   <!--  !!! -->
+   <!--  These profile groupings need to also be mirrored in server/ear/pom.xml -->
+   <!--  !!! -->
+
+   <modules>
+      <!--  core plugins  -->
+      <module>platform</module>
+      <module>jmx</module>
+      <module>rhq-agent</module>
+      <module>noop</module>
+   </modules>
+
+  <profiles>
+
+    <profile>
+        <id>jboss-plugins</id>
+         <activation>
+            <property>
+               <name>java.home</name>
+            </property>
+         </activation>
+
+        <modules>
+           <!--  NOTE: Order is important. -->
+           <module>augeas</module>
+           <module>apache</module>
+           <module>tomcat</module>
+           <module>hibernate</module>
+           <module>mod-cluster</module>
+           <module>rhq-server</module>
+           <module>jboss-cache</module>
+           <module>jboss-as</module>
+           <module>jboss-as-5</module>
+           <module>jboss-as-7</module>
+           <module>jboss-cache-v3</module>
+           <!--  was not in Jopr build at merge time <module>jbossOSGi</module>  -->
+           <module>database</module>
+           <module>postgres</module>
+           <module>script</module>
+           <module>iis</module>
+        </modules>
+    </profile>
+
+    <profile>
+        <id>bundle-plugins</id>
+         <activation>
+            <property>
+               <name>java.home</name>
+            </property>
+         </activation>
+
+        <modules>
+           <module>filetemplate-bundle</module>
+           <module>ant-bundle</module>
+        </modules>
+    </profile>
+
+    <profile>
+        <id>linux-plugins</id>
+         <activation>
+            <property>
+               <name>java.home</name>
+            </property>
+         </activation>
+
+        <modules>
+           <module>augeas</module>
+           <module>cron</module>
+           <module>script</module>
+           <module>grub</module>
+           <!-- not behaving       <module>hardware</module> -->
+           <module>hosts</module>
+           <module>cobbler</module>
+           <module>sudoers</module>
+           <module>netservices</module>
+           <module>samba</module>
+           <module>postfix</module>
+           <module>aliases</module>
+           <module>sshd</module>
+        </modules>
+    </profile>
+
+
+    <profile>
+        <id>misc-plugins</id>
+         <activation>
+            <property>
+               <name>java.home</name>
+            </property>
+         </activation>
+
+        <modules>
+           <module>byteman</module>
+           <module>irc</module>
+
+           <module>iis</module>
+           <module>database</module>
+           <module>postgres</module>
+           <module>hadoop</module>
+           <module>hudson</module>
+           <!-- error in code generation (see RHQ-1225)  <module>jira</module> -->
+           <module>mysql</module>
+           <!-- non-public dependency        <module>onewire</module> -->
+           <module>oracle</module>
+           <module>perftest</module>
+           <module>script2</module>
+           <module>snmptrapd</module>
+           <module>twitter</module>
+           <module>virt</module>
+           <module>kickstart</module>
+           <module>pattern-generator</module>
+        </modules>
+    </profile>
+
+    <profile>
+        <id>validate-plugins</id>
+         <activation>
+            <property>
+               <name>java.home</name>
+            </property>
+         </activation>
+
+        <modules>
+           <!-- make this the last - it will validate all the plugins -->
+           <module>validate-all-plugins</module>
+        </modules>
+    </profile>
+
+  </profiles>
+
+</project>

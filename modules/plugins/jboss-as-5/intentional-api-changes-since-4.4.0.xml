@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<differences>
+  <difference>
+     <className>org/rhq/plugins/jbossas5/Ejb2BeanComponent</className>
+     <differenceType>7004</differenceType><!-- number of arguments changed -->
+     <method>org.jboss.managed.api.ManagedComponent getManagedComponent()</method>
+     <justification>
+         This difference is due to fixes applied for bug 835113. The old method signature cannot be added back because it would re-introduce the problem fixed by bug 835113. 
+         This method is just protected so it is not visible (or available for use) outside of inheriting classes. 
+         Also, this method is just an override for a base method from ManagedComponentComponent. The base class, ManagedComponentComponent, still has both methods available for use. 
+         The fix for bug 835113 had the Ejb2BeanComponent override a different base method. 
+         
+         Based on this, no action to be taken for this difference.
+     </justification>
+  </difference>
+</differences>

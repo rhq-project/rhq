@@ -266,7 +266,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
 
             chart.yAxis
                     .axisLabel(yAxisUnits)
-                    .tickFormat($wnd.d3.format('.02f'));
+                    .tickFormat($wnd.d3.format(',f'));
 
             $wnd.d3.select(chartSelection)
                     .datum(data())

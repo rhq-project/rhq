@@ -109,7 +109,7 @@ svg .title {
 
 .nvd3.nv-noData {
   font-size: 18px;
-  font-weight: bold;
+  font-weight: bolf;
 }
 
 
@@ -153,6 +153,10 @@ svg .title {
   stroke-opacity: .75;
 }
 
+.nvd3 .nv-axis.nv-x path.domain {
+  stroke-opacity: 0;
+}
+
 .nvd3 .nv-axis line {
   fill: none;
   stroke: #000;
@@ -167,6 +171,13 @@ svg .title {
 .nvd3 .nv-axis .nv-axisMaxMin text {
   font-weight: bold;
 }
+
+.nvd3 .x  .nv-axis .nv-axisMaxMin text,
+.nvd3 .x2 .nv-axis .nv-axisMaxMin text,
+.nvd3 .x3 .nv-axis .nv-axisMaxMin text {
+  text-anchor: middle
+}
+
 
 
 /**********
@@ -492,8 +503,16 @@ svg .title {
 
 
 /**********
-* Sparkline plus
+* Sparkline
 */
+
+.nvd3.nv-sparkline path {
+  fill: none;
+}
+
+.nvd3.nv-sparklineplus g.nv-hoverValue {
+  pointer-events: none;
+}
 
 .nvd3.nv-sparklineplus .nv-hoverValue line {
   stroke: #f44;

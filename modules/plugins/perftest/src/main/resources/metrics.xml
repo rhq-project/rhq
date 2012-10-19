@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<scenario xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns="urn:xmlns:jboss.org:on-perftest">
+
+   <resource type="server-a">
+      <simpleResourceGenerator numberOfResources="1"/>
+      <simpleNumericMeasurementGenerator/>
+   </resource>
+
+</scenario>

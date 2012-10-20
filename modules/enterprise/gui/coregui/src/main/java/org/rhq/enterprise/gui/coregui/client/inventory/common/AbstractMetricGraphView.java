@@ -63,6 +63,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWidgetCanvas
  * @author Greg Hinkle
  * @author Jay Shaughnessy
  */
+@Deprecated
 public abstract class AbstractMetricGraphView extends LocatableVLayout {
 
     private static final String INSTRUCTIONS = MSG.view_resource_monitor_graph_instructions();

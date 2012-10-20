@@ -20,17 +20,21 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.events.CellClickEvent;
 import com.smartgwt.client.widgets.grid.events.CellClickHandler;
 
+import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.D3GraphListView;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 
 /**
  * Views a resource's measurements in a tabular view.
@@ -42,6 +46,7 @@ public class GroupMeasurementTableView extends Table<GroupMeasurementTableDataSo
 
     private final int groupId;
 
+
     public GroupMeasurementTableView(String locatorId, ResourceGroupComposite groupComposite, int groupId) {
         super(locatorId);
         this.groupId = groupId;
@@ -51,6 +56,7 @@ public class GroupMeasurementTableView extends Table<GroupMeasurementTableDataSo
         setTitle(MSG.common_title_numeric_metrics());
     }
 
+    @Override
     protected void configureTable() {
         ArrayList<ListGridField> fields = getDataSource().getListGridFields();
 
@@ -61,17 +67,19 @@ public class GroupMeasurementTableView extends Table<GroupMeasurementTableDataSo
                 Record record = event.getRecord();
                 String title = record.getAttribute(GroupMeasurementTableDataSource.FIELD_METRIC_LABEL);
                 ChartViewWindow window = new ChartViewWindow("MeasurementTableFrame", title);
-                //Ex. /resource/common/monitor/Visibility.do?mode=chartSingleMetricMultiResource&groupId=10141&m=10172
-                //generate and include iframed content
-                String defId = record.getAttribute(GroupMeasurementTableDataSource.FIELD_METRIC_DEF_ID);
-                String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricMultiResource&groupId=";
-                destination += groupId + "&m=" + defId;
-                FullHTMLPane iframe = new FullHTMLPane("MeasurementTableFrameView", destination);
-                window.addItem(iframe);
+                int defId = record.getAttributeAsInt(GroupMeasurementTableDataSource.FIELD_METRIC_DEF_ID);
+                Log.debug(" *** Mike you clicked here and defId is: "+ defId + ", groupId: "+groupId);
+
+                CompositeGroupD3GraphListView graph = new CompositeGroupD3GraphListView("CompositeD3GraphView",
+                        groupId, defId);
+                window.addItem(graph);
+                graph.populateData();
                 window.show();
             }
         });
         setListGridFields(fields.toArray(new ListGridField[getDataSource().getListGridFields().size()]));
         addExtraWidget(new UserPreferencesMeasurementRangeEditor(extendLocatorId("range")), true);
     }
+
+
 }

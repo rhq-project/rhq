@@ -206,6 +206,12 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
                 if (selection == null || selection.length == 0) {
                     return;
                 }
+                final int[] definitionIds = new int[selection.length];
+                int i = 0;
+                for (ListGridRecord record : selection) {
+                    Integer defId = record.getAttributeAsInt(MeasurementTableDataSource.FIELD_METRIC_DEF_ID);
+                    definitionIds[i++] = defId.intValue();
+                }
                 
                 ResourceCriteria criteria = new ResourceCriteria();
                 criteria.addFilterId(resourceId);
@@ -230,6 +236,7 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
                                     final ResourceComposite resourceComposite = result.get(0);
 
                                     ChartViewWindow window = new ChartViewWindow(extendLocatorId("ChartWindow"), "");
+                                    //@todo pass definitionIds to for the selected metrics
                                     window.addItem(new D3GraphListView(extendLocatorId("D3Graphs"),
                                             resourceComposite.getResource()));
                                     window.show();

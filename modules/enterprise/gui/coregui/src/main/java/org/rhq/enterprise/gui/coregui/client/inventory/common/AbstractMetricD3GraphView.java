@@ -36,6 +36,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
+ * @author Greg Hinkle
+ * @author Jay Shaughnessy
  * @author Mike Thompson
  */
 public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
@@ -227,10 +229,11 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
     }
 
     /**
-     * If there is more than 2 days time window then return true so we can show dates in axis labels.
+     * If there is more than 2 days time window then return true so we can show day of week
+     * in axis labels.
      * @param startTime
      * @param endTime
-     * @return true if differnce between startTime and endTime is >= 2 days
+     * @return true if difference between startTime and endTime is >= 2 days
      */
    public boolean shouldDisplayDateInXAxisLabel(Long startTime, Long endTime){
        long timeThreshold = 2 * 24 * 60 * 1000; // 2 days

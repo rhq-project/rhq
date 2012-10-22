@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/scripting/javascript/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/scripting/python/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/scripting/python/src/test/java"/>
+	<classpathentry kind="src" path="modules/enterprise/scripting/javascript/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/installer/src/test/java"/>
 	<classpathentry kind="src" path="modules/common/jboss-as-dmr-client/src/test/java"/>
 	<classpathentry kind="src" path="modules/common/jboss-as-dmr-client/src/main/java"/>
@@ -322,5 +326,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/jboss/jboss-embeddable-ejb3/jboss-ejb3-all/1.0.0.Alpha9/jboss-ejb3-all-1.0.0.Alpha9.jar"/>
 	<classpathentry exported="true" kind="var" path="JDK_HOME/lib/tools.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/jboss/remotingjmx/remoting-jmx/1.0.2.Final/remoting-jmx-1.0.2.Final.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/mozilla/rhino/1.7R4/rhino-1.7R4.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/python/jython-standalone/2.5.2/jython-standalone-2.5.2.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

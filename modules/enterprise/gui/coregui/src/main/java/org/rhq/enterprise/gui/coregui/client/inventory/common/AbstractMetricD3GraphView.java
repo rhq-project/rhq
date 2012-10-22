@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
+import java.util.Date;
 import java.util.List;
 
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -230,16 +231,20 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
 
     /**
      * If there is more than 2 days time window then return true so we can show day of week
-     * in axis labels.
-     * @param startTime
-     * @param endTime
+     * in axis labels. Function to switch the timescale to whichever is more appropriate hours
+     * or hours with days of week.
      * @return true if difference between startTime and endTime is >= 2 days
      */
-   public boolean shouldDisplayDateInXAxisLabel(Long startTime, Long endTime){
-       long timeThreshold = 2 * 24 * 60 * 1000; // 2 days
-       return endTime - startTime >= timeThreshold;
+   public boolean shouldDisplayDayOfWeekInXAxisLabel(){
+       Long startTime = data.get(0).getTimestamp();
+       Long endTime = data.get(data.size() -1).getTimestamp();
+       long timeThreshold = 24 * 60 * 60 * 1000; // 1 days
+       return  startTime + timeThreshold < endTime;
    }
 
+    /**
+     * The magic JSNI to draw the charts with d3.
+     */
     public native void drawJsniCharts() /*-{
         //console.log("Draw nvd3 charts");
         var chartId =  this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getChartId()();
@@ -248,6 +253,8 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
         var yAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisTitle()();
         var yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisUnits()();
         var xAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getXAxisTitle()();
+        var displayDayOfWeek = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::shouldDisplayDayOfWeekInXAxisLabel()();
+        var xAxisTimeFormat = (displayDayOfWeek) ? "%a %I %p" : "%I %p";
         var json = eval(this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getJsonMetrics()());
 
         var data = function() {
@@ -265,7 +272,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
                     .tooltips(true);
 
             chart.xAxis.axisLabel(xAxisLabel)
-                    .tickFormat(function(d) { return $wnd.d3.time.format('%a %I %p')(new Date(d)) });
+                    .tickFormat(function(d) { return $wnd.d3.time.format(xAxisTimeFormat)(new Date(d)) });
 
             chart.yAxis
                     .axisLabel(yAxisUnits)

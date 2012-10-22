@@ -42,7 +42,10 @@ import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
- * Build the View that shows the individual graph views.
+ * Build the View that shows the individual graph views for multi-graph
+ * views if just a resource is provided and single graph view if resource
+ * and definitionId are provided.
+ *
  * @author Mike Thompson
  */
 public class D3GraphListView extends LocatableVLayout {

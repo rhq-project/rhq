@@ -53,10 +53,6 @@ public class MetadataBeanTest extends AbstractEJB3Test {
 
     private List<Integer> pluginIds = new ArrayList<Integer>();
 
-    @Override
-    protected boolean isDBResetNeeded() {
-        return false;
-    }
 
     @BeforeGroups(groups = { "plugin.metadata" }, dependsOnGroups = { "integration.ejb3" })
     public void beforeGroups() throws Exception {
@@ -79,7 +75,11 @@ public class MetadataBeanTest extends AbstractEJB3Test {
     }
 
     @BeforeMethod(groups = { "plugin.metadata" }, dependsOnGroups = { "integration.ejb3" })
-    public void beforeMethod() throws Exception {
+    public void before() throws Exception {
+        if (!inContainer()) {
+            return;
+        }
+
         TestBundleServerPluginService bundleService = new TestBundleServerPluginService();
         prepareCustomServerPluginService(bundleService);
         bundleService.startMasterPluginContainerWithoutSchedulingJobs();
@@ -93,7 +93,11 @@ public class MetadataBeanTest extends AbstractEJB3Test {
      * however removes the generated plugin files during each test run.
      */
     @AfterMethod(alwaysRun = true, groups = { "plugin.metadata" })
-    void afterMethod() throws Exception {
+    void after() throws Exception {
+        if (!inContainer()) {
+            return;
+        }
+
         unprepareServerPluginService();
         unprepareScheduler();
         unpreparePluginScannerService();

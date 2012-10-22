@@ -66,6 +66,7 @@ import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.test.UpdatePluginMetadataTestBase;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.AlertAvailabilityDurationJob;
+import org.rhq.enterprise.server.test.TransactionCallbackReturnable;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.test.JPAUtils;
 import org.rhq.test.TransactionCallbackWithContext;
@@ -428,9 +429,9 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
     }
 
     private AlertCondition getAlertConditionWithLogs(final int conditionId) {
-        return JPAUtils.executeInTransaction(new TransactionCallbackWithContext<AlertCondition>() {
+        return executeInTransaction(new TransactionCallbackReturnable<AlertCondition>() {
             @Override
-            public AlertCondition execute(TransactionManager tm, EntityManager em) throws Exception {
+            public AlertCondition execute() throws Exception {
                 AlertCondition cond = em.find(AlertCondition.class, conditionId);
                 cond.getConditionLogs().size(); // force the load
                 return cond;

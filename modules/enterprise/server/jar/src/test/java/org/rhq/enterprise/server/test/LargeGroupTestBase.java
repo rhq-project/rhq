@@ -325,8 +325,8 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
         System.out.println(" Done.");
 
         // purge the users and role
-        JPAUtils.executeInTransaction(new TransactionCallbackWithContext<Object>() {
-            public Object execute(TransactionManager tm, EntityManager em) throws Exception {
+        executeInTransaction(new TransactionCallbackReturnable<Object>() {
+            public Object execute() throws Exception {
                 lge.normalRole = em.getReference(Role.class, lge.normalRole.getId());
                 lge.normalSubject = em.getReference(Subject.class, lge.normalSubject.getId());
                 lge.unauthzSubject = em.getReference(Subject.class, lge.unauthzSubject.getId());
@@ -339,8 +339,8 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
 
         if (!keepTypes) {
             // purge the resource types
-            JPAUtils.executeInTransaction(new TransactionCallbackWithContext<Object>() {
-                public Object execute(TransactionManager tm, EntityManager em) throws Exception {
+            executeInTransaction(new TransactionCallbackReturnable<Object>() {
+                public Object execute() throws Exception {
                     ResourceType pType = em.getReference(ResourceType.class, lge.platformResource.getResourceType()
                         .getId());
                     ResourceType sType = em.getReference(ResourceType.class, lge.compatibleGroup.getResourceType()

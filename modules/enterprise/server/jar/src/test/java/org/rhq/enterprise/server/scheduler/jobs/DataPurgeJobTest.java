@@ -36,8 +36,6 @@ import javax.transaction.SystemException;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.JobListener;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.alert.Alert;
@@ -97,8 +95,8 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
     private int resourceTypeId;
     private TestServerPluginService testServerPluginService;
 
-    @BeforeMethod
-    public void beforeMethod() throws Throwable {
+    @Override
+    public void beforeMethod() throws Exception {
         try {
             //we need this because the drift plugins are referenced from the system settings that we use in our tests
             testServerPluginService = new TestServerPluginService();
@@ -111,12 +109,12 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         } catch (Throwable t) {
             System.err.println("Cannot prepare test: " + t);
             t.printStackTrace();
-            throw t;
+            throw new RuntimeException(t);
         }
     }
 
-    @AfterMethod(alwaysRun = true)
-    public void afterMethod() throws Throwable {
+    @Override
+    public void afterMethod() throws Exception {
         try {
             deleteNewResource(newResource);
             unprepareForTestAgents();
@@ -125,7 +123,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         } catch (Throwable t) {
             System.err.println("Cannot unprepare test: " + t);
             t.printStackTrace();
-            throw t;
+            throw new RuntimeException(t);
         }
     }
 

@@ -53,7 +53,7 @@ import org.rhq.core.domain.drift.dto.DriftDTO;
 import org.rhq.core.domain.drift.dto.DriftFileDTO;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.test.AssertUtils;
-import org.rhq.test.TransactionCallback;
+import org.rhq.enterprise.server.test.TransactionCallback;
 
 @Test(dependsOnGroups = "pinning")
 public class JPADriftServerBeanTest extends AbstractDriftServerTest {

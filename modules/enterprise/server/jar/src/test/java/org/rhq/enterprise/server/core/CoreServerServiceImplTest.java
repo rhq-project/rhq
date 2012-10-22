@@ -31,7 +31,6 @@ import javax.management.ObjectName;
 import javax.persistence.Query;
 
 import org.testng.annotations.AfterGroups;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -165,8 +164,8 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
         server.setId(serverId);
     }
 
-    @AfterMethod
-    public void unprepare() throws Exception {
+    @Override
+    public void afterMethod() throws Exception {
 
         // cleanup our test server
         LookupUtil.getCloudManager().updateServerMode(new Integer[] { server.getId() }, OperationMode.DOWN);

@@ -28,7 +28,6 @@ import java.util.UUID;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.transaction.Status;
-import javax.transaction.TransactionManager;
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
@@ -61,9 +60,8 @@ import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
+import org.rhq.enterprise.server.test.TransactionCallbackReturnable;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.test.JPAUtils;
-import org.rhq.test.TransactionCallbackWithContext;
 
 public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
 
@@ -425,9 +423,9 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
     }
 
     protected Resource persistNewResource(final String resourceTypeName) throws Exception {
-        return JPAUtils.executeInTransaction(new TransactionCallbackWithContext<Resource>() {
-            @Override
-            public Resource execute(TransactionManager tm, EntityManager em) throws Exception {
+        return executeInTransaction(new TransactionCallbackReturnable<Resource>() {
+
+            public Resource execute() throws Exception {
                 ResourceType resourceType = getResourceType(resourceTypeName);
                 Resource resource = new Resource("reskey" + System.currentTimeMillis(), "resname", resourceType);
                 resource.setUuid(UUID.randomUUID().toString());

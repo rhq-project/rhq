@@ -16,6 +16,7 @@ import javax.persistence.PersistenceContext;
 import javax.transaction.TransactionManager;
 
 import org.testng.AssertJUnit;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -228,7 +229,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
      * 
      * Instead, override {@link #afterMethod()}.
      */
-    @BeforeMethod
+    @AfterMethod(alwaysRun = true)
     protected void __afterMethod() throws Exception {
         // currently no special handling necessary
         afterMethod();
@@ -373,11 +374,11 @@ public abstract class AbstractEJB3Test extends Arquillian {
     }
 
     protected void assertEquals(String msg, int expected, int actual) {
-        AssertJUnit.assertEquals(expected, actual);
+        AssertJUnit.assertEquals(msg, expected, actual);
     }
 
     protected void assertEquals(String msg, String expected, String actual) {
-        AssertJUnit.assertEquals(expected, actual);
+        AssertJUnit.assertEquals(msg, expected, actual);
     }
 
     protected void fail(String message) {

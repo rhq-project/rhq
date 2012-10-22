@@ -29,7 +29,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
 import org.rhq.test.AssertUtils;
-import org.rhq.test.TransactionCallback;
+import org.rhq.enterprise.server.test.TransactionCallback;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 

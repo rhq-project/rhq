@@ -18,31 +18,22 @@
  */
 package org.rhq.enterprise.gui.configuration.group;
 
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.Create;
-import org.jboss.seam.annotations.End;
-import org.jboss.seam.annotations.In;
-import org.jboss.seam.annotations.Name;
-import org.jboss.seam.annotations.Scope;
-import org.jboss.seam.faces.Redirect;
-
 import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.enterprise.gui.legacy.ParamConstants;
 
 /**
  * A POJO Seam component that handles loading Resource configurations across a compatible Group in view-only mode.
  *
  * @author Ian Springer
  */
-@Name("ViewGroupResourceConfigurationUIBean")
-@Scope(ScopeType.PAGE)
+//@Name("ViewGroupResourceConfigurationUIBean")
+//@Scope(ScopeType.PAGE)
 public class ViewGroupResourceConfigurationUIBean extends AbstractGroupResourceConfigurationUIBean {
     public static final String VIEW_ID = "/rhq/group/configuration/viewCurrent.xhtml";
 
-    @In(value = "org.jboss.seam.faces.redirect")
-    private Redirect redirect;
+    //@In(value = "org.jboss.seam.faces.redirect")
+    //private Redirect redirect;
 
-    @Create
+    //@Create
     public void init() {
         loadConfigurations();
         return;
@@ -51,11 +42,11 @@ public class ViewGroupResourceConfigurationUIBean extends AbstractGroupResourceC
     /**
      * Redirect to editCurrent.xhtml. This gets called when user clicks the EDIT button.
      */
-    @End
+    //@End
     public void edit() {
-        this.redirect.setParameter(ParamConstants.GROUP_ID_PARAM, getGroup().getId());
-        this.redirect.setViewId(getViewId(EditGroupResourceConfigurationUIBean.VIEW_ID));
-        this.redirect.execute();
+        //        this.redirect.setParameter(ParamConstants.GROUP_ID_PARAM, getGroup().getId());
+        //        this.redirect.setViewId(getViewId(EditGroupResourceConfigurationUIBean.VIEW_ID));
+        //        this.redirect.execute();
         return;
     }
 

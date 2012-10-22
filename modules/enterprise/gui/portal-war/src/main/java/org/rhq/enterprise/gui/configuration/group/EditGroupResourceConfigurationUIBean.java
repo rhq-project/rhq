@@ -20,18 +20,7 @@ package org.rhq.enterprise.gui.configuration.group;
 
 import javax.faces.application.FacesMessage;
 
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.Begin;
-import org.jboss.seam.annotations.Create;
-import org.jboss.seam.annotations.End;
-import org.jboss.seam.annotations.In;
-import org.jboss.seam.annotations.Name;
-import org.jboss.seam.annotations.Scope;
-import org.jboss.seam.core.Conversation;
-import org.jboss.seam.faces.Redirect;
-
 import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.configuration.ConfigurationUpdateStillInProgressException;
@@ -41,20 +30,20 @@ import org.rhq.enterprise.server.configuration.ConfigurationUpdateStillInProgres
  *
  * @author Ian Springer
  */
-@Name("EditGroupResourceConfigurationUIBean")
-@Scope(ScopeType.CONVERSATION)
+//@Name("EditGroupResourceConfigurationUIBean")
+//@Scope(ScopeType.CONVERSATION)
 public class EditGroupResourceConfigurationUIBean extends AbstractGroupResourceConfigurationUIBean {
     public static final String VIEW_ID = "/rhq/group/configuration/editCurrent.xhtml";
 
-    @In(value = "org.jboss.seam.faces.redirect")
-    private Redirect redirect;
+    //@In(value = "org.jboss.seam.faces.redirect")
+    //private Redirect redirect;
 
-    @Create
-    @Begin
+    //@Create
+    //@Begin
     public void init() {
         loadConfigurations();
         // We can set this once here, since this.redirect is scoped to the same CONVERSATION as this managed bean instance.
-        this.redirect.setParameter(ParamConstants.GROUP_ID_PARAM, getGroup().getId());
+        //this.redirect.setParameter(ParamConstants.GROUP_ID_PARAM, getGroup().getId());
         return;
     }
 
@@ -73,7 +62,7 @@ public class EditGroupResourceConfigurationUIBean extends AbstractGroupResourceC
 
             FacesContextUtility
                 .addMessage(FacesMessage.SEVERITY_INFO, "Group Resource Configuration update scheduled.");
-            Conversation.instance().endBeforeRedirect();
+            //Conversation.instance().endBeforeRedirect();
             viewId = GroupResourceConfigurationHistoryUIBean.VIEW_ID;
         } catch (ConfigurationUpdateStillInProgressException updateException) {
             FacesContextUtility
@@ -88,29 +77,29 @@ public class EditGroupResourceConfigurationUIBean extends AbstractGroupResourceC
                 "Failed to schedule group Resource Configuration update - cause: " + e);
             viewId = VIEW_ID;
         }
-        this.redirect.setViewId(getViewId(viewId));
-        this.redirect.execute();
+        //this.redirect.setViewId(getViewId(viewId));
+        //this.redirect.execute();
     }
 
     /**
      * End the convo and redirect back to viewCurrent.xhtml. This gets called when user clicks the CANCEL button.
      */
-    @End
+    //@End
     public void cancel() {
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Edit canceled.");
-        this.redirect.setViewId(getViewId(ViewGroupResourceConfigurationUIBean.VIEW_ID));
-        this.redirect.execute();
+        //this.redirect.setViewId(getViewId(ViewGroupResourceConfigurationUIBean.VIEW_ID));
+        // this.redirect.execute();
         return;
     }
 
     /**
      * End the convo and reload the current page (editCurrent.xhtml). This gets called when user clicks the RESET button.
      */
-    @End
+    // @End
     public void reset() {
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "All properties reset to original values.");
-        this.redirect.setViewId(getViewId(VIEW_ID));
-        this.redirect.execute();
+        //  this.redirect.setViewId(getViewId(VIEW_ID));
+        //  this.redirect.execute();
         return;
     }
 

@@ -20,15 +20,6 @@ package org.rhq.enterprise.gui.alert.common;
 
 import javax.faces.application.FacesMessage;
 
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.Create;
-import org.jboss.seam.annotations.In;
-import org.jboss.seam.annotations.Name;
-import org.jboss.seam.annotations.Scope;
-import org.jboss.seam.annotations.web.RequestParameter;
-import org.jboss.seam.contexts.Context;
-import org.jboss.seam.contexts.Contexts;
-
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.framework.EnterpriseFacesContextUIBean;
@@ -36,14 +27,14 @@ import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 import org.rhq.enterprise.server.plugin.pc.alert.CustomAlertSenderBackingBean;
 
-@Scope(ScopeType.EVENT)
-@Name("customContentUIBean")
+//@Scope(ScopeType.EVENT)
+//@Name("customContentUIBean")
 public class CustomContentUIBean extends EnterpriseFacesContextUIBean {
 
-    @RequestParameter("nid")
+    //@RequestParameter("nid")
     private Integer alertNotificationId;
 
-    @In
+    //@In
     private AlertNotificationManagerLocal alertNotificationManager;
 
     private String contentUrl;
@@ -53,7 +44,7 @@ public class CustomContentUIBean extends EnterpriseFacesContextUIBean {
         return contentUrl;
     }
 
-    @Create
+    //@Create
     public void init() {
         if (alertNotificationId == null) {
             return;
@@ -94,8 +85,8 @@ public class CustomContentUIBean extends EnterpriseFacesContextUIBean {
      * name of bean, but this class is not an "official" seam component.
      */
     private void outjectBean(String name, CustomAlertSenderBackingBean bean) {
-        Context context = Contexts.getPageContext();
-        context.set(name, bean);
+        // Context context = Contexts.getPageContext();
+        // context.set(name, bean);
     }
 
     public String saveConfiguration() {
@@ -114,9 +105,9 @@ public class CustomContentUIBean extends EnterpriseFacesContextUIBean {
             int alertDefinitionId = Integer.parseInt(customBackingBean.getContextId());
             alertNotificationManager.updateAlertNotification(getSubject(), alertDefinitionId, notification);
 
-            AlertNotificationsUIBean notificationsUIBean = (AlertNotificationsUIBean) Contexts
-                .lookupInStatefulContexts("alertNotificationsUIBean");
-            notificationsUIBean.reselectActiveNotificationUsingDataComparison(notification);
+            //            AlertNotificationsUIBean notificationsUIBean = (AlertNotificationsUIBean) Contexts
+            //                .lookupInStatefulContexts("alertNotificationsUIBean");
+            //            notificationsUIBean.reselectActiveNotificationUsingDataComparison(notification);
         } catch (Throwable t) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to save alert notification", t);
         }

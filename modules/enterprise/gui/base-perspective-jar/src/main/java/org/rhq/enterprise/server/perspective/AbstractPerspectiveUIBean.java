@@ -18,24 +18,19 @@
  */
 package org.rhq.enterprise.server.perspective;
 
-import org.jboss.seam.Component;
-import org.jboss.seam.annotations.Create;
-import org.jboss.seam.annotations.In;
-import org.jboss.seam.faces.FacesMessages;
-
 /**
  * A base class for Seam components that utilize the RHQ remote API.
  *
  * @author Ian Springer
  */
 public abstract class AbstractPerspectiveUIBean {
-    @In
-    protected FacesMessages facesMessages;
+    //    @In
+    //    protected FacesMessages facesMessages;
 
     protected PerspectiveClientUIBean perspectiveClient;
 
-    @Create
+    //    @Create
     public void init() {
-        this.perspectiveClient = (PerspectiveClientUIBean) Component.getInstance(PerspectiveClientUIBean.class, true);
+        //        this.perspectiveClient = (PerspectiveClientUIBean) Component.getInstance(PerspectiveClientUIBean.class, true);
     }
 }

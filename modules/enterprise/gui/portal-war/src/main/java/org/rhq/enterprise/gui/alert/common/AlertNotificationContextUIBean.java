@@ -18,16 +18,10 @@
  */
 package org.rhq.enterprise.gui.alert.common;
 
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.Create;
-import org.jboss.seam.annotations.Name;
-import org.jboss.seam.annotations.Scope;
-import org.jboss.seam.annotations.web.RequestParameter;
-
 import org.rhq.enterprise.gui.common.framework.EnterpriseFacesContextUIBean;
 
-@Scope(ScopeType.EVENT)
-@Name("AlertNotificationContextUIBean")
+//@Scope(ScopeType.EVENT)
+//@Name("AlertNotificationContextUIBean")
 public class AlertNotificationContextUIBean extends EnterpriseFacesContextUIBean {
     private enum Context {
         AlertNotificationTemplate, //
@@ -37,18 +31,18 @@ public class AlertNotificationContextUIBean extends EnterpriseFacesContextUIBean
         NotificationDetails;
     }
 
-    @RequestParameter("context")
+    // @RequestParameter("context")
     private String context;
-    @RequestParameter("contextId")
+    // @RequestParameter("contextId")
     private Integer contextId;
-    @RequestParameter("contextSubId")
+    // @RequestParameter("contextSubId")
     private Integer contextSubId;
 
     private String name;
     private String redirect;
     private String refresh;
 
-    @Create
+    // @Create
     public void init() {
         if (context.equals("template")) {
             name = "Alert Notification Template";

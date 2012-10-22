@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.server.perspective;
 
-import org.jboss.seam.Component;
-import org.jboss.seam.annotations.Create;
 import org.rhq.core.gui.table.bean.AbstractPagedDataUIBean;
 
 /**
@@ -31,11 +29,11 @@ import org.rhq.core.gui.table.bean.AbstractPagedDataUIBean;
 public abstract class AbstractPerspectivePagedDataUIBean extends AbstractPagedDataUIBean {
     protected PerspectiveClientUIBean perspectiveClient;
 
-    @Create
+    // @Create
     public void init() {
         if (this.perspectiveClient == null) {
-            this.perspectiveClient = (PerspectiveClientUIBean) Component.getInstance(PerspectiveClientUIBean.class,
-                    true);
+            //            this.perspectiveClient = (PerspectiveClientUIBean) Component.getInstance(PerspectiveClientUIBean.class,
+            //                    true);
         }
     }
 }

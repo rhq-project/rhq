@@ -4037,20 +4037,25 @@
 
             </schemaSpec>
 
-<!-- RHQ 4.5.0 uses DB Schema 2.125 -->
-            <schemaSpec version="2.125">
+<!-- RHQ 4.5.0 uses DB Schema 2.123 -->
+
+            <schemaSpec version="2.124">
+
                 <schema-directSQL>
                     <statement desc="Update the NULL to 0 for MIN_ENTRIES">
                         UPDATE RHQ_CONFIG_PROP_DEF
                         SET MIN_ENTRIES = 0
                         WHERE MIN_ENTRIES IS NULL
+                          AND DTYPE = 'list'
                     </statement>
                     <statement desc="Update the NULL to 32767 for MAX_ENTRIES">
                         UPDATE RHQ_CONFIG_PROP_DEF
                         SET MAX_ENTRIES = 32767
                         WHERE MAX_ENTRIES IS NULL
+                          AND DTYPE = 'list'
                     </statement>
                 </schema-directSQL>
+
             </schemaSpec>
 
         </dbupgrade>

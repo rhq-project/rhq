@@ -4,13 +4,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.AutoCreate;
-import org.jboss.seam.annotations.Name;
-import org.jboss.seam.annotations.Scope;
-import org.jboss.seam.annotations.web.RequestParameter;
-import org.jboss.seam.core.Conversation;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.clientapi.RemoteClient;
 import org.rhq.enterprise.server.auth.SubjectManagerRemote;
@@ -18,9 +11,9 @@ import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 /**
  * @author Ian Springer
  */
-@Name(PerspectiveClientUIBean.NAME)
-@Scope(ScopeType.CONVERSATION)
-@AutoCreate
+//@Name(PerspectiveClientUIBean.NAME)
+//@Scope(ScopeType.CONVERSATION)
+//@AutoCreate
 public class PerspectiveClientUIBean {
     public static final String NAME = "PerspectiveClientUIBean";
 
@@ -31,23 +24,23 @@ public class PerspectiveClientUIBean {
 
     private final Log log = LogFactory.getLog(this.getClass());
 
-    @RequestParameter
+    //    @RequestParameter
     private String rhqServerHost;
     private String serverHost;
 
-    @RequestParameter
+    //    @RequestParameter
     private Integer rhqServerPort;
     private Integer serverPort;
 
-    @RequestParameter
+    //    @RequestParameter
     private String rhqUsername;
     private String username;
 
-    @RequestParameter
+    //    @RequestParameter
     private String rhqPassword;
     private String password;
 
-    @RequestParameter
+    //    @RequestParameter
     private Integer rhqSessionId;
 
     private RemoteClient remoteClient;
@@ -64,12 +57,12 @@ public class PerspectiveClientUIBean {
                 this.remoteClient.connect();
             } catch (Exception e) {
                 this.remoteClient = null;
-                log.info("Ending perspective client Conversation with id " + Conversation.instance().getId() + "...");
-                Conversation.instance().end();
+                //                log.info("Ending perspective client Conversation with id " + Conversation.instance().getId() + "...");
+                //                Conversation.instance().end();
                 throw e;
             }
-            Conversation.instance().begin();
-            log.info("Began perspective client Conversation with id " + Conversation.instance().getId() + ".");
+            //            Conversation.instance().begin();
+            //            log.info("Began perspective client Conversation with id " + Conversation.instance().getId() + ".");
         }
         return this.remoteClient;
     }

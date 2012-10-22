@@ -18,15 +18,14 @@
  */
 package org.rhq.core.gui.table.bean;
 
-import org.jboss.seam.annotations.In;
-import org.jboss.seam.faces.FacesMessages;
+import javax.faces.context.FacesContext;
+import javax.faces.model.SelectItem;
+
 import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.UnlimitedPageControl;
 import org.rhq.core.gui.table.model.PagedListDataModel;
-
-import javax.faces.context.FacesContext;
-import javax.faces.model.SelectItem;
 
 /**
  * @author Ian Springer
@@ -45,9 +44,6 @@ public abstract class AbstractPagedDataUIBean<T> {
     /** The number of specific pages to display on the data scroller - limit to 7 pages until we find a general fix for
      *  RHQ-1813. */
     private static final int DATA_SCROLLER_MAX_PAGES = 7;
-
-    @In
-    protected FacesMessages facesMessages;
     
     private PageControl pageControl;
     private PagedListDataModel<T> dataModel;

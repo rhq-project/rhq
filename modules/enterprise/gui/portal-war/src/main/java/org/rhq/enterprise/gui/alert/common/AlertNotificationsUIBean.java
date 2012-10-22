@@ -26,13 +26,6 @@ import java.util.TreeMap;
 
 import javax.faces.application.FacesMessage;
 
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.Create;
-import org.jboss.seam.annotations.In;
-import org.jboss.seam.annotations.Name;
-import org.jboss.seam.annotations.Scope;
-import org.jboss.seam.annotations.web.RequestParameter;
-
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -46,18 +39,18 @@ import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
  *
  * @author Justin Harris
  */
-@Scope(ScopeType.EVENT)
-@Name("alertNotificationsUIBean")
+//@Scope(ScopeType.EVENT)
+//@Name("alertNotificationsUIBean")
 public class AlertNotificationsUIBean extends EnterpriseFacesContextUIBean {
 
-    @RequestParameter("nid")
+    //    @RequestParameter("nid")
     private Integer notificationId;
-    @RequestParameter("context")
+    //    @RequestParameter("context")
     private String context;
-    @RequestParameter("contextId")
+    //    @RequestParameter("contextId")
     private Integer contextId;
 
-    @In
+    //    @In
     private AlertNotificationManagerLocal alertNotificationManager;
 
     private List<AlertNotification> alertNotifications;
@@ -121,7 +114,7 @@ public class AlertNotificationsUIBean extends EnterpriseFacesContextUIBean {
         }
     }
 
-    @Create
+    //    @Create
     public void initNotifications() {
         reloadAlertNotifications();
         this.selectedNotifications = new HashSet<AlertNotification>();

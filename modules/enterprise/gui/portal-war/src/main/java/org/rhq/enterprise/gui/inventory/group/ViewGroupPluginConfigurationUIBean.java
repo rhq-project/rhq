@@ -18,31 +18,22 @@
  */
 package org.rhq.enterprise.gui.inventory.group;
 
-import org.rhq.enterprise.gui.legacy.ParamConstants;
-
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.faces.Redirect;
-import org.jboss.seam.annotations.Create;
-import org.jboss.seam.annotations.Name;
-import org.jboss.seam.annotations.Scope;
-import org.jboss.seam.annotations.End;
-import org.jboss.seam.annotations.In;
 
 /**
  * A POJO Seam component that handles loading plugin configurations across a compatible Group in view-only mode.
  *
  * @author Ian Springer
  */
-@Name("ViewGroupPluginConfigurationUIBean")
-@Scope(ScopeType.PAGE)
+//@Name("ViewGroupPluginConfigurationUIBean")
+//@Scope(ScopeType.PAGE)
 public class ViewGroupPluginConfigurationUIBean extends AbstractGroupPluginConfigurationUIBean
 {
     public static final String VIEW_ID = "/rhq/group/inventory/view-connection.xhtml";
 
-    @In(value = "org.jboss.seam.faces.redirect")
-    private Redirect redirect;
+    //@In(value = "org.jboss.seam.faces.redirect")
+    //private Redirect redirect;
 
-    @Create
+    //@Create
     public void init() {
         loadConfigurations();
         return;
@@ -51,11 +42,11 @@ public class ViewGroupPluginConfigurationUIBean extends AbstractGroupPluginConfi
     /**
      * Redirect to editCurrent.xhtml. This gets called when user clicks the EDIT button.
      */
-    @End
+    // @End
     public void edit() {
-        this.redirect.setParameter(ParamConstants.GROUP_ID_PARAM, getGroup().getId());
-        this.redirect.setViewId(EditGroupPluginConfigurationUIBean.VIEW_ID);
-        this.redirect.execute();
+        // this.redirect.setParameter(ParamConstants.GROUP_ID_PARAM, getGroup().getId());
+        //this.redirect.setViewId(EditGroupPluginConfigurationUIBean.VIEW_ID);
+        // this.redirect.execute();
         return;
     }
 }

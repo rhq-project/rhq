@@ -233,7 +233,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
      * If there is more than 2 days time window then return true so we can show day of week
      * in axis labels. Function to switch the timescale to whichever is more appropriate hours
      * or hours with days of week.
-     * @return true if difference between startTime and endTime is >= 2 days
+     * @return true if difference between startTime and endTime is >= x days
      */
    public boolean shouldDisplayDayOfWeekInXAxisLabel(){
        Long startTime = data.get(0).getTimestamp();

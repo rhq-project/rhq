@@ -68,7 +68,7 @@ public class GroupMeasurementTableView extends Table<GroupMeasurementTableDataSo
                 String title = record.getAttribute(GroupMeasurementTableDataSource.FIELD_METRIC_LABEL);
                 ChartViewWindow window = new ChartViewWindow("MeasurementTableFrame", title);
                 int defId = record.getAttributeAsInt(GroupMeasurementTableDataSource.FIELD_METRIC_DEF_ID);
-                Log.debug(" *** Mike you clicked here and defId is: "+ defId + ", groupId: "+groupId);
+                Log.debug(" *** clicked here and defId is: "+ defId + ", groupId: "+groupId);
 
                 CompositeGroupD3GraphListView graph = new CompositeGroupD3GraphListView("CompositeD3GraphView",
                         groupId, defId);

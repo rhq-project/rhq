@@ -19,7 +19,9 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table;
 
 import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -28,6 +30,7 @@ import com.smartgwt.client.widgets.layout.HLayout;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
@@ -83,6 +86,7 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterId(groupId);
         criteria.fetchResourceType(true);
+        criteria.addFilterVisible(false);
         groupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
             @Override
             public void onFailure(Throwable caught) {
@@ -97,7 +101,53 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
                 }
 
                 final ResourceGroup group = result.get(0);
-                Log.debug(" *** group: "+group.getName());
+                Log.debug(" *** group: "+group.getName()+","+group.getAutoGroupParentResource().getId());
+                Log.debug(" *** type: "+group.getResourceType().getId());
+
+                ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
+
+                ResourceGroupCriteria autoGroupCriteria = new ResourceGroupCriteria();
+
+
+                // for autoclusters and private groups (autogroups) we need to add more criteria
+                boolean isAutoCluster = (null != group.getClusterResourceGroup());
+                boolean isAutoGroup = (null != group.getSubject());
+
+                if (isAutoCluster) {
+                    autoGroupCriteria.addFilterVisible(false);
+
+                } else if (isAutoGroup) {
+                    autoGroupCriteria.addFilterVisible(false);
+                    autoGroupCriteria.addFilterPrivate(true);
+                }
+
+                autoGroupCriteria.addFilterResourceTypeId(group.getResourceType().getId());
+                autoGroupCriteria.addFilterAutoGroupParentResourceId(group.getAutoGroupParentResource().getId());
+                groupService.findResourceGroupsByCriteria(autoGroupCriteria, new AsyncCallback<PageList<ResourceGroup>>() {
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_lookupFailed(), caught);
+                    }
+
+                    @Override
+                    public void onSuccess(PageList<ResourceGroup> result) {
+                        Log.debug(" *** autogroup members: "+ result.size());
+
+                        final ResourceGroup autoGroup = result.get(0);
+                        Log.debug(" autogroup name: "+autoGroup.getName() +", "+autoGroup.getAutoGroupParentResource().getName());
+                        Log.debug(" autogroup ids: "+autoGroup.getId() +", parent:"+autoGroup.getAutoGroupParentResource().getId());
+                        Log.debug(" autogroup size #: "+autoGroup.getAutoGroupParentResource().getChildResources().size());
+
+                        Set<Resource> childResources = autoGroup.getAutoGroupParentResource().getChildResources();
+                        for (Resource res : childResources)
+                        {
+                            Log.debug(" *** Resource -> " + res.getName() + ":" + res.getId());
+                        }
+
+                            }
+                        });
+
+
                 String url = LinkManager.getResourceGroupLink(group);
                 resourceTitle = new HTMLFlow(SeleniumUtility.getLocatableHref(url, group.getName(), null));
 
@@ -187,18 +237,15 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
             HTMLFlow title = new HTMLFlow("<b>" + definition.getDisplayName() + "</b> " + definition.getDescription());
             title.setWidth100();
             addMember(title);
-            //chartHeight = (chartHeight != null) ? chartHeight : "100%";
             HTMLFlow graph = new HTMLFlow("<div id=\"mChart-"+getChartId()+"\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:100%;\"></svg></div>");
             graph.setWidth100();
             graph.setHeight100();
             addMember(graph);
 
-            drawJsniCharts();
+            //drawJsniCharts();
             markForRedraw();
 
         }
-
-
 
     }
 

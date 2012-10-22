@@ -38,6 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -47,8 +48,17 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 public class D3GraphListView extends LocatableVLayout {
 
     private Resource resource;
+    private Integer definitionId = null;
     private Label loadingLabel = new Label(MSG.common_msg_loading());
     private UserPreferencesMeasurementRangeEditor measurementRangeEditor;
+
+    public D3GraphListView(String locatorId, Resource resource, int definitionId){
+        super(locatorId);
+        measurementRangeEditor = new UserPreferencesMeasurementRangeEditor(this.getLocatorId());
+        this.resource = resource;
+        setOverflow(Overflow.AUTO);
+        this.definitionId = definitionId;
+    }
 
     public D3GraphListView(String locatorId, Resource resource) {
         super(locatorId);
@@ -127,7 +137,17 @@ public class D3GraphListView extends LocatableVLayout {
                                         int i = 0;
                                         for (List<MeasurementDataNumericHighLowComposite> data : result)
                                         {
-                                            buildIndividualGraph(measurementDefinitions.get(i++), data);
+                                            if(null != definitionId){
+                                                // single graph case
+                                                int measurementId = measurementDefinitions.get(i).getId();
+                                                if(measurementId == definitionId){
+                                                    buildIndividualGraph(measurementDefinitions.get(i), data);
+                                                }
+                                            }else {
+                                                // multiple graph case
+                                                buildIndividualGraph(measurementDefinitions.get(i), data);
+                                            }
+                                            i++;
                                         }
                                     }
                                 }
@@ -137,13 +157,17 @@ public class D3GraphListView extends LocatableVLayout {
             });
     }
 
-    private void buildIndividualGraph(MeasurementDefinition measurementDefinition, List<MeasurementDataNumericHighLowComposite> data) {
+    private void buildIndividualGraph(MeasurementDefinition measurementDefinition, List<MeasurementDataNumericHighLowComposite> data ) {
+        buildIndividualGraph(measurementDefinition,data, 130);
+    }
+
+    private void buildIndividualGraph(MeasurementDefinition measurementDefinition, List<MeasurementDataNumericHighLowComposite> data, int height) {
 
         ResourceMetricD3GraphView graph = new ResourceMetricD3GraphView(extendLocatorId(measurementDefinition.getName()), resource.getId(),
             measurementDefinition, data);
 
         graph.setWidth("95%");
-        graph.setHeight(120);
+        graph.setHeight(height);
 
         addMember(graph);
     }

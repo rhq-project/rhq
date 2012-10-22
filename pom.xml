@@ -1192,6 +1192,33 @@
 
   <profiles>
 
+    <profile>
+       <id>code-coverage</id>
+       
+       <build>
+          <plugins>
+             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>cobertura-maven-plugin</artifactId>
+                <version>2.5.2</version>
+                <configuration>
+                   <formats>
+                      <format>xml</format>
+                   </formats>
+                </configuration>
+                <executions>
+                   <execution>
+                      <phase>post-integration-test</phase>
+                      <goals>
+                         <goal>cobertura</goal>
+                      </goals>
+                   </execution>
+                </executions>
+             </plugin> 
+          </plugins>
+       </build>
+    </profile>
+    
     <!-- NOTE: This profile is extended upon in several other submodules.
          If you need to change its activation policy, make sure to do that in
          *ALL* the modules that define this profile. -->

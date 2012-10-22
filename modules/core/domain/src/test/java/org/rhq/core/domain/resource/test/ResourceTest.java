@@ -24,6 +24,7 @@ package org.rhq.core.domain.resource.test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -62,6 +63,7 @@ public class ResourceTest extends AbstractEJB3Test {
 
             for (int i = 0; i < count; i++) {
                 Resource newResource = new Resource("testCreateAlotOfResources" + i, "res" + i, theResourceType);
+                newResource.setUuid("" + new Random().nextInt());
                 newResource.setAgent(theAgent);
                 em.persist(newResource);
                 resources.add(newResource);
@@ -77,7 +79,7 @@ public class ResourceTest extends AbstractEJB3Test {
         try {
             for (int i = 0; i < count; i++) {
                 Resource doomedResource = em.find(Resource.class, resources.get(i).getId());
-                em.remove(doomedResource);
+                deleteResource(em, doomedResource);
             }
 
             em.remove(em.find(ResourceType.class, theResourceType.getId()));
@@ -87,6 +89,17 @@ public class ResourceTest extends AbstractEJB3Test {
         }
 
         System.out.println("Took [" + (System.currentTimeMillis() - start) + "]ms to remove [" + count + "] resources");
+    }
+
+    private static void deleteResource(EntityManager entityManager, Resource doomedResource) {
+        if (null == doomedResource) {
+            return;
+        }
+
+        for (Availability avail : doomedResource.getAvailability()) {
+            entityManager.remove(avail);
+        }
+        entityManager.remove(doomedResource);
     }
 
     @Test(groups = "integration.ejb3")
@@ -111,6 +124,7 @@ public class ResourceTest extends AbstractEJB3Test {
 
             for (int i = 0; i < count; i++) {
                 Resource newResource = new Resource("testCreateAlotOfResources" + i, "res" + i, theResourceType);
+                newResource.setUuid("" + new Random().nextInt());
                 newResource.setAgent(theAgent);
                 em.persist(newResource);
                 resources.add(newResource);
@@ -129,7 +143,7 @@ public class ResourceTest extends AbstractEJB3Test {
         try {
             for (int i = 0; i < count; i++) {
                 Resource doomedResource = em.find(Resource.class, resources.get(i).getId());
-                em.remove(doomedResource);
+                deleteResource(em, doomedResource);
             }
 
             em.remove(em.find(ResourceType.class, theResourceType.getId()));

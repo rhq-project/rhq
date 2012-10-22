@@ -25,9 +25,13 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hyperic.sigar.SigarProxy;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.Resource;
@@ -35,6 +39,8 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.availability.AvailabilityCollectorRunnable;
 import org.rhq.core.pluginapi.availability.AvailabilityContext;
 import org.rhq.core.pluginapi.availability.AvailabilityFacet;
+import org.rhq.core.pluginapi.event.EventContext;
+import org.rhq.core.pluginapi.event.EventPoller;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.PluginContainerDeployment;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
@@ -108,7 +114,41 @@ public class ApacheExecutionUtil {
         Resource resource = new Resource(result.getResourceKey(), null, apacheServerResourceType);
         resource.setPluginConfiguration(config);
         resourceContext = new ResourceContext<PlatformComponent>(resource, null, null, discoveryComponent, systemInfo,
-            null, null, null, null, null, null, new AvailabilityContext() {
+            null, null, null, new EventContext() {
+
+                @Override
+                public void unregisterEventPoller(@NotNull
+                String eventType, @NotNull
+                String sourceLocation) {
+                }
+
+                @Override
+                public void unregisterEventPoller(@NotNull
+                String eventType) {
+                }
+
+                @Override
+                public void registerEventPoller(@NotNull
+                EventPoller poller, int pollingInterval, @NotNull
+                String sourceLocation) {
+                }
+
+                @Override
+                public void registerEventPoller(@NotNull
+                EventPoller poller, int pollingInterval) {
+                }
+
+                @Override
+                public void publishEvent(@NotNull
+                Event event) {
+                }
+
+                @Override
+                @Nullable
+                public SigarProxy getSigar() {
+                    return null;
+                }
+            }, null, null, new AvailabilityContext() {
 
                 @Override
                 public void requestAvailabilityCheck() {

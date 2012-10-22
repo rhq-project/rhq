@@ -28,8 +28,6 @@ import java.util.Random;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.Availability;
@@ -44,12 +42,12 @@ import org.rhq.core.domain.test.AbstractEJB3Test;
 public class ResourceErrorTest extends AbstractEJB3Test {
     private Resource newResource;
 
-    @BeforeMethod
+    @Override
     public void beforeMethod() throws Exception {
         newResource = createNewResource();
     }
 
-    @AfterMethod
+    @Override
     public void afterMethod() throws Exception {
         deleteNewResource(newResource);
     }

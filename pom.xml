@@ -136,7 +136,7 @@
     <ant.contrib.version>1.0b3</ant.contrib.version>
     <freemarker.version>2.3.18</freemarker.version>
     <powermock.version>1.4.11</powermock.version>
-    <arquillian.version>1.0.1.Final</arquillian.version>
+    <arquillian.version>1.0.2.Final</arquillian.version>
     <xercesImpl.version>2.9.1-jbossas-2</xercesImpl.version> <!-- see BZ-820629 and CVE-2009-2625 -->
     <opencsv.version>1.8</opencsv.version>    
     
@@ -235,6 +235,13 @@
            overall JBoss AS Server version.  Meaning, the AS provides these libs. When the Server
            version is changed the versions of each of these should be validated and updated as needed. -->
       
+      <dependency>
+        <groupId>org.jboss.as</groupId>
+        <artifactId>jboss-as-dist</artifactId>
+        <version>${jboss.version}</version>
+        <type>zip</type>
+      </dependency>
+
       <dependency>
         <groupId>jboss</groupId>
         <artifactId>jboss-cache</artifactId>
@@ -682,9 +689,7 @@
          </plugin>
          <plugin>
            <artifactId>maven-failsafe-plugin</artifactId>
-           <!-- TODO: Upgrade to 2.13 when it's released. Do not upgrade to 2.12, or we will suffer from
-                      http://jira.codehaus.org/browse/SUREFIRE-836. -->
-           <version>2.11</version>
+           <version>2.12.4</version>
            <configuration>
              <argLine>-Xms32M -Xmx512M</argLine>
            </configuration>
@@ -731,9 +736,7 @@
          </plugin>
          <plugin>
            <artifactId>maven-surefire-plugin</artifactId>
-           <!-- TODO: Upgrade to 2.13 when it's released. Do not upgrade to 2.12, or we will suffer from
-                      http://jira.codehaus.org/browse/SUREFIRE-836. -->
-           <version>2.11</version>
+           <version>2.12.4</version>
            <configuration>
              <argLine>-Xms32M -Xmx512M</argLine>
            </configuration>

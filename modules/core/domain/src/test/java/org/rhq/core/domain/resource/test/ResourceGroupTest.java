@@ -26,8 +26,6 @@ import java.util.Random;
 
 import javax.persistence.EntityManager;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.Availability;
@@ -41,9 +39,26 @@ public class ResourceGroupTest extends AbstractEJB3Test {
     private Resource newResource;
     private ResourceGroup newGroup;
 
+    @Override
+    public void beforeMethod() throws Exception {
+        try {
+            newResource = createNewResource();
+            newGroup = newResource.getExplicitGroups().iterator().next();
+        } catch (Throwable t) {
+            // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
+            // and throw a cryptic NPE (see http://jira.codehaus.org/browse/SUREFIRE-157)!
+            t.printStackTrace();
+            throw new RuntimeException(t);
+        }
+    }
+
+    @Override
+    public void afterMethod() throws Exception {
+        deleteNewResource(newResource);
+    }
+
     @Test(groups = "integration.ejb3")
     public void testCreate() throws Exception {
-        EntityManager em = getEntityManager();
         getTransactionManager().begin();
         try {
             assert newResource != null;
@@ -128,21 +143,4 @@ public class ResourceGroupTest extends AbstractEJB3Test {
         }
     }
 
-    @BeforeMethod
-    public void beforeMethod() throws Exception {
-        try {
-            newResource = createNewResource();
-            newGroup = newResource.getExplicitGroups().iterator().next();
-        } catch (Throwable t) {
-            // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
-            // and throw a cryptic NPE (see http://jira.codehaus.org/browse/SUREFIRE-157)!
-            t.printStackTrace();
-            throw new RuntimeException(t);
-        }
-    }
-
-    @AfterMethod
-    public void afterMethod() throws Exception {
-        deleteNewResource(newResource);
-    }
 }

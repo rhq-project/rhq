@@ -122,9 +122,9 @@ public class DriftDefinitionsView extends TableSection<DriftDefinitionDataSource
 
     @Override
     protected void configureTable() {
-        ArrayList<ListGridField> dataSourceFields = getDataSource().getListGridFields();
+        ArrayList<ListGridField> dataSourceFields = getDataSource().getListGridFields(hasWriteAccess);
         getListGrid().setFields(dataSourceFields.toArray(new ListGridField[dataSourceFields.size()]));
-        setupTableInteractions(this.hasWriteAccess);
+        setupTableInteractions(hasWriteAccess);
 
         super.configureTable();
     }
@@ -169,7 +169,7 @@ public class DriftDefinitionsView extends TableSection<DriftDefinitionDataSource
             detectNowEnablement) {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
-                if (selection.length == 0) {
+                if (selection.length == 0 || !hasWriteAccess) {
                     return false;
                 }
                 return Boolean.valueOf(selection[0].getAttribute(DriftDefinitionDataSource.ATTR_IS_ENABLED));

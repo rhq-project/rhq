@@ -96,13 +96,12 @@ public class PackageVersionContentSourceTest extends AbstractEJB3Test {
             em.persist(cs);
             em.persist(pvcs);
             em.flush();
-            em.close();
-            em = getEntityManager();
+            em.clear();
 
             PackageVersionContentSourcePK pk = new PackageVersionContentSourcePK(pv, cs);
             PackageVersionContentSource pvcsDup = em.find(PackageVersionContentSource.class, pk);
 
-            em.close();
+            em.clear();
 
             assert pvcsDup != null;
             assert pvcsDup.equals(pvcs);
@@ -112,12 +111,9 @@ public class PackageVersionContentSourceTest extends AbstractEJB3Test {
             assert pkDup.getContentSource().getName().equals("testPVCSContentSource");
             assert pkDup.getPackageVersion().getGeneralPackage().getName().equals("testPVCSInsertPackage");
 
-            em = getEntityManager();
             Query q = em.createNamedQuery(PackageVersionContentSource.QUERY_FIND_BY_CONTENT_SOURCE_ID);
             q.setParameter("id", cs.getId());
             List<PackageVersionContentSource> allPvcs = q.getResultList();
-
-            em.close();
 
             // make sure the fetch joining works by looking deep inside the objects
             assert allPvcs != null;
@@ -137,7 +133,6 @@ public class PackageVersionContentSourceTest extends AbstractEJB3Test {
                 .getResourceType().equals(rt);
 
             // add repo and subscribe resource to it; test metadata query
-            em = getEntityManager();
             Repo repo = new Repo("testPVCSRepo");
             em.persist(repo);
             RepoContentSource ccsmapping = repo.addContentSource(cs);
@@ -163,12 +158,12 @@ public class PackageVersionContentSourceTest extends AbstractEJB3Test {
             assert new String(composite.getPackageDetailsKey().getVersion()).equals(pv.getVersion());
             assert new String(composite.getPackageDetailsKey().getPackageTypeName()).equals(pt.getName());
             assert new String(composite.getPackageDetailsKey().getArchitectureName()).equals(arch.getName());
-            em.close();
+            em.clear();
 
             // remove cs from pv
-            em = getEntityManager();
             pvcs = em.find(PackageVersionContentSource.class, pvcs.getPackageVersionContentSourcePK());
             em.remove(pvcs);
+
         } finally {
             getTransactionManager().rollback();
         }
@@ -208,23 +203,22 @@ public class PackageVersionContentSourceTest extends AbstractEJB3Test {
             em.persist(cs);
             em.persist(pvcs);
             em.flush();
-            em.close();
-            em = getEntityManager();
+            em.clear();
 
             PackageVersionContentSourcePK pk = new PackageVersionContentSourcePK(pv, cs);
             PackageVersionContentSource pvcsDup = em.find(PackageVersionContentSource.class, pk);
 
-            em.close();
+            em.clear();
 
             assert pvcsDup != null;
             assert pvcsDup.equals(pvcs);
             assert pvcsDup.getLocation().equals("fooLocation");
 
-            em = getEntityManager();
             Query q = em.createNamedQuery(PackageVersionContentSource.DELETE_BY_CONTENT_SOURCE_ID);
             q.setParameter("contentSourceId", cs.getId());
             assert 1 == q.executeUpdate();
-            em.close();
+            em.clear();
+
         } finally {
             getTransactionManager().rollback();
         }
@@ -268,43 +262,36 @@ public class PackageVersionContentSourceTest extends AbstractEJB3Test {
             em.persist(cs);
             em.persist(pvcs);
             em.flush();
-            em.close();
+            em.clear();
 
-            em = getEntityManager();
             PackageVersionContentSourcePK pk = new PackageVersionContentSourcePK(pv, cs);
             PackageVersionContentSource pvcsDup = em.find(PackageVersionContentSource.class, pk);
-            em.close();
+            em.clear();
 
             assert pvcsDup != null;
             assert pvcsDup.equals(pvcs);
             assert pvcsDup.getLocation().equals("fooLocation");
 
-            em = getEntityManager();
             Query q = em.createNamedQuery(PackageVersionContentSource.DELETE_BY_CONTENT_SOURCE_ID);
             q.setParameter("contentSourceId", cs.getId());
             assert 1 == q.executeUpdate();
-            em.close();
+            em.clear();
 
-            em = getEntityManager();
             PackageBits findBits = em.find(PackageBits.class, bits.getId());
-            em.close();
             assert findBits != null : "The bits did not cascade-persist for some reason";
             assert findBits.getId() > 0 : "The package bits did not cascade-persist for some reason!";
             assert new String(bits.getBlob().getBits()).equals(new String(findBits.getBlob().getBits()));
 
-            em = getEntityManager();
             q = em.createNamedQuery(PackageVersion.DELETE_IF_NO_CONTENT_SOURCES_OR_REPOS);
             assert 1 == q.executeUpdate();
-            em.close();
+            em.clear();
 
-            em = getEntityManager();
             q = em.createNamedQuery(PackageBits.DELETE_IF_NO_PACKAGE_VERSION);
             assert q.executeUpdate() > 0;
-            em.close();
+            em.clear();
 
-            em = getEntityManager();
             findBits = em.find(PackageBits.class, bits.getId());
-            em.close();
+            em.clear();
             assert findBits == null : "The bits did not delete for some reason";
         } finally {
             getTransactionManager().rollback();

@@ -186,8 +186,6 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
     public PageList<CallTimeDataComposite> findCallTimeDataForContext(Subject subject, EntityContext context,
         long beginTime, long endTime, String destination, PageControl pageControl) {
 
-        // lookup measurement definition id
-
         CallTimeDataCriteria criteria = new CallTimeDataCriteria();
         criteria.addFilterBeginTime(beginTime);
         criteria.addFilterEndTime(endTime);
@@ -195,12 +193,20 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
             criteria.addFilterDestination(destination);
         }
 
-        pageControl.initDefaultOrderingField("SUM(calltimedatavalue.total)/SUM(calltimedatavalue.count)",
-            PageOrdering.DESC); // only set if no ordering yet specified
-        pageControl.addDefaultOrderingField("calltimedatavalue.key.callDestination", PageOrdering.ASC); // add this to sort, if not already specified
         criteria.setPageControl(pageControl);
 
-        //criteria.addSortAverage(PageOrdering.DESC);
+        return findCallTimeDataForContext(subject, context, criteria);
+    }
+
+    public PageList<CallTimeDataComposite> findCallTimeDataForContext(Subject subject, EntityContext context,
+        CallTimeDataCriteria criteria) {
+
+        PageControl pageControl = criteria.getPageControlOverrides();
+        if (pageControl != null) {
+            pageControl.initDefaultOrderingField("SUM(calltimedatavalue.total)/SUM(calltimedatavalue.count)",
+                PageOrdering.DESC); // only set if no ordering yet specified
+            pageControl.addDefaultOrderingField("calltimedatavalue.key.callDestination", PageOrdering.ASC); // add this to sort, if not already specified
+        }
 
         if (context.type == EntityContext.Type.Resource) {
             criteria.addFilterResourceId(context.resourceId);
@@ -212,7 +218,6 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
         }
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
         String replacementSelectList = "" //
             + " new org.rhq.core.domain.measurement.calltime.CallTimeDataComposite( " //
             + "   calltimedatavalue.key.callDestination, " //

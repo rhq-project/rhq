@@ -15,8 +15,8 @@
    <description>RHQ domain model classes (i.e. POJOs used by both server and agent)</description>
 
    <properties>
-     <!-- dependency versions -->
-     <jboss-embeddable-ejb3.version>1.0.0.Alpha9</jboss-embeddable-ejb3.version>
+     <jboss.zip>${settings.localRepository}/org/jboss/as/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip</jboss.zip>
+     <jboss.unzip.location>${basedir}/target/jboss-as-${jboss.version}</jboss.unzip.location>
      <rhq.internal>false</rhq.internal>
    </properties>
 
@@ -68,6 +68,13 @@
 
       <!--================ Test Deps ================-->
       <dependency>
+          <groupId>org.jboss.as</groupId>
+          <artifactId>jboss-as-dist</artifactId>
+          <type>zip</type>
+          <scope>test</scope>
+      </dependency>
+
+      <dependency>
           <groupId>${project.groupId}</groupId>
           <artifactId>test-utils</artifactId>
           <version>${project.version}</version>
@@ -88,25 +95,62 @@
       </dependency>
 
       <dependency>
-         <groupId>com.h2database</groupId>
-         <artifactId>h2</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
          <groupId>net.sourceforge.jtds</groupId>
          <artifactId>jtds</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>test</scope>
       </dependency>
 
-      <dependency>
-         <groupId>jboss.jboss-embeddable-ejb3</groupId>
-         <artifactId>jboss-ejb3-all</artifactId>
-         <version>${jboss-embeddable-ejb3.version}</version>
-         <scope>test</scope>
-      </dependency>
+  <dependency>
+    <groupId>org.jboss.spec</groupId>
+    <artifactId>jboss-javaee-6.0</artifactId>
+    <version>${jboss.javaee6.spec.version}</version>
+    <scope>provided</scope>
+    <type>pom</type>
+  </dependency>
+ 
+  <dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-arquillian-container-managed</artifactId>
+    <version>${jboss.version}</version>
+    <scope>test</scope>
+  </dependency>
+         
+  <dependency>
+    <groupId>org.jboss.arquillian.testng</groupId>
+    <artifactId>arquillian-testng-container</artifactId>    
+    <scope>test</scope>
+  </dependency>
+
+  <dependency>
+    <groupId>org.jboss.shrinkwrap</groupId>
+    <artifactId>shrinkwrap-impl-base</artifactId>
+    <scope>test</scope>
+  </dependency>
+
+  <dependency>
+    <groupId>org.jboss.shrinkwrap.resolver</groupId>
+    <artifactId>shrinkwrap-resolver-api</artifactId>
+    <scope>test</scope>
+  </dependency>
+
+  <dependency>
+    <groupId>org.jboss.shrinkwrap.resolver</groupId>
+    <artifactId>shrinkwrap-resolver-api-maven</artifactId>
+    <scope>test</scope>
+  </dependency>
+
+  <dependency>
+    <groupId>org.jboss.shrinkwrap.resolver</groupId>
+    <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
+    <scope>test</scope>
+  </dependency>
+
+  <dependency>
+    <groupId>org.jboss.arquillian.protocol</groupId>
+    <artifactId>arquillian-protocol-servlet</artifactId>
+    <scope>test</scope>
+  </dependency>              
 
       <!-- NOTE: The remaining test deps correspond to the classes contained in hibernate-all.jar and thirdparty-all.jar. -->
 
@@ -196,6 +240,86 @@
 
       <plugins>
 
+        <plugin>
+          <artifactId>maven-antrun-plugin</artifactId>
+          <executions>
+            <execution>
+              <id>prepare AS container</id>
+              <phase>process-test-resources</phase>
+              <configuration>
+                <target>
+                    <echo>Unzipping JBossAS ${jboss.version} found at ${jboss.zip}</echo>
+                    <unzip src="${jboss.zip}" dest="${jboss.unzip.location}/.." />
+                    <echo>JBossAS ${jboss.version} should now be at: ${jboss.unzip.location}</echo>
+                    <property name="jboss.conf" location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
+                    <echo>Will now add test configuration to JBossAS config file: ${jboss.conf}</echo>
+                    <replace file="${jboss.conf}">
+                      <replacefilter>
+                        <replacetoken>&lt;/drivers></replacetoken>
+                        <replacevalue><![CDATA[
+                    <!-- FOR RHQ TESTING -->
+                    <driver name="postgres" module="org.rhq.postgres">
+                        <xa-datasource-class>org.postgresql.xa.PGXADataSource</xa-datasource-class>
+                    </driver>
+                    <driver name="oracle" module="org.rhq.oracle">
+                        <xa-datasource-class>oracle.jdbc.xa.client.OracleXADataSource</xa-datasource-class>
+                    </driver>
+                </drivers>]]></replacevalue>
+                      </replacefilter>
+                      <replacefilter>
+                        <replacetoken>&lt;/security-domains></replacetoken>
+                        <replacevalue><![CDATA[
+                <!-- FOR RHQ TESTING -->
+                <security-domain name="RHQDSSecurityDomain" cache-type="default">
+                    <authentication>
+                        <login-module code="SecureIdentity" flag="required">
+                            <module-option name="username" value="rhqadmin"/>
+                            <module-option name="password" value="1eeb2f255e832171df8592078de921bc"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>
+            </security-domains>]]></replacevalue>
+                      </replacefilter>
+                    </replace>
+
+                    <property name="jboss.modules.dir" location="${jboss.unzip.location}/modules" />
+                    <echo>Adding JDBC modules to ${jboss.modules.dir} ...</echo>
+                    <copy file="${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar"
+                          toDir="${jboss.modules.dir}/org/rhq/oracle/main" failonerror="false" verbose="true" />
+                    <echo file="${jboss.modules.dir}/org/rhq/oracle/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.1" name="org.rhq.oracle">
+    <resources>
+        <resource-root path="ojdbc6-${ojdbc6.version}.jar"/>
+    </resources>
+    <dependencies>
+        <module name="javax.api"/>
+        <module name="javax.transaction.api"/>
+    </dependencies>
+</module>
+]]></echo>
+                    <copy file="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"
+                          toDir="${jboss.modules.dir}/org/rhq/postgres/main" verbose="true" />
+                    <echo file="${jboss.modules.dir}/org/rhq/postgres/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.1" name="org.rhq.postgres">
+    <resources>
+        <resource-root path="postgresql-${postgresql.version}.jar"/>
+    </resources>
+    <dependencies>
+        <module name="javax.api"/>
+        <module name="javax.transaction.api"/>
+    </dependencies>
+</module>
+]]></echo>
+
+                </target>
+              </configuration>
+              <goals>
+                <goal>run</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
@@ -224,8 +348,8 @@
                   <value>${rhq.test.ds.hibernate-dialect}</value>
                 </property>
               </systemProperties>
-              <excludes>
-                <exclude>**/ResourceTypeTest.java</exclude>
+              <excludes>                
+                <exclude>**/ResourceTypeTest.java</exclude> <!-- TODO: this should be fixed up and reinstated -->
               </excludes>
               <!-- The below is required for tests to run against Oracle. -->
               <additionalClasspathElements>
@@ -257,6 +381,18 @@
 
    <profiles>
 
+        <!-- if you want to test on oracle, this can pull down the oracle jdbc driver that is needed -->
+        <profile>
+            <id>ojdbc-driver</id>
+            <dependencies>
+                <dependency>
+                    <groupId>com.oracle</groupId>
+                    <artifactId>ojdbc6</artifactId>
+                    <version>${ojdbc6.version}</version>
+                </dependency>
+            </dependencies>
+       </profile>
+
        <profile>
          <id>dev</id>
 
@@ -275,6 +411,7 @@
                   <executions>
 
                      <execution>
+                        <id>deploy</id>
                         <phase>process-classes</phase>
                         <configuration>
                            <target>

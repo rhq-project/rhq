@@ -17,13 +17,6 @@
     <name>RHQ Enterprise Server Application Server Container</name>
     <description>The full RHQ appserver container build, including the JBossAS server and all config/deploy files</description>
 
-    <properties>
-        <jboss.version>7.1.1.Final</jboss.version>
-
-        <!-- TODO do we still need this? -->
-        <rhq.webappsReloadable>false</rhq.webappsReloadable>
-    </properties>
-
     <dependencies>
 
         <dependency>
@@ -57,7 +50,7 @@
         <dependency>
             <groupId>org.jboss.as</groupId>
             <artifactId>jboss-as-dist</artifactId>
-            <version>7.1.1.Final</version>
+            <!-- NOTE: version defined in root pom dependencyManagement section -->
             <type>zip</type>
         </dependency>
 
@@ -260,8 +253,6 @@
             <properties>
                 <rhq.rootDir>../../../..</rhq.rootDir>
                 <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-                <!-- TODO do we still need this? -->
-                <rhq.webappsReloadable>true</rhq.webappsReloadable>
             </properties>
 
             <build>

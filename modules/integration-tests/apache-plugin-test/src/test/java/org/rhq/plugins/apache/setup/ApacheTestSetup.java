@@ -35,7 +35,6 @@ import java.util.Set;
 
 import org.jmock.Expectations;
 import org.jmock.Mockery;
-import org.jmock.lib.action.ReturnValueAction;
 
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.AvailabilityReport;
@@ -48,19 +47,15 @@ import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.plugins.apache.ApacheServerDiscoveryComponent;
 import org.rhq.plugins.apache.ApacheVirtualHostServiceComponent;
 import org.rhq.plugins.apache.ApacheVirtualHostServiceDiscoveryComponent;
-import org.rhq.plugins.apache.parser.ApacheConfigReader;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
-import org.rhq.plugins.apache.parser.ApacheParser;
-import org.rhq.plugins.apache.parser.ApacheParserImpl;
-import org.rhq.plugins.apache.upgrade.UpgradeTestBase;
 import org.rhq.plugins.apache.util.ApacheBinaryInfo;
 import org.rhq.plugins.apache.util.ApacheDeploymentUtil;
+import org.rhq.plugins.apache.util.ApacheDeploymentUtil.DeploymentConfig;
 import org.rhq.plugins.apache.util.ApacheExecutionUtil;
+import org.rhq.plugins.apache.util.ApacheExecutionUtil.ExpectedApacheState;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
 import org.rhq.plugins.apache.util.ResourceTypes;
 import org.rhq.plugins.apache.util.VHostSpec;
-import org.rhq.plugins.apache.util.ApacheDeploymentUtil.DeploymentConfig;
-import org.rhq.plugins.apache.util.ApacheExecutionUtil.ExpectedApacheState;
 import org.rhq.test.ObjectCollectionSerializer;
 import org.rhq.test.TokenReplacingReader;
 import org.rhq.test.pc.PluginContainerTest;
@@ -244,6 +239,12 @@ public class ApacheTestSetup {
         expectations.allowing(ss.getDiscoveryServerService()).clearResourceConfigError(
             expectations.with(Expectations.any(int.class)));
         
+        expectations.allowing(ss.getDiscoveryServerService()).setResourceEnablement(
+            expectations.with(Expectations.any(int.class)), expectations.with(Expectations.any(boolean.class)));
+
+        expectations.allowing(ss.getDiscoveryServerService()).updateResourceVersion(
+            expectations.with(Expectations.any(int.class)), expectations.with(Expectations.any(String.class)));
+
         expectations.allowing(ss.getDriftServerService()).getDriftDefinitions(expectations.with(Expectations.any(Set.class)));
         expectations.will(Expectations.returnValue(Collections.emptyMap()));
         

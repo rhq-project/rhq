@@ -17,11 +17,8 @@
   <description>RHQ enterprise server main JAR</description>
 
   <properties>
-    <rhq.server.datasource>java:/RHQDS</rhq.server.datasource>
-    <rhq.server.ds-mapping>PostgreSQL</rhq.server.ds-mapping>
-
-      <!-- dependency versions -->
-    <jboss-embeddable-ejb3.version>1.0.0.Alpha9</jboss-embeddable-ejb3.version>
+    <jboss.zip>${settings.localRepository}/org/jboss/as/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip</jboss.zip>
+    <jboss.unzip.location>${basedir}/target/jboss-as-${jboss.version}</jboss.unzip.location>
 
     <clean.db>true</clean.db>
 
@@ -139,6 +136,13 @@
            loaded when testing.  -->
 
     <dependency>
+      <groupId>org.jboss.as</groupId>
+      <artifactId>jboss-as-dist</artifactId>
+      <type>zip</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>test-utils</artifactId>
       <version>${project.version}</version>
@@ -182,13 +186,6 @@
           <artifactId>ant-launcher</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
-
-    <dependency>
-      <groupId>jboss.jboss-embeddable-ejb3</groupId>
-      <artifactId>jboss-ejb3-all</artifactId>
-      <version>${jboss-embeddable-ejb3.version}</version>
-      <scope>test</scope>
     </dependency>
 
       <!-- NOTE: The remaining test deps correspond to the classes contained in hibernate-all.jar and thirdparty-all.jar. -->
@@ -670,28 +667,80 @@
             </goals>
           </execution>
 
-               <!--  in order to get JMS to work properly in embedded test container, extract jms-rs.rar classes -->
-          <execution>
-            <id>Extract JMS classes from RAR needed for JMS tests</id>
-            <phase>process-classes</phase>
-            <configuration>
-              <target>
-                <unzip src="src/test/resources/jms-ra.rar" dest="target">
-                  <patternset>
-                    <include name="jms-ra.jar"/>
-                  </patternset>
-                </unzip>
-                <unzip src="target/jms-ra.jar" dest="target/test-classes">
-                  <patternset>
-                    <include name="org/**"/>
-                  </patternset>
-                </unzip>
-              </target>
-            </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
-          </execution>
+            <execution>
+              <id>prepare AS container</id>
+              <phase>process-test-resources</phase>
+              <configuration>
+                <target>
+                    <echo>Unzipping JBossAS ${jboss.version} found at ${jboss.zip}</echo>
+                    <unzip src="${jboss.zip}" dest="${jboss.unzip.location}/.." />
+                    <echo>JBossAS ${jboss.version} should now be at: ${jboss.unzip.location}</echo>
+                    <property name="jboss.conf" location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
+                    <echo>Will now add test configuration to JBossAS config file: ${jboss.conf}</echo>
+                    <replace file="${jboss.conf}">
+                      <replacefilter>
+                        <replacetoken>&lt;/drivers></replacetoken>
+                        <replacevalue><![CDATA[
+                    <!-- FOR RHQ TESTING -->
+                    <driver name="postgres" module="org.rhq.postgres">
+                        <xa-datasource-class>org.postgresql.xa.PGXADataSource</xa-datasource-class>
+                    </driver>
+                    <driver name="oracle" module="org.rhq.oracle">
+                        <xa-datasource-class>oracle.jdbc.xa.client.OracleXADataSource</xa-datasource-class>
+                    </driver>
+                </drivers>]]></replacevalue>
+                      </replacefilter>
+                      <replacefilter>
+                        <replacetoken>&lt;/security-domains></replacetoken>
+                        <replacevalue><![CDATA[
+                <!-- FOR RHQ TESTING -->
+                <security-domain name="RHQDSSecurityDomain" cache-type="default">
+                    <authentication>
+                        <login-module code="SecureIdentity" flag="required">
+                            <module-option name="username" value="rhqadmin"/>
+                            <module-option name="password" value="1eeb2f255e832171df8592078de921bc"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>
+            </security-domains>]]></replacevalue>
+                      </replacefilter>
+                    </replace>
+
+                    <property name="jboss.modules.dir" location="${jboss.unzip.location}/modules" />
+                    <echo>Adding JDBC modules to ${jboss.modules.dir} ...</echo>
+                    <copy file="${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar"
+                          toDir="${jboss.modules.dir}/org/rhq/oracle/main" failonerror="false" verbose="true" />
+                    <echo file="${jboss.modules.dir}/org/rhq/oracle/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.1" name="org.rhq.oracle">
+    <resources>
+        <resource-root path="ojdbc6-${ojdbc6.version}.jar"/>
+    </resources>
+    <dependencies>
+        <module name="javax.api"/>
+        <module name="javax.transaction.api"/>
+    </dependencies>
+</module>
+]]></echo>
+                    <copy file="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"
+                          toDir="${jboss.modules.dir}/org/rhq/postgres/main" verbose="true" />
+                    <echo file="${jboss.modules.dir}/org/rhq/postgres/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.1" name="org.rhq.postgres">
+    <resources>
+        <resource-root path="postgresql-${postgresql.version}.jar"/>
+    </resources>
+    <dependencies>
+        <module name="javax.api"/>
+        <module name="javax.transaction.api"/>
+    </dependencies>
+</module>
+]]></echo>
+
+                </target>
+              </configuration>
+              <goals>
+                <goal>run</goal>
+              </goals>
+            </execution>
 
         </executions>
       </plugin>
@@ -865,6 +914,19 @@
         </plugins>
       </build>
     </profile>
+
+    <!-- if you want to test on oracle, this can pull down the oracle jdbc driver that is needed -->
+    <profile>
+        <id>ojdbc-driver</id>
+        <dependencies>
+            <dependency>
+                <groupId>com.oracle</groupId>
+                <artifactId>ojdbc6</artifactId>
+                <version>${ojdbc6.version}</version>
+            </dependency>
+        </dependencies>
+    </profile>
+
 
     <profile>
       <id>dev</id>

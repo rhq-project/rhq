@@ -48,6 +48,7 @@ import org.rhq.core.util.stream.StreamUtil;
 
 @Test(groups = "integration.ejb3")
 public class PluginTest extends AbstractEJB3Test {
+
     public void testUpdate() throws Throwable {
         boolean done = false;
         getTransactionManager().begin();
@@ -112,12 +113,8 @@ public class PluginTest extends AbstractEJB3Test {
             String help = "help-UPDATED";
             PluginDeploymentType deployment = PluginDeploymentType.AGENT;
 
-            em.close();
             getTransactionManager().commit(); // we will be doing an update - needs to be in own tx
             getTransactionManager().begin();
-            em = getEntityManager();
-
-            em.flush(); // gotta get those two persists to flush to the DB
 
             Plugin pluginEntity = em.getReference(Plugin.class, plugin.getId());
             pluginEntity.setName(name);
@@ -139,10 +136,8 @@ public class PluginTest extends AbstractEJB3Test {
                 throw new Exception("Failed to update a plugin that matches [" + plugin + "]", e);
             }
 
-            em.close();
             getTransactionManager().commit(); // must commit now
             getTransactionManager().begin();
-            em = getEntityManager();
 
             plugin = em.find(Plugin.class, id);
             assert plugin != null;
@@ -160,18 +155,14 @@ public class PluginTest extends AbstractEJB3Test {
             // and what we really want to test - ensure the content remained intact after the update
             assert new String(plugin.getContent()).equals(new String(content));
 
-            // clean up - delete our test plugin
-            em.close();
             getTransactionManager().commit();
             getTransactionManager().begin();
-            em = getEntityManager();
             q = em.createNamedQuery(Plugin.QUERY_FIND_ANY_BY_NAME);
             q.setParameter("name", plugin.getName());
             Plugin doomed = (Plugin) q.getSingleResult();
             doomed = em.getReference(Plugin.class, doomed.getId());
             em.remove(doomed);
             assert q.getResultList().size() == 0 : "didn't remove the plugin";
-            em.close();
             getTransactionManager().commit();
             done = true;
         } catch (Throwable t) {
@@ -329,6 +320,7 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.getContent() == null;
 
             query = em.createNamedQuery(Plugin.QUERY_FIND_ALL_INSTALLED);
+            @SuppressWarnings("unchecked")
             List<Plugin> all = query.getResultList();
             boolean got_it = false;
             for (Plugin p : all) {
@@ -374,15 +366,16 @@ public class PluginTest extends AbstractEJB3Test {
         }
     }
 
+
     public void testPersistStreamContent() throws Exception {
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
         boolean done = false;
 
-        getTransactionManager().begin();
+            getTransactionManager().begin();
         EntityManager em = getEntityManager();
-        try {
+            try {
             String name = "PluginTest-testPersist";
             String path = "/test/Persist";
             String displayName = "Plugin Test - testPersist";
@@ -419,13 +412,12 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.getHelp().equals(help);
             assert plugin.getContent() == null;
 
-            em.close();
             getTransactionManager().commit(); // must commit since we are going to use a second connection now
             getTransactionManager().begin();
 
             // now stream the content into the plugin's table
             InitialContext context = getInitialContext();
-            DataSource ds = (DataSource) context.lookup("java:/RHQDS");
+            DataSource ds = (DataSource) context.lookup(JNDI_RHQDS);
             assert ds != null : "Could not get the data source!";
             conn = ds.getConnection();
             ps = conn.prepareStatement("UPDATE " + Plugin.TABLE_NAME + " SET CONTENT = ? WHERE ID = ?");
@@ -440,13 +432,11 @@ public class PluginTest extends AbstractEJB3Test {
 
             getTransactionManager().commit();
             getTransactionManager().begin();
-            em = getEntityManager();
 
             // verify the content made it into the database via hibernate
             plugin = em.find(Plugin.class, plugin.getId());
             assert new String(plugin.getContent()).equals(new String(content));
 
-            em.close();
             getTransactionManager().commit();
             getTransactionManager().begin();
 
@@ -472,14 +462,13 @@ public class PluginTest extends AbstractEJB3Test {
             // clean up - delete our test plugin
             getTransactionManager().commit();
             getTransactionManager().begin();
-            em = getEntityManager();
+
             Query q = em.createNamedQuery(Plugin.QUERY_FIND_ANY_BY_NAME);
             q.setParameter("name", plugin.getName());
             Plugin doomed = (Plugin) q.getSingleResult();
             doomed = em.getReference(Plugin.class, doomed.getId());
             em.remove(doomed);
             assert q.getResultList().size() == 0 : "didn't remove the plugin";
-            em.close();
             getTransactionManager().commit();
             done = true;
 
@@ -495,9 +484,9 @@ public class PluginTest extends AbstractEJB3Test {
             }
             if (!done) {
                 getTransactionManager().rollback();
+                }
             }
         }
-    }
 
     public void testPersistStreamContent2() throws Exception {
         Connection conn = null;
@@ -519,13 +508,12 @@ public class PluginTest extends AbstractEJB3Test {
             em.persist(plugin);
             assert plugin.getId() > 0;
 
-            em.close();
             getTransactionManager().commit(); // must commit since we are going to use a second connection now
             getTransactionManager().begin();
 
             // test that we can get a null content stream
             InitialContext context = getInitialContext();
-            DataSource ds = (DataSource) context.lookup("java:/RHQDS");
+            DataSource ds = (DataSource) context.lookup(JNDI_RHQDS);
             assert ds != null : "Could not get the data source!";
             conn = ds.getConnection();
             ps = conn.prepareStatement("SELECT PATH, CONTENT FROM " + Plugin.TABLE_NAME + " WHERE ID = ?");
@@ -586,7 +574,7 @@ public class PluginTest extends AbstractEJB3Test {
             // clean up - delete our test plugin
             getTransactionManager().commit();
             getTransactionManager().begin();
-            em = getEntityManager();
+
             Query q = em.createNamedQuery(Plugin.QUERY_FIND_ANY_BY_NAME);
             q.setParameter("name", plugin.getName());
             Plugin doomed = (Plugin) q.getSingleResult();

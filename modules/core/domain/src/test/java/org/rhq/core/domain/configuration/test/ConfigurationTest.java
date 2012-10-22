@@ -28,9 +28,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.List;
 
-import javax.persistence.EntityManager;
-import javax.transaction.TransactionManager;
-
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
@@ -45,212 +42,226 @@ import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.shared.TransactionCallback;
 import org.rhq.core.domain.test.AbstractEJB3Test;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 
 public class ConfigurationTest extends AbstractEJB3Test {
+
+
     @Test(groups = "integration.ejb3")
     public void testPersistConfigurationUpdateHistory() throws Exception {
-        EntityManager em = getEntityManager();
-        getTransactionManager().begin();
-        try {
-            ResourceType type = new ResourceType("platform", "", ResourceCategory.PLATFORM, null);
-            em.persist(type);
-            Resource resource = new Resource("key", "name", type);
-            em.persist(resource);
 
-            Configuration c = new Configuration();
-            PropertySimple p1 = new PropertySimple("first", "firstValue");
-            p1.setErrorMessage(ThrowableUtil.getStackAsString(new Exception(
-                "This should be a boolean value - true or false")));
-            c.put(p1);
-            em.persist(c);
+        executeInTransaction(new TransactionCallback() {
+            public void execute() throws Exception {
 
-            AbstractResourceConfigurationUpdate cur = new ResourceConfigurationUpdate(resource, c, "dummy");
-            em.persist(cur);
+                ResourceType type = new ResourceType("platform", "", ResourceCategory.PLATFORM, null);
+                em.persist(type);
+                Resource resource = new Resource("key", "name", type);
+                em.persist(resource);
 
-            AbstractResourceConfigurationUpdate copy = em.find(AbstractResourceConfigurationUpdate.class, cur.getId());
-            assert copy.getStatus().equals(ConfigurationUpdateStatus.INPROGRESS) : copy;
-            assert copy.getSubjectName().equals("dummy") : copy;
-            assert copy.getCreatedTime() > 0 : copy;
-            assert copy.getModifiedTime() > 0 : copy;
-            assert copy.getErrorMessage() == null : copy;
-            assert copy.getConfiguration().getSimple("first") != null : copy;
-            assert copy.getConfiguration().getSimple("first").getErrorMessage().indexOf(
-                "This should be a boolean value - true or false") > -1 : copy;
-            assert copy.getConfiguration().getSimple("first").getStringValue().equals("firstValue") : copy;
+                Configuration c = new Configuration();
+                PropertySimple p1 = new PropertySimple("first", "firstValue");
+                p1.setErrorMessage(ThrowableUtil.getStackAsString(new Exception(
+                    "This should be a boolean value - true or false")));
+                c.put(p1);
+                em.persist(c);
 
-            // let's pretend we failed the update
-            cur.setErrorMessage(ThrowableUtil.getStackAsString((new Exception("update error here"))));
-            assert copy.getStatus().equals(ConfigurationUpdateStatus.FAILURE) : copy; // setting the error message also sets status to failure
+                AbstractResourceConfigurationUpdate cur = new ResourceConfigurationUpdate(resource, c, "dummy");
+                em.persist(cur);
 
-            copy = em.find(AbstractResourceConfigurationUpdate.class, cur.getId());
-            assert copy.getStatus().equals(ConfigurationUpdateStatus.FAILURE) : copy;
-            assert copy.getErrorMessage().indexOf("update error here") > -1 : copy;
-            assert copy.getConfiguration().getSimple("first") != null : copy;
-            assert copy.getConfiguration().getSimple("first").getErrorMessage().indexOf(
-                "This should be a boolean value - true or false") > -1 : copy;
-            assert copy.getConfiguration().getSimple("first").getStringValue().equals("firstValue") : copy;
-        } finally {
-            getTransactionManager().rollback();
-        }
+                AbstractResourceConfigurationUpdate copy = em.find(AbstractResourceConfigurationUpdate.class,
+                    cur.getId());
+                assert copy.getStatus().equals(ConfigurationUpdateStatus.INPROGRESS) : copy;
+                assert copy.getSubjectName().equals("dummy") : copy;
+                assert copy.getCreatedTime() > 0 : copy;
+                assert copy.getModifiedTime() > 0 : copy;
+                assert copy.getErrorMessage() == null : copy;
+                assert copy.getConfiguration().getSimple("first") != null : copy;
+                assert copy.getConfiguration().getSimple("first").getErrorMessage()
+                    .indexOf("This should be a boolean value - true or false") > -1 : copy;
+                assert copy.getConfiguration().getSimple("first").getStringValue().equals("firstValue") : copy;
+
+                // let's pretend we failed the update
+                cur.setErrorMessage(ThrowableUtil.getStackAsString((new Exception("update error here"))));
+                assert copy.getStatus().equals(ConfigurationUpdateStatus.FAILURE) : copy; // setting the error message also sets status to failure
+
+                copy = em.find(AbstractResourceConfigurationUpdate.class, cur.getId());
+                assert copy.getStatus().equals(ConfigurationUpdateStatus.FAILURE) : copy;
+                assert copy.getErrorMessage().indexOf("update error here") > -1 : copy;
+                assert copy.getConfiguration().getSimple("first") != null : copy;
+                assert copy.getConfiguration().getSimple("first").getErrorMessage()
+                    .indexOf("This should be a boolean value - true or false") > -1 : copy;
+                assert copy.getConfiguration().getSimple("first").getStringValue().equals("firstValue") : copy;
+            }
+        });
     }
 
     @Test(groups = "integration.ejb3")
     public void testPersistConfiguration() throws Exception {
-        EntityManager em = getEntityManager();
-        getTransactionManager().begin();
-        try {
-            Configuration c = new Configuration();
-            PropertySimple p1 = new PropertySimple("first", "firstValue");
-            p1.setErrorMessage(ThrowableUtil.getStackAsString(new Exception(
-                "This should be a boolean value - true or false")));
-            c.put(p1);
-            em.persist(c);
-            Configuration copy = em.find(Configuration.class, c.getId());
-            assert c.equals(copy);
-            assert copy.getSimple("first") != null;
-            assert copy.getSimple("first").getErrorMessage().indexOf("This should be a boolean value - true or false") > -1;
-            assert copy.getSimple("first").getStringValue().equals("firstValue");
-        } finally {
-            getTransactionManager().rollback();
-        }
+
+        executeInTransaction(new TransactionCallback() {
+            public void execute() throws Exception {
+
+                Configuration c = new Configuration();
+                PropertySimple p1 = new PropertySimple("first", "firstValue");
+                p1.setErrorMessage(ThrowableUtil.getStackAsString(new Exception(
+                    "This should be a boolean value - true or false")));
+                c.put(p1);
+                em.persist(c);
+                Configuration copy = em.find(Configuration.class, c.getId());
+                assert c.equals(copy);
+                assert copy.getSimple("first") != null;
+                assert copy.getSimple("first").getErrorMessage()
+                    .indexOf("This should be a boolean value - true or false") > -1;
+                assert copy.getSimple("first").getStringValue().equals("firstValue");
+            }
+        });
     }
 
     @Test(groups = "integration.ejb3")
     public void testConfigurationSerialization() throws Exception {
-        Configuration c = new Configuration();
-        c.setId(1);
-        c.setNotes("hi");
-        c.setVersion(1);
 
-        PropertySimple p1 = new PropertySimple("a", true);
-        c.put(p1);
+        executeInTransaction(new TransactionCallback() {
+            public void execute() throws Exception {
 
-        PropertyMap p2 = new PropertyMap("b");
-        p2.put(new PropertySimple("b1", "alpha"));
-        p2.put(new PropertySimple("b2", "beta"));
-        c.put(p2);
+                Configuration c = new Configuration();
+                c.setId(1);
+                c.setNotes("hi");
+                c.setVersion(1);
 
-        PropertyMap p3 = new PropertyMap("c");
-        c.put(p3);
+                PropertySimple p1 = new PropertySimple("a", true);
+                c.put(p1);
 
-        PropertyList p4 = new PropertyList("d", new PropertySimple("d1", "alpha"));
-        c.put(p4);
+                PropertyMap p2 = new PropertyMap("b");
+                p2.put(new PropertySimple("b1", "alpha"));
+                p2.put(new PropertySimple("b2", "beta"));
+                c.put(p2);
 
-        PropertyList p5 = new PropertyList("e");
-        c.put(p5);
+                PropertyMap p3 = new PropertyMap("c");
+                c.put(p3);
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(baos);
-        oos.writeObject(c);
+                PropertyList p4 = new PropertyList("d", new PropertySimple("d1", "alpha"));
+                c.put(p4);
 
-        ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-        ObjectInputStream ois = new ObjectInputStream(bais);
+                PropertyList p5 = new PropertyList("e");
+                c.put(p5);
 
-        Configuration c1 = (Configuration) ois.readObject();
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ObjectOutputStream oos = new ObjectOutputStream(baos);
+                oos.writeObject(c);
 
-        assert c.getNotes().equals(c1.getNotes());
-        assert c1.getNames().containsAll(c.getNames());
-        assert c1.getMap("c").getMap().isEmpty();
+                ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+                ObjectInputStream ois = new ObjectInputStream(bais);
 
-        System.out.println("Serialized version of config was " + baos.size() + " bytes");
+                Configuration c1 = (Configuration) ois.readObject();
+
+                assert c.getNotes().equals(c1.getNotes());
+                assert c1.getNames().containsAll(c.getNames());
+                assert c1.getMap("c").getMap().isEmpty();
+
+                System.out.println("Serialized version of config was " + baos.size() + " bytes");
+            }
+        });
     }
 
     @Test(groups = "integration.ejb3")
     public void testStoreConfiguration() throws Exception {
-        Configuration configuration = new Configuration();
-        configuration.setNotes("Testing");
-        configuration.setVersion(1);
 
-        configuration.put(new PropertySimple("Integer", 3));
+        executeInTransaction(new TransactionCallback() {
+            public void execute() throws Exception {
 
-        configuration.put(new PropertySimple("String", "Hello, World"));
+                Configuration configuration = new Configuration();
+                configuration.setNotes("Testing");
+                configuration.setVersion(1);
 
-        configuration.put(new PropertyList("EmptyList"));
-        configuration.put(new PropertyList("MyList", new PropertySimple("letter", "a"), new PropertySimple("letter",
-            "b"), new PropertySimple("letter", "c")));
+                configuration.put(new PropertySimple("Integer", 3));
 
-        PropertyMap myMap = new PropertyMap("MyMap");
-        myMap.put(new PropertySimple("Alpha", "Uno"));
-        myMap.put(new PropertySimple("Beta", "Dose"));
-        myMap.put(new PropertyList("ListInAMap", new PropertySimple("foo", Math.PI), new PropertySimple("foo", Math.E),
-            new PropertySimple("foo", Double.MAX_VALUE), new PropertySimple("foo", Double.MIN_VALUE)));
-        configuration.put(myMap);
+                configuration.put(new PropertySimple("String", "Hello, World"));
 
-        TransactionManager transactionManager = getTransactionManager();
-        transactionManager.begin();
+                configuration.put(new PropertyList("EmptyList"));
+                configuration.put(new PropertyList("MyList", new PropertySimple("letter", "a"), new PropertySimple(
+                    "letter", "b"), new PropertySimple("letter", "c")));
 
-        EntityManager em = getEntityManager();
-        em.persist(configuration);
-        em.flush();
-        em.remove(configuration); // added by ips (03/29/07)
-        transactionManager.commit();
+                PropertyMap myMap = new PropertyMap("MyMap");
+                myMap.put(new PropertySimple("Alpha", "Uno"));
+                myMap.put(new PropertySimple("Beta", "Dose"));
+                myMap.put(new PropertyList("ListInAMap", new PropertySimple("foo", Math.PI), new PropertySimple("foo",
+                    Math.E), new PropertySimple("foo", Double.MAX_VALUE), new PropertySimple("foo", Double.MIN_VALUE)));
+                configuration.put(myMap);
+
+                em.persist(configuration);
+                em.flush();
+                em.remove(configuration); // added by ips (03/29/07)
+            }
+        });
     }
 
     @Test(groups = "integration.ejb3")
     public void testReadConfigurations() throws Exception {
-        TransactionManager transactionManager = getTransactionManager();
-        transactionManager.begin();
-        EntityManager em = getEntityManager();
-        List<Configuration> configurations = em.createQuery("Select c from Configuration c").setMaxResults(5)
-            .getResultList();
-        for (Configuration configuration : configurations) {
-            System.out.println("Configuration Found: " + configuration.getNotes());
 
-            for (Property prop : configuration.getProperties()) {
-                prettyPrintProperty(prop, 1);
+        executeInTransaction(new TransactionCallback() {
+            public void execute() throws Exception {
+
+                @SuppressWarnings("unchecked")
+                List<Configuration> configurations = em.createQuery("Select c from Configuration c").setMaxResults(5)
+                    .getResultList();
+                for (Configuration configuration : configurations) {
+                    System.out.println("Configuration Found: " + configuration.getNotes());
+
+                    for (Property prop : configuration.getProperties()) {
+                        prettyPrintProperty(prop, 1);
+                    }
+                }
             }
-        }
-
-        transactionManager.commit();
+        });
     }
 
     @Test(groups = "integration.ejb3")
     public void verifyPersistSavesRawConfiguration() throws Exception {
-        EntityManager entityMgr = getEntityManager();
-        getTransactionManager().begin();
 
-        try {
-            RawConfiguration rawConfig = createRawConfiguration();
+        executeInTransaction(new TransactionCallback() {
+            public void execute() throws Exception {
 
-            Configuration config = new Configuration();
-            config.addRawConfiguration(rawConfig);
+                RawConfiguration rawConfig = createRawConfiguration();
 
-            entityMgr.persist(config);
+                Configuration config = new Configuration();
+                config.addRawConfiguration(rawConfig);
 
-            assertTrue("Failed to cascade save to " + RawConfiguration.class.getSimpleName(), rawConfig.getId() != 0);
-        } finally {
-            getTransactionManager().rollback();
-        }
+                em.persist(config);
+
+                assertTrue("Failed to cascade save to " + RawConfiguration.class.getSimpleName(),
+                    rawConfig.getId() != 0);
+            }
+        });
+
     }
 
     @Test(groups = "integration.ejb3")
     public void verifyOrphanedRawConfigurationDeletedFromDatabase() throws Exception {
-        getTransactionManager().begin();
-        EntityManager entityMgr = getEntityManager();
 
-        try {
-            RawConfiguration rawConfiguration = createRawConfiguration();
+        executeInTransaction(new TransactionCallback() {
+            public void execute() throws Exception {
 
-            Configuration config = new Configuration();
-            config.addRawConfiguration(rawConfiguration);
+                RawConfiguration rawConfiguration = createRawConfiguration();
 
-            entityMgr.persist(config);
+                Configuration config = new Configuration();
+                config.addRawConfiguration(rawConfiguration);
 
-            config.removeRawConfiguration(rawConfiguration);
+                em.persist(config);
 
-            config = entityMgr.merge(config);
+                config.removeRawConfiguration(rawConfiguration);
 
-            entityMgr.flush();
-            entityMgr.clear();
+                config = em.merge(config);
 
-            assertNull("Failed to remove the orphaned " + RawConfiguration.class.getSimpleName()
-                + " from the persistence context.", entityMgr.find(RawConfiguration.class, rawConfiguration.getId()));
-        } finally {
-            getTransactionManager().rollback();
-        }
+                em.flush();
+                em.clear();
+
+                assertNull("Failed to remove the orphaned " + RawConfiguration.class.getSimpleName()
+                    + " from the persistence context.", em.find(RawConfiguration.class, rawConfiguration.getId()));
+            }
+        });
     }
 
     RawConfiguration createRawConfiguration() {

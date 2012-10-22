@@ -56,9 +56,24 @@ public class WebRuntimeComponent extends BaseComponent<BaseComponent<?>> {
         }
 
         if (logFile != null) {
+            if (log.isDebugEnabled()) {
+                if (logFile.isFile()) {
+                    log.debug("[" + resourceContext.getResourceKey() + "] is using the response time log file ["
+                        + logFile + "]");
+                } else {
+                    log.debug("The response time log file [" + logFile + "] for ["
+                        + resourceContext.getResourceKey() + "] does not exist yet.");
+                }
+            }
+
             this.responseTimeLogParser = new ResponseTimeLogParser(logFile);
             this.responseTimeLogParser.setExcludes(responseTimeConfig.getExcludes());
             this.responseTimeLogParser.setTransforms(responseTimeConfig.getTransforms());
+        } else {
+            if (log.isDebugEnabled()) {
+                log.debug("Cannot monitor response time for [" + resourceContext.getResourceKey()
+                    + "] - unknown log file location");
+            }
         }
     }
 
@@ -108,9 +123,37 @@ public class WebRuntimeComponent extends BaseComponent<BaseComponent<?>> {
                 if (virtualHost != null) {
                     String contextRoot = readAttribute("context-root");
                     if (contextRoot != null) {
-                        // e.g. "192.168.1.100_foo_rt.log" for foo.war deployed to 192.168.1.100 vhost
-                        String logFileName = String.format("%s_%s_rt.log", virtualHost, contextRoot);
+                        // RtFilter strips the initial '/' and replaces all other '/' with '_'.
+                        // If the context is the top root context ("/"), then it uses "ROOT";
+                        // see org.rhq.helpers.rtfilter.util.ServletUtility.getContextRootFromSpec25
+                        if (contextRoot.startsWith("/")) {
+                            if (contextRoot.equals("/")) {
+                                contextRoot = "ROOT";
+                            } else {
+                                contextRoot = contextRoot.substring(1);
+                            }
+                        }
+                        contextRoot = contextRoot.replace('/', '_'); // for context roots like foo/bar
+
+                        // RtFilter doesn't prefix the filename with a vhost if there is none or its the default
+                        if (virtualHost.equals("default-host")) {
+                            virtualHost = "";
+                        } else {
+                            virtualHost = virtualHost + "_";
+                        }
+
+                        // RtFilter puts the log files in the rt subdirectory under the log directory.
+                        // e.g. "rt/192.168.1.100_foo_rt.log" for foo.war deployed to 192.168.1.100 vhost
+                        String logFileName = String.format("rt/%s%s_rt.log", virtualHost, contextRoot);
                         logFile = new File(logDir, logFileName);
+                    } else {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Unknown context root for: " + getAddress());
+                        }
+                    }
+                } else {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Unknown virtual host for: " + getAddress());
                     }
                 }
             } catch (Exception e) {

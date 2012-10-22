@@ -181,6 +181,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         pluginConfig.setSimpleValue("domainHost", domainHost);
 
         File logDir = getLogDir(process, commandLine, baseDir);
+        serverPluginConfig.setLogDir(logDir);
 
         File logFile = getLogFile(logDir);
         initLogEventSourcesConfigProp(logFile.getPath(), pluginConfig);

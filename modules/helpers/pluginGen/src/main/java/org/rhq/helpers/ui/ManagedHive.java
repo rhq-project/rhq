@@ -116,6 +116,10 @@ import org.rhq.helpers.ui.RemoteApi.Protocol;
 public class ManagedHive extends JFrame {
 
     static Logger LOG = Logger.getLogger(ManagedHive.class.getName());
+    private static String REMOTE_PROTOCOL = "--remote-protocol";
+    private static String REMOTE_PROTOCOL_PORT = "--remote-port";
+    private static String HELP = "--help";
+    private static String HELP1 = "-h";
     /******************* Startup/initialization & Components *************/
     /** Simple command line launch mechanism
      * @param args
@@ -123,9 +127,47 @@ public class ManagedHive extends JFrame {
     public static void main(String[] args) {
         //allow way to switch between protocols at server startup
         if (args.length > 0) {
-            String remoteApiProtocoal = args[0];
-            if (remoteApiProtocoal.trim().equalsIgnoreCase("HTTP")) {
-                ManagedHive.defaultProtocol = Protocol.HTTP_JSON;
+            for (int i = 0; i < args.length; i++) {
+                String argument = args[i];
+                argument = argument.toLowerCase();
+                //determine remote protocol type
+                if (argument.startsWith(REMOTE_PROTOCOL)) {
+                    //default to JSON over socket
+                    ManagedHive.defaultProtocol = Protocol.JSON;
+                    //split on = to get value
+                    String[] selection = argument.split("=");
+                    if ((selection != null) && (selection.length == 2) && (selection[1].equalsIgnoreCase("HTTP"))) {
+                        ManagedHive.defaultProtocol = Protocol.HTTP_JSON;
+                    }
+                }
+                //determine remote protocol port. This is optional and first available will be 
+                //selected if the requested port is not actually available.
+                if (argument.startsWith(REMOTE_PROTOCOL_PORT)) {
+                    //already defaulted to 9876
+                    //split on = to get value
+                    String[] selection = argument.split("=");
+                    if ((selection != null) && (selection.length == 2)) {
+                        String value = selection[1];
+                        int valueInt = -1;
+                        try {
+                            valueInt = Integer.parseInt(value);
+                            if ((valueInt > -1) && (valueInt < 66000)) {
+                                ManagedHive.defaultRemoteApiPort = valueInt;
+                            }//otherwise ignore
+                        } catch (NumberFormatException nfe) {
+                        }
+                    }
+                }
+
+                if ((argument.startsWith(HELP) || argument.startsWith(HELP1))) {
+                    String acceptableInput = "Ex. java -jar ManagedHive.jar -Drhq.virtual.hive "
+                        + "--remote-protocol=http --remote-port=9876 \n"
+                        + "Ex. java -jar ManagedHive.jar -h \t(displays acceptable input and exits)\n"
+                        + "Ex. java -jar ManagedHive.jar --help \t(displays acceptable input and exits)\n"
+                        + "Ex. java -jar ManagedHive.jar \t\t(no arguments, runs with defaults. No discovery differentiator)";
+                    System.out.println(acceptableInput);
+                    System.exit(0);//bail
+                }
             }
         }
         new ManagedHive();

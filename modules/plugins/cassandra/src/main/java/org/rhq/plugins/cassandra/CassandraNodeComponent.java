@@ -84,18 +84,18 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
 
         if (name.equals("shutdown")) {
-            return shutdown(parameters);
+            return shutdownNode();
         } else if (name.equals("start")) {
-            return start(parameters);
+            return startNode();
         } else if (name.equals("restart")) {
-            return restart(parameters);
+            return restartNode();
         }
 
         return null;
     }
 
     @SuppressWarnings("rawtypes")
-    private OperationResult shutdown(Configuration params) {
+    protected OperationResult shutdownNode() {
         ResourceContext<?> context = getResourceContext();
 
         if (log.isInfoEnabled()) {
@@ -137,7 +137,7 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         }
     }
 
-    private OperationResult start(Configuration params) {
+    protected OperationResult startNode() {
         ResourceContext<?> context = getResourceContext();
         Configuration pluginConfig = context.getPluginConfiguration();
         String baseDir = pluginConfig.getSimpleValue("baseDir");
@@ -157,11 +157,11 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         }
     }
 
-    private OperationResult restart(Configuration params) {
-        OperationResult result = shutdown(params);
+    protected OperationResult restartNode() {
+        OperationResult result = shutdownNode();
 
         if (result.getErrorMessage() == null) {
-            result = start(params);
+            result = startNode();
         }
 
         return result;

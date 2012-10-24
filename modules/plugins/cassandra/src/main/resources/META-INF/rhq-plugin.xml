@@ -28,6 +28,8 @@
 
     <subcategories>
       <subcategory name="Client Request Metrics" description="Client Request Metrics"/>
+      <subcategory name="Server Request Metrics" description="Server Request Metrics"/>
+      <subcategory name="Internal Server Metrics" description="Server Request Metrics"/>
     </subcategories>
 
     <plugin-configuration>
@@ -181,8 +183,8 @@
       </plugin-configuration>
 
       <metric property="TotalCommitLogSize" measurementType="trendsup" displayType="summary" description="Size of all commit log segments"/>
-      <metric property="PendingTasks" measurementType="dynamic" displayType="detail" description="Number of tasks waiting to be executed"/>
-      <metric property="CompletedTasks" measurementType="trendsup" displayType="detail" description="Number of completed tasks"/>
+      <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Number of tasks waiting to be executed"/>
+      <metric property="CompletedTasks" measurementType="trendsup" displayType="summary" description="Number of completed tasks"/>
     </service>
 
 
@@ -260,7 +262,7 @@
       </operation>
 
       <metric property="CompletedTasks" measurementType="trendsup" displayType="summary" description="Number of completed compactions since server [re]start"/>
-      <metric property="PendingTasks" measurementType="dynamic" displayType="detail" description="Number of tasks waiting to be executed"/>
+      <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Number of tasks waiting to be executed"/>
       <metric property="TotalBytesCompacted" measurementType="trendsup" displayType="detail" description="Total number of bytes compacted since server [re]start"/>
       <metric property="TotalCompactionsCompleted" measurementType="trendsup" displayType="detail" description="Total number of compactions since server [re]start"/>
     </service>
@@ -280,17 +282,17 @@
       <operation name="invalidateKeyCache" description="Invalidate the key cache."/>
       <operation name="invalidateRowCache" description="Invalidate the row cache."/>
 
-      <metric property="KeyCacheHits" measurementType="dynamic" displayType="detail" description="Number of key cache hits"/>
-      <metric property="RowCacheHists" measurementType="dynamic" displayType="detail" description="Number of row cache hits"/>
+      <metric property="KeyCacheHits" measurementType="dynamic" displayType="summary" description="Number of key cache hits"/>
+      <metric property="RowCacheHists" measurementType="dynamic" displayType="summary" description="Number of row cache hits"/>
 
-      <metric property="KeyCacheRequests" measurementType="dynamic" displayType="detail" description="Number of key cache requests"/>
-      <metric property="RowCacheRequests" measurementType="dynamic" displayType="detail" description="Number of row cache requests"/>
+      <metric property="KeyCacheRequests" measurementType="dynamic" displayType="summary" description="Number of key cache requests"/>
+      <metric property="RowCacheRequests" measurementType="dynamic" displayType="summary" description="Number of row cache requests"/>
 
-      <metric property="KeyCacheRecentHitRate" measurementType="dynamic" displayType="detail" description="Recent key cache hit rate"/>
-      <metric property="RowCacheRecentHitRate" measurementType="dynamic" displayType="detail" description="Recent row cache hit rate"/>
+      <metric property="KeyCacheRecentHitRate" measurementType="dynamic" displayType="summary" description="Recent key cache hit rate"/>
+      <metric property="RowCacheRecentHitRate" measurementType="dynamic" displayType="summary" description="Recent row cache hit rate"/>
 
-      <metric property="KeyCacheCapacityInBytes" measurementType="dynamic" displayType="detail" description="Key cache capacity in bytes"/>
-      <metric property="RowCacheCapacityInBytes" measurementType="dynamic" displayType="detail" description="Row cache capacity in bytes"/>
+      <metric property="KeyCacheCapacityInBytes" measurementType="dynamic" displayType="summary" description="Key cache capacity in bytes"/>
+      <metric property="RowCacheCapacityInBytes" measurementType="dynamic" displayType="summary" description="Row cache capacity in bytes"/>
 
       <metric property="KeyCacheSize" measurementType="dynamic" displayType="detail" description="Key cache size"/>
       <metric property="RowCacheSize" measurementType="dynamic" displayType="detail" description="Row cache size"/>
@@ -344,6 +346,9 @@
             <c:simple-property name="strategyOptionValue" type="string" readOnly="true"/>
           </c:map-property>
         </c:list-property>
+        <c:list-property name="keyspaceFileLocations" readOnly="true" description="List of data file locations">
+          <c:simple-property name="directory" type="string" readOnly="true"/>
+        </c:list-property>
       </resource-configuration>
 
       <service name="ColumnFamily"
@@ -393,24 +398,34 @@
             <c:simple-property name="operationResult" description="Filenames that contain the given key on this node."/>
           </results>
         </operation>
+        <operation name="restoreSnapshot" description="Restore the column family from a previously taken snapshot.">
+          <parameters>
+            <c:simple-property name="snapshotName" required="true" type="string" description="Snapshot Name">
+              <c:option-source target="configuration" expression="snapshots:type=ColumnFamily"/>
+            </c:simple-property>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" description="Filenames that contain the given key on this node."/>
+          </results>
+        </operation>
 
-        <metric property="CompressionRatio" measurementType="dynamic" displayType="detail" description="Compression Ratio"/>
-        <metric property="LiveDiskSpaceUsed" displayName="Live Disk Space Used" measurementType="dynamic" displayType="detail" description="Disk space used by SSTables belonging to this CF"/>
-        <metric property="LiveSSTableCount" displayName="Live SS Table Count" measurementType="dynamic" displayType="detail" description="Number of SSTables on disk for this CF"/>
-        <metric property="MaxRowSize" measurementType="dynamic" displayType="detail" description="Size of the largest compacted row"/>
-        <metric property="MeanRowSize" measurementType="dynamic" displayType="detail" description="Means size of the compacted rows"/>
-        <metric property="MemtableColumnsCount" displayName="Memtable Columns Count" measurementType="dynamic" displayType="detail" description="Total number of columns present in the memtable."/>
+        <metric property="CompressionRatio" measurementType="dynamic" displayType="summary" description="Compression Ratio"/>
+        <metric property="LiveDiskSpaceUsed" displayName="Live Disk Space Used" measurementType="dynamic" displayType="summary" description="Disk space used by SSTables belonging to this CF"/>
+        <metric property="LiveSSTableCount" displayName="Live SS Table Count" measurementType="dynamic" displayType="summary" description="Number of SSTables on disk for this CF"/>
+        <metric property="MaxRowSize" measurementType="dynamic" displayType="summary" description="Size of the largest compacted row"/>
+        <metric property="MeanRowSize" measurementType="dynamic" displayType="summary" description="Means size of the compacted rows"/>
+        <metric property="MemtableColumnsCount" displayName="Memtable Columns Count" measurementType="dynamic" displayType="summary" description="Total number of columns present in the memtable."/>
         <metric property="MemtableDataSize" displayName="Memtable Data Size" measurementType="dynamic" displayType="detail" description="Total amount of data stored in the memtable, including column related overhead."/>
-        <metric property="MemtableSwitchCount" displayName="Memtable Switch Count" measurementType="dynamic" displayType="detail" description="Number of times that a flush has resulted in the memtable being switched out."/>
-        <metric property="MinRowSize" measurementType="dynamic" displayType="detail" description="Size of the smallest compacted row"/>
-        <metric property="PendingTasks" measurementType="dynamic" displayType="detail" description="Estimated number of tasks pending for this column family"/>
+        <metric property="MemtableSwitchCount" displayName="Memtable Switch Count" measurementType="dynamic" displayType="summary" description="Number of times that a flush has resulted in the memtable being switched out."/>
+        <metric property="MinRowSize" measurementType="dynamic" displayType="summary" description="Size of the smallest compacted row"/>
+        <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Estimated number of tasks pending for this column family"/>
         <metric property="ReadCount" displayName="Read Count"  measurementType="trendsup" displayType="summary" description="Number of read operations since execution start"/>
         <metric property="RecentReadLatencyMicros" displayName="Recent Read Latency (in micro seconds)" measurementType="trendsup" displayType="detail" description="Latency of read operations since this metric was last sampled"/>
         <metric property="RecentWriteLatencyMicros" displayName="Recent Write Latency (in micro seconds)" measurementType="trendsup" displayType="detail" description="Latency of write operations since this metric was last sampled"/>
-        <metric property="TotalDiskSpaceUsed" measurementType="dynamic" displayType="summary" description="Total disk space used by SSTables belonging to this CF, including obsolete ones waiting to be GC'd"/>
+        <metric property="TotalDiskSpaceUsed" measurementType="dynamic" displayType="detail" description="Total disk space used by SSTables belonging to this CF, including obsolete ones waiting to be GC'd"/>
         <metric property="TotalReadLatencyMicros" displayName="Total Read Latency (in micro seconds)" measurementType="trendsup" displayType="detail" description="Latency of read operations since execution start"/>
         <metric property="TotalWriteLatencyMicros" displayName="Total Write Latency (in micro seconds)" measurementType="trendsup" displayType="detail" description="Latency of write operations since execution start"/>
-        <metric property="UnleveledSSTables" measurementType="dynamic" displayType="detail" description="Number of SSTables in L0. Always return 0 if Leveled compaction is not enabled."/>
+        <metric property="UnleveledSSTables" measurementType="dynamic" displayType="summary" description="Number of SSTables in L0. Always return 0 if Leveled compaction is not enabled."/>
         <metric property="WriteCount" displayName="Write Count" measurementType="trendsup" displayType="summary" description="Number of write operations since execution start"/>
 
         <resource-configuration>
@@ -422,8 +437,99 @@
           <c:simple-property name="CompressionParameters" type="string" required="true" description="Compression parameters"/>
           <c:simple-property name="MinimumCompactionThreshold" type="integer" required="true" description="Minimum number of sstables in queue before compaction kicks off."/>
           <c:simple-property name="MaximumCompactionThreshold" type="integer" required="true" description="Maximum number of sstables in queue before compaction kicks off."/>
+          <c:list-property name="snapshots" readOnly="true" required="false">
+            <c:map-property name="snapshot" readOnly="true">
+              <c:simple-property name="name" readOnly="true"/>
+              <c:simple-property name="folder" readOnly="true" description="Snapshot Folder"/>
+            </c:map-property>
+          </c:list-property>
         </resource-configuration>
       </service>
+    </service>
+
+
+    <service name="ConfigurableStages"
+             discovery="org.rhq.plugins.cassandra.MetricsDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Server Request Metrics">
+
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string"
+                           default="org.apache.cassandra.request:type=MutationStage|org.apache.cassandra.request:type=ReadStage|org.apache.cassandra.request:type=ReplicateOnWriteStage"/>
+        <c:simple-property name="nameMarker" readOnly="true" type="string" default="type=" />
+      </plugin-configuration>
+
+      <metric property="ActiveCount" measurementType="dynamic" displayType="summary" description="Active Count"/>
+      <metric property="CurrentlyBlockedTasks" measurementType="dynamic" displayType="summary" description="Currently Blocked Tasks"/>
+      <metric property="CompletedTasks" measurementType="dynamic" displayType="summary" description="Completed Tasks"/>
+      <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Pending Tasks"/>
+      <metric property="TotalBlockedTasks" measurementType="dynamic" displayType="summary" description="Total Blocked Tasks"/>
+
+      <resource-configuration>
+          <c:simple-property name="CorePoolSize" type="integer" required="true" description="Core Pool Size."/>
+      </resource-configuration>
+    </service>
+
+    <service name="EnabledStages"
+             discovery="org.rhq.plugins.cassandra.MetricsDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Server Request Metrics">
+
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string"
+                           default="org.apache.cassandra.request:type=ReadRepairStage|org.apache.cassandra.request:type=RequestResponseStage"/>
+        <c:simple-property name="nameMarker" readOnly="true" type="string" default="type=" />
+      </plugin-configuration>
+
+      <metric property="ActiveCount" measurementType="dynamic" displayType="summary" description="Active Count"/>
+      <metric property="CurrentlyBlockedTasks" measurementType="dynamic" displayType="summary" description="Currently Blocked Tasks"/>
+      <metric property="CompletedTasks" measurementType="dynamic" displayType="summary" description="Completed Tasks"/>
+      <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Pending Tasks"/>
+      <metric property="TotalBlockedTasks" measurementType="dynamic" displayType="summary" description="Total Blocked Tasks"/>
+    </service>
+
+     <service name="ConfigurableInternalServerMetrics"
+             discovery="org.rhq.plugins.cassandra.MetricsDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Internal Server Metrics">
+
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string"
+                           default="org.apache.cassandra.internal:type=AntiEntropySessions"/>
+        <c:simple-property name="nameMarker" readOnly="true" type="string" default="type=" />
+      </plugin-configuration>
+
+      <metric property="ActiveCount" measurementType="dynamic" displayType="summary" description="Active Count"/>
+      <metric property="CurrentlyBlockedTasks" measurementType="dynamic" displayType="summary" description="Currently Blocked Tasks"/>
+      <metric property="CompletedTasks" measurementType="dynamic" displayType="summary" description="Completed Tasks"/>
+      <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Pending Tasks"/>
+      <metric property="TotalBlockedTasks" measurementType="dynamic" displayType="summary" description="Total Blocked Tasks"/>
+
+      <resource-configuration>
+          <c:simple-property name="CorePoolSize" type="integer" required="true" description="Core Pool Size."/>
+      </resource-configuration>
+    </service>
+
+    <service name="EnabledInternalServerMetrics"
+             discovery="org.rhq.plugins.cassandra.MetricsDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Internal Server Metrics">
+
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string"
+                           default="org.apache.cassandra.internal:type=AntiEntropyStage|org.apache.cassandra.internal:type=FlushWriter|org.apache.cassandra.internal:type=GossipStage|org.apache.cassandra.internal:type=HintedHandoff|org.apache.cassandra.internal:type=InternalResponseStage|org.apache.cassandra.internal:type=MemtablePostFlusher|org.apache.cassandra.internal:type=MigrationStage|org.apache.cassandra.internal:type=MiscStage|org.apache.cassandra.internal:type=StreamStage|org.apache.cassandra.internal:type=commitlog_archiver"/>
+        <c:simple-property name="nameMarker" readOnly="true" type="string" default="type=" />
+      </plugin-configuration>
+
+      <metric property="ActiveCount" measurementType="dynamic" displayType="summary" description="Active Count"/>
+      <metric property="CurrentlyBlockedTasks" measurementType="dynamic" displayType="summary" description="Currently Blocked Tasks"/>
+      <metric property="CompletedTasks" measurementType="dynamic" displayType="summary" description="Completed Tasks"/>
+      <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Pending Tasks"/>
+      <metric property="TotalBlockedTasks" measurementType="dynamic" displayType="summary" description="Total Blocked Tasks"/>
     </service>
 
   </server>

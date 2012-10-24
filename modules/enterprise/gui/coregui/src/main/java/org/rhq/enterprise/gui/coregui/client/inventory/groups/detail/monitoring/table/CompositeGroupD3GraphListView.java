@@ -18,8 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -33,9 +33,9 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
@@ -44,12 +44,12 @@ import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * This composite graph view has different graph types and data structures for
  * graphing multiple individual resources of the composite resource as
- * multiline graph
+ * multi-line graph. Single Metric Multiple Resource graph.
+ *
  * @author  Mike Thompson
  */
 public class CompositeGroupD3GraphListView extends LocatableVLayout
@@ -60,13 +60,15 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
     private int groupId;
     private int definitionId;
 
+
     private MeasurementDefinition definition;
 
     private UserPreferencesMeasurementRangeEditor measurementRangeEditor;
+
     /**
-     * multiData is a list of a list of Measurement data for multiple metrics.
+     * measurementForEachResource is a list of a list of single Measurement data for multiple resources.
      */
-    private List<List<MeasurementDataNumericHighLowComposite>> multiData;
+    private List<List<MeasurementDataNumericHighLowComposite>> measurementForEachResource;
 
 
 
@@ -74,127 +76,110 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
         super(locatorId);
         this.groupId = groupId;
         setDefinitionId(defId);
+        measurementForEachResource = new ArrayList<List<MeasurementDataNumericHighLowComposite>>();
         measurementRangeEditor = new UserPreferencesMeasurementRangeEditor(this.getLocatorId());
         setHeight100();
         setWidth100();
     }
 
     public void populateData() {
-        Log.debug(" ** populateData");
         ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
 
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterId(groupId);
         criteria.fetchResourceType(true);
         criteria.addFilterVisible(false);
-        groupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
+        criteria.addFilterPrivate(true);
+        criteria.fetchExplicitResources(true);
+
+        groupService.findResourceGroupCompositesByCriteria(criteria, new AsyncCallback<PageList<ResourceGroupComposite>>()
+        {
             @Override
-            public void onFailure(Throwable caught) {
+            public void onFailure(Throwable caught)
+            {
                 CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_lookupFailed(), caught);
             }
 
             @Override
-            public void onSuccess(PageList<ResourceGroup> result) {
-                if (result.isEmpty()) {
-                    Log.debug(" *** group is empty ");
+            public void onSuccess(PageList<ResourceGroupComposite> result)
+            {
+                if (result.isEmpty())
+                {
                     return;
                 }
+                measurementForEachResource.clear();
 
-                final ResourceGroup group = result.get(0);
-                Log.debug(" *** group: "+group.getName()+","+group.getAutoGroupParentResource().getId());
-                Log.debug(" *** type: "+group.getResourceType().getId());
+                final ResourceGroup group = result.get(0).getResourceGroup();
+                Log.debug(" *** group: " + group.getName() + "," + group.getAutoGroupParentResource().getId());
+                Log.debug(" *** resource type: " + group.getResourceType().getId());
+                Log.debug(" *** child resources: " + group.getExplicitResources().size());
 
-                ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
+                Set<Resource> childResources = group.getExplicitResources();
+                for (Resource childResource : childResources)
+                {
+                    Log.debug(" *** Adding composite: "+childResource.getName());
 
-                ResourceGroupCriteria autoGroupCriteria = new ResourceGroupCriteria();
-
-
-                // for autoclusters and private groups (autogroups) we need to add more criteria
-                boolean isAutoCluster = (null != group.getClusterResourceGroup());
-                boolean isAutoGroup = (null != group.getSubject());
-
-                if (isAutoCluster) {
-                    autoGroupCriteria.addFilterVisible(false);
-
-                } else if (isAutoGroup) {
-                    autoGroupCriteria.addFilterVisible(false);
-                    autoGroupCriteria.addFilterPrivate(true);
-                }
-
-                autoGroupCriteria.addFilterResourceTypeId(group.getResourceType().getId());
-                autoGroupCriteria.addFilterAutoGroupParentResourceId(group.getAutoGroupParentResource().getId());
-                groupService.findResourceGroupsByCriteria(autoGroupCriteria, new AsyncCallback<PageList<ResourceGroup>>() {
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_lookupFailed(), caught);
-                    }
-
-                    @Override
-                    public void onSuccess(PageList<ResourceGroup> result) {
-                        Log.debug(" *** autogroup members: "+ result.size());
-
-                        final ResourceGroup autoGroup = result.get(0);
-                        Log.debug(" autogroup name: "+autoGroup.getName() +", "+autoGroup.getAutoGroupParentResource().getName());
-                        Log.debug(" autogroup ids: "+autoGroup.getId() +", parent:"+autoGroup.getAutoGroupParentResource().getId());
-                        Log.debug(" autogroup size #: "+autoGroup.getAutoGroupParentResource().getChildResources().size());
-
-                        Set<Resource> childResources = autoGroup.getAutoGroupParentResource().getChildResources();
-                        for (Resource res : childResources)
+                    ResourceTypeRepository.Cache.getInstance().getResourceTypes(childResource.getResourceType().getId(),
+                        EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
+                        new ResourceTypeRepository.TypeLoadedCallback()
                         {
-                            Log.debug(" *** Resource -> " + res.getName() + ":" + res.getId());
-                        }
+                            @Override
+                            public void onTypesLoaded(final ResourceType type)
+                            {
 
-                            }
-                        });
+                                for (MeasurementDefinition def : type.getMetricDefinitions())
+                                {
+                                    // only need the one selected measurement
+                                    if (def.getId() == getDefinitionId())
+                                    {
+                                        setDefinition(def);
 
+                                        GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroupForLast(
+                                                groupId, new int[]{getDefinitionId()}, 8,
+                                                MeasurementUtility.UNIT_HOURS, 60,
+                                                new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>()
+                                                {
+                                                    @Override
+                                                    public void onFailure(Throwable caught)
+                                                    {
+                                                        CoreGUI.getErrorHandler().handleError(
+                                                                MSG.view_resource_monitor_graphs_loadFailed(), caught);
+                                                    }
 
-                String url = LinkManager.getResourceGroupLink(group);
-                resourceTitle = new HTMLFlow(SeleniumUtility.getLocatableHref(url, group.getName(), null));
+                                                    @Override
+                                                    public void onSuccess(
+                                                            List<List<MeasurementDataNumericHighLowComposite>> result)
+                                                    {
+                                                        Log.debug(" *** #metrics for group: " + result.size());
+                                                        addMeasurementForEachResource(result.get(0));
 
-                ResourceTypeRepository.Cache.getInstance().getResourceTypes(group.getResourceType().getId(),
-                    EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
-                    new ResourceTypeRepository.TypeLoadedCallback() {
-                        @Override
-                        public void onTypesLoaded(final ResourceType type) {
-
-                            for (MeasurementDefinition def : type.getMetricDefinitions()) {
-                                // only need the one selected measurement
-                                if (def.getId() == getDefinitionId()) {
-                                    setDefinition(def);
-
-                                    GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroupForLast(
-                                        groupId, new int[] { getDefinitionId() }, 8,
-                                        MeasurementUtility.UNIT_HOURS, 60,
-                                        new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
-                                            @Override
-                                            public void onFailure(Throwable caught) {
-                                                CoreGUI.getErrorHandler().handleError(
-                                                    MSG.view_resource_monitor_graphs_loadFailed(), caught);
-                                            }
-
-                                            @Override
-                                            public void onSuccess(
-                                                List<List<MeasurementDataNumericHighLowComposite>> result) {
-                                                setMultiData(result);
-                                                Log.debug(" *** #metrics for group: " + result.size());
-                                                drawGraph();
-                                            }
-                                        });
+                                                        drawGraph();
+                                                    }
+                                                });
+                                    }
                                 }
                             }
-                        }
-                    });
+                        });
+            }
             }
         });
 
     }
 
-    public List<List<MeasurementDataNumericHighLowComposite>> getMultiData() {
-        return multiData;
+    public List<List<MeasurementDataNumericHighLowComposite>> getMeasurementForEachResource() {
+        return measurementForEachResource;
     }
 
-    public void setMultiData(List<List<MeasurementDataNumericHighLowComposite>> multiData) {
-        this.multiData = multiData;
+    /**
+     * Adding is done asynchronously, so we must synchronize the add.
+     * @param resourceMeasurementList
+     */
+    synchronized public void addMeasurementForEachResource(List<MeasurementDataNumericHighLowComposite> resourceMeasurementList) {
+       measurementForEachResource.add(resourceMeasurementList);
+    }
+
+    public void setMeasurementForEachResource(List<List<MeasurementDataNumericHighLowComposite>> measurementForEachResource) {
+        this.measurementForEachResource = measurementForEachResource;
     }
     public int getDefinitionId() {
         return definitionId;

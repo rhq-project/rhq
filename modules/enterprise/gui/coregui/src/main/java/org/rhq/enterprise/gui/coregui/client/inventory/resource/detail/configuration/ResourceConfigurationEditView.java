@@ -121,7 +121,7 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
             buttonbar.destroy();
             removeMember(buttonbar);
         }
-        
+
         GWTServiceLookup.getConfigurationService().getLatestResourceConfigurationUpdate(resource.getId(),
             new AsyncCallback<ResourceConfigurationUpdate>() {
                 @Override
@@ -134,14 +134,15 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
                         refreshing = false;
                         return;
                     }
-                    
+
                     ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
                         EnumSet.of(MetadataType.resourceConfigurationDefinition), new TypeLoadedCallback() {
                             @Override
                             public void onTypesLoaded(ResourceType type) {
                                 ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
-                                configurationService.getOptionValuesForConfigDefinition(
-                                    type.getResourceConfigurationDefinition(), new AsyncCallback<ConfigurationDefinition>(){
+                                configurationService.getOptionValuesForConfigDefinition(resource.getId(),
+                                    type.getResourceConfigurationDefinition(),
+                                    new AsyncCallback<ConfigurationDefinition>() {
                                     @Override
                                     public void onFailure(Throwable throwable) {
                                         refreshing = false;

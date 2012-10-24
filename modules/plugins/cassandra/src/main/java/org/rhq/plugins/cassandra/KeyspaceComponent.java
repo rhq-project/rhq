@@ -25,12 +25,14 @@
 
 package org.rhq.plugins.cassandra;
 
+import java.io.File;
 import java.util.Map;
 
 import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
 
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
+import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -49,18 +51,18 @@ import org.rhq.plugins.jmx.JMXComponent;
 /**
  * @author John Sanda
  */
-public class KeyspaceComponent<T extends ResourceComponent<?>> implements ResourceComponent<T>, ConfigurationFacet,
-    JMXComponent<T>, OperationFacet {
+public class KeyspaceComponent implements ResourceComponent<ResourceComponent<?>>, ConfigurationFacet,
+    JMXComponent<ResourceComponent<?>>, OperationFacet {
 
     private static final String STORAGE_SERVICE_BEAN = "org.apache.cassandra.db:type=StorageService";
 
     private static final String COMPACT_OPERATION = "forceTableCompaction";
     private static final String REPAIR_OPERATION = "forceTableRepair";
 
-    private ResourceContext<T> context;
+    private ResourceContext<ResourceComponent<?>> context;
 
     @Override
-    public void start(ResourceContext<T> context) throws Exception {
+    public void start(ResourceContext<ResourceComponent<?>> context) throws Exception {
         this.context = context;
     }
 
@@ -98,6 +100,7 @@ public class KeyspaceComponent<T extends ResourceComponent<?>> implements Resour
             list.add(map);
         }
         config.put(list);
+        config.put(this.getKeySpaceDataFileLocations());
 
         return config;
     }
@@ -173,6 +176,46 @@ public class KeyspaceComponent<T extends ResourceComponent<?>> implements Resour
         }
 
         return new OperationResult();
+    }
+
+    public PropertyList getKeySpaceDataFileLocations() {
+        EmsBean emsBean = loadBean(STORAGE_SERVICE_BEAN);
+        EmsAttribute attribute = emsBean.getAttribute("AllDataFileLocations");
+
+        PropertyList list = new PropertyList("keyspaceFileLocations");
+        String[] dirs = (String[]) attribute.getValue();
+        for (String dir : dirs) {
+            if (!dir.endsWith("/")) {
+                dir = dir + "/";
+            }
+
+            list.add(new PropertySimple("directory", dir + context.getResourceKey()));
+        }
+
+        return list;
+    }
+
+    public PropertySimple getCommitLogProperty() {
+        EmsBean emsBean = loadBean(STORAGE_SERVICE_BEAN);
+        EmsAttribute attribute = emsBean.getAttribute("CommitLogLocation");
+        return new PropertySimple("CommitLogLocation", attribute.refresh());
+    }
+
+    public boolean clearCommitLog() {
+        PropertySimple commitLogProperty = this.getCommitLogProperty();
+
+        File commitLogFolder = new File(commitLogProperty.getStringValue());
+
+        File[] commitLogFiles = commitLogFolder.listFiles();
+        for (File file : commitLogFiles) {
+            file.delete();
+        }
+
+        return true;
+    }
+
+    public CassandraNodeComponent getCassandraNodeComponent() {
+        return (CassandraNodeComponent) this.context.getParentResourceComponent();
     }
 
     /**

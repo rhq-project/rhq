@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
-import javax.transaction.TransactionManager;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -67,11 +66,9 @@ import org.rhq.enterprise.server.TestServerPluginService;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
+import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
-import org.rhq.test.JPAUtils;
-import org.rhq.test.TransactionCallback;
-import org.rhq.test.TransactionCallbackWithContext;
 
 /**
  * 
@@ -569,9 +566,9 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 
     private void removeNoExceptions(final Object o) {
         try {
-            JPAUtils.executeInTransaction(new TransactionCallbackWithContext<Void>() {
-                @Override
-                public Void execute(TransactionManager tm, EntityManager em) {
+            executeInTransaction(new TransactionCallback() {
+                public void execute() {
+                    EntityManager em = getEntityManager();
                     Object o2 = em.merge(o);
 
                     if (o2 instanceof Resource) {
@@ -579,7 +576,6 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
                     } else {
                         em.remove(o2);
                     }
-                    return null;
                 }
             });
         } catch (Exception e) {

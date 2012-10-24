@@ -180,8 +180,21 @@ public class CoreJBossASClient extends JBossASClient {
      * @throws Exception
      */
     public void reload() throws Exception {
+        reload(false);
+    }
+
+    /**
+     * Invokes the management "reload" operation which will shut down all the app server services and
+     * restart them again potentially in admin-only mode.
+     * This does not shutdown the JVM itself.
+     *
+     * @param adminOnly if <code>true</code>, reloads the server in admin-only mode
+     *
+     * @throws Exception
+     */
+    public void reload(boolean adminOnly) throws Exception {
         final ModelNode request = createRequest("reload", Address.root());
-        request.get("admin-only").set(false);
+        request.get("admin-only").set(adminOnly);
         final ModelNode response = execute(request);
         if (!isSuccess(response)) {
             throw new FailureException(response);

@@ -512,7 +512,7 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         // quickly as it is basically just updates the the inventory status to UNINVENTORIED for the
         // resources to be deleted.
         for (Resource resource : resources) {
-            assertEquals("The resource should have been marked for deletion",
+            assertTrue("The resource should have been marked for deletion",
                 InventoryStatus.UNINVENTORIED == resource.getInventoryStatus());
         }
     }

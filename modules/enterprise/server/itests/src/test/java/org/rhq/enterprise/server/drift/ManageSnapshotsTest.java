@@ -55,7 +55,7 @@ import org.rhq.core.domain.drift.JPADriftSet;
 import org.rhq.core.domain.server.EntitySerializer;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.test.AssertUtils;
-import org.rhq.test.TransactionCallback;
+import org.rhq.enterprise.server.test.TransactionCallback;
 
 @Test(dependsOnGroups = "pinning")
 public class ManageSnapshotsTest extends AbstractDriftServerTest {

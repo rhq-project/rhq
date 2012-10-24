@@ -425,7 +425,7 @@ public class ServerInstallUtil {
         final ModelNode oracleDriverRequest = client.createNewJdbcDriverRequest(JDBC_DRIVER_ORACLE, "org.rhq.oracle",
             "oracle.jdbc.xa.client.OracleXADataSource");
         final ModelNode cassandraDriverRequest = client.createNewJdbcDriverRequest(JDBC_DRIVER_CASSANDRA,
-            "org.apache-extras.cassandra-jdbc", "org.apache.cassandra.cql.jdbc.CassandraDataSource", false);
+            "org.apache-extras.cassandra-jdbc", null);
 
         // if we are to use Oracle, we throw an exception if we can't create the Oracle datasource. We also try to
         // create the Postgres datasource but because it isn't needed, we don't throw exceptions if that fails, we

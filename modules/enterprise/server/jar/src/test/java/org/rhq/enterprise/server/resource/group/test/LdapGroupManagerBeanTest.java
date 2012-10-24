@@ -38,9 +38,9 @@ import org.rhq.enterprise.server.resource.group.LdapGroupManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerPluginService;
+import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.test.ldap.FakeLdapCtxFactory;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.test.TransactionCallback;
 
 /**
  * Integration tests for methods and operations performed by {@link LdapGroupManagerBean}. 

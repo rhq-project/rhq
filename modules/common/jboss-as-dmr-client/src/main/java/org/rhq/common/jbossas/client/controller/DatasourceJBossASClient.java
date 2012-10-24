@@ -132,31 +132,28 @@ public class DatasourceJBossASClient extends JBossASClient {
      * @param name the name of the JDBC driver (this is not the name of the JDBC jar or the module name, it is
      *             just a convienence name of the JDBC driver configuration).
      * @param moduleName the name of the JBossAS module where the JDBC driver is installed
-     * @param driverXaClassName the JDBC driver's XA datasource classname
+     * @param driverXaClassName the JDBC driver's XA datasource classname (null if XA is not supported)
      *
      * @return the request to create the JDBC driver configuration.
      */
     public ModelNode createNewJdbcDriverRequest(String name, String moduleName, String driverXaClassName) {
-        return createNewJdbcDriverRequest(name, moduleName, driverXaClassName, true);
-    }
-
-    public ModelNode createNewJdbcDriverRequest(String name, String moduleName, String driverXaClassName,
-        boolean isXA) {
         String dmrTemplate;
-        if (isXA) {
-            dmrTemplate =
-                "{" +
-                "\"driver-module-name\" => \"%s\" " +
-                ", \"driver-xa-datasource-class-name\" => \"%s\" " +
-                "}";
+        String dmr;
+
+        if (driverXaClassName != null) {
+            dmrTemplate = "" //
+                + "{" //
+                + "\"driver-module-name\" => \"%s\" " //
+                + ", \"driver-xa-datasource-class-name\" => \"%s\" " //
+                + "}";
+            dmr = String.format(dmrTemplate, moduleName, driverXaClassName);
         } else {
-            dmrTemplate =
-                "{" +
-                "\"driver-module-name\" => \"%s\" " +
-                ", \"driver-datasource-class-name\" => \"%s\" " +
-                 "}";
+            dmrTemplate = "" //
+                + "{" //
+                + "\"driver-module-name\" => \"%s\" " //
+                + "}";
+            dmr = String.format(dmrTemplate, moduleName);
         }
-        String dmr = String.format(dmrTemplate, moduleName, driverXaClassName);
 
         Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_DATASOURCES, JDBC_DRIVER, name);
         final ModelNode request = ModelNode.fromString(dmr);

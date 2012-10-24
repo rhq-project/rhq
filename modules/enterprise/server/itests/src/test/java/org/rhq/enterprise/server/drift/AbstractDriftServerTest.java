@@ -48,7 +48,7 @@ import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
-import org.rhq.test.TransactionCallback;
+import org.rhq.enterprise.server.test.TransactionCallback;
 
 @Test(groups = "drift", sequential = true)
 public abstract class AbstractDriftServerTest extends AbstractEJB3Test {

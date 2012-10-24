@@ -124,7 +124,7 @@ public class ManagedHive extends JFrame {
         //allow way to switch between protocols at server startup
         if (args.length > 0) {
             String remoteApiProtocoal = args[0];
-            if (remoteApiProtocoal.trim().toUpperCase().indexOf("HTTP") > 0) {
+            if (remoteApiProtocoal.trim().equalsIgnoreCase("HTTP")) {
                 ManagedHive.defaultProtocol = Protocol.HTTP_JSON;
             }
         }

@@ -137,12 +137,25 @@ public class DatasourceJBossASClient extends JBossASClient {
      * @return the request to create the JDBC driver configuration.
      */
     public ModelNode createNewJdbcDriverRequest(String name, String moduleName, String driverXaClassName) {
-        String dmrTemplate = "" //
-            + "{" //
-            + "\"driver-module-name\" => \"%s\" " //
-            + ", \"driver-xa-datasource-class-name\" => \"%s\" " //
-            + "}";
+        return createNewJdbcDriverRequest(name, moduleName, driverXaClassName, true);
+    }
 
+    public ModelNode createNewJdbcDriverRequest(String name, String moduleName, String driverXaClassName,
+        boolean isXA) {
+        String dmrTemplate;
+        if (isXA) {
+            dmrTemplate =
+                "{" +
+                "\"driver-module-name\" => \"%s\" " +
+                ", \"driver-xa-datasource-class-name\" => \"%s\" " +
+                "}";
+        } else {
+            dmrTemplate =
+                "{" +
+                "\"driver-module-name\" => \"%s\" " +
+                ", \"driver-datasource-class-name\" => \"%s\" " +
+                 "}";
+        }
         String dmr = String.format(dmrTemplate, moduleName, driverXaClassName);
 
         Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_DATASOURCES, JDBC_DRIVER, name);
@@ -207,6 +220,53 @@ public class DatasourceJBossASClient extends JBossASClient {
             exceptionSorterClassName, idleTimeoutMinutes, jndiName, jta, minPoolSize, maxPoolSize,
             preparedStatementCacheSize, securityDomain, staleConnectionCheckerClassName, transactionIsolation,
             validConnectionCheckerClassName);
+
+        Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_DATASOURCES, DATA_SOURCE, name);
+        final ModelNode request1 = ModelNode.fromString(dmr);
+        request1.get(OPERATION).set(ADD);
+        request1.get(ADDRESS).set(addr.getAddressNode());
+
+        // if there are no conn properties, no need to create a batch request, there is only one ADD request to make
+        if (connectionProperties == null || connectionProperties.size() == 0) {
+            return request1;
+        }
+
+        // create a batch of requests - the first is the main one, the rest create each conn property
+        ModelNode[] batch = new ModelNode[1 + connectionProperties.size()];
+        batch[0] = request1;
+        int n = 1;
+        for (Map.Entry<String, String> entry : connectionProperties.entrySet()) {
+            addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_DATASOURCES, DATA_SOURCE, name, CONNECTION_PROPERTIES,
+                entry.getKey());
+            final ModelNode requestN = new ModelNode();
+            requestN.get(OPERATION).set(ADD);
+            requestN.get(ADDRESS).set(addr.getAddressNode());
+            if (entry.getValue().indexOf("${") > -1) {
+                requestN.get(VALUE).setExpression(entry.getValue());
+            } else {
+                requestN.get(VALUE).set(entry.getValue());
+            }
+            batch[n++] = requestN;
+        }
+
+        return createBatchRequest(batch);
+    }
+
+    public ModelNode createNewDatasourceRequest(String name, String connectionUrlExpression, String driverName,
+        boolean jta, Map<String, String> connectionProperties) {
+
+        String jndiName = "java:jboss/datasources/" + name;
+
+        String dmrTemplate = "" //
+            + "{" //
+            + "\"connection-url\" => expression \"%s\" " //
+            + ", \"driver-name\" => \"%s\" " //
+            + ", \"jndi-name\" => \"%s\" " //
+            + ", \"jta\" => %s " //
+            + ", \"use-java-context\" => true " //
+            + "}";
+
+        String dmr = String.format(dmrTemplate, connectionUrlExpression, driverName, jndiName, jta);
 
         Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_DATASOURCES, DATA_SOURCE, name);
         final ModelNode request1 = ModelNode.fromString(dmr);

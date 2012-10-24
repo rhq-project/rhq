@@ -201,14 +201,13 @@
             toDir="${jboss.modules.dir}/org/apache-extras/cassandra-jdbc/main" failonerror="false" verbose="true"/>
       <copy file="${settings.localRepository}/com/google/code/findbugs/jsr305/${cassandra.jdbc.jsr305.version}/jsr305-${cassandra.jdbc.jsr305.version}.jar"
             toDir="${jboss.modules.dir}/org/apache-extras/cassandra-jdbc/main" failonerror="false" verbose="true"/>
-      <echo file="${jboss.modules.dir}/org/apache-extras/cassandra-jdbc/main/module.xml">
-      <![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+      <echo file="${jboss.modules.dir}/org/apache-extras/cassandra-jdbc/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
 <module xmlns="urn:jboss:module:1.1" name="org.apache-extras.cassandra-jdbc">
   <resources>
     <resource-root path="cassandra-jdbc-${cassandra.jdbc.version}.jar"/>
     <resource-root path="cassandra-clientutil-${cassandra.version}.jar"/>
     <resource-root path="cassandra-thrift-${cassandra.version}.jar"/>
-    <resource-root path="libthrift-${cassandra.thrift}.jar"/>
+    <resource-root path="libthrift-${cassandra.thrift.version}.jar"/>
     <resource-root path="jsr305-${cassandra.jdbc.jsr305.version}.jar"/>
     <resource-root path="guava-${cassandra.jdbc.guava.version}.jar"/>
   </resources>

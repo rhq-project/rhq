@@ -24,4 +24,9 @@ public class ResourceOperationScheduleDetailsView extends AbstractOperationSched
         return this.resourceComposite.getResourcePermission().isControl();
     }
 
+    @Override
+    protected int getResourceId() {
+        return this.resourceComposite.getResource().getId();
+    }
+
 }

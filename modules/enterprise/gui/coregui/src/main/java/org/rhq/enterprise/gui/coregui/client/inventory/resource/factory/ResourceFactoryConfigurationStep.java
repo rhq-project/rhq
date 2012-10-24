@@ -101,7 +101,7 @@ public class ResourceFactoryConfigurationStep extends AbstractWizardStep impleme
                 this.startingConfig = wizard.getNewResourceStartingConfiguration();
 
                 ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
-                configurationService.getOptionValuesForConfigDefinition(def,
+                configurationService.getOptionValuesForConfigDefinition(-1, def,
                     new AsyncCallback<ConfigurationDefinition>() {
                         public void onSuccess(ConfigurationDefinition result) {
                             createAndAddConfigurationEditor(result);

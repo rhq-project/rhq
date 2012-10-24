@@ -24,12 +24,16 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.wordnik.swagger.annotations.ApiClass;
+import com.wordnik.swagger.annotations.ApiProperty;
+
 import org.jboss.resteasy.links.RESTServiceDiscovery;
 
 /**
  * A single alert
  * @author Heiko W. Rupp
  */
+@ApiClass(value = "This class represents a single fired alert.")
 @XmlRootElement
 public class AlertRest {
 
@@ -61,18 +65,22 @@ public class AlertRest {
         this.alertDefinition = alertDefinitionId;
     }
 
+    @ApiProperty("The id of the alert")
     public int getId() {
         return id;
     }
 
+    @ApiProperty("Name of the alert, taken from the AlertDefinition")
     public String getName() {
         return name;
     }
 
+    @ApiProperty("AlertDefinition from which the alert was fired")
     public AlertDefinitionRest getAlertDefinition() {
         return alertDefinition;
     }
 
+    @ApiProperty("Is the definition enabled (=active)?")
     public boolean isDefinitionEnabled() {
         return definitionEnabled;
     }
@@ -81,6 +89,7 @@ public class AlertRest {
         this.definitionEnabled = definitionEnabled;
     }
 
+    @ApiProperty("The user that acknowledged the alert (if any)")
     public String getAckBy() {
         return ackBy;
     }
@@ -89,6 +98,7 @@ public class AlertRest {
         this.ackBy = ackBy;
     }
 
+    @ApiProperty("Timestamp of the acknowledgement")
     public long getAckTime() {
         return ackTime;
     }
@@ -97,6 +107,7 @@ public class AlertRest {
         this.ackTime = ackTime;
     }
 
+    @ApiProperty("Timestamp when the alert has been fired")
     public long getAlertTime() {
         return alertTime;
     }
@@ -105,6 +116,7 @@ public class AlertRest {
         this.alertTime = alertTime;
     }
 
+    @ApiProperty("Description of the alert")
     public String getDescription() {
         return description;
     }
@@ -113,6 +125,7 @@ public class AlertRest {
         this.description = description;
     }
 
+    @ApiProperty("The resource on which the alert was fired")
     public ResourceWithType getResource() {
         return resource;
     }

@@ -27,12 +27,17 @@ import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
+import com.wordnik.swagger.annotations.ApiClass;
+import com.wordnik.swagger.annotations.ApiProperty;
+
 import org.jboss.resteasy.spi.touri.URITemplate;
 
 /**
  * A simple metric schedule
  * @author Heiko W. Rupp
  */
+@ApiClass(value = "A single metrics schedule",
+    description = "A scheudle represents the collection interval for a metric and if the collection is enabled")
 @XmlRootElement
 @URITemplate("/metric/schedule/{id}")
 public class MetricSchedule {
@@ -61,6 +66,7 @@ public class MetricSchedule {
         this.type = type;
     }
 
+    @ApiProperty("The id of the schedule")
     @XmlID
     public String getScheduleId() {
         return ""+scheduleId;
@@ -70,6 +76,7 @@ public class MetricSchedule {
         this.scheduleId = scheduleId;
     }
 
+    @ApiProperty("The name of the metric")
     public String getScheduleName() {
         return scheduleName;
     }
@@ -78,6 +85,7 @@ public class MetricSchedule {
         this.scheduleName = scheduleName;
     }
 
+    @ApiProperty("Is the collection enabled?")
     public Boolean getEnabled() {
         return enabled;
     }
@@ -86,6 +94,8 @@ public class MetricSchedule {
         this.enabled = enabled;
     }
 
+    @ApiProperty(value = "The collection interval in milliseconds",
+        allowableValues = "A minimum of 30s")
     public long getCollectionInterval() {
         return collectionInterval;
     }
@@ -94,6 +104,7 @@ public class MetricSchedule {
         this.collectionInterval = collectionInterval;
     }
 
+    @ApiProperty("The name of the metric as shown in the UI")
     public String getDisplayName() {
         return displayName;
     }
@@ -102,6 +113,7 @@ public class MetricSchedule {
         this.displayName = displayName;
     }
 
+    @ApiProperty("The base unit of the metric")
     public String getUnit() {
         return unit;
     }
@@ -110,6 +122,7 @@ public class MetricSchedule {
         this.unit = unit;
     }
 
+    @ApiProperty(value ="Type of metric", allowableValues = "MEASUREMENT, TRAIT, COMPLEX, CALLTIME, AVAILABILITY")
     public String getType() {
         return type;
     }
@@ -122,6 +135,7 @@ public class MetricSchedule {
 //        return String.valueOf(enabled);
 //    }
 
+    @ApiProperty("Last modification timestamp of the schedule")
     @XmlTransient
     public long getMtime() {
         return mtime;

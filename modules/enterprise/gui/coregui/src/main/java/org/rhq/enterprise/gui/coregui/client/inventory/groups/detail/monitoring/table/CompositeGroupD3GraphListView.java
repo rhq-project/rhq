@@ -110,11 +110,11 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
                 measurementForEachResource.clear();
 
                 final ResourceGroup group = result.get(0).getResourceGroup();
-                Log.debug(" *** group: " + group.getName() + "," + group.getAutoGroupParentResource().getId());
-                Log.debug(" *** resource type: " + group.getResourceType().getId());
-                Log.debug(" *** child resources: " + group.getExplicitResources().size());
+                Log.debug("group name: " + group.getName());
+                Log.debug("# of child resources: " + group.getExplicitResources().size());
 
                 Set<Resource> childResources = group.getExplicitResources();
+
                 for (Resource childResource : childResources)
                 {
                     Log.debug(" *** Adding composite: "+childResource.getName());
@@ -150,9 +150,7 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
                                                     public void onSuccess(
                                                             List<List<MeasurementDataNumericHighLowComposite>> result)
                                                     {
-                                                        Log.debug(" *** #metrics for group: " + result.size());
                                                         addMeasurementForEachResource(result.get(0));
-
                                                         drawGraph();
                                                     }
                                                 });
@@ -227,14 +225,14 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
             graph.setHeight100();
             addMember(graph);
 
-            //drawJsniCharts();
+            drawJsniChart();
             markForRedraw();
 
         }
 
     }
 
-    public native void drawJsniCharts() /*-{
+    public native void drawJsniChart() /*-{
         console.log("Draw nvd3 charts for composite multiline graph");
         var chartId =  this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getChartId()();
         var chartHandle = "#mChart-"+chartId;
@@ -255,9 +253,7 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
         };
 
         $wnd.nv.addGraph(function() {
-            var chart = $wnd.nv.models.multiBarChart()
-            .showControls(false)
-            .tooltips(true);
+            var chart = $wnd.nv.models.lineChart();
 
         chart.xAxis.axisLabel(xAxisLabel)
             .tickFormat(function(d) { return $wnd.d3.time.format('%a %I %p')(new Date(d)) });

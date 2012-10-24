@@ -23,6 +23,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -113,6 +114,9 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
                 Log.debug("group name: " + group.getName());
                 Log.debug("# of child resources: " + group.getExplicitResources().size());
 
+                //@todo: replace with CountDownLatch; but GWT doesn't have java.util.concurrent
+                drawChartsLater();
+
                 Set<Resource> childResources = group.getExplicitResources();
 
                 for (Resource childResource : childResources)
@@ -151,7 +155,7 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
                                                             List<List<MeasurementDataNumericHighLowComposite>> result)
                                                     {
                                                         addMeasurementForEachResource(result.get(0));
-                                                        drawGraph();
+                                                        //drawGraph();
                                                     }
                                                 });
                                     }
@@ -159,6 +163,27 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
                             }
                         });
             }
+            }
+
+            private void drawChartsLater()
+            {
+                new Timer() {
+                    final long startTime = System.currentTimeMillis();
+
+                    @Override
+                    public void run() {
+
+                            // 4 second timer
+                            long elapsedMillis = System.currentTimeMillis() - startTime;
+                            if (elapsedMillis < 4000L) {
+                                Log.debug(" *** mike - reschdule timer");
+                                schedule(100); // Reschedule the timer.
+
+                            } else {
+                                drawGraph();
+                            }
+                    }
+                }.run(); // fire the timer immediately
             }
         });
 
@@ -240,6 +265,8 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
         var yAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisTitle()();
         var yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisUnits()();
         var xAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getXAxisTitle()();
+        var displayDayOfWeek = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::shouldDisplayDayOfWeekInXAxisLabel()();
+        var xAxisTimeFormat = (displayDayOfWeek) ? "%a %I %p" : "%I %p";
         var json = eval(this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getJsonMetrics()());
 
         var data = function() {
@@ -256,7 +283,7 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
             var chart = $wnd.nv.models.lineChart();
 
         chart.xAxis.axisLabel(xAxisLabel)
-            .tickFormat(function(d) { return $wnd.d3.time.format('%a %I %p')(new Date(d)) });
+            .tickFormat(function(d) { return $wnd.d3.time.format(xAxisTimeFormat)(new Date(d)) });
 
         chart.yAxis
             .axisLabel(yAxisUnits)

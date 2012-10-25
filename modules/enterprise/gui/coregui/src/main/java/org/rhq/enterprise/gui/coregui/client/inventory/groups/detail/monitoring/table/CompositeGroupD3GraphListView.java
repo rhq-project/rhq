@@ -23,7 +23,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -41,7 +40,6 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
@@ -125,8 +123,8 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
                      */
                     public void execute()
                     {
-                        Log.debug(" *** Hey I'm done here!!");
                         drawGraph();
+                        markForRedraw();
                     }
                 });
 
@@ -134,7 +132,7 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
 
                 for (Resource childResource : childResources)
                 {
-                    Log.debug(" *** Adding composite: "+childResource.getName());
+                    Log.debug("Adding child composite: "+childResource.getName());
 
                     ResourceTypeRepository.Cache.getInstance().getResourceTypes(childResource.getResourceType().getId(),
                         EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
@@ -152,6 +150,11 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
                                         setDefinition(def);
 
                                         //@todo: fixme
+//                                        List<Long> times = measurementRangeEditor.getBeginEndTimes();
+//                                        Long startTime = times.get(0);
+//                                        Long endTime = times.get(1);
+//                                        GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroup();
+
                                         GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroupForLast(
                                                 groupId, new int[]{getDefinitionId()}, 8,
                                                 MeasurementUtility.UNIT_HOURS, 60,
@@ -177,7 +180,7 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
                                 }
                             }
                         });
-            }
+                }
             }
 
         });
@@ -194,6 +197,20 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
      */
     synchronized public void addMeasurementForEachResource(List<MeasurementDataNumericHighLowComposite> resourceMeasurementList) {
        measurementForEachResource.add(resourceMeasurementList);
+    }
+
+    @Override
+    protected void onDraw() {
+        super.onDraw();
+        removeMembers(getMembers());
+        drawGraph();
+    }
+
+    @Override
+    public void parentResized() {
+        super.parentResized();
+        removeMembers(getMembers());
+        drawGraph();
     }
 
     public void setMeasurementForEachResource(List<List<MeasurementDataNumericHighLowComposite>> measurementForEachResource) {
@@ -240,7 +257,7 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
             HTMLFlow title = new HTMLFlow("<b>" + definition.getDisplayName() + "</b> " + definition.getDescription());
             title.setWidth100();
             addMember(title);
-            HTMLFlow graph = new HTMLFlow("<div id=\"mChart-"+getChartId()+"\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:100%;\"></svg></div>");
+            HTMLFlow graph = new HTMLFlow("<div id=\"mChart-"+getChartId()+"\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:95%;\"></svg></div>");
             graph.setWidth100();
             graph.setHeight100();
             addMember(graph);
@@ -252,21 +269,49 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
 
     }
 
-//    public String getJsonMetrics(){
-//        StringBuilder sb = new StringBuilder("[");
-//        for (List<MeasurementDataNumericHighLowComposite> measurement : measurementForEachResource) {
-//        //StringBuilder sb = new StringBuilder("[");
-//        for (MeasurementDataNumericHighLowComposite measurement : data) {
-//            if(!Double.isNaN(measurement.getValue())){
-//                sb.append("{ x:"+measurement.getTimestamp()+",");
-//                sb.append(" y:"+ MeasurementUnits.scaleUp(measurement.getValue(), definition.getUnits())+"},");
-//            }
-//        }
-//        sb.setLength(sb.length()-1); // delete the last ','
-//        sb.append("]");
-//        }
-//        return sb.toString();
-//    }
+    public String getYAxisTitle(){
+        return definition.getName();
+    }
+    public String getYAxisUnits(){
+        return definition.getUnits().toString();
+    }
+
+    public String getXAxisTitle(){
+        return MSG.view_charts_time_axis_label();
+    }
+
+
+    /**
+     * Takes a measurementList for each resource and turn it into an array.
+     * @return String
+     */
+    public String produceInnerValuesArray(List<MeasurementDataNumericHighLowComposite> measurementList){
+        StringBuilder sb = new StringBuilder("[");
+        for (MeasurementDataNumericHighLowComposite measurement : measurementList) {
+            if(!Double.isNaN(measurement.getValue())){
+                sb.append("{ x:"+measurement.getTimestamp()+",");
+                sb.append(" y:"+ MeasurementUnits.scaleUp(measurement.getValue(), definition.getUnits())+"},");
+            }
+        }
+        sb.setLength(sb.length()-1); // delete the last ','
+        sb.append("]");
+        return sb.toString();
+    }
+
+    public String getJsonMetrics(){
+        StringBuilder sb = new StringBuilder("[");
+        int i = 0;
+        for (List<MeasurementDataNumericHighLowComposite> measurementList : measurementForEachResource) {
+            sb.append("{ values: ");
+            sb.append(produceInnerValuesArray(measurementList));
+            sb.append(",key: '");
+            sb.append(definition.getName() + i++);
+            sb.append("'},");
+        }
+        sb.setLength(sb.length()-1); // delete the last ','
+        sb.append("]");
+        return sb.toString();
+    }
 
     /**
      * If there is more than 2 days time window then return true so we can show day of week
@@ -274,58 +319,61 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
      * or hours with days of week.
      * @return true if difference between startTime and endTime is >= x days
      */
-    public static boolean shouldDisplayDayOfWeekInXAxisLabel(Long startTime, Long endTime){
-        //Long startTime = data.get(0).getTimestamp();
-        //Long endTime = data.get(data.size() -1).getTimestamp();
+    public boolean shouldDisplayDayOfWeekInXAxisLabel(){
+        List<MeasurementDataNumericHighLowComposite> firstResourceMeasurementList = measurementForEachResource.get(0);
+        Long startTime = firstResourceMeasurementList.get(0).getTimestamp();
+        Long endTime = firstResourceMeasurementList.get(firstResourceMeasurementList.size() - 1).getTimestamp();
         long timeThreshold = 24 * 60 * 60 * 1000; // 1 days
         return  startTime + timeThreshold < endTime;
     }
 
     public native void drawJsniChart() /*-{
         console.log("Draw nvd3 charts for composite multiline graph");
-        //var chartId =  this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getChartId()();
-        //var chartHandle = "#mChart-"+chartId,
-        //chartSelection = chartHandle + " svg";
+        var chartId =  this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartId()();
+        var chartHandle = "#mChart-"+chartId,
+        chartSelection = chartHandle + " svg",
 //        yAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getYAxisTitle()(),
-//        yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getYAxisUnits()(),
-//        xAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getXAxisTitle()(),
-//        displayDayOfWeek = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::shouldDisplayDayOfWeekInXAxisLabel()(),
-//        xAxisTimeFormat = (displayDayOfWeek) ? "%a %I %p" : "%I %p";
-       // json = eval(this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getJsonMetrics()());
+        yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getYAxisUnits()(),
+        xAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getXAxisTitle()(),
+        displayDayOfWeek = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::shouldDisplayDayOfWeekInXAxisLabel()();
+        xAxisTimeFormat = (displayDayOfWeek) ? "%a %I %p" : "%I %p";
+        json = eval(this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getJsonMetrics()());
 
-        var data = function() {
-        return [
-                {
-                values: [{x:1, y: 5}, {x:2, y:3}],
-                key: 'CPU 1' ,
-                color: 'steelblue'
-                },{
-                values: [{x:1, y: 6}, {x:2, y:7}],
-                key: 'CPU 2' ,
-                color: '#ff7f0e'
-                },
-            {
-                values: [{x:1, y: 10}, {x:2, y:9}],
-                key: 'CPU 3' ,
-                color: '#ff7f0e'
-            }
+        console.log(json);
+        var data = function() { json };
 
-            ];
-        };
+//        var data = function() {
+//        return [
+//                {
+//                values: [{x:1, y: 5}, {x:2, y:3}],
+//                key: 'CPU 1' ,
+//                color: 'steelblue'
+//                },{
+//                values: [{x:1, y: 6}, {x:2, y:7}],
+//                key: 'CPU 2' ,
+//                color: '#ff7f0e'
+//                },
+//            {
+//                values: [{x:1, y: 10}, {x:2, y:9}],
+//                key: 'CPU 3' ,
+//                color: '#ff7f0e'
+//            }
+//
+//            ];
+//        };
 
         $wnd.nv.addGraph(function() {
             var chart = $wnd.nv.models.lineChart();
 
         chart.xAxis.axisLabel(xAxisLabel)
-//            .tickFormat(function(d) { return $wnd.d3.time.format(xAxisTimeFormat)(new Date(d)) });
-            .tickFormat($wnd.d3.format(',f'));
+            .tickFormat(function(d) { return $wnd.d3.time.format(xAxisTimeFormat)(new Date(d)) });
 
         chart.yAxis
             .axisLabel(yAxisUnits)
             .tickFormat($wnd.d3.format(',f'));
 
         $wnd.d3.select(chartSelection)
-            .datum(data())
+            .datum(data)
             .transition().duration(300)
             .call(chart);
 

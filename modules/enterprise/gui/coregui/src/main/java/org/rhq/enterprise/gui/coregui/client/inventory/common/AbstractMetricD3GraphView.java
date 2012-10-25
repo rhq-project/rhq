@@ -130,6 +130,11 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
         renderGraph();
     }
 
+    /**
+     * Setup the page elements especially the div and svg elements that serve as
+     * placeholders for the d3 stuff to grab onto and add svg tags to render the chart.
+     *
+     */
     protected void drawGraph() {
         Log.debug("drawGraph in AbstractMetricD3GraphView for: "+ definition + ","+definitionId);
 

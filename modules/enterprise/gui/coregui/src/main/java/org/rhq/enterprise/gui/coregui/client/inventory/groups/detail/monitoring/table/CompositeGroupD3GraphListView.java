@@ -30,6 +30,7 @@ import com.smartgwt.client.widgets.layout.HLayout;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -40,9 +41,12 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
+import org.rhq.enterprise.gui.coregui.client.util.async.Command;
+import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -113,9 +117,18 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
                 final ResourceGroup group = result.get(0).getResourceGroup();
                 Log.debug("group name: " + group.getName());
                 Log.debug("# of child resources: " + group.getExplicitResources().size());
-
-                //@todo: replace with CountDownLatch; but GWT doesn't have java.util.concurrent
-                drawChartsLater();
+                final CountDownLatch countDownLatch = CountDownLatch.create(group.getExplicitResources().size(),new Command()
+                {
+                    @Override
+                    /**
+                     * Do this only after ALL of the metric queries for each resource
+                     */
+                    public void execute()
+                    {
+                        Log.debug(" *** Hey I'm done here!!");
+                        drawGraph();
+                    }
+                });
 
                 Set<Resource> childResources = group.getExplicitResources();
 
@@ -138,6 +151,7 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
                                     {
                                         setDefinition(def);
 
+                                        //@todo: fixme
                                         GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroupForLast(
                                                 groupId, new int[]{getDefinitionId()}, 8,
                                                 MeasurementUtility.UNIT_HOURS, 60,
@@ -146,6 +160,7 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
                                                     @Override
                                                     public void onFailure(Throwable caught)
                                                     {
+                                                        countDownLatch.countDown();
                                                         CoreGUI.getErrorHandler().handleError(
                                                                 MSG.view_resource_monitor_graphs_loadFailed(), caught);
                                                     }
@@ -154,8 +169,8 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
                                                     public void onSuccess(
                                                             List<List<MeasurementDataNumericHighLowComposite>> result)
                                                     {
+                                                        countDownLatch.countDown();
                                                         addMeasurementForEachResource(result.get(0));
-                                                        //drawGraph();
                                                     }
                                                 });
                                     }
@@ -165,26 +180,6 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
             }
             }
 
-            private void drawChartsLater()
-            {
-                new Timer() {
-                    final long startTime = System.currentTimeMillis();
-
-                    @Override
-                    public void run() {
-
-                            // 4 second timer
-                            long elapsedMillis = System.currentTimeMillis() - startTime;
-                            if (elapsedMillis < 4000L) {
-                                Log.debug(" *** mike - reschdule timer");
-                                schedule(100); // Reschedule the timer.
-
-                            } else {
-                                drawGraph();
-                            }
-                    }
-                }.run(); // fire the timer immediately
-            }
         });
 
     }
@@ -257,25 +252,64 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
 
     }
 
+//    public String getJsonMetrics(){
+//        StringBuilder sb = new StringBuilder("[");
+//        for (List<MeasurementDataNumericHighLowComposite> measurement : measurementForEachResource) {
+//        //StringBuilder sb = new StringBuilder("[");
+//        for (MeasurementDataNumericHighLowComposite measurement : data) {
+//            if(!Double.isNaN(measurement.getValue())){
+//                sb.append("{ x:"+measurement.getTimestamp()+",");
+//                sb.append(" y:"+ MeasurementUnits.scaleUp(measurement.getValue(), definition.getUnits())+"},");
+//            }
+//        }
+//        sb.setLength(sb.length()-1); // delete the last ','
+//        sb.append("]");
+//        }
+//        return sb.toString();
+//    }
+
+    /**
+     * If there is more than 2 days time window then return true so we can show day of week
+     * in axis labels. Function to switch the timescale to whichever is more appropriate hours
+     * or hours with days of week.
+     * @return true if difference between startTime and endTime is >= x days
+     */
+    public static boolean shouldDisplayDayOfWeekInXAxisLabel(Long startTime, Long endTime){
+        //Long startTime = data.get(0).getTimestamp();
+        //Long endTime = data.get(data.size() -1).getTimestamp();
+        long timeThreshold = 24 * 60 * 60 * 1000; // 1 days
+        return  startTime + timeThreshold < endTime;
+    }
+
     public native void drawJsniChart() /*-{
         console.log("Draw nvd3 charts for composite multiline graph");
-        var chartId =  this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getChartId()();
-        var chartHandle = "#mChart-"+chartId;
-        var chartSelection = chartHandle + " svg";
-        var yAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisTitle()();
-        var yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisUnits()();
-        var xAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getXAxisTitle()();
-        var displayDayOfWeek = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::shouldDisplayDayOfWeekInXAxisLabel()();
-        var xAxisTimeFormat = (displayDayOfWeek) ? "%a %I %p" : "%I %p";
-        var json = eval(this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getJsonMetrics()());
+        //var chartId =  this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getChartId()();
+        //var chartHandle = "#mChart-"+chartId,
+        //chartSelection = chartHandle + " svg";
+//        yAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getYAxisTitle()(),
+//        yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getYAxisUnits()(),
+//        xAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getXAxisTitle()(),
+//        displayDayOfWeek = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::shouldDisplayDayOfWeekInXAxisLabel()(),
+//        xAxisTimeFormat = (displayDayOfWeek) ? "%a %I %p" : "%I %p";
+       // json = eval(this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getJsonMetrics()());
 
         var data = function() {
         return [
                 {
-                values: json,
-                key: yAxisLabel ,
+                values: [{x:1, y: 5}, {x:2, y:3}],
+                key: 'CPU 1' ,
+                color: 'steelblue'
+                },{
+                values: [{x:1, y: 6}, {x:2, y:7}],
+                key: 'CPU 2' ,
                 color: '#ff7f0e'
-                }
+                },
+            {
+                values: [{x:1, y: 10}, {x:2, y:9}],
+                key: 'CPU 3' ,
+                color: '#ff7f0e'
+            }
+
             ];
         };
 
@@ -283,7 +317,8 @@ public class CompositeGroupD3GraphListView extends LocatableVLayout
             var chart = $wnd.nv.models.lineChart();
 
         chart.xAxis.axisLabel(xAxisLabel)
-            .tickFormat(function(d) { return $wnd.d3.time.format(xAxisTimeFormat)(new Date(d)) });
+//            .tickFormat(function(d) { return $wnd.d3.time.format(xAxisTimeFormat)(new Date(d)) });
+            .tickFormat($wnd.d3.format(',f'));
 
         chart.yAxis
             .axisLabel(yAxisUnits)

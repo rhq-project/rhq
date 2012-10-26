@@ -104,11 +104,11 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
                     }
                     measurementForEachResource.clear();
 
-                    final ResourceGroup group = result.get(0).getResourceGroup();
-                    Log.debug("group name: " + group.getName());
-                    Log.debug("# of child resources: " + group.getExplicitResources().size());
+                    final ResourceGroup parentGroup = result.get(0).getResourceGroup();
+                    Log.debug("group name: " + parentGroup.getName());
+                    Log.debug("# of child resources: " + parentGroup.getExplicitResources().size());
                     // setting up a deferred Command to execute after all resource queries have completed (successfully or unsuccessfully)
-                    final CountDownLatch countDownLatch = CountDownLatch.create(group.getExplicitResources().size(),
+                    final CountDownLatch countDownLatch = CountDownLatch.create(parentGroup.getExplicitResources().size(),
                         new Command() {
                             @Override
                             /**
@@ -121,7 +121,7 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
                             }
                         });
 
-                    Set<Resource> childResources = group.getExplicitResources();
+                    Set<Resource> childResources = parentGroup.getExplicitResources();
 
                     for (Resource childResource : childResources) {
                         Log.debug("Adding child composite: " + childResource.getName());
@@ -158,6 +158,7 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
                                                             public void onSuccess(
                                                                     List<List<MeasurementDataNumericHighLowComposite>> result) {
                                                                 countDownLatch.countDown();
+                                                                Log.debug(" ** result.size() "+result.size());
                                                                 addMeasurementForEachResource(result.get(0));
                                                             }
                                                         });
@@ -176,7 +177,7 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
      * Adding is done asynchronously, so we must synchronize the add.
      * @param resourceMeasurementList
      */
-    synchronized public void addMeasurementForEachResource(
+     public void addMeasurementForEachResource(
         List<MeasurementDataNumericHighLowComposite> resourceMeasurementList) {
         measurementForEachResource.add(resourceMeasurementList);
     }
@@ -286,7 +287,8 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
             sb.append("{ values: ");
             sb.append(produceInnerValuesArray(measurementList));
             sb.append(",key: '");
-            sb.append(definition.getName() + i++);
+            sb.append(definition.getName());
+            sb.append(i++);
             sb.append("'},");
         }
         sb.setLength(sb.length() - 1); // delete the last ','
@@ -321,42 +323,21 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
        json = eval(this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getJsonMetrics()());
 
        console.log(json);
-       //var data = function() { json };
-
-       //        var data = function() {
-       //        return [
-       //                {
-       //                values: [{x:1, y: 5}, {x:2, y:3}],
-       //                key: 'CPU 1' ,
-       //                color: '#ffffff'
-       //                },{
-       //                values: [{x:1, y: 6}, {x:2, y:7}],
-       //                key: 'CPU 2' ,
-       //                color: '#ff7f0e'
-       //                },
-       //            {
-       //                values: [{x:1, y: 10}, {x:2, y:9}],
-       //                key: 'CPU 3' ,
-       //                color: '#ff7f0e'
-       //            }
-       //
-       //            ];
-       //        };
 
        $wnd.nv.addGraph(function() {
        var chart = $wnd.nv.models.lineChart();
 
        chart.xAxis.axisLabel(xAxisLabel)
-       .tickFormat(function(d) { return $wnd.d3.time.format(xAxisTimeFormat)(new Date(d)) });
+            .tickFormat(function(d) { return $wnd.d3.time.format(xAxisTimeFormat)(new Date(d)) });
 
        chart.yAxis
-       .axisLabel(yAxisUnits)
-       .tickFormat($wnd.d3.format('.02f'));
+            .axisLabel(yAxisUnits)
+            .tickFormat($wnd.d3.format('.02f'));
 
        $wnd.d3.select(chartSelection)
-       .datum(json)
-       .transition().duration(300)
-       .call(chart);
+            .datum(json)
+            .transition().duration(300)
+            .call(chart);
 
        $wnd.nv.utils.windowResize(chart.update);
 

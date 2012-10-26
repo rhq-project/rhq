@@ -23,6 +23,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -68,13 +69,13 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
     /**
      * measurementForEachResource is a list of a list of single Measurement data for multiple resources.
      */
-    private List<List<MeasurementDataNumericHighLowComposite>> measurementForEachResource;
+    private List<MultiLineGraphData> measurementForEachResource;
 
     public CompositeGroupD3GraphListView(String locatorId, int groupId, int defId) {
         super(locatorId);
         this.groupId = groupId;
         setDefinitionId(defId);
-        measurementForEachResource = new ArrayList<List<MeasurementDataNumericHighLowComposite>>();
+        measurementForEachResource = new ArrayList<MultiLineGraphData>();
         measurementRangeEditor = new UserPreferencesMeasurementRangeEditor(this.getLocatorId());
         setHeight100();
         setWidth100();
@@ -126,15 +127,12 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
                         // resourceType will be the same for all autogroup children so get first
                         Resource childResource = childResources.iterator().next();
 
-                        Log.debug(" ** ChildResource: " + childResource.getName() + ":" + childResource.getId());
-
                         ResourceTypeRepository.Cache.getInstance().getResourceTypes(
                             childResource.getResourceType().getId(),
                             EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
                             new ResourceTypeRepository.TypeLoadedCallback() {
                                 @Override
                                 public void onTypesLoaded(final ResourceType type) {
-                                    Log.debug("onTypesLoaded");
 
                                     for (MeasurementDefinition def : type.getMetricDefinitions()) {
                                         // only need the one selected measurement
@@ -147,7 +145,7 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
                                     Long startTime = times.get(0);
                                     Long endTime = times.get(1);
 
-                                    for (Resource childResource : childResources) {
+                                    for (final Resource childResource : childResources) {
                                         Log.debug("Adding child composite: " + childResource.getName()
                                             + childResource.getId());
 
@@ -164,11 +162,10 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
                                                     }
 
                                                     @Override
-                                                    public void onSuccess(
-                                                            List<List<MeasurementDataNumericHighLowComposite>> result)
+                                                    public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> result)
                                                     {
                                                         countDownLatch.countDown();
-                                                        addMeasurementForEachResource(result.get(0));
+                                                        addMeasurementForEachResource(childResource.getName(), childResource.getId(), result.get(0));
                                                     }
                                                 });
                                     }
@@ -182,11 +179,44 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
     }
 
     /**
+     * Immutable data for each graph line.
+     */
+    private final class MultiLineGraphData
+    {
+        private String resourceName;
+        private int resourceId;
+        private List<MeasurementDataNumericHighLowComposite> measurementData;
+
+        private MultiLineGraphData(String resourceName, int resourceId, List<MeasurementDataNumericHighLowComposite> measurmentData)
+        {
+            this.resourceName = resourceName;
+            this.resourceId = resourceId;
+            this.measurementData = measurmentData;
+        }
+
+        public String getResourceName()
+        {
+            return resourceName;
+        }
+
+        public int getResourceId()
+        {
+            return resourceId;
+        }
+
+        public List<MeasurementDataNumericHighLowComposite> getMeasurementData()
+        {
+            return measurementData;
+        }
+    }
+
+    /**
      * Adding is done asynchronously, so we must synchronize the add.
      * @param resourceMeasurementList
      */
-    public synchronized  void addMeasurementForEachResource(List<MeasurementDataNumericHighLowComposite> resourceMeasurementList) {
-        measurementForEachResource.add(resourceMeasurementList);
+    public synchronized  void addMeasurementForEachResource(String resourceName, int resourceId, List<MeasurementDataNumericHighLowComposite> resourceMeasurementList) {
+
+        measurementForEachResource.add(new MultiLineGraphData(resourceName,resourceId,resourceMeasurementList));
     }
 
     @Override
@@ -289,13 +319,11 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
 
     private String getJsonMetrics() {
         StringBuilder sb = new StringBuilder("[");
-        int i = 0;
-        for (List<MeasurementDataNumericHighLowComposite> measurementList : measurementForEachResource) {
+        for (MultiLineGraphData multiLineGraphData : measurementForEachResource) {
             sb.append("{ values: ");
-            sb.append(produceInnerValuesArray(measurementList));
+            sb.append(produceInnerValuesArray(multiLineGraphData.getMeasurementData()));
             sb.append(",key: '");
-            sb.append(definition.getName());
-            sb.append(i++);
+            sb.append(multiLineGraphData.getResourceName());
             sb.append("'},");
         }
         sb.setLength(sb.length() - 1); // delete the last ','
@@ -310,7 +338,7 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
      * @return true if difference between startTime and endTime is >= x days
      */
     public boolean shouldDisplayDayOfWeekInXAxisLabel() {
-        List<MeasurementDataNumericHighLowComposite> firstResourceMeasurementList = measurementForEachResource.get(0);
+        List<MeasurementDataNumericHighLowComposite> firstResourceMeasurementList = measurementForEachResource.get(0).getMeasurementData();
         Long startTime = firstResourceMeasurementList.get(0).getTimestamp();
         Long endTime = firstResourceMeasurementList.get(firstResourceMeasurementList.size() - 1).getTimestamp();
         long timeThreshold = 24 * 60 * 60 * 1000; // 1 days

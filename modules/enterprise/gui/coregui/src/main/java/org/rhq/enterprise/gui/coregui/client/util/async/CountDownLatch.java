@@ -41,24 +41,25 @@ public final class CountDownLatch {
      *
      * @param count number of
      * @param command to execute after {@code count}
-     * @return a new latch.
+     * @return a new countdownlatch.
      */
     public static CountDownLatch create(int count, Command command) {
         return new CountDownLatch(count, command);
     }
 
     /**
-     * countDown the count by one.
+     * countDown or decrement the count by one.
      *
      * @throws IllegalStateException if this counter has already been ticked the
      *         expected number of times.
      */
     public void countDown() {
+        if(count <= 0){
+           Log.error("Illegal State in countDownLatch.count : "+ count);
+        }
         count--;
-        Log.debug("CountDownLatch.countDown:"+count);
         if (count == 0) {
             // we have met our conditions execute the command
-            Log.debug("CountDownLatch executed:");
             command.execute();
         }
     }

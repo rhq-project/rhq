@@ -109,22 +109,24 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
                     Log.debug("# of child resources: " + parentGroup.getExplicitResources().size());
                     // setting up a deferred Command to execute after all resource queries have completed (successfully or unsuccessfully)
                     final CountDownLatch countDownLatch = CountDownLatch.create(parentGroup.getExplicitResources().size(),
-                        new Command() {
-                            @Override
-                            /**
-                             * Do this only after ALL of the metric queries for each resource
-                             */
-                            public void execute() {
-                                Log.debug("CountDownLatch Complete. Drawing graph.");
-                                drawGraph();
-                                redraw();
-                            }
-                        });
+                            new Command() {
+                        @Override
+                        /**
+                         * Do this only after ALL of the metric queries for each resource
+                         */
+                        public void execute() {
+                            drawGraph();
+                            redraw();
+                        }
+                    });
 
-                    Set<Resource> childResources = parentGroup.getExplicitResources();
+                    final Set<Resource> childResources = parentGroup.getExplicitResources();
+                    if (!childResources.isEmpty()) {
 
-                    for (Resource childResource : childResources) {
-                        Log.debug("Adding child composite: " + childResource.getName());
+                        // resourceType will be the same for all autogroup children so get first
+                        Resource childResource = childResources.iterator().next();
+
+                        Log.debug(" ** ChildResource: " + childResource.getName() + ":" + childResource.getId());
 
                         ResourceTypeRepository.Cache.getInstance().getResourceTypes(
                             childResource.getResourceType().getId(),
@@ -132,37 +134,43 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
                             new ResourceTypeRepository.TypeLoadedCallback() {
                                 @Override
                                 public void onTypesLoaded(final ResourceType type) {
+                                    Log.debug("onTypesLoaded");
 
                                     for (MeasurementDefinition def : type.getMetricDefinitions()) {
                                         // only need the one selected measurement
                                         if (def.getId() == getDefinitionId()) {
                                             setDefinition(def);
-
-                                            List<Long> times = measurementRangeEditor.getBeginEndTimes();
-                                            Long startTime = times.get(0);
-                                            Long endTime = times.get(1);
-
-                                            GWTServiceLookup.getMeasurementDataService()
-                                                .findDataForCompatibleGroup(
-                                                        groupId, new int[]{getDefinitionId()},
-                                                        startTime, endTime, 60,
-                                                        new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
-                                                            @Override
-                                                            public void onFailure(Throwable caught) {
-                                                                countDownLatch.countDown();
-                                                                CoreGUI.getErrorHandler().handleError(
-                                                                        MSG.view_resource_monitor_graphs_loadFailed(), caught);
-                                                            }
-
-                                                            @Override
-                                                            public void onSuccess(
-                                                                    List<List<MeasurementDataNumericHighLowComposite>> result) {
-                                                                countDownLatch.countDown();
-                                                                Log.debug(" ** result.size() "+result.size());
-                                                                addMeasurementForEachResource(result.get(0));
-                                                            }
-                                                        });
                                         }
+                                    }
+
+                                    List<Long> times = measurementRangeEditor.getBeginEndTimes();
+                                    Long startTime = times.get(0);
+                                    Long endTime = times.get(1);
+
+                                    for (Resource childResource : childResources) {
+                                        Log.debug("Adding child composite: " + childResource.getName()
+                                            + childResource.getId());
+
+                                        GWTServiceLookup.getMeasurementDataService().findDataForResource(
+                                                childResource.getId(), new int[]{getDefinitionId()}, startTime, endTime, 60,
+                                                new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>()
+                                                {
+                                                    @Override
+                                                    public void onFailure(Throwable caught)
+                                                    {
+                                                        countDownLatch.countDown();
+                                                        CoreGUI.getErrorHandler().handleError(
+                                                                MSG.view_resource_monitor_graphs_loadFailed(), caught);
+                                                    }
+
+                                                    @Override
+                                                    public void onSuccess(
+                                                            List<List<MeasurementDataNumericHighLowComposite>> result)
+                                                    {
+                                                        countDownLatch.countDown();
+                                                        addMeasurementForEachResource(result.get(0));
+                                                    }
+                                                });
                                     }
                                 }
                             });
@@ -177,8 +185,7 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
      * Adding is done asynchronously, so we must synchronize the add.
      * @param resourceMeasurementList
      */
-     public void addMeasurementForEachResource(
-        List<MeasurementDataNumericHighLowComposite> resourceMeasurementList) {
+    public synchronized  void addMeasurementForEachResource(List<MeasurementDataNumericHighLowComposite> resourceMeasurementList) {
         measurementForEachResource.add(resourceMeasurementList);
     }
 
@@ -311,40 +318,40 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
     }
 
     public native void drawJsniChart() /*-{
-       console.log("Draw nvd3 charts for composite multiline graph");
-       var chartId =  this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartId()();
-       var chartHandle = "#mChart-"+chartId,
-       chartSelection = chartHandle + " svg",
-       //        yAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getYAxisTitle()(),
-       yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getYAxisUnits()(),
-       xAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getXAxisTitle()(),
-       displayDayOfWeek = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::shouldDisplayDayOfWeekInXAxisLabel()();
-       xAxisTimeFormat = (displayDayOfWeek) ? "%a %I %p" : "%I %p";
-       json = eval(this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getJsonMetrics()());
+           console.log("Draw nvd3 charts for composite multiline graph");
+           var chartId =  this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartId()(),
+           chartHandle = "#mChart-"+chartId,
+           chartSelection = chartHandle + " svg",
+           //        yAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getYAxisTitle()(),
+           yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getYAxisUnits()(),
+           xAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getXAxisTitle()(),
+           displayDayOfWeek = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::shouldDisplayDayOfWeekInXAxisLabel()(),
+           xAxisTimeFormat = (displayDayOfWeek) ? "%a %I %p" : "%I %p",
+           json = eval(this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getJsonMetrics()());
 
-       console.log(json);
+           console.log(json);
 
-       $wnd.nv.addGraph(function() {
-       var chart = $wnd.nv.models.lineChart();
+           $wnd.nv.addGraph(function() {
+           var chart = $wnd.nv.models.lineChart();
 
-       chart.xAxis.axisLabel(xAxisLabel)
-            .tickFormat(function(d) { return $wnd.d3.time.format(xAxisTimeFormat)(new Date(d)) });
+           chart.xAxis.axisLabel(xAxisLabel)
+           .tickFormat(function(d) { return $wnd.d3.time.format(xAxisTimeFormat)(new Date(d)) });
 
-       chart.yAxis
-            .axisLabel(yAxisUnits)
-            .tickFormat($wnd.d3.format('.02f'));
+           chart.yAxis
+           .axisLabel(yAxisUnits)
+           .tickFormat($wnd.d3.format('.02f'));
 
-       $wnd.d3.select(chartSelection)
-            .datum(json)
-            .transition().duration(300)
-            .call(chart);
+           $wnd.d3.select(chartSelection)
+           .datum(json)
+           .transition().duration(300)
+           .call(chart);
 
-       $wnd.nv.utils.windowResize(chart.update);
+           $wnd.nv.utils.windowResize(chart.update);
 
-       return chart;
-       });
+           return chart;
+           });
 
-                                       }-*/;
+       }-*/;
 
     public CompositeGroupD3GraphListView getInstance(String locatorId, int groupId, int definitionId) {
         return new CompositeGroupD3GraphListView(locatorId, groupId, definitionId);

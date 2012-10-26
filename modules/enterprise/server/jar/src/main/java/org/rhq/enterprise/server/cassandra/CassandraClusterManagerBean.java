@@ -47,8 +47,8 @@ import org.apache.commons.logging.LogFactory;
 import org.quartz.JobDataMap;
 import org.quartz.SchedulerException;
 
-import org.rhq.cassandra.CassandraException;
 import org.rhq.cassandra.BootstrapDeployer;
+import org.rhq.cassandra.CassandraException;
 import org.rhq.cassandra.DeploymentOptions;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
@@ -64,13 +64,16 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.bundle.BundleManagerLocal;
+import org.rhq.enterprise.server.core.CoreServerMBean;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author John Sanda
@@ -98,20 +101,12 @@ public class CassandraClusterManagerBean implements CassandraClusterManagerLocal
     @Override
     @TransactionAttribute(NEVER)
     public void installBundle() throws CassandraException {
-        Properties deploymentProps = null;
-        try {
-            deploymentProps = loadDeploymentProps();
-        } catch (IOException e) {
-            String msg = "An error occurred while trying to load cassandra.properties. Cannot proceed with " +
-                "Cassandra bundle installation";
-            logException(msg, e);
-            throw new CassandraException(msg, e);
-        }
+        DeploymentOptions deploymentOptions = new DeploymentOptions();
         File deployBaseDir = getDeployBaseDir();
         Subject overlord = subjectManager.getOverlord();
-        String bundleName = deploymentProps.getProperty("rhq.cassandra.bundle.name");
-        String bundleVersionString = deploymentProps.getProperty("rhq.cassandra.bundle.version");
-        String bundleFileName = deploymentProps.getProperty("rhq.cassandra.bundle.filename");
+        String bundleName = deploymentOptions.getBundleName();
+        String bundleVersionString = deploymentOptions.getBundleVersion();
+        String bundleFileName = deploymentOptions.getBundleFileName();
         Bundle bundle = null;
         try {
             bundle = getBundle(overlord, bundleName);
@@ -130,16 +125,37 @@ public class CassandraClusterManagerBean implements CassandraClusterManagerLocal
             throw new CassandraException(msg, e);
         }
 
-        BootstrapDeployer deployer = new BootstrapDeployer();
-        deployer.setDeploymentOptions(new DeploymentOptions(deploymentProps));
-        deployer.deploy();
+        String seeds;
+        if (deploymentOptions.isEmbedded()) {
+            BootstrapDeployer deployer = new BootstrapDeployer();
+            deployer.setDeploymentOptions(deploymentOptions);
+            seeds = deployer.getCassandraHosts();
+
+            // need to save the seeds list back to rhq-server.properties.
+            CoreServerMBean coreServer = LookupUtil.getCoreServer();
+            File installDir = coreServer.getInstallDir();
+            File binDir = new File(installDir, "bin");
+            File serverProperties = new File(binDir, "rhq-server.properties");
+            PropertiesFileUpdate propsFile = new PropertiesFileUpdate(serverProperties.getAbsolutePath());
+
+            try {
+                propsFile.update("rhq.cassandra.cluster.seeds", seeds);
+            } catch (IOException e) {
+                log.warn("Failed to update rhq.cassandra.cluster.seeds property in " + serverProperties, e);
+            }
+
+            deployer.deploy();
+
+        } else {
+            seeds = System.getProperty("rhq.cassandra.cluster.seeds");
+        }
 
         String jobTrigger = "CassandraClusterHeartBeatTrigger - " + UUID.randomUUID().toString();
         String jobGroup = CassandraClusterHeartBeatJob.JOB_NAME + "Group";
 
         JobDataMap jobDataMap = new JobDataMap();
         jobDataMap.put(CassandraClusterHeartBeatJob.KEY_CONNECTION_TIMEOUT, "100");
-        jobDataMap.put(CassandraClusterHeartBeatJob.KEY_CASSANDRA_HOSTS, deployer.getCassandraHosts());
+        jobDataMap.put(CassandraClusterHeartBeatJob.KEY_CASSANDRA_HOSTS, seeds);
 
         try {
             scheduler.scheduleRepeatingJob(CassandraClusterHeartBeatJob.JOB_NAME, jobGroup, jobDataMap,

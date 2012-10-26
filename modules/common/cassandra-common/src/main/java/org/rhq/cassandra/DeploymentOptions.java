@@ -25,12 +25,19 @@
 
 package org.rhq.cassandra;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * @author John Sanda
  */
 public class DeploymentOptions {
+
+    private final Log log = LogFactory.getLog(DeploymentOptions.class);
 
     private String bundleFileName;
     private String bundleName;
@@ -42,17 +49,49 @@ public class DeploymentOptions {
     private String loggingLevel;
 
     public DeploymentOptions() {
+        init(loadProperties());
+    }
+
+    private Properties loadProperties() {
+        InputStream stream = null;
+        try {
+            stream = getClass().getResourceAsStream("/cassandra.properties");
+            Properties props = new Properties();
+            props.load(stream);
+
+            return props;
+        }  catch (IOException e) {
+            throw new RuntimeException("Unable to create DeploymentOptions. An error occurred while loading " +
+                "cassandra.properties", e);
+        } finally {
+            if (stream != null) {
+                try {
+                    stream.close();
+                } catch (IOException e) {
+                    String msg = "An error occurred while closing input stream on cassandra.properties";
+                    log.info(msg, e);
+                }
+            }
+        }
     }
 
     public DeploymentOptions(Properties properties) {
+        init(properties);
+    }
+
+    private void init(Properties properties) {
         setBundleFileName(properties.getProperty("rhq.cassandra.bundle.filename"));
         setBundleName(properties.getProperty("rhq.cassandra.bundle.name"));
         setBundleVersion(properties.getProperty("rhq.cassandra.bundle.version"));
-        setClusterDir(properties.getProperty("rhq.cassandra.cluster.dir"));
-        setNumNodes(Integer.parseInt(properties.getProperty("rhq.cassandra.cluster.num-nodes")));
+        setClusterDir(System.getProperty("rhq.cassandra.cluster.dir",
+            properties.getProperty("rhq.cassandra.cluster.dir")));
+        setNumNodes(Integer.parseInt(System.getProperty("rhq.cassandra.cluster.num-nodes",
+            properties.getProperty("rhq.cassandra.cluster.num-nodes"))));
         setAutoDeploy(Boolean.valueOf(properties.getProperty("rhq.cassandra.cluster.auto-deploy")));
-        setEmbedded(Boolean.valueOf(properties.getProperty("rhq.cassandra.cluster.is-embedded")));
-        setLoggingLevel(properties.getProperty("rhq.cassandra.logging.level"));
+        setEmbedded(Boolean.valueOf(System.getProperty("rhq.cassandra.cluster.is-embedded",
+            properties.getProperty("rhq.cassandra.cluster.is-embedded"))));
+        setLoggingLevel(System.getProperty("rhq.cassandra.logging.level",
+            properties.getProperty("rhq.cassandra.logging.level")));
     }
 
     public String getBundleFileName() {

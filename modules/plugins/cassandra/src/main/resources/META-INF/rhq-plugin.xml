@@ -400,7 +400,7 @@
         </operation>
         <operation name="restoreSnapshot" description="Restore the column family from a previously taken snapshot.">
           <parameters>
-            <c:simple-property name="name" required="true" type="string" description="Snapshot Name">
+            <c:simple-property name="snapshotName" required="true" type="string" description="Snapshot Name">
               <c:option-source target="configuration" expression="snapshots/snapshot=name"/>
             </c:simple-property>
           </parameters>

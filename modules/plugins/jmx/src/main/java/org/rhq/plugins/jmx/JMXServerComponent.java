@@ -24,7 +24,6 @@ package org.rhq.plugins.jmx;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.support.ConnectionProvider;
 
@@ -44,7 +43,7 @@ import org.rhq.plugins.jmx.util.ConnectionProviderFactory;
  * versions. The same holds true for Hibernate applications - multiple connections can be created
  * to different versions of the Hibernate MBean and due to the isolation of each connection, there
  * are no version incompatibility errors that will occur.
- *  
+ *
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
@@ -106,18 +105,13 @@ public class JMXServerComponent<T extends ResourceComponent<?>> implements JMXCo
     }
 
     public EmsConnection getEmsConnection() {
+        this.reconnectIfDisconnected();
+
         return this.connection;
     }
 
     public AvailabilityType getAvailability() {
-        if ((connectionProvider) == null || !connectionProvider.isConnected()) {
-            try {
-                internalStart();
-            } catch (Exception e) {
-                log.debug("Still unable to reconnect to " + context.getResourceType() + "[" + context.getResourceKey()
-                    + "] due to error: " + e);
-            }
-        }
+        this.reconnectIfDisconnected();
 
         return ((connectionProvider != null) && connectionProvider.isConnected()) ? AvailabilityType.UP
             : AvailabilityType.DOWN;
@@ -127,4 +121,23 @@ public class JMXServerComponent<T extends ResourceComponent<?>> implements JMXCo
         return this.context;
     }
 
+    /**
+     * This method will attempt to reestablish the connection to the JMX server
+     * if it detects that the current connection is no longer open or valid.
+     *
+     * The code that detects if a connection is still open or valid is in the external
+     * EMS library and depends on the type of connection provider. Please read the EMS
+     * documentation and code for more details on how ConnectionProvider.isConnected()
+     * works for different supported providers.
+     */
+    private synchronized void reconnectIfDisconnected() {
+        if ((connectionProvider) == null || !connectionProvider.isConnected()) {
+            try {
+                internalStart();
+            } catch (Exception e) {
+                log.debug("Still unable to reconnect to " + context.getResourceType() + "[" + context.getResourceKey()
+                    + "] due to error: " + e);
+            }
+        }
+    }
 }

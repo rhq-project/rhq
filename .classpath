@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/itests-2/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/scripting/javascript/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/scripting/python/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/scripting/python/src/test/java"/>
@@ -47,7 +48,6 @@
 	<classpathentry kind="src" path="modules/enterprise/server/xml-schemas/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/xml-schemas/target/generated-sources/xjc"/>
 	<classpathentry kind="src" path="modules/enterprise/server/jar/src/main/java"/>
-	<classpathentry kind="src" path="modules/enterprise/server/jar/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/jar/target/generated-sources/antlr3"/>
 	<classpathentry kind="src" path="modules/enterprise/binding/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/binding/src/test/java"/>

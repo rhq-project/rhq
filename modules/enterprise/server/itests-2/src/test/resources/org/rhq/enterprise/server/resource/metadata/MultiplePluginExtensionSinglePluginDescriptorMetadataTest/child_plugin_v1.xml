@@ -1,0 +1,29 @@
+<plugin name="MultiplePluginExtensionSinglePluginDescriptorMetadataChildTestPlugin"
+        version="1.0"
+        displayName="Multiple Plugin Extension Single Descriptor Metadata Child Test Plugin"
+        package="org.rhq.plugins.test.child"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <server name="OuterServerA">
+        <server name="Child1ServerA"
+                description="Child 1 Server type that extends Parent Server type"
+                discovery="Child1DiscoveryComponent"
+                class="Child1Component"
+                sourcePlugin="MultiplePluginExtensionSinglePluginDescriptorMetadataParentTestPlugin"
+                sourceType="ParentServerA">
+        </server>
+    </server>
+
+    <server name="OuterServerB">
+        <server name="Child2ServerA"
+                description="Child 2 Server type that extends Parent Server type"
+                discovery="Child2DiscoveryComponent"
+                class="Child2Component"
+                sourcePlugin="MultiplePluginExtensionSinglePluginDescriptorMetadataParentTestPlugin"
+                sourceType="ParentServerA">
+        </server>
+    </server>
+
+</plugin>

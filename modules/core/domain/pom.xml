@@ -338,6 +338,12 @@
           <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
+              <properties>
+                <property>
+                  <name>listener</name>
+                  <value>org.rhq.test.testng.StdoutReporter</value>
+                </property>
+              </properties>            
               <systemProperties>
                 <property>
                   <name>ejbjarDirectory</name>

@@ -1,0 +1,10 @@
+<plugin name="ResourceMetaDataManagerBeanTest" displayName="Mock JBoss AS" package="org.rhq.plugins.mock.jboss"
+        version="1.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin">
+  
+   <platform name="events">
+         <event name="hugo" description="One" displayName="HugoOne"/>
+   </platform>
+</plugin>
+   

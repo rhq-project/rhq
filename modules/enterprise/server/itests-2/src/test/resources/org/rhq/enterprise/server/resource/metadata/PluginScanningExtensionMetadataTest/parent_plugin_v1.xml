@@ -1,0 +1,18 @@
+<plugin name="PluginScanningExtensionMetadataParentTestPlugin"
+        version="1.0"
+        displayName="Plugin Scanning Extension Metadata Parent Test Plugin"
+        package="org.rhq.plugins.test.parent"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <server name="ParentServerA"
+            description="Parent Server type that can be extended by a Child Server type"
+            discovery="ParentDiscoveryComponent"
+            class="ParentComponent">
+
+        <operation name="A-op" timeout="123456" description="a op"></operation>
+
+    </server>
+
+</plugin>

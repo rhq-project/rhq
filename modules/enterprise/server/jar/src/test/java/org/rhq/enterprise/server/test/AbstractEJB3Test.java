@@ -62,11 +62,11 @@ public abstract class AbstractEJB3Test extends Arquillian {
     @ArquillianResource
     protected InitialContext initialContext;
 
-    // We originally deployed the domain jar as a JavaArchive (JAR file). But this ran into problems because
+    // We originally deployed the jar as a JavaArchive (JAR file). But this ran into problems because
     // of the dependent 3rd party jars.  There isn't an obvious way to deploy the dependent jars of a jar.
     // Also, AS7 makes it hard to put them in a globally accessibly /lib directory due to
     // its classloader isolation and module approach. So, we now deploy an EnterpriseArchive (ear)
-    // where the domain jar is deployed as a module and the 3rd party libraries are put in the ear's /lib.
+    // where the ejb jar is deployed as a module and the 3rd party libraries are put in the ear's /lib.
 
     @Deployment
     protected static EnterpriseArchive getBaseDeployment() {
@@ -85,30 +85,32 @@ public abstract class AbstractEJB3Test extends Arquillian {
             dataSourceXml = "jbossas-oracle-ds.xml";
         }
 
-        // Create the domain jar which will subsequently be packaged in the ear deployment   
-        JavaArchive ejbJar = ShrinkWrap.create(JavaArchive.class, "rhq-core-domain-ejb3.jar") //
+        // Create the ejb jar which will subsequently be packaged in the ear deployment   
+        JavaArchive ejbJar = ShrinkWrap.create(JavaArchive.class, "rhq-enterprise-server-ejb3.jar") //
             .addAsManifestResource(dataSourceXml) // the datasource
             .addAsManifestResource("ejb-jar.xml") // the empty ejb jar descriptor
             .addAsManifestResource("test-persistence.xml", "persistence.xml") //  the test persistence context            
             .addAsManifestResource(EmptyAsset.INSTANCE, ArchivePaths.create("beans.xml") // add CDI injection (needed by arquillian injection)
             );
 
-        // non-domain RHQ classes in use by domain test classes
+        // non-server-jar RHQ classes in use by server jar test classes
         ejbJar.addClass(ThrowableUtil.class) //
             .addClass(MessageDigestGenerator.class) //
             .addClass(StreamUtil.class) //
             .addClass(AssertUtils.class) //
             .addClasses(PropertyMatcher.class, MatchResult.class, PropertyMatchException.class);
 
-        // domain classes
+        // server jar classes
         ejbJar = addClasses(ejbJar, new File("target/classes/org"), null);
+
+        // System.out.println("** The Deployment EJB JAR: " + ejbJar.toString(true) + "\n");
 
         JavaArchive testClassesJar = ShrinkWrap.create(JavaArchive.class, "test-classes.jar");
         testClassesJar = addClasses(testClassesJar, new File("target/test-classes/org"), null);
 
         // create test ear
-        EnterpriseArchive ear = ShrinkWrap.create(EnterpriseArchive.class, "test-domain.ear") //
-            .addAsModule(ejbJar) // the domain jar under test
+        EnterpriseArchive ear = ShrinkWrap.create(EnterpriseArchive.class, "test-server.ear") //
+            .addAsModule(ejbJar) // the jar under test
             .addAsLibrary(testClassesJar) // the actual test classes
             .setApplicationXML("application.xml"); // the application xml declaring the ejb jar
 
@@ -136,16 +138,18 @@ public abstract class AbstractEJB3Test extends Arquillian {
         MavenDependencyResolver resolver = DependencyResolvers.use(MavenDependencyResolver.class);
         resolver.loadMetadataFromPom("pom.xml");
         Collection<JavaArchive> dependencies = new HashSet<JavaArchive>();
-        dependencies
-            .addAll(resolver.artifact("commons-beanutils:commons-beanutils:1.8.2").resolveAs(JavaArchive.class));
-        dependencies.addAll(resolver.artifact("commons-codec:commons-codec").resolveAs(JavaArchive.class));
-        dependencies.addAll(resolver.artifact("commons-io:commons-io").resolveAs(JavaArchive.class));
-        dependencies.addAll(resolver.artifact("org.unitils:unitils-testng:3.1").resolveAs(JavaArchive.class));
+        //dependencies
+        //    .addAll(resolver.artifact("commons-beanutils:commons-beanutils:1.8.2").resolveAs(JavaArchive.class));
+        //dependencies.addAll(resolver.artifact("commons-codec:commons-codec").resolveAs(JavaArchive.class));
+        //dependencies.addAll(resolver.artifact("commons-io:commons-io").resolveAs(JavaArchive.class));
+        //dependencies.addAll(resolver.artifact("org.unitils:unitils-testng:3.1").resolveAs(JavaArchive.class));
 
+        //dependencies.addAll(resolver.artifact("org.rhq:rhq-core-domain").resolveAs(JavaArchive.class));
         String[] excludeFilters = { "testng.*jdk" };
 
         dependencies = exclude(dependencies, excludeFilters);
         ear = ear.addAsLibraries(dependencies);
+        ear.addAsModule((resolver.artifact("org.rhq:rhq-core-domain").resolveAsFiles())[0], "rhq-core-domain-ejb3.jar");
 
         System.out.println("** The Deployment EAR: " + ear.toString(true) + "\n");
 
@@ -207,8 +211,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
             } else if (fileName.endsWith(".class")) {
                 int dot = fileName.indexOf('.');
                 try {
-                    Class<?> clazz = Class.forName(packageName + "." + fileName.substring(0, dot));
-                    archive.addClasses(clazz);
+                    //Class<?> clazz = Class.forName(packageName + "." + fileName.substring(0, dot));
+                    archive.addClass(packageName + "." + fileName.substring(0, dot));
                 } catch (Exception e) {
                     System.out.println("WARN: Could not add class:" + e);
                 }

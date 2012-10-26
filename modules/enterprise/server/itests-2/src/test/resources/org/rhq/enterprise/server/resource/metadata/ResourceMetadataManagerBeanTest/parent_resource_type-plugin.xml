@@ -1,0 +1,29 @@
+<plugin name="ParentResourceTypeTestPlugin" displayName="Test Plugin" package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <server name="Server A First Level" description="Server A description">
+        <server name="Server B Second Level" description="Server B description"/>
+        <service name="Service A Second Level" description="Service A description"/>
+    </server>
+
+    <server name="Server C First Level" description="Server C description">
+      <runs-inside>
+        <parent-resource-type name="Server B Second Level" plugin="ParentResourceTypeTestPlugin"/>
+      </runs-inside>
+    </server>
+
+    <service name="Service B First Level" description="Service B description">
+      <runs-inside>
+        <parent-resource-type name="Server B Second Level" plugin="ParentResourceTypeTestPlugin"/>
+      </runs-inside>
+    </service>
+
+    <service name="Service C First Level" description="Service C description">
+      <runs-inside>
+        <parent-resource-type name="Service A Second Level" plugin="ParentResourceTypeTestPlugin"/>
+      </runs-inside>
+    </service>
+
+</plugin>

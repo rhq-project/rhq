@@ -27,8 +27,6 @@ import java.util.Set;
 import javax.persistence.EntityManager;
 
 import org.apache.commons.lang.RandomStringUtils;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -42,11 +40,11 @@ import org.rhq.core.domain.content.RepoRepoRelationship;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.RepoException;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
-import org.rhq.enterprise.server.plugin.pc.content.TestContentServerPluginService;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -54,29 +52,37 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
 
     private final static boolean ENABLED = true;
 
-    private RepoManagerLocal repoManager;
-    private ContentSourceManagerLocal contentSourceManager;
-    private ContentSourceMetadataManagerLocal contentSourceMetadataManager;
+    //@Inject
+    protected RepoManagerLocal repoManager;
+
+    //@Inject
+    protected ContentSourceManagerLocal contentSourceManager;
+
+    //@Inject
+    protected ContentSourceMetadataManagerLocal contentSourceMetadataManager;
 
     private Subject overlord;
 
-    @BeforeMethod
-    public void setupBeforeMethod() throws Exception {
+    //@Inject
+    protected SubjectManagerLocal subjectManager;
+
+    @Override
+    public void beforeMethod() throws Exception {
 
         overlord = LookupUtil.getSubjectManager().getOverlord();
+        //overlord = subjectManager.getOverlord();
         prepareScheduler();
 
         repoManager = LookupUtil.getRepoManagerLocal();
         contentSourceManager = LookupUtil.getContentSourceManager();
         contentSourceMetadataManager = LookupUtil.getContentSourceMetadataManager();
 
-        TestContentServerPluginService pluginService = new TestContentServerPluginService(this);
+        //TestContentServerPluginService pluginService = new TestContentServerPluginService(this);
         getTransactionManager().begin();
-
     }
 
-    @AfterMethod
-    public void tearDownAfterMethod() throws Exception {
+    @Override
+    public void afterMethod() throws Exception {
         unprepareServerPluginService();
         unprepareScheduler();
         getTransactionManager().rollback();

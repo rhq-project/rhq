@@ -1,0 +1,28 @@
+<plugin name="ResourceMetaDataManagerBeanTest" displayName="Mock JBoss AS" package="org.rhq.plugins.mock.jboss"
+        version="2"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <platform name="groupPropDeletedPlatform">
+        <resource-configuration>
+            <c:group name="advanced" displayName="Advanced">
+                <c:simple-property name="application-managed-security"
+                                   type="boolean"
+                                   activationPolicy="immediate"
+                                   displayName="Application Managed Security"
+                                   required="false">
+                    <c:description>Specifying this element indicates that connections in the pool should be
+                        distinguished
+                        by application code supplied parameters, such as from getConnection(user, pw). This requires
+                        that you set a security domain which will populate a security-domain-and-application tag. If it
+                        is missing
+                        this resource will not be created or saved.
+                    </c:description>
+                </c:simple-property>
+            </c:group>
+        </resource-configuration>
+    </platform>
+
+</plugin>
+   

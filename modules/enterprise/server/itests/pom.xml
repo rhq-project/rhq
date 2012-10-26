@@ -22,7 +22,7 @@
   <properties>
     <rhq.server.datasource>java:/RHQDS</rhq.server.datasource>
     <rhq.server.ds-mapping>PostgreSQL</rhq.server.ds-mapping>
-    <jboss-embeddable-ejb3.version>1.0.0.Alpha9</jboss-embeddable-ejb3.version>
+    <!--  <jboss-embeddable-ejb3.version>1.0.0.Alpha9</jboss-embeddable-ejb3.version>  -->
   </properties>
 
   <dependencies>
@@ -186,13 +186,15 @@
         </exclusions>
       </dependency>
 
+<!-- 
       <dependency>
          <groupId>jboss.jboss-embeddable-ejb3</groupId>
          <artifactId>jboss-ejb3-all</artifactId>
          <version>${jboss-embeddable-ejb3.version}</version>
          <scope>test</scope>
       </dependency>
-
+ -->
+ 
       <!-- Shrinkwrap to build up test plugins etc. -->
       <dependency>
           <groupId>org.jboss.shrinkwrap</groupId>

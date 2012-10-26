@@ -1,0 +1,54 @@
+<plugin name="RemoveTypesPlugin" displayName="Remove Types Plugin" package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+    <server name="ServerC" description="Server C description">
+
+        <subcategories>
+            <subcategory name="ServerC.Category1">
+                <subcategory name="ServerC.NestedCategory1"/>
+            </subcategory>
+            <subcategory name="ServerC.Category2"/>
+        </subcategories>
+
+        <bundle type="Test Bundle"/>
+
+        <process-scan name="scan1" query="process|basename|match=^java.*,arg|org.rhq.serverC1|match=.*"/>
+        <process-scan name="scan2" query="process|basename|match=^java.*,arg|org.rhq.serverC2|match=.*"/>
+
+        <operation name="run">
+            <parameters>
+                <c:simple-property name="script"/>
+            </parameters>
+            <results>
+                <c:simple-property name="errors"/>
+            </results>
+        </operation>
+
+        <metric displayName="Metric 1" property="ServerC::metric1" displayType="summary" defaultInterval="300000"/>
+
+        <event name="serverCEvent" description="an entry was appended to a log file"/>
+
+        <content name="ServerC.Content" category="deployable">
+            <configuration>
+                <c:simple-property name="ServerC.Content.version"/>
+            </configuration>
+        </content>
+    </server>
+
+    <server name="ServerD">
+        <service name="ServerD.Child1">
+            <service name="ServerD.GrandChild1"/>
+        </service>
+    </server>
+
+    <server name="ServerE">
+        <service name="ServiceE1">
+            <service name="ServiceE2">
+                <service name="ServiceE3">
+                    <service name="serviceE4"/>
+                </service>
+            </service>
+        </service>
+    </server>
+</plugin>

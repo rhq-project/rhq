@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<deployment xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="urn:jboss:bean-deployer bean-deployer_1_0.xsd"
+            xmlns="urn:jboss:bean-deployer">
+
+   <bean class="org.jboss.ejb3.embedded.JaasSecurityManagerService"
+         name="jboss.security:service=JaasSecurityManager">
+      <property name="initialContextProperties">
+         <inject bean="InitialContextProperties"/>
+      </property>
+   </bean>
+</deployment>

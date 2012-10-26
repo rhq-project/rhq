@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- ===================================================================== -->
+<!--                                                                       -->
+<!--  Generic datasource configuration showing all possibilities           -->
+<!--                                                                       -->
+<!-- ===================================================================== -->
+
+<!-- $Id: generic_ds.xml 695 2005-09-17 00:43:05Z ccrouch $ -->
+
+
+<datasources>
+  <local-tx-datasource>
+    <jndi-name>GenericDS</jndi-name>
+    <connection-url>[jdbc: url for use with Driver class]</connection-url>
+    <driver-class>[fully qualified class name of java.sql.Driver implementation]</driver-class>
+    <user-name>x</user-name>
+    <password>y</password>
+    <!-- you can include connection properties that will get passed in 
+     the DriverManager.getConnection(props) call-->
+    <!-- look at your Driver docs to see what these might be -->
+    <connection-property name="char.encoding">UTF-8</connection-property>
+    <transaction-isolation>TRANSACTION_SERIALIZABLE</transaction-isolation>
+
+    <!--pooling parameters-->
+    <min-pool-size>5</min-pool-size>
+    <max-pool-size>100</max-pool-size>
+    <blocking-timeout-millis>5000</blocking-timeout-millis>
+    <idle-timeout-minutes>15</idle-timeout-minutes>
+        <!-- sql to call when connection is created -->
+        <new-connection-sql>select * from user where name=$</new-connection-sql>
+        
+
+        <!-- sql to call on an existing pooled connection when it is obtained from pool -->
+        <check-valid-connection-sql>some arbitrary sql</check-valid-connection-sql>
+        
+
+
+    <!-- pooling criteria.  USE AT MOST ONE-->
+    <!--  If you don't use JAAS login modules or explicit login 
+     getConnection(usr,pw) but rely on user/pw specified above, 
+     don't specify anything here -->
+
+    <!-- If you supply the usr/pw from a JAAS login module 
+    <security-domain>MyRealm</security-domain>
+-->
+
+    <!-- if your app supplies the usr/pw explicitly getConnection(usr, pw) -->
+    <application-managed-security/>
+
+    <!--Anonymous depends elements are copied verbatim into the ConnectionManager mbean config-->
+    <depends>myapp.service:service=DoSomethingService</depends>
+
+  </local-tx-datasource>
+
+  <!-- you can include regular mbean configurations like this one -->
+  <mbean code="org.jboss.tm.XidFactory" 
+	 name="jboss:service=XidFactory">
+    <attribute name="Pad">true</attribute>
+  </mbean>
+
+
+
+
+
+</datasources>

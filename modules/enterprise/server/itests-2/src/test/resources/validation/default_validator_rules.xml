@@ -1,0 +1,47 @@
+<!DOCTYPE form-validation PUBLIC
+          "-//Apache Software Foundation//DTD Commons Validator Rules Configuration 1.1.3//EN"
+          "http://jakarta.apache.org/commons/dtds/validator_1_1_3.dtd">
+     
+<form-validation>
+   <global>      
+      <validator name="required"
+                 classname="com.jboss.jbossnetwork.apl.validation.ActionArgumentsValidator"
+                 method="validateRequired"
+                 methodParams="java.lang.Object, org.apache.commons.validator.Field"
+                 msg="errors.required"/>                                  
+
+<!--
+	  <validator name="maxLength"
+                 classname="org.apache.commons.validator.GenericValidator"
+                 method="maxLength"
+                 methodParams="java.lang.String, int"
+                 msg="errors.maxLength"/>     
+-->
+     <validator name="optionalInt"
+                 classname="com.jboss.jbossnetwork.apl.validation.ActionArgumentsValidator"
+                 method="validateOptionalInt"
+                 methodParams="java.lang.Object, org.apache.commons.validator.Field"
+                 msg="errors.int"/> 
+
+<!--
+      <validator name="int2"
+                 classname="com.jboss.jbossnetwork.apl.validation.ActionArgumentsTypeValidator"
+                 method="validateInt"
+                 methodParams="java.lang.Object,org.apache.commons.validator.Field"
+                 msg="errors.int"/>
+
+       THIS VALIDATOR STILL NEEDS MORE WORK TO BE REALLY USEFUL          
+      <validator name="matchesTypeDefinition"
+                 classname="com.jboss.jbossnetwork.apl.validation.ActionAttributeDefinitionValidator"
+                 method="matchesTypeDefinition"
+                 methodParams="java.lang.Object,org.apache.commons.validator.Field"
+                 msg="errors.type"/>
+-->
+
+      <validator name="mapValue"
+                 classname="com.jboss.jbossnetwork.apl.validation.ActionArgumentsValidator"
+                 method="validateMapParameter"
+                 methodParams="java.lang.Object, org.apache.commons.validator.Field"
+                 msg="errors.mapValue"/>
+   </global>
+</form-validation>

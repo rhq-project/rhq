@@ -207,11 +207,6 @@ import org.rhq.enterprise.server.test.TestLocal;
  * @author Ian Springer
  */
 public final class LookupUtil {
-    private static boolean embeddedDeployment;
-
-    static {
-        embeddedDeployment = Boolean.valueOf(System.getProperty("embeddedDeployment", "false"));
-    }
 
     /**
      * Prevent instantiation.
@@ -246,9 +241,6 @@ public final class LookupUtil {
         try {
             InitialContext context = new InitialContext();
             String jndi = RHQConstants.TRANSACTION_MANAGER_JNDI_NAME;
-            if (embeddedDeployment) {
-                jndi = "java:/TransactionManager";
-            }
             TransactionManager tm = (TransactionManager) context.lookup(jndi);
             context.close();
             return tm;
@@ -644,7 +636,7 @@ public final class LookupUtil {
     // Private Methods
 
     private static String getLocalJNDIName(String beanName, String interfaceName) {
-        return (embeddedDeployment ? "" : ("java:global/rhq/rhq-enterprise-server-ejb3/")) + beanName + "!" + interfaceName;
+        return "java:global/rhq/rhq-enterprise-server-ejb3/" + beanName + "!" + interfaceName;
     }
 
     private static <T> String getLocalJNDIName(@NotNull Class<? super T> beanClass) {
@@ -660,8 +652,8 @@ public final class LookupUtil {
      */
     private static <T> String getRemoteJNDIName(@NotNull
     Class<? super T> beanClass) {
-        return (embeddedDeployment ? "" : ("java:global/rhq/rhq-enterprise-server-ejb3/")) + beanClass.getSimpleName()
-            + "!" + beanClass.getName().replace("Bean", "Remote");
+        return ("java:global/rhq/rhq-enterprise-server-ejb3/" + beanClass.getSimpleName() + "!" + beanClass.getName()
+            .replace("Bean", "Remote"));
     }
 
     @SuppressWarnings("unchecked")

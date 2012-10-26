@@ -1,0 +1,27 @@
+<plugin name="ResourceMetaDataManagerBeanTest" displayName="Mock JBoss AS" package="org.rhq.plugins.mock.jboss"
+        version="1"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <platform name="groupPropMovedPlatform">
+        <resource-configuration>
+            <c:group name="advanced" displayName="Advanced">
+                <c:simple-property name="security-domain-and-application"
+                                   type="string"
+                                   activationPolicy="immediate"
+                                   displayName="Security Domain"
+                                   required="false">
+                    <c:description>Indicates Subjects from security domain are used to distinguish connections in
+                        this pool.
+                    </c:description>
+                    <c:defaultValueDescription>If nothing is specified, the default will be to use a single pool of
+                        equivalent connections.
+                    </c:defaultValueDescription>
+                </c:simple-property>
+            </c:group>
+        </resource-configuration>
+    </platform>
+
+</plugin>
+   

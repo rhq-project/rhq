@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xpathproc>
+      <test1></test1>
+      <test2/>
+      <!-- <test3/> -->
+      <test4>4</test4>
+      <test5>
+      5
+      </test5>
+      <test6><!-- test -->6</test6>
+      <test7>  
+      YYY
+      <!-- test -->
+      7
+      </test7> 
+      
+      <test8>
+      8
+      <!-- test -->
+      ZZZ
+      </test8>
+      
+      <test9>
+      
+      <!-- test -->
+      9
+      </test9>
+      
+      <test10 name="test10">10</test10>
+      
+      <test11 name="test11">
+      11</test11>
+
+      <test12 name="test12"><!-- test -->12</test12>
+
+      <test13 name="test13
+      ">13</test13>
+         
+      <test14>    </test14>   
+
+</xpathproc>

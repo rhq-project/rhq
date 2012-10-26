@@ -300,6 +300,14 @@ public abstract class AbstractMeasurementRangeEditor extends LocatableDynamicFor
         }
     }
 
+    /**
+     * Returns the SetButton so you can set a click handler from a dialog box
+     * @return ButtonItem setButton
+     */
+    public ButtonItem getSetButton(){
+        return setButton;
+    }
+
     public boolean isDisplaySetButton() {
         return displaySetButton;
     }

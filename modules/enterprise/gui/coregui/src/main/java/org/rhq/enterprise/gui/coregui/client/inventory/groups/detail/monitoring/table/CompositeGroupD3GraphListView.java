@@ -26,6 +26,8 @@ import java.util.Set;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
@@ -144,6 +146,15 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
                                     List<Long> times = measurementRangeEditor.getBeginEndTimes();
                                     Long startTime = times.get(0);
                                     Long endTime = times.get(1);
+                                    measurementRangeEditor.getSetButton().addClickHandler(new ClickHandler()
+                                    {
+                                        @Override
+                                        public void onClick(ClickEvent event)
+                                        {
+                                           populateData();
+                                           markForRedraw();
+                                        }
+                                    });
 
                                     for (final Resource childResource : childResources) {
                                         Log.debug("Adding child composite: " + childResource.getName()

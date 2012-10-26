@@ -529,6 +529,25 @@ public class Installer implements EntryPoint {
         databaseForm.setFields(dbType, dbConnectionUrl, dbUsername, dbPassword, buttonSpacer, testConnectionButton,
             dbExistingSchemaOption);
 
+        final DynamicForm metricsDatabaseForm = new DynamicForm();
+        metricsDatabaseForm.setAutoWidth();
+        metricsDatabaseForm.setPadding(5);
+        metricsDatabaseForm.setCellPadding(5);
+        metricsDatabaseForm.setWrapItemTitles(false);
+        metricsDatabaseForm.setIsGroup(true);
+        metricsDatabaseForm.setGroupTitle("Metrics Database Settings");
+
+        TextItem hostNames = new TextItem(ServerProperties.PROP_CASSANDRA_CLUSTER_SEEDS, "Metrics Database Nodes");
+        hostNames.setWidth(fieldWidth);
+        hostNames.addChangedHandler(new ChangedHandler() {
+            @Override
+            public void onChanged(ChangedEvent event) {
+                updateServerProperty(ServerProperties.PROP_CASSANDRA_CLUSTER_SEEDS, String.valueOf(event.getValue()));
+            }
+        });
+
+        metricsDatabaseForm.setFields(hostNames);
+
         ////////////////////////////////////////////////////////
         // The Server Settings form
 
@@ -677,6 +696,7 @@ public class Installer implements EntryPoint {
         simpleForm.setHeight100();
         simpleForm.setDefaultLayoutAlign(Alignment.CENTER);
         simpleForm.addMember(databaseForm);
+        simpleForm.addMember(metricsDatabaseForm);
         simpleForm.addMember(serverSettingsForm);
 
         return simpleForm;

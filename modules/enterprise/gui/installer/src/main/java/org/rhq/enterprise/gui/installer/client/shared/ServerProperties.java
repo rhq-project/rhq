@@ -113,6 +113,8 @@ public class ServerProperties {
     public static final String PROP_MM_AT_START = "rhq.server.maintenance-mode-at-startup";
     public static final String PROP_OPERATION_TIMEOUT = "rhq.server.operation-timeout";
 
+    public static final String PROP_CASSANDRA_CLUSTER_SEEDS = "rhq.cassandra.cluster.seeds";
+
     // this list contains all the properties that are to have boolean values (true | false)
     public static final Set<String> BOOLEAN_PROPERTIES;
     static {

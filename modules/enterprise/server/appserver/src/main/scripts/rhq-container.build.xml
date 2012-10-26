@@ -558,6 +558,12 @@ rhq.autoinstall.enabled=${rhq.autoinstall.enabled}
 rhq.autoinstall.database=auto
 rhq.autoinstall.public-endpoint-address=
 
+# Cassandra cluster configuration settings
+# A comma-delimited list of hostnames on which Cassandra will run. Cassandra
+# nodes use this list to discover other nodes and learn about the cluster
+# topology.
+rhq.cassandra.cluster.seeds=
+
 </echo>
 
     </target>
@@ -585,14 +591,11 @@ rhq.autoinstall.public-endpoint-address=
         <copy todir="${project.build.outputDirectory}" verbose="true">
             <fileset dir="src/main/dev-resources" />
         </copy>
-        <echo>Putting a developer setting in rhq-server.properties to turn on/off strict agent update version checking</echo>
-        <echo file="${project.build.outputDirectory}/bin/rhq-server.properties" append="true">rhq.server.agent-update.nonstrict-version-check=true</echo>
       <loadproperties>
         <zipentry zipfile="${settings.localRepository}/org/rhq/rhq-cassandra-common/${project.version}/rhq-cassandra-common-${project.version}.jar"
                   name="cassandra.properties"/>
       </loadproperties>
       <echo file="${project.build.outputDirectory}/bin/rhq-server.properties" append="true">
-
 # The following properties that begin with a prefix of rhq.cassandra are ONLY for
 # development/testing environments where an embedded cluster is used. These properties are
 # loaded from the cassandra.properties file in the rhq-cassandra-common module. Note that
@@ -614,7 +617,10 @@ rhq.autoinstall.public-endpoint-address=
 #
 # The log4j logging level to use on each node.
 # rhq.cassandra.logging.level=${rhq.cassandra.logging.level}
-      </echo>
+
+</echo>
+      <echo>Putting a developer setting in rhq-server.properties to turn on/off strict agent update version checking</echo>
+      <echo file="${project.build.outputDirectory}/bin/rhq-server.properties" append="true">rhq.server.agent-update.nonstrict-version-check=true</echo>
     </target>
 
     <!-- The prepare-release target must be run AFTER the resources:resources goal has executed. -->

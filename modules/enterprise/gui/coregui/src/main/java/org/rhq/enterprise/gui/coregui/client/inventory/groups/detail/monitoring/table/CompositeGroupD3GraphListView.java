@@ -23,7 +23,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
@@ -72,6 +71,9 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
      * measurementForEachResource is a list of a list of single Measurement data for multiple resources.
      */
     private List<MultiLineGraphData> measurementForEachResource;
+    private HLayout titleHLayout;
+    private HTMLFlow title;
+    private HTMLFlow graph;
 
     public CompositeGroupD3GraphListView(String locatorId, int groupId, int defId) {
         super(locatorId);
@@ -93,6 +95,7 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
         criteria.addFilterPrivate(true);
         criteria.fetchExplicitResources(true);
 
+        measurementForEachResource.clear();
         groupService.findResourceGroupCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceGroupComposite>>() {
                 @Override
@@ -105,7 +108,6 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
                     if (result.isEmpty()) {
                         return;
                     }
-                    measurementForEachResource.clear();
 
                     final ResourceGroup parentGroup = result.get(0).getResourceGroup();
                     Log.debug("group name: " + parentGroup.getName());
@@ -151,6 +153,7 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
                                         @Override
                                         public void onClick(ClickEvent event)
                                         {
+                                           drawGraph();
                                            populateData();
                                            markForRedraw();
                                         }
@@ -233,7 +236,6 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
     @Override
     protected void onDraw() {
         super.onDraw();
-        removeMembers(getMembers());
         drawGraph();
     }
 
@@ -265,12 +267,24 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
         this.definition = definition;
     }
 
+    private void removeMembers(){
+
+        removeMember(measurementRangeEditor);
+        if(null != titleHLayout) removeMember(titleHLayout);
+        if(null != title) removeMember(title);
+        if (null != graph) removeMember(graph);
+    }
+
     private void drawGraph() {
         Log.debug("drawGraph in CompositeGroupD3GraphListView for: " + definition + "," + definitionId);
 
+        if(null != titleHLayout){
+            removeMembers();
+        }
+
         addMember(measurementRangeEditor);
 
-        HLayout titleHLayout = new LocatableHLayout(extendLocatorId("HTitle"));
+        titleHLayout = new LocatableHLayout(extendLocatorId("HTitle"));
 
         if (definition != null) {
             titleHLayout.setAutoHeight();
@@ -283,10 +297,10 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
 
             addMember(titleHLayout);
 
-            HTMLFlow title = new HTMLFlow("<b>" + definition.getDisplayName() + "</b> " + definition.getDescription());
+            title = new HTMLFlow("<b>" + definition.getDisplayName() + "</b> " + definition.getDescription());
             title.setWidth100();
             addMember(title);
-            HTMLFlow graph = new HTMLFlow("<div id=\"mChart-" + getChartId()
+            graph = new HTMLFlow("<div id=\"mChart-" + getChartId()
                 + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:95%;\"></svg></div>");
             graph.setWidth100();
             graph.setHeight100();
@@ -349,6 +363,10 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
      * @return true if difference between startTime and endTime is >= x days
      */
     public boolean shouldDisplayDayOfWeekInXAxisLabel() {
+        // because of asyncrony this is possible so default it
+        if(null == measurementForEachResource || measurementForEachResource.isEmpty()){
+           return true;
+        }
         List<MeasurementDataNumericHighLowComposite> firstResourceMeasurementList = measurementForEachResource.get(0).getMeasurementData();
         Long startTime = firstResourceMeasurementList.get(0).getTimestamp();
         Long endTime = firstResourceMeasurementList.get(firstResourceMeasurementList.size() - 1).getTimestamp();

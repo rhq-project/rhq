@@ -46,7 +46,9 @@ import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScanner;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceMBean;
 import org.rhq.enterprise.server.scheduler.SchedulerService;
+import org.rhq.enterprise.server.scheduler.SchedulerServiceMBean;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.test.AssertUtils;
 import org.rhq.test.MatchResult;
@@ -59,7 +61,6 @@ public abstract class AbstractEJB3Test extends Arquillian {
 
     private SchedulerService schedulerService;
     private ServerPluginService serverPluginService;
-    private MBeanServer dummyJBossMBeanServer;
     private PluginDeploymentScannerMBean pluginScannerService;
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -84,6 +85,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
             dialect = "postgres";
         }
 
+        @SuppressWarnings("unused")
         String dataSourceXml;
         if (dialect.toLowerCase().contains("postgres")) {
             dataSourceXml = "jbossas-postgres-ds.xml";
@@ -551,11 +553,16 @@ public abstract class AbstractEJB3Test extends Arquillian {
      */
     public void prepareCustomServerPluginService(ServerPluginService testServiceMBean) {
         try {
-            // TODO: Fix
-            //            MBeanServer mbs = getJBossMBeanServer();
-            //            testServiceMBean.start();
-            //            mbs.registerMBean(testServiceMBean, ServerPluginServiceMBean.OBJECT_NAME);
-            //            serverPluginService = testServiceMBean;
+            // first, unregister the real service...
+            MBeanServer mbs = getPlatformMBeanServer();
+            if (mbs.isRegistered(ServerPluginService.OBJECT_NAME)) {
+                mbs.unregisterMBean(ServerPluginService.OBJECT_NAME);
+            }
+
+            // Now replace with the test service...
+            testServiceMBean.start();
+            mbs.registerMBean(testServiceMBean, ServerPluginServiceMBean.OBJECT_NAME);
+            serverPluginService = testServiceMBean;
             return;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -570,17 +577,14 @@ public abstract class AbstractEJB3Test extends Arquillian {
         if (serverPluginService != null) {
             serverPluginService.stopMasterPluginContainer();
             serverPluginService.stop();
+            MBeanServer mbs = getPlatformMBeanServer();
             if (beanOnly) {
-                // TODO: Fix
-                //                if (mbs.isRegistered(ServerPluginService.OBJECT_NAME)) {
-                //                    getJBossMBeanServer().unregisterMBean(ServerPluginService.OBJECT_NAME);
-                //                }
-                //                if (mbs.isRegistered(ServerPluginServiceMBean.OBJECT_NAME)) {
-                //                    getJBossMBeanServer().unregisterMBean(ServerPluginServiceMBean.OBJECT_NAME);
-                //                }
+                if (mbs.isRegistered(ServerPluginService.OBJECT_NAME)) {
+                    mbs.unregisterMBean(ServerPluginService.OBJECT_NAME);
+                }
 
             } else {
-                //                releaseJBossMBeanServer();
+                //MBeanServerFactory.releaseMBeanServer(mbs);
             }
             serverPluginService = null;
         }
@@ -596,15 +600,35 @@ public abstract class AbstractEJB3Test extends Arquillian {
                 return;
             }
 
+            // first, unregister the real service...
+            MBeanServer mbs = getPlatformMBeanServer();
+            if (mbs.isRegistered(SchedulerService.SCHEDULER_MBEAN_NAME)) {
+                mbs.unregisterMBean(SchedulerService.SCHEDULER_MBEAN_NAME);
+            }
+
+            // Now replace with the test service...
             Properties quartzProps = new Properties();
             quartzProps.load(this.getClass().getClassLoader().getResourceAsStream("test-scheduler.properties"));
 
             schedulerService = new SchedulerService();
             schedulerService.setQuartzProperties(quartzProps);
             schedulerService.start();
-            //getJBossMBeanServer().registerMBean(schedulerService, SchedulerServiceMBean.SCHEDULER_MBEAN_NAME);
+            mbs.registerMBean(schedulerService, SchedulerServiceMBean.SCHEDULER_MBEAN_NAME);
             schedulerService.startQuartzScheduler();
-            return;
+
+            //            MBeanServer mbs = getPlatformMBeanServer();
+            //            schedulerService = MBeanServerInvocationHandler.newProxyInstance(mbs,
+            //                SchedulerServiceMBean.SCHEDULER_MBEAN_NAME, SchedulerServiceMBean.class, false);
+            //
+            //            Properties quartzProps = new Properties();
+            //            quartzProps.load(this.getClass().getClassLoader().getResourceAsStream("test-scheduler.properties"));
+            //            //schedulerService = LookupUtil.getSchedulerBean();
+            //            //schedulerService = new SchedulerService();
+            //            schedulerService.setQuartzProperties(quartzProps);
+            //            //schedulerService.start();
+            //            //getJBossMBeanServer().registerMBean(schedulerService, SchedulerServiceMBean.SCHEDULER_MBEAN_NAME);
+            //            schedulerService.startQuartzScheduler();
+            //            return;
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException(e);
@@ -617,17 +641,18 @@ public abstract class AbstractEJB3Test extends Arquillian {
 
     public void unprepareScheduler(boolean beanOnly) throws Exception {
         if (schedulerService != null) {
-            schedulerService.stop();
+            //schedulerService.stop();
+            schedulerService = null;
+
+            MBeanServer mbs = getPlatformMBeanServer();
             if (beanOnly) {
-                //                MBeanServer mbs = getJBossMBeanServer();
-                //                if (mbs.isRegistered(SchedulerServiceMBean.SCHEDULER_MBEAN_NAME)) {
-                //                    getJBossMBeanServer().unregisterMBean(SchedulerServiceMBean.SCHEDULER_MBEAN_NAME);
-                //                }
+                if (mbs.isRegistered(SchedulerService.SCHEDULER_MBEAN_NAME)) {
+                    mbs.unregisterMBean(SchedulerService.SCHEDULER_MBEAN_NAME);
+                }
             } else {
-                //                releaseJBossMBeanServer();
+                //MBeanServerFactory.releaseMBeanServer(mbs);
             }
 
-            schedulerService = null;
         }
     }
 

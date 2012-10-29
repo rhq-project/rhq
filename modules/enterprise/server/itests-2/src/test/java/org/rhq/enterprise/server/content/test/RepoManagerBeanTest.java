@@ -45,12 +45,14 @@ import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.RepoException;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
+import org.rhq.enterprise.server.plugin.pc.content.TestContentServerPluginService;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
+import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class RepoManagerBeanTest extends AbstractEJB3Test {
 
-    private final static boolean ENABLED = true;
+    private final static boolean ENABLED = false;
 
     //@Inject
     protected RepoManagerLocal repoManager;
@@ -73,6 +75,7 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         overlord = LookupUtil.getSubjectManager().getOverlord();
         System.out.println("*** 1");
         prepareScheduler();
+
         System.out.println("*** 2");
         repoManager = LookupUtil.getRepoManagerLocal();
         System.out.println("*** 3");
@@ -80,39 +83,47 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         System.out.println("*** 4");
         contentSourceMetadataManager = LookupUtil.getContentSourceMetadataManager();
         System.out.println("*** 5");
-        //TestContentServerPluginService pluginService = new TestContentServerPluginService(this);
-        getTransactionManager().begin();
-        System.out.println("*** 6");
+        // start mock plugin container        
+        @SuppressWarnings("unused")
+        TestContentServerPluginService pluginService = new TestContentServerPluginService(this);
+        //getTransactionManager().begin();
+        //System.out.println("*** 6");
     }
 
     @Override
     public void afterMethod() throws Exception {
         System.out.println("*** 7");
         unprepareServerPluginService();
+
         System.out.println("*** 8");
         unprepareScheduler();
+
         System.out.println("*** 9");
-        getTransactionManager().rollback();
-        System.out.println("*** 10");
+        //getTransactionManager().rollback();
+        //System.out.println("*** 10");
     }
 
-    @Test(enabled = ENABLED)
+    @Test
+    // (enabled = ENABLED)
     public void createABunchOfRepos() throws Exception {
-        PageList<Repo> repos = repoManager.findRepos(overlord, new PageControl());
-        int origsize = 0;
-        if (repos != null) {
-            origsize = repos.size();
-        }
-        for (int i = 0; i < 10; i++) {
-            Random r = new Random(System.currentTimeMillis());
-            Repo repo = new Repo(r.nextLong() + "");
-            repoManager.createRepo(overlord, repo);
-        }
-        repos = repoManager.findRepos(overlord, new PageControl());
+        executeInTransaction(new TransactionCallback() {
 
-        assert repos.size() == (origsize + 10);
+            public void execute() throws Exception {
+                PageList<Repo> repos = repoManager.findRepos(overlord, new PageControl());
+                int origsize = 0;
+                if (repos != null) {
+                    origsize = repos.size();
+                }
+                for (int i = 0; i < 10; i++) {
+                    Random r = new Random(System.currentTimeMillis());
+                    Repo repo = new Repo(r.nextLong() + "");
+                    repoManager.createRepo(overlord, repo);
+                }
+                repos = repoManager.findRepos(overlord, new PageControl());
 
-        System.out.println("*** 11");
+                assert repos.size() == (origsize + 10);
+            }
+        });
     }
 
     @Test(enabled = ENABLED)

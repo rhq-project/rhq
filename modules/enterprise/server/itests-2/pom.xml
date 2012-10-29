@@ -573,7 +573,7 @@
                 </datasource>                    
                 <!-- FOR RHQ TESTING -->
                 <datasource jta="false" jndi-name="java:jboss/datasources/NoTxRHQDS" pool-name="NoTxRHQDS" enabled="true" use-java-context="true">
-                    <connection-url>${rhq.server.database.connection-url:jdbc:postgres://127.0.0.1:5432/rhq}</connection-url>
+                    <connection-url>${rhq.server.database.connection-url:jdbc:postgresql://127.0.0.1:5432/rhq}</connection-url>
                     <connection-property name="char.encoding">
                         UTF-8
                     </connection-property>

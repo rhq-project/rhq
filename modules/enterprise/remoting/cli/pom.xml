@@ -200,7 +200,7 @@
                   <configuration>
                      <excludedGroups>${rhq.testng.excludedGroups},ws</excludedGroups>
                      <forkMode>pertest</forkMode>
-                     <argLine>-Xmx512m -Xms128m</argLine>
+                     <argLine>${jacoco.unit-test.args} -Xmx512m -Xms128m</argLine>
                      <additionalClasspathElements>
 -->
                         <!-- The below is required for WS Java Client support -->

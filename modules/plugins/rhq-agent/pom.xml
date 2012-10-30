@@ -110,7 +110,7 @@
                            <skip>${maven.test.skip}</skip>
                            <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
                            <useSystemClassLoader>true</useSystemClassLoader>
-                           <argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib</argLine>
+                           <argLine>${jacoco.integration-test.args} -Dorg.hyperic.sigar.path=${basedir}/target/itest/lib</argLine>
                            <systemPropertyVariables combine.children="append">
                               <project.artifactId>${project.artifactId}</project.artifactId>
                               <project.version>${project.version}</project.version>

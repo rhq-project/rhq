@@ -240,9 +240,9 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
-                    <!-- <argLine>-Xdebug -Xnoagent -Djava.compiler=NONE 
+                    <!-- <argLine>${jacoco.unit-test.args} -Xdebug -Xnoagent -Djava.compiler=NONE
                         -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine> -->
-                    <argLine>-Djava.security.manager -Djava.security.policy==${project.build.testOutputDirectory}/allow-all.policy</argLine>    
+                    <argLine>${jacoco.unit-test.args} -Djava.security.manager -Djava.security.policy==${project.build.testOutputDirectory}/allow-all.policy</argLine>
                     <!-- This is important, because some of the tests try to exit the JVM. -->
                     <failIfNoTests>true</failIfNoTests>
                 </configuration>

@@ -364,9 +364,9 @@
 
                     <excludedGroups>arquillian,${rhq.testng.excludedGroups}</excludedGroups>
                     <!-- need to point the library path to the location of the native libraries -->
-                    <argLine>-Dorg.hyperic.sigar.path=${project.build.directory}/jboss-sigar</argLine>
+                    <argLine>${jacoco.unit-test.args} -Dorg.hyperic.sigar.path=${project.build.directory}/jboss-sigar</argLine>
                     <!--
-                    <argLine>-Dorg.hyperic.sigar.path=${project.build.directory}/jboss-sigar -Dsigar.nativeLogging=true</argLine>
+                       <argLine>${jacoco.unit-test.args} -Dorg.hyperic.sigar.path=${project.build.directory}/jboss-sigar -Dsigar.nativeLogging=true</argLine>
                      -->
                 </configuration>
             </execution>

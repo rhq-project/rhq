@@ -90,8 +90,8 @@
                            <skip>${maven.test.skip}</skip>
                            <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
                            <useSystemClassLoader>true</useSystemClassLoader>
-                           <argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib</argLine>
-                           <!--<argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>-->
+                           <argLine>${jacoco.integration-test.args} -Dorg.hyperic.sigar.path=${basedir}/target/itest/lib</argLine>
+                           <!--<argLine>${jacoco.integration-test.args} -Dorg.hyperic.sigar.path=${basedir}/target/itest/lib -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>-->
                            <systemProperties>
                               <property>
                                  <name>project.artifactId</name>

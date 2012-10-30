@@ -25,6 +25,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.security.AccessControlException;
 import java.security.Permissions;
@@ -164,6 +165,12 @@ public class PythonScriptEngineInitializerTest {
         Map<String, Set<Method>> ret = new HashMap<String, Set<Method>>();
 
         for (Method m : cls.getDeclaredMethods()) {
+            int mods = m.getModifiers();
+
+            if (Modifier.isStatic(mods) || !Modifier.isPublic(mods)) {
+                continue;
+            }
+
             Set<Method> methods = ret.get(m.getName());
             if (methods == null) {
                 methods = new HashSet<Method>();

@@ -344,8 +344,8 @@
                   <useSystemClassLoader>true</useSystemClassLoader>
                   <excludes><exclude>org/rhq/plugins/jbossas5/itest/**</exclude></excludes>
                   <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
-                  <argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib</argLine>
-                  <!--<argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>-->
+                  <argLine>${jacoco.integration-test.args} -Dorg.hyperic.sigar.path=${basedir}/target/itest/lib</argLine>
+                  <!--<argLine>${jacoco.integration-test.args} -Dorg.hyperic.sigar.path=${basedir}/target/itest/lib -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>-->
                   <additionalClasspathElements>
                     <additionalClasspathElement>
                       ${project.build.testSourceDirectory}/../jars/ejb2-test.jar

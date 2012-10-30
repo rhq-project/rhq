@@ -57,7 +57,7 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
                <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
-               <argLine>-Djava.security.manager
+               <argLine>${jacoco.unit-test.args} -Djava.security.manager
                   -Djava.security.policy==${project.build.testOutputDirectory}/allow-all.policy</argLine>
                <!-- This is important, because some of the tests try to exit 
                   the JVM. -->

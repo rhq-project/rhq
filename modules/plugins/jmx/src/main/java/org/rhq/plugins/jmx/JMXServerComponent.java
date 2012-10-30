@@ -51,8 +51,8 @@ public class JMXServerComponent<T extends ResourceComponent<?>> implements JMXCo
 
     private static final Log log = LogFactory.getLog(JMXServerComponent.class);
 
-    private EmsConnection connection;
-    private ConnectionProvider connectionProvider;
+    private volatile EmsConnection connection;
+    private volatile ConnectionProvider connectionProvider;
 
     /**
      * The context of a component that is started. Note, other classes should use #getResourceContext(), rather than

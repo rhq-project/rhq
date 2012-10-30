@@ -29,7 +29,9 @@
     <subcategories>
       <subcategory name="Client Request Metrics" description="Client Request Metrics"/>
       <subcategory name="Server Request Metrics" description="Server Request Metrics"/>
-      <subcategory name="Internal Server Metrics" description="Server Request Metrics"/>
+      <subcategory name="Internal Server Metrics" description="Internal Server Metrics"/>
+      <subcategory name="Database Management Services" description="Database Management Services"/>
+      <subcategory name="Network Services" description="Network Services"/>
     </subcategories>
 
     <plugin-configuration>
@@ -82,7 +84,8 @@
     <service name="StorageProxy"
              discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
              class="org.rhq.plugins.jmx.MBeanResourceComponent"
-             singleton="true">
+             singleton="true"
+             subCategory="Database Management Services">
 
       <plugin-configuration>
         <c:simple-property name="objectName" readOnly="true" default="org.apache.cassandra.db:type=StorageProxy"/>
@@ -112,7 +115,8 @@
     <service name="StorageService"
              discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
              class="org.rhq.plugins.cassandra.StorageServiceComponent"
-             singleton="true">
+             singleton="true"
+             subCategory="Database Management Services">
 
       <plugin-configuration>
         <c:simple-property name="objectName" readOnly="true" default="org.apache.cassandra.db:type=StorageService"/>
@@ -175,7 +179,8 @@
     <service name="CommitLog"
              discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
              class="org.rhq.plugins.jmx.MBeanResourceComponent"
-             singleton="true">
+             singleton="true"
+             subCategory="Database Management Services">
 
       <plugin-configuration>
         <c:simple-property name="objectName" readOnly="true" type="string" default="org.apache.cassandra.db:type=Commitlog"/>
@@ -240,7 +245,8 @@
     <service name="CompactionManager"
              discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
              class="org.rhq.plugins.jmx.MBeanResourceComponent"
-             singleton="true">
+             singleton="true"
+             subCategory="Database Management Services">
 
       <plugin-configuration>
         <c:simple-property name="objectName" readOnly="true" type="string" default="org.apache.cassandra.db:type=CompactionManager"/>
@@ -271,7 +277,8 @@
     <service name="CacheService"
              discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
              class="org.rhq.plugins.jmx.MBeanResourceComponent"
-             singleton="true">
+             singleton="true"
+             subCategory="Database Management Services">
 
       <plugin-configuration>
         <c:simple-property name="objectName" readOnly="true" type="string" default="org.apache.cassandra.db:type=Caches"/>
@@ -303,6 +310,255 @@
 
         <c:simple-property name="KeyCacheSavePeriodInSeconds" type="integer" required="true" description="Key cache save period in seconds"/>
         <c:simple-property name="RowCacheSavePeriodInSeconds" type="integer" required="true" description="Row cache save period in seconds"/>
+      </resource-configuration>
+    </service>
+
+
+    <service name="ConfigurableStages"
+             discovery="org.rhq.plugins.cassandra.MetricsDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Server Request Metrics">
+
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string"
+                           default="org.apache.cassandra.request:type=MutationStage|org.apache.cassandra.request:type=ReadStage|org.apache.cassandra.request:type=ReplicateOnWriteStage"/>
+        <c:simple-property name="nameMarker" readOnly="true" type="string" default="type=" />
+      </plugin-configuration>
+
+      <metric property="ActiveCount" measurementType="dynamic" displayType="summary" description="Active Count"/>
+      <metric property="CurrentlyBlockedTasks" measurementType="dynamic" displayType="summary" description="Currently Blocked Tasks"/>
+      <metric property="CompletedTasks" measurementType="dynamic" displayType="summary" description="Completed Tasks"/>
+      <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Pending Tasks"/>
+      <metric property="TotalBlockedTasks" measurementType="dynamic" displayType="summary" description="Total Blocked Tasks"/>
+
+      <resource-configuration>
+          <c:simple-property name="CorePoolSize" type="integer" required="true" description="Core Pool Size."/>
+      </resource-configuration>
+    </service>
+
+    <service name="EnabledStages"
+             discovery="org.rhq.plugins.cassandra.MetricsDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Server Request Metrics">
+
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string"
+                           default="org.apache.cassandra.request:type=ReadRepairStage|org.apache.cassandra.request:type=RequestResponseStage"/>
+        <c:simple-property name="nameMarker" readOnly="true" type="string" default="type=" />
+      </plugin-configuration>
+
+      <metric property="ActiveCount" measurementType="dynamic" displayType="summary" description="Active Count"/>
+      <metric property="CurrentlyBlockedTasks" measurementType="dynamic" displayType="summary" description="Currently Blocked Tasks"/>
+      <metric property="CompletedTasks" measurementType="dynamic" displayType="summary" description="Completed Tasks"/>
+      <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Pending Tasks"/>
+      <metric property="TotalBlockedTasks" measurementType="dynamic" displayType="summary" description="Total Blocked Tasks"/>
+    </service>
+
+    <service name="ConfigurableInternalServerMetrics"
+             discovery="org.rhq.plugins.cassandra.MetricsDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Internal Server Metrics">
+
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string"
+                           default="org.apache.cassandra.internal:type=AntiEntropySessions"/>
+        <c:simple-property name="nameMarker" readOnly="true" type="string" default="type=" />
+      </plugin-configuration>
+
+      <metric property="ActiveCount" measurementType="dynamic" displayType="summary" description="Active Count"/>
+      <metric property="CurrentlyBlockedTasks" measurementType="dynamic" displayType="summary" description="Currently Blocked Tasks"/>
+      <metric property="CompletedTasks" measurementType="dynamic" displayType="summary" description="Completed Tasks"/>
+      <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Pending Tasks"/>
+      <metric property="TotalBlockedTasks" measurementType="dynamic" displayType="summary" description="Total Blocked Tasks"/>
+
+      <resource-configuration>
+          <c:simple-property name="CorePoolSize" type="integer" required="true" description="Core Pool Size."/>
+      </resource-configuration>
+    </service>
+
+    <service name="EnabledInternalServerMetrics"
+             discovery="org.rhq.plugins.cassandra.MetricsDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Internal Server Metrics">
+
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string"
+                           default="org.apache.cassandra.internal:type=AntiEntropyStage|org.apache.cassandra.internal:type=FlushWriter|org.apache.cassandra.internal:type=GossipStage|org.apache.cassandra.internal:type=HintedHandoff|org.apache.cassandra.internal:type=InternalResponseStage|org.apache.cassandra.internal:type=MemtablePostFlusher|org.apache.cassandra.internal:type=MigrationStage|org.apache.cassandra.internal:type=MiscStage|org.apache.cassandra.internal:type=StreamStage|org.apache.cassandra.internal:type=commitlog_archiver"/>
+        <c:simple-property name="nameMarker" readOnly="true" type="string" default="type=" />
+      </plugin-configuration>
+
+      <metric property="ActiveCount" measurementType="dynamic" displayType="summary" description="Active Count"/>
+      <metric property="CurrentlyBlockedTasks" measurementType="dynamic" displayType="summary" description="Currently Blocked Tasks"/>
+      <metric property="CompletedTasks" measurementType="dynamic" displayType="summary" description="Completed Tasks"/>
+      <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Pending Tasks"/>
+      <metric property="TotalBlockedTasks" measurementType="dynamic" displayType="summary" description="Total Blocked Tasks"/>
+    </service>
+
+
+    <service name="FailureDetector"
+             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+             class="org.rhq.plugins.cassandra.FailureDetectorComponent"
+             singleton="true"
+             subCategory="Network Services">
+
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string" default="org.apache.cassandra.net:type=FailureDetector"/>
+        <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Failure Detector" />
+      </plugin-configuration>
+
+      <resource-configuration>
+          <c:simple-property name="PhiConvictThreshold" type="integer" required="true" description="Phi-convict threshold sets the sensitivity of the failure detector. Lower values increase the likelihood that an unresponsive node will be marked as down, while higher values decrease the likelihood."/>
+          <c:simple-property name="AllEndpointStates" type="integer" required="false" readOnly="true" description="States of all the end-points."/>
+          <c:list-property name="SimpleStates" readOnly="true">
+            <c:map-property name="SimpleState" readOnly="true">
+              <c:simple-property name="name" type="string" readOnly="true"/>
+              <c:simple-property name="value" type="string" readOnly="true"/>
+            </c:map-property>
+          </c:list-property>
+      </resource-configuration>
+    </service>
+
+
+    <service name="Gossiper"
+             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Network Services">
+
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string" default="org.apache.cassandra.net:type=Gossiper"/>
+        <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Gossiper" />
+      </plugin-configuration>
+
+      <operation name="getVersion" description="Get version">
+          <parameters>
+            <c:simple-property name="p1" displayName="Address" required="true" type="string" description="Address"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" description="Version"/>
+          </results>
+      </operation>
+      <operation name="getCurrentGenerationNumber" description="Get current generation number">
+          <parameters>
+            <c:simple-property name="p1" displayName="Address" required="true" type="string" description="Address"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" description="Current Generation Number"/>
+          </results>
+      </operation>
+      <operation name="getEndpointDowntime" description="Get endpoint downtime">
+          <parameters>
+            <c:simple-property name="p1" displayName="Address" required="true" type="string" description="Address"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" description="Endpoint Downtime"/>
+          </results>
+      </operation>
+      <operation name="unsafeAssassinateEndpoint" description="Unsafe assassinate endpoint">
+          <parameters>
+            <c:simple-property name="p1" displayName="Address" required="true" type="string" description="Address"/>
+          </parameters>
+      </operation>
+    </service>
+
+    <service name="StreamingService"
+             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Network Services">
+
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string" default="org.apache.cassandra.net:type=StreamingService"/>
+        <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Streaming Service" />
+      </plugin-configuration>
+
+      <resource-configuration>
+          <c:simple-property name="Status" type="string" required="false" readOnly="true" description="Status"/>
+          <c:list-property name="StreamDestinations" readOnly="true">
+            <c:map-property name="StreamDestination" readOnly="true">
+              <c:simple-property name="name" type="string" readOnly="true"/>
+              <c:simple-property name="value" type="string" readOnly="true"/>
+            </c:map-property>
+          </c:list-property>
+          <c:list-property name="StreamSources" readOnly="true">
+            <c:map-property name="StreamSource" readOnly="true">
+              <c:simple-property name="name" type="string" readOnly="true"/>
+              <c:simple-property name="value" type="string" readOnly="true"/>
+            </c:map-property>
+          </c:list-property>
+      </resource-configuration>
+    </service>
+
+    <service name="MessagingService"
+             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Network Services">
+
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" default="org.apache.cassandra.net:type=MessagingService"/>
+        <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Messaging Service"/>
+      </plugin-configuration>
+
+      <metric property="TotalTimeouts" measurementType="trendsup" displayType="detail" description="Total timeouts."/>
+      <metric property="RecentTotalTimeouts" measurementType="trendsup" displayType="detail" description="Recent total timeouts."/>
+
+      <resource-configuration>
+        <c:list-property name="CommandPendingTasks" readOnly="true">
+          <c:map-property name="CommandPendingTask" readOnly="true">
+              <c:simple-property name="name" type="string" readOnly="true"/>
+              <c:simple-property name="value" type="string" readOnly="true"/>
+          </c:map-property>
+        </c:list-property>
+        <c:list-property name="CommandCompletedTasks" readOnly="true">
+          <c:map-property name="CommandCompletedTask" readOnly="true">
+              <c:simple-property name="name" type="string" readOnly="true"/>
+              <c:simple-property name="value" type="string" readOnly="true"/>
+          </c:map-property>
+        </c:list-property>
+
+        <c:list-property name="ResponsePendingTasks" readOnly="true">
+          <c:map-property name="ResponsePendingTask" readOnly="true">
+              <c:simple-property name="name" type="string" readOnly="true"/>
+              <c:simple-property name="value" type="string" readOnly="true"/>
+          </c:map-property>
+        </c:list-property>
+        <c:list-property name="ResponseCompletedTasks" readOnly="true">
+          <c:map-property name="ResponseCompletedTask" readOnly="true">
+              <c:simple-property name="name" type="string" readOnly="true"/>
+              <c:simple-property name="value" type="string" readOnly="true"/>
+          </c:map-property>
+        </c:list-property>
+
+        <c:list-property name="DroppedMessages" readOnly="true">
+          <c:map-property name="DroppedMessage" readOnly="true">
+              <c:simple-property name="name" type="string" readOnly="true"/>
+              <c:simple-property name="value" type="string" readOnly="true"/>
+          </c:map-property>
+        </c:list-property>
+        <c:list-property name="RecentlyDroppedMessages" readOnly="true">
+          <c:map-property name="RecentlyDroppedMessage" readOnly="true">
+              <c:simple-property name="name" type="string" readOnly="true"/>
+              <c:simple-property name="value" type="string" readOnly="true"/>
+          </c:map-property>
+        </c:list-property>
+
+        <c:list-property name="TimeoutsPerHost" readOnly="true">
+          <c:map-property name="TimeoutPerHost" readOnly="true">
+              <c:simple-property name="name" type="string" readOnly="true"/>
+              <c:simple-property name="value" type="string" readOnly="true"/>
+          </c:map-property>
+        </c:list-property>
+        <c:list-property name="RecentTimeoutsPerHost" readOnly="true">
+          <c:map-property name="RecentTimeoutPerHost" readOnly="true">
+              <c:simple-property name="name" type="string" readOnly="true"/>
+              <c:simple-property name="value" type="string" readOnly="true"/>
+          </c:map-property>
+        </c:list-property>
       </resource-configuration>
     </service>
 
@@ -445,91 +701,6 @@
           </c:list-property>
         </resource-configuration>
       </service>
-    </service>
-
-
-    <service name="ConfigurableStages"
-             discovery="org.rhq.plugins.cassandra.MetricsDiscoveryComponent"
-             class="org.rhq.plugins.jmx.MBeanResourceComponent"
-             singleton="true"
-             subCategory="Server Request Metrics">
-
-      <plugin-configuration>
-        <c:simple-property name="objectName" readOnly="true" type="string"
-                           default="org.apache.cassandra.request:type=MutationStage|org.apache.cassandra.request:type=ReadStage|org.apache.cassandra.request:type=ReplicateOnWriteStage"/>
-        <c:simple-property name="nameMarker" readOnly="true" type="string" default="type=" />
-      </plugin-configuration>
-
-      <metric property="ActiveCount" measurementType="dynamic" displayType="summary" description="Active Count"/>
-      <metric property="CurrentlyBlockedTasks" measurementType="dynamic" displayType="summary" description="Currently Blocked Tasks"/>
-      <metric property="CompletedTasks" measurementType="dynamic" displayType="summary" description="Completed Tasks"/>
-      <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Pending Tasks"/>
-      <metric property="TotalBlockedTasks" measurementType="dynamic" displayType="summary" description="Total Blocked Tasks"/>
-
-      <resource-configuration>
-          <c:simple-property name="CorePoolSize" type="integer" required="true" description="Core Pool Size."/>
-      </resource-configuration>
-    </service>
-
-    <service name="EnabledStages"
-             discovery="org.rhq.plugins.cassandra.MetricsDiscoveryComponent"
-             class="org.rhq.plugins.jmx.MBeanResourceComponent"
-             singleton="true"
-             subCategory="Server Request Metrics">
-
-      <plugin-configuration>
-        <c:simple-property name="objectName" readOnly="true" type="string"
-                           default="org.apache.cassandra.request:type=ReadRepairStage|org.apache.cassandra.request:type=RequestResponseStage"/>
-        <c:simple-property name="nameMarker" readOnly="true" type="string" default="type=" />
-      </plugin-configuration>
-
-      <metric property="ActiveCount" measurementType="dynamic" displayType="summary" description="Active Count"/>
-      <metric property="CurrentlyBlockedTasks" measurementType="dynamic" displayType="summary" description="Currently Blocked Tasks"/>
-      <metric property="CompletedTasks" measurementType="dynamic" displayType="summary" description="Completed Tasks"/>
-      <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Pending Tasks"/>
-      <metric property="TotalBlockedTasks" measurementType="dynamic" displayType="summary" description="Total Blocked Tasks"/>
-    </service>
-
-     <service name="ConfigurableInternalServerMetrics"
-             discovery="org.rhq.plugins.cassandra.MetricsDiscoveryComponent"
-             class="org.rhq.plugins.jmx.MBeanResourceComponent"
-             singleton="true"
-             subCategory="Internal Server Metrics">
-
-      <plugin-configuration>
-        <c:simple-property name="objectName" readOnly="true" type="string"
-                           default="org.apache.cassandra.internal:type=AntiEntropySessions"/>
-        <c:simple-property name="nameMarker" readOnly="true" type="string" default="type=" />
-      </plugin-configuration>
-
-      <metric property="ActiveCount" measurementType="dynamic" displayType="summary" description="Active Count"/>
-      <metric property="CurrentlyBlockedTasks" measurementType="dynamic" displayType="summary" description="Currently Blocked Tasks"/>
-      <metric property="CompletedTasks" measurementType="dynamic" displayType="summary" description="Completed Tasks"/>
-      <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Pending Tasks"/>
-      <metric property="TotalBlockedTasks" measurementType="dynamic" displayType="summary" description="Total Blocked Tasks"/>
-
-      <resource-configuration>
-          <c:simple-property name="CorePoolSize" type="integer" required="true" description="Core Pool Size."/>
-      </resource-configuration>
-    </service>
-
-    <service name="EnabledInternalServerMetrics"
-             discovery="org.rhq.plugins.cassandra.MetricsDiscoveryComponent"
-             class="org.rhq.plugins.jmx.MBeanResourceComponent"
-             singleton="true"
-             subCategory="Internal Server Metrics">
-
-      <plugin-configuration>
-        <c:simple-property name="objectName" readOnly="true" type="string"
-                           default="org.apache.cassandra.internal:type=AntiEntropyStage|org.apache.cassandra.internal:type=FlushWriter|org.apache.cassandra.internal:type=GossipStage|org.apache.cassandra.internal:type=HintedHandoff|org.apache.cassandra.internal:type=InternalResponseStage|org.apache.cassandra.internal:type=MemtablePostFlusher|org.apache.cassandra.internal:type=MigrationStage|org.apache.cassandra.internal:type=MiscStage|org.apache.cassandra.internal:type=StreamStage|org.apache.cassandra.internal:type=commitlog_archiver"/>
-        <c:simple-property name="nameMarker" readOnly="true" type="string" default="type=" />
-      </plugin-configuration>
-
-      <metric property="ActiveCount" measurementType="dynamic" displayType="summary" description="Active Count"/>
-      <metric property="CurrentlyBlockedTasks" measurementType="dynamic" displayType="summary" description="Currently Blocked Tasks"/>
-      <metric property="CompletedTasks" measurementType="dynamic" displayType="summary" description="Completed Tasks"/>
-      <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Pending Tasks"/>
-      <metric property="TotalBlockedTasks" measurementType="dynamic" displayType="summary" description="Total Blocked Tasks"/>
     </service>
 
   </server>

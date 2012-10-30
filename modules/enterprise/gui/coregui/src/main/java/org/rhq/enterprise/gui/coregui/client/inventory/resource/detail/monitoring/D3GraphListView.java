@@ -27,6 +27,8 @@ import java.util.List;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
@@ -70,6 +72,10 @@ public class D3GraphListView extends LocatableVLayout {
         setOverflow(Overflow.AUTO);
     }
 
+    public void addSetButtonClickHandler(ClickHandler clickHandler){
+        measurementRangeEditor.getSetButton().addClickHandler(clickHandler);
+    }
+
     @Override
     protected void onDraw() {
         super.onDraw();
@@ -82,6 +88,8 @@ public class D3GraphListView extends LocatableVLayout {
             buildGraphs();
         }
     }
+
+
 
     /**
      * Build whatever graph metrics (MeasurementDefinitions) are defined for the resource.

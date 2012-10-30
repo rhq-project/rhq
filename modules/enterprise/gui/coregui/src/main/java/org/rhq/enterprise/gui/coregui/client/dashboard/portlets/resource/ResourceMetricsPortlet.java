@@ -285,8 +285,18 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                             //FullHTMLPane iframe = new FullHTMLPane(
                                                                 //recentMeasurementsContent.extendLocatorId("View"),
                                                             //    destination);
-                                                            window.addItem(new D3GraphListView(extendLocatorId("D3Graphs"),
-                                                                    resourceComposite.getResource(),md.getId()));
+                                                            D3GraphListView graphView = new D3GraphListView(extendLocatorId("D3Graphs"),
+                                                                    resourceComposite.getResource(),md.getId());
+                                                            graphView.addSetButtonClickHandler(new ClickHandler()
+                                                            {
+                                                                @Override
+                                                                public void onClick(ClickEvent event)
+                                                                {
+                                                                    //@todo: Finish Me
+
+                                                                }
+                                                            });
+                                                            window.addItem(graphView);
                                                             window.show();
                                                         }
                                                     });

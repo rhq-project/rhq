@@ -11,10 +11,6 @@
    <name>RHQ Code Coverage</name>
    <description>A module gathering the code coverage info from the test runs of all the RHQ modules</description>
 
-   <properties>
-      <rhq.internal>false</rhq.internal>
-   </properties>
-
    <profiles>
       <profile>
          <id>code-coverage</id>

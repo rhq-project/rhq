@@ -20,21 +20,16 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.events.CellClickEvent;
 import com.smartgwt.client.widgets.grid.events.CellClickHandler;
 
-import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
-import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.D3GraphListView;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
 
 /**
  * Views a resource's measurements in a tabular view.
@@ -68,9 +63,8 @@ public class GroupMeasurementTableView extends Table<GroupMeasurementTableDataSo
                 String title = record.getAttribute(GroupMeasurementTableDataSource.FIELD_METRIC_LABEL);
                 ChartViewWindow window = new ChartViewWindow("MeasurementTableFrame", title);
                 int defId = record.getAttributeAsInt(GroupMeasurementTableDataSource.FIELD_METRIC_DEF_ID);
-                Log.debug(" *** clicked here and defId is: "+ defId + ", groupId: "+groupId);
 
-                CompositeGroupD3GraphListView graph = new CompositeGroupD3GraphListView("CompositeD3GraphView",
+                CompositeGroupD3GraphListView graph = new CompositeGroupMultiLineGraphListView("CompositeD3GraphView",
                         groupId, defId);
                 window.addItem(graph);
                 graph.populateData();

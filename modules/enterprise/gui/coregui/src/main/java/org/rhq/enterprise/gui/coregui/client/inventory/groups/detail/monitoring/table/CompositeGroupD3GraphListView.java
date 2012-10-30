@@ -39,6 +39,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.JsonMetricProducer;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
@@ -56,7 +57,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  *
  * @author  Mike Thompson
  */
-public final class CompositeGroupD3GraphListView extends LocatableVLayout {
+public abstract class CompositeGroupD3GraphListView extends LocatableVLayout implements JsonMetricProducer
+{
 
     private HTMLFlow resourceTitle;
 
@@ -342,7 +344,8 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
         return sb.toString();
     }
 
-    private String getJsonMetrics() {
+    @Override
+    public String getJsonMetrics() {
         StringBuilder sb = new StringBuilder("[");
         for (MultiLineGraphData multiLineGraphData : measurementForEachResource) {
             sb.append("{ values: ");
@@ -374,44 +377,9 @@ public final class CompositeGroupD3GraphListView extends LocatableVLayout {
         return startTime + timeThreshold < endTime;
     }
 
-    public native void drawJsniChart() /*-{
-           console.log("Draw nvd3 charts for composite multiline graph");
-           var chartId =  this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartId()(),
-           chartHandle = "#mChart-"+chartId,
-           chartSelection = chartHandle + " svg",
-           //        yAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getYAxisTitle()(),
-           yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getYAxisUnits()(),
-           xAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getXAxisTitle()(),
-           displayDayOfWeek = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::shouldDisplayDayOfWeekInXAxisLabel()(),
-           xAxisTimeFormat = (displayDayOfWeek) ? "%a %I %p" : "%I %p",
-           json = eval(this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getJsonMetrics()());
-
-           console.log(json);
-
-           $wnd.nv.addGraph(function() {
-           var chart = $wnd.nv.models.lineChart();
-
-           chart.xAxis.axisLabel(xAxisLabel)
-           .tickFormat(function(d) { return $wnd.d3.time.format(xAxisTimeFormat)(new Date(d)) });
-
-           chart.yAxis
-           .axisLabel(yAxisUnits)
-           .tickFormat($wnd.d3.format('.02f'));
-
-           $wnd.d3.select(chartSelection)
-           .datum(json)
-           .transition().duration(300)
-           .call(chart);
-
-           $wnd.nv.utils.windowResize(chart.update);
-
-           return chart;
-           });
-
-       }-*/;
-
-    public CompositeGroupD3GraphListView getInstance(String locatorId, int groupId, int definitionId) {
-        return new CompositeGroupD3GraphListView(locatorId, groupId, definitionId);
-    }
+    /**
+     * Client can choose which graph types to render.
+     */
+    public abstract void drawJsniChart();
 
 }

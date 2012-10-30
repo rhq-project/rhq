@@ -2529,11 +2529,18 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                     String expr = expression;
                     if (expr.contains(":")) {
                         expr = expr.substring(expr.indexOf(':') + 1);
-                        criteria.setSearchExpression(expr);
-                        resources = resourceManager.findResourcesByCriteria(subject, criteria);
-                    } else if (resourceId >= 0) {
-                        resources = new ArrayList<Resource>();
-                        resources.add(resourceManager.getResourceById(subject, resourceId));
+
+                        if (!"self".equals(expr)) {
+                            criteria.setSearchExpression(expr);
+                            resources = resourceManager.findResourcesByCriteria(subject, criteria);
+                        } else if (resourceId >= 0) {
+                            resources = new ArrayList<Resource>();
+                            resources.add(resourceManager.getResourceById(subject, resourceId));
+                        } else {
+                            log.warn("Self reference requested but resource id is not valid."
+                                + "Option source expression:" + expression);
+                            return;
+                        }
                     } else {
                         log.warn("Option source expression for property " + pds.getName()
                             + " and target configuration contains no ':'");

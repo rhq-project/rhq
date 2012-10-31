@@ -194,8 +194,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
             } else if (fileName.endsWith(".class")) {
                 int dot = fileName.indexOf('.');
                 try {
-                    Class<?> clazz = Class.forName(packageName + "." + fileName.substring(0, dot));
-                    archive.addClasses(clazz);
+                    archive.addClass(packageName + "." + fileName.substring(0, dot));
                 } catch (Exception e) {
                     System.out.println("WARN: Could not add class:" + e);
                 }
@@ -267,7 +266,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
     }
 
     protected InitialContext getInitialContext() {
-        // may be null if not yet injected (as of 1.0.1.Final, only injected inside @Test)
+        // may be null if not yet injected
         if (null != initialContext) {
             return initialContext;
         }

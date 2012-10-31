@@ -5,7 +5,6 @@ import java.lang.management.ManagementFactory;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Properties;
@@ -30,13 +29,12 @@ import org.jboss.shrinkwrap.api.ArchivePaths;
 import org.jboss.shrinkwrap.api.Filters;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
-import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
-import org.jboss.shrinkwrap.impl.base.exporter.zip.ZipExporterImpl;
 import org.jboss.shrinkwrap.resolver.api.DependencyResolvers;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
 
+import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -69,58 +67,40 @@ public abstract class AbstractEJB3Test extends Arquillian {
     @ArquillianResource
     protected InitialContext initialContext;
 
-    // We originally deployed the jar as a JavaArchive (JAR file). But this ran into problems because
-    // of the dependent 3rd party jars.  There isn't an obvious way to deploy the dependent jars of a jar.
-    // Also, AS7 makes it hard to put them in a globally accessibly /lib directory due to
-    // its classloader isolation and module approach. So, we now deploy an EnterpriseArchive (ear)
-    // where the ejb jar is deployed as a module and the 3rd party libraries are put in the ear's /lib.
+    // We originally (in 4.2.3 days) ran these tests as "unit" tests in the server/jar module using
+    // the embedded conatiner.  With Arquillian it makes sense to actually deploy an EAR because
+    // we need a way to deploy dependent ears needed to support the server/jar classes. But
+    // building this jar up (as is done in core/domain) was too difficult due to the huge number
+    // of dependencies. It was easier, and probably more sensical, to use the already built rhq.ear
+    // and run as true integration tests.  We do thin rhq.ear by removing all of the WAR files, and 
+    // deploy only the EJB jars, and the services, which are really the objects under test.
 
     @Deployment
     protected static EnterpriseArchive getBaseDeployment() {
 
-        // depending on the db in use, set up the necessary datasource 
-        String dialect = System.getProperty("hibernate.dialect");
-        if (dialect == null) {
-            System.out.println("!!! hibernate.dialect is not set! Assuming you want to test on postgres");
-            dialect = "postgres";
-        }
+        //TODO: Get to work with Oracle or Postgres, currently the standalone.xml is canned and
+        // using Postgres only.  This is likely to be done in pom.xml as opposed to here, so commenting
+        // out.
+        //        // depending on the db in use, set up the necessary datasource 
+        //        String dialect = System.getProperty("hibernate.dialect");
+        //        if (dialect == null) {
+        //            System.out.println("!!! hibernate.dialect is not set! Assuming you want to test on postgres");
+        //            dialect = "postgres";
+        //        }
+        //
+        //        @SuppressWarnings("unused")
+        //        String dataSourceXml;
+        //        if (dialect.toLowerCase().contains("postgres")) {
+        //            dataSourceXml = "jbossas-postgres-ds.xml";
+        //        } else {
+        //            dataSourceXml = "jbossas-oracle-ds.xml";
+        //        }
 
-        @SuppressWarnings("unused")
-        String dataSourceXml;
-        if (dialect.toLowerCase().contains("postgres")) {
-            dataSourceXml = "jbossas-postgres-ds.xml";
-        } else {
-            dataSourceXml = "jbossas-oracle-ds.xml";
-        }
-
-        MavenDependencyResolver jarResolver = DependencyResolvers.use(MavenDependencyResolver.class);
-        //resolver.loadMetadataFromPom("pom.xml");
-
-        // Create the ejb jar which will subsequently be packaged in the ear deployment   
-        //        JavaArchive serverJar = ShrinkWrap.create(JavaArchive.class, "rhq-enterprise-server-ejb3.jar") //
-        //            .addAsManifestResource(dataSourceXml) // the datasource
-        //            .addAsManifestResource("ejb-jar.xml") // the empty ejb jar descriptor
-        //            .addAsManifestResource("test-persistence.xml", "persistence.xml") //  the test persistence context            
-        //            .addAsManifestResource(EmptyAsset.INSTANCE, ArchivePaths.create("beans.xml") // add CDI injection (needed by arquillian injection)
-        //            );
-
-        // server jar classes
-        //        serverJar = addClasses(serverJar, new File("../jar/target/classes/org"), null);
-        //        JavaArchive serverJar = ShrinkWrap.create(JavaArchive.class, "rhq-enterprise-server-ejb3.jar");
-        //        JavaArchive artifact = jarResolver.artifact("org.rhq:rhq-enterprise-server:4.6.0-SNAPSHOT")
-        //            .resolveAs(JavaArchive.class).iterator().next();
-        //        serverJar.merge(artifact, Filters.exclude(".*META-INF.*"));
-        //        serverJar.addAsManifestResource(dataSourceXml) // the datasource
-        //            .addAsManifestResource("ejb-jar.xml") // the empty ejb jar descriptor
-        //            .addAsManifestResource("test-persistence.xml", "persistence.xml") //  the test persistence context            
-        //            .addAsManifestResource(EmptyAsset.INSTANCE, ArchivePaths.create("beans.xml")); // add CDI injection (needed by arquillian injection)
-
-        //        System.out.println("** The Deployment EJB JAR: " + serverJar.toString(true) + "\n");
-
+        // deploy the test classes in their own jar, under /lib
         JavaArchive testClassesJar = ShrinkWrap.create(JavaArchive.class, "test-classes.jar");
         testClassesJar = addClasses(testClassesJar, new File("target/test-classes/org"), null);
 
-        // non itests-2 RHQ classes in use by test classes
+        // add non itests-2 RHQ classes used by the test classes, as well as needed resources 
         testClassesJar.addClass(ThrowableUtil.class);
         testClassesJar.addClass(MessageDigestGenerator.class);
         testClassesJar.addClass(StreamUtil.class);
@@ -129,58 +109,36 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testClassesJar.addAsManifestResource(EmptyAsset.INSTANCE, ArchivePaths.create("beans.xml")); // add CDI injection (needed by arquillian injection);
         testClassesJar.addAsResource("test-scheduler.properties");
 
-        // create test ear
+        // create test ear by starting with rhq.ear and thinning it
         MavenDependencyResolver earResolver = DependencyResolvers.use(MavenDependencyResolver.class);
         // this must be named rhq.ear because the "rhq" portion is used in the jndi names
-        EnterpriseArchive ear = ShrinkWrap.create(EnterpriseArchive.class, "rhq.ear");
-        EnterpriseArchive ear2 = earResolver.artifact("org.rhq:rhq-enterprise-server-ear:ear:4.6.0-SNAPSHOT")
+        EnterpriseArchive testEar = ShrinkWrap.create(EnterpriseArchive.class, "rhq.ear");
+        EnterpriseArchive rhqEar = earResolver.artifact("org.rhq:rhq-enterprise-server-ear:ear:4.6.0-SNAPSHOT")
             .resolveAs(EnterpriseArchive.class).iterator().next();
-        //ear = ear.merge(ear2, Filters.exclude(".*\\.war.*|.*application.xml.*|.*rhq-enterprise-server-ejb3.*"));
-        ear = ear.merge(ear2, Filters.include("/lib.*|/rhq.*ejb3\\.jar.*|/rhq-enterprise-server-services-sar.*"));
+        // merge rhq.ear into testEar but include only the EJB jars, the SAR, and the supporting libraries
+        testEar = testEar.merge(rhqEar,
+            Filters.include("/lib.*|/rhq.*ejb3\\.jar.*|/rhq-enterprise-server-services-sar.*"));
+        // remove startup beans and shutdown listeners, we don't want this to be a full server deployment. The tests
+        // start/stop what they need, typically with test services or mocks.
+        testEar.delete(ArchivePaths
+            .create("/rhq-enterprise-server-ejb3.jar/org/rhq/enterprise/server/core/StartupBean.class"));
+        testEar.delete(ArchivePaths
+            .create("/rhq-enterprise-server-ejb3.jar/org/rhq/enterprise/server/core/StartupBean$1.class"));
+        testEar.delete(ArchivePaths
+            .create("/rhq-enterprise-server-ejb3.jar/org/rhq/enterprise/server/core/StartupBeanPreparation.class"));
+        testEar.delete(ArchivePaths
+            .create("/rhq-enterprise-server-ejb3.jar/org/rhq/enterprise/server/core/ShutdownListener.class"));
 
-        //        ear.addAsModule((resolver.artifact("org.rhq:rhq-enterprise-server:4.6.0-SNAPSHOT").resolveAsFiles())[0],
-        //            "rhq-core-enterprise-server-ejb3.jar");
-        //        ear.addAsModule((resolver.artifact("org.rhq:rhq-core-domain:4.6.0-SNAPSHOT").resolveAsFiles())[0],
-        //            "rhq-core-domain-ejb3.jar");
-        //ear.getAsType(JavaArchive.class, "rhq-enterprise-server-ejb3.jar")
-        //ear = ear.addAsModule(serverJar); // the jar under test
-        ear = ear.addAsLibrary(testClassesJar); // the actual test classes
-        ear = ear.addAsManifestResource("jboss-deployment-structure.xml");
-        ear = ear.setApplicationXML("application.xml"); // the application xml declaring the ejb jar
-        //ear = ear.addAsLibrary("persistence.jar");
+        // add the test classes to the deployment
+        testEar.addAsLibrary(testClassesJar);
 
-        //System.out.println("** The Deployment EAR: " + ear.toString(true) + "\n");
+        // add the necessary AS7 dependency modules
+        testEar.addAsManifestResource("jboss-deployment-structure.xml");
 
-        //ear.delete("rhq-portal.war");
-        //ear.delete("coregui.war");
+        // add the application xml declaring the ejb jars
+        testEar.setApplicationXML("application.xml");
 
-        //        ear.merge(resolver.artifact("org.rhq:rhq-enterprise-server-ear:4.6.0-SNAPSHOT")
-        //            .resolveAs(EnterpriseArchive.class).iterator().next());
-        //            .addAsModule(ejbJar) // the jar under test
-        //            .addAsLibrary(testClassesJar) // the actual test classes
-        //            .setApplicationXML("application.xml"); // the application xml declaring the ejb jar
-
-        // Adding the 3rd party jars is not easy.  There were basically two approaches I could think of:
-        //
-        // 1) Use the MavenDependencyResolver to figure out and add all of the test deps and put them in lib
-        // 
-        // This immediately ran into trouble as there were way more jars sucked in than were actually necessary.
-        // Furthermore, it included arquillian, shrinkwrap, jboss, etc.. lots of jars that actually caused
-        // issues like locking and other horrible things due, I suppose, to just stepping all over the test env
-        // set up by Arquillian.  So, the next step was to try and start excluding the unwanted jars.  This was
-        // tedious and difficult and I didn't really get it close to working before giving up and going with
-        // option 2.
-        //
-        // 2) Use the MavenDependencyResolver to locate and pull just the artifacts we need.
-        //
-        // This is annoying because it's basically duplicating the same sort of effort that we already
-        // use maven to do for us. It involves running, failing on NoClassDefFound, fixing it, repeat. It
-        // does pull in necessary transitive deps but sometimes it pulls in unwanted transitive deps. So,
-        // we still end up having to do some exclusion filtering.  Since Shrinkwrap has weak and buggy         
-        // filtering, we have some homegrown filtering methods below. 
-        // TODO: Is there any way to not have to specify the versions for the transitive deps? This is brittle as is.
-
-        //load 3rd party deps explicitly
+        // add additional 3rd party dependent jars needed to support test classes
         MavenDependencyResolver resolver = DependencyResolvers.use(MavenDependencyResolver.class);
         resolver.loadMetadataFromPom("pom.xml");
         Collection<JavaArchive> dependencies = new HashSet<JavaArchive>();
@@ -188,26 +146,25 @@ public abstract class AbstractEJB3Test extends Arquillian {
         dependencies.addAll(resolver.artifact("org.liquibase:liquibase-core").resolveAs(JavaArchive.class));
         dependencies.addAll(resolver.artifact("org.rhq:test-utils").resolveAs(JavaArchive.class));
         dependencies.addAll(resolver.artifact("org.rhq.helpers:perftest-support").resolveAs(JavaArchive.class));
-        //dependencies.addAll(resolver.artifact("commons-io:commons-io").resolveAs(JavaArchive.class));
-        //dependencies.addAll(resolver.artifact("org.unitils:unitils-testng:3.1").resolveAs(JavaArchive.class));
 
-        //dependencies.addAll(resolver.artifact("org.rhq:rhq-core-domain").resolveAs(JavaArchive.class));
+        // exclude any transitive deps we don't want
         String[] excludeFilters = { "testng.*jdk", "rhq-core-domain.*jar" };
-        //
         dependencies = exclude(dependencies, excludeFilters);
-        ear = ear.addAsLibraries(dependencies);
-        //        ear.addAsModule((resolver.artifact("org.rhq:rhq-core-domain").resolveAsFiles())[0], "rhq-core-domain-ejb3.jar");
 
-        //System.out.println("** The Deployment EAR: " + ear.toString(true) + "\n");
+        testEar.addAsLibraries(dependencies);
 
-        try {
-            ZipExporter exporter = new ZipExporterImpl(ear);
-            exporter.exportTo(new File("/home/jshaughn/temp/test-ear.ear"), true);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        // Print out the test EAR structure
+        // System.out.println("** The Deployment EAR: " + ear.toString(true) + "\n");
 
-        return ear;
+        // Save the test EAR to a zip file for inspection (set file explicitly)
+        //        try {
+        //            ZipExporter exporter = new ZipExporterImpl(ear);
+        //            exporter.exportTo(new File("/home/jshaughn/temp/test-ear.ear"), true);
+        //        } catch (Exception e) {
+        //            e.printStackTrace();
+        //        }
+
+        return testEar;
     }
 
     /**
@@ -265,7 +222,6 @@ public abstract class AbstractEJB3Test extends Arquillian {
             } else if (fileName.endsWith(".class")) {
                 int dot = fileName.indexOf('.');
                 try {
-                    //Class<?> clazz = Class.forName(packageName + "." + fileName.substring(0, dot));
                     archive.addClass(packageName + "." + fileName.substring(0, dot));
                 } catch (Exception e) {
                     System.out.println("WARN: Could not add class:" + e);
@@ -291,7 +247,24 @@ public abstract class AbstractEJB3Test extends Arquillian {
         // one time, and doing it in container allows for the expected injections and context.
         if (inContainer()) {
             try {
+                // Make sure we set the db type for tests that may need it (normally done in StartupBean)
+                if (null == DatabaseTypeFactory.getDefaultDatabaseType()) {
+                    Connection conn = null;
+                    try {
+                        conn = getConnection();
+                        DatabaseTypeFactory.setDefaultDatabaseType(DatabaseTypeFactory.getDatabaseType(conn));
+                    } catch (Exception e) {
+                        System.err.println("!!! WARNING !!! cannot set default database type, some tests may fail");
+                        e.printStackTrace();
+                    } finally {
+                        if (null != conn) {
+                            conn.close();
+                        }
+                    }
+                }
+
                 beforeMethod();
+
             } catch (Throwable t) {
                 // Arquillian is eating these, make sure they show up in some way
                 System.out.println("BEFORE METHOD FAILURE, TEST DID NOT RUN!!! " + t.getMessage());
@@ -345,7 +318,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
     }
 
     protected InitialContext getInitialContext() {
-        // may be null if not yet injected (as of 1.0.1.Final, only injected inside @Test)
+        // may be null if not yet injected
         if (null != initialContext) {
             return initialContext;
         }
@@ -530,18 +503,6 @@ public abstract class AbstractEJB3Test extends Arquillian {
         AssertJUnit.fail(message);
     }
 
-    private final long DEFAULT_OFFSET = 50;
-    private long referenceTime = new Date().getTime();
-
-    public Date getAnotherDate() {
-        return getAnotherDate(DEFAULT_OFFSET);
-    }
-
-    public Date getAnotherDate(long offset) {
-        referenceTime += offset;
-        return new Date(referenceTime);
-    }
-
     /**
      * If you need to test server plugins, you must first prepare the server plugin service.
      * After this returns, the caller must explicitly start the PC by using the appropriate API
@@ -616,19 +577,6 @@ public abstract class AbstractEJB3Test extends Arquillian {
             mbs.registerMBean(schedulerService, SchedulerServiceMBean.SCHEDULER_MBEAN_NAME);
             schedulerService.startQuartzScheduler();
 
-            //            MBeanServer mbs = getPlatformMBeanServer();
-            //            schedulerService = MBeanServerInvocationHandler.newProxyInstance(mbs,
-            //                SchedulerServiceMBean.SCHEDULER_MBEAN_NAME, SchedulerServiceMBean.class, false);
-            //
-            //            Properties quartzProps = new Properties();
-            //            quartzProps.load(this.getClass().getClassLoader().getResourceAsStream("test-scheduler.properties"));
-            //            //schedulerService = LookupUtil.getSchedulerBean();
-            //            //schedulerService = new SchedulerService();
-            //            schedulerService.setQuartzProperties(quartzProps);
-            //            //schedulerService.start();
-            //            //getJBossMBeanServer().registerMBean(schedulerService, SchedulerServiceMBean.SCHEDULER_MBEAN_NAME);
-            //            schedulerService.startQuartzScheduler();
-            //            return;
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException(e);
@@ -641,7 +589,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
 
     public void unprepareScheduler(boolean beanOnly) throws Exception {
         if (schedulerService != null) {
-            //schedulerService.stop();
+            schedulerService.stop();
             schedulerService = null;
 
             MBeanServer mbs = getPlatformMBeanServer();

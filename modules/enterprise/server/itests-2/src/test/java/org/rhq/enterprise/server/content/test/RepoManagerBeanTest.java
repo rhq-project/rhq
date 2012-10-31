@@ -52,59 +52,36 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public class RepoManagerBeanTest extends AbstractEJB3Test {
 
-    private final static boolean ENABLED = false;
+    private final static boolean ENABLED = true;
 
-    //@Inject
+
     protected RepoManagerLocal repoManager;
-
-    //@Inject
     protected ContentSourceManagerLocal contentSourceManager;
-
-    //@Inject
     protected ContentSourceMetadataManagerLocal contentSourceMetadataManager;
+    protected SubjectManagerLocal subjectManager;
 
     private Subject overlord;
 
-    //@Inject
-    protected SubjectManagerLocal subjectManager;
-
     @Override
     public void beforeMethod() throws Exception {
-        System.out.println("*** 0");
-
         overlord = LookupUtil.getSubjectManager().getOverlord();
-        System.out.println("*** 1");
         prepareScheduler();
 
-        System.out.println("*** 2");
         repoManager = LookupUtil.getRepoManagerLocal();
-        System.out.println("*** 3");
         contentSourceManager = LookupUtil.getContentSourceManager();
-        System.out.println("*** 4");
         contentSourceMetadataManager = LookupUtil.getContentSourceMetadataManager();
-        System.out.println("*** 5");
         // start mock plugin container        
         @SuppressWarnings("unused")
         TestContentServerPluginService pluginService = new TestContentServerPluginService(this);
-        //getTransactionManager().begin();
-        //System.out.println("*** 6");
     }
 
     @Override
     public void afterMethod() throws Exception {
-        System.out.println("*** 7");
         unprepareServerPluginService();
-
-        System.out.println("*** 8");
         unprepareScheduler();
-
-        System.out.println("*** 9");
-        //getTransactionManager().rollback();
-        //System.out.println("*** 10");
     }
 
-    @Test
-    // (enabled = ENABLED)
+    @Test(enabled = ENABLED)
     public void createABunchOfRepos() throws Exception {
         executeInTransaction(new TransactionCallback() {
 
@@ -128,395 +105,464 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
 
     @Test(enabled = ENABLED)
     public void createDeleteRepo() throws Exception {
-        Repo repo = new Repo("testCreateDeleteRepo");
-        int id = repoManager.createRepo(overlord, repo).getId();
-        Repo lookedUp = repoManager.getRepo(overlord, id);
-        assert lookedUp != null;
-        Repo lookedUp2 = repoManager.getRepoByName(lookedUp.getName()).get(0);
-        assert lookedUp2 != null;
-        assert id == lookedUp.getId();
-        assert id == lookedUp2.getId();
+        executeInTransaction(new TransactionCallback() {
 
-        repoManager.deleteRepo(overlord, id);
-        lookedUp = repoManager.getRepo(overlord, id);
-        assert lookedUp == null;
+            public void execute() throws Exception {
+
+                Repo repo = new Repo("testCreateDeleteRepo");
+                int id = repoManager.createRepo(overlord, repo).getId();
+                Repo lookedUp = repoManager.getRepo(overlord, id);
+                assert lookedUp != null;
+                Repo lookedUp2 = repoManager.getRepoByName(lookedUp.getName()).get(0);
+                assert lookedUp2 != null;
+                assert id == lookedUp.getId();
+                assert id == lookedUp2.getId();
+
+                repoManager.deleteRepo(overlord, id);
+                lookedUp = repoManager.getRepo(overlord, id);
+                assert lookedUp == null;
+            }
+        });
     }
 
     @Test(enabled = ENABLED)
     public void createDeleteRepoGroup() throws Exception {
-        // Setup
-        EntityManager entityManager = getEntityManager();
+        executeInTransaction(new TransactionCallback() {
 
-        RepoGroupType groupType = new RepoGroupType("testCreateDeleteRepoGroupType");
-        entityManager.persist(groupType);
-        entityManager.flush();
+            public void execute() throws Exception {
 
-        String groupName = "testCreateDeleteRepoGroup";
-        RepoGroup group = repoManager.getRepoGroupByName(groupName);
-        assert group == null;
+                EntityManager entityManager = getEntityManager();
 
-        // Test
-        group = new RepoGroup(groupName);
-        group.setRepoGroupType(groupType);
-        group = repoManager.createRepoGroup(overlord, group);
+                RepoGroupType groupType = new RepoGroupType("testCreateDeleteRepoGroupType");
+                entityManager.persist(groupType);
+                entityManager.flush();
 
-        // Verify
-        int id = group.getId();
-        group = repoManager.getRepoGroup(overlord, id);
-        assert group != null;
-        assert group.getName().equals(groupName);
+                String groupName = "testCreateDeleteRepoGroup";
+                RepoGroup group = repoManager.getRepoGroupByName(groupName);
+                assert group == null;
 
-        // Cleanup
-        repoManager.deleteRepoGroup(overlord, id);
-        group = repoManager.getRepoGroup(overlord, id);
-        assert group == null;
+                // Test
+                group = new RepoGroup(groupName);
+                group.setRepoGroupType(groupType);
+                group = repoManager.createRepoGroup(overlord, group);
 
-        entityManager.remove(groupType);
+                // Verify
+                int id = group.getId();
+                group = repoManager.getRepoGroup(overlord, id);
+                assert group != null;
+                assert group.getName().equals(groupName);
+
+                // Cleanup
+                repoManager.deleteRepoGroup(overlord, id);
+                group = repoManager.getRepoGroup(overlord, id);
+                assert group == null;
+
+                entityManager.remove(groupType);
+
+            }
+        });
     }
 
     @Test(enabled = ENABLED)
     public void createFindDeleteCandidateRepo() throws Exception {
-        // Setup
-        Repo repo = new Repo("test create candidate repo");
+        executeInTransaction(new TransactionCallback() {
 
-        PageList<Repo> importedRepos = repoManager.findRepos(overlord, new PageControl());
-        int origSize = 0;
-        if (importedRepos != null) {
-            origSize = importedRepos.size();
-        }
+            public void execute() throws Exception {
 
-        // Test
-        repo.setCandidate(true);
-        repo = repoManager.createRepo(overlord, repo);
+                Repo repo = new Repo("test create candidate repo");
 
-        // Verify
-        try {
-            assert repo.isCandidate();
+                PageList<Repo> importedRepos = repoManager.findRepos(overlord, new PageControl());
+                int origSize = 0;
+                if (importedRepos != null) {
+                    origSize = importedRepos.size();
+                }
 
-            // Should not be returned from this call since it's a candidate repo
-            importedRepos = repoManager.findRepos(overlord, new PageControl());
-            assert importedRepos.size() == origSize;
-            assert repoManager.getRepo(overlord, repo.getId()) != null;
-        } finally {
-            repoManager.deleteRepo(overlord, repo.getId());
-        }
+                // Test
+                repo.setCandidate(true);
+                repo = repoManager.createRepo(overlord, repo);
+
+                // Verify
+                try {
+                    assert repo.isCandidate();
+
+                    // Should not be returned from this call since it's a candidate repo
+                    importedRepos = repoManager.findRepos(overlord, new PageControl());
+                    assert importedRepos.size() == origSize;
+                    assert repoManager.getRepo(overlord, repo.getId()) != null;
+                } finally {
+                    repoManager.deleteRepo(overlord, repo.getId());
+                }
+            }
+        });
     }
 
     @Test(enabled = ENABLED)
     public void createDuplicateRepoGroup() throws Exception {
-        // Setup
-        EntityManager entityManager = getEntityManager();
+        executeInTransaction(new TransactionCallback() {
 
-        RepoGroupType groupType = new RepoGroupType("testCreateDuplicateRepoGroup");
-        entityManager.persist(groupType);
-        entityManager.flush();
+            public void execute() throws Exception {
 
-        String groupName = "testCreateDuplicateRepoGroup";
+                EntityManager entityManager = getEntityManager();
 
-        RepoGroup existing = new RepoGroup(groupName);
-        existing.setRepoGroupType(groupType);
-        repoManager.createRepoGroup(overlord, existing);
+                RepoGroupType groupType = new RepoGroupType("testCreateDuplicateRepoGroup");
+                entityManager.persist(groupType);
+                entityManager.flush();
 
-        existing = repoManager.getRepoGroupByName(groupName);
-        assert existing != null;
+                String groupName = "testCreateDuplicateRepoGroup";
 
-        // Test
-        RepoGroup duplicate = new RepoGroup(groupName);
-        duplicate.setRepoGroupType(groupType);
+                RepoGroup existing = new RepoGroup(groupName);
+                existing.setRepoGroupType(groupType);
+                repoManager.createRepoGroup(overlord, existing);
 
-        try {
-            repoManager.createRepoGroup(overlord, existing);
-            assert false;
-        } catch (RepoException e) {
-            // Expected
-        }
+                existing = repoManager.getRepoGroupByName(groupName);
+                assert existing != null;
 
-        // Cleanup
-        repoManager.deleteRepoGroup(overlord, existing.getId());
-        existing = repoManager.getRepoGroup(overlord, existing.getId());
-        assert existing == null;
+                // Test
+                RepoGroup duplicate = new RepoGroup(groupName);
+                duplicate.setRepoGroupType(groupType);
 
-        entityManager.remove(groupType);
+                try {
+                    repoManager.createRepoGroup(overlord, existing);
+                    assert false;
+                } catch (RepoException e) {
+                    // Expected
+                }
+
+                // Cleanup
+                repoManager.deleteRepoGroup(overlord, existing.getId());
+                existing = repoManager.getRepoGroup(overlord, existing.getId());
+                assert existing == null;
+
+                entityManager.remove(groupType);
+
+            }
+        });
     }
 
     @Test(enabled = ENABLED)
     public void getRepoGroupByNameNoGroup() throws Exception {
-        // Test
-        RepoGroup group = repoManager.getRepoGroupByName("foo");
+        executeInTransaction(new TransactionCallback() {
 
-        assert group == null;
+            public void execute() throws Exception {
+
+                RepoGroup group = repoManager.getRepoGroupByName("foo");
+
+                assert group == null;
+            }
+        });
     }
 
     @Test(enabled = ENABLED)
     public void getRepoGroupTypeByName() throws Exception {
-        // Setup
-        EntityManager entityManager = getEntityManager();
-        String name = "test-repo-type";
+        executeInTransaction(new TransactionCallback() {
 
-        RepoGroupType groupType = new RepoGroupType(name);
-        entityManager.persist(groupType);
-        entityManager.flush();
+            public void execute() throws Exception {
 
-        // Test
-        RepoGroupType type = repoManager.getRepoGroupTypeByName(overlord, name);
-        assert type != null;
-        assert type.getName().equals(name);
+                EntityManager entityManager = getEntityManager();
+                String name = "test-repo-type";
 
-        // Cleanup
-        type = entityManager.find(RepoGroupType.class, type.getId());
-        entityManager.remove(type);
-        entityManager.flush();
+                RepoGroupType groupType = new RepoGroupType(name);
+                entityManager.persist(groupType);
+                entityManager.flush();
+
+                // Test
+                RepoGroupType type = repoManager.getRepoGroupTypeByName(overlord, name);
+                assert type != null;
+                assert type.getName().equals(name);
+
+                // Cleanup
+                type = entityManager.find(RepoGroupType.class, type.getId());
+                entityManager.remove(type);
+                entityManager.flush();
+            }
+        });
     }
 
     @Test(enabled = ENABLED)
     public void addRepoRelationship() throws Exception {
-        // Setup
-        EntityManager entityManager = getEntityManager();
+        executeInTransaction(new TransactionCallback() {
 
-        Repo repo = new Repo("repo1");
-        Repo relatedRepo = new Repo("repo2");
+            public void execute() throws Exception {
 
-        repo = repoManager.createRepo(overlord, repo);
-        relatedRepo = repoManager.createRepo(overlord, relatedRepo);
+                EntityManager entityManager = getEntityManager();
 
-        String relationshipTypeName = "testRelationshipType";
-        RepoRelationshipType relationshipType = new RepoRelationshipType(relationshipTypeName);
-        entityManager.persist(relationshipType);
-        entityManager.flush();
+                Repo repo = new Repo("repo1");
+                Repo relatedRepo = new Repo("repo2");
 
-        // Test
-        repoManager.addRepoRelationship(overlord, repo.getId(), relatedRepo.getId(), relationshipTypeName);
+                repo = repoManager.createRepo(overlord, repo);
+                relatedRepo = repoManager.createRepo(overlord, relatedRepo);
 
-        // Verify
-        RepoCriteria repoCriteria = new RepoCriteria();
-        repoCriteria.fetchRepoRepoGroups(true);
-        repoCriteria.addFilterId(repo.getId());
+                String relationshipTypeName = "testRelationshipType";
+                RepoRelationshipType relationshipType = new RepoRelationshipType(relationshipTypeName);
+                entityManager.persist(relationshipType);
+                entityManager.flush();
 
-        PageList<Repo> repoPageList = repoManager.findReposByCriteria(overlord, repoCriteria);
-        assert repoPageList.size() == 1;
+                // Test
+                repoManager.addRepoRelationship(overlord, repo.getId(), relatedRepo.getId(), relationshipTypeName);
 
-        Repo persistedRepo = repoPageList.get(0);
-        Set<RepoRepoRelationship> relationships = persistedRepo.getRepoRepoRelationships();
-        assert relationships.size() == 1;
+                // Verify
+                RepoCriteria repoCriteria = new RepoCriteria();
+                repoCriteria.fetchRepoRepoGroups(true);
+                repoCriteria.addFilterId(repo.getId());
 
-        RepoRepoRelationship relationship = relationships.iterator().next();
-        assert relationship.getRepoRepoRelationshipPK().getRepo().getName().equals("repo1");
-        assert relationship.getRepoRepoRelationshipPK().getRepoRelationship().getRelatedRepo().getName()
-            .equals("repo2");
-        assert relationship.getRepoRepoRelationshipPK().getRepoRelationship().getRepoRelationshipType().getName()
-            .equals(relationshipTypeName);
+                PageList<Repo> repoPageList = repoManager.findReposByCriteria(overlord, repoCriteria);
+                assert repoPageList.size() == 1;
 
-        // Cleanup handled by rollback in tear down method
+                Repo persistedRepo = repoPageList.get(0);
+                Set<RepoRepoRelationship> relationships = persistedRepo.getRepoRepoRelationships();
+                assert relationships.size() == 1;
+
+                RepoRepoRelationship relationship = relationships.iterator().next();
+                assert relationship.getRepoRepoRelationshipPK().getRepo().getName().equals("repo1");
+                assert relationship.getRepoRepoRelationshipPK().getRepoRelationship().getRelatedRepo().getName()
+                    .equals("repo2");
+                assert relationship.getRepoRepoRelationshipPK().getRepoRelationship().getRepoRelationshipType()
+                    .getName().equals(relationshipTypeName);
+            }
+        });
     }
 
     @Test(enabled = ENABLED)
     public void findCandidatesByContentProvider() throws Exception {
-        // Setup
-        String candidateRepoName = "candidate with source";
+        executeInTransaction(new TransactionCallback() {
 
-        //   Create a content source type and a content source
-        ContentSourceType type = new ContentSourceType("testGetSyncResultsListCST");
-        Set<ContentSourceType> types = new HashSet<ContentSourceType>();
-        types.add(type);
-        contentSourceMetadataManager.registerTypes(types); // this blows away any previous existing types
-        ContentSource contentSource = new ContentSource("testGetSyncResultsListCS", type);
-        contentSource = contentSourceManager.simpleCreateContentSource(overlord, contentSource);
+            public void execute() throws Exception {
 
-        //   Create an imported (non-candidate) repo associated with the source
-        Repo importedRepo = new Repo("imported repo");
-        importedRepo.addContentSource(contentSource);
-        importedRepo = repoManager.createRepo(overlord, importedRepo);
+                String candidateRepoName = "candidate with source";
 
-        //   Create a candidate repo associated with that source
-        Repo candidateRepo = new Repo(candidateRepoName);
-        candidateRepo.setCandidate(true);
-        candidateRepo.addContentSource(contentSource);
-        candidateRepo = repoManager.createRepo(overlord, candidateRepo);
+                //   Create a content source type and a content source
+                ContentSourceType type = new ContentSourceType("testGetSyncResultsListCST");
+                Set<ContentSourceType> types = new HashSet<ContentSourceType>();
+                types.add(type);
+                contentSourceMetadataManager.registerTypes(types); // this blows away any previous existing types
+                ContentSource contentSource = new ContentSource("testGetSyncResultsListCS", type);
+                contentSource = contentSourceManager.simpleCreateContentSource(overlord, contentSource);
 
-        // Test
-        RepoCriteria criteria = new RepoCriteria();
-        criteria.addFilterCandidate(true);
-        criteria.addFilterContentSourceIds(contentSource.getId());
-        criteria.fetchRepoContentSources(true);
+                //   Create an imported (non-candidate) repo associated with the source
+                Repo importedRepo = new Repo("imported repo");
+                importedRepo.addContentSource(contentSource);
+                importedRepo = repoManager.createRepo(overlord, importedRepo);
 
-        PageList<Repo> foundRepos = repoManager.findReposByCriteria(overlord, criteria);
+                //   Create a candidate repo associated with that source
+                Repo candidateRepo = new Repo(candidateRepoName);
+                candidateRepo.setCandidate(true);
+                candidateRepo.addContentSource(contentSource);
+                candidateRepo = repoManager.createRepo(overlord, candidateRepo);
 
-        // Verify
+                // Test
+                RepoCriteria criteria = new RepoCriteria();
+                criteria.addFilterCandidate(true);
+                criteria.addFilterContentSourceIds(contentSource.getId());
+                criteria.fetchRepoContentSources(true);
 
-        //   Make sure only one of the two repos from above came back
-        assert foundRepos.size() == 1;
+                PageList<Repo> foundRepos = repoManager.findReposByCriteria(overlord, criteria);
 
-        Repo foundRepo = foundRepos.get(0);
-        assert foundRepo.getName().equals(candidateRepoName);
-        assert foundRepo.isCandidate();
+                // Verify
 
-        // Cleanup handled by rollback in tear down method
+                //   Make sure only one of the two repos from above came back
+                assert foundRepos.size() == 1;
+
+                Repo foundRepo = foundRepos.get(0);
+                assert foundRepo.getName().equals(candidateRepoName);
+                assert foundRepo.isCandidate();
+
+            }
+        });
     }
 
     @Test(enabled = ENABLED)
     public void importCandidateRepo() throws Exception {
-        // Setup
-        Repo candidate = new Repo("create me");
-        candidate.setCandidate(true);
-        Repo created = repoManager.createRepo(overlord, candidate);
+        executeInTransaction(new TransactionCallback() {
 
-        // Test
-        List<Integer> repoIds = new ArrayList<Integer>(1);
-        repoIds.add(created.getId());
-        repoManager.importCandidateRepo(overlord, repoIds);
+            public void execute() throws Exception {
 
-        // Verify
-        RepoCriteria repoCriteria = new RepoCriteria();
-        repoCriteria.addFilterId(created.getId());
+                Repo candidate = new Repo("create me");
+                candidate.setCandidate(true);
+                Repo created = repoManager.createRepo(overlord, candidate);
 
-        PageList<Repo> repoList = repoManager.findReposByCriteria(overlord, repoCriteria);
-        assert repoList.size() == 1;
+                // Test
+                List<Integer> repoIds = new ArrayList<Integer>(1);
+                repoIds.add(created.getId());
+                repoManager.importCandidateRepo(overlord, repoIds);
 
-        Repo verify = repoList.get(0);
-        assert verify != null;
-        assert !verify.isCandidate();
+                // Verify
+                RepoCriteria repoCriteria = new RepoCriteria();
+                repoCriteria.addFilterId(created.getId());
+
+                PageList<Repo> repoList = repoManager.findReposByCriteria(overlord, repoCriteria);
+                assert repoList.size() == 1;
+
+                Repo verify = repoList.get(0);
+                assert verify != null;
+                assert !verify.isCandidate();
+            }
+        });
     }
 
     @Test(enabled = ENABLED)
     public void importCandidateRepoBadId() throws Exception {
-        // Test
-        try {
-            List<Integer> repoIds = new ArrayList<Integer>(1);
-            repoIds.add(12345);
-            repoManager.importCandidateRepo(overlord, repoIds);
-            assert false;
-        } catch (RepoException e) {
-            // Expected
-        }
+        executeInTransaction(new TransactionCallback() {
+
+            public void execute() throws Exception {
+
+                try {
+                    List<Integer> repoIds = new ArrayList<Integer>(1);
+                    repoIds.add(12345);
+                    repoManager.importCandidateRepo(overlord, repoIds);
+                    assert false;
+                } catch (RepoException e) {
+                    // Expected
+                }
+            }
+        });
     }
 
     @Test(enabled = ENABLED)
     public void importNonCandidateRepo() throws Exception {
-        // Setup
-        Repo nonCandidate = new Repo("create me");
-        Repo created = repoManager.createRepo(overlord, nonCandidate);
+        executeInTransaction(new TransactionCallback() {
 
-        // Test
-        try {
-            List<Integer> repoIds = new ArrayList<Integer>(1);
-            repoIds.add(created.getId());
-            repoManager.importCandidateRepo(overlord, repoIds);
-            assert false;
-        } catch (RepoException e) {
-            // Expected
-        }
+            public void execute() throws Exception {
 
+                Repo nonCandidate = new Repo("create me");
+                Repo created = repoManager.createRepo(overlord, nonCandidate);
+
+                // Test
+                try {
+                    List<Integer> repoIds = new ArrayList<Integer>(1);
+                    repoIds.add(created.getId());
+                    repoManager.importCandidateRepo(overlord, repoIds);
+                    assert false;
+                } catch (RepoException e) {
+                    // Expected
+                }
+            }
+        });
     }
 
     @Test(enabled = ENABLED)
     public void deleteCandidatesForContentSource() throws Exception {
-        // Setup
-        ContentSourceType contentSourceType = new ContentSourceType("testSourceType");
-        Set<ContentSourceType> types = new HashSet<ContentSourceType>(1);
-        types.add(contentSourceType);
-        contentSourceMetadataManager.registerTypes(types);
+        executeInTransaction(new TransactionCallback() {
 
-        ContentSource source1 = new ContentSource("testSource1", contentSourceType);
-        source1 = contentSourceManager.simpleCreateContentSource(overlord, source1);
+            public void execute() throws Exception {
 
-        ContentSource source2 = new ContentSource("testSource2", contentSourceType);
-        source2 = contentSourceManager.simpleCreateContentSource(overlord, source2);
+                ContentSourceType contentSourceType = new ContentSourceType("testSourceType");
+                Set<ContentSourceType> types = new HashSet<ContentSourceType>(1);
+                types.add(contentSourceType);
+                contentSourceMetadataManager.registerTypes(types);
 
-        // -> Only has source to delete, should be deleted
-        Repo repo1 = new Repo("repo1");
-        repo1.setCandidate(true);
-        repo1.addContentSource(source1);
+                ContentSource source1 = new ContentSource("testSource1", contentSourceType);
+                source1 = contentSourceManager.simpleCreateContentSource(overlord, source1);
 
-        // -> Has different source, should not be deleted
-        Repo repo2 = new Repo("repo2");
-        repo2.setCandidate(true);
-        repo2.addContentSource(source2);
+                ContentSource source2 = new ContentSource("testSource2", contentSourceType);
+                source2 = contentSourceManager.simpleCreateContentSource(overlord, source2);
 
-        // -> Has source to delete and another source, should not be deleted
-        Repo repo3 = new Repo("repo3");
-        repo3.setCandidate(true);
-        repo3.addContentSource(source1);
-        repo3.addContentSource(source2);
+                // -> Only has source to delete, should be deleted
+                Repo repo1 = new Repo("repo1");
+                repo1.setCandidate(true);
+                repo1.addContentSource(source1);
 
-        // -> No sources, should not be deleted
-        Repo repo4 = new Repo("repo4");
-        repo4.setCandidate(true);
+                // -> Has different source, should not be deleted
+                Repo repo2 = new Repo("repo2");
+                repo2.setCandidate(true);
+                repo2.addContentSource(source2);
 
-        repo1 = repoManager.createRepo(overlord, repo1);
-        repo2 = repoManager.createRepo(overlord, repo2);
-        repo3 = repoManager.createRepo(overlord, repo3);
-        repo4 = repoManager.createRepo(overlord, repo4);
+                // -> Has source to delete and another source, should not be deleted
+                Repo repo3 = new Repo("repo3");
+                repo3.setCandidate(true);
+                repo3.addContentSource(source1);
+                repo3.addContentSource(source2);
 
-        // Test
-        repoManager.deleteCandidatesWithOnlyContentSource(overlord, source1.getId());
+                // -> No sources, should not be deleted
+                Repo repo4 = new Repo("repo4");
+                repo4.setCandidate(true);
 
-        // Verify
-        assert repoManager.getRepo(overlord, repo1.getId()) == null;
-        assert repoManager.getRepo(overlord, repo2.getId()) != null;
-        assert repoManager.getRepo(overlord, repo3.getId()) != null;
-        assert repoManager.getRepo(overlord, repo4.getId()) != null;
+                repo1 = repoManager.createRepo(overlord, repo1);
+                repo2 = repoManager.createRepo(overlord, repo2);
+                repo3 = repoManager.createRepo(overlord, repo3);
+                repo4 = repoManager.createRepo(overlord, repo4);
+
+                // Test
+                repoManager.deleteCandidatesWithOnlyContentSource(overlord, source1.getId());
+
+                // Verify
+                assert repoManager.getRepo(overlord, repo1.getId()) == null;
+                assert repoManager.getRepo(overlord, repo2.getId()) != null;
+                assert repoManager.getRepo(overlord, repo3.getId()) != null;
+                assert repoManager.getRepo(overlord, repo4.getId()) != null;
+            }
+        });
     }
 
     @Test(enabled = ENABLED)
     public void updateRepoWithProvider() throws Exception {
         // See BZ 537216 for more details
 
-        // Setup
-        String newName = "newRepo-" + RandomStringUtils.randomAlphanumeric(6);
-        String oldName = "testRepo-" + RandomStringUtils.randomAlphanumeric(6);
+        executeInTransaction(new TransactionCallback() {
 
-        ContentSourceType contentSourceType = new ContentSourceType("testSourceType");
+            public void execute() throws Exception {
 
-        Set<ContentSourceType> types = new HashSet<ContentSourceType>(1);
-        types.add(contentSourceType);
-        contentSourceMetadataManager.registerTypes(types);
+                String newName = "newRepo-" + RandomStringUtils.randomAlphanumeric(6);
+                String oldName = "testRepo-" + RandomStringUtils.randomAlphanumeric(6);
 
-        ContentSource source = new ContentSource("testSource1", contentSourceType);
-        source = contentSourceManager.simpleCreateContentSource(overlord, source);
+                ContentSourceType contentSourceType = new ContentSourceType("testSourceType");
 
-        Repo repo = new Repo(oldName);
-        repo = repoManager.createRepo(overlord, repo);
+                Set<ContentSourceType> types = new HashSet<ContentSourceType>(1);
+                types.add(contentSourceType);
+                contentSourceMetadataManager.registerTypes(types);
 
-        repoManager.simpleAddContentSourcesToRepo(overlord, repo.getId(), new int[] { source.getId() });
+                ContentSource source = new ContentSource("testSource1", contentSourceType);
+                source = contentSourceManager.simpleCreateContentSource(overlord, source);
 
-        // Test
-        repo.setName(newName);
-        repoManager.updateRepo(overlord, repo);
+                Repo repo = new Repo(oldName);
+                repo = repoManager.createRepo(overlord, repo);
 
-        // Verify
-        RepoCriteria byName = new RepoCriteria();
-        byName.addFilterName(newName);
-        PageList<Repo> reposWithNewName = repoManager.findReposByCriteria(overlord, byName);
+                repoManager.simpleAddContentSourcesToRepo(overlord, repo.getId(), new int[] { source.getId() });
 
-        assert reposWithNewName.size() == 1;
+                // Test
+                repo.setName(newName);
+                repoManager.updateRepo(overlord, repo);
 
-        byName = new RepoCriteria();
-        byName.addFilterName(oldName);
-        PageList<Repo> reposWithOldName = repoManager.findReposByCriteria(overlord, byName);
+                // Verify
+                RepoCriteria byName = new RepoCriteria();
+                byName.addFilterName(newName);
+                PageList<Repo> reposWithNewName = repoManager.findReposByCriteria(overlord, byName);
 
-        assert reposWithOldName.size() == 0;
+                assert reposWithNewName.size() == 1;
+
+                byName = new RepoCriteria();
+                byName.addFilterName(oldName);
+                PageList<Repo> reposWithOldName = repoManager.findReposByCriteria(overlord, byName);
+
+                assert reposWithOldName.size() == 0;
+            }
+        });
     }
 
     @Test(enabled = ENABLED)
     public void updateSyncSchedule() {
-        Repo repo = new Repo("updateSyncSchedule");
-        repo.setSyncSchedule("NOT A VALID CRON");
-        boolean failed = false;
-        try {
-            repo = repoManager.createRepo(overlord, repo);
-        } catch (RepoException e) {
-            failed = true;
-        }
-        assert failed;
+        executeInTransaction(new TransactionCallback() {
 
-        failed = false;
-        repo.setSyncSchedule("0 0 3 * * ?");
-        try {
-            repo = repoManager.createRepo(overlord, repo);
-        } catch (RepoException e) {
-            failed = true;
-        }
-        assert !failed;
+            public void execute() throws Exception {
+
+                Repo repo = new Repo("updateSyncSchedule");
+                repo.setSyncSchedule("NOT A VALID CRON");
+                boolean failed = false;
+                try {
+                    repo = repoManager.createRepo(overlord, repo);
+                } catch (RepoException e) {
+                    failed = true;
+                }
+                assert failed;
+
+                failed = false;
+                repo.setSyncSchedule("0 0 3 * * ?");
+                try {
+                    repo = repoManager.createRepo(overlord, repo);
+                } catch (RepoException e) {
+                    failed = true;
+                }
+                assert !failed;
+            }
+        });
     }
-
 }

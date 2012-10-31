@@ -132,10 +132,19 @@ public class JMXServerComponent<T extends ResourceComponent<?>> implements JMXCo
      */
     private synchronized void reconnectIfDisconnected() {
         if ((connectionProvider) == null || !connectionProvider.isConnected()) {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (Exception e) {
+                    log.debug("Unable to close existing EmsConnection for " + context.getResourceType() + "["
+                        + context.getResourceKey() + "] due to error: " + e);
+                }
+            }
+
             try {
                 internalStart();
             } catch (Exception e) {
-                log.debug("Still unable to reconnect to " + context.getResourceType() + "[" + context.getResourceKey()
+                log.debug("Unable to reconnect to " + context.getResourceType() + "[" + context.getResourceKey()
                     + "] due to error: " + e);
             }
         }

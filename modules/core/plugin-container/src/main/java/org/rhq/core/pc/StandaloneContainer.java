@@ -431,9 +431,12 @@ public class StandaloneContainer {
             SystemInfoFactory.disableNativeSystemInfo();
             System.out.println("Native layer disabled.");
         } else if (what.startsWith("s")) {
-            System.out.println(SystemInfoFactory.isNativeSystemInfoAvailable() ? "Available" : "Not Available");
+            System.out.println("Native layer is:");
             System.out.println(SystemInfoFactory.isNativeSystemInfoDisabled() ? "Disabled" : "Enabled");
-            System.out.println(SystemInfoFactory.isNativeSystemInfoInitialized() ? "Initialized" : "Not initialized");
+            if (!SystemInfoFactory.isNativeSystemInfoDisabled()) {
+                System.out.println(SystemInfoFactory.isNativeSystemInfoAvailable() ? "Available" : "Not Available");
+                System.out.println(SystemInfoFactory.isNativeSystemInfoInitialized() ? "Initialized" : "Not initialized");
+            }
         } else {
             System.err.println("Unknown option. Only 'e', 'd' and 's' are applicable (enable/disable/status)");
             return;

@@ -17,12 +17,6 @@
                         defaultValue=""
                         type="string"/>
 
-    <rhq:input-property name="auto.bootstrap"
-                        description="Set to true to make new (non-seed) node that automatically migrates the right data to itself. If no initial token is specified, the node will pick one such that it will get half the range of the most loaded node. If a node starts up without boostrapping, it will mark itself bootstrapped so that you cannot subsequently accidently boostrap a node with data on it."
-                        required="true"
-                        defaultValue="false"
-                        type="boolean"/>
- 
     <rhq:input-property name="data.dir"
                         description="The directory where Cassandra should store data files. This should be a path relative to the base deployment directory."
                         required="true"
@@ -89,6 +83,17 @@
                         defaultValue=""
                         type="string"/>
 
+    <rhq:input-property name="cassandra.ring.delay.property"
+                        required="false"
+                        defaultValue=""
+                        type="string"/>
+
+    <rhq:input-property name="cassandra.ring.delay"
+                        description="When a node initializes it contacts a seed and then sleeps for RING_DELAY (milliseconds) to learn about other nodes in the cluster. Cassandra uses a default value of 30 seconds."
+                        required="false"
+                        defaultValue=""
+                        type="string"/>
+
 <!--
   The next two properties, install.schema and replication.factor deal with
   running a CLI or CQL script to install and configure a keyspace.
@@ -112,7 +117,7 @@
 <!--
       <rhq:file name="dbsetup.script" destinationFile="scripts/dbsetup.script" replace="true"/>
 -->
-      <rhq:archive name="cassandra-1.1.5.zip">
+      <rhq:archive name="cassandra.zip">
         <rhq:replace>
           <rhq:fileset dir="conf">
             <include name="cassandra.yaml"/>

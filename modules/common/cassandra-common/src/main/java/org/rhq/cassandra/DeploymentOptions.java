@@ -47,6 +47,7 @@ public class DeploymentOptions {
     private Boolean autoDeploy;
     private Boolean embedded;
     private String loggingLevel;
+    private Long ringDelay;
 
     public DeploymentOptions() {
         init(loadProperties());
@@ -83,15 +84,24 @@ public class DeploymentOptions {
         setBundleFileName(properties.getProperty("rhq.cassandra.bundle.filename"));
         setBundleName(properties.getProperty("rhq.cassandra.bundle.name"));
         setBundleVersion(properties.getProperty("rhq.cassandra.bundle.version"));
-        setClusterDir(System.getProperty("rhq.cassandra.cluster.dir",
-            properties.getProperty("rhq.cassandra.cluster.dir")));
-        setNumNodes(Integer.parseInt(System.getProperty("rhq.cassandra.cluster.num-nodes",
-            properties.getProperty("rhq.cassandra.cluster.num-nodes"))));
-        setAutoDeploy(Boolean.valueOf(properties.getProperty("rhq.cassandra.cluster.auto-deploy")));
-        setEmbedded(Boolean.valueOf(System.getProperty("rhq.cassandra.cluster.is-embedded",
-            properties.getProperty("rhq.cassandra.cluster.is-embedded"))));
-        setLoggingLevel(System.getProperty("rhq.cassandra.logging.level",
-            properties.getProperty("rhq.cassandra.logging.level")));
+        setClusterDir(loadProperty("rhq.cassandra.cluster.dir", properties));
+        setNumNodes(Integer.parseInt(loadProperty("rhq.cassandra.cluster.num-nodes", properties)));
+        setAutoDeploy(Boolean.valueOf(loadProperty("rhq.cassandra.cluster.auto-deploy", properties)));
+        setEmbedded(Boolean.valueOf(loadProperty("rhq.cassandra.cluster.is-embedded", properties)));
+        setLoggingLevel(loadProperty("rhq.cassandra.logging.level", properties));
+
+        String ringDelay = loadProperty("rhq.cassandra.ring.delay", properties);
+        if (ringDelay != null && !ringDelay.isEmpty()) {
+            setRingDelay(Long.valueOf(ringDelay));
+        }
+    }
+
+    private String loadProperty(String key, Properties properties) {
+        String value = System.getProperty(key);
+        if (value == null || value.isEmpty()) {
+            return properties.getProperty(key);
+        }
+        return value;
     }
 
     public String getBundleFileName() {
@@ -171,6 +181,16 @@ public class DeploymentOptions {
     public void setLoggingLevel(String loggingLevel) {
         if (this.loggingLevel == null) {
             this.loggingLevel = loggingLevel;
+        }
+    }
+
+    public Long getRingDelay() {
+        return ringDelay;
+    }
+
+    public void setRingDelay(Long ringDelay) {
+        if (this.ringDelay == null) {
+            this.ringDelay = ringDelay;
         }
     }
 

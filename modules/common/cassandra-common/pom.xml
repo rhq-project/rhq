@@ -13,7 +13,7 @@
   <name>RHQ Cassandra Common</name>
 
   <properties>
-    <cassandra.version>1.1.5</cassandra.version>
+    <cassandra.version>1.2.0-beta1</cassandra.version>
     <local.repo>${settings.localRepository}</local.repo>
   </properties>
 
@@ -39,7 +39,7 @@
     <dependency>
       <groupId>org.apache.cassandra</groupId>
       <artifactId>cassandra-all</artifactId>
-      <version>1.1.5</version>
+      <version>${cassandra.version}</version>
     </dependency>
 
     <dependency>
@@ -84,10 +84,28 @@
             </goals>
             <configuration>
               <target>
+                <echo message="PACKAGE"/>
+                <property name="cassandra.download.dir"
+                          value="${project.build.directory}/cassandra-download"/>
+
                 <property name="cassandra.dir"
                           value="${project.build.outputDirectory}/cassandra-${cassandra.version}"/>
-                <property name="cassandra.distro.filename"
-                          value="cassandra-${cassandra.version}.zip"/>
+
+                <mkdir dir="${cassandra.download.dir}"/>
+                <get src="http://archive.apache.org/dist/cassandra/1.2.0/apache-cassandra-1.2.0-beta1-bin.tar.gz"
+                     dest="${cassandra.download.dir}/apache-cassandra-1.2.0-beta1-bin.tar.gz"
+                     skipexisting="true"
+                     verbose="true"/>
+                <gunzip src="${cassandra.download.dir}/apache-cassandra-1.2.0-beta1-bin.tar.gz"
+                        dest="${cassandra.download.dir}"/>
+                <untar src="${cassandra.download.dir}/apache-cassandra-1.2.0-beta1-bin.tar"
+                       dest="${cassandra.download.dir}"/>
+                <move file="${cassandra.download.dir}/apache-cassandra-1.2.0-beta1"
+                      tofile="${project.build.outputDirectory}/cassandra-${cassandra.version}"
+                      overwrite="false"/>
+                <delete file="${cassandra.download.dir}/apache-cassandra-1.2.0-beta1-bin.tar"/>
+
+                <property name="cassandra.distro.filename" value="cassandra-${cassandra.version}.zip"/>
                 <property name="cassandra.distro.zip"
                           value="${project.build.outputDirectory}/${cassandra.distro.filename}"/>
                 <zip basedir="${cassandra.dir}" destfile="${cassandra.distro.zip}"/>
@@ -192,13 +210,14 @@
             </dependencies>
             <executions>
               <execution>
-                <id>setup-pkg</id>
+                <id>setup-pkg-mac</id>
                 <phase>prepare-package</phase>
                 <goals>
                   <goal>run</goal>
                 </goals>
                 <configuration>
                   <target>
+                    <echo message="PACKAGE HACK"/>
                     <property name="cassandra.dir"
                               value="${project.build.outputDirectory}/cassandra-${cassandra.version}"/>
                     <property name="cassandra.lib.dir" value="${cassandra.dir}/lib"/>

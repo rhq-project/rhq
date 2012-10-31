@@ -34,6 +34,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
@@ -105,7 +106,7 @@ public class BootstrapDeployer {
                 props.put("log.dir", "logs");
                 props.put("saved.caches.dir", "saved_caches");
                 props.put("hostname", address);
-                props.put("seeds", collectionToString(seeds));
+                props.put("seeds", collectionToString(ipAddresses));
                 props.put("jmx.port", Integer.toString(jmxPort));
                 props.put("initial.token", generateToken(i, deploymentOptions.getNumNodes()));
                 props.put("rhq.deploy.dir", nodeBasedir.getAbsolutePath());
@@ -114,6 +115,11 @@ public class BootstrapDeployer {
                 props.put("listen.address", address);
                 props.put("rpc.address", address);
                 props.put("logging.level", deploymentOptions.getLoggingLevel());
+
+                if (deploymentOptions.getRingDelay() != null) {
+                    props.put("cassandra.ring.delay.property", "-Dcassandra.ring_delay_ms=");
+                    props.put("cassandra.ring.delay", deploymentOptions.getRingDelay());
+                }
 
                 doLocalDeploy(props, bundleDir);
                 startNode(nodeBasedir);
@@ -175,12 +181,14 @@ public class BootstrapDeployer {
                 return;
             } catch (TTransportException e) {
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(3000);
                 } catch (InterruptedException e1) {
                 }
             }
         }
-        throw new CassandraException("Could not connect to " + host + " after " + maxRetries);
+        Date timestamp = new Date();
+        throw new CassandraException("[" + timestamp + "] Could not connect to " + host + " after " + maxRetries +
+            " tries");
     }
 
     private void updateSchema(File basedir, String host, int port) throws CassandraException {

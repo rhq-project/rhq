@@ -144,6 +144,8 @@ JMX_PORT="@@jmx.port@@"
 # Here we create the arguments that will get passed to the jvm when
 # starting cassandra.
 
+JVM_EXTRA_OPTS="@@cassandra.ring.delay.property@@@@cassandra.ring.delay@@"
+
 # enable assertions.  disabling this in production will give a modest
 # performance benefit (around 5%).
 JVM_OPTS="$JVM_OPTS -ea"

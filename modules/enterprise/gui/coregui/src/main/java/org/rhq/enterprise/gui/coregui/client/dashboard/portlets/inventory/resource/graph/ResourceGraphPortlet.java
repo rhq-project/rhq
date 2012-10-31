@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph;
 
+import java.util.List;
+
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
@@ -38,7 +40,6 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceMetricD3GraphView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceMetricGraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceScheduledMetricDatasource;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 
@@ -195,6 +196,7 @@ public class ResourceGraphPortlet extends ResourceMetricD3GraphView implements C
             renderGraph();
         }
     }
+
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();

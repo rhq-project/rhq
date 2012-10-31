@@ -18,12 +18,14 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table;
 
+import org.rhq.enterprise.gui.coregui.client.HasD3JsniChart;
+
 /**
  * A MultiLine version of the Composite group single metric multiple resource charts.
  *
  * @author Mike Thompson
  */
-public final class CompositeGroupMultiLineGraphListView extends CompositeGroupD3GraphListView
+public final class CompositeGroupMultiLineGraphListView extends CompositeGroupD3GraphListView implements HasD3JsniChart
 {
 
     public CompositeGroupMultiLineGraphListView(String locatorId, int groupId, int defId)
@@ -33,17 +35,18 @@ public final class CompositeGroupMultiLineGraphListView extends CompositeGroupD3
 
 
 
+    @Override
     public native void drawJsniChart() /*-{
         console.log("Draw nvd3 charts for composite multiline graph");
         var chartId =  this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartId()(),
-                chartHandle = "#mChart-"+chartId,
-                chartSelection = chartHandle + " svg",
-        //        yAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getYAxisTitle()(),
-                yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getYAxisUnits()(),
-                xAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getXAxisTitle()(),
-                displayDayOfWeek = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::shouldDisplayDayOfWeekInXAxisLabel()(),
-                xAxisTimeFormat = (displayDayOfWeek) ? "%a %I %p" : "%I %p",
-                json = eval(this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getJsonMetrics()());
+            chartHandle = "#mChart-"+chartId,
+            chartSelection = chartHandle + " svg",
+    //        yAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getYAxisTitle()(),
+            yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getYAxisUnits()(),
+            xAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getXAxisTitle()(),
+            displayDayOfWeek = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::shouldDisplayDayOfWeekInXAxisLabel()(),
+            xAxisTimeFormat = (displayDayOfWeek) ? "%a %I %p" : "%I %p",
+            json = eval(this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getJsonMetrics()());
 
 
         $wnd.nv.addGraph(function() {

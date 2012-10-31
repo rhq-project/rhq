@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
-import java.util.Date;
 import java.util.List;
 
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -31,6 +30,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
+import org.rhq.enterprise.gui.coregui.client.JsonMetricProducer;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
@@ -41,7 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Jay Shaughnessy
  * @author Mike Thompson
  */
-public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
+public abstract class AbstractMetricD3GraphView extends LocatableVLayout implements JsonMetricProducer{
 
     protected HTMLFlow resourceTitle;
 
@@ -166,14 +166,13 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
             graph.setHeight100();
             addMember(graph);
 
-            drawJsniCharts();
+            drawJsniChart();
             markForRedraw();
 
         }
-
-
-
     }
+
+    public abstract  void drawJsniChart();
 
     private Img createLiveGraphImage() {
         Img liveGraph = new LocatableImg(extendLocatorId("Live"), IconEnum.RECENT_MEASUREMENTS.getIcon16x16Path(), 16, 16);
@@ -221,6 +220,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
        return MSG.view_charts_time_axis_label();
     }
 
+    @Override
     public String getJsonMetrics(){
         StringBuilder sb = new StringBuilder("[");
         for (MeasurementDataNumericHighLowComposite measurement : data) {
@@ -246,53 +246,4 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
        long timeThreshold = 24 * 60 * 60 * 1000; // 1 days
        return  startTime + timeThreshold < endTime;
    }
-
-    /**
-     * The magic JSNI to draw the charts with d3.
-     */
-    public native void drawJsniCharts() /*-{
-        //console.log("Draw nvd3 charts");
-        var chartId =  this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getChartId()(),
-        chartHandle = "#rChart-"+chartId,
-        chartSelection = chartHandle + " svg",
-        yAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisTitle()(),
-        yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisUnits()(),
-        xAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getXAxisTitle()(),
-        displayDayOfWeek = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::shouldDisplayDayOfWeekInXAxisLabel()(),
-        xAxisTimeFormat = (displayDayOfWeek) ? "%a %I %p" : "%I %p",
-        json = eval(this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getJsonMetrics()());
-
-        var data = function() {
-            return [
-                {
-                    values: json,
-                    key: yAxisLabel ,
-                    color: '#ff7f0e'
-                }
-            ];
-        };
-        $wnd.nv.addGraph(function() {
-            var chart = $wnd.nv.models.multiBarChart()
-                    .showControls(false)
-                    .tooltips(true);
-
-            chart.xAxis.axisLabel(xAxisLabel)
-                    .tickFormat(function(d) { return $wnd.d3.time.format(xAxisTimeFormat)(new Date(d)) });
-
-            chart.yAxis
-                    .axisLabel(yAxisUnits)
-                    .tickFormat($wnd.d3.format(',f'));
-
-            $wnd.d3.select(chartSelection)
-                    .datum(data())
-                    .transition().duration(300)
-                    .call(chart);
-
-            $wnd.nv.utils.windowResize(chart.update);
-
-            return chart;
-        });
-
-    }-*/;
-
 }

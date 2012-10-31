@@ -121,6 +121,8 @@ public class BootstrapDeployer {
                     props.put("cassandra.ring.delay", deploymentOptions.getRingDelay());
                 }
 
+                props.put("rhq.cassandra.node.num_tokens", deploymentOptions.getNumTokens());
+
                 doLocalDeploy(props, bundleDir);
                 startNode(nodeBasedir);
                 if (i == 0) {

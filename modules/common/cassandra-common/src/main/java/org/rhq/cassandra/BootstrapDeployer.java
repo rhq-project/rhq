@@ -195,28 +195,22 @@ public class BootstrapDeployer {
 
     private void updateSchema(File basedir, String host, int port) throws CassandraException {
         File binDir = new File(basedir, "bin");
-        File cliScript;
+        File script = new File(binDir, "cqlsh");
         SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
-
-        if (systemInfo.getOperatingSystemType() == OperatingSystemType.WINDOWS) {
-            cliScript = new File(binDir, "cassandra-cli.bat");
-        } else {
-            cliScript = new File(binDir, "cassandra-cli");
-        }
 
         File dbsetupFile = null;
         try {
-            dbsetupFile = File.createTempFile("dbsetup.script", null);
-            InputStream inputStream = getClass().getResourceAsStream("/dbsetup.script");
+            dbsetupFile = File.createTempFile("dbsetup.cql", null);
+            InputStream inputStream = getClass().getResourceAsStream("/dbsetup.cql");
             FileOutputStream outputStream = new FileOutputStream(dbsetupFile);
             StreamUtil.copy(inputStream, outputStream);
         } catch (IOException e) {
             throw new CassandraException("Failed to load schema update script", e);
         }
-        ProcessExecution cliExe = ProcessExecutionUtility.createProcessExecution(cliScript);
+        ProcessExecution cliExe = ProcessExecutionUtility.createProcessExecution(script);
         cliExe.setWaitForCompletion(30000L);
         cliExe.setCaptureOutput(true);
-        cliExe.setArguments(asList("--debug", "-f", dbsetupFile.getAbsolutePath(), "-h", host, "-p", Integer.toString(port)));
+        cliExe.setArguments(asList("-3", "--debug", "-f", dbsetupFile.getAbsolutePath()));
 
         ProcessExecutionResults results = systemInfo.executeProcess(cliExe);
         String output = results.getCapturedOutput();

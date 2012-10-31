@@ -56,7 +56,7 @@
         <filtering>true</filtering>
       </resource>
       <resource>
-        <directory>src/main/cassandra/cli</directory>
+        <directory>src/main/cassandra/cql</directory>
       </resource>
     </resources>
 

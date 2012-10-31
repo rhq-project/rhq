@@ -28,11 +28,16 @@ package org.rhq.server.metrics;
 import static me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality.EQUAL;
 import static me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality.LESS_THAN_EQUAL;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+
+import javax.sql.DataSource;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeComparator;
@@ -89,6 +94,8 @@ public class MetricsServer {
     private Keyspace keyspace;
 
     private DateTimeService dateTimeService = new DateTimeService();
+
+    private DataSource cassandraDS;
 
     // These property getters/setters are here right now primarily to facilitate
     // testing.
@@ -171,6 +178,10 @@ public class MetricsServer {
 
     public void setKeyspace(Keyspace keyspace) {
         this.keyspace = keyspace;
+    }
+
+    public void setCassandraDS(DataSource dataSource) {
+        cassandraDS = dataSource;
     }
 
     public List<MeasurementDataNumericHighLowComposite> findDataForContext(Subject subject, EntityContext entityContext,
@@ -259,19 +270,46 @@ public class MetricsServer {
     public void addNumericData(Set<MeasurementDataNumeric> dataSet) {
         Map<Integer, DateTime> updates = new TreeMap<Integer, DateTime>();
         Mutator<Integer> mutator = HFactory.createMutator(keyspace, IntegerSerializer.get());
+        Connection connection = null;
+        PreparedStatement statement = null;
 
-        for (MeasurementDataNumeric data : dataSet) {
-            updates.put(data.getScheduleId(), new DateTime(data.getTimestamp()).hourOfDay().roundFloorCopy());
-            mutator.addInsertion(
-                data.getScheduleId(),
-                rawMetricsDataCF,
-                HFactory.createColumn(data.getTimestamp(), data.getValue(), DateTimeService.SEVEN_DAYS,
-                    LongSerializer.get(), DoubleSerializer.get()));
+        try {
+            connection = cassandraDS.getConnection();
+            String sql = "INSERT INTO raw_metrics (schedule_id, time, value) VALUES (?, ?, ?)";
+            statement = connection.prepareStatement(sql);
+
+            for (MeasurementDataNumeric data : dataSet) {
+                statement.setInt(1, data.getScheduleId());
+                statement.setDate(2, new java.sql.Date(data.getTimestamp()));
+                statement.setDouble(3, data.getValue());
+
+                statement.executeUpdate();
+                //statement.addBatch();
+            }
+//            statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (statement != null) {
+                try {
+                    statement.close();
+                } catch (SQLException e) {
+                }
+            }
         }
 
-        mutator.execute();
-
-        updateMetricsQueue(oneHourMetricsDataCF, updates);
+//        for (MeasurementDataNumeric data : dataSet) {
+//            updates.put(data.getScheduleId(), new DateTime(data.getTimestamp()).hourOfDay().roundFloorCopy());
+//            mutator.addInsertion(
+//                data.getScheduleId(),
+//                rawMetricsDataCF,
+//                HFactory.createColumn(data.getTimestamp(), data.getValue(), DateTimeService.SEVEN_DAYS,
+//                    LongSerializer.get(), DoubleSerializer.get()));
+//        }
+//
+//        mutator.execute();
+//
+//        updateMetricsQueue(oneHourMetricsDataCF, updates);
     }
 
     public void calculateAggregates() {

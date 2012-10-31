@@ -31,18 +31,21 @@ import static org.rhq.server.metrics.DateTimeService.ONE_MONTH;
 import static org.rhq.server.metrics.DateTimeService.ONE_YEAR;
 import static org.rhq.server.metrics.DateTimeService.SEVEN_DAYS;
 import static org.rhq.server.metrics.DateTimeService.TWO_WEEKS;
+import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertEquals;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.StringWriter;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.cassandra.cql.jdbc.CassandraDataSource;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.joda.time.Chronology;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeField;
@@ -57,7 +60,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
-import org.rhq.cassandra.CLibrary;
 import org.rhq.cassandra.CassandraClusterManager;
 import org.rhq.cassandra.CassandraException;
 import org.rhq.cassandra.ClusterInitService;
@@ -68,7 +70,6 @@ import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.core.util.stream.StreamUtil;
 
 import me.prettyprint.cassandra.serializers.CompositeSerializer;
 import me.prettyprint.cassandra.serializers.DoubleSerializer;
@@ -81,13 +82,11 @@ import me.prettyprint.cassandra.service.KeyIterator;
 import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
-import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.Composite;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.mutation.MutationResult;
 import me.prettyprint.hector.api.mutation.Mutator;
-import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.SliceQuery;
 
 /**
@@ -95,6 +94,10 @@ import me.prettyprint.hector.api.query.SliceQuery;
  */
 @Listeners({CassandraClusterManager.class})
 public class MetricsServerTest {
+
+    private static final boolean ENABLED = false;
+
+    private final Log log = LogFactory.getLog(MetricsServerTest.class);
 
     private final long SECOND = 1000;
 
@@ -118,6 +121,8 @@ public class MetricsServerTest {
 
     private Keyspace keyspace;
 
+    private CassandraDataSource dataSource;
+
     private static class MetricsServerStub extends MetricsServer {
         private DateTime currentHour;
 
@@ -137,49 +142,18 @@ public class MetricsServerTest {
     @BeforeClass
     @DeployCluster
     public void deployCluster() throws CassandraException {
-//        File basedir = new File("target");
-//        File clusterDir = new File(basedir, "cassandra");
-//
-//        FileUtil.purge(clusterDir, false);
-//
-//        int numNodes = 2;
-//
-//        DeploymentOptions deploymentOptions = new DeploymentOptions();
-//        deploymentOptions.setClusterDir(clusterDir.getAbsolutePath());
-//        deploymentOptions.setNumNodes(numNodes);
-//        deploymentOptions.setLoggingLevel("DEBUG");
-//
-//        BootstrapDeployer deployer = new BootstrapDeployer();
-//        deployer.setDeploymentOptions(deploymentOptions);
-//        deployer.deploy();
-
         List<CassandraHost> hosts = asList(new CassandraHost("127.0.0.1", 9160), new CassandraHost("127.0.0.2", 9160));
         ClusterInitService initService = new ClusterInitService();
 
         initService.waitForClusterToStart(hosts);
         initService.waitForSchemaAgreement("rhq", hosts);
+
+        dataSource = new CassandraDataSource("127.0.0.1", 9160, "rhq", null, null, "3.0.0");
     }
 
     @AfterClass
     @ShutdownCluster
     public void shutdownCluster() throws Exception {
-//        File basedir = new File("target");
-//        File clusterDir = new File(basedir, "cassandra");
-//        killNode(new File(clusterDir, "node0"));
-//        killNode(new File(clusterDir, "node1"));
-    }
-
-    private void killNode(File nodeDir) throws Exception {
-        long pid = getPid(nodeDir);
-        CLibrary.kill((int) pid, 9);
-    }
-
-    private long getPid(File nodeDir) throws IOException {
-        File binDir = new File(nodeDir, "bin");
-        StringWriter writer = new StringWriter();
-        StreamUtil.copy(new FileReader(new File(binDir, "cassandra.pid")), writer);
-
-        return Long.parseLong(writer.getBuffer().toString());
     }
 
     @BeforeMethod
@@ -197,7 +171,8 @@ public class MetricsServerTest {
         metricsServer.setMetricsQueueCF(METRICS_WORK_QUEUE_CF);
         metricsServer.setTraitsCF(TRAITS_CF);
         metricsServer.setResourceTraitsCF(RESOURCE_TRAITS_CF);
-        purgeDB();
+        metricsServer.setCassandraDS(dataSource);
+        //purgeDB();
     }
 
     private void purgeDB() {
@@ -218,8 +193,8 @@ public class MetricsServerTest {
         return rowMutator.execute();
     }
 
-    @Test
-    public void insertMultipleRawNumericDataForOneSchedule() {
+    @Test//(enabled = ENABLED)
+    public void insertMultipleRawNumericDataForOneSchedule() throws Exception {
         int scheduleId = 123;
 
         //DateTime hour0 = now.hourOfDay().roundFloorCopy().minusHours(now.hourOfDay().get());
@@ -243,39 +218,52 @@ public class MetricsServerTest {
 
         metricsServer.addNumericData(data);
 
-        SliceQuery<Integer, Long, Double> query = HFactory.createSliceQuery(keyspace, IntegerSerializer.get(),
-            LongSerializer.get(), DoubleSerializer.get());
-        query.setColumnFamily(RAW_METRIC_DATA_CF);
-        query.setKey(scheduleId);
-        query.setRange(null, null, false, 10);
+//        SliceQuery<Integer, Long, Double> query = HFactory.createSliceQuery(keyspace, IntegerSerializer.get(),
+//            LongSerializer.get(), DoubleSerializer.get());
+//        query.setColumnFamily(RAW_METRIC_DATA_CF);
+//        query.setKey(scheduleId);
+//        query.setRange(null, null, false, 10);
+//
+//        QueryResult<ColumnSlice<Long, Double>> queryResult = query.execute();
+//        List<HColumn<Long, Double>> actual = queryResult.get().getColumns();
+//
+//        List<HColumn<Long, Double>> expected = asList(
+//            HFactory.createColumn(threeMinutesAgo.getMillis(), 3.2, sevenDays, LongSerializer.get(),
+//                DoubleSerializer.get()),
+//            HFactory.createColumn(twoMinutesAgo.getMillis(), 3.9, sevenDays, LongSerializer.get(),
+//                DoubleSerializer.get()),
+//            HFactory.createColumn(oneMinuteAgo.getMillis(), 2.6, sevenDays, LongSerializer.get(),
+//                DoubleSerializer.get())
+//        );
+//
+//        for (int i = 0; i < expected.size(); ++i) {
+//            assertPropertiesMatch("The returned columns do not match", expected.get(i), actual.get(i),
+//                "clock");
+//        }
+//
+//        DateTime theHour = now().hourOfDay().roundFloorCopy();
+//        Composite expectedComposite = new Composite();
+//        expectedComposite.addComponent(theHour.getMillis(), LongSerializer.get());
+//        expectedComposite.addComponent(scheduleId, IntegerSerializer.get());
+//
+//        assert1HourMetricsQueueEquals(asList(HFactory.createColumn(expectedComposite, 0, CompositeSerializer.get(),
+//            IntegerSerializer.get())));
 
-        QueryResult<ColumnSlice<Long, Double>> queryResult = query.execute();
-        List<HColumn<Long, Double>> actual = queryResult.get().getColumns();
+        Connection connection = dataSource.getConnection();
+        Statement statement = connection.createStatement();
+        ResultSet resultSet = statement.executeQuery("SELECT * FROM raw_metrics WHERE schedule_id = " + scheduleId);
 
-        List<HColumn<Long, Double>> expected = asList(
-            HFactory.createColumn(threeMinutesAgo.getMillis(), 3.2, sevenDays, LongSerializer.get(),
-                DoubleSerializer.get()),
-            HFactory.createColumn(twoMinutesAgo.getMillis(), 3.9, sevenDays, LongSerializer.get(),
-                DoubleSerializer.get()),
-            HFactory.createColumn(oneMinuteAgo.getMillis(), 2.6, sevenDays, LongSerializer.get(),
-                DoubleSerializer.get())
-        );
-
-        for (int i = 0; i < expected.size(); ++i) {
-            assertPropertiesMatch("The returned columns do not match", expected.get(i), actual.get(i),
-                "clock");
+        Set<MeasurementDataNumeric> actual = new HashSet<MeasurementDataNumeric>();
+        while (resultSet.next()) {
+            actual.add(new MeasurementDataNumeric(resultSet.getDate(2).getTime(), resultSet.getInt(1),
+                resultSet.getDouble(3)));
         }
+        resultSet.close();
 
-        DateTime theHour = now().hourOfDay().roundFloorCopy();
-        Composite expectedComposite = new Composite();
-        expectedComposite.addComponent(theHour.getMillis(), LongSerializer.get());
-        expectedComposite.addComponent(scheduleId, IntegerSerializer.get());
-
-        assert1HourMetricsQueueEquals(asList(HFactory.createColumn(expectedComposite, 0, CompositeSerializer.get(),
-            IntegerSerializer.get())));
+        assertCollectionMatchesNoOrder("Failed to retrieve raw metric data", data, actual, "name");
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void calculateAggregatesForOneScheduleWhenDBIsEmpty() {
         int scheduleId = 123;
 
@@ -331,7 +319,7 @@ public class MetricsServerTest {
         assert6HourDataEquals(scheduleId, expected6HourData);
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void aggregateRawDataDuring9thHour() {
         int scheduleId = 123;
 
@@ -401,7 +389,7 @@ public class MetricsServerTest {
         assert1HourMetricsQueueEmpty(scheduleId);
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void aggregate1HourDataDuring12thHour() {
         // set up the test fixture
         int scheduleId = 123;
@@ -470,7 +458,7 @@ public class MetricsServerTest {
         assert24HourDataEmpty(scheduleId);
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void aggregate6HourDataDuring24thHour() {
         // set up the test fixture
         int scheduleId = 123;
@@ -530,7 +518,7 @@ public class MetricsServerTest {
         assert24HourMetricsQueueEmpty(scheduleId);
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void findRawDataComposites() {
         DateTime beginTime = now().minusHours(4);
         DateTime endTime = now();
@@ -580,7 +568,7 @@ public class MetricsServerTest {
             actualData.get(29));
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void find1HourDataComposites() {
         DateTime beginTime = now().minusDays(11);
         DateTime endTime = now();
@@ -664,7 +652,7 @@ public class MetricsServerTest {
             actualData.get(29));
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void find6HourDataComposites() {
         DateTime beginTime = now().minusDays(20);
         DateTime endTime = now();

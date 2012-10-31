@@ -77,6 +77,32 @@
             <id>setup-pkg</id>
           </execution>
           <execution>
+            <id>get-cassandra</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <property name="cassandra.download.dir"
+                          value="${project.build.directory}/cassandra-download"/>
+                <mkdir dir="${cassandra.download.dir}"/>
+
+                <get src="http://repo1.maven.org/maven2/org/apache/cassandra/apache-cassandra/${cassandra.version}/apache-cassandra-${cassandra.version}-bin.tar.gz"
+                     dest="${settings.localRepository}/org/apache/cassandra/apache-cassandra/${cassandra.version}/apache-cassandra-${cassandra.version}-bin.tar.gz"
+                     skipexisting="true"
+                     verbose="true"/>
+                <gunzip src="${settings.localRepository}/org/apache/cassandra/apache-cassandra/${cassandra.version}/apache-cassandra-${cassandra.version}-bin.tar.gz"
+                        dest="${cassandra.download.dir}"/>
+                <untar src="${cassandra.download.dir}/apache-cassandra-${cassandra.version}-bin.tar"
+                       dest="${cassandra.download.dir}"/>
+                <move file="${cassandra.download.dir}/apache-cassandra-${cassandra.version}"
+                      tofile="${project.build.outputDirectory}/cassandra-${cassandra.version}"/>
+                <delete dir="${cassandra.download.dir}"/>
+              </target>
+            </configuration>
+          </execution>
+          <execution>
             <id>create-cassandra-pkg</id>
             <phase>prepare-package</phase>
             <goals>
@@ -84,28 +110,9 @@
             </goals>
             <configuration>
               <target>
-                <echo message="PACKAGE"/>
-                <property name="cassandra.download.dir"
-                          value="${project.build.directory}/cassandra-download"/>
-
                 <property name="cassandra.dir"
                           value="${project.build.outputDirectory}/cassandra-${cassandra.version}"/>
-
-                <mkdir dir="${cassandra.download.dir}"/>
-                <get src="http://archive.apache.org/dist/cassandra/1.2.0/apache-cassandra-1.2.0-beta1-bin.tar.gz"
-                     dest="${cassandra.download.dir}/apache-cassandra-1.2.0-beta1-bin.tar.gz"
-                     skipexisting="true"
-                     verbose="true"/>
-                <gunzip src="${cassandra.download.dir}/apache-cassandra-1.2.0-beta1-bin.tar.gz"
-                        dest="${cassandra.download.dir}"/>
-                <untar src="${cassandra.download.dir}/apache-cassandra-1.2.0-beta1-bin.tar"
-                       dest="${cassandra.download.dir}"/>
-                <move file="${cassandra.download.dir}/apache-cassandra-1.2.0-beta1"
-                      tofile="${project.build.outputDirectory}/cassandra-${cassandra.version}"
-                      overwrite="false"/>
-                <delete file="${cassandra.download.dir}/apache-cassandra-1.2.0-beta1-bin.tar"/>
-
-                <property name="cassandra.distro.filename" value="cassandra-${cassandra.version}.zip"/>
+                <property name="cassandra.distro.filename" value="cassandra.zip"/>
                 <property name="cassandra.distro.zip"
                           value="${project.build.outputDirectory}/${cassandra.distro.filename}"/>
                 <zip basedir="${cassandra.dir}" destfile="${cassandra.distro.zip}"/>
@@ -211,13 +218,12 @@
             <executions>
               <execution>
                 <id>setup-pkg-mac</id>
-                <phase>prepare-package</phase>
+                <phase>process-resources</phase>
                 <goals>
                   <goal>run</goal>
                 </goals>
                 <configuration>
                   <target>
-                    <echo message="PACKAGE HACK"/>
                     <property name="cassandra.dir"
                               value="${project.build.outputDirectory}/cassandra-${cassandra.version}"/>
                     <property name="cassandra.lib.dir" value="${cassandra.dir}/lib"/>

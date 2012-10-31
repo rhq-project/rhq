@@ -59,6 +59,12 @@
                         defaultValue="127.0.0.1"
                         type="string"/>
 
+    <rhq:input-property name="rhq.cassandra.node.num-tokens"
+                        description="Defines the number of tokens randomly assigned to a node on the ring. The more tokens, relative to other nodes, the larger the proportion of data that this node will store. You probably want all nodes to have the same number of tokens assuming they have equal hardware capability."
+                        required="false"
+                        defaultValue="256"
+                        type="string"/>
+
     <rhq:input-property name="initial.token"
                         description="Each Cassandra node is assigned a unique token that determines what keys it is the first replica for. If you sort all nodes' token, the range of keys each is responsible for is (PreviousToken, MyToken], that is, from the previous token (exclusive) to the node's token (inclusive). The machine with the lowest Token gets both all keys less than that token, and all keys greater than the largest token; this is called a wrapping range."
                         required="false"

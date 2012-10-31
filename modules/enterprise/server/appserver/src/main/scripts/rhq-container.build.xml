@@ -381,6 +381,12 @@
 
     <target name="prepare-bin-dir">
         <echo>*** Preparing bin dir ***</echo>
+
+      <loadproperties>
+        <zipentry zipfile="${settings.localRepository}/org/rhq/rhq-cassandra-common/${project.version}/rhq-cassandra-common-${project.version}.jar"
+                  name="cassandra.properties"/>
+      </loadproperties>
+
         <echo>Connection URL is ${rhq.server.database.connection-url}</echo>
 
         <property name="rhq.bin.dir" location="${project.build.outputDirectory}/bin" />
@@ -564,6 +570,19 @@ rhq.autoinstall.public-endpoint-address=
 # topology.
 rhq.cassandra.cluster.seeds=
 
+# When a node initializes it contacts a seed and then sleeps for RING_DELAY
+# (milliseconds) to learn about other nodes in the cluster. This defaults to 30
+# seconds.
+# rhq.cassandra.ring.delay
+
+# Defines the number of tokens randomly assigned to a node on the ring. The more
+# tokens, relative to other nodes, the larger the proportion of data that this
+# node will store. You probably want all nodes to have the same number of tokens
+# assuming they have equal hardware capability. Tokens are randomly generated
+# with the expectation of an even distribution. With that said, there can be
+# some variation. Either increasing this value or increasing the number of
+# nodes in the cluster will help even out the distribution.
+rhq.cassandra.node.num-tokens=${rhq.cassandra.node.num-tokens}
 </echo>
 
     </target>
@@ -591,10 +610,12 @@ rhq.cassandra.cluster.seeds=
         <copy todir="${project.build.outputDirectory}" verbose="true">
             <fileset dir="src/main/dev-resources" />
         </copy>
+
       <loadproperties>
         <zipentry zipfile="${settings.localRepository}/org/rhq/rhq-cassandra-common/${project.version}/rhq-cassandra-common-${project.version}.jar"
                   name="cassandra.properties"/>
       </loadproperties>
+
       <echo file="${project.build.outputDirectory}/bin/rhq-server.properties" append="true">
 # The following properties that begin with a prefix of rhq.cassandra are ONLY for
 # development/testing environments where an embedded cluster is used. These properties are

@@ -48,6 +48,7 @@ public class DeploymentOptions {
     private Boolean embedded;
     private String loggingLevel;
     private Long ringDelay;
+    private Integer numTokens;
 
     public DeploymentOptions() {
         init(loadProperties());
@@ -94,6 +95,8 @@ public class DeploymentOptions {
         if (ringDelay != null && !ringDelay.isEmpty()) {
             setRingDelay(Long.valueOf(ringDelay));
         }
+
+        setNumTokens(Integer.valueOf(loadProperty("rhq.cassandra.node.num-tokens", properties)));
     }
 
     private String loadProperty(String key, Properties properties) {
@@ -191,6 +194,16 @@ public class DeploymentOptions {
     public void setRingDelay(Long ringDelay) {
         if (this.ringDelay == null) {
             this.ringDelay = ringDelay;
+        }
+    }
+
+    public Integer getNumTokens() {
+        return numTokens;
+    }
+
+    public void setNumTokens(int numTokens) {
+        if (this.numTokens == null) {
+            this.numTokens = numTokens;
         }
     }
 

@@ -30,7 +30,6 @@ import org.dbunit.dataset.xml.FlatXmlProducer;
 import org.dbunit.operation.DatabaseOperation;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeGroups;
 import org.testng.annotations.BeforeMethod;
 import org.xml.sax.InputSource;
 
@@ -53,8 +52,10 @@ public class MetadataBeanTest extends AbstractEJB3Test {
 
     private List<Integer> pluginIds = new ArrayList<Integer>();
 
-
-    @BeforeGroups(groups = { "plugin.metadata" }, dependsOnGroups = { "integration.ejb3" })
+    // @BeforeGroups currently executes only as client (remote) only with Arquillian/testNg. So,
+    // we can't get DS here.  Now called from BeforeMethod.
+    //
+    //@BeforeGroups(groups = { "plugin.metadata" }, dependsOnGroups = { "integration.ejb3" })
     public void beforeGroups() throws Exception {
         setupDB();
     }
@@ -66,6 +67,12 @@ public class MetadataBeanTest extends AbstractEJB3Test {
      */
     @AfterClass(alwaysRun = true, groups = { "plugin.metadata" })
     void afterClass() throws Exception {
+        // Although its documented that AfterXXX don't execute in-container (only as client), in practice this is not true
+        // and we perform in-container work here. 
+        if (!inContainer()) {
+            return;
+        }
+
         PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
         pluginMgr.deletePlugins(overlord, pluginIds);
@@ -79,6 +86,9 @@ public class MetadataBeanTest extends AbstractEJB3Test {
         if (!inContainer()) {
             return;
         }
+
+        // @BeforeGroups currently executed only as client (remote) only with Arquillian/testNg, so call from here instead 
+        beforeGroups();
 
         TestBundleServerPluginService bundleService = new TestBundleServerPluginService();
         prepareCustomServerPluginService(bundleService);

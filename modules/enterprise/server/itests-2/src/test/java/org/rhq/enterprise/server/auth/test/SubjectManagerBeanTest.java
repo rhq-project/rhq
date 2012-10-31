@@ -27,8 +27,6 @@ import java.util.UUID;
 
 import javax.security.auth.login.LoginException;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -53,7 +51,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Test
 public class SubjectManagerBeanTest extends AbstractEJB3Test {
-    
+
     private SubjectManagerLocal subjectManager;
     private AuthorizationManagerLocal authorizationManager;
     private RoleManagerLocal roleManager;
@@ -61,8 +59,8 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
     /**
      * Prepares things for the entire test class.
      */
-    @BeforeClass
-    public void beforeClass() {
+    @Override
+    public void beforeMethod() {
         subjectManager = LookupUtil.getSubjectManager();
         authorizationManager = LookupUtil.getAuthorizationManager();
         roleManager = LookupUtil.getRoleManager();
@@ -71,8 +69,8 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
     /**
      * This runs after each test method. It clears out all sessions.
      */
-    @AfterMethod
-    public void purgeAllSessions() {
+    @Override
+    public void afterMethod() {
         // create a list of all users we know our tests have used
         List<String> usernames = new ArrayList<String>();
         usernames.add("admin");
@@ -469,7 +467,7 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
         }
 
     }
-    
+
     public void testViewUsersPermission_subjectWithViewUsersRoleCanViewOtherUsers() throws Exception {
         getTransactionManager().begin();
 
@@ -489,7 +487,8 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
             Subject anotherSubject = new Subject("subject" + UUID.randomUUID(), true, false);
             anotherSubject = subjectManager.createSubject(overlord, anotherSubject, "password");
 
-            PageList<Subject> subjects = subjectManager.findSubjectsByCriteria(subjectWithViewUsersRole, new SubjectCriteria());
+            PageList<Subject> subjects = subjectManager.findSubjectsByCriteria(subjectWithViewUsersRole,
+                new SubjectCriteria());
             Set<Subject> subjectSet = new HashSet<Subject>(subjects);
             assertTrue(subjectSet.contains(subjectWithViewUsersRole));
             assertTrue(subjectSet.contains(anotherSubject));
@@ -531,13 +530,15 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
 
             Subject subjectWithNonViewUsersRole = new Subject("subject" + UUID.randomUUID(), true, false);
             subjectWithNonViewUsersRole.addRole(roleWithoutViewUsersPerm);
-            subjectWithNonViewUsersRole = subjectManager.createSubject(overlord, subjectWithNonViewUsersRole, "password");
+            subjectWithNonViewUsersRole = subjectManager.createSubject(overlord, subjectWithNonViewUsersRole,
+                "password");
             subjectWithNonViewUsersRole = subjectManager.loginUnauthenticated(subjectWithNonViewUsersRole.getName());
 
             Subject anotherSubject = new Subject("subject" + UUID.randomUUID(), true, false);
             anotherSubject = subjectManager.createSubject(overlord, anotherSubject, "password");
 
-            PageList<Subject> subjects = subjectManager.findSubjectsByCriteria(subjectWithNonViewUsersRole, new SubjectCriteria());
+            PageList<Subject> subjects = subjectManager.findSubjectsByCriteria(subjectWithNonViewUsersRole,
+                new SubjectCriteria());
             Set<Subject> subjectSet = new HashSet<Subject>(subjects);
             assertEquals(1, subjectSet.size());
             assertTrue(subjectSet.contains(subjectWithNonViewUsersRole));
@@ -559,7 +560,8 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
             Subject anotherSubject = new Subject("subject" + UUID.randomUUID(), true, false);
             anotherSubject = subjectManager.createSubject(overlord, anotherSubject, "password");
 
-            PageList<Subject> subjects = subjectManager.findSubjectsByCriteria(subjectWithNoRoles, new SubjectCriteria());
+            PageList<Subject> subjects = subjectManager.findSubjectsByCriteria(subjectWithNoRoles,
+                new SubjectCriteria());
             Set<Subject> subjectSet = new HashSet<Subject>(subjects);
             assertEquals(1, subjectSet.size());
             assertTrue(subjectSet.contains(subjectWithNoRoles));

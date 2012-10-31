@@ -119,26 +119,27 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
 
     @Override
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
-        Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();        
+        Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();
         Map<String, List<DiscoveredResourceDetails>> duplicatesByKey = new LinkedHashMap<String, List<DiscoveredResourceDetails>>();
 
         // Filter out JBoss, Tomcat, etc. processes, which will be represented by more specific types of Resources
         // discovered by other plugins.
-        List<ProcessScanResult> nonExcludedProcesses = getNonExcludedJavaProcesses(context); 
+        List<ProcessScanResult> nonExcludedProcesses = getNonExcludedJavaProcesses(context);
 
         for (ProcessScanResult process : nonExcludedProcesses) {
             try {
                 ProcessInfo processInfo = process.getProcessInfo();
                 DiscoveredResourceDetails details = discoverResourceDetails(context, processInfo);
                 if (details != null) {
-                    if (discoveredResources.contains(details)) {                        
+                    //detect discovered jmx resources that are erroneously using the same key
+                    if (discoveredResources.contains(details)) {
                         List<DiscoveredResourceDetails> duplicates = duplicatesByKey.get(details.getResourceKey());
                         if (duplicates == null) {
                             duplicates = new ArrayList<DiscoveredResourceDetails>();
                             duplicatesByKey.put(details.getResourceKey(), duplicates);
                         }
-                        duplicates.add(details);                        
-                    }                    
+                        duplicates.add(details);
+                    }
                     discoveredResources.add(details);
                 }
             } catch (RuntimeException re) {
@@ -150,7 +151,8 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
                 }
             }
         }
-        
+
+        //Log the erroneous collisions and take them out of the discoveredResource list.
         for (String duplicateKey : duplicatesByKey.keySet()) {
             List<DiscoveredResourceDetails> duplicates = duplicatesByKey.get(duplicateKey);
             log.error("Multiple Resources with the same key (" + duplicateKey
@@ -166,7 +168,7 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
     private List<ProcessScanResult> getNonExcludedJavaProcesses(ResourceDiscoveryContext context) {
         // This is the list of all currently running java processes.
         List<ProcessScanResult> javaProcesses = context.getAutoDiscoveredProcesses();
-        
+
         List<ProcessScanResult> nonExcludedJavaProcesses = new ArrayList<ProcessScanResult>();
         Set<String> processExcludes = getProcessExcludes();
         for (ProcessScanResult javaProcess : javaProcesses) {
@@ -197,7 +199,7 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
         return false;
     }
 
-    protected Set<String> getProcessExcludes() {        
+    protected Set<String> getProcessExcludes() {
         Set<String> processExcludes;
         String overrideProcessExcludes = System.getProperty(SYSPROP_RHQ_JMXPLUGIN_PROCESS_FILTERS);
         if (overrideProcessExcludes != null) {
@@ -238,7 +240,7 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
             }
             throw new RuntimeException("Failed to connect to JVM with connector address [" + connectorAddress + "].", e);
         }
-                        
+
         String key = connectorAddress;
         String name = connectorAddress;
 
@@ -319,9 +321,17 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
                 throw new RuntimeException("Failed to parse connector address: " + connectorAddress, e);
             }
 
-            JMXConnector jmxConnector;
+            JMXConnector jmxConnector = null;
+            Long pid;
             try {
                 jmxConnector = connect(jmxServiceURL);
+                MBeanServerConnection mbeanServerConnection = jmxConnector.getMBeanServerConnection();
+                RuntimeMXBean runtimeMXBean = ManagementFactory.newPlatformMXBeanProxy(mbeanServerConnection,
+                    ManagementFactory.RUNTIME_MXBEAN_NAME, RuntimeMXBean.class);
+                pid = getJvmPid(runtimeMXBean);
+                if (pid == null) {
+                    throw new RuntimeException("Failed to determine JVM pid by parsing JVM name.");
+                }
             } catch (SecurityException e) {
                 // Authentication failed, which most likely means the username and password are not set correctly in
                 // the Resource's plugin config. This is not an error, so return null.
@@ -335,19 +345,8 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
                 log.debug("Unable to upgrade key of JVM Resource with key [" + inventoriedResource.getResourceKey()
                         + "], since connecting to its JMX service URL [" + jmxServiceURL + "] failed: " + e);
                 return null;
-            }
-
-            Long pid;
-            try {
-                MBeanServerConnection mbeanServerConnection = jmxConnector.getMBeanServerConnection();                
-                RuntimeMXBean runtimeMXBean = ManagementFactory.newPlatformMXBeanProxy(mbeanServerConnection,
-                    ManagementFactory.RUNTIME_MXBEAN_NAME, RuntimeMXBean.class);
-                pid = getJvmPid(runtimeMXBean);
-                if (pid == null) {
-                    throw new RuntimeException("Failed to determine JVM pid by parsing JVM name.");
-                }
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to determine pid of JVM at [" + jmxServiceURL + "].", e);
+            } finally {
+                close(jmxConnector);
             }
 
             List<ProcessInfo> processes = inventoriedResource.getSystemInformation().getProcesses(
@@ -374,6 +373,13 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
         }
 
         return null;
+    }
+
+    private void close(JMXConnector jmxConnector) {
+        try {
+            if (jmxConnector != null)
+                jmxConnector.close();
+        } catch (Exception e) {}
     }
 
     private static Long getJvmPid(RuntimeMXBean runtimeMXBean) {
@@ -429,8 +435,8 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
         pluginConfig.put(new PropertySimple(CONNECTION_TYPE, J2SE5ConnectionTypeDescriptor.class.getName()));
         if (jmxRemotingPort != null) {
             pluginConfig.put(new PropertySimple(CONNECTOR_ADDRESS_CONFIG_PROPERTY, jmxServiceURL));
-        }        
-        
+        }
+
         return new DiscoveredResourceDetails(context.getResourceType(), key.toString(), name, version, description,
             pluginConfig, process);
     }
@@ -461,30 +467,29 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
         JMXConnector jmxConnector = null;
         try {
             jmxConnector = connect(jmxServiceURL);
+            return getJavaVersion(jmxConnector);
         } catch (SecurityException e) {
             log.warn("Unable to to authenticate to JMX service URL [" + jmxServiceURL + "]: " + e.getMessage());
         } catch (IOException e) {
             log.error("Failed to connect to JMX service URL [" + jmxServiceURL + "].", e);
+        } catch (Exception e) {
+            log.error("Failed to determine JVM version for process [" + process.getPid() + "] with command line [" +
+                Arrays.asList(process.getCommandLine()) + "].", e);
+        } finally {
+            close(jmxConnector);
         }
-        String version;
-        if (jmxConnector != null) {
-            try {
+        // TODO: We could exec "java -version" here.
+        return null;
+    }
 
-                MBeanServerConnection mbeanServerConnection = jmxConnector.getMBeanServerConnection();
-                RuntimeMXBean runtimeMXBean = ManagementFactory.newPlatformMXBeanProxy(mbeanServerConnection,
-                        ManagementFactory.RUNTIME_MXBEAN_NAME, RuntimeMXBean.class);
-                version = runtimeMXBean.getSystemProperties().get(SYSPROP_JAVA_VERSION);
-                if (version == null) {
-                    throw new IllegalStateException("System property [" + SYSPROP_JAVA_VERSION + "] is not defined.");
-                }
-            } catch (Exception e) {
-                log.error("Failed to determine JVM version for process [" + process.getPid() + "] with command line [" +
-                    Arrays.asList(process.getCommandLine()) + "].", e);
-                version = null;
-            }
-        } else {
-            // TODO: We could exec "java -version" here.
-            version = null;
+    protected String getJavaVersion(JMXConnector jmxConnector) throws Exception {
+        String version;
+        MBeanServerConnection mbeanServerConnection = jmxConnector.getMBeanServerConnection();
+        RuntimeMXBean runtimeMXBean = ManagementFactory.newPlatformMXBeanProxy(mbeanServerConnection,
+                ManagementFactory.RUNTIME_MXBEAN_NAME, RuntimeMXBean.class);
+        version = runtimeMXBean.getSystemProperties().get(SYSPROP_JAVA_VERSION);
+        if (version == null) {
+            throw new IllegalStateException("System property [" + SYSPROP_JAVA_VERSION + "] is not defined.");
         }
         return version;
     }
@@ -529,7 +534,7 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
         String className = null;
         for (int i = 1; i < process.getCommandLine().length; i++) {
             String arg = process.getCommandLine()[i];
-    
+
             if (!arg.startsWith("-")) {
                 className = arg;
                 break;

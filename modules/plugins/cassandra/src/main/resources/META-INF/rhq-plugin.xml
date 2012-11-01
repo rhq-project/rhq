@@ -401,7 +401,7 @@
 
     <service name="FailureDetector"
              discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
-             class="org.rhq.plugins.cassandra.FailureDetectorComponent"
+             class="org.rhq.plugins.cassandra.ComplexConfigurationResourceComponent"
              singleton="true"
              subCategory="Network Services">
 
@@ -467,7 +467,7 @@
 
     <service name="StreamingService"
              discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
-             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             class="org.rhq.plugins.cassandra.ComplexConfigurationResourceComponent"
              singleton="true"
              subCategory="Network Services">
 
@@ -479,23 +479,17 @@
       <resource-configuration>
           <c:simple-property name="Status" type="string" required="false" readOnly="true" description="Status"/>
           <c:list-property name="StreamDestinations" readOnly="true">
-            <c:map-property name="StreamDestination" readOnly="true">
-              <c:simple-property name="name" type="string" readOnly="true"/>
-              <c:simple-property name="value" type="string" readOnly="true"/>
-            </c:map-property>
+            <c:simple-property name="StreamDestination" readOnly="true" type="string"/>
           </c:list-property>
           <c:list-property name="StreamSources" readOnly="true">
-            <c:map-property name="StreamSource" readOnly="true">
-              <c:simple-property name="name" type="string" readOnly="true"/>
-              <c:simple-property name="value" type="string" readOnly="true"/>
-            </c:map-property>
+            <c:simple-property name="StreamSource" readOnly="true" type="string"/>
           </c:list-property>
       </resource-configuration>
     </service>
 
     <service name="MessagingService"
              discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
-             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             class="org.rhq.plugins.cassandra.ComplexConfigurationResourceComponent"
              singleton="true"
              subCategory="Network Services">
 

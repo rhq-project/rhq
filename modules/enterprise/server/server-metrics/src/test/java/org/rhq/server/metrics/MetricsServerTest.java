@@ -108,11 +108,11 @@ public class MetricsServerTest {
 
     private final String RAW_METRIC_DATA_CF = "raw_metrics";
 
-    private final String ONE_HOUR_METRIC_DATA_CF = "one_hour_metric_data";
+    private final String ONE_HOUR_METRIC_DATA_CF = "one_hour_metrics";
 
-    private final String SIX_HOUR_METRIC_DATA_CF = "six_hour_metric_data";
+    private final String SIX_HOUR_METRIC_DATA_CF = "six_hour_metrics";
 
-    private final String TWENTY_FOUR_HOUR_METRIC_DATA_CF = "twenty_four_hour_metric_data";
+    private final String TWENTY_FOUR_HOUR_METRIC_DATA_CF = "twenty_four_hour_metrics";
 
     private final String METRICS_INDEX = "metrics_index";
 
@@ -182,17 +182,23 @@ public class MetricsServerTest {
         metricsServer.setTraitsCF(TRAITS_CF);
         metricsServer.setResourceTraitsCF(RESOURCE_TRAITS_CF);
         metricsServer.setCassandraDS(dataSource);
-        //purgeDB();
+        purgeDB();
     }
 
-    private void purgeDB() {
-        deleteAllRows(METRICS_INDEX, StringSerializer.get());
-        deleteAllRows(RAW_METRIC_DATA_CF, IntegerSerializer.get());
-        deleteAllRows(ONE_HOUR_METRIC_DATA_CF, IntegerSerializer.get());
-        deleteAllRows(SIX_HOUR_METRIC_DATA_CF, IntegerSerializer.get());
-        deleteAllRows(TWENTY_FOUR_HOUR_METRIC_DATA_CF, IntegerSerializer.get());
-        deleteAllRows(TRAITS_CF, IntegerSerializer.get());
-        deleteAllRows(RESOURCE_TRAITS_CF, IntegerSerializer.get());
+    private void purgeDB() throws SQLException {
+//        deleteAllRows(METRICS_INDEX, StringSerializer.get());
+//        deleteAllRows(RAW_METRIC_DATA_CF, IntegerSerializer.get());
+//        deleteAllRows(ONE_HOUR_METRIC_DATA_CF, IntegerSerializer.get());
+//        deleteAllRows(SIX_HOUR_METRIC_DATA_CF, IntegerSerializer.get());
+//        deleteAllRows(TWENTY_FOUR_HOUR_METRIC_DATA_CF, IntegerSerializer.get());
+//        deleteAllRows(TRAITS_CF, IntegerSerializer.get());
+//        deleteAllRows(RESOURCE_TRAITS_CF, IntegerSerializer.get());
+        Statement statement = connection.createStatement();
+        statement.executeUpdate("TRUNCATE " + RAW_METRIC_DATA_CF);
+        statement.executeUpdate("TRUNCATE " + ONE_HOUR_METRIC_DATA_CF);
+        statement.executeUpdate("TRUNCATE " + METRICS_INDEX);
+
+        statement.close();
     }
 
     private <K> MutationResult deleteAllRows(String columnFamily, Serializer<K> keySerializer) {

@@ -45,7 +45,7 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  */
 public class ComplexConfigurationResourceComponent extends MBeanResourceComponent<JMXComponent<?>> {
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "deprecation" })
     @Override
     public Configuration loadResourceConfiguration() {
         Configuration configuration =  super.loadResourceConfiguration();
@@ -88,6 +88,15 @@ public class ComplexConfigurationResourceComponent extends MBeanResourceComponen
                         Set<Object> setValue = (Set<Object>) result;
 
                         for (Object entry : setValue) {
+                            propertyList.add(new PropertySimple(entryName, entry.toString()));
+                        }
+                    } else if (result instanceof Object[]) {
+                        String entryName = ((PropertyDefinitionSimple) ((PropertyDefinitionList) propertyDefinition)
+                            .getMemberDefinition()).getName();
+
+                        Object[] arrayValue = (Object[]) result;
+
+                        for (Object entry : arrayValue) {
                             propertyList.add(new PropertySimple(entryName, entry.toString()));
                         }
                     }

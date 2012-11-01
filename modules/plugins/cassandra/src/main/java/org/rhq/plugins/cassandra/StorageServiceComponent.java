@@ -36,18 +36,14 @@ import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertyList;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.plugins.jmx.JMXComponent;
-import org.rhq.plugins.jmx.MBeanResourceComponent;
 
 /**
  * @author John Sanda
  */
-public class StorageServiceComponent extends MBeanResourceComponent<JMXComponent<?>> {
+public class StorageServiceComponent extends ComplexConfigurationResourceComponent {
 
     private Log log = LogFactory.getLog(StorageServiceComponent.class);
 
@@ -125,21 +121,4 @@ public class StorageServiceComponent extends MBeanResourceComponent<JMXComponent
 
         return new OperationResult();
     }
-
-    @Override
-    public Configuration loadResourceConfiguration() {
-        Configuration config = super.loadResourceConfiguration();
-        EmsBean emsBean = getEmsBean();
-        EmsAttribute attribute = emsBean.getAttribute("AllDataFileLocations");
-
-        PropertyList list = new PropertyList("dataFileLocations");
-        String[] dirs = (String[]) attribute.getValue();
-        for (String dir : dirs) {
-            list.add(new PropertySimple("directory", dir));
-        }
-        config.put(list);
-
-        return config;
-    }
-
 }

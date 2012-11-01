@@ -155,23 +155,76 @@
         </parameters>
       </operation>
 
-      <metric property="Token" dataType="trait" description="A string representation of this node's token" defaultOn="true"/>
-      <metric property="ReleaseVersion" dataType="trait" description="The Cassandra version"/>
+      <metric property="CurrentGenerationNumber" dataType="trait" displayType="summary" description="Current generation number"/>
+      <metric property="ExceptionCount" measurementType="trendsup" dataType="measurement" displayType="summary" description="Exception Count"/>
+      <metric property="Initialized" dataType="trait" displayType="summary" description="Initialized"/>
+      <metric property="Joined" dataType="trait" displayType="summary" description="Joined"/>
+      <metric property="Load" dataType="measurement" units="bytes" displayType="summary" description="Amount of load in disk usage on the node being queried"/>
+      <metric property="OperationMode" dataType="trait" displayType="summary" description="Current operation mode"/>
+      <metric property="ReleaseVersion" dataType="trait" displayType="summary" description="Cassandra version"/>
+      <metric property="RPCServiceRunning" dataType="trait" displayType="summary" displayName="RPC Service Running" description="RPC Service Running"/>
       <metric property="SchemaVersion" dataType="trait" displayType="summary"
               description="The current schema version for this node. The value is calculated as a checksum of all rows
                in the system.schema_* column families. This value is used in an algorithm to compare schema versions
                between nodes and apply updates as necessary. This value should be the same for all fully initialized
                nodes in the cluster."/>
-      <metric property="ReleaseVersion" dataType="trait" description="Cassandra version"/>
-      <metric property="Load" dataType="measurement" units="bytes" displayType="summary" description="Amount of load in disk usage on the node being queried"/>
-      <metric property="OperationMode" dataType="trait" description="The current operation mode"/>
+      <metric property="Token" dataType="trait" displayType="summary" description="A string representation of this node's token" defaultOn="true"/>
 
       <resource-configuration>
-        <c:simple-property name="SavedCachesLocation" type="string" readOnly="true" description="Location of the saved caches directory"/>
-        <c:simple-property name="CommitLogLocation" type="string" readOnly="true" default="Location of the commit log directory"/>
-        <c:list-property name="dataFileLocations" readOnly="true" description="List of data file locations">
-          <c:simple-property name="directory" type="string" readOnly="true"/>
-        </c:list-property>
+        <c:group name="DataStorage">
+          <c:list-property name="AllDataFileLocations" displayName="Data File Locations" readOnly="true" description="List of data file locations">
+            <c:simple-property name="directory" type="string" readOnly="true"/>
+          </c:list-property>
+          <c:simple-property name="CommitLogLocation" type="string" readOnly="true" default="Location of the commit log directory"/>
+          <c:simple-property name="SavedCachesLocation" type="string" readOnly="true" description="Location of the saved caches directory"/>
+        </c:group>
+
+        <c:group name="NodeConfiguration">
+          <c:simple-property name="CompactionThroughputMbPerSec" type="integer" required="true" displayName="Compaction Throughput Mb Per Sec" description="Compaction throughput in Mb/Sec"/>
+          <c:simple-property name="DrainProgress" type="string" required="false" readOnly="true" description="Drain progress"/>
+          <c:simple-property name="IncrementalBackupsEnabled" type="boolean" required="true" description="Incremental Backups Enabled"/>
+          <c:list-property name="PrimaryRange" readOnly="true" description="Primary Range">
+            <c:simple-property name="element" type="string" readOnly="true"/>
+          </c:list-property>
+          <c:simple-property name="RemovalStatus" type="string" readOnly="true" description="Removal status"/>
+          <c:simple-property name="StreamThroughputMbPerSec" type="integer" required="true" displayName="Stream Throughput Mb Per Sec" description="Stream throughput in Mb/Sec"/>
+        </c:group>
+
+        <c:group name="Cluster Information">
+          <c:list-property name="LeavingNodes" readOnly="true" description="List of nodes currently leaving the ring.">
+            <c:simple-property name="node" readOnly="true"/>
+          </c:list-property>
+          <c:list-property name="LiveNodes" readOnly="true" description="list of live nodes in the cluster, where liveness is determined by the failure detector of the node being queried.">
+            <c:simple-property name="node" readOnly="true"/>
+          </c:list-property>
+          <c:list-property name="JoiningNodes" readOnly="true" description="List of nodes currently joining the ring.">
+            <c:simple-property name="node" readOnly="true"/>
+          </c:list-property>
+          <c:list-property name="LoadMap" readOnly="true" description="Human-readable load values for the cluster.">
+              <c:map-property name="entry" readOnly="true">
+                <c:simple-property name="endpoint" readOnly="true"/>
+                <c:simple-property name="load" readOnly="true"/>
+              </c:map-property>
+          </c:list-property>
+          <c:list-property name="MovingNodes" readOnly="true" description="List of nodes currently moving the ring.">
+            <c:simple-property name="node" readOnly="true"/>
+          </c:list-property>
+          <c:list-property name="Ownership" readOnly="true" description="Mapping of token -> percentage of cluster owned by that token">
+              <c:map-property name="entry" readOnly="true">
+                <c:simple-property name="token" readOnly="true"/>
+                <c:simple-property name="percentage" readOnly="true"/>
+              </c:map-property>
+          </c:list-property>
+          <c:list-property name="TokenToEndpointMap" readOnly="true" description="Token To Endpoint Map">
+              <c:map-property name="entry" readOnly="true">
+                <c:simple-property name="token" readOnly="true"/>
+                <c:simple-property name="endpoint" readOnly="true"/>
+              </c:map-property>
+          </c:list-property>
+          <c:list-property name="UnreachableNodes" readOnly="true" description="List of unreachable nodes in the cluster, as determined by this node's failure detector.">
+            <c:simple-property name="node" readOnly="true"/>
+          </c:list-property>
+        </c:group>
       </resource-configuration>
     </service>
 

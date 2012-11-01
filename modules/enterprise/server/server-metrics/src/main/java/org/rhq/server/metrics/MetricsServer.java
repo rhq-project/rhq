@@ -89,7 +89,7 @@ public class MetricsServer {
 
     private String twentyFourHourMetricsDataCF;
 
-    private String metricsQueueCF;
+    private String metricsIndex;
 
     private String traitsCF;
 
@@ -152,12 +152,12 @@ public class MetricsServer {
         this.twentyFourHourMetricsDataCF = twentyFourHourMetricsDataCF;
     }
 
-    public String getMetricsQueueCF() {
-        return metricsQueueCF;
+    public String getMetricsIndex() {
+        return metricsIndex;
     }
 
-    public void setMetricsQueueCF(String metricsQueueCF) {
-        this.metricsQueueCF = metricsQueueCF;
+    public void setMetricsIndex(String metricsIndex) {
+        this.metricsIndex = metricsIndex;
     }
 
     public String getTraitsCF() {
@@ -335,7 +335,7 @@ public class MetricsServer {
 
         SliceQuery<String, Composite, Integer> queueQuery = HFactory.createSliceQuery(keyspace, StringSerializer.get(),
             new CompositeSerializer().get(), IntegerSerializer.get());
-        queueQuery.setColumnFamily(metricsQueueCF);
+        queueQuery.setColumnFamily(metricsIndex);
         queueQuery.setKey(oneHourMetricsDataCF);
 
         ColumnSliceIterator<String, Composite, Integer> queueIterator = new ColumnSliceIterator<String, Composite, Integer>(
@@ -388,7 +388,7 @@ public class MetricsServer {
 
             updatedSchedules.put(scheduleId, dateTimeService.getTimeSlice(startTime, Minutes.minutes(60 * 6)));
 
-            queueMutator.addDeletion(oneHourMetricsDataCF, metricsQueueCF, queueColumn.getName(),
+            queueMutator.addDeletion(oneHourMetricsDataCF, metricsIndex, queueColumn.getName(),
                 CompositeSerializer.get());
         }
         mutator.execute();
@@ -406,7 +406,7 @@ public class MetricsServer {
 
         SliceQuery<String, Composite, Integer> queueQuery = HFactory.createSliceQuery(keyspace, StringSerializer.get(),
             new CompositeSerializer().get(), IntegerSerializer.get());
-        queueQuery.setColumnFamily(metricsQueueCF);
+        queueQuery.setColumnFamily(metricsIndex);
         queueQuery.setKey(toColumnFamily);
 
         ColumnSliceIterator<String, Composite, Integer> queueIterator = new ColumnSliceIterator<String, Composite, Integer>(
@@ -485,7 +485,7 @@ public class MetricsServer {
 
             updatedSchedules.put(scheduleId, dateTimeService.getTimeSlice(startTime, nextInterval));
 
-            queueMutator.addDeletion(toColumnFamily, metricsQueueCF, queueColumn.getName(), CompositeSerializer.get());
+            queueMutator.addDeletion(toColumnFamily, metricsIndex, queueColumn.getName(), CompositeSerializer.get());
         }
         mutator.execute();
         queueMutator.execute();
@@ -545,7 +545,7 @@ public class MetricsServer {
             log.warn(errorMsg);
             return null;
         }
-        String sql = "INSERT INTO " + metricsQueueCF + " (bucket, time, schedule_id, null_col) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO " + metricsIndex + " (bucket, time, schedule_id, null_col) VALUES (?, ?, ?, ?)";
         PreparedStatement statement = null;
         try {
             statement = connection.prepareStatement(sql);

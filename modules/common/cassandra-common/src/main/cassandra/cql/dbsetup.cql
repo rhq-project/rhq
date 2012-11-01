@@ -17,7 +17,7 @@ CREATE TABLE one_hour_metrics (
     PRIMARY KEY (schedule_id, time, type)
 );
 
-CREATE TABLE metrics_work_queue (
+CREATE TABLE metrics_index (
     bucket varchar,
     time timestamp,
     schedule_id int,

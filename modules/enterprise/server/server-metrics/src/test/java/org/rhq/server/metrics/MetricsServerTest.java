@@ -114,7 +114,7 @@ public class MetricsServerTest {
 
     private final String TWENTY_FOUR_HOUR_METRIC_DATA_CF = "twenty_four_hour_metric_data";
 
-    private final String METRICS_WORK_QUEUE_CF = "metrics_work_queue";
+    private final String METRICS_INDEX = "metrics_index";
 
     private final String TRAITS_CF = "traits";
 
@@ -178,7 +178,7 @@ public class MetricsServerTest {
         metricsServer.setOneHourMetricsDataCF(ONE_HOUR_METRIC_DATA_CF);
         metricsServer.setSixHourMetricsDataCF(SIX_HOUR_METRIC_DATA_CF);
         metricsServer.setTwentyFourHourMetricsDataCF(TWENTY_FOUR_HOUR_METRIC_DATA_CF);
-        metricsServer.setMetricsQueueCF(METRICS_WORK_QUEUE_CF);
+        metricsServer.setMetricsIndex(METRICS_INDEX);
         metricsServer.setTraitsCF(TRAITS_CF);
         metricsServer.setResourceTraitsCF(RESOURCE_TRAITS_CF);
         metricsServer.setCassandraDS(dataSource);
@@ -186,7 +186,7 @@ public class MetricsServerTest {
     }
 
     private void purgeDB() {
-        deleteAllRows(METRICS_WORK_QUEUE_CF, StringSerializer.get());
+        deleteAllRows(METRICS_INDEX, StringSerializer.get());
         deleteAllRows(RAW_METRIC_DATA_CF, IntegerSerializer.get());
         deleteAllRows(ONE_HOUR_METRIC_DATA_CF, IntegerSerializer.get());
         deleteAllRows(SIX_HOUR_METRIC_DATA_CF, IntegerSerializer.get());
@@ -373,7 +373,7 @@ public class MetricsServerTest {
         Composite key = createQueueColumnName(hour8, scheduleId);
         HColumn<Composite, Integer> oneHourQueueColumn = HFactory.createColumn(key, 0, CompositeSerializer.get(),
             IntegerSerializer.get());
-        queueMutator.addInsertion(ONE_HOUR_METRIC_DATA_CF, METRICS_WORK_QUEUE_CF, oneHourQueueColumn);
+        queueMutator.addInsertion(ONE_HOUR_METRIC_DATA_CF, METRICS_INDEX, oneHourQueueColumn);
 
         queueMutator.execute();
 
@@ -452,7 +452,7 @@ public class MetricsServerTest {
         Composite key = createQueueColumnName(hour6, scheduleId);
         HColumn<Composite, Integer> sixHourQueueColumn = HFactory.createColumn(key, 0, CompositeSerializer.get(),
             IntegerSerializer.get());
-        queueMutator.addInsertion(SIX_HOUR_METRIC_DATA_CF, METRICS_WORK_QUEUE_CF, sixHourQueueColumn);
+        queueMutator.addInsertion(SIX_HOUR_METRIC_DATA_CF, METRICS_INDEX, sixHourQueueColumn);
 
         queueMutator.execute();
 
@@ -519,7 +519,7 @@ public class MetricsServerTest {
         Composite key = createQueueColumnName(hour0, scheduleId);
         HColumn<Composite, Integer> twentyFourHourQueueColumn = HFactory.createColumn(key, 0, CompositeSerializer.get(),
             IntegerSerializer.get());
-        queueMutator.addInsertion(TWENTY_FOUR_HOUR_METRIC_DATA_CF, METRICS_WORK_QUEUE_CF, twentyFourHourQueueColumn);
+        queueMutator.addInsertion(TWENTY_FOUR_HOUR_METRIC_DATA_CF, METRICS_INDEX, twentyFourHourQueueColumn);
 
         queueMutator.execute();
 
@@ -785,7 +785,7 @@ public class MetricsServerTest {
     private void assertMetricsQueueEquals(String columnFamily, List<HColumn<Composite, Integer>> expected) {
         SliceQuery<String,Composite, Integer> sliceQuery = HFactory.createSliceQuery(keyspace, StringSerializer.get(),
             new CompositeSerializer().get(), IntegerSerializer.get());
-        sliceQuery.setColumnFamily(METRICS_WORK_QUEUE_CF);
+        sliceQuery.setColumnFamily(METRICS_INDEX);
         sliceQuery.setKey(columnFamily);
 
         ColumnSliceIterator<String, Composite, Integer> iterator = new ColumnSliceIterator<String, Composite, Integer>(
@@ -813,7 +813,7 @@ public class MetricsServerTest {
         try {
             List<MetricsIndexEntry> actual = new ArrayList<MetricsIndexEntry>();
             statement = connection.createStatement();
-            resultSet = statement.executeQuery("SELECT bucket, time, schedule_id FROM " + METRICS_WORK_QUEUE_CF +
+            resultSet = statement.executeQuery("SELECT bucket, time, schedule_id FROM " + METRICS_INDEX +
                 " WHERE bucket = '" + columnFamily + "'");
             while (resultSet.next()) {
                 actual.add(new MetricsIndexEntry(resultSet.getString(1), resultSet.getDate(2), resultSet.getInt(3)));
@@ -927,7 +927,7 @@ public class MetricsServerTest {
     private void assertMetricsQueueEmpty(int scheduleId, String columnFamily) {
         SliceQuery<String,Composite, Integer> sliceQuery = HFactory.createSliceQuery(keyspace, StringSerializer.get(),
             new CompositeSerializer().get(), IntegerSerializer.get());
-        sliceQuery.setColumnFamily(METRICS_WORK_QUEUE_CF);
+        sliceQuery.setColumnFamily(METRICS_INDEX);
         sliceQuery.setKey(columnFamily);
 
         ColumnSliceIterator<String, Composite, Integer> iterator = new ColumnSliceIterator<String, Composite, Integer>(

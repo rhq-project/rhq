@@ -91,6 +91,9 @@
     <jboss-transaction-api.version>1.0.0.Final</jboss-transaction-api.version>
     <picketbox.version>4.0.7.Final</picketbox.version>
     <resteasy.version>2.3.2.Final</resteasy.version>    
+    <jboss-staxmapper.version>1.1.0.Final</jboss-staxmapper.version>
+    <jboss-modules.version>1.1.1.GA</jboss-modules.version>
+    <jboss-dmr.version>1.1.1.Final</jboss-dmr.version>
 
     <!-- Not Provided - some of these are needed by the agent -->
     <jboss-annotations.version>4.2.3.GA</jboss-annotations.version>    
@@ -326,6 +329,32 @@
         <version>${jboss-jts.version}</version>
       </dependency>
 
+      <dependency>
+        <groupId>org.jboss.modules</groupId>
+        <artifactId>jboss-modules</artifactId>
+        <version>${jboss-modules.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss</groupId>
+        <artifactId>jboss-dmr</artifactId>
+        <version>${jboss-dmr.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.as</groupId>
+        <artifactId>jboss-as-controller</artifactId>
+        <version>${jboss.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.as</groupId>
+        <artifactId>jboss-as-server</artifactId>
+        <version>${jboss.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.as</groupId>
+        <artifactId>jboss-as-ee</artifactId>
+        <version>${jboss.version}</version>
+      </dependency>
+
       <!-- see BZ-820629 and CVE-2009-2625 for why this is needed -->
       <dependency>
         <groupId>xerces</groupId>
@@ -542,6 +571,12 @@
          <groupId>org.jboss.ejb3</groupId>
          <artifactId>jboss-ejb3-ext-api</artifactId>
          <version>${jboss-ejb3-ext-api.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jboss</groupId>
+         <artifactId>staxmapper</artifactId>
+         <version>${jboss-staxmapper.version}</version>
       </dependency>
 
       <dependency>

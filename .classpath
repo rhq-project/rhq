@@ -65,6 +65,8 @@
 	<classpathentry kind="src" path="modules/enterprise/server/sars/agent-sar/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/safe-invoker/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/safe-invoker/src/test/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/startup-subsystem/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/startup-subsystem/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/container-lib/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/ant-bundle/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/filetemplate-bundle/src/main/java"/>
@@ -287,6 +289,9 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/jboss-dmr/1.1.1.Final/jboss-dmr-1.1.1.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-naming/7.1.1.Final/jboss-as-naming-7.1.1.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-server/7.1.1.Final/jboss-as-server-7.1.1.Final.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/staxmapper/1.1.0.Final/staxmapper-1.1.0.Final.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/modules/jboss-modules/1.1.1.GA/jboss-modules-1.1.1.GA.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-subsystem-test/7.1.1.Final/jboss-as-subsystem-test-7.1.1.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-controller/7.1.1.Final/jboss-as-controller-7.1.1.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-controller-client/7.1.1.Final/jboss-as-controller-client-7.1.1.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-links/2.3.2.Final/resteasy-links-2.3.2.Final.jar"/>

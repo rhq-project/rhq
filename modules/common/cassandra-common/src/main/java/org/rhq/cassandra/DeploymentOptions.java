@@ -51,20 +51,24 @@ public class DeploymentOptions {
     private Integer numTokens;
 
     public DeploymentOptions() {
-        init(loadProperties());
     }
 
-    private Properties loadProperties() {
+    public DeploymentOptions(Properties properties) {
+        init(properties);
+    }
+
+    public void load() throws IOException {
         InputStream stream = null;
         try {
             stream = getClass().getResourceAsStream("/cassandra.properties");
             Properties props = new Properties();
             props.load(stream);
 
-            return props;
+            init(props);
         }  catch (IOException e) {
-            throw new RuntimeException("Unable to create DeploymentOptions. An error occurred while loading " +
-                "cassandra.properties", e);
+            log.warn("Unable to load deployment options from cassandra.properties.");
+            log.info("The following error occurred while trying to load options.", e);
+            throw e;
         } finally {
             if (stream != null) {
                 try {
@@ -75,10 +79,6 @@ public class DeploymentOptions {
                 }
             }
         }
-    }
-
-    public DeploymentOptions(Properties properties) {
-        init(properties);
     }
 
     private void init(Properties properties) {

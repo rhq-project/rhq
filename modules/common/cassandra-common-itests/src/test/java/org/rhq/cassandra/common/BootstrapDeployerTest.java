@@ -30,9 +30,9 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -61,14 +61,14 @@ public class BootstrapDeployerTest {
         File clusterDir = new File(basedir, "cassandra");
         int numNodes = 2;
 
-        Properties properties = new Properties();
-        properties.setProperty("rhq.cassandra.cluster.dir", clusterDir.getAbsolutePath());
-        properties.setProperty("rhq.cassandra.logging.level", "DEBUG");
-        properties.setProperty("rhq.cassandra.cluster.num-nodes", "2");
-        properties.setProperty("rhq.cassandra.ring.delay", "1000");
-        properties.setProperty("rhq.cassandra.node.num-tokens", "256");
-
-        DeploymentOptions deploymentOptions = new DeploymentOptions(properties);
+        DeploymentOptions deploymentOptions = new DeploymentOptions();
+        try {
+            deploymentOptions.setClusterDir(clusterDir.getAbsolutePath());
+            deploymentOptions.setRingDelay(1000L);
+            deploymentOptions.load();
+        } catch (IOException e) {
+            throw new CassandraException(e);
+        }
 
         BootstrapDeployer deployer = new BootstrapDeployer();
         deployer.setDeploymentOptions(deploymentOptions);

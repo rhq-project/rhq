@@ -82,7 +82,11 @@ public class CassandraClusterManager implements IInvokedMethodListener {
         DeploymentOptions deploymentOptions = new DeploymentOptions();
         deploymentOptions.setClusterDir(clusterDir.getAbsolutePath());
         deploymentOptions.setNumNodes(numNodes);
-        deploymentOptions.setLoggingLevel("DEBUG");
+        try {
+            deploymentOptions.load();
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to load deployment options.", e);
+        }
 
         BootstrapDeployer deployer = new BootstrapDeployer();
         deployer.setDeploymentOptions(deploymentOptions);

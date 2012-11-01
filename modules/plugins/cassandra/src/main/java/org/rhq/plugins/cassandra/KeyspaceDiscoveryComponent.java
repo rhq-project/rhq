@@ -25,33 +25,90 @@
 
 package org.rhq.plugins.cassandra;
 
-import static org.rhq.plugins.cassandra.CassandraUtil.getKeyspaceDefinitions;
-
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
+import org.mc4j.ems.connection.EmsConnection;
+import org.mc4j.ems.connection.bean.EmsBean;
+import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.plugins.jmx.JMXComponent;
 
 /**
  * @author John Sanda
  */
-public class KeyspaceDiscoveryComponent implements ResourceDiscoveryComponent<ResourceComponent<?>> {
+public class KeyspaceDiscoveryComponent implements ResourceDiscoveryComponent<JMXComponent<?>> {
+
+    private static final String STORAGE_SERVICE_BEAN = "org.apache.cassandra.db:type=StorageService";
 
     @Override
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ResourceComponent<?>> context)
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent<?>> context)
         throws Exception {
+
         Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
 
-        for (KeyspaceDefinition keyspaceDef : getKeyspaceDefinitions()) {
-            details.add(new DiscoveredResourceDetails(context.getResourceType(), keyspaceDef.getName(),
-                keyspaceDef.getName(), null, null, null, null));
+        for (Object keyspaceName : getKeyspaces(context.getParentResourceComponent().getEmsConnection())) {
+            details.add(new DiscoveredResourceDetails(context.getResourceType(), keyspaceName.toString(), keyspaceName
+                .toString(), null, null, null, null));
         }
 
         return details;
+    }
+
+    /**
+     * Retrieve the keyspace names from the StorageService bean.
+     *
+     * @param emsConnection Ems Connection
+     * @return list of keyspaces
+     */
+    @SuppressWarnings("unchecked")
+    private List<Object> getKeyspaces(EmsConnection emsConnection) {
+        List<Object> value = null;
+
+        EmsBean emsBean = loadBean(STORAGE_SERVICE_BEAN, emsConnection);
+        if (emsBean != null) {
+            EmsAttribute attribute = emsBean.getAttribute("Keyspaces");
+            if (attribute != null) {
+                value = (List<Object>) attribute.refresh();
+            }
+        }
+
+        if (value == null) {
+            value = new ArrayList<Object>();
+        }
+
+        return value;
+    }
+
+    /**
+     * Loads the bean with the given object name.
+     *
+     * Subclasses are free to override this method in order to load the bean.
+     *
+     * @param objectName the name of the bean to load
+     * @return the bean that is loaded
+     */
+    private EmsBean loadBean(String objectName, EmsConnection emsConnection) {
+        if (emsConnection != null) {
+            EmsBean bean = emsConnection.getBean(objectName);
+            if (bean == null) {
+                // In some cases, this resource component may have been discovered by some means other than querying its
+                // parent's EMSConnection (e.g. ApplicationDiscoveryComponent uses a filesystem to discover EARs and
+                // WARs that are not yet deployed). In such cases, getBean() will return null, since EMS won't have the
+                // bean in its cache. To cover such cases, make an attempt to query the underlying MBeanServer for the
+                // bean before giving up.
+                emsConnection.queryBeans(objectName);
+                bean = emsConnection.getBean(objectName);
+            }
+
+            return bean;
+        }
+
+        return null;
     }
 }

@@ -39,6 +39,8 @@ import java.util.TreeMap;
 
 import javax.sql.DataSource;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeComparator;
 import org.joda.time.Hours;
@@ -72,6 +74,8 @@ import me.prettyprint.hector.api.query.SliceQuery;
 public class MetricsServer {
 
     private static final int DEFAULT_PAGE_SIZE = 200;
+
+    private final Log log = LogFactory.getLog(MetricsServer.class);
 
     private Cluster cluster;
 
@@ -284,9 +288,11 @@ public class MetricsServer {
                 statement.setDouble(3, data.getValue());
 
                 statement.executeUpdate();
+                updates.put(data.getScheduleId(), new DateTime(data.getTimestamp()).hourOfDay().roundFloorCopy());
                 //statement.addBatch();
             }
 //            statement.executeUpdate();
+            updateMetricsQueue(oneHourMetricsDataCF, updates);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         } finally {
@@ -517,19 +523,51 @@ public class MetricsServer {
 //    }
 
     private MutationResult updateMetricsQueue(String columnFamily, Map<Integer, DateTime> updates) {
-        Mutator<String> mutator = HFactory.createMutator(keyspace, StringSerializer.get());
-
-        for (Integer scheduleId : updates.keySet()) {
-            DateTime collectionTime = new DateTime(updates.get(scheduleId));
-            Composite composite = new Composite();
-            composite.addComponent(collectionTime.getMillis(), LongSerializer.get());
-            composite.addComponent(scheduleId, IntegerSerializer.get());
-            HColumn<Composite, Integer> column = HFactory.createColumn(composite, 0, CompositeSerializer.get(),
-                IntegerSerializer.get());
-            mutator.addInsertion(columnFamily, metricsQueueCF, column);
+//        Mutator<String> mutator = HFactory.createMutator(keyspace, StringSerializer.get());
+//
+//        for (Integer scheduleId : updates.keySet()) {
+//            DateTime collectionTime = new DateTime(updates.get(scheduleId));
+//            Composite composite = new Composite();
+//            composite.addComponent(collectionTime.getMillis(), LongSerializer.get());
+//            composite.addComponent(scheduleId, IntegerSerializer.get());
+//            HColumn<Composite, Integer> column = HFactory.createColumn(composite, 0, CompositeSerializer.get(),
+//                IntegerSerializer.get());
+//            mutator.addInsertion(columnFamily, metricsQueueCF, column);
+//        }
+//
+//        return mutator.execute();
+        Connection connection = null;
+        String errorMsg = "Cannot update " + columnFamily + " index for schedule ids " + updates.keySet();
+        try {
+            connection = cassandraDS.getConnection();
+        } catch (SQLException e) {
+            log.error("Failed to obtain connection", e);
+            log.warn(errorMsg);
+            return null;
         }
+        String sql = "INSERT INTO " + metricsQueueCF + " (bucket, time, schedule_id, null_col) VALUES (?, ?, ?, ?)";
+        PreparedStatement statement = null;
+        try {
+            statement = connection.prepareStatement(sql);
+        } catch (SQLException e) {
+            log.error("Failed to create prepared statement [" + sql + "]", e);
+            log.warn(errorMsg);
+            return null;
+        }
+        for (Integer scheduleId : updates.keySet()) {
+            try {
+                statement.setString(1, columnFamily);
+                statement.setDate(2, new java.sql.Date(updates.get(scheduleId).getMillis()));
+                statement.setInt(3, scheduleId);
+                statement.setBoolean(4, false);
 
-        return mutator.execute();
+                statement.executeUpdate();
+            } catch (SQLException e) {
+                log.warn("Failed to update " + columnFamily + " index for " + scheduleId + " at time slice " +
+                    updates.get(scheduleId));
+            }
+        }
+        return null;
     }
 
     protected DateTime getCurrentHour() {

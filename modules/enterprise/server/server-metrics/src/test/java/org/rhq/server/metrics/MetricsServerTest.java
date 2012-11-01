@@ -37,6 +37,7 @@ import static org.testng.Assert.assertEquals;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -54,6 +55,8 @@ import org.joda.time.Days;
 import org.joda.time.Duration;
 import org.joda.time.chrono.GregorianChronology;
 import org.joda.time.field.DividedDateTimeField;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -123,6 +126,8 @@ public class MetricsServerTest {
 
     private CassandraDataSource dataSource;
 
+    private Connection connection;
+
     private static class MetricsServerStub extends MetricsServer {
         private DateTime currentHour;
 
@@ -149,6 +154,11 @@ public class MetricsServerTest {
         initService.waitForSchemaAgreement("rhq", hosts);
 
         dataSource = new CassandraDataSource("127.0.0.1", 9160, "rhq", null, null, "3.0.0");
+        try {
+            connection = dataSource.getConnection();
+        } catch (SQLException e) {
+            throw new CassandraException("Unable to get JDBC connection.", e);
+        }
     }
 
     @AfterClass
@@ -193,14 +203,21 @@ public class MetricsServerTest {
         return rowMutator.execute();
     }
 
+    @Test
+    public void formatDate() {
+        DateTime dateTime = now();
+        DateTimeFormatter format = DateTimeFormat.mediumDateTime();
+    }
+
     @Test//(enabled = ENABLED)
     public void insertMultipleRawNumericDataForOneSchedule() throws Exception {
         int scheduleId = 123;
 
-        //DateTime hour0 = now.hourOfDay().roundFloorCopy().minusHours(now.hourOfDay().get());
-        DateTime threeMinutesAgo = now().minusMinutes(3);
-        DateTime twoMinutesAgo = now().minusMinutes(2);
-        DateTime oneMinuteAgo = now().minusMinutes(1);
+        DateTime hour0 = now().hourOfDay().roundFloorCopy().minusHours(now().hourOfDay().get());
+        DateTime currentTime = hour0.plusHours(4).plusMinutes(44);
+        DateTime threeMinutesAgo = currentTime.minusMinutes(3);
+        DateTime twoMinutesAgo = currentTime.minusMinutes(2);
+        DateTime oneMinuteAgo = currentTime.minusMinutes(1);
 
         int sevenDays = Duration.standardDays(7).toStandardSeconds().getSeconds();
 
@@ -249,7 +266,6 @@ public class MetricsServerTest {
 //        assert1HourMetricsQueueEquals(asList(HFactory.createColumn(expectedComposite, 0, CompositeSerializer.get(),
 //            IntegerSerializer.get())));
 
-        Connection connection = dataSource.getConnection();
         Statement statement = connection.createStatement();
         ResultSet resultSet = statement.executeQuery("SELECT * FROM raw_metrics WHERE schedule_id = " + scheduleId);
 
@@ -261,6 +277,11 @@ public class MetricsServerTest {
         resultSet.close();
 
         assertCollectionMatchesNoOrder("Failed to retrieve raw metric data", data, actual, "name");
+
+        List<MetricsIndexEntry> expectedIndex = asList(new MetricsIndexEntry(ONE_HOUR_METRIC_DATA_CF,
+            hour0.plusHours(4), scheduleId));
+            assertMetricsQueueEquals(ONE_HOUR_METRIC_DATA_CF, expectedIndex, "Failed to update index for " +
+            ONE_HOUR_METRIC_DATA_CF);
     }
 
     @Test(enabled = ENABLED)
@@ -783,6 +804,24 @@ public class MetricsServerTest {
                 "The timestamp does not match the expected value.");
             assertEquals(getScheduleId(actualColumn.getName()), getScheduleId(expectedColumn.getName()),
                 "The schedule id does not match the expected value.");
+        }
+    }
+
+    private void assertMetricsQueueEquals(String columnFamily, List<MetricsIndexEntry> expected, String msg) {
+        Statement statement = null;
+        ResultSet resultSet = null;
+        try {
+            List<MetricsIndexEntry> actual = new ArrayList<MetricsIndexEntry>();
+            statement = connection.createStatement();
+            resultSet = statement.executeQuery("SELECT bucket, time, schedule_id FROM " + METRICS_WORK_QUEUE_CF +
+                " WHERE bucket = '" + columnFamily + "'");
+            while (resultSet.next()) {
+                actual.add(new MetricsIndexEntry(resultSet.getString(1), resultSet.getDate(2), resultSet.getInt(3)));
+            }
+            assertCollectionMatchesNoOrder("Failed to retrieve raw metric data", expected, actual, msg + ": " +
+                columnFamily + " index not match expected values.");
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 

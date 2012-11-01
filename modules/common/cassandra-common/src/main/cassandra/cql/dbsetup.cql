@@ -9,6 +9,14 @@ CREATE TABLE raw_metrics (
     PRIMARY KEY (schedule_id, time)
 );
 
+CREATE TABLE one_hour_metrics (
+    schedule_id int,
+    time timestamp,
+    type int,
+    value double,
+    PRIMARY KEY (schedule_id, time, type)
+);
+
 CREATE TABLE metrics_work_queue (
     bucket varchar,
     time timestamp,

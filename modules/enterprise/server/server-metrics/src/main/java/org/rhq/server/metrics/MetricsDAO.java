@@ -27,7 +27,10 @@ package org.rhq.server.metrics;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.sql.DataSource;
 
@@ -58,28 +61,28 @@ public class MetricsDAO {
         this.dataSource = dataSource;
     }
 
-    public Query<MetricsIndexEntry> findMetricsIndexEntries(final String bucket) {
-//        execute(new ConnectionCallback() {
-//            @Override
-//            public void invoke(Connection connection) {
-//                try {
-//                    PreparedStatement statement = connection.prepareStatement(METRICS_INDEX_QUERY);
-//                    statement.setString(1, bucket);
-//
-//                    return new Query<MetricsIndexEntry>(statement,
-//                        new MetricsIndexResultSetMapper(bucket));
-//                } catch (SQLException e) {
-//                    throw new CQLException(e);
-//                }
-//            }
-//        });
+    public List<MetricsIndexEntry> findMetricsIndexEntries(final String bucket) {
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet resultSet = null;
         try {
-            Connection connection = dataSource.getConnection();
-            PreparedStatement statement = connection.prepareStatement(METRICS_INDEX_QUERY);
+            connection = dataSource.getConnection();
+            statement = connection.prepareStatement(METRICS_INDEX_QUERY);
             statement.setString(1, bucket);
-            return new Query<MetricsIndexEntry>(connection, statement, new MetricsIndexResultSetMapper(bucket));
+            resultSet = statement.executeQuery();
+            List<MetricsIndexEntry> indexEntries = new ArrayList<MetricsIndexEntry>();
+            ResultSetMapper<MetricsIndexEntry> resultSetMapper = new MetricsIndexResultSetMapper(bucket);
+
+            while (resultSet.next()) {
+                indexEntries.add(resultSetMapper.map(resultSet));
+            }
+            return indexEntries;
         } catch (SQLException e) {
             throw new CQLException(e);
+        } finally {
+            JDBCUtil.safeClose(resultSet);
+            JDBCUtil.safeClose(statement);
+            JDBCUtil.safeClose(connection);
         }
     }
 

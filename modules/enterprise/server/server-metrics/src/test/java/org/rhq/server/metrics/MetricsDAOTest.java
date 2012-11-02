@@ -31,7 +31,6 @@ import static org.testng.Assert.assertEquals;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.joda.time.DateTime;
@@ -71,13 +70,8 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         }
 
         MetricsDAO dao = new MetricsDAO(dataSource);
-        final List<MetricsIndexEntry> actualEntries = new ArrayList<MetricsIndexEntry>();
-        dao.findMetricsIndexEntries(MetricsDAO.ONE_HOUR_METRICS_TABLE).forEach(new QueryCallback<MetricsIndexEntry>() {
-            @Override
-            public void invoke(MetricsIndexEntry row) {
-                actualEntries.add(row);
-            }
-        });
+        List<MetricsIndexEntry> actualEntries = dao.findMetricsIndexEntries(MetricsDAO.ONE_HOUR_METRICS_TABLE);
+
         assertEquals(actualEntries.size(), 4, "Expected to get 4 entries but got " + actualEntries);
     }
 

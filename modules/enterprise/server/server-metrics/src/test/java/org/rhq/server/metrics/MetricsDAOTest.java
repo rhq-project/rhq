@@ -25,13 +25,14 @@
 
 package org.rhq.server.metrics;
 
+import static java.util.Arrays.asList;
 import static org.joda.time.DateTime.now;
-import static org.testng.Assert.assertEquals;
+import static org.rhq.server.metrics.MetricsDAO.ONE_HOUR_METRICS_TABLE;
+import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.joda.time.DateTime;
 import org.testng.annotations.Test;
@@ -42,37 +43,20 @@ import org.testng.annotations.Test;
 public class MetricsDAOTest extends CassandraIntegrationTest {
 
     @Test
-    public void findOneHourIndexEntries() {
-        Connection connection = null;
-        PreparedStatement statement = null;
-
-        String sql = "INSERT INTO " + MetricsDAO.METRICS_INDEX_TABLE +
-            " (bucket, time, schedule_id, null_col) VALUES (?, ?, ?, ?)";
-
+    public void updateAndFindOneHourIndexEntries() {
         DateTime hour0 = now().hourOfDay().roundFloorCopy().minusHours(now().hourOfDay().get());
-        int numSchedules = 2;
-        try {
-            connection = dataSource.getConnection();
-            statement = connection.prepareStatement(sql);
 
-            for (int i = 0; i < 2; ++i) {
-                for (int j = 0; j < numSchedules; ++j) {
-                    statement.setString(1, MetricsDAO.ONE_HOUR_METRICS_TABLE);
-                    statement.setDate(2, new java.sql.Date(hour0.plusHours(i + j).getMillis()));
-                    statement.setInt(3, 100 + j);
-                    statement.setBoolean(4, false);
-
-                    statement.executeUpdate();
-                }
-            }
-        } catch (SQLException e) {
-            throw new CQLException(e);
-        }
+        Map<Integer, DateTime> updates = new HashMap<Integer, DateTime>();
+        updates.put(100, hour0);
+        updates.put(101, hour0);
 
         MetricsDAO dao = new MetricsDAO(dataSource);
-        List<MetricsIndexEntry> actualEntries = dao.findMetricsIndexEntries(MetricsDAO.ONE_HOUR_METRICS_TABLE);
+        dao.updateMetricsIndex(ONE_HOUR_METRICS_TABLE, updates);
+        List<MetricsIndexEntry> actual = dao.findMetricsIndexEntries(ONE_HOUR_METRICS_TABLE);
 
-        assertEquals(actualEntries.size(), 4, "Expected to get 4 entries but got " + actualEntries);
+        List<MetricsIndexEntry> expected = asList(new MetricsIndexEntry(ONE_HOUR_METRICS_TABLE, hour0, 100),
+            new MetricsIndexEntry(ONE_HOUR_METRICS_TABLE, hour0, 101));
+        assertCollectionMatchesNoOrder(expected, actual, "Failed to update or retrieve metrics index entries");
     }
 
 }

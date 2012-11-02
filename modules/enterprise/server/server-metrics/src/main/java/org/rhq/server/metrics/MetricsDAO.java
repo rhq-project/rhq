@@ -31,8 +31,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.sql.DataSource;
+
+import org.joda.time.DateTime;
 
 import org.rhq.core.util.jdbc.JDBCUtil;
 
@@ -51,6 +54,9 @@ public class MetricsDAO {
         "WHERE bucket = ? " +
         "ORDER BY time";
 
+    private static final String UPDATE_METRICS_INDEX =
+        "INSERT INTO " + METRICS_INDEX_TABLE + " (bucket, time, schedule_id, null_col) VALUES (?, ?, ?, ?)";
+
     private static interface ConnectionCallback {
         void invoke(Connection connection);
     }
@@ -61,7 +67,7 @@ public class MetricsDAO {
         this.dataSource = dataSource;
     }
 
-    public List<MetricsIndexEntry> findMetricsIndexEntries(final String bucket) {
+    public List<MetricsIndexEntry> findMetricsIndexEntries(String bucket) {
         Connection connection = null;
         PreparedStatement statement = null;
         ResultSet resultSet = null;
@@ -81,6 +87,33 @@ public class MetricsDAO {
             throw new CQLException(e);
         } finally {
             JDBCUtil.safeClose(resultSet);
+            JDBCUtil.safeClose(statement);
+            JDBCUtil.safeClose(connection);
+        }
+    }
+
+    public void updateMetricsIndex(String bucket, Map<Integer, DateTime> updates) {
+        Connection connection = null;
+        PreparedStatement statement = null;
+        try {
+            connection = dataSource.getConnection();
+            statement = connection.prepareStatement(UPDATE_METRICS_INDEX);
+            for (Integer scheduleId : updates.keySet()) {
+                try {
+                    statement.setString(1, bucket);
+                    statement.setDate(2, new java.sql.Date(updates.get(scheduleId).getMillis()));
+                    statement.setInt(3, scheduleId);
+                    statement.setBoolean(4, false);
+
+                    statement.executeUpdate();
+                } catch (SQLException e) {
+//                    log.warn("Failed to update " + columnFamily + " index for " + scheduleId + " at time slice " +
+//                        updates.get(scheduleId));
+                }
+            }
+        } catch (SQLException e) {
+            throw new CQLException(e);
+        } finally {
             JDBCUtil.safeClose(statement);
             JDBCUtil.safeClose(connection);
         }

@@ -35,7 +35,6 @@ import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertEquals;
 
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -47,7 +46,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.cassandra.cql.jdbc.CassandraDataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.Chronology;
@@ -57,17 +55,11 @@ import org.joda.time.DateTimeFieldType;
 import org.joda.time.Duration;
 import org.joda.time.chrono.GregorianChronology;
 import org.joda.time.field.DividedDateTimeField;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 import org.rhq.cassandra.CassandraClusterManager;
-import org.rhq.cassandra.CassandraException;
-import org.rhq.cassandra.ClusterInitService;
-import org.rhq.cassandra.DeployCluster;
-import org.rhq.cassandra.ShutdownCluster;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -79,7 +71,6 @@ import me.prettyprint.cassandra.serializers.DoubleSerializer;
 import me.prettyprint.cassandra.serializers.IntegerSerializer;
 import me.prettyprint.cassandra.serializers.LongSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.cassandra.service.CassandraHost;
 import me.prettyprint.cassandra.service.ColumnSliceIterator;
 import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.Keyspace;
@@ -93,7 +84,7 @@ import me.prettyprint.hector.api.query.SliceQuery;
  * @author John Sanda
  */
 @Listeners({CassandraClusterManager.class})
-public class MetricsServerTest {
+public class MetricsServerTest extends CassandraIntegrationTest {
 
     private static final boolean ENABLED = false;
 
@@ -121,10 +112,6 @@ public class MetricsServerTest {
 
     private Keyspace keyspace;
 
-    private CassandraDataSource dataSource;
-
-    private Connection connection;
-
     private static class MetricsServerStub extends MetricsServer {
         private DateTime currentHour;
 
@@ -139,28 +126,6 @@ public class MetricsServerTest {
             }
             return currentHour;
         }
-    }
-
-    @BeforeClass
-    @DeployCluster
-    public void deployCluster() throws CassandraException {
-        List<CassandraHost> hosts = asList(new CassandraHost("127.0.0.1", 9160), new CassandraHost("127.0.0.2", 9160));
-        ClusterInitService initService = new ClusterInitService();
-
-        initService.waitForClusterToStart(hosts);
-        initService.waitForSchemaAgreement("rhq", hosts);
-
-        dataSource = new CassandraDataSource("127.0.0.1", 9160, "rhq", null, null, "3.0.0");
-        try {
-            connection = dataSource.getConnection();
-        } catch (SQLException e) {
-            throw new CassandraException("Unable to get JDBC connection.", e);
-        }
-    }
-
-    @AfterClass
-    @ShutdownCluster
-    public void shutdownCluster() throws Exception {
     }
 
     @BeforeMethod

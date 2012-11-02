@@ -342,7 +342,7 @@ public class MetricsServer {
             connection = cassandraDS.getConnection();
 
             String indexSQL =
-                "SELECT bucket, time, schedule_id " +
+                "SELECT time, schedule_id " +
                 "FROM " + metricsIndex + " " +
                 "WHERE bucket = '" + oneHourMetricsDataCF + "' " +
                 "ORDER BY time";
@@ -361,9 +361,12 @@ public class MetricsServer {
             insert1HourData = connection.prepareStatement(insert1HourSQL);
             ResultSet indexResultSet = statement.executeQuery();
 
+            MetricsIndexResultSetMapper indexResultSetMapper = new MetricsIndexResultSetMapper(oneHourMetricsDataCF);
+
             while (indexResultSet.next()) {
-                MetricsIndexEntry indexEntry = new MetricsIndexEntry(rawMetricsDataCF, indexResultSet.getDate(2),
-                    indexResultSet.getInt(3));
+//                MetricsIndexEntry indexEntry = new MetricsIndexEntry(rawMetricsDataCF, indexResultSet.getDate(2),
+//                    indexResultSet.getInt(3));
+                MetricsIndexEntry indexEntry = indexResultSetMapper.map(indexResultSet);
                 DateTime startTime = indexEntry.getTime();
                 DateTime endTime = startTime.plusMinutes(60);
 

@@ -273,50 +273,9 @@ public class MetricsServer {
     }
 
     public void addNumericData(Set<MeasurementDataNumeric> dataSet) {
-        Map<Integer, DateTime> updates = new TreeMap<Integer, DateTime>();
-        Mutator<Integer> mutator = HFactory.createMutator(keyspace, IntegerSerializer.get());
-        Connection connection = null;
-        PreparedStatement statement = null;
-
-        try {
-            connection = cassandraDS.getConnection();
-            String sql = "INSERT INTO raw_metrics (schedule_id, time, value) VALUES (?, ?, ?)";
-            statement = connection.prepareStatement(sql);
-
-            for (MeasurementDataNumeric data : dataSet) {
-                statement.setInt(1, data.getScheduleId());
-                statement.setDate(2, new java.sql.Date(data.getTimestamp()));
-                statement.setDouble(3, data.getValue());
-
-                statement.executeUpdate();
-                updates.put(data.getScheduleId(), new DateTime(data.getTimestamp()).hourOfDay().roundFloorCopy());
-                //statement.addBatch();
-            }
-//            statement.executeUpdate();
-            updateMetricsQueue(oneHourMetricsDataCF, updates);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } finally {
-            if (statement != null) {
-                try {
-                    statement.close();
-                } catch (SQLException e) {
-                }
-            }
-        }
-
-//        for (MeasurementDataNumeric data : dataSet) {
-//            updates.put(data.getScheduleId(), new DateTime(data.getTimestamp()).hourOfDay().roundFloorCopy());
-//            mutator.addInsertion(
-//                data.getScheduleId(),
-//                rawMetricsDataCF,
-//                HFactory.createColumn(data.getTimestamp(), data.getValue(), DateTimeService.SEVEN_DAYS,
-//                    LongSerializer.get(), DoubleSerializer.get()));
-//        }
-//
-//        mutator.execute();
-//
-//        updateMetricsQueue(oneHourMetricsDataCF, updates);
+        MetricsDAO dao = new MetricsDAO(cassandraDS);
+        Map<Integer, DateTime> updates = dao.insertRawMetrics(dataSet);
+        updateMetricsQueue(MetricsDAO.ONE_HOUR_METRICS_TABLE, updates);
     }
 
     public void calculateAggregates() {

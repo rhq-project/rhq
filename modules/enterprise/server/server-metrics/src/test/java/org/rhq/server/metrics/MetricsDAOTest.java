@@ -29,18 +29,71 @@ import static java.util.Arrays.asList;
 import static org.joda.time.DateTime.now;
 import static org.rhq.server.metrics.MetricsDAO.ONE_HOUR_METRICS_TABLE;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
+import static org.testng.Assert.assertEquals;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 import org.joda.time.DateTime;
 import org.testng.annotations.Test;
+
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 
 /**
  * @author John Sanda
  */
 public class MetricsDAOTest extends CassandraIntegrationTest {
+
+    private final long SECOND = 1000;
+
+    private final long MINUTE = 60 * SECOND;
+
+    @Test
+    public void insertAndFindRawMetrics() {
+        int scheduleId = 123;
+
+        DateTime hour0 = now().hourOfDay().roundFloorCopy().minusHours(now().hourOfDay().get());
+        DateTime currentTime = hour0.plusHours(4).plusMinutes(44);
+        DateTime currentHour = currentTime.hourOfDay().roundFloorCopy();
+        DateTime threeMinutesAgo = currentTime.minusMinutes(3);
+        DateTime twoMinutesAgo = currentTime.minusMinutes(2);
+        DateTime oneMinuteAgo = currentTime.minusMinutes(1);
+
+        String scheduleName = getClass().getName() + "_SCHEDULE";
+        long interval = MINUTE * 10;
+        boolean enabled = true;
+        DataType dataType = DataType.MEASUREMENT;
+        MeasurementScheduleRequest request = new MeasurementScheduleRequest(scheduleId, scheduleName, interval,
+            enabled, dataType);
+
+        Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>();
+        data.add(new MeasurementDataNumeric(threeMinutesAgo.getMillis(), request, 3.2));
+        data.add(new MeasurementDataNumeric(twoMinutesAgo.getMillis(), request, 3.9));
+        data.add(new MeasurementDataNumeric(oneMinuteAgo.getMillis(), request, 2.6));
+
+        MetricsDAO dao = new MetricsDAO(dataSource);
+        Map<Integer, DateTime> actualUpdates = dao.insertRawMetrics(data);
+
+        Map<Integer, DateTime> expectedUpdates = new TreeMap<Integer, DateTime>();
+        expectedUpdates.put(scheduleId, currentHour);
+
+        assertEquals(actualUpdates, expectedUpdates, "The updates do not match expected value.");
+
+        List<RawNumericMetric> actualMetrics = dao.findRawMetrics(scheduleId,  currentHour, currentHour.plusHours(1));
+        List<RawNumericMetric> expectedMetrics = asList(
+            new RawNumericMetric(scheduleId, threeMinutesAgo.getMillis(), 3.2),
+            new RawNumericMetric(scheduleId, twoMinutesAgo.getMillis(), 3.9),
+            new RawNumericMetric(scheduleId, oneMinuteAgo.getMillis(), 2.6)
+        );
+
+        assertEquals(actualMetrics, expectedMetrics, "Failed to find raw metrics");
+    }
 
     @Test
     public void updateAndFindOneHourIndexEntries() {

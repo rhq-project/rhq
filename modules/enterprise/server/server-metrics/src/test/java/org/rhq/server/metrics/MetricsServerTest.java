@@ -52,7 +52,6 @@ import org.joda.time.Chronology;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeField;
 import org.joda.time.DateTimeFieldType;
-import org.joda.time.Duration;
 import org.joda.time.chrono.GregorianChronology;
 import org.joda.time.field.DividedDateTimeField;
 import org.testng.annotations.BeforeMethod;
@@ -172,8 +171,6 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         DateTime threeMinutesAgo = currentTime.minusMinutes(3);
         DateTime twoMinutesAgo = currentTime.minusMinutes(2);
         DateTime oneMinuteAgo = currentTime.minusMinutes(1);
-
-        int sevenDays = Duration.standardDays(7).toStandardSeconds().getSeconds();
 
         String scheduleName = getClass().getName() + "_SCHEDULE";
         long interval = MINUTE * 10;

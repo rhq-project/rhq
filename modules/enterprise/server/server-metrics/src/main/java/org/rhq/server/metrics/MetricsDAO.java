@@ -32,11 +32,14 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 import javax.sql.DataSource;
 
 import org.joda.time.DateTime;
 
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.util.jdbc.JDBCUtil;
 
 /**
@@ -46,7 +49,17 @@ public class MetricsDAO {
 
     public static final String METRICS_INDEX_TABLE = "metrics_index";
 
+    public static final String RAW_METRICS_TABLE = "raw_metrics";
+
     public static final String ONE_HOUR_METRICS_TABLE = "one_hour_metrics";
+
+    private static final String RAW_METRICS_QUERY =
+        "SELECT schedule_id, time, value " +
+        "FROM " + RAW_METRICS_TABLE + " " +
+        "WHERE schedule_id = ? AND time >= ? AND time < ?";
+
+    private static final String INSERT_RAW_METRICS =
+        "INSERT INTO raw_metrics (schedule_id, time, value) VALUES (?, ?, ?)";
 
     private static final String METRICS_INDEX_QUERY =
         "SELECT time, schedule_id " +
@@ -65,6 +78,60 @@ public class MetricsDAO {
 
     public MetricsDAO(DataSource dataSource) {
         this.dataSource = dataSource;
+    }
+
+    public Map<Integer, DateTime> insertRawMetrics(Set<MeasurementDataNumeric> dataSet) {
+        Map<Integer, DateTime> updates = new TreeMap<Integer, DateTime>();
+        Connection connection = null;
+        PreparedStatement statement = null;
+        try {
+            connection = dataSource.getConnection();
+            statement = connection.prepareStatement(INSERT_RAW_METRICS);
+
+            for (MeasurementDataNumeric data : dataSet) {
+                statement.setInt(1, data.getScheduleId());
+                statement.setDate(2, new java.sql.Date(data.getTimestamp()));
+                statement.setDouble(3, data.getValue());
+                statement.executeUpdate();
+
+                updates.put(data.getScheduleId(), new DateTime(data.getTimestamp()).hourOfDay().roundFloorCopy());
+            }
+
+            return updates;
+        } catch (SQLException e) {
+            throw new CQLException(e);
+        } finally {
+            JDBCUtil.safeClose(statement);
+            JDBCUtil.safeClose(connection);
+        }
+    }
+
+    public List<RawNumericMetric> findRawMetrics(int scheduleId, DateTime startTime, DateTime endTime) {
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet resultSet = null;
+        try {
+            connection = dataSource.getConnection();
+            statement = connection.prepareStatement(RAW_METRICS_QUERY);
+            statement.setInt(1, scheduleId);
+            statement.setDate(2, new java.sql.Date(startTime.getMillis()));
+            statement.setDate(3, new java.sql.Date(endTime.getMillis()));
+
+            resultSet = statement.executeQuery();
+            List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
+            ResultSetMapper<RawNumericMetric> resultSetMapper = new RawNumericMetricMapper();
+
+            while (resultSet.next()) {
+                metrics.add(resultSetMapper.map(resultSet));
+            }
+            return metrics;
+        } catch (SQLException e) {
+            throw new CQLException(e);
+        } finally {
+            JDBCUtil.safeClose(resultSet);
+            JDBCUtil.safeClose(statement);
+            JDBCUtil.safeClose(connection);
+        }
     }
 
     public List<MetricsIndexEntry> findMetricsIndexEntries(String bucket) {

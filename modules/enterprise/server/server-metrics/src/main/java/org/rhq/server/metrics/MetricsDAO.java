@@ -54,6 +54,8 @@ public class MetricsDAO {
 
     public static final String ONE_HOUR_METRICS_TABLE = "one_hour_metrics";
 
+    public static final String SIX_HOUR_METRICS_TABLE = "six_hour_metrics";
+
     private static final String RAW_METRICS_QUERY =
         "SELECT schedule_id, time, value " +
         "FROM " + RAW_METRICS_TABLE + " " +

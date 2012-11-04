@@ -17,6 +17,14 @@ CREATE TABLE one_hour_metrics (
     PRIMARY KEY (schedule_id, time, type)
 );
 
+CREATE TABLE six_hour_metrics (
+    schedule_id int,
+    time timestamp,
+    type int,
+    value double,
+    PRIMARY KEY (schedule_id, time, type)
+);
+
 CREATE TABLE metrics_index (
     bucket varchar,
     time timestamp,

@@ -27,10 +27,14 @@ package org.rhq.server.metrics;
 
 import static java.util.Arrays.asList;
 import static org.joda.time.DateTime.now;
+import static org.rhq.server.metrics.MetricsDAO.METRICS_INDEX_TABLE;
 import static org.rhq.server.metrics.MetricsDAO.ONE_HOUR_METRICS_TABLE;
+import static org.rhq.server.metrics.MetricsDAO.RAW_METRICS_TABLE;
+import static org.rhq.server.metrics.MetricsDAO.SIX_HOUR_METRICS_TABLE;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.testng.Assert.assertEquals;
 
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -39,6 +43,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import org.joda.time.DateTime;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.DataType;
@@ -53,6 +58,15 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
     private final long SECOND = 1000;
 
     private final long MINUTE = 60 * SECOND;
+
+    @BeforeMethod
+    public void resetDB() throws Exception {
+        Statement statement = connection.createStatement();
+        statement.executeUpdate("TRUNCATE " + RAW_METRICS_TABLE);
+        statement.executeUpdate("TRUNCATE " + ONE_HOUR_METRICS_TABLE);
+        statement.executeUpdate("TRUNCATE " + METRICS_INDEX_TABLE);
+        statement.executeUpdate("TRUNCATE " + SIX_HOUR_METRICS_TABLE);
+    }
 
     @Test
     public void insertAndFindRawMetrics() {
@@ -93,6 +107,61 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         );
 
         assertEquals(actualMetrics, expectedMetrics, "Failed to find raw metrics");
+    }
+
+    @Test
+    public void insertAndFindAllOneHourMetrics() {
+        int scheduleId = 123;
+        DateTime hour0 = now().hourOfDay().roundFloorCopy().minusHours(now().hourOfDay().get());
+
+        MetricsDAO dao = new MetricsDAO(dataSource);
+        List<AggregatedNumericMetric> metrics = asList(
+            new AggregatedNumericMetric(scheduleId, 3.0, 1.0, 8.0, hour0.getMillis()),
+            new AggregatedNumericMetric(scheduleId, 4.0, 2.0, 10.0, hour0.plusHours(1).getMillis()),
+            new AggregatedNumericMetric(456, 2.0, 2.0, 2.0, hour0.getMillis())
+        );
+
+        Map<Integer, DateTime> actualUpdates = dao.insertAggregates(ONE_HOUR_METRICS_TABLE, metrics);
+        Map<Integer, DateTime> expectedUpdates = new TreeMap<Integer, DateTime>();
+        expectedUpdates.put(scheduleId, hour0);
+        expectedUpdates.put(scheduleId, hour0.plusHours(1));
+        expectedUpdates.put(456, hour0);
+
+        assertEquals(actualUpdates, expectedUpdates, "The updates do not match the expected values");
+
+        List<AggregatedNumericMetric> expected = asList(
+            new AggregatedNumericMetric(scheduleId, 3.0, 1.0, 8.0, hour0.getMillis()),
+            new AggregatedNumericMetric(scheduleId, 4.0, 2.0, 10.0, hour0.plusHours(1).getMillis())
+        );
+        List<AggregatedNumericMetric> actual = dao.findAggregateMetrics(ONE_HOUR_METRICS_TABLE, scheduleId);
+        assertEquals(actual, expected, "Failed to find one hour metrics");
+    }
+
+    @Test
+    public void findRangeOfOneHourMetrics() {
+        int scheduledId = 123;
+        DateTime hour0 = now().hourOfDay().roundFloorCopy().minusHours(now().hourOfDay().get());
+
+        MetricsDAO dao = new MetricsDAO(dataSource);
+        dao.insertAggregates(ONE_HOUR_METRICS_TABLE, asList(
+            new AggregatedNumericMetric(scheduledId, 2.0, 2.0, 2.0, hour0.getMillis()),
+            new AggregatedNumericMetric(scheduledId, 3.0, 3.0, 3.0, hour0.plusHours(1).getMillis()),
+            new AggregatedNumericMetric(scheduledId, 4.0, 4.0, 4.0, hour0.plusHours(2).getMillis()),
+            new AggregatedNumericMetric(scheduledId, 5.0, 5.0, 5.0, hour0.plusHours(3).getMillis()),
+            new AggregatedNumericMetric(456, 1.0, 1.0, 1.0, hour0.plusHours(1).getMillis())
+        ));
+
+        DateTime startTime = hour0.plusHours(1);
+        DateTime endTime = hour0.plusHours(3);
+        List<AggregatedNumericMetric> expected = asList(
+            new AggregatedNumericMetric(scheduledId, 3.0, 3.0, 3.0, hour0.plusHours(1).getMillis()),
+            new AggregatedNumericMetric(scheduledId, 4.0, 4.0, 4.0, hour0.plusHours(2).getMillis())
+        );
+
+        List<AggregatedNumericMetric> actual = dao.findAggregateMetrics(ONE_HOUR_METRICS_TABLE, scheduledId, startTime,
+            endTime);
+
+        assertEquals(actual, expected, "Failed to find one hour metrics for date range");
     }
 
     @Test

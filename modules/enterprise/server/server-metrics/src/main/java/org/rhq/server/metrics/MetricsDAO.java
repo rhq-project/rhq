@@ -210,6 +210,43 @@ public class MetricsDAO {
         }
     }
 
+    public List<AggregatedNumericMetric> findAggregateMetrics(String bucket, int scheduleId, DateTime startTime,
+        DateTime endTime) {
+
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet resultSet = null;
+
+        String sql =
+            "SELECT schedule_id, time, type, value " +
+            "FROM " + bucket + " " +
+            "WHERE schedule_id = " + scheduleId + " AND time >= ? AND TIME < ? " +
+            "ORDER BY time, type";
+
+        try {
+            connection = dataSource.getConnection();
+            statement = connection.prepareStatement(sql);
+            statement.setDate(1, new java.sql.Date(startTime.getMillis()));
+            statement.setDate(2, new java.sql.Date(endTime.getMillis()));
+            resultSet = statement.executeQuery();
+
+            List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
+            ResultSetMapper<AggregatedNumericMetric> resultSetMapper = new AggregateMetricMapper();
+
+            while (resultSet.next()) {
+                metrics.add(resultSetMapper.map(resultSet));
+            }
+
+            return metrics;
+        } catch (SQLException e) {
+            throw new CQLException(e);
+        } finally {
+            JDBCUtil.safeClose(resultSet);
+            JDBCUtil.safeClose(statement);
+            JDBCUtil.safeClose(connection);
+        }
+    }
+
     public List<MetricsIndexEntry> findMetricsIndexEntries(String bucket) {
         Connection connection = null;
         PreparedStatement statement = null;

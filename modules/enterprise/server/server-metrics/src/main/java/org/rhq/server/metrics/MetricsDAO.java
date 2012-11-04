@@ -29,6 +29,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -106,6 +107,46 @@ public class MetricsDAO {
         }
     }
 
+    public Map<Integer, DateTime> insertAggregates(String bucket, List<AggregatedNumericMetric> metrics) {
+        Map<Integer, DateTime> updates = new TreeMap<Integer, DateTime>();
+        Connection connection = null;
+        PreparedStatement statement = null;
+        String sql = "INSERT INTO " + bucket + " (schedule_id, time, type, value) VALUES (?, ?, ?, ?)";
+        try {
+            connection = dataSource.getConnection();
+            statement = connection.prepareStatement(sql);
+
+            for (AggregatedNumericMetric metric : metrics) {
+                statement.setInt(1, metric.getScheduleId());
+                statement.setDate(2, new java.sql.Date(metric.getTimestamp()));
+                statement.setInt(3, AggregateType.MIN.ordinal());
+                statement.setDouble(4, metric.getMin());
+                statement.executeUpdate();
+
+                statement.setInt(1, metric.getScheduleId());
+                statement.setDate(2, new java.sql.Date(metric.getTimestamp()));
+                statement.setInt(3, AggregateType.MAX.ordinal());
+                statement.setDouble(4, metric.getMax());
+                statement.executeUpdate();
+
+                statement.setInt(1, metric.getScheduleId());
+                statement.setDate(2, new java.sql.Date(metric.getTimestamp()));
+                statement.setInt(3, AggregateType.AVG.ordinal());
+                statement.setDouble(4, metric.getAvg());
+                statement.executeUpdate();
+
+                updates.put(metric.getScheduleId(), new DateTime(metric.getTimestamp()));
+            }
+
+            return updates;
+        } catch (SQLException e) {
+            throw new CQLException(e);
+        } finally {
+            JDBCUtil.safeClose(statement);
+            JDBCUtil.safeClose(connection);
+        }
+    }
+
     public List<RawNumericMetric> findRawMetrics(int scheduleId, DateTime startTime, DateTime endTime) {
         Connection connection = null;
         PreparedStatement statement = null;
@@ -124,6 +165,39 @@ public class MetricsDAO {
             while (resultSet.next()) {
                 metrics.add(resultSetMapper.map(resultSet));
             }
+            return metrics;
+        } catch (SQLException e) {
+            throw new CQLException(e);
+        } finally {
+            JDBCUtil.safeClose(resultSet);
+            JDBCUtil.safeClose(statement);
+            JDBCUtil.safeClose(connection);
+        }
+    }
+
+    public List<AggregatedNumericMetric> findAggregateMetrics(String bucket, int scheduleId) {
+        Connection connection = null;
+        Statement statement = null;
+        ResultSet resultSet = null;
+
+        String sql =
+            "SELECT schedule_id, time, type, value, ttl(value), writetime(value)" +
+            "FROM " + bucket + " " +
+            "WHERE schedule_id = " + scheduleId + " " +
+            "ORDER BY time, type";
+
+        try {
+            connection = dataSource.getConnection();
+            statement = connection.createStatement();
+            resultSet = statement.executeQuery(sql);
+
+            List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
+            ResultSetMapper<AggregatedNumericMetric> resultSetMapper = new AggregateMetricMapper();
+
+            while (resultSet.next()) {
+                metrics.add(resultSetMapper.map(resultSet));
+            }
+
             return metrics;
         } catch (SQLException e) {
             throw new CQLException(e);

@@ -28,9 +28,10 @@ package org.rhq.server.metrics;
 import static me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality.EQUAL;
 import static me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality.LESS_THAN_EQUAL;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,7 +52,6 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.core.util.jdbc.JDBCUtil;
 
 import me.prettyprint.cassandra.serializers.CompositeSerializer;
 import me.prettyprint.cassandra.serializers.DoubleSerializer;
@@ -276,7 +276,6 @@ public class MetricsServer {
         MetricsDAO dao = new MetricsDAO(cassandraDS);
         Map<Integer, DateTime> updates = dao.insertRawMetrics(dataSet);
         dao.updateMetricsIndex(MetricsDAO.ONE_HOUR_METRICS_TABLE, updates);
-        updateMetricsQueue(MetricsDAO.ONE_HOUR_METRICS_TABLE, updates);
     }
 
     public void calculateAggregates() {
@@ -292,161 +291,43 @@ public class MetricsServer {
     }
 
     private Map<Integer, DateTime> aggregateRawData() {
-        Map<Integer, DateTime> updatedSchedules = new TreeMap<Integer, DateTime>();
-        Connection connection = null;
-        PreparedStatement statement = null;
-        PreparedStatement rawMetricsStatement = null;
-        PreparedStatement insert1HourData = null;
+       MetricsDAO dao = new MetricsDAO(cassandraDS);
+        List<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(MetricsDAO.ONE_HOUR_METRICS_TABLE);
+        List<AggregatedNumericMetric> oneHourMetrics = new ArrayList<AggregatedNumericMetric>();
 
-        try {
-            connection = cassandraDS.getConnection();
+        for (MetricsIndexEntry indexEntry : indexEntries) {
+            DateTime startTime = indexEntry.getTime();
+            DateTime endTime = startTime.plusMinutes(60);
 
-            String indexSQL =
-                "SELECT time, schedule_id " +
-                "FROM " + metricsIndex + " " +
-                "WHERE bucket = '" + oneHourMetricsDataCF + "' " +
-                "ORDER BY time";
+            List<RawNumericMetric> rawMetrics = dao.findRawMetrics(indexEntry.getScheduleId(), startTime, endTime);
 
-            String rawMetricsSQL =
-                "SELECT schedule_id, time, value " +
-                "FROM " + rawMetricsDataCF + " " +
-                "WHERE schedule_id = ? AND time >= ? AND time < ?";
+            double min = Double.NaN;
+            double max = min;
+            double sum = 0;
+            int count = 0;
+            double value;
 
-            String insert1HourSQL =
-                "INSERT INTO " + oneHourMetricsDataCF + " (schedule_id, time, type, value) " +
-                "VALUES (?, ?, ?, ?)";
-
-            statement = connection.prepareStatement(indexSQL);
-            rawMetricsStatement = connection.prepareStatement(rawMetricsSQL);
-            insert1HourData = connection.prepareStatement(insert1HourSQL);
-            ResultSet indexResultSet = statement.executeQuery();
-
-            MetricsIndexResultSetMapper indexResultSetMapper = new MetricsIndexResultSetMapper(oneHourMetricsDataCF);
-
-            while (indexResultSet.next()) {
-//                MetricsIndexEntry indexEntry = new MetricsIndexEntry(rawMetricsDataCF, indexResultSet.getDate(2),
-//                    indexResultSet.getInt(3));
-                MetricsIndexEntry indexEntry = indexResultSetMapper.map(indexResultSet);
-                DateTime startTime = indexEntry.getTime();
-                DateTime endTime = startTime.plusMinutes(60);
-
-                rawMetricsStatement.setInt(1, indexEntry.getScheduleId());
-                rawMetricsStatement.setDate(2, new java.sql.Date(startTime.getMillis()));
-                rawMetricsStatement.setDate(3, new java.sql.Date(endTime.getMillis()));
-                ResultSet metricsResultSet = rawMetricsStatement.executeQuery();
-
-                metricsResultSet.next();
-
-                double min = metricsResultSet.getDouble(3);
-                double max = min;
-                double sum = max;
-                int count = 1;
-                double value;
-
-                while (metricsResultSet.next()) {
-                    value = metricsResultSet.getDouble(3);
-                    if (value < min) {
-                        min = value;
-                    } else if (value > max) {
-                        max = value;
-                    }
-                    sum += value;
-                    ++count;
+            for (RawNumericMetric metric : rawMetrics) {
+                value = metric.getValue();
+                if (count == 0) {
+                    min = value;
+                    max = min;
                 }
-                double avg = sum / count;
-                metricsResultSet.close();
-                metricsResultSet = null;
-
-                insert1HourData.setInt(1, indexEntry.getScheduleId());
-                insert1HourData.setDate(2, new java.sql.Date(startTime.getMillis()));
-                insert1HourData.setInt(3, AggregateType.MIN.ordinal());
-                insert1HourData.setDouble(4, min);
-                insert1HourData.executeUpdate();
-
-                insert1HourData.setInt(1, indexEntry.getScheduleId());
-                insert1HourData.setDate(2, new java.sql.Date(startTime.getMillis()));
-                insert1HourData.setInt(3, AggregateType.MAX.ordinal());
-                insert1HourData.setDouble(4, max);
-                insert1HourData.executeUpdate();
-
-                insert1HourData.setInt(1, indexEntry.getScheduleId());
-                insert1HourData.setDate(2, new java.sql.Date(startTime.getMillis()));
-                insert1HourData.setInt(3, AggregateType.AVG.ordinal());
-                insert1HourData.setDouble(4, avg);
-                insert1HourData.executeUpdate();
-
-                updatedSchedules.put(indexEntry.getScheduleId(), indexEntry.getTime());
+                if (value < min) {
+                    min = value;
+                } else if (value > max) {
+                    max = value;
+                }
+                sum += value;
+                ++count;
             }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } finally {
-            JDBCUtil.safeClose(insert1HourData);
-            JDBCUtil.safeClose(rawMetricsStatement);
-            JDBCUtil.safeClose(statement);
-            JDBCUtil.safeClose(connection);
+            double avg = divide(sum, count);
+            oneHourMetrics.add(new AggregatedNumericMetric(indexEntry.getScheduleId(), avg, min, max,
+                startTime.getMillis()));
         }
 
-//        SliceQuery<String, Composite, Integer> queueQuery = HFactory.createSliceQuery(keyspace, StringSerializer.get(),
-//            new CompositeSerializer().get(), IntegerSerializer.get());
-//        queueQuery.setColumnFamily(metricsIndex);
-//        queueQuery.setKey(oneHourMetricsDataCF);
-//
-//        ColumnSliceIterator<String, Composite, Integer> queueIterator = new ColumnSliceIterator<String, Composite, Integer>(
-//            queueQuery, (Composite) null, (Composite) null, false);
-//
-//        Mutator<Integer> mutator = HFactory.createMutator(keyspace, IntegerSerializer.get());
-//        Mutator<String> queueMutator = HFactory.createMutator(keyspace, StringSerializer.get());
-//
-//        while (queueIterator.hasNext()) {
-//            HColumn<Composite, Integer> queueColumn = queueIterator.next();
-//            Integer scheduleId = queueColumn.getName().get(1, IntegerSerializer.get());
-//            Long timestamp = queueColumn.getName().get(0, LongSerializer.get());
-//            DateTime startTime = new DateTime(timestamp);
-//            DateTime endTime = new DateTime(timestamp).plus(Minutes.minutes(60));
-//
-//            SliceQuery<Integer, Long, Double> rawDataQuery = HFactory.createSliceQuery(keyspace,
-//                IntegerSerializer.get(), LongSerializer.get(), DoubleSerializer.get());
-//            rawDataQuery.setColumnFamily(rawMetricsDataCF);
-//            rawDataQuery.setKey(scheduleId);
-//
-//            ColumnSliceIterator<Integer, Long, Double> rawDataIterator = new ColumnSliceIterator<Integer, Long, Double>(
-//                rawDataQuery, startTime.getMillis(), endTime.getMillis(), false);
-//            rawDataIterator.hasNext();
-//
-//            HColumn<Long, Double> rawDataColumn = rawDataIterator.next();
-//            double min = rawDataColumn.getValue();
-//            double max = min;
-//            double sum = max;
-//            int count = 1;
-//
-//            while (rawDataIterator.hasNext()) {
-//                rawDataColumn = rawDataIterator.next();
-//                if (rawDataColumn.getValue() < min) {
-//                    min = rawDataColumn.getValue();
-//                } else if (rawDataColumn.getValue() > max) {
-//                    max = rawDataColumn.getValue();
-//                }
-//                sum += rawDataColumn.getValue();
-//                ++count;
-//            }
-//
-//            double avg = sum / count;
-//
-//            mutator.addInsertion(scheduleId, oneHourMetricsDataCF,
-//                createAvgColumn(startTime, avg, DateTimeService.TWO_WEEKS));
-//            mutator.addInsertion(scheduleId, oneHourMetricsDataCF,
-//                createMaxColumn(startTime, max, DateTimeService.TWO_WEEKS));
-//            mutator.addInsertion(scheduleId, oneHourMetricsDataCF,
-//                createMinColumn(startTime, min, DateTimeService.TWO_WEEKS));
-//
-//            updatedSchedules.put(scheduleId, dateTimeService.getTimeSlice(startTime, Minutes.minutes(60 * 6)));
-//
-//            queueMutator.addDeletion(oneHourMetricsDataCF, metricsIndex, queueColumn.getName(),
-//                CompositeSerializer.get());
-//        }
-//        mutator.execute();
-//        queueMutator.execute();
-
+        Map<Integer, DateTime> updatedSchedules = dao.insertAggregates(MetricsDAO.ONE_HOUR_METRICS_TABLE,
+            oneHourMetrics);
         return updatedSchedules;
     }
 
@@ -530,7 +411,8 @@ public class MetricsServer {
                 }
             }
 
-            double avg = sum / avgCount;
+//            double avg = sum / avgCount;
+            double avg = divide(sum, avgCount);
 
             mutator.addInsertion(scheduleId, toColumnFamily, createAvgColumn(startTime, avg, ttl));
             mutator.addInsertion(scheduleId, toColumnFamily, createMaxColumn(startTime, max, ttl));
@@ -621,6 +503,20 @@ public class MetricsServer {
             }
         }
         return null;
+    }
+
+    static double divide(double dividend, int divisor) {
+        return new BigDecimal(Double.toString(dividend)).divide(new BigDecimal(Integer.toString(divisor)),
+            MathContext.DECIMAL64).doubleValue();
+    }
+
+    double avg(double... values) {
+        BigDecimal sum = new BigDecimal("0.00");
+        for (double value : values) {
+            sum = sum.add(new BigDecimal(Double.toString(value)));
+        }
+        BigDecimal avg = sum.divide(new BigDecimal(Integer.toString(values.length), MathContext.DECIMAL64));
+        return avg.doubleValue();
     }
 
     protected DateTime getCurrentHour() {

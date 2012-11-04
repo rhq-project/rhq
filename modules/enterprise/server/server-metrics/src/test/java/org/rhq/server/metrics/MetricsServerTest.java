@@ -31,6 +31,7 @@ import static org.rhq.server.metrics.DateTimeService.ONE_MONTH;
 import static org.rhq.server.metrics.DateTimeService.ONE_YEAR;
 import static org.rhq.server.metrics.DateTimeService.SEVEN_DAYS;
 import static org.rhq.server.metrics.DateTimeService.TWO_WEEKS;
+import static org.rhq.server.metrics.MetricsServer.divide;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertEquals;
@@ -39,11 +40,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -186,37 +184,6 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
         metricsServer.addNumericData(data);
 
-//        SliceQuery<Integer, Long, Double> query = HFactory.createSliceQuery(keyspace, IntegerSerializer.get(),
-//            LongSerializer.get(), DoubleSerializer.get());
-//        query.setColumnFamily(RAW_METRIC_DATA_CF);
-//        query.setKey(scheduleId);
-//        query.setRange(null, null, false, 10);
-//
-//        QueryResult<ColumnSlice<Long, Double>> queryResult = query.execute();
-//        List<HColumn<Long, Double>> actual = queryResult.get().getColumns();
-//
-//        List<HColumn<Long, Double>> expected = asList(
-//            HFactory.createColumn(threeMinutesAgo.getMillis(), 3.2, sevenDays, LongSerializer.get(),
-//                DoubleSerializer.get()),
-//            HFactory.createColumn(twoMinutesAgo.getMillis(), 3.9, sevenDays, LongSerializer.get(),
-//                DoubleSerializer.get()),
-//            HFactory.createColumn(oneMinuteAgo.getMillis(), 2.6, sevenDays, LongSerializer.get(),
-//                DoubleSerializer.get())
-//        );
-//
-//        for (int i = 0; i < expected.size(); ++i) {
-//            assertPropertiesMatch("The returned columns do not match", expected.get(i), actual.get(i),
-//                "clock");
-//        }
-//
-//        DateTime theHour = now().hourOfDay().roundFloorCopy();
-//        Composite expectedComposite = new Composite();
-//        expectedComposite.addComponent(theHour.getMillis(), LongSerializer.get());
-//        expectedComposite.addComponent(scheduleId, IntegerSerializer.get());
-//
-//        assert1HourMetricsQueueEquals(asList(HFactory.createColumn(expectedComposite, 0, CompositeSerializer.get(),
-//            IntegerSerializer.get())));
-
         Statement statement = connection.createStatement();
         ResultSet resultSet = statement.executeQuery("SELECT * FROM raw_metrics WHERE schedule_id = " + scheduleId);
 
@@ -289,8 +256,8 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 //        );
 //
 //        assert6HourDataEquals(scheduleId, expected6HourData);
-        List<AggregatedNumericMetric> expected = asList(new AggregatedNumericMetric(scheduleId, (3.9 + 3.2 + 2.6) / 3,
-            2.6, 3.9, lastHour.getMillis()));
+        List<AggregatedNumericMetric> expected = asList(new AggregatedNumericMetric(scheduleId,
+            divide((3.9 + 3.2 + 2.6), 3), 2.6, 3.9, lastHour.getMillis()));
         assertMetricDataEquals(ONE_HOUR_METRIC_DATA_CF, scheduleId, expected);
     }
 
@@ -831,52 +798,11 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     }
 
     private void assertMetricDataEquals(String columnFamily, int scheduleId, List<AggregatedNumericMetric> expected) {
-        Statement statement = null;
-        try {
-            statement = connection.createStatement();
-            String sql =
-                "SELECT schedule_id, time, type, value, ttl(value), writetime(value)" +
-                "FROM " + columnFamily + " " +
-                "WHERE schedule_id = " + scheduleId + " " +
-                "ORDER BY time, type";
-            Map<Long, AggregatedNumericMetric> metrics = new HashMap<Long, AggregatedNumericMetric>();
-            ResultSet resultSet = statement.executeQuery(sql);
+        MetricsDAO dao = new MetricsDAO(dataSource);
+        List<AggregatedNumericMetric> actual = dao.findAggregateMetrics(columnFamily, scheduleId);
 
-            while (resultSet.next()) {
-                long timestamp = resultSet.getDate(2).getTime();
-                AggregatedNumericMetric metric = metrics.get(timestamp);
-                if (metric == null) {
-                    metric = new AggregatedNumericMetric();
-                    metric.setScheduleId(scheduleId);
-                    metric.setTimestamp(timestamp);
-                }
-                AggregateType aggregateType = AggregateType.valueOf(resultSet.getInt(3));
-                switch (aggregateType) {
-                    case MAX:
-                        metric.setMax(resultSet.getDouble(4));
-                        break;
-                    case MIN:
-                        metric.setMin(resultSet.getDouble(4));
-                        break;
-                    default:  // AVG
-                        metric.setAvg(resultSet.getDouble(4));
-                        break;
-                }
-                metrics.put(timestamp, metric);
-            }
-            Collection<AggregatedNumericMetric> actual = metrics.values();
-
-            assertCollectionMatchesNoOrder(expected, actual, "Metric data for schedule id " + scheduleId +
-                " in table " + columnFamily + " does not match expected values");
-        } catch (SQLException e) {
-        } finally {
-            if (statement != null) {
-                try {
-                    statement.close();
-                } catch (SQLException e) {
-                }
-            }
-        }
+        assertCollectionMatchesNoOrder(expected, actual, "Metric data for schedule id " + scheduleId +
+            " in table " + columnFamily + " does not match expected values");
     }
 
     private void assert6HourDataEmpty(int scheduleId) {

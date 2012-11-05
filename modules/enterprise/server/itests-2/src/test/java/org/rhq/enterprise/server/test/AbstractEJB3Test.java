@@ -300,7 +300,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
      * 
      * Instead, override {@link #afterMethod()}.
      */
-    @AfterMethod
+    @AfterMethod(alwaysRun = true)
     protected void __afterMethod() throws Exception {
         if (inContainer()) {
             afterMethod();
@@ -327,7 +327,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
     }
 
     /**
-     * Override Point!  Do not implement an @AfterMethod, instead override this method. 
+     * Override Point!  Do not implement an @AfterMethod, instead override this method. note: alwaysRun=true 
      */
     protected void afterMethod() throws Exception {
         // do nothing if we're not overridden

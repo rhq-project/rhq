@@ -40,6 +40,7 @@
 
   <properties>
     <cassandra.version>1.1.5</cassandra.version>
+    <skipClusterShutdown>false</skipClusterShutdown>
   </properties>
 
   <dependencies>
@@ -127,4 +128,17 @@
       <version>1.7.1</version>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <systemPropertyVariables>
+            <rhq.cassandra.cluster.skip-shutdown>${skipClusterShutdown}</rhq.cassandra.cluster.skip-shutdown>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>

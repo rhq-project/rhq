@@ -64,7 +64,11 @@ public class CassandraClusterManager implements IInvokedMethodListener {
         Method method = invokedMethod.getTestMethod().getConstructorOrMethod().getMethod();
         if (method.isAnnotationPresent(ShutdownCluster.class)) {
             try {
-                shutdownCluster();
+                Boolean skipShutdown = Boolean.valueOf(
+                    System.getProperty("rhq.cassandra.cluster.skip-shutdown", "false"));
+                if (!skipShutdown) {
+                    shutdownCluster();
+                }
             } catch (Exception e) {
                 log.warn("An error occurred while shutting down the cluster", e);
             }

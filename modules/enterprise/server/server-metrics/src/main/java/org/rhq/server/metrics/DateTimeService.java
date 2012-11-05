@@ -75,4 +75,10 @@ public class DateTimeService {
         return dateTimeComparator.compare(now().minusDays(365), dateTime) < 0;
     }
 
+    public DateTime hour0() {
+        DateTime rightNow = now();
+        return rightNow.hourOfDay().roundFloorCopy().minusHours(
+            rightNow.hourOfDay().roundFloorCopy().hourOfDay().get());
+    }
+
 }

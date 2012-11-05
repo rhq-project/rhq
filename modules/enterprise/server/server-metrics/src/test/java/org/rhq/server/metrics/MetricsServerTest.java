@@ -31,6 +31,8 @@ import static org.rhq.server.metrics.DateTimeService.ONE_MONTH;
 import static org.rhq.server.metrics.DateTimeService.ONE_YEAR;
 import static org.rhq.server.metrics.DateTimeService.SEVEN_DAYS;
 import static org.rhq.server.metrics.DateTimeService.TWO_WEEKS;
+import static org.rhq.server.metrics.MetricsDAO.ONE_HOUR_METRICS_TABLE;
+import static org.rhq.server.metrics.MetricsDAO.SIX_HOUR_METRICS_TABLE;
 import static org.rhq.server.metrics.MetricsServer.divide;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
@@ -164,7 +166,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     public void insertMultipleRawNumericDataForOneSchedule() throws Exception {
         int scheduleId = 123;
 
-        DateTime hour0 = now().hourOfDay().roundFloorCopy().minusHours(now().hourOfDay().get());
+        DateTime hour0 = hour0();
         DateTime currentTime = hour0.plusHours(4).plusMinutes(44);
         DateTime threeMinutesAgo = currentTime.minusMinutes(3);
         DateTime twoMinutesAgo = currentTime.minusMinutes(2);
@@ -206,7 +208,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     public void calculateAggregatesForOneScheduleWhenDBIsEmpty() {
         int scheduleId = 123;
 
-        DateTime hour0 = now().hourOfDay().roundFloorCopy().minusHours(now().hourOfDay().get());
+        DateTime hour0 = hour0();
         DateTime hour6 = hour0.plusHours(6);
         DateTime lastHour = hour6.minusHours(1);
         DateTime firstMetricTime = hour6.minusMinutes(3);
@@ -256,9 +258,15 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 //        );
 //
 //        assert6HourDataEquals(scheduleId, expected6HourData);
+
+        // verify that one hour metric data is updated
         List<AggregatedNumericMetric> expected = asList(new AggregatedNumericMetric(scheduleId,
             divide((3.9 + 3.2 + 2.6), 3), 2.6, 3.9, lastHour.getMillis()));
-        assertMetricDataEquals(ONE_HOUR_METRIC_DATA_CF, scheduleId, expected);
+        assertMetricDataEquals(ONE_HOUR_METRICS_TABLE, scheduleId, expected);
+
+        // verify that 6 hour metric data is updated
+        assertMetricDataEquals(SIX_HOUR_METRICS_TABLE, scheduleId, asList(new AggregatedNumericMetric(scheduleId,
+            divide((3.9 + 3.2 + 2.6), 3), 2.6, 3.9, hour0.getMillis())));
     }
 
     @Test(enabled = ENABLED)
@@ -266,7 +274,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         int scheduleId = 123;
 
         DateTime now = new DateTime();
-        DateTime hour0 = now.hourOfDay().roundFloorCopy().minusHours(now.hourOfDay().get());
+        DateTime hour0 = hour0();
         DateTime hour9 = hour0.plusHours(9);
         DateTime hour8 = hour9.minusHours(1);
 
@@ -337,7 +345,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         int scheduleId = 123;
 
         DateTime now = new DateTime();
-        DateTime hour0 = now.hourOfDay().roundFloorCopy().minusHours(now.hourOfDay().get());
+        DateTime hour0 = hour0();
         DateTime hour12 = hour0.plusHours(12);
         DateTime hour6 = hour0.plusHours(6);
         DateTime hour7 = hour0.plusHours(7);
@@ -406,7 +414,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         int scheduleId = 123;
 
         DateTime now = new DateTime();
-        DateTime hour0 = now.hourOfDay().roundFloorCopy().minusHours(now.hourOfDay().get());
+        DateTime hour0 = hour0();
         DateTime hour12 = hour0.plusHours(12);
         DateTime hour6 = hour0.plusHours(6);
         DateTime hour24 = hour0.plusHours(24);

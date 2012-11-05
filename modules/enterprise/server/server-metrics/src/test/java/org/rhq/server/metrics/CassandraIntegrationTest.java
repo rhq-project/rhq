@@ -32,6 +32,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import org.apache.cassandra.cql.jdbc.CassandraDataSource;
+import org.joda.time.DateTime;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Listeners;
@@ -54,9 +55,13 @@ public class CassandraIntegrationTest {
 
     protected Connection connection;
 
+    private DateTimeService dateTimeService;
+
     @BeforeClass
     @DeployCluster
     public void deployCluster() throws CassandraException {
+        dateTimeService = new DateTimeService();
+
         List<CassandraHost> hosts = asList(new CassandraHost("127.0.0.1", 9160), new CassandraHost("127.0.0.2", 9160));
         ClusterInitService initService = new ClusterInitService();
 
@@ -74,5 +79,9 @@ public class CassandraIntegrationTest {
     @AfterClass
     @ShutdownCluster
     public void shutdownCluster() throws Exception {
+    }
+
+    protected DateTime hour0() {
+        return dateTimeService.hour0();
     }
 }

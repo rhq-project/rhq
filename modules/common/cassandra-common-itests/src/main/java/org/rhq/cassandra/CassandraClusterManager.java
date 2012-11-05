@@ -37,7 +37,6 @@ import org.testng.IInvokedMethod;
 import org.testng.IInvokedMethodListener;
 import org.testng.ITestResult;
 
-import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 
 /**
@@ -79,10 +78,7 @@ public class CassandraClusterManager implements IInvokedMethodListener {
         File basedir = new File("target");
         File clusterDir = new File(basedir, "cassandra");
 
-        FileUtil.purge(clusterDir, false);
-
         int numNodes = annotation.numNodes();
-
         DeploymentOptions deploymentOptions = new DeploymentOptions();
         deploymentOptions.setClusterDir(clusterDir.getAbsolutePath());
         deploymentOptions.setNumNodes(numNodes);
@@ -94,6 +90,7 @@ public class CassandraClusterManager implements IInvokedMethodListener {
 
         BootstrapDeployer deployer = new BootstrapDeployer();
         deployer.setDeploymentOptions(deploymentOptions);
+
         deployer.deploy();
     }
 

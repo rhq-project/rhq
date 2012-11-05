@@ -78,7 +78,7 @@ public class BootstrapDeployer {
         File clusterDir = new File(deploymentOptions.getClusterDir());
         File installedMarker = new File(clusterDir, ".installed");
 
-        if (installedMarker.exists()) {
+        if (isClusterInstalled()) {
             return;
         }
 
@@ -142,6 +142,16 @@ public class BootstrapDeployer {
                 FileUtil.purge(bundleDir, true);
             }
         }
+    }
+
+    private boolean isClusterInstalled() {
+        File clusterDir = new File(deploymentOptions.getClusterDir());
+        File installedMarker = new File(clusterDir, ".installed");
+
+        if (installedMarker.exists()) {
+            return true;
+        }
+        return false;
     }
 
     private void doLocalDeploy(Properties deployProps, File bundleDir) throws CassandraException {

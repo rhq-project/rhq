@@ -31,10 +31,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 import javax.sql.DataSource;
 
@@ -83,8 +83,8 @@ public class MetricsDAO {
         this.dataSource = dataSource;
     }
 
-    public Map<Integer, DateTime> insertRawMetrics(Set<MeasurementDataNumeric> dataSet) {
-        Map<Integer, DateTime> updates = new TreeMap<Integer, DateTime>();
+    public Set<MeasurementDataNumeric> insertRawMetrics(Set<MeasurementDataNumeric> dataSet) {
+        Set<MeasurementDataNumeric> insertedMetrics = new HashSet<MeasurementDataNumeric>();
         Connection connection = null;
         PreparedStatement statement = null;
         try {
@@ -97,10 +97,9 @@ public class MetricsDAO {
                 statement.setDouble(3, data.getValue());
                 statement.executeUpdate();
 
-                updates.put(data.getScheduleId(), new DateTime(data.getTimestamp()).hourOfDay().roundFloorCopy());
+                insertedMetrics.add(data);
             }
-
-            return updates;
+            return insertedMetrics;
         } catch (SQLException e) {
             throw new CQLException(e);
         } finally {
@@ -109,8 +108,8 @@ public class MetricsDAO {
         }
     }
 
-    public Map<Integer, DateTime> insertAggregates(String bucket, List<AggregatedNumericMetric> metrics) {
-        Map<Integer, DateTime> updates = new TreeMap<Integer, DateTime>();
+    public List<AggregatedNumericMetric> insertAggregates(String bucket, List<AggregatedNumericMetric> metrics) {
+        List<AggregatedNumericMetric> updates = new ArrayList<AggregatedNumericMetric>();
         Connection connection = null;
         PreparedStatement statement = null;
         String sql = "INSERT INTO " + bucket + " (schedule_id, time, type, value) VALUES (?, ?, ?, ?)";
@@ -137,9 +136,8 @@ public class MetricsDAO {
                 statement.setDouble(4, metric.getAvg());
                 statement.executeUpdate();
 
-                updates.put(metric.getScheduleId(), new DateTime(metric.getTimestamp()));
+                updates.add(metric);
             }
-
             return updates;
         } catch (SQLException e) {
             throw new CQLException(e);
@@ -299,15 +297,4 @@ public class MetricsDAO {
         }
     }
 
-    private void execute(ConnectionCallback callback) {
-        Connection connection = null;
-        try {
-            connection = dataSource.getConnection();
-            callback.invoke(connection);
-        } catch(SQLException e) {
-            throw new CQLException(e);
-        } finally {
-            JDBCUtil.safeClose(connection);
-        }
-    }
 }

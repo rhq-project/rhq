@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import javax.sql.DataSource;
 
@@ -273,20 +274,29 @@ public class MetricsServer {
 
     public void addNumericData(Set<MeasurementDataNumeric> dataSet) {
         MetricsDAO dao = new MetricsDAO(cassandraDS);
-        Map<Integer, DateTime> updates = dao.insertRawMetrics(dataSet);
+        Set<MeasurementDataNumeric> updates = dao.insertRawMetrics(dataSet);
+        updateMetricsIndex(updates);
+    }
+
+    private void updateMetricsIndex(Set<MeasurementDataNumeric> rawMetrics) {
+        MetricsDAO dao = new MetricsDAO(cassandraDS);
+        Map<Integer, DateTime> updates = new TreeMap<Integer, DateTime>();
+        for (MeasurementDataNumeric rawMetric : rawMetrics) {
+            updates.put(rawMetric.getScheduleId(), new DateTime(rawMetric.getTimestamp()).hourOfDay().roundFloorCopy());
+        }
         dao.updateMetricsIndex(ONE_HOUR_METRICS_TABLE, updates);
     }
 
     public void calculateAggregates() {
         MetricsDAO dao = new MetricsDAO(cassandraDS);
 
-        Map<Integer, DateTime> updatedSchedules = aggregateRawData();
-        for (Integer scheduleId : updatedSchedules.keySet()) {
-            DateTime dateTime = updatedSchedules.get(scheduleId);
-            updatedSchedules.put(scheduleId, dateTimeService.getTimeSlice(dateTime, Minutes.minutes(60 * 6)));
-        }
-        dao.updateMetricsIndex(SIX_HOUR_METRICS_TABLE, updatedSchedules);
-//        updateMetricsQueue(sixHourMetricsDataCF, updatedSchedules);
+        List<AggregatedNumericMetric> updatedSchedules = aggregateRawData();
+        updateMetricsIndex(SIX_HOUR_METRICS_TABLE, updatedSchedules, Minutes.minutes(60 * 6));
+//        for (Integer scheduleId : updatedSchedules.keySet()) {
+//            DateTime dateTime = updatedSchedules.get(scheduleId);
+//            updatedSchedules.put(scheduleId, dateTimeService.getTimeSlice(dateTime, Minutes.minutes(60 * 6)));
+//        }
+//        dao.updateMetricsIndex(SIX_HOUR_METRICS_TABLE, updatedSchedules);
 //
 //        updatedSchedules = calculateAggregates(oneHourMetricsDataCF, sixHourMetricsDataCF, Minutes.minutes(60 * 6),
 //            Hours.hours(24).toStandardMinutes(), DateTimeService.ONE_MONTH);
@@ -299,7 +309,17 @@ public class MetricsServer {
 //            Hours.hours(24).toStandardMinutes(), DateTimeService.ONE_YEAR);
     }
 
-    private Map<Integer, DateTime> aggregateRawData() {
+    private void updateMetricsIndex(String bucket, List<AggregatedNumericMetric> metrics, Minutes interval) {
+        MetricsDAO dao = new MetricsDAO(cassandraDS);
+        Map<Integer, DateTime> updates = new TreeMap<Integer, DateTime>();
+        for (AggregatedNumericMetric metric : metrics) {
+            updates.put(metric.getScheduleId(), dateTimeService.getTimeSlice(new DateTime(metric.getTimestamp()),
+                interval));
+        }
+        dao.updateMetricsIndex(bucket, updates);
+    }
+
+    private List<AggregatedNumericMetric> aggregateRawData() {
        MetricsDAO dao = new MetricsDAO(cassandraDS);
         List<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(ONE_HOUR_METRICS_TABLE);
         List<AggregatedNumericMetric> oneHourMetrics = new ArrayList<AggregatedNumericMetric>();
@@ -335,12 +355,12 @@ public class MetricsServer {
                 startTime.getMillis()));
         }
 
-        Map<Integer, DateTime> updatedSchedules = dao.insertAggregates(ONE_HOUR_METRICS_TABLE,
+        List<AggregatedNumericMetric> updatedSchedules = dao.insertAggregates(ONE_HOUR_METRICS_TABLE,
             oneHourMetrics);
         return updatedSchedules;
     }
 
-    private Map<Integer, DateTime> calculateAggregates(String fromColumnFamily, String toColumnFamily,
+    private List<AggregatedNumericMetric> calculateAggregates(String fromColumnFamily, String toColumnFamily,
         Minutes interval, Minutes nextInterval, int ttl) {
 
         MetricsDAO dao = new MetricsDAO(cassandraDS);
@@ -384,12 +404,11 @@ public class MetricsServer {
                 startTime.getMillis()));
         }
 
-        Map<Integer, DateTime> updatedSchedules = dao.insertAggregates(toColumnFamily,
-            toMetrics);
-        for (Integer scheduleId : updatedSchedules.keySet()) {
-            DateTime dateTime = updatedSchedules.get(scheduleId);
-            updatedSchedules.put(scheduleId, dateTimeService.getTimeSlice(dateTime, nextInterval));
-        }
+        List<AggregatedNumericMetric> updatedSchedules = dao.insertAggregates(toColumnFamily, toMetrics);
+//        for (Integer scheduleId : updatedSchedules.keySet()) {
+//            DateTime dateTime = updatedSchedules.get(scheduleId);
+//            updatedSchedules.put(scheduleId, dateTimeService.getTimeSlice(dateTime, nextInterval));
+//        }
         return updatedSchedules;
 
 //        SliceQuery<String, Composite, Integer> queueQuery = HFactory.createSliceQuery(keyspace, StringSerializer.get(),

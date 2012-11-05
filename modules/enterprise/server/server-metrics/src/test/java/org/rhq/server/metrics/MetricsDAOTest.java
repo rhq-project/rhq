@@ -40,7 +40,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 import org.joda.time.DateTime;
 import org.testng.annotations.BeforeMethod;
@@ -92,12 +91,9 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         data.add(new MeasurementDataNumeric(oneMinuteAgo.getMillis(), request, 2.6));
 
         MetricsDAO dao = new MetricsDAO(dataSource);
-        Map<Integer, DateTime> actualUpdates = dao.insertRawMetrics(data);
+        Set<MeasurementDataNumeric> actualUpdates = dao.insertRawMetrics(data);
 
-        Map<Integer, DateTime> expectedUpdates = new TreeMap<Integer, DateTime>();
-        expectedUpdates.put(scheduleId, currentHour);
-
-        assertEquals(actualUpdates, expectedUpdates, "The updates do not match expected value.");
+        assertEquals(actualUpdates, data, "The updates do not match expected value.");
 
         List<RawNumericMetric> actualMetrics = dao.findRawMetrics(scheduleId,  currentHour, currentHour.plusHours(1));
         List<RawNumericMetric> expectedMetrics = asList(
@@ -121,11 +117,8 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
             new AggregatedNumericMetric(456, 2.0, 2.0, 2.0, hour0.getMillis())
         );
 
-        Map<Integer, DateTime> actualUpdates = dao.insertAggregates(ONE_HOUR_METRICS_TABLE, metrics);
-        Map<Integer, DateTime> expectedUpdates = new TreeMap<Integer, DateTime>();
-        expectedUpdates.put(scheduleId, hour0);
-        expectedUpdates.put(scheduleId, hour0.plusHours(1));
-        expectedUpdates.put(456, hour0);
+        List<AggregatedNumericMetric> actualUpdates = dao.insertAggregates(ONE_HOUR_METRICS_TABLE, metrics);
+        List<AggregatedNumericMetric> expectedUpdates = metrics;
 
         assertEquals(actualUpdates, expectedUpdates, "The updates do not match the expected values");
 

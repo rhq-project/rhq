@@ -40,16 +40,20 @@ import java.util.List;
 import javax.ejb.EJBException;
 import javax.persistence.EntityManager;
 
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.criteria.DriftDefinitionTemplateCriteria;
 import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.JPADriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.JPADriftCriteria;
 import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionComparator;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
@@ -62,8 +66,9 @@ import org.rhq.core.domain.drift.JPADriftSet;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
-import org.rhq.test.AssertUtils;
 import org.rhq.enterprise.server.test.TransactionCallback;
+import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.test.AssertUtils;
 
 public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
 
@@ -71,16 +76,27 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
     private static final String TEST_PIN_TEMPLATE = "test-pinTemplate";
 
     private DriftTemplateManagerLocal templateMgr;
-
     private DriftManagerLocal driftMgr;
 
+    private static final String drift1Path = "drift.1";
+    private static final String drift2Path = "drift.2";
+
+    private static final String driftFile1Hash = "a1b2c3";
+    private static final String driftFile2Hash = "1a2b3c";
+
+    // Note: Arquillian currently (1.0.2) runs each test in its own testng lifecycle. Think of it as each
+    // test being in its own suite, and the test class being new'd for each test. Instance variables
+    // don't retain thier set values between tests.  We must reset these from the db, as necessary, when
+    // tests have dependencies on other tests.
     private JPADrift drift1;
     private JPADrift drift2;
     private JPADriftFile driftFile1;
     private JPADriftFile driftFile2;
 
-    @BeforeClass
-    public void initClass() {
+    @Override
+    protected void beforeMethod() throws Exception {
+        super.beforeMethod();
+
         templateMgr = getDriftTemplateManager();
         driftMgr = getDriftManager();
     }
@@ -114,6 +130,28 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
         };
     }
 
+    @Override
+    protected void fetchDB(EntityManager em) throws Exception {
+        Subject overlord = getOverlord();
+        JPADriftServerLocal driftServer = LookupUtil.getJPADriftServer();
+        driftFile1 = driftServer.getDriftFile(overlord, driftFile1Hash);
+        driftFile2 = driftServer.getDriftFile(overlord, driftFile2Hash);
+        DriftCriteria c = new JPADriftCriteria();
+        c.addFilterDriftHandlingModes((DriftHandlingMode[]) null);
+        c.addFilterCategories((DriftCategory[]) null);
+        c.addFilterResourceIds((Integer[]) null);
+        c.addFilterPath(drift1Path);
+        List<JPADrift> drift = driftServer.findDriftsByCriteria(overlord, c);
+        if (0 != drift.size()) {
+            drift1 = em.find(JPADrift.class, drift.get(0).getId());
+        }
+        c.addFilterPath(drift2Path);
+        drift = driftServer.findDriftsByCriteria(overlord, c);
+        if (0 != drift.size()) {
+            drift2 = em.find(JPADrift.class, drift.get(0).getId());
+        }
+    }
+
     @Test(dependsOnGroups = "pinning")
     public void createNewTemplate() {
         final DriftDefinition definition = new DriftDefinition(new Configuration());
@@ -126,7 +164,7 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
         final DriftDefinitionTemplate newTemplate = templateMgr.createTemplate(getOverlord(), resourceType.getId(),
             true, definition);
 
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 EntityManager em = getEntityManager();
@@ -160,7 +198,7 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
         DriftDefinitionTemplate template = loadTemplate(definition.getName());
         assertNotNull("Failed to load template", template);
         getEntityManager().clear();
-        System.out.println("Created " + template.toString(false));
+        //System.out.println("Created " + template.toString(false));
     }
 
     @Test(groups = "negativeUpdate", dependsOnMethods = "createTemplateForNegativeUpdateTests", expectedExceptions = EJBException.class, expectedExceptionsMessageRegExp = ".*base directory.*cannot be modified")
@@ -238,7 +276,7 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
 
         templateMgr.updateTemplate(getOverlord(), template);
 
-        // verify that the tempalte has been updated
+        // verify that the template has been updated
         final DriftDefinitionTemplate updatedTemplate = loadTemplate(template.getName());
         AssertUtils.assertPropertiesMatch("Failed to update template", template, updatedTemplate, "resourceType",
             "driftDefinitions", "templateDefinition");
@@ -252,8 +290,8 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
             assertEquals(msg + "enabled property not updated", updatedTemplateDef.isEnabled(), updatedDef.isEnabled());
             assertEquals(msg + "driftHandlingMode property not updated", updatedTemplateDef.getDriftHandlingMode(),
                 updatedDef.getDriftHandlingMode());
-            assertEquals(msg + "interval property not updated", updatedTemplateDef.getInterval(), updatedDef
-                .getInterval());
+            assertEquals(msg + "interval property not updated", updatedTemplateDef.getInterval(),
+                updatedDef.getInterval());
         }
 
         // verify that the detached definitions have not been updated.
@@ -262,8 +300,8 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
             String msg = "Detached definition " + toString(def) + " should not get updated - ";
 
             assertEquals(msg + "enabled property was modified", def.isEnabled(), defAfterUpdate.isEnabled());
-            assertEquals(msg + "driftHandlingMode property was modified", def.getDriftHandlingMode(), defAfterUpdate
-                .getDriftHandlingMode());
+            assertEquals(msg + "driftHandlingMode property was modified", def.getDriftHandlingMode(),
+                defAfterUpdate.getDriftHandlingMode());
             assertEquals(msg + "interval property was modified", def.getInterval(), defAfterUpdate.getInterval());
         }
     }
@@ -290,18 +328,18 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
         // create initial change set from which the snapshot will be generated
         final JPADriftChangeSet changeSet0 = new JPADriftChangeSet(resource, 0, COVERAGE, attachedDef1);
 
-        driftFile1 = new JPADriftFile("a1b2c3");
-        drift1 = new JPADrift(changeSet0, "drift.1", FILE_ADDED, null, driftFile1);
+        driftFile1 = new JPADriftFile(driftFile1Hash);
+        drift1 = new JPADrift(changeSet0, drift1Path, FILE_ADDED, null, driftFile1);
 
         final JPADriftSet driftSet = new JPADriftSet();
         driftSet.addDrift(drift1);
 
         // create change set v1
-        driftFile2 = new JPADriftFile("1a2b3c");
+        driftFile2 = new JPADriftFile(driftFile2Hash);
         final JPADriftChangeSet changeSet1 = new JPADriftChangeSet(resource, 1, DRIFT, attachedDef1);
-        drift2 = new JPADrift(changeSet1, "drift.2", FILE_ADDED, null, driftFile2);
+        drift2 = new JPADrift(changeSet1, drift2Path, FILE_ADDED, null, driftFile2);
 
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 EntityManager em = getEntityManager();
@@ -337,6 +375,7 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
     @Test(groups = "pinning", dependsOnMethods = "pinTemplate")
     @InitDB(false)
     public void persistChangeSetWhenTemplateGetsPinned() throws Exception {
+
         DriftDefinitionTemplate template = loadTemplate(TEST_PIN_TEMPLATE);
 
         GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
@@ -348,7 +387,7 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
         assertEquals("Expected to find change set for pinned template", 1, changeSets.size());
 
         JPADriftChangeSet expectedChangeSet = new JPADriftChangeSet(resource, 1, COVERAGE, null);
-        List<? extends Drift> expectedDrifts = asList(new JPADrift(expectedChangeSet, "drift.1", FILE_ADDED, null,
+        List<? extends Drift> expectedDrifts = asList(new JPADrift(expectedChangeSet, drift1Path, FILE_ADDED, null,
             driftFile1), new JPADrift(expectedChangeSet, drift2.getPath(), FILE_ADDED, null, driftFile2));
 
         DriftChangeSet<?> actualChangeSet = changeSets.get(0);
@@ -361,9 +400,9 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
         // we need to compare the newDriftFile properties separately because
         // assertCollectionMatchesNoOrder compares properties via equals() and JPADriftFile
         // does not implement equals.
-        assertPropertiesMatch(drift1.getNewDriftFile(), findDriftByPath(actualDrifts, "drift.1").getNewDriftFile(),
+        assertPropertiesMatch(drift1.getNewDriftFile(), findDriftByPath(actualDrifts, drift1Path).getNewDriftFile(),
             "The newDriftFile property was not set correctly for " + drift1);
-        assertPropertiesMatch(drift2.getNewDriftFile(), findDriftByPath(actualDrifts, "drift.2").getNewDriftFile(),
+        assertPropertiesMatch(drift2.getNewDriftFile(), findDriftByPath(actualDrifts, drift2Path).getNewDriftFile(),
             "The newDriftFile property was not set correctly for " + drift1);
     }
 
@@ -423,21 +462,21 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
         // create some change sets
         final JPADriftChangeSet changeSet0 = new JPADriftChangeSet(resource, 0, COVERAGE, attachedDef1);
 
-        driftFile1 = new JPADriftFile("a1b2c3");
-        drift1 = new JPADrift(changeSet0, "drift.1", FILE_ADDED, null, driftFile1);
+        driftFile1 = new JPADriftFile(driftFile1Hash);
+        drift1 = new JPADrift(changeSet0, drift1Path, FILE_ADDED, null, driftFile1);
 
         final JPADriftSet driftSet0 = new JPADriftSet();
         driftSet0.addDrift(drift1);
 
         final JPADriftChangeSet changeSet1 = new JPADriftChangeSet(resource, 0, DRIFT, detachedDef1);
 
-        driftFile2 = new JPADriftFile("1a2b3c");
-        drift2 = new JPADrift(changeSet1, "drift.2", FILE_ADDED, null, driftFile2);
+        driftFile2 = new JPADriftFile(driftFile2Hash);
+        drift2 = new JPADrift(changeSet1, drift2Path, FILE_ADDED, null, driftFile2);
 
         final JPADriftSet driftSet1 = new JPADriftSet();
         driftSet1.addDrift(drift2);
 
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 EntityManager em = getEntityManager();
@@ -468,20 +507,20 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
         // verify that attached definitions along with their change sets have
         // been deleted
         assertNull("Change sets belonging to attached definitions should be deleted", loadChangeSet(changeSet0.getId()));
-        assertNull("Attached definition " + toString(attachedDef1) + " should be deleted", loadDefinition(attachedDef1
-            .getId()));
-        assertNull("Attached definition " + toString(attachedDef2) + " should be deleted", loadDefinition(attachedDef2
-            .getId()));
+        assertNull("Attached definition " + toString(attachedDef1) + " should be deleted",
+            loadDefinition(attachedDef1.getId()));
+        assertNull("Attached definition " + toString(attachedDef2) + " should be deleted",
+            loadDefinition(attachedDef2.getId()));
 
         // verify that detached definitions along with their change sets have not been deleted
-        assertNotNull("Change sets belonging to detached definitions should not be deleted", loadChangeSet(changeSet1
-            .getId()));
+        assertNotNull("Change sets belonging to detached definitions should not be deleted",
+            loadChangeSet(changeSet1.getId()));
         assertDetachedDefinitionNotDeleted(detachedDef1.getId());
         assertDetachedDefinitionNotDeleted(detachedDef2.getId());
 
         // verify that the template itself has been deleted
-        assertNull("The template " + toString(template) + " should have been deleted", loadTemplate(template.getName(),
-            false));
+        assertNull("The template " + toString(template) + " should have been deleted",
+            loadTemplate(template.getName(), false));
     }
 
     @SuppressWarnings("unchecked")
@@ -515,8 +554,8 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
         criteria.addFilterStartVersion(1);
         criteria.addFilterDriftDefinitionId(definition.getId());
 
-        assertEquals("There should not be any drift change sets", 0, driftMgr.findDriftChangeSetsByCriteria(
-            getOverlord(), criteria).size());
+        assertEquals("There should not be any drift change sets", 0,
+            driftMgr.findDriftChangeSetsByCriteria(getOverlord(), criteria).size());
     }
 
     private void assertDefinitionIsNotPinned(DriftDefinition definition) throws Exception {
@@ -538,8 +577,8 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
     private void assertDriftTemplateEquals(String msg, DriftDefinitionTemplate expected, DriftDefinitionTemplate actual) {
         AssertUtils.assertPropertiesMatch(msg + ": basic drift definition template properties do not match", expected,
             actual, "id", "resourceType", "ctime", "templateDefinition");
-        assertDriftDefEquals(msg + ": template definitions do not match", expected.getTemplateDefinition(), actual
-            .getTemplateDefinition());
+        assertDriftDefEquals(msg + ": template definitions do not match", expected.getTemplateDefinition(),
+            actual.getTemplateDefinition());
     }
 
     private void assertDriftDefEquals(String msg, DriftDefinition expected, DriftDefinition actual) {

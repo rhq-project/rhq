@@ -2,6 +2,7 @@ package org.rhq.enterprise.server.test;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -25,22 +26,29 @@ import org.testng.annotations.BeforeMethod;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ArchivePaths;
 import org.jboss.shrinkwrap.api.Filters;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
+import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
+import org.jboss.shrinkwrap.impl.base.exporter.zip.ZipExporterImpl;
 import org.jboss.shrinkwrap.resolver.api.DependencyResolvers;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
 
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.shared.BuilderException;
+import org.rhq.core.domain.shared.ResourceBuilder;
+import org.rhq.core.domain.shared.ResourceTypeBuilder;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SessionManager;
+import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScanner;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
@@ -57,6 +65,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
 
     protected static final String JNDI_RHQDS = "java:jboss/datasources/RHQDS";
 
+    private TestServerCommunicationsService agentService;
     private SchedulerService schedulerService;
     private ServerPluginService serverPluginService;
     private PluginDeploymentScannerMBean pluginScannerService;
@@ -105,9 +114,13 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testClassesJar.addClass(MessageDigestGenerator.class);
         testClassesJar.addClass(StreamUtil.class);
         testClassesJar.addClass(AssertUtils.class);
+        testClassesJar.addClass(ResourceBuilder.class);
+        testClassesJar.addClass(ResourceTypeBuilder.class);
+        testClassesJar.addClass(BuilderException.class);
         testClassesJar.addClasses(PropertyMatcher.class, MatchResult.class, PropertyMatchException.class);
         testClassesJar.addAsManifestResource(EmptyAsset.INSTANCE, ArchivePaths.create("beans.xml")); // add CDI injection (needed by arquillian injection);
         testClassesJar.addAsResource("test-scheduler.properties");
+        testClassesJar.addAsResource("test-alert-sender-serverplugin.xml");
 
         // create test ear by starting with rhq.ear and thinning it
         MavenDependencyResolver earResolver = DependencyResolvers.use(MavenDependencyResolver.class);
@@ -144,6 +157,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
         Collection<JavaArchive> dependencies = new HashSet<JavaArchive>();
         dependencies.addAll(resolver.artifact("org.powermock:powermock-api-mockito").resolveAs(JavaArchive.class));
         dependencies.addAll(resolver.artifact("org.liquibase:liquibase-core").resolveAs(JavaArchive.class));
+        dependencies
+            .addAll(resolver.artifact("org.jboss.shrinkwrap:shrinkwrap-impl-base").resolveAs(JavaArchive.class));
         dependencies.addAll(resolver.artifact("org.rhq:test-utils").resolveAs(JavaArchive.class));
         dependencies.addAll(resolver.artifact("org.rhq.helpers:perftest-support").resolveAs(JavaArchive.class));
 
@@ -157,14 +172,19 @@ public abstract class AbstractEJB3Test extends Arquillian {
         // System.out.println("** The Deployment EAR: " + ear.toString(true) + "\n");
 
         // Save the test EAR to a zip file for inspection (set file explicitly)
-        //        try {
-        //            ZipExporter exporter = new ZipExporterImpl(ear);
-        //            exporter.exportTo(new File("/home/jshaughn/temp/test-ear.ear"), true);
-        //        } catch (Exception e) {
-        //            e.printStackTrace();
-        //        }
+        //exportZip(testEar, new File("/home/jshaughn/temp/test-ear.ear"));
 
         return testEar;
+    }
+
+    @SuppressWarnings("unused")
+    static private void exportZip(Archive<?> zipArchive, File outFile) {
+        try {
+            ZipExporter exporter = new ZipExporterImpl(zipArchive);
+            exporter.exportTo(outFile, true);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -241,7 +261,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
      * and {@link #inContainer()} call.
      */
     @BeforeMethod
-    protected void __beforeMethod() throws Throwable {
+    protected void __beforeMethod(Method method) throws Throwable {
         // Note that Arquillian calls the testng BeforeMethod twice (as of 1.0.2.Final, once 
         // out of container and once in container. In general the expectation is to execute it 
         // one time, and doing it in container allows for the expected injections and context.
@@ -264,6 +284,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
                 }
 
                 beforeMethod();
+                beforeMethod(method);
 
             } catch (Throwable t) {
                 // Arquillian is eating these, make sure they show up in some way
@@ -295,6 +316,13 @@ public abstract class AbstractEJB3Test extends Arquillian {
      * Override Point!  Do not implement a @BeforeMethod, instead override this method. 
      */
     protected void beforeMethod() throws Exception {
+        // do nothing if we're not overridden
+    }
+
+    /**
+     * Override Point!  Do not implement a @BeforeMethod, instead override this method. 
+     */
+    protected void beforeMethod(Method method) throws Exception {
         // do nothing if we're not overridden
     }
 
@@ -600,7 +628,83 @@ public abstract class AbstractEJB3Test extends Arquillian {
             } else {
                 //MBeanServerFactory.releaseMBeanServer(mbs);
             }
+        }
+    }
 
+    /**
+     * If you need to test round trips from server to agent and back, you first must install the server communications
+     * service that houses all the agent clients. Call this method and add your test agent services to the public fields
+     * in the returned object.
+     *
+     * @return the object that will house your test agent service impls and the agent clients.
+     *
+     * @throws RuntimeException
+     */
+    public TestServerCommunicationsService prepareForTestAgents() {
+        if (agentService != null) {
+            return agentService;
+        }
+
+        return prepareForTestAgents(new TestServerCommunicationsService());
+    }
+
+    /**
+     * If you need to test round trips from server to agent and back, you first must install the server communications
+     * service that houses all the agent clients. Call this method and add your test agent services to the public fields
+     * in the returned object.
+     *
+     * @return the object that will house your test agent service impls and the agent clients.
+     *
+     * @throws RuntimeException
+     */
+    public TestServerCommunicationsService prepareForTestAgents(TestServerCommunicationsServiceMBean customAgentService) {
+        try {
+            if (agentService != null) {
+                return agentService;
+            }
+
+            // first, unregister the real service...
+            MBeanServer mbs = getPlatformMBeanServer();
+            if (mbs.isRegistered(ServerCommunicationsServiceMBean.OBJECT_NAME)) {
+                mbs.unregisterMBean(ServerCommunicationsServiceMBean.OBJECT_NAME);
+            }
+
+            // Now replace with the test service...
+            TestServerCommunicationsService agentService = new TestServerCommunicationsService();
+            mbs.registerMBean(customAgentService, ServerCommunicationsServiceMBean.OBJECT_NAME);
+            return agentService;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Call this after your tests have finished. You only need to call this if your test previously called
+     * {@link #prepareForTestAgents()}.
+     */
+    public void unprepareForTestAgents() {
+        unprepareForTestAgents(false);
+    }
+
+    public void unprepareForTestAgents(boolean beanOnly) {
+        try {
+            if (agentService != null) {
+                agentService.stop();
+                agentService = null;
+
+                MBeanServer mbs = getPlatformMBeanServer();
+                if (beanOnly) {
+                    if (mbs.isRegistered(ServerCommunicationsServiceMBean.OBJECT_NAME)) {
+                        mbs.unregisterMBean(ServerCommunicationsServiceMBean.OBJECT_NAME);
+                    }
+                } else {
+                    //MBeanServerFactory.releaseMBeanServer(mbs);
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -646,51 +750,6 @@ public abstract class AbstractEJB3Test extends Arquillian {
         pluginScannerService = null;
     }
 
-    /**
-     * If you need to test round trips from server to agent and back, you first must install the server communications
-     * service that houses all the agent clients. Call this method and add your test agent services to the public fields
-     * in the returned object.
-     *
-     * @return the object that will house your test agent service impls and the agent clients.
-     *
-     * @throws RuntimeException
-     */
-    public TestServerCommunicationsService prepareForTestAgents() {
-        try {
-            //            MBeanServer mbs = getJBossMBeanServer();
-            //            if (mbs.isRegistered(ServerCommunicationsServiceMBean.OBJECT_NAME)) {
-            //                mbs.unregisterMBean(ServerCommunicationsServiceMBean.OBJECT_NAME);
-            //            }
-            TestServerCommunicationsService testAgentContainer = new TestServerCommunicationsService();
-            //            mbs.registerMBean(testAgentContainer, ServerCommunicationsServiceMBean.OBJECT_NAME);
-            return testAgentContainer;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Call this after your tests have finished. You only need to call this if your test previously called
-     * {@link #prepareForTestAgents()}.
-     */
-    public void unprepareForTestAgents() {
-        unprepareForTestAgents(false);
-    }
-
-    public void unprepareForTestAgents(boolean beanOnly) {
-        try {
-            if (beanOnly) {
-                //                MBeanServer mbs = getJBossMBeanServer();
-                //                if (mbs.isRegistered(ServerCommunicationsServiceMBean.OBJECT_NAME)) {
-                //                    mbs.unregisterMBean(ServerCommunicationsServiceMBean.OBJECT_NAME);
-                //                }
-            } else {
-                //                releaseJBossMBeanServer();
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public MBeanServer getPlatformMBeanServer() {
         return ManagementFactory.getPlatformMBeanServer();

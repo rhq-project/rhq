@@ -28,8 +28,6 @@ import javax.persistence.Query;
 
 import junit.framework.Assert;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -68,8 +66,8 @@ public class MeasurementScheduleManagerTest extends AbstractMeasurementScheduleM
     private Agent theAgent;
     private MeasurementScheduleTestServerCommunicationsService testCommService;
 
-    @BeforeMethod
-    public void beforeMethod() {
+    @Override
+    protected void beforeMethod() {
         try {
             prepareScheduler();
             testCommService = (MeasurementScheduleTestServerCommunicationsService) prepareForTestAgents();
@@ -84,8 +82,8 @@ public class MeasurementScheduleManagerTest extends AbstractMeasurementScheduleM
         }
     }
 
-    @AfterMethod
-    public void afterMethod() {
+    @Override
+    protected void afterMethod() {
         EntityManager em = null;
 
         try {
@@ -356,7 +354,7 @@ public class MeasurementScheduleManagerTest extends AbstractMeasurementScheduleM
         try {
             if (null != em) {
                 em.flush();
-                getTransactionManager().commit();
+                getTransactionManager().rollback();
                 em.close();
             }
         } catch (Throwable t) {

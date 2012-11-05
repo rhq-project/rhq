@@ -121,6 +121,13 @@
 
     <dependency>
       <groupId>${project.groupId}</groupId>
+      <artifactId>rhq-serverplugin-drift</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>${project.groupId}</groupId>
       <artifactId>rhq-core-client-api</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>
@@ -400,7 +407,7 @@
         </executions>
         </plugin>
       -->
- 
+
       <plugin>
         <artifactId>maven-antrun-plugin</artifactId>
         <executions>
@@ -409,7 +416,7 @@
             <id>prepare AS container</id>
             <phase>process-test-resources</phase>
             <configuration>
-              <target> 
+              <target>
                 <echo>Unzipping JBossAS ${jboss.version} found at ${jboss.zip}</echo>
                 <unzip
                   src="${jboss.zip}"
@@ -420,7 +427,18 @@
                   location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
                 <echo>Will now add test configuration to JBossAS config file: ${jboss.conf}</echo>
                 <replace file="${jboss.conf}">
-                                                                       
+
+                  <replacefilter>
+                    <replacetoken>&lt;/extensions></replacetoken>
+                    <replacevalue><![CDATA[
+    </extensions>
+                    
+    <!-- FOR RHQ TESTING -->
+    <system-properties>
+        <property name="project.version" value="${project.version}"/>
+    </system-properties>]]></replacevalue>
+                  </replacefilter>
+
                   <replacefilter>
                     <replacetoken>&lt;/security-domains></replacetoken>
                     <replacevalue><![CDATA[
@@ -433,9 +451,9 @@
                         </login-module>
                     </authentication>
                 </security-domain>
-            </security-domains>]]></replacevalue>                  
+            </security-domains>]]></replacevalue>
                   </replacefilter>
-                  
+
                   <replacefilter>
                     <replacetoken>&lt;/session-bean></replacetoken>
                     <replacevalue><![CDATA[
@@ -454,7 +472,7 @@
         <extension module="org.jboss.as.messaging"/>
         <extension module="org.jboss.as.naming"/>]]></replacevalue>
                   </replacefilter>
-                  
+
                   <replacefilter>
                     <replacetoken>&lt;socket-binding name="https" port="8443"/></replacetoken>
                     <replacevalue><![CDATA[
@@ -463,7 +481,7 @@
         <socket-binding name="messaging" port="${rhq.server.socket.binding.port.messaging:4445}"/>
         <socket-binding name="messaging-throughput" port="${rhq.server.socket.binding.port.messaging-throughput:4455}"/>]]></replacevalue>
                   </replacefilter>
-                  
+
                   <replacefilter>
                     <replacetoken>&lt;subsystem xmlns="urn:jboss:domain:naming:1.1"/></replacetoken>
                     <replacevalue><![CDATA[
@@ -629,8 +647,8 @@
                         <prepared-statement-cache-size>75</prepared-statement-cache-size>
                     </statement>
                 </xa-datasource>]]></replacevalue>
-                    </replacefilter>                
-                    
+                  </replacefilter>
+
                   <replacefilter>
                     <replacetoken>&lt;/drivers></replacetoken>
                     <replacevalue><![CDATA[                    
@@ -705,7 +723,7 @@
 
         </executions>
       </plugin>
- 
+
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
 
@@ -725,6 +743,7 @@
             <hibernate.dialect>${rhq.test.ds.hibernate-dialect}</hibernate.dialect>
             <clean.db>${clean.db}</clean.db>
             <log4j.configDebug>false</log4j.configDebug>
+            <project.version>${project.version}</project.version>
           </systemPropertyVariables>
           <additionalClasspathElements>
             <!-- The below is required for tests to run against Oracle. -->

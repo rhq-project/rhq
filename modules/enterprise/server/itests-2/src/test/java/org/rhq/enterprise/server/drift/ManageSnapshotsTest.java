@@ -38,7 +38,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.persistence.EntityManager;
 
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -54,18 +53,18 @@ import org.rhq.core.domain.drift.JPADriftFile;
 import org.rhq.core.domain.drift.JPADriftSet;
 import org.rhq.core.domain.server.EntitySerializer;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.test.AssertUtils;
 import org.rhq.enterprise.server.test.TransactionCallback;
+import org.rhq.test.AssertUtils;
 
-@Test(dependsOnGroups = "pinning")
+@Test
 public class ManageSnapshotsTest extends AbstractDriftServerTest {
 
     private DriftManagerLocal driftMgr;
 
     private DriftTemplateManagerLocal templateMgr;
 
-    @BeforeClass
-    public void initClass() throws Exception {
+    @Override
+    public void beforeMethod() throws Exception {
         driftMgr = getDriftManager();
         templateMgr = getDriftTemplateManager();
     }
@@ -82,7 +81,7 @@ public class ManageSnapshotsTest extends AbstractDriftServerTest {
         final JPADriftSet driftSet = new JPADriftSet();
         driftSet.addDrift(drift);
 
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 EntityManager em = getEntityManager();
@@ -119,7 +118,7 @@ public class ManageSnapshotsTest extends AbstractDriftServerTest {
         final JPADriftChangeSet changeSet1 = new JPADriftChangeSet(resource, 1, DRIFT, driftDef);
         final JPADrift drift2 = new JPADrift(changeSet1, "drift.2", FILE_ADDED, null, driftFile2);
 
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 EntityManager em = getEntityManager();
@@ -181,7 +180,7 @@ public class ManageSnapshotsTest extends AbstractDriftServerTest {
         final JPADriftSet driftSet = new JPADriftSet();
         driftSet.addDrift(drift);
 
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 EntityManager em = getEntityManager();
@@ -241,7 +240,7 @@ public class ManageSnapshotsTest extends AbstractDriftServerTest {
         final DriftDefinition driftDef = template.createDefinition();
         driftDef.setResource(resource);
 
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 EntityManager em = getEntityManager();
@@ -262,7 +261,7 @@ public class ManageSnapshotsTest extends AbstractDriftServerTest {
         driftDef.setInterval(1800L);
         driftDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
 
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 driftDef.setResource(resource);

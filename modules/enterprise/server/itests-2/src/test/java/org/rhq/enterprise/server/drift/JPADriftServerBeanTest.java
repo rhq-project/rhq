@@ -36,8 +36,6 @@ import java.util.Set;
 
 import javax.persistence.EntityManager;
 
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -52,10 +50,10 @@ import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
 import org.rhq.core.domain.drift.dto.DriftDTO;
 import org.rhq.core.domain.drift.dto.DriftFileDTO;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.test.AssertUtils;
 import org.rhq.enterprise.server.test.TransactionCallback;
+import org.rhq.test.AssertUtils;
 
-@Test(dependsOnGroups = "pinning")
+@Test
 public class JPADriftServerBeanTest extends AbstractDriftServerTest {
 
     private JPADriftServerLocal jpaDriftServer;
@@ -68,13 +66,12 @@ public class JPADriftServerBeanTest extends AbstractDriftServerTest {
 
     private JPADriftFile driftFile2;
 
-    @BeforeClass
-    public void initTests() {
-        jpaDriftServer = getJPADriftServer();
-    }
+    @Override
+    public void beforeMethod() throws Exception {
+        super.beforeMethod();
 
-    @BeforeMethod
-    public void persistDriftFiles() throws Exception {
+        jpaDriftServer = getJPADriftServer();
+
         driftFile1 = jpaDriftServer.persistDriftFile(new JPADriftFile(DRIFT_FILE_1_ID));
         driftFile2 = jpaDriftServer.persistDriftFile(new JPADriftFile(DRIFT_FILE_2_ID));
 
@@ -101,7 +98,7 @@ public class JPADriftServerBeanTest extends AbstractDriftServerTest {
         driftDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
         driftDef.setResource(resource);
 
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 EntityManager em = getEntityManager();
@@ -260,7 +257,7 @@ public class JPADriftServerBeanTest extends AbstractDriftServerTest {
         driftDef.setResource(resource);
 
         // persist the change set and drift definition
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 EntityManager em = getEntityManager();

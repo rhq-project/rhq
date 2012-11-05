@@ -30,12 +30,10 @@ import javax.persistence.NoResultException;
 import javax.persistence.NonUniqueResultException;
 
 import org.apache.commons.io.FileUtils;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
@@ -47,10 +45,11 @@ import org.rhq.core.domain.shared.ResourceTypeBuilder;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
-import org.rhq.enterprise.server.util.ResourceTreeHelper;
 import org.rhq.enterprise.server.test.TransactionCallback;
+import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.ResourceTreeHelper;
 
-@Test(groups = "drift", sequential = true)
+@Test(groups = "drift")
 public abstract class AbstractDriftServerTest extends AbstractEJB3Test {
 
     protected final String RESOURCE_TYPE_NAME = getClass().getSimpleName() + "_RESOURCE_TYPE";
@@ -71,15 +70,38 @@ public abstract class AbstractDriftServerTest extends AbstractEJB3Test {
 
     protected Resource resource;
 
-    @BeforeMethod
-    public void initServices(Method testMethod) throws Exception {
+    // This is supposed to be an AfterClass method to do final cleanup, but Arquillian currently
+    // runs the entire Suite lifecycle on each test. So, Before/AfterXXX all act like Before/AfterMethod.
+    // So, it does nothing for now unless called from a superclass, and we simply leave junk in the DB. 
+    //@AfterClass
+    protected void afterClass() throws Exception {
+        purgeDB();
+        executeInTransaction(false, new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                purgeDB(getEntityManager());
+            }
+        });
+    }
+
+    @Override
+    protected void beforeMethod(Method testMethod) throws Exception {
+
         initDriftServer();
         initAgentServices();
 
         InitDB annotation = testMethod.getAnnotation(InitDB.class);
         if (annotation == null || annotation.value()) {
             initDB();
+        } else {
+            fetchDB();
         }
+    }
+
+    @Override
+    protected void afterMethod() throws Exception {
+        shutDownDriftServer();
+        shutDownAgentServices();
     }
 
     private void initDriftServer() throws Exception {
@@ -87,7 +109,7 @@ public abstract class AbstractDriftServerTest extends AbstractEJB3Test {
         prepareCustomServerPluginService(driftServerPluginService);
         driftServerPluginService.masterConfig.getPluginDirectory().mkdirs();
 
-        String projectVersion = System.getProperty("projectVersion");
+        String projectVersion = System.getProperty("project.version");
 
         File jpaDriftPlugin = new File("../plugins/drift-rhq/target/rhq-serverplugin-drift-" + projectVersion + ".jar");
         assertTrue("Drift server plugin JAR file not found at" + jpaDriftPlugin.getPath(), jpaDriftPlugin.exists());
@@ -103,12 +125,6 @@ public abstract class AbstractDriftServerTest extends AbstractEJB3Test {
         agentServiceContainer.driftService = new TestDefService();
     }
 
-    @AfterMethod
-    public void shutDownServices() throws Exception {
-        shutDownDriftServer();
-        shutDownAgentServices();
-    }
-
     private void shutDownDriftServer() throws Exception {
         unprepareServerPluginService();
         //already done by the above call
@@ -120,20 +136,9 @@ public abstract class AbstractDriftServerTest extends AbstractEJB3Test {
         unprepareForTestAgents();
     }
 
-    @AfterClass
-    public void cleanUpDB() throws Exception {
-        purgeDB();
-        executeInTransaction(new TransactionCallback() {
-            @Override
-            public void execute() throws Exception {
-                purgeDB(getEntityManager());
-            }
-        });
-    }
-
     private void initDB() throws Exception {
         purgeDB();
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 EntityManager em = getEntityManager();
@@ -151,8 +156,28 @@ public abstract class AbstractDriftServerTest extends AbstractEJB3Test {
         });
     }
 
+    private void fetchDB() throws Exception {
+        executeInTransaction(false, new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                ResourceCriteria c = new ResourceCriteria();
+                c.addFilterName(RESOURCE_NAME);
+                c.addFilterInventoryStatus(null);
+                resource = LookupUtil.getResourceManager().findResourcesByCriteria(getOverlord(), c).get(0);
+                resource = em.find(Resource.class, resource.getId());
+                resourceType = resource.getResourceType();
+                agent = resource.getAgent();
+
+                fetchDB(em);
+            }
+        });
+    }
+
+    protected void fetchDB(EntityManager em) throws Exception {
+    }
+
     private void purgeDB() {
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 EntityManager em = getEntityManager();
@@ -235,4 +260,5 @@ public abstract class AbstractDriftServerTest extends AbstractEJB3Test {
         }
         return null;
     }
+
 }

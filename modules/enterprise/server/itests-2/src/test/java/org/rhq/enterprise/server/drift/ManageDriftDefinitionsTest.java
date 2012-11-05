@@ -19,25 +19,6 @@
 
 package org.rhq.enterprise.server.drift;
 
-import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
-import org.rhq.core.domain.criteria.JPADriftChangeSetCriteria;
-import org.rhq.core.domain.drift.*;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
-import org.rhq.test.AssertUtils;
-import org.rhq.enterprise.server.test.TransactionCallback;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import javax.persistence.EntityManager;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import static java.util.Arrays.asList;
 import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
@@ -47,7 +28,38 @@ import static org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode.BO
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftTemplateManager;
 
-@Test(dependsOnGroups = "pinning")
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.persistence.EntityManager;
+
+import org.testng.annotations.Test;
+
+import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
+import org.rhq.core.domain.criteria.JPADriftChangeSetCriteria;
+import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftComplianceStatus;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition;
+import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.DriftDefinitionComparator;
+import org.rhq.core.domain.drift.DriftDefinitionTemplate;
+import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.JPADrift;
+import org.rhq.core.domain.drift.JPADriftChangeSet;
+import org.rhq.core.domain.drift.JPADriftFile;
+import org.rhq.core.domain.drift.JPADriftSet;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
+import org.rhq.enterprise.server.test.TransactionCallback;
+import org.rhq.test.AssertUtils;
+
+@Test
 public class ManageDriftDefinitionsTest extends AbstractDriftServerTest {
 
     private final String DRIFT_NOT_SUPPORTED_TYPE = getClass().getSimpleName() + "DRIFT_NOT_SUPPORTED_RESOURCE_TYPE";
@@ -62,8 +74,8 @@ public class ManageDriftDefinitionsTest extends AbstractDriftServerTest {
 
     private Resource driftNotSupportedResource;
 
-    @BeforeClass
-    public void initClass() throws Exception {
+    @Override
+    public void beforeMethod() throws Exception {
         driftMgr = getDriftManager();
         templateMgr = getDriftTemplateManager();
     }
@@ -189,7 +201,7 @@ public class ManageDriftDefinitionsTest extends AbstractDriftServerTest {
         final DriftDefinitionTemplate template = templateMgr.createTemplate(getOverlord(), resourceType.getId(), true,
             templateDef);
 
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 EntityManager em = getEntityManager();

@@ -24,13 +24,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import javax.management.MBeanServer;
-
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.server.agentclient.AgentClient;
-import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
 import org.rhq.enterprise.server.measurement.MeasurementConstants;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestAgentClient;
@@ -44,17 +41,7 @@ public class AbstractMeasurementScheduleManagerTest extends AbstractEJB3Test {
 
     @Override
     public TestServerCommunicationsService prepareForTestAgents() {
-        try {
-            MBeanServer mbs = getPlatformMBeanServer();
-            if (mbs.isRegistered(ServerCommunicationsServiceMBean.OBJECT_NAME)) {
-                mbs.unregisterMBean(ServerCommunicationsServiceMBean.OBJECT_NAME);
-            }
-            TestServerCommunicationsService testAgentContainer = new MeasurementScheduleTestServerCommunicationsService();
-            mbs.registerMBean(testAgentContainer, ServerCommunicationsServiceMBean.OBJECT_NAME);
-            return testAgentContainer;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return prepareForTestAgents(new MeasurementScheduleTestServerCommunicationsService());
     }
 
     public static class MeasurementScheduleTestServerCommunicationsService extends TestServerCommunicationsService {

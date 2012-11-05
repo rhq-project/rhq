@@ -31,8 +31,11 @@ import static org.rhq.server.metrics.DateTimeService.ONE_MONTH;
 import static org.rhq.server.metrics.DateTimeService.ONE_YEAR;
 import static org.rhq.server.metrics.DateTimeService.SEVEN_DAYS;
 import static org.rhq.server.metrics.DateTimeService.TWO_WEEKS;
+import static org.rhq.server.metrics.MetricsDAO.METRICS_INDEX_TABLE;
 import static org.rhq.server.metrics.MetricsDAO.ONE_HOUR_METRICS_TABLE;
+import static org.rhq.server.metrics.MetricsDAO.RAW_METRICS_TABLE;
 import static org.rhq.server.metrics.MetricsDAO.SIX_HOUR_METRICS_TABLE;
+import static org.rhq.server.metrics.MetricsDAO.TWENTY_FOUR_HOUR_METRICS_TABLE;
 import static org.rhq.server.metrics.MetricsServer.divide;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
@@ -48,12 +51,8 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.joda.time.Chronology;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeField;
-import org.joda.time.DateTimeFieldType;
-import org.joda.time.chrono.GregorianChronology;
-import org.joda.time.field.DividedDateTimeField;
+import org.joda.time.Minutes;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -155,9 +154,10 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 //        deleteAllRows(TRAITS_CF, IntegerSerializer.get());
 //        deleteAllRows(RESOURCE_TRAITS_CF, IntegerSerializer.get());
         Statement statement = connection.createStatement();
-        statement.executeUpdate("TRUNCATE " + RAW_METRIC_DATA_CF);
-        statement.executeUpdate("TRUNCATE " + ONE_HOUR_METRIC_DATA_CF);
-        statement.executeUpdate("TRUNCATE " + METRICS_INDEX);
+        statement.executeUpdate("TRUNCATE " + RAW_METRICS_TABLE);
+        statement.executeUpdate("TRUNCATE " + ONE_HOUR_METRICS_TABLE);
+        statement.executeUpdate("TRUNCATE " + SIX_HOUR_METRICS_TABLE);
+        statement.executeUpdate("TRUNCATE " + METRICS_INDEX_TABLE);
 
         statement.close();
     }
@@ -200,8 +200,8 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
         List<MetricsIndexEntry> expectedIndex = asList(new MetricsIndexEntry(ONE_HOUR_METRIC_DATA_CF,
             hour0.plusHours(4), scheduleId));
-            assertMetricsQueueEquals(ONE_HOUR_METRIC_DATA_CF, expectedIndex, "Failed to update index for " +
-            ONE_HOUR_METRIC_DATA_CF);
+            assertMetricsIndexEquals(ONE_HOUR_METRIC_DATA_CF, expectedIndex, "Failed to update index for " +
+                ONE_HOUR_METRIC_DATA_CF);
     }
 
     @Test//(enabled = ENABLED)
@@ -267,13 +267,14 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         // verify that 6 hour metric data is updated
         assertMetricDataEquals(SIX_HOUR_METRICS_TABLE, scheduleId, asList(new AggregatedNumericMetric(scheduleId,
             divide((3.9 + 3.2 + 2.6), 3), 2.6, 3.9, hour0.getMillis())));
+
+        // TODO verify that 24 hour data is *not* updated
     }
 
-    @Test(enabled = ENABLED)
+    @Test//(enabled = ENABLED)
     public void aggregateRawDataDuring9thHour() {
         int scheduleId = 123;
 
-        DateTime now = new DateTime();
         DateTime hour0 = hour0();
         DateTime hour9 = hour0.plusHours(9);
         DateTime hour8 = hour9.minusHours(1);
@@ -286,57 +287,62 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         double secondValue = 2.2;
         double thirdValue = 3.3;
 
-        // insert raw data to be aggregated
-        Mutator<Integer> rawMetricsMutator = HFactory.createMutator(keyspace, IntegerSerializer.get());
-        rawMetricsMutator.addInsertion(scheduleId, RAW_METRIC_DATA_CF, createRawDataColumn(firstMetricTime,
-            firstValue));
-        rawMetricsMutator.addInsertion(scheduleId, RAW_METRIC_DATA_CF,
-            createRawDataColumn(secondMetricTime, secondValue));
-        rawMetricsMutator.addInsertion(scheduleId, RAW_METRIC_DATA_CF, createRawDataColumn(thirdMetricTime,
-            thirdValue));
+        Set<MeasurementDataNumeric> rawMetrics = new HashSet<MeasurementDataNumeric>();
+        rawMetrics.add(new MeasurementDataNumeric(firstMetricTime.getMillis(), scheduleId, firstValue));
+        rawMetrics.add(new MeasurementDataNumeric(secondMetricTime.getMillis(), scheduleId, secondValue));
+        rawMetrics.add(new MeasurementDataNumeric(thirdMetricTime.getMillis(), scheduleId, thirdValue));
 
-        rawMetricsMutator.execute();
+        MetricsDAO dao = new MetricsDAO(dataSource);
+        Set<MeasurementDataNumeric> insertedRawMetrics = dao.insertRawMetrics(rawMetrics);
+        metricsServer.updateMetricsIndex(insertedRawMetrics);
+
+        // insert raw data to be aggregated
+//        Mutator<Integer> rawMetricsMutator = HFactory.createMutator(keyspace, IntegerSerializer.get());
+//        rawMetricsMutator.addInsertion(scheduleId, RAW_METRIC_DATA_CF, createRawDataColumn(firstMetricTime,
+//            firstValue));
+//        rawMetricsMutator.addInsertion(scheduleId, RAW_METRIC_DATA_CF,
+//            createRawDataColumn(secondMetricTime, secondValue));
+//        rawMetricsMutator.addInsertion(scheduleId, RAW_METRIC_DATA_CF, createRawDataColumn(thirdMetricTime,
+//            thirdValue));
+//
+//        rawMetricsMutator.execute();
 
         // update the one hour queue
-        Mutator<String> queueMutator = HFactory.createMutator(keyspace, StringSerializer.get());
-        Composite key = createQueueColumnName(hour8, scheduleId);
-        HColumn<Composite, Integer> oneHourQueueColumn = HFactory.createColumn(key, 0, CompositeSerializer.get(),
-            IntegerSerializer.get());
-        queueMutator.addInsertion(ONE_HOUR_METRIC_DATA_CF, METRICS_INDEX, oneHourQueueColumn);
-
-        queueMutator.execute();
+//        Mutator<String> queueMutator = HFactory.createMutator(keyspace, StringSerializer.get());
+//        Composite key = createQueueColumnName(hour8, scheduleId);
+//        HColumn<Composite, Integer> oneHourQueueColumn = HFactory.createColumn(key, 0, CompositeSerializer.get(),
+//            IntegerSerializer.get());
+//        queueMutator.addInsertion(ONE_HOUR_METRIC_DATA_CF, METRICS_INDEX, oneHourQueueColumn);
+//
+//        queueMutator.execute();
 
         metricsServer.setCurrentHour(hour9);
         metricsServer.calculateAggregates();
 
         // verify that the 1 hour aggregates are calculated
-
-        assert1HourDataEquals(scheduleId, asList(
-            create1HourColumn(hour8, AggregateType.MAX, thirdValue),
-            create1HourColumn(hour8, AggregateType.MIN, firstValue),
-            create1HourColumn(hour8, AggregateType.AVG, (firstValue + secondValue + thirdValue) / 3)
+        assertMetricDataEquals(ONE_HOUR_METRICS_TABLE, scheduleId, asList(
+            new AggregatedNumericMetric(scheduleId, divide((1.1 + 2.2 + 3.3), 3), firstValue, thirdValue,
+                hour8.getMillis())
         ));
 
-        Chronology chronology = GregorianChronology.getInstance();
-        DateTimeField hourField = chronology.hourOfDay();
-        DividedDateTimeField dividedField = new DividedDateTimeField(hourField, DateTimeFieldType.clockhourOfDay(), 6);
-        long timestamp = dividedField.roundFloor(hour9.getMillis());
-        DateTime sixHourSlice = new DateTime(timestamp);
+        // verify that the 6 hour index is updated
+        DateTimeService dateTimeService = new DateTimeService();
+        List<MetricsIndexEntry> expected6HourIndex = asList(new MetricsIndexEntry(SIX_HOUR_METRICS_TABLE,
+            dateTimeService.getTimeSlice(hour9, Minutes.minutes(60 * 6)), scheduleId));
 
-        // verify that the 6 hour queue is updated
-        assert6HourMetricsQueueEquals(asList(HFactory.createColumn(createQueueColumnName(sixHourSlice, scheduleId), 0,
-            CompositeSerializer.get(), IntegerSerializer.get())));
+        assertMetricsIndexEquals(SIX_HOUR_METRICS_TABLE, expected6HourIndex, "Failed to update index for " +
+            SIX_HOUR_METRICS_TABLE);
 
         // The 6 hour data should not get aggregated since the current 6 hour time slice
         // has not passed yet. More specifically, the aggregation job is running at 09:00
         // which means that the current 6 hour slice is from 06:00 to 12:00.
         assert6HourDataEmpty(scheduleId);
 
-        // verify that the 24 hour queue is empty
-        assert24HourMetricsQueueEmpty(scheduleId);
+        // verify that the 24 hour index is empty
+        assert24HourMetricsIndexEmpty(scheduleId);
 
         // verify that the 1 hour queue has been purged
-        assert1HourMetricsQueueEmpty(scheduleId);
+        assert1HourMetricsIndexEmpty(scheduleId);
     }
 
     @Test(enabled = ENABLED)
@@ -398,7 +404,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         ));
 
         // verify that the 6 hour queue has been updated
-        assert6HourMetricsQueueEmpty(scheduleId);
+        assert6HourMetricsIndexEmpty(scheduleId);
 
         // verify that the 24 hour queue is updated
         assert24HourMetricsQueueEquals(asList(HFactory.createColumn(createQueueColumnName(hour0, scheduleId), 0,
@@ -465,7 +471,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         ));
 
         // verify that the 24 hour queue is updated
-        assert24HourMetricsQueueEmpty(scheduleId);
+        assert24HourMetricsIndexEmpty(scheduleId);
     }
 
     @Test(enabled = ENABLED)
@@ -736,7 +742,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         }
     }
 
-    private void assertMetricsQueueEquals(String columnFamily, List<MetricsIndexEntry> expected, String msg) {
+    private void assertMetricsIndexEquals(String columnFamily, List<MetricsIndexEntry> expected, String msg) {
         Statement statement = null;
         ResultSet resultSet = null;
         try {
@@ -814,7 +820,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     }
 
     private void assert6HourDataEmpty(int scheduleId) {
-        assertMetricDataEmpty(scheduleId, SIX_HOUR_METRIC_DATA_CF);
+        assertMetricDataEmpty(scheduleId, SIX_HOUR_METRICS_TABLE);
     }
 
     private void assert24HourDataEmpty(int scheduleId) {
@@ -822,72 +828,80 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     }
 
     private void assertMetricDataEmpty(int scheduleId, String columnFamily) {
-        SliceQuery<Integer, Composite, Double> query = HFactory.createSliceQuery(keyspace, IntegerSerializer.get(),
-            CompositeSerializer.get(), DoubleSerializer.get());
-        query.setColumnFamily(columnFamily);
-        query.setKey(scheduleId);
+//        SliceQuery<Integer, Composite, Double> query = HFactory.createSliceQuery(keyspace, IntegerSerializer.get(),
+//            CompositeSerializer.get(), DoubleSerializer.get());
+//        query.setColumnFamily(columnFamily);
+//        query.setKey(scheduleId);
+//
+//        ColumnSliceIterator<Integer, Composite, Double> iterator = new ColumnSliceIterator<Integer, Composite, Double>(
+//            query, (Composite) null, (Composite) null, false);
+//
+//        List<HColumn<Composite, Double>> actual = new ArrayList<HColumn<Composite, Double>>();
+//        while (iterator.hasNext()) {
+//            actual.add(iterator.next());
+//        }
+//
+//        String prefix;
+//        if (columnFamily.equals(ONE_HOUR_METRIC_DATA_CF)) {
+//            prefix = "The one hour data for schedule id " + scheduleId + " is wrong.";
+//        } else if (columnFamily.equals(SIX_HOUR_METRIC_DATA_CF)) {
+//            prefix = "The six hour data for schedule id " + scheduleId + " is wrong.";
+//        } else if (columnFamily.equals(TWENTY_FOUR_HOUR_METRIC_DATA_CF)) {
+//            prefix = "The twenty-four hour data for schedule id " + scheduleId + " is wrong.";
+//        } else {
+//            throw new IllegalArgumentException(columnFamily + " is not a recognized column family");
+//        }
+//
+//        assertEquals(actual.size(), 0, prefix + " Expected the row to be empty.");
+        MetricsDAO dao = new MetricsDAO(dataSource);
+        List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(columnFamily, scheduleId);
 
-        ColumnSliceIterator<Integer, Composite, Double> iterator = new ColumnSliceIterator<Integer, Composite, Double>(
-            query, (Composite) null, (Composite) null, false);
-
-        List<HColumn<Composite, Double>> actual = new ArrayList<HColumn<Composite, Double>>();
-        while (iterator.hasNext()) {
-            actual.add(iterator.next());
-        }
-
-        String prefix;
-        if (columnFamily.equals(ONE_HOUR_METRIC_DATA_CF)) {
-            prefix = "The one hour data for schedule id " + scheduleId + " is wrong.";
-        } else if (columnFamily.equals(SIX_HOUR_METRIC_DATA_CF)) {
-            prefix = "The six hour data for schedule id " + scheduleId + " is wrong.";
-        } else if (columnFamily.equals(TWENTY_FOUR_HOUR_METRIC_DATA_CF)) {
-            prefix = "The twenty-four hour data for schedule id " + scheduleId + " is wrong.";
-        } else {
-            throw new IllegalArgumentException(columnFamily + " is not a recognized column family");
-        }
-
-        assertEquals(actual.size(), 0, prefix + " Expected the row to be empty.");
+        assertEquals(metrics.size(), 0, "Expected " + columnFamily + " to be empty for schedule id " + scheduleId +
+            " but found " + metrics);
     }
 
-    private void assert1HourMetricsQueueEmpty(int scheduleId) {
-        assertMetricsQueueEmpty(scheduleId, ONE_HOUR_METRIC_DATA_CF);
+    private void assert1HourMetricsIndexEmpty(int scheduleId) {
+        assertMetricsIndexEmpty(scheduleId, ONE_HOUR_METRICS_TABLE);
     }
 
-    private void assert6HourMetricsQueueEmpty(int scheduleId) {
-        assertMetricsQueueEmpty(scheduleId, SIX_HOUR_METRIC_DATA_CF);
+    private void assert6HourMetricsIndexEmpty(int scheduleId) {
+        assertMetricsIndexEmpty(scheduleId, SIX_HOUR_METRICS_TABLE);
     }
 
-    private void assert24HourMetricsQueueEmpty(int scheduleId) {
-        assertMetricsQueueEmpty(scheduleId, TWENTY_FOUR_HOUR_METRIC_DATA_CF);
+    private void assert24HourMetricsIndexEmpty(int scheduleId) {
+        assertMetricsIndexEmpty(scheduleId, TWENTY_FOUR_HOUR_METRICS_TABLE);
     }
 
-    private void assertMetricsQueueEmpty(int scheduleId, String columnFamily) {
-        SliceQuery<String,Composite, Integer> sliceQuery = HFactory.createSliceQuery(keyspace, StringSerializer.get(),
-            new CompositeSerializer().get(), IntegerSerializer.get());
-        sliceQuery.setColumnFamily(METRICS_INDEX);
-        sliceQuery.setKey(columnFamily);
+    private void assertMetricsIndexEmpty(int scheduleId, String table) {
+//        SliceQuery<String,Composite, Integer> sliceQuery = HFactory.createSliceQuery(keyspace, StringSerializer.get(),
+//            new CompositeSerializer().get(), IntegerSerializer.get());
+//        sliceQuery.setColumnFamily(METRICS_INDEX);
+//        sliceQuery.setKey(columnFamily);
+//
+//        ColumnSliceIterator<String, Composite, Integer> iterator = new ColumnSliceIterator<String, Composite, Integer>(
+//            sliceQuery, (Composite) null, (Composite) null, false);
+//
+//        List<HColumn<Composite, Integer>> actual = new ArrayList<HColumn<Composite, Integer>>();
+//        while (iterator.hasNext()) {
+//            actual.add(iterator.next());
+//        }
+//
+//        String queueName;
+//        if (columnFamily.equals(ONE_HOUR_METRIC_DATA_CF)) {
+//            queueName = "1 hour";
+//        } else if (columnFamily.equals(SIX_HOUR_METRIC_DATA_CF)) {
+//            queueName = "6 hour";
+//        } else if (columnFamily.equals(TWENTY_FOUR_HOUR_METRIC_DATA_CF)) {
+//            queueName = "24 hour";
+//        } else {
+//            throw new IllegalArgumentException(columnFamily + " is not a recognized metric data column family.");
+//        }
 
-        ColumnSliceIterator<String, Composite, Integer> iterator = new ColumnSliceIterator<String, Composite, Integer>(
-            sliceQuery, (Composite) null, (Composite) null, false);
-
-        List<HColumn<Composite, Integer>> actual = new ArrayList<HColumn<Composite, Integer>>();
-        while (iterator.hasNext()) {
-            actual.add(iterator.next());
-        }
-
-        String queueName;
-        if (columnFamily.equals(ONE_HOUR_METRIC_DATA_CF)) {
-            queueName = "1 hour";
-        } else if (columnFamily.equals(SIX_HOUR_METRIC_DATA_CF)) {
-            queueName = "6 hour";
-        } else if (columnFamily.equals(TWENTY_FOUR_HOUR_METRIC_DATA_CF)) {
-            queueName = "24 hour";
-        } else {
-            throw new IllegalArgumentException(columnFamily + " is not a recognized metric data column family.");
-        }
-
-        assertEquals(actual.size(), 0, "Expected the " + queueName + " queue to be empty for schedule id " +
-            scheduleId);
+//        assertEquals(actual.size(), 0, "Expected the " + queueName + " queue to be empty for schedule id " +
+//            scheduleId);
+        MetricsDAO dao = new MetricsDAO(dataSource);
+        List<MetricsIndexEntry> index = dao.findMetricsIndexEntries(table);
+        assertEquals(index.size(), 0, "Expected metrics index for " + table + " to be empty but found " + index);
     }
 
     private Integer getScheduleId(Composite composite) {

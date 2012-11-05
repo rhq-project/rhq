@@ -278,7 +278,7 @@ public class MetricsServer {
         updateMetricsIndex(updates);
     }
 
-    private void updateMetricsIndex(Set<MeasurementDataNumeric> rawMetrics) {
+    void updateMetricsIndex(Set<MeasurementDataNumeric> rawMetrics) {
         MetricsDAO dao = new MetricsDAO(cassandraDS);
         Map<Integer, DateTime> updates = new TreeMap<Integer, DateTime>();
         for (MeasurementDataNumeric rawMetric : rawMetrics) {
@@ -290,14 +290,20 @@ public class MetricsServer {
     public void calculateAggregates() {
         MetricsDAO dao = new MetricsDAO(cassandraDS);
 
+        // We first query the metrics index table to determine which schedules have data to
+        // be aggregated. Then we retrieve the metric data and aggregate or compress the
+        // data, writing the compressed values into the next wider (i.e., longer life span
+        // for data) bucket/table. At this point we remove the index entries for the data
+        // that has already been processed. We currently purge the entire row in the index
+        // table. We can safely do this entire work flow is single threaded. It might make
+        // sense to perform the deletes in a more granular fashion to avoid concurrency
+        // issues in the future. The last step in the work flow is to update the metrics
+        // index for the newly persisted aggregates.
+
         List<AggregatedNumericMetric> updatedSchedules = aggregateRawData();
+        dao.deleteMetricsIndexEntries(ONE_HOUR_METRICS_TABLE);
         updateMetricsIndex(SIX_HOUR_METRICS_TABLE, updatedSchedules, Minutes.minutes(60 * 6));
-//        for (Integer scheduleId : updatedSchedules.keySet()) {
-//            DateTime dateTime = updatedSchedules.get(scheduleId);
-//            updatedSchedules.put(scheduleId, dateTimeService.getTimeSlice(dateTime, Minutes.minutes(60 * 6)));
-//        }
-//        dao.updateMetricsIndex(SIX_HOUR_METRICS_TABLE, updatedSchedules);
-//
+
 //        updatedSchedules = calculateAggregates(oneHourMetricsDataCF, sixHourMetricsDataCF, Minutes.minutes(60 * 6),
 //            Hours.hours(24).toStandardMinutes(), DateTimeService.ONE_MONTH);
         updatedSchedules = calculateAggregates(oneHourMetricsDataCF, sixHourMetricsDataCF, Minutes.minutes(60),
@@ -384,7 +390,6 @@ public class MetricsServer {
             double max = min;
             double sum = 0;
             int count = 0;
-            double value;
 
             for (AggregatedNumericMetric metric : metrics) {
                 if (count == 0) {
@@ -405,10 +410,6 @@ public class MetricsServer {
         }
 
         List<AggregatedNumericMetric> updatedSchedules = dao.insertAggregates(toColumnFamily, toMetrics);
-//        for (Integer scheduleId : updatedSchedules.keySet()) {
-//            DateTime dateTime = updatedSchedules.get(scheduleId);
-//            updatedSchedules.put(scheduleId, dateTimeService.getTimeSlice(dateTime, nextInterval));
-//        }
         return updatedSchedules;
 
 //        SliceQuery<String, Composite, Integer> queueQuery = HFactory.createSliceQuery(keyspace, StringSerializer.get(),

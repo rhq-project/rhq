@@ -299,4 +299,21 @@ public class MetricsDAO {
         }
     }
 
+    public void deleteMetricsIndexEntries(String table) {
+        Connection connection = null;
+        Statement statement = null;
+        try {
+            connection = dataSource.getConnection();
+            statement = connection.createStatement();
+
+            String sql = "DELETE FROM " + METRICS_INDEX_TABLE + " WHERE bucket = '" + table + "'";
+            statement.executeUpdate(sql);
+        } catch (SQLException e) {
+            throw new CQLException(e);
+        } finally {
+            JDBCUtil.safeClose(statement);
+            JDBCUtil.safeClose(connection);
+        }
+    }
+
 }

@@ -26,7 +26,6 @@
 package org.rhq.server.metrics;
 
 import static java.util.Arrays.asList;
-import static org.joda.time.DateTime.now;
 import static org.rhq.server.metrics.MetricsDAO.METRICS_INDEX_TABLE;
 import static org.rhq.server.metrics.MetricsDAO.ONE_HOUR_METRICS_TABLE;
 import static org.rhq.server.metrics.MetricsDAO.RAW_METRICS_TABLE;
@@ -71,7 +70,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
     public void insertAndFindRawMetrics() {
         int scheduleId = 123;
 
-        DateTime hour0 = now().hourOfDay().roundFloorCopy().minusHours(now().hourOfDay().get());
+        DateTime hour0 = hour0();
         DateTime currentTime = hour0.plusHours(4).plusMinutes(44);
         DateTime currentHour = currentTime.hourOfDay().roundFloorCopy();
         DateTime threeMinutesAgo = currentTime.minusMinutes(3);
@@ -108,7 +107,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
     @Test
     public void insertAndFindAllOneHourMetrics() {
         int scheduleId = 123;
-        DateTime hour0 = now().hourOfDay().roundFloorCopy().minusHours(now().hourOfDay().get());
+        DateTime hour0 = hour0();
 
         MetricsDAO dao = new MetricsDAO(dataSource);
         List<AggregatedNumericMetric> metrics = asList(
@@ -133,7 +132,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
     @Test
     public void findRangeOfOneHourMetrics() {
         int scheduledId = 123;
-        DateTime hour0 = now().hourOfDay().roundFloorCopy().minusHours(now().hourOfDay().get());
+        DateTime hour0 = hour0();
 
         MetricsDAO dao = new MetricsDAO(dataSource);
         dao.insertAggregates(ONE_HOUR_METRICS_TABLE, asList(
@@ -159,7 +158,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
     @Test
     public void updateAndFindOneHourIndexEntries() {
-        DateTime hour0 = now().hourOfDay().roundFloorCopy().minusHours(now().hourOfDay().get());
+        DateTime hour0 = hour0();
 
         Map<Integer, DateTime> updates = new HashMap<Integer, DateTime>();
         updates.put(100, hour0);
@@ -172,6 +171,23 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         List<MetricsIndexEntry> expected = asList(new MetricsIndexEntry(ONE_HOUR_METRICS_TABLE, hour0, 100),
             new MetricsIndexEntry(ONE_HOUR_METRICS_TABLE, hour0, 101));
         assertCollectionMatchesNoOrder(expected, actual, "Failed to update or retrieve metrics index entries");
+    }
+
+    @Test
+    public void purge1HourMetricsIndex() {
+        Map<Integer, DateTime> updates = new HashMap<Integer, DateTime>();
+        updates.put(100, hour0());
+        updates.put(101, hour0());
+        updates.put(100, hour0().plusHours(1));
+        updates.put(101, hour0().plusHours(1));
+
+        MetricsDAO dao = new MetricsDAO(dataSource);
+        dao.updateMetricsIndex(ONE_HOUR_METRICS_TABLE, updates);
+        dao.deleteMetricsIndexEntries(ONE_HOUR_METRICS_TABLE);
+
+        List<MetricsIndexEntry> index = dao.findMetricsIndexEntries(ONE_HOUR_METRICS_TABLE);
+        assertEquals(index.size(), 0, "Expected index for " + ONE_HOUR_METRICS_TABLE + " to be empty but found " +
+            index);
     }
 
 }

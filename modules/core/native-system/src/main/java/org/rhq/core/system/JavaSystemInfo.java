@@ -30,6 +30,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
 
 import org.hyperic.sigar.Mem;
 import org.hyperic.sigar.NetConnection;
@@ -48,6 +49,19 @@ import org.rhq.core.util.exec.ProcessToStart;
  * @author John Mazzitelli
  */
 public class JavaSystemInfo implements SystemInfo {
+
+    private final ProcessExecutor javaExec;
+
+    /**
+     * Constructor for {@link JavaSystemInfo} with package scope so only the {@link SystemInfoFactory} can instantiate
+     * this object.
+     *
+     * @param threadPool executor thread pool used for managing sub processes
+     */
+    JavaSystemInfo(ExecutorService threadPool) {
+        javaExec = new ProcessExecutor(threadPool);
+    }
+
     /**
      * Returns <code>false</code> - this implementation relies solely on the Java API to get all the system information
      * it can.
@@ -194,7 +208,6 @@ public class JavaSystemInfo implements SystemInfo {
             executionResults.setCapturedOutputStream(outputStream);
         }
 
-        ProcessExecutor javaExec = new ProcessExecutor();
         ProcessExecutorResults javaExecResults = javaExec.execute(process);
         executionResults.setExitCode(javaExecResults.getExitCode());
         executionResults.setError(javaExecResults.getError());
@@ -288,13 +301,6 @@ public class JavaSystemInfo implements SystemInfo {
 
     public List<NetConnection> getNetworkConnections(String addressName, int port) {
         throw getUnsupportedException("Cannot get network connections");
-    }
-
-    /**
-     * Constructor for {@link JavaSystemInfo} with package scope so only the {@link SystemInfoFactory} can instantiate
-     * this object.
-     */
-    JavaSystemInfo() {
     }
 
     private UnsupportedOperationException getUnsupportedException(Exception e) {

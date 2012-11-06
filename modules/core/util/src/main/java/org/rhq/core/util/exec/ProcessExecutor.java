@@ -34,6 +34,7 @@ import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -43,7 +44,8 @@ import java.util.concurrent.TimeoutException;
 import org.rhq.core.util.UtilI18NResourceKeys;
 
 /**
- * Executes a process using 100% Java API.
+ * Executes processes using the Java API.
+ * This instance is thread safe and can be reused.
  *
  * <p><b>Warning: caution should be exercised when using this class - it allows any process to be started with no
  * security restrictions.</b></p>
@@ -52,7 +54,26 @@ import org.rhq.core.util.UtilI18NResourceKeys;
  */
 public class ProcessExecutor {
 
-    private static ExecutorService threadPool = Executors.newCachedThreadPool();
+    /**
+     * A thread pool for executing processes.
+     * Although it would make sense to have this 'static', it mucks up RHQ Agent cleanup.
+     * Far better is to keep a reference to this instance.
+     */
+    private final ExecutorService threadPool;
+
+    /**
+     * Constructs with a thread pool which executes tasks.
+     */
+    public ProcessExecutor(ExecutorService threadPool) {
+        this.threadPool = threadPool;
+    }
+
+    /**
+     * Constructs using a new, cached thread pool.
+     */
+    public ProcessExecutor() {
+        this(Executors.newCachedThreadPool());
+    }
 
     /**
      * This executes any operating system process as described in the given start command. When this method returns, it
@@ -147,10 +168,10 @@ public class ProcessExecutor {
      */
     protected static class RedirectThreads {
 
-        private final StreamRedirector stdout;
-        private final StreamRedirector stderr;
+        private final Future<?> stdout;
+        private final Future<?> stderr;
 
-        private RedirectThreads(StreamRedirector stdout, StreamRedirector stderr) {
+        private RedirectThreads(Future<?> stdout, Future<?> stderr) {
             this.stdout = stdout;
             this.stderr = stderr;
         }
@@ -158,17 +179,17 @@ public class ProcessExecutor {
         /**
          * Waits for output to be fully captured.
          */
-        public void join() throws InterruptedException {
-            stderr.join();
-            stdout.join();
+        public void join() throws InterruptedException, ExecutionException {
+            stderr.get();
+            stdout.get();
         }
 
         /**
          * Interrupts these threads.
          */
         public void interrupt() {
-            stderr.interrupt();
-            stdout.interrupt();
+            stderr.cancel(true);
+            stdout.cancel(true);
         }
 
     }
@@ -222,8 +243,8 @@ public class ProcessExecutor {
         StreamRedirector stdoutThread = new StreamRedirector(threadNamePrefix + "-stdout", stdout, fileOutputStream);
         StreamRedirector stderrThread = new StreamRedirector(threadNamePrefix + "-stderr", stderr, fileOutputStream);
 
-        stdoutThread.start();
-        stderrThread.start();
+        Future<?> out = threadPool.submit(stdoutThread);
+        Future<?> err = threadPool.submit(stderrThread);
 
         // if an input file was specified, take the file's data and write it to the process' stdin
         File inputFile = getInputFile(process);
@@ -245,7 +266,7 @@ public class ProcessExecutor {
 
         stdin.close();
 
-        return new RedirectThreads(stdoutThread, stderrThread);
+        return new RedirectThreads(out, err);
     }
 
     /**

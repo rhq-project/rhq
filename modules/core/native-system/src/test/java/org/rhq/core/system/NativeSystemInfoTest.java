@@ -305,7 +305,7 @@ public class NativeSystemInfoTest {
      */
     @Test(enabled = ENABLED)
     public void testJava() {
-        processJavaSystemInfo(new JavaSystemInfo());
+        processJavaSystemInfo(SystemInfoFactory.createJavaSystemInfo());
     }
 
     /**

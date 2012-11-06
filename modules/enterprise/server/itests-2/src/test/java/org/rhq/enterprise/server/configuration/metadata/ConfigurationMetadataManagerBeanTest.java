@@ -33,7 +33,6 @@ import java.util.Map;
 import javax.persistence.EntityManager;
 import javax.transaction.SystemException;
 
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
@@ -70,14 +69,19 @@ public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
 
     ConfigurationDefinition updatedConfigDef;
 
-    @BeforeClass
-    public void setupClass() {
+    //@BeforeClass don't use BeforeClass as Arquillian 1.0.2 invokes it on every test method
+    protected void beforeClass() {
         String pluginFileBaseName = "configuration_metadata_manager_bean_test";
         String version1 = pluginFileBaseName + "_v1.xml";
         String version2 = pluginFileBaseName + "_v2.xml";
 
         originalDescriptor = loadPluginDescriptor(getClass().getResource(version1));
         updatedDescriptor = loadPluginDescriptor(getClass().getResource(version2));
+    }
+
+    @Override
+    protected void beforeMethod() {
+        beforeClass();
     }
 
     @Test(enabled = ENABLED)

@@ -28,9 +28,6 @@ import java.util.Set;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
@@ -141,21 +138,23 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
 
     // Setup  --------------------------------------------
 
-    @BeforeClass
-    public void setupBeforeClass() throws Exception {
+    //@BeforeClass don't use BeforeClass as Arquillian 1.0.2 invokes it on every test method
+    protected void beforeClass() throws Exception {
         contentManager = LookupUtil.getContentManager();
         subjectManager = LookupUtil.getSubjectManager();
 
         populateResponseSteps();
     }
 
-    @BeforeMethod
-    public void setupBeforeMethod() throws Exception {
+    @Override
+    protected void beforeMethod() throws Exception {
+        beforeClass();
+
         setupTestEnvironment();
     }
 
-    @AfterMethod(alwaysRun = true)
-    public void tearDownAfterMethod() throws Exception {
+    @Override
+    protected void afterMethod() throws Exception {
         tearDownTestEnvironment();
     }
 

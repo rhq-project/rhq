@@ -26,10 +26,8 @@ import java.util.Random;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
-import javax.transaction.TransactionManager;
+import javax.transaction.Status;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -49,6 +47,7 @@ import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerPluginService;
+import org.rhq.enterprise.server.test.TransactionCallbackReturnable;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -80,8 +79,8 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
     private TestServerPluginService testServerPluginService;
 
-    @BeforeMethod
-    public void beforeMethod() {
+    @Override
+    protected void beforeMethod() {
         try {
             prepareScheduler();
 
@@ -103,8 +102,8 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         }
     }
 
-    @AfterMethod
-    public void afterMethod() throws Exception {
+    @Override
+    protected void afterMethod() throws Exception {
         try {
             if (theResource != null) {
                 // perform in-band and out-of-band work in quick succession
@@ -155,11 +154,11 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         Long middle = now - 30000; // 30s ago
         Long then = now - 60000; // 60s ago
 
-        EntityManager em = beginTx();
+        beginTx();
 
         try {
             setupResource(em);
-            commitAndClose(em);
+            commitAndClose();
 
             Availability aThen = new Availability(theResource, then, UP);
             aThen.setEndTime(middle);
@@ -183,7 +182,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             persistAvailability(aMiddle);
             // UNKNOWN(0) --> UP(-60000) --> DOWN(-30000)
 
-            em = beginTx();
+            beginTx();
             Query q = em.createNamedQuery(Availability.FIND_BY_RESOURCE);
             q.setParameter("resourceId", theResource.getId());
             List<Availability> avails = q.getResultList();
@@ -194,9 +193,8 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             e.printStackTrace();
             throw e;
         } finally {
-            if (em != null) {
+            if (Status.STATUS_ACTIVE == getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
-                em.close();
             }
         }
     }
@@ -208,11 +206,11 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         Long middle = now - 30000; // 30s ago
         Long then = now - 60000; // 60s ago
 
-        EntityManager em = beginTx();
+        beginTx();
 
         try {
             setupResource(em);
-            commitAndClose(em);
+            commitAndClose();
 
             Availability aThen = new Availability(theResource, then, UP);
 
@@ -229,7 +227,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             persistAvailability(aNow);
             // UNKNOWN(0) --> UP(-60000) --> DOWN(-30000) --> UP(NOW) -->            
 
-            em = beginTx();
+            beginTx();
 
             int purged = availabilityManager.purgeAvailabilities(now - 29999); // keeps aMiddle and aNow
             assert purged == 2 : "Didn't purge 2 --> " + purged;
@@ -264,16 +262,15 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             e.printStackTrace();
             throw e;
         } finally {
-            if (em != null) {
+            if (Status.STATUS_ACTIVE == getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
-                em.close();
             }
         }
     }
 
     @Test(enabled = ENABLE_TESTS)
     public void testGetAvailabilities() throws Exception {
-        EntityManager em = beginTx();
+        beginTx();
 
         try {
             List<AvailabilityPoint> availPoints;
@@ -281,8 +278,8 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
             setupResource(em);
             // platform: UNKNOWN(0) -->             
-            commitAndClose(em);
-            em = null;
+            commitAndClose();
+
 
             AvailabilityReport report = new AvailabilityReport(false, theAgent.getName());
 
@@ -420,21 +417,20 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             e.printStackTrace();
             throw e;
         } finally {
-            if (em != null) {
+            if (Status.STATUS_ACTIVE == getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
-                em.close();
             }
         }
     }
 
     @Test(enabled = ENABLE_TESTS)
     public void testSetAllAgentResourceAvailabilities() throws Exception {
-        EntityManager em = beginTx();
+        beginTx();
 
         try {
             setupResource(em);
-            commitAndClose(em);
-            em = null;
+            commitAndClose();
+
 
             // setAllAgentResourceAvails will only operate on those that have at least 1 avail row
             Availability avail = new Availability(theResource, UNKNOWN);
@@ -451,27 +447,26 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             e.printStackTrace();
             throw e;
         } finally {
-            if (em != null) {
+            if (Status.STATUS_ACTIVE == getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
-                em.close();
             }
         }
     }
 
     @Test(enabled = ENABLE_TESTS)
     public void testAgentBackfillNewResource() throws Exception {
-        EntityManager em = beginTx();
+        beginTx();
 
         try {
             setupResource(em);
-            commitAndClose(em);
-            em = null;
+            commitAndClose();
+
 
             // have never heard from the new agent yet - we do not backfill anything in this case
             LookupUtil.getAgentManager().checkForSuspectAgents();
             assert availabilityManager.getCurrentAvailabilityTypeForResource(overlord, theResource.getId()) == UNKNOWN;
 
-            em = beginTx();
+            beginTx();
             Resource resource = em.find(Resource.class, theResource.getId());
             List<Availability> avails = resource.getAvailability();
             assert avails != null;
@@ -480,23 +475,22 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             e.printStackTrace();
             throw e;
         } finally {
-            if (em != null) {
+            if (Status.STATUS_ACTIVE == getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
-                em.close();
             }
         }
     }
 
     @Test(enabled = ENABLE_TESTS)
     public void testAgentBackfill() throws Exception {
-        EntityManager em = beginTx();
+        beginTx();
 
         try {
             prepareForTestAgents();
 
             setupResource(em);
-            commitAndClose(em);
-            em = null;
+            commitAndClose();
+
 
             // add a report that says the resource was up 20 minutes ago
             Availability avail = new Availability(theResource, (System.currentTimeMillis() - 12000000), UP);
@@ -508,11 +502,11 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             assert availabilityManager.getCurrentAvailabilityTypeForResource(overlord, theResource.getId()) == UP;
 
             // let's pretend we haven't heard from the agent in a few minutes
-            em = beginTx();
+            beginTx();
             Agent agent = em.find(Agent.class, theAgent.getId());
             agent.setLastAvailabilityPing(System.currentTimeMillis() - (1000 * 60 * 18)); // 18 mins
-            commitAndClose(em);
-            em = null;
+            commitAndClose();
+
 
             // the agent should be suspect and will be considered down, the platform resource should be down
             // (although children should be UNKNOWN)
@@ -523,12 +517,12 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             assert curAvail == DOWN : curAvail;
 
             // make sure our resource's new availabilities are consistent (first (UNKNOWN) , second (UP), third (DOWN))
-            em = beginTx();
+            beginTx();
             Resource resource = em.find(Resource.class, theResource.getId());
             List<Availability> allAvails = resource.getAvailability();
             assert allAvails.size() == 3;
-            commitAndClose(em);
-            em = null;
+            commitAndClose();
+
 
             Availability a1 = allAvails.get(0);
             Availability a2 = allAvails.get(1);
@@ -550,9 +544,8 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         } finally {
             unprepareForTestAgents();
 
-            if (em != null) {
+            if (Status.STATUS_ACTIVE == getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
-                em.close();
             }
         }
     }
@@ -560,7 +553,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
     @Test(enabled = true)
     //ENABLE_TESTS)
     public void testAgentBackfillPerformance() throws Exception {
-        EntityManager em = beginTx();
+        beginTx();
         List<Resource> allResources = new ArrayList<Resource>();
 
         try {
@@ -576,8 +569,8 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             }
             em.flush();
 
-            commitAndClose(em);
-            em = null;
+            commitAndClose();
+
 
             for (Resource res : allResources) {
                 int resId = res.getId();
@@ -602,11 +595,11 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             }
 
             // let's pretend we haven't heard from the agent in a few minutes
-            em = beginTx();
+            beginTx();
             Agent agent = em.find(Agent.class, theAgent.getId());
             agent.setLastAvailabilityPing(System.currentTimeMillis() - (1000 * 60 * 18)); // 18 mins
-            commitAndClose(em);
-            em = null;
+            commitAndClose();
+
 
             // the agent should be suspect and will be considered down. the resources have their initial
             // UNKNOWN avails.  The platform should get a new DOWN Availability row. The rest should remain
@@ -643,11 +636,11 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             assert availabilityManager.getCurrentAvailabilityTypeForResource(overlord, theResource.getId()) == UP;
 
             // let's again pretend we haven't heard from the agent in a few minutes
-            em = beginTx();
+            beginTx();
             agent = em.find(Agent.class, theAgent.getId());
             agent.setLastAvailabilityPing(System.currentTimeMillis() - (1000 * 60 * 18));
-            commitAndClose(em);
-            em = null;
+            commitAndClose();
+
 
             // the agent should be suspect and will be considered down
             // all of the resources have availabilities now, so another row will be added to them if they are not disabled
@@ -671,12 +664,12 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
                 // make sure our resources' new availabilities are consistent
                 // the first time we backfilled everything was unknown, only the platform was updated. 
                 // later we went UP/DISABLED then DOWN so we'll have 2, 3 or 4 rows)
-                em = beginTx();
+                beginTx();
                 resource = em.find(Resource.class, resource.getId());
                 List<Availability> allAvails = resource.getAvailability();
                 assert allAvails.size() == ((expected == DOWN) ? 4 : ((expected == DISABLED) ? 2 : 3)) : allAvails;
-                commitAndClose(em);
-                em = null;
+                commitAndClose();
+
 
                 Availability a0 = allAvails.get(0);
                 Availability a1 = allAvails.get(1);
@@ -723,28 +716,27 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             System.out.println("testAgentBackfillPerformance: checking validity of data took "
                 + (System.currentTimeMillis() - start) + "ms");
 
-            em = null;
+
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
         } finally {
             unprepareForTestAgents();
 
-            if (em != null) {
+            if (Status.STATUS_ACTIVE == getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
-                em.close();
             }
         }
     }
 
     @Test(enabled = ENABLE_TESTS)
     public void testAgentOldReport() throws Exception {
-        EntityManager em = beginTx();
+        beginTx();
 
         try {
             setupResource(em); // inserts initial UNKNOWN Availability at epoch
-            commitAndClose(em);
-            em = null;
+            commitAndClose();
+
 
             Availability avail;
             long now = System.currentTimeMillis();
@@ -818,21 +810,20 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             e.printStackTrace();
             throw e;
         } finally {
-            if (em != null) {
+            if (Status.STATUS_ACTIVE == getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
-                em.close();
             }
         }
     }
 
     @Test(enabled = ENABLE_TESTS)
     public void testAgentOldReport2() throws Exception {
-        EntityManager em = beginTx();
+        beginTx();
 
         try {
             setupResource(em);
-            commitAndClose(em);
-            em = null;
+            commitAndClose();
+
 
             long now = System.currentTimeMillis();
 
@@ -878,23 +869,22 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             e.printStackTrace();
             throw e;
         } finally {
-            if (em != null) {
+            if (Status.STATUS_ACTIVE == getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
-                em.close();
             }
         }
     }
 
     @Test(enabled = ENABLE_TESTS)
     public void testGetAvailabilities2() throws Exception {
-        EntityManager em = beginTx();
+        beginTx();
 
         try {
             Availability avail;
 
             setupResource(em);
-            commitAndClose(em);
-            em = null;
+            commitAndClose();
+
 
             Calendar cal = Calendar.getInstance();
             cal.set(Calendar.YEAR, 2000);
@@ -961,9 +951,8 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             e.printStackTrace();
             throw e;
         } finally {
-            if (em != null) {
+            if (Status.STATUS_ACTIVE == getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
-                em.close();
             }
         }
     }
@@ -975,15 +964,15 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
      */
     @Test(enabled = ENABLE_TESTS)
     public void testMergeReport() throws Exception {
-        EntityManager em = beginTx();
+        beginTx();
 
         try {
             Availability avail;
             AvailabilityReport report;
 
             setupResource(em);
-            commitAndClose(em);
-            em = null;
+            commitAndClose();
+
 
             long allAvailCount = setUpAvailabilities(em);
 
@@ -1005,7 +994,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             Agent agent = LookupUtil.getAgentManager().getAgentByName(theAgent.getName());
             Date lastReport = new Date(agent.getLastAvailabilityReport());
             assert lastReport != null;
-            assert countAvailabilitiesInDB(null) == allAvailCount;
+            assert countAvailabilitiesInDB().equals(allAvailCount);
             avail = availabilityManager.getCurrentAvailabilityForResource(overlord, theResource.getId());
 
             // should have returned availability3
@@ -1027,7 +1016,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             // the agent should have been updated and a new row in availability was added (resource is now DOWN)
             agent = LookupUtil.getAgentManager().getAgentByName(theAgent.getName());
             assert new Date(agent.getLastAvailabilityReport()).after(lastReport);
-            assert countAvailabilitiesInDB(null) == (allAvailCount + 1);
+            assert countAvailabilitiesInDB().equals(allAvailCount + 1);
             assert availabilityManager.getCurrentAvailabilityTypeForResource(overlord, theResource.getId()) == DOWN;
             Availability queriedAvail = availabilityManager.getCurrentAvailabilityForResource(overlord,
                 theResource.getId());
@@ -1040,9 +1029,8 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             e.printStackTrace();
             throw e;
         } finally {
-            if (em != null) {
+            if (Status.STATUS_ACTIVE == getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
-                em.close();
             }
         }
     }
@@ -1054,15 +1042,15 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
      */
     @Test(enabled = ENABLE_TESTS)
     public void testMergeReportWithStaleResource() throws Exception {
-        EntityManager em = beginTx();
+        beginTx();
 
         try {
             Availability avail;
             AvailabilityReport report;
 
             setupResource(em);
-            commitAndClose(em);
-            em = null;
+            commitAndClose();
+
 
             long allAvailCount = setUpAvailabilities(em);
 
@@ -1090,7 +1078,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             Agent agent = LookupUtil.getAgentManager().getAgentByName(theAgent.getName());
             Date lastReport = new Date(agent.getLastAvailabilityReport());
             assert lastReport != null;
-            assert countAvailabilitiesInDB(null) == allAvailCount;
+            assert countAvailabilitiesInDB().equals(allAvailCount);
             avail = availabilityManager.getCurrentAvailabilityForResource(overlord, theResource.getId());
 
             // should have returned availability3
@@ -1112,7 +1100,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             // the agent should have been updated and a new row in availability was added (resource is now DOWN)
             agent = LookupUtil.getAgentManager().getAgentByName(theAgent.getName());
             assert new Date(agent.getLastAvailabilityReport()).after(lastReport);
-            assert countAvailabilitiesInDB(null) == (allAvailCount + 1);
+            assert countAvailabilitiesInDB().equals(allAvailCount + 1);
             assert availabilityManager.getCurrentAvailabilityTypeForResource(overlord, theResource.getId()) == DOWN;
             Availability queriedAvail = availabilityManager.getCurrentAvailabilityForResource(overlord,
                 theResource.getId());
@@ -1125,16 +1113,15 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             e.printStackTrace();
             throw e;
         } finally {
-            if (em != null) {
+            if (Status.STATUS_ACTIVE == getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
-                em.close();
             }
         }
     }
 
     @Test(enabled = ENABLE_TESTS)
     public void testMergeReportPerformance() throws Exception {
-        EntityManager em = beginTx();
+        beginTx();
         List<Resource> allResources = new ArrayList<Resource>();
 
         try {
@@ -1148,8 +1135,8 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             }
             em.flush();
 
-            commitAndClose(em);
-            em = null;
+            commitAndClose();
+
 
             // add a report that says the resources are now up - the report will add one avail for each resource
             // at this point, the resources do not yet have a row in availability - after the merge they will have 1
@@ -1224,27 +1211,23 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             System.out.println("testMergeReportPerformance: checking validity of data 3 took "
                 + (System.currentTimeMillis() - start) + "ms");
 
-            em = null;
+
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
         } finally {
-            if (em != null) {
+            if (Status.STATUS_ACTIVE == getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
-                em.close();
             }
         }
     }
 
-    private EntityManager beginTx() throws Exception {
+    private void beginTx() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
-        return em;
     }
 
-    private void commitAndClose(EntityManager em) throws Exception {
+    private void commitAndClose() throws Exception {
         getTransactionManager().commit();
-        em.close();
     }
 
     /**
@@ -1281,25 +1264,14 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
      *
      * @throws Exception
      */
-    private long countAvailabilitiesInDB(EntityManager em) throws Exception {
-        TransactionManager tx = null;
-
-        if (em == null) {
-            tx = getTransactionManager();
-            tx.begin();
-            em = getEntityManager();
-        }
-
-        try {
-            Query q = em.createQuery("SELECT count(a) FROM Availability a");
-            long count = (Long) q.getSingleResult();
-            return count;
-        } finally {
-            if (tx != null) {
-                tx.rollback();
-                em.close();
+    private Long countAvailabilitiesInDB() throws Exception {
+        return executeInTransaction(new TransactionCallbackReturnable<Long>() {
+            public Long execute() throws Exception {
+                Query q = em.createQuery("SELECT count(a) FROM Availability a");
+                Long count = (Long) q.getSingleResult();
+                return count;
             }
-        }
+        });
     }
 
     /**
@@ -1374,7 +1346,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         cal.set(Calendar.MINUTE, 40);
         Date splitEnd = cal.getTime();
 
-        long count = countAvailabilitiesInDB(em);
+        long count = countAvailabilitiesInDB();
 
         availability1 = new Availability(theResource, start.getTime(), UP);
         availability1.setEndTime(splitStart.getTime());
@@ -1387,7 +1359,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         availability3 = new Availability(theResource, splitEnd.getTime(), UP);
         persistAvailability(availability3);
 
-        long countNow = countAvailabilitiesInDB(em);
+        long countNow = countAvailabilitiesInDB();
 
         assert countNow == (count + 3) : "Did not find three availabilities - instead found: " + countNow;
 

@@ -26,12 +26,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
 import javax.persistence.Query;
 
-import org.testng.annotations.AfterGroups;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.server.core.AgentRegistrationException;
@@ -93,6 +89,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 // J. testAttemptToChangeAgentName
 //   1) register agent "newName" but with Z's host/port/token. In effect, this is trying to change the agent's name. (REJECT - you are not allowed to rename agents)
 
+@SuppressWarnings("unchecked")
 @Test(groups = { "core.agent.registration" })
 public class CoreServerServiceImplTest extends AbstractEJB3Test {
     private static final String TEST_AGENT_NAME_PREFIX = "CoreServerServiceImplTest.Agent";
@@ -100,18 +97,31 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
     private AgentVersion agentVersion;
     private Server server;
     private String oldServerNamePropertyValue = null;
-    private AgentRegistrationRequest aReq = null;
-    private AgentRegistrationResults aResults = null;
-    private AgentRegistrationRequest zReq = null;
-    private AgentRegistrationResults zResults = null;
 
     private static final int A_PORT = 11111;
     private static final String A_HOST = "hostA";
     private static final int B_PORT = 22222;
     private static final String B_HOST = "hostB";
 
-    @AfterGroups(groups = { "core.agent.registration" })
-    public void afterGroup() throws Exception {
+    // README
+    // Arquillian (1.0.2) does not honor Testng's lifecycle, Before/AfterClass are invoked on
+    // every test.  We use stand-in tests to simulate BeforeClass and AfterClass, using priorities
+    // to make them run first and last.  Testng (I believe) applies priority after dependencies, so it
+    // is important that afterClassStandIn() have a dependency such that it runs in the last test-set.
+
+    @Test(priority = -10)
+    public void beforeClassStandIn() throws Exception {
+        // delete our instance var object files, if they exist
+        deleteObjects("a.obj");
+        deleteObjects("b.obj");
+    }
+
+    @Test(priority = 10, dependsOnMethods = "testNormalAgentRegistration", alwaysRun = true)
+    public void afterClassStandIn() throws Exception {
+        // delete our instance var object files
+        deleteObjects("a.obj");
+        deleteObjects("b.obj");
+
         // clean up any agents we might have created
         Query q = getEntityManager().createQuery(
             "select a from Agent a where name like '" + TEST_AGENT_NAME_PREFIX + "%'");
@@ -121,23 +131,22 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
         }
     }
 
-    @BeforeMethod
-    public void prepare() throws Exception {
+    @Override
+    protected void beforeMethod() throws Exception {
         // mock the name of our server via the sysprop (in production, this is normally set in rhq-server.properties)
         oldServerNamePropertyValue = System.getProperty(RHQ_SERVER_NAME_PROPERTY);
         String newServerNamePropertyValue = "CoreServerServiceImplTest.Server";
         System.setProperty(RHQ_SERVER_NAME_PROPERTY, newServerNamePropertyValue);
 
         // mock up our core server MBean that provides information about where the jboss home dir is
-        MBeanServer mbs = getPlatformMBeanServer();
         DummyCoreServer mbean = new DummyCoreServer();
-        mbs.registerMBean(mbean, new ObjectName(CoreServerMBean.OBJECT_NAME));
+        prepareCustomServerService(mbean, CoreServerMBean.OBJECT_NAME);
 
         // in order to register, we need to mock out the agent version file used by the server
         // to determine the agent version it supports.
         agentVersion = new AgentVersion("1.2.3", "12345");
         File agentVersionFile = new File(mbean.getJBossServerHomeDir(),
-            "deploy/rhq.ear/rhq-downloads/rhq-agent/rhq-server-agent-versions.properties");
+            "deployments/rhq.ear/rhq-downloads/rhq-agent/rhq-server-agent-versions.properties");
         agentVersionFile.getParentFile().mkdirs();
         agentVersionFile.delete();
         Properties agentVersionProps = new Properties();
@@ -158,6 +167,7 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
         server.setName(newServerNamePropertyValue);
         server.setAddress("CoreServerServiceImplTest.localhost");
         server.setPort(12345);
+
         server.setSecurePort(12346);
         server.setOperationMode(OperationMode.NORMAL);
         int serverId = LookupUtil.getServerManager().create(server);
@@ -165,15 +175,14 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
     }
 
     @Override
-    public void afterMethod() throws Exception {
+    protected void afterMethod() throws Exception {
 
         // cleanup our test server
         LookupUtil.getCloudManager().updateServerMode(new Integer[] { server.getId() }, OperationMode.DOWN);
         LookupUtil.getCloudManager().deleteServer(server.getId());
 
         // shutdown our mock mbean server
-        MBeanServer mbs = getPlatformMBeanServer();
-        mbs.unregisterMBean(new ObjectName(CoreServerMBean.OBJECT_NAME));
+        unprepareCustomServerService(CoreServerMBean.OBJECT_NAME);
 
         unprepareForTestAgents();
 
@@ -250,8 +259,10 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
         assert agent.getPort() == 55552;
 
         // remember this agent so our later tests can use it
-        zReq = request;
-        zResults = results;
+        AgentRegistrationRequest zReq = request;
+        AgentRegistrationResults zResults = results;
+
+        writeObjects("b.obj", zReq, zResults);
 
         // Try to re-register changes to host and/or port but do not send any token.
         // Because there is no token, these should fail.
@@ -288,13 +299,17 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
     @Test(dependsOnMethods = "testChangeAddressPort")
     public void testNormalAgentRegistration() throws Exception {
         CoreServerServiceImpl service = new CoreServerServiceImpl();
-        aReq = createRequest(prefixName("A"), A_HOST, A_PORT, null);
-        aResults = service.registerAgent(aReq);
+        AgentRegistrationRequest aReq = createRequest(prefixName("A"), A_HOST, A_PORT, null);
+        AgentRegistrationResults aResults = service.registerAgent(aReq);
         assert aResults != null : "got null results";
+
+        writeObjects("a.obj", aReq, aResults);
     }
 
     @Test(dependsOnMethods = "testNormalAgentRegistration")
     public void testHijackExistingAgentAddressPort() throws Exception {
+        List<Object> objs = readObjects("a.obj", 1);
+        AgentRegistrationRequest aReq = (AgentRegistrationRequest) objs.get(0);
         CoreServerServiceImpl service = new CoreServerServiceImpl();
         AgentRegistrationRequest request;
         request = createRequest(prefixName("B"), aReq.getAddress(), aReq.getPort(), null);
@@ -310,6 +325,10 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
     public void testHijackExistingAgentName() throws Exception {
         CoreServerServiceImpl service = new CoreServerServiceImpl();
         AgentRegistrationRequest request;
+
+        List<Object> objs = readObjects("a.obj", 1);
+        AgentRegistrationRequest aReq = (AgentRegistrationRequest) objs.get(0);
+
         request = createRequest(aReq.getName(), aReq.getAddress(), B_PORT, null);
         try {
             service.registerAgent(request);
@@ -337,6 +356,10 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
     public void testHijackExistingAgentAddressPortWithBogusToken() throws Exception {
         CoreServerServiceImpl service = new CoreServerServiceImpl();
         AgentRegistrationRequest request;
+
+        List<Object> objs = readObjects("a.obj", 1);
+        AgentRegistrationRequest aReq = (AgentRegistrationRequest) objs.get(0);
+
         request = createRequest(prefixName("B"), aReq.getAddress(), aReq.getPort(), "badtoken");
         try {
             service.registerAgent(request);
@@ -350,6 +373,10 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
     public void testHijackExistingAgentNameWithBogusToken() throws Exception {
         CoreServerServiceImpl service = new CoreServerServiceImpl();
         AgentRegistrationRequest request;
+
+        List<Object> objs = readObjects("a.obj", 1);
+        AgentRegistrationRequest aReq = (AgentRegistrationRequest) objs.get(0);
+
         request = createRequest(aReq.getName(), aReq.getAddress(), aReq.getPort(), "badtoken");
         try {
             service.registerAgent(request);
@@ -357,6 +384,7 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
         } catch (AgentRegistrationException ok) {
             debugPrintThrowable(ok);
         }
+
         request = createRequest(aReq.getName(), aReq.getAddress(), B_PORT, "badtoken");
         try {
             service.registerAgent(request);
@@ -384,6 +412,15 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
     public void testHijackExistingAgentNameWithAnotherAgentToken() throws Exception {
         CoreServerServiceImpl service = new CoreServerServiceImpl();
         AgentRegistrationRequest request;
+
+        List<Object> objs = readObjects("a.obj", 1);
+        AgentRegistrationRequest aReq = (AgentRegistrationRequest) objs.get(0);
+
+        objs = readObjects("b.obj", 2);
+        @SuppressWarnings("unused")
+        AgentRegistrationRequest zReq = (AgentRegistrationRequest) objs.get(0);
+        AgentRegistrationResults zResults = (AgentRegistrationResults) objs.get(1);
+
         request = createRequest(aReq.getName(), aReq.getAddress(), aReq.getPort(), zResults.getAgentToken());
         try {
             service.registerAgent(request);
@@ -418,6 +455,13 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
     public void testAgentHijackingAnotherAgentAddressPort() throws Exception {
         CoreServerServiceImpl service = new CoreServerServiceImpl();
         AgentRegistrationRequest request;
+        List<Object> objs = readObjects("a.obj", 2);
+        AgentRegistrationRequest aReq = (AgentRegistrationRequest) objs.get(0);
+        AgentRegistrationResults aResults = (AgentRegistrationResults) objs.get(1);
+
+        objs = readObjects("b.obj", 1);
+        AgentRegistrationRequest zReq = (AgentRegistrationRequest) objs.get(0);
+
         request = createRequest(aReq.getName(), zReq.getAddress(), zReq.getPort(), aResults.getAgentToken());
         try {
             service.registerAgent(request);
@@ -431,6 +475,11 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
     public void testAttemptToChangeAgentName() throws Exception {
         CoreServerServiceImpl service = new CoreServerServiceImpl();
         AgentRegistrationRequest request;
+
+        List<Object> objs = readObjects("b.obj", 2);
+        AgentRegistrationRequest zReq = (AgentRegistrationRequest) objs.get(0);
+        AgentRegistrationResults zResults = (AgentRegistrationResults) objs.get(1);
+
         request = createRequest(prefixName("newName"), zReq.getAddress(), zReq.getPort(), zResults.getAgentToken());
         try {
             service.registerAgent(request);

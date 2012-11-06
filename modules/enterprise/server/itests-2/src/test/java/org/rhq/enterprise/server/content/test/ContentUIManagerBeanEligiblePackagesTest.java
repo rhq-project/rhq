@@ -26,9 +26,6 @@ import javax.persistence.Query;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -98,19 +95,15 @@ public class ContentUIManagerBeanEligiblePackagesTest extends AbstractEJB3Test {
 
     // Setup  --------------------------------------------
 
-    @BeforeClass
-    public void setupBeforeClass() throws Exception {
+    @Override
+    protected void beforeMethod() throws Exception {
         contentUIManager = LookupUtil.getContentUIManager();
         subjectManager = LookupUtil.getSubjectManager();
-    }
-
-    @BeforeMethod
-    public void populateDatabase() throws Exception {
         setupTestEnvironment();
     }
 
-    @AfterMethod
-    public void cleanDatabase() throws Exception {
+    @Override
+    protected void afterMethod() throws Exception {
         tearDownTestEnvironment();
     }
 

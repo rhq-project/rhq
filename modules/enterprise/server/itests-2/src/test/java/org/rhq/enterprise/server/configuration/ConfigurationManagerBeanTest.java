@@ -27,9 +27,6 @@ import java.util.Map;
 import javax.persistence.EntityManager;
 
 import org.jetbrains.annotations.NotNull;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
@@ -86,8 +83,8 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
     /**
      * Prepares things for the entire test class.
      */
-    @BeforeClass
-    public void beforeClass() {
+    //@BeforeClass don't use BeforeClass as Arquillian 1.0.2 invokes it on every test method
+    protected void beforeClass() {
         // Make sure page control sorts so the latest config update is last (the default is for the latest to be first).
         configUpdatesPageControl = PageControl.getUnlimitedInstance();
         // (ips, 04/01/10): Use createdTime, rather than id, to order by, since the id's are not guaranteed to be
@@ -100,8 +97,10 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         overlord = LookupUtil.getSubjectManager().getOverlord();
     }
 
-    @BeforeMethod
-    public void beforeMethod() throws Exception {
+    @Override
+    protected void beforeMethod() throws Exception {
+        beforeClass();
+
         prepareScheduler();
 
         TestServerCommunicationsService agentServiceContainer = prepareForTestAgents();
@@ -141,8 +140,8 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         }
     }
 
-    @AfterMethod(alwaysRun = true)
-    public void afterMethod() throws Exception {
+    @Override
+    protected void afterMethod() throws Exception {
         try {
             // perform in-band and out-of-band work in quick succession
             // only need to delete newResource1, which will delete his child newResource2 as well as the agent

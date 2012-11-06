@@ -436,6 +436,7 @@
     <!-- FOR RHQ TESTING -->
     <system-properties>
         <property name="project.version" value="${project.version}"/>
+        <property name="rhq.server.content.filesystem" value="${jboss.unzip.location}/standalone/data/packagebits" />
     </system-properties>]]></replacevalue>
                   </replacefilter>
 

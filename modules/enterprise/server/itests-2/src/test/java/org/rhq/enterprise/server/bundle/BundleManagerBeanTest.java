@@ -37,8 +37,6 @@ import javax.persistence.Query;
 import javax.transaction.TransactionManager;
 
 import org.hibernate.LazyInitializationException;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -114,8 +112,8 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     private Subject overlord;
     TestServerCommunicationsService agentServiceContainer;
 
-    @BeforeMethod
-    public void beforeMethod() throws Exception {
+    @Override
+    protected void beforeMethod() throws Exception {
         agentServiceContainer = prepareForTestAgents();
         agentServiceContainer.bundleService = new TestAgentClient(null, agentServiceContainer);
 
@@ -130,8 +128,8 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         cleanupDatabase();
     }
 
-    @AfterMethod(alwaysRun = true)
-    public void afterMethod() throws Exception {
+    @Override
+    protected void afterMethod() throws Exception {
         unprepareForTestAgents();
 
         try {

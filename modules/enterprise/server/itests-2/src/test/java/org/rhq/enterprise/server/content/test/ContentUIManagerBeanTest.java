@@ -24,7 +24,6 @@ import java.io.FileOutputStream;
 
 import javax.persistence.EntityManager;
 
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.content.Architecture;
@@ -57,8 +56,8 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
 
     // Setup  --------------------------------------------
 
-    @BeforeClass
-    public void setupBeforeClass() throws Exception {
+    @Override
+    protected void beforeMethod() throws Exception {
         contentUIManager = LookupUtil.getContentUIManager();
         contentManager = LookupUtil.getContentManager();
     }

@@ -23,7 +23,6 @@ import java.util.List;
 
 import javax.persistence.EntityManager;
 
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -54,9 +53,8 @@ public class ClusterManagerBeanTest extends AbstractEJB3Test {
     private ResourceGroupManagerLocal resourceGroupManager;
     private ResourceManagerLocal resourceManager;
 
-    @BeforeMethod
-    @SuppressWarnings( { "unused" })
-    private void init() {
+    @Override
+    protected void beforeMethod() {
         clusterManager = LookupUtil.getClusterManager();
         resourceGroupManager = LookupUtil.getResourceGroupManager();
         resourceManager = LookupUtil.getResourceManager();

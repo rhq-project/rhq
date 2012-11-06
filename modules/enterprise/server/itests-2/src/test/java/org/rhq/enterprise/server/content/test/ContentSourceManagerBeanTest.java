@@ -30,10 +30,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.commons.lang.RandomStringUtils;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -61,7 +57,6 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.MessageDigestGenerator;
-import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
@@ -77,7 +72,6 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
 
     private static final boolean TESTS_ENABLED = true;
 
-    private ContentManagerLocal contentManager;
     private ContentSourceManagerLocal contentSourceManager;
     private ContentSourceMetadataManagerLocal contentSourceMetadataManager;
     private RepoManagerLocal repoManager;
@@ -120,18 +114,11 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
      */
     private Architecture architecture1;
 
-    /**
-     * Extra architecture used in tests.
-     */
-    private Architecture architecture2;
-
     private ResourceType resourceType1;
     private Resource resource1;
-    private TestContentServerPluginService pluginService;
 
-    @BeforeClass
-    public void setupBeforeClass() throws Exception {
-        contentManager = LookupUtil.getContentManager();
+    //@BeforeClass don't use BeforeClass as Arquillian 1.0.2 invokes it on every test method
+    protected void beforeClass() throws Exception {
         contentSourceManager = LookupUtil.getContentSourceManager();
         contentSourceMetadataManager = LookupUtil.getContentSourceMetadataManager();
         repoManager = LookupUtil.getRepoManagerLocal();
@@ -142,28 +129,32 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
         cleanupPreviousTestRuns();
     }
 
-    @AfterClass
-    public void tearDownAfterClass() throws Exception {
-        // This delete is temporary. There are content sources left over from previous runs of this test
-        // that need to be deleted and this is the simplest way of clearing everyone's environment without
-        // requesting a dbsetup.
-        cleanupPreviousTestRuns();
-    }
+    //    @AfterClass
+    //    public void tearDownAfterClass() throws Exception {
+    //        // This delete is temporary. There are content sources left over from previous runs of this test
+    //        // that need to be deleted and this is the simplest way of clearing everyone's environment without
+    //        // requesting a dbsetup.
+    //        cleanupPreviousTestRuns();
+    //    }
 
-    @BeforeMethod
-    public void setupBeforeMethod() throws Exception {
+    @Override
+    protected void beforeMethod() throws Exception {
+        beforeClass();
+
         setupTestEnvironment();
         overlord = LookupUtil.getSubjectManager().getOverlord();
         prepareScheduler();
+        @SuppressWarnings("unused")
         TestContentServerPluginService pluginService = new TestContentServerPluginService(this);
-        cleanupPreviousTestRuns();
     }
 
-    @AfterMethod
-    public void tearDownAfterMethod() throws Exception {
+    @Override
+    protected void afterMethod() throws Exception {
         tearDownTestEnvironment();
         unprepareServerPluginService();
         unprepareScheduler();
+
+        cleanupPreviousTestRuns(); // TODO move to @AfterClass shen supported by Arquillian        
     }
 
     @Test(enabled = TESTS_ENABLED)
@@ -947,7 +938,6 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
         try {
             try {
                 architecture1 = em.find(Architecture.class, 1);
-                architecture2 = em.find(Architecture.class, 2);
 
                 resourceType1 = new ResourceType("platform-" + System.currentTimeMillis(), "TestPlugin",
                     ResourceCategory.PLATFORM, null);

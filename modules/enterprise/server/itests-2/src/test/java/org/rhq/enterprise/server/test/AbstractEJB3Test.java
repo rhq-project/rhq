@@ -1,17 +1,24 @@
 package org.rhq.enterprise.server.test;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
 import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.persistence.EntityManager;
@@ -288,7 +295,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
 
             } catch (Throwable t) {
                 // Arquillian is eating these, make sure they show up in some way
-                System.out.println("BEFORE METHOD FAILURE, TEST DID NOT RUN!!! " + t.getMessage());
+                System.out.println("BEFORE METHOD FAILURE, TEST DID NOT RUN!!! ");
+                t.printStackTrace();
                 throw t;
             }
         }
@@ -540,6 +548,41 @@ public abstract class AbstractEJB3Test extends Arquillian {
      *
      * @throws RuntimeException
      */
+    public void prepareCustomServerService(Object testServiceMBean, String objectNameStr) {
+        try {
+            ObjectName objectName = new ObjectName(objectNameStr);
+
+            // first, unregister the real service...
+            MBeanServer mbs = getPlatformMBeanServer();
+            if (mbs.isRegistered(objectName)) {
+                mbs.unregisterMBean(objectName);
+            }
+
+            // Now replace with the test service...
+            mbs.registerMBean(testServiceMBean, objectName);
+            return;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void unprepareCustomServerService(String objectNameStr) throws Exception {
+        ObjectName objectName = new ObjectName(objectNameStr);        
+        MBeanServer mbs = getPlatformMBeanServer();
+        if (mbs.isRegistered(objectName)) {
+            mbs.unregisterMBean(objectName);
+        }
+    }
+
+    /**
+     * If you need to test server plugins, you must first prepare the server plugin service.
+     * After this returns, the caller must explicitly start the PC by using the appropriate API
+     * on the given mbean; this method will only start the service, it will NOT start the master PC.
+     *
+     * @param testServiceMBean the object that will house your test server plugins
+     *
+     * @throws RuntimeException
+     */
     public void prepareCustomServerPluginService(ServerPluginService testServiceMBean) {
         try {
             // first, unregister the real service...
@@ -750,7 +793,6 @@ public abstract class AbstractEJB3Test extends Arquillian {
         pluginScannerService = null;
     }
 
-
     public MBeanServer getPlatformMBeanServer() {
         return ManagementFactory.getPlatformMBeanServer();
     }
@@ -768,6 +810,64 @@ public abstract class AbstractEJB3Test extends Arquillian {
 
     public static Connection getConnection() throws SQLException {
         return LookupUtil.getDataSource().getConnection();
+    }
+
+    /**
+     * A utility for writing out various objects that need to be persisted for use between
+     * tests.  Arquillian (1.0.2) basically "new"s the testng test class on each test, so instance
+     * variables can not be used between tests. Instead, the db or this mechanism needs to be used.
+     * 
+     * The file will be placed in the standard temp dir.  If it already exists it will be replaced.
+     *  
+     * @param filename Do not include the directory. The value will be prepended with the class name.
+     * @param objects
+     * @throws Exception
+     */
+    protected void writeObjects(String filename, Object... objects) throws Exception {
+        File file = new File(System.getProperty("java.io.tmpdir"), this.getClass().getName() + "-" + filename);
+        file.delete();
+        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file));
+        for (Object o : objects) {
+            oos.writeObject(o);
+        }
+        oos.close();
+    }
+
+    /**
+     * A utility for reading in objects written with {@link #writeObjects(String, Object...). They are
+     * placed in the result List in the same order they were written.
+     * 
+     * @param filename The same filename used in the write. Do not include the directory. 
+     * The value will be prepended with the class name.
+     * @param numObjects the number of objects to read out. Can be less than total written, not greater. 
+     * @throws Exception
+     */
+    protected List<Object> readObjects(String filename, int numObjects) throws Exception {
+        List<Object> result = new ArrayList<Object>();
+        ObjectInputStream ois = null;
+
+        try {
+            File file = new File(System.getProperty("java.io.tmpdir"), this.getClass().getName() + "-" + filename);
+            ois = new ObjectInputStream(new FileInputStream(file));
+            for (int i = 0; i < numObjects; ++i) {
+                result.add(ois.readObject());
+            }
+        } finally {
+            ois.close();
+        }
+
+        return result;
+    }
+
+    /**
+     * A utility for cleaning up files created with {@link #writeObjects(String, Object...).
+     * 
+     * @param filename The same filename used in the write. Do not include the directory. 
+     * @return true if deleted, false otherwise. 
+     */
+    protected boolean deleteObjects(String filename) {
+        File file = new File(System.getProperty("java.io.tmpdir"), this.getClass().getName() + "-" + filename);
+        return file.delete();
     }
 
 }

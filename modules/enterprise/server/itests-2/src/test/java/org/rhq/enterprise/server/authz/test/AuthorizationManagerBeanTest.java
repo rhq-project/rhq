@@ -26,7 +26,6 @@ import java.util.Set;
 
 import javax.persistence.EntityManager;
 
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -44,9 +43,9 @@ import org.rhq.enterprise.server.util.SessionTestHelper;
 public class AuthorizationManagerBeanTest extends AbstractEJB3Test {
     private AuthorizationManagerLocal authorizationManager;
 
-    @BeforeMethod
+    @Override
     @SuppressWarnings( { "unused" })
-    private void init() {
+    protected void beforeMethod() {
         try {
             authorizationManager = LookupUtil.getAuthorizationManager();
         } catch (Throwable t) {

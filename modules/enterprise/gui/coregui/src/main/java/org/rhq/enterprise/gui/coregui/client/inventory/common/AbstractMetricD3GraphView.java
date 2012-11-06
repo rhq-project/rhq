@@ -226,11 +226,15 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
         for (MeasurementDataNumericHighLowComposite measurement : data) {
             if(!Double.isNaN(measurement.getValue())){
                 sb.append("{ x:"+measurement.getTimestamp()+",");
+                sb.append(" high:"+MeasurementUnits.scaleUp(measurement.getHighValue(), definition.getUnits())+",");
+                sb.append(" low:"+MeasurementUnits.scaleUp(measurement.getLowValue(), definition.getUnits())+",");
                 sb.append(" y:"+MeasurementUnits.scaleUp(measurement.getValue(), definition.getUnits())+"},");
             }
         }
         sb.setLength(sb.length()-1); // delete the last ','
         sb.append("]");
+        Log.debug("Json data has "+data.size()+" entries.");
+        Log.debug(sb.toString());
         return sb.toString();
     }
 

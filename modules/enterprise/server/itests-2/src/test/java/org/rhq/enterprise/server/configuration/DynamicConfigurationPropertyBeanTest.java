@@ -31,7 +31,6 @@ import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.authz.Role;
@@ -51,8 +50,8 @@ public class DynamicConfigurationPropertyBeanTest extends AbstractEJB3Test {
 
     private DynamicConfigurationPropertyLocal bean;
 
-    @BeforeMethod
-    public void setUp() {
+    @Override
+    protected void beforeMethod() {
         bean = LookupUtil.getDynamicConfigurationProperty();
     }
 

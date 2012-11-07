@@ -18,6 +18,7 @@ import java.util.Properties;
 import java.util.regex.Pattern;
 
 import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -128,6 +129,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testClassesJar.addAsManifestResource(EmptyAsset.INSTANCE, ArchivePaths.create("beans.xml")); // add CDI injection (needed by arquillian injection);
         testClassesJar.addAsResource("test-scheduler.properties");
         testClassesJar.addAsResource("test-alert-sender-serverplugin.xml");
+        testClassesJar.addAsResource("org/rhq/enterprise/server/discovery/DiscoveryBossBeanTest.xml");
 
         // create test ear by starting with rhq.ear and thinning it
         MavenDependencyResolver earResolver = DependencyResolvers.use(MavenDependencyResolver.class);
@@ -551,7 +553,23 @@ public abstract class AbstractEJB3Test extends Arquillian {
     public void prepareCustomServerService(Object testServiceMBean, String objectNameStr) {
         try {
             ObjectName objectName = new ObjectName(objectNameStr);
+            prepareCustomServerService(testServiceMBean, objectName);
+        } catch (MalformedObjectNameException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
+    /**
+     * If you need to test server plugins, you must first prepare the server plugin service.
+     * After this returns, the caller must explicitly start the PC by using the appropriate API
+     * on the given mbean; this method will only start the service, it will NOT start the master PC.
+     *
+     * @param testServiceMBean the object that will house your test server plugins
+     *
+     * @throws RuntimeException
+     */
+    public void prepareCustomServerService(Object testServiceMBean, ObjectName objectName) {
+        try {
             // first, unregister the real service...
             MBeanServer mbs = getPlatformMBeanServer();
             if (mbs.isRegistered(objectName)) {
@@ -567,7 +585,11 @@ public abstract class AbstractEJB3Test extends Arquillian {
     }
 
     public void unprepareCustomServerService(String objectNameStr) throws Exception {
-        ObjectName objectName = new ObjectName(objectNameStr);        
+        ObjectName objectName = new ObjectName(objectNameStr);
+        unprepareCustomServerService(objectName);
+    }
+
+    public void unprepareCustomServerService(ObjectName objectName) throws Exception {
         MBeanServer mbs = getPlatformMBeanServer();
         if (mbs.isRegistered(objectName)) {
             mbs.unregisterMBean(objectName);
@@ -602,23 +624,15 @@ public abstract class AbstractEJB3Test extends Arquillian {
     }
 
     public void unprepareServerPluginService() throws Exception {
-        unprepareServerPluginService(false);
-    }
-
-    public void unprepareServerPluginService(boolean beanOnly) throws Exception {
         if (serverPluginService != null) {
             serverPluginService.stopMasterPluginContainer();
             serverPluginService.stop();
-            MBeanServer mbs = getPlatformMBeanServer();
-            if (beanOnly) {
-                if (mbs.isRegistered(ServerPluginService.OBJECT_NAME)) {
-                    mbs.unregisterMBean(ServerPluginService.OBJECT_NAME);
-                }
-
-            } else {
-                //MBeanServerFactory.releaseMBeanServer(mbs);
-            }
             serverPluginService = null;
+        }
+
+        MBeanServer mbs = getPlatformMBeanServer();
+        if (mbs.isRegistered(ServerPluginService.OBJECT_NAME)) {
+            mbs.unregisterMBean(ServerPluginService.OBJECT_NAME);
         }
     }
 
@@ -655,22 +669,14 @@ public abstract class AbstractEJB3Test extends Arquillian {
     }
 
     public void unprepareScheduler() throws Exception {
-        unprepareScheduler(false);
-    }
-
-    public void unprepareScheduler(boolean beanOnly) throws Exception {
         if (schedulerService != null) {
             schedulerService.stop();
             schedulerService = null;
+        }
 
-            MBeanServer mbs = getPlatformMBeanServer();
-            if (beanOnly) {
-                if (mbs.isRegistered(SchedulerService.SCHEDULER_MBEAN_NAME)) {
-                    mbs.unregisterMBean(SchedulerService.SCHEDULER_MBEAN_NAME);
-                }
-            } else {
-                //MBeanServerFactory.releaseMBeanServer(mbs);
-            }
+        MBeanServer mbs = getPlatformMBeanServer();
+        if (mbs.isRegistered(SchedulerService.SCHEDULER_MBEAN_NAME)) {
+            mbs.unregisterMBean(SchedulerService.SCHEDULER_MBEAN_NAME);
         }
     }
 
@@ -713,8 +719,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
             }
 
             // Now replace with the test service...
-            TestServerCommunicationsService agentService = new TestServerCommunicationsService();
-            mbs.registerMBean(customAgentService, ServerCommunicationsServiceMBean.OBJECT_NAME);
+            agentService = (TestServerCommunicationsService) customAgentService;
+            mbs.registerMBean(agentService, ServerCommunicationsServiceMBean.OBJECT_NAME);
             return agentService;
 
         } catch (Exception e) {
@@ -728,23 +734,15 @@ public abstract class AbstractEJB3Test extends Arquillian {
      * {@link #prepareForTestAgents()}.
      */
     public void unprepareForTestAgents() {
-        unprepareForTestAgents(false);
-    }
-
-    public void unprepareForTestAgents(boolean beanOnly) {
         try {
             if (agentService != null) {
                 agentService.stop();
                 agentService = null;
+            }
 
-                MBeanServer mbs = getPlatformMBeanServer();
-                if (beanOnly) {
-                    if (mbs.isRegistered(ServerCommunicationsServiceMBean.OBJECT_NAME)) {
-                        mbs.unregisterMBean(ServerCommunicationsServiceMBean.OBJECT_NAME);
-                    }
-                } else {
-                    //MBeanServerFactory.releaseMBeanServer(mbs);
-                }
+            MBeanServer mbs = getPlatformMBeanServer();
+            if (mbs.isRegistered(ServerCommunicationsServiceMBean.OBJECT_NAME)) {
+                mbs.unregisterMBean(ServerCommunicationsServiceMBean.OBJECT_NAME);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

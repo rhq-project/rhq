@@ -27,8 +27,6 @@ import org.dbunit.dataset.IDataSet;
 import org.dbunit.dataset.xml.FlatXmlDataSet;
 import org.dbunit.dataset.xml.FlatXmlProducer;
 import org.dbunit.operation.DatabaseOperation;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.xml.sax.InputSource;
 
@@ -50,8 +48,8 @@ public class DeleteAlertsTest extends AbstractEJB3Test {
     private Subject superuser;
     private Resource newResource;
 
-    @BeforeMethod
-    public void beforeMethod() throws Exception {
+    @Override
+    protected void beforeMethod() throws Exception {
         alertManager = LookupUtil.getAlertManager();
         superuser = LookupUtil.getSubjectManager().getOverlord();
 
@@ -70,8 +68,8 @@ public class DeleteAlertsTest extends AbstractEJB3Test {
         newResource = getEntityManager().find(Resource.class, 1);
     }
 
-    @AfterMethod(alwaysRun = true)
-    public void afterMethod() throws Exception {
+    @Override
+    protected void afterMethod() throws Exception {
         if ("true".equals(System.getProperty("clean.db"))) {
             Connection connection = null;
 

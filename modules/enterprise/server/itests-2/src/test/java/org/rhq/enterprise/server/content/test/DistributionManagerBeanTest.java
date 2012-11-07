@@ -2,12 +2,9 @@ package org.rhq.enterprise.server.content.test;
 
 import java.util.List;
 
-import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.transaction.TransactionManager;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -27,8 +24,8 @@ public class DistributionManagerBeanTest extends AbstractEJB3Test {
     private DistributionType distType;
     private Subject overlord;
 
-    @BeforeMethod
-    public void setupBeforeMethod() throws Exception {
+    @Override
+    protected void beforeMethod() throws Exception {
         TransactionManager tx = getTransactionManager();
         tx.begin();
 
@@ -38,8 +35,8 @@ public class DistributionManagerBeanTest extends AbstractEJB3Test {
         overlord = LookupUtil.getSubjectManager().getOverlord();
     }
 
-    @AfterMethod
-    public void tearDownAfterMethod() throws Exception {
+    @Override
+    protected void afterMethod() throws Exception {
         TransactionManager tx = getTransactionManager();
         if (tx != null) {
             tx.rollback();
@@ -73,7 +70,6 @@ public class DistributionManagerBeanTest extends AbstractEJB3Test {
         Distribution distro = distManager.getDistributionByLabel(kslabel);
 
         DistributionFile distfile = new DistributionFile(distro, "vmlinux", "d41d8cd98f00b204e9800998ecf8427e");
-        EntityManager em = getEntityManager();
         em.persist(distfile);
         Query query = em.createNamedQuery(DistributionFile.SELECT_BY_DIST_ID);
 

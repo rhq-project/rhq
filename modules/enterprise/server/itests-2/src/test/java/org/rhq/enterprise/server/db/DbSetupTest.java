@@ -20,6 +20,8 @@ package org.rhq.enterprise.server.db;
 
 import java.util.Set;
 
+import org.testng.annotations.Test;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
@@ -28,8 +30,6 @@ import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.DbSetupUtility;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
 /**
  * Test that dbsetup initializes the data in the RHQ schema as intended (e.g. test that the Superuser and All Resources
@@ -40,8 +40,8 @@ import org.testng.annotations.Test;
 @Test(groups = "db", singleThreaded = true)
 public class DbSetupTest extends AbstractEJB3Test {
 
-    @BeforeClass(groups = "db")
-    public void setUp() throws Exception {
+    @Override
+    protected void beforeMethod() throws Exception {
         // Recreate a fresh JON DB with the latest schema.
         DbSetupUtility.dbreset();
         DbSetupUtility.dbsetup();

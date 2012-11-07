@@ -30,15 +30,10 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import javax.transaction.TransactionManager;
 
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
@@ -53,7 +48,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 //make sure we run this after the plugins.metadata tests are done so that
 //the db contents don't interfere
-@Test(dependsOnGroups = "plugin.metadata")
+@Test
+//(dependsOnGroups = "plugin.metadata")
 public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
 
     private static final String PLUGIN_NAME = "DeployTest"; // as defined in our test descriptors
@@ -110,7 +106,14 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
     //   | 1.0-feb-2  |          |            |         | one of the files gets deleted
     // --------------------------------------------------------------------------
 
-    @BeforeClass
+    // README
+    // Arquillian (1.0.2) does not honor Testng's lifecycle, Before/AfterClass are invoked on
+    // every test.  Since beforeClass sets instance variables, we need to now call it for
+    // every test, so we call it from beforeMethod(). We use a stand-in test to simulate AfterClass, 
+    // using priorities to make it run last.  Testng (I believe) applies priority after dependencies, so it
+    // is important that afterClassStandIn() have a dependency such that it runs in the last test-set.
+
+    //@BeforeClass
     public void beforeClass() throws Exception {
         Calendar cal = Calendar.getInstance();
         cal.set(2009, Calendar.FEBRUARY, 1, 1, 0, 0);
@@ -161,8 +164,9 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
         return;
     }
 
-    @AfterClass(alwaysRun = true)
-    public void afterClass() throws Exception {
+    //@AfterClass(alwaysRun = true)
+    @Test(priority = 10, alwaysRun = true)
+    public void afterClassStandIn() throws Exception {
         for (Map.Entry<String, File> entry : testPluginFiles.entrySet()) {
             File doomed = entry.getValue();
             doomed.delete();
@@ -177,8 +181,10 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
         return;
     }
 
-    @BeforeMethod
-    public void beforeMethod() throws Exception {
+    @Override
+    protected void beforeMethod() throws Exception {
+        beforeClass();
+
         afterMethod(); // we clean up before and after, just to be sure we're clean
 
         File deployDir = new File(DEPLOY_LOCATION);
@@ -207,15 +213,14 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
 
     }
 
-    @AfterMethod(alwaysRun = true)
+    @Override
     @SuppressWarnings("unchecked")
-    public void afterMethod() throws Exception {
+    protected void afterMethod() throws Exception {
 
         emptyDirectory(new File(DEPLOY_LOCATION));
 
         TransactionManager tm = getTransactionManager();
         tm.begin();
-        EntityManager em = getEntityManager();
         try {
             Query q = em.createNamedQuery(Plugin.QUERY_FIND_BY_NAME);
             q.setParameter("name", PLUGIN_NAME);
@@ -226,7 +231,6 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
         } catch (NoResultException ignore) {
         } finally {
             tm.commit();
-            em.close();
         }
 
         return;
@@ -473,14 +477,12 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
 
         TransactionManager tm = getTransactionManager();
         tm.begin();
-        EntityManager em = getEntityManager();
         try {
             Query q = em.createNamedQuery(Plugin.QUERY_FIND_BY_NAME);
             q.setParameter("name", PLUGIN_NAME);
             dbPlugin = (Plugin) q.getSingleResult();
         } finally {
             tm.rollback();
-            em.close();
         }
 
         assertSamePlugin(plugin, dbPlugin);
@@ -547,7 +549,6 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
 
         TransactionManager tm = getTransactionManager();
         tm.begin();
-        EntityManager em = getEntityManager();
         try {
             em.persist(pluginPojo);
         } catch (Exception e) {
@@ -555,7 +556,6 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
             throw e;
         } finally {
             tm.commit();
-            em.close();
         }
 
         return plugin; // do not return the persisted pojo, let GC collect the larger pojo with the file content

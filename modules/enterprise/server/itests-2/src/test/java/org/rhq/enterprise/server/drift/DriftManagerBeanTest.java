@@ -19,7 +19,6 @@
 package org.rhq.enterprise.server.drift;
 
 import static org.apache.commons.io.FileUtils.deleteDirectory;
-import static org.apache.commons.io.FileUtils.toFile;
 import static org.rhq.common.drift.FileEntry.addedFileEntry;
 import static org.rhq.common.drift.FileEntry.changedFileEntry;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
@@ -29,14 +28,7 @@ import java.io.File;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 
-import javax.persistence.EntityManager;
-
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.common.drift.ChangeSetWriter;
@@ -46,8 +38,8 @@ import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.criteria.JPADriftChangeSetCriteria;
-import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftChangeSet;
@@ -88,26 +80,15 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
     MessageDigestGenerator digestGenerator;
 
-    /**
-     * Prepares things for the entire test class.
-     */
-    @BeforeClass
-    public void beforeClass() throws Exception {
+    @Override
+    protected void beforeMethod() throws Exception {
         digestGenerator = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
         jpaDriftServer = LookupUtil.getJPADriftServer();
         driftManager = LookupUtil.getDriftManager();
         overlord = LookupUtil.getSubjectManager().getOverlord();
 
         driftServerService = new DriftServerServiceImpl();
-    }
 
-    @AfterClass(alwaysRun = true)
-    public void afterClass() {
-        driftServerService = null;
-    }
-
-    @BeforeMethod
-    public void beforeMethod() throws Exception {
         TestServerCommunicationsService agentServiceContainer = prepareForTestAgents();
         agentServiceContainer.driftService = new TestDefService();
 
@@ -118,8 +99,8 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         newResource = createNewResource();
     }
 
-    @AfterMethod(alwaysRun = true)
-    public void afterMethod() throws Exception {
+    @Override
+    protected void afterMethod() throws Exception {
         try {
             deleteNewResource(newResource);
         } finally {
@@ -130,7 +111,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
     @Test
     public void testStoreChangeSet() throws Exception {
-        File rootDir = toFile(getClass().getResource("."));
+        File rootDir = new File(System.getProperty("java.io.tmpdir"));
         File changeSetsDir = new File(rootDir, "changesets");
         deleteDirectory(changeSetsDir);
         changeSetsDir.mkdirs();
@@ -217,13 +198,10 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
         driftManager.updateDriftDefinition(overlord, EntityContext.forResource(newResource.getId()), driftDefPojo);
 
-        ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-        ResourceCriteria c = new ResourceCriteria();
-        c.addFilterId(newResource.getId());
-        c.fetchDriftDefinitions(true);
-        List<Resource> resources = resourceManager.findResourcesByCriteria(overlord, c);
-        assertEquals(1, resources.size());
-        Set<DriftDefinition> driftDefs = resources.get(0).getDriftDefinitions();
+        DriftDefinitionCriteria c = new DriftDefinitionCriteria();
+        c.addFilterResourceIds(newResource.getId());
+        c.fetchConfiguration(true);
+        List<DriftDefinition> driftDefs = driftManager.findDriftDefinitionsByCriteria(overlord, c);
         assertNotNull(driftDefs);
         assertEquals(3, driftDefs.size());
         DriftDefinition driftDef = null;
@@ -240,9 +218,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         driftDefPojo.setInterval(120L);
         driftManager.updateDriftDefinition(overlord, EntityContext.forResource(newResource.getId()), driftDefPojo);
 
-        resources = resourceManager.findResourcesByCriteria(overlord, c);
-        assertEquals(1, resources.size());
-        driftDefs = resources.get(0).getDriftDefinitions();
+        driftDefs = driftManager.findDriftDefinitionsByCriteria(overlord, c);
         assertNotNull(driftDefs);
         assertEquals(3, driftDefs.size());
         driftDef = null;
@@ -263,9 +239,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
         driftManager.updateDriftDefinition(overlord, EntityContext.forResource(newResource.getId()), driftDefPojo);
 
-        resources = resourceManager.findResourcesByCriteria(overlord, c);
-        assertEquals(1, resources.size());
-        driftDefs = resources.get(0).getDriftDefinitions();
+        driftDefs = driftManager.findDriftDefinitionsByCriteria(overlord, c);
         assertNotNull(driftDefs);
         assertEquals(4, driftDefs.size());
         for (Iterator<DriftDefinition> i = driftDefs.iterator(); i.hasNext();) {
@@ -285,9 +259,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         }
 
         driftManager.deleteDriftDefinition(overlord, EntityContext.forResource(newResource.getId()), "testDriftDef");
-        resources = resourceManager.findResourcesByCriteria(overlord, c);
-        assertEquals(1, resources.size());
-        driftDefs = resources.get(0).getDriftDefinitions();
+        driftDefs = driftManager.findDriftDefinitionsByCriteria(overlord, c);
         assertNotNull(driftDefs);
         assertEquals(3, driftDefs.size());
         for (Iterator<DriftDefinition> i = driftDefs.iterator(); i.hasNext();) {
@@ -303,7 +275,6 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
     private void deleteDriftFiles() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
 
         try {
             try {
@@ -321,14 +292,11 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
             em.flush();
             getTransactionManager().commit();
         } finally {
-            em.close();
         }
     }
 
     private Resource createNewResource() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
-
         Resource resource;
 
         try {
@@ -371,7 +339,6 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
             em.flush();
             getTransactionManager().commit();
         } finally {
-            em.close();
         }
 
         return resource;
@@ -379,7 +346,6 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
     private void deleteNewResource(Resource resource) throws Exception {
         if (null != resource) {
-            EntityManager em = null;
 
             try {
                 ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
@@ -393,7 +359,6 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
                 // now dispose of other hibernate entities
                 getTransactionManager().begin();
-                em = getEntityManager();
 
                 ResourceType type = em.find(ResourceType.class, resource.getResourceType().getId());
                 Agent agent = em.find(Agent.class, resource.getAgent().getId());
@@ -407,14 +372,12 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
                 getTransactionManager().commit();
             } catch (Exception e) {
                 try {
-                    System.out.println("CANNOT CLEAN UP TEST (" + this.getClass().getSimpleName() + ") Cause: " + e);
+                    System.out.println("CANNOT CLEAN UP TEST (" + this.getClass().getSimpleName() + ")");
+                    e.printStackTrace();
                     getTransactionManager().rollback();
                 } catch (Exception ignore) {
                 }
             } finally {
-                if (null != em) {
-                    em.close();
-                }
             }
         }
     }

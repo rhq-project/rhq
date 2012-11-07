@@ -21,6 +21,8 @@ package org.rhq.enterprise.server.db;
 import java.util.Set;
 import java.util.UUID;
 
+import org.testng.annotations.Test;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
@@ -29,9 +31,6 @@ import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.DbSetupUtility;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
 /**
  * Test that various dbupgrade schema versions update the data model as intended.
@@ -41,16 +40,16 @@ import org.testng.annotations.Test;
 @Test(groups = "db", singleThreaded = true)
 public class DbUpgradeTest extends AbstractEJB3Test {
 
-    @BeforeClass(groups = "db")
-    public void setUp() throws Exception {
+    @Override
+    protected void beforeMethod() throws Exception {
         // Recreate a fresh JON DB with the JON 2.3.1 schema, then upgrade it to the JON 3.0.0 schema.
         DbSetupUtility.dbreset();
         DbSetupUtility.dbsetup("2.3.1");
         DbSetupUtility.dbupgrade(DbSetupUtility.JON300_SCHEMA_VERSION);
     }
 
-    @AfterClass(groups = "db")
-    public void tearDown() throws Exception {
+    @Override
+    protected void afterMethod() throws Exception {
         // Upgrade to the latest schema version so the DB is left in a state usable by other tests.
         DbSetupUtility.dbupgrade("LATEST");
     }

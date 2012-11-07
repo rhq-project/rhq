@@ -33,8 +33,6 @@ import java.util.UUID;
 
 import javax.ejb.EJBException;
 import javax.management.MBeanServer;
-import javax.management.MBeanServerFactory;
-import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.dbunit.database.DatabaseConfig;
@@ -51,13 +49,8 @@ import org.dbunit.operation.DatabaseOperation;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.xml.sax.InputSource;
-
-import org.jboss.mx.util.MBeanServerLocator;
 
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
@@ -68,8 +61,6 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.core.comm.ServerCommunicationsService;
-import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
@@ -101,19 +92,11 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
     private TestServerCommunicationsService agentServiceContainer;
 
-    @BeforeClass
-    public void beforeClass() throws Exception {
+    @Override
+    protected void beforeMethod() throws Exception {
         discoveryBoss = LookupUtil.getDiscoveryBoss();
         subjectManager = LookupUtil.getSubjectManager();
         resourceManager = LookupUtil.getResourceManager();
-    }
-
-    @BeforeMethod
-    public void setupTestData() throws Exception {
-        dummyJBossMBeanServer = MBeanServerFactory.createMBeanServer("jboss");
-        MBeanServerLocator.setJBoss(dummyJBossMBeanServer);
-        dummyJBossMBeanServer.registerMBean(new ServerCommunicationsService(),
-            ServerCommunicationsServiceMBean.OBJECT_NAME);
 
         initDB();
 
@@ -140,16 +123,15 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
                 Resource parentResource = resourceManager.getResource(subjectManager.getOverlord(), parentResourceId);
                 resource.setParentResource(parentResource);
                 Integer ownerSubjectId = (Integer) invocation.getArguments()[3];
-                return discoveryBoss.addResource(resource, ownerSubjectId);
+                MergeResourceResponse response = discoveryBoss.addResource(resource, ownerSubjectId);
+                return response;
             }
         });
     }
 
-    @AfterMethod(alwaysRun = true)
+    @Override
     public void afterMethod() throws Exception {
         try {
-            MBeanServerFactory.releaseMBeanServer(dummyJBossMBeanServer);
-
             cleanDB();
         } finally {
             unprepareForTestAgents();
@@ -283,11 +265,9 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
     public void cleanDB() throws Exception {
         Connection connection = null;
-        EntityManager em = null;
 
         try {
             getTransactionManager().begin();
-            em = getEntityManager();
 
             Query q;
             List<?> doomed;
@@ -299,17 +279,11 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
             }
             em.flush();
             getTransactionManager().commit();
-            em.close();
-            em = null;
         } catch (Exception e) {
             try {
                 System.out.println("CANNOT CLEAN UP TEST: Cause: " + e);
                 getTransactionManager().rollback();
             } catch (Exception ignore) {
-            }
-        } finally {
-            if (null != em) {
-                em.close();
             }
         }
 

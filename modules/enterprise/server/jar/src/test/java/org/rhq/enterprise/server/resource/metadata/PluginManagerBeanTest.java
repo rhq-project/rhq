@@ -13,6 +13,8 @@ import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScanner;
+import org.rhq.enterprise.server.inventory.InventoryManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob;
 import org.rhq.enterprise.server.scheduler.jobs.PurgeResourceTypesJob;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -62,6 +64,7 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         createPlugin("test-plugin1", "1.0", "plugin_1.xml");
         createPlugin("test-plugin2", "1.0", "plugin_2.xml");
         createPlugin("test-plugin3", "1.0", "plugin_3.xml");
+        createPlugin("test-plugin3.1", "1.0", "plugin_3.1.xml");
     }
 
     @Test(dependsOnMethods = { "registerPlugins" })
@@ -148,6 +151,19 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
 
         assertTrue("Expected plugin status to be set to DELETED", plugin1.getStatus() == PluginStatusType.DELETED);
         assertTrue("Expected plugin status to be set to DELETED", plugin2.getStatus() == PluginStatusType.DELETED);
+    }
+
+    @Test(dependsOnMethods = { "registerPlugins" })
+    public void isPluginReadyForDeletion() {
+        Plugin plugin3 = getPlugin("PluginManagerBeanTestPlugin3");
+
+        ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
+        List<Integer> ids = resourceTypeManager.getResourceTypeIdsByPlugin(plugin3.getName());
+        InventoryManagerLocal inventoryManager = LookupUtil.getInventoryManager();
+        inventoryManager.markTypesDeleted(ids);
+
+        assertTrue("Expected " + plugin3 + " to be ready for purge since all its resource types have been marked " +
+            "deleted", pluginMgr.isReadyForPurge(plugin3));
     }
 
     @Test(enabled = false, dependsOnMethods = { "deletePlugins" })

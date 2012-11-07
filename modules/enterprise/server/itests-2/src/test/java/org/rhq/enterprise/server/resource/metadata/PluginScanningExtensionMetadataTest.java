@@ -56,8 +56,12 @@ public class PluginScanningExtensionMetadataTest extends MetadataBeanTest {
     private List<File> createdJarFiles = new ArrayList<File>();
     private PluginDeploymentScanner pluginScanner;
 
-    @BeforeMethod
-    public void prepareBeforeTestMethod() {
+    @BeforeMethod(groups = { "plugin.metadata" }, dependsOnGroups = { "integration.ejb3" })
+    protected void beforeTestMethod() throws Exception {
+        if (!inContainer()) {
+            return;
+        }
+
         subjectMgr = LookupUtil.getSubjectManager();
         resourceTypeMgr = LookupUtil.getResourceTypeManager();
 
@@ -70,8 +74,11 @@ public class PluginScanningExtensionMetadataTest extends MetadataBeanTest {
         createdJarFiles.clear();
     }
 
-    @AfterMethod(alwaysRun = true)
-    public void cleanUpAfterTestMethod() {
+    @AfterMethod(groups = { "plugin.metadata" }, dependsOnGroups = { "integration.ejb3" })
+    protected void afterTestMethod() throws Exception {
+        if (!inContainer()) {
+            return;
+        }
         // clean up any generated jar files - we want to remove these so they don't get in the way of a future test run
         if (!createdJarFiles.isEmpty()) {
             for (File doomed : createdJarFiles) {
@@ -82,7 +89,6 @@ public class PluginScanningExtensionMetadataTest extends MetadataBeanTest {
     }
 
     @Override
-    @Test(enabled = false)
     // this method isn't a test method
     protected void preparePluginScannerService() {
         if (this.pluginScanner == null) {

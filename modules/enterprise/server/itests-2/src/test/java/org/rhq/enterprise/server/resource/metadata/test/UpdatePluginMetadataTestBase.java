@@ -88,7 +88,7 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
 
         prepareScheduler();
         try {
-            unpreparePluginScannerService(true);
+            unpreparePluginScannerService();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

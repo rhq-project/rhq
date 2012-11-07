@@ -132,6 +132,14 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testClassesJar.addAsResource("test-assist-color-number.txt");
         testClassesJar.addAsResource("org/rhq/enterprise/server/discovery/DiscoveryBossBeanTest.xml");
         testClassesJar.addAsResource("org/rhq/enterprise/server/inventory/InventoryManagerBeanTest.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/PluginScanningExtensionMetadataTest/child1_plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/PluginScanningExtensionMetadataTest/child2_plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/PluginScanningExtensionMetadataTest/parent_plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/PluginScanningExtensionMetadataTest/parent_plugin_v2.xml");
         testClassesJar.addAsResource("serverplugins/simple-generic-serverplugin.xml");
 
         // create test ear by starting with rhq.ear and thinning it
@@ -620,7 +628,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
             testServiceMBean.start();
             mbs.registerMBean(testServiceMBean, ServerPluginServiceMBean.OBJECT_NAME);
             serverPluginService = testServiceMBean;
-            return;
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -765,10 +773,16 @@ public abstract class AbstractEJB3Test extends Arquillian {
             if (scannerService == null) {
                 scannerService = new PluginDeploymentScanner();
             }
-            //            MBeanServer mbs = getJBossMBeanServer();
-            //            mbs.registerMBean(scannerService, PluginDeploymentScannerMBean.OBJECT_NAME);
-            //            pluginScannerService = scannerService;
-            return;
+
+            MBeanServer mbs = getPlatformMBeanServer();
+            if (mbs.isRegistered(PluginDeploymentScannerMBean.OBJECT_NAME)) {
+                mbs.unregisterMBean(PluginDeploymentScannerMBean.OBJECT_NAME);
+            }
+
+            // Now replace with the test service...
+            mbs.registerMBean(scannerService, PluginDeploymentScannerMBean.OBJECT_NAME);
+            pluginScannerService = scannerService;
+
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException(e);
@@ -776,22 +790,15 @@ public abstract class AbstractEJB3Test extends Arquillian {
     }
 
     public void unpreparePluginScannerService() throws Exception {
-        unpreparePluginScannerService(false);
-    }
-
-    public void unpreparePluginScannerService(boolean beanOnly) throws Exception {
         if (pluginScannerService != null) {
             pluginScannerService.stop();
-            if (beanOnly) {
-                //                MBeanServer mbs = getJBossMBeanServer();
-                //                if (mbs.isRegistered(PluginDeploymentScannerMBean.OBJECT_NAME)) {
-                //                    getJBossMBeanServer().unregisterMBean(PluginDeploymentScannerMBean.OBJECT_NAME);
-            }
-        } else {
-            //                releaseJBossMBeanServer();
+            pluginScannerService = null;
         }
 
-        pluginScannerService = null;
+        MBeanServer mbs = getPlatformMBeanServer();
+        if (mbs.isRegistered(PluginDeploymentScannerMBean.OBJECT_NAME)) {
+            mbs.unregisterMBean(PluginDeploymentScannerMBean.OBJECT_NAME);
+        }
     }
 
     public MBeanServer getPlatformMBeanServer() {

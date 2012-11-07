@@ -23,11 +23,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
-import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -57,7 +54,6 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
     private MeasurementDefinition measDef;
     private MeasurementSchedule measSched;
     private MeasurementSchedule measSched2;
-    private EntityManager entityManager;
     private ResourceManagerLocal resourceManager;
     private MeasurementBaselineManagerLocal baselineManager;
     private MeasurementOOBManagerLocal oobManager;
@@ -68,17 +64,18 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
     private List<MeasurementDefinition> allDefs;
     private List<MeasurementSchedule> allScheds;
 
-    @BeforeMethod
-    public void beforeMethod() throws Exception {
-        this.prepareScheduler();
+    @Override
+    protected void beforeMethod() throws Exception {
         this.resourceManager = LookupUtil.getResourceManager();
         this.baselineManager = LookupUtil.getMeasurementBaselineManager();
         this.oobManager = LookupUtil.getOOBManager();
         this.overlord = LookupUtil.getSubjectManager().getOverlord();
+
+        this.prepareScheduler();
     }
 
-    @AfterMethod
-    public void afterMethod() throws Exception {
+    @Override
+    protected void afterMethod() throws Exception {
         this.unprepareScheduler();
     }
 
@@ -93,7 +90,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
         begin();
 
         try {
-            setupManyResources(entityManager, 20, 10);
+            setupManyResources(20, 10);
 
             long now = System.currentTimeMillis();
             long eldest = now - 180000;
@@ -162,8 +159,8 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
         begin();
 
         try {
-            setupResources(entityManager);
-            assert entityManager.find(Resource.class, platform.getId()) != null : "Did not setup platform - cannot test";
+            setupResources();
+            assert em.find(Resource.class, platform.getId()) != null : "Did not setup platform - cannot test";
 
             long now = System.currentTimeMillis();
             long eldest = now - 180000;
@@ -199,7 +196,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
             begin();
 
-            bl1 = entityManager.find(MeasurementSchedule.class, measSched.getId()).getBaseline();
+            bl1 = em.find(MeasurementSchedule.class, measSched.getId()).getBaseline();
             assert bl1 != null : "Baseline for measSched should have been inserted";
             assert bl1.getSchedule().getId() == measSched.getId();
             assert !bl1.isUserEntered();
@@ -207,7 +204,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             assertEquals(50.0, bl1.getMax());
             assertEquals(40.0, bl1.getMean());
 
-            bl2 = entityManager.find(MeasurementSchedule.class, measSched2.getId()).getBaseline();
+            bl2 = em.find(MeasurementSchedule.class, measSched2.getId()).getBaseline();
             assert bl2 != null : "Baseline for measSched2 should have been inserted";
             assert bl2.getSchedule().getId() == measSched2.getId();
             assert !bl2.isUserEntered();
@@ -231,7 +228,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
             begin();
 
-            bl1 = entityManager.find(MeasurementSchedule.class, measSched.getId()).getBaseline();
+            bl1 = em.find(MeasurementSchedule.class, measSched.getId()).getBaseline();
             assert bl1 != null : "Baseline for measSched should have been inserted";
             assert bl1.getSchedule().getId() == measSched.getId();
             assert !bl1.isUserEntered();
@@ -239,7 +236,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             assertEquals(50.0, bl1.getMax());
             assertEquals(40.0, bl1.getMean());
 
-            bl2 = entityManager.find(MeasurementSchedule.class, measSched2.getId()).getBaseline();
+            bl2 = em.find(MeasurementSchedule.class, measSched2.getId()).getBaseline();
             assert bl2 != null : "Baseline for measSched2 should have been inserted";
             assert bl2.getSchedule().getId() == measSched2.getId();
             assert !bl2.isUserEntered();
@@ -262,7 +259,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
             begin();
 
-            bl1 = entityManager.find(MeasurementSchedule.class, measSched.getId()).getBaseline();
+            bl1 = em.find(MeasurementSchedule.class, measSched.getId()).getBaseline();
             assert bl1 != null : "Baseline for measSched should have been inserted";
             assert bl1.getSchedule().getId() == measSched.getId();
             assert !bl1.isUserEntered();
@@ -270,7 +267,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             assertEquals(50.00, bl1.getMax());
             assertEquals(20.25, bl1.getMean());
 
-            bl2 = entityManager.find(MeasurementSchedule.class, measSched2.getId()).getBaseline();
+            bl2 = em.find(MeasurementSchedule.class, measSched2.getId()).getBaseline();
             assert bl2 != null : "Baseline for measSched2 should have been inserted";
             assert bl2.getSchedule().getId() == measSched2.getId();
             assert !bl2.isUserEntered();
@@ -309,8 +306,8 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
         begin();
 
         try {
-            setupResources(entityManager);
-            assert entityManager.find(Resource.class, platform.getId()) != null : "Did not setup platform - cannot test";
+            setupResources();
+            assert em.find(Resource.class, platform.getId()) != null : "Did not setup platform - cannot test";
 
             long now = System.currentTimeMillis();
             long eldest = now - 180000;
@@ -340,7 +337,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             oobManager.computeOOBsFromHourBeginingAt(overlord, eldest);
 
             // check results
-            Query q = entityManager.createQuery("SELECT oo FROM MeasurementOOB oo");
+            Query q = em.createQuery("SELECT oo FROM MeasurementOOB oo");
             List<MeasurementOOB> oobs = q.getResultList();
             System.out.println("OOBs calculated: \n" + oobs);
             for (MeasurementOOB oob : oobs) {
@@ -362,7 +359,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
             // Compute some more OOBs
             oobManager.computeOOBsFromHourBeginingAt(overlord, elder);
-            q = entityManager.createQuery("SELECT oo FROM MeasurementOOB oo");
+            q = em.createQuery("SELECT oo FROM MeasurementOOB oo");
             oobs = q.getResultList();
             //    System.out.println("OOBs calculated: \n" + oobs);
 
@@ -376,7 +373,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
             begin();
 
-            q = entityManager.createQuery("DELETE FROM MeasurementOOB oo WHERE  oo.id = :sched1 OR oo.id = :sched2");
+            q = em.createQuery("DELETE FROM MeasurementOOB oo WHERE  oo.id = :sched1 OR oo.id = :sched2");
             q.setParameter("sched1", measSched.getId());
             q.setParameter("sched2", measSched2.getId());
             q.executeUpdate();
@@ -396,7 +393,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
     }
 
-    private void setupResources(EntityManager em) {
+    private void setupResources() {
         agent = new Agent("test-agent", "localhost", 1234, "", "randomToken");
         em.persist(agent);
 
@@ -450,20 +447,20 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             deleteMeasurementDataNumeric1H(measSched);
             deleteMeasurementDataNumeric1H(measSched2);
 
-            if ((doomed = entityManager.find(MeasurementSchedule.class, measSched.getId())) != null) {
-                entityManager.remove(doomed);
+            if ((doomed = em.find(MeasurementSchedule.class, measSched.getId())) != null) {
+                em.remove(doomed);
             }
 
-            if ((doomed = entityManager.find(MeasurementSchedule.class, measSched2.getId())) != null) {
-                entityManager.remove(doomed);
+            if ((doomed = em.find(MeasurementSchedule.class, measSched2.getId())) != null) {
+                em.remove(doomed);
             }
 
-            if ((doomed = entityManager.find(MeasurementDefinition.class, measDef.getId())) != null) {
-                entityManager.remove(doomed);
+            if ((doomed = em.find(MeasurementDefinition.class, measDef.getId())) != null) {
+                em.remove(doomed);
             }
 
-            if ((doomed = entityManager.find(ResourceType.class, platformType.getId())) != null) {
-                entityManager.remove(doomed);
+            if ((doomed = em.find(ResourceType.class, platformType.getId())) != null) {
+                em.remove(doomed);
             }
 
             commit();
@@ -473,7 +470,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
         }
     }
 
-    private void setupManyResources(EntityManager em, int resourceCount, int measurementCount) {
+    private void setupManyResources(int resourceCount, int measurementCount) {
         allResources = new ArrayList<Resource>(resourceCount);
         allDefs = new ArrayList<MeasurementDefinition>(measurementCount);
         allScheds = new ArrayList<MeasurementSchedule>(resourceCount * measurementCount);
@@ -561,13 +558,13 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             begin();
 
             for (MeasurementDefinition doomedDef : allDefs) {
-                if ((doomed = entityManager.find(MeasurementDefinition.class, doomedDef.getId())) != null) {
-                    entityManager.remove(doomed);
+                if ((doomed = em.find(MeasurementDefinition.class, doomedDef.getId())) != null) {
+                    em.remove(doomed);
                 }
             }
 
-            if ((doomed = entityManager.find(ResourceType.class, platformType.getId())) != null) {
-                entityManager.remove(doomed);
+            if ((doomed = em.find(ResourceType.class, platformType.getId())) != null) {
+                em.remove(doomed);
             }
 
             commit();
@@ -587,14 +584,12 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
     }
 
     private void commit() throws Exception {
-        entityManager.flush();
+        em.flush();
         getTransactionManager().commit();
-        entityManager.close();
     }
 
     private void begin() throws Exception {
         getTransactionManager().begin();
-        entityManager = getEntityManager();
     }
 
     private void insertMeasurementDataNumeric1H(long timeStamp, MeasurementSchedule schedule, double value, double min,
@@ -603,14 +598,14 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             + "(time_stamp, schedule_id, value, minvalue, maxvalue) " + "VALUES (" + timeStamp + "," + schedule.getId()
             + "," + value + "," + min + "," + max + ")";
 
-        Query q = entityManager.createNativeQuery(sql);
+        Query q = em.createNativeQuery(sql);
         assert q.executeUpdate() == 1;
     }
 
     private void deleteMeasurementDataNumeric1H(MeasurementSchedule schedule) {
         String sql = "DELETE FROM RHQ_measurement_data_num_1h WHERE schedule_id = " + schedule.getId();
 
-        Query q = entityManager.createNativeQuery(sql);
+        Query q = em.createNativeQuery(sql);
         q.executeUpdate();
     }
 }

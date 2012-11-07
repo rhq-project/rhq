@@ -28,9 +28,9 @@ import org.dbunit.dataset.datatype.IDataTypeFactory;
 import org.dbunit.dataset.xml.FlatXmlDataSet;
 import org.dbunit.dataset.xml.FlatXmlProducer;
 import org.dbunit.operation.DatabaseOperation;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 import org.xml.sax.InputSource;
 
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
@@ -52,21 +52,23 @@ public class MetadataBeanTest extends AbstractEJB3Test {
 
     private List<Integer> pluginIds = new ArrayList<Integer>();
 
-    // @BeforeGroups currently executes only as client (remote) only with Arquillian/testNg. So,
-    // we can't get DS here.  Now called from BeforeMethod.
+    // Arquillian (1.0.2) executes @BeforeGroups only as client (remote). So, we can't get DS here.
+    // Also, it is called for each test.  For now call from BeforeMethod.
     //
     //@BeforeGroups(groups = { "plugin.metadata" }, dependsOnGroups = { "integration.ejb3" })
     public void beforeGroups() throws Exception {
         setupDB();
     }
 
+    // Arquillian (1.0.2) executes @AfterClass after each test. So, instead turn it into a low priority
+    // test that should execute last.
     /**
      * Need to delete rows from RHQ_PLUGINS because subsequent tests in server/jar would otherwise fail. Some tests look
      * at what plugins are in the database, and then look for corresponding plugin files on the file system. MetadataTest
      * however removes the generated plugin files during each test run.
      */
-    @AfterClass(alwaysRun = true, groups = { "plugin.metadata" })
-    void afterClass() throws Exception {
+    @Test(priority = 10, alwaysRun = true, groups = { "plugin.metadata" })
+    void afterClassStandIn() throws Exception {
         // Although its documented that AfterXXX don't execute in-container (only as client), in practice this is not true
         // and we perform in-container work here. 
         if (!inContainer()) {
@@ -82,7 +84,7 @@ public class MetadataBeanTest extends AbstractEJB3Test {
     }
 
     @BeforeMethod(groups = { "plugin.metadata" }, dependsOnGroups = { "integration.ejb3" })
-    public void before() throws Exception {
+    protected void before() throws Exception {
         if (!inContainer()) {
             return;
         }
@@ -103,7 +105,7 @@ public class MetadataBeanTest extends AbstractEJB3Test {
      * however removes the generated plugin files during each test run.
      */
     @AfterMethod(alwaysRun = true, groups = { "plugin.metadata" })
-    void after() throws Exception {
+    protected void after() throws Exception {
         if (!inContainer()) {
             return;
         }
@@ -188,11 +190,11 @@ public class MetadataBeanTest extends AbstractEJB3Test {
     }
 
     protected String getPluginWorkDir() throws Exception {
-        return getCurrentWorkingDir() + "/work";
+        return getCurrentWorkingDir() + "/rhqtest";
     }
 
     protected String getCurrentWorkingDir() throws Exception {
-        return getClass().getResource(".").toURI().getPath();
+        return System.getProperty("java.io.tmpdir");
     }
 
     String getAmpsVersion(PluginDescriptor pluginDescriptor) {

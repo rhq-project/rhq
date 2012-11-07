@@ -35,8 +35,6 @@ import java.util.Set;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
@@ -91,8 +89,8 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
     private Agent theAgent;
     private Set<MeasurementData> expectedResult1, expectedResult2, expectedResult3, expectedResult4;
 
-    @BeforeMethod
-    public void beforeMethod() {
+    @Override
+    protected void beforeMethod() {
         try {
             this.measurementDataManager = LookupUtil.getMeasurementDataManager();
             this.callTimeDataManager = LookupUtil.getCallTimeDataManager();
@@ -106,14 +104,14 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
         }
     }
 
-    @AfterMethod
-    public void afterMethod() {
+    @Override
+    protected void afterMethod() {
 
         try {
             // delete values
             callTimeDataManager.purgeCallTimeData(new Date());
 
-            EntityManager em = beginTx();
+            beginTx();
 
             // delete keys
             List<Integer> resourceIds = new ArrayList<Integer>();
@@ -156,7 +154,7 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
             theAgent = em.merge(theAgent);
             em.remove(theAgent);
 
-            commitAndClose(em);
+            commit();
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException(e);
@@ -167,7 +165,7 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
     public void bz658491() throws Exception {
 
         try {
-            EntityManager em = beginTx();
+            beginTx();
 
             setupResources(em);
 
@@ -187,7 +185,7 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
             report.addData(data1);
             report.addData(data2);
 
-            commitAndClose(em);
+            commit();
 
             measurementDataManager.mergeMeasurementReport(report);
 
@@ -216,7 +214,7 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
     public void bz658491OneResource() throws Exception {
 
         try {
-            EntityManager em = beginTx();
+            beginTx();
 
             setupResources(em);
 
@@ -236,7 +234,7 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
             report.addData(data1);
             report.addData(data2);
 
-            commitAndClose(em);
+            commit();
 
             measurementDataManager.mergeMeasurementReport(report);
 
@@ -310,6 +308,7 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
      * @param  em The EntityManager to use
      *
      */
+    @SuppressWarnings("unchecked")
     private void setupGroupOfResources(EntityManager em) {
         theAgent = new Agent("testagent", "localhost", 1234, "", "randomToken");
         em.persist(theAgent);
@@ -410,9 +409,9 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
     @Test
     public void testFindLiveDataForGroup1() throws Exception {
         // prepare DB
-        EntityManager em = beginTx();
+        beginTx();
         setupGroupOfResources(em);
-        commitAndClose(em);
+        commit();
         try {
             Set<MeasurementData> actualResult = measurementDataManager.findLiveDataForGroup(overlord, group.getId(),
                 new int[] { resource1.getId() }, new int[] { definitionCt1.getId() });
@@ -435,9 +434,9 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
     @Test
     public void testFindLiveDataForGroup2() throws Exception {
         // prepare DB
-        EntityManager em = beginTx();
+        beginTx();
         setupGroupOfResources(em);
-        commitAndClose(em);
+        commit();
         try {
             Set<MeasurementData> actualResult = measurementDataManager.findLiveDataForGroup(overlord, group.getId(),
                 new int[] { resource1.getId(), resource2.getId() },
@@ -454,9 +453,9 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
     @Test
     public void testFindLiveDataForGroup3() throws Exception {
         // prepare DB
-        EntityManager em = beginTx();
+        beginTx();
         setupGroupOfResources(em);
-        commitAndClose(em);
+        commit();
         try {
 
             Set<MeasurementData> actualResult = measurementDataManager.findLiveDataForGroup(overlord, group.getId(),
@@ -473,9 +472,9 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
     @Test
     public void testFindLiveDataForGroup4() throws Exception {
         // prepare DB
-        EntityManager em = beginTx();
+        beginTx();
         setupGroupOfResources(em);
-        commitAndClose(em);
+        commit();
         try {
             measurementDataManager.findLiveDataForGroup(null, group.getId(), new int[] { resource1.getId() },
                 new int[] { definitionCt1.getId() });
@@ -488,9 +487,9 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
     @Test
     public void testAddAndFindTrait1() throws Exception {
         // prepare DB
-        EntityManager em = beginTx();
+        beginTx();
         setupGroupOfResources(em);
-        commitAndClose(em);
+        commit();
         try {
             Set<MeasurementDataTrait> expectedResult = new HashSet<MeasurementDataTrait>();
             for (MeasurementData data : expectedResult1) {
@@ -515,9 +514,9 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
     @Test
     public void testAddAndFindTrait2() throws Exception {
         // prepare DB
-        EntityManager em = beginTx();
+        beginTx();
         setupGroupOfResources(em);
-        commitAndClose(em);
+        commit();
         try {
             Set<MeasurementDataTrait> expectedResult = new HashSet<MeasurementDataTrait>();
             for (MeasurementData data : expectedResult4) {
@@ -542,9 +541,9 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
     @Test
     public void testAddAndFindTrait3() throws Exception {
         // prepare DB
-        EntityManager em = beginTx();
+        beginTx();
         setupGroupOfResources(em);
-        commitAndClose(em);
+        commit();
         try {
             Set<MeasurementDataTrait> traitsData = new HashSet<MeasurementDataTrait>();
             Set<MeasurementDataTrait> expectedResult = new HashSet<MeasurementDataTrait>();
@@ -574,9 +573,9 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
     @Test
     public void testFindNonExistentTraitByResourceId() throws Exception {
         // prepare DB
-        EntityManager em = beginTx();
+        beginTx();
         setupGroupOfResources(em);
-        commitAndClose(em);
+        commit();
         try {            
             // get back the trait data
             List<MeasurementDataTrait> actualResult = measurementDataManager.findTraits(overlord, resource2.getId(), definitionCt2.getId());
@@ -598,9 +597,9 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
     @Test
     public void testAddAndFindByCriteria() throws Exception {
         // prepare DB
-        EntityManager em = beginTx();
+        beginTx();
         setupGroupOfResources(em);
-        commitAndClose(em);
+        commit();
         try {
             Set<MeasurementDataTrait> expectedResult = new HashSet<MeasurementDataTrait>();
             for (MeasurementData data : expectedResult1) {
@@ -647,9 +646,9 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
     @Test
     public void testAddAndFindCurrentTraitByResourceId() throws Exception {
         // prepare DB
-        EntityManager em = beginTx();
+        beginTx();
         setupGroupOfResources(em);
-        commitAndClose(em);
+        commit();
         try {
             // get back the trait data
             List<MeasurementDataTrait> actualResult = measurementDataManager.findCurrentTraitsForResource(overlord, resource1.getId(), null);
@@ -665,9 +664,9 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
     @Test
     public void testAddAndFindCurrentTraitByResourceIdAcrossMoreSchedules() throws Exception {
         // prepare DB
-        EntityManager em = beginTx();
+        beginTx();
         setupGroupOfResources(em);
-        commitAndClose(em);
+        commit();
         try {
             Set<MeasurementDataTrait> expectedResult = new HashSet<MeasurementDataTrait>();
             for (MeasurementData data : expectedResult2) {
@@ -692,9 +691,9 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
     @Test
     public void testFindNonExistentCurrentTraitByResourceId() throws Exception {
         // prepare DB
-        EntityManager em = beginTx();
+        beginTx();
         setupGroupOfResources(em);
-        commitAndClose(em);
+        commit();
         try {
             Set<MeasurementDataTrait> expectedResult = new HashSet<MeasurementDataTrait>();
             for (MeasurementData data : expectedResult2) {
@@ -723,15 +722,12 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
         return measurement;
     }
 
-    private EntityManager beginTx() throws Exception {
+    private void beginTx() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
-        return em;
     }
 
-    private void commitAndClose(EntityManager em) throws Exception {
+    private void commit() throws Exception {
         em.flush();
         getTransactionManager().commit();
-        em.close();
     }
 }

@@ -3,11 +3,8 @@ package org.rhq.enterprise.server.measurement.test;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -41,8 +38,8 @@ public class MeasurementViewManagerTest extends AbstractEJB3Test {
         // TODO: jmarques - write unit tests for MeasurementViewManager
     }
 
-    @BeforeMethod
-    public void init() throws Exception {
+    @Override
+    public void beforeMethod() throws Exception {
         viewManager = LookupUtil.getMeasurementViewManager();
         subjectManager = LookupUtil.getSubjectManager();
 
@@ -50,8 +47,6 @@ public class MeasurementViewManagerTest extends AbstractEJB3Test {
 
         getTransactionManager().begin();
         try {
-            EntityManager em = getEntityManager();
-
             String prefix = MeasurementViewManagerTest.class.getSimpleName();
 
             type = new ResourceType(prefix + "type", prefix + "plugin", ResourceCategory.PLATFORM, null);
@@ -99,12 +94,10 @@ public class MeasurementViewManagerTest extends AbstractEJB3Test {
         }
     }
 
-    @AfterMethod
-    public void afterTest() throws Exception {
+    @Override
+    public void afterMethod() throws Exception {
         getTransactionManager().begin();
         try {
-            EntityManager em = getEntityManager();
-
             List<Integer> measurementDefinitionIds = new ArrayList<Integer>();
             for (int i = 0; i < definitions.size(); i++) {
                 measurementDefinitionIds.add(definitions.get(i).getId());

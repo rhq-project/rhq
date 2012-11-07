@@ -107,6 +107,11 @@ public class PluginManagerBean implements PluginManagerLocal {
         criteria.setStrict(true);
         PageList results = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(), criteria);
 
+        if (log.isDebugEnabled()) {
+            log.debug(plugin + " is not ready to be purged. There are still " + results.getTotalSize() +
+                " resource types in the system for this plugin.");
+        }
+
         return results.getTotalSize() == 0;
     }
 

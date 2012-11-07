@@ -104,6 +104,7 @@ public class PluginManagerBean implements PluginManagerLocal {
         ResourceTypeCriteria criteria = new ResourceTypeCriteria();
         criteria.addFilterPluginName(plugin.getName());
         criteria.setRestriction(Criteria.Restriction.COUNT_ONLY);
+        criteria.setStrict(true);
         PageList results = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(), criteria);
 
         return results.getTotalSize() == 0;

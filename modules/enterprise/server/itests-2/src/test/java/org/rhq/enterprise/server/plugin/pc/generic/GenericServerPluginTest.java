@@ -27,8 +27,6 @@ import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -55,15 +53,15 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.generic.Generi
 public class GenericServerPluginTest extends AbstractEJB3Test {
     private TestGenericServerPluginService pluginService;
 
-    @BeforeMethod
-    public void beforeMethod() throws Exception {
+    @Override
+    protected void beforeMethod() throws Exception {
         this.pluginService = new TestGenericServerPluginService();
         deleteAllTestPluginJars(); // remove any old server plugins that might be still around
         prepareCustomServerPluginService(this.pluginService);
     }
 
-    @AfterMethod(alwaysRun = true)
-    public void afterMethod() throws Exception {
+    @Override
+    protected void afterMethod() throws Exception {
         unprepareServerPluginService();
         deleteAllTestPluginJars(); // remove any server plugins that tests created
         this.pluginService = null;

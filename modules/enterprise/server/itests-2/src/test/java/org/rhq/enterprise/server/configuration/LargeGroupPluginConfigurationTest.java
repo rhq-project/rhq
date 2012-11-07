@@ -23,8 +23,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.jetbrains.annotations.NotNull;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
@@ -60,8 +58,10 @@ public class LargeGroupPluginConfigurationTest extends LargeGroupTestBase {
     /**
      * Create a large group of 1000+ resources.
      */
-    @BeforeMethod
-    public void beforeMethod() throws Exception {
+    @Override
+    protected void beforeMethod() throws Exception {
+        super.beforeMethod();
+
         env = createLargeGroupWithNormalUserRoleAccess(1010, Permission.MODIFY_RESOURCE);
         SessionTestHelper.simulateLogin(env.normalSubject);
     }
@@ -69,10 +69,12 @@ public class LargeGroupPluginConfigurationTest extends LargeGroupTestBase {
     /**
      * Remove the group and all its members.
      */
-    @AfterMethod(alwaysRun = true)
-    public void afterMethod() throws Exception {
+    @Override
+    protected void afterMethod() throws Exception {
         tearDownLargeGroupWithNormalUserRoleAccess(env);
         SessionTestHelper.simulateLogout(env.normalSubject);
+
+        super.afterMethod();
     }
 
     public void testGroupPluginConfigurationUpdate() throws Exception {

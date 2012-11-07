@@ -356,7 +356,8 @@ public final class LookupUtil {
     }
 
     public static EntityManagerFacadeLocal getEntityManagerFacade() {
-        return lookupLocal(EntityManagerFacade.class);
+        Class<EntityManagerFacade> clazz = EntityManagerFacade.class;
+        return (EntityManagerFacadeLocal) lookupByName(clazz.getSimpleName(), clazz.getName() + "Local");
     }
 
     public static EventManagerLocal getEventManager() {
@@ -620,7 +621,7 @@ public final class LookupUtil {
      * @param beanName the name of the EJB bean
      * @param interfaceName the full class name of either the remote or local interface
      * 
-     * @return the bean accessed through specified inerface
+     * @return the bean accessed through specified interface
      */
     public static Object getEjb(String beanName, String interfaceName) {
         return lookupByName(beanName, interfaceName);

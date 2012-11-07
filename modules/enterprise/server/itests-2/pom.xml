@@ -120,6 +120,20 @@
     </dependency>
 
     <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-script-bindings</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-server-client-api</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>rhq-serverplugin-drift</artifactId>
       <version>${project.version}</version>

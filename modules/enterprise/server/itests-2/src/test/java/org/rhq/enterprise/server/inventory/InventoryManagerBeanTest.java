@@ -17,8 +17,6 @@ import org.dbunit.ext.oracle.Oracle10DataTypeFactory;
 import org.dbunit.ext.oracle.OracleDataTypeFactory;
 import org.dbunit.ext.postgresql.PostgresqlDataTypeFactory;
 import org.dbunit.operation.DatabaseOperation;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.xml.sax.InputSource;
 
@@ -32,8 +30,8 @@ public class InventoryManagerBeanTest extends AbstractEJB3Test {
 
     private static List<Integer> deletedTypeIds = asList(1, 2, 3, 4, 5);
 
-    @BeforeMethod
-    public void beforeMethod() throws Exception {
+    @Override
+    protected void beforeMethod() throws Exception {
         initDB();
 
         getTransactionManager().begin();
@@ -43,8 +41,8 @@ public class InventoryManagerBeanTest extends AbstractEJB3Test {
         getTransactionManager().commit();
     }
 
-    @AfterMethod(alwaysRun = true)
-    public void afterMethod() throws Exception {
+    @Override
+    protected void afterMethod() throws Exception {
         cleanDB();
     }
 
@@ -96,7 +94,7 @@ public class InventoryManagerBeanTest extends AbstractEJB3Test {
         // protect against other db detritus, just look for the ones we expect
         int resultSize = deletedTypes.size();
         assertTrue("Expected at least five deleted types", resultSize >= 5);
-        List<Integer> resultIds = new ArrayList(resultSize);
+        List<Integer> resultIds = new ArrayList<Integer>(resultSize);
         for (ResourceType rt : deletedTypes) {
             resultIds.add(rt.getId());
         }

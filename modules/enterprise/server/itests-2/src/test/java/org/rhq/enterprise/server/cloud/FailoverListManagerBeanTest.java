@@ -25,11 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.persistence.EntityManager;
-
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -70,11 +65,8 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
     private PartitionEvent partitionEvent;
     private List<Agent> newAgents;
 
-    /**
-     * Prepares things for the entire test class.
-     */
-    @BeforeClass
-    public void beforeClass() {
+    @Override
+    protected void beforeMethod() throws Exception {
         agentManager = LookupUtil.getAgentManager();
         failoverListManager = LookupUtil.getFailoverListManager();
         partitionEventManager = LookupUtil.getPartitionEventManager();
@@ -85,10 +77,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         servers = new ArrayList<Server>();
         agents = new ArrayList<Agent>();
         newAgents = new ArrayList<Agent>();
-    }
 
-    @BeforeMethod
-    public void beforeMethod() throws Exception {
         servers.clear();
         agents.clear();
         newAgents.clear();
@@ -96,8 +85,8 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         prepareForTestAgents();
     }
 
-    @AfterMethod(alwaysRun = true)
-    public void afterMethod() throws Exception {
+    @Override
+    protected void afterMethod() throws Exception {
         try {
             getTransactionManager().begin();
 
@@ -155,7 +144,7 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         Agent agent;
 
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
+
         try {
             for (int i = 0; (i < numServers); ++i) {
                 server = new Server();
@@ -190,14 +179,12 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
             }
 
             throw e;
-        } finally {
-            em.close();
         }
     }
 
     private void setupNewAgents(int numNewAgents) throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
+
         try {
             for (int i = 0; (i < numNewAgents); ++i) {
 
@@ -215,8 +202,6 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
             }
 
             throw e;
-        } finally {
-            em.close();
         }
     }
 

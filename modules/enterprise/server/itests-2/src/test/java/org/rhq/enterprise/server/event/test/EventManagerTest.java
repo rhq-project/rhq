@@ -28,7 +28,6 @@ import java.util.Set;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -53,10 +52,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class EventManagerTest extends AbstractEJB3Test {
 
     EventManagerLocal eventManager;
-    EntityManager em;
 
-    @BeforeMethod
-    public void init() {
+    @Override
+    protected void beforeMethod() {
         try {
             eventManager = LookupUtil.getEventManager();
         } catch (Throwable t) {
@@ -67,13 +65,11 @@ public class EventManagerTest extends AbstractEJB3Test {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testEventsSimple() throws Exception {
 
         try {
             getTransactionManager().begin();
-            em = getEntityManager();
             Resource resource = setUpResource(em);
 
             EventDefinition eDef = new EventDefinition(resource.getResourceType(), "My definition is this ..");
@@ -115,7 +111,6 @@ public class EventManagerTest extends AbstractEJB3Test {
 
         } finally {
             getTransactionManager().rollback();
-            em.close();
         }
     }
 
@@ -124,7 +119,6 @@ public class EventManagerTest extends AbstractEJB3Test {
 
         try {
             getTransactionManager().begin();
-            em = getEntityManager();
             Resource resource = setUpResource(em);
 
             EventDefinition eDef = new EventDefinition(resource.getResourceType(), "My definition is this ..");
@@ -175,7 +169,6 @@ public class EventManagerTest extends AbstractEJB3Test {
 
         } finally {
             getTransactionManager().rollback();
-            em.close();
         }
     }
 

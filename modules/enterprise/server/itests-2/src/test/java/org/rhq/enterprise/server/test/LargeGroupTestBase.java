@@ -20,14 +20,8 @@ package org.rhq.enterprise.server.test;
 
 import java.util.List;
 
-import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
-import javax.transaction.TransactionManager;
-
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -53,8 +47,6 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.SessionTestHelper;
-import org.rhq.test.JPAUtils;
-import org.rhq.test.TransactionCallbackWithContext;
 
 public abstract class LargeGroupTestBase extends AbstractEJB3Test {
     // for plugin configuration
@@ -101,27 +93,21 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
         }
     }
 
-    /**
-     * Prepares things for the entire test class.
-     */
-    @BeforeClass
-    public void beforeClassBase() {
+    @Override
+    protected void beforeMethod() throws Exception {
         configurationManager = LookupUtil.getConfigurationManager();
         resourceManager = LookupUtil.getResourceManager();
         resourceGroupManager = LookupUtil.getResourceGroupManager();
         subjectManager = LookupUtil.getSubjectManager();
-    }
-
-    @BeforeMethod
-    public void beforeMethodBase() throws Exception {
+        
         TestServerCommunicationsService agentServiceContainer = prepareForTestAgents();
         setupMockAgentServices(agentServiceContainer);
 
         prepareScheduler();
     }
 
-    @AfterMethod(alwaysRun = true)
-    public void afterMethodBase() throws Exception {
+    @Override
+    protected void afterMethod() throws Exception {
         try {
             unprepareForTestAgents();
         } finally {
@@ -174,8 +160,9 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
         System.out.println("=====Creating a group with [" + groupSize + "] members");
 
         final LargeGroupEnvironment lge = new LargeGroupEnvironment(largeGroupEnv);
-        JPAUtils.executeInTransaction(new TransactionCallbackWithContext<Object>() {
-            public Object execute(TransactionManager tm, EntityManager em) throws Exception {
+        executeInTransaction(false, new TransactionCallback() {
+
+            public void execute() throws Exception {
                 // create the agent where all resources will be housed
                 lge.agent = SessionTestHelper.createNewAgent(em, "LargeGroupTestAgent");
 
@@ -208,6 +195,7 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
 
                     em.persist(lge.serverType);
                     em.flush();
+
                 } else {
                     lge.serverType = em.find(ResourceType.class, lge.serverType.getId());
                 }
@@ -278,7 +266,6 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
 
                 em.flush();
                 em.clear();
-                return null;
             }
         });
 
@@ -325,29 +312,27 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
         System.out.println(" Done.");
 
         // purge the users and role
-        executeInTransaction(new TransactionCallbackReturnable<Object>() {
-            public Object execute() throws Exception {
+        executeInTransaction(false, new TransactionCallback() {
+            public void execute() throws Exception {
                 lge.normalRole = em.getReference(Role.class, lge.normalRole.getId());
                 lge.normalSubject = em.getReference(Subject.class, lge.normalSubject.getId());
                 lge.unauthzSubject = em.getReference(Subject.class, lge.unauthzSubject.getId());
                 em.remove(lge.normalRole);
                 em.remove(lge.normalSubject);
                 em.remove(lge.unauthzSubject);
-                return null;
             }
         });
 
         if (!keepTypes) {
             // purge the resource types
-            executeInTransaction(new TransactionCallbackReturnable<Object>() {
-                public Object execute() throws Exception {
+            executeInTransaction(false, new TransactionCallback() {
+                public void execute() throws Exception {
                     ResourceType pType = em.getReference(ResourceType.class, lge.platformResource.getResourceType()
                         .getId());
                     ResourceType sType = em.getReference(ResourceType.class, lge.compatibleGroup.getResourceType()
                         .getId());
                     em.remove(sType);
                     em.remove(pType);
-                    return null;
                 }
             });
         }
@@ -362,8 +347,8 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
      * @return status, or null if not known
      */
     protected ConfigurationUpdateStatus getGroupPluginConfigurationStatus(final int groupId) {
-        return JPAUtils.executeInTransaction(new TransactionCallbackWithContext<ConfigurationUpdateStatus>() {
-            public ConfigurationUpdateStatus execute(TransactionManager tm, EntityManager em) throws Exception {
+        return executeInTransaction(false, new TransactionCallbackReturnable<ConfigurationUpdateStatus>() {
+            public ConfigurationUpdateStatus execute() throws Exception {
                 try {
                     Query query = em.createNamedQuery(GroupPluginConfigurationUpdate.QUERY_FIND_LATEST_BY_GROUP_ID);
                     query.setParameter("groupId", groupId);
@@ -385,8 +370,8 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
      * @return status, or null if not known
      */
     protected ConfigurationUpdateStatus getGroupResourceConfigurationStatus(final int groupId) {
-        return JPAUtils.executeInTransaction(new TransactionCallbackWithContext<ConfigurationUpdateStatus>() {
-            public ConfigurationUpdateStatus execute(TransactionManager tm, EntityManager em) throws Exception {
+        return executeInTransaction(false, new TransactionCallbackReturnable<ConfigurationUpdateStatus>() {
+            public ConfigurationUpdateStatus execute() throws Exception {
                 try {
                     Query query = em.createNamedQuery(GroupResourceConfigurationUpdate.QUERY_FIND_LATEST_BY_GROUP_ID);
                     query.setParameter("groupId", groupId);

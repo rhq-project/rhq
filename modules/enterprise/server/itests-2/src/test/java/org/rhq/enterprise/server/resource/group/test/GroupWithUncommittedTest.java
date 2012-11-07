@@ -23,7 +23,6 @@ import java.util.List;
 
 import javax.persistence.Query;
 
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.authz.Permission;
@@ -77,13 +76,15 @@ public class GroupWithUncommittedTest extends LargeGroupTestBase {
     /**
      * Remove the group and all its members.
      */
-    @AfterMethod(alwaysRun = true)
-    public void teardownEnv() throws Exception {
+    @Override
+    public void afterMethod() throws Exception {
         if (env != null) {
             tearDownLargeGroupWithNormalUserRoleAccess(env, false);
             SessionTestHelper.simulateLogout(env.normalSubject);
         }
         env = null;
+
+        super.afterMethod();
     }
 
     @Test(enabled = TESTS_ENABLED)

@@ -93,7 +93,6 @@ public enum RhqManager {
     private String beanName;
     private boolean enabled;
 
-    private static final int REMOTE_IFACE_SUFFIX_LENGTH = "Remote".length();
 
     private RhqManager(Class<?> remote, String enable) {
         this.remote = remote;
@@ -141,6 +140,6 @@ public enum RhqManager {
                 + "' does not follow the established naming convention. This is a bug, please report it.");
         }
 
-        return ifaceName.substring(0, ifaceName.length() - REMOTE_IFACE_SUFFIX_LENGTH) + "Local";
+        return (ifaceName.substring(0, ifaceName.lastIndexOf("Remote")) + "Local");
     }
 }

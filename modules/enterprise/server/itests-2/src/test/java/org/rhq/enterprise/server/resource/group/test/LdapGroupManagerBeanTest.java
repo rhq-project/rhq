@@ -25,9 +25,6 @@ import java.util.Properties;
 
 import javax.persistence.Query;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.common.SystemConfiguration;
@@ -98,18 +95,11 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
     private SystemManagerLocal systemManager = null;
     private TestServerPluginService testServerPluginService = null;
 
-    //    private Subject overlord = null;
-
-    @BeforeClass
-    @SuppressWarnings({ "unused" })
-    private void init() throws Throwable {
-        //        overlord = LookupUtil.getSubjectManager().getOverlord();
+    @Override
+    protected void beforeMethod() throws Exception {
         systemManager = LookupUtil.getSystemManager();
         ldapGroupManager = LookupUtil.getLdapGroupManager();
-    }
 
-    @BeforeMethod
-    public void beforeMethod() throws Exception {
         //we need this because the drift plugins are referenced from the system settings that we use in our tests
         testServerPluginService = new TestServerPluginService();
         prepareCustomServerPluginService(testServerPluginService);
@@ -151,8 +141,8 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
         this.setLdapGroupMemberAttribute("member");
     }
 
-    @AfterMethod(alwaysRun = true)
-    public void afterMethod() throws Exception {
+    @Override
+    protected void afterMethod() throws Exception {
         unprepareServerPluginService();
     }
 

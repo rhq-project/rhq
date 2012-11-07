@@ -23,7 +23,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.authz.Permission;
@@ -80,8 +79,13 @@ public class LargeGroupCriteriaTest extends LargeGroupTestBase {
     /**
      * Remove the group and all its members.
      */
-    @AfterMethod(alwaysRun = true)
-    public void tearDownGroups() throws Exception {
+    @Override
+    protected void afterMethod() throws Exception {
+        tearDownGroups();
+        super.afterMethod();
+    }
+
+    private void tearDownGroups() throws Exception {
         if (env != null) {
             System.out.println("Tearing down groups...");
             Iterator<LargeGroupEnvironment> iter = env.iterator();

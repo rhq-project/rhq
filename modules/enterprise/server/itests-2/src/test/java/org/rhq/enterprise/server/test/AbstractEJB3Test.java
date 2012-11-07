@@ -129,7 +129,10 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testClassesJar.addAsManifestResource(EmptyAsset.INSTANCE, ArchivePaths.create("beans.xml")); // add CDI injection (needed by arquillian injection);
         testClassesJar.addAsResource("test-scheduler.properties");
         testClassesJar.addAsResource("test-alert-sender-serverplugin.xml");
+        testClassesJar.addAsResource("test-assist-color-number.txt");
         testClassesJar.addAsResource("org/rhq/enterprise/server/discovery/DiscoveryBossBeanTest.xml");
+        testClassesJar.addAsResource("org/rhq/enterprise/server/inventory/InventoryManagerBeanTest.xml");
+        testClassesJar.addAsResource("serverplugins/simple-generic-serverplugin.xml");
 
         // create test ear by starting with rhq.ear and thinning it
         MavenDependencyResolver earResolver = DependencyResolvers.use(MavenDependencyResolver.class);

@@ -47,6 +47,13 @@ public class RawNumericMetric {
         this.timestamp = timestamp;
     }
 
+    public RawNumericMetric(int scheduleId, long timestamp, double value, ColumnMetadata metadata) {
+        this.scheduleId = scheduleId;
+        this.value = value;
+        this.timestamp = timestamp;
+        columnMetadata = metadata;
+    }
+
     public int getScheduleId() {
         return scheduleId;
     }

@@ -33,8 +33,37 @@ import java.sql.SQLException;
  */
 public class RawNumericMetricMapper implements ResultSetMapper<RawNumericMetric> {
 
+    private ResultSetMapper<RawNumericMetric> mapper;
+
+    public RawNumericMetricMapper() {
+        this(false);
+    }
+
+    public RawNumericMetricMapper(boolean metaDataIncluded) {
+        if (metaDataIncluded) {
+            mapper = new ResultSetMapper<RawNumericMetric>() {
+                @Override
+                public RawNumericMetric map(ResultSet resultSet) throws SQLException {
+                    RawNumericMetric rawMetric = new RawNumericMetric(resultSet.getInt(1),
+                        resultSet.getDate(2).getTime(), resultSet.getDouble(3));
+                    ColumnMetadata metadata = new ColumnMetadata(resultSet.getInt(4), resultSet.getLong(5));
+                    rawMetric.setColumnMetadata(metadata);
+                    return rawMetric;
+                }
+            };
+        } else {
+            mapper = new ResultSetMapper<RawNumericMetric>() {
+                @Override
+                public RawNumericMetric map(ResultSet resultSet) throws SQLException {
+                    return new RawNumericMetric(resultSet.getInt(1), resultSet.getDate(2).getTime(),
+                        resultSet.getDouble(3));
+                }
+            };
+        }
+    }
+
     @Override
     public RawNumericMetric map(ResultSet resultSet) throws SQLException {
-        return new RawNumericMetric(resultSet.getInt(1), resultSet.getDate(2).getTime(), resultSet.getDouble(3));
+        return mapper.map(resultSet);
     }
 }

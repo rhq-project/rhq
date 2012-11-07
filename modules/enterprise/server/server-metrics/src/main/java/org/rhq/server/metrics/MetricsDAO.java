@@ -63,8 +63,14 @@ public class MetricsDAO {
         "FROM " + RAW_METRICS_TABLE + " " +
         "WHERE schedule_id = ? AND time >= ? AND time < ?";
 
+    private static final String RAW_METRICS_WITH_METADATA_QUERY =
+        "SELECT schedule_id, time, value, ttl(value), writetime(value) " +
+            "FROM " + RAW_METRICS_TABLE + " " +
+            "WHERE schedule_id = ? AND time >= ? AND time < ?";
+
     private static final String INSERT_RAW_METRICS =
-        "INSERT INTO raw_metrics (schedule_id, time, value) VALUES (?, ?, ?)";
+        "INSERT INTO raw_metrics (schedule_id, time, value) " +
+        "VALUES (?, ?, ?) USING TTL ? AND TIMESTAMP ?";
 
     private static final String METRICS_INDEX_QUERY =
         "SELECT time, schedule_id " +
@@ -75,23 +81,21 @@ public class MetricsDAO {
     private static final String UPDATE_METRICS_INDEX =
         "INSERT INTO " + METRICS_INDEX_TABLE + " (bucket, time, schedule_id, null_col) VALUES (?, ?, ?, ?)";
 
-    private static interface ConnectionCallback {
-        void invoke(Connection connection);
-    }
-
     private DataSource dataSource;
 
     public MetricsDAO(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
-    public Set<MeasurementDataNumeric> insertRawMetrics(Set<MeasurementDataNumeric> dataSet) {
+    public Set<MeasurementDataNumeric> insertRawMetrics(Set<MeasurementDataNumeric> dataSet, int ttl, long timestamp) {
         Set<MeasurementDataNumeric> insertedMetrics = new HashSet<MeasurementDataNumeric>();
         Connection connection = null;
         PreparedStatement statement = null;
         try {
+            String sql = "INSERT INTO raw_metrics (schedule_id, time, value) VALUES (?, ?, ?) " +
+                "USING TTL " + ttl + " AND TIMESTAMP " + timestamp;
             connection = dataSource.getConnection();
-            statement = connection.prepareStatement(INSERT_RAW_METRICS);
+            statement = connection.prepareStatement(sql);
 
             for (MeasurementDataNumeric data : dataSet) {
                 statement.setInt(1, data.getScheduleId());
@@ -163,6 +167,40 @@ public class MetricsDAO {
             resultSet = statement.executeQuery();
             List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
             ResultSetMapper<RawNumericMetric> resultSetMapper = new RawNumericMetricMapper();
+
+            while (resultSet.next()) {
+                metrics.add(resultSetMapper.map(resultSet));
+            }
+            return metrics;
+        } catch (SQLException e) {
+            throw new CQLException(e);
+        } finally {
+            JDBCUtil.safeClose(resultSet);
+            JDBCUtil.safeClose(statement);
+            JDBCUtil.safeClose(connection);
+        }
+    }
+
+    public List<RawNumericMetric> findRawMetrics(int scheduleId, DateTime startTime, DateTime endTime,
+        boolean includeMetadata) {
+
+        if (!includeMetadata) {
+            return findRawMetrics(scheduleId, startTime, endTime);
+        }
+
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet resultSet = null;
+        try {
+            connection = dataSource.getConnection();
+            statement = connection.prepareStatement(RAW_METRICS_WITH_METADATA_QUERY);
+            statement.setInt(1, scheduleId);
+            statement.setDate(2, new java.sql.Date(startTime.getMillis()));
+            statement.setDate(3, new java.sql.Date(endTime.getMillis()));
+
+            resultSet = statement.executeQuery();
+            List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
+            ResultSetMapper<RawNumericMetric> resultSetMapper = new RawNumericMetricMapper(true);
 
             while (resultSet.next()) {
                 metrics.add(resultSetMapper.map(resultSet));

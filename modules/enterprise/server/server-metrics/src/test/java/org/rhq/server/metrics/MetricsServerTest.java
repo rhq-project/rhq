@@ -36,10 +36,12 @@ import static org.rhq.server.metrics.MetricsDAO.ONE_HOUR_METRICS_TABLE;
 import static org.rhq.server.metrics.MetricsDAO.RAW_METRICS_TABLE;
 import static org.rhq.server.metrics.MetricsDAO.SIX_HOUR_METRICS_TABLE;
 import static org.rhq.server.metrics.MetricsDAO.TWENTY_FOUR_HOUR_METRICS_TABLE;
+import static org.rhq.server.metrics.MetricsServer.RAW_TTL;
 import static org.rhq.server.metrics.MetricsServer.divide;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -110,6 +112,8 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
     private Keyspace keyspace;
 
+    private MetricsDAO dao;
+
     private static class MetricsServerStub extends MetricsServer {
         private DateTime currentHour;
 
@@ -142,6 +146,9 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         metricsServer.setTraitsCF(TRAITS_CF);
         metricsServer.setResourceTraitsCF(RESOURCE_TRAITS_CF);
         metricsServer.setCassandraDS(dataSource);
+
+        dao = new MetricsDAO(dataSource);
+
         purgeDB();
     }
 
@@ -172,31 +179,23 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         DateTime twoMinutesAgo = currentTime.minusMinutes(2);
         DateTime oneMinuteAgo = currentTime.minusMinutes(1);
 
-        String scheduleName = getClass().getName() + "_SCHEDULE";
-        long interval = MINUTE * 10;
-        boolean enabled = true;
-        DataType dataType = DataType.MEASUREMENT;
-        MeasurementScheduleRequest request = new MeasurementScheduleRequest(scheduleId, scheduleName, interval,
-            enabled, dataType);
-
         Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>();
-        data.add(new MeasurementDataNumeric(threeMinutesAgo.getMillis(), request, 3.2));
-        data.add(new MeasurementDataNumeric(twoMinutesAgo.getMillis(), request, 3.9));
-        data.add(new MeasurementDataNumeric(oneMinuteAgo.getMillis(), request, 2.6));
+        data.add(new MeasurementDataNumeric(threeMinutesAgo.getMillis(), scheduleId, 3.2));
+        data.add(new MeasurementDataNumeric(twoMinutesAgo.getMillis(), scheduleId, 3.9));
+        data.add(new MeasurementDataNumeric(oneMinuteAgo.getMillis(), scheduleId, 2.6));
 
+        long timestamp = System.currentTimeMillis();
         metricsServer.addNumericData(data);
 
-        Statement statement = connection.createStatement();
-        ResultSet resultSet = statement.executeQuery("SELECT * FROM raw_metrics WHERE schedule_id = " + scheduleId);
+        List<RawNumericMetric> actual = dao.findRawMetrics(scheduleId, hour0.plusHours(4), hour0.plusHours(5));
+        List<RawNumericMetric> expected = asList(
+            new RawNumericMetric(scheduleId, threeMinutesAgo.getMillis(), 3.2),
+            new RawNumericMetric(scheduleId, twoMinutesAgo.getMillis(), 3.9),
+            new RawNumericMetric(scheduleId, oneMinuteAgo.getMillis(), 2.6)
+        );
 
-        Set<MeasurementDataNumeric> actual = new HashSet<MeasurementDataNumeric>();
-        while (resultSet.next()) {
-            actual.add(new MeasurementDataNumeric(resultSet.getDate(2).getTime(), resultSet.getInt(1),
-                resultSet.getDouble(3)));
-        }
-        resultSet.close();
-
-        assertCollectionMatchesNoOrder("Failed to retrieve raw metric data", data, actual, "name");
+        assertEquals(actual, expected, "Failed to retrieve raw metric data");
+        assertColumnMetadataEquals(scheduleId, hour0.plusHours(4), hour0.plusHours(5), RAW_TTL, timestamp);
 
         List<MetricsIndexEntry> expectedIndex = asList(new MetricsIndexEntry(ONE_HOUR_METRIC_DATA_CF,
             hour0.plusHours(4), scheduleId));
@@ -292,8 +291,8 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         rawMetrics.add(new MeasurementDataNumeric(secondMetricTime.getMillis(), scheduleId, secondValue));
         rawMetrics.add(new MeasurementDataNumeric(thirdMetricTime.getMillis(), scheduleId, thirdValue));
 
-        MetricsDAO dao = new MetricsDAO(dataSource);
-        Set<MeasurementDataNumeric> insertedRawMetrics = dao.insertRawMetrics(rawMetrics);
+        long timestamp = System.currentTimeMillis();
+        Set<MeasurementDataNumeric> insertedRawMetrics = dao.insertRawMetrics(rawMetrics, RAW_TTL, timestamp);
         metricsServer.updateMetricsIndex(insertedRawMetrics);
 
         // insert raw data to be aggregated
@@ -705,6 +704,17 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         return composite;
     }
 
+    private void assertColumnMetadataEquals(int scheduleId, DateTime startTime, DateTime endTime, Integer ttl,
+        long timestamp) {
+        List<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, startTime, endTime, true);
+        for (RawNumericMetric metric : metrics) {
+            assertEquals(metric.getColumnMetadata().getTtl(), ttl, "The TTL does not match the expected value for " +
+                metric);
+            assertTrue(metric.getColumnMetadata().getWriteTime() >= timestamp, "The column timestamp for " + metric +
+                " should be >= " + timestamp + " but it is " + metric.getColumnMetadata().getWriteTime());
+        }
+    }
+
     private void assert1HourMetricsQueueEquals(List<HColumn<Composite, Integer>> expected) {
         assertMetricsQueueEquals(ONE_HOUR_METRIC_DATA_CF, expected);
     }
@@ -812,9 +822,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     }
 
     private void assertMetricDataEquals(String columnFamily, int scheduleId, List<AggregatedNumericMetric> expected) {
-        MetricsDAO dao = new MetricsDAO(dataSource);
         List<AggregatedNumericMetric> actual = dao.findAggregateMetrics(columnFamily, scheduleId);
-
         assertCollectionMatchesNoOrder(expected, actual, "Metric data for schedule id " + scheduleId +
             " in table " + columnFamily + " does not match expected values");
     }
@@ -853,9 +861,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 //        }
 //
 //        assertEquals(actual.size(), 0, prefix + " Expected the row to be empty.");
-        MetricsDAO dao = new MetricsDAO(dataSource);
         List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(columnFamily, scheduleId);
-
         assertEquals(metrics.size(), 0, "Expected " + columnFamily + " to be empty for schedule id " + scheduleId +
             " but found " + metrics);
     }
@@ -899,7 +905,6 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
 //        assertEquals(actual.size(), 0, "Expected the " + queueName + " queue to be empty for schedule id " +
 //            scheduleId);
-        MetricsDAO dao = new MetricsDAO(dataSource);
         List<MetricsIndexEntry> index = dao.findMetricsIndexEntries(table);
         assertEquals(index.size(), 0, "Expected metrics index for " + table + " to be empty but found " + index);
     }

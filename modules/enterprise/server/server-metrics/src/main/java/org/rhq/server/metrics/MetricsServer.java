@@ -47,6 +47,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeComparator;
+import org.joda.time.Days;
 import org.joda.time.Minutes;
 
 import org.rhq.core.domain.auth.Subject;
@@ -75,6 +76,8 @@ import me.prettyprint.hector.api.query.SliceQuery;
 public class MetricsServer {
 
     private static final int DEFAULT_PAGE_SIZE = 200;
+
+    public static int RAW_TTL = Days.days(7).toStandardSeconds().getSeconds();
 
     private final Log log = LogFactory.getLog(MetricsServer.class);
 
@@ -274,7 +277,8 @@ public class MetricsServer {
 
     public void addNumericData(Set<MeasurementDataNumeric> dataSet) {
         MetricsDAO dao = new MetricsDAO(cassandraDS);
-        Set<MeasurementDataNumeric> updates = dao.insertRawMetrics(dataSet);
+        long timestamp = System.currentTimeMillis();
+        Set<MeasurementDataNumeric> updates = dao.insertRawMetrics(dataSet, RAW_TTL, timestamp);
         updateMetricsIndex(updates);
     }
 

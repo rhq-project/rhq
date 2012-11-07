@@ -41,12 +41,11 @@ import java.util.Map;
 import java.util.Set;
 
 import org.joda.time.DateTime;
+import org.joda.time.Hours;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
-import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 
 /**
  * @author John Sanda
@@ -77,31 +76,39 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         DateTime twoMinutesAgo = currentTime.minusMinutes(2);
         DateTime oneMinuteAgo = currentTime.minusMinutes(1);
 
-        String scheduleName = getClass().getName() + "_SCHEDULE";
-        long interval = MINUTE * 10;
-        boolean enabled = true;
-        DataType dataType = DataType.MEASUREMENT;
-        MeasurementScheduleRequest request = new MeasurementScheduleRequest(scheduleId, scheduleName, interval,
-            enabled, dataType);
-
         Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>();
-        data.add(new MeasurementDataNumeric(threeMinutesAgo.getMillis(), request, 3.2));
-        data.add(new MeasurementDataNumeric(twoMinutesAgo.getMillis(), request, 3.9));
-        data.add(new MeasurementDataNumeric(oneMinuteAgo.getMillis(), request, 2.6));
+        data.add(new MeasurementDataNumeric(threeMinutesAgo.getMillis(), scheduleId, 3.2));
+        data.add(new MeasurementDataNumeric(twoMinutesAgo.getMillis(), scheduleId, 3.9));
+        data.add(new MeasurementDataNumeric(oneMinuteAgo.getMillis(), scheduleId, 2.6));
 
         MetricsDAO dao = new MetricsDAO(dataSource);
-        Set<MeasurementDataNumeric> actualUpdates = dao.insertRawMetrics(data);
+        int ttl = Hours.ONE.toStandardSeconds().getSeconds();
+        long timestamp = System.currentTimeMillis();
+        Set<MeasurementDataNumeric> actualUpdates = dao.insertRawMetrics(data, ttl, timestamp);
 
         assertEquals(actualUpdates, data, "The updates do not match expected value.");
 
-        List<RawNumericMetric> actualMetrics = dao.findRawMetrics(scheduleId,  currentHour, currentHour.plusHours(1));
+        List<RawNumericMetric> actualMetrics = dao.findRawMetrics(scheduleId, currentHour, currentHour.plusHours(1));
         List<RawNumericMetric> expectedMetrics = asList(
             new RawNumericMetric(scheduleId, threeMinutesAgo.getMillis(), 3.2),
             new RawNumericMetric(scheduleId, twoMinutesAgo.getMillis(), 3.9),
             new RawNumericMetric(scheduleId, oneMinuteAgo.getMillis(), 2.6)
         );
-
         assertEquals(actualMetrics, expectedMetrics, "Failed to find raw metrics");
+
+        // Now verify that the column meta data was set. We do this separately  in order to
+        // exercise both versions of the findRawMetrics method. In production code (so far),
+        // we have no need to retrieve meta data when retrieving raw metrics, but we need
+        // to verify that the meta data is in fact set.
+        List<RawNumericMetric> actualMetricsWithMetadata = dao.findRawMetrics(scheduleId, currentHour,
+            currentHour.plusHours(1), true) ;
+        List<RawNumericMetric> expectedMetricsWithMetadata = asList(
+            new RawNumericMetric(scheduleId, threeMinutesAgo.getMillis(), 3.2, new ColumnMetadata(ttl, timestamp)),
+            new RawNumericMetric(scheduleId, twoMinutesAgo.getMillis(), 3.9, new ColumnMetadata(ttl, timestamp)),
+            new RawNumericMetric(scheduleId, oneMinuteAgo.getMillis(), 2.6, new ColumnMetadata(ttl, timestamp))
+        );
+        assertEquals(actualMetricsWithMetadata, expectedMetricsWithMetadata, "Column meta data does not match " +
+            "expected values");
     }
 
     @Test

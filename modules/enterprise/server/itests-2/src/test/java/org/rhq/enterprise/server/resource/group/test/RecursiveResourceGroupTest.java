@@ -27,8 +27,6 @@ import java.util.Random;
 import javax.persistence.EntityManager;
 import javax.transaction.Status;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -55,8 +53,8 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
     private RoleManagerLocal roleManager;
     private SubjectManagerLocal subjectManager;
 
-    @BeforeMethod
-    protected void init() {
+    @Override
+    protected void beforeMethod() throws Exception {
         resourceGroupManager = LookupUtil.getResourceGroupManager();
         resourceManager = LookupUtil.getResourceManager();
         roleManager = LookupUtil.getRoleManager();
@@ -64,8 +62,8 @@ public class RecursiveResourceGroupTest extends AbstractEJB3Test {
         prepareScheduler();
     }
 
-    @AfterMethod
-    protected void after() throws Exception {
+    @Override
+    protected void afterMethod() throws Exception {
         unprepareScheduler();
     }
 

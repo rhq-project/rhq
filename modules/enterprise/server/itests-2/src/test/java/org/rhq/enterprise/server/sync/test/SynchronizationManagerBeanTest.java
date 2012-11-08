@@ -606,7 +606,9 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
             while ((cnt = str.read(buf)) >= 0) {
                 bld.append(buf, 0, cnt);
             }
-
+            System.out.println("*********************************************");
+            System.out.println(bld.toString());
+            System.out.println("*********************************************");
             return bld.toString();
         } finally {
             str.close();

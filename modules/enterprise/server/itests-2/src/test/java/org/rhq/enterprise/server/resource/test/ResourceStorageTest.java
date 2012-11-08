@@ -21,7 +21,6 @@ package org.rhq.enterprise.server.resource.test;
 import java.util.List;
 import java.util.Map;
 
-import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
@@ -40,10 +39,8 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.authz.AuthorizationManagerBean;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
-import org.rhq.enterprise.server.resource.ResourceManagerBean;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
@@ -55,7 +52,7 @@ public class ResourceStorageTest extends AbstractEJB3Test {
     // TODO GH: Fixme (setup non-super user and group)@Test(groups = "integration.ejb3")
     public void testFindResourceComposite() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
+
         try {
             ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
             SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
@@ -81,7 +78,6 @@ public class ResourceStorageTest extends AbstractEJB3Test {
     @SuppressWarnings("unchecked")
     public void testBindOrderBy() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
         try {
             log.error("QUERY TEST!!");
             Query q = em.createQuery("SELECT r FROM Resource r ORDER BY :col");
@@ -140,7 +136,6 @@ public class ResourceStorageTest extends AbstractEJB3Test {
     @Test(groups = "integration.ejb3")
     public void testConstructorQuery() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
         try {
             Query q = em
                 .createQuery("SELECT new org.rhq.enterprise.server.resource.test.ResourceWithStatus(a.availabilityType,r) "
@@ -162,7 +157,6 @@ public class ResourceStorageTest extends AbstractEJB3Test {
     @Test(groups = "integration.ejb3")
     public void getDeadResources() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
         try {
             Query q = em
                 .createQuery("SELECT new org.rhq.enterprise.server.resource.test.ResourceWithStatus(a.availabilityType,r) "
@@ -205,16 +199,11 @@ public class ResourceStorageTest extends AbstractEJB3Test {
     public void resourceTest() throws Exception {
         // TODO GH: Implement actual tests
 
-        System.out.println("foo");
-
-        ResourceManagerLocal resourceManager = (ResourceManagerLocal) getInitialContext().lookup(
-            ResourceManagerBean.class.getSimpleName() + "/local");
+        ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
-        //         (SubjectManagerLocal) getInitialContext().lookup(SubjectManagerBean.class.getSimpleName() + "/local");
 
-        AuthorizationManagerLocal authorizationManager = (AuthorizationManagerLocal) getInitialContext().lookup(
-            AuthorizationManagerBean.class.getSimpleName() + "/local");
+        AuthorizationManagerLocal authorizationManager = LookupUtil.getAuthorizationManager();
 
         Subject rhqadmin = subjectManager.loginUnauthenticated("rhqadmin");
         System.out.println(rhqadmin);

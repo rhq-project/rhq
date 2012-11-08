@@ -26,11 +26,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import javax.ejb.EJBException;
-import javax.persistence.EntityManager;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
@@ -92,16 +88,13 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
 
     // Setup  --------------------------------------------
 
-    @BeforeClass
-    public void setupBeforeClass() throws Exception {
+    @Override
+    public void beforeMethod() throws Exception {
         resourceFactoryManager = LookupUtil.getResourceFactoryManager();
         resourceManager = LookupUtil.getResourceManager();
         discoveryBoss = LookupUtil.getDiscoveryBoss();
         overlord = LookupUtil.getSubjectManager().getOverlord();
-    }
 
-    @BeforeMethod
-    public void setupBeforeMethod() throws Exception {
         prepareScheduler();
         TestServerCommunicationsService agentServiceContainer = prepareForTestAgents();
         agentServiceContainer.resourceFactoryService = mockAgentService;
@@ -114,8 +107,8 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
         setupResourceEnvironment();
     }
 
-    @AfterMethod(alwaysRun = true)
-    public void teardownAfterMethod() throws Exception {
+    @Override
+    public void afterMethod() throws Exception {
         unprepareForTestAgents();
         unprepareScheduler();
         unprepareServerPluginService();
@@ -141,12 +134,10 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
             "newResource", null, resourceConfiguration);
 
         // Verify
-        EntityManager entityManager = null;
         try {
             getTransactionManager().begin();
-            entityManager = getEntityManager();
 
-            Resource parent = entityManager.find(Resource.class, parentResource.getId());
+            Resource parent = em.find(Resource.class, parentResource.getId());
             List<CreateResourceHistory> historyList = parent.getCreateChildResourceRequests();
 
             assert historyList.size() == 1 : "Incorrect number of children found. Expected: 1, Found: "
@@ -162,7 +153,6 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
             assert historyItem.getConfiguration() != null : "Null configuration found for history item";
         } finally {
             getTransactionManager().rollback();
-            entityManager.close();
         }
     }
 
@@ -182,12 +172,10 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
             "newResource", null, resourceConfiguration);
 
         // Verify
-        EntityManager entityManager = null;
         try {
             getTransactionManager().begin();
-            entityManager = getEntityManager();
 
-            Resource parent = entityManager.find(Resource.class, parentResource.getId());
+            Resource parent = em.find(Resource.class, parentResource.getId());
             List<CreateResourceHistory> historyList = parent.getCreateChildResourceRequests();
 
             assert historyList.size() == 1 : "Incorrect number of children found. Expected: 1, Found: "
@@ -201,7 +189,6 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
                 + historyItem.getErrorMessage();
         } finally {
             getTransactionManager().rollback();
-            entityManager.close();
         }
     }
 
@@ -217,16 +204,14 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
         resourceConfiguration.put(new PropertySimple("property1", "value1"));
 
         // Test
-        CreateResourceHistory history1 = resourceFactoryManager.createResource(overlord, parentResource.getId(), configBackedChildResourceType2.getId(),
-                "newResource", null, resourceConfiguration);
+        CreateResourceHistory history1 = resourceFactoryManager.createResource(overlord, parentResource.getId(),
+            configBackedChildResourceType2.getId(), "newResource", null, resourceConfiguration);
 
         // Verify
-        EntityManager entityManager = null;
         try {
             getTransactionManager().begin();
-            entityManager = getEntityManager();
 
-            Resource parent = entityManager.find(Resource.class, parentResource.getId());
+            Resource parent = em.find(Resource.class, parentResource.getId());
             List<CreateResourceHistory> historyList = parent.getCreateChildResourceRequests();
 
             assert historyList.size() == 1 : "Incorrect number of children found. Expected: 1, Found: "
@@ -242,12 +227,11 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
             assert historyItem.getConfiguration() != null : "Null configuration found for history item";
         } finally {
             getTransactionManager().rollback();
-            entityManager.close();
         }
 
         // Invoke the same callbacks the plugin container would to actually commit the new Resource to inventory.
-        resourceFactoryManager.completeCreateResource(new CreateResourceResponse(history1.getId(), "newResource", "key",
-                CreateResourceStatus.SUCCESS, null, new Configuration()));
+        resourceFactoryManager.completeCreateResource(new CreateResourceResponse(history1.getId(), "newResource",
+            "key", CreateResourceStatus.SUCCESS, null, new Configuration()));
         Resource resource = new Resource(1000000);
         resource.setUuid(UUID.randomUUID().toString());
         resource.setResourceType(configBackedChildResourceType2);
@@ -260,7 +244,7 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
         // Now try to create another Resource of the same singleton type - this should fail.
         try {
             CreateResourceHistory history2 = resourceFactoryManager.createResource(overlord, parentResource.getId(),
-                    configBackedChildResourceType2.getId(), "newResource2", null, resourceConfiguration);
+                configBackedChildResourceType2.getId(), "newResource2", null, resourceConfiguration);
             fail("Creating a singleton that already existed succeeded: " + history2);
         } catch (EJBException e) {
             assertEquals(String.valueOf(e.getCause()), RuntimeException.class, e.getCause().getClass());
@@ -283,23 +267,21 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
         deploymentTimeConfiguration.put(new PropertySimple("testProperty", "testValue"));
 
         // This file should be in the classpath, so use it for the artifact content
-        URL contentResource = this.getClass().getClassLoader().getResource("jndi.properties");
-        assert contentResource != null : "Could not load jndi.properties as package content";
+        URL contentResource = this.getClass().getClassLoader().getResource("test-scheduler.properties");
+        assert contentResource != null : "Could not load test-scheduler.properties as package content";
 
         InputStream packageInputStream = contentResource.openStream();
 
         // Test
-        CreateResourceHistory history1 = resourceFactoryManager.createResource(overlord, parentResource.getId(), contentBackedChildResourceType.getId(),
-                "newResource", null, packageName, packageVersion, architectureId, deploymentTimeConfiguration,
-                packageInputStream);
+        CreateResourceHistory history1 = resourceFactoryManager.createResource(overlord, parentResource.getId(),
+            contentBackedChildResourceType.getId(), "newResource", null, packageName, packageVersion, architectureId,
+            deploymentTimeConfiguration, packageInputStream);
 
         // Verify
-        EntityManager entityManager = null;
         try {
             getTransactionManager().begin();
-            entityManager = getEntityManager();
 
-            Resource parent = entityManager.find(Resource.class, parentResource.getId());
+            Resource parent = em.find(Resource.class, parentResource.getId());
             List<CreateResourceHistory> historyList = parent.getCreateChildResourceRequests();
 
             assert historyList.size() == 1 : "Incorrect number of children found. Expected: 1, Found: "
@@ -314,12 +296,11 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
             assert historyItem.getErrorMessage() == null : "Error message found for successful call";
         } finally {
             getTransactionManager().rollback();
-            entityManager.close();
         }
 
         // Invoke the same callbacks the plugin container would to actually commit the new Resource to inventory.
-        resourceFactoryManager.completeCreateResource(new CreateResourceResponse(history1.getId(), "newResource", "key",
-                CreateResourceStatus.SUCCESS, null, new Configuration()));
+        resourceFactoryManager.completeCreateResource(new CreateResourceResponse(history1.getId(), "newResource",
+            "key", CreateResourceStatus.SUCCESS, null, new Configuration()));
         Resource resource = new Resource(2000000);
         resource.setUuid(UUID.randomUUID().toString());
         resource.setResourceType(contentBackedChildResourceType);
@@ -332,8 +313,8 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
         // Now try to create another Resource of the same singleton type - this should fail.
         try {
             CreateResourceHistory history2 = resourceFactoryManager.createResource(overlord, parentResource.getId(),
-                    contentBackedChildResourceType.getId(), "newResource2", null, packageName, packageVersion,
-                    architectureId, deploymentTimeConfiguration, packageInputStream);
+                contentBackedChildResourceType.getId(), "newResource2", null, packageName, packageVersion,
+                architectureId, deploymentTimeConfiguration, packageInputStream);
             fail("Creating a singleton that already existed succeeded: " + history2);
         } catch (EJBException e) {
             assertEquals(String.valueOf(e.getCause()), RuntimeException.class, e.getCause().getClass());
@@ -356,13 +337,10 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
         resourceFactoryManager.deleteResource(overlord, deleteMe.getId());
 
         // Verify
-        EntityManager entityManager = null;
-
         try {
             getTransactionManager().begin();
-            entityManager = getEntityManager();
 
-            Resource parent = entityManager.find(Resource.class, parentResource.getId());
+            Resource parent = em.find(Resource.class, parentResource.getId());
             Set<Resource> childResources = parent.getChildResources();
 
             assert childResources.size() == 1 : "Child resource not found on the parent";
@@ -373,7 +351,6 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
                 + deletedResource.getInventoryStatus();
         } finally {
             getTransactionManager().rollback();
-            entityManager.close();
         }
     }
 
@@ -391,14 +368,10 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
         // Test
         resourceFactoryManager.deleteResource(overlord, deleteMe.getId());
 
-        // Verify
-        EntityManager entityManager = null;
-
         try {
             getTransactionManager().begin();
-            entityManager = getEntityManager();
 
-            Resource parent = entityManager.find(Resource.class, parentResource.getId());
+            Resource parent = em.find(Resource.class, parentResource.getId());
             Set<Resource> childResources = parent.getChildResources();
 
             assert childResources.size() == 1 : "Child resource not found on the parent";
@@ -409,7 +382,6 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
                 + deletedResource.getInventoryStatus();
         } finally {
             getTransactionManager().rollback();
-            entityManager.close();
         }
     }
 
@@ -423,18 +395,18 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
 
         resourceConfiguration = new Configuration();
         resourceConfiguration.getMap();
-        resourceFactoryManager.createResource(overlord, parentResource.getId(), configBackedChildResourceType1.getId(), "resource1",
-            (Configuration) null, resourceConfiguration);
+        resourceFactoryManager.createResource(overlord, parentResource.getId(), configBackedChildResourceType1.getId(),
+            "resource1", (Configuration) null, resourceConfiguration);
 
         resourceConfiguration = new Configuration();
         resourceConfiguration.getMap();
-        resourceFactoryManager.createResource(overlord, parentResource.getId(), configBackedChildResourceType1.getId(), "resource2",
-                (Configuration) null, resourceConfiguration);
+        resourceFactoryManager.createResource(overlord, parentResource.getId(), configBackedChildResourceType1.getId(),
+            "resource2", (Configuration) null, resourceConfiguration);
 
         resourceConfiguration = new Configuration();
         resourceConfiguration.getMap();
-        resourceFactoryManager.createResource(overlord, parentResource.getId(), configBackedChildResourceType1.getId(), "resource3",
-            (Configuration) null, resourceConfiguration);
+        resourceFactoryManager.createResource(overlord, parentResource.getId(), configBackedChildResourceType1.getId(),
+            "resource3", (Configuration) null, resourceConfiguration);
 
         // Verify
         int numRequestsInHistory = resourceFactoryManager.getCreateChildResourceHistoryCount(parentResource.getId(),
@@ -520,63 +492,59 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
      */
     private void setupResourceEnvironment() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
 
         try {
-            try {
-                // Create parent resource type
-                parentResourceType = new ResourceType("platform-" + System.currentTimeMillis(), TEST_PLUGIN_NAME,
-                    ResourceCategory.PLATFORM, null);
-                em.persist(parentResourceType);
+            // Create parent resource type
+            parentResourceType = new ResourceType("platform-" + System.currentTimeMillis(), TEST_PLUGIN_NAME,
+                ResourceCategory.PLATFORM, null);
+            em.persist(parentResourceType);
 
-                // Create child resource type to parent. Artifact type lives under this resource type.
-                contentBackedChildResourceType = new ResourceType("service-" + System.currentTimeMillis(), TEST_PLUGIN_NAME,
-                    ResourceCategory.SERVICE, parentResourceType);
-                contentBackedChildResourceType.setCreateDeletePolicy(CreateDeletePolicy.BOTH);
-                contentBackedChildResourceType.setCreationDataType(ResourceCreationDataType.CONTENT);
-                contentBackedChildResourceType.setSingleton(true);
-                em.persist(contentBackedChildResourceType);
+            // Create child resource type to parent. Artifact type lives under this resource type.
+            contentBackedChildResourceType = new ResourceType("service-" + System.currentTimeMillis(),
+                TEST_PLUGIN_NAME, ResourceCategory.SERVICE, parentResourceType);
+            contentBackedChildResourceType.setCreateDeletePolicy(CreateDeletePolicy.BOTH);
+            contentBackedChildResourceType.setCreationDataType(ResourceCreationDataType.CONTENT);
+            contentBackedChildResourceType.setSingleton(true);
+            em.persist(contentBackedChildResourceType);
 
-                // Create artifact type under child resource type that is marked as the creation artifact type
-                packageType = new PackageType();
-                packageType.setName("artifact-" + System.currentTimeMillis());
-                packageType.setDescription("");
-                packageType.setCategory(PackageCategory.DEPLOYABLE);
-                packageType.setDisplayName("TestResourceArtifact");
-                packageType.setCreationData(true);
-                packageType.setResourceType(contentBackedChildResourceType);
-                em.persist(packageType);
+            // Create artifact type under child resource type that is marked as the creation artifact type
+            packageType = new PackageType();
+            packageType.setName("artifact-" + System.currentTimeMillis());
+            packageType.setDescription("");
+            packageType.setCategory(PackageCategory.DEPLOYABLE);
+            packageType.setDisplayName("TestResourceArtifact");
+            packageType.setCreationData(true);
+            packageType.setResourceType(contentBackedChildResourceType);
+            em.persist(packageType);
 
-                // Link artifact type and child resource type
-                contentBackedChildResourceType.addPackageType(packageType);
+            // Link artifact type and child resource type
+            contentBackedChildResourceType.addPackageType(packageType);
 
-                configBackedChildResourceType1 = new ResourceType("service1-" + System.currentTimeMillis(), TEST_PLUGIN_NAME,
-                                    ResourceCategory.SERVICE, parentResourceType);
-                configBackedChildResourceType1.setCreateDeletePolicy(CreateDeletePolicy.BOTH);
-                configBackedChildResourceType1.setCreationDataType(ResourceCreationDataType.CONFIGURATION);
-                em.persist(configBackedChildResourceType1);
+            configBackedChildResourceType1 = new ResourceType("service1-" + System.currentTimeMillis(),
+                TEST_PLUGIN_NAME, ResourceCategory.SERVICE, parentResourceType);
+            configBackedChildResourceType1.setCreateDeletePolicy(CreateDeletePolicy.BOTH);
+            configBackedChildResourceType1.setCreationDataType(ResourceCreationDataType.CONFIGURATION);
+            em.persist(configBackedChildResourceType1);
 
-                configBackedChildResourceType2 = new ResourceType("service2-" + System.currentTimeMillis(), TEST_PLUGIN_NAME,
-                                    ResourceCategory.SERVICE, parentResourceType);
-                configBackedChildResourceType2.setCreateDeletePolicy(CreateDeletePolicy.BOTH);
-                configBackedChildResourceType2.setCreationDataType(ResourceCreationDataType.CONFIGURATION);
-                configBackedChildResourceType2.setSingleton(true);
-                em.persist(configBackedChildResourceType2);
+            configBackedChildResourceType2 = new ResourceType("service2-" + System.currentTimeMillis(),
+                TEST_PLUGIN_NAME, ResourceCategory.SERVICE, parentResourceType);
+            configBackedChildResourceType2.setCreateDeletePolicy(CreateDeletePolicy.BOTH);
+            configBackedChildResourceType2.setCreationDataType(ResourceCreationDataType.CONFIGURATION);
+            configBackedChildResourceType2.setSingleton(true);
+            em.persist(configBackedChildResourceType2);
 
-                // Create parent resource off of which to hang created resources
-                parentResource = new Resource("parent" + System.currentTimeMillis(), "name", parentResourceType);
-                parentResource.setUuid("" + new Random().nextInt());
-                em.persist(parentResource);
-            } catch (Exception e) {
-                System.out.println(e);
-                getTransactionManager().rollback();
-                throw e;
-            }
+            // Create parent resource off of which to hang created resources
+            parentResource = new Resource("parent" + System.currentTimeMillis(), "name", parentResourceType);
+            parentResource.setUuid("" + new Random().nextInt());
+            em.persist(parentResource);
 
-            getTransactionManager().commit();
-        } finally {
-            em.close();
+        } catch (Exception e) {
+            System.out.println(e);
+            getTransactionManager().rollback();
+            throw e;
         }
+
+        getTransactionManager().commit();
     }
 
     /**
@@ -593,7 +561,7 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
             }
 
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
+
             try {
                 // Remove the children first.
                 ResourceType deleteMeType = em.find(ResourceType.class, contentBackedChildResourceType.getId());
@@ -617,8 +585,6 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
                 }
 
                 throw e;
-            } finally {
-                em.close();
             }
         }
     }
@@ -634,24 +600,18 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
         Resource resource = null;
 
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
-
         try {
-            try {
-                resource = new Resource("child" + System.currentTimeMillis(), "name", parentResourceType);
-                resource.setUuid("" + new Random().nextInt());
-                resource.setParentResource(parentResource);
-                resource.setInventoryStatus(InventoryStatus.COMMITTED);
-                em.persist(resource);
-            } catch (Exception e) {
-                System.out.println(e);
-                getTransactionManager().rollback();
-            }
-
-            getTransactionManager().commit();
-        } finally {
-            em.close();
+            resource = new Resource("child" + System.currentTimeMillis(), "name", parentResourceType);
+            resource.setUuid("" + new Random().nextInt());
+            resource.setParentResource(parentResource);
+            resource.setInventoryStatus(InventoryStatus.COMMITTED);
+            em.persist(resource);
+        } catch (Exception e) {
+            System.out.println(e);
+            getTransactionManager().rollback();
         }
+
+        getTransactionManager().commit();
 
         return resource;
     }

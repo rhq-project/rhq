@@ -22,12 +22,9 @@ package org.rhq.enterprise.server.plugin;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.hibernate.LazyInitializationException;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -54,8 +51,8 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
 
     private ServerPluginsLocal serverPluginsBean;
 
-    @BeforeMethod
-    public void beforeMethod() {
+    @Override
+    protected void beforeMethod() {
         TestGenericServerPluginService pluginService;
         pluginService = new TestGenericServerPluginService();
         prepareCustomServerPluginService(pluginService);
@@ -63,10 +60,8 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
         serverPluginsBean = LookupUtil.getServerPlugins();
     }
 
-    @AfterMethod(alwaysRun = true)
-    public void afterMethod() {
-
-        EntityManager em = null;
+    @Override
+    protected void afterMethod() {
 
         try {
             unprepareServerPluginService();
@@ -389,7 +384,7 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
     }
 
     private ServerPlugin getDeletedPluginInTx(String pluginName) throws Exception {
-        EntityManager em = getEntityManager();
+
         getTransactionManager().begin();
         try {
             Query q = em.createNamedQuery(ServerPlugin.QUERY_FIND_ANY_BY_NAME);

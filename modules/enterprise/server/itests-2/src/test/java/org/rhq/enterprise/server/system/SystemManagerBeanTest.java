@@ -20,9 +20,6 @@ package org.rhq.enterprise.server.system;
 
 import java.util.Properties;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.db.DatabaseType;
@@ -40,13 +37,10 @@ public class SystemManagerBeanTest extends AbstractEJB3Test {
     private SystemManagerLocal systemManager;
     private TestServerPluginService testServerPluginService;
 
-    @BeforeClass
-    public void setupServer() {
+    @Override
+    protected void beforeMethod() throws Exception {
         systemManager = LookupUtil.getSystemManager();
-    }
 
-    @BeforeMethod
-    public void beforeMethod() {
         // do this each method so it doesn't expire
         overlord = LookupUtil.getSubjectManager().getOverlord();
 
@@ -56,8 +50,8 @@ public class SystemManagerBeanTest extends AbstractEJB3Test {
         testServerPluginService.startMasterPluginContainer();
     }
 
-    @AfterMethod(alwaysRun = true)
-    public void tearDownServer() throws Exception {
+    @Override
+    protected void afterMethod() throws Exception {
         unprepareServerPluginService();
     }
 

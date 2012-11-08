@@ -18,10 +18,6 @@
  */
 package org.rhq.enterprise.server.resource.test;
 
-import javax.persistence.EntityManager;
-
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -41,9 +37,8 @@ import org.rhq.enterprise.server.util.SessionTestHelper;
 public class ResourceGroupManagerBeanTest extends AbstractEJB3Test {
     private static ResourceGroupManagerLocal resourceGroupManager;
 
-    @BeforeMethod
-    @SuppressWarnings("unused")
-    private void init() {
+    @Override
+    protected void beforeMethod() {
         try {
             resourceGroupManager = LookupUtil.getResourceGroupManager();
             prepareScheduler();
@@ -55,9 +50,8 @@ public class ResourceGroupManagerBeanTest extends AbstractEJB3Test {
         }
     }
 
-    @AfterMethod
-    @SuppressWarnings("unused")
-    private void after() {
+    @Override
+    protected void afterMethod() {
         try {
             unprepareScheduler();
         } catch (Throwable t) {
@@ -72,8 +66,6 @@ public class ResourceGroupManagerBeanTest extends AbstractEJB3Test {
     public void testGetCompatibleGroupById() throws Exception {
         getTransactionManager().begin();
         try {
-            EntityManager em = getEntityManager();
-
             /* bootstrap */
             ResourceType type = new ResourceType("type", "plugin", ResourceCategory.PLATFORM, null);
             Subject testSubject = SessionTestHelper.createNewSubject(em, "testSubject");
@@ -104,8 +96,6 @@ public class ResourceGroupManagerBeanTest extends AbstractEJB3Test {
     public void testUpdateGroupDescription() throws Exception {
         getTransactionManager().begin();
         try {
-            EntityManager em = getEntityManager();
-
             /* bootstrap */
             ResourceType type = new ResourceType("type", "plugin", ResourceCategory.PLATFORM, null);
             Subject testSubject = SessionTestHelper.createNewSubject(em, "testSubject");
@@ -137,8 +127,6 @@ public class ResourceGroupManagerBeanTest extends AbstractEJB3Test {
     public void testUpdateGroupName() throws Exception {
         getTransactionManager().begin();
         try {
-            EntityManager em = getEntityManager();
-
             /* bootstrap */
             ResourceType type = new ResourceType("type", "plugin", ResourceCategory.PLATFORM, null);
             Subject testSubject = SessionTestHelper.createNewSubject(em, "testSubject");

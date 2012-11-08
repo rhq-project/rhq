@@ -157,6 +157,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_NAME_VISIBLE_GROUP);
         query.setParameter("name", group.getName());
 
+        @SuppressWarnings("unchecked")
         List<ResourceGroup> groups = query.getResultList();
         if (groups.size() != 0) {
             throw new ResourceGroupAlreadyExistsException("ResourceGroup with name " + group.getName()
@@ -341,8 +342,11 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         throws ResourceGroupDeleteException {
 
         // for compatible groups, first recursively remove any referring backing groups for auto-clusters
-        for (ResourceGroup referringGroup : group.getClusterBackingGroups()) {
-            deleteResourceGroup(subject, referringGroup.getId());
+        List<ResourceGroup> clusterBackingGroups = group.getClusterBackingGroups();
+        if (null != clusterBackingGroups) {
+            for (ResourceGroup referringGroup : clusterBackingGroups) {
+                deleteResourceGroup(subject, referringGroup.getId());
+            }
         }
 
         Subject overlord = subjectManager.getOverlord();
@@ -999,7 +1003,6 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         }
     }
 
-    @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void setResourceType(int resourceGroupId) throws ResourceGroupDeleteException {
         Query query = entityManager.createNamedQuery(ResourceType.QUERY_GET_EXPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP);
@@ -1008,7 +1011,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         Subject overlord = subjectManager.getOverlord();
         ResourceGroup resourceGroup = getResourceGroupById(overlord, resourceGroupId, null);
 
-        List results = query.getResultList();
+        @SuppressWarnings("unchecked")
+        List<Object> results = query.getResultList();
         if (results.size() == 1) {
             Object[] info = (Object[]) results.get(0);
             int resourceTypeId = (Integer) info[0];
@@ -1505,14 +1509,14 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             : RecursivityChangeType.RemovedRecursion);
     }
 
-    @SuppressWarnings("unchecked")
     public PageList<ResourceGroup> findResourceGroupsByCriteria(Subject subject, ResourceGroupCriteria criteria) {
 
         CriteriaAuthzType authzType = getCriteriaAuthzType(subject, criteria);
 
         CriteriaQueryGenerator generator = getCriteriaQueryGenerator(subject, criteria, authzType);
 
-        CriteriaQueryRunner<ResourceGroup> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+        CriteriaQueryRunner<ResourceGroup> queryRunner = new CriteriaQueryRunner<ResourceGroup>(criteria, generator,
+            entityManager);
 
         PageList<ResourceGroup> result = queryRunner.execute();
 

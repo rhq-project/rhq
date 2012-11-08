@@ -23,14 +23,9 @@ import java.util.List;
 import java.util.Random;
 
 import javax.ejb.EJBException;
-import javax.persistence.EntityManager;
 
 import org.quartz.SimpleTrigger;
 import org.quartz.Trigger;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
@@ -97,26 +92,15 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
     // for those tests that cancel an operation, this will be the results of the simulated cancellation
     private CancelResults simulatedOperation_CancelResults;
 
-    /**
-     * Prepares things for the entire test class.
-     */
-    @BeforeClass
-    public void beforeClass() {
+    @Override
+    protected void beforeMethod() throws Exception {
         configurationManager = LookupUtil.getConfigurationManager();
         operationManager = LookupUtil.getOperationManager();
         schedulerManager = LookupUtil.getSchedulerBean();
         overlord = LookupUtil.getSubjectManager().getOverlord();
 
         operationServerService = new OperationServerServiceImpl();
-    }
 
-    @AfterClass(alwaysRun = true)
-    public void afterClass() {
-        operationServerService = null;
-    }
-
-    @BeforeMethod
-    public void beforeMethod() throws Exception {
         TestServerCommunicationsService agentServiceContainer = prepareForTestAgents();
         agentServiceContainer.operationService = new TestConfigService();
 
@@ -131,8 +115,8 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         newGroup = newResource.getExplicitGroups().iterator().next();
     }
 
-    @AfterMethod(alwaysRun = true)
-    public void afterMethod() throws Exception {
+    @Override
+    protected void afterMethod() throws Exception {
         try {
             deleteNewResource(newResource);
         } finally {
@@ -1550,53 +1534,48 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
     private Resource createNewResource() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
 
         Resource resource;
 
         try {
-            try {
-                ResourceType resourceType = new ResourceType("plat" + System.currentTimeMillis(), "test",
-                    ResourceCategory.PLATFORM, null);
+            ResourceType resourceType = new ResourceType("plat" + System.currentTimeMillis(), "test",
+                ResourceCategory.PLATFORM, null);
 
-                OperationDefinition def = new OperationDefinition(resourceType, "testOp");
-                def.setTimeout(10);
-                def.setDisplayName("Test Operation");
-                resourceType.addOperationDefinition(def);
+            OperationDefinition def = new OperationDefinition(resourceType, "testOp");
+            def.setTimeout(10);
+            def.setDisplayName("Test Operation");
+            resourceType.addOperationDefinition(def);
 
-                em.persist(resourceType);
+            em.persist(resourceType);
 
-                Agent agent = new Agent("testagent", "testaddress", 1, "", "testtoken");
-                em.persist(agent);
-                em.flush();
-
-                resource = new Resource("reskey" + System.currentTimeMillis(), "resname", resourceType);
-                resource.setUuid("" + new Random().nextInt());
-                resource.setAgent(agent);
-                resource.setInventoryStatus(InventoryStatus.COMMITTED);
-                em.persist(resource);
-
-                ResourceGroup group = new ResourceGroup("testgroupOMB" + System.currentTimeMillis(), resourceType);
-                em.persist(group);
-                group.addExplicitResource(resource);
-            } catch (Exception e) {
-                System.out.println("CANNOT PREPARE TEST: " + e);
-                getTransactionManager().rollback();
-                throw e;
-            }
-
+            Agent agent = new Agent("testagent", "testaddress", 1, "", "testtoken");
+            em.persist(agent);
             em.flush();
-            getTransactionManager().commit();
-        } finally {
-            em.close();
+
+            resource = new Resource("reskey" + System.currentTimeMillis(), "resname", resourceType);
+            resource.setUuid("" + new Random().nextInt());
+            resource.setAgent(agent);
+            resource.setInventoryStatus(InventoryStatus.COMMITTED);
+            em.persist(resource);
+
+            ResourceGroup group = new ResourceGroup("testgroupOMB" + System.currentTimeMillis(), resourceType);
+            em.persist(group);
+            group.addExplicitResource(resource);
+            em.flush();
+
+        } catch (Exception e) {
+            System.out.println("CANNOT PREPARE TEST: " + e);
+            getTransactionManager().rollback();
+            throw e;
         }
+
+        getTransactionManager().commit();
 
         return resource;
     }
 
     private void deleteNewResource(Resource resource) throws Exception {
         if (null != resource) {
-            EntityManager em = null;
 
             try {
                 ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
@@ -1610,8 +1589,6 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
                 ResourceGroup group = res.getExplicitGroups().iterator().next();
 
                 getTransactionManager().commit();
-                em.close();
-                em = null;
 
                 // then invoke bulk delete on the resource to remove any dependencies not defined in the hibernate entity model
                 // perform in-band and out-of-band work in quick succession
@@ -1642,10 +1619,6 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
                     System.out.println("CANNOT CLEAN UP TEST (" + this.getClass().getSimpleName() + ") Cause: " + e);
                     getTransactionManager().rollback();
                 } catch (Exception ignore) {
-                }
-            } finally {
-                if (null != em) {
-                    em.close();
                 }
             }
         }

@@ -19,12 +19,11 @@
 package org.rhq.enterprise.server.content.test;
 
 import java.util.List;
-import javax.persistence.EntityManager;
+
 import javax.persistence.Query;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
+
 import org.testng.annotations.Test;
+
 import org.rhq.core.domain.resource.ProductVersion;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -44,18 +43,15 @@ public class ProductVersionManagerBeanTest extends AbstractEJB3Test {
 
     // Setup  --------------------------------------------
 
-    @BeforeClass
-    public void setupBeforeClass() throws Exception {
+    @Override
+    protected void beforeMethod() throws Exception {
         productManager = LookupUtil.getProductVersionManager();
-    }
 
-    @BeforeMethod
-    public void setupBeforeMethod() throws Exception {
         setupTestEnvironment();
     }
 
-    @AfterMethod
-    public void teardownAfterMethod() throws Exception {
+    @Override
+    protected void afterMethod() throws Exception {
         teardownTestEnvironment();
     }
 
@@ -68,31 +64,26 @@ public class ProductVersionManagerBeanTest extends AbstractEJB3Test {
 
         // Verify
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
 
         try {
-            try {
-                // Verify
-                resourceType = em.find(ResourceType.class, resourceType.getId());
+            // Verify
+            resourceType = em.find(ResourceType.class, resourceType.getId());
 
-                Query query = em.createNamedQuery(ProductVersion.QUERY_FIND_BY_RESOURCE_TYPE_AND_VERSION);
-                query.setParameter("resourceType", resourceType);
-                query.setParameter("version", "1.0.0");
+            Query query = em.createNamedQuery(ProductVersion.QUERY_FIND_BY_RESOURCE_TYPE_AND_VERSION);
+            query.setParameter("resourceType", resourceType);
+            query.setParameter("version", "1.0.0");
 
-                List addedProductVersion = query.getResultList();
+            List addedProductVersion = query.getResultList();
 
-                assert addedProductVersion.size() == 1 : "Incorrect number of versions persisted. Expected: 1, Found: "
-                    + addedProductVersion.size();
+            assert addedProductVersion.size() == 1 : "Incorrect number of versions persisted. Expected: 1, Found: "
+                + addedProductVersion.size();
 
-                // Clean up
-                em.remove(addedProductVersion.get(0));
+            // Clean up
+            em.remove(addedProductVersion.get(0));
 
-                getTransactionManager().commit();
-            } catch (Exception e) {
-                getTransactionManager().rollback();
-            }
-        } finally {
-            em.close();
+            getTransactionManager().commit();
+        } catch (Exception e) {
+            getTransactionManager().rollback();
         }
     }
 
@@ -104,31 +95,26 @@ public class ProductVersionManagerBeanTest extends AbstractEJB3Test {
 
         // Verify
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
 
         try {
-            try {
-                // Verify
-                resourceType = em.find(ResourceType.class, resourceType.getId());
+            // Verify
+            resourceType = em.find(ResourceType.class, resourceType.getId());
 
-                Query query = em.createNamedQuery(ProductVersion.QUERY_FIND_BY_RESOURCE_TYPE_AND_VERSION);
-                query.setParameter("resourceType", resourceType);
-                query.setParameter("version", "1.0.0");
+            Query query = em.createNamedQuery(ProductVersion.QUERY_FIND_BY_RESOURCE_TYPE_AND_VERSION);
+            query.setParameter("resourceType", resourceType);
+            query.setParameter("version", "1.0.0");
 
-                List addedProductVersion = query.getResultList();
+            List addedProductVersion = query.getResultList();
 
-                assert addedProductVersion.size() == 1 : "Incorrect number of versions persisted. Expected: 1, Found: "
-                    + addedProductVersion.size();
+            assert addedProductVersion.size() == 1 : "Incorrect number of versions persisted. Expected: 1, Found: "
+                + addedProductVersion.size();
 
-                // Clean up
-                em.remove(addedProductVersion.get(0));
+            // Clean up
+            em.remove(addedProductVersion.get(0));
 
-                getTransactionManager().commit();
-            } catch (Exception e) {
-                getTransactionManager().rollback();
-            }
-        } finally {
-            em.close();
+            getTransactionManager().commit();
+        } catch (Exception e) {
+            getTransactionManager().rollback();
         }
     }
 
@@ -136,42 +122,30 @@ public class ProductVersionManagerBeanTest extends AbstractEJB3Test {
 
     private void setupTestEnvironment() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
-
         try {
-            try {
-                resourceType = new ResourceType("testResourceType", "testPlugin", ResourceCategory.PLATFORM, null);
+            resourceType = new ResourceType("testResourceType", "testPlugin", ResourceCategory.PLATFORM, null);
 
-                em.persist(resourceType);
+            em.persist(resourceType);
 
-                getTransactionManager().commit();
-            } catch (Exception e) {
-                e.printStackTrace();
-                getTransactionManager().rollback();
-                throw e;
-            }
-        } finally {
-            em.close();
+            getTransactionManager().commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+            getTransactionManager().rollback();
+            throw e;
         }
     }
 
     private void teardownTestEnvironment() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
-
         try {
-            try {
-                resourceType = em.find(ResourceType.class, resourceType.getId());
-                em.remove(resourceType);
+            resourceType = em.find(ResourceType.class, resourceType.getId());
+            em.remove(resourceType);
 
-                getTransactionManager().commit();
-            } catch (Exception e) {
-                e.printStackTrace();
-                getTransactionManager().rollback();
-                throw e;
-            }
-        } finally {
-            em.close();
+            getTransactionManager().commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+            getTransactionManager().rollback();
+            throw e;
         }
     }
 }

@@ -21,7 +21,6 @@ package org.rhq.enterprise.server.authz.test;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -46,11 +45,8 @@ public class RoleManagerBeanTest extends AbstractEJB3Test {
     private RoleManagerLocal roleManager;
     private LdapGroupManagerLocal ldapManager;
 
-    /**
-     * Prepares things for the entire test class.
-     */
-    @BeforeClass
-    public void beforeClass() {
+    @Override
+    protected void beforeMethod() {
         roleManager = LookupUtil.getRoleManager();
         subjectManager = LookupUtil.getSubjectManager();
         ldapManager = LookupUtil.getLdapGroupManager();

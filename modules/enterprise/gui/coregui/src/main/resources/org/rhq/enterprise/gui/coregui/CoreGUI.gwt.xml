@@ -51,7 +51,10 @@
          embedded in the GFlot JAR (the charting lib used for GraphPortlet).  Furthermore, GFlot 2.4.2 requires
          the version of jquery (1.7.2).
     -->
+    <script src="/coregui/js/jquery-1.7.2.min.js."/>
     <script src="/coregui/js/jquery.sparkline-2.0.min.js"/>
+    <script src="/coregui/js/d3.v2.js"/>
+    <script src="/coregui/js/nv.d3.js"/>
 
 
     <!--

@@ -15,6 +15,10 @@
    <name>RHQ JBossAS 3.2.x/4.x Plugin</name>
    <description>A plugin for managing JBoss Application Server 3.2.x/4.x</description>
 
+   <properties>
+      <rhq.internal>false</rhq.internal>
+   </properties>
+   
    <dependencies>
       <!-- internal -->
       <!-- TODO: Move this up to the parent pom. -->
@@ -355,6 +359,7 @@
             </plugins>
          </build>
       </profile>
+      
     <profile>
       <id>cobertura-plugins</id>
       <activation>

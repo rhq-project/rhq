@@ -15,7 +15,11 @@
    <name>RHQ JMX Plugin</name>
    <description>a plugin for managing a generic JMX-enabled application</description>
 
-   <dependencies>
+   <properties>
+      <rhq.internal>false</rhq.internal>
+   </properties>
+  
+  <dependencies>
 
       <dependency>
          <groupId>mc4j</groupId>
@@ -257,7 +261,7 @@
             </plugins>
          </build>
       </profile>
-
+      
     <profile>
       <id>cobertura-plugins</id>
       <activation>

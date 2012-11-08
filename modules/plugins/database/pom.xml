@@ -15,6 +15,10 @@
    <name>RHQ Database Plugin</name>
    <description>An abstract plugin for managing databases via JDBC</description>
 
+   <properties>
+      <rhq.internal>false</rhq.internal>
+   </properties>
+   
    <dependencies>
 
    </dependencies>
@@ -94,6 +98,7 @@
             </plugins>
          </build>
       </profile>
+      
     <profile>
       <id>cobertura-plugins</id>
       <activation>

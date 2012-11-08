@@ -14,6 +14,10 @@
   <name>RHQ Utilities</name>
   <description>generic utility classes for use by any RHQ module</description>
 
+  <properties>
+     <rhq.internal>false</rhq.internal>
+  </properties>
+  
   <dependencies>
 
     <!-- Used by the (deprecated) legacy XML parser, which is used to parse RHQ license files. -->
@@ -131,6 +135,7 @@
            </plugins>
          </build>
       </profile>
+      
       <profile>
       <id>cobertura</id>
       <activation>

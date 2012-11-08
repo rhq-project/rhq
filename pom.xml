@@ -187,7 +187,7 @@
     <animal.sniffer.java.signature.artifactId>java16</animal.sniffer.java.signature.artifactId>
     <animal.sniffer.java.signature.version>1.0</animal.sniffer.java.signature.version>
     <!-- API checks -->
-    <clirr.version>2.4</clirr.version>
+    <clirr.version>2.5</clirr.version>
     <!-- a default value for the child modules indicating that the module is not
          part of our public API and is therefore not API-checked. -->
     <rhq.internal>true</rhq.internal>

@@ -20,13 +20,10 @@ package org.rhq.enterprise.server.content.metadata.test;
 
 import java.net.URL;
 
-import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.Unmarshaller;
-
-import org.testng.annotations.BeforeClass;
 
 import org.rhq.core.domain.content.ContentSourceType;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
@@ -42,21 +39,14 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.content.Conten
 public class TestBase extends AbstractEJB3Test {
     protected ContentSourceMetadataManagerLocal metadataManager;
 
-    @BeforeClass
-    protected void beforeClass() {
-        try {
-            metadataManager = LookupUtil.getContentSourceMetadataManager();
-        } catch (Throwable t) {
-            // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
-            // and throw a cryptic NPE (see http://jira.codehaus.org/browse/SUREFIRE-157)!
-            t.printStackTrace();
-            throw new RuntimeException(t);
-        }
+    @Override
+    protected void beforeMethod() throws Exception {
+        metadataManager = LookupUtil.getContentSourceMetadataManager();
     }
 
     protected ContentSourceType getContentSourceType(String typeName) throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();        
+
         try {
             Query q = em.createNamedQuery(ContentSourceType.QUERY_FIND_BY_NAME_WITH_CONFIG_DEF);
             ContentSourceType type = (ContentSourceType) q.setParameter("name", typeName).getSingleResult();
@@ -65,7 +55,6 @@ public class TestBase extends AbstractEJB3Test {
             return null;
         } finally {
             getTransactionManager().rollback();
-            em.close();
         }
     }
 

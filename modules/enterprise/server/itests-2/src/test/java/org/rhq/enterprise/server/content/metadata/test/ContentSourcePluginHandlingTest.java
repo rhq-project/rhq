@@ -20,9 +20,6 @@ package org.rhq.enterprise.server.content.metadata.test;
 
 import java.util.List;
 
-import javax.persistence.EntityManager;
-
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -36,8 +33,8 @@ import org.rhq.core.domain.content.ContentSourceType;
  */
 @Test
 public class ContentSourcePluginHandlingTest extends TestBase {
-    @AfterMethod
-    @SuppressWarnings("unchecked")
+
+    @Override
     protected void afterMethod() throws Exception {
         // I tried and tried to get it to work where I create a single tx and just rollback
         // after the test but I could not get the entity manager/tx used by my SLSBs to be the
@@ -45,7 +42,6 @@ public class ContentSourcePluginHandlingTest extends TestBase {
         // and commit.  I will clean up the tests here.
         getTransactionManager().begin();
 
-        EntityManager em = getEntityManager();
         List<ContentSourceType> list = em.createQuery(
             "select c from ContentSourceType c where c.name like 'testCSPHT%'").getResultList();
 
@@ -54,6 +50,8 @@ public class ContentSourcePluginHandlingTest extends TestBase {
         }
 
         getTransactionManager().commit();
+
+        super.afterMethod();
     }
 
     public void testUpdateContentSourceTypes() throws Throwable {

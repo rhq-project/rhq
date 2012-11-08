@@ -21,10 +21,8 @@ package org.rhq.enterprise.server.inventory;
 import java.util.List;
 import java.util.Random;
 
-import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -49,8 +47,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class UninventoryTest extends AbstractEJB3Test {
     private Resource newResource;
 
-    @AfterMethod(alwaysRun = true)
-    public void afterMethod() throws Exception {
+    @Override
+    protected void afterMethod() throws Exception {
         if (newResource != null) {
             deleteNewResource(newResource);
             newResource = null;
@@ -59,7 +57,7 @@ public class UninventoryTest extends AbstractEJB3Test {
 
     public void testDriftDefRemoval() throws Exception {
         ResourceTypeCreator rtCreator = new ResourceTypeCreator() {
-            public void modifyResourceTypeToPersist(ResourceType resourceType, EntityManager em) {
+            public void modifyResourceTypeToPersist(ResourceType resourceType) {
                 DriftDefinitionTemplate template = new DriftDefinitionTemplate();
                 template.setName("drift1");
                 template.setDescription("drift def template");
@@ -72,7 +70,7 @@ public class UninventoryTest extends AbstractEJB3Test {
             }
         };
         ResourceCreator rCreator = new ResourceCreator() {
-            public void modifyResourceToPersist(Resource resource, EntityManager em) {
+            public void modifyResourceToPersist(Resource resource) {
                 Configuration config = new Configuration();
                 DriftDefinition driftDef = new DriftDefinition(config);
                 driftDef.setBasedir(new BaseDirectory(BaseDirValueContext.fileSystem, "/boo"));
@@ -119,53 +117,47 @@ public class UninventoryTest extends AbstractEJB3Test {
 
     private Resource createNewResource(ResourceTypeCreator rtCreator, ResourceCreator rCreator) throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
 
         Resource resource;
 
         try {
-            try {
-                ResourceType resourceType = new ResourceType("plat" + System.currentTimeMillis(), "test",
-                    ResourceCategory.PLATFORM, null);
+            ResourceType resourceType = new ResourceType("plat" + System.currentTimeMillis(), "test",
+                ResourceCategory.PLATFORM, null);
 
-                if (rtCreator != null) {
-                    rtCreator.modifyResourceTypeToPersist(resourceType, em);
-                }
-
-                em.persist(resourceType);
-
-                Agent agent = new Agent("testagent", "testaddress", 1, "", "testtoken");
-                em.persist(agent);
-                em.flush();
-
-                resource = new Resource("reskey" + System.currentTimeMillis(), "resname", resourceType);
-                resource.setUuid("" + new Random().nextInt());
-                resource.setAgent(agent);
-                resource.setInventoryStatus(InventoryStatus.COMMITTED);
-                if (rCreator != null) {
-                    rCreator.modifyResourceToPersist(resource, em);
-                }
-                em.persist(resource);
-
-            } catch (Exception e) {
-                System.out.println("CANNOT PREPARE TEST: " + e);
-                getTransactionManager().rollback();
-                throw e;
+            if (rtCreator != null) {
+                rtCreator.modifyResourceTypeToPersist(resourceType);
             }
 
+            em.persist(resourceType);
+
+            Agent agent = new Agent("testagent", "testaddress", 1, "", "testtoken");
+            em.persist(agent);
             em.flush();
-            getTransactionManager().commit();
-            newResource = resource;
-        } finally {
-            em.close();
+
+            resource = new Resource("reskey" + System.currentTimeMillis(), "resname", resourceType);
+            resource.setUuid("" + new Random().nextInt());
+            resource.setAgent(agent);
+            resource.setInventoryStatus(InventoryStatus.COMMITTED);
+            if (rCreator != null) {
+                rCreator.modifyResourceToPersist(resource);
+            }
+            em.persist(resource);
+
+        } catch (Exception e) {
+            System.out.println("CANNOT PREPARE TEST: " + e);
+            getTransactionManager().rollback();
+            throw e;
         }
+
+        em.flush();
+        getTransactionManager().commit();
+        newResource = resource;
 
         return resource;
     }
 
     private void deleteNewResource(Resource resource) throws Exception {
         if (null != resource) {
-            EntityManager em = null;
 
             try {
                 ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
@@ -198,19 +190,15 @@ public class UninventoryTest extends AbstractEJB3Test {
                     getTransactionManager().rollback();
                 } catch (Exception ignore) {
                 }
-            } finally {
-                if (null != em) {
-                    em.close();
-                }
             }
         }
     }
 
     private interface ResourceTypeCreator {
-        void modifyResourceTypeToPersist(ResourceType resourceType, EntityManager em);
+        void modifyResourceTypeToPersist(ResourceType resourceType);
     }
 
     private interface ResourceCreator {
-        void modifyResourceToPersist(Resource resource, EntityManager em);
+        void modifyResourceToPersist(Resource resource);
     }
 }

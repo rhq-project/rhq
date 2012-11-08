@@ -22,12 +22,9 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
-import javax.persistence.EntityManager;
 import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -53,15 +50,19 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
 
     TestServerCommunicationsService agentServiceContainer;
 
-    @BeforeMethod
-    public void beforeMethod() throws Exception {
+    @Override
+    protected void beforeMethod() throws Exception {
+        super.beforeMethod();
+
         superuser = LookupUtil.getSubjectManager().getOverlord();
         newResource = createNewResourceWithNewType();
     }
 
-    @AfterMethod
-    public void afterMethod() throws Exception {
+    @Override
+    protected void afterMethod() throws Exception {
         deleteNewResourceAgentResourceType(newResource);
+
+        super.afterMethod();
     }
 
     public void testResourceErrors() {
@@ -140,29 +141,28 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
 
     private int givenASampleResourceHierarchy() throws NotSupportedException, SystemException {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
+
         int leafResourceId = 0;
         try {
-            ResourceType platformType = createResourceType(em, "platform" + System.currentTimeMillis(), "test", null,
+            ResourceType platformType = createResourceType("platform" + System.currentTimeMillis(), "test", null,
                 ResourceCategory.PLATFORM);
-            ResourceType appserverType = createResourceType(em, "jboss AS 5" + System.currentTimeMillis(), "jbossas5",
+            ResourceType appserverType = createResourceType("jboss AS 5" + System.currentTimeMillis(), "jbossas5",
                 platformType, ResourceCategory.SERVER);
-            ResourceType jvmType = createResourceType(em, "JVM" + System.currentTimeMillis(), "jbossas5",
-                appserverType, ResourceCategory.SERVICE);
-            ResourceType memType = createResourceType(em, "Memory Subsystem" + System.currentTimeMillis(), "jbossas5",
+            ResourceType jvmType = createResourceType("JVM" + System.currentTimeMillis(), "jbossas5", appserverType,
+                ResourceCategory.SERVICE);
+            ResourceType memType = createResourceType("Memory Subsystem" + System.currentTimeMillis(), "jbossas5",
                 jvmType, ResourceCategory.SERVICE);
             Agent agent = new Agent("agent" + System.currentTimeMillis(), "host" + System.currentTimeMillis(), 1, "",
                 "token" + System.currentTimeMillis());
             em.persist(agent);
             em.flush();
 
-            Resource platform = createResource(em, platformType, agent, "platformKey" + System.currentTimeMillis(),
+            Resource platform = createResource(platformType, agent, "platformKey" + System.currentTimeMillis(),
                 "host.dev.corp", null);
-            Resource appserver = createResource(em, appserverType, agent, "JEAP" + System.currentTimeMillis(),
+            Resource appserver = createResource(appserverType, agent, "JEAP" + System.currentTimeMillis(),
                 "JBOSS EAP 5.1.1", platform);
-            Resource jvm = createResource(em, jvmType, agent, "jvm" + System.currentTimeMillis(), "JBoss AS JVM",
-                appserver);
-            Resource memSubystem = createResource(em, memType, agent, "mem" + System.currentTimeMillis(),
+            Resource jvm = createResource(jvmType, agent, "jvm" + System.currentTimeMillis(), "JBoss AS JVM", appserver);
+            Resource memSubystem = createResource(memType, agent, "mem" + System.currentTimeMillis(),
                 "Memory Subsystem", jvm);
             leafResourceId = memSubystem.getId();
 
@@ -173,14 +173,12 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
                 getTransactionManager().rollback();
             } catch (Exception ignore) {
             }
-        } finally {
-            em.close();
         }
         return leafResourceId;
     }
 
-    private Resource createResource(EntityManager em, ResourceType platformType, Agent agent, String resourceKey,
-        String resourceName, Resource parent) {
+    private Resource createResource(ResourceType platformType, Agent agent, String resourceKey, String resourceName,
+        Resource parent) {
         Resource resource = new Resource(resourceKey, resourceName, platformType);
         resource.setUuid(UUID.randomUUID().toString());
         resource.setAgent(agent);
@@ -189,8 +187,8 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
         return resource;
     }
 
-    private ResourceType createResourceType(EntityManager em, String name, String pluginName,
-        ResourceType parentResourceType, ResourceCategory resourceCategory) {
+    private ResourceType createResourceType(String name, String pluginName, ResourceType parentResourceType,
+        ResourceCategory resourceCategory) {
         ResourceType platformType = new ResourceType(name, pluginName, resourceCategory, parentResourceType);
         ResourceType resourceType = platformType;
         em.persist(resourceType);
@@ -199,35 +197,30 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
 
     private Resource createNewResourceWithNewType() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
 
         Resource resource;
 
         try {
-            try {
-                ResourceType resourceType = new ResourceType("plat" + System.currentTimeMillis(), "test",
-                    ResourceCategory.PLATFORM, null);
+            ResourceType resourceType = new ResourceType("plat" + System.currentTimeMillis(), "test",
+                ResourceCategory.PLATFORM, null);
 
-                em.persist(resourceType);
+            em.persist(resourceType);
 
-                Agent agent = new Agent("testagent", "testaddress", 16163, "", "testtoken");
-                em.persist(agent);
-                em.flush();
+            Agent agent = new Agent("testagent", "testaddress", 16163, "", "testtoken");
+            em.persist(agent);
+            em.flush();
 
-                resource = new Resource("reskey" + System.currentTimeMillis(), "resname", resourceType);
-                resource.setUuid("" + new Random().nextInt());
-                resource.setAgent(agent);
-                em.persist(resource);
-            } catch (Exception e) {
-                System.out.println("CANNOT PREPARE TEST: " + e);
-                getTransactionManager().rollback();
-                throw e;
-            }
-
-            getTransactionManager().commit();
-        } finally {
-            em.close();
+            resource = new Resource("reskey" + System.currentTimeMillis(), "resname", resourceType);
+            resource.setUuid("" + new Random().nextInt());
+            resource.setAgent(agent);
+            em.persist(resource);
+        } catch (Exception e) {
+            System.out.println("CANNOT PREPARE TEST: " + e);
+            getTransactionManager().rollback();
+            throw e;
         }
+
+        getTransactionManager().commit();
 
         return resource;
     }
@@ -235,7 +228,7 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
     private void deleteNewResourceAgentResourceType(Resource resource) throws Exception {
         if (resource != null) {
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
+
             try {
                 Resource res = em.find(Resource.class, resource.getId());
                 System.out.println("Removing " + res + "...");
@@ -259,8 +252,6 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
                     getTransactionManager().rollback();
                 } catch (Exception ignore) {
                 }
-            } finally {
-                em.close();
             }
         }
     }

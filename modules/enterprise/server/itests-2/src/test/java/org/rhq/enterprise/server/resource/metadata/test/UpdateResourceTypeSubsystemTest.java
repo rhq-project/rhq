@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.resource.metadata.test;
 
 import java.util.Set;
 
-import javax.persistence.EntityManager;
 import javax.transaction.Status;
 
 import org.testng.annotations.Test;
@@ -58,7 +57,6 @@ public class UpdateResourceTypeSubsystemTest extends UpdatePluginMetadataTestBas
             registerPlugin("updateResourceTypeBundleTarget-v1.xml");
             ResourceType platform1 = getResourceType("myPlatform1");
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
             platform1 = em.find(ResourceType.class, platform1.getId());
 
             assert platform1.getResourceTypeBundleConfiguration() == null : "platform should not be a bundle target";
@@ -90,7 +88,7 @@ public class UpdateResourceTypeSubsystemTest extends UpdatePluginMetadataTestBas
             registerPlugin("updateResourceTypeBundleTarget-v2.xml");
             ResourceType platform2 = getResourceType("myPlatform1");
             getTransactionManager().begin();
-            em = getEntityManager();
+
             platform2 = em.find(ResourceType.class, platform2.getId());
 
             assert platform1.getResourceTypeBundleConfiguration() == null : "platform should not be a bundle target";
@@ -119,12 +117,6 @@ public class UpdateResourceTypeSubsystemTest extends UpdatePluginMetadataTestBas
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
             }
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testResourceTypeBundleTarget");
-            }
         }
     }
 
@@ -139,7 +131,6 @@ public class UpdateResourceTypeSubsystemTest extends UpdatePluginMetadataTestBas
             registerPlugin("update4-v1_0.xml");
             ResourceType platform1 = getResourceType("myPlatform4");
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
             platform1 = em.find(ResourceType.class, platform1.getId());
 
             Set<ResourceType> servers1 = platform1.getChildResourceTypes();
@@ -161,7 +152,7 @@ public class UpdateResourceTypeSubsystemTest extends UpdatePluginMetadataTestBas
             registerPlugin("update4-v2_0.xml");
             ResourceType platform2 = getResourceType("myPlatform4");
             getTransactionManager().begin();
-            em = getEntityManager();
+
             platform2 = em.find(ResourceType.class, platform2.getId());
 
             Set<ResourceType> servers2 = platform2.getChildResourceTypes();
@@ -176,7 +167,7 @@ public class UpdateResourceTypeSubsystemTest extends UpdatePluginMetadataTestBas
             registerPlugin("update4-v1_0.xml", "3.0");
             ResourceType platform3 = getResourceType("myPlatform4");
             getTransactionManager().begin();
-            em = getEntityManager();
+
             platform3 = em.find(ResourceType.class, platform3.getId());
 
             Set<ResourceType> servers3 = platform3.getChildResourceTypes();
@@ -197,12 +188,6 @@ public class UpdateResourceTypeSubsystemTest extends UpdatePluginMetadataTestBas
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
-            }
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testResourceTypeDeletion");
             }
         }
     }
@@ -228,7 +213,6 @@ public class UpdateResourceTypeSubsystemTest extends UpdatePluginMetadataTestBas
             resourceManager.createResource(overlord, platformResource, -1);
 
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
             platform1 = em.find(ResourceType.class, platform1.getId());
 
             assert platform1 != null : "I did not find myPlatform";
@@ -261,7 +245,7 @@ public class UpdateResourceTypeSubsystemTest extends UpdatePluginMetadataTestBas
             registerPlugin("update2-v2_0.xml");
             ResourceType platform2 = getResourceType("myPlatform");
             getTransactionManager().begin();
-            em = getEntityManager();
+
             platform2 = em.find(ResourceType.class, platform2.getId());
 
             assert platform2 != null : "I did not find myPlatform";
@@ -327,12 +311,6 @@ public class UpdateResourceTypeSubsystemTest extends UpdatePluginMetadataTestBas
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
             }
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out
-                    .println("CANNOT CLEAN UP TEST: " + this.getClass().getSimpleName() + ".testMoveResourceType");
-            }
         }
 
         System.out.println("testMoveResourceType --- end");
@@ -351,12 +329,6 @@ public class UpdateResourceTypeSubsystemTest extends UpdatePluginMetadataTestBas
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
-            }
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testDuplicateResourceType");
             }
         }
     }

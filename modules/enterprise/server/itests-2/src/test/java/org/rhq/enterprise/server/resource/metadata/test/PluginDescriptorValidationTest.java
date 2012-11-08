@@ -28,8 +28,6 @@ import javax.xml.bind.util.ValidationEventCollector;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.descriptor.DescriptorPackages;
@@ -49,12 +47,6 @@ public class PluginDescriptorValidationTest extends UpdatePluginMetadataTestBase
      * Plugins we want to test. Note that they need to appear here in the correct dependency order.
      */
     String[] plugins = { "database", "postgres", "platform", "jmx", "rhq-agent", "apache" };
-
-    @BeforeMethod
-    @Override
-    protected void init() {
-        super.init();
-    }
 
     /**
      * Load all the plugin descriptors thus running them through the XML Schema validation.

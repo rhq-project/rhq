@@ -57,7 +57,6 @@ import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
-import org.rhq.enterprise.server.core.plugin.PluginDeploymentScanner;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceMBean;
@@ -141,6 +140,81 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testClassesJar
             .addAsResource("org/rhq/enterprise/server/resource/metadata/PluginScanningExtensionMetadataTest/parent_plugin_v2.xml");
         testClassesJar.addAsResource("serverplugins/simple-generic-serverplugin.xml");
+        testClassesJar.addAsResource("test/metadata/content-source-update-v1.xml");
+        testClassesJar.addAsResource("test/metadata/content-source-update-v2.xml");
+        testClassesJar.addAsResource("test/metadata/noTypes.xml");
+        testClassesJar.addAsResource("test/metadata/alerts/type-with-metric.xml");
+        testClassesJar.addAsResource("test/metadata/configuration/addDeleteTemplate1.xml");
+        testClassesJar.addAsResource("test/metadata/configuration/addDeleteTemplate2.xml");
+        testClassesJar.addAsResource("test/metadata/configuration/addDeleteTemplate3.xml");
+        testClassesJar.addAsResource("test/metadata/configuration/constraint.xml");
+        testClassesJar.addAsResource("test/metadata/configuration/constraintMinMax.xml");
+        testClassesJar.addAsResource("test/metadata/configuration/propertyChanging-v1.xml");
+        testClassesJar.addAsResource("test/metadata/configuration/propertyChanging-v2.xml");
+        testClassesJar.addAsResource("test/metadata/configuration/propertyList-v1.xml");
+        testClassesJar.addAsResource("test/metadata/configuration/propertyList-v2.xml");
+        testClassesJar.addAsResource("test/metadata/configuration/propertyList-simple.xml");
+        testClassesJar.addAsResource("test/metadata/configuration/propertyMap-v1.xml");
+        testClassesJar.addAsResource("test/metadata/configuration/propertyMap-v2.xml");
+        testClassesJar.addAsResource("test/metadata/configuration/groupDeleted-v1.xml");
+        testClassesJar.addAsResource("test/metadata/configuration/groupDeleted-v2.xml");
+        testClassesJar.addAsResource("test/metadata/configuration/groupPropDeleted-v1.xml");
+        testClassesJar.addAsResource("test/metadata/configuration/groupPropDeleted-v2.xml");
+        testClassesJar.addAsResource("test/metadata/configuration/groupPropDeleted-v3.xml");
+        testClassesJar.addAsResource("test/metadata/configuration/groupPropDeleted-v4.xml");
+        testClassesJar.addAsResource("test/metadata/configuration/groupPropMoved-v1.xml");
+        testClassesJar.addAsResource("test/metadata/configuration/groupPropMoved-v2.xml");
+        testClassesJar.addAsResource("test/metadata/configuration/update5-v1_0.xml");
+        testClassesJar.addAsResource("test/metadata/configuration/update5-v2_0.xml");
+        testClassesJar.addAsResource("test/metadata/configuration/updateDefaultTemplate1.xml");
+        testClassesJar.addAsResource("test/metadata/configuration/updateDefaultTemplate2.xml");
+        testClassesJar.addAsResource("test/metadata/events/event1-1.xml");
+        testClassesJar.addAsResource("test/metadata/events/event1-2.xml");
+        testClassesJar.addAsResource("test/metadata/measurement/measurementDeletion-v1_0.xml");
+        testClassesJar.addAsResource("test/metadata/measurement/measurementDeletion-v2_0.xml");
+        testClassesJar.addAsResource("test/metadata/measurement/update-v1_0.xml");
+        testClassesJar.addAsResource("test/metadata/measurement/update-v2_0.xml");
+        testClassesJar.addAsResource("test/metadata/measurement/update6-1.xml");
+        testClassesJar.addAsResource("test/metadata/measurement/update6-2.xml");
+        testClassesJar.addAsResource("test/metadata/measurement/update7-1.xml");
+        testClassesJar.addAsResource("test/metadata/measurement/update7-2.xml");
+        testClassesJar.addAsResource("test/metadata/natives/update5-v1_0.xml");
+        testClassesJar.addAsResource("test/metadata/natives/update5-v2_0.xml");
+        testClassesJar.addAsResource("test/metadata/operation/operation1-1.xml");
+        testClassesJar.addAsResource("test/metadata/operation/operation1-2.xml");
+        testClassesJar.addAsResource("test/metadata/operation/operation2-1.xml");
+        testClassesJar.addAsResource("test/metadata/operation/operation2-2.xml");
+        testClassesJar.addAsResource("test/metadata/operation/operation3-1.xml");
+        testClassesJar.addAsResource("test/metadata/operation/operation3-2.xml");
+        testClassesJar.addAsResource("test/metadata/operation/update3-v1_0.xml");
+        testClassesJar.addAsResource("test/metadata/operation/update3-v2_0.xml");
+        testClassesJar.addAsResource("test/metadata/resource/illegal-subcat-1.xml");
+        testClassesJar.addAsResource("test/metadata/resource/nested-subcat-2children.xml");
+        testClassesJar.addAsResource("test/metadata/resource/nested-subcat-grandchild.xml");
+        testClassesJar.addAsResource("test/metadata/resource/nested-subcat-services-v1_0.xml");
+        testClassesJar.addAsResource("test/metadata/resource/nested-subcat-services-v2_0.xml");
+        testClassesJar.addAsResource("test/metadata/resource/nested-subcat-v1_0.xml");
+        testClassesJar.addAsResource("test/metadata/resource/nested-subcat-v1_1.xml");
+        testClassesJar.addAsResource("test/metadata/resource/nested-subcat-v2_0.xml");
+        testClassesJar.addAsResource("test/metadata/resource/no-subcat.xml");
+        testClassesJar.addAsResource("test/metadata/resource/one-subcat-v1_0.xml");
+        testClassesJar.addAsResource("test/metadata/resource/one-subcat-v1_1.xml");
+        testClassesJar.addAsResource("test/metadata/resource/one-subcat-v2_0.xml");
+        testClassesJar.addAsResource("test/metadata/resource/one-subcat-v3_0.xml");
+        testClassesJar.addAsResource("test/metadata/resource/services-v1_0.xml");
+        testClassesJar.addAsResource("test/metadata/resource/services-v2_0.xml");
+        testClassesJar.addAsResource("test/metadata/resource/test-subcategories.xml");
+        testClassesJar.addAsResource("test/metadata/resource/test-subcategories2.xml");
+        testClassesJar.addAsResource("test/metadata/resource/test-subcategories3.xml");
+        testClassesJar.addAsResource("test/metadata/resource/two-subcat.xml");
+        testClassesJar.addAsResource("test/metadata/resource/undefined-child-subcat-1.xml");
+        testClassesJar.addAsResource("test/metadata/resource-type/duplicateResourceType.xml");
+        testClassesJar.addAsResource("test/metadata/resource-type/update2-v1_0.xml");
+        testClassesJar.addAsResource("test/metadata/resource-type/update2-v2_0.xml");
+        testClassesJar.addAsResource("test/metadata/resource-type/update4-v1_0.xml");
+        testClassesJar.addAsResource("test/metadata/resource-type/update4-v2_0.xml");
+        testClassesJar.addAsResource("test/metadata/resource-type/updateResourceTypeBundleTarget-v1.xml");
+        testClassesJar.addAsResource("test/metadata/resource-type/updateResourceTypeBundleTarget-v2.xml");
 
         // create test ear by starting with rhq.ear and thinning it
         MavenDependencyResolver earResolver = DependencyResolvers.use(MavenDependencyResolver.class);
@@ -322,9 +396,16 @@ public abstract class AbstractEJB3Test extends Arquillian {
      * Instead, override {@link #afterMethod()}.
      */
     @AfterMethod(alwaysRun = true)
-    protected void __afterMethod() throws Exception {
-        if (inContainer()) {
-            afterMethod();
+    protected void __afterMethod() throws Throwable {
+        try {
+            if (inContainer()) {
+                afterMethod();
+            }
+        } catch (Throwable t) {
+            System.out
+                .println("AFTER METHOD FAILURE, TEST CLEAN UP FAILED!!! MAY NEED TO CLEAN DB BEFORE RUNNING MORE TESTS!");
+            t.printStackTrace();
+            throw t;
         }
     }
 
@@ -764,16 +845,14 @@ public abstract class AbstractEJB3Test extends Arquillian {
         return pluginScannerService;
     }
 
-    protected void preparePluginScannerService() {
-        preparePluginScannerService(null);
-    }
-
+    /**
+     * Note that the standard plugin scanner service is deployed automatically with the test rhq ear,
+     * this is only necessary if you want a custom service.
+     *  
+     * @param scannerService
+     */
     public void preparePluginScannerService(PluginDeploymentScannerMBean scannerService) {
         try {
-            if (scannerService == null) {
-                scannerService = new PluginDeploymentScanner();
-            }
-
             MBeanServer mbs = getPlatformMBeanServer();
             if (mbs.isRegistered(PluginDeploymentScannerMBean.OBJECT_NAME)) {
                 mbs.unregisterMBean(PluginDeploymentScannerMBean.OBJECT_NAME);
@@ -782,6 +861,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
             // Now replace with the test service...
             mbs.registerMBean(scannerService, PluginDeploymentScannerMBean.OBJECT_NAME);
             pluginScannerService = scannerService;
+            pluginScannerService.start();
 
         } catch (Exception e) {
             e.printStackTrace();

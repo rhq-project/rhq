@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.persistence.EntityManager;
 import javax.transaction.Status;
 
 import org.testng.annotations.Test;
@@ -60,7 +59,7 @@ public class UpdateOperationsSubsystemTest extends UpdatePluginMetadataTestBase 
             registerPlugin("update3-v1_0.xml");
             ResourceType platform1 = getResourceType("myPlatform3");
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
+
             platform1 = em.find(ResourceType.class, platform1.getId());
 
             Set<PackageType> packageTypes = platform1.getPackageTypes();
@@ -75,7 +74,7 @@ public class UpdateOperationsSubsystemTest extends UpdatePluginMetadataTestBase 
             registerPlugin("update3-v2_0.xml");
             ResourceType platform2 = getResourceType("myPlatform3");
             getTransactionManager().begin();
-            em = getEntityManager();
+
             platform2 = em.find(ResourceType.class, platform2.getId());
 
             Set<PackageType> packageTypes2 = platform2.getPackageTypes();
@@ -119,7 +118,7 @@ public class UpdateOperationsSubsystemTest extends UpdatePluginMetadataTestBase 
             registerPlugin("update3-v1_0.xml", "3.0");
             ResourceType platform3 = getResourceType("myPlatform3");
             getTransactionManager().begin();
-            em = getEntityManager();
+
             platform3 = em.find(ResourceType.class, platform3.getId());
 
             Set<PackageType> packageTypes3 = platform3.getPackageTypes();
@@ -143,12 +142,6 @@ public class UpdateOperationsSubsystemTest extends UpdatePluginMetadataTestBase 
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
             }
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testOperationAndArtifactUpdates");
-            }
         }
     }
 
@@ -160,7 +153,7 @@ public class UpdateOperationsSubsystemTest extends UpdatePluginMetadataTestBase 
             ResourceType platform = getResourceType("ops");
             assert platform != null;
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
+
             platform = em.find(ResourceType.class, platform.getId());
 
             Set<OperationDefinition> opDefs = platform.getOperationDefinitions();
@@ -177,7 +170,7 @@ public class UpdateOperationsSubsystemTest extends UpdatePluginMetadataTestBase 
             platform = getResourceType("ops");
             assert platform != null;
             getTransactionManager().begin();
-            em = getEntityManager();
+
             platform = em.find(ResourceType.class, platform.getId());
 
             opDefs = platform.getOperationDefinitions();
@@ -214,7 +207,6 @@ public class UpdateOperationsSubsystemTest extends UpdatePluginMetadataTestBase 
             platform = getResourceType("ops");
             assert platform != null;
             getTransactionManager().begin();
-            em = getEntityManager();
             platform = em.find(ResourceType.class, platform.getId());
 
             opDefs = platform.getOperationDefinitions();
@@ -224,12 +216,6 @@ public class UpdateOperationsSubsystemTest extends UpdatePluginMetadataTestBase 
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
-            }
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testAddRemoveOperationWithParams");
             }
         }
     }
@@ -242,7 +228,6 @@ public class UpdateOperationsSubsystemTest extends UpdatePluginMetadataTestBase 
             ResourceType platform = getResourceType("ops");
             assert platform != null;
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
             platform = em.find(ResourceType.class, platform.getId());
 
             Set<OperationDefinition> opDefs = platform.getOperationDefinitions();
@@ -266,7 +251,6 @@ public class UpdateOperationsSubsystemTest extends UpdatePluginMetadataTestBase 
             platform = getResourceType("ops");
             assert platform != null;
             getTransactionManager().begin();
-            em = getEntityManager();
             platform = em.find(ResourceType.class, platform.getId());
 
             opDefs = platform.getOperationDefinitions();
@@ -286,7 +270,6 @@ public class UpdateOperationsSubsystemTest extends UpdatePluginMetadataTestBase 
             platform = getResourceType("ops");
             assert platform != null;
             getTransactionManager().begin();
-            em = getEntityManager();
             platform = em.find(ResourceType.class, platform.getId());
 
             opDefs = platform.getOperationDefinitions();
@@ -296,12 +279,6 @@ public class UpdateOperationsSubsystemTest extends UpdatePluginMetadataTestBase 
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
-            }
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testAddRemoveOperationWithParams2");
             }
         }
     }
@@ -314,7 +291,6 @@ public class UpdateOperationsSubsystemTest extends UpdatePluginMetadataTestBase 
             ResourceType platform = getResourceType("ops");
             assert platform != null;
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
             platform = em.find(ResourceType.class, platform.getId());
 
             Set<OperationDefinition> opDefs = platform.getOperationDefinitions();
@@ -338,7 +314,6 @@ public class UpdateOperationsSubsystemTest extends UpdatePluginMetadataTestBase 
             platform = getResourceType("ops");
             assert platform != null;
             getTransactionManager().begin();
-            em = getEntityManager();
             platform = em.find(ResourceType.class, platform.getId());
 
             opDefs = platform.getOperationDefinitions();
@@ -359,7 +334,6 @@ public class UpdateOperationsSubsystemTest extends UpdatePluginMetadataTestBase 
             platform = getResourceType("ops");
             assert platform != null;
             getTransactionManager().begin();
-            em = getEntityManager();
             platform = em.find(ResourceType.class, platform.getId());
 
             opDefs = platform.getOperationDefinitions();
@@ -369,12 +343,6 @@ public class UpdateOperationsSubsystemTest extends UpdatePluginMetadataTestBase 
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
-            }
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testAddRemoveOperationWithGrouping");
             }
         }
     }

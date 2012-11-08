@@ -62,6 +62,8 @@ public class PluginScanningExtensionMetadataTest extends MetadataBeanTest {
             return;
         }
 
+        preparePluginScannerService();
+
         subjectMgr = LookupUtil.getSubjectManager();
         resourceTypeMgr = LookupUtil.getResourceTypeManager();
 
@@ -86,11 +88,12 @@ public class PluginScanningExtensionMetadataTest extends MetadataBeanTest {
             }
         }
         createdJarFiles.clear();
+
+        unpreparePluginScannerService();
     }
 
-    @Override
     // this method isn't a test method
-    protected void preparePluginScannerService() {
+    private void preparePluginScannerService() {
         if (this.pluginScanner == null) {
             this.pluginScanner = new PluginDeploymentScanner();
 
@@ -104,14 +107,8 @@ public class PluginScanningExtensionMetadataTest extends MetadataBeanTest {
             this.pluginScanner.setServerPluginDir(null); // we don't want to scan for these
             this.pluginScanner.setScanPeriod("9999999"); // we want to manually scan - don't allow for auto-scan to happen
         }
-        super.preparePluginScannerService(this.pluginScanner);
 
-        try {
-            this.pluginScanner.start();
-        } catch (Exception e) {
-            throw new RuntimeException(e); // should never really happen
-        }
-
+        preparePluginScannerService(this.pluginScanner);
     }
 
     public void testRegisterPlugins() throws Exception {

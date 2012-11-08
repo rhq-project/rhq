@@ -34,21 +34,8 @@ public class SubcategoryTest extends UpdatePluginMetadataTestBase {
 
     @Test
     public void testAddResourcTypeWithKnownSubCategory() throws Exception {
-        // Note, plugins are registered in new transactions. for tests, this means
-        // you can't do everything in a trans and roll back at the end. You must clean up
-        // manually.
-        try {
-            registerPlugin("test-subcategories.xml");
-            registerPlugin("test-subcategories3.xml");
-        } finally {
-            // clean up
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testAddResourcTypeWithKnownSubCategory");
-            }
-        }
+        registerPlugin("test-subcategories.xml");
+        registerPlugin("test-subcategories3.xml");
     }
 
 }

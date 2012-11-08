@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import javax.persistence.EntityManager;
 import javax.transaction.Status;
 
 import org.testng.annotations.Test;
@@ -60,7 +59,6 @@ public class UpdateEventsSubsystemTest extends UpdatePluginMetadataTestBase {
             ResourceType platform = getResourceType("events");
             assert platform != null;
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
             platform = em.find(ResourceType.class, platform.getId());
 
             Set<EventDefinition> eDefs = platform.getEventDefinitions();
@@ -113,12 +111,6 @@ public class UpdateEventsSubsystemTest extends UpdatePluginMetadataTestBase {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
             }
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testCreateDeleteEvent");
-            }
         }
     }
 
@@ -134,7 +126,6 @@ public class UpdateEventsSubsystemTest extends UpdatePluginMetadataTestBase {
             ResourceType platform = getResourceType("events");
             assert platform != null;
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
             platform = em.find(ResourceType.class, platform.getId());
 
             Set<EventDefinition> eDefs = platform.getEventDefinitions();
@@ -166,11 +157,6 @@ public class UpdateEventsSubsystemTest extends UpdatePluginMetadataTestBase {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
             }
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName() + ".testNoOpChange");
-            }
         }
     }
 
@@ -181,25 +167,22 @@ public class UpdateEventsSubsystemTest extends UpdatePluginMetadataTestBase {
 
         ResourceType platform = null;
         Resource testResource = null;
-        EntityManager entityManager = null;
 
         // prepare basic stuff
         try {
             registerPlugin("event1-2.xml");
             getTransactionManager().begin();
-            entityManager = getEntityManager();
             platform = getResourceType("events");
 
             testResource = new Resource("-test-", "-test resource", platform);
             testResource.setUuid("" + new Random().nextInt());
-            entityManager.persist(testResource);
-            setUpAgent(entityManager, testResource);
+            em.persist(testResource);
+            setUpAgent(testResource);
             getTransactionManager().commit();
 
             getTransactionManager().begin();
-            entityManager = getEntityManager();
-            platform = entityManager.find(ResourceType.class, platform.getId());
-            testResource = entityManager.find(Resource.class, testResource.getId());
+            platform = em.find(ResourceType.class, platform.getId());
+            testResource = em.find(Resource.class, testResource.getId());
             Set<EventDefinition> eDefs = platform.getEventDefinitions();
             assert eDefs.size() == 2 : "Did not find the expected 2 eventDefinitions, but " + eDefs.size();
             Iterator<EventDefinition> eIter = eDefs.iterator();
@@ -211,7 +194,7 @@ public class UpdateEventsSubsystemTest extends UpdatePluginMetadataTestBase {
                     found = true;
                     // We got the definition that will vanish later, so attach some stuff to it
                     EventSource source = new EventSource("test location", def, testResource);
-                    entityManager.persist(source);
+                    em.persist(source);
 
                     Event ev = new Event(def.getName(), source.getLocation(), System.currentTimeMillis(),
                         EventSeverity.INFO, "This is a test");
@@ -231,7 +214,6 @@ public class UpdateEventsSubsystemTest extends UpdatePluginMetadataTestBase {
             registerPlugin("event1-1.xml", "3.0");
             platform = getResourceType("events");
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
             platform = em.find(ResourceType.class, platform.getId());
 
             eDefs = platform.getEventDefinitions();
@@ -244,12 +226,6 @@ public class UpdateEventsSubsystemTest extends UpdatePluginMetadataTestBase {
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
-            }
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testSingleSubCategoryCreate");
             }
         }
     }

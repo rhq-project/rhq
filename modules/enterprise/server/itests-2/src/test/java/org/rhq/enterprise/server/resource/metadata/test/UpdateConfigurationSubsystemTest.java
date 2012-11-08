@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import javax.persistence.EntityManager;
 import javax.transaction.Status;
 
 import org.testng.annotations.Test;
@@ -74,7 +73,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
             registerPlugin("update5-v1_0.xml", null);
             ResourceType platform1 = getResourceType("myPlatform5");
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
             platform1 = em.find(ResourceType.class, platform1.getId());
 
             Set<ResourceType> servers = platform1.getChildResourceTypes();
@@ -165,14 +163,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
             }
-
-            // clean up
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testAddDeleteDefaultTemplate");
-            }
         }
     }
 
@@ -193,7 +183,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
             // create resource with plugin configuration
             ResourceType testServerResourceType = getResourceType("TestServer");
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
             testServerResourceType = em.find(ResourceType.class, testServerResourceType.getId());
             ConfigurationDefinition pluginConfigurationDef = testServerResourceType.getPluginConfigurationDefinition();
             PropertyDefinition testPropertyDef = pluginConfigurationDef.getPropertyDefinitionSimple("testProperty");
@@ -210,7 +199,7 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
                 em.persist(testResource);
                 em.flush();
 
-                setUpAgent(em, testResource);
+                setUpAgent(testResource);
 
                 testResource = em.find(Resource.class, testResource.getId());
                 pluginConfigurationId = testResource.getPluginConfiguration().getId();
@@ -259,14 +248,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
             }
-
-            // clean up
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testResourceConfiguration");
-            }
         }
     }
 
@@ -284,7 +265,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
             registerPlugin("update5-v1_0.xml", "1");
             ResourceType platform1 = getResourceType("myPlatform5");
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
             platform1 = em.find(ResourceType.class, platform1.getId());
 
             Set<ResourceType> servers = platform1.getChildResourceTypes();
@@ -442,14 +422,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
             }
-
-            // clean up
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testResourceConfiguration");
-            }
         }
     }
 
@@ -458,7 +430,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
      *
      * @throws Exception
      */
-    @SuppressWarnings("deprecation")
     @Test(enabled = ENABLED)
     public void testConstraint() throws Exception {
         // Note, plugins are registered in new transactions. for tests, this means
@@ -468,7 +439,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
             registerPlugin("constraint.xml");
             ResourceType platform = getResourceType("constraintPlatform");
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
             platform = em.find(ResourceType.class, platform.getId());
 
             ConfigurationDefinition config = platform.getResourceConfigurationDefinition();
@@ -483,13 +453,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
             }
-
-            // clean up
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName() + ".testConstraint");
-            }
         }
     }
 
@@ -498,7 +461,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
      *
      * @throws Exception
      */
-    @SuppressWarnings("deprecation")
     @Test(enabled = ENABLED)
     public void testConstraint2() throws Exception {
         // Note, plugins are registered in new transactions. for tests, this means
@@ -508,7 +470,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
             registerPlugin("constraint.xml");
             ResourceType platform = getResourceType("constraintPlatform");
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
             platform = em.find(ResourceType.class, platform.getId());
 
             ConfigurationDefinition config = platform.getResourceConfigurationDefinition();
@@ -523,13 +484,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
-            }
-
-            // clean up
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName() + ".testConstraint2");
             }
         }
     }
@@ -548,7 +502,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
             registerPlugin("constraintMinMax.xml");
             ResourceType platform = getResourceType("constraintPlatform");
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
             platform = em.find(ResourceType.class, platform.getId());
 
             ConfigurationDefinition config = platform.getResourceConfigurationDefinition();
@@ -573,13 +526,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
             }
-
-            // clean up
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName() + ".testConstraint2");
-            }
         }
     }
 
@@ -590,7 +536,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
             registerPlugin("propertyList-v1.xml");
             ResourceType platform = getResourceType("myPlatform6");
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
             platform = em.find(ResourceType.class, platform.getId());
             ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
             Map<String, PropertyDefinition> propDefs = cd.getPropertyDefinitions();
@@ -757,13 +702,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
             }
-
-            // clean up
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName() + ".testListOfLists");
-            }
         }
     }
 
@@ -776,7 +714,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
             registerPlugin("propertyList-simple.xml");
             ResourceType platform = getResourceType("myPlatform");
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
             platform = em.find(ResourceType.class, platform.getId());
 
             ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
@@ -796,14 +733,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
             }
-
-            // clean up
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testListPropertyMinMax");
-            }
         }
     }
 
@@ -817,7 +746,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
                 registerPlugin("propertyMap-v1.xml");
                 ResourceType platform = getResourceType("myPlatform7");
                 getTransactionManager().begin();
-                EntityManager em = getEntityManager();
                 platform = em.find(ResourceType.class, platform.getId());
 
                 ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
@@ -870,7 +798,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
                 registerPlugin("propertyMap-v2.xml");
                 ResourceType platform = getResourceType("myPlatform7");
                 getTransactionManager().begin();
-                EntityManager em = getEntityManager();
                 platform = em.find(ResourceType.class, platform.getId());
 
                 ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
@@ -930,13 +857,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
             }
-
-            // clean up
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName() + ".testMapProperty");
-            }
         }
     }
 
@@ -955,7 +875,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
                 registerPlugin("propertyChanging-v1.xml");
                 ResourceType platform = getResourceType("myPlatform7");
                 getTransactionManager().begin();
-                EntityManager em = getEntityManager();
                 platform = em.find(ResourceType.class, platform.getId());
 
                 ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
@@ -988,7 +907,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
                 registerPlugin("propertyChanging-v2.xml");
                 ResourceType platform = getResourceType("myPlatform7");
                 getTransactionManager().begin();
-                EntityManager em = getEntityManager();
                 platform = em.find(ResourceType.class, platform.getId());
 
                 ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
@@ -1025,7 +943,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
                 registerPlugin("propertyChanging-v1.xml", "3.0"); // this is our 3rd version, but reuse v1
                 ResourceType platform = getResourceType("myPlatform7");
                 getTransactionManager().begin();
-                EntityManager em = getEntityManager();
                 platform = em.find(ResourceType.class, platform.getId());
 
                 ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
@@ -1057,14 +974,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
             }
-
-            // clean up
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testChangePropertyType");
-            }
         }
 
     }
@@ -1073,100 +982,50 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
 
     @Test(enabled = ENABLED)
     public void testGroupDeleted() throws Exception {
-        // Note, plugins are registered in new transactions. for tests, this means
-        // you can't do everything in a trans and roll back at the end. You must clean up
-        // manually.
-        try {
-            registerPlugin("groupDeleted-v1.xml");
-            System.out.println("==> Done with v1");
-            registerPlugin("groupDeleted-v2.xml");
-            System.out.println("==> Done with v2");
-            registerPlugin("groupDeleted-v1.xml", "3.0");
-            System.out.println("==> Done with v1");
-        } finally {
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName() + ".testGroupDeleted");
-            }
-        }
+        registerPlugin("groupDeleted-v1.xml");
+        System.out.println("==> Done with v1");
+        registerPlugin("groupDeleted-v2.xml");
+        System.out.println("==> Done with v2");
+        registerPlugin("groupDeleted-v1.xml", "3.0");
+        System.out.println("==> Done with v1");
     }
 
     @Test(enabled = ENABLED)
     public void testGroupPropDeleted() throws Exception {
-        // Note, plugins are registered in new transactions. for tests, this means
-        // you can't do everything in a trans and roll back at the end. You must clean up
-        // manually.
-        try {
-            registerPlugin("groupPropDeleted-v1.xml");
-            System.out.println("==> Done with v1");
-            registerPlugin("groupPropDeleted-v2.xml");
-            System.out.println("==> Done with v2");
-            registerPlugin("groupPropDeleted-v1.xml", "3.0");
-            System.out.println("==> Done with v1");
-        } finally {
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testGroupPropDeleted");
-            }
-        }
+        registerPlugin("groupPropDeleted-v1.xml");
+        System.out.println("==> Done with v1");
+        registerPlugin("groupPropDeleted-v2.xml");
+        System.out.println("==> Done with v2");
+        registerPlugin("groupPropDeleted-v1.xml", "3.0");
+        System.out.println("==> Done with v1");
     }
 
     @Test(enabled = ENABLED)
     public void testGroupPropDeletedExt() throws Exception {
-        // Note, plugins are registered in new transactions. for tests, this means
-        // you can't do everything in a trans and roll back at the end. You must clean up
-        // manually.
-        try {
-            registerPlugin("groupPropDeleted-v3.xml");
-            System.out.println("==> Done with v1");
-            registerPlugin("groupPropDeleted-v4.xml");
-            System.out.println("==> Done with v2");
-            registerPlugin("groupPropDeleted-v3.xml", "5.0");
-            System.out.println("==> Done with v1");
-        } finally {
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testGroupPropDeletedExt");
-            }
-        }
+        registerPlugin("groupPropDeleted-v3.xml");
+        System.out.println("==> Done with v1");
+        registerPlugin("groupPropDeleted-v4.xml");
+        System.out.println("==> Done with v2");
+        registerPlugin("groupPropDeleted-v3.xml", "5.0");
+        System.out.println("==> Done with v1");
     }
 
     @Test(enabled = ENABLED)
     public void testGroupPropMoved() throws Exception {
-        // Note, plugins are registered in new transactions. for tests, this means
-        // you can't do everything in a trans and roll back at the end. You must clean up
-        // manually.
-        try {
-            registerPlugin("groupPropMoved-v1.xml");
-            System.out.println("==> Done with v1");
-            registerPlugin("groupPropMoved-v2.xml");
-            System.out.println("==> Done with v2");
-            registerPlugin("groupPropMoved-v1.xml", "3.0");
-            System.out.println("==> Done with v1");
-        } finally {
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName() + ".testGroupPropMoved");
-            }
-        }
+        registerPlugin("groupPropMoved-v1.xml");
+        System.out.println("==> Done with v1");
+        registerPlugin("groupPropMoved-v2.xml");
+        System.out.println("==> Done with v2");
+        registerPlugin("groupPropMoved-v1.xml", "3.0");
+        System.out.println("==> Done with v1");
     }
 
     @Test(enabled = ENABLED)
     public void testUpdateDefaultTemplate() throws Exception {
-        // Note, plugins are registered in new transactions. for tests, this means
-        // you can't do everything in a trans and roll back at the end. You must clean up
-        // manually.
         try {
             registerPlugin("updateDefaultTemplate1.xml");
             ResourceType platform = getResourceType("myPlatform7");
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
             platform = em.find(ResourceType.class, platform.getId());
 
             ConfigurationDefinition cd = platform.getResourceConfigurationDefinition();
@@ -1195,22 +1054,11 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
             }
-
-            // clean up
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testUpdateDefaultTemplate");
-            }
         }
     }
 
     @Test(enabled = ENABLED)
     public void testAddDeleteTemplate() throws Exception {
-        // Note, plugins are registered in new transactions. for tests, this means
-        // you can't do everything in a trans and roll back at the end. You must clean up
-        // manually.
         try {
             ResourceType platform;
             ConfigurationTemplate defaultTemplate;
@@ -1222,7 +1070,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
             registerPlugin("addDeleteTemplate1.xml");
             platform = getResourceType("myPlatform7");
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
             platform = em.find(ResourceType.class, platform.getId());
 
             cd = platform.getResourceConfigurationDefinition();
@@ -1288,14 +1135,6 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
-            }
-
-            // clean up
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testAddDeleteDefaultTemplate");
             }
         }
     }

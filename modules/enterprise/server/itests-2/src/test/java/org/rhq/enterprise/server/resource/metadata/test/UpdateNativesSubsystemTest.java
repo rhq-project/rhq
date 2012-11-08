@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.resource.metadata.test;
 
 import java.util.Set;
 
-import javax.persistence.EntityManager;
 import javax.transaction.Status;
 
 import org.testng.annotations.Test;
@@ -50,7 +49,6 @@ public class UpdateNativesSubsystemTest extends UpdatePluginMetadataTestBase {
             registerPlugin("update5-v1_0.xml");
             ResourceType platform1 = getResourceType("myPlatform5");
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
             platform1 = em.find(ResourceType.class, platform1.getId());
 
             Set<ResourceType> servers = platform1.getChildResourceTypes();
@@ -79,7 +77,7 @@ public class UpdateNativesSubsystemTest extends UpdatePluginMetadataTestBase {
             registerPlugin("update5-v2_0.xml");
             ResourceType platform2 = getResourceType("myPlatform5");
             getTransactionManager().begin();
-            em = getEntityManager();
+
             platform2 = em.find(ResourceType.class, platform2.getId());
             Set<ResourceType> servers2 = platform2.getChildResourceTypes();
             assert servers2.size() == 1 : "Expected to find 1 server in v2, but got " + servers2.size();
@@ -103,7 +101,7 @@ public class UpdateNativesSubsystemTest extends UpdatePluginMetadataTestBase {
             registerPlugin("update5-v1_0.xml", "3.0");
             platform1 = getResourceType("myPlatform5");
             getTransactionManager().begin();
-            em = getEntityManager();
+
             platform1 = em.find(ResourceType.class, platform1.getId());
             servers = platform1.getChildResourceTypes();
             assert servers.size() == 1 : "Expected to find 1 server in v1, but got " + servers.size();
@@ -122,11 +120,6 @@ public class UpdateNativesSubsystemTest extends UpdatePluginMetadataTestBase {
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
-            }
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNNOT CLEAN UP TEST: " + this.getClass().getSimpleName() + ".testProcessScans");
             }
         }
     }

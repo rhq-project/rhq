@@ -23,14 +23,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
-import javax.transaction.TransactionManager;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.alert.Alert;
@@ -66,10 +61,9 @@ import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.test.UpdatePluginMetadataTestBase;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.AlertAvailabilityDurationJob;
+import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.test.TransactionCallbackReturnable;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.test.JPAUtils;
-import org.rhq.test.TransactionCallbackWithContext;
 
 @Test
 public class AlertConditionTest extends UpdatePluginMetadataTestBase {
@@ -87,8 +81,14 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         return "alerts";
     }
 
-    @AfterMethod(alwaysRun = true)
-    public void removePersistedResource() throws Exception {
+    @Override
+    protected void beforeMethod() throws Exception {
+        super.beforeMethod();
+        System.setProperty(RHQ_SERVER_NAME_PROPERTY, RHQ_SERVER_NAME_PROPERTY_VALUE);
+    }
+
+    @Override
+    public void afterMethod() throws Exception {
         if (resource != null) {
             deleteNewResource(resource);
             resource = null;
@@ -96,17 +96,9 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
 
         deleteServerIdentity();
 
-        return;
-    }
-
-    @BeforeClass(alwaysRun = true)
-    public void setSysProp() {
-        System.setProperty(RHQ_SERVER_NAME_PROPERTY, RHQ_SERVER_NAME_PROPERTY_VALUE);
-    }
-
-    @AfterClass(alwaysRun = true)
-    public void unsetSysProp() {
         System.setProperty(RHQ_SERVER_NAME_PROPERTY, "");
+
+        super.afterMethod();
     }
 
     @Test(enabled = ENABLED)
@@ -243,6 +235,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
     @Test(enabled = ENABLED)
     public void testAvailChangeAlert() throws Exception {
         // create our resource with alert definition
+        @SuppressWarnings("unused")
         MeasurementDefinition metricDef = createResourceWithMetricSchedule();
         createAlertDefinitionWithAvailChangeCondition(resource.getId(), AlertConditionOperator.AVAIL_GOES_DOWN);
         createAlertDefinitionWithAvailChangeCondition(resource.getId(), AlertConditionOperator.AVAIL_GOES_NOT_UP);
@@ -289,61 +282,56 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
 
     @Test(enabled = ENABLED)
     public void testAvailDurationAlert() throws Exception {
-        try {
-            prepareScheduler();
-            SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
-            scheduler.scheduleTriggeredJob(AlertAvailabilityDurationJob.class, false, null);
+        SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
+        scheduler.scheduleTriggeredJob(AlertAvailabilityDurationJob.class, false, null);
 
-            // create our resource with alert definition
-            MeasurementDefinition metricDef = createResourceWithMetricSchedule();
-            // use a 10s duration, this is not allowed in general, the gui forces 1 minute minimum
-            createAlertDefinitionWithAvailDurationCondition(resource.getId(),
-                AlertConditionOperator.AVAIL_DURATION_DOWN, 10);
+        // create our resource with alert definition
+        @SuppressWarnings("unused")
+        MeasurementDefinition metricDef = createResourceWithMetricSchedule();
+        // use a 10s duration, this is not allowed in general, the gui forces 1 minute minimum
+        createAlertDefinitionWithAvailDurationCondition(resource.getId(), AlertConditionOperator.AVAIL_DURATION_DOWN,
+            10);
 
-            // resource has initial UNKNOWN ResourceAvailability and no Availability records. simulate an avail report
-            // coming from the agent and setting the initial avail to UP.
-            AvailabilityReport availReport = new AvailabilityReport(AGENT_NAME);
-            availReport.addAvailability(new Datum(resource.getId(), AvailabilityType.UP, System.currentTimeMillis()));
-            AvailabilityManagerLocal availManager = LookupUtil.getAvailabilityManager();
-            availManager.mergeAvailabilityReport(availReport);
+        // resource has initial UNKNOWN ResourceAvailability and no Availability records. simulate an avail report
+        // coming from the agent and setting the initial avail to UP.
+        AvailabilityReport availReport = new AvailabilityReport(AGENT_NAME);
+        availReport.addAvailability(new Datum(resource.getId(), AvailabilityType.UP, System.currentTimeMillis()));
+        AvailabilityManagerLocal availManager = LookupUtil.getAvailabilityManager();
+        availManager.mergeAvailabilityReport(availReport);
 
-            // wait for our JMS messages to process and see if we get any alerts
-            Thread.sleep(3000);
+        // wait for our JMS messages to process and see if we get any alerts
+        Thread.sleep(3000);
 
-            PageList<Alert> alerts = getAlerts(resource.getId());
-            assert alerts.size() == 0 : "No alert should have fired on the initial avail reporting: " + alerts;
+        PageList<Alert> alerts = getAlerts(resource.getId());
+        assert alerts.size() == 0 : "No alert should have fired on the initial avail reporting: " + alerts;
 
-            // Now simulate the down avail
-            availReport = new AvailabilityReport(AGENT_NAME);
-            availReport.addAvailability(new Datum(resource.getId(), AvailabilityType.DOWN,
-                System.currentTimeMillis() + 10));
-            availManager.mergeAvailabilityReport(availReport);
+        // Now simulate the down avail
+        availReport = new AvailabilityReport(AGENT_NAME);
+        availReport
+            .addAvailability(new Datum(resource.getId(), AvailabilityType.DOWN, System.currentTimeMillis() + 10));
+        availManager.mergeAvailabilityReport(availReport);
 
-            // wait for our JMS messages to process and see if we get any alerts
-            Thread.sleep(5000);
+        // wait for our JMS messages to process and see if we get any alerts
+        Thread.sleep(5000);
 
-            alerts = getAlerts(resource.getId());
-            assert alerts.size() == 0 : "No alert should have fired after 30s, will take at least a minute: " + alerts;
+        alerts = getAlerts(resource.getId());
+        assert alerts.size() == 0 : "No alert should have fired after 30s, will take at least a minute: " + alerts;
 
-            // wait for our JMS messages to process and see if we get any alerts
-            Thread.sleep(6000);
+        // wait for our JMS messages to process and see if we get any alerts
+        Thread.sleep(6000);
 
-            alerts = getAlerts(resource.getId());
-            assert alerts.size() == 1 : "One alert should have fired on the avail duration: " + alerts;
+        alerts = getAlerts(resource.getId());
+        assert alerts.size() == 1 : "One alert should have fired on the avail duration: " + alerts;
 
-            // purge the resource fully, which should remove all alert defs and alert conditions and condition logs
-            int resourceId = resource.getId();
-            deleteNewResource(resource);
-            resource = null;
+        // purge the resource fully, which should remove all alert defs and alert conditions and condition logs
+        int resourceId = resource.getId();
+        deleteNewResource(resource);
+        resource = null;
 
-            AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
-            PageList<AlertDefinition> defs = alertDefManager.findAlertDefinitions(getOverlord(), resourceId,
-                PageControl.getUnlimitedInstance());
-            assert defs.isEmpty() : "failed to delete the alert definition - are condition logs still around?";
-
-        } finally {
-            unprepareScheduler();
-        }
+        AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
+        PageList<AlertDefinition> defs = alertDefManager.findAlertDefinitions(getOverlord(), resourceId,
+            PageControl.getUnlimitedInstance());
+        assert defs.isEmpty() : "failed to delete the alert definition - are condition logs still around?";
     }
 
     @Test(enabled = ENABLED)
@@ -429,7 +417,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
     }
 
     private AlertCondition getAlertConditionWithLogs(final int conditionId) {
-        return executeInTransaction(new TransactionCallbackReturnable<AlertCondition>() {
+        return executeInTransaction(false, new TransactionCallbackReturnable<AlertCondition>() {
             @Override
             public AlertCondition execute() throws Exception {
                 AlertCondition cond = em.find(AlertCondition.class, conditionId);
@@ -644,12 +632,11 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         resource = persistNewResource(resourceType.getName()); // will have UNKNOWN avail
         assert resource != null && resource.getId() > 0 : "failed to create test resource";
 
-        JPAUtils.executeInTransaction(new TransactionCallbackWithContext<Object>() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
-            public Object execute(TransactionManager tm, EntityManager em) throws Exception {
+            public void execute() throws Exception {
                 MeasurementSchedule schedule = new MeasurementSchedule(metricDef, resource);
                 em.persist(schedule);
-                return null;
             }
         });
 
@@ -685,7 +672,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
 
         // simulate the agent being "connected" to the server
         try {
-            Agent agent = getAgent(getEntityManager());
+            Agent agent = getAgent();
             agent.setServer(server);
             LookupUtil.getAgentManager().updateAgent(agent);
         } catch (NoResultException nre) {

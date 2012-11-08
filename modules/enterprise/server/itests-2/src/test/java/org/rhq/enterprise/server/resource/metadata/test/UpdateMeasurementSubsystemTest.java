@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 
 import org.testng.annotations.Test;
@@ -60,79 +59,69 @@ public class UpdateMeasurementSubsystemTest extends UpdatePluginMetadataTestBase
         // Note, plugins are registered in new transactions. for tests, this means
         // you can't do everything in a trans and roll back at the end. You must clean up
         // manually.
-        try {
-            registerPlugin("update-v1_0.xml");
-            ResourceType server1 = getResourceType("testServer1");
-            Set<MeasurementDefinition> definitions1 = server1.getMetricDefinitions();
-            // for metric counts, add one for the built in AvailabilityType metric
-            assert definitions1.size() == 5 : "There should be 5 metrics for v1";
-            for (MeasurementDefinition def : definitions1) {
-                if (def.getDisplayName().equals("Three")) {
-                    assert def.getDisplayType() == DisplayType.DETAIL : "DisplayType for Three should be Detail in v1";
-                }
-
-                if (def.getDisplayName().equals("Five")) {
-                    // this is a trick(y) one, as we do not want to honor updates
-                    // of the default interval when a plugin was already deployed once and
-                    // we do a redeploy
-                    assert def.getDefaultInterval() == 30000L : "DefaultInterval should be 30000 for Five in v1";
-                }
+        registerPlugin("update-v1_0.xml");
+        ResourceType server1 = getResourceType("testServer1");
+        Set<MeasurementDefinition> definitions1 = server1.getMetricDefinitions();
+        // for metric counts, add one for the built in AvailabilityType metric
+        assert definitions1.size() == 5 : "There should be 5 metrics for v1";
+        for (MeasurementDefinition def : definitions1) {
+            if (def.getDisplayName().equals("Three")) {
+                assert def.getDisplayType() == DisplayType.DETAIL : "DisplayType for Three should be Detail in v1";
             }
 
-            // now hot deploy a new version of that plugin
-            registerPlugin("update-v2_0.xml");
+            if (def.getDisplayName().equals("Five")) {
+                // this is a trick(y) one, as we do not want to honor updates
+                // of the default interval when a plugin was already deployed once and
+                // we do a redeploy
+                assert def.getDefaultInterval() == 30000L : "DefaultInterval should be 30000 for Five in v1";
+            }
+        }
 
-            ResourceType server2 = getResourceType("testServer1");
-            Set<MeasurementDefinition> definitions2 = server2.getMetricDefinitions();
-            // for metric counts, add one for the built in AvailabilityType metric            
-            assert definitions2.size() == 5 : "There should be 5 metrics in v2";
-            boolean foundFour = false;
+        // now hot deploy a new version of that plugin
+        registerPlugin("update-v2_0.xml");
 
-            for (MeasurementDefinition def : definitions2) {
-                assert !(def.getDisplayName().equals("One")) : "One should be gone in v2";
-                if (def.getDisplayName().equals("Three")) {
-                    assert def.getDisplayType() == DisplayType.SUMMARY : "DisplayType for Three should be Summary in v2";
-                }
+        ResourceType server2 = getResourceType("testServer1");
+        Set<MeasurementDefinition> definitions2 = server2.getMetricDefinitions();
+        // for metric counts, add one for the built in AvailabilityType metric            
+        assert definitions2.size() == 5 : "There should be 5 metrics in v2";
+        boolean foundFour = false;
 
-                if (def.getDisplayName().equals("Four")) {
-                    foundFour = true;
-                }
-
-                if (def.getDisplayName().equals("Five")) {
-                    // this is a trick(y) one, as we do not want to honor updates
-                    // of the default interval when a plugin was already deployed once and
-                    // we do a redeploy
-                    assert def.getDefaultInterval() == 30000L : "DefaultInterval should still be 30000 for Five in v2";
-                }
+        for (MeasurementDefinition def : definitions2) {
+            assert !(def.getDisplayName().equals("One")) : "One should be gone in v2";
+            if (def.getDisplayName().equals("Three")) {
+                assert def.getDisplayType() == DisplayType.SUMMARY : "DisplayType for Three should be Summary in v2";
             }
 
-            assert foundFour == true : "Four should be there in v2, but wasn't";
-
-            // Now try the other way round
-            registerPlugin("update-v1_0.xml", "3.0");
-            ResourceType server3 = getResourceType("testServer1");
-            Set<MeasurementDefinition> definitions3 = server3.getMetricDefinitions();
-            // for metric counts, add one for the built in AvailabilityType metric
-            assert definitions3.size() == 5 : "There should be 5 metrics for v3";
-            for (MeasurementDefinition def : definitions3) {
-                if (def.getDisplayName().equals("Three")) {
-                    assert def.getDisplayType() == DisplayType.DETAIL : "DisplayType for Three should be Detail in v3";
-                }
-
-                if (def.getDisplayName().equals("Five")) {
-                    // this is a trick(y) one, as we do not want to honor updates
-                    // of the default interval when a plugin was already deployed once and
-                    // we do a redeploy
-                    assert def.getDefaultInterval() == 30000L : "DefaultInterval should be 30000 for Five in v3";
-                }
+            if (def.getDisplayName().equals("Four")) {
+                foundFour = true;
             }
-        } finally {
-            // clean up
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testUpdateMeasurementDefinition");
+
+            if (def.getDisplayName().equals("Five")) {
+                // this is a trick(y) one, as we do not want to honor updates
+                // of the default interval when a plugin was already deployed once and
+                // we do a redeploy
+                assert def.getDefaultInterval() == 30000L : "DefaultInterval should still be 30000 for Five in v2";
+            }
+        }
+
+        assert foundFour == true : "Four should be there in v2, but wasn't";
+
+        // Now try the other way round
+        registerPlugin("update-v1_0.xml", "3.0");
+        ResourceType server3 = getResourceType("testServer1");
+        Set<MeasurementDefinition> definitions3 = server3.getMetricDefinitions();
+        // for metric counts, add one for the built in AvailabilityType metric
+        assert definitions3.size() == 5 : "There should be 5 metrics for v3";
+        for (MeasurementDefinition def : definitions3) {
+            if (def.getDisplayName().equals("Three")) {
+                assert def.getDisplayType() == DisplayType.DETAIL : "DisplayType for Three should be Detail in v3";
+            }
+
+            if (def.getDisplayName().equals("Five")) {
+                // this is a trick(y) one, as we do not want to honor updates
+                // of the default interval when a plugin was already deployed once and
+                // we do a redeploy
+                assert def.getDefaultInterval() == 30000L : "DefaultInterval should be 30000 for Five in v3";
             }
         }
     }
@@ -150,36 +139,26 @@ public class UpdateMeasurementSubsystemTest extends UpdatePluginMetadataTestBase
         // manually.  
 
         // for metric counts, add one for the built in AvailabilityType metric
-        try {
-            { // extra block for variable scoping purposes
-                registerPlugin("measurementDeletion-v1_0.xml");
-                ResourceType server = getResourceType("testServer1");
-                Set<MeasurementDefinition> def = server.getMetricDefinitions();
-                assertEquals(5, def.size());
-            }
+        { // extra block for variable scoping purposes
+            registerPlugin("measurementDeletion-v1_0.xml");
+            ResourceType server = getResourceType("testServer1");
+            Set<MeasurementDefinition> def = server.getMetricDefinitions();
+            assertEquals(5, def.size());
+        }
 
-            { // extra block for variable scoping purposes
-                registerPlugin("measurementDeletion-v2_0.xml", "2.0");
+        { // extra block for variable scoping purposes
+            registerPlugin("measurementDeletion-v2_0.xml", "2.0");
 
-                ResourceType server = getResourceType("testServer1");
-                Set<MeasurementDefinition> def = server.getMetricDefinitions();
-                assertEquals(1, def.size());
-            }
+            ResourceType server = getResourceType("testServer1");
+            Set<MeasurementDefinition> def = server.getMetricDefinitions();
+            assertEquals(1, def.size());
+        }
 
-            { // extra block for variable scoping purposes
-                registerPlugin("measurementDeletion-v1_0.xml", "3.0");
-                ResourceType server = getResourceType("testServer1");
-                Set<MeasurementDefinition> def = server.getMetricDefinitions();
-                assertEquals(5, def.size());
-            }
-        } finally {
-            // clean up
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
-                    + ".testDeleteMeasurementDefinition");
-            }
+        { // extra block for variable scoping purposes
+            registerPlugin("measurementDeletion-v1_0.xml", "3.0");
+            ResourceType server = getResourceType("testServer1");
+            Set<MeasurementDefinition> def = server.getMetricDefinitions();
+            assertEquals(5, def.size());
         }
     }
 
@@ -201,72 +180,61 @@ public class UpdateMeasurementSubsystemTest extends UpdatePluginMetadataTestBase
         // you can't do everything in a trans and roll back at the end. You must clean up
         // manually.  Still, some work can be performed transactionally, as done below.
         try {
-            try {
-                registerPlugin("update6-1.xml");
-                ResourceType server = getResourceType("testServer1");
+            registerPlugin("update6-1.xml");
+            ResourceType server = getResourceType("testServer1");
 
-                getTransactionManager().begin();
-                EntityManager entityManager = getEntityManager();
+            getTransactionManager().begin();
 
-                getPluginId(entityManager);
+            getPluginId();
 
-                Set<MeasurementDefinition> definitions1 = server.getMetricDefinitions();
-                // for metric counts, add one for the built in AvailabilityType metric
-                assert definitions1.size() == 2;
+            Set<MeasurementDefinition> definitions1 = server.getMetricDefinitions();
+            // for metric counts, add one for the built in AvailabilityType metric
+            assert definitions1.size() == 2;
 
-                /*
-                 * Create a Fake Resource and a MeasurementSchedule
-                 */
-                testResource = new Resource("-test-", "-test resource-", server);
-                testResource.setUuid("" + new Random().nextInt());
-                entityManager.persist(testResource);
+            /*
+             * Create a Fake Resource and a MeasurementSchedule
+             */
+            testResource = new Resource("-test-", "-test resource-", server);
+            testResource.setUuid("" + new Random().nextInt());
+            em.persist(testResource);
 
-                sched = new MeasurementSchedule(definitions1.iterator().next(), testResource);
-                entityManager.persist(sched);
+            sched = new MeasurementSchedule(definitions1.iterator().next(), testResource);
+            em.persist(sched);
 
-                entityManager.flush();
+            em.flush();
 
-                baseline = new MeasurementBaseline();
-                baseline.setSchedule(sched);
-                baseline.setUserEntered(true);
-                entityManager.persist(baseline);
+            baseline = new MeasurementBaseline();
+            baseline.setSchedule(sched);
+            baseline.setUserEntered(true);
+            em.persist(baseline);
 
-                eDef = new EventDefinition(server, "-test event definition-");
-                entityManager.persist(eDef);
+            eDef = new EventDefinition(server, "-test event definition-");
+            em.persist(eDef);
 
-                setUpAgent(entityManager, testResource);
+            setUpAgent(testResource);
 
-                getTransactionManager().commit();
-            } catch (Exception e) {
-                getTransactionManager().rollback();
-                fail("Setup of v1 failed: " + e);
-            }
-
-            // Set up done, now replace the plugin with a new one.
-
-            System.out.println("Done with v1");
-
-            registerPlugin("update6-2.xml");
-
-            ResourceType server;
-            try {
-                server = getResourceType("testServer1");
-                assert server == null : "testServer1 found, but should not";
-            } catch (NoResultException nre) {
-                ; // no issue 
-            }
-
-            server = getResourceType("testServer2");
-            assert server != null : "testServer2 not found";
-
-        } finally {
-            // clean up
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNOT CLEAN UP TEST: " + this.getClass().getSimpleName() + ".testRenameServer");
-            }
+            getTransactionManager().commit();
+        } catch (Exception e) {
+            getTransactionManager().rollback();
+            fail("Setup of v1 failed: " + e);
         }
+
+        // Set up done, now replace the plugin with a new one.
+
+        System.out.println("Done with v1");
+
+        registerPlugin("update6-2.xml");
+
+        ResourceType server;
+        try {
+            server = getResourceType("testServer1");
+            assert server == null : "testServer1 found, but should not";
+        } catch (NoResultException nre) {
+            ; // no issue 
+        }
+
+        server = getResourceType("testServer2");
+        assert server != null : "testServer2 not found";
     }
 
     /**
@@ -281,72 +249,62 @@ public class UpdateMeasurementSubsystemTest extends UpdatePluginMetadataTestBase
         // you can't do everything in a trans and roll back at the end. You must clean up
         // manually.  Still, some work can be performed transactionally, as done below.
         try {
-            try {
-                registerPlugin("update7-1.xml");
-                ResourceType platform = getResourceType("myPlatform7");
-
-                getTransactionManager().begin();
-                EntityManager entityManager = getEntityManager();
-
-                getPluginId(entityManager);
-
-                Set<MeasurementDefinition> definitions1 = platform.getMetricDefinitions();
-                assert definitions1.size() == 1;
-
-                /*
-                 * Create a Fake Resource and a MeasurementSchedule
-                 */
-                Resource testResource = new Resource("-test-", "-test resource", platform);
-                testResource.setUuid("" + new Random().nextInt());
-                entityManager.persist(testResource);
-
-                setUpAgent(entityManager, testResource);
-
-                getTransactionManager().commit();
-            } catch (Exception e) {
-                getTransactionManager().rollback();
-                fail("Setup of v1 failed: " + e);
-            }
-
-            // Set up done, now replace the plugin with a new one.
-
-            System.out.println("Done with v1");
-
-            try {
-                registerPlugin("update7-2.xml");
-            } catch (Throwable t) {
-                System.err.println(t);
-            }
-
+            registerPlugin("update7-1.xml");
             ResourceType platform = getResourceType("myPlatform7");
-            Set<MeasurementDefinition> definitions2 = platform.getMetricDefinitions();
-            assert definitions2.size() == 2;
 
-            Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-            ResourceCriteria c = new ResourceCriteria();
-            c.addFilterResourceTypeId(platform.getId());
-            c.addFilterInventoryStatus(InventoryStatus.NEW);
-            c.fetchSchedules(true);
-            List<Resource> resources = LookupUtil.getResourceManager().findResourcesByCriteria(overlord, c);
-            assert resources != null;
-            assertEquals(1, resources.size());
+            getTransactionManager().begin();
 
-            Resource res = resources.get(0);
-            Set<MeasurementSchedule> schedules = res.getSchedules();
-            assert schedules != null;
+            getPluginId();
+
+            Set<MeasurementDefinition> definitions1 = platform.getMetricDefinitions();
+            assert definitions1.size() == 1;
+
             /*
-             * We only expect one schedule for the freshly created metric, as the resource we
-             * created earlier has no schedule attached yet (in the test).
-             * In the "real world" it would get its schedules on inventory sync time.
+             * Create a Fake Resource and a MeasurementSchedule
              */
-            assert schedules.size() == 1 : "Did not find the expected 1 new schedule, but: " + schedules.size();
-        } finally {
-            // clean up
-            try {
-                cleanupTest();
-            } catch (Exception e) {
-                System.out.println("CANNOT CLEAN UP TEST: " + this.getClass().getSimpleName() + ".testRenameServer");
-            }
+            Resource testResource = new Resource("-test-", "-test resource", platform);
+            testResource.setUuid("" + new Random().nextInt());
+            em.persist(testResource);
+
+            setUpAgent(testResource);
+
+            getTransactionManager().commit();
+        } catch (Exception e) {
+            getTransactionManager().rollback();
+            fail("Setup of v1 failed: " + e);
         }
+
+        // Set up done, now replace the plugin with a new one.
+
+        System.out.println("Done with v1");
+
+        try {
+            registerPlugin("update7-2.xml");
+        } catch (Throwable t) {
+            System.err.println(t);
+        }
+
+        ResourceType platform = getResourceType("myPlatform7");
+        Set<MeasurementDefinition> definitions2 = platform.getMetricDefinitions();
+        assert definitions2.size() == 2;
+
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        ResourceCriteria c = new ResourceCriteria();
+        c.addFilterResourceTypeId(platform.getId());
+        c.addFilterInventoryStatus(InventoryStatus.NEW);
+        c.fetchSchedules(true);
+        List<Resource> resources = LookupUtil.getResourceManager().findResourcesByCriteria(overlord, c);
+        assert resources != null;
+        assertEquals(1, resources.size());
+
+        Resource res = resources.get(0);
+        Set<MeasurementSchedule> schedules = res.getSchedules();
+        assert schedules != null;
+        /*
+         * We only expect one schedule for the freshly created metric, as the resource we
+         * created earlier has no schedule attached yet (in the test).
+         * In the "real world" it would get its schedules on inventory sync time.
+         */
+        assert schedules.size() == 1 : "Did not find the expected 1 new schedule, but: " + schedules.size();
     }
 }

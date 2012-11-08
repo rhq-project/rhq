@@ -111,7 +111,6 @@
     <freemarker.version>2.3.18</freemarker.version>
     <powermock.version>1.4.11</powermock.version>
     <arquillian.version>1.0.0.Final</arquillian.version>
-    <animal.sniffer.version>1.7</animal.sniffer.version>
     <xercesImpl.version>2.9.1-jbossas-2</xercesImpl.version> <!-- see BZ-820629 and CVE-2009-2625 -->
 
     <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
@@ -179,7 +178,19 @@
     <!-- NOTE: The below line is a workaround for a Maven bug, where it does not expand settings.* properties
                used in the distributionManagement section of the POM. -->
     <localRepository>${user.home}/.m2/repository</localRepository>
-      <project.json.version>20080701</project.json.version>
+
+    <project.json.version>20080701</project.json.version>
+
+    <!-- Java API checking -->
+    <animal.sniffer.version>1.8</animal.sniffer.version>
+    <animal.sniffer.java.signature.groupId>org.codehaus.mojo.signature</animal.sniffer.java.signature.groupId>
+    <animal.sniffer.java.signature.artifactId>java16</animal.sniffer.java.signature.artifactId>
+    <animal.sniffer.java.signature.version>1.0</animal.sniffer.java.signature.version>
+    <!-- API checks -->
+    <clirr.version>2.4</clirr.version>
+    <!-- a default value for the child modules indicating that the module is not
+         part of our public API and is therefore not API-checked. -->
+    <rhq.internal>true</rhq.internal>
   </properties>
 
 
@@ -720,6 +731,11 @@
             <artifactId>animal-sniffer-maven-plugin</artifactId>
             <version>${animal.sniffer.version}</version>
          </plugin>
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>clirr-maven-plugin</artifactId>
+            <version>${clirr.version}</version>
+         </plugin>
        </plugins>
      </pluginManagement>
 
@@ -1015,7 +1031,9 @@
                    <tasks>
                       <property name="apidocs.dir" value="target/apidocs" />
 
-                      <copy dir="modules/core/domain/target/site/apidocs" todir="${apidocs.dir}/domain"/>
+                      <copy todir="${apidocs.dir}/domain">
+                         <fileset dir="modules/core/domain/target/site/apidocs" erroronmissingdir="false"/>
+                      </copy>
                    </tasks>
                 </configuration>
                 <goals>
@@ -1053,9 +1071,9 @@
                   <id>java-api-check</id>
                   <configuration>
                       <signature>
-                          <groupId>org.codehaus.mojo.signature</groupId>
-                          <artifactId>java16</artifactId>
-                          <version>1.0</version>
+                         <groupId>${animal.sniffer.java.signature.groupId}</groupId>
+                         <artifactId>${animal.sniffer.java.signature.artifactId}</artifactId>
+                         <version>${animal.sniffer.java.signature.version}</version>
                       </signature>
                   </configuration>
                   <phase>process-classes</phase>
@@ -1067,8 +1085,7 @@
       </plugin>
     </plugins>
 
-  </build>
-
+  </build>  
 
   <repositories>
 
@@ -1288,7 +1305,65 @@
          </build>
       </profile>
 
-  </profiles>
+  <profile>
+     <id>signature-check</id>
+     <activation>
+        <property>
+           <name>signature-check-base-version</name>
+        </property>
+     </activation>
+     <build>
+        <plugins>
+           <plugin>
+              <groupId>org.codehaus.mojo</groupId>
+              <artifactId>clirr-maven-plugin</artifactId>
+              <executions>
+                 <execution>
+                    <id>signature-check</id>
+                    <goals>
+                       <goal>check</goal>
+                    </goals>
+                    <configuration>
+                       <comparisonArtifacts>
+                          <comparisonArtifact>
+                             <groupId>${project.groupId}</groupId>
+                             <artifactId>${project.artifactId}</artifactId>
+                             <version>${signature-check-base-version}</version>
+                          </comparisonArtifact>
+                       </comparisonArtifacts>
+                       <logResults>true</logResults>
+                       <xmlOutputFile>${project.build.directory}/${project.build.finalName}.signature-check.xml</xmlOutputFile>
+                       <failOnError>false</failOnError>
+                       <skip>${rhq.internal}</skip>
+                    </configuration>
+                 </execution>
+              </executions>
+           </plugin>
+        </plugins>
+     </build>
+
+     <reporting>
+        <plugins>
+           <plugin>
+              <groupId>org.codehaus.mojo</groupId>
+              <artifactId>clirr-maven-plugin</artifactId>
+              <configuration>
+                 <comparisonVersion>${signature-check-base-version}</comparisonVersion>
+                 <comparisonArtifacts>
+                    <comparisonArtifact>
+                       <groupId>${project.groupId}</groupId>
+                       <artifactId>${project.artifactId}</artifactId>
+                       <version>${signature-check-base-version}</version>
+                    </comparisonArtifact>
+                 </comparisonArtifacts>
+                 <skip>${rhq.internal}</skip>
+                 <minSeverity>info</minSeverity>
+              </configuration>
+           </plugin>
+        </plugins>
+     </reporting>   
+  </profile>
+</profiles>
 
 
     <reporting>

@@ -23,6 +23,8 @@
       <jboss-embeddable-ejb3.version>1.0.0.Alpha9</jboss-embeddable-ejb3.version>
 
       <clean.db>true</clean.db>
+
+      <rhq.internal>false</rhq.internal>
    </properties>
 
    <dependencies>
@@ -712,6 +714,16 @@ Build-OS-Version=${os.version}
 
             </executions>
          </plugin>
+      <plugin>
+         <groupId>org.codehaus.mojo</groupId>
+         <artifactId>clirr-maven-plugin</artifactId>
+         <configuration>
+            <includes>
+               <include>**/*Remote</include>
+               <include>**/ServerVersion</include>
+            </includes>
+         </configuration>
+      </plugin>
 
          <plugin>
             <groupId>org.antlr</groupId>
@@ -1057,4 +1069,18 @@ Build-OS-Version=${os.version}
      </profile>
    </profiles>
 
+  <reporting>
+     <plugins>
+        <plugin>
+           <groupId>org.codehaus.mojo</groupId>
+           <artifactId>clirr-maven-plugin</artifactId>
+           <configuration>
+              <includes>
+                 <include>**/*Remote</include>
+                 <include>**/ServerVersion</include>
+              </includes>
+           </configuration>
+        </plugin>
+     </plugins>
+  </reporting>
 </project>

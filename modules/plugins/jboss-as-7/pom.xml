@@ -27,6 +27,7 @@
     <jboss-as-arquillian-container-managed.version>7.1.1.Final</jboss-as-arquillian-container-managed.version>
     <java.tieredCompilation>-Dxxx</java.tieredCompilation>
     <java.useCompressedOOPS>-Dxxx</java.useCompressedOOPS>
+    <rhq.internal>false</rhq.internal>
   </properties>
 
 
@@ -649,6 +650,7 @@
       </build>
 
     </profile>
+    
   </profiles>
 
 </project>

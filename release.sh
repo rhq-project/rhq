@@ -349,10 +349,16 @@ run_release_version_and_tag_process()
    [ "$?" -ne 0 ] && abort "Failed to cleanup snbapshot jars produced by test build from module target dirs. Please see above Maven output for details, fix any issues, then try again."
 
    echo "7) Commit the change in version; if everything went well so far then this is a good tag."
-   git add -u
-   [ "$?" -ne 0 ] && abort "Adding modified files to commit failed."
-   git commit -m "tag $RELEASE_TAG"
-   [ "$?" -ne 0 ] && abort "The commit with version modified files failed."
+   git diff --exit-code
+   if [ "$?" -ne 0 ];
+   then
+      git add -u
+      [ "$?" -ne 0 ] && abort "Adding modified files to commit failed."
+      git commit -m "tag $RELEASE_TAG"
+      [ "$?" -ne 0 ] && abort "The commit with version modified files failed."
+   else
+      echo "No changes detected to commit. There was no effective change in release version."
+   fi
 
    echo "8) Tag the current source."
    if [ "$OVERRIDE_TAG" ];
@@ -373,7 +379,7 @@ run_release_version_and_tag_process()
       echo "9) DID NOT execute this step because local branch was created. No need to merge back changes."
    fi
 
-   echo "10) If everything went well so far than means all the changes can be pushed!!!"
+   echo "10) Everything went well so far, all the changes are now pushed!!!"
    git push origin "refs/heads/$BUILD_BRANCH"
    [ "$?" -ne 0 ] && abort "$BUILD_BRANCH branch push to origin failed."
    git push origin "refs/tags/$RELEASE_TAG"

@@ -69,23 +69,22 @@ public abstract class MetricLineGraphView extends AbstractMetricD3GraphView impl
                     width = 400 - margin.left - margin.right,
                     height = 150 - margin.top - margin.bottom;
 
-            var x = $wnd.d3.time.scale()
+            var timeScale = $wnd.d3.time.scale()
                     .range([0, width])
                     .domain($wnd.d3.extent(data, function(d) { return d.x; }));
 
-            var y = $wnd.d3.scale.linear()
+            var yScale = $wnd.d3.scale.linear()
                     .rangeRound([height, 0])
                     .domain([$wnd.d3.min(data.map(function(x) {return x.low;})), $wnd.d3.max(data.map(function(x){return x.high;}))]);
 
             var xAxis = $wnd.d3.svg.axis()
-                    .scale(x)
+                    .scale(timeScale)
                     .ticks(5)
                     .orient("bottom");
 
             var yAxis = $wnd.d3.svg.axis()
-                    .scale(y)
+                    .scale(yScale)
                     .ticks(5)
-                    //.tickSubdivide(5)
                     .orient("left");
 
 //d3.select("y axis").append().text(" Metric Label")
@@ -97,18 +96,18 @@ public abstract class MetricLineGraphView extends AbstractMetricD3GraphView impl
 
             var line = $wnd.d3.svg.line()
                     .interpolate(interpolation)
-                    .x(function(d) { return x(d.x); })
-                    .y(function(d) { return y(+d.y); });
+                    .x(function(d) { return timeScale(d.x); })
+                    .y(function(d) { return yScale(+d.y); });
 
             var highLine = $wnd.d3.svg.line()
                     .interpolate(interpolation)
-                    .x(function(d) { return x(d.x); })
-                    .y(function(d) { return y(+d.high); });
+                    .x(function(d) { return timeScale(d.x); })
+                    .y(function(d) { return yScale(+d.high); });
 
             var lowLine = $wnd.d3.svg.line()
                     .interpolate(interpolation)
-                    .x(function(d) { return x(d.x); })
-                    .y(function(d) { return y(+d.low); });
+                    .x(function(d) { return timeScale(d.x); })
+                    .y(function(d) { return yScale(+d.low); });
 
             var svg = $wnd.d3.select(chartSelection).append("svg")
                     .attr("width", width + margin.left + margin.right)
@@ -116,12 +115,11 @@ public abstract class MetricLineGraphView extends AbstractMetricD3GraphView impl
                     .append("g")
                     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-            console.log(svg);
-
             svg.append("g")
                     .attr("class", "x axis")
                     .attr("transform", "translate(0," + height + ")")
                     .call(xAxis);
+
 
             svg.append("g")
                     .attr("class", "y axis")
@@ -131,7 +129,7 @@ public abstract class MetricLineGraphView extends AbstractMetricD3GraphView impl
                     .attr("y", -60)
                     .attr("dy", ".71em")
                     .style("text-anchor", "end")
-                    .text("("+yAxisUnits+")");
+                    .text(yAxisUnits !== "" ? "("+yAxisUnits+")" : "");
 
             console.log("finished axes");
 
@@ -161,8 +159,49 @@ public abstract class MetricLineGraphView extends AbstractMetricD3GraphView impl
                     .attr("stroke", "blue")
                     .attr("stroke-width", "1.5")
                     .attr("stroke-dasharray", "5,5")
-                    //.attr("stroke-opacity", ".8")
+                    .attr("stroke-opacity", ".3")
                     .attr("d", lowLine);
+
+            svg.selectAll("circle")
+                    .data(data)
+                    .enter()
+                    .append("circle")
+                    .attr("class", "tooltip")
+                    .attr("cx", function(d){ return timeScale(d.x);  })
+                    .attr("cy", function(d){ return yScale(d.y);  })
+                    .attr("r", 2)
+                    .attr("stroke", "black")
+                    .attr("fill", "none");
+
+            svg.selectAll("circle")
+                    .on("mouseover",  function(d){
+                        $wnd.d3.select(this)
+                                .transition().attr("r",7).attr("stroke", "red").attr("fill","red");
+                    })
+                    .on("mouseout",  function(d){
+                        $wnd.d3.select(this)
+                                .transition().attr("r",2).attr("stroke","black").attr("fill","none");
+                    });
+
+            svg.selectAll("circle")
+                    .on("mouseover.tooltip", function(d){
+               $wnd.d3.select("text#" + d.x).remove();
+               $wnd.d3.select(chartHandle)
+                       .append("text")
+                       .text("Value: "+ d.y)
+                       .attr("x", timeScale(d.x) + 10)
+                       .attr("y", yScale(d.y) - 10)
+                       .attr("id", d.x);
+            });
+            svg.selectAll("circle")
+                    .on("mouseout.tooltip", function(d){
+                        $wnd.d3.select("text#" + d.x)
+                                .transition()
+                                .duration(500)
+                                .style("opacity",0)
+                                .style("transform","translate(10, -10)")
+                                .remove();
+                    });
 
             console.log("finished paths");
         }

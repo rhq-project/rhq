@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
 import java.util.List;
 
+import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.events.ClickEvent;
@@ -166,9 +167,13 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
             graph.setHeight100();
             addMember(graph);
 
-            drawJsniChart();
-            markForRedraw();
-
+            new Timer() {
+                @Override
+                public void run() {
+                    //@todo: this is a hack around timing issue of jsni not seeing the DOM
+                    drawJsniChart();
+                }
+            }.schedule(100);
         }
     }
 

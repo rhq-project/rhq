@@ -1,0 +1,30 @@
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+
+.x.axis path {
+    display: none;
+}
+
+/*.line {*/
+    /*fill: none;*/
+    /*stroke: steelblue;*/
+    /*stroke-width: 1.5px;*/
+/*}*/
+
+/*.highLine {*/
+    /*fill: none;*/
+    /*stroke: red;*/
+    /*stroke-opacity: 0.2;*/
+    /*stroke-width: 1.5px;*/
+/*}*/
+/*.lowLine {*/
+    /*fill: none;*/
+    /*stroke: lightblue;*/
+    /*stroke-opacity: 0.25;*/
+    /*stroke-width: 1.5px;*/
+/*}*/

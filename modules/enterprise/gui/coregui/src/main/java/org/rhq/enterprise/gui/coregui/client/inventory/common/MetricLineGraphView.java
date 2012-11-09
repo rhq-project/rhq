@@ -65,9 +65,9 @@ public abstract class MetricLineGraphView extends AbstractMetricD3GraphView impl
         function draw(data){
             "use strict";
 
-            var margin = {top: 10, right: 20, bottom: 10, left: 10},
+            var margin = {top: 10, right: 5, bottom: 30, left: 70},
                     width = 400 - margin.left - margin.right,
-                    height = 300 - margin.top - margin.bottom;
+                    height = 150 - margin.top - margin.bottom;
 
             var x = $wnd.d3.time.scale()
                     .range([0, width])
@@ -79,11 +79,13 @@ public abstract class MetricLineGraphView extends AbstractMetricD3GraphView impl
 
             var xAxis = $wnd.d3.svg.axis()
                     .scale(x)
+                    .ticks(5)
                     .orient("bottom");
 
             var yAxis = $wnd.d3.svg.axis()
                     .scale(y)
-                    .tickSubdivide(5)
+                    .ticks(5)
+                    //.tickSubdivide(5)
                     .orient("left");
 
 //d3.select("y axis").append().text(" Metric Label")
@@ -126,10 +128,10 @@ public abstract class MetricLineGraphView extends AbstractMetricD3GraphView impl
                     .call(yAxis)
                     .append("text")
                     .attr("transform", "rotate(-90)")
-                    .attr("y", 6)
+                    .attr("y", -60)
                     .attr("dy", ".71em")
                     .style("text-anchor", "end")
-                    .text("Metric");
+                    .text("("+yAxisUnits+")");
 
             console.log("finished axes");
 
@@ -138,7 +140,7 @@ public abstract class MetricLineGraphView extends AbstractMetricD3GraphView impl
                     .attr("class", "line")
                     .attr("fill", "none")
                     .attr("stroke", "steelblue")
-                    .attr("stroke-width", "1.5")
+                    .attr("stroke-width", "2")
                     .attr("d", line);
 
             svg.append("path")
@@ -147,6 +149,8 @@ public abstract class MetricLineGraphView extends AbstractMetricD3GraphView impl
                     .attr("fill", "none")
                     .attr("stroke", "red")
                     .attr("stroke-width", "1.5")
+                    //.attr("stroke-dasharray", "20,10,5,5,5,10")
+                    .attr("stroke-dasharray", "5,5")
                     .attr("stroke-opacity", ".3")
                     .attr("d", highLine);
 
@@ -154,9 +158,10 @@ public abstract class MetricLineGraphView extends AbstractMetricD3GraphView impl
                     .datum(data)
                     .attr("class", "lowLine")
                     .attr("fill", "none")
-                    .attr("stroke", "lightblue")
+                    .attr("stroke", "blue")
                     .attr("stroke-width", "1.5")
-                    .attr("stroke-opacity", ".3")
+                    .attr("stroke-dasharray", "5,5")
+                    //.attr("stroke-opacity", ".8")
                     .attr("d", lowLine);
 
             console.log("finished paths");

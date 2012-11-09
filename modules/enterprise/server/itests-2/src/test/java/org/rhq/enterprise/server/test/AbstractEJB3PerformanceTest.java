@@ -18,23 +18,20 @@
  */
 package org.rhq.enterprise.server.test;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.rhq.helpers.perftest.support.reporting.PerformanceReportExporter;
-import org.rhq.helpers.perftest.support.testng.PerformanceReporting;
-import org.testng.ITestResult;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-
-import javax.persistence.EntityManager;
 import java.lang.reflect.Method;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.testng.ITestResult;
+
+import org.rhq.helpers.perftest.support.reporting.PerformanceReportExporter;
+import org.rhq.helpers.perftest.support.testng.PerformanceReporting;
 
 /**
  * Helper that introduces timing functionality on top of the Abstract EJB tests.
@@ -102,8 +99,11 @@ public class AbstractEJB3PerformanceTest extends AbstractEJB3Test {
         return getTiming(DEFAULT);
     }
 
-    @AfterMethod
-    protected void reportTimings(ITestResult result, Method meth) {
+    @Override
+    protected void afterMethod(ITestResult result, Method meth) {
+        if (!inContainer()) {
+            return;
+        }
 
         printTimings(meth.getName());
 

@@ -22,12 +22,8 @@ import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.List;
 
-import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
-import org.testng.ITestResult;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
@@ -63,7 +59,7 @@ import org.rhq.helpers.perftest.support.testng.PerformanceReporting;
 @Test(groups = "PERF")
 @Listeners({ DatabaseSetupInterceptor.class })
 @PerformanceReporting(exporter = ExcelExporter.class)
-@DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion = "2.101")
+@DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion = "2.125")
 public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
     ResourceManagerLocal resourceManager;
@@ -78,8 +74,8 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
     //    private static final int[] ROUNDS = new int[]{10,20};
 
-    @BeforeMethod
-    public void beforeMethod(Method method) {
+    @Override
+    protected void beforeMethod(Method method) {
         super.setupTimings(method);
         Date now = new Date();
         try {
@@ -102,11 +98,6 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
         }
     }
 
-    @AfterMethod
-    public void afterMethod(ITestResult result, Method meth) {
-        super.reportTimings(result, meth);
-    }
-
     /**
      * Send availability reports to the server and measure timing.
      * For each resource, availability alternates for each report.
@@ -119,7 +110,6 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
         Date now = new Date();
 
-        EntityManager em = getEntityManager();
         Query q = em.createQuery("SELECT r FROM Resource r");
         List<Resource> resources = q.getResultList();
         Resource res = resources.get(0);
@@ -193,7 +183,6 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
     public void testRandom() throws Exception {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
-        EntityManager em = getEntityManager();
         Query q = em.createQuery("SELECT r FROM Resource r");
         List<Resource> resources = q.getResultList();
         Resource res = resources.get(0);
@@ -260,7 +249,6 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
     public void testAlwaysUp() throws Exception {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
-        EntityManager em = getEntityManager();
         Query q = em.createQuery("SELECT r FROM Resource r");
         List<Resource> resources = q.getResultList();
         Resource res = resources.get(0);
@@ -329,7 +317,6 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
     public void testAlternatingWithAlert() throws Exception {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
-        EntityManager em = getEntityManager();
         Query q = em.createQuery("SELECT r FROM Resource r");
         List<Resource> resources = q.getResultList();
         Resource res = resources.get(0);

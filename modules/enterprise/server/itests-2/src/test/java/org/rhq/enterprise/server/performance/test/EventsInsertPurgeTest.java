@@ -18,6 +18,20 @@
  */
 package org.rhq.enterprise.server.performance.test;
 
+import java.lang.reflect.Method;
+import java.sql.SQLException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.persistence.Query;
+
+import org.testng.annotations.Listeners;
+import org.testng.annotations.Test;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventDefinition;
@@ -38,20 +52,6 @@ import org.rhq.helpers.perftest.support.reporting.ExcelExporter;
 import org.rhq.helpers.perftest.support.testng.DatabaseSetupInterceptor;
 import org.rhq.helpers.perftest.support.testng.DatabaseState;
 import org.rhq.helpers.perftest.support.testng.PerformanceReporting;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Listeners;
-import org.testng.annotations.Test;
-
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
-import java.lang.reflect.Method;
-import java.sql.SQLException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Performance test the events subsystem
@@ -61,7 +61,7 @@ import java.util.Set;
 @Test(groups = "PERF")
 @Listeners({ DatabaseSetupInterceptor.class })
 @PerformanceReporting(exporter=ExcelExporter.class)
-@DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.101")
+@DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion = "2.125")
 public class EventsInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
     private static final int ROUNDS = 20000;
@@ -78,8 +78,8 @@ public class EventsInsertPurgeTest extends AbstractEJB3PerformanceTest {
     private static final String PURGE__FORMAT = "Purge %6d";
 
 
-    @BeforeMethod
-    public void beforeMethod(Method method) {
+    @Override
+    protected void beforeMethod(Method method) {
         super.setupTimings(method);
         try {
             this.availabilityManager = LookupUtil.getAvailabilityManager();
@@ -112,8 +112,6 @@ public class EventsInsertPurgeTest extends AbstractEJB3PerformanceTest {
     public void testSimpleInserts() throws Exception {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
-
-        EntityManager em = getEntityManager();
         Query q = em.createQuery("SELECT r FROM Resource r");
         List<Resource> resources = q.getResultList();
         Resource res = resources.get(0);

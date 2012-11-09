@@ -28,6 +28,7 @@ import javax.persistence.PersistenceContext;
 import javax.transaction.TransactionManager;
 
 import org.testng.AssertJUnit;
+import org.testng.ITestResult;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
@@ -139,6 +140,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
             .addAsResource("org/rhq/enterprise/server/resource/metadata/PluginScanningExtensionMetadataTest/parent_plugin_v1.xml");
         testClassesJar
             .addAsResource("org/rhq/enterprise/server/resource/metadata/PluginScanningExtensionMetadataTest/parent_plugin_v2.xml");
+        testClassesJar.addAsResource("perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip");
         testClassesJar.addAsResource("serverplugins/simple-generic-serverplugin.xml");
         testClassesJar.addAsResource("test/metadata/content-source-update-v1.xml");
         testClassesJar.addAsResource("test/metadata/content-source-update-v2.xml");
@@ -396,10 +398,11 @@ public abstract class AbstractEJB3Test extends Arquillian {
      * Instead, override {@link #afterMethod()}.
      */
     @AfterMethod(alwaysRun = true)
-    protected void __afterMethod() throws Throwable {
+    protected void __afterMethod(ITestResult result, Method method) throws Throwable {
         try {
             if (inContainer()) {
                 afterMethod();
+                afterMethod(result, method);
             }
         } catch (Throwable t) {
             System.out
@@ -432,6 +435,13 @@ public abstract class AbstractEJB3Test extends Arquillian {
      * Override Point!  Do not implement an @AfterMethod, instead override this method. note: alwaysRun=true 
      */
     protected void afterMethod() throws Exception {
+        // do nothing if we're not overridden
+    }
+
+    /**
+     * Override Point!  Do not implement an @AfterMethod, instead override this method. note: alwaysRun=true 
+     */
+    protected void afterMethod(ITestResult result, Method meth) throws Exception {
         // do nothing if we're not overridden
     }
 

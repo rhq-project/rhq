@@ -18,8 +18,18 @@
  */
 package org.rhq.enterprise.server.performance.test;
 
+import java.lang.reflect.Method;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+
+import javax.persistence.Query;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.testng.annotations.Listeners;
+import org.testng.annotations.Test;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -31,10 +41,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
-import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
-import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementDataManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
@@ -44,17 +51,6 @@ import org.rhq.helpers.perftest.support.reporting.ExcelExporter;
 import org.rhq.helpers.perftest.support.testng.DatabaseSetupInterceptor;
 import org.rhq.helpers.perftest.support.testng.DatabaseState;
 import org.rhq.helpers.perftest.support.testng.PerformanceReporting;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Listeners;
-import org.testng.annotations.Test;
-
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
-import java.lang.reflect.Method;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Test insertion of call time data and purging it
@@ -64,7 +60,7 @@ import java.util.Set;
 @Test(groups = "PERF")
 @Listeners({ DatabaseSetupInterceptor.class })
 @PerformanceReporting(exporter=ExcelExporter.class)
-@DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion="2.101")
+@DatabaseState(url = "perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip", dbVersion = "2.125")
 public class CallTimeInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
     private final Log log = LogFactory.getLog(CallTimeInsertPurgeTest.class);
@@ -84,8 +80,8 @@ public class CallTimeInsertPurgeTest extends AbstractEJB3PerformanceTest {
     private static final String PURGE__FORMAT = "Purge %6d";
 
 
-    @BeforeMethod
-    public void beforeMethod(Method method) {
+    @Override
+    protected void beforeMethod(Method method) {
         super.setupTimings(method);
         try {
             this.availabilityManager = LookupUtil.getAvailabilityManager();
@@ -112,8 +108,6 @@ public class CallTimeInsertPurgeTest extends AbstractEJB3PerformanceTest {
 
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
-
-        EntityManager em = getEntityManager();
         Query q = em.createQuery("SELECT r FROM Resource r");
         List<Resource> resources = q.getResultList();
         Resource res = resources.get(0);

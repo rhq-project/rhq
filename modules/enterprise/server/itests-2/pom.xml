@@ -25,12 +25,6 @@
   <properties>
     <jboss.zip>${settings.localRepository}/org/jboss/as/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip</jboss.zip>
     <jboss.unzip.location>${basedir}/target/jboss-as-${jboss.version}</jboss.unzip.location>
-
-    <!--
-      <rhq.server.datasource>java:/RHQDS</rhq.server.datasource>
-      <rhq.server.ds-mapping>PostgreSQL</rhq.server.ds-mapping>
-    -->
-    <!-- <jboss-embeddable-ejb3.version>1.0.0.Alpha9</jboss-embeddable-ejb3.version> -->
   </properties>
 
   <dependencies>
@@ -200,182 +194,7 @@
       <version>2.0.3</version>
       <scope>test</scope>
     </dependency>
-
-
-    <!--
-
-      <dependency>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-enterprise-server</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-      </dependency>
-
-      <dependency>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-enterprise-server</artifactId>
-      <version>${project.version}</version>
-      <type>test-jar</type>
-      <scope>test</scope>
-      </dependency>
-
-
-      <dependency>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-script-bindings</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-      <exclusions>
-      <exclusion>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-enterprise-server</artifactId>
-      </exclusion>
-      </exclusions>
-      </dependency>
-
-      <dependency>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-scripting-javascript</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-      </dependency>
-
-      <dependency>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-server-client-api</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-      <exclusions>
-      <exclusion>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-enterprise-server</artifactId>
-      </exclusion>
-      </exclusions>
-      </dependency>
-
-      <exclusions>
-      <exclusion>
-      <groupId>ant</groupId>
-      <artifactId>ant</artifactId>
-      </exclusion>
-      <exclusion>
-      <groupId>ant</groupId>
-      <artifactId>ant-launcher</artifactId>
-      </exclusion>
-      </exclusions>
-      </dependency>
-    -->
-    <!-- Shrinkwrap to build up test plugins etc. -->
-
-    <!--
-      <dependency>
-      <groupId>org.jboss.shrinkwrap</groupId>
-      <artifactId>shrinkwrap-api</artifactId>
-      </dependency>
-
-      <dependency>
-      <groupId>org.jboss.shrinkwrap</groupId>
-      <artifactId>shrinkwrap-impl-base</artifactId>
-      <scope>compile</scope>
-      </dependency>
-    -->
-
-    <!-- NOTE: The remaining test deps correspond to the classes contained in hibernate-all.jar and thirdparty-all.jar. -->
-
-    <!--
-      <dependency>
-      <groupId>org.javassist</groupId>
-      <artifactId>javassist</artifactId>
-      <scope>test</scope>
-      </dependency>
-
-    -->
-    <!-- needed by embedded ejb container -->
-    <!--
-      <dependency>
-      <groupId>trove</groupId>
-      <artifactId>trove</artifactId>
-      <version>1.0.2</version>
-      <scope>test</scope>
-      </dependency>
-    -->
-    <!-- needed by embedded ejb container -->
-    <!--
-      <dependency>
-      <groupId>xerces</groupId>
-      <artifactId>xercesImpl</artifactId>
-      <version>${xercesImpl.version}</version>
-      <scope>test</scope>
-      </dependency>
-    -->
-    <!-- 3rd Party Deps -->
-
-    <!-- required by RHQ server classes, as well as EJB3 Embedded -->
-    <!--
-      <dependency>
-      <groupId>dom4j</groupId>
-      <artifactId>dom4j</artifactId>
-      <version>1.6.1-jboss</version>
-      <scope>runtime</scope>
-      </dependency>
-
-      <dependency>
-      <groupId>javax.mail</groupId>
-      <artifactId>mail</artifactId>
-      <version>1.4</version>
-      </dependency>
-
-      <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>servlet-api</artifactId>
-      <version>2.4</version>
-      <scope>provided
-      </dependency>
-
-
-      <dependency>
-      <groupId>org.opensymphony.quartz</groupId>
-      <artifactId>quartz-oracle</artifactId>
-      <scope>provided</scope>
-      </dependency>
-
-    -->
-    <!-- This is needed cglib which is in turn needed by hibernate -->
-
-    <!--
-      <dependency>
-      <groupId>org.easymock</groupId>
-      <artifactId>easymockclassextension</artifactId>
-      <version>2.2</version>
-      <scope>test</scope>
-      </dependency>
-
-      <dependency>
-      <groupId>org.freemarker</groupId>
-      <artifactId>freemarker</artifactId>
-      <version>2.3.18</version>
-      <scope>provided</scope>
-      </dependency>
-
-      <dependency>
-      <groupId>org.jboss.resteasy</groupId>
-      <artifactId>resteasy-jaxrs</artifactId>
-      <version>${resteasy.version}</version>
-      </dependency>
-
-    -->
-    <!-- Dependencies for RHQ components needed for integration tests -->
-    <!--
-      <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>rhq-serverplugin-drift</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-      </dependency>
-
-    -->
   </dependencies>
-
 
   <build>
     <testResources>
@@ -386,42 +205,6 @@
     </testResources>
 
     <plugins>
-      <!--
-        <plugin>
-        <artifactId>maven-antrun-plugin</artifactId>
-        <executions>
-      -->
-      <!-- in order to get JMS to work properly in embedded test container, extract jms-rs.rar classes -->
-      <!--
-        <execution>
-        <id>Extract JMS classes from RAR needed for JMS tests</id>
-        <phase>process-classes</phase>
-        <configuration>
-        <target>
-        <unzip
-        src="src/test/resources/jms-ra.rar"
-        dest="target">
-        <patternset>
-        <include name="jms-ra.jar" />
-        </patternset>
-        </unzip>
-        <unzip
-        src="target/jms-ra.jar"
-        dest="target/test-classes">
-        <patternset>
-        <include name="org/**" />
-        </patternset>
-        </unzip>
-        </target>
-        </configuration>
-        <goals>
-        <goal>run</goal>
-        </goals>
-        </execution>
-        </executions>
-        </plugin>
-      -->
-
       <plugin>
         <artifactId>maven-antrun-plugin</artifactId>
         <executions>
@@ -744,7 +527,7 @@
 
         <configuration>
           <skipTests>true</skipTests>
-          <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
+          <excludedGroups>arquillian,PERF,${rhq.testng.excludedGroups}</excludedGroups>
           <groups>${rhq.testng.includedGroups}</groups>
           <properties>
             <property>

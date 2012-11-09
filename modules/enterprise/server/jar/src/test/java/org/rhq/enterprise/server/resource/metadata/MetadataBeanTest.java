@@ -69,7 +69,7 @@ public class MetadataBeanTest extends AbstractEJB3Test {
      * however removes the generated plugin files during each test run.
      */
     @AfterClass(alwaysRun = true, groups = { "plugin.metadata" })
-    void afterClass() throws Exception {
+    public void afterClass() throws Exception {
         PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
         pluginMgr.deletePlugins(overlord, pluginIds);

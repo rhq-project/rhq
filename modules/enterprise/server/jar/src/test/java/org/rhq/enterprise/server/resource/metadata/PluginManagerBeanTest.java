@@ -34,7 +34,8 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
     private PluginDeploymentScanner pluginScanner;
 
     @AfterClass
-    public void afterClass() {
+    public void afterClass() throws Exception {
+        super.afterClass();
         this.pluginScanner = null;
     }
 
@@ -50,7 +51,9 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         subjectMgr = LookupUtil.getSubjectManager();
         pluginMgr = LookupUtil.getPluginManager();
 
-        List<Plugin> plugins = getEntityManager().createQuery("from Plugin where name IN ('PluginManagerBeanTestPlugin1', 'PluginManagerBeanTestPlugin2', 'PluginManagerBeanTestPlugin3')").getResultList();
+        String query = "from Plugin where name IN ('PluginManagerBeanTestPlugin1', 'PluginManagerBeanTestPlugin2', " +
+            "'PluginManagerBeanTestPlugin3', 'PluginManagerBeanTestPlugin3.1')";
+        List<Plugin> plugins = getEntityManager().createQuery(query).getResultList();
         if (!plugins.isEmpty()) {
             System.out.println("Purging plugins " + plugins + "...");
             for (Plugin plugin : plugins) {

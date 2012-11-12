@@ -420,7 +420,6 @@ public class PluginManagerBean implements PluginManagerLocal {
     }
 
     @Override
-    @TransactionAttribute(TransactionAttributeType.NEVER)
     public boolean registerPluginTypes(String newPluginName, PluginDescriptor pluginDescriptor, boolean newOrUpdated,
         boolean forceUpdate) throws Exception {
         boolean typesUpdated = false;

@@ -117,7 +117,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     @EJB
     private PluginConfigurationMetadataManagerLocal pluginConfigMetadataMgr;
 
-    @TransactionAttribute(TransactionAttributeType.NEVER)
     public void updateTypes(Set<ResourceType> resourceTypes) throws Exception {
         // Only process the type if it is a non-runs-inside type (i.e. not a child of some other type X at this same
         // level in the type hierarchy). runs-inside types which we skip here will get processed at the next level down

@@ -26,6 +26,8 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.annotation.ejb.TransactionTimeout;
+
 import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
@@ -420,6 +422,7 @@ public class PluginManagerBean implements PluginManagerLocal {
     }
 
     @Override
+    @TransactionTimeout(1800)
     public boolean registerPluginTypes(String newPluginName, PluginDescriptor pluginDescriptor, boolean newOrUpdated,
         boolean forceUpdate) throws Exception {
         boolean typesUpdated = false;

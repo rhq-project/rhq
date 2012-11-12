@@ -45,6 +45,7 @@
             <module>gui</module>
             <module>server/plugins</module>
             <module>server/ear</module>
+            <module>server/startup-subsystem</module>
             <module>binding</module>
             <module>scripting</module>
             <module>server/client-api</module>            
@@ -74,6 +75,7 @@
             <module>gui</module>
             <module>server/plugins</module>
             <module>server/ear</module>
+            <module>server/startup-subsystem</module>
             <module>server/appserver</module>
             <module>server/client-api</module>
             <module>server/itests</module>

@@ -279,7 +279,7 @@
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>gwt-maven-plugin</artifactId>
         <!-- Cant upgrade to 2.5.0 plugin because gwt dev mode doesnt autorefresh -->
-        <version>2.4.0</version>
+        <version>2.5.0</version>
         <configuration>
           <noServer>true</noServer>
           <inplace>false</inplace>

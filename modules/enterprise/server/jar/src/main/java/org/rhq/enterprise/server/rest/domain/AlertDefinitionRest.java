@@ -20,11 +20,14 @@ package org.rhq.enterprise.server.rest.domain;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.wordnik.swagger.annotations.ApiClass;
+import com.wordnik.swagger.annotations.ApiProperty;
 
 /**
  * Alert Definition
  * @author Heiko W. Rupp
  */
+@ApiClass("Representation of an AlertDefinition")
 @XmlRootElement
 public class AlertDefinitionRest {
 
@@ -41,6 +44,7 @@ public class AlertDefinitionRest {
         this.id = id;
     }
 
+    @ApiProperty("The id of the definition")
     public int getId() {
         return id;
     }
@@ -49,6 +53,7 @@ public class AlertDefinitionRest {
         this.id = id;
     }
 
+    @ApiProperty("The name of the definition")
     public String getName() {
         return name;
     }
@@ -57,6 +62,7 @@ public class AlertDefinitionRest {
         this.name = name;
     }
 
+    @ApiProperty("Is the definition enabled(=active)?")
     public boolean isEnabled() {
         return enabled;
     }
@@ -65,6 +71,8 @@ public class AlertDefinitionRest {
         this.enabled = enabled;
     }
 
+    @ApiProperty(value = "The priority of the definition",
+        allowableValues = "LOW, MEDIUM, HIGH")
     public String getPriority() {
         return priority;
     }

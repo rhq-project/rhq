@@ -19,7 +19,7 @@
 
   <properties>
         <!-- dependency versions -->
-    <gwt.version>2.4.0</gwt.version>
+    <gwt.version>2.5.0</gwt.version>
     <smartgwt.version>3.0</smartgwt.version>
 
         <!--  If this is too much memory to allocate to your gwt:debug process then override this property in
@@ -278,7 +278,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>gwt-maven-plugin</artifactId>
-        <version>2.4.0</version>
+        <version>2.5.0</version>
         <configuration>
           <noServer>true</noServer>
           <inplace>false</inplace>

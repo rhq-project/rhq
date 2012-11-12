@@ -33,17 +33,17 @@ import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.wordnik.swagger.annotations.ApiClass;
+import com.wordnik.swagger.annotations.ApiProperty;
+
 import org.jboss.resteasy.spi.touri.URITemplate;
 
 /**
  * A (partial) resource with some type information
  * @author Heiko W. Rupp
  */
+@ApiClass("One resource")
 @XmlRootElement(name="resource")
-/*
-@XmlAccessorType(XmlAccessType.NONE)
-@URITemplate("{id}")
-*/
 public class ResourceWithType {
 
     String resourceName;
@@ -67,6 +67,7 @@ public class ResourceWithType {
         this.resourceId = id;
     }
 
+    @ApiProperty("Name of the resource")
     @XmlElement
     public String getResourceName() {
         return resourceName;
@@ -76,6 +77,7 @@ public class ResourceWithType {
         this.resourceName = resourceName;
     }
 
+    @ApiProperty("ID of the resource")
     @XmlID
     public String getResourceId() {
         return String.valueOf(resourceId);
@@ -85,6 +87,7 @@ public class ResourceWithType {
         this.resourceId = resourceId;
     }
 
+    @ApiProperty("Name of the resource type of teh resource")
     @XmlElement
     public String getTypeName() {
         return typeName;
@@ -94,6 +97,7 @@ public class ResourceWithType {
         this.typeName = typeName;
     }
 
+    @ApiProperty("Id of the resource type of the resource")
     @XmlElement
     public Integer getTypeId() {
         return typeId;
@@ -103,6 +107,7 @@ public class ResourceWithType {
         this.typeId = typeId;
     }
 
+    @ApiProperty("Name of the plugin defining the resource type")
     @XmlElement
     public String getPluginName() {
         return pluginName;
@@ -112,6 +117,7 @@ public class ResourceWithType {
         this.pluginName = pluginName;
     }
 
+    @ApiProperty("Id of the parent resource. Can be null if there is no parent (i.e. the category is platform")
     public Integer getParentId() {
         return parentId;
     }
@@ -137,6 +143,7 @@ public class ResourceWithType {
         this.ancestry = ancestry;
     }
 
+    @ApiProperty("The ancestry gives the path to the root resource")
     public String getAncestry() {
         return ancestry;
     }

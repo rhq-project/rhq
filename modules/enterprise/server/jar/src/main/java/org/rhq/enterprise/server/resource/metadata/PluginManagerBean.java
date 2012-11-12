@@ -104,7 +104,13 @@ public class PluginManagerBean implements PluginManagerLocal {
         ResourceTypeCriteria criteria = new ResourceTypeCriteria();
         criteria.addFilterPluginName(plugin.getName());
         criteria.setRestriction(Criteria.Restriction.COUNT_ONLY);
+        criteria.setStrict(true);
         PageList results = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(), criteria);
+
+        if (log.isDebugEnabled()) {
+            log.debug(plugin + " is not ready to be purged. There are still " + results.getTotalSize() +
+                " resource types in the system for this plugin.");
+        }
 
         return results.getTotalSize() == 0;
     }
@@ -414,6 +420,7 @@ public class PluginManagerBean implements PluginManagerLocal {
     }
 
     @Override
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public boolean registerPluginTypes(String newPluginName, PluginDescriptor pluginDescriptor, boolean newOrUpdated,
         boolean forceUpdate) throws Exception {
         boolean typesUpdated = false;

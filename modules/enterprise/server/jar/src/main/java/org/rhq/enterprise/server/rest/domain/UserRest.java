@@ -21,10 +21,14 @@ package org.rhq.enterprise.server.rest.domain;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.wordnik.swagger.annotations.ApiClass;
+import com.wordnik.swagger.annotations.ApiProperty;
+
 /**
  * A user
  * @author Heiko W. Rupp
  */
+@ApiClass("Information about a user in RHQ")
 @XmlRootElement
 public class UserRest {
 
@@ -43,6 +47,7 @@ public class UserRest {
         this.login = login;
     }
 
+    @ApiProperty("The ID of the user")
     public int getId() {
         return id;
     }
@@ -51,6 +56,7 @@ public class UserRest {
         this.id = id;
     }
 
+    @ApiProperty("The login name of the user")
     public String getLogin() {
         return login;
     }
@@ -59,6 +65,7 @@ public class UserRest {
         this.login = login;
     }
 
+    @ApiProperty("The telephone number of the user")
     public String getTel() {
         return tel;
     }
@@ -67,6 +74,7 @@ public class UserRest {
         this.tel = tel;
     }
 
+    @ApiProperty("The email address of the user")
     public String getEmail() {
         return email;
     }
@@ -75,6 +83,7 @@ public class UserRest {
         this.email = email;
     }
 
+    @ApiProperty("The first name of the user")
     public String getFirstName() {
         return firstName;
     }
@@ -83,6 +92,7 @@ public class UserRest {
         this.firstName = firstName;
     }
 
+    @ApiProperty("The last name of the user")
     public String getLastName() {
         return lastName;
     }

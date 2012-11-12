@@ -69,7 +69,7 @@ public class SigarAccess {
     }
 
     public static boolean isSigarAvailable() {
-        if (SystemInfoFactory.isNativeSystemInfoAvailable() && !SystemInfoFactory.isNativeSystemInfoDisabled()) {
+        if (!SystemInfoFactory.isNativeSystemInfoDisabled() && SystemInfoFactory.isNativeSystemInfoAvailable()) {
             // its available, but it may not yet have been initialized. If it has not been initialized,
             // make a call that forces it to be initialized and loaded. 99% of the time, the native layer
             // will already be initialized and this check will be very fast.

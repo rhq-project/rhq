@@ -1064,24 +1064,25 @@ public class ConfigurationBean {
         }
         preconfiguredHaServer.setEndpointAddress(publicEndpointAddress);
 
-        // define the public endpoint ports.
-        // note that if using a different transport other than (ssl)servlet, we'll
-        // take the connector's bind port and use it for both ports. This is to support a special deployment
-        // use-case - 99% of the time, the agents will go through the web/tomcat connector and thus we'll use
-        // the http/https ports for the public endpoints.
-        PropertyItemWithValue connectorTransport = getConfigurationPropertyFromAll(ServerProperties.PROP_CONNECTOR_TRANSPORT);
-        if (connectorTransport != null && connectorTransport.getValue() != null
-            && connectorTransport.getValue().contains("socket")) {
-
-            // we aren't using the (ssl)servlet protocol, take the connector bind port and use it for the public endpoint ports
-            PropertyItemWithValue connectorBindPort = getConfigurationPropertyFromAll(ServerProperties.PROP_CONNECTOR_BIND_PORT);
-            if (connectorBindPort == null || connectorBindPort.getValue() == null
-                || "".equals(connectorBindPort.getValue().trim()) || "0".equals(connectorBindPort.getValue().trim())) {
-                throw new Exception("Using non-servlet transport [" + connectorTransport + "] but didn't define a port");
-            }
-            preconfiguredHaServer.setEndpointPort(Integer.parseInt(connectorBindPort.getValue()));
-            preconfiguredHaServer.setEndpointSecurePort(Integer.parseInt(connectorBindPort.getValue()));
-        } else {
+//        commented because of BZ 870533
+//        // define the public endpoint ports.
+//        // note that if using a different transport other than (ssl)servlet, we'll
+//        // take the connector's bind port and use it for both ports. This is to support a special deployment
+//        // use-case - 99% of the time, the agents will go through the web/tomcat connector and thus we'll use
+//        // the http/https ports for the public endpoints.
+//        PropertyItemWithValue connectorTransport = getConfigurationPropertyFromAll(ServerProperties.PROP_CONNECTOR_TRANSPORT);
+//        if (connectorTransport != null && connectorTransport.getValue() != null
+//            && connectorTransport.getValue().contains("socket")) {
+//
+//            // we aren't using the (ssl)servlet protocol, take the connector bind port and use it for the public endpoint ports
+//            PropertyItemWithValue connectorBindPort = getConfigurationPropertyFromAll(ServerProperties.PROP_CONNECTOR_BIND_PORT);
+//            if (connectorBindPort == null || connectorBindPort.getValue() == null
+//                || "".equals(connectorBindPort.getValue().trim()) || "0".equals(connectorBindPort.getValue().trim())) {
+//                throw new Exception("Using non-servlet transport [" + connectorTransport + "] but didn't define a port");
+//            }
+//            preconfiguredHaServer.setEndpointPort(Integer.parseInt(connectorBindPort.getValue()));
+//            preconfiguredHaServer.setEndpointSecurePort(Integer.parseInt(connectorBindPort.getValue()));
+//        } else {
             // this is the typical use-case - the transport is probably (ssl)servlet so use the web http/https ports
             try {
                 PropertyItemWithValue httpPort = getPropHaEndpointPort();
@@ -1096,7 +1097,7 @@ public class ConfigurationBean {
             } catch (Exception e) {
                 LOG.warn("Could not determine secure port, will use default: " + e);
             }
-        }
+//        }
 
         // everything looks good - remember these
         setHaServer(preconfiguredHaServer);

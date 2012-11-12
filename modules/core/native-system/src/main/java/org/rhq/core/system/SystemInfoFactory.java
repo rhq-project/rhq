@@ -70,30 +70,6 @@ public class SystemInfoFactory {
         load, VERSION_STRING, BUILD_DATE, NATIVE_VERSION_STRING, NATIVE_BUILD_DATE
     }
 
-    static {
-        try {
-            Class<?> clazz = Class.forName(NATIVE_LIBRARY_CLASS_NAME);
-
-            nativeApis.put(NativeApi.load, clazz.getMethod(NativeApi.load.name(), new Class[0]));
-            nativeApis.put(NativeApi.VERSION_STRING, clazz.getField(NativeApi.VERSION_STRING.name()));
-            nativeApis.put(NativeApi.BUILD_DATE, clazz.getField(NativeApi.BUILD_DATE.name()));
-            nativeApis.put(NativeApi.NATIVE_VERSION_STRING, clazz.getField(NativeApi.NATIVE_VERSION_STRING.name()));
-            nativeApis.put(NativeApi.NATIVE_BUILD_DATE, clazz.getField(NativeApi.NATIVE_BUILD_DATE.name()));
-
-            invokeApi(NativeApi.load);
-
-            nativeLibraryLoadable = true;
-        } catch (Throwable t) {
-            // We don't have the JNI classes (sigar.jar) and/or the native shared library (e.g. libsigar-amd64-linux.so).
-            // This might be expected (e.g. the admin console WAR (Embedded Jopr) does not include SIGAR), so don't log
-            // anything, but store the Throwable, so callers can log the cause when appropriate.
-            nativeLibraryLoadable = false;
-            nativeLibraryLoadThrowable = t;
-        }
-
-        disabled = !nativeLibraryLoadable; // automatically disable native system info iff the native library is not loadable
-    }
-
     /**
      * If the native system is both {@link #isNativeSystemInfoAvailable() available} and
      * {@link #isNativeSystemInfoDisabled() enabled}, this will return the native system's version string. Otherwise, a
@@ -107,7 +83,7 @@ public class SystemInfoFactory {
 
         initialize(); // make sure we've loaded the native libraries, if appropriate
 
-        if (isNativeSystemInfoAvailable() && !isNativeSystemInfoDisabled()) {
+        if (!isNativeSystemInfoDisabled() && isNativeSystemInfoAvailable()) {
             try {
                 version = "Version=" + invokeApi(NativeApi.VERSION_STRING) + " (" + invokeApi(NativeApi.BUILD_DATE)
                     + "); Native version=" + invokeApi(NativeApi.NATIVE_VERSION_STRING) + " ("
@@ -173,6 +149,8 @@ public class SystemInfoFactory {
      * @see JavaSystemInfo
      */
     public static boolean isNativeSystemInfoAvailable() {
+        initialize();
+
         return nativeLibraryLoadable;
     }
 
@@ -213,7 +191,7 @@ public class SystemInfoFactory {
 
             SystemInfo nativePlatform = null;
 
-            if (isNativeSystemInfoAvailable() && !isNativeSystemInfoDisabled()) {
+            if (!isNativeSystemInfoDisabled() && isNativeSystemInfoAvailable()) {
                 // we could use SIGAR here, but this should be enough
                 if (System.getProperty("os.name").toLowerCase().indexOf("windows") > -1) {
                     nativePlatform = new WindowsNativeSystemInfo();
@@ -276,15 +254,32 @@ public class SystemInfoFactory {
      */
     private static synchronized void initialize() {
         if (!initialized) {
-            if (isNativeSystemInfoAvailable() && !isNativeSystemInfoDisabled()) {
+            if (!isNativeSystemInfoDisabled()) {
                 try {
+                    Class<?> clazz = Class.forName(NATIVE_LIBRARY_CLASS_NAME);
+
+                    nativeApis.put(NativeApi.load, clazz.getMethod(NativeApi.load.name(), new Class[0]));
+                    nativeApis.put(NativeApi.VERSION_STRING, clazz.getField(NativeApi.VERSION_STRING.name()));
+                    nativeApis.put(NativeApi.BUILD_DATE, clazz.getField(NativeApi.BUILD_DATE.name()));
+                    nativeApis.put(NativeApi.NATIVE_VERSION_STRING, clazz.getField(NativeApi.NATIVE_VERSION_STRING.name()));
+                    nativeApis.put(NativeApi.NATIVE_BUILD_DATE, clazz.getField(NativeApi.NATIVE_BUILD_DATE.name()));
+
                     invokeApi(NativeApi.load);
+
+                    nativeLibraryLoadable = true;
+
                     initialized = true; // we only set this to true when we actually initialized the native layer
                 } catch (Throwable t) {
+                    // We don't have the JNI classes (sigar.jar) and/or the native shared library (e.g. libsigar-amd64-linux.so).
+                    // This might be expected (e.g. the admin console WAR (Embedded Jopr) does not include SIGAR), so don't log
+                    // anything, but store the Throwable, so callers can log the cause when appropriate.
+                    nativeLibraryLoadable = false;
+                    nativeLibraryLoadThrowable = t;
+
                     LOG.warn("Native library not available on this platform: " + ThrowableUtil.getAllMessages(t));
                     LOG.debug("Native library failure stack trace follows: ", t);
-                    nativeLibraryLoadable = false;
-                    disabled = true;
+
+                    disabled = true; // automatically disable native system info if the native library is not loadable
                 }
             }
         }

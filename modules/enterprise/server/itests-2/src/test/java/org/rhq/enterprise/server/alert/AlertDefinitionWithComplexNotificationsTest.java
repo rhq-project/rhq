@@ -271,6 +271,12 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
         removeNoExceptions(resourceAlertDefinition);
         removeNoExceptions(groupAlertDefinition);
         removeNoExceptions(templateAlertDefinition);
+        executeInTransaction(false, new TransactionCallback() {
+            public void execute() throws Exception {
+                em.createQuery("delete from AlertNotification ").executeUpdate();
+                em.createQuery("delete from AlertDefinition ").executeUpdate();               
+            }
+        });
         removeNoExceptions(resourceGroup);
         for (Resource r : resources) {
             r.removeExplicitGroup(resourceGroup);
@@ -641,7 +647,7 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 
     private void removeNoExceptions(final Object o) {
         try {
-            executeInTransaction(new TransactionCallback() {
+            executeInTransaction(false, new TransactionCallback() {
                 public void execute() {
                     EntityManager em = getEntityManager();
                     Object o2 = em.merge(o);

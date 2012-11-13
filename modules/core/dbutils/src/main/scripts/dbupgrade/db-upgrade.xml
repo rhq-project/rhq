@@ -4044,7 +4044,30 @@
                 <schema-javaTask className="org.rhq.core.db.upgrade.ConfigurationObfuscationCorrectionUpgradeTask" />
             </schemaSpec>
 
-<!-- JON 3.1.2 RELEASE uses DB Schema 2.122.1 -->
+            <!-- BZ 865167 -->
+            <!-- NOTE that this schemaSpec has the version 2.126 in master branch. This is so that we don't use a higher
+                 version number in the release branch than any other in the master branch (that is not already  applied
+                 in here), from which the next minor version of JON is going to be based from.  -->
+            <schemaSpec version="2.122.2">
+                <schema-directSQL>
+                    <statement targetDBVendor="postgresql">
+                        INSERT INTO RHQ_RESOURCE_AVAIL ( ID, RESOURCE_ID, AVAILABILITY_TYPE )
+                            SELECT nextval('RHQ_RESOURCE_AVAIL_ID_SEQ'::text), res.ID, 2
+                              FROM RHQ_RESOURCE res
+                                   LEFT JOIN RHQ_RESOURCE_AVAIL avail ON res.ID = avail.RESOURCE_ID
+                             WHERE avail.ID IS NULL
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        INSERT INTO RHQ_RESOURCE_AVAIL ( ID, RESOURCE_ID, AVAILABILITY_TYPE )
+                            SELECT RHQ_RESOURCE_AVAIL_ID_SEQ.nextval, res.ID, 2
+                              FROM RHQ_RESOURCE res
+                                   LEFT JOIN RHQ_RESOURCE_AVAIL avail ON res.ID = avail.RESOURCE_ID
+                             WHERE avail.ID IS NULL
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
+<!-- JON 3.1.2 RELEASE uses DB Schema 2.122.2 -->
 
         </dbupgrade>
     </target>

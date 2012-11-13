@@ -162,46 +162,46 @@ public abstract class MetricLineGraphView extends AbstractMetricD3GraphView impl
                     .attr("stroke-opacity", ".3")
                     .attr("d", lowLine);
 
-            svg.selectAll("circle")
-                    .data(data)
-                    .enter()
-                    .append("circle")
-                    .attr("class", "tooltip")
-                    .attr("cx", function(d){ return timeScale(d.x);  })
-                    .attr("cy", function(d){ return yScale(d.y);  })
-                    .attr("r", 2)
-                    .attr("stroke", "black")
-                    .attr("fill", "none");
+//            svg.selectAll("circle")
+//                    .data(data)
+//                    .enter()
+//                    .append("circle")
+//                    .attr("class", "tooltip")
+//                    .attr("cx", function(d){ return timeScale(d.x);  })
+//                    .attr("cy", function(d){ return yScale(d.y);  })
+//                    .attr("r", 2)
+//                    .attr("stroke", "black")
+//                    .attr("fill", "none");
 
-            svg.selectAll("circle")
-                    .on("mouseover",  function(d){
-                        $wnd.d3.select(this)
-                                .transition().attr("r",7).attr("stroke", "red").attr("fill","red");
-                    })
-                    .on("mouseout",  function(d){
-                        $wnd.d3.select(this)
-                                .transition().attr("r",2).attr("stroke","black").attr("fill","none");
-                    });
-
-            svg.selectAll("circle")
-                    .on("mouseover.tooltip", function(d){
-               $wnd.d3.select("text#" + d.x).remove();
-               $wnd.d3.select(chartHandle)
-                       .append("text")
-                       .text("Value: "+ d.y)
-                       .attr("x", timeScale(d.x) + 10)
-                       .attr("y", yScale(d.y) - 10)
-                       .attr("id", d.x);
-            });
-            svg.selectAll("circle")
-                    .on("mouseout.tooltip", function(d){
-                        $wnd.d3.select("text#" + d.x)
-                                .transition()
-                                .duration(500)
-                                .style("opacity",0)
-                                .style("transform","translate(10, -10)")
-                                .remove();
-                    });
+//            svg.selectAll("circle")
+//                    .on("mouseover",  function(d){
+//                        $wnd.d3.select(this)
+//                                .transition().attr("r",7).attr("stroke", "red").attr("fill","red");
+//                    })
+//                    .on("mouseout",  function(d){
+//                        $wnd.d3.select(this)
+//                                .transition().attr("r",2).attr("stroke","black").attr("fill","none");
+//                    });
+//
+//            svg.selectAll("circle")
+//                    .on("mouseover.tooltip", function(d){
+//               $wnd.d3.select("text#" + d.x).remove();
+//               $wnd.d3.select(chartHandle)
+//                       .append("text")
+//                       .text("Value: "+ d.y)
+//                       .attr("x", timeScale(d.x) + 10)
+//                       .attr("y", yScale(d.y) - 10)
+//                       .attr("id", d.x);
+//            });
+//            svg.selectAll("circle")
+//                    .on("mouseout.tooltip", function(d){
+//                        $wnd.d3.select("text#" + d.x)
+//                                .transition()
+//                                .duration(500)
+//                                .style("opacity",0)
+//                                .style("transform","translate(10, -10)")
+//                                .remove();
+//                    });
 
             console.log("finished paths");
         }

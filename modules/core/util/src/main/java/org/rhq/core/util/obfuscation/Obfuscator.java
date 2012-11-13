@@ -42,7 +42,8 @@ import javax.crypto.spec.SecretKeySpec;
 public final class Obfuscator {
 
     private static final byte[] KEY = "jaas is the way".getBytes();
-    
+    public static final String ALGORITHM = "Blowfish";
+
     //no instances, please
     private Obfuscator() {
 
@@ -62,9 +63,9 @@ public final class Obfuscator {
      */
     public static String encode(String secret) throws NoSuchPaddingException, NoSuchAlgorithmException,
         InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
-        SecretKeySpec key = new SecretKeySpec(KEY, "Blowfish");
+        SecretKeySpec key = new SecretKeySpec(KEY, ALGORITHM);
 
-        Cipher cipher = Cipher.getInstance("Blowfish");
+        Cipher cipher = Cipher.getInstance(ALGORITHM);
         cipher.init(Cipher.ENCRYPT_MODE, key);
         byte[] encoding = cipher.doFinal(secret.getBytes());
         BigInteger n = new BigInteger(encoding);
@@ -88,12 +89,30 @@ public final class Obfuscator {
      */
     public static String decode(String secret) throws NoSuchPaddingException, NoSuchAlgorithmException,
         InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
-        SecretKeySpec key = new SecretKeySpec(KEY, "Blowfish");
+        SecretKeySpec key = new SecretKeySpec(KEY, ALGORITHM);
 
         BigInteger n = new BigInteger(secret, 16);
         byte[] encoding = n.toByteArray();
 
-        Cipher cipher = Cipher.getInstance("Blowfish");
+        //SECURITY-344: fix leading zeros
+        if (encoding.length % 8 != 0) {
+            int length = encoding.length;
+            int newLength = ((length / 8) + 1) * 8;
+            int pad = newLength - length; //number of leading zeros
+            byte[] old = encoding;
+            encoding = new byte[newLength];
+            for (int i = old.length - 1; i >= 0; i--) {
+                encoding[i + pad] = old[i];
+            }
+            //SECURITY-563: handle negative numbers
+            if (n.signum() == -1) {
+                for (int i = 0; i < newLength - length; i++) {
+                    encoding[i] = (byte) -1;
+                }
+            }
+        }
+
+        Cipher cipher = Cipher.getInstance(ALGORITHM);
         cipher.init(Cipher.DECRYPT_MODE, key);
         byte[] decode = cipher.doFinal(encoding);
         return new String(decode);

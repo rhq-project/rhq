@@ -4027,7 +4027,25 @@
                    </statement>
                 </schema-directSQL>                    
             </schemaSpec>
-            
+
+<!-- JON 3.1.1 RELEASE uses DB Schema 2.122 -->
+
+            <!-- NOTE that this schemaSpec has the version 2.125 in master branch. This is so that we don't use a higher
+                 version number in the release branch than any other in the master branch (that is not already  applied
+                 in here), from which the next minor version of JON is going to be based from.
+
+                 Also note that running this schemaSpec twice (i.e. once as 2.122.1 and the second time as 2.125) does
+                 no harm so this file can be safely merged from the two branches (as far as this schemaSpec is
+                 concerned. -->
+            <schemaSpec version="2.122.1">
+                <!-- We were using a buggy version of password obfuscation from JBoss AS. This task sets the affected
+                     passwords to NULL. Fortunately, this currently affects only CSP content sources, so the damage
+                     is not huge from the user perspective. -->
+                <schema-javaTask className="org.rhq.core.db.upgrade.ConfigurationObfuscationCorrectionUpgradeTask" />
+            </schemaSpec>
+
+<!-- JON 3.1.2 RELEASE uses DB Schema 2.122.1 -->
+
         </dbupgrade>
     </target>
 </project>

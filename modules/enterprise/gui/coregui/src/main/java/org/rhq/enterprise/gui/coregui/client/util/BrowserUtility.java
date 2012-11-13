@@ -34,11 +34,10 @@ public class BrowserUtility {
 
 
     //This is a JSNI call out to the third party javascript lib to execute on the data inserted into the DOM.
-    //@todo: find a replacement now that we are using d3.js
     public static native void graphSparkLines()
     /*-{
      //find all elements where attribute class contains 'dynamicsparkline' and graph their contents
-     //$wnd.jQuery('.dynamicsparkline').sparkline();
+     $wnd.jQuery('.dynamicsparkline').sparkline();
     }-*/;
 
 

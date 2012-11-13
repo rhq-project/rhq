@@ -527,14 +527,8 @@
 
         <configuration>
           <skipTests>true</skipTests>
-          <!-- NOTE: PERF GROUP AND SOME CLASSES EXCLUDED (SEE BZ 874696) -->
-          <excludedGroups>PERF,${rhq.testng.excludedGroups}</excludedGroups>          
+          <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
           <groups>${rhq.testng.includedGroups}</groups>
-          <excludes>
-            <exclude>**/JndiAccessTest.java</exclude>
-            <exclude>**/LdapGroupManagerBeanTest.java</exclude>
-            <exclude>**/SynchronizationManagerBeanTest.java</exclude>
-          </excludes>          
           <properties>
             <property>
               <name>listener</name>
@@ -565,9 +559,16 @@
             <configuration>
               <skipTests>${skipTests}</skipTests>
               <excludes>
-                <exclude>com/**/*.java</exclude>
+                <!-- NOTE: PERF GROUP AND SOME CLASSES EXCLUDED (SEE BZ 874696) -->
+                <exclude>**/JndiAccessTest.java</exclude>
+                <exclude>**/LdapGroupManagerBeanTest.java</exclude>
+                <exclude>**/SynchronizationManagerBeanTest.java</exclude>
                 <exclude>org/rhq/**/performance/**/*.java</exclude>
+                
+                <!--  exclude the db tests which are not expected to run in this suite -->
                 <exclude>org/rhq/enterprise/server/db/**</exclude>
+                <!--  exclude any unexpected packages -->
+                <exclude>com/**/*.java</exclude>
               </excludes>
             </configuration>
           </execution>

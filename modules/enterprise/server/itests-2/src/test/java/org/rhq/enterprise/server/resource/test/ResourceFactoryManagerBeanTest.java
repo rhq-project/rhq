@@ -89,7 +89,7 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
     // Setup  --------------------------------------------
 
     @Override
-    public void beforeMethod() throws Exception {
+    protected void beforeMethod() throws Exception {
         resourceFactoryManager = LookupUtil.getResourceFactoryManager();
         resourceManager = LookupUtil.getResourceManager();
         discoveryBoss = LookupUtil.getDiscoveryBoss();
@@ -108,7 +108,7 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
     }
 
     @Override
-    public void afterMethod() throws Exception {
+    protected void afterMethod() throws Exception {
         unprepareForTestAgents();
         unprepareScheduler();
         unprepareServerPluginService();

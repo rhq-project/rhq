@@ -32,6 +32,7 @@ import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -56,7 +57,6 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.test.AssertUtils;
 
-@Test
 public class ManageSnapshotsTest extends AbstractDriftServerTest {
 
     private DriftManagerLocal driftMgr;
@@ -64,7 +64,9 @@ public class ManageSnapshotsTest extends AbstractDriftServerTest {
     private DriftTemplateManagerLocal templateMgr;
 
     @Override
-    public void beforeMethod() throws Exception {
+    protected void beforeMethod(Method testMethod) throws Exception {
+        super.beforeMethod(testMethod);
+
         driftMgr = getDriftManager();
         templateMgr = getDriftTemplateManager();
     }
@@ -141,17 +143,16 @@ public class ManageSnapshotsTest extends AbstractDriftServerTest {
 
         PageList<? extends DriftChangeSet<?>> changeSets = driftMgr.findDriftChangeSetsByCriteria(getOverlord(),
             criteria);
-        assertEquals("All change sets except the change set representing the pinned snapshot should be removed",
-            1, changeSets.size());
+        assertEquals("All change sets except the change set representing the pinned snapshot should be removed", 1,
+            changeSets.size());
         DriftChangeSet<?> changeSet = changeSets.get(0);
 
         assertEquals("The pinned snapshot version should be reset to zero", 0, changeSet.getVersion());
         assertEquals("The change set category is wrong", COVERAGE, changeSet.getCategory());
 
         JPADriftChangeSet expectedChangeSet = new JPADriftChangeSet(resource, 1, COVERAGE, driftDef);
-        List<? extends Drift> expectedDrifts = asList(
-            new JPADrift(expectedChangeSet, drift1.getPath(), FILE_ADDED, null, driftFile1),
-            new JPADrift(expectedChangeSet, drift2.getPath(), FILE_ADDED, null, driftFile2));
+        List<? extends Drift> expectedDrifts = asList(new JPADrift(expectedChangeSet, drift1.getPath(), FILE_ADDED,
+            null, driftFile1), new JPADrift(expectedChangeSet, drift2.getPath(), FILE_ADDED, null, driftFile2));
 
         List<? extends Drift> actualDrifts = new ArrayList(changeSet.getDrifts());
 
@@ -216,8 +217,7 @@ public class ManageSnapshotsTest extends AbstractDriftServerTest {
         assertTrue("Failed to send request to agent to pin snapshot", agentInvoked.get());
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class,
-        expectedExceptionsMessageRegExp = "Cannot repin.*definition.*")
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Cannot repin.*definition.*")
     public void doNotAllowSnapshotToBePinnedWhenDefinitionIsAttachedToPinnedTemplate() {
         // First create the template
         final DriftDefinition templateDef = new DriftDefinition(new Configuration());

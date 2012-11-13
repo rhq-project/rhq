@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.content.test;
 
 import java.util.Random;
 
-import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.commons.lang.RandomStringUtils;
@@ -137,195 +136,180 @@ public class ContentUIManagerBeanEligiblePackagesTest extends AbstractEJB3Test {
 
     private void setupTestEnvironment() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
 
         try {
-            try {
-                architecture = em.find(Architecture.class, 1);
+            architecture = em.find(Architecture.class, 1);
 
-                resourceType = new ResourceType("resourcetype-" + System.currentTimeMillis(), "TestPlugin",
-                    ResourceCategory.PLATFORM, null);
-                em.persist(resourceType);
+            resourceType = new ResourceType("resourcetype-" + System.currentTimeMillis(), "TestPlugin",
+                ResourceCategory.PLATFORM, null);
+            em.persist(resourceType);
 
-                // Create resource against which we'll be retrieving packages
-                resource = new Resource("parent" + System.currentTimeMillis(), "name", resourceType);
-                resource.setUuid("" + new Random().nextInt());
-                resource.setVersion("1.0");
-                em.persist(resource);
+            // Create resource against which we'll be retrieving packages
+            resource = new Resource("parent" + System.currentTimeMillis(), "name", resourceType);
+            resource.setUuid("" + new Random().nextInt());
+            resource.setVersion("1.0");
+            em.persist(resource);
 
-                // Product versions
-                productVersion1 = new ProductVersion();
-                productVersion1.setVersion("1.0");
-                productVersion1.setResourceType(resourceType);
-                em.persist(productVersion1);
+            // Product versions
+            productVersion1 = new ProductVersion();
+            productVersion1.setVersion("1.0");
+            productVersion1.setResourceType(resourceType);
+            em.persist(productVersion1);
 
-                resource.setProductVersion(productVersion1);
+            resource.setProductVersion(productVersion1);
 
-                productVersion2 = new ProductVersion();
-                productVersion2.setVersion("2.0");
-                productVersion2.setResourceType(resourceType);
-                em.persist(productVersion2);
+            productVersion2 = new ProductVersion();
+            productVersion2.setVersion("2.0");
+            productVersion2.setResourceType(resourceType);
+            em.persist(productVersion2);
 
-                // Add package types to resource type
-                packageType1 = new PackageType();
-                packageType1.setName("package1-" + System.currentTimeMillis());
-                packageType1.setDescription("");
-                packageType1.setCategory(PackageCategory.DEPLOYABLE);
-                packageType1.setDisplayName("TestResourcePackage");
-                packageType1.setCreationData(true);
-                packageType1.setResourceType(resourceType);
-                em.persist(packageType1);
+            // Add package types to resource type
+            packageType1 = new PackageType();
+            packageType1.setName("package1-" + System.currentTimeMillis());
+            packageType1.setDescription("");
+            packageType1.setCategory(PackageCategory.DEPLOYABLE);
+            packageType1.setDisplayName("TestResourcePackage");
+            packageType1.setCreationData(true);
+            packageType1.setResourceType(resourceType);
+            em.persist(packageType1);
 
-                resourceType.addPackageType(packageType1);
+            resourceType.addPackageType(packageType1);
 
-                // Package 1 - No product versions specified
-                package1 = new Package("Package1", packageType1);
-                PackageVersion packageVersion1 = new PackageVersion(package1, "1.0.0", architecture);
-                package1.addVersion(packageVersion1);
+            // Package 1 - No product versions specified
+            package1 = new Package("Package1", packageType1);
+            PackageVersion packageVersion1 = new PackageVersion(package1, "1.0.0", architecture);
+            package1.addVersion(packageVersion1);
 
-                em.persist(package1);
+            em.persist(package1);
 
-                // Package 2 - Has list of product versions that contains the resource's version
-                package2 = new Package("Package2", packageType1);
-                PackageVersion packageVersion2 = new PackageVersion(package2, "1.0.0", architecture);
-                ProductVersionPackageVersion pvpv1 = packageVersion2.addProductVersion(productVersion1);
-                ProductVersionPackageVersion pvpv2 = packageVersion2.addProductVersion(productVersion2);
-                package2.addVersion(packageVersion2);
+            // Package 2 - Has list of product versions that contains the resource's version
+            package2 = new Package("Package2", packageType1);
+            PackageVersion packageVersion2 = new PackageVersion(package2, "1.0.0", architecture);
+            ProductVersionPackageVersion pvpv1 = packageVersion2.addProductVersion(productVersion1);
+            ProductVersionPackageVersion pvpv2 = packageVersion2.addProductVersion(productVersion2);
+            package2.addVersion(packageVersion2);
 
-                em.persist(package2);
-                em.persist(pvpv1);
-                em.persist(pvpv2);
+            em.persist(package2);
+            em.persist(pvpv1);
+            em.persist(pvpv2);
 
-                // Package 3 - Has list of product versions where the resource version is not included
-                package3 = new Package("Package3", packageType1);
-                PackageVersion packageVersion3 = new PackageVersion(package3, "1.0.0", architecture);
-                ProductVersionPackageVersion pvpv3 = packageVersion3.addProductVersion(productVersion2);
-                package3.addVersion(packageVersion3);
+            // Package 3 - Has list of product versions where the resource version is not included
+            package3 = new Package("Package3", packageType1);
+            PackageVersion packageVersion3 = new PackageVersion(package3, "1.0.0", architecture);
+            ProductVersionPackageVersion pvpv3 = packageVersion3.addProductVersion(productVersion2);
+            package3.addVersion(packageVersion3);
 
-                em.persist(package3);
-                em.persist(pvpv3);
+            em.persist(package3);
+            em.persist(pvpv3);
 
-                // Package 4 - No product version restriction, but already installed on the resource
-                package4 = new Package("Package4", packageType1);
-                PackageVersion packageVersion4 = new PackageVersion(package4, "1.0.0", architecture);
-                package4.addVersion(packageVersion4);
+            // Package 4 - No product version restriction, but already installed on the resource
+            package4 = new Package("Package4", packageType1);
+            PackageVersion packageVersion4 = new PackageVersion(package4, "1.0.0", architecture);
+            package4.addVersion(packageVersion4);
 
-                em.persist(package4);
+            em.persist(package4);
 
-                // Wire up the repo to the resource and add all of these packages to it
-                repo1 = new Repo("repo-" + RandomStringUtils.randomNumeric(6));
-                em.persist(repo1);
+            // Wire up the repo to the resource and add all of these packages to it
+            repo1 = new Repo("repo-" + RandomStringUtils.randomNumeric(6));
+            em.persist(repo1);
 
-                repoPackageVersion1 = repo1.addPackageVersion(packageVersion1);
-                repoPackageVersion2 = repo1.addPackageVersion(packageVersion2);
-                repoPackageVersion3 = repo1.addPackageVersion(packageVersion3);
-                repoPackageVersion4 = repo1.addPackageVersion(packageVersion4);
+            repoPackageVersion1 = repo1.addPackageVersion(packageVersion1);
+            repoPackageVersion2 = repo1.addPackageVersion(packageVersion2);
+            repoPackageVersion3 = repo1.addPackageVersion(packageVersion3);
+            repoPackageVersion4 = repo1.addPackageVersion(packageVersion4);
 
-                em.persist(repoPackageVersion1);
-                em.persist(repoPackageVersion2);
-                em.persist(repoPackageVersion3);
-                em.persist(repoPackageVersion4);
+            em.persist(repoPackageVersion1);
+            em.persist(repoPackageVersion2);
+            em.persist(repoPackageVersion3);
+            em.persist(repoPackageVersion4);
 
-                resourceRepo1 = repo1.addResource(resource);
-                em.persist(resourceRepo1);
+            resourceRepo1 = repo1.addResource(resource);
+            em.persist(resourceRepo1);
 
-                // Subscribe the resource to a second repo to make sure the joins won't duplicate stuff
-                repo2 = new Repo("test-" + RandomStringUtils.randomNumeric(6));
-                em.persist(repo2);
+            // Subscribe the resource to a second repo to make sure the joins won't duplicate stuff
+            repo2 = new Repo("test-" + RandomStringUtils.randomNumeric(6));
+            em.persist(repo2);
 
-                resourceRepo2 = repo2.addResource(resource);
-                em.persist(resourceRepo2);
+            resourceRepo2 = repo2.addResource(resource);
+            em.persist(resourceRepo2);
 
-                installedPackage1 = new InstalledPackage();
-                installedPackage1.setResource(resource);
-                installedPackage1.setPackageVersion(packageVersion4);
-                resource.addInstalledPackage(installedPackage1);
+            installedPackage1 = new InstalledPackage();
+            installedPackage1.setResource(resource);
+            installedPackage1.setPackageVersion(packageVersion4);
+            resource.addInstalledPackage(installedPackage1);
 
-                getTransactionManager().commit();
-            } catch (Exception e) {
-                e.printStackTrace();
-                getTransactionManager().rollback();
-                throw e;
-            }
-        } finally {
-            em.close();
+            getTransactionManager().commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+            getTransactionManager().rollback();
+            throw e;
         }
     }
 
     private void tearDownTestEnvironment() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
 
         try {
-            try {
-                Query q = em.createNamedQuery(RepoPackageVersion.DELETE_BY_REPO_ID);
-                q.setParameter("repoId", repo1.getId());
-                q.executeUpdate();
+            Query q = em.createNamedQuery(RepoPackageVersion.DELETE_BY_REPO_ID);
+            q.setParameter("repoId", repo1.getId());
+            q.executeUpdate();
 
-                q = em.createNamedQuery(ResourceRepo.DELETE_BY_RESOURCE_ID);
-                q.setParameter("resourceId", resource.getId());
-                q.executeUpdate();
+            q = em.createNamedQuery(ResourceRepo.DELETE_BY_RESOURCE_ID);
+            q.setParameter("resourceId", resource.getId());
+            q.executeUpdate();
 
-                getTransactionManager().commit();
-            } catch (Exception e) {
-                e.printStackTrace();
-                getTransactionManager().rollback();
-                throw e;
-            }
-        } finally {
-            em.close();
+            getTransactionManager().commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+            getTransactionManager().rollback();
+            throw e;
         }
 
         getTransactionManager().begin();
-        em = getEntityManager();
 
         try {
-            try {
-                resource = em.find(Resource.class, resource.getId());
-                for (InstalledPackage ip : resource.getInstalledPackages()) {
-                    em.remove(ip);
-                }
-
-                package1 = em.find(Package.class, package1.getId());
-                em.remove(package1);
-
-                package2 = em.find(Package.class, package2.getId());
-                em.remove(package2);
-
-                package3 = em.find(Package.class, package3.getId());
-                em.remove(package3);
-
-                package4 = em.find(Package.class, package4.getId());
-                em.remove(package4);
-
-                packageType1 = em.find(PackageType.class, packageType1.getId());
-                em.remove(packageType1);
-
-                ResourceTreeHelper.deleteResource(em, resource);
-
-                repo1 = em.find(Repo.class, repo1.getId());
-                em.remove(repo1);
-
-                repo2 = em.find(Repo.class, repo2.getId());
-                em.remove(repo2);
-
-                productVersion1 = em.find(ProductVersion.class, productVersion1.getId());
-                em.remove(productVersion1);
-
-                productVersion2 = em.find(ProductVersion.class, productVersion2.getId());
-                em.remove(productVersion2);
-
-                resourceType = em.find(ResourceType.class, resourceType.getId());
-                em.remove(resourceType);
-
-                getTransactionManager().commit();
-            } catch (Exception e) {
-                e.printStackTrace();
-                getTransactionManager().rollback();
-                throw e;
+            resource = em.find(Resource.class, resource.getId());
+            for (InstalledPackage ip : resource.getInstalledPackages()) {
+                em.remove(ip);
             }
-        } finally {
-            em.close();
+
+            package1 = em.find(Package.class, package1.getId());
+            em.remove(package1);
+
+            package2 = em.find(Package.class, package2.getId());
+            em.remove(package2);
+
+            package3 = em.find(Package.class, package3.getId());
+            em.remove(package3);
+
+            package4 = em.find(Package.class, package4.getId());
+            em.remove(package4);
+
+            packageType1 = em.find(PackageType.class, packageType1.getId());
+            em.remove(packageType1);
+
+            ResourceTreeHelper.deleteResource(em, resource);
+
+            repo1 = em.find(Repo.class, repo1.getId());
+            em.remove(repo1);
+
+            repo2 = em.find(Repo.class, repo2.getId());
+            em.remove(repo2);
+
+            productVersion1 = em.find(ProductVersion.class, productVersion1.getId());
+            em.remove(productVersion1);
+
+            productVersion2 = em.find(ProductVersion.class, productVersion2.getId());
+            em.remove(productVersion2);
+
+            resourceType = em.find(ResourceType.class, resourceType.getId());
+            em.remove(resourceType);
+
+            getTransactionManager().commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+            getTransactionManager().rollback();
+            throw e;
         }
     }
 

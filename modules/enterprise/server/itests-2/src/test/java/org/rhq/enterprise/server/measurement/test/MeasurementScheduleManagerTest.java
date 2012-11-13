@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import junit.framework.Assert;
@@ -84,11 +83,9 @@ public class MeasurementScheduleManagerTest extends AbstractMeasurementScheduleM
 
     @Override
     protected void afterMethod() {
-        EntityManager em = null;
-
         try {
             // delete values
-            em = beginTx();
+            beginTx();
 
             // delete keys
             List<Integer> resourceIds = new ArrayList<Integer>();
@@ -122,7 +119,7 @@ public class MeasurementScheduleManagerTest extends AbstractMeasurementScheduleM
             } catch (Exception e) {
             }
 
-            commitAndClose(em);
+            commitAndClose();
         }
 
     }
@@ -130,12 +127,10 @@ public class MeasurementScheduleManagerTest extends AbstractMeasurementScheduleM
     @Test
     public void testIntervals() {
 
-        EntityManager em = null;
-
         try {
-            em = beginTx();
+            beginTx();
 
-            setupResources(em);
+            setupResources();
 
             MeasurementSchedule schedule1 = new MeasurementSchedule(definitionCt1, resource1);
             em.persist(schedule1);
@@ -143,8 +138,7 @@ public class MeasurementScheduleManagerTest extends AbstractMeasurementScheduleM
             resource1.addSchedule(schedule1);
             resource1 = em.merge(resource1);
 
-            commitAndClose(em);
-            em = null;
+            commitAndClose();
 
             // 60s is valid
             schedule1.setInterval(60000L);
@@ -220,19 +214,17 @@ public class MeasurementScheduleManagerTest extends AbstractMeasurementScheduleM
             Assert.fail();
 
         } finally {
-            commitAndClose(em);
+            commitAndClose();
         }
     }
 
     @Test
     public void testBug811696() {
 
-        EntityManager em = null;
-
         try {
-            em = beginTx();
+            beginTx();
 
-            setupResources(em);
+            setupResources();
             long defaultInterval = definitionCt1.getDefaultInterval();
             long updatedInterval = defaultInterval * 2;
 
@@ -244,8 +236,7 @@ public class MeasurementScheduleManagerTest extends AbstractMeasurementScheduleM
             resource1.addSchedule(schedule1);
             resource1 = em.merge(resource1);
 
-            commitAndClose(em);
-            em = null;
+            commitAndClose();
 
             // Test interval update of metrics at the template level
             testCommService.init();
@@ -316,7 +307,7 @@ public class MeasurementScheduleManagerTest extends AbstractMeasurementScheduleM
             Assert.fail(e.getMessage());
 
         } finally {
-            commitAndClose(em);
+            commitAndClose();
         }
     }
 
@@ -326,7 +317,7 @@ public class MeasurementScheduleManagerTest extends AbstractMeasurementScheduleM
      * @param  em The EntityManager to use
      *
      */
-    private void setupResources(EntityManager em) {
+    private void setupResources() {
         theAgent = new Agent("testagent", "localhost", 1234, "", "randomToken");
         em.persist(theAgent);
 
@@ -344,18 +335,15 @@ public class MeasurementScheduleManagerTest extends AbstractMeasurementScheduleM
         em.persist(resource1);
     }
 
-    private EntityManager beginTx() throws Exception {
+    private void beginTx() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
-        return em;
     }
 
-    private void commitAndClose(EntityManager em) {
+    private void commitAndClose() {
         try {
             if (null != em) {
                 em.flush();
-                getTransactionManager().rollback();
-                em.close();
+                getTransactionManager().commit();
             }
         } catch (Throwable t) {
 

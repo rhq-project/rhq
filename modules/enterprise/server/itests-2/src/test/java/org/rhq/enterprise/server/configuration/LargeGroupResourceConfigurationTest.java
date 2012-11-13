@@ -66,7 +66,7 @@ public class LargeGroupResourceConfigurationTest extends LargeGroupTestBase {
      * Remove the group and all its members.
      */
     @Override
-    public void afterMethod() throws Exception {
+    protected void afterMethod() throws Exception {
         tearDownLargeGroupWithNormalUserRoleAccess(env);
         SessionTestHelper.simulateLogout(env.normalSubject);
 

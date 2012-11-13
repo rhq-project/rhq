@@ -80,17 +80,12 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
             }
 
             getTransactionManager().commit();
-            em.close();
-            em = null;
+
         } catch (Exception e) {
             try {
                 System.out.println("CANNOT CLEAN UP TEST: Cause: " + e);
                 getTransactionManager().rollback();
             } catch (Exception ignore) {
-            }
-        } finally {
-            if (null != em) {
-                em.close();
             }
         }
     }
@@ -217,12 +212,12 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
         PluginStatusType status;
 
         PluginKey missingKey;
-        missingKey = new PluginKey(PluginDeploymentType.SERVER, new ServerPluginType(GenericPluginDescriptorType.class)
-            .stringify(), TEST_PLUGIN_NAME_PREFIX + "1");
+        missingKey = new PluginKey(PluginDeploymentType.SERVER,
+            new ServerPluginType(GenericPluginDescriptorType.class).stringify(), TEST_PLUGIN_NAME_PREFIX + "1");
         status = this.serverPluginsBean.getServerPluginStatus(missingKey);
         assert status == null;
-        missingKey = new PluginKey(PluginDeploymentType.SERVER, new ServerPluginType(GenericPluginDescriptorType.class)
-            .stringify(), TEST_PLUGIN_NAME_PREFIX + "2");
+        missingKey = new PluginKey(PluginDeploymentType.SERVER,
+            new ServerPluginType(GenericPluginDescriptorType.class).stringify(), TEST_PLUGIN_NAME_PREFIX + "2");
         status = this.serverPluginsBean.getServerPluginStatus(missingKey);
         assert status == null;
 
@@ -267,12 +262,12 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
         PluginStatusType status;
 
         PluginKey missingKey;
-        missingKey = new PluginKey(PluginDeploymentType.SERVER, new ServerPluginType(GenericPluginDescriptorType.class)
-            .stringify(), TEST_PLUGIN_NAME_PREFIX + "1");
+        missingKey = new PluginKey(PluginDeploymentType.SERVER,
+            new ServerPluginType(GenericPluginDescriptorType.class).stringify(), TEST_PLUGIN_NAME_PREFIX + "1");
         status = this.serverPluginsBean.getServerPluginStatus(missingKey);
         assert status == null;
-        missingKey = new PluginKey(PluginDeploymentType.SERVER, new ServerPluginType(GenericPluginDescriptorType.class)
-            .stringify(), TEST_PLUGIN_NAME_PREFIX + "2");
+        missingKey = new PluginKey(PluginDeploymentType.SERVER,
+            new ServerPluginType(GenericPluginDescriptorType.class).stringify(), TEST_PLUGIN_NAME_PREFIX + "2");
         status = this.serverPluginsBean.getServerPluginStatus(missingKey);
         assert status == null;
 

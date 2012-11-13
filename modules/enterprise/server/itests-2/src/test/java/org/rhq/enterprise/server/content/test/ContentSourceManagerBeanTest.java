@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.apache.commons.lang.RandomStringUtils;
@@ -281,7 +280,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
 
             // Verify the product version was created
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
+
             try {
                 resourceType1 = em.find(ResourceType.class, resourceType1.getId());
 
@@ -300,7 +299,6 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
                 assert productVersionList.size() > 0 : "Could not find product version for 2.0.0";
             } finally {
                 getTransactionManager().rollback();
-                em.close();
             }
 
             // see that the resource sees no metadata yet - not subscribed yet
@@ -933,178 +931,168 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
 
     private void setupTestEnvironment() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
 
         try {
-            try {
-                architecture1 = em.find(Architecture.class, 1);
+            architecture1 = em.find(Architecture.class, 1);
 
-                resourceType1 = new ResourceType("platform-" + System.currentTimeMillis(), "TestPlugin",
-                    ResourceCategory.PLATFORM, null);
-                em.persist(resourceType1);
+            resourceType1 = new ResourceType("platform-" + System.currentTimeMillis(), "TestPlugin",
+                ResourceCategory.PLATFORM, null);
+            em.persist(resourceType1);
 
-                // Add package types to resource type
-                packageType1 = new PackageType();
-                packageType1.setName("package1-" + System.currentTimeMillis());
-                packageType1.setDescription("");
-                packageType1.setCategory(PackageCategory.DEPLOYABLE);
-                packageType1.setDisplayName("TestResourcePackage");
-                packageType1.setCreationData(true);
-                packageType1.setResourceType(resourceType1);
-                em.persist(packageType1);
+            // Add package types to resource type
+            packageType1 = new PackageType();
+            packageType1.setName("package1-" + System.currentTimeMillis());
+            packageType1.setDescription("");
+            packageType1.setCategory(PackageCategory.DEPLOYABLE);
+            packageType1.setDisplayName("TestResourcePackage");
+            packageType1.setCreationData(true);
+            packageType1.setResourceType(resourceType1);
+            em.persist(packageType1);
 
-                packageType2 = new PackageType();
-                packageType2.setName("package2-" + System.currentTimeMillis());
-                packageType2.setDescription("");
-                packageType2.setCategory(PackageCategory.DEPLOYABLE);
-                packageType2.setDisplayName("TestResourcePackage2");
-                packageType2.setCreationData(true);
-                packageType2.setResourceType(resourceType1);
-                em.persist(packageType2);
+            packageType2 = new PackageType();
+            packageType2.setName("package2-" + System.currentTimeMillis());
+            packageType2.setDescription("");
+            packageType2.setCategory(PackageCategory.DEPLOYABLE);
+            packageType2.setDisplayName("TestResourcePackage2");
+            packageType2.setCreationData(true);
+            packageType2.setResourceType(resourceType1);
+            em.persist(packageType2);
 
-                packageType3 = new PackageType();
-                packageType3.setName("package3-" + System.currentTimeMillis());
-                packageType3.setDescription("");
-                packageType3.setCategory(PackageCategory.DEPLOYABLE);
-                packageType3.setDisplayName("TestResourcePackage3");
-                packageType3.setCreationData(true);
-                packageType3.setResourceType(resourceType1);
-                em.persist(packageType3);
+            packageType3 = new PackageType();
+            packageType3.setName("package3-" + System.currentTimeMillis());
+            packageType3.setDescription("");
+            packageType3.setCategory(PackageCategory.DEPLOYABLE);
+            packageType3.setDisplayName("TestResourcePackage3");
+            packageType3.setCreationData(true);
+            packageType3.setResourceType(resourceType1);
+            em.persist(packageType3);
 
-                packageType4 = new PackageType();
-                packageType4.setName("package4-" + System.currentTimeMillis());
-                packageType4.setDescription("");
-                packageType4.setCategory(PackageCategory.DEPLOYABLE);
-                packageType4.setDisplayName("TestResourcePackage4");
-                packageType4.setCreationData(true);
-                packageType4.setResourceType(resourceType1);
-                em.persist(packageType4);
+            packageType4 = new PackageType();
+            packageType4.setName("package4-" + System.currentTimeMillis());
+            packageType4.setDescription("");
+            packageType4.setCategory(PackageCategory.DEPLOYABLE);
+            packageType4.setDisplayName("TestResourcePackage4");
+            packageType4.setCreationData(true);
+            packageType4.setResourceType(resourceType1);
+            em.persist(packageType4);
 
-                resourceType1.addPackageType(packageType1);
-                resourceType1.addPackageType(packageType2);
-                resourceType1.addPackageType(packageType3);
+            resourceType1.addPackageType(packageType1);
+            resourceType1.addPackageType(packageType2);
+            resourceType1.addPackageType(packageType3);
 
-                // Package 1 - Contains 2 versions
-                package1 = new Package("Package1", packageType1);
+            // Package 1 - Contains 2 versions
+            package1 = new Package("Package1", packageType1);
 
-                package1.addVersion(new PackageVersion(package1, "1.0.0", architecture1));
-                package1.addVersion(new PackageVersion(package1, "2.0.0", architecture1));
+            package1.addVersion(new PackageVersion(package1, "1.0.0", architecture1));
+            package1.addVersion(new PackageVersion(package1, "2.0.0", architecture1));
 
-                em.persist(package1);
+            em.persist(package1);
 
-                // Package 2 - Contains 2 versions
-                package2 = new Package("Package2", packageType2);
+            // Package 2 - Contains 2 versions
+            package2 = new Package("Package2", packageType2);
 
-                package2.addVersion(new PackageVersion(package2, "1.0.0", architecture1));
-                package2.addVersion(new PackageVersion(package2, "2.0.0", architecture1));
+            package2.addVersion(new PackageVersion(package2, "1.0.0", architecture1));
+            package2.addVersion(new PackageVersion(package2, "2.0.0", architecture1));
 
-                em.persist(package2);
+            em.persist(package2);
 
-                // Package 3 - Contains 1 version
-                package3 = new Package("Package3", packageType3);
+            // Package 3 - Contains 1 version
+            package3 = new Package("Package3", packageType3);
 
-                package3.addVersion(new PackageVersion(package3, "1.0.0", architecture1));
+            package3.addVersion(new PackageVersion(package3, "1.0.0", architecture1));
 
-                em.persist(package3);
+            em.persist(package3);
 
-                // Package 4 - Contains 2 versions, the first is installed
-                package4 = new Package("Package4", packageType4);
+            // Package 4 - Contains 2 versions, the first is installed
+            package4 = new Package("Package4", packageType4);
 
-                PackageVersion package4Installed = new PackageVersion(package4, "1.0.0", architecture1);
-                package4.addVersion(package4Installed);
-                package4.addVersion(new PackageVersion(package4, "2.0.0", architecture1));
+            PackageVersion package4Installed = new PackageVersion(package4, "1.0.0", architecture1);
+            package4.addVersion(package4Installed);
+            package4.addVersion(new PackageVersion(package4, "2.0.0", architecture1));
 
-                em.persist(package4);
+            em.persist(package4);
 
-                // Package 5 - Contains 1 version, it is installed
-                package5 = new Package("Package5", packageType4);
+            // Package 5 - Contains 1 version, it is installed
+            package5 = new Package("Package5", packageType4);
 
-                PackageVersion package5Installed = new PackageVersion(package5, "1.0.0", architecture1);
-                package5.addVersion(package5Installed);
+            PackageVersion package5Installed = new PackageVersion(package5, "1.0.0", architecture1);
+            package5.addVersion(package5Installed);
 
-                em.persist(package5);
+            em.persist(package5);
 
-                // Create resource against which we'll merge the discovery report
-                resource1 = new Resource("parent" + System.currentTimeMillis(), "name", resourceType1);
-                resource1.setUuid("" + new Random().nextInt());
-                em.persist(resource1);
+            // Create resource against which we'll merge the discovery report
+            resource1 = new Resource("parent" + System.currentTimeMillis(), "name", resourceType1);
+            resource1.setUuid("" + new Random().nextInt());
+            em.persist(resource1);
 
-                // Install packages on the resource
-                installedPackage1 = new InstalledPackage();
-                installedPackage1.setResource(resource1);
-                installedPackage1.setPackageVersion(package4Installed);
-                resource1.addInstalledPackage(installedPackage1);
+            // Install packages on the resource
+            installedPackage1 = new InstalledPackage();
+            installedPackage1.setResource(resource1);
+            installedPackage1.setPackageVersion(package4Installed);
+            resource1.addInstalledPackage(installedPackage1);
 
-                installedPackage2 = new InstalledPackage();
-                installedPackage2.setResource(resource1);
-                installedPackage2.setPackageVersion(package4Installed);
-                resource1.addInstalledPackage(installedPackage2);
+            installedPackage2 = new InstalledPackage();
+            installedPackage2.setResource(resource1);
+            installedPackage2.setPackageVersion(package4Installed);
+            resource1.addInstalledPackage(installedPackage2);
 
-                installedPackage1.setResource(resource1);
-                installedPackage2.setResource(resource1);
+            installedPackage1.setResource(resource1);
+            installedPackage2.setResource(resource1);
 
-                getTransactionManager().commit();
-            } catch (Exception e) {
-                e.printStackTrace();
-                getTransactionManager().rollback();
-                throw e;
-            }
-        } finally {
-            em.close();
+            getTransactionManager().commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+            getTransactionManager().rollback();
+            throw e;
         }
     }
 
     private void tearDownTestEnvironment() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
 
         try {
-            try {
-                resource1 = em.find(Resource.class, resource1.getId());
-                for (InstalledPackage ip : resource1.getInstalledPackages()) {
-                    em.remove(ip);
-                }
-
-                package1 = em.find(Package.class, package1.getId());
-                em.remove(package1);
-
-                package2 = em.find(Package.class, package2.getId());
-                em.remove(package2);
-
-                package3 = em.find(Package.class, package3.getId());
-                em.remove(package3);
-
-                package4 = em.find(Package.class, package4.getId());
-                em.remove(package4);
-
-                package5 = em.find(Package.class, package5.getId());
-                em.remove(package5);
-
-                packageType1 = em.find(PackageType.class, packageType1.getId());
-                em.remove(packageType1);
-
-                packageType2 = em.find(PackageType.class, packageType2.getId());
-                em.remove(packageType2);
-
-                packageType3 = em.find(PackageType.class, packageType3.getId());
-                em.remove(packageType3);
-
-                packageType4 = em.find(PackageType.class, packageType4.getId());
-                em.remove(packageType4);
-
-                ResourceTreeHelper.deleteResource(em, resource1);
-
-                resourceType1 = em.find(ResourceType.class, resourceType1.getId());
-                em.remove(resourceType1);
-
-                getTransactionManager().commit();
-            } catch (Exception e) {
-                e.printStackTrace();
-                getTransactionManager().rollback();
-                throw e;
+            resource1 = em.find(Resource.class, resource1.getId());
+            for (InstalledPackage ip : resource1.getInstalledPackages()) {
+                em.remove(ip);
             }
-        } finally {
-            em.close();
+
+            package1 = em.find(Package.class, package1.getId());
+            em.remove(package1);
+
+            package2 = em.find(Package.class, package2.getId());
+            em.remove(package2);
+
+            package3 = em.find(Package.class, package3.getId());
+            em.remove(package3);
+
+            package4 = em.find(Package.class, package4.getId());
+            em.remove(package4);
+
+            package5 = em.find(Package.class, package5.getId());
+            em.remove(package5);
+
+            packageType1 = em.find(PackageType.class, packageType1.getId());
+            em.remove(packageType1);
+
+            packageType2 = em.find(PackageType.class, packageType2.getId());
+            em.remove(packageType2);
+
+            packageType3 = em.find(PackageType.class, packageType3.getId());
+            em.remove(packageType3);
+
+            packageType4 = em.find(PackageType.class, packageType4.getId());
+            em.remove(packageType4);
+
+            ResourceTreeHelper.deleteResource(em, resource1);
+
+            resourceType1 = em.find(ResourceType.class, resourceType1.getId());
+            em.remove(resourceType1);
+
+            getTransactionManager().commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+            getTransactionManager().rollback();
+            throw e;
         }
     }
 
@@ -1117,79 +1105,73 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
      */
     private void cleanupPreviousTestRuns() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
 
         try {
-            try {
-                Query query;
-                List results;
+            Query query;
+            List results;
 
-                query = em.createNamedQuery(ContentSource.QUERY_FIND_BY_NAME_AND_TYPENAME);
-                query.setParameter("name", "testUpdateContentSource");
-                query.setParameter("typeName", "testUpdateContentSourceCST");
-                results = query.getResultList();
+            query = em.createNamedQuery(ContentSource.QUERY_FIND_BY_NAME_AND_TYPENAME);
+            query.setParameter("name", "testUpdateContentSource");
+            query.setParameter("typeName", "testUpdateContentSourceCST");
+            results = query.getResultList();
 
-                if (results.size() > 0) {
-                    ContentSource deleteMe = (ContentSource) results.get(0);
-                    em.remove(deleteMe);
-                }
-
-                query = em.createNamedQuery(ContentSource.QUERY_FIND_BY_NAME_AND_TYPENAME);
-                query.setParameter("name", "testUpdateContentSource2");
-                query.setParameter("typeName", "testUpdateContentSourceCST2");
-                results = query.getResultList();
-
-                if (results.size() > 0) {
-                    ContentSource deleteMe = (ContentSource) results.get(0);
-                    em.remove(deleteMe);
-                }
-
-                query = em.createNamedQuery(ContentSource.QUERY_FIND_BY_NAME_AND_TYPENAME);
-                query.setParameter("name", "testConstraintViolation");
-                query.setParameter("typeName", "testConstraintViolationCST");
-                results = query.getResultList();
-
-                if (results.size() > 0) {
-                    ContentSource deleteMe = (ContentSource) results.get(0);
-                    em.remove(deleteMe);
-                }
-
-                query = em.createNamedQuery(ContentSourceType.QUERY_FIND_BY_NAME);
-                query.setParameter("name", "testUpdateContentSourceCST");
-                results = query.getResultList();
-
-                if (results.size() > 0) {
-                    ContentSourceType deleteMe = (ContentSourceType) results.get(0);
-                    em.remove(deleteMe);
-                }
-
-                query = em.createNamedQuery(ContentSourceType.QUERY_FIND_BY_NAME);
-                query.setParameter("name", "testUpdateContentSourceCST2");
-                results = query.getResultList();
-
-                if (results.size() > 0) {
-                    ContentSourceType deleteMe = (ContentSourceType) results.get(0);
-                    em.remove(deleteMe);
-                }
-
-                query = em.createNamedQuery(ContentSourceType.QUERY_FIND_BY_NAME);
-                query.setParameter("name", "testConstraintViolationCST");
-                results = query.getResultList();
-
-                if (results.size() > 0) {
-                    ContentSourceType deleteMe = (ContentSourceType) results.get(0);
-                    em.remove(deleteMe);
-                }
-
-                getTransactionManager().commit();
-            } catch (Exception e) {
-                e.printStackTrace();
-                getTransactionManager().rollback();
-                throw e;
+            if (results.size() > 0) {
+                ContentSource deleteMe = (ContentSource) results.get(0);
+                em.remove(deleteMe);
             }
-        } finally {
-            em.close();
-        }
 
+            query = em.createNamedQuery(ContentSource.QUERY_FIND_BY_NAME_AND_TYPENAME);
+            query.setParameter("name", "testUpdateContentSource2");
+            query.setParameter("typeName", "testUpdateContentSourceCST2");
+            results = query.getResultList();
+
+            if (results.size() > 0) {
+                ContentSource deleteMe = (ContentSource) results.get(0);
+                em.remove(deleteMe);
+            }
+
+            query = em.createNamedQuery(ContentSource.QUERY_FIND_BY_NAME_AND_TYPENAME);
+            query.setParameter("name", "testConstraintViolation");
+            query.setParameter("typeName", "testConstraintViolationCST");
+            results = query.getResultList();
+
+            if (results.size() > 0) {
+                ContentSource deleteMe = (ContentSource) results.get(0);
+                em.remove(deleteMe);
+            }
+
+            query = em.createNamedQuery(ContentSourceType.QUERY_FIND_BY_NAME);
+            query.setParameter("name", "testUpdateContentSourceCST");
+            results = query.getResultList();
+
+            if (results.size() > 0) {
+                ContentSourceType deleteMe = (ContentSourceType) results.get(0);
+                em.remove(deleteMe);
+            }
+
+            query = em.createNamedQuery(ContentSourceType.QUERY_FIND_BY_NAME);
+            query.setParameter("name", "testUpdateContentSourceCST2");
+            results = query.getResultList();
+
+            if (results.size() > 0) {
+                ContentSourceType deleteMe = (ContentSourceType) results.get(0);
+                em.remove(deleteMe);
+            }
+
+            query = em.createNamedQuery(ContentSourceType.QUERY_FIND_BY_NAME);
+            query.setParameter("name", "testConstraintViolationCST");
+            results = query.getResultList();
+
+            if (results.size() > 0) {
+                ContentSourceType deleteMe = (ContentSourceType) results.get(0);
+                em.remove(deleteMe);
+            }
+
+            getTransactionManager().commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+            getTransactionManager().rollback();
+            throw e;
+        }
     }
 }

@@ -60,7 +60,7 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
      * Prepares things for the entire test class.
      */
     @Override
-    public void beforeMethod() {
+    protected void beforeMethod() {
         subjectManager = LookupUtil.getSubjectManager();
         authorizationManager = LookupUtil.getAuthorizationManager();
         roleManager = LookupUtil.getRoleManager();
@@ -70,7 +70,7 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
      * This runs after each test method. It clears out all sessions.
      */
     @Override
-    public void afterMethod() {
+    protected void afterMethod() {
         // create a list of all users we know our tests have used
         List<String> usernames = new ArrayList<String>();
         usernames.add("admin");

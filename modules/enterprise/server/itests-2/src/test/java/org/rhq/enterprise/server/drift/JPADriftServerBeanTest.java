@@ -29,12 +29,11 @@ import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
 import static org.rhq.enterprise.server.util.LookupUtil.getJPADriftServer;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import javax.persistence.EntityManager;
 
 import org.testng.annotations.Test;
 
@@ -67,8 +66,8 @@ public class JPADriftServerBeanTest extends AbstractDriftServerTest {
     private JPADriftFile driftFile2;
 
     @Override
-    public void beforeMethod() throws Exception {
-        super.beforeMethod();
+    protected void beforeMethod(Method testMethod) throws Exception {
+        super.beforeMethod(testMethod);
 
         jpaDriftServer = getJPADriftServer();
 
@@ -101,7 +100,6 @@ public class JPADriftServerBeanTest extends AbstractDriftServerTest {
         executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
-                EntityManager em = getEntityManager();
                 em.persist(driftDef);
             }
         });
@@ -145,12 +143,11 @@ public class JPADriftServerBeanTest extends AbstractDriftServerTest {
         assertEquals("Expected to find one change set", 1, changeSets.size());
 
         JPADriftChangeSet jpaChangeSet = changeSets.get(0);
-        assertEquals("Expected change set to contain two drifts. This could be a result of the change set not being " +
-            "persisted correctly or the criteria fetch being done incorrectly.", 2, jpaChangeSet.getDrifts().size());
+        assertEquals("Expected change set to contain two drifts. This could be a result of the change set not being "
+            + "persisted correctly or the criteria fetch being done incorrectly.", 2, jpaChangeSet.getDrifts().size());
 
-       AssertUtils
-           .assertPropertiesMatch("The change set was not persisted correctly", changeSet, jpaChangeSet, "id", "drifts",
-               "class", "ctime");
+        AssertUtils.assertPropertiesMatch("The change set was not persisted correctly", changeSet, jpaChangeSet, "id",
+            "drifts", "class", "ctime");
 
         List<? extends Drift> expectedDrifts = asList(drift1, drift2);
         List<? extends Drift> actualDrifts = new ArrayList(jpaChangeSet.getDrifts());
@@ -163,10 +160,10 @@ public class JPADriftServerBeanTest extends AbstractDriftServerTest {
             (List<Drift>) expectedDrifts, (List<Drift>) actualDrifts, "id", "ctime", "changeSet", "directory",
             "newDriftFile", "class");
 
-        assertPropertiesMatch("The newDriftFile property was not set correctly for " + drift1, drift1.getNewDriftFile(),
-            findDriftByPath(actualDrifts, "drift.1").getNewDriftFile(), "class", "ctime") ;
-        assertPropertiesMatch("The newDriftFile property was not set correctly for " + drift2, drift2.getNewDriftFile(),
-            findDriftByPath(actualDrifts, "drift.2").getNewDriftFile(), "class", "ctime") ;
+        assertPropertiesMatch("The newDriftFile property was not set correctly for " + drift1,
+            drift1.getNewDriftFile(), findDriftByPath(actualDrifts, "drift.1").getNewDriftFile(), "class", "ctime");
+        assertPropertiesMatch("The newDriftFile property was not set correctly for " + drift2,
+            drift2.getNewDriftFile(), findDriftByPath(actualDrifts, "drift.2").getNewDriftFile(), "class", "ctime");
     }
 
     public void persistTemplateChangeSet() {
@@ -211,12 +208,11 @@ public class JPADriftServerBeanTest extends AbstractDriftServerTest {
         assertEquals("Expected to find one change set", 1, changeSets.size());
 
         JPADriftChangeSet jpaChangeSet = changeSets.get(0);
-        assertEquals("Expected change set to contain two drifts. This could be a result of the change set not being " +
-            "persisted correctly or the criteria fetch being done incorrectly.", 2, jpaChangeSet.getDrifts().size());
+        assertEquals("Expected change set to contain two drifts. This could be a result of the change set not being "
+            + "persisted correctly or the criteria fetch being done incorrectly.", 2, jpaChangeSet.getDrifts().size());
 
-       AssertUtils
-           .assertPropertiesMatch("The change set was not persisted correctly", changeSet, jpaChangeSet, "id", "drifts",
-               "class", "ctime");
+        AssertUtils.assertPropertiesMatch("The change set was not persisted correctly", changeSet, jpaChangeSet, "id",
+            "drifts", "class", "ctime");
 
         List<? extends Drift> expectedDrifts = asList(drift1, drift2);
         List<? extends Drift> actualDrifts = new ArrayList(jpaChangeSet.getDrifts());
@@ -229,10 +225,10 @@ public class JPADriftServerBeanTest extends AbstractDriftServerTest {
             (List<Drift>) expectedDrifts, (List<Drift>) actualDrifts, "id", "ctime", "changeSet", "directory",
             "newDriftFile", "class");
 
-        assertPropertiesMatch("The newDriftFile property was not set correctly for " + drift1, drift1.getNewDriftFile(),
-            findDriftByPath(actualDrifts, "drift.1").getNewDriftFile(), "class", "ctime") ;
-        assertPropertiesMatch("The newDriftFile property was not set correctly for " + drift2, drift2.getNewDriftFile(),
-            findDriftByPath(actualDrifts, "drift.2").getNewDriftFile(), "class", "ctime") ;
+        assertPropertiesMatch("The newDriftFile property was not set correctly for " + drift1,
+            drift1.getNewDriftFile(), findDriftByPath(actualDrifts, "drift.1").getNewDriftFile(), "class", "ctime");
+        assertPropertiesMatch("The newDriftFile property was not set correctly for " + drift2,
+            drift2.getNewDriftFile(), findDriftByPath(actualDrifts, "drift.2").getNewDriftFile(), "class", "ctime");
     }
 
     public void copyChangeSet() {
@@ -260,7 +256,6 @@ public class JPADriftServerBeanTest extends AbstractDriftServerTest {
         executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
-                EntityManager em = getEntityManager();
                 em.persist(changeSet);
                 em.persist(driftDef);
                 em.persist(driftSet);
@@ -278,15 +273,14 @@ public class JPADriftServerBeanTest extends AbstractDriftServerTest {
 
         PageList<JPADriftChangeSet> changeSets = jpaDriftServer.findDriftChangeSetsByCriteria(getOverlord(), criteria);
 
-        assertEquals("Expected to get back one change set", 1,changeSets.size());
+        assertEquals("Expected to get back one change set", 1, changeSets.size());
 
         JPADriftChangeSet newChangeSet = changeSets.get(0);
         Set<JPADrift> expectedDrifts = new HashSet<JPADrift>(asList(drift1, drift2));
         Set<JPADrift> actualDrifts = newChangeSet.getDrifts();
 
         AssertUtils.assertCollectionMatchesNoOrder("The change set drifts were not copied correctly", expectedDrifts,
-            actualDrifts,
-            "changeSet", "newDriftFile");
+            actualDrifts, "changeSet", "newDriftFile");
     }
 
     private DriftFileDTO toDTo(JPADriftFile driftFile) {
@@ -297,11 +291,10 @@ public class JPADriftServerBeanTest extends AbstractDriftServerTest {
         return dto;
     }
 
-
     private void assertDriftFilePersisted(JPADriftFile driftFile, String name, String content) {
         assertNotNull("Failed to get " + name + " Was it persisted?", driftFile);
-        assertEquals("The content for " + name + " is wrong", content, jpaDriftServer.getDriftFileBits(
-            driftFile.getHashId()));
+        assertEquals("The content for " + name + " is wrong", content,
+            jpaDriftServer.getDriftFileBits(driftFile.getHashId()));
         assertEquals("The drift file status is wrong", LOADED, driftFile.getStatus());
     }
 

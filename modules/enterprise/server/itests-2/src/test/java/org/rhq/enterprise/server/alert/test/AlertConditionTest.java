@@ -88,7 +88,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
     }
 
     @Override
-    public void afterMethod() throws Exception {
+    protected void afterMethod() throws Exception {
         if (resource != null) {
             deleteNewResource(resource);
             resource = null;

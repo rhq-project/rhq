@@ -39,7 +39,7 @@ public class MeasurementViewManagerTest extends AbstractEJB3Test {
     }
 
     @Override
-    public void beforeMethod() throws Exception {
+    protected void beforeMethod() throws Exception {
         viewManager = LookupUtil.getMeasurementViewManager();
         subjectManager = LookupUtil.getSubjectManager();
 
@@ -95,7 +95,7 @@ public class MeasurementViewManagerTest extends AbstractEJB3Test {
     }
 
     @Override
-    public void afterMethod() throws Exception {
+    protected void afterMethod() throws Exception {
         getTransactionManager().begin();
         try {
             List<Integer> measurementDefinitionIds = new ArrayList<Integer>();

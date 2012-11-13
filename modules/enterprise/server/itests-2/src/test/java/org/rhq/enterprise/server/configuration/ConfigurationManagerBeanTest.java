@@ -24,8 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.persistence.EntityManager;
-
 import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.Test;
 
@@ -109,7 +107,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         agentServiceContainer.discoveryService = testServices;
 
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
+
         try {
             compatibleGroup = SessionTestHelper.createNewCompatibleGroupForRole(em, null, // no role necessary here
                 "compat");
@@ -135,8 +133,6 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
             }
 
             throw e;
-        } finally {
-            em.close();
         }
     }
 
@@ -156,7 +152,6 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
 
         try {
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
 
             try {
                 ResourceGroup group = em.find(ResourceGroup.class, compatibleGroup.getId());
@@ -171,12 +166,10 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
                 }
 
                 throw e;
-            } finally {
-                em.close();
             }
 
             getTransactionManager().begin();
-            em = getEntityManager();
+
             try {
                 ResourceType type = em.find(ResourceType.class, newResource1.getResourceType().getId());
 
@@ -191,8 +184,6 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
                 }
 
                 throw e;
-            } finally {
-                em.close();
             }
 
         } finally {
@@ -404,7 +395,6 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
 
     private void testGroupPluginConfigurationUpdateWorkflowHelper(boolean failOnChildUpdates) throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
 
         Resource resource1 = newResource1;
         Resource resource2 = newResource2;
@@ -530,10 +520,6 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
             assert false : "Failed test with this exception: " + e;
         } finally {
             getTransactionManager().rollback();
-            try {
-                em.close();
-            } catch (Exception e) {
-            }
         }
     }
 
@@ -561,7 +547,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
             // completedConfigurationUpdate is made inline (in the real code, this would be asynchronous)
             // at this point in time, the round trip messaging is done and we have the agent response
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
+
             try {
                 resource = em.find(Resource.class, resource.getId());
 
@@ -578,10 +564,6 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
                 assert mybool.getErrorMessage().indexOf("Not a valid boolean") > 0;
             } finally {
                 getTransactionManager().rollback();
-                try {
-                    em.close();
-                } catch (Exception e) {
-                }
             }
 
             assert configurationManager.getLatestResourceConfigurationUpdate(overlord, resource.getId()) != null : "Resource wasn't configured yet - but we should have populated it with live values";
@@ -593,16 +575,12 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
             configurationManager.purgeResourceConfigurationUpdate(overlord, history.getId(), false);
 
             getTransactionManager().begin();
-            em = getEntityManager();
+
             try {
                 resource = em.find(Resource.class, resource.getId());
                 assert resource.getResourceConfigurationUpdates().size() == 1; // the initial built for us for free with the live config
             } finally {
                 getTransactionManager().rollback();
-                try {
-                    em.close();
-                } catch (Exception e) {
-                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -949,16 +927,14 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
     }
 
     void persist(Object entity) throws Exception {
-        EntityManager entityMgr = getEntityManager();
         getEntityManager().persist(entity);
-        entityMgr.flush();
-        entityMgr.clear();
+        em.flush();
+        em.clear();
     }
 
     void delete(Configuration configuration) {
-        EntityManager entityMgr = getEntityManager();
-        Configuration managedConfig = entityMgr.find(Configuration.class, configuration.getId());
-        entityMgr.remove(managedConfig);
+        Configuration managedConfig = em.find(Configuration.class, configuration.getId());
+        em.remove(managedConfig);
     }
 
     private class TestServices implements ConfigurationAgentService, DiscoveryAgentService {

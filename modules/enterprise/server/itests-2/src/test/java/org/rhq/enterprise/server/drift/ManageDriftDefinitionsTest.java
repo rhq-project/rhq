@@ -28,6 +28,7 @@ import static org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode.BO
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftTemplateManager;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -75,15 +76,19 @@ public class ManageDriftDefinitionsTest extends AbstractDriftServerTest {
     private Resource driftNotSupportedResource;
 
     @Override
-    public void beforeMethod() throws Exception {
+    protected void beforeMethod(Method testMethod) throws Exception {
+        super.beforeMethod(testMethod);
+
         driftMgr = getDriftManager();
         templateMgr = getDriftTemplateManager();
     }
 
     @Override
-    protected void purgeDB(EntityManager em) {
-        deleteEntity(Resource.class, DRIFT_NOT_SUPPORTED_RESOURCE, em);
-        deleteEntity(ResourceType.class, DRIFT_NOT_SUPPORTED_TYPE, em);
+    protected void purgeDB() {
+        super.purgeDB();
+
+        deleteEntity(Resource.class, DRIFT_NOT_SUPPORTED_RESOURCE);
+        deleteEntity(ResourceType.class, DRIFT_NOT_SUPPORTED_TYPE);
     }
 
     public void createDefinitionFromUnpinnedTemplate() {
@@ -106,7 +111,7 @@ public class ManageDriftDefinitionsTest extends AbstractDriftServerTest {
 
         // verify that the definition was created
         DriftDefinition newDef = loadDefinition(definition.getName());
-        DriftDefinitionComparator comparator = new  DriftDefinitionComparator(
+        DriftDefinitionComparator comparator = new DriftDefinitionComparator(
             BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS);
 
         assertEquals("The drift definition was not persisted correctly", 0, comparator.compare(definition, newDef));
@@ -122,51 +127,51 @@ public class ManageDriftDefinitionsTest extends AbstractDriftServerTest {
     // class, DriftServerTest. See http://groups.google.com/group/testng-users/browse_thread/thread/da2790679a430d51?pli=1
     // more info on the order in which TestNG executes tests.
 
-//    public void createEntitiesThatDoNotSupportDrift() {
-//        // first create the resource type that does not support drift
-//        driftNotSupportedType = new ResourceTypeBuilder()
-//                .createResourceType()
-//                .withId(0)
-//                .withName(DRIFT_NOT_SUPPORTED_TYPE)
-//                .withCategory(SERVER)
-//                .withPlugin(DRIFT_NOT_SUPPORTED_TYPE.toLowerCase())
-//                .build();
-//
-//        // create a resource of the type that does not support drift
-//        driftNotSupportedResource = new ResourceBuilder()
-//                .createResource()
-//                .withId(0)
-//                .withName(DRIFT_NOT_SUPPORTED_RESOURCE)
-//                .withResourceKey(DRIFT_NOT_SUPPORTED_RESOURCE)
-//                .withRandomUuid()
-//                .withResourceType(driftNotSupportedType)
-//                .build();
-//
-//        executeInTransaction(new TransactionCallback() {
-//            @Override
-//            public void execute() throws Exception {
-//                EntityManager em = getEntityManager();
-//                em.persist(driftNotSupportedType);
-//                em.persist(driftNotSupportedResource);
-//            }
-//        });
-//    }
-//
-//    @Test(dependsOnMethods = "createEntitiesThatDoNotSupportDrift",
-//            expectedExceptions = EJBException.class,
-//            expectedExceptionsMessageRegExp = ".*Cannot create drift definition.*type.*does not support drift management")
-//    @InitDB(false)
-//    public void doNotAllowDefinitionToBeCreatedForTypeThatDoesNotSupportDrift() {
-//        DriftDefinition driftDef = new DriftDefinition(new Configuration());
-//        driftDef.setName("test_typeDoesNotSupportDrift");
-//        driftDef.setEnabled(true);
-//        driftDef.setInterval(1800L);
-//        driftDef.setDriftHandlingMode(normal);
-//        driftDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
-//
-//        driftMgr.updateDriftDefinition(getOverlord(), EntityContext.forResource(driftNotSupportedResource.getId()),
-//                driftDef);
-//    }
+    //    public void createEntitiesThatDoNotSupportDrift() {
+    //        // first create the resource type that does not support drift
+    //        driftNotSupportedType = new ResourceTypeBuilder()
+    //                .createResourceType()
+    //                .withId(0)
+    //                .withName(DRIFT_NOT_SUPPORTED_TYPE)
+    //                .withCategory(SERVER)
+    //                .withPlugin(DRIFT_NOT_SUPPORTED_TYPE.toLowerCase())
+    //                .build();
+    //
+    //        // create a resource of the type that does not support drift
+    //        driftNotSupportedResource = new ResourceBuilder()
+    //                .createResource()
+    //                .withId(0)
+    //                .withName(DRIFT_NOT_SUPPORTED_RESOURCE)
+    //                .withResourceKey(DRIFT_NOT_SUPPORTED_RESOURCE)
+    //                .withRandomUuid()
+    //                .withResourceType(driftNotSupportedType)
+    //                .build();
+    //
+    //        executeInTransaction(new TransactionCallback() {
+    //            @Override
+    //            public void execute() throws Exception {
+    //                EntityManager em = getEntityManager();
+    //                em.persist(driftNotSupportedType);
+    //                em.persist(driftNotSupportedResource);
+    //            }
+    //        });
+    //    }
+    //
+    //    @Test(dependsOnMethods = "createEntitiesThatDoNotSupportDrift",
+    //            expectedExceptions = EJBException.class,
+    //            expectedExceptionsMessageRegExp = ".*Cannot create drift definition.*type.*does not support drift management")
+    //    @InitDB(false)
+    //    public void doNotAllowDefinitionToBeCreatedForTypeThatDoesNotSupportDrift() {
+    //        DriftDefinition driftDef = new DriftDefinition(new Configuration());
+    //        driftDef.setName("test_typeDoesNotSupportDrift");
+    //        driftDef.setEnabled(true);
+    //        driftDef.setInterval(1800L);
+    //        driftDef.setDriftHandlingMode(normal);
+    //        driftDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
+    //
+    //        driftMgr.updateDriftDefinition(getOverlord(), EntityContext.forResource(driftNotSupportedResource.getId()),
+    //                driftDef);
+    //    }
 
     @SuppressWarnings("unchecked")
     public void createDefinitionFromPinnedTemplate() throws Exception {
@@ -237,11 +242,12 @@ public class ManageDriftDefinitionsTest extends AbstractDriftServerTest {
                     agentInvoked.set(true);
                     assertNotNull("Expected snapshot drift instances collection to be non-null",
                         snapshot.getDriftInstances());
-                    assertEquals("Expected snapshot to contain two drift entries", 2, snapshot.getDriftInstances().size());
+                    assertEquals("Expected snapshot to contain two drift entries", 2, snapshot.getDriftInstances()
+                        .size());
                 } catch (Exception e) {
-                    String msg = "Do not pass attached entites to agent since those entities are outside of " +
-                        "Hibernate's control. The persistence context should be flushed and cleared to ensure that " +
-                        "only detached objects are sent to the agent";
+                    String msg = "Do not pass attached entites to agent since those entities are outside of "
+                        + "Hibernate's control. The persistence context should be flushed and cleared to ensure that "
+                        + "only detached objects are sent to the agent";
                     throw new RuntimeException(msg, e);
                 }
             }
@@ -265,9 +271,8 @@ public class ManageDriftDefinitionsTest extends AbstractDriftServerTest {
         assertEquals("Expected to find one change set", 1, changeSets.size());
 
         JPADriftChangeSet expectedChangeSet = new JPADriftChangeSet(resource, 1, COVERAGE, null);
-        List<? extends Drift> expectedDrifts = asList(
-            new JPADrift(expectedChangeSet, drift1.getPath(), FILE_ADDED, null, driftFile1),
-            new JPADrift(expectedChangeSet, drift2.getPath(), FILE_ADDED, null, driftFile2));
+        List<? extends Drift> expectedDrifts = asList(new JPADrift(expectedChangeSet, drift1.getPath(), FILE_ADDED,
+            null, driftFile1), new JPADrift(expectedChangeSet, drift2.getPath(), FILE_ADDED, null, driftFile2));
 
         DriftChangeSet<?> actualChangeSet = changeSets.get(0);
         List<? extends Drift> actualDrifts = new ArrayList(actualChangeSet.getDrifts());
@@ -290,7 +295,7 @@ public class ManageDriftDefinitionsTest extends AbstractDriftServerTest {
         templateDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
 
         final DriftDefinitionTemplate template = templateMgr.createTemplate(getOverlord(), resourceType.getId(), true,
-                templateDef);
+            templateDef);
 
         // First create the definition
         DriftDefinition definition = template.createDefinition();

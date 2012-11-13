@@ -29,7 +29,6 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import javax.persistence.EntityManager;
 import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
 
@@ -96,7 +95,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
     private TestServerPluginService testServerPluginService;
 
     @Override
-    public void beforeMethod() throws Exception {
+    protected void beforeMethod() throws Exception {
         try {
             //we need this because the drift plugins are referenced from the system settings that we use in our tests
             testServerPluginService = new TestServerPluginService();
@@ -114,7 +113,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
     }
 
     @Override
-    public void afterMethod() throws Exception {
+    protected void afterMethod() throws Exception {
         try {
             deleteNewResource(newResource);
             unprepareForTestAgents();
@@ -152,7 +151,6 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         }
         getTransactionManager().begin();
         try {
-            EntityManager em = getEntityManager();
 
             /* agent is now implicitly deleted
             Agent agent = em.find(Agent.class, agentId);
@@ -190,13 +188,13 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
     private void addDataToBePurged() throws NotSupportedException, SystemException, Throwable {
         // add a bunch of data that is to be purged
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
+
         try {
             try {
                 // add alerts
                 AlertDefinition ad = newResource.getAlertDefinitions().iterator().next();
                 for (long timestamp = 0L; timestamp < 200L; timestamp++) {
-                    Alert newAlert = createNewAlert(em, ad, timestamp);
+                    Alert newAlert = createNewAlert(ad, timestamp);
                     assert newAlert.getCtime() == timestamp : "bad alert persisted:" + newAlert;
                     assert newAlert.getId() > 0 : "alert not persisted:" + newAlert;
                     if (timestamp % 50L == 0) {
@@ -209,7 +207,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
 
                 // add availabilities
                 for (long timestamp = 0L; timestamp < 2000L; timestamp += 2L) {
-                    Availability newAvail = createNewAvailability(em, newResource, timestamp, timestamp + 1L);
+                    Availability newAvail = createNewAvailability(newResource, timestamp, timestamp + 1L);
                     assert newAvail.getStartTime() == timestamp : "bad avail persisted:" + newAvail;
                     assert newAvail.getEndTime() == (timestamp + 1L) : "bad avail persisted:" + newAvail;
                     assert newAvail.getId() > 0 : "avail not persisted:" + newAvail;
@@ -239,15 +237,13 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             System.err.println("!!!!! DataPurgeJobTest.testPurge failed: " + ThrowableUtil.getAllMessages(t));
             t.printStackTrace();
             throw t;
-        } finally {
-            em.close();
         }
     }
 
     private void makeSureDataIsPurged() throws NotSupportedException, SystemException {
         // now that our data purge job is done, make sure none of our test data is left behind
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
+
         try {
             Subject overlord = LookupUtil.getSubjectManager().getOverlord();
             Resource res = em.find(Resource.class, newResource.getId());
@@ -297,7 +293,6 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
 
         } finally {
             getTransactionManager().rollback();
-            em.close();
         }
     }
 
@@ -422,7 +417,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         return;
     }
 
-    private Availability createNewAvailability(EntityManager em, Resource res, long start, long end) {
+    private Availability createNewAvailability(Resource res, long start, long end) {
         Availability a = new Availability(res, start, AvailabilityType.UP);
         if (end > 0) {
             a.setEndTime(end);
@@ -431,7 +426,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         return a;
     }
 
-    private Alert createNewAlert(EntityManager em, AlertDefinition ad, long timestamp) {
+    private Alert createNewAlert(AlertDefinition ad, long timestamp) {
         Alert a = new Alert(ad, timestamp);
         em.persist(a);
 
@@ -449,100 +444,95 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
 
     private Resource createNewResource() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
 
         Resource resource;
 
         try {
-            try {
-                long now = System.currentTimeMillis();
-                ResourceType resourceType = new ResourceType("plat" + now, "test", ResourceCategory.PLATFORM, null);
+            long now = System.currentTimeMillis();
+            ResourceType resourceType = new ResourceType("plat" + now, "test", ResourceCategory.PLATFORM, null);
 
-                em.persist(resourceType);
-                resourceTypeId = resourceType.getId();
+            em.persist(resourceType);
+            resourceTypeId = resourceType.getId();
 
-                Agent agent = new Agent("testagent" + now, "testaddress" + now, 1, "", "testtoken" + now);
-                em.persist(agent);
-                agentId = agent.getId();
-                em.flush();
+            Agent agent = new Agent("testagent" + now, "testaddress" + now, 1, "", "testtoken" + now);
+            em.persist(agent);
+            agentId = agent.getId();
+            em.flush();
 
-                resource = new Resource("reskey" + now, "resname", resourceType);
-                resource.setUuid("" + new Random().nextInt());
-                resource.setAgent(agent);
-                em.persist(resource);
+            resource = new Resource("reskey" + now, "resname", resourceType);
+            resource.setUuid("" + new Random().nextInt());
+            resource.setAgent(agent);
+            em.persist(resource);
 
-                AlertDefinition ad = new AlertDefinition();
-                ad.setName("alertTest");
-                ad.setEnabled(true);
-                ad.setPriority(AlertPriority.HIGH);
-                ad.setResource(resource);
-                ad.setAlertDampening(new AlertDampening(AlertDampening.Category.NONE));
-                ad.setConditionExpression(BooleanExpression.ALL);
-                ad.setRecoveryId(0);
-                em.persist(ad);
+            AlertDefinition ad = new AlertDefinition();
+            ad.setName("alertTest");
+            ad.setEnabled(true);
+            ad.setPriority(AlertPriority.HIGH);
+            ad.setResource(resource);
+            ad.setAlertDampening(new AlertDampening(AlertDampening.Category.NONE));
+            ad.setConditionExpression(BooleanExpression.ALL);
+            ad.setRecoveryId(0);
+            em.persist(ad);
 
-                AlertCondition ac = new AlertCondition(ad, AlertConditionCategory.AVAILABILITY);
-                ac.setComparator("==");
-                em.persist(ac);
-                ad.addCondition(ac);
+            AlertCondition ac = new AlertCondition(ad, AlertConditionCategory.AVAILABILITY);
+            ac.setComparator("==");
+            em.persist(ac);
+            ad.addCondition(ac);
 
-                EventDefinition ed = new EventDefinition(resourceType, "DataPurgeJobTestEventDefinition");
-                em.persist(ed);
-                resourceType.addEventDefinition(ed);
+            EventDefinition ed = new EventDefinition(resourceType, "DataPurgeJobTestEventDefinition");
+            em.persist(ed);
+            resourceType.addEventDefinition(ed);
 
-                // add calltime schedule
-                MeasurementDefinition def = new MeasurementDefinition(resourceType, "DataPurgeJobTestCalltimeMeasDef");
-                def.setCategory(MeasurementCategory.PERFORMANCE);
-                def.setDataType(DataType.CALLTIME);
-                def.setDefaultInterval(12345);
-                def.setDefaultOn(true);
-                def.setDestinationType("DataPurgeJobTestDestType");
-                def.setDisplayName(def.getName());
-                def.setDisplayType(DisplayType.SUMMARY);
-                em.persist(def);
-                MeasurementSchedule schedule = new MeasurementSchedule(def, resource);
-                em.persist(schedule);
-                def.addSchedule(schedule);
-                resource.addSchedule(schedule);
+            // add calltime schedule
+            MeasurementDefinition def = new MeasurementDefinition(resourceType, "DataPurgeJobTestCalltimeMeasDef");
+            def.setCategory(MeasurementCategory.PERFORMANCE);
+            def.setDataType(DataType.CALLTIME);
+            def.setDefaultInterval(12345);
+            def.setDefaultOn(true);
+            def.setDestinationType("DataPurgeJobTestDestType");
+            def.setDisplayName(def.getName());
+            def.setDisplayType(DisplayType.SUMMARY);
+            em.persist(def);
+            MeasurementSchedule schedule = new MeasurementSchedule(def, resource);
+            em.persist(schedule);
+            def.addSchedule(schedule);
+            resource.addSchedule(schedule);
 
-                // add trait schedule
-                def = new MeasurementDefinition(resourceType, "DataPurgeJobTestTraitMeasDef");
-                def.setCategory(MeasurementCategory.PERFORMANCE);
-                def.setDataType(DataType.TRAIT);
-                def.setDefaultInterval(12345);
-                def.setDefaultOn(true);
-                def.setDisplayName(def.getName());
-                def.setDisplayType(DisplayType.SUMMARY);
-                em.persist(def);
-                schedule = new MeasurementSchedule(def, resource);
-                em.persist(schedule);
-                def.addSchedule(schedule);
-                resource.addSchedule(schedule);
+            // add trait schedule
+            def = new MeasurementDefinition(resourceType, "DataPurgeJobTestTraitMeasDef");
+            def.setCategory(MeasurementCategory.PERFORMANCE);
+            def.setDataType(DataType.TRAIT);
+            def.setDefaultInterval(12345);
+            def.setDefaultOn(true);
+            def.setDisplayName(def.getName());
+            def.setDisplayType(DisplayType.SUMMARY);
+            em.persist(def);
+            schedule = new MeasurementSchedule(def, resource);
+            em.persist(schedule);
+            def.addSchedule(schedule);
+            resource.addSchedule(schedule);
 
-                // add normal measurment schedule
-                def = new MeasurementDefinition(resourceType, "DataPurgeJobTestNormalMeasDef");
-                def.setCategory(MeasurementCategory.PERFORMANCE);
-                def.setDataType(DataType.MEASUREMENT);
-                def.setDefaultInterval(12345);
-                def.setDefaultOn(true);
-                def.setDisplayName(def.getName());
-                def.setDisplayType(DisplayType.SUMMARY);
-                em.persist(def);
-                schedule = new MeasurementSchedule(def, resource);
-                em.persist(schedule);
-                def.addSchedule(schedule);
-                resource.addSchedule(schedule);
+            // add normal measurment schedule
+            def = new MeasurementDefinition(resourceType, "DataPurgeJobTestNormalMeasDef");
+            def.setCategory(MeasurementCategory.PERFORMANCE);
+            def.setDataType(DataType.MEASUREMENT);
+            def.setDefaultInterval(12345);
+            def.setDefaultOn(true);
+            def.setDisplayName(def.getName());
+            def.setDisplayType(DisplayType.SUMMARY);
+            em.persist(def);
+            schedule = new MeasurementSchedule(def, resource);
+            em.persist(schedule);
+            def.addSchedule(schedule);
+            resource.addSchedule(schedule);
 
-            } catch (Exception e) {
-                System.out.println("CANNOT PREPARE TEST: " + e);
-                getTransactionManager().rollback();
-                throw e;
-            }
-
-            getTransactionManager().commit();
-        } finally {
-            em.close();
+        } catch (Exception e) {
+            System.out.println("CANNOT PREPARE TEST: " + e);
+            getTransactionManager().rollback();
+            throw e;
         }
+
+        getTransactionManager().commit();
 
         return resource;
     }
@@ -563,7 +553,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
 
             // delete the agent and the type
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
+
             try {
                 Agent agent = em.find(Agent.class, doomedAgent.getId());
                 if (agent != null)
@@ -579,8 +569,6 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                     getTransactionManager().rollback();
                 } catch (Exception ignore) {
                 }
-            } finally {
-                em.close();
             }
         }
     }

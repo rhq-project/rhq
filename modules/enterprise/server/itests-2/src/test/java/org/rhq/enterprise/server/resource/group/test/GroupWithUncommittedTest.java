@@ -77,7 +77,7 @@ public class GroupWithUncommittedTest extends LargeGroupTestBase {
      * Remove the group and all its members.
      */
     @Override
-    public void afterMethod() throws Exception {
+    protected void afterMethod() throws Exception {
         if (env != null) {
             tearDownLargeGroupWithNormalUserRoleAccess(env, false);
             SessionTestHelper.simulateLogout(env.normalSubject);

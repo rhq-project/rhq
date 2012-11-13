@@ -527,8 +527,14 @@
 
         <configuration>
           <skipTests>true</skipTests>
-          <excludedGroups>arquillian,PERF,${rhq.testng.excludedGroups}</excludedGroups>
+          <!-- NOTE: PERF GROUP AND SOME CLASSES EXCLUDED (SEE BZ 874696) -->
+          <excludedGroups>PERF,${rhq.testng.excludedGroups}</excludedGroups>          
           <groups>${rhq.testng.includedGroups}</groups>
+          <excludes>
+            <exclude>**/JndiAccessTest.java</exclude>
+            <exclude>**/LdapGroupManagerBeanTest.java</exclude>
+            <exclude>**/SynchronizationManagerBeanTest.java</exclude>
+          </excludes>          
           <properties>
             <property>
               <name>listener</name>

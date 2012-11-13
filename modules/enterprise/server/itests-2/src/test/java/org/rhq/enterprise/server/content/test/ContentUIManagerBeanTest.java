@@ -19,10 +19,8 @@
 package org.rhq.enterprise.server.content.test;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
-
-import javax.persistence.EntityManager;
+import java.io.InputStream;
 
 import org.testng.annotations.Test;
 
@@ -38,6 +36,7 @@ import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
+import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.SessionTestHelper;
 
@@ -66,244 +65,253 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
 
     @Test(enabled = ENABLE_TESTS)
     public void testPackageBits() throws Throwable {
-        LoadedPackageBitsComposite composite;
 
-        getTransactionManager().begin();
+        executeInTransaction(new TransactionCallback() {
 
-        try {
-            EntityManager em = getEntityManager();
-            Resource resource = SessionTestHelper.createNewResource(em, "testPkgBitsResource");
-            PackageType pkgType = new PackageType("testPkgBitsPT", resource.getResourceType());
-            org.rhq.core.domain.content.Package pkg = new Package("testPkgBitsP", pkgType);
-            Architecture arch = new Architecture("testPkgArch");
-            PackageVersion pkgVer = new PackageVersion(pkg, "1", arch);
+            public void execute() throws Exception {
+                LoadedPackageBitsComposite composite;
 
-            em.persist(pkgType);
-            em.persist(pkg);
-            em.persist(arch);
-            em.persist(pkgVer);
-            em.flush();
+                try {
+                    Resource resource = SessionTestHelper.createNewResource(em, "testPkgBitsResource");
+                    PackageType pkgType = new PackageType("testPkgBitsPT", resource.getResourceType());
+                    org.rhq.core.domain.content.Package pkg = new Package("testPkgBitsP", pkgType);
+                    Architecture arch = new Architecture("testPkgArch");
+                    PackageVersion pkgVer = new PackageVersion(pkg, "1", arch);
 
-            // test that no bits are available right now
-            composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer.getId());
-            assert composite != null;
-            assert composite.getPackageVersionId() == pkgVer.getId();
-            assert composite.getPackageBitsId() == null;
-            assert !composite.isPackageBitsAvailable();
-            assert !composite.isPackageBitsInDatabase();
+                    em.persist(pkgType);
+                    em.persist(pkg);
+                    em.persist(arch);
+                    em.persist(pkgVer);
+                    em.flush();
 
-            // pretend we loaded the bits, but we stored them somewhere other then the DB
-            PackageBits packageBits = createPackageBits(em);
-            pkgVer.setPackageBits(packageBits);
-            pkgVer = em.merge(pkgVer);
-            em.flush();
+                    // test that no bits are available right now
+                    composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer.getId());
+                    assert composite != null;
+                    assert composite.getPackageVersionId() == pkgVer.getId();
+                    assert composite.getPackageBitsId() == null;
+                    assert !composite.isPackageBitsAvailable();
+                    assert !composite.isPackageBitsInDatabase();
 
-            // test that the bits are available, but are not stored in the DB
-            composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer.getId());
-            assert composite != null;
-            assert composite.getPackageVersionId() == pkgVer.getId();
-            assert composite.getPackageBitsId() == packageBits.getId();
-            assert composite.isPackageBitsAvailable();
-            assert !composite.isPackageBitsInDatabase();
+                    // pretend we loaded the bits, but we stored them somewhere other then the DB
+                    PackageBits packageBits = createPackageBits();
+                    pkgVer.setPackageBits(packageBits);
+                    pkgVer = em.merge(pkgVer);
+                    em.flush();
 
-            // let's make sure there really is no data in the DB
-            packageBits = em.find(PackageBits.class, packageBits.getId());
-            assert packageBits != null;
-            assert packageBits.getBlob().getBits() == null;
+                    // test that the bits are available, but are not stored in the DB
+                    composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer.getId());
+                    assert composite != null;
+                    assert composite.getPackageVersionId() == pkgVer.getId();
+                    assert composite.getPackageBitsId() == packageBits.getId();
+                    assert composite.isPackageBitsAvailable();
+                    assert !composite.isPackageBitsInDatabase();
 
-            // now lets store some bits in the DB
-            final String DATA = "testPackageBits data";
-            PackageBitsBlob packageBitsBlob = em.find(PackageBitsBlob.class, packageBits.getId());
-            packageBitsBlob.setBits(DATA.getBytes());
-            em.merge(packageBitsBlob);
-            em.flush();
+                    // let's make sure there really is no data in the DB
+                    packageBits = em.find(PackageBits.class, packageBits.getId());
+                    assert packageBits != null;
+                    assert packageBits.getBlob().getBits() == null;
 
-            // test that the bits are available and stored in the DB
-            composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer.getId());
-            assert composite != null;
-            assert composite.getPackageVersionId() == pkgVer.getId();
-            assert composite.getPackageBitsId() == packageBits.getId();
-            assert composite.isPackageBitsAvailable();
-            assert composite.isPackageBitsInDatabase();
+                    // now lets store some bits in the DB
+                    final String DATA = "testPackageBits data";
+                    PackageBitsBlob packageBitsBlob = em.find(PackageBitsBlob.class, packageBits.getId());
+                    packageBitsBlob.setBits(DATA.getBytes());
+                    em.merge(packageBitsBlob);
+                    em.flush();
 
-            // let's make sure the data really is in the DB
-            packageBits = em.find(PackageBits.class, packageBits.getId());
-            assert packageBits != null;
-            assert DATA.equals(new String(packageBits.getBlob().getBits()));
+                    // test that the bits are available and stored in the DB
+                    composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer.getId());
+                    assert composite != null;
+                    assert composite.getPackageVersionId() == pkgVer.getId();
+                    assert composite.getPackageBitsId() == packageBits.getId();
+                    assert composite.isPackageBitsAvailable();
+                    assert composite.isPackageBitsInDatabase();
 
-            ////////////////////////////////////////////////////
-            // create another package version and test with that
-            ////////////////////////////////////////////////////
-            PackageVersion pkgVer2 = new PackageVersion(pkg, "2", arch);
-            em.persist(pkgVer2);
-            em.flush();
+                    // let's make sure the data really is in the DB
+                    packageBits = em.find(PackageBits.class, packageBits.getId());
+                    assert packageBits != null;
+                    assert DATA.equals(new String(packageBits.getBlob().getBits()));
 
-            // first make sure the query still gets the right answer for the first pkgVer
-            composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer.getId());
-            assert composite != null;
-            assert composite.getPackageVersionId() == pkgVer.getId();
-            assert composite.getPackageBitsId() == packageBits.getId();
-            assert composite.isPackageBitsAvailable();
-            assert composite.isPackageBitsInDatabase();
+                    ////////////////////////////////////////////////////
+                    // create another package version and test with that
+                    ////////////////////////////////////////////////////
+                    PackageVersion pkgVer2 = new PackageVersion(pkg, "2", arch);
+                    em.persist(pkgVer2);
+                    em.flush();
 
-            // test that no bits are available right now
-            composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer2.getId());
-            assert composite != null;
-            assert composite.getPackageVersionId() == pkgVer2.getId();
-            assert composite.getPackageBitsId() == null;
-            assert !composite.isPackageBitsAvailable();
-            assert !composite.isPackageBitsInDatabase();
+                    // first make sure the query still gets the right answer for the first pkgVer
+                    composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer.getId());
+                    assert composite != null;
+                    assert composite.getPackageVersionId() == pkgVer.getId();
+                    assert composite.getPackageBitsId() == packageBits.getId();
+                    assert composite.isPackageBitsAvailable();
+                    assert composite.isPackageBitsInDatabase();
 
-            // pretend we loaded the bits, but we stored them somewhere other then the DB
-            PackageBits packageBits2 = createPackageBits(em);
-            pkgVer2.setPackageBits(packageBits2);
-            pkgVer2 = em.merge(pkgVer2);
-            em.flush();
+                    // test that no bits are available right now
+                    composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer2.getId());
+                    assert composite != null;
+                    assert composite.getPackageVersionId() == pkgVer2.getId();
+                    assert composite.getPackageBitsId() == null;
+                    assert !composite.isPackageBitsAvailable();
+                    assert !composite.isPackageBitsInDatabase();
 
-            // make sure the query still gets the right answer for the first pkgVer
-            composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer.getId());
-            assert composite != null;
-            assert composite.getPackageVersionId() == pkgVer.getId();
-            assert composite.getPackageBitsId() == packageBits.getId();
-            assert composite.isPackageBitsAvailable();
-            assert composite.isPackageBitsInDatabase();
+                    // pretend we loaded the bits, but we stored them somewhere other then the DB
+                    PackageBits packageBits2 = createPackageBits();
+                    pkgVer2.setPackageBits(packageBits2);
+                    pkgVer2 = em.merge(pkgVer2);
+                    em.flush();
 
-            // test that the bits are available, but are not stored in the DB
-            composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer2.getId());
-            assert composite != null;
-            assert composite.getPackageVersionId() == pkgVer2.getId();
-            assert composite.getPackageBitsId() == packageBits2.getId();
-            assert composite.isPackageBitsAvailable();
-            assert !composite.isPackageBitsInDatabase();
+                    // make sure the query still gets the right answer for the first pkgVer
+                    composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer.getId());
+                    assert composite != null;
+                    assert composite.getPackageVersionId() == pkgVer.getId();
+                    assert composite.getPackageBitsId() == packageBits.getId();
+                    assert composite.isPackageBitsAvailable();
+                    assert composite.isPackageBitsInDatabase();
 
-            // let's make sure there really is no data in the DB
-            packageBits2 = em.find(PackageBits.class, packageBits2.getId());
-            assert packageBits2 != null;
-            assert packageBits2.getBlob().getBits() == null;
+                    // test that the bits are available, but are not stored in the DB
+                    composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer2.getId());
+                    assert composite != null;
+                    assert composite.getPackageVersionId() == pkgVer2.getId();
+                    assert composite.getPackageBitsId() == packageBits2.getId();
+                    assert composite.isPackageBitsAvailable();
+                    assert !composite.isPackageBitsInDatabase();
 
-            // now lets store some bits in the DB
-            final String DATA2 = "testPackageBits more data";
-            packageBits2.getBlob().setBits(DATA2.getBytes());
-            em.merge(packageBits2.getBlob());
-            em.flush();
+                    // let's make sure there really is no data in the DB
+                    packageBits2 = em.find(PackageBits.class, packageBits2.getId());
+                    assert packageBits2 != null;
+                    assert packageBits2.getBlob().getBits() == null;
 
-            // make sure the query still gets the right answer for the first pkgVer
-            composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer.getId());
-            assert composite != null;
-            assert composite.getPackageVersionId() == pkgVer.getId();
-            assert composite.getPackageBitsId() == packageBits.getId();
-            assert composite.isPackageBitsAvailable();
-            assert composite.isPackageBitsInDatabase();
+                    // now lets store some bits in the DB
+                    final String DATA2 = "testPackageBits more data";
+                    packageBits2.getBlob().setBits(DATA2.getBytes());
+                    em.merge(packageBits2.getBlob());
+                    em.flush();
 
-            // test that the bits are available and stored in the DB
-            composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer2.getId());
-            assert composite != null;
-            assert composite.getPackageVersionId() == pkgVer2.getId();
-            assert composite.getPackageBitsId() == packageBits2.getId();
-            assert composite.isPackageBitsAvailable();
-            assert composite.isPackageBitsInDatabase();
+                    // make sure the query still gets the right answer for the first pkgVer
+                    composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer.getId());
+                    assert composite != null;
+                    assert composite.getPackageVersionId() == pkgVer.getId();
+                    assert composite.getPackageBitsId() == packageBits.getId();
+                    assert composite.isPackageBitsAvailable();
+                    assert composite.isPackageBitsInDatabase();
 
-            // let's make sure the data really is in the DB
-            packageBits2 = em.find(PackageBits.class, packageBits2.getId());
-            assert packageBits2 != null;
-            assert DATA2.equals(new String(packageBits2.getBlob().getBits()));
-        } catch (Throwable t) {
-            t.printStackTrace();
-            throw t;
-        } finally {
-            getTransactionManager().rollback();
-        }
+                    // test that the bits are available and stored in the DB
+                    composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer2.getId());
+                    assert composite != null;
+                    assert composite.getPackageVersionId() == pkgVer2.getId();
+                    assert composite.getPackageBitsId() == packageBits2.getId();
+                    assert composite.isPackageBitsAvailable();
+                    assert composite.isPackageBitsInDatabase();
+
+                    // let's make sure the data really is in the DB
+                    packageBits2 = em.find(PackageBits.class, packageBits2.getId());
+                    assert packageBits2 != null;
+                    assert DATA2.equals(new String(packageBits2.getBlob().getBits()));
+
+                } catch (Throwable t) {
+                    t.printStackTrace();
+                    throw new RuntimeException(t);
+                }
+            }
+        });
     }
 
     @Test(enabled = ENABLE_TESTS)
     public void testPackageBitsBlobStream() throws Throwable {
-        LoadedPackageBitsComposite composite;
 
-        getTransactionManager().begin();
+        executeInTransaction(new TransactionCallback() {
 
-        try {
-            EntityManager em = getEntityManager();
-            Resource resource = SessionTestHelper.createNewResource(em, "testPkgBitsLargeResource");
-            PackageType pkgType = new PackageType("testPkgBitsLargePT", resource.getResourceType());
-            org.rhq.core.domain.content.Package pkg = new Package("testPkgBitsLargeP", pkgType);
-            Architecture arch = new Architecture("testPkgLargeArch");
-            PackageVersion pkgVer = new PackageVersion(pkg, "1", arch);
+            public void execute() throws Exception {
+                LoadedPackageBitsComposite composite;
+                try {
+                    Resource resource = SessionTestHelper.createNewResource(em, "testPkgBitsLargeResource");
+                    PackageType pkgType = new PackageType("testPkgBitsLargePT", resource.getResourceType());
+                    org.rhq.core.domain.content.Package pkg = new Package("testPkgBitsLargeP", pkgType);
+                    Architecture arch = new Architecture("testPkgLargeArch");
+                    PackageVersion pkgVer = new PackageVersion(pkg, "1", arch);
 
-            em.persist(pkgType);
-            em.persist(pkg);
-            em.persist(arch);
-            em.persist(pkgVer);
-            em.flush();
+                    em.persist(pkgType);
+                    em.persist(pkg);
+                    em.persist(arch);
+                    em.persist(pkgVer);
+                    em.flush();
 
-            // test that no bits are available right now
-            composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer.getId());
-            assert composite != null;
-            assert composite.getPackageVersionId() == pkgVer.getId();
-            assert composite.getPackageBitsId() == null;
-            assert !composite.isPackageBitsAvailable();
-            assert !composite.isPackageBitsInDatabase();
+                    // test that no bits are available right now
+                    composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer.getId());
+                    assert composite != null;
+                    assert composite.getPackageVersionId() == pkgVer.getId();
+                    assert composite.getPackageBitsId() == null;
+                    assert !composite.isPackageBitsAvailable();
+                    assert !composite.isPackageBitsInDatabase();
 
-            // pretend we loaded the bits, but we stored them somewhere other then the DB
-            PackageBits packageBits = createPackageBits(em);
-            pkgVer.setPackageBits(packageBits);
-            pkgVer = em.merge(pkgVer);
-            em.flush();
+                    // pretend we loaded the bits, but we stored them somewhere other then the DB
+                    PackageBits packageBits = createPackageBits();
+                    pkgVer.setPackageBits(packageBits);
+                    pkgVer = em.merge(pkgVer);
+                    em.flush();
 
-            // test that the bits are available, but are not stored in the DB
-            composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer.getId());
-            assert composite != null;
-            assert composite.getPackageVersionId() == pkgVer.getId();
-            assert composite.getPackageBitsId() == packageBits.getId();
-            assert composite.isPackageBitsAvailable();
-            assert !composite.isPackageBitsInDatabase();
+                    // test that the bits are available, but are not stored in the DB
+                    composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer.getId());
+                    assert composite != null;
+                    assert composite.getPackageVersionId() == pkgVer.getId();
+                    assert composite.getPackageBitsId() == packageBits.getId();
+                    assert composite.isPackageBitsAvailable();
+                    assert !composite.isPackageBitsInDatabase();
 
-            // let's make sure there really is no data in the DB
-            packageBits = em.find(PackageBits.class, packageBits.getId());
-            assert packageBits != null;
-            assert packageBits.getBlob().getBits() == null;
+                    // let's make sure there really is no data in the DB
+                    packageBits = em.find(PackageBits.class, packageBits.getId());
+                    assert packageBits != null;
+                    assert packageBits.getBlob().getBits() == null;
 
-            // now lets store some bits in the DB using PreparedStatements and BLOB mechanism
-            // to simulate large file transfers where streaming is used instead of reading entire
-            // contents into memory every time.
+                    // now lets store some bits in the DB using PreparedStatements and BLOB mechanism
+                    // to simulate large file transfers where streaming is used instead of reading entire
+                    // contents into memory every time.
 
-            //any jar should be fine. Use generated server jar
-            File originalBinary = new File("./src/test/resources/binary-blob-sample.jar");
-            //destination once pulled from db
-            File retrieved = new File("./target/pulled.jar");
-            if (retrieved.exists()) {
-                assertTrue("Unable to delete ./target/pulled.jar for test cleanup.", retrieved.delete());
+                    // destination once pulled from db
+                    String pulledFilename = System.getProperty("java.io.tmpdir") + "/"
+                        + this.getClass().getSimpleName()
+                        + "/pulled.jar";
+                    File retrieved = new File(pulledFilename);
+                    if (retrieved.exists()) {
+                        assertTrue("Unable to delete " + pulledFilename + " for test cleanup.", retrieved.delete());
+                    }
+
+                    //any jar should be fine. Use canned jar
+                    InputStream originalBinaryStream = this.getClass().getClassLoader()
+                        .getResourceAsStream("binary-blob-sample.jar");
+                    String originalDigest = new MessageDigestGenerator(MessageDigestGenerator.SHA_256)
+                        .calcDigestString(originalBinaryStream);
+                    originalBinaryStream.close();
+                    originalBinaryStream = this.getClass().getClassLoader()
+                        .getResourceAsStream("binary-blob-sample.jar");
+                    contentManager.updateBlobStream(originalBinaryStream, packageBits, null);
+                    packageBits = em.find(PackageBits.class, packageBits.getId());
+
+                    // test that the bits are available and stored in the DB: Reading the Blob
+                    composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer.getId());
+                    assert composite != null;
+                    assert composite.getPackageVersionId() == pkgVer.getId();
+                    assert composite.getPackageBitsId() == packageBits.getId();
+                    assert composite.isPackageBitsAvailable();
+                    assert composite.isPackageBitsInDatabase();
+
+                    FileOutputStream outputStream = new FileOutputStream(retrieved);
+                    contentManager.writeBlobOutToStream(outputStream, packageBits, false);
+
+                    //Check that db content equal to file system content
+                    String newDigest = new MessageDigestGenerator(MessageDigestGenerator.SHA_256)
+                        .calcDigestString(retrieved);
+                    assertEquals("Uploaded and retrieved digests differ:", originalDigest, newDigest);
+
+                } catch (Throwable t) {
+                    t.printStackTrace();
+                    throw new RuntimeException(t);
+                }
             }
-            FileInputStream fos = new FileInputStream(originalBinary);
-
-            contentManager.updateBlobStream(fos, packageBits, null);
-            packageBits = em.find(PackageBits.class, packageBits.getId());
-
-            // test that the bits are available and stored in the DB: Reading the Blob
-            composite = contentUIManager.getLoadedPackageBitsComposite(pkgVer.getId());
-            assert composite != null;
-            assert composite.getPackageVersionId() == pkgVer.getId();
-            assert composite.getPackageBitsId() == packageBits.getId();
-            assert composite.isPackageBitsAvailable();
-            assert composite.isPackageBitsInDatabase();
-
-            FileOutputStream outputStream = new FileOutputStream(retrieved);
-            contentManager.writeBlobOutToStream(outputStream, packageBits, false);
-
-            //Check that db content equal to file system content
-            String originalDigest = new MessageDigestGenerator(MessageDigestGenerator.SHA_256)
-                .calcDigestString(originalBinary);
-            String newDigest = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(retrieved);
-            assertEquals("Uploaded and retrieved digests differ:", originalDigest, newDigest);
-
-        } catch (Throwable t) {
-            t.printStackTrace();
-            throw t;
-        } finally {
-            getTransactionManager().rollback();
-        }
+        });
     }
 
-    private PackageBits createPackageBits(EntityManager em) {
+    private PackageBits createPackageBits() {
         PackageBits bits = null;
         PackageBitsBlob blob = null;
 

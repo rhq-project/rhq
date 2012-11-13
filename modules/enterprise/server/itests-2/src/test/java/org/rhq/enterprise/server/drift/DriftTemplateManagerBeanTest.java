@@ -33,27 +33,20 @@ import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftTemplateManager;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import javax.ejb.EJBException;
-import javax.persistence.EntityManager;
-
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.criteria.DriftDefinitionTemplateCriteria;
 import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.JPADriftChangeSetCriteria;
-import org.rhq.core.domain.criteria.JPADriftCriteria;
 import org.rhq.core.domain.drift.Drift;
-import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftChangeSet;
-import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionComparator;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
@@ -67,7 +60,6 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
 import org.rhq.enterprise.server.test.TransactionCallback;
-import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.test.AssertUtils;
 
 public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
@@ -86,7 +78,7 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
 
     // Note: Arquillian currently (1.0.2) runs each test in its own testng lifecycle. Think of it as each
     // test being in its own suite, and the test class being new'd for each test. Instance variables
-    // don't retain thier set values between tests.  We must reset these from the db, as necessary, when
+    // don't retain their set values between tests.  We must reset these from the db, as necessary, when
     // tests have dependencies on other tests.
     private JPADrift drift1;
     private JPADrift drift2;
@@ -94,15 +86,17 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
     private JPADriftFile driftFile2;
 
     @Override
-    protected void beforeMethod() throws Exception {
-        super.beforeMethod();
+    protected void beforeMethod(Method testMethod) throws Exception {
+        super.beforeMethod(testMethod);
 
         templateMgr = getDriftTemplateManager();
         driftMgr = getDriftManager();
     }
 
     @Override
-    protected void initDB(EntityManager em) {
+    protected void initDB() throws Exception {
+        super.initDB();
+
         agentServiceContainer.driftService = new TestDefService() {
             @Override
             public void unscheduleDriftDetection(int resourceId, DriftDefinition driftDef) {
@@ -130,28 +124,6 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
         };
     }
 
-    @Override
-    protected void fetchDB(EntityManager em) throws Exception {
-        Subject overlord = getOverlord();
-        JPADriftServerLocal driftServer = LookupUtil.getJPADriftServer();
-        driftFile1 = driftServer.getDriftFile(overlord, driftFile1Hash);
-        driftFile2 = driftServer.getDriftFile(overlord, driftFile2Hash);
-        DriftCriteria c = new JPADriftCriteria();
-        c.addFilterDriftHandlingModes((DriftHandlingMode[]) null);
-        c.addFilterCategories((DriftCategory[]) null);
-        c.addFilterResourceIds((Integer[]) null);
-        c.addFilterPath(drift1Path);
-        List<JPADrift> drift = driftServer.findDriftsByCriteria(overlord, c);
-        if (0 != drift.size()) {
-            drift1 = em.find(JPADrift.class, drift.get(0).getId());
-        }
-        c.addFilterPath(drift2Path);
-        drift = driftServer.findDriftsByCriteria(overlord, c);
-        if (0 != drift.size()) {
-            drift2 = em.find(JPADrift.class, drift.get(0).getId());
-        }
-    }
-
     @Test(dependsOnGroups = "pinning")
     public void createNewTemplate() {
         final DriftDefinition definition = new DriftDefinition(new Configuration());
@@ -167,8 +139,6 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
         executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
-                EntityManager em = getEntityManager();
-
                 ResourceType updatedType = em.find(ResourceType.class, resourceType.getId());
 
                 assertEquals("Failed to add new drift definition to resource type", 1, updatedType
@@ -184,8 +154,81 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
         });
     }
 
+    // I had to restructure several tests below into a single test because the approach previously
+    // taken was flawed.  It depended on no interaction between test classes derived from
+    // AbstractDriftServerTest. Once the classes interact a test method in another class could
+    // wipe the DB of the test objects these tests needed.  That is a false assumption.
     @Test(groups = "negativeUpdate")
-    public void createTemplateForNegativeUpdateTests() {
+    public void consolidatedNegativeUpdatesTest() {
+        String testClass = "Running Test: " + this.getClass().getSimpleName() + ".";
+
+        String testMethod = "createTemplateForNegativeUpdateTests()";
+        System.out.println(testClass + testMethod);
+        createTemplateForNegativeUpdateTests();
+
+        testMethod = "createTemplateForNegativeUpdateTests()";
+        System.out.println(testClass + testMethod);
+        try {
+            doNotAllowBaseDirToBeUpdated();
+            fail(testMethod + ": Should have thrown exception");
+        } catch (Exception e) {
+            String msg = e.getMessage();
+            if (!msg.matches(".*base directory.*cannot be modified")) {
+                fail(testMethod + ": Wrong Exception: " + e.getMessage());
+            }
+        }
+
+        testMethod = "doNotAllowBaseDirToBeUpdated()";
+        System.out.println(testClass + testMethod);
+        try {
+            doNotAllowBaseDirToBeUpdated();
+            fail(testMethod + ": Should have thrown exception");
+        } catch (Exception e) {
+            String msg = e.getMessage();
+            if (!msg.matches(".*base directory.*cannot be modified")) {
+                fail(testMethod + ": Wrong Exception: " + e.getMessage());
+            }
+        }
+
+        testMethod = "doNotAllowFiltersToBeUpdated()";
+        System.out.println(testClass + testMethod);
+        try {
+            doNotAllowFiltersToBeUpdated();
+            fail(testMethod + ": Should have thrown exception");
+        } catch (Exception e) {
+            String msg = e.getMessage();
+            if (!msg.matches(".*filters.*cannot be modified")) {
+                fail(testMethod + ": Wrong Exception: " + e.getMessage());
+            }
+        }
+
+        testMethod = "doNotAllowTemplateNameToBeUpdated()";
+        System.out.println(testClass + testMethod);
+        try {
+            doNotAllowTemplateNameToBeUpdated();
+            fail(testMethod + ": Should have thrown exception");
+        } catch (Exception e) {
+            String msg = e.getMessage();
+            if (!msg.matches(".*name.*cannot be modified")) {
+                fail(testMethod + ": Wrong Exception: " + e.getMessage());
+            }
+        }
+
+        testMethod = "doNotAllowDuplicateTemplateNames()";
+        System.out.println(testClass + testMethod);
+        try {
+            doNotAllowDuplicateTemplateNames();
+            fail(testMethod + ": Should have thrown exception");
+        } catch (Exception e) {
+            String msg = e.getMessage();
+            if (!msg.matches(".*template name must be unique.*")) {
+                fail(testMethod + ": Wrong Exception: " + e.getMessage());
+            }
+        }
+    }
+
+    //@Test(groups = "negativeUpdate")
+    private void createTemplateForNegativeUpdateTests() {
         DriftDefinition definition = new DriftDefinition(new Configuration());
         definition.setName(TEST_CREATE_TEMPLATE);
         definition.setEnabled(true);
@@ -197,13 +240,12 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
 
         DriftDefinitionTemplate template = loadTemplate(definition.getName());
         assertNotNull("Failed to load template", template);
-        getEntityManager().clear();
+        //em.clear();
         //System.out.println("Created " + template.toString(false));
     }
 
-    @Test(groups = "negativeUpdate", dependsOnMethods = "createTemplateForNegativeUpdateTests", expectedExceptions = EJBException.class, expectedExceptionsMessageRegExp = ".*base directory.*cannot be modified")
-    @InitDB(false)
-    public void doNotAllowBaseDirToBeUpdated() {
+    //@Test(groups = "negativeUpdate", dependsOnMethods = "createTemplateForNegativeUpdateTests", expectedExceptions = EJBException.class, expectedExceptionsMessageRegExp = ".*base directory.*cannot be modified")
+    private void doNotAllowBaseDirToBeUpdated() {
         DriftDefinitionTemplate template = loadTemplate(TEST_CREATE_TEMPLATE);
         DriftDefinition definition = template.getTemplateDefinition();
         definition.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/TEST"));
@@ -211,9 +253,8 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
         templateMgr.updateTemplate(getOverlord(), template);
     }
 
-    @Test(groups = "negativeUpdate", dependsOnMethods = "createTemplateForNegativeUpdateTests", expectedExceptions = EJBException.class, expectedExceptionsMessageRegExp = ".*filters.*cannot be modified")
-    @InitDB(false)
-    public void doNotAllowFiltersToBeUpdated() {
+    //@Test(groups = "negativeUpdate", dependsOnMethods = "createTemplateForNegativeUpdateTests", expectedExceptions = EJBException.class, expectedExceptionsMessageRegExp = ".*filters.*cannot be modified")
+    private void doNotAllowFiltersToBeUpdated() {
         DriftDefinitionTemplate template = loadTemplate(TEST_CREATE_TEMPLATE);
         DriftDefinition definition = template.getTemplateDefinition();
         definition.addExclude(new Filter("/foo/bar/TEST/conf", "*.xml"));
@@ -221,18 +262,16 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
         templateMgr.updateTemplate(getOverlord(), template);
     }
 
-    @Test(groups = "negativeUpdate", dependsOnMethods = "createTemplateForNegativeUpdateTests", expectedExceptions = EJBException.class, expectedExceptionsMessageRegExp = ".*name.*cannot be modified")
-    @InitDB(false)
-    public void doNotAllowTemplateNameToBeUpdated() {
+    //@Test(groups = "negativeUpdate", dependsOnMethods = "createTemplateForNegativeUpdateTests", expectedExceptions = EJBException.class, expectedExceptionsMessageRegExp = ".*name.*cannot be modified")
+    private void doNotAllowTemplateNameToBeUpdated() {
         DriftDefinitionTemplate template = loadTemplate(TEST_CREATE_TEMPLATE);
         template.setName("A new name");
 
         templateMgr.updateTemplate(getOverlord(), template);
     }
 
-    @Test(groups = "negativeUpdate", dependsOnMethods = "createTemplateForNegativeUpdateTests", expectedExceptions = EJBException.class, expectedExceptionsMessageRegExp = ".*template name must be unique.*")
-    @InitDB(false)
-    public void doNotAllowDuplicateTemplateNames() {
+    //@Test(groups = "negativeUpdate", dependsOnMethods = "createTemplateForNegativeUpdateTests", expectedExceptions = EJBException.class, expectedExceptionsMessageRegExp = ".*template name must be unique.*")
+    private void doNotAllowDuplicateTemplateNames() {
         DriftDefinition definition = new DriftDefinition(new Configuration());
         definition.setName(TEST_CREATE_TEMPLATE);
         definition.setEnabled(true);
@@ -306,8 +345,33 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
         }
     }
 
+    // I had to restructure several tests below into a single test because the approach previously
+    // taken was flawed.  It depended on no interaction between test classes derived from
+    // AbstractDriftServerTest. Once the classes interact a test method in another class could
+    // wipe the DB of the test objects these tests needed.  That is a false assumption.
     @Test(groups = "pinning", dependsOnGroups = "negativeUpdate")
-    public void pinTemplate() throws Exception {
+    public void consolidatedPinningTest() throws Exception {
+        String testClass = "Running Test: " + this.getClass().getSimpleName() + ".";
+
+        String testMethod = "pinTemplate()";
+        System.out.println(testClass + testMethod);
+        pinTemplate();
+
+        testMethod = "persistChangeSetWhenTemplateGetsPinned()";
+        System.out.println(testClass + testMethod);
+        persistChangeSetWhenTemplateGetsPinned();
+
+        testMethod = "updateAttachedDefinitionsWhenTemplateGetsPinned()";
+        System.out.println(testClass + testMethod);
+        updateAttachedDefinitionsWhenTemplateGetsPinned();
+
+        testMethod = "doNotUpdateDetachedDefinitionsWhenTemplateGetsPinned()";
+        System.out.println(testClass + testMethod);
+        doNotUpdateDetachedDefinitionsWhenTemplateGetsPinned();
+    }
+
+    //@Test(groups = "pinning", dependsOnGroups = "negativeUpdate")
+    private void pinTemplate() throws Exception {
         // First create the template
         final DriftDefinition templateDef = new DriftDefinition(new Configuration());
         templateDef.setName(TEST_PIN_TEMPLATE);
@@ -342,8 +406,6 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
         executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
-                EntityManager em = getEntityManager();
-
                 em.persist(attachedDef1);
 
                 em.persist(driftFile1);
@@ -372,9 +434,8 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
     }
 
     @SuppressWarnings("unchecked")
-    @Test(groups = "pinning", dependsOnMethods = "pinTemplate")
-    @InitDB(false)
-    public void persistChangeSetWhenTemplateGetsPinned() throws Exception {
+    //@Test(groups = "pinning", dependsOnMethods = "pinTemplate")
+    private void persistChangeSetWhenTemplateGetsPinned() throws Exception {
 
         DriftDefinitionTemplate template = loadTemplate(TEST_PIN_TEMPLATE);
 
@@ -406,9 +467,8 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
             "The newDriftFile property was not set correctly for " + drift1);
     }
 
-    @Test(groups = "pinning", dependsOnMethods = "pinTemplate")
-    @InitDB(false)
-    public void updateAttachedDefinitionsWhenTemplateGetsPinned() throws Exception {
+    //@Test(groups = "pinning", dependsOnMethods = "pinTemplate")
+    private void updateAttachedDefinitionsWhenTemplateGetsPinned() throws Exception {
         DriftDefinitionTemplate template = loadTemplate(TEST_PIN_TEMPLATE);
 
         // get the attached definitions
@@ -423,9 +483,8 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
         assertDefinitionIsPinned(attachedDefs.get(1));
     }
 
-    @Test(groups = "pinning", dependsOnMethods = "pinTemplate")
-    @InitDB(false)
-    public void doNotUpdateDetachedDefinitionsWhenTemplateGetsPinned() throws Exception {
+    //@Test(groups = "pinning", dependsOnMethods = "pinTemplate")    
+    private void doNotUpdateDetachedDefinitionsWhenTemplateGetsPinned() throws Exception {
         DriftDefinitionTemplate template = loadTemplate(TEST_PIN_TEMPLATE);
 
         // get the detached definitions
@@ -479,8 +538,6 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
         executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
-                EntityManager em = getEntityManager();
-
                 em.persist(attachedDef1);
                 em.persist(attachedDef2);
                 em.persist(detachedDef1);

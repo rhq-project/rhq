@@ -63,7 +63,7 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
     private Subject overlord;
 
     @Override
-    public void beforeMethod() throws Exception {
+    protected void beforeMethod() throws Exception {
         overlord = LookupUtil.getSubjectManager().getOverlord();
         prepareScheduler();
 
@@ -76,7 +76,7 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
     }
 
     @Override
-    public void afterMethod() throws Exception {
+    protected void afterMethod() throws Exception {
         unprepareServerPluginService();
         unprepareScheduler();
     }

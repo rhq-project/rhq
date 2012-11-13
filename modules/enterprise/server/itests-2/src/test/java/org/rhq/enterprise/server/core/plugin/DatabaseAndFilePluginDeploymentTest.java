@@ -53,9 +53,11 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
 
     private static final String PLUGIN_NAME = "DeployTest"; // as defined in our test descriptors
-    private static final String DESCRIPTORS_LOCATION = "./target/test-classes/test/deployment/";
-    private static final String JARS_LOCATION = DESCRIPTORS_LOCATION + "jars";
-    private static final String DEPLOY_LOCATION = DESCRIPTORS_LOCATION + "deploy";
+    private static final String DESCRIPTORS_LOCATION = "test/deployment/";
+    private static final String TEST_DIR = System.getProperty("java.io.tmpdir") + "/"
+        + DatabaseAndFilePluginDeploymentTest.class.getName() + "/";
+    private static final String JARS_LOCATION = TEST_DIR + "jars";
+    private static final String DEPLOY_LOCATION = TEST_DIR + "deploy";
     private static final String TESTPLUGIN_1_0_FEB = "1.0-feb";
     private static final String TESTPLUGIN_1_0_JUN = "1.0-june";
     private static final String TESTPLUGIN_1_1_FEB = "1.1-feb";
@@ -146,16 +148,17 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
         testPluginFiles.put(TESTPLUGIN_1_0_FEB2, new File(jarsDir, TESTPLUGIN_1_0_FEB2 + ".jar"));
 
         for (Map.Entry<String, File> entry : testPluginFiles.entrySet()) {
-            File descriptorFile = new File(DESCRIPTORS_LOCATION, entry.getKey() + ".xml");
+            String descriptor = DESCRIPTORS_LOCATION + entry.getKey() + ".xml";
             File file = entry.getValue();
-            buildPluginJar(descriptorFile, file);
+            buildPluginJar(descriptor, file);
             assert file.exists();
 
-            PluginDescriptor descriptor = AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL());
-            testPluginDescriptors.put(entry.getKey(), descriptor);
+            PluginDescriptor pluginDescriptor = AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI()
+                .toURL());
+            testPluginDescriptors.put(entry.getKey(), pluginDescriptor);
 
             Plugin pluginPojo = new Plugin(PLUGIN_NAME, file.getName());
-            pluginPojo.setVersion(descriptor.getVersion());
+            pluginPojo.setVersion(pluginDescriptor.getVersion());
             pluginPojo.setMd5(MessageDigestGenerator.getDigestString(file));
             pluginPojo.setMtime(testTimestamps.get(entry.getKey()).getTime());
             testPlugins.put(entry.getKey(), pluginPojo);
@@ -167,10 +170,6 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
     //@AfterClass(alwaysRun = true)
     @Test(priority = 10, alwaysRun = true)
     public void afterClassStandIn() throws Exception {
-        for (Map.Entry<String, File> entry : testPluginFiles.entrySet()) {
-            File doomed = entry.getValue();
-            doomed.delete();
-        }
         File jarsDir = new File(JARS_LOCATION);
         jarsDir.delete();
 
@@ -196,16 +195,16 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
         assert jarsDir.isDirectory();
 
         for (Map.Entry<String, File> entry : testPluginFiles.entrySet()) {
-            File descriptorFile = new File(DESCRIPTORS_LOCATION, entry.getKey() + ".xml");
+            String descriptor = DESCRIPTORS_LOCATION + entry.getKey() + ".xml";
             File file = entry.getValue();
-            buildPluginJar(descriptorFile, file);
+            buildPluginJar(descriptor, file);
             assert file.exists();
 
-            PluginDescriptor descriptor = AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL());
-            testPluginDescriptors.put(entry.getKey(), descriptor);
+            PluginDescriptor pluginDescriptor = AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL());
+            testPluginDescriptors.put(entry.getKey(), pluginDescriptor);
 
             Plugin pluginPojo = new Plugin(PLUGIN_NAME, file.getName());
-            pluginPojo.setVersion(descriptor.getVersion());
+            pluginPojo.setVersion(pluginDescriptor.getVersion());
             pluginPojo.setMd5(MessageDigestGenerator.getDigestString(file));
             pluginPojo.setMtime(testTimestamps.get(entry.getKey()).getTime());
             testPlugins.put(entry.getKey(), pluginPojo);
@@ -576,13 +575,13 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
         pluginJar.setLastModified(testTimestamps.get(pluginId).getTime());
     }
 
-    private void buildPluginJar(File descriptor, File pluginJar) throws Exception {
+    private void buildPluginJar(String descriptor, File pluginJar) throws Exception {
         FileOutputStream fos = new FileOutputStream(pluginJar);
         ZipOutputStream zip = new ZipOutputStream(fos);
         try {
             ZipEntry zipEntry = new ZipEntry("META-INF/rhq-plugin.xml");
             zip.putNextEntry(zipEntry);
-            InputStream input = new FileInputStream(descriptor);
+            InputStream input = this.getClass().getClassLoader().getResourceAsStream(descriptor);
             try {
                 StreamUtil.copy(input, zip, false);
             } finally {

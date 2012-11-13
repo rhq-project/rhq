@@ -25,7 +25,6 @@ import java.io.File;
 import java.lang.reflect.Method;
 import java.util.List;
 
-import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.NonUniqueResultException;
 
@@ -33,7 +32,6 @@ import org.apache.commons.io.FileUtils;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
@@ -42,14 +40,12 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.shared.ResourceBuilder;
 import org.rhq.core.domain.shared.ResourceTypeBuilder;
-import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.test.TransactionCallback;
-import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
 
-@Test(groups = "drift")
+@Test(groups = "drift", singleThreaded = true)
 public abstract class AbstractDriftServerTest extends AbstractEJB3Test {
 
     protected final String RESOURCE_TYPE_NAME = getClass().getSimpleName() + "_RESOURCE_TYPE";
@@ -57,8 +53,6 @@ public abstract class AbstractDriftServerTest extends AbstractEJB3Test {
     protected final String AGENT_NAME = getClass().getSimpleName() + "_AGENT";
 
     protected final String RESOURCE_NAME = getClass().getSimpleName() + "_RESOURCE";
-
-    private ServerPluginsLocal serverPluginsMgr;
 
     protected DriftServerPluginService driftServerPluginService;
 
@@ -70,36 +64,17 @@ public abstract class AbstractDriftServerTest extends AbstractEJB3Test {
 
     protected Resource resource;
 
-    // This is supposed to be an AfterClass method to do final cleanup, but Arquillian currently
-    // runs the entire Suite lifecycle on each test. So, Before/AfterXXX all act like Before/AfterMethod.
-    // So, it does nothing for now unless called from a superclass, and we simply leave junk in the DB. 
-    //@AfterClass
-    protected void afterClass() throws Exception {
-        purgeDB();
-        executeInTransaction(false, new TransactionCallback() {
-            @Override
-            public void execute() throws Exception {
-                purgeDB(getEntityManager());
-            }
-        });
-    }
-
     @Override
     protected void beforeMethod(Method testMethod) throws Exception {
 
         initDriftServer();
         initAgentServices();
-
-        InitDB annotation = testMethod.getAnnotation(InitDB.class);
-        if (annotation == null || annotation.value()) {
-            initDB();
-        } else {
-            fetchDB();
-        }
+        initDB();
     }
 
     @Override
     protected void afterMethod() throws Exception {
+        purgeDB();
         shutDownDriftServer();
         shutDownAgentServices();
     }
@@ -116,8 +91,6 @@ public abstract class AbstractDriftServerTest extends AbstractEJB3Test {
         FileUtils.copyFileToDirectory(jpaDriftPlugin, driftServerPluginService.masterConfig.getPluginDirectory());
 
         driftServerPluginService.startMasterPluginContainer();
-
-        //serverPluginsMgr = LookupUtil.getServerPlugins();
     }
 
     private void initAgentServices() {
@@ -127,8 +100,6 @@ public abstract class AbstractDriftServerTest extends AbstractEJB3Test {
 
     private void shutDownDriftServer() throws Exception {
         unprepareServerPluginService();
-        //already done by the above call
-        //driftServerPluginService.stopMasterPluginContainer();
     }
 
     private void shutDownAgentServices() {
@@ -136,12 +107,11 @@ public abstract class AbstractDriftServerTest extends AbstractEJB3Test {
         unprepareForTestAgents();
     }
 
-    private void initDB() throws Exception {
+    protected void initDB() throws Exception {
         purgeDB();
         executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
-                EntityManager em = getEntityManager();
                 initResourceType();
                 initAgent();
                 initResource();
@@ -150,37 +120,14 @@ public abstract class AbstractDriftServerTest extends AbstractEJB3Test {
                 em.persist(agent);
                 resource.setAgent(agent);
                 em.persist(resource);
-
-                initDB(em);
             }
         });
     }
 
-    private void fetchDB() throws Exception {
+    protected void purgeDB() {
         executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
-                ResourceCriteria c = new ResourceCriteria();
-                c.addFilterName(RESOURCE_NAME);
-                c.addFilterInventoryStatus(null);
-                resource = LookupUtil.getResourceManager().findResourcesByCriteria(getOverlord(), c).get(0);
-                resource = em.find(Resource.class, resource.getId());
-                resourceType = resource.getResourceType();
-                agent = resource.getAgent();
-
-                fetchDB(em);
-            }
-        });
-    }
-
-    protected void fetchDB(EntityManager em) throws Exception {
-    }
-
-    private void purgeDB() {
-        executeInTransaction(false, new TransactionCallback() {
-            @Override
-            public void execute() throws Exception {
-                EntityManager em = getEntityManager();
 
                 em.createQuery("delete from JPADrift ").executeUpdate();
                 em.createQuery("delete from JPADriftChangeSet").executeUpdate();
@@ -189,22 +136,14 @@ public abstract class AbstractDriftServerTest extends AbstractEJB3Test {
                 em.createQuery("delete from DriftDefinition").executeUpdate();
                 em.createQuery("delete from DriftDefinitionTemplate").executeUpdate();
 
-                deleteEntity(Resource.class, RESOURCE_NAME, em);
-                deleteEntity(Agent.class, AGENT_NAME, em);
-                deleteEntity(ResourceType.class, RESOURCE_TYPE_NAME, em);
-
-                purgeDB(em);
+                deleteEntity(Resource.class, RESOURCE_NAME);
+                deleteEntity(Agent.class, AGENT_NAME);
+                deleteEntity(ResourceType.class, RESOURCE_TYPE_NAME);
             }
         });
     }
 
-    protected void purgeDB(EntityManager em) {
-    }
-
-    protected void initDB(EntityManager em) {
-    }
-
-    protected void deleteEntity(Class<?> clazz, String name, EntityManager em) {
+    protected void deleteEntity(Class<?> clazz, String name) {
         try {
             Object entity = em
                 .createQuery("select entity from " + clazz.getSimpleName() + " entity where entity.name = :name")

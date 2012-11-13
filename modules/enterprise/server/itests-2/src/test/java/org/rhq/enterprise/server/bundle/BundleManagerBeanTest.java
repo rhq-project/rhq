@@ -32,7 +32,6 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.transaction.TransactionManager;
 
@@ -141,11 +140,9 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     }
 
     private void cleanupDatabase() {
-        EntityManager em = null;
-
         try {
             getTransactionManager().begin();
-            em = getEntityManager();
+
 
             Query q;
             List<?> doomed;
@@ -271,17 +268,11 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             }
 
             getTransactionManager().commit();
-            em.close();
-            em = null;
         } catch (Exception e) {
             try {
                 System.out.println("CANNOT CLEAN UP TEST: Cause: " + e);
                 getTransactionManager().rollback();
             } catch (Exception ignore) {
-            }
-        } finally {
-            if (null != em) {
-                em.close();
             }
         }
     }
@@ -1072,9 +1063,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         TransactionManager txMgr = getTransactionManager();
         txMgr.begin();
-        EntityManager em = getEntityManager();
         em.persist(rt);
-        em.close();
         txMgr.commit();
         return rt;
     }
@@ -1082,7 +1071,6 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     // lifted from ResourceManagerBeanTest, with the addition of adding bundle config to the type
     private ResourceGroup createTestResourceGroup() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
 
         ResourceGroup resourceGroup = null;
         Resource resource = null;
@@ -1147,8 +1135,6 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             } catch (Exception ignore) {
                 //
             }
-        } finally {
-            em.close();
         }
 
         return resourceGroup;

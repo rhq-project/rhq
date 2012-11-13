@@ -127,9 +127,16 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testClassesJar.addClass(BuilderException.class);
         testClassesJar.addClasses(PropertyMatcher.class, MatchResult.class, PropertyMatchException.class);
         testClassesJar.addAsManifestResource(EmptyAsset.INSTANCE, ArchivePaths.create("beans.xml")); // add CDI injection (needed by arquillian injection);
+        //TOD0 (jshaughn): Once we have identified all of the necessary test resource files, see if we can just add the
+        //      entire /resources dir in one statement
+        testClassesJar.addAsResource("binary-blob-sample.jar");
         testClassesJar.addAsResource("test-alert-sender-serverplugin.xml");
         testClassesJar.addAsResource("test-assist-color-number.txt");
         testClassesJar.addAsResource("test-scheduler.properties");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/configuration/metadata/configuration_metadata_manager_bean_test_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/configuration/metadata/configuration_metadata_manager_bean_test_v2.xml");
         testClassesJar.addAsResource("org/rhq/enterprise/server/discovery/DiscoveryBossBeanTest.xml");
         testClassesJar.addAsResource("org/rhq/enterprise/server/inventory/InventoryManagerBeanTest.xml");
         testClassesJar
@@ -142,6 +149,11 @@ public abstract class AbstractEJB3Test extends Arquillian {
             .addAsResource("org/rhq/enterprise/server/resource/metadata/PluginScanningExtensionMetadataTest/parent_plugin_v2.xml");
         testClassesJar.addAsResource("perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip");
         testClassesJar.addAsResource("serverplugins/simple-generic-serverplugin.xml");
+        testClassesJar.addAsResource("test/deployment/1.0-feb-2.xml");
+        testClassesJar.addAsResource("test/deployment/1.0-feb.xml");
+        testClassesJar.addAsResource("test/deployment/1.0-june.xml");
+        testClassesJar.addAsResource("test/deployment/1.1-feb.xml");
+        testClassesJar.addAsResource("test/deployment/1.1-june.xml");
         testClassesJar.addAsResource("test/metadata/content-source-update-v1.xml");
         testClassesJar.addAsResource("test/metadata/content-source-update-v2.xml");
         testClassesJar.addAsResource("test/metadata/noTypes.xml");
@@ -255,8 +267,15 @@ public abstract class AbstractEJB3Test extends Arquillian {
         dependencies.addAll(resolver.artifact("org.liquibase:liquibase-core").resolveAs(JavaArchive.class));
         dependencies
             .addAll(resolver.artifact("org.jboss.shrinkwrap:shrinkwrap-impl-base").resolveAs(JavaArchive.class));
+        dependencies.addAll(resolver.artifact("org.rhq:rhq-core-client-api:jar:tests").resolveAs(JavaArchive.class));
         dependencies.addAll(resolver.artifact("org.rhq:test-utils").resolveAs(JavaArchive.class));
         dependencies.addAll(resolver.artifact("org.rhq.helpers:perftest-support").resolveAs(JavaArchive.class));
+
+        // Transitive deps required by the above and for some reason not sucked in. Note that
+        // these require an explicit version. TODO (jshaughn): Can we make these transitive or
+        // avoid the explicit version?
+        // dep required byt rhq-core-client-api test-jar
+        dependencies.addAll(resolver.artifact("commons-jxpath:commons-jxpath:1.3").resolveAs(JavaArchive.class));
 
         // exclude any transitive deps we don't want
         String[] excludeFilters = { "testng.*jdk", "rhq-core-domain.*jar" };

@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import org.testng.annotations.Test;
@@ -259,7 +258,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             throw t;
         } finally {
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
 
             try {
                 if (persistedPV != null && persistedPV.getId() > 0) {
@@ -272,7 +270,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 }
             } finally {
                 getTransactionManager().commit();
-                em.close();
             }
         }
 
@@ -354,7 +351,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
 
             // Verify  --------------------------------------------
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
 
             try {
                 // Simple count checks
@@ -429,7 +425,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 assert packageXInstalledPackage != null;
             } finally {
                 getTransactionManager().rollback();
-                em.close();
             }
         }
     }
@@ -479,7 +474,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
 
             // Check to see if the request and installed package were created and have the right status
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
 
             try {
                 // Content request
@@ -563,7 +557,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 responseLock.notifyAll();
 
                 getTransactionManager().rollback();
-                em.close();
             }
         }
 
@@ -573,7 +566,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         Thread.sleep(1000);
 
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
+
         try {
             // Content request
             Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE);
@@ -651,7 +644,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             assertEquals(0, pvs.size());
         } finally {
             getTransactionManager().rollback();
-            em.close();
         }
     }
 
@@ -691,7 +683,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
 
             // Check to see if the request and installed package were created and have the right status
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
 
             try {
                 // Content request
@@ -727,7 +718,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 responseLock.notifyAll();
 
                 getTransactionManager().rollback();
-                em.close();
             }
         }
 
@@ -737,7 +727,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         Thread.sleep(1000);
 
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
+
         try {
             // Content request
             Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE);
@@ -810,7 +800,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
 
         } finally {
             getTransactionManager().rollback();
-            em.close();
         }
     }
 
@@ -850,7 +839,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         Thread.sleep(1000);
 
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
 
         try {
             // Content request
@@ -885,7 +873,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 + historyEntity.getStatus();
         } finally {
             getTransactionManager().rollback();
-            em.close();
         }
     }
 
@@ -926,7 +913,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         // Verify  --------------------------------------------
 
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
 
         try {
             // Content request
@@ -961,7 +947,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 + historyEntity.getStatus();
         } finally {
             getTransactionManager().rollback();
-            em.close();
         }
     }
 
@@ -1000,7 +985,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         // Verify  --------------------------------------------
 
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
 
         try {
             // Content request
@@ -1035,7 +1019,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 + historyEntity.getStatus();
         } finally {
             getTransactionManager().rollback();
-            em.close();
         }
     }
 
@@ -1066,7 +1049,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
 
         // Need to create a content service request off of which to hang the dependencies as new installed package requests
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
 
         ContentServiceRequest request = null;
         try {
@@ -1092,8 +1074,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             getTransactionManager().rollback();
 
             assert false : "Error during setup: " + t;
-        } finally {
-            em.close();
         }
 
         // Test  --------------------------------------------
@@ -1103,7 +1083,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
 
         // Verify installed packages were created for the two dependency packages
         getTransactionManager().begin();
-        em = getEntityManager();
 
         try {
             // Overall package count on the request
@@ -1133,7 +1112,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             }
         } finally {
             getTransactionManager().rollback();
-            em.close();
         }
     }
 
@@ -1162,7 +1140,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             contentManager.deletePackages(overlord, resource1.getId(), deleteUs, notes);
 
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
 
             try {
                 // Content request
@@ -1191,7 +1168,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 }
             } finally {
                 getTransactionManager().rollback();
-                em.close();
             }
         }
 
@@ -1201,7 +1177,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         Thread.sleep(1000);
 
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
+
         try {
             // Content request
             Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE);
@@ -1251,7 +1227,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 + results.size();
         } finally {
             getTransactionManager().rollback();
-            em.close();
         }
     }
 
@@ -1280,7 +1255,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             contentManager.deletePackages(overlord, resource1.getId(), deleteUs, notes);
 
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
 
             try {
                 // Content request
@@ -1309,7 +1283,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 }
             } finally {
                 getTransactionManager().rollback();
-                em.close();
             }
         }
 
@@ -1319,7 +1292,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         Thread.sleep(1000);
 
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
+
         try {
             // Content request
             Query query = em.createNamedQuery(ContentServiceRequest.QUERY_FIND_BY_RESOURCE);
@@ -1369,7 +1342,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 + results.size();
         } finally {
             getTransactionManager().rollback();
-            em.close();
         }
     }
 
@@ -1380,131 +1352,125 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         agentServiceContainer.contentService = contentAgentService;
 
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
 
         try {
-            try {
-                architecture1 = em.find(Architecture.class, 1);
-                architecture2 = em.find(Architecture.class, 2);
+            architecture1 = em.find(Architecture.class, 1);
+            architecture2 = em.find(Architecture.class, 2);
 
-                resourceType1 = new ResourceType("resourcetype-" + System.currentTimeMillis(), "TestPlugin",
-                    ResourceCategory.PLATFORM, null);
-                em.persist(resourceType1);
+            resourceType1 = new ResourceType("resourcetype-" + System.currentTimeMillis(), "TestPlugin",
+                ResourceCategory.PLATFORM, null);
+            em.persist(resourceType1);
 
-                // Add package types to resource type
-                packageType1 = new PackageType();
-                packageType1.setName("package1-" + System.currentTimeMillis());
-                packageType1.setDescription("");
-                packageType1.setCategory(PackageCategory.DEPLOYABLE);
-                packageType1.setDisplayName("TestResourcePackage");
-                packageType1.setCreationData(true);
-                packageType1.setResourceType(resourceType1);
-                em.persist(packageType1);
+            // Add package types to resource type
+            packageType1 = new PackageType();
+            packageType1.setName("package1-" + System.currentTimeMillis());
+            packageType1.setDescription("");
+            packageType1.setCategory(PackageCategory.DEPLOYABLE);
+            packageType1.setDisplayName("TestResourcePackage");
+            packageType1.setCreationData(true);
+            packageType1.setResourceType(resourceType1);
+            em.persist(packageType1);
 
-                packageType2 = new PackageType();
-                packageType2.setName("package2-" + System.currentTimeMillis());
-                packageType2.setDescription("");
-                packageType2.setCategory(PackageCategory.DEPLOYABLE);
-                packageType2.setDisplayName("TestResourcePackage2");
-                packageType2.setCreationData(true);
-                packageType2.setResourceType(resourceType1);
-                em.persist(packageType2);
+            packageType2 = new PackageType();
+            packageType2.setName("package2-" + System.currentTimeMillis());
+            packageType2.setDescription("");
+            packageType2.setCategory(PackageCategory.DEPLOYABLE);
+            packageType2.setDisplayName("TestResourcePackage2");
+            packageType2.setCreationData(true);
+            packageType2.setResourceType(resourceType1);
+            em.persist(packageType2);
 
-                packageType3 = new PackageType();
-                packageType3.setName("package3-" + System.currentTimeMillis());
-                packageType3.setDescription("");
-                packageType3.setCategory(PackageCategory.DEPLOYABLE);
-                packageType3.setDisplayName("TestResourcePackage3");
-                packageType3.setCreationData(true);
-                packageType3.setResourceType(resourceType1);
-                em.persist(packageType3);
+            packageType3 = new PackageType();
+            packageType3.setName("package3-" + System.currentTimeMillis());
+            packageType3.setDescription("");
+            packageType3.setCategory(PackageCategory.DEPLOYABLE);
+            packageType3.setDisplayName("TestResourcePackage3");
+            packageType3.setCreationData(true);
+            packageType3.setResourceType(resourceType1);
+            em.persist(packageType3);
 
-                packageType4 = new PackageType();
-                packageType4.setName("package4-" + System.currentTimeMillis());
-                packageType4.setDescription("");
-                packageType4.setCategory(PackageCategory.DEPLOYABLE);
-                packageType4.setDisplayName("TestResourcePackage4");
-                packageType4.setCreationData(true);
-                packageType4.setResourceType(resourceType1);
-                em.persist(packageType4);
+            packageType4 = new PackageType();
+            packageType4.setName("package4-" + System.currentTimeMillis());
+            packageType4.setDescription("");
+            packageType4.setCategory(PackageCategory.DEPLOYABLE);
+            packageType4.setDisplayName("TestResourcePackage4");
+            packageType4.setCreationData(true);
+            packageType4.setResourceType(resourceType1);
+            em.persist(packageType4);
 
-                resourceType1.addPackageType(packageType1);
-                resourceType1.addPackageType(packageType2);
-                resourceType1.addPackageType(packageType3);
+            resourceType1.addPackageType(packageType1);
+            resourceType1.addPackageType(packageType2);
+            resourceType1.addPackageType(packageType3);
 
-                // Package 1 - Contains 2 versions
-                package1 = new Package("Package1", packageType1);
+            // Package 1 - Contains 2 versions
+            package1 = new Package("Package1", packageType1);
 
-                package1.addVersion(new PackageVersion(package1, "1.0.0", architecture1));
-                package1.addVersion(new PackageVersion(package1, "2.0.0", architecture1));
+            package1.addVersion(new PackageVersion(package1, "1.0.0", architecture1));
+            package1.addVersion(new PackageVersion(package1, "2.0.0", architecture1));
 
-                em.persist(package1);
+            em.persist(package1);
 
-                // Package 2 - Contains 2 versions
-                package2 = new Package("Package2", packageType2);
+            // Package 2 - Contains 2 versions
+            package2 = new Package("Package2", packageType2);
 
-                package2.addVersion(new PackageVersion(package2, "1.0.0", architecture1));
-                package2.addVersion(new PackageVersion(package2, "2.0.0", architecture1));
+            package2.addVersion(new PackageVersion(package2, "1.0.0", architecture1));
+            package2.addVersion(new PackageVersion(package2, "2.0.0", architecture1));
 
-                em.persist(package2);
+            em.persist(package2);
 
-                // Package 3 - Contains 1 version
-                package3 = new Package("Package3", packageType3);
+            // Package 3 - Contains 1 version
+            package3 = new Package("Package3", packageType3);
 
-                package3.addVersion(new PackageVersion(package3, "1.0.0", architecture1));
+            package3.addVersion(new PackageVersion(package3, "1.0.0", architecture1));
 
-                em.persist(package3);
+            em.persist(package3);
 
-                // Package 4 - Contains 2 versions, the first is installed
-                package4 = new Package("Package4", packageType4);
+            // Package 4 - Contains 2 versions, the first is installed
+            package4 = new Package("Package4", packageType4);
 
-                PackageVersion package4Installed = new PackageVersion(package4, "1.0.0", architecture1);
-                package4.addVersion(package4Installed);
-                package4.addVersion(new PackageVersion(package4, "2.0.0", architecture1));
+            PackageVersion package4Installed = new PackageVersion(package4, "1.0.0", architecture1);
+            package4.addVersion(package4Installed);
+            package4.addVersion(new PackageVersion(package4, "2.0.0", architecture1));
 
-                em.persist(package4);
+            em.persist(package4);
 
-                // Package 5 - Contains 1 version, it is installed
-                package5 = new Package("Package5", packageType3);
+            // Package 5 - Contains 1 version, it is installed
+            package5 = new Package("Package5", packageType3);
 
-                PackageVersion package5Installed = new PackageVersion(package5, "1.0.0", architecture1);
-                package5.addVersion(package5Installed);
+            PackageVersion package5Installed = new PackageVersion(package5, "1.0.0", architecture1);
+            package5.addVersion(package5Installed);
 
-                em.persist(package5);
+            em.persist(package5);
 
-                // Create resource against which we'll merge the discovery report
-                resource1 = new Resource("parent" + System.currentTimeMillis(), "name", resourceType1);
-                resource1.setUuid("" + new Random().nextInt());
-                em.persist(resource1);
+            // Create resource against which we'll merge the discovery report
+            resource1 = new Resource("parent" + System.currentTimeMillis(), "name", resourceType1);
+            resource1.setUuid("" + new Random().nextInt());
+            em.persist(resource1);
 
-                // Install packages on the resource
-                installedPackage1 = new InstalledPackage();
-                installedPackage1.setResource(resource1);
-                installedPackage1.setPackageVersion(package4Installed);
-                resource1.addInstalledPackage(installedPackage1);
+            // Install packages on the resource
+            installedPackage1 = new InstalledPackage();
+            installedPackage1.setResource(resource1);
+            installedPackage1.setPackageVersion(package4Installed);
+            resource1.addInstalledPackage(installedPackage1);
 
-                installedPackage2 = new InstalledPackage();
-                installedPackage2.setResource(resource1);
-                installedPackage2.setPackageVersion(package5Installed);
-                resource1.addInstalledPackage(installedPackage2);
+            installedPackage2 = new InstalledPackage();
+            installedPackage2.setResource(resource1);
+            installedPackage2.setPackageVersion(package5Installed);
+            resource1.addInstalledPackage(installedPackage2);
 
-                installedPackage1.setResource(resource1);
-                installedPackage2.setResource(resource1);
+            installedPackage1.setResource(resource1);
+            installedPackage2.setResource(resource1);
 
-                getTransactionManager().commit();
-            } catch (Exception e) {
-                e.printStackTrace();
-                getTransactionManager().rollback();
-                throw e;
-            }
-        } finally {
-            em.close();
+            getTransactionManager().commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+            getTransactionManager().rollback();
+            throw e;
         }
     }
 
     private void tearDownTestEnvironment() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
 
         try {
             try {
@@ -1560,7 +1526,6 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
                 throw e;
             }
         } finally {
-            em.close();
             unprepareForTestAgents();
         }
     }

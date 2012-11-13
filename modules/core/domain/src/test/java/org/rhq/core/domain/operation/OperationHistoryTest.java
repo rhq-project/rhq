@@ -45,7 +45,7 @@ public class OperationHistoryTest extends AbstractEJB3Test {
     private ResourceGroup newGroup;
 
     @Override
-    public void beforeMethod() throws Exception {
+    protected void beforeMethod() throws Exception {
         try {
             newResource = createNewResource();
             newOperation = newResource.getResourceType().getOperationDefinitions().iterator().next();
@@ -59,7 +59,7 @@ public class OperationHistoryTest extends AbstractEJB3Test {
     }
 
     @Override
-    public void afterMethod() throws Exception {
+    protected void afterMethod() throws Exception {
         deleteNewResource(newResource);
     }
 

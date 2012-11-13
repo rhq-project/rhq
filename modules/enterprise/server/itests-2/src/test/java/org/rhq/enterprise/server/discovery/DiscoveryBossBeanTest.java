@@ -130,7 +130,7 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
     }
 
     @Override
-    public void afterMethod() throws Exception {
+    protected void afterMethod() throws Exception {
         try {
             cleanDB();
         } finally {

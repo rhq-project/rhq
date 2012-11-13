@@ -391,7 +391,6 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
      * @param md MeasurementDefinition
      * @return formatted String representation of the last value retrieved.
      */
-    //    protected String convertLastValueForDisplay(double lastValue, MeasurementDefinition md) {
     public static String convertLastValueForDisplay(double lastValue, MeasurementDefinition md) {
         String convertedValue = "";
         String[] convertedValues = GwtMonitorUtils.formatSimpleMetrics(new double[] { lastValue }, md);

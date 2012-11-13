@@ -194,7 +194,7 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
 
 
         // new d3 chart selection
-        //@todo: i18n
+        //@todo: i18n when we remove gflot graphs
         addTableAction(extendLocatorId("d3ChartValues"), "d3 Chart Selection", new TableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
@@ -210,7 +210,7 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
                 int i = 0;
                 for (ListGridRecord record : selection) {
                     Integer defId = record.getAttributeAsInt(MeasurementTableDataSource.FIELD_METRIC_DEF_ID);
-                    definitionIds[i++] = defId.intValue();
+                    definitionIds[i++] = defId;
                 }
                 
                 ResourceCriteria criteria = new ResourceCriteria();

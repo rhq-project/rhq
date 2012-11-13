@@ -222,7 +222,7 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                     double minValue = Double.MAX_VALUE;//
                                                     for (MeasurementDataNumericHighLowComposite d : data) {
                                                         if ((!Double.isNaN(d.getValue()))
-                                                            && (String.valueOf(d.getValue()).indexOf("NaN") == -1)) {
+                                                            && (!String.valueOf(d.getValue()).contains("NaN"))) {
                                                             if (d.getValue() < minValue) {
                                                                 minValue = d.getValue();
                                                             }
@@ -235,7 +235,7 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
 
                                                     for (MeasurementDataNumericHighLowComposite d : data) {
                                                         if ((!Double.isNaN(d.getValue()))
-                                                            && (String.valueOf(d.getValue()).indexOf("NaN") == -1)) {
+                                                            && (!String.valueOf(d.getValue()).contains("NaN"))) {
                                                             commaDelimitedList += d.getValue() + ",";
                                                         }
                                                     }
@@ -263,10 +263,6 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
 
                                                     //Link/title element
                                                     final String title = md.getDisplayName();
-                                                    //final String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricSingleResource&id="
-                                                    //    + resourceId + "&m=" + md.getId();
-
-                                                    //have link launch modal window on click
                                                     LinkItem link = AbstractActivityView.newLinkItem(title,null);
                                                     link.setTooltip(title);
                                                     link.setTitleVAlign(VerticalAlignment.TOP);
@@ -281,23 +277,11 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                             ChartViewWindow window = new ChartViewWindow(
                                                                 recentMeasurementsContent
                                                                     .extendLocatorId("ChartWindow"), title);
-                                                            //generate and include iframed content
-                                                            //FullHTMLPane iframe = new FullHTMLPane(
-                                                                //recentMeasurementsContent.extendLocatorId("View"),
-                                                            //    destination);
                                                             D3GraphListView graphView = new D3GraphListView(extendLocatorId("D3Graphs"),
                                                                     resourceComposite.getResource(),md.getId());
-                                                            graphView.addSetButtonClickHandler(new ClickHandler()
-                                                            {
-                                                                @Override
-                                                                public void onClick(ClickEvent event)
-                                                                {
-                                                                    //@todo: Finish Me
-
-                                                                }
-                                                            });
                                                             window.addItem(graphView);
                                                             window.show();
+                                                            draw();
                                                         }
                                                     });
 
@@ -314,7 +298,7 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                     row.setWidth100();
 
                                                     //if graph content returned
-                                                    if ((md.getName().trim().indexOf("Trait.") == -1)
+                                                    if ((!md.getName().trim().contains("Trait."))
                                                         && (lastValue != -1)) {
                                                         column.addMember(row);
                                                         someChartedData = true;

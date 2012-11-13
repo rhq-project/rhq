@@ -8,10 +8,17 @@ import java.util.Map;
 import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.wordnik.swagger.annotations.ApiClass;
+import com.wordnik.swagger.annotations.ApiProperty;
+
 /**
  * @author Heiko W. Rupp
  */
 @XmlRootElement
+@ApiClass(value = "Represents an operation to be scheduled.",
+        description = "You use this object to prepare the operation to be scheduled. " +
+                "The object is derived from an OperationDefinition. When you are ready preparing," +
+                "you need to set 'readyToSubmit' to true.")
 public class OperationRest {
 
     int id;
@@ -30,6 +37,7 @@ public class OperationRest {
         this.definitionId = definitionId;
     }
 
+    @ApiProperty("Id of the operation schedule")
     public int getId() {
         return id;
     }
@@ -38,6 +46,7 @@ public class OperationRest {
         this.id = id;
     }
 
+    @ApiProperty("Name of the operation")
     public String getName() {
         return name;
     }
@@ -46,6 +55,7 @@ public class OperationRest {
         this.name = name;
     }
 
+    @ApiProperty("Is this schedule ready to finally be submitted (and thus be scheduled to run)")
     public boolean isReadyToSubmit() {
         return readyToSubmit;
     }
@@ -54,6 +64,7 @@ public class OperationRest {
         this.readyToSubmit = readyToSubmit;
     }
 
+    @ApiProperty("The id of the resource the operation should run ")
     public int getResourceId() {
         return resourceId;
     }
@@ -62,6 +73,7 @@ public class OperationRest {
         this.resourceId = resourceId;
     }
 
+    @ApiProperty("The id of the operation definition this schedule was created from")
     public int getDefinitionId() {
         return definitionId;
     }
@@ -70,6 +82,8 @@ public class OperationRest {
         this.definitionId = definitionId;
     }
 
+    @ApiProperty("A key/value map of parameters. Keys are strings. The map is populated at the time the " +
+            "schedule is created from its definition")
     public Map<String, Object> getParams() {
         return params;
     }

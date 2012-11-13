@@ -133,7 +133,7 @@ public class MeasurementCollectorRunner implements Callable<MeasurementReport>, 
             long start = System.currentTimeMillis();
             measurementComponent.getValues(report, Collections.unmodifiableSet(requests));
             long duration = (System.currentTimeMillis() - start);
-            if (duration > 2000L) {
+            if (duration > 2000L || log.isTraceEnabled()) {
                 String message = "[PERF] Collection of measurements for [" + resource + "] (component=["
                     + measurementComponent + "]) took [" + duration + "]ms";
                 if (log.isDebugEnabled()) {

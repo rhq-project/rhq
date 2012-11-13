@@ -23,10 +23,14 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.wordnik.swagger.annotations.ApiClass;
+import com.wordnik.swagger.annotations.ApiProperty;
+
 /**
  * A lightweight resource with a list of children
  * @author Heiko W. Rupp
  */
+@ApiClass("One resource with its direct child resources")
 @XmlRootElement
 public class ResourceWithChildren {
 
@@ -42,16 +46,19 @@ public class ResourceWithChildren {
         this.name = name;
     }
 
+    @ApiProperty("Id of the resource")
     @XmlElement
     public String getId() {
         return id;
     }
 
+    @ApiProperty("Name of the resource")
     @XmlElement
     public String getName() {
         return name;
     }
 
+    @ApiProperty("List of child resources")
     @XmlElement
     public List<ResourceWithChildren> getChildren() {
         return children;

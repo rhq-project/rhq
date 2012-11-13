@@ -29,14 +29,14 @@ USAGE:   release.sh OPTIONS
    --release-version=version              [REQUIRED]
       The release version to be tagged by this script.
 
-   --development-version=version          [REQUIRED]
-      The version under which development will continue after tagging.
-
    --release-branch=git_branch            [REQUIRED]
       Git branch to be used as base for tagging and/or branching.
 
    --release-type=community|enterprise    [REQUIRED]
       Type of release.
+
+   --development-version=version          [OPTIONAL]
+      The version under which development will continue after tagging or branching on the original branch. If development version is not specified then the branch is considered terminal branch and no further development is expected on the original branch.
 
    --test-mode                            [OPTIONAL, DEFAULT]
       Run this script in test mode. Create a test branch from release branch and perform tagging and version updates on this test branch.
@@ -93,6 +93,7 @@ parse_and_validate_options()
    EXTRA_MAVEN_PROFILE=
    DEBUG_MODE=false
    OVERRIDE_TAG=false
+   TERMINAL_BRANCH=false
 
    short_options="h"
    long_options="help,release-version:,development-version:,release-branch:,release-type:,test-mode,production-mode,mode:,branch,tag,scm-strategy:,extra-profile:,debug::,workspace:,override-tag::"
@@ -221,7 +222,7 @@ parse_and_validate_options()
 
    if [ -z "$DEVELOPMENT_VERSION" ];
    then
-      usage "Development version not specified!"
+      TERMINAL_BRANCH=true;
    fi
 
    if [ -z "$RELEASE_BRANCH" ];
@@ -229,21 +230,24 @@ parse_and_validate_options()
       usage "Release branch not specified!"
    fi
 
-   if [ "$RELEASE_TYPE" != "community" ] && [ "$RELEASE_TYPE" != "enterprise" ]; then
+   if [ "$RELEASE_TYPE" != "community" ] && [ "$RELEASE_TYPE" != "enterprise" ];
+   then
       usage "Invalid release type: $RELEASE_TYPE (valid release types are 'community' or 'enterprise')"
    fi
 
-   if [ "$MODE" != "test" ] && [ "$MODE" != "production" ]; then
+   if [ "$MODE" != "test" ] && [ "$MODE" != "production" ];
+   then
       usage "Invalid script mode: $MODE (valid modes are 'test' or 'production')"
    fi
 
-   if [ "$SCM_STRATEGY" != "tag" ] && [ "$SCM_STRATEGY" != "branch" ]; then
+   if [ "$SCM_STRATEGY" != "tag" ] && [ "$SCM_STRATEGY" != "branch" ];
+   then
       usage "Invalid scm strategy: $SCM_STRATEGY (valid scm strategies are 'tag' or 'branch')"
    fi
 
    print_centered "Script Options"
    script_options=( "RELEASE_VERSION" "DEVELOPMENT_VERSION" "RELEASE_BRANCH" "RELEASE_TYPE" \
-                     "MODE" "SCM_STRATEGY" )
+                     "MODE" "SCM_STRATEGY" "TERMINAL_BRANCH")
    print_variables "${script_options[@]}"
 }
 
@@ -345,10 +349,16 @@ run_release_version_and_tag_process()
    [ "$?" -ne 0 ] && abort "Failed to cleanup snbapshot jars produced by test build from module target dirs. Please see above Maven output for details, fix any issues, then try again."
 
    echo "7) Commit the change in version; if everything went well so far then this is a good tag."
-   git add -u
-   [ "$?" -ne 0 ] && abort "Adding modified files to commit failed."
-   git commit -m "tag $RELEASE_TAG"
-   [ "$?" -ne 0 ] && abort "The commit with version modified files failed."
+   git diff --exit-code
+   if [ "$?" -ne 0 ];
+   then
+      git add -u
+      [ "$?" -ne 0 ] && abort "Adding modified files to commit failed."
+      git commit -m "tag $RELEASE_TAG"
+      [ "$?" -ne 0 ] && abort "The commit with version modified files failed."
+   else
+      echo "No changes detected to commit. There was no effective change in release version."
+   fi
 
    echo "8) Tag the current source."
    if [ "$OVERRIDE_TAG" ];
@@ -369,7 +379,7 @@ run_release_version_and_tag_process()
       echo "9) DID NOT execute this step because local branch was created. No need to merge back changes."
    fi
 
-   echo "10) If everything went well so far than means all the changes can be pushed!!!"
+   echo "10) Everything went well so far, all the changes are now pushed!!!"
    git push origin "refs/heads/$BUILD_BRANCH"
    [ "$?" -ne 0 ] && abort "$BUILD_BRANCH branch push to origin failed."
    git push origin "refs/tags/$RELEASE_TAG"
@@ -383,6 +393,12 @@ run_release_version_and_tag_process()
 update_development_version()
 {
    print_function_information $FUNCNAME
+
+   if [ "$TERMINAL_BRANCH" ];
+   then
+      echo "Release branch $RELEASE_BRANCH is a terminal branch. Version on release branch no updated for future development!";
+      return 0;
+   fi
 
    echo "1) Set version to the current development version"
    mvn versions:set versions:use-releases -DnewVersion=$DEVELOPMENT_VERSION  -DallowSnapshots=false -DgenerateBackupPoms=false

@@ -4064,6 +4064,27 @@
                      is not huge from the user perspective. -->
                 <schema-javaTask className="org.rhq.core.db.upgrade.ConfigurationObfuscationCorrectionUpgradeTask" />
             </schemaSpec>
+
+            <!-- BZ 865167 -->
+            <schemaSpec version="2.126">
+                <schema-directSQL>
+                    <statement targetDBVendor="postgresql">
+                        INSERT INTO RHQ_RESOURCE_AVAIL ( ID, RESOURCE_ID, AVAILABILITY_TYPE )
+                            SELECT nextval('RHQ_RESOURCE_AVAIL_ID_SEQ'::text), res.ID, 2
+                              FROM RHQ_RESOURCE res
+                                   LEFT JOIN RHQ_RESOURCE_AVAIL avail ON res.ID = avail.RESOURCE_ID
+                             WHERE avail.ID IS NULL
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        INSERT INTO RHQ_RESOURCE_AVAIL ( ID, RESOURCE_ID, AVAILABILITY_TYPE )
+                            SELECT RHQ_RESOURCE_AVAIL_ID_SEQ.nextval, res.ID, 2
+                              FROM RHQ_RESOURCE res
+                                   LEFT JOIN RHQ_RESOURCE_AVAIL avail ON res.ID = avail.RESOURCE_ID
+                             WHERE avail.ID IS NULL
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

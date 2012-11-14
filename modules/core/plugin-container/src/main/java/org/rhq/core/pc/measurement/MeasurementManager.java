@@ -580,8 +580,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
             nextCollection += randomInterval;
 
             if (LOG.isTraceEnabled()) {
-                LOG.trace("Rescheduling next collection of [" + scheduledMeasurement.getResourceId() + ":"
-                    + scheduledMeasurement.getScheduleId() + ":" + scheduledMeasurement.getName() + "] for "
+                LOG.trace("Rescheduling next collection of [" + scheduledMeasurement + "] for "
                     + new Date(nextCollection));
             }
 

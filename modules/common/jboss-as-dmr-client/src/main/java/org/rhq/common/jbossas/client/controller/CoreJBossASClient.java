@@ -82,6 +82,23 @@ public class CoreJBossASClient extends JBossASClient {
     }
 
     /**
+     * Enabled or disables the default deployment scanner.
+     * @param enabled the new status to be set
+     * @throws Exception
+     */
+    public void setAppServerDefaultDeploymentScanEnabled(boolean enabled) throws Exception {
+        final String[] addressArr = { SUBSYSTEM, DEPLOYMENT_SCANNER, SCANNER, "default" };
+        final Address address = Address.root().add(addressArr);
+        final ModelNode req = createWriteAttributeRequest("scan-enabled", Boolean.toString(enabled), address);
+        final ModelNode response = execute(req);
+
+        if (!isSuccess(response)) {
+            throw new FailureException(response);
+        }
+        return;
+    }
+
+    /**
      * Returns the location where the default deployment scanner is pointing to.
      * This is where EARs, WARs and the like are deployed to.
      * @return the default deployments directory - null if there is no deployment scanner

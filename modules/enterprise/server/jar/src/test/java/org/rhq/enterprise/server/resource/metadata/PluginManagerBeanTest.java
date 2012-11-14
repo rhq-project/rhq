@@ -11,6 +11,7 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginStatusType;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScanner;
 import org.rhq.enterprise.server.inventory.InventoryManagerLocal;
@@ -156,17 +157,53 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         assertTrue("Expected plugin status to be set to DELETED", plugin2.getStatus() == PluginStatusType.DELETED);
     }
 
-    @Test(dependsOnMethods = { "registerPlugins" })
-    public void isPluginReadyForDeletion() {
-        Plugin plugin3 = getPlugin("PluginManagerBeanTestPlugin3");
-
+    @Test(dependsOnMethods = {"deletePlugins"})
+    public void isPluginReadyForPurge() throws Exception {
         ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
-        List<Integer> ids = resourceTypeManager.getResourceTypeIdsByPlugin(plugin3.getName());
         InventoryManagerLocal inventoryManager = LookupUtil.getInventoryManager();
-        inventoryManager.markTypesDeleted(ids);
 
-        assertTrue("Expected " + plugin3 + " to be ready for purge since all its resource types have been marked " +
-            "deleted", pluginMgr.isReadyForPurge(plugin3));
+        Plugin plugin = getDeletedPlugin("PluginManagerBeanTestPlugin1");
+        List<ResourceType> resourceTypes = resourceTypeManager.getResourceTypesByPlugin(plugin.getName());
+        List<ResourceType> deletedTypes = inventoryManager.getDeletedTypes();
+
+        assertTrue("All of the resource types declared in " + plugin + " should have already been deleted",
+            deletedTypes.containsAll(resourceTypes));
+
+        assertFalse("A plugin is not ready to be purged until all of its resource types have already been purged " +
+            "and until the plugin itself has been marked for purge", pluginMgr.isReadyForPurge(plugin));
+    }
+
+    private Plugin getDeletedPlugin(String name) {
+        List<Plugin> deletedPlugins = pluginMgr.findAllDeletedPlugins();
+        for (Plugin plugin : deletedPlugins) {
+            if (plugin.getName().equals(name)) {
+                return plugin;
+            }
+        }
+        return null;
+    }
+
+    @Test(dependsOnMethods = { "registerPlugins", "isPluginReadyForPurge"})
+    public void pluginPurgeCheckShouldUseExactMatchesInQuery() throws Exception {
+        // See https://bugzilla.redhat.com/show_bug.cgi?id=845700 for details on this test
+
+        InventoryManagerLocal inventoryManager = LookupUtil.getInventoryManager();
+        ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
+
+        Plugin plugin3 = getPlugin("PluginManagerBeanTestPlugin3");
+        ResourceType resourceType = resourceTypeManager.getResourceTypeByNameAndPlugin("TestServer3",
+            plugin3.getName());
+
+        assertNotNull("Failed to find resource type. Did the resource type name in the plugin descriptor change?",
+            resourceType);
+
+        pluginMgr.deletePlugins(subjectMgr.getOverlord(), asList(plugin3.getId()));
+        inventoryManager.purgeDeletedResourceType(resourceType);
+        pluginMgr.markPluginsForPurge(subjectMgr.getOverlord(), asList(plugin3.getId()));
+
+
+        assertTrue("Expected " + plugin3 + " to be ready for purge since all its resource types have been purged " +
+            "and the plugin has been marked for purge", pluginMgr.isReadyForPurge(plugin3));
     }
 
     @Test(enabled = false, dependsOnMethods = { "deletePlugins" })

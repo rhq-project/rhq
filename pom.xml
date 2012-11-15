@@ -94,6 +94,7 @@
     <jboss-staxmapper.version>1.1.0.Final</jboss-staxmapper.version>
     <jboss-modules.version>1.1.1.GA</jboss-modules.version>
     <jboss-dmr.version>1.1.1.Final</jboss-dmr.version>
+    <jboss-msc.version>1.0.2.GA</jboss-msc.version>
 
     <!-- Not Provided - some of these are needed by the agent -->
     <jboss-annotations.version>4.2.3.GA</jboss-annotations.version>    
@@ -353,6 +354,16 @@
         <groupId>org.jboss.as</groupId>
         <artifactId>jboss-as-ee</artifactId>
         <version>${jboss.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.as</groupId>
+        <artifactId>jboss-as-naming</artifactId>
+        <version>${jboss.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.msc</groupId>
+        <artifactId>jboss-msc</artifactId>
+        <version>${jboss-msc.version}</version>
       </dependency>
 
       <!-- see BZ-820629 and CVE-2009-2625 for why this is needed -->

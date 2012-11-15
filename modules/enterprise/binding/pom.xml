@@ -3,10 +3,10 @@
     <parent>
         <artifactId>rhq-enterprise-parent</artifactId>
         <groupId>org.rhq</groupId>
-        <version>4.4.0.JON311-SNAPSHOT</version>
+        <version>4.4.0.JON312</version>
     </parent>
     <artifactId>rhq-script-bindings</artifactId>
-    <version>4.4.0.JON311-SNAPSHOT</version>
+    <version>4.4.0.JON312</version>
     <name>RHQ Script Bindings</name>
     <description>Abstraction of different facilities and default configurations for script bindings</description>
 

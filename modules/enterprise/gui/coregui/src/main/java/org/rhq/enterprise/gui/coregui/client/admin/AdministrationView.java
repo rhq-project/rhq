@@ -61,7 +61,6 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     public static final ViewName SECTION_CONTENT_VIEW_ID = new ViewName("Content", MSG.view_admin_content());
 
     // TODO these iframe page view ids should go away in favor of the gwt view page view_id, when available
-    private static final ViewName PAGE_SERVERS_VIEW_ID = new ViewName("Servers", MSG.view_adminTopology_servers(), IconEnum.SERVERS);
     private static final ViewName PAGE_AGENTS_VIEW_ID = new ViewName("Agents", MSG.view_adminTopology_agents(),IconEnum.AGENT);
     private static final ViewName PAGE_AFFINITY_GROUPS_VIEW_ID = new ViewName("AffinityGroups",
         MSG.view_adminTopology_affinityGroups(), IconEnum.ALL_GROUPS);
@@ -136,11 +135,10 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         ProductInfo productInfo = CoreGUI.get().getProductInfo();
         boolean isRHQ = (productInfo != null) && "RHQ".equals(productInfo.getShortName());
 
-        NavigationItem serversItem = new NavigationItem(PAGE_SERVERS_VIEW_ID,
+        NavigationItem serversItem = new NavigationItem(ServerTableView.VIEW_ID,
             new ViewFactory() {
                 public Canvas createView() {
-                    return new FullHTMLPane(extendLocatorId(PAGE_SERVERS_VIEW_ID.getName()),
-                        "/rhq/ha/listServers-plain.xhtml?nomenu=true");
+                    return new ServerTableView(extendLocatorId(ServerTableView.VIEW_ID.getName()));
                 }
             }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 

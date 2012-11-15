@@ -373,10 +373,14 @@ run_release_version_and_tag_process()
    if [ "$SCM_STRATEGY" = "tag" ];
    then
       echo "9) Merge any remote changes into the local branch to be able to push tag and version change. This will fail if the merge process requires manual merges."
-      git pull origin "$BUILD_BRANCH"
-      [ "$?" -ne 0 ] && abort "Merge with remote $BUILD_BRANCH failed."
+      git ls-remote --exit-code origin $BUILD_BRANCH
+      if [ "$?" -eq 0 ];
+      then
+         git pull origin "$BUILD_BRANCH"
+         [ "$?" -ne 0 ] && abort "Merge with remote $BUILD_BRANCH failed."
+      fi
    else
-      echo "9) DID NOT execute this step because local branch was created. No need to merge back changes."
+      echo "9) DID NOT execute remote changes merge because local branch was created. No need to merge back changes."
    fi
 
    echo "10) Everything went well so far, all the changes are now pushed!!!"

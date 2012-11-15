@@ -30,9 +30,11 @@ import com.smartgwt.client.widgets.layout.HLayout;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.JsonMetricProducer;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -49,6 +51,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
     private int entityId;
     private int definitionId;
 
+    private MeasurementUnits adjustedMeasurementUnits;
     private MeasurementDefinition definition;
     private List<MeasurementDataNumericHighLowComposite> data;
 
@@ -217,8 +220,18 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
     public String getYAxisTitle(){
        return definition.getName();
     }
+
+    /**
+     * Returns the y-axis units normalized to highest scale (Bytes -> Gb).
+     * NOTE: this requires a dependency such that getJsonMetrics is called
+     * before this method as the adjustedMeasurementUnits are calculated in that method.
+     * @return yAxisUnits -- normalized to highest UOM.
+     */
     public String getYAxisUnits(){
-       return definition.getUnits().toString();
+        if(adjustedMeasurementUnits == null){
+           Log.error("AbstractMetricD3GraphView.adjustedMeasurementUnits is populated by getJsonMetrics. Make sure it is called first.");
+        }
+       return adjustedMeasurementUnits.getName();
     }
 
     public String getXAxisTitle(){
@@ -228,12 +241,20 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
     @Override
     public String getJsonMetrics(){
         StringBuilder sb = new StringBuilder("[");
+        boolean gotAdjustedMeasurementUnits = false;
         for (MeasurementDataNumericHighLowComposite measurement : data) {
             if(!Double.isNaN(measurement.getValue())){
                 sb.append("{ x:"+measurement.getTimestamp()+",");
-                sb.append(" high:"+MeasurementUnits.scaleUp(measurement.getHighValue(), definition.getUnits())+",");
-                sb.append(" low:"+MeasurementUnits.scaleUp(measurement.getLowValue(), definition.getUnits())+",");
-                sb.append(" y:"+MeasurementUnits.scaleUp(measurement.getValue(), definition.getUnits())+"},");
+                MeasurementNumericValueAndUnits newHigh = MeasurementConverterClient.fit(measurement.getHighValue(), definition.getUnits());
+                MeasurementNumericValueAndUnits newLow = MeasurementConverterClient.fit(measurement.getLowValue(), definition.getUnits());
+                MeasurementNumericValueAndUnits newValue = MeasurementConverterClient.fit(measurement.getValue(), definition.getUnits());
+                if(!gotAdjustedMeasurementUnits){
+                    adjustedMeasurementUnits = newValue.getUnits();
+                   gotAdjustedMeasurementUnits = true;
+                }
+                sb.append(" high:"+newHigh.getValue()+",");
+                sb.append(" low:"+newLow.getValue()+",");
+                sb.append(" y:"+newValue.getValue()+"},");
             }
         }
         sb.setLength(sb.length()-1); // delete the last ','

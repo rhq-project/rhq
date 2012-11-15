@@ -50,13 +50,14 @@ public abstract class MetricBarChartGraphView extends AbstractMetricD3GraphView 
         var chartId =  this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getChartId()(),
             chartHandle = "#rChart-"+chartId,
             chartSelection = chartHandle + " svg",
+            json = eval(this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getJsonMetrics()()),
             yAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisTitle()(),
             yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisUnits()(),
             xAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getXAxisTitle()(),
             displayDayOfWeek = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::shouldDisplayDayOfWeekInXAxisLabel()(),
-            xAxisTimeFormat = (displayDayOfWeek) ? "%a %I %p" : "%I %p",
-            json = eval(this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getJsonMetrics()());
+            xAxisTimeFormat = (displayDayOfWeek) ? "%a %I %p" : "%I %p";
 
+        // nvd3 defines their json models a standard way (same model for other graphs)
         var data = function() {
             return [
                 {

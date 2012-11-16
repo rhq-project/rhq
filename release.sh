@@ -306,7 +306,7 @@ set_local_and_environment_variables()
       MAVEN_ARGS="$MAVEN_ARGS --debug"
    fi
 
-   if [ -z "RELEASE_TAG" ]; then
+   if [ -z "$RELEASE_TAG" ]; then
       TAG_PREFIX="RHQ"
       TAG_VERSION=`echo $RELEASE_VERSION | sed 's/[\.|-]/_/g'`
       RELEASE_TAG="${TAG_PREFIX}_${TAG_VERSION}"

@@ -106,7 +106,7 @@ public class ConfigurationToAugeasSimple implements ConfigurationToAugeas {
             i = seq - 1;
         }
 
-        for (PropertyDefinition mapEntryPropDef : propDefMap.getPropertyDefinitions()) {
+        for (PropertyDefinition mapEntryPropDef : propDefMap.getOrderedPropertyDefinitions()) {
             updateProperty(mapEntryPropDef, map, nodes.get(i), 0);
         }
 

@@ -216,7 +216,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                             }
                         }
 
-                        definitions = definitionMap.getPropertyDefinitions();
+                        definitions = new ArrayList<PropertyDefinition>(definitionMap.getOrderedPropertyDefinitions());
                         PropertyMap map = conf.getMap(mapName);
                         for (PropertyDefinition def : definitions) {
                             createWriteAttribute(cop, address1, def, map.get(def.getName()));

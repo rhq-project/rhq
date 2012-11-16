@@ -43,6 +43,7 @@ import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.util.ValueCallback;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
@@ -373,9 +374,9 @@ public class ConfigurationEditor extends LocatableVLayout {
             this.originalConfiguration = configuration.deepCopy();
         }
 
-        String oobProp = this.configuration.getSimpleValue("__OOB",null);
-        if (oobProp!=null) {
-            Message msg = new Message(oobProp,Message.Severity.Warning,EnumSet.of(Message.Option.Transient));
+        String oobProp = this.configuration.getSimpleValue("__OOB", null);
+        if (oobProp != null) {
+            Message msg = new Message(oobProp, Message.Severity.Warning, EnumSet.of(Message.Option.Transient));
             CoreGUI.getMessageCenter().notify(msg);
         }
 
@@ -778,9 +779,12 @@ public class ConfigurationEditor extends LocatableVLayout {
         }
         LocatableVLayout layout = new LocatableVLayout(parentLocatorId + "_Layout");
 
+        HTMLFlow description = new HTMLFlow(propertyDefinitionMap.getDescription());
+        layout.addMember(description);
+
         final PropertyDefinitionMap propertyDefinitionMapFinal = propertyDefinitionMap;
         LocatableDynamicForm valuesCanvas = buildPropertiesForm(layout.getLocatorId(),
-            propertyDefinitionMapFinal.getPropertyDefinitions(), propertyMap);
+            propertyDefinitionMapFinal.getOrderedPropertyDefinitions(), propertyMap);
         layout.addMember(valuesCanvas);
 
         if (isDynamic && !isReadOnly(propertyDefinitionMap, propertyMap)) {
@@ -940,7 +944,8 @@ public class ConfigurationEditor extends LocatableVLayout {
         summaryTable.setRecordEnabledProperty(null);
 
         List<ListGridField> fieldsList = new ArrayList<ListGridField>();
-        final List<PropertyDefinition> propertyDefinitions = memberPropertyDefinitionMap.getPropertyDefinitions();
+        final List<PropertyDefinition> propertyDefinitions = new ArrayList<PropertyDefinition>(
+            memberPropertyDefinitionMap.getOrderedPropertyDefinitions());
 
         List<PropertyDefinition> summaryPropertyDefinitions = new ArrayList<PropertyDefinition>();
         for (PropertyDefinition subDef : propertyDefinitions) {
@@ -998,12 +1003,17 @@ public class ConfigurationEditor extends LocatableVLayout {
                     SC.confirm(MSG.view_configEdit_confirm_2(), new BooleanCallback() {
                         public void execute(Boolean confirmed) {
                             if (confirmed) {
-                                PropertyMapListGridRecord recordToBeDeleted = (PropertyMapListGridRecord) recordClickEvent
-                                    .getRecord();
-                                propertyList.getList().remove(recordToBeDeleted.getIndex());
-                                ListGridRecord[] rows = buildSummaryRecords(propertyList, propertyDefinitions);
-                                summaryTable.setData(rows);
-                                firePropertyChangedEvent(propertyList, propertyDefinitionList, true);
+                                if (summaryTable.getRecordList().getLength() <= propertyDefinitionList.getMin()) {
+                                    SC.say(MSG.view_configEdit_minBoundsExceeded(String.valueOf(propertyDefinitionList
+                                        .getMin())));
+                                } else {
+                                    PropertyMapListGridRecord recordToBeDeleted = (PropertyMapListGridRecord) recordClickEvent
+                                        .getRecord();
+                                    propertyList.getList().remove(recordToBeDeleted.getIndex());
+                                    ListGridRecord[] rows = buildSummaryRecords(propertyList, propertyDefinitions);
+                                    summaryTable.setData(rows);
+                                    firePropertyChangedEvent(propertyList, propertyDefinitionList, true);
+                                }
                             }
                         }
                     });
@@ -1638,7 +1648,8 @@ public class ConfigurationEditor extends LocatableVLayout {
         final PropertyDefinitionList propertyDefinitionList, final PropertyList propertyList,
         PropertyDefinitionMap memberMapDefinition, final PropertyMap memberMap, final boolean mapReadOnly) {
 
-        final List<PropertyDefinition> memberDefinitions = memberMapDefinition.getPropertyDefinitions();
+        final List<PropertyDefinition> memberDefinitions = new ArrayList<PropertyDefinition>(
+            memberMapDefinition.getOrderedPropertyDefinitions());
 
         final boolean newRow = (memberMap == null);
         final PropertyMap workingMap = (newRow) ? new PropertyMap(memberMapDefinition.getName()) : memberMap

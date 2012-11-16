@@ -256,7 +256,7 @@ parse_and_validate_options()
 
    print_centered "Script Options"
    script_options=( "RELEASE_VERSION" "DEVELOPMENT_VERSION" "RELEASE_BRANCH" "RELEASE_TYPE" \
-                     "MODE" "SCM_STRATEGY" "TERMINAL_BRANCH")
+                     "MODE" "SCM_STRATEGY" "TERMINAL_BRANCH" "RELEASE_TAG")
    print_variables "${script_options[@]}"
 }
 
@@ -326,7 +326,8 @@ set_local_and_environment_variables()
    print_variables "${environment_variables[@]}"
 
    print_centered "Local Variables"
-   local_variables=( "MAVEN_LOCAL_REPO_DIR" "MAVEN_SETTINGS_FILE" "MAVEN_ARGS" )
+   local_variables=( "MAVEN_LOCAL_REPO_DIR" "MAVEN_SETTINGS_FILE" "MAVEN_ARGS" \
+                     "RELEASE_TAG" )
    print_variables "${local_variables[@]}"
 }
 

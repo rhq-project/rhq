@@ -65,7 +65,7 @@ public class PropertyMapToCompositeValueSupportAdapter extends AbstractPropertyM
                 : "none";
             compositeMetaType = new MutableCompositeMetaType(name, desc);
             if (propDefMap != null) {
-                for (PropertyDefinition mapMemberPropDef : propDefMap.getPropertyDefinitions()) {
+                for (PropertyDefinition mapMemberPropDef : propDefMap.getOrderedPropertyDefinitions()) {
                     String mapMemberDesc = (propDefMap.getDescription() != null) ? propDefMap.getDescription() : "none";
                     MetaType mapMemberMetaType = ConversionUtils.convertPropertyDefinitionToMetaType(mapMemberPropDef);
                     compositeMetaType.addItem(mapMemberPropDef.getName(), mapMemberDesc, mapMemberMetaType);

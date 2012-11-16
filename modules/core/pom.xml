@@ -18,14 +18,6 @@
    <name>RHQ Core Modules</name>
    <description>parent POM for modules comprising the RHQ core (i.e. modules required by both the enterprise and embedded editions of RHQ)</description>
 
-   <dependencies>
-      <dependency>
-        <groupId>net.sourceforge.cobertura</groupId>
-        <artifactId>cobertura</artifactId>
-        <version>${cobertura.version}</version>
-     </dependency>
-  </dependencies>
-
    <profiles>
 
       <profile>

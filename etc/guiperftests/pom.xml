@@ -70,7 +70,7 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <version>2.6</version>
             <configuration>
-               <argLine>-Xms16M -Xmx256M</argLine>
+               <argLine>${jacoco.unit-test.args} -Xms16M -Xmx256M</argLine>
             </configuration>
          </plugin>
        </plugins>

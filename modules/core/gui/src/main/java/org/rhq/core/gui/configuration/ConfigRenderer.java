@@ -476,7 +476,7 @@ public class ConfigRenderer extends Renderer {
             .getPropertyDefinitionList(listName).getMemberDefinition();
         String mapName = mapDefinition.getName();
         PropertyMap newMap = new PropertyMap(mapName);
-        for (PropertyDefinition mapMemberDefinition : mapDefinition.getPropertyDefinitions()) {
+        for (PropertyDefinition mapMemberDefinition : mapDefinition.getOrderedPropertyDefinitions()) {
             PropertyDefinitionSimple simpleDefinition = (PropertyDefinitionSimple) mapMemberDefinition;
             newMap.put(new PropertySimple(simpleDefinition.getName(), (simpleDefinition.isRequired()) ? "" : null));
         }

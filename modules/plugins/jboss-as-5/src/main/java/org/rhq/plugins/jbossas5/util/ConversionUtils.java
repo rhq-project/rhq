@@ -22,9 +22,9 @@
 */
 package org.rhq.plugins.jbossas5.util;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -235,11 +235,12 @@ public class ConversionUtils {
             // TODO (very low priority, since lists of lists are not going to be at all common)
             memberMetaType = null;
         } else if (propDef instanceof PropertyDefinitionMap) {
-            List<PropertyDefinition> memberPropDefs = ((PropertyDefinitionMap) propDef).getPropertyDefinitions();
+            Collection<PropertyDefinition> memberPropDefs = ((PropertyDefinitionMap) propDef)
+                .getOrderedPropertyDefinitions();
             if (memberPropDefs.isEmpty())
                 throw new IllegalStateException("PropertyDefinitionMap doesn't contain any member PropertyDefinitions.");
             // NOTE: We assume member prop defs are all of the same type, since for MapCompositeMetaTypes, they have to be.
-            PropertyDefinition mapMemberPropDef = memberPropDefs.get(0);
+            PropertyDefinition mapMemberPropDef = memberPropDefs.iterator().next();
             MetaType mapMemberMetaType = convertPropertyDefinitionToMetaType(mapMemberPropDef);
             memberMetaType = new MapCompositeMetaType(mapMemberMetaType);
         } else {

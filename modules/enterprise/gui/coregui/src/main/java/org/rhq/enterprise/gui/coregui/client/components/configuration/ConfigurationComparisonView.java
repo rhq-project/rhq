@@ -176,7 +176,7 @@ public class ConfigurationComparisonView extends VLayout {
                 for (AbstractPropertyMap map : maps) {
                     properties.add((PropertyMap) map);
                 }
-                buildNode(mapNode, defMap.getPropertyDefinitions(), properties);
+                buildNode(mapNode, defMap.getOrderedPropertyDefinitions(), properties);
                 if (!mapNode.getAttributeAsBoolean(ATTRIB_ALL_SAME)) {
                     parent.setAttribute(ATTRIB_ALL_SAME, false);
                 }

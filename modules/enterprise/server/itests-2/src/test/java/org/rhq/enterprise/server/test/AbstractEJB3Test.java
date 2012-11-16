@@ -95,24 +95,6 @@ public abstract class AbstractEJB3Test extends Arquillian {
     @Deployment
     protected static EnterpriseArchive getBaseDeployment() {
 
-        //TODO: Get to work with Oracle or Postgres, currently the standalone.xml is canned and
-        // using Postgres only.  This is likely to be done in pom.xml as opposed to here, so commenting
-        // out.
-        //        // depending on the db in use, set up the necessary datasource 
-        //        String dialect = System.getProperty("hibernate.dialect");
-        //        if (dialect == null) {
-        //            System.out.println("!!! hibernate.dialect is not set! Assuming you want to test on postgres");
-        //            dialect = "postgres";
-        //        }
-        //
-        //        @SuppressWarnings("unused")
-        //        String dataSourceXml;
-        //        if (dialect.toLowerCase().contains("postgres")) {
-        //            dataSourceXml = "jbossas-postgres-ds.xml";
-        //        } else {
-        //            dataSourceXml = "jbossas-oracle-ds.xml";
-        //        }
-
         // deploy the test classes in their own jar, under /lib
         JavaArchive testClassesJar = ShrinkWrap.create(JavaArchive.class, "test-classes.jar");
         testClassesJar = addClasses(testClassesJar, new File("target/test-classes/org"), null);

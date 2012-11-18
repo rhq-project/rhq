@@ -23,11 +23,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
 import org.rhq.core.domain.measurement.DataType;
@@ -53,26 +54,44 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 public class D3GraphListView extends LocatableVLayout {
 
     private Resource resource;
-    private Integer definitionId = null;
+    private Set<Integer> definitionIds = null;
     private Label loadingLabel = new Label(MSG.common_msg_loading());
     private UserPreferencesMeasurementRangeEditor measurementRangeEditor;
+    private boolean useSummaryData = false;
 
-    public D3GraphListView(String locatorId, Resource resource, int definitionId){
+    public static D3GraphListView createMultipleGraphs(String locatorId, Resource resource, Set<Integer> definitionIds) {
+
+        return new D3GraphListView(locatorId, resource, definitionIds);
+    }
+
+    public static D3GraphListView createSummaryMultipleGraphs(String locatorId, Resource resource) {
+        return new D3GraphListView(locatorId, resource);
+    }
+
+    public static D3GraphListView createSingleGraph(String locatorId, Resource resource, Integer measurementId) {
+        TreeSet<Integer> defintionIds = new TreeSet<Integer>();
+        defintionIds.add(measurementId);
+        // add the Graphtype enum to tell which one to call not just method signature
+        return new D3GraphListView(locatorId, resource, defintionIds);
+    }
+
+    private D3GraphListView(String locatorId, Resource resource, Set<Integer> definitionIds) {
         super(locatorId);
         measurementRangeEditor = new UserPreferencesMeasurementRangeEditor(this.getLocatorId());
         this.resource = resource;
         setOverflow(Overflow.AUTO);
-        this.definitionId = definitionId;
+        this.definitionIds = definitionIds;
     }
 
-    public D3GraphListView(String locatorId, Resource resource) {
+    private D3GraphListView(String locatorId, Resource resource) {
         super(locatorId);
         measurementRangeEditor = new UserPreferencesMeasurementRangeEditor(this.getLocatorId());
         this.resource = resource;
         setOverflow(Overflow.AUTO);
+        useSummaryData = true;
     }
 
-    public void addSetButtonClickHandler(ClickHandler clickHandler){
+    public void addSetButtonClickHandler(ClickHandler clickHandler) {
         measurementRangeEditor.getSetButton().addClickHandler(clickHandler);
     }
 
@@ -89,13 +108,11 @@ public class D3GraphListView extends LocatableVLayout {
         }
     }
 
-
-
     /**
      * Build whatever graph metrics (MeasurementDefinitions) are defined for the resource.
      */
     private void buildGraphs() {
-        List<Long> startEndList =  measurementRangeEditor.getBeginEndTimes();
+        List<Long> startEndList = measurementRangeEditor.getBeginEndTimes();
         final long startTime = startEndList.get(0);
         final long endTime = startEndList.get(1);
 
@@ -105,14 +122,23 @@ public class D3GraphListView extends LocatableVLayout {
                 public void onTypesLoaded(final ResourceType type) {
 
                     final ArrayList<MeasurementDefinition> measurementDefinitions = new ArrayList<MeasurementDefinition>();
+                    final ArrayList<MeasurementDefinition> summaryMeasurementDefinitions = new ArrayList<MeasurementDefinition>();
 
                     for (MeasurementDefinition def : type.getMetricDefinitions()) {
                         if (def.getDataType() == DataType.MEASUREMENT && def.getDisplayType() == DisplayType.SUMMARY) {
-                            measurementDefinitions.add(def);
+                            summaryMeasurementDefinitions.add(def);
                         }
+                        measurementDefinitions.add(def);
                     }
 
                     Collections.sort(measurementDefinitions, new Comparator<MeasurementDefinition>() {
+                        @Override
+                        public int compare(MeasurementDefinition o1, MeasurementDefinition o2) {
+                            return new Integer(o1.getDisplayOrder()).compareTo(o2.getDisplayOrder());
+                        }
+                    });
+                    Collections.sort(summaryMeasurementDefinitions, new Comparator<MeasurementDefinition>() {
+                        @Override
                         public int compare(MeasurementDefinition o1, MeasurementDefinition o2) {
                             return new Integer(o1.getDisplayOrder()).compareTo(o2.getDisplayOrder());
                         }
@@ -123,59 +149,80 @@ public class D3GraphListView extends LocatableVLayout {
                         measDefIdArray[i] = measurementDefinitions.get(i).getId();
                     }
 
-                    GWTServiceLookup.getMeasurementDataService().findDataForResource(resource.getId(), measDefIdArray, startTime, endTime,60,
-                            new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>()
-                            {
-                                @Override
-                                public void onFailure(Throwable caught)
-                                {
-                                    CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_loadFailed(),
-                                            caught);
-                                    loadingLabel.setContents(MSG.view_resource_monitor_graphs_loadFailed());
-                                }
+                    GWTServiceLookup.getMeasurementDataService().findDataForResource(resource.getId(), measDefIdArray,
+                        startTime, endTime, 60,
+                        new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
+                            @Override
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_loadFailed(),
+                                    caught);
+                                loadingLabel.setContents(MSG.view_resource_monitor_graphs_loadFailed());
+                            }
 
-
-                                @Override
-                                public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> result)
-                                {
-                                    if (result.isEmpty())
-                                    {
-                                        loadingLabel.setContents(MSG.view_resource_monitor_graphs_noneAvailable());
-                                    }
-                                    else
-                                    {
-                                        loadingLabel.hide();
-                                        int i = 0;
-                                        for (List<MeasurementDataNumericHighLowComposite> data : result)
-                                        {
-                                            if(null != definitionId){
-                                                // single graph case
-                                                int measurementId = measurementDefinitions.get(i).getId();
-                                                if(measurementId == definitionId){
-                                                    buildIndividualGraph(measurementDefinitions.get(i), data);
-                                                }
-                                            }else {
-                                                // multiple graph case
-                                                buildIndividualGraph(measurementDefinitions.get(i), data);
-                                            }
-                                            i++;
-                                        }
+                            @Override
+                            public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> result) {
+                                if (result.isEmpty()) {
+                                    loadingLabel.setContents(MSG.view_resource_monitor_graphs_noneAvailable());
+                                } else {
+                                    loadingLabel.hide();
+                                    if (useSummaryData) {
+                                        Log.debug("using summary data #" + summaryMeasurementDefinitions.size());
+                                        Log.debug("results size #" + result.size());
+                                        buildSummaryGraph(result, summaryMeasurementDefinitions);
+                                    } else {
+                                        determineGraphsToBuild(result, measurementDefinitions, definitionIds);
                                     }
                                 }
-                            });
+                            }
+                        });
 
                 }
+
+                private void buildSummaryGraph(List<List<MeasurementDataNumericHighLowComposite>> measurementData,
+                    List<MeasurementDefinition> summaryMeasurementDefinitions) {
+                    Log.debug(" **** measurementData #: " + measurementData.size());
+                    int i = 0;
+                    List<List<MeasurementDataNumericHighLowComposite>> newData = measurementData.subList(0, summaryMeasurementDefinitions.size());
+                    for (List<MeasurementDataNumericHighLowComposite> measurementList : newData)
+                    {
+                        final MeasurementDefinition measurementDefinition = summaryMeasurementDefinitions.get(i);
+                        buildIndividualGraph(measurementDefinition, measurementList, 130);
+                        i++;
+                    }
+
+                }
+
+                private void determineGraphsToBuild(List<List<MeasurementDataNumericHighLowComposite>> measurementData,
+                    List<MeasurementDefinition> measurementDefinitions, Set<Integer> definitionIds) {
+                    int i = 0;
+                    for (List<MeasurementDataNumericHighLowComposite> measurement : measurementData) {
+
+                        for (Integer selectedDefinitionId : definitionIds) {
+                            final MeasurementDefinition measurementDefinition = measurementDefinitions.get(i);
+                            final int measurementId = measurementDefinition.getId();
+
+                            if (null != selectedDefinitionId) {
+                                // single graph case
+                                if (measurementId == selectedDefinitionId) {
+                                    buildIndividualGraph(measurementDefinition, measurement, 250);
+                                }
+                            } else {
+                                // multiple graph case
+                                buildIndividualGraph(measurementDefinition, measurement, 130);
+                            }
+                        }
+                        i++;
+                    }
+                }
             });
+
     }
 
-    private void buildIndividualGraph(MeasurementDefinition measurementDefinition, List<MeasurementDataNumericHighLowComposite> data ) {
-        buildIndividualGraph(measurementDefinition,data, 130);
-    }
+    private void buildIndividualGraph(MeasurementDefinition measurementDefinition,
+        List<MeasurementDataNumericHighLowComposite> data, int height) {
 
-    private void buildIndividualGraph(MeasurementDefinition measurementDefinition, List<MeasurementDataNumericHighLowComposite> data, int height) {
-
-        ResourceMetricD3GraphView graph = new ResourceMetricD3GraphView(extendLocatorId(measurementDefinition.getName()), resource.getId(),
-            measurementDefinition, data);
+        ResourceMetricD3GraphView graph = new ResourceMetricD3GraphView(
+            extendLocatorId(measurementDefinition.getName()), resource.getId(), measurementDefinition, data);
 
         graph.setWidth("95%");
         graph.setHeight(height);

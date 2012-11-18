@@ -25,6 +25,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.SelectionStyle;
@@ -206,11 +207,10 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
                 if (selection == null || selection.length == 0) {
                     return;
                 }
-                final int[] definitionIds = new int[selection.length];
-                int i = 0;
+                final TreeSet<Integer> definitionIds = new TreeSet<Integer>();
                 for (ListGridRecord record : selection) {
                     Integer defId = record.getAttributeAsInt(MeasurementTableDataSource.FIELD_METRIC_DEF_ID);
-                    definitionIds[i++] = defId;
+                    definitionIds.add(defId);
                 }
                 
                 ResourceCriteria criteria = new ResourceCriteria();
@@ -236,9 +236,8 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
                                     final ResourceComposite resourceComposite = result.get(0);
 
                                     ChartViewWindow window = new ChartViewWindow(extendLocatorId("ChartWindow"), "");
-                                    //@todo pass definitionIds to for the selected metrics
-                                    window.addItem(new D3GraphListView(extendLocatorId("D3Graphs"),
-                                            resourceComposite.getResource()));
+                                    window.addItem(D3GraphListView.createMultipleGraphs(extendLocatorId("D3Graphs"),
+                                            resourceComposite.getResource(), definitionIds));
                                     window.show();
                                     refreshTableInfo();
 

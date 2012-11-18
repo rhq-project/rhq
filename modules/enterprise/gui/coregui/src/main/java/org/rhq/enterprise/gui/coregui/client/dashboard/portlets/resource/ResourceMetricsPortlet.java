@@ -23,6 +23,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
@@ -277,8 +278,8 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                             ChartViewWindow window = new ChartViewWindow(
                                                                 recentMeasurementsContent
                                                                     .extendLocatorId("ChartWindow"), title);
-                                                            D3GraphListView graphView = new D3GraphListView(extendLocatorId("D3Graphs"),
-                                                                    resourceComposite.getResource(),md.getId());
+                                                            D3GraphListView graphView = D3GraphListView.createSingleGraph(extendLocatorId("D3Graphs"),
+                                                                    resourceComposite.getResource(), md.getId());
                                                             window.addItem(graphView);
                                                             window.show();
                                                             draw();

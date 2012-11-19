@@ -56,7 +56,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Joseph Marques
  */
 @Stateless
-public class CloudManagerBean implements CloudManagerLocal {
+public class CloudManagerBean implements CloudManagerLocal, CloudManagerRemote {
     private final Log log = LogFactory.getLog(CloudManagerBean.class);
 
     // A time sufficient to determine whether a server is down.  Can be based on the initial delay set for the server instance

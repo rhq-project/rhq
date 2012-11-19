@@ -24,6 +24,7 @@ import org.rhq.enterprise.server.alert.AlertManagerRemote;
 import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 import org.rhq.enterprise.server.authz.RoleManagerRemote;
 import org.rhq.enterprise.server.bundle.BundleManagerRemote;
+import org.rhq.enterprise.server.cloud.CloudManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.content.RepoManagerRemote;
@@ -63,6 +64,7 @@ public enum RhqManager {
     BundleManager(BundleManagerRemote.class, "${BundleManager}"), //
     CallTimeDataManager(CallTimeDataManagerRemote.class, "${CallTimeDataManager}"), //
     RepoManager(RepoManagerRemote.class, "${RepoManager}"), //
+    CloudManager(CloudManagerRemote.class, "${CloudManager}"), //
     ConfigurationManager(ConfigurationManagerRemote.class, "${ConfigurationManager}"), //
     ContentManager(ContentManagerRemote.class, "${ContentManager}"), //
     DataAccessManager(DataAccessManagerRemote.class, "${DataAccessManager}"), //

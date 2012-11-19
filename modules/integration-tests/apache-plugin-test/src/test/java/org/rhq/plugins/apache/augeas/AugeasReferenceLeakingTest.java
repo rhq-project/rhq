@@ -53,7 +53,6 @@ import org.rhq.plugins.apache.PluginLocation;
 import org.rhq.plugins.apache.setup.ApacheTestConfiguration;
 import org.rhq.plugins.apache.setup.ApacheTestSetup;
 import org.rhq.plugins.apache.upgrade.UpgradeTestBase;
-import org.rhq.plugins.apache.util.ApacheExecutionUtil.ExpectedApacheState;
 import org.rhq.plugins.apache.util.ResourceTypes;
 import org.rhq.test.pc.PluginContainerSetup;
 import org.rhq.test.pc.PluginContainerTest;
@@ -169,7 +168,8 @@ public class AugeasReferenceLeakingTest extends BMNGRunner {
             }
         };
 
-        setup = new ApacheTestSetup(apacheConfig.configurationName, PluginContainerTest.getCurrentMockContext(),
+        setup = new ApacheTestSetup(this.getClass(), apacheConfig.configurationName,
+            PluginContainerTest.getCurrentMockContext(),
             new ResourceTypes(PluginLocation.APACHE_PLUGIN));
 
         Resource platform = UpgradeTestBase.discoverPlatform();
@@ -186,7 +186,7 @@ public class AugeasReferenceLeakingTest extends BMNGRunner {
 
     private void stopApache() throws Exception {
         if (setup != null) {
-            setup.withApacheSetup().getExecutionUtil().invokeOperation(ExpectedApacheState.STOPPED, "stop");
+            setup.withApacheSetup().stopApache();
             setup = null;
         }
     }

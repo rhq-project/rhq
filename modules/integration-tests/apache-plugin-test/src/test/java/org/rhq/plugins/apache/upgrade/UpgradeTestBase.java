@@ -62,7 +62,6 @@ import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.setup.ApacheTestConfiguration;
 import org.rhq.plugins.apache.setup.ApacheTestSetup;
 import org.rhq.plugins.apache.util.ApacheDeploymentUtil.DeploymentConfig;
-import org.rhq.plugins.apache.util.ApacheExecutionUtil.ExpectedApacheState;
 import org.rhq.plugins.apache.util.ResourceTypes;
 import org.rhq.plugins.apache.util.VHostSpec;
 import org.rhq.plugins.apache.util.VirtualHostLegacyResourceKeyUtil;
@@ -97,7 +96,8 @@ public class UpgradeTestBase extends PluginContainerTest {
     }
 
     protected void testUpgrade(ApacheTestConfiguration testConfiguration) throws Throwable {
-        final ApacheTestSetup setup = new ApacheTestSetup(testConfiguration.configurationName, context, apacheResourceTypes);
+        final ApacheTestSetup setup = new ApacheTestSetup(this.getClass(), testConfiguration.configurationName,
+            context, apacheResourceTypes);
         boolean testFailed = false;
         try {
             
@@ -193,7 +193,7 @@ public class UpgradeTestBase extends PluginContainerTest {
             throw t;
         } finally {
             try {
-                setup.withApacheSetup().getExecutionUtil().invokeOperation(ExpectedApacheState.STOPPED, "stop");
+                setup.withApacheSetup().stopApache();
             } catch (Exception e) {
                 if (testFailed) {
                     LOG.error("Failed to stop apache.", e);
@@ -209,7 +209,7 @@ public class UpgradeTestBase extends PluginContainerTest {
 
     protected void defineRHQ3ResourceKeys(ApacheTestConfiguration testConfig, ApacheTestSetup setup) throws Exception {
         setup.withApacheSetup().init();
-        ApacheServerComponent component = setup.withApacheSetup().getExecutionUtil().getServerComponent();
+        ApacheServerComponent component = setup.withApacheSetup().getServerComponent();
         ApacheDirectiveTree config = component.parseRuntimeConfiguration(false);
     
         DeploymentConfig deployConfig = setup.getDeploymentConfig();

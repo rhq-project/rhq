@@ -71,7 +71,6 @@ public class D3GraphListView extends LocatableVLayout {
     public static D3GraphListView createSingleGraph(String locatorId, Resource resource, Integer measurementId) {
         TreeSet<Integer> defintionIds = new TreeSet<Integer>();
         defintionIds.add(measurementId);
-        // add the Graphtype enum to tell which one to call not just method signature
         return new D3GraphListView(locatorId, resource, defintionIds);
     }
 
@@ -166,9 +165,7 @@ public class D3GraphListView extends LocatableVLayout {
                                 } else {
                                     loadingLabel.hide();
                                     if (useSummaryData) {
-                                        Log.debug("using summary data #" + summaryMeasurementDefinitions.size());
-                                        Log.debug("results size #" + result.size());
-                                        buildSummaryGraph(result, summaryMeasurementDefinitions);
+                                        buildSummaryGraph(result, summaryMeasurementDefinitions, measurementDefinitions);
                                     } else {
                                         determineGraphsToBuild(result, measurementDefinitions, definitionIds);
                                     }
@@ -179,14 +176,19 @@ public class D3GraphListView extends LocatableVLayout {
                 }
 
                 private void buildSummaryGraph(List<List<MeasurementDataNumericHighLowComposite>> measurementData,
-                    List<MeasurementDefinition> summaryMeasurementDefinitions) {
-                    Log.debug(" **** measurementData #: " + measurementData.size());
-                    int i = 0;
-                    List<List<MeasurementDataNumericHighLowComposite>> newData = measurementData.subList(0, summaryMeasurementDefinitions.size());
-                    for (List<MeasurementDataNumericHighLowComposite> measurementList : newData)
+                    List<MeasurementDefinition> summaryMeasurementDefinitions, List<MeasurementDefinition> measurementDefinitions) {
+                    Set<Integer> summaryIds = new TreeSet<Integer>();
+                    for (MeasurementDefinition summaryMeasurementDefinition : summaryMeasurementDefinitions)
                     {
-                        final MeasurementDefinition measurementDefinition = summaryMeasurementDefinitions.get(i);
-                        buildIndividualGraph(measurementDefinition, measurementList, 130);
+                        summaryIds.add(summaryMeasurementDefinition.getId());
+                    }
+
+                    int i = 0;
+                    for (MeasurementDefinition measurementDefinition : measurementDefinitions)
+                    {
+                        if(summaryIds.contains(measurementDefinition.getId())){
+                            buildIndividualGraph(measurementDefinition, measurementData.get(i), 130);
+                        }
                         i++;
                     }
 

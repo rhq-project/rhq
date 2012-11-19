@@ -109,10 +109,9 @@ public abstract class MetricLineGraphView extends AbstractMetricD3GraphView impl
                     .x(function(d) { return timeScale(d.x); })
                     .y(function(d) { return yScale(+d.low); });
 
-            var svg = $wnd.d3.select(chartSelection).append("svg")
+            var svg = $wnd.d3.select(chartSelection).append("g")
                     .attr("width", width + margin.left + margin.right)
                     .attr("height", height + margin.top + margin.bottom)
-                    .append("g")
                     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
             svg.append("g")

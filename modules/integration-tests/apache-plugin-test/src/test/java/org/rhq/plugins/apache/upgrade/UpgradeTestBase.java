@@ -101,6 +101,9 @@ public class UpgradeTestBase extends PluginContainerTest {
         boolean testFailed = false;
         try {
             
+            LOG.debug("---------------------------------------------------------- Starting the upgrade test for: "
+                + this.getClass().getSimpleName() + ": " + testConfiguration.configurationName);
+
             String[] configFiles = Arrays.copyOf(testConfiguration.apacheConfigurationFiles, testConfiguration.apacheConfigurationFiles.length + 1);
             configFiles[testConfiguration.apacheConfigurationFiles.length] = "/snmpd.conf";
             
@@ -198,6 +201,9 @@ public class UpgradeTestBase extends PluginContainerTest {
                     throw e;
                 }
             }
+
+            LOG.debug("---------------------------------------------------------- Finished the upgrade test for: "
+                + this.getClass().getSimpleName() + ": " + testConfiguration.configurationName);
         }
     }
 

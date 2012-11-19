@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,37 +20,31 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.core.domain.cloud.composite;
+package org.rhq.enterprise.gui.coregui.client.gwt;
 
-import java.io.Serializable;
+import java.util.List;
+
+import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
+import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.util.PageControl;
 
 /**
- * @author Joseph Marques
+ * @author Jiri Kremser
  */
-public class ServerWithAgentCountComposite implements Serializable {
+public interface CloudGWTService extends RemoteService {
 
-    private static final long serialVersionUID = -7553274660445454259L;
-    private Server server;
-    private int agentCount;
+    /**
+     * 
+     * @return a list of all available servers (the servers in MAINTENANCE mode are included as well)
+     * @throws RuntimeException
+     */
+    List<ServerWithAgentCountComposite> getServers(PageControl pc) throws RuntimeException;
     
-    public ServerWithAgentCountComposite() {
-     // GWT needs this
-    }
-
-    public ServerWithAgentCountComposite(Server server, Number agentCount) {
-        super();
-        this.server = server;
-        this.agentCount = agentCount.intValue();
-    }
-
-    public Server getServer() {
-        return server;
-    }
-
-    public int getAgentCount() {
-        return agentCount;
-    }
+    Server getServerById(int serverId) throws RuntimeException;
+    
+    List<Agent> getAgentsByServerName(String serverName) throws RuntimeException;
 
 }

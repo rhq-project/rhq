@@ -31,30 +31,24 @@ import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.IButton;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.criteria.Criteria;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.admin.ServerTableView.CloudDataSource;
 import org.rhq.enterprise.gui.coregui.client.components.table.AuthorizedTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.components.upload.PluginFileUploadForm;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 
 /**
  * @author Jiri Kremser
@@ -67,15 +61,15 @@ public class ServerTableView extends TableSection<CloudDataSource> {
 
     private static final String FIELD_ID = "id";
     private static final String FIELD_NAME = "name";
-    private static final String FIELD_MODE = "mode";
-    private static final String FIELD_ENDPOINT_ADDRESS = "endpointAddress";
-    private static final String FIELD_NONSECURE_PORT = "nonsecurePort";
+    private static final String FIELD_MODE = "operationMode";
+    private static final String FIELD_ENDPOINT_ADDRESS = "address";
+    private static final String FIELD_NONSECURE_PORT = "port";
     private static final String FIELD_SECURE_PORT = "securePort";
-    private static final String FIELD_LAST_UPDATE_TIME = "lastUpdateTime";
+    private static final String FIELD_LAST_UPDATE_TIME = "mtime";
     private static final String FIELD_AFFINITY_GROUP = "affinityGroup";
     private static final String FIELD_AGENT_COUNT = "agentCount";
 
-    private boolean showUndeployed = false;
+//    private boolean showUndeployed = false;
 
     public ServerTableView(String locatorId) {
         super(locatorId, null);
@@ -91,32 +85,33 @@ public class ServerTableView extends TableSection<CloudDataSource> {
         listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
         listGrid.sort(FIELD_NAME, SortDirection.ASCENDING);
 
-        addTableAction(extendLocatorId("enable"), MSG.common_button_enable(), MSG.common_msg_areYouSure(),
+        addTableAction(extendLocatorId("setNormal"), MSG.view_adminTopology_server_setNormal(), MSG.common_msg_areYouSure(),
             new AuthorizedTableAction(this, TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
                 public void executeAction(ListGridRecord[] selections, Object actionValue) {
                     int[] selectedIds = getSelectedIds(selections);
-                    GWTServiceLookup.getPluginService().enableServerPlugins(selectedIds,
-                        new AsyncCallback<ArrayList<String>>() {
-                            @Override
-                            public void onSuccess(ArrayList<String> result) {
-                                Message msg = new Message(
-                                    MSG.view_admin_plugins_enabledServerPlugins(result.toString()), Severity.Info);
-                                CoreGUI.getMessageCenter().notify(msg);
-                                refresh();
-                            }
-
-                            @Override
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(
-                                    MSG.view_admin_plugins_enabledServerPluginsFailure() + " " + caught.getMessage(),
-                                    caught);
-                                refreshTableInfo();
-                            }
-                        });
+                    SC.say("setting servers to normal mode, ids: " + selectedIds);
+//                    GWTServiceLookup.getPluginService().enableServerPlugins(selectedIds,
+//                        new AsyncCallback<ArrayList<String>>() {
+//                            @Override
+//                            public void onSuccess(ArrayList<String> result) {
+//                                Message msg = new Message(
+//                                    MSG.view_admin_plugins_enabledServerPlugins(result.toString()), Severity.Info);
+//                                CoreGUI.getMessageCenter().notify(msg);
+//                                refresh();
+//                            }
+//
+//                            @Override
+//                            public void onFailure(Throwable caught) {
+//                                CoreGUI.getErrorHandler().handleError(
+//                                    MSG.view_admin_plugins_enabledServerPluginsFailure() + " " + caught.getMessage(),
+//                                    caught);
+//                                refreshTableInfo();
+//                            }
+//                        });
                 }
             });
 
-        addTableAction(extendLocatorId("disable"), MSG.common_button_disable(), new AuthorizedTableAction(this,
+        addTableAction(extendLocatorId("setMaintenance"), MSG.view_adminTopology_server_setMaintenance(), new AuthorizedTableAction(this,
             TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                 ArrayList<String> selectedNames = getSelectedNames(selections);
@@ -125,24 +120,25 @@ public class ServerTableView extends TableSection<CloudDataSource> {
                     public void execute(Boolean confirmed) {
                         if (confirmed) {
                             int[] selectedIds = getSelectedIds(selections);
-                            GWTServiceLookup.getPluginService().disableServerPlugins(selectedIds,
-                                new AsyncCallback<ArrayList<String>>() {
-                                    @Override
-                                    public void onSuccess(ArrayList<String> result) {
-                                        Message msg = new Message(MSG.view_admin_plugins_disabledServerPlugins(result
-                                            .toString()), Severity.Info);
-                                        CoreGUI.getMessageCenter().notify(msg);
-                                        refresh();
-                                    }
-
-                                    @Override
-                                    public void onFailure(Throwable caught) {
-                                        CoreGUI.getErrorHandler().handleError(
-                                            MSG.view_admin_plugins_disabledServerPluginsFailure() + " "
-                                                + caught.getMessage(), caught);
-                                        refreshTableInfo();
-                                    }
-                                });
+                            SC.say("setting servers to maintenance mode, ids: " + selectedIds);
+//                            GWTServiceLookup.getPluginService().disableServerPlugins(selectedIds,
+//                                new AsyncCallback<ArrayList<String>>() {
+//                                    @Override
+//                                    public void onSuccess(ArrayList<String> result) {
+//                                        Message msg = new Message(MSG.view_admin_plugins_disabledServerPlugins(result
+//                                            .toString()), Severity.Info);
+//                                        CoreGUI.getMessageCenter().notify(msg);
+//                                        refresh();
+//                                    }
+//
+//                                    @Override
+//                                    public void onFailure(Throwable caught) {
+//                                        CoreGUI.getErrorHandler().handleError(
+//                                            MSG.view_admin_plugins_disabledServerPluginsFailure() + " "
+//                                                + caught.getMessage(), caught);
+//                                        refreshTableInfo();
+//                                    }
+//                                });
                         } else {
                             refreshTableInfo();
                         }
@@ -151,137 +147,95 @@ public class ServerTableView extends TableSection<CloudDataSource> {
             }
         });
 
-        addTableAction(extendLocatorId("undeploy"), MSG.view_admin_plugins_undeploy(), new AuthorizedTableAction(this,
-            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
-            public void executeAction(final ListGridRecord[] selections, Object actionValue) {
-                ArrayList<String> selectedNames = getSelectedNames(selections);
-                String message = MSG.view_admin_plugins_serverUndeployConfirm(selectedNames.toString());
-                SC.ask(message, new BooleanCallback() {
-                    public void execute(Boolean confirmed) {
-                        if (confirmed) {
-                            int[] selectedIds = getSelectedIds(selections);
-                            GWTServiceLookup.getPluginService().undeployServerPlugins(selectedIds,
-                                new AsyncCallback<ArrayList<String>>() {
-                                    @Override
-                                    public void onSuccess(ArrayList<String> result) {
-                                        Message msg = new Message(MSG.view_admin_plugins_undeployedServerPlugins(result
-                                            .toString()), Severity.Info);
-                                        CoreGUI.getMessageCenter().notify(msg);
-                                        refresh();
-                                    }
-
-                                    @Override
-                                    public void onFailure(Throwable caught) {
-                                        CoreGUI.getErrorHandler().handleError(
-                                            MSG.view_admin_plugins_undeployedServerPluginsFailure() + " "
-                                                + caught.getMessage(), caught);
-                                        refreshTableInfo();
-                                    }
-                                });
-                        } else {
-                            refreshTableInfo();
-                        }
-                    }
-                });
-            }
-        });
-
-        addTableAction(extendLocatorId("purge"), MSG.common_button_purge(), MSG.common_msg_areYouSure(),
+        
+        addTableAction(extendLocatorId("removeSelected"), MSG.view_adminTopology_server_removeSelected(), MSG.common_msg_areYouSure(),
             new AuthorizedTableAction(this, TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    if (showUndeployed) {
-                        return super.isEnabled(selection);
-                    } else {
-                        return false; // we aren't showing undeployed plugins, so there is no plugin shown that can be purged anyway
-                    }
-                }
-
                 public void executeAction(ListGridRecord[] selections, Object actionValue) {
                     int[] selectedIds = getSelectedIds(selections);
-                    GWTServiceLookup.getPluginService().purgeServerPlugins(selectedIds,
-                        new AsyncCallback<ArrayList<String>>() {
-                            @Override
-                            public void onSuccess(ArrayList<String> result) {
-                                Message msg = new Message(
-                                    MSG.view_admin_plugins_purgedServerPlugins(result.toString()), Severity.Info);
-                                CoreGUI.getMessageCenter().notify(msg);
-                                refresh();
-                            }
-
-                            @Override
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(
-                                    MSG.view_admin_plugins_purgedServerPluginsFailure() + " " + caught.getMessage(),
-                                    caught);
-                                refreshTableInfo();
-                            }
-                        });
+                    SC.say("removing servers with ids: " + selectedIds);
+//                    GWTServiceLookup.getCloudService().purgeServerPlugins(selectedIds,
+//                        new AsyncCallback<ArrayList<String>>() {
+//                            @Override
+//                            public void onSuccess(ArrayList<String> result) {
+//                                Message msg = new Message(
+//                                    MSG.view_admin_plugins_purgedServerPlugins(result.toString()), Severity.Info);
+//                                CoreGUI.getMessageCenter().notify(msg);
+//                                refresh();
+//                            }
+//
+//                            @Override
+//                            public void onFailure(Throwable caught) {
+//                                CoreGUI.getErrorHandler().handleError(
+//                                    MSG.view_admin_plugins_purgedServerPluginsFailure() + " " + caught.getMessage(),
+//                                    caught);
+//                                refreshTableInfo();
+//                            }
+//                        });
                 }
             });
 
-        IButton scanForUpdatesButton = new LocatableIButton(extendLocatorId("scanButton"),
-            MSG.view_admin_plugins_scan());
-        scanForUpdatesButton.setAutoFit(true);
-        scanForUpdatesButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                GWTServiceLookup.getPluginService().scanAndRegister(new AsyncCallback<Void>() {
-                    @Override
-                    public void onSuccess(Void result) {
-                        Message msg = new Message(MSG.view_admin_plugins_scanComplete(), Severity.Info);
-                        CoreGUI.getMessageCenter().notify(msg);
-                        refresh();
-                    }
+//        IButton scanForUpdatesButton = new LocatableIButton(extendLocatorId("scanButton"),
+//            MSG.view_admin_plugins_scan());
+//        scanForUpdatesButton.setAutoFit(true);
+//        scanForUpdatesButton.addClickHandler(new ClickHandler() {
+//            public void onClick(ClickEvent event) {
+//                GWTServiceLookup.getPluginService().scanAndRegister(new AsyncCallback<Void>() {
+//                    @Override
+//                    public void onSuccess(Void result) {
+//                        Message msg = new Message(MSG.view_admin_plugins_scanComplete(), Severity.Info);
+//                        CoreGUI.getMessageCenter().notify(msg);
+//                        refresh();
+//                    }
+//
+//                    @Override
+//                    public void onFailure(Throwable caught) {
+//                        CoreGUI.getErrorHandler().handleError(
+//                            MSG.view_admin_plugins_scanFailure() + " " + caught.getMessage(), caught);
+//                        refreshTableInfo();
+//                    }
+//                });
+//            }
+//        });
 
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(
-                            MSG.view_admin_plugins_scanFailure() + " " + caught.getMessage(), caught);
-                        refreshTableInfo();
-                    }
-                });
-            }
-        });
+//        IButton restartMasterPCButton = new LocatableIButton(extendLocatorId("restartMasterPCButton"),
+//            MSG.view_admin_plugins_restartMasterPC());
+//        restartMasterPCButton.setAutoFit(true);
+//        restartMasterPCButton.addClickHandler(new ClickHandler() {
+//            public void onClick(ClickEvent event) {
+//                Message msg = new Message(MSG.view_admin_plugins_restartMasterPCStarted(), Severity.Info);
+//                CoreGUI.getMessageCenter().notify(msg);
+//
+//                GWTServiceLookup.getPluginService().restartMasterPluginContainer(new AsyncCallback<Void>() {
+//                    @Override
+//                    public void onSuccess(Void result) {
+//                        Message msg = new Message(MSG.view_admin_plugins_restartMasterPCComplete(), Severity.Info);
+//                        CoreGUI.getMessageCenter().notify(msg);
+//                        refresh();
+//                    }
+//
+//                    @Override
+//                    public void onFailure(Throwable caught) {
+//                        CoreGUI.getErrorHandler().handleError(
+//                            MSG.view_admin_plugins_restartMasterPCFailure() + " " + caught.getMessage(), caught);
+//                        refreshTableInfo();
+//                    }
+//                });
+//            }
+//        });
 
-        IButton restartMasterPCButton = new LocatableIButton(extendLocatorId("restartMasterPCButton"),
-            MSG.view_admin_plugins_restartMasterPC());
-        restartMasterPCButton.setAutoFit(true);
-        restartMasterPCButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                Message msg = new Message(MSG.view_admin_plugins_restartMasterPCStarted(), Severity.Info);
-                CoreGUI.getMessageCenter().notify(msg);
+//        PluginFileUploadForm pluginUploadForm = new PluginFileUploadForm(extendLocatorId("upload"),
+//            MSG.view_admin_plugins_upload(), true);
 
-                GWTServiceLookup.getPluginService().restartMasterPluginContainer(new AsyncCallback<Void>() {
-                    @Override
-                    public void onSuccess(Void result) {
-                        Message msg = new Message(MSG.view_admin_plugins_restartMasterPCComplete(), Severity.Info);
-                        CoreGUI.getMessageCenter().notify(msg);
-                        refresh();
-                    }
-
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(
-                            MSG.view_admin_plugins_restartMasterPCFailure() + " " + caught.getMessage(), caught);
-                        refreshTableInfo();
-                    }
-                });
-            }
-        });
-
-
-        PluginFileUploadForm pluginUploadForm = new PluginFileUploadForm(extendLocatorId("upload"),
-            MSG.view_admin_plugins_upload(), true);
-
-        addExtraWidget(scanForUpdatesButton, true);
-        addExtraWidget(restartMasterPCButton, true);
-        addExtraWidget(pluginUploadForm, true);
+//        addExtraWidget(scanForUpdatesButton, true);
+//        addExtraWidget(restartMasterPCButton, true);
+//        addExtraWidget(pluginUploadForm, true);
 
         super.configureTable();
     }
 
     @Override
     public Canvas getDetailsView(Integer id) {
-        return new ServerPluginDetailView(extendLocatorId("detailsView"), id);
+        return new ServerDetailView(extendLocatorId("detailsView"), id);
     }
 
     private int[] getSelectedIds(ListGridRecord[] selections) {
@@ -307,7 +261,7 @@ public class ServerTableView extends TableSection<CloudDataSource> {
         return ids;
     }
 
-    public class CloudDataSource extends RPCDataSource<Server, Criteria> {
+    public class CloudDataSource extends RPCDataSource<ServerWithAgentCountComposite, Criteria> {
 
         public CloudDataSource() {
             super();
@@ -338,29 +292,35 @@ public class ServerTableView extends TableSection<CloudDataSource> {
             ListGridField modeField = new ListGridField(FIELD_MODE, MSG.view_adminTopology_server_mode());
             fields.add(modeField);
 
-            ListGridField endpointAddressField = new ListGridField(FIELD_ENDPOINT_ADDRESS, MSG.view_adminTopology_server_endpointAddress());
-//            TimestampCellFormatter.prepareDateField(endpointAddressField);
+            ListGridField endpointAddressField = new ListGridField(FIELD_ENDPOINT_ADDRESS,
+                MSG.view_adminTopology_server_endpointAddress());
+            //            TimestampCellFormatter.prepareDateField(endpointAddressField);
             fields.add(endpointAddressField);
 
-            ListGridField nonsecurePortField = new ListGridField(FIELD_NONSECURE_PORT, MSG.view_adminTopology_server_nonSecurePort());
-//            enabledField.setType(ListGridFieldType.IMAGE);
-//            enabledField.setAlign(Alignment.CENTER);
+            ListGridField nonsecurePortField = new ListGridField(FIELD_NONSECURE_PORT,
+                MSG.view_adminTopology_server_nonSecurePort());
+            //            enabledField.setType(ListGridFieldType.IMAGE);
+            //            enabledField.setAlign(Alignment.CENTER);
             fields.add(nonsecurePortField);
 
-            ListGridField securedPortField = new ListGridField(FIELD_SECURE_PORT, MSG.view_adminTopology_server_securePort());
-//            deployedField.setType(ListGridFieldType.IMAGE);
-//            deployedField.setAlign(Alignment.CENTER);
-//            deployedField.setHidden(true);
+            ListGridField securedPortField = new ListGridField(FIELD_SECURE_PORT,
+                MSG.view_adminTopology_server_securePort());
+            //            deployedField.setType(ListGridFieldType.IMAGE);
+            //            deployedField.setAlign(Alignment.CENTER);
+            //            deployedField.setHidden(true);
             fields.add(securedPortField);
 
-            ListGridField lastUpdateTimeField = new ListGridField(FIELD_LAST_UPDATE_TIME, MSG.view_adminTopology_server_lastUpdateTime());
-            TimestampCellFormatter.prepareDateField(endpointAddressField);
+            ListGridField lastUpdateTimeField = new ListGridField(FIELD_LAST_UPDATE_TIME,
+                MSG.view_adminTopology_server_lastUpdateTime());
+            TimestampCellFormatter.prepareDateField(lastUpdateTimeField);
             fields.add(lastUpdateTimeField);
-            
-            ListGridField affinityGroupField = new ListGridField(FIELD_AFFINITY_GROUP, MSG.view_adminTopology_server_affinityGroup());
+
+            ListGridField affinityGroupField = new ListGridField(FIELD_AFFINITY_GROUP,
+                MSG.view_adminTopology_server_affinityGroup());
             fields.add(affinityGroupField);
-            
-            ListGridField agentCountField = new ListGridField(FIELD_AGENT_COUNT, MSG.view_adminTopology_server_agentCount());
+
+            ListGridField agentCountField = new ListGridField(FIELD_AGENT_COUNT,
+                MSG.view_adminTopology_server_agentCount());
             fields.add(agentCountField);
 
             idField.setWidth(100);
@@ -376,39 +336,66 @@ public class ServerTableView extends TableSection<CloudDataSource> {
 
         @Override
         protected void executeFetch(final DSRequest request, final DSResponse response, Criteria criteria) {
-//            GWTServiceLookup.getPluginService().getServerPlugins(showUndeployed,
-//                new AsyncCallback<ArrayList<Server>>() {
-//                    public void onSuccess(ArrayList<Server> result) {
-//                        response.setData(buildRecords(result));
-//                        response.setTotalRows(result.size());
-//                        processResponse(request.getRequestId(), response);
-//                    }
-//
-//                    @Override
-//                    public void onFailure(Throwable t) {
-//                        CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), t);
-//                        response.setStatus(DSResponse.STATUS_FAILURE);
-//                        processResponse(request.getRequestId(), response);
-//                    }
-//                });
+            final PageControl pc = getPageControl(request);
+
+            GWTServiceLookup.getCloudService().getServers(pc, new AsyncCallback<List<ServerWithAgentCountComposite>>() {
+                public void onSuccess(List<ServerWithAgentCountComposite> result) {
+                    response.setData(buildRecords(result));
+                    response.setTotalRows(result.size());
+                    processResponse(request.getRequestId(), response);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    //todo: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), t);
+                    response.setStatus(DSResponse.STATUS_FAILURE);
+                    processResponse(request.getRequestId(), response);
+                }
+            });
+        }
+
+        /**
+         * Returns a prepopulated PageControl based on the provided DSRequest. This will set sort fields,
+         * pagination, but *not* filter fields.
+         *
+         * @param request the request to turn into a page control
+         * @return the page control for passing to criteria and other queries
+         */
+        protected PageControl getPageControl(DSRequest request) {
+            // Initialize paging.         
+            PageControl pageControl = new PageControl(0, getDataPageSize());
+
+            // Initialize sorting.
+            String sortBy = request.getAttribute("sortBy");
+            if (sortBy != null) {
+                String[] sorts = sortBy.split(",");
+                for (String sort : sorts) {
+                    PageOrdering ordering = (sort.startsWith("-")) ? PageOrdering.DESC : PageOrdering.ASC;
+                    String columnName = (ordering == PageOrdering.DESC) ? sort.substring(1) : sort;
+                    pageControl.addDefaultOrderingField(columnName, ordering);
+                }
+            }
+
+            return pageControl;
         }
 
         @Override
-        public Server copyValues(Record from) {
-            throw new UnsupportedOperationException("ServerTableView.CloudDataSourcepublic Server copyValues(Record from)");
+        public ServerWithAgentCountComposite copyValues(Record from) {
+            throw new UnsupportedOperationException(
+                "ServerTableView.CloudDataSourcepublic Server copyValues(Record from)");
         }
 
         @Override
-        public ListGridRecord copyValues(Server from) {
+        public ListGridRecord copyValues(ServerWithAgentCountComposite from) {
             ListGridRecord record = new ListGridRecord();
-            record.setAttribute(FIELD_ID, from.getId());
-            record.setAttribute(FIELD_NAME, from.getName());
-            record.setAttribute(FIELD_MODE, from.getOperationMode());
-            record.setAttribute(FIELD_ENDPOINT_ADDRESS, from.getAddress());
-            record.setAttribute(FIELD_NONSECURE_PORT, from.getPort());
-            record.setAttribute(FIELD_SECURE_PORT, from.getSecurePort());
-            record.setAttribute(FIELD_LAST_UPDATE_TIME, from.getMtime());
-            record.setAttribute(FIELD_AFFINITY_GROUP, from.getAffinityGroup());
+            record.setAttribute(FIELD_ID, from.getServer().getId());
+            record.setAttribute(FIELD_NAME, from.getServer().getName());
+            record.setAttribute(FIELD_MODE, from.getServer().getOperationMode());
+            record.setAttribute(FIELD_ENDPOINT_ADDRESS, from.getServer().getAddress());
+            record.setAttribute(FIELD_NONSECURE_PORT, from.getServer().getPort());
+            record.setAttribute(FIELD_SECURE_PORT, from.getServer().getSecurePort());
+            record.setAttribute(FIELD_LAST_UPDATE_TIME, from.getServer().getMtime());
+            record.setAttribute(FIELD_AFFINITY_GROUP, from.getServer().getAffinityGroup());
             record.setAttribute(FIELD_AGENT_COUNT, from.getAgentCount());
             return record;
         }

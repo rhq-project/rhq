@@ -194,6 +194,10 @@
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.PlatformUtilizationGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI CloudGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.CloudGWTServiceImpl</servlet-class>
+    </servlet>
+    <servlet>
         <servlet-name>ReportExporter</servlet-name>
         <servlet-class>org.rhq.enterprise.gui.coregui.server.reports.ReportExportServlet</servlet-class>
     </servlet>
@@ -372,6 +376,10 @@
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI PlatformUtilizationGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/PlatformUtilizationGWTService</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI CloudGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/CloudGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>ReportExporter</servlet-name>

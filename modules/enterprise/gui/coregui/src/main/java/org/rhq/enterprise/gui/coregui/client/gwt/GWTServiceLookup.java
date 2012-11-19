@@ -205,6 +205,10 @@ public class GWTServiceLookup {
     public static PlatformUtilizationGWTServiceAsync getPlatformUtilizationService() {
         return secure(PlatformUtilizationGWTServiceAsync.Util.getInstance());
     }
+    
+    public static CloudGWTServiceAsync getCloudService() {
+        return secure(CloudGWTServiceAsync.Util.getInstance());
+    }
 
     @SuppressWarnings("unchecked")
     private static <T> T secure(Object sdt) {

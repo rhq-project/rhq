@@ -73,7 +73,7 @@ public class ApacheTestSetup {
     private Map<String, String> inventoryFileReplacements;
     private Mockery context;
     private ResourceTypes apacheResourceTypes;
-    private Class<?> testClass;
+    private String testId;
     
     public class ApacheSetup {
         private String serverRoot;
@@ -133,7 +133,7 @@ public class ApacheTestSetup {
             File errorLog = new File(new File(new File(serverRoot), "logs"), "error_log");
 
             if (errorLog.exists() && errorLog.canRead()) {
-                String copyName = testClass.getSimpleName() + "-" + configurationName + ".httpd.error_log";
+                String copyName = testId + ".httpd.error_log";
 
                 FileUtil.copyFile(errorLog, new File(new File("target"), copyName));
             }
@@ -214,9 +214,9 @@ public class ApacheTestSetup {
         }
     }
 
-    public ApacheTestSetup(Class<?> testClass, String configurationName, Mockery context,
+    public ApacheTestSetup(String testId, String configurationName, Mockery context,
         ResourceTypes apacheResourceTypes) {
-        this.testClass = testClass;
+        this.testId = testId;
         this.configurationName = configurationName;
         this.context = context;
         this.apacheResourceTypes = apacheResourceTypes;

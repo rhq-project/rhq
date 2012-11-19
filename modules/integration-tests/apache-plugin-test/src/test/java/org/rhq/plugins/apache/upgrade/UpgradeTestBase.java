@@ -95,14 +95,15 @@ public class UpgradeTestBase extends PluginContainerTest {
         platform = discoverPlatform();
     }
 
-    protected void testUpgrade(ApacheTestConfiguration testConfiguration) throws Throwable {
-        final ApacheTestSetup setup = new ApacheTestSetup(this.getClass(), testConfiguration.configurationName,
-            context, apacheResourceTypes);
+    protected void testUpgrade(String testMethod, ApacheTestConfiguration testConfiguration) throws Throwable {
+        String testId = this.getClass().getSimpleName() + "#" + testMethod;
+        final ApacheTestSetup setup = new ApacheTestSetup(testId, testConfiguration.configurationName, context,
+            apacheResourceTypes);
         boolean testFailed = false;
         try {
             
             LOG.debug("---------------------------------------------------------- Starting the upgrade test for: "
-                + this.getClass().getSimpleName() + ": " + testConfiguration.configurationName);
+                + testId);
 
             String[] configFiles = Arrays.copyOf(testConfiguration.apacheConfigurationFiles, testConfiguration.apacheConfigurationFiles.length + 1);
             configFiles[testConfiguration.apacheConfigurationFiles.length] = "/snmpd.conf";
@@ -203,7 +204,7 @@ public class UpgradeTestBase extends PluginContainerTest {
             }
 
             LOG.debug("---------------------------------------------------------- Finished the upgrade test for: "
-                + this.getClass().getSimpleName() + ": " + testConfiguration.configurationName);
+                + testId);
         }
     }
 

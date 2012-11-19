@@ -168,7 +168,8 @@ public class AugeasReferenceLeakingTest extends BMNGRunner {
             }
         };
 
-        setup = new ApacheTestSetup(this.getClass(), apacheConfig.configurationName,
+        setup = new ApacheTestSetup(this.getClass().getSimpleName()
+            + "#testReadingConfigurationsDoesNotLeakAugeasReferences", apacheConfig.configurationName,
             PluginContainerTest.getCurrentMockContext(),
             new ResourceTypes(PluginLocation.APACHE_PLUGIN));
 

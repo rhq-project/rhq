@@ -34,7 +34,7 @@ num_tokens: @@rhq.cassandra.node.num_tokens@@
 # the heaviest-loaded existing node.  If there is no load information
 # available, such as is the case with a new cluster, it will pick
 # a random token, which will lead to hot spots.
-#initial_token: 
+#initial_token:
 
 # See http://wiki.apache.org/cassandra/HintedHandoff
 hinted_handoff_enabled: true
@@ -62,16 +62,13 @@ authority: org.apache.cassandra.auth.AllowAllAuthority
 # The partitioner is responsible for distributing rows (by key) across
 # nodes in the cluster.  Any IPartitioner may be used, including your
 # own as long as it is on the classpath.  Out of the box, Cassandra
-# provides org.apache.cassandra.dht.RandomPartitioner
-# org.apache.cassandra.dht.ByteOrderedPartitioner,
-# org.apache.cassandra.dht.OrderPreservingPartitioner (deprecated),
-# and org.apache.cassandra.dht.CollatingOrderPreservingPartitioner
-# (deprecated).
+# provides org.apache.cassandra.dht.{Murmur3Partitioner, RandomPartitioner
+# ByteOrderedPartitioner, OrderPreservingPartitioner (deprecated)}.
 # 
 # - RandomPartitioner distributes rows across the cluster evenly by md5.
-#   When in doubt, this is the best option.
+#   This is the default prior to 1.2 and is retained for compatibility.
 # - Murmur3Partitioner is similar to RandomPartioner but uses Murmur3_128
-#   Hash Function instead of md5
+#   Hash Function instead of md5.  When in doubt, this is the best option.
 # - ByteOrderedPartitioner orders rows lexically by key bytes.  BOP allows
 #   scanning rows in key order, but the ordering can generate hot spots
 #   for sequential insertion workloads.
@@ -308,12 +305,11 @@ listen_address: @@listen.address@@
 # Whether to start the native transport server.
 # Currently, only the thrift server is started by default because the native
 # transport is considered beta.
+# Please note that the address on which the native transport is bound is the
+# same as the rpc_address. The port however is different and specified below.
 start_native_transport: false
-# The address to bind the CQL native transport to. The same remarks than for
-# rpc_address applies.
-native_transport_address: localhost
 # port for the CQL native transport to listen for clients on
-native_transport_port: 8000
+native_transport_port: 9042
 # The maximum of thread handling requests. The meaning is the same than
 # rpc_max_threads. The default is unlimited.
 #native_transport_max_threads: 2048
@@ -334,7 +330,7 @@ rpc_port: 9160
 # enable or disable keepalive on rpc connections
 rpc_keepalive: true
 
-# Cassandra provides three options for the RPC Server:
+# Cassandra provides three out-of-the-box options for the RPC Server:
 #
 # sync  -> One thread per thrift connection. For a very large number of clients, memory
 #          will be your limiting factor. On a 64 bit JVM, 128KB is the minimum stack size
@@ -348,6 +344,9 @@ rpc_keepalive: true
 #
 # The default is sync because on Windows hsha is about 30% slower.  On Linux,
 # sync/hsha performance is about the same, with hsha of course using less memory.
+#
+# Alternatively,  can provide your own RPC server by providing the fully-qualified class name
+# of an o.a.c.t.TServerFactory that can create an instance of it.
 rpc_server_type: sync
 
 # Uncomment rpc_min|max_thread to set request pool size limits.
@@ -368,8 +367,6 @@ rpc_server_type: sync
 # rpc_recv_buff_size_in_bytes:
 
 # Frame size for thrift (maximum field length).
-# 0 disables TFramedTransport in favor of TSocket. This option
-# is deprecated; we strongly recommend using Framed mode.
 thrift_framed_transport_size_in_mb: 15
 
 # The max length of a thrift message, including all fields and
@@ -417,8 +414,6 @@ in_memory_compaction_limit_in_mb: 64
 # slowly or too fast, you should look at
 # compaction_throughput_mb_per_sec first.
 #
-# This setting has no effect on LeveledCompactionStrategy.
-#
 # concurrent_compactors defaults to the number of cores.
 # Uncomment to make compaction mono-threaded, the pre-0.8 default.
 #concurrent_compactors: 1
@@ -463,6 +458,14 @@ write_rpc_timeout_in_ms: 10000
 truncate_rpc_timeout_in_ms: 300000
 # The default timeout for other, miscellaneous operations
 rpc_timeout_in_ms: 10000
+
+# Enable operation timeout information exchange between nodes to accurately
+# measure request timeouts, If disabled cassandra will assuming the request
+# was forwarded to the replica instantly by the coordinator
+#
+# Warning: before enabling this property make sure to ntp is installed
+# and the times are synchronized between the nodes.
+cross_node_timeout: false
 
 # Enable socket timeout for streaming operation.
 # When a timeout occurs during streaming, streaming is retried from the start
@@ -607,7 +610,7 @@ index_interval: 128
 # the keystore and truststore.  For instructions on generating these files, see:
 # http://download.oracle.com/javase/6/docs/technotes/guides/security/jsse/JSSERefGuide.html#CreateKeystore
 #
-encryption_options:
+server_encryption_options:
     internode_encryption: none
     keystore: conf/.keystore
     keystore_password: cassandra
@@ -619,9 +622,24 @@ encryption_options:
     # store_type: JKS
     # cipher_suites: [TLS_RSA_WITH_AES_128_CBC_SHA,TLS_RSA_WITH_AES_256_CBC_SHA]
 
+# enable or disable client/server encryption.
+# The available internode options are: none, all
+client_encryption_options:
+    internode_encryption: none
+    keystore: conf/.keystore
+    keystore_password: cassandra
+    truststore: conf/.truststore
+    truststore_password: cassandra
+    # More advanced defaults below:
+    # protocol: TLS
+    # algorithm: SunX509
+    # store_type: JKS
+    # cipher_suites: [TLS_RSA_WITH_AES_128_CBC_SHA,TLS_RSA_WITH_AES_256_CBC_SHA]
+
+
 # internode_compression controls whether traffic between nodes is
 # compressed.
 # can be:  all  - all traffic is compressed
 #          dc   - traffic between different datacenters is compressed
 #          none - nothing is compressed.
-internode_compression: all
+internode_compression: none

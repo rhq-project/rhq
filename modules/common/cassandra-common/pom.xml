@@ -13,7 +13,7 @@
   <name>RHQ Cassandra Common</name>
 
   <properties>
-    <cassandra.version>1.2.0-beta1</cassandra.version>
+    <cassandra.version>1.2.0-beta2</cassandra.version>
     <local.repo>${settings.localRepository}</local.repo>
   </properties>
 
@@ -39,6 +39,12 @@
     <dependency>
       <groupId>org.apache.cassandra</groupId>
       <artifactId>cassandra-all</artifactId>
+      <version>${cassandra.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.cassandra</groupId>
+      <artifactId>cassandra-thrift</artifactId>
       <version>${cassandra.version}</version>
     </dependency>
 
@@ -87,7 +93,7 @@
                 <property name="cassandra.download.dir"
                           value="${project.build.directory}/cassandra-download"/>
                 <mkdir dir="${cassandra.download.dir}"/>
-
+                <mkdir dir="${settings.localRepository}/org/apache/cassandra/apache-cassandra/${cassandra.version}"/>
                 <get src="http://repo1.maven.org/maven2/org/apache/cassandra/apache-cassandra/${cassandra.version}/apache-cassandra-${cassandra.version}-bin.tar.gz"
                      dest="${settings.localRepository}/org/apache/cassandra/apache-cassandra/${cassandra.version}/apache-cassandra-${cassandra.version}-bin.tar.gz"
                      skipexisting="true"

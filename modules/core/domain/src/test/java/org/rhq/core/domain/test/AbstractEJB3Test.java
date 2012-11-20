@@ -24,6 +24,7 @@ package org.rhq.core.domain.test;
 
 import java.io.File;
 import java.net.URL;
+import java.sql.DatabaseMetaData;
 import java.util.Date;
 import java.util.Hashtable;
 
@@ -79,6 +80,7 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
 
             deployer.start();
             System.err.println("...... deployer started....");
+            printDbVersion();
         } catch (Throwable t) {
             // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
             // and throw a cryptic NPE (see http://jira.codehaus.org/browse/SUREFIRE-157)!
@@ -98,6 +100,13 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
 
     public EntityManager getEntityManager() {
         return lookupEntityManager();
+    }
+
+    private static void printDbVersion() throws Exception {
+        EntityManager em = lookupEntityManager();
+        DatabaseMetaData md = ((org.hibernate.ejb.EntityManagerImpl) em).getSession().connection().getMetaData();
+        System.err.println(">>> Database url for testing is [" + md.getURL() + "] with user [" + md.getUserName() + "] <<<");
+
     }
 
     public boolean isPostgres(EntityManager em) throws Exception {

@@ -139,8 +139,8 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
         protected List<FormItem> getOnDrawItems() {
             List<FormItem> items = super.getOnDrawItems();
 
-            TextItem version = new TextItem("editableVersion",
-                MSG.view_alert_definition_notification_cliScript_editor_newScriptVersion());
+            TextItem version = new TextItem("editableVersion", MSG
+                .view_alert_definition_notification_cliScript_editor_newScriptVersion());
             version.setColSpan(getNumCols());
             version.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
@@ -178,9 +178,8 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
         }
     };
 
-    private static String FAILED_LAST_TIME = "failed";
-
     private boolean formBuilt;
+
     private SelectItem repoSelector;
     private RadioGroupWithComponentsItem packageSelector;
     private SelectItem existingPackageSelector;
@@ -227,8 +226,8 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
                     SectionItem userSection = new SectionItem("userSection");
                     userSection.setDefaultValue(MSG.view_alert_definition_notification_cliScript_editor_whichUser());
 
-                    repoSelector = new SortedSelectItem(extendLocatorId("repoSelector"),
-                        MSG.view_alert_definition_notification_cliScript_editor_selectRepo());
+                    repoSelector = new SelectItem(extendLocatorId("repoSelector"), MSG
+                        .view_alert_definition_notification_cliScript_editor_selectRepo());
                     repoSelector.setDefaultToFirstOption(true);
                     repoSelector.setWrapTitle(false);
                     repoSelector.setWidth(400);
@@ -404,18 +403,9 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
 
     private void validatePackage(final AsyncCallback<Void> callback) {
         if (config.selectedRepo == null) {
-            setFailed(repoSelector);
+            repoSelector.setIcons(failureIcon);
             callback.onFailure(null);
             return;
-        }
-        setOk(repoSelector);
-        if (!existingPackageSelector.isDisabled()) {
-            if (config.selectedPackage == null) {
-                setFailed(existingPackageSelector);
-                callback.onFailure(null);
-                return;
-            }
-            setOk(existingPackageSelector);
         }
         getConfiguration().put(new PropertySimple(PROP_REPO_ID, config.selectedRepo.getId()));
 
@@ -427,8 +417,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
             if (cliScriptPackageType.getVersionFormat() != null) {
                 String versionRegex = cliScriptPackageType.getVersionFormat().getFullFormatRegex();
                 if (versionRegex != null) {
-                    Object version = uploadForm.getField("version").getValue();
-                    if (version == null ||!matches(version.toString(), versionRegex)) {
+                    if (!matches(uploadForm.getField("version").getValue().toString(), versionRegex)) {
                         uploadForm.getItem("editableVersion").setIcons(failureIcon);
                         callback.onFailure(null);
                         return;
@@ -540,8 +529,8 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
         form.setTitleOrientation(TitleOrientation.TOP);
         anotherUserName = new TextItem("userName", MSG.dataSource_users_field_name());
         anotherUserPassword = new PasswordItem("password", MSG.common_title_password());
-        verifyUserButton = new ButtonItem("verify",
-            MSG.view_alert_definition_notification_cliScript_editor_verifyAuthentication());
+        verifyUserButton = new ButtonItem("verify", MSG
+            .view_alert_definition_notification_cliScript_editor_verifyAuthentication());
 
         successIcon = new FormItemIcon();
         successIcon.setSrc(ImageManager.getAvailabilityIcon(Boolean.TRUE));
@@ -688,19 +677,6 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
 
     private void loadPackageType(AsyncCallback<PackageTypeAndVersionFormatComposite> handler) {
         GWTServiceLookup.getContentService().findPackageType(null, PACKAGE_TYPE_NAME, handler);
-    }
-
-    private void setFailed(FormItem item) {
-        item.setIcons(failureIcon);
-        item.setAttribute(FAILED_LAST_TIME, true);
-    }
-
-    private void setOk(FormItem item) {
-        Boolean lastTimeFail = item.getAttributeAsBoolean(FAILED_LAST_TIME);
-        if (lastTimeFail != null && lastTimeFail) {
-            item.setIcons(successIcon);
-            item.setAttribute(FAILED_LAST_TIME, false);
-        }
     }
 
     private void checkAuthenticationAndDo(final AsyncCallback<Void> action) {

@@ -59,10 +59,14 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
     @BeforeMethod
     public void resetDB() throws Exception {
         Statement statement = connection.createStatement();
-        statement.executeUpdate("TRUNCATE " + RAW_METRICS_TABLE);
-        statement.executeUpdate("TRUNCATE " + ONE_HOUR_METRICS_TABLE);
-        statement.executeUpdate("TRUNCATE " + METRICS_INDEX_TABLE);
-        statement.executeUpdate("TRUNCATE " + SIX_HOUR_METRICS_TABLE);
+//        statement.executeUpdate("TRUNCATE " + RAW_METRICS_TABLE);
+//        statement.executeUpdate("TRUNCATE " + ONE_HOUR_METRICS_TABLE);
+//        statement.executeUpdate("TRUNCATE " + METRICS_INDEX_TABLE);
+//        statement.executeUpdate("TRUNCATE " + SIX_HOUR_METRICS_TABLE);
+        statement.executeUpdate("DELETE FROM " + RAW_METRICS_TABLE + " WHERE schedule_id IN (123, 456)");
+        statement.executeUpdate("DELETE FROM " + ONE_HOUR_METRICS_TABLE + " WHERE schedule_id IN (123, 456)");
+        statement.executeUpdate("DELETE FROM " + SIX_HOUR_METRICS_TABLE + " WHERE schedule_id IN (123, 456)");
+        statement.executeUpdate("DELETE FROM " + METRICS_INDEX_TABLE + " WHERE bucket IN ('raw_metrics', 'one_hour_metrics', 'six_hour_metrics')");
     }
 
     @Test
@@ -82,6 +86,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         data.add(new MeasurementDataNumeric(oneMinuteAgo.getMillis(), scheduleId, 2.6));
 
         MetricsDAO dao = new MetricsDAO(dataSource);
+//        int ttl = Days.days(10).toStandardSeconds().getSeconds();
         int ttl = Hours.ONE.toStandardSeconds().getSeconds();
         long timestamp = System.currentTimeMillis();
         Set<MeasurementDataNumeric> actualUpdates = dao.insertRawMetrics(data, ttl, timestamp);

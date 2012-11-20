@@ -93,7 +93,8 @@ public class MetricsDAO {
         PreparedStatement statement = null;
         try {
             String sql = "INSERT INTO raw_metrics (schedule_id, time, value) VALUES (?, ?, ?) " +
-                "USING TTL " + ttl + " AND TIMESTAMP " + timestamp;
+                "USING TTL " + ttl;
+//            sql = "INSERT INTO raw_metrics (schedule_id, time, value) VALUES (?, ?, ?) ";
             connection = dataSource.getConnection();
             statement = connection.prepareStatement(sql);
 
@@ -221,7 +222,7 @@ public class MetricsDAO {
         ResultSet resultSet = null;
 
         String sql =
-            "SELECT schedule_id, time, type, value, ttl(value), writetime(value)" +
+            "SELECT schedule_id, time, type, value, ttl(value), writetime(value) " +
             "FROM " + bucket + " " +
             "WHERE schedule_id = " + scheduleId + " " +
             "ORDER BY time, type";

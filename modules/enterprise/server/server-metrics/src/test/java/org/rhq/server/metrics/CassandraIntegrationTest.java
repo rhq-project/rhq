@@ -25,11 +25,9 @@
 
 package org.rhq.server.metrics;
 
-import static java.util.Arrays.asList;
-
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.List;
+import java.sql.Statement;
 
 import org.apache.cassandra.cql.jdbc.CassandraDataSource;
 import org.joda.time.DateTime;
@@ -39,11 +37,8 @@ import org.testng.annotations.Listeners;
 
 import org.rhq.cassandra.CassandraClusterManager;
 import org.rhq.cassandra.CassandraException;
-import org.rhq.cassandra.ClusterInitService;
 import org.rhq.cassandra.DeployCluster;
 import org.rhq.cassandra.ShutdownCluster;
-
-import me.prettyprint.cassandra.service.CassandraHost;
 
 /**
  * @author John Sanda
@@ -58,19 +53,22 @@ public class CassandraIntegrationTest {
     private DateTimeService dateTimeService;
 
     @BeforeClass
-    @DeployCluster
+    @DeployCluster(numNodes = 2)
     public void deployCluster() throws CassandraException {
         dateTimeService = new DateTimeService();
 
-        List<CassandraHost> hosts = asList(new CassandraHost("127.0.0.1", 9160), new CassandraHost("127.0.0.2", 9160));
-        ClusterInitService initService = new ClusterInitService();
-
-        initService.waitForClusterToStart(hosts);
-        initService.waitForSchemaAgreement("rhq", hosts);
+//        List<CassandraHost> hosts = asList(new CassandraHost("127.0.0.1", 9160), new CassandraHost("127.0.0.2", 9160));
+//        List<CassandraHost> hosts = asList(new CassandraHost("127.0.0.1", 9160));
+//        ClusterInitService initService = new ClusterInitService();
+//
+//        initService.waitForClusterToStart(hosts);
+//        initService.waitForSchemaAgreement("rhq", hosts);
 
         dataSource = new CassandraDataSource("127.0.0.1", 9160, "rhq", null, null, "3.0.0");
         try {
             connection = dataSource.getConnection();
+            Statement statement = connection.createStatement();
+            statement.execute("use rhq;");
         } catch (SQLException e) {
             throw new CassandraException("Unable to get JDBC connection.", e);
         }

@@ -47,8 +47,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -56,10 +58,8 @@ import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.joda.time.Minutes;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
-import org.rhq.cassandra.CassandraClusterManager;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -72,7 +72,6 @@ import me.prettyprint.cassandra.serializers.IntegerSerializer;
 import me.prettyprint.cassandra.serializers.LongSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.cassandra.service.ColumnSliceIterator;
-import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.beans.Composite;
 import me.prettyprint.hector.api.beans.HColumn;
@@ -83,7 +82,7 @@ import me.prettyprint.hector.api.query.SliceQuery;
 /**
  * @author John Sanda
  */
-@Listeners({CassandraClusterManager.class})
+//@Listeners({CassandraClusterManager.class})
 public class MetricsServerTest extends CassandraIntegrationTest {
 
     private static final boolean ENABLED = false;
@@ -132,24 +131,24 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
     @BeforeMethod
     public void initServer() throws Exception {
-        Cluster cluster = HFactory.getOrCreateCluster("rhq", "127.0.0.1:9160");
-        keyspace = HFactory.createKeyspace("rhq", cluster);
-
+//        Cluster cluster = HFactory.getOrCreateCluster("rhq", "127.0.0.1:9160");
+//        keyspace = HFactory.createKeyspace("rhq", cluster);
+//
         metricsServer = new MetricsServerStub();
-        metricsServer.setCluster(cluster);
-        metricsServer.setKeyspace(keyspace);
-        metricsServer.setRawMetricsDataCF(RAW_METRIC_DATA_CF);
-        metricsServer.setOneHourMetricsDataCF(ONE_HOUR_METRIC_DATA_CF);
-        metricsServer.setSixHourMetricsDataCF(SIX_HOUR_METRIC_DATA_CF);
-        metricsServer.setTwentyFourHourMetricsDataCF(TWENTY_FOUR_HOUR_METRIC_DATA_CF);
-        metricsServer.setMetricsIndex(METRICS_INDEX);
-        metricsServer.setTraitsCF(TRAITS_CF);
-        metricsServer.setResourceTraitsCF(RESOURCE_TRAITS_CF);
+//        metricsServer.setCluster(cluster);
+//        metricsServer.setKeyspace(keyspace);
+//        metricsServer.setRawMetricsDataCF(RAW_METRIC_DATA_CF);
+//        metricsServer.setOneHourMetricsDataCF(ONE_HOUR_METRIC_DATA_CF);
+//        metricsServer.setSixHourMetricsDataCF(SIX_HOUR_METRIC_DATA_CF);
+//        metricsServer.setTwentyFourHourMetricsDataCF(TWENTY_FOUR_HOUR_METRIC_DATA_CF);
+//        metricsServer.setMetricsIndex(METRICS_INDEX);
+//        metricsServer.setTraitsCF(TRAITS_CF);
+//        metricsServer.setResourceTraitsCF(RESOURCE_TRAITS_CF);
         metricsServer.setCassandraDS(dataSource);
 
         dao = new MetricsDAO(dataSource);
 
-        purgeDB();
+        //purgeDB();
     }
 
     private void purgeDB() throws SQLException {
@@ -214,49 +213,14 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         DateTime secondMetricTime = hour6.minusMinutes(2);
         DateTime thirdMetricTime = hour6.minusMinutes(1);
 
-        String scheduleName = getClass().getName() + "_SCHEDULE";
-        long interval = MINUTE * 15;
-        boolean enabled = true;
-        DataType dataType = DataType.MEASUREMENT;
-        MeasurementScheduleRequest request = new MeasurementScheduleRequest(scheduleId, scheduleName, interval,
-            enabled, dataType);
-
         Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>();
-        data.add(new MeasurementDataNumeric(firstMetricTime.getMillis(), request, 3.2));
-        data.add(new MeasurementDataNumeric(secondMetricTime.getMillis(), request, 3.9));
-        data.add(new MeasurementDataNumeric(thirdMetricTime.getMillis(), request, 2.6));
+        data.add(new MeasurementDataNumeric(firstMetricTime.getMillis(), scheduleId, 3.2));
+        data.add(new MeasurementDataNumeric(secondMetricTime.getMillis(), scheduleId, 3.9));
+        data.add(new MeasurementDataNumeric(thirdMetricTime.getMillis(), scheduleId, 2.6));
 
         metricsServer.setCurrentHour(hour6);
         metricsServer.addNumericData(data);
         metricsServer.calculateAggregates();
-
-        // verify one hour metric data is calculated
-        // The ttl for 1 hour data is 14 days.
-//        int ttl = Days.days(14).toStandardSeconds().getSeconds();
-//        List<HColumn<Composite, Double>> expected1HourData = asList(
-//            HFactory.createColumn(createAggregateKey(lastHour, AggregateType.MAX), 3.9, ttl, CompositeSerializer.get(),
-//                DoubleSerializer.get()),
-//            HFactory.createColumn(createAggregateKey(lastHour, AggregateType.MIN), 2.6, ttl, CompositeSerializer.get(),
-//                DoubleSerializer.get()),
-//            HFactory.createColumn(createAggregateKey(lastHour, AggregateType.AVG), (3.9 + 3.2 + 2.6) / 3, ttl,
-//                CompositeSerializer.get(), DoubleSerializer.get())
-//        );
-//
-//        assert1HourDataEquals(scheduleId, expected1HourData);
-
-        // verify six hour metric data is calculated
-        // the ttl for 6 hour data is 31 days
-//        ttl = Days.days(31).toStandardSeconds().getSeconds();
-//        List<HColumn<Composite, Double>> expected6HourData = asList(
-//            HFactory.createColumn(createAggregateKey(hour0, AggregateType.MAX), 3.9, ttl, CompositeSerializer.get(),
-//                DoubleSerializer.get()),
-//            HFactory.createColumn(createAggregateKey(hour0, AggregateType.MIN), 2.6, ttl, CompositeSerializer.get(),
-//                DoubleSerializer.get()),
-//            HFactory.createColumn(createAggregateKey(hour0, AggregateType.AVG), (3.9 + 3.2 + 2.6) / 3, ttl,
-//                CompositeSerializer.get(), DoubleSerializer.get())
-//        );
-//
-//        assert6HourDataEquals(scheduleId, expected6HourData);
 
         // verify that one hour metric data is updated
         List<AggregatedNumericMetric> expected = asList(new AggregatedNumericMetric(scheduleId,
@@ -268,6 +232,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             divide((3.9 + 3.2 + 2.6), 3), 2.6, 3.9, hour0.getMillis())));
 
         // TODO verify that 24 hour data is *not* updated
+        // TODO verify metrics index for 24 hour data is updated
     }
 
     @Test//(enabled = ENABLED)
@@ -294,26 +259,6 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         long timestamp = System.currentTimeMillis();
         Set<MeasurementDataNumeric> insertedRawMetrics = dao.insertRawMetrics(rawMetrics, RAW_TTL, timestamp);
         metricsServer.updateMetricsIndex(insertedRawMetrics);
-
-        // insert raw data to be aggregated
-//        Mutator<Integer> rawMetricsMutator = HFactory.createMutator(keyspace, IntegerSerializer.get());
-//        rawMetricsMutator.addInsertion(scheduleId, RAW_METRIC_DATA_CF, createRawDataColumn(firstMetricTime,
-//            firstValue));
-//        rawMetricsMutator.addInsertion(scheduleId, RAW_METRIC_DATA_CF,
-//            createRawDataColumn(secondMetricTime, secondValue));
-//        rawMetricsMutator.addInsertion(scheduleId, RAW_METRIC_DATA_CF, createRawDataColumn(thirdMetricTime,
-//            thirdValue));
-//
-//        rawMetricsMutator.execute();
-
-        // update the one hour queue
-//        Mutator<String> queueMutator = HFactory.createMutator(keyspace, StringSerializer.get());
-//        Composite key = createQueueColumnName(hour8, scheduleId);
-//        HColumn<Composite, Integer> oneHourQueueColumn = HFactory.createColumn(key, 0, CompositeSerializer.get(),
-//            IntegerSerializer.get());
-//        queueMutator.addInsertion(ONE_HOUR_METRIC_DATA_CF, METRICS_INDEX, oneHourQueueColumn);
-//
-//        queueMutator.execute();
 
         metricsServer.setCurrentHour(hour9);
         metricsServer.calculateAggregates();
@@ -349,7 +294,6 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         // set up the test fixture
         int scheduleId = 123;
 
-        DateTime now = new DateTime();
         DateTime hour0 = hour0();
         DateTime hour12 = hour0.plusHours(12);
         DateTime hour6 = hour0.plusHours(6);
@@ -358,7 +302,6 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
         double min1 = 1.1;
         double avg1 = 2.2;
-        //double max1 = 3.3;
         double max1 = 9.9;
 
         double min2 = 4.4;
@@ -366,29 +309,37 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         double max2 = 6.6;
 
         // insert one hour data to be aggregated
-        Mutator<Integer> oneHourMutator = HFactory.createMutator(keyspace, IntegerSerializer.get());
-        oneHourMutator.addInsertion(scheduleId, ONE_HOUR_METRIC_DATA_CF, create1HourColumn(hour7, AggregateType.MAX,
-            max1));
-        oneHourMutator.addInsertion(scheduleId, ONE_HOUR_METRIC_DATA_CF, create1HourColumn(hour7, AggregateType.MIN,
-            min1));
-        oneHourMutator.addInsertion(scheduleId, ONE_HOUR_METRIC_DATA_CF, create1HourColumn(hour7, AggregateType.AVG,
-            avg1));
-        oneHourMutator.addInsertion(scheduleId, ONE_HOUR_METRIC_DATA_CF, create1HourColumn(hour8, AggregateType.MAX,
-            max2));
-        oneHourMutator.addInsertion(scheduleId, ONE_HOUR_METRIC_DATA_CF, create1HourColumn(hour8, AggregateType.MIN,
-            min2));
-        oneHourMutator.addInsertion(scheduleId, ONE_HOUR_METRIC_DATA_CF, create1HourColumn(hour8, AggregateType.AVG,
-            avg2));
-        oneHourMutator.execute();
+//        Mutator<Integer> oneHourMutator = HFactory.createMutator(keyspace, IntegerSerializer.get());
+//        oneHourMutator.addInsertion(scheduleId, ONE_HOUR_METRIC_DATA_CF, create1HourColumn(hour7, AggregateType.MAX,
+//            max1));
+//        oneHourMutator.addInsertion(scheduleId, ONE_HOUR_METRIC_DATA_CF, create1HourColumn(hour7, AggregateType.MIN,
+//            min1));
+//        oneHourMutator.addInsertion(scheduleId, ONE_HOUR_METRIC_DATA_CF, create1HourColumn(hour7, AggregateType.AVG,
+//            avg1));
+//        oneHourMutator.addInsertion(scheduleId, ONE_HOUR_METRIC_DATA_CF, create1HourColumn(hour8, AggregateType.MAX,
+//            max2));
+//        oneHourMutator.addInsertion(scheduleId, ONE_HOUR_METRIC_DATA_CF, create1HourColumn(hour8, AggregateType.MIN,
+//            min2));
+//        oneHourMutator.addInsertion(scheduleId, ONE_HOUR_METRIC_DATA_CF, create1HourColumn(hour8, AggregateType.AVG,
+//            avg2));
+//        oneHourMutator.execute();
+        List<AggregatedNumericMetric> oneHourMetrics = asList(
+            new AggregatedNumericMetric(scheduleId, avg1, min1, max1, hour7.getMillis()),
+            new AggregatedNumericMetric(scheduleId, avg2, min2, max2, hour8.getMillis())
+        );
+        dao.insertAggregates(ONE_HOUR_METRICS_TABLE, oneHourMetrics);
 
         // update the 6 hour queue
-        Mutator<String> queueMutator = HFactory.createMutator(keyspace, StringSerializer.get());
-        Composite key = createQueueColumnName(hour6, scheduleId);
-        HColumn<Composite, Integer> sixHourQueueColumn = HFactory.createColumn(key, 0, CompositeSerializer.get(),
-            IntegerSerializer.get());
-        queueMutator.addInsertion(SIX_HOUR_METRIC_DATA_CF, METRICS_INDEX, sixHourQueueColumn);
-
-        queueMutator.execute();
+//        Mutator<String> queueMutator = HFactory.createMutator(keyspace, StringSerializer.get());
+//        Composite key = createQueueColumnName(hour6, scheduleId);
+//        HColumn<Composite, Integer> sixHourQueueColumn = HFactory.createColumn(key, 0, CompositeSerializer.get(),
+//            IntegerSerializer.get());
+//        queueMutator.addInsertion(SIX_HOUR_METRIC_DATA_CF, METRICS_INDEX, sixHourQueueColumn);
+//
+//        queueMutator.execute();
+        Map<Integer, DateTime> indexUpdates = new HashMap<Integer, DateTime>();
+        indexUpdates.put(scheduleId, hour6);
+        dao.updateMetricsIndex(SIX_HOUR_METRICS_TABLE, indexUpdates);
 
         // execute the system under test
         metricsServer.setCurrentHour(hour12);
@@ -396,21 +347,23 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
         // verify the results
         // verify that the one hour data has been aggregated
-        assert6HourDataEquals(scheduleId, asList(
-            create6HourColumn(hour6, AggregateType.MAX, max1),
-            create6HourColumn(hour6, AggregateType.MIN, min1),
-            create6HourColumn(hour6, AggregateType.AVG, (avg1 + avg2) / 2)
-        ));
+//        assert6HourDataEquals(scheduleId, asList(
+//            create6HourColumn(hour6, AggregateType.MAX, max1),
+//            create6HourColumn(hour6, AggregateType.MIN, min1),
+//            create6HourColumn(hour6, AggregateType.AVG, (avg1 + avg2) / 2)
+//        ));
+        assertMetricDataEquals(SIX_HOUR_METRICS_TABLE, scheduleId, asList(new AggregatedNumericMetric(scheduleId,
+            divide((avg1 + avg2), 2), min1, max1, hour6.getMillis())));
 
         // verify that the 6 hour queue has been updated
-        assert6HourMetricsIndexEmpty(scheduleId);
+//        assert6HourMetricsIndexEmpty(scheduleId);
 
         // verify that the 24 hour queue is updated
-        assert24HourMetricsQueueEquals(asList(HFactory.createColumn(createQueueColumnName(hour0, scheduleId), 0,
-            CompositeSerializer.get(), IntegerSerializer.get())));
+//        assert24HourMetricsQueueEquals(asList(HFactory.createColumn(createQueueColumnName(hour0, scheduleId), 0,
+//            CompositeSerializer.get(), IntegerSerializer.get())));
 
         // verify that 6 hour data is not rolled up into the 24 hour bucket
-        assert24HourDataEmpty(scheduleId);
+//        assert24HourDataEmpty(scheduleId);
     }
 
     @Test(enabled = ENABLED)

@@ -18,8 +18,8 @@
 
     <properties>
         <!-- dependency versions -->
-        <gwt.version>2.4.0</gwt.version>
-        <smartgwt.version>3.0</smartgwt.version>
+    <gwt.version>2.5.0</gwt.version>
+    <smartgwt.version>3.0</smartgwt.version>
 
         <!--  If this is too much memory to allocate to your gwt:debug process then override this property in
               in your settings.xml -->
@@ -276,30 +276,30 @@
 
         <plugins>
 
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>gwt-maven-plugin</artifactId>
-                <version>2.4.0</version>
-                <configuration>
-                    <noServer>true</noServer>
-                    <inplace>false</inplace>
-                    <!-- <logLevel>INFO' -bindAddress 0.0.0.0 -logLevel 'INFO</logLevel> -->
-                    <logLevel>INFO</logLevel>
-                    <runTarget>${coreGuiRunTarget}</runTarget>
-                    <extraJvmArgs>${gwt-plugin.extraJvmArgs}</extraJvmArgs>
-                    <localWorkers>${gwt-plugin.localWorkers}</localWorkers>
-                    <draftCompile>${gwt.draftCompile}</draftCompile>
-                    <soyc>${gwt.soyc}</soyc>                    
-                    <buildOutputDirectory>target/gwtclasses</buildOutputDirectory>
-                    <hostedWebapp>target/hostedWar</hostedWebapp>
-                    <debugSuspend>false</debugSuspend>
-                    <servicePattern>**/gwt/*GWTService.java</servicePattern>
-                    <i18nMessagesBundle>org.rhq.enterprise.gui.coregui.client.Messages</i18nMessagesBundle>
-                    <i18nConstantsWithLookupBundle>org.rhq.enterprise.gui.coregui.client.MessageConstants</i18nConstantsWithLookupBundle>
-                    <compileSourcesArtifact>org.rhq:rhq-core-domain</compileSourcesArtifact>
-                    <style>${gwt.style}</style>
-                    <strict>true</strict>
-                </configuration>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>gwt-maven-plugin</artifactId>
+        <version>2.5.0</version>
+        <configuration>
+          <noServer>true</noServer>
+          <inplace>false</inplace>
+<!--          <logLevel>INFO' -bindAddress 0.0.0.0 -logLevel 'INFO</logLevel> -->
+          <logLevel>INFO</logLevel> 
+          <runTarget>${coreGuiRunTarget}</runTarget>
+          <extraJvmArgs>${gwt-plugin.extraJvmArgs}</extraJvmArgs>
+          <localWorkers>${gwt-plugin.localWorkers}</localWorkers>
+          <draftCompile>${gwt.draftCompile}</draftCompile>
+          <soyc>${gwt.soyc}</soyc>
+          <buildOutputDirectory>target/gwtclasses</buildOutputDirectory>
+          <hostedWebapp>target/hostedWar</hostedWebapp>
+          <debugSuspend>false</debugSuspend>
+          <servicePattern>**/gwt/*GWTService.java</servicePattern>
+          <i18nMessagesBundle>org.rhq.enterprise.gui.coregui.client.Messages</i18nMessagesBundle>
+          <i18nConstantsWithLookupBundle>org.rhq.enterprise.gui.coregui.client.MessageConstants</i18nConstantsWithLookupBundle>
+          <compileSourcesArtifact>org.rhq:rhq-core-domain</compileSourcesArtifact>
+          <style>${gwt.style}</style>
+          <strict>true</strict>
+        </configuration>
 
                 <executions>
                     <execution>

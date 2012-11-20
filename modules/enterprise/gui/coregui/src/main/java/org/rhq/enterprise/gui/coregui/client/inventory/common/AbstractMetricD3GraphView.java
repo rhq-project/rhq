@@ -231,7 +231,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
         if(adjustedMeasurementUnits == null){
            Log.error("AbstractMetricD3GraphView.adjustedMeasurementUnits is populated by getJsonMetrics. Make sure it is called first.");
         }
-       return adjustedMeasurementUnits.getName();
+       return adjustedMeasurementUnits.toString();
     }
 
     public String getXAxisTitle(){
@@ -245,9 +245,10 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
         for (MeasurementDataNumericHighLowComposite measurement : data) {
             if(!Double.isNaN(measurement.getValue())){
                 sb.append("{ x:"+measurement.getTimestamp()+",");
-                MeasurementNumericValueAndUnits newHigh = MeasurementConverterClient.fit(measurement.getHighValue(), definition.getUnits());
-                MeasurementNumericValueAndUnits newLow = MeasurementConverterClient.fit(measurement.getLowValue(), definition.getUnits());
-                MeasurementNumericValueAndUnits newValue = MeasurementConverterClient.fit(measurement.getValue(), definition.getUnits());
+
+                MeasurementNumericValueAndUnits newHigh = normalizeUnitsAndValues(measurement.getHighValue(), definition.getUnits());
+                MeasurementNumericValueAndUnits newLow = normalizeUnitsAndValues(measurement.getLowValue(), definition.getUnits());
+                MeasurementNumericValueAndUnits newValue = normalizeUnitsAndValues(measurement.getValue(), definition.getUnits());
                 if(!gotAdjustedMeasurementUnits){
                     adjustedMeasurementUnits = newValue.getUnits();
                    gotAdjustedMeasurementUnits = true;
@@ -263,6 +264,21 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
         Log.debug(sb.toString());
         return sb.toString();
     }
+
+    private  MeasurementNumericValueAndUnits normalizeUnitsAndValues(double value, MeasurementUnits measurementUnits){
+        MeasurementNumericValueAndUnits newValue = MeasurementConverterClient.fit(value, measurementUnits);
+        MeasurementNumericValueAndUnits returnValue = null;
+
+        // adjust for percentage numbers
+        if(measurementUnits.equals(MeasurementUnits.PERCENTAGE)) {
+            returnValue = new MeasurementNumericValueAndUnits(newValue.getValue() * 100,newValue.getUnits());
+        }  else {
+            returnValue = new MeasurementNumericValueAndUnits(newValue.getValue() ,newValue.getUnits());
+        }
+
+        return returnValue;
+    }
+
 
     /**
      * If there is more than 2 days time window then return true so we can show day of week

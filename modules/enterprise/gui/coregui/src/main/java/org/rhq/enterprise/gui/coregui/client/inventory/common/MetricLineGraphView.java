@@ -128,7 +128,7 @@ public abstract class MetricLineGraphView extends AbstractMetricD3GraphView impl
                     .attr("y", -60)
                     .attr("dy", ".71em")
                     .style("text-anchor", "end")
-                    .text(yAxisUnits !== "" ? "("+yAxisUnits+")" : "");
+                    .text(yAxisUnits === "NONE" ? "" : yAxisUnits);
 
             console.log("finished axes");
 

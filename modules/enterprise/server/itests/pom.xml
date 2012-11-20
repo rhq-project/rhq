@@ -372,7 +372,7 @@
                          <value>${project.version}</value>
                       </property>
                    </systemProperties>
-                   <argLine>-Djava.security.manager -Djava.security.policy==${basedir}/target/test-classes/security.policy</argLine>
+                   <argLine>${jacoco.unit-test.args} -Djava.security.manager -Djava.security.policy==${basedir}/target/test-classes/security.policy</argLine>
                    <additionalClasspathElements>
                       <!-- The below is required for tests to run against Oracle. -->
                       <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar</additionalClasspathElement>

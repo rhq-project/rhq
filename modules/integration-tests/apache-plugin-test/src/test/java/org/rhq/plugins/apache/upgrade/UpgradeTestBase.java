@@ -62,7 +62,6 @@ import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.setup.ApacheTestConfiguration;
 import org.rhq.plugins.apache.setup.ApacheTestSetup;
 import org.rhq.plugins.apache.util.ApacheDeploymentUtil.DeploymentConfig;
-import org.rhq.plugins.apache.util.ApacheExecutionUtil.ExpectedApacheState;
 import org.rhq.plugins.apache.util.ResourceTypes;
 import org.rhq.plugins.apache.util.VHostSpec;
 import org.rhq.plugins.apache.util.VirtualHostLegacyResourceKeyUtil;
@@ -96,11 +95,16 @@ public class UpgradeTestBase extends PluginContainerTest {
         platform = discoverPlatform();
     }
 
-    protected void testUpgrade(ApacheTestConfiguration testConfiguration) throws Throwable {
-        final ApacheTestSetup setup = new ApacheTestSetup(testConfiguration.configurationName, context, apacheResourceTypes);
+    protected void testUpgrade(String testMethod, ApacheTestConfiguration testConfiguration) throws Throwable {
+        String testId = this.getClass().getSimpleName() + "#" + testMethod;
+        final ApacheTestSetup setup = new ApacheTestSetup(testId, testConfiguration.configurationName, context,
+            apacheResourceTypes);
         boolean testFailed = false;
         try {
             
+            LOG.debug("---------------------------------------------------------- Starting the upgrade test for: "
+                + testId);
+
             String[] configFiles = Arrays.copyOf(testConfiguration.apacheConfigurationFiles, testConfiguration.apacheConfigurationFiles.length + 1);
             configFiles[testConfiguration.apacheConfigurationFiles.length] = "/snmpd.conf";
             
@@ -190,7 +194,7 @@ public class UpgradeTestBase extends PluginContainerTest {
             throw t;
         } finally {
             try {
-                setup.withApacheSetup().getExecutionUtil().invokeOperation(ExpectedApacheState.STOPPED, "stop");
+                setup.withApacheSetup().stopApache();
             } catch (Exception e) {
                 if (testFailed) {
                     LOG.error("Failed to stop apache.", e);
@@ -198,12 +202,15 @@ public class UpgradeTestBase extends PluginContainerTest {
                     throw e;
                 }
             }
+
+            LOG.debug("---------------------------------------------------------- Finished the upgrade test for: "
+                + testId);
         }
     }
 
     protected void defineRHQ3ResourceKeys(ApacheTestConfiguration testConfig, ApacheTestSetup setup) throws Exception {
         setup.withApacheSetup().init();
-        ApacheServerComponent component = setup.withApacheSetup().getExecutionUtil().getServerComponent();
+        ApacheServerComponent component = setup.withApacheSetup().getServerComponent();
         ApacheDirectiveTree config = component.parseRuntimeConfiguration(false);
     
         DeploymentConfig deployConfig = setup.getDeploymentConfig();

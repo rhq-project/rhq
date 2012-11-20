@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<differences>
+    <difference>
+        <className>org/rhq/core/util/exec/ProcessExecutor</className>
+        <differenceType>7006</differenceType><!-- method return type changed -->
+        <method>org.rhq.core.util.exec.ProcessExecutor$RedirectThreads redirectStreams(*)</method>
+        <to>void</to>
+        <justification>
+            To fix the prior change that broke API compatibility with this method, we are putting it
+            back to return void. The new method, redirectAllStreams, is now the new method we want.
+            We have reverted back to the original signature but deprecated redirectStreams.
+        </justification>
+    </difference>
+</differences>

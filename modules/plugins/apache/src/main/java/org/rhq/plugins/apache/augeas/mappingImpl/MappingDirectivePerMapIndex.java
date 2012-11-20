@@ -55,7 +55,7 @@ public class MappingDirectivePerMapIndex extends MappingDirectivePerMap {
         PropertyMap map = new PropertyMap(directiveName);
 
         int idx = 0;
-        for (PropertyDefinition propDef : propDefMap.getPropertyDefinitions()) {
+        for (PropertyDefinition propDef : propDefMap.getOrderedPropertyDefinitions()) {
             if (propDef instanceof PropertyDefinitionSimple) {
                 if (ApacheServerComponent.AUXILIARY_INDEX_PROP.equals(propDef.getName())) {
                     map.put(new PropertySimple(ApacheServerComponent.AUXILIARY_INDEX_PROP, node.getSeq()));

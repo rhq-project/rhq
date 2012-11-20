@@ -54,16 +54,18 @@ public class NativePromptCommand implements AgentPromptCommand {
 
         if (args.length <= 1) {
             out.println(MSG
-                .getMsg(SystemInfoFactory.isNativeSystemInfoAvailable() ? AgentI18NResourceKeys.NATIVE_IS_AVAILABLE
-                    : AgentI18NResourceKeys.NATIVE_IS_NOT_AVAILABLE));
-
-            out.println(MSG
                 .getMsg(SystemInfoFactory.isNativeSystemInfoDisabled() ? AgentI18NResourceKeys.NATIVE_IS_DISABLED
                     : AgentI18NResourceKeys.NATIVE_IS_NOT_DISABLED));
 
-            out.println(MSG
-                .getMsg(SystemInfoFactory.isNativeSystemInfoInitialized() ? AgentI18NResourceKeys.NATIVE_IS_INITIALIZED
-                    : AgentI18NResourceKeys.NATIVE_IS_NOT_INITIALIZED));
+            if (!SystemInfoFactory.isNativeSystemInfoDisabled()) {
+                out.println(MSG
+                    .getMsg(SystemInfoFactory.isNativeSystemInfoAvailable() ? AgentI18NResourceKeys.NATIVE_IS_AVAILABLE
+                        : AgentI18NResourceKeys.NATIVE_IS_NOT_AVAILABLE));
+
+                out.println(MSG
+                    .getMsg(SystemInfoFactory.isNativeSystemInfoInitialized() ? AgentI18NResourceKeys.NATIVE_IS_INITIALIZED
+                        : AgentI18NResourceKeys.NATIVE_IS_NOT_INITIALIZED));
+            }
 
             return true;
         }

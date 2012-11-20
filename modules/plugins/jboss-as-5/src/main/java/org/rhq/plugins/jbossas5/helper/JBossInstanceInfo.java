@@ -169,7 +169,7 @@ public class JBossInstanceInfo {
                     File workingDir = new File(currentWorkingDir);
                     url = JBossConfigurationUtility.makeURL(arg, workingDir);
                 } catch (Exception e) {
-                    log.error("Failed to parse argument to --properties option: " + options.getOptarg());
+                    log.error("Failed to parse argument to --properties option: " + options.getOptarg() + ": " + e);
                     break;
                 }
                 Properties props = new Properties();

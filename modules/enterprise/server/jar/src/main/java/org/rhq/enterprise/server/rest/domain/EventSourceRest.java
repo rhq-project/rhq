@@ -22,13 +22,14 @@ package org.rhq.enterprise.server.rest.domain;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiClass;
 import com.wordnik.swagger.annotations.ApiProperty;
 
 /**
  * An EventSource
  * @author Heiko W. Rupp
  */
-@Api("This class represents an EventSource - e.g. a logfile.")
+@ApiClass("This class represents an EventSource - e.g. a logfile.")
 @XmlRootElement(name="source")
 public class EventSourceRest {
 

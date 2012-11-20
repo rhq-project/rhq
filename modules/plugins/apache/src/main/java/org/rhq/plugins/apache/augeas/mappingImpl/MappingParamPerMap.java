@@ -85,7 +85,7 @@ public class MappingParamPerMap extends AugeasToConfigurationSimple {
                 int idx = i;
                 PropertyMap map = new PropertyMap(mapDef.getName());
                 propList.add(map);
-                for (PropertyDefinition def : mapDef.getPropertyDefinitions()) {
+                for (PropertyDefinition def : mapDef.getOrderedPropertyDefinitions()) {
                     if (ApacheServerComponent.AUXILIARY_INDEX_PROP.equals(def.getName())) {
                         map.put(new PropertySimple(ApacheServerComponent.AUXILIARY_INDEX_PROP, directiveNode.getSeq()));
                     } else {

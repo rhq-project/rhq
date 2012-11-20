@@ -139,8 +139,17 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     public ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException {
         validateInventoryReport(report);
 
-        InventoryReportFilter filter = new DeletedResourceTypeFilter(subjectManager, resourceTypeManager, pluginManager);
-        if (!filter.accept(report)) {
+        DeletedResourceTypeFilter filter = new DeletedResourceTypeFilter(subjectManager, resourceTypeManager, pluginManager);
+        Set<ResourceType> deletedTypes = filter.apply(report);
+
+        if (!deletedTypes.isEmpty()) {
+            if (log.isDebugEnabled()) {
+                log.debug("The inventory report from " + report.getAgent() + " with added roots " +
+                    report.getAddedRoots() + " contains these deleted resource types " + deletedTypes);
+            } else {
+                log.info("The inventory report from " + report.getAgent() + " contains these deleted resource types " +
+                    deletedTypes);
+            }
             throw new StaleTypeException("The report contains one or more resource types that have been marked for "
                 + "deletion.");
         }

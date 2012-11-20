@@ -21,12 +21,16 @@ package org.rhq.enterprise.server.rest.domain;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.wordnik.swagger.annotations.ApiClass;
+import com.wordnik.swagger.annotations.ApiProperty;
+
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 
 /**
  * Simple property definition
  * @author Heiko W. Rupp
  */
+@ApiClass(value = "A simple property definition", description = "This bean is e.g. used for parameters of operations")
 @XmlRootElement
 public class SimplePropDef {
 
@@ -38,6 +42,7 @@ public class SimplePropDef {
     public SimplePropDef() {
     }
 
+    @ApiProperty("The name of the property")
     public String getName() {
         return name;
     }
@@ -46,6 +51,7 @@ public class SimplePropDef {
         this.name = name;
     }
 
+    @ApiProperty("Indicates if the property is required i.e. has to have a value set")
     public boolean isRequired() {
         return required;
     }
@@ -54,6 +60,8 @@ public class SimplePropDef {
         this.required = required;
     }
 
+    @ApiProperty(value = "The type of the property",
+        allowableValues = "STRING, LONG_STRING, PASSWORD, BOOLEAN, INTEGER, LONG, FLOAT, DOUBLE, FILE, DIRECTORY")
     public PropertySimpleType getType() {
         return type;
     }
@@ -62,6 +70,7 @@ public class SimplePropDef {
         this.type = type;
     }
 
+    @ApiProperty("The string representation of a default value if defined.")
     public String getDefaultValue() {
         return defaultValue;
     }

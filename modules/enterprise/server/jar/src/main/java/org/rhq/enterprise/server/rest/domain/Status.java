@@ -23,10 +23,14 @@ import java.util.Map;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.wordnik.swagger.annotations.ApiClass;
+import com.wordnik.swagger.annotations.ApiProperty;
+
 /**
  * System status
  * @author Heiko W. Rupp
  */
+@ApiClass("Place holder for the system status")
 @XmlRootElement
 public class Status {
 
@@ -34,6 +38,7 @@ public class Status {
     public Status() {
     }
 
+    @ApiProperty("Contains the status as a map of key/value pairs")
     public Map<String, String> getValues() {
         return values;
     }

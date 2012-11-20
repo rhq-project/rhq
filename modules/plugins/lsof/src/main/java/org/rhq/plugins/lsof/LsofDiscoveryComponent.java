@@ -53,13 +53,13 @@ public class LsofDiscoveryComponent extends ScriptDiscoveryComponent {
 
         switch (detectionMechanism) {
         case INTERNAL:
-            if (!SystemInfoFactory.isNativeSystemInfoAvailable()) {
-                throw new InvalidPluginConfigurationException(
-                    "The native system is not available - cannot use the internal detection mechanism");
-            }
             if (SystemInfoFactory.isNativeSystemInfoDisabled()) {
                 throw new InvalidPluginConfigurationException(
                     "The native system is disabled - cannot use the internal detection mechanism");
+            }
+            if (!SystemInfoFactory.isNativeSystemInfoAvailable()) {
+                throw new InvalidPluginConfigurationException(
+                    "The native system is not available - cannot use the internal detection mechanism");
             }
             String version = LsofComponent.VERSION;
             details = new DiscoveredResourceDetails(discoveryContext.getResourceType(), "*lsof-internal*",

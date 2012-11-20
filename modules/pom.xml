@@ -176,6 +176,23 @@
                <module>integration-tests</module>
            </modules>
        </profile>
+
+       <profile>
+          <id>code-coverage</id>
+          <activation>
+             <property>
+                <name>code-coverage</name>
+             </property>
+          </activation>
+          <modules>
+             <module>core</module>
+             <module>common</module>
+             <module>plugins</module>
+             <module>helpers</module>
+             <module>enterprise</module>
+             <module>integration-tests</module>
+          </modules>
+       </profile>         
    </profiles>
 
 </project>

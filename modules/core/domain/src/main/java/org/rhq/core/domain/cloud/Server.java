@@ -89,9 +89,8 @@ import org.rhq.core.domain.resource.Agent;
     @NamedQuery(name = Server.QUERY_UPDATE_STATUS_BY_NAME, query = "" //
         + " UPDATE Server s " //
         + "    SET s.status = -1 " // negative numbers so that bitmask strat does not conflict with this one
-        + "  WHERE s.status = 0 " // we only need the first guy to set it
-        + "    AND s.name = :identity ") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "id", sequenceName = "RHQ_SERVER_ID_SEQ")
+        + "  WHERE s.status = 0 ") })
+@SequenceGenerator(name = "id", sequenceName = "RHQ_SERVER_ID_SEQ")
 @Table(name = "RHQ_SERVER")
 public class Server implements Serializable {
 

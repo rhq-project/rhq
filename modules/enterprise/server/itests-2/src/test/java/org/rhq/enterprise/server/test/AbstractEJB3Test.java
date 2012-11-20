@@ -247,6 +247,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
         Collection<JavaArchive> dependencies = new HashSet<JavaArchive>();
         dependencies.addAll(resolver.artifact("org.powermock:powermock-api-mockito").resolveAs(JavaArchive.class));
         dependencies.addAll(resolver.artifact("org.liquibase:liquibase-core").resolveAs(JavaArchive.class));
+        dependencies.addAll(resolver.artifact("joda-time:joda-time").resolveAs(JavaArchive.class));
         dependencies
             .addAll(resolver.artifact("org.jboss.shrinkwrap:shrinkwrap-impl-base").resolveAs(JavaArchive.class));
         dependencies.addAll(resolver.artifact("org.rhq:rhq-core-client-api:jar:tests").resolveAs(JavaArchive.class));

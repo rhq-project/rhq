@@ -86,7 +86,6 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         data.add(new MeasurementDataNumeric(oneMinuteAgo.getMillis(), scheduleId, 2.6));
 
         MetricsDAO dao = new MetricsDAO(dataSource);
-//        int ttl = Days.days(10).toStandardSeconds().getSeconds();
         int ttl = Hours.ONE.toStandardSeconds().getSeconds();
         long timestamp = System.currentTimeMillis();
         Set<MeasurementDataNumeric> actualUpdates = dao.insertRawMetrics(data, ttl, timestamp);

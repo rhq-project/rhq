@@ -30,6 +30,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -38,6 +40,8 @@ import org.testng.IInvokedMethodListener;
 import org.testng.ITestResult;
 
 import org.rhq.core.util.stream.StreamUtil;
+
+import me.prettyprint.cassandra.service.CassandraHost;
 
 /**
  * @author John Sanda
@@ -92,6 +96,24 @@ public class CassandraClusterManager implements IInvokedMethodListener {
         deployer.setDeploymentOptions(deploymentOptions);
 
         deployer.deploy();
+
+        ClusterInitService clusterInitService = new ClusterInitService();
+        List<CassandraHost> cassandraHosts = getCassandraHosts(deployer.getCassandraHosts());
+
+        if (annotation.waitForClusterToStart()) {
+            clusterInitService.waitForClusterToStart(cassandraHosts);
+        }
+
+        if (annotation.waitForSchemaAgreement()) {
+            // TODO do not hard code cluster name
+            // I am ok with hard coding the cluster name for now as it is only required
+            // by the Hector API, and it is to be determined whether or not we will continue
+            // using Hector. If we wind up directly using the underlying Thrift API, there
+            // is no cluster name argument.
+            //
+            // jsanda
+            clusterInitService.waitForSchemaAgreement("rhq", cassandraHosts);
+        }
     }
 
     private void shutdownCluster() throws Exception {
@@ -112,5 +134,16 @@ public class CassandraClusterManager implements IInvokedMethodListener {
         StreamUtil.copy(new FileReader(new File(binDir, "cassandra.pid")), writer);
 
         return Long.parseLong(writer.getBuffer().toString());
+    }
+
+    private List<CassandraHost> getCassandraHosts(String hosts) {
+        List<CassandraHost> cassandraHosts = new ArrayList<CassandraHost>();
+
+        for (String s : hosts.split(",")) {
+            String[] params = s.split(":");
+            cassandraHosts.add(new CassandraHost(params[0], Integer.parseInt(params[1])));
+
+        }
+        return cassandraHosts;
     }
 }

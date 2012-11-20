@@ -31,12 +31,30 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * boo!
+ *
  * @author John Sanda
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD })
 public @interface DeployCluster {
 
+    /**
+     * @return The number of nodes in the cluster. Defaults to two.
+     */
     int numNodes() default 2;
+
+    /**
+     * @return A flag that specifies whether or not to wait for all cluster nodes to start.
+     * The approach that is currently used to determine whether or a node is started is to
+     * open a Thrift connection to that node. This attribute defaults to true.
+     */
+    boolean waitForClusterToStart() default true;
+
+    /**
+     * @return A flag that specifies whether or not to wait for schema agreement across the
+     * cluster. Defaults to true.
+     */
+    boolean waitForSchemaAgreement() default true;
 
 }

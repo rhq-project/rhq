@@ -53,17 +53,9 @@ public class CassandraIntegrationTest {
     private DateTimeService dateTimeService;
 
     @BeforeClass
-    @DeployCluster(numNodes = 2)
+    @DeployCluster
     public void deployCluster() throws CassandraException {
         dateTimeService = new DateTimeService();
-
-//        List<CassandraHost> hosts = asList(new CassandraHost("127.0.0.1", 9160), new CassandraHost("127.0.0.2", 9160));
-//        List<CassandraHost> hosts = asList(new CassandraHost("127.0.0.1", 9160));
-//        ClusterInitService initService = new ClusterInitService();
-//
-//        initService.waitForClusterToStart(hosts);
-//        initService.waitForSchemaAgreement("rhq", hosts);
-
         dataSource = new CassandraDataSource("127.0.0.1", 9160, "rhq", null, null, "3.0.0");
         try {
             connection = dataSource.getConnection();

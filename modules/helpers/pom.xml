@@ -16,16 +16,6 @@
   <name>RHQ Helpers</name>
   <description>parent POM for all RHQ helpers</description>
 
-  <dependencies>
-      <dependency>
-        <groupId>net.sourceforge.cobertura</groupId>
-        <artifactId>cobertura</artifactId>
-        <version>${cobertura.version}</version>
-        <scope>test</scope>
-     </dependency>
-  </dependencies>
-
-
   <modules>
 
     <module>rtfilter</module>

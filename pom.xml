@@ -63,8 +63,6 @@
          The dependency versions below are declared together as the versions of each are dependent on the
          overall JBoss AS Server version.  Meaning, the AS provides these libs. When the Server
          version is changed the versions of each of these should be validated and updated as needed. 
-    
-    <jboss-javassist.version>3.9.0.GA</jboss-javassist.version>
     -->
     <jboss.version>7.1.1.Final</jboss.version>
     <jboss.javaee6.spec.version>3.0.0.Final</jboss.javaee6.spec.version>
@@ -144,13 +142,6 @@
     <xercesImpl.version>2.9.1-jbossas-2</xercesImpl.version> <!-- see BZ-820629 and CVE-2009-2625 -->
     <opencsv.version>1.8</opencsv.version>    
     
-
-    <!-- Note that this is DIFFERENT from the jboss-javassist defined above.
-    This version is used for org.javassist:javassist artifact that is used in
-    Arquillian integration, and works with jacoco (as opposed to javassist 3.9.0,
-       which doesn't in some cases.) -->
-    <javassist.version>3.16.1-GA</javassist.version>
-
     <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
     <rhq.db.admin.password>rhqadmin</rhq.db.admin.password>
 

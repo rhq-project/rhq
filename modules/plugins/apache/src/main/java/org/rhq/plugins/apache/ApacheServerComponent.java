@@ -283,16 +283,29 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
         boolean available;
         try {
             if (this.url != null) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Trying to ping the server for availability: " + this.url);
+                }
                 long t1 = System.currentTimeMillis();
                 int timeout = PluginUtility.getAvailabilityFacetTimeout();
                 available = WWWUtils.isAvailable(this.url, timeout);
                 availPingTime = System.currentTimeMillis() - t1;
             } else {
+                if (log.isDebugEnabled()) {
+                    log.debug("Trying to ping the server for availability through SNMP.");
+                }
                 available = getSNMPSession().ping();
                 availPingTime = -1;
             }
         } catch (Exception e) {
+            if (log.isDebugEnabled()) {
+                log.debug("Exception while checking availability.", e);
+            }
             available = false;
+        }
+
+        if (log.isDebugEnabled()) {
+            log.debug("Availability determined: " + (available ? AvailabilityType.UP : AvailabilityType.DOWN));
         }
 
         return (available) ? AvailabilityType.UP : AvailabilityType.DOWN;

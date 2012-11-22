@@ -100,7 +100,7 @@ public abstract class AbstractIntegrationTest {
         assert node != null : "No result from upload - node was null";
         assert node.has("outcome") : "No outcome from upload";
         String outcome = node.get("outcome").getTextValue();
-        assert outcome.equals("success") : "Upload was no success" + outcome;
+        assert outcome.equals("success") : "Upload was no success, but: [" + outcome + "]";
 
         JsonNode resultNode = node.get("result");
         return resultNode.get("BYTES_VALUE").getTextValue();

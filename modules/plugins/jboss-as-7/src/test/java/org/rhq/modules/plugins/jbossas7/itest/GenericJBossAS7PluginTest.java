@@ -58,7 +58,9 @@ public class GenericJBossAS7PluginTest extends AbstractJBossAS7PluginTest {
         // are not exposed, it is normal that the server returns 'undefined' for the value
         // Note that those
         excludedMetricNamesByType.put(new ResourceType("Memory Pool Resource",PLUGIN_NAME, ResourceCategory.SERVICE,null),
-                new String[] {"collection-usage-threshold-count","collection-usage-threshold","collection-usage"});
+                new String[] {"collection-usage-threshold-count","collection-usage-threshold","collection-usage",
+                        "collection-usage-threshold-exceeded","collection-usage:committed","collection-usage:init",
+                        "collection-usage:max","collection-usage:used","usage-threshold-count","usage-threshold-exceeded"});
         assertAllNumericMetricsAndTraitsHaveNonNullValues(excludedMetricNamesByType);
     }
 

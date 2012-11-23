@@ -34,6 +34,7 @@ import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.AlertDefinitionTemplateTypeView;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.DriftDefinitionTemplateTypeView;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.MetricTemplateTypeView;
+import org.rhq.enterprise.gui.coregui.client.admin.topology.ServerTableView;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
@@ -61,6 +62,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     public static final ViewName SECTION_CONTENT_VIEW_ID = new ViewName("Content", MSG.view_admin_content());
 
     // TODO these iframe page view ids should go away in favor of the gwt view page view_id, when available
+    private static final ViewName PAGE_SERVERS_VIEW_ID = new ViewName("Servers", MSG.view_adminTopology_servers(), IconEnum.SERVERS);
     private static final ViewName PAGE_AGENTS_VIEW_ID = new ViewName("Agents", MSG.view_adminTopology_agents(),IconEnum.AGENT);
     private static final ViewName PAGE_AFFINITY_GROUPS_VIEW_ID = new ViewName("AffinityGroups",
         MSG.view_adminTopology_affinityGroups(), IconEnum.ALL_GROUPS);
@@ -135,12 +137,12 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         ProductInfo productInfo = CoreGUI.get().getProductInfo();
         boolean isRHQ = (productInfo != null) && "RHQ".equals(productInfo.getShortName());
 
-        NavigationItem serversItem = new NavigationItem(ServerTableView.VIEW_ID,
-            new ViewFactory() {
-                public Canvas createView() {
-                    return new ServerTableView(extendLocatorId(ServerTableView.VIEW_ID.getName()));
-                }
-            }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
+        NavigationItem serversItem = new NavigationItem(PAGE_SERVERS_VIEW_ID, new ViewFactory() {
+            public Canvas createView() {
+                return new FullHTMLPane(extendLocatorId(PAGE_SERVERS_VIEW_ID.getName()),
+                    "/rhq/ha/listServers-plain.xhtml?nomenu=true");
+            }
+        }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
         NavigationItem agentsItem = new NavigationItem(PAGE_AGENTS_VIEW_ID,  new ViewFactory() {
             public Canvas createView() {
@@ -171,14 +173,21 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
                     return new RemoteAgentInstallView(extendLocatorId("RemoteAgentInstall"));
                 }
             }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
+        
+        NavigationItem serversItemGwt = new NavigationItem(ServerTableView.VIEW_ID,
+            new ViewFactory() {
+                public Canvas createView() {
+                    return new ServerTableView(extendLocatorId(ServerTableView.VIEW_ID.getName()));
+                }
+            }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
         NavigationSection topologyRegion = null;
         if (isRHQ) {
             topologyRegion = new NavigationSection(SECTION_TOPOLOGY_VIEW_ID, serversItem, agentsItem,
-                affinityGroupsItem, partitionEventsItem, remoteAgentInstallItem);
+                affinityGroupsItem, partitionEventsItem, serversItemGwt, remoteAgentInstallItem);
         } else {
             topologyRegion = new NavigationSection(SECTION_TOPOLOGY_VIEW_ID, serversItem, agentsItem,
-                affinityGroupsItem, partitionEventsItem);
+                affinityGroupsItem, partitionEventsItem, serversItemGwt);
         }
         return topologyRegion;
     }

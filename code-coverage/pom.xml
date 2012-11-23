@@ -1,0 +1,205 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   <modelVersion>4.0.0</modelVersion>
+   <parent>
+      <artifactId>rhq-parent</artifactId>
+      <groupId>org.rhq</groupId>
+      <version>4.6.0-SNAPSHOT</version>
+   </parent>
+
+   <artifactId>rhq-code-coverage</artifactId>
+
+   <name>RHQ Code Coverage</name>
+   <description>A module gathering the code coverage info from the test runs of all the RHQ modules</description>
+
+   <profiles>
+      <profile>
+         <id>code-coverage</id>
+         <activation>
+            <property>
+               <name>code-coverage</name>
+            </property>
+         </activation>   
+         <build>
+            <plugins>
+               <plugin>
+                  <!-- Do NOT run code coverage on this module... -->
+                  <groupId>org.jacoco</groupId>
+                  <artifactId>jacoco-maven-plugin</artifactId>
+                  <configuration>
+                     <skip>true</skip>
+                  </configuration>
+               </plugin>
+               <!-- Do NOT run tests in this module... -->
+               <plugin>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <configuration>
+                     <skip>true</skip>
+                  </configuration>
+               </plugin>
+               <!-- NOT even the integration tests... -->
+               <plugin>
+                  <artifactId>maven-failsafe-plugin</artifactId>
+                  <configuration>
+                     <skip>true</skip>
+                  </configuration>
+               </plugin>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-dependency-plugin</artifactId>
+                  <executions>
+                     <!-- Copy the ant tasks jar. Needed for ts.jacoco.report-ant . -->
+                     <execution>
+                        <id>jacoco-dependency-ant</id>
+                        <goals>
+                           <goal>copy</goal>
+                        </goals>
+                        <phase>process-test-resources</phase>
+                        <inherited>false</inherited>
+                        <configuration>
+                           <artifactItems>
+                              <artifactItem>
+                                 <groupId>org.jacoco</groupId>
+                                 <artifactId>org.jacoco.ant</artifactId>
+                                 <version>${jacoco.version}</version>
+                              </artifactItem>
+                           </artifactItems>
+                           <stripVersion>true</stripVersion>
+                           <outputDirectory>${project.build.directory}/jacoco-jars</outputDirectory>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>overall-chart-creation</id>
+                        <phase>verify</phase>
+                        <goals>
+                           <goal>run</goal>
+                        </goals>
+                        <configuration>
+                           <target>
+                              <!-- Execute an ant task within maven -->
+                              <echo message="Generating JaCoCo Reports" />
+                              <taskdef name="report" classname="org.jacoco.ant.ReportTask">
+                                 <classpath path="${project.build.directory}/jacoco-jars/org.jacoco.ant.jar" />
+                              </taskdef>
+                              <mkdir dir="${project.reporting.outputDirectory}/coverage-report/overall" />
+                              <report>
+                                 <executiondata>
+                                    <fileset dir="${basedir}/../modules">
+                                       <include name="**/target/jacoco-unit-test.exec" />
+                                       <include name="**/target/jacoco-integration-test.exec" />
+                                    </fileset>
+                                 </executiondata>
+                                 <structure name="RHQ Overall Code Coverage Report (including unit and integration tests)">
+                                    <group name="Plugins">
+                                       <classfiles>
+                                          <fileset dir="${basedir}/../modules">
+                                             <include name="plugins/**/target/classes/org/rhq/**" />
+                                             <include name="plugins/**/target/generated-classes/*/org/rhq/**" />
+                                             <include name="integration-tests/**/target/classes/org/rhq/**" />
+                                             <include name="integration-tests/**/target/generated-classes/org/rhq/**" />
+                                          </fileset>
+                                       </classfiles>
+                                       <sourcefiles>
+                                          <dirset dir="${basedir}/../modules/">
+                                             <include name="**/src/main/java" />
+                                             <include name="**/target/generated-sources/*" />
+                                          </dirset>
+                                       </sourcefiles>
+                                    </group>
+                                    <group name="Core">
+                                       <classfiles>
+                                          <fileset dir="${basedir}/../modules">
+                                             <include name="core/**/target/classes/org/rhq/**" />
+                                             <include name="core/**/target/generated-classes/org/rhq/**" />
+                                             <include name="integration-tests/**/target/classes/org/rhq/**" />
+                                             <include name="integration-tests/**/target/generated-classes/org/rhq/**" />
+                                          </fileset>
+                                       </classfiles>
+                                       <sourcefiles>
+                                          <dirset dir="${basedir}/../modules/">
+                                             <include name="**/src/main/java" />
+                                             <include name="**/target/generated-sources/*" />
+                                          </dirset>
+                                       </sourcefiles>
+                                    </group>
+                                    <group name="Enterprise">
+                                       <classfiles>
+                                          <fileset dir="${basedir}/../modules">
+                                             <include name="enterprise/**/target/classes/org/rhq/**" />
+                                             <include name="enterprise/**/target/generated-classes/org/rhq/**" />
+                                             <include name="integration-tests/**/target/classes/org/rhq/**" />
+                                             <include name="integration-tests/**/target/generated-classes/org/rhq/**" />
+                                             <exclude name="enterprise/gui/**" />
+                                          </fileset>
+                                       </classfiles>
+                                       <sourcefiles>
+                                          <dirset dir="${basedir}/../modules/">
+                                             <include name="**/src/main/java" />
+                                             <include name="**/target/generated-sources/*" />
+                                          </dirset>
+                                       </sourcefiles>
+                                    </group>
+                                    <group name="GUI">
+                                       <classfiles>
+                                          <fileset dir="${basedir}/../modules">
+                                             <include name="enterprise/gui/**/target/classes/org/rhq/**" />
+                                             <include name="enterprise/gui/**/target/generated-classes/org/rhq/**" />
+                                             <include name="integration-tests/**/target/classes/org/rhq/**" />
+                                             <include name="integration-tests/**/target/generated-classes/org/rhq/**" />
+                                          </fileset>
+                                       </classfiles>
+                                       <sourcefiles>
+                                          <dirset dir="${basedir}/../modules/">
+                                             <include name="**/src/main/java" />
+                                             <include name="**/target/generated-sources/*" />
+                                          </dirset>
+                                       </sourcefiles>
+                                    </group>
+                                    <group name="Miscellaneous">
+                                       <classfiles>
+                                          <fileset dir="${basedir}/../modules">
+                                             <include name="**/target/classes/org/rhq/**" />
+                                             <include name="**/target/generated-classes/org/rhq/**" />
+                                             <exclude name="plugins/**/target/classes/org/rhq/**" />
+                                             <exclude name="plugins/**/target/generated-classes/*/org/rhq/**" />
+                                             <exclude name="core/**/target/classes/org/rhq/**" />
+                                             <exclude name="core/**/target/generated-classes/org/rhq/**" />
+                                             <exclude name="enterprise/**/target/classes/org/rhq/**" />
+                                             <exclude name="enterprise/**/target/generated-classes/org/rhq/**" />
+                                          </fileset>
+                                       </classfiles>
+                                       <sourcefiles>
+                                          <dirset dir="${basedir}/../modules/">
+                                             <include name="**/src/main/java" />
+                                             <include name="**/target/generated-sources/*" />
+                                          </dirset>
+                                       </sourcefiles>
+                                    </group>   
+                                 </structure>
+                                 <html destdir="${project.reporting.outputDirectory}/coverage-report/overall" />
+                                 <xml destfile="${project.reporting.outputDirectory}/coverage-report/overall/coverage-report.xml" />
+                                 <csv destfile="${project.reporting.outputDirectory}/coverage-report/overall/coverage-report.csv" />
+                              </report>
+                           </target>
+                        </configuration>
+                     </execution>
+                  </executions>
+                  <dependencies>
+                     <dependency>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>org.jacoco.ant</artifactId>
+                        <version>${jacoco.version}</version>
+                     </dependency>
+                  </dependencies>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+   </profiles>
+</project>
+      

@@ -486,7 +486,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent<?>> implem
 
     protected void populatePropertyMap(PropertyDefinitionMap propDefMap, PropertyMap propMap, Augeas augeas,
         AugeasNode mapNode) {
-        for (PropertyDefinition mapEntryPropDef : propDefMap.getPropertyDefinitions()) {
+        for (PropertyDefinition mapEntryPropDef : propDefMap.getOrderedPropertyDefinitions()) {
             loadProperty(mapEntryPropDef, propMap, augeas, mapNode);
         }
     }
@@ -559,7 +559,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent<?>> implem
 
     protected void setNodeFromPropertyMap(PropertyDefinitionMap propDefMap, PropertyMap propMap, Augeas augeas,
         AugeasNode mapNode) {
-        for (PropertyDefinition mapEntryPropDef : propDefMap.getPropertyDefinitions()) {
+        for (PropertyDefinition mapEntryPropDef : propDefMap.getOrderedPropertyDefinitions()) {
             setNode(mapEntryPropDef, propMap, augeas, mapNode);
         }
     }

@@ -46,6 +46,7 @@ import org.rhq.core.pluginapi.inventory.PluginContainerDeployment;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
@@ -179,8 +180,13 @@ public class ApacheExecutionUtil {
 
     public void invokeOperation(ExpectedApacheState desiredState, String operation) throws Exception {
         int i = 0;
+
         while (i < 10) {
-            serverComponent.invokeOperation(operation, new Configuration());
+            OperationResult res = serverComponent.invokeOperation(operation, new Configuration());
+
+            LOG.debug("Invoked operation '" + operation + "' on " + resourceContext.getResourceKey() + " (waiting for "
+                + desiredState + "), attempt " + i + ": "
+                + res.getComplexResults().getMap().toString());
 
             //wait for max 30s for the operation to "express" itself
             int w = 0;

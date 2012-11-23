@@ -207,7 +207,7 @@
                            <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
                            <groups>ws</groups>
                            <forkMode>pertest</forkMode>
-                           <argLine>-Xmx512m -Xms128m</argLine>
+                           <argLine>${jacoco.unit-test.args} -Xmx512m -Xms128m</argLine>
                            <systemProperties>
                               <property>
                                  <name>deploymentDirectory</name>

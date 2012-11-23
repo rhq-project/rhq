@@ -20,6 +20,7 @@
 package org.rhq.enterprise.gui.coregui.client.components.configuration;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -103,7 +104,7 @@ public class AggregateConfigurationBuilder {
 
     private static void buildAggregatePropertyMap(PropertyDefinitionMap propertyDefinitionMap,
         List<AbstractPropertyMap> sourceParentPropertyMaps, AbstractPropertyMap targetParentPropertyMap) {
-        List<PropertyDefinition> childPropertyDefinitions = propertyDefinitionMap.getPropertyDefinitions();
+        Collection<PropertyDefinition> childPropertyDefinitions = propertyDefinitionMap.getOrderedPropertyDefinitions();
         if (!childPropertyDefinitions.isEmpty()) {
             for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions)
                 buildAggregateProperty(childPropertyDefinition, sourceParentPropertyMaps, targetParentPropertyMap);

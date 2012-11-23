@@ -16,14 +16,6 @@
    <name>RHQ Enterprise Modules</name>
    <description>parent POM for modules comprising the RHQ enterprise edition</description>
 
-   <dependencies>
-      <dependency>
-        <groupId>net.sourceforge.cobertura</groupId>
-        <artifactId>cobertura</artifactId>
-        <version>${cobertura.version}</version>
-     </dependency>
-  </dependencies>
-
    <profiles>
 
       <profile>

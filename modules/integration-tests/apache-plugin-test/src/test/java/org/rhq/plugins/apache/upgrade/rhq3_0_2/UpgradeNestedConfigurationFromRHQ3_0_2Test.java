@@ -62,7 +62,7 @@ public class UpgradeNestedConfigurationFromRHQ3_0_2Test extends UpgradeTestBase 
     @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithResolvableNames(final String installDir, final String exePath) throws Throwable {
-        testUpgrade(new ApacheTestConfiguration() {
+        testUpgrade("testWithResolvableNames", new ApacheTestConfiguration() {
             {
                 apacheConfigurationFiles = configuredApacheConfigurationFiles;
                 inventoryFile = configuredInventoryFile;
@@ -82,7 +82,7 @@ public class UpgradeNestedConfigurationFromRHQ3_0_2Test extends UpgradeTestBase 
     @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithUnresolvableNames(final String installDir, final String exePath) throws Throwable {
-        testUpgrade(new ApacheTestConfiguration() {
+        testUpgrade("testWithUnresolvableNames", new ApacheTestConfiguration() {
             {
                 apacheConfigurationFiles = configuredApacheConfigurationFiles;
                 inventoryFile = configuredInventoryFile;
@@ -113,7 +113,7 @@ public class UpgradeNestedConfigurationFromRHQ3_0_2Test extends UpgradeTestBase 
     @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithNonUniqueNames(final String installDir, final String exePath) throws Throwable {
-        testUpgrade(new ApacheTestConfiguration() {
+        testUpgrade("testWithNonUniqueNames", new ApacheTestConfiguration() {
             {
                 apacheConfigurationFiles = configuredApacheConfigurationFiles;
                 inventoryFile = configuredInventoryFileWithSingleVHost;
@@ -144,7 +144,7 @@ public class UpgradeNestedConfigurationFromRHQ3_0_2Test extends UpgradeTestBase 
     @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithAnyAddress(final String installPath, final String exePath) throws Throwable {
-        testUpgrade(new ApacheTestConfiguration() {
+        testUpgrade("testWithAnyAddress", new ApacheTestConfiguration() {
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
 
@@ -179,7 +179,7 @@ public class UpgradeNestedConfigurationFromRHQ3_0_2Test extends UpgradeTestBase 
     @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithWildcardAddress(final String installPath, final String exePath) throws Throwable {
-        testUpgrade(new ApacheTestConfiguration() {
+        testUpgrade("testWithWildcardAddress", new ApacheTestConfiguration() {
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
 

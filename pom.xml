@@ -100,7 +100,6 @@
     <twitter4j.version>2.2.4</twitter4j.version>
     <commons-codec.version>1.4</commons-codec.version>
     <testng.version>6.5.2</testng.version>
-    <cobertura.version>1.9.4.1</cobertura.version>
     <augeas.version>0.9.0</augeas.version>
     <augeas.classifier>el5</augeas.classifier>
     <augeas.zip.version>0.9.0</augeas.zip.version>
@@ -109,9 +108,15 @@
     <ant.contrib.version>1.0b3</ant.contrib.version>
     <resteasy.version>2.3.4.Final</resteasy.version>
     <freemarker.version>2.3.18</freemarker.version>
-    <powermock.version>1.4.11</powermock.version>
+    <powermock.version>1.4.12</powermock.version>
     <arquillian.version>1.0.1.Final</arquillian.version>
     <xercesImpl.version>2.9.1-jbossas-2</xercesImpl.version> <!-- see BZ-820629 and CVE-2009-2625 -->
+
+    <!-- Note that this is DIFFERENT from the jboss-javassist defined above.
+    This version is used for org.javassist:javassist artifact that is used in
+    Arquillian integration, and works with jacoco (as opposed to javassist 3.9.0,
+       which doesn't in some cases.) -->
+    <javassist.version>3.16.1-GA</javassist.version>
 
     <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
     <rhq.db.admin.password>rhqadmin</rhq.db.admin.password>
@@ -195,6 +200,8 @@
     <!-- The name of the file in the module's root dir that contains the intentional
          api changes to be ignored by Clirr api checks -->
     <intentional-api-changes-file>intentional-api-changes-since-${signature-check-base-version}.xml</intentional-api-changes-file>
+
+    <jacoco.version>0.6.0.201210061924</jacoco.version>
   </properties>
 
 
@@ -496,6 +503,11 @@
          <scope>import</scope>
       </dependency>
 
+      <dependency>
+         <groupId>org.javassist</groupId>
+         <artifactId>javassist</artifactId>
+         <version>${javassist.version}</version>
+      </dependency>
     </dependencies>
 
   </dependencyManagement>
@@ -554,13 +566,6 @@
     </dependency>
     <!-- end of workaround -->
 
-    <dependency>
-      <groupId>net.sourceforge.cobertura</groupId>
-      <artifactId>cobertura</artifactId>
-      <version>${cobertura.version}</version>
-      <scope>test</scope>
-    </dependency>
-
   </dependencies>
 
 
@@ -594,18 +599,24 @@
                  </exclusion>
                </exclusions>
              </dependency>
-
-             <!-- We must declare this here to workaround
-                  http://jira.codehaus.org/browse/MANTRUN-51.
-                  Once we require Maven 3.0, this will no
-                  no longer needed. -->
-             <dependency>
-               <groupId>net.sourceforge.cobertura</groupId>
-               <artifactId>cobertura</artifactId>
-               <version>${cobertura.version}</version>
-             </dependency>
            </dependencies>
-         </plugin>
+
+           <executions>
+              <execution>
+                 <id>pre-create target/classes</id>
+                 <phase>process-resources</phase>
+                 <goals>
+                    <goal>run</goal>
+                 </goals>
+                 <configuration>
+                    <target>
+                       <echo>Pre-creating target/classes so that Jacoco can see it even if there are no source files in the module.</echo>
+                       <mkdir dir="${project.build.directory}/classes" />
+                    </target>
+                 </configuration>
+              </execution>
+           </executions>
+        </plugin>
 
          <plugin>
            <artifactId>maven-assembly-plugin</artifactId>
@@ -645,7 +656,7 @@
                       http://jira.codehaus.org/browse/SUREFIRE-836. -->
            <version>2.11</version>
            <configuration>
-             <argLine>-Xms32M -Xmx512M</argLine>
+              <argLine>${jacoco.integration-test.args} -Xms32M -Xmx512M</argLine>
            </configuration>
          </plugin>
          <plugin>
@@ -694,7 +705,7 @@
                       http://jira.codehaus.org/browse/SUREFIRE-836. -->
            <version>2.11</version>
            <configuration>
-             <argLine>-Xms32M -Xmx512M</argLine>
+              <argLine>${jacoco.unit-test.args} -Xms32M -Xmx512M</argLine>
            </configuration>
          </plugin>
          <plugin>
@@ -755,13 +766,19 @@
                </exclusions>
             </configuration>
          </plugin>
-         
+
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>clirr-maven-plugin</artifactId>
             <version>${clirr.version}</version>
          </plugin>
-       </plugins>              
+
+         <plugin>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <version>${jacoco.version}</version>
+         </plugin>
+       </plugins>
      </pluginManagement>
 
 
@@ -1110,7 +1127,7 @@
       </plugin>
     </plugins>
 
-  </build>  
+  </build>
 
   <repositories>
 
@@ -1187,10 +1204,193 @@
 
   <modules>
     <module>modules</module>
+    <module>code-coverage</module>
   </modules>
 
 
   <profiles>
+
+    <!-- This profile is the "opposite" of the code coverage profile and provides
+       default values for properties that are set in the code-coverage profile
+          to kick of jacoco java agent. -->
+    <profile>
+       <id>no-code-coverage</id>
+       <activation>
+          <property>
+             <name>!code-coverage</name>
+          </property>
+       </activation>
+
+       <properties>
+          <jacoco.unit-test.args></jacoco.unit-test.args>
+          <jacoco.integration-test.args></jacoco.integration-test.args>
+       </properties>
+    </profile>
+
+    <profile>
+       <id>code-coverage</id>
+       <activation>
+          <property>
+             <name>code-coverage</name>
+          </property>
+       </activation>
+       <build>
+          <plugins>
+             <!-- This definition creates the 2 independent coverage reports -
+                separately for unit tests and integration tests -->
+             <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                   <execution>
+                      <id>prepare-agent-for-unit-tests</id>
+                      <phase>process-resources</phase>
+                      <goals>
+                         <goal>prepare-agent</goal>
+                      </goals>
+                      <configuration>
+                         <destFile>${project.build.directory}/jacoco-unit-test.exec</destFile>
+                         <propertyName>jacoco.unit-test.args</propertyName>
+                         <includes>
+                            <include>org.rhq.*</include>
+                         </includes>
+                      </configuration>
+                   </execution>
+                   <execution>
+                      <id>prepare-agent-for-integration-tests</id>
+                      <phase>pre-integration-test</phase>
+                      <goals>
+                         <goal>prepare-agent</goal>
+                      </goals>
+                      <configuration>
+                         <destFile>${project.build.directory}/jacoco-integration-test.exec</destFile>
+                         <propertyName>jacoco.integration-test.args</propertyName>
+                      </configuration>
+                   </execution>
+                   <execution>
+                      <id>report-unit-tests</id>
+                      <phase>prepare-package</phase>
+                      <goals>
+                         <goal>report</goal>
+                      </goals>
+                      <configuration>
+                         <dataFile>${project.build.directory}/jacoco-unit-test.exec</dataFile>
+                         <outputDirectory>${project.reporting.outputDirectory}/coverage-report/unit-tests</outputDirectory>
+                         <includes>
+                            <include>org/rhq/**</include>
+                         </includes>
+                      </configuration>
+                   </execution>
+                   <execution>
+                      <id>report-integration-tests</id>
+                      <!-- Run this very late so that test, integration-test
+                         have already been completed -->
+                      <phase>verify</phase>
+                      <goals>
+                         <goal>report</goal>
+                      </goals>
+                      <configuration>
+                         <dataFile>${project.build.directory}/jacoco-integration-test.exec</dataFile>
+                         <outputDirectory>${project.reporting.outputDirectory}/coverage-report/integration-tests</outputDirectory>
+                         <includes>
+                            <include>org/rhq/**</include>
+                         </includes>
+                      </configuration>
+                   </execution>
+                </executions>
+             </plugin>
+
+             <!-- The following insanity merges the two separate coverage reports
+                and produces an overall report - the total test coverage including
+                both unit and integration tests (defined in the same module).
+                If the integration test resides in a separate module, it is only
+                possible to deduce the coverage from report generated by the
+                top-level code-coverage module that merges all the coverage
+                reports in the whole build. -->
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-dependency-plugin</artifactId>
+               <executions>
+                  <!-- Copy the ant tasks jar. Needed for org.jacoco.ant.ReportTask . -->
+                  <execution>
+                     <id>jacoco-dependency-ant</id>
+                     <goals>
+                        <goal>copy</goal>
+                     </goals>
+                     <phase>process-test-resources</phase>
+                     <inherited>false</inherited>
+                     <configuration>
+                        <artifactItems>
+                           <artifactItem>
+                              <groupId>org.jacoco</groupId>
+                              <artifactId>org.jacoco.ant</artifactId>
+                              <version>${jacoco.version}</version>
+                           </artifactItem>
+                        </artifactItems>
+                        <stripVersion>true</stripVersion>
+                        <outputDirectory>${project.build.directory}/jacoco-jars</outputDirectory>
+                     </configuration>
+                  </execution>
+               </executions>
+            </plugin>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-antrun-plugin</artifactId>
+               <executions>
+                  <execution>
+                     <id>overall-chart-creation</id>
+                     <phase>verify</phase>
+                     <goals>
+                        <goal>run</goal>
+                     </goals>
+                     <configuration>
+                        <target>
+                           <!-- Execute an ant task within maven -->
+                           <echo message="Generating Overall JaCoCo Report" />
+                           <taskdef name="report" classname="org.jacoco.ant.ReportTask">
+                              <classpath path="${project.build.directory}/jacoco-jars/org.jacoco.ant.jar" />
+                           </taskdef>
+                           <mkdir dir="${project.reporting.outputDirectory}/coverage-report/overall" />
+                           <report>
+                              <executiondata>
+                                 <fileset dir="${project.build.directory}">
+                                    <include name="jacoco-unit-test.exec" />
+                                    <include name="jacoco-integration-test.exec" />
+                                 </fileset>
+                              </executiondata>
+                              <structure name="Overall Code Coverage Report (including unit and integration tests)">
+                                 <classfiles>
+                                    <fileset dir="${project.build.directory}">
+                                       <include name="classes/org/rhq/**" />
+                                       <include name="generated-classes/*/org/rhq/**" />
+                                    </fileset>
+                                 </classfiles>
+                                 <sourcefiles>
+                                    <dirset dir="${basedir}">
+                                       <include name="src/main/java" />
+                                       <include name="target/generated-sources/*" />
+                                    </dirset>
+                                 </sourcefiles>
+                              </structure>
+                              <html destdir="${project.reporting.outputDirectory}/coverage-report/overall" />
+                              <xml destfile="${project.reporting.outputDirectory}/coverage-report/overall/jacoco.xml" />
+                              <csv destfile="${project.reporting.outputDirectory}/coverage-report/overall/jacoco.csv" />
+                           </report>
+                        </target>
+                     </configuration>
+                  </execution>
+               </executions>
+               <dependencies>
+                  <dependency>
+                     <groupId>org.jacoco</groupId>
+                     <artifactId>org.jacoco.ant</artifactId>
+                     <version>${jacoco.version}</version>
+                  </dependency>
+               </dependencies>
+            </plugin>
+          </plugins>
+       </build>
+    </profile>
 
     <!-- NOTE: This profile is extended upon in several other submodules.
          If you need to change its activation policy, make sure to do that in
@@ -1201,16 +1401,16 @@
            <property>
               <!-- we want this always active but activeByDefault doesn't work -->
               <!-- see http://maven.apache.org/guides/introduction/introduction-to-profiles.html -->
-              <name>java.home</name> 
+              <name>java.home</name>
            </property>
         </activation>
-        
+
         <!-- Can be used to pass a flag down to deployment composing ANT scripts and somesuch -->
         <properties>
            <rhq.bundle-additional-script-languages>true</rhq.bundle-additional-script-languages>
-        </properties>            
+        </properties>
     </profile>
-    
+
     <profile>
         <id>ojdbc-driver</id>
         <activation>
@@ -1409,7 +1609,7 @@
               </configuration>
            </plugin>
         </plugins>
-     </reporting>   
+     </reporting>
   </profile>
 
   <profile>
@@ -1417,7 +1617,7 @@
         <property>
            <name>generate-dependency-graph</name>
            <value>true</value>
-        </property> 
+        </property>
      </activation>
 
      <reporting>
@@ -1430,7 +1630,7 @@
               </configuration>
            </plugin>
         </plugins>
-     </reporting>   
+     </reporting>
    </profile>
 </profiles>
 
@@ -1444,8 +1644,8 @@
               <reportSet>
               </reportSet>
            </reportSets>
-      </plugin>           
-            
+      </plugin>
+
 <!--
             <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -1642,6 +1842,10 @@
             </roles>
         </developer>
         <developer>
+            <name>Thomas Segismont</name>
+            <timezone>+1</timezone>
+        </developer>
+        <developer>
             <name>Jay Shaughnessy</name>
             <timezone>-5</timezone>
         </developer>
@@ -1649,6 +1853,9 @@
             <name>Ian Springer</name>
             <timezone>-5</timezone>
             <url>http://freshjava.blogspot.com/</url>
+          <roles>
+              <role>retired</role>
+          </roles>
         </developer>
         <developer>
             <name>Mike Thompson</name>

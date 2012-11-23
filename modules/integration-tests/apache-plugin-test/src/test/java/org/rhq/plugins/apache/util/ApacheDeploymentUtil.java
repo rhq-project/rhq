@@ -19,7 +19,6 @@
 
 package org.rhq.plugins.apache.util;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -33,7 +32,6 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -198,10 +196,40 @@ public class ApacheDeploymentUtil {
                     tokenReplacements.put(LISTEN4, address4 == null ? "" : address4.toString(false, false));
                 }
             }
+
+            @Override
+            public String toString() {
+                StringBuilder bld = new StringBuilder("VHost[");
+                if (address1 != null) {
+                    bld.append(address1.toString()).append(", ");
+                }
+                if (address2 != null) {
+                    bld.append(address2.toString()).append(", ");
+                }
+                if (address3 != null) {
+                    bld.append(address3.toString()).append(", ");
+                }
+                if (address4 != null) {
+                    bld.append(address4.toString()).append(", ");
+                }
+
+                String serverName = getServerName();
+                if (serverName != null) {
+                    bld.append("serverName=").append(serverName).append(", ");
+                }
+
+                if (additionalDirectives != null) {
+                    bld.append("with additional directives, ");
+                }
+
+                bld.replace(bld.length() - 2, bld.length(), "]");
+                
+                return bld.toString();
+            }
         }
 
         public String serverRoot = null;
-        public String documentRoot = "hdocs";
+        public String documentRoot = "htdocs";
         public String snmpHost = "localhost";
         public int snmpPort = 1610;
         public final VHost mainServer = new VHost();
@@ -242,48 +270,69 @@ public class ApacheDeploymentUtil {
             default: throw new IllegalArgumentException();
             }
         }
+
+        @Override
+        public String toString() {
+            return new StringBuilder("DeploymentConfig[").append("mainServer=").append(mainServer).append(", vhost1=")
+                .append(vhost1).append(", vhost2=").append(vhost2).append(", vhost3=").append(vhost3)
+                .append(", vhost4=").append(vhost4).append(", serverRoot=").append(serverRoot)
+                .append(", documentRoot=").append(documentRoot).append(", snmpHost=").append(snmpHost)
+                .append(", snmpPort=").append(snmpPort).append("]").toString();
+        }
     }
 
     public static void addDefaultVariables(Map<String, String> variables, String prefix) {
         InetAddress localhost = determineLocalhost();
-        checkOrAddDefault(variables, "localhost", localhost.getHostName());
-        checkOrAddDefault(variables, "localhost.ip", localhost.getHostAddress());
-        checkOrAddDefault(variables, "unresolvable.host", "unreachable.host.com");
-        checkOrAddDefault(variables, "port1", "11675");
-        checkOrAddDefault(variables, "port2", "11676");
-        checkOrAddDefault(variables, "port3", "11677");
-        checkOrAddDefault(variables, "port4", "11678");
+        PortScout portScout = new PortScout();
+        try {
+            checkOrAddDefault(variables, "localhost", localhost.getHostName());
+            checkOrAddDefault(variables, "localhost.ip", localhost.getHostAddress());
+            checkOrAddDefault(variables, "unresolvable.host", "unreachable.host.com");
 
-        if (prefix != null && !prefix.trim().isEmpty()) {
-            prefix += ".";
-        } else {
-            prefix = "";
+            checkOrAddDefault(variables, "port1", getRandomFreePort(portScout));
+            checkOrAddDefault(variables, "port2", getRandomFreePort(portScout));
+            checkOrAddDefault(variables, "port3", getRandomFreePort(portScout));
+            checkOrAddDefault(variables, "port4", getRandomFreePort(portScout));
+
+            if (prefix != null && !prefix.trim().isEmpty()) {
+                prefix += ".";
+            } else {
+                prefix = "";
+            }
+
+            checkOrAddDefault(variables, prefix + "snmp.port", getRandomFreePort(portScout));
+
+            checkOrAddDefault(variables, prefix + "listen1", "${port1}");
+            checkOrAddDefault(variables, prefix + "listen2", "${port2}");
+            checkOrAddDefault(variables, prefix + "listen3", "${port3}");
+            checkOrAddDefault(variables, prefix + "listen4", "${port4}");
+
+            checkOrAddDefault(variables, prefix + "vhost1.servername", "${localhost}:${port1}");
+            checkOrAddDefault(variables, prefix + "vhost1.urls", "${" + prefix + "vhost1.servername}");
+            checkOrAddDefault(variables, prefix + "vhost1.servername.directive", "ServerName ${" + prefix
+                + "vhost1.servername}");
+
+            checkOrAddDefault(variables, prefix + "vhost2.servername", "${localhost}:${port2}");
+            checkOrAddDefault(variables, prefix + "vhost2.urls", "${" + prefix + "vhost2.servername}");
+            checkOrAddDefault(variables, prefix + "vhost2.servername.directive", "ServerName ${" + prefix
+                + "vhost2.servername}");
+
+            checkOrAddDefault(variables, prefix + "vhost3.servername", "${localhost}:${port3}");
+            checkOrAddDefault(variables, prefix + "vhost3.urls", "${" + prefix + "vhost3.servername}");
+            checkOrAddDefault(variables, prefix + "vhost3.servername.directive", "ServerName ${" + prefix
+                + "vhost3.servername}");
+
+            checkOrAddDefault(variables, prefix + "vhost4.servername", "${localhost}:${port4}");
+            checkOrAddDefault(variables, prefix + "vhost4.urls", "${" + prefix + "vhost4.servername}");
+            checkOrAddDefault(variables, prefix + "vhost4.servername.directive", "ServerName ${" + prefix
+                + "vhost4.servername}");
+        } finally {
+            try {
+                portScout.close();
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
         }
-        
-        checkOrAddDefault(variables, prefix + "listen1", "${port1}");
-        checkOrAddDefault(variables, prefix + "listen2", "${port2}");
-        checkOrAddDefault(variables, prefix + "listen3", "${port3}");
-        checkOrAddDefault(variables, prefix + "listen4", "${port4}");
-
-        checkOrAddDefault(variables, prefix + "vhost1.servername", "${localhost}:${port1}");
-        checkOrAddDefault(variables, prefix + "vhost1.urls", "${" + prefix + "vhost1.servername}");
-        checkOrAddDefault(variables, prefix + "vhost1.servername.directive", "ServerName ${" + prefix
-            + "vhost1.servername}");
-
-        checkOrAddDefault(variables, prefix + "vhost2.servername", "${localhost}:${port2}");
-        checkOrAddDefault(variables, prefix + "vhost2.urls", "${" + prefix + "vhost2.servername}");
-        checkOrAddDefault(variables, prefix + "vhost2.servername.directive", "ServerName ${" + prefix
-            + "vhost2.servername}");
-
-        checkOrAddDefault(variables, prefix + "vhost3.servername", "${localhost}:${port3}");
-        checkOrAddDefault(variables, prefix + "vhost3.urls", "${" + prefix + "vhost3.servername}");
-        checkOrAddDefault(variables, prefix + "vhost3.servername.directive", "ServerName ${" + prefix
-            + "vhost3.servername}");
-
-        checkOrAddDefault(variables, prefix + "vhost4.servername", "${localhost}:${port4}");
-        checkOrAddDefault(variables, prefix + "vhost4.urls", "${" + prefix + "vhost4.servername}");
-        checkOrAddDefault(variables, prefix + "vhost4.servername.directive", "ServerName ${" + prefix
-            + "vhost4.servername}");
     }
 
     private static void checkOrAddDefault(Map<String, String> map, String key, String value) {
@@ -433,4 +482,12 @@ public class ApacheDeploymentUtil {
             }
         }
     };
+
+    private static String getRandomFreePort(PortScout scout) throws IllegalStateException {
+        try {
+            return Integer.toString(scout.getNextFreePort());
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to find a free port.", e);
+        }
+    }
 }

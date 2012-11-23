@@ -292,7 +292,8 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
                 availPingTime = System.currentTimeMillis() - t1;
             } else {
                 if (log.isDebugEnabled()) {
-                    log.debug("Trying to ping the server for availability through SNMP.");
+                    log.debug("Trying to ping the server for availability through SNMP "
+                        + getSNMPAddressString(resourceContext.getPluginConfiguration()));
                 }
                 available = getSNMPSession().ping();
                 availPingTime = -1;
@@ -631,6 +632,14 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
         }
 
         return snmpSession;
+    }
+
+    private static String getSNMPAddressString(Configuration pluginConfig) {
+        String host = pluginConfig.getSimple(PLUGIN_CONFIG_PROP_SNMP_AGENT_HOST).getStringValue();
+        String portString = pluginConfig.getSimple(PLUGIN_CONFIG_PROP_SNMP_AGENT_PORT).getStringValue();
+        String community = pluginConfig.getSimple(PLUGIN_CONFIG_PROP_SNMP_AGENT_COMMUNITY).getStringValue();
+
+        return host + ":" + portString + "/" + community;
     }
 
     /**

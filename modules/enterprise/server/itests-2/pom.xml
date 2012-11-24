@@ -251,8 +251,8 @@
                 <security-domain name="RHQDSSecurityDomain" cache-type="default">
                     <authentication>
                         <login-module code="SecureIdentity" flag="required">
-                            <module-option name="username" value="rhqadmin"/>
-                            <module-option name="password" value="1eeb2f255e832171df8592078de921bc"/>
+                            <module-option name="username" value="${rhq.test.ds.user-name}"/>
+                            <module-option name="password" value="${rhq.test.ds.password}"/>
                         </login-module>
                     </authentication>
                 </security-domain>

@@ -41,7 +41,7 @@
             <module>binding</module>
             <module>scripting</module>
             <module>server/client-api</module>            
-            <module>server/itests</module>
+            <module>server/itests-2</module>
          </modules>
       </profile>
 
@@ -70,7 +70,7 @@
             <module>server/startup-subsystem</module>
             <module>server/appserver</module>
             <module>server/client-api</module>
-            <module>server/itests</module>
+            <module>server/itests-2</module>
          </modules>
       </profile>
 

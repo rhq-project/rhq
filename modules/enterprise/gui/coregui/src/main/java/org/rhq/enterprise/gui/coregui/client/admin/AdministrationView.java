@@ -185,7 +185,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         NavigationItem agentsItemGwt = new NavigationItem(AgentTableView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
                 return new AgentTableView(extendLocatorId(AgentTableView.VIEW_ID.getName()),
-                    MSG.view_adminTopology_agents() + " (GWT)");
+                    MSG.view_adminTopology_agents() + " (GWT)", null);
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 

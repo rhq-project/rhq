@@ -23,6 +23,8 @@ import java.util.List;
 import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 
 /**
  * @author Simeon Pinder
@@ -30,6 +32,8 @@ import org.rhq.core.domain.resource.Agent;
 public interface AgentGWTService extends RemoteService {
 
     Agent getAgentForResource(int resourceId) throws RuntimeException;
+    
+    PageList<Agent> getAgentsByServer(Integer serverId, PageControl pageControl) throws RuntimeException;
 
     Boolean pingAgentForResource(int resourceId) throws RuntimeException;
     

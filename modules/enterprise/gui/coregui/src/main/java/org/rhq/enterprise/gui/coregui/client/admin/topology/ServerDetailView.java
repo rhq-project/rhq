@@ -36,7 +36,6 @@ import com.smartgwt.client.data.RecordList;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.util.SC;
-import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
@@ -68,7 +67,7 @@ public class ServerDetailView extends LocatableVLayout {
     private SectionStackSection detailsSection = null;
     private SectionStackSection agentSection = null;
 
-    private int initSectionCount = 0;
+    private volatile int initSectionCount = 0;
 
     public ServerDetailView(String locatorId, int serverId) {
         super(locatorId);
@@ -94,7 +93,7 @@ public class ServerDetailView extends LocatableVLayout {
                 GWTServiceLookup.getCloudService().getAgentsByServerName(server.getName(),
                     new AsyncCallback<List<Agent>>() {
                         public void onSuccess(List<Agent> agents) {
-                            preparAgentSection(sectionStack, server, agents);
+                            prepareAgentSection(sectionStack, server, agents);
                         };
 
                         public void onFailure(Throwable caught) {
@@ -104,14 +103,14 @@ public class ServerDetailView extends LocatableVLayout {
             }
 
             public void onFailure(Throwable caught) {
-              //TODO: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), caught);
+                SC.say("er1:" + caught);
+                //TODO: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), caught);
             }
         });
     }
 
     public boolean isInitialized() {
-        //        return initSectionCount >= 5;
-        return true;
+        return initSectionCount >= 2;
     }
 
     @Override
@@ -139,7 +138,7 @@ public class ServerDetailView extends LocatableVLayout {
                     // don't wait forever, give up after 20s and show what we have
                     long elapsedMillis = System.currentTimeMillis() - startTime;
                     if (elapsedMillis > 20000) {
-                        initSectionCount = 5;
+                        initSectionCount = 2;
                     }
                     schedule(100); // Reschedule the timer.
                 }
@@ -147,14 +146,12 @@ public class ServerDetailView extends LocatableVLayout {
         }.run(); // fire the timer immediately
     }
 
-    private void preparAgentSection(SectionStack stack, Server server, List<Agent> agents) {
+    private void prepareAgentSection(SectionStack stack, Server server, List<Agent> agents) {
         SectionStackSection section = new SectionStackSection(MSG.view_adminTopology_serverDetail_connectedAgents());
         section.setExpanded(true);
-        Label help = new Label("agents grid..");
-        section.setItems(help);
-        // TODO: once the AgentTableView is done, instanciate it here
+        AgentTableView agentsTable = new AgentTableView(extendLocatorId(AgentTableView.VIEW_ID.getName()), null, serverId);
+        section.setItems(agentsTable);
 
-        stack.addSection(section);
         agentSection = section;
         ++initSectionCount;
         return;
@@ -213,10 +210,7 @@ public class ServerDetailView extends LocatableVLayout {
         section.setExpanded(true);
         section.setItems(form);
 
-        stack.addSection(section);
         detailsSection = section;
         ++initSectionCount;
-
-        return;
     }
 }

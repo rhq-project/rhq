@@ -21,6 +21,8 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 import java.util.List;
 
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.AgentGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
@@ -63,6 +65,16 @@ public class AgentGWTServiceImpl extends AbstractGWTServiceImpl implements Agent
         try {
             //security handled in AgentManagerBean. requires View_Resource. 
             return SerialUtility.prepare(agentManager.getAllAgents(), "AgentService.getAllAgents");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public PageList<Agent> getAgentsByServer(Integer serverId, PageControl pc) throws RuntimeException {
+        try {
+            //security handled in AgentManagerBean. requires View_Resource. 
+            return SerialUtility.prepare(agentManager.getAgentsByServer(getSessionSubject(), serverId, pc), "AgentService.getAgentsByServer");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

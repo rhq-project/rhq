@@ -22,6 +22,7 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang.ArrayUtils;
@@ -67,7 +68,8 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     @Override
     public List<Agent> getAgentsByServerName(String serverName) throws RuntimeException {
         try {
-            return SerialUtility.prepare(cloudManager.getAgentsByServerName(serverName), "CloudGWTServiceImpl.getAgentsByServerName");
+            List <Agent> persistentBag = SerialUtility.prepare(cloudManager.getAgentsByServerName(serverName), "CloudGWTServiceImpl.getAgentsByServerName");
+            return new ArrayList<Agent>(persistentBag);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

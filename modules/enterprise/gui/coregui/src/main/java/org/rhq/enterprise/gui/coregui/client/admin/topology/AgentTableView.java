@@ -42,11 +42,11 @@ public class AgentTableView extends TableSection<AgentNodeDatasource> {
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_CONFIGURATION_VIEW_ID + "/" + VIEW_ID;
 
-    public AgentTableView(String locatorId, String tableTitle) {
+    public AgentTableView(String locatorId, String tableTitle, Integer serverId) {
         super(locatorId, tableTitle);
         setHeight100();
         setWidth100();
-        setDataSource(new AgentNodeDatasource());
+        setDataSource(new AgentNodeDatasource(serverId));
     }
 
     @Override

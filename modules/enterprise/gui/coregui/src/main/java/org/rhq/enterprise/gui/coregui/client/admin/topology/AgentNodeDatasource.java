@@ -41,6 +41,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -51,9 +52,12 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  *
  */
 public class AgentNodeDatasource extends RPCDataSource<Agent, Criteria> {
+    
+    private final Integer serverId; 
 
-    public AgentNodeDatasource() {
+    public AgentNodeDatasource(Integer serverId) {
         super();
+        this.serverId = serverId;
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
     }
@@ -76,15 +80,15 @@ public class AgentNodeDatasource extends RPCDataSource<Agent, Criteria> {
         fields.add(idField);
 
         fields.add(FIELD_NAME.getListGridField("*"));
-        fields.add(FIELD_SERVER.getListGridField("90"));
-        fields.add(FIELD_ADDRESS.getListGridField("90"));
+        fields.add(FIELD_SERVER.getListGridField("120"));
+        fields.add(FIELD_ADDRESS.getListGridField("105"));
         fields.add(FIELD_PORT.getListGridField("90"));
 
         ListGridField lastAvailabilityReportField = FIELD_LAST_AVAILABILITY_REPORT.getListGridField("90");
         TimestampCellFormatter.prepareDateField(lastAvailabilityReportField);
         fields.add(lastAvailabilityReportField);
 
-        fields.add(FIELD_AFFINITY_GROUP.getListGridField("80"));
+        fields.add(FIELD_AFFINITY_GROUP.getListGridField("100"));
 
         return fields;
     }
@@ -93,9 +97,9 @@ public class AgentNodeDatasource extends RPCDataSource<Agent, Criteria> {
     protected void executeFetch(final DSRequest request, final DSResponse response, Criteria criteria) {
         final PageControl pc = getPageControl(request);
 
-        // TODO: getAllAgents -> agentManager.getAgentsByServer(subject, null, pc);
-        GWTServiceLookup.getAgentService().getAllAgents(new AsyncCallback<List<Agent>>() {
-            public void onSuccess(List<Agent> result) {
+        // TODO: null is for all agents -> change to particular server id
+        GWTServiceLookup.getAgentService().getAgentsByServer(serverId, pc, new AsyncCallback<PageList<Agent>>() {
+            public void onSuccess(PageList<Agent> result) {
                 response.setData(buildRecords(result));
                 response.setTotalRows(result.size());
                 processResponse(request.getRequestId(), response);
@@ -147,7 +151,7 @@ public class AgentNodeDatasource extends RPCDataSource<Agent, Criteria> {
         record.setAttribute(FIELD_NAME.propertyName(), from.getName());
         record.setAttribute(FIELD_ADDRESS.propertyName(), from.getAddress());
         record.setAttribute(FIELD_PORT.propertyName(), from.getPort());
-        record.setAttribute(FIELD_SERVER.propertyName(), from.getServer());
+        record.setAttribute(FIELD_SERVER.propertyName(), from.getServer().getName());
         record.setAttribute(FIELD_LAST_AVAILABILITY_REPORT.propertyName(), from.getLastAvailabilityReport());
         record.setAttribute(FIELD_AFFINITY_GROUP.propertyName(), from.getAffinityGroup());
         return record;

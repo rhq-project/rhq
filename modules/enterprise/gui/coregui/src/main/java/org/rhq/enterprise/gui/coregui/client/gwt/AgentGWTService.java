@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.resource.Agent;
@@ -30,5 +32,7 @@ public interface AgentGWTService extends RemoteService {
     Agent getAgentForResource(int resourceId) throws RuntimeException;
 
     Boolean pingAgentForResource(int resourceId) throws RuntimeException;
+    
+    List<Agent> getAllAgents() throws RuntimeException;
 
 }

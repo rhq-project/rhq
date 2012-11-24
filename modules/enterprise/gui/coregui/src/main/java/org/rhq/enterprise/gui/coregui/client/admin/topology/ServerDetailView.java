@@ -19,14 +19,16 @@
 
 package org.rhq.enterprise.gui.coregui.client.admin.topology;
 
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerNodeDataourceField.FIELD_ADDRESS;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerNodeDataourceField.FIELD_AFFINITY_GROUP;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerNodeDataourceField.FIELD_CTIME;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerNodeDataourceField.FIELD_MTIME;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerNodeDataourceField.FIELD_NAME;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerNodeDataourceField.FIELD_OPERATION_MODE;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerNodeDataourceField.FIELD_PORT;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerNodeDataourceField.FIELD_SECURE_PORT;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerNodeDatasourceField.FIELD_ADDRESS;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerNodeDatasourceField.FIELD_AFFINITY_GROUP;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerNodeDatasourceField.FIELD_CTIME;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerNodeDatasourceField.FIELD_MTIME;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerNodeDatasourceField.FIELD_NAME;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerNodeDatasourceField.FIELD_OPERATION_MODE;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerNodeDatasourceField.FIELD_PORT;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerNodeDatasourceField.FIELD_SECURE_PORT;
+
+import java.util.List;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -41,12 +43,11 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
-import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 
 import org.rhq.core.domain.cloud.Server;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -87,21 +88,29 @@ public class ServerDetailView extends LocatableVLayout {
     @Override
     protected void onInit() {
         super.onInit();
-
         GWTServiceLookup.getCloudService().getServerById(this.serverId, new AsyncCallback<Server>() {
-            public void onSuccess(Server server) {
+            public void onSuccess(final Server server) {
                 prepareDetailsSection(sectionStack, server);
-                preparAgentSection(sectionStack, server);
+                GWTServiceLookup.getCloudService().getAgentsByServerName(server.getName(),
+                    new AsyncCallback<List<Agent>>() {
+                        public void onSuccess(List<Agent> agents) {
+                            preparAgentSection(sectionStack, server, agents);
+                        };
+
+                        public void onFailure(Throwable caught) {
+                            //TODO: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), caught);
+                        }
+                    });
             }
 
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), caught);
+              //TODO: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), caught);
             }
         });
     }
 
     public boolean isInitialized() {
-//        return initSectionCount >= 5;
+        //        return initSectionCount >= 5;
         return true;
     }
 
@@ -138,13 +147,13 @@ public class ServerDetailView extends LocatableVLayout {
         }.run(); // fire the timer immediately
     }
 
-    private void preparAgentSection(SectionStack stack, Server server) {
+    private void preparAgentSection(SectionStack stack, Server server, List<Agent> agents) {
         SectionStackSection section = new SectionStackSection(MSG.view_adminTopology_serverDetail_connectedAgents());
         section.setExpanded(true);
         Label help = new Label("agents grid..");
         section.setItems(help);
-        ListGrid agentGrid = new ListGrid();
-        
+        // TODO: once the AgentTableView is done, instanciate it here
+
         stack.addSection(section);
         agentSection = section;
         ++initSectionCount;
@@ -186,20 +195,19 @@ public class ServerDetailView extends LocatableVLayout {
         StaticTextItem lastUpdatetem = new StaticTextItem(FIELD_MTIME.propertyName(), FIELD_MTIME.title());
         lastUpdatetem.setValue(TimestampCellFormatter.format(Long.valueOf(server.getMtime()),
             TimestampCellFormatter.DATE_TIME_FORMAT_MEDIUM));
-        
+
         ButtonItem saveButton = new ButtonItem();
         saveButton.setOverflow(Overflow.VISIBLE);
-        saveButton.setTitle(MSG.common_button_save());  
-        saveButton.addClickHandler(new ClickHandler() {  
-            public void onClick(ClickEvent event) {  
+        saveButton.setTitle(MSG.common_button_save());
+        saveButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
                 RecordList list = form.getRecordList();
                 SC.say("name is " + list.get(0).getAttribute("name"));
-            }  
+            }
         });
 
         form.setItems(nameItem, addressItem, portItem, securePortItem, operationModeItem, affinityGroupItem,
             installationDateItem, lastUpdatetem, saveButton);
-        
 
         SectionStackSection section = new SectionStackSection(MSG.common_title_details());
         section.setExpanded(true);

@@ -24,7 +24,10 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import java.util.List;
 
+import org.apache.commons.lang.ArrayUtils;
+
 import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
@@ -65,6 +68,26 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     public List<Agent> getAgentsByServerName(String serverName) throws RuntimeException {
         try {
             return SerialUtility.prepare(cloudManager.getAgentsByServerName(serverName), "CloudGWTServiceImpl.getAgentsByServerName");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+
+    @Override
+    public void deleteServers(int[] serverIds) throws RuntimeException {
+        try {
+            cloudManager.deleteServers(ArrayUtils.toObject(serverIds));
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+
+    @Override
+    public void updateServerMode(int[] serverIds, OperationMode mode) throws RuntimeException {
+        try {
+            cloudManager.updateServerMode(ArrayUtils.toObject(serverIds), mode);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

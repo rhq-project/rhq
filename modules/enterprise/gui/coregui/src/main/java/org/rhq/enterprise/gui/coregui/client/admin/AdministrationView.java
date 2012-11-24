@@ -34,6 +34,7 @@ import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.AlertDefinitionTemplateTypeView;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.DriftDefinitionTemplateTypeView;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.MetricTemplateTypeView;
+import org.rhq.enterprise.gui.coregui.client.admin.topology.AgentTableView;
 import org.rhq.enterprise.gui.coregui.client.admin.topology.ServerTableView;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
@@ -173,21 +174,28 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
                     return new RemoteAgentInstallView(extendLocatorId("RemoteAgentInstall"));
                 }
             }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
+
+        NavigationItem serversItemGwt = new NavigationItem(ServerTableView.VIEW_ID, new ViewFactory() {
+            public Canvas createView() {
+                return new ServerTableView(extendLocatorId(ServerTableView.VIEW_ID.getName()),
+                    MSG.view_adminTopology_servers() + " (GWT)");
+            }
+        }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
         
-        NavigationItem serversItemGwt = new NavigationItem(ServerTableView.VIEW_ID,
-            new ViewFactory() {
-                public Canvas createView() {
-                    return new ServerTableView(extendLocatorId(ServerTableView.VIEW_ID.getName()));
-                }
-            }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
+        NavigationItem agentsItemGwt = new NavigationItem(AgentTableView.VIEW_ID, new ViewFactory() {
+            public Canvas createView() {
+                return new AgentTableView(extendLocatorId(AgentTableView.VIEW_ID.getName()),
+                    MSG.view_adminTopology_agents() + " (GWT)");
+            }
+        }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
         NavigationSection topologyRegion = null;
         if (isRHQ) {
             topologyRegion = new NavigationSection(SECTION_TOPOLOGY_VIEW_ID, serversItem, agentsItem,
-                affinityGroupsItem, partitionEventsItem, serversItemGwt, remoteAgentInstallItem);
+                affinityGroupsItem, partitionEventsItem, serversItemGwt, agentsItemGwt, remoteAgentInstallItem);
         } else {
             topologyRegion = new NavigationSection(SECTION_TOPOLOGY_VIEW_ID, serversItem, agentsItem,
-                affinityGroupsItem, partitionEventsItem, serversItemGwt);
+                affinityGroupsItem, partitionEventsItem, serversItemGwt, agentsItemGwt);
         }
         return topologyRegion;
     }

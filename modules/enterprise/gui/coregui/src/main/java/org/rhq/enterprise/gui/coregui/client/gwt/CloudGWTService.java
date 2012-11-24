@@ -42,9 +42,13 @@ public interface CloudGWTService extends RemoteService {
      * @throws RuntimeException
      */
     List<ServerWithAgentCountComposite> getServers(PageControl pc) throws RuntimeException;
-    
+
     Server getServerById(int serverId) throws RuntimeException;
-    
+
     List<Agent> getAgentsByServerName(String serverName) throws RuntimeException;
+
+    void deleteServers(int[] serverIds) throws RuntimeException;
+
+    void updateServerMode(int[] serverIds, Server.OperationMode mode) throws RuntimeException;
 
 }

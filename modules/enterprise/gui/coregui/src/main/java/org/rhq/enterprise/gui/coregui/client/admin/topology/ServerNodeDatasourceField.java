@@ -26,7 +26,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
  * @author Jirka Kremser
  *
  */
-public enum ServerNodeDataourceField {
+public enum ServerNodeDatasourceField {
 
     FIELD_ID("id", CoreGUI.getMessages().common_title_id()),
 
@@ -58,7 +58,7 @@ public enum ServerNodeDataourceField {
      */
     private String title;
 
-    private ServerNodeDataourceField(String propertyName, String title) {
+    private ServerNodeDatasourceField(String propertyName, String title) {
         this.propertyName = propertyName;
         this.title = title;
     }

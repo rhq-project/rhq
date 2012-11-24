@@ -800,7 +800,7 @@
          <plugin>
            <artifactId>maven-war-plugin</artifactId>
            <version>2.1</version>
-         </plugin>
+         </plugin>         
 
          <!-- === Codehaus Mojo Plugins === -->
          <plugin>
@@ -835,6 +835,17 @@
             <artifactId>animal-sniffer-maven-plugin</artifactId>
             <version>${animal.sniffer.version}</version>
          </plugin>
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>clirr-maven-plugin</artifactId>
+            <version>${clirr.version}</version>
+         </plugin>
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>         
+           <artifactId>xml-maven-plugin</artifactId>
+           <version>1.0</version>
+         </plugin>
+         
       	 <plugin>
             <groupId>com.googlecode.maven-overview-plugin</groupId>
             <artifactId>maven-overview-plugin</artifactId>
@@ -857,17 +868,11 @@
          </plugin>
 
          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>clirr-maven-plugin</artifactId>
-            <version>${clirr.version}</version>
-         </plugin>
-
-         <plugin>
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
             <version>${jacoco.version}</version>
          </plugin>
-       </plugins>
+       </plugins>       
      </pluginManagement>
 
 

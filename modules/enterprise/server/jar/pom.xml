@@ -135,7 +135,7 @@
       <groupId>org.rhq</groupId>
       <artifactId>test-utils</artifactId>
       <version>${project.version}</version>
-      <scope>test-compile</scope>
+      <scope>test</scope>
       <exclusions>
         <exclusion>
           <groupId>org.testng</groupId>
@@ -1134,6 +1134,7 @@
         <plugin>
            <groupId>org.codehaus.mojo</groupId>
            <artifactId>clirr-maven-plugin</artifactId>
+           <version>${clirr.version}</version>
            <configuration>
               <includes>
                  <include>**/*Remote</include>

@@ -17,7 +17,7 @@
   <description>a servlet filter that logs response times for HTTP requests to JEE web applications</description>
 
    <properties>
-      <moduleName>${groupId}.${artifactId}</moduleName>
+      <moduleName>${project.groupId}.${project.artifactId}</moduleName>
    </properties>
 
   <dependencies>

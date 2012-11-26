@@ -9,9 +9,9 @@
 
 <!ENTITY datasourceAndConnectionFactoryMetrics '
     <!-- Traits -->
-    <metric property="custom.connectionAvailable" displayType="summary" displayName="Connection Available?"
-            dataType="trait" category="availability" defaultInterval="900000"
-            description="could a connection to the underlying data provider be obtained?"/>
+    <metric property="custom.connectionAvailable" displayType="detail" displayName="Connection Available?"
+            dataType="trait" category="availability" defaultInterval="900000" defaultOn="false"
+            description="could a connection to the underlying data provider be obtained? Please see the documentation before enabling this metric"/>
 '>
 
 <!ENTITY datasourceAndConnectionFactoryOperations '

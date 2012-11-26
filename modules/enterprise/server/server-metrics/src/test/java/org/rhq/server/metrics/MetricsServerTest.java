@@ -82,7 +82,6 @@ import me.prettyprint.hector.api.query.SliceQuery;
 /**
  * @author John Sanda
  */
-//@Listeners({CassandraClusterManager.class})
 public class MetricsServerTest extends CassandraIntegrationTest {
 
     private static final boolean ENABLED = false;
@@ -131,38 +130,20 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
     @BeforeMethod
     public void initServer() throws Exception {
-//        Cluster cluster = HFactory.getOrCreateCluster("rhq", "127.0.0.1:9160");
-//        keyspace = HFactory.createKeyspace("rhq", cluster);
-//
         metricsServer = new MetricsServerStub();
-//        metricsServer.setCluster(cluster);
-//        metricsServer.setKeyspace(keyspace);
-//        metricsServer.setRawMetricsDataCF(RAW_METRIC_DATA_CF);
-//        metricsServer.setOneHourMetricsDataCF(ONE_HOUR_METRIC_DATA_CF);
-//        metricsServer.setSixHourMetricsDataCF(SIX_HOUR_METRIC_DATA_CF);
-//        metricsServer.setTwentyFourHourMetricsDataCF(TWENTY_FOUR_HOUR_METRIC_DATA_CF);
-//        metricsServer.setMetricsIndex(METRICS_INDEX);
-//        metricsServer.setTraitsCF(TRAITS_CF);
-//        metricsServer.setResourceTraitsCF(RESOURCE_TRAITS_CF);
         metricsServer.setCassandraDS(dataSource);
 
         dao = new MetricsDAO(dataSource);
 
-        //purgeDB();
+        purgeDB();
     }
 
     private void purgeDB() throws SQLException {
-//        deleteAllRows(METRICS_INDEX, StringSerializer.get());
-//        deleteAllRows(RAW_METRIC_DATA_CF, IntegerSerializer.get());
-//        deleteAllRows(ONE_HOUR_METRIC_DATA_CF, IntegerSerializer.get());
-//        deleteAllRows(SIX_HOUR_METRIC_DATA_CF, IntegerSerializer.get());
-//        deleteAllRows(TWENTY_FOUR_HOUR_METRIC_DATA_CF, IntegerSerializer.get());
-//        deleteAllRows(TRAITS_CF, IntegerSerializer.get());
-//        deleteAllRows(RESOURCE_TRAITS_CF, IntegerSerializer.get());
         Statement statement = connection.createStatement();
         statement.executeUpdate("TRUNCATE " + RAW_METRICS_TABLE);
         statement.executeUpdate("TRUNCATE " + ONE_HOUR_METRICS_TABLE);
         statement.executeUpdate("TRUNCATE " + SIX_HOUR_METRICS_TABLE);
+        statement.executeUpdate("TRUNCATE " + TWENTY_FOUR_HOUR_METRICS_TABLE);
         statement.executeUpdate("TRUNCATE " + METRICS_INDEX_TABLE);
 
         statement.close();
@@ -225,11 +206,11 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         // verify that one hour metric data is updated
         List<AggregatedNumericMetric> expected = asList(new AggregatedNumericMetric(scheduleId,
             divide((3.9 + 3.2 + 2.6), 3), 2.6, 3.9, lastHour.getMillis()));
-        assertMetricDataEquals(ONE_HOUR_METRICS_TABLE, scheduleId, expected);
+        assert1HourDataEquals(scheduleId, expected);
 
         // verify that 6 hour metric data is updated
-        assertMetricDataEquals(SIX_HOUR_METRICS_TABLE, scheduleId, asList(new AggregatedNumericMetric(scheduleId,
-            divide((3.9 + 3.2 + 2.6), 3), 2.6, 3.9, hour0.getMillis())));
+        assert6HourDataEquals(scheduleId, asList(new AggregatedNumericMetric(scheduleId, divide((3.9 + 3.2 + 2.6), 3),
+            2.6, 3.9, hour0.getMillis())));
 
         // TODO verify that 24 hour data is *not* updated
         // TODO verify metrics index for 24 hour data is updated
@@ -256,18 +237,15 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         rawMetrics.add(new MeasurementDataNumeric(secondMetricTime.getMillis(), scheduleId, secondValue));
         rawMetrics.add(new MeasurementDataNumeric(thirdMetricTime.getMillis(), scheduleId, thirdValue));
 
-        long timestamp = System.currentTimeMillis();
-        Set<MeasurementDataNumeric> insertedRawMetrics = dao.insertRawMetrics(rawMetrics, RAW_TTL, timestamp);
+        Set<MeasurementDataNumeric> insertedRawMetrics = dao.insertRawMetrics(rawMetrics, RAW_TTL);
         metricsServer.updateMetricsIndex(insertedRawMetrics);
 
         metricsServer.setCurrentHour(hour9);
         metricsServer.calculateAggregates();
 
         // verify that the 1 hour aggregates are calculated
-        assertMetricDataEquals(ONE_HOUR_METRICS_TABLE, scheduleId, asList(
-            new AggregatedNumericMetric(scheduleId, divide((1.1 + 2.2 + 3.3), 3), firstValue, thirdValue,
-                hour8.getMillis())
-        ));
+        assert1HourDataEquals(scheduleId, asList(new AggregatedNumericMetric(scheduleId, divide((1.1 + 2.2 + 3.3), 3),
+            firstValue, thirdValue, hour8.getMillis())));
 
         // verify that the 6 hour index is updated
         DateTimeService dateTimeService = new DateTimeService();
@@ -289,7 +267,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         assert1HourMetricsIndexEmpty(scheduleId);
     }
 
-    @Test(enabled = ENABLED)
+    @Test//(enabled = ENABLED)
     public void aggregate1HourDataDuring12thHour() {
         // set up the test fixture
         int scheduleId = 123;
@@ -309,20 +287,6 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         double max2 = 6.6;
 
         // insert one hour data to be aggregated
-//        Mutator<Integer> oneHourMutator = HFactory.createMutator(keyspace, IntegerSerializer.get());
-//        oneHourMutator.addInsertion(scheduleId, ONE_HOUR_METRIC_DATA_CF, create1HourColumn(hour7, AggregateType.MAX,
-//            max1));
-//        oneHourMutator.addInsertion(scheduleId, ONE_HOUR_METRIC_DATA_CF, create1HourColumn(hour7, AggregateType.MIN,
-//            min1));
-//        oneHourMutator.addInsertion(scheduleId, ONE_HOUR_METRIC_DATA_CF, create1HourColumn(hour7, AggregateType.AVG,
-//            avg1));
-//        oneHourMutator.addInsertion(scheduleId, ONE_HOUR_METRIC_DATA_CF, create1HourColumn(hour8, AggregateType.MAX,
-//            max2));
-//        oneHourMutator.addInsertion(scheduleId, ONE_HOUR_METRIC_DATA_CF, create1HourColumn(hour8, AggregateType.MIN,
-//            min2));
-//        oneHourMutator.addInsertion(scheduleId, ONE_HOUR_METRIC_DATA_CF, create1HourColumn(hour8, AggregateType.AVG,
-//            avg2));
-//        oneHourMutator.execute();
         List<AggregatedNumericMetric> oneHourMetrics = asList(
             new AggregatedNumericMetric(scheduleId, avg1, min1, max1, hour7.getMillis()),
             new AggregatedNumericMetric(scheduleId, avg2, min2, max2, hour8.getMillis())
@@ -330,13 +294,6 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         dao.insertAggregates(ONE_HOUR_METRICS_TABLE, oneHourMetrics);
 
         // update the 6 hour queue
-//        Mutator<String> queueMutator = HFactory.createMutator(keyspace, StringSerializer.get());
-//        Composite key = createQueueColumnName(hour6, scheduleId);
-//        HColumn<Composite, Integer> sixHourQueueColumn = HFactory.createColumn(key, 0, CompositeSerializer.get(),
-//            IntegerSerializer.get());
-//        queueMutator.addInsertion(SIX_HOUR_METRIC_DATA_CF, METRICS_INDEX, sixHourQueueColumn);
-//
-//        queueMutator.execute();
         Map<Integer, DateTime> indexUpdates = new HashMap<Integer, DateTime>();
         indexUpdates.put(scheduleId, hour6);
         dao.updateMetricsIndex(SIX_HOUR_METRICS_TABLE, indexUpdates);
@@ -347,31 +304,26 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
         // verify the results
         // verify that the one hour data has been aggregated
-//        assert6HourDataEquals(scheduleId, asList(
-//            create6HourColumn(hour6, AggregateType.MAX, max1),
-//            create6HourColumn(hour6, AggregateType.MIN, min1),
-//            create6HourColumn(hour6, AggregateType.AVG, (avg1 + avg2) / 2)
-//        ));
-        assertMetricDataEquals(SIX_HOUR_METRICS_TABLE, scheduleId, asList(new AggregatedNumericMetric(scheduleId,
-            divide((avg1 + avg2), 2), min1, max1, hour6.getMillis())));
+        assert6HourDataEquals(scheduleId, asList(new AggregatedNumericMetric(scheduleId, divide((avg1 + avg2), 2), min1,
+            max1, hour6.getMillis())));
 
         // verify that the 6 hour queue has been updated
-//        assert6HourMetricsIndexEmpty(scheduleId);
+        assert6HourMetricsIndexEmpty(scheduleId);
 
         // verify that the 24 hour queue is updated
-//        assert24HourMetricsQueueEquals(asList(HFactory.createColumn(createQueueColumnName(hour0, scheduleId), 0,
-//            CompositeSerializer.get(), IntegerSerializer.get())));
+        assertMetricsIndexEquals(TWENTY_FOUR_HOUR_METRICS_TABLE, asList(new MetricsIndexEntry(
+            TWENTY_FOUR_HOUR_METRICS_TABLE, hour0, scheduleId)), "Failed to update index for " +
+            TWENTY_FOUR_HOUR_METRICS_TABLE);
 
         // verify that 6 hour data is not rolled up into the 24 hour bucket
-//        assert24HourDataEmpty(scheduleId);
+        assert24HourDataEmpty(scheduleId);
     }
 
-    @Test(enabled = ENABLED)
+    @Test//(enabled = ENABLED)
     public void aggregate6HourDataDuring24thHour() {
         // set up the test fixture
         int scheduleId = 123;
 
-        DateTime now = new DateTime();
         DateTime hour0 = hour0();
         DateTime hour12 = hour0.plusHours(12);
         DateTime hour6 = hour0.plusHours(6);
@@ -386,29 +338,16 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         double max2 = 6.6;
 
         // insert 6 hour data to be aggregated
-        Mutator<Integer> sixHourMutator = HFactory.createMutator(keyspace, IntegerSerializer.get());
-        sixHourMutator.addInsertion(scheduleId, SIX_HOUR_METRIC_DATA_CF, create6HourColumn(hour6, AggregateType.MAX,
-            max1));
-        sixHourMutator.addInsertion(scheduleId, SIX_HOUR_METRIC_DATA_CF, create6HourColumn(hour6, AggregateType.MIN,
-            min1));
-        sixHourMutator.addInsertion(scheduleId, SIX_HOUR_METRIC_DATA_CF, create6HourColumn(hour6, AggregateType.AVG,
-            avg1));
-        sixHourMutator.addInsertion(scheduleId, SIX_HOUR_METRIC_DATA_CF, create6HourColumn(hour12, AggregateType.MAX,
-            max2));
-        sixHourMutator.addInsertion(scheduleId, SIX_HOUR_METRIC_DATA_CF, create6HourColumn(hour12, AggregateType.MIN,
-            min2));
-        sixHourMutator.addInsertion(scheduleId, SIX_HOUR_METRIC_DATA_CF, create6HourColumn(hour12, AggregateType.AVG,
-            avg2));
-        sixHourMutator.execute();
+        List<AggregatedNumericMetric> sixHourMetrics = asList(
+            new AggregatedNumericMetric(scheduleId, avg1, min1, max1, hour6.getMillis()),
+            new AggregatedNumericMetric(scheduleId, avg2, min2, max2, hour12.getMillis())
+        );
+        dao.insertAggregates(SIX_HOUR_METRICS_TABLE, sixHourMetrics);
 
         // update the 24 queue
-        Mutator<String> queueMutator = HFactory.createMutator(keyspace, StringSerializer.get());
-        Composite key = createQueueColumnName(hour0, scheduleId);
-        HColumn<Composite, Integer> twentyFourHourQueueColumn = HFactory.createColumn(key, 0, CompositeSerializer.get(),
-            IntegerSerializer.get());
-        queueMutator.addInsertion(TWENTY_FOUR_HOUR_METRIC_DATA_CF, METRICS_INDEX, twentyFourHourQueueColumn);
-
-        queueMutator.execute();
+        Map<Integer, DateTime> indexUpdates = new HashMap<Integer, DateTime>();
+        indexUpdates.put(scheduleId, hour0);
+        dao.updateMetricsIndex(TWENTY_FOUR_HOUR_METRICS_TABLE, indexUpdates);
 
         // execute the system under test
         metricsServer.setCurrentHour(hour24);
@@ -416,11 +355,8 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
         // verify the results
         // verify that the 6 hour data is aggregated
-        assert24HourDataEquals(scheduleId, asList(
-            create24HourColumn(hour0, AggregateType.MAX, max2),
-            create24HourColumn(hour0, AggregateType.MIN, min1),
-            create24HourColumn(hour0, AggregateType.AVG, (avg1 + avg2) / 2)
-        ));
+        assert24HourDataEquals(scheduleId, asList(new AggregatedNumericMetric(scheduleId, divide(avg1 + avg2, 2),
+            min1, max2, hour0.getMillis())));
 
         // verify that the 24 hour queue is updated
         assert24HourMetricsIndexEmpty(scheduleId);
@@ -723,16 +659,16 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         }
     }
 
-    private void assert1HourDataEquals(int scheduleId, List<HColumn<Composite, Double>> expected) {
-        assertMetricDataEquals(scheduleId, ONE_HOUR_METRIC_DATA_CF, expected);
+    private void assert1HourDataEquals(int scheduleId, List<AggregatedNumericMetric> expected) {
+        assertMetricDataEquals(ONE_HOUR_METRICS_TABLE, scheduleId, expected);
     }
 
-    private void assert6HourDataEquals(int scheduleId, List<HColumn<Composite, Double>> expected) {
-        assertMetricDataEquals(scheduleId, SIX_HOUR_METRIC_DATA_CF, expected);
+    private void assert6HourDataEquals(int scheduleId, List<AggregatedNumericMetric> expected) {
+        assertMetricDataEquals(SIX_HOUR_METRICS_TABLE, scheduleId, expected);
     }
 
-    private void assert24HourDataEquals(int scheduleId, List<HColumn<Composite, Double>> expected) {
-        assertMetricDataEquals(scheduleId, TWENTY_FOUR_HOUR_METRIC_DATA_CF, expected);
+    private void assert24HourDataEquals(int scheduleId, List<AggregatedNumericMetric> expected) {
+        assertMetricDataEquals(TWENTY_FOUR_HOUR_METRICS_TABLE, scheduleId, expected);
     }
 
     private void assertMetricDataEquals(int scheduleId, String columnFamily, List<HColumn<Composite,
@@ -789,31 +725,6 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     }
 
     private void assertMetricDataEmpty(int scheduleId, String columnFamily) {
-//        SliceQuery<Integer, Composite, Double> query = HFactory.createSliceQuery(keyspace, IntegerSerializer.get(),
-//            CompositeSerializer.get(), DoubleSerializer.get());
-//        query.setColumnFamily(columnFamily);
-//        query.setKey(scheduleId);
-//
-//        ColumnSliceIterator<Integer, Composite, Double> iterator = new ColumnSliceIterator<Integer, Composite, Double>(
-//            query, (Composite) null, (Composite) null, false);
-//
-//        List<HColumn<Composite, Double>> actual = new ArrayList<HColumn<Composite, Double>>();
-//        while (iterator.hasNext()) {
-//            actual.add(iterator.next());
-//        }
-//
-//        String prefix;
-//        if (columnFamily.equals(ONE_HOUR_METRIC_DATA_CF)) {
-//            prefix = "The one hour data for schedule id " + scheduleId + " is wrong.";
-//        } else if (columnFamily.equals(SIX_HOUR_METRIC_DATA_CF)) {
-//            prefix = "The six hour data for schedule id " + scheduleId + " is wrong.";
-//        } else if (columnFamily.equals(TWENTY_FOUR_HOUR_METRIC_DATA_CF)) {
-//            prefix = "The twenty-four hour data for schedule id " + scheduleId + " is wrong.";
-//        } else {
-//            throw new IllegalArgumentException(columnFamily + " is not a recognized column family");
-//        }
-//
-//        assertEquals(actual.size(), 0, prefix + " Expected the row to be empty.");
         List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(columnFamily, scheduleId);
         assertEquals(metrics.size(), 0, "Expected " + columnFamily + " to be empty for schedule id " + scheduleId +
             " but found " + metrics);
@@ -832,32 +743,6 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     }
 
     private void assertMetricsIndexEmpty(int scheduleId, String table) {
-//        SliceQuery<String,Composite, Integer> sliceQuery = HFactory.createSliceQuery(keyspace, StringSerializer.get(),
-//            new CompositeSerializer().get(), IntegerSerializer.get());
-//        sliceQuery.setColumnFamily(METRICS_INDEX);
-//        sliceQuery.setKey(columnFamily);
-//
-//        ColumnSliceIterator<String, Composite, Integer> iterator = new ColumnSliceIterator<String, Composite, Integer>(
-//            sliceQuery, (Composite) null, (Composite) null, false);
-//
-//        List<HColumn<Composite, Integer>> actual = new ArrayList<HColumn<Composite, Integer>>();
-//        while (iterator.hasNext()) {
-//            actual.add(iterator.next());
-//        }
-//
-//        String queueName;
-//        if (columnFamily.equals(ONE_HOUR_METRIC_DATA_CF)) {
-//            queueName = "1 hour";
-//        } else if (columnFamily.equals(SIX_HOUR_METRIC_DATA_CF)) {
-//            queueName = "6 hour";
-//        } else if (columnFamily.equals(TWENTY_FOUR_HOUR_METRIC_DATA_CF)) {
-//            queueName = "24 hour";
-//        } else {
-//            throw new IllegalArgumentException(columnFamily + " is not a recognized metric data column family.");
-//        }
-
-//        assertEquals(actual.size(), 0, "Expected the " + queueName + " queue to be empty for schedule id " +
-//            scheduleId);
         List<MetricsIndexEntry> index = dao.findMetricsIndexEntries(table);
         assertEquals(index.size(), 0, "Expected metrics index for " + table + " to be empty but found " + index);
     }

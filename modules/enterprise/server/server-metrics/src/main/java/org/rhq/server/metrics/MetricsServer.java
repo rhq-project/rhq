@@ -29,6 +29,7 @@ import static me.prettyprint.hector.api.beans.AbstractComposite.ComponentEqualit
 import static me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality.LESS_THAN_EQUAL;
 import static org.rhq.server.metrics.MetricsDAO.ONE_HOUR_METRICS_TABLE;
 import static org.rhq.server.metrics.MetricsDAO.SIX_HOUR_METRICS_TABLE;
+import static org.rhq.server.metrics.MetricsDAO.TWENTY_FOUR_HOUR_METRICS_TABLE;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -48,6 +49,7 @@ import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeComparator;
 import org.joda.time.Days;
+import org.joda.time.Hours;
 import org.joda.time.Minutes;
 
 import org.rhq.core.domain.auth.Subject;
@@ -303,19 +305,30 @@ public class MetricsServer {
         // issues in the future. The last step in the work flow is to update the metrics
         // index for the newly persisted aggregates.
 
+        // TODO deleteMetricsIndexEntries should take a list of schedule ids
+        // MetricsDAO.deleteMetricsIndexEntries deletes the entire row, but we probably do
+        // not want to delete each column unless and until we verify that the data for the
+        // schedule id in that column has in fact been aggregated. It might be better for
+        // deleteMetricsIndexEntries to take a list of schedule ids to purge.
+
         List<AggregatedNumericMetric> updatedSchedules = aggregateRawData();
-        dao.deleteMetricsIndexEntries(ONE_HOUR_METRICS_TABLE);
-        updateMetricsIndex(SIX_HOUR_METRICS_TABLE, updatedSchedules, Minutes.minutes(60 * 6));
+        if (!updatedSchedules.isEmpty()) {
+            dao.deleteMetricsIndexEntries(ONE_HOUR_METRICS_TABLE);
+            updateMetricsIndex(SIX_HOUR_METRICS_TABLE, updatedSchedules, Minutes.minutes(60 * 6));
+        }
 
-//        updatedSchedules = calculateAggregates(oneHourMetricsDataCF, sixHourMetricsDataCF, Minutes.minutes(60 * 6),
-//            Hours.hours(24).toStandardMinutes(), DateTimeService.ONE_MONTH);
-        updatedSchedules = calculateAggregates(oneHourMetricsDataCF, sixHourMetricsDataCF, Minutes.minutes(60),
+        updatedSchedules = calculateAggregates(ONE_HOUR_METRICS_TABLE, SIX_HOUR_METRICS_TABLE, Minutes.minutes(60),
             Minutes.minutes(60 * 6), DateTimeService.ONE_MONTH);
+        if (!updatedSchedules.isEmpty()) {
+            dao.deleteMetricsIndexEntries(SIX_HOUR_METRICS_TABLE);
+            updateMetricsIndex(TWENTY_FOUR_HOUR_METRICS_TABLE, updatedSchedules, Hours.hours(24).toStandardMinutes());
+        }
 
-//        updateMetricsQueue(twentyFourHourMetricsDataCF, updatedSchedules);
-//
-//        calculateAggregates(sixHourMetricsDataCF, twentyFourHourMetricsDataCF, Hours.hours(24).toStandardMinutes(),
-//            Hours.hours(24).toStandardMinutes(), DateTimeService.ONE_YEAR);
+        updatedSchedules = calculateAggregates(SIX_HOUR_METRICS_TABLE, TWENTY_FOUR_HOUR_METRICS_TABLE,
+            Hours.hours(24).toStandardMinutes(), Hours.hours(24).toStandardMinutes(), DateTimeService.ONE_YEAR);
+        if (!updatedSchedules.isEmpty()) {
+            dao.deleteMetricsIndexEntries(TWENTY_FOUR_HOUR_METRICS_TABLE);
+        }
     }
 
     private void updateMetricsIndex(String bucket, List<AggregatedNumericMetric> metrics, Minutes interval) {
@@ -414,95 +427,6 @@ public class MetricsServer {
 
         List<AggregatedNumericMetric> updatedSchedules = dao.insertAggregates(toColumnFamily, toMetrics);
         return updatedSchedules;
-
-//        SliceQuery<String, Composite, Integer> queueQuery = HFactory.createSliceQuery(keyspace, StringSerializer.get(),
-//            new CompositeSerializer().get(), IntegerSerializer.get());
-//        queueQuery.setColumnFamily(metricsIndex);
-//        queueQuery.setKey(toColumnFamily);
-//
-//        ColumnSliceIterator<String, Composite, Integer> queueIterator = new ColumnSliceIterator<String, Composite, Integer>(
-//            queueQuery, (Composite) null, (Composite) null, false);
-//
-//        Mutator<Integer> mutator = HFactory.createMutator(keyspace, IntegerSerializer.get());
-//        Mutator<String> queueMutator = HFactory.createMutator(keyspace, StringSerializer.get());
-//
-//        while (queueIterator.hasNext()) {
-//            HColumn<Composite, Integer> queueColumn = queueIterator.next();
-//            Integer scheduleId = queueColumn.getName().get(1, IntegerSerializer.get());
-//            Long timestamp = queueColumn.getName().get(0, LongSerializer.get());
-//            DateTime startTime = new DateTime(timestamp);
-//            DateTime endTime = new DateTime(timestamp).plus(interval);
-//
-//            if (dateTimeComparator.compare(currentHour, endTime) < 0) {
-//                continue;
-//            }
-//
-//            Composite startColKey = new Composite();
-//            startColKey.addComponent(startTime.getMillis(), LongSerializer.get());
-//
-//            Composite endColKey = new Composite();
-//            endColKey.addComponent(endTime.getMillis(), LongSerializer.get());
-//
-//            SliceQuery<Integer, Composite, Double> fromColumnFamilyQuery = HFactory.createSliceQuery(keyspace,
-//                IntegerSerializer.get(), CompositeSerializer.get(), DoubleSerializer.get());
-//            fromColumnFamilyQuery.setColumnFamily(fromColumnFamily);
-//            fromColumnFamilyQuery.setKey(scheduleId);
-//
-//            ColumnSliceIterator<Integer, Composite, Double> fromColumnFamilyIterator = new ColumnSliceIterator<Integer, Composite, Double>(
-//                fromColumnFamilyQuery, startColKey, endColKey, false);
-//            fromColumnFamilyIterator.hasNext();
-//
-//            HColumn<Composite, Double> fromColumn = null;
-//            double min = 0;
-//            double max = 0;
-//            double sum = 0;
-//            int avgCount = 0;
-//            int minCount = 0;
-//            int maxCount = 0;
-//
-//            while (fromColumnFamilyIterator.hasNext()) {
-//                fromColumn = fromColumnFamilyIterator.next();
-//                AggregateType type = AggregateType.valueOf(fromColumn.getName().get(1, IntegerSerializer.get()));
-//
-//                switch (type) {
-//                case AVG:
-//                    sum += fromColumn.getValue();
-//                    avgCount++;
-//                    break;
-//                case MIN:
-//                    if (minCount == 0) {
-//                        min = fromColumn.getValue();
-//                    } else if (fromColumn.getValue() < min) {
-//                        min = fromColumn.getValue();
-//                    }
-//                    minCount++;
-//                    break;
-//                case MAX:
-//                    if (maxCount == 0) {
-//                        max = fromColumn.getValue();
-//                    } else if (fromColumn.getValue() > max) {
-//                        max = fromColumn.getValue();
-//                    }
-//                    maxCount++;
-//                    break;
-//                }
-//            }
-//
-////            double avg = sum / avgCount;
-//            double avg = divide(sum, avgCount);
-//
-//            mutator.addInsertion(scheduleId, toColumnFamily, createAvgColumn(startTime, avg, ttl));
-//            mutator.addInsertion(scheduleId, toColumnFamily, createMaxColumn(startTime, max, ttl));
-//            mutator.addInsertion(scheduleId, toColumnFamily, createMinColumn(startTime, min, ttl));
-//
-//            updatedSchedules.put(scheduleId, dateTimeService.getTimeSlice(startTime, nextInterval));
-//
-//            queueMutator.addDeletion(toColumnFamily, metricsIndex, queueColumn.getName(), CompositeSerializer.get());
-//        }
-//        mutator.execute();
-//        queueMutator.execute();
-//
-//        return updatedSchedules;
     }
 
 //    public void addTraitData(Set<MeasurementDataTrait> dataSet) {

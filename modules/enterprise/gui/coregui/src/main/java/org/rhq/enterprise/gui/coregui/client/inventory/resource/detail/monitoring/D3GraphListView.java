@@ -29,6 +29,7 @@ import java.util.TreeSet;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
 import org.rhq.core.domain.measurement.DataType;
@@ -47,7 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 /**
  * Build the View that shows the individual graph views for multi-graph
  * views if just a resource is provided and single graph view if resource
- * and definitionId are provided.
+ * and  measurement definitionId are provided.
  *
  * @author Mike Thompson
  */
@@ -69,34 +70,39 @@ public class D3GraphListView extends LocatableVLayout {
     }
 
     public static D3GraphListView createSingleGraph(String locatorId, Resource resource, Integer measurementId) {
-        TreeSet<Integer> defintionIds = new TreeSet<Integer>();
-        defintionIds.add(measurementId);
-        return new D3GraphListView(locatorId, resource, defintionIds);
+        TreeSet<Integer> definitionIds = new TreeSet<Integer>();
+        definitionIds.add(measurementId);
+        return new D3GraphListView(locatorId, resource, definitionIds);
     }
 
     private D3GraphListView(String locatorId, Resource resource, Set<Integer> definitionIds) {
         super(locatorId);
-        measurementRangeEditor = new UserPreferencesMeasurementRangeEditor(this.getLocatorId());
         this.resource = resource;
-        setOverflow(Overflow.AUTO);
+        commonConstructorSettings();
         this.definitionIds = definitionIds;
     }
 
     private D3GraphListView(String locatorId, Resource resource) {
         super(locatorId);
-        measurementRangeEditor = new UserPreferencesMeasurementRangeEditor(this.getLocatorId());
         this.resource = resource;
-        setOverflow(Overflow.AUTO);
+        commonConstructorSettings();
         useSummaryData = true;
     }
 
+    private void commonConstructorSettings(){
+        measurementRangeEditor = new UserPreferencesMeasurementRangeEditor(this.getLocatorId());
+        setOverflow(Overflow.AUTO);
+    }
+
     public void addSetButtonClickHandler(ClickHandler clickHandler) {
+        Log.debug("measurementRangeEditor "+measurementRangeEditor);
         measurementRangeEditor.getSetButton().addClickHandler(clickHandler);
     }
 
     @Override
     protected void onDraw() {
         super.onDraw();
+        //Log.debug(" *** Invoking onDraw()");
 
         destroyMembers();
 
@@ -107,10 +113,15 @@ public class D3GraphListView extends LocatableVLayout {
         }
     }
 
+
+    public void redrawGraphs(){
+       this.onDraw();
+    }
+
     /**
      * Build whatever graph metrics (MeasurementDefinitions) are defined for the resource.
      */
-    private void buildGraphs() {
+    public void buildGraphs() {
         List<Long> startEndList = measurementRangeEditor.getBeginEndTimes();
         final long startTime = startEndList.get(0);
         final long endTime = startEndList.get(1);
@@ -206,7 +217,7 @@ public class D3GraphListView extends LocatableVLayout {
                             if (null != selectedDefinitionId) {
                                 // single graph case
                                 if (measurementId == selectedDefinitionId) {
-                                    buildIndividualGraph(measurementDefinition, measurement, 250);
+                                    buildIndividualGraph(measurementDefinition, measurement, 160);
                                 }
                             } else {
                                 // multiple graph case

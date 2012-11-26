@@ -31,6 +31,8 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
+import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -236,8 +238,16 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
                                     final ResourceComposite resourceComposite = result.get(0);
 
                                     ChartViewWindow window = new ChartViewWindow(extendLocatorId("ChartWindow"), "");
-                                    window.addItem(D3GraphListView.createMultipleGraphs(extendLocatorId("D3Graphs"),
-                                            resourceComposite.getResource(), definitionIds));
+                                    final D3GraphListView graphListView = D3GraphListView.createMultipleGraphs(extendLocatorId("D3Graphs"), resourceComposite.getResource(), definitionIds);
+                                    graphListView.addSetButtonClickHandler(new ClickHandler()
+                                    {
+                                        @Override
+                                        public void onClick(ClickEvent event)
+                                        {
+                                            graphListView.redrawGraphs();
+                                        }
+                                    });
+                                    window.addItem(graphListView);
                                     window.show();
                                     refreshTableInfo();
 

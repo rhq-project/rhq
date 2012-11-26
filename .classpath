@@ -269,8 +269,8 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/jboss/web/jbossweb/2.0.1.GA/jbossweb-2.0.1.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/libvirt/libvirt/0.4.1/libvirt-0.4.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/fedorahosted/cobbler/cobbler4j/0.1/cobbler4j-0.1.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/com/google/gwt/gwt-user/2.4.0/gwt-user-2.4.0.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/com/google/gwt/gwt-dev/2.4.0/gwt-dev-2.4.0.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/com/google/gwt/gwt-user/2.5.0/gwt-user-2.5.0.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/com/google/gwt/gwt-dev/2.5.0/gwt-dev-2.5.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/smartgwt/smartgwt/3.0/smartgwt-3.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/googlecode/gflot/gflot/2.4.2/gflot-2.4.2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/jcraft/jsch/0.1.29/jsch-0.1.29.jar"/>
@@ -316,5 +316,6 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/wordnik/swagger-annotations_2.9.1/1.1-SNAPSHOT/swagger-annotations_2.9.1-1.1-20120531.064118-1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman/1.2.1/byteman-1.2.1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/com/wordnik/swagger-annotations_2.9.1/1.1.1-SNAPSHOT/swagger-annotations_2.9.1-1.1.1-20121031.024335-6.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/joda-time/joda-time/2.1/joda-time-2.1.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

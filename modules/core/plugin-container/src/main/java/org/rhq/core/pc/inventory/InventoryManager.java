@@ -1614,7 +1614,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
             if (forceReinitialization) {
                 switch (state) {
                 case STARTED:
-                    component.stop();
+                    if (log.isDebugEnabled()) {
+                        log.debug("Forcing re-initialization of an already started resource: " + resource);
+                    }
+                    deactivateResource(resource);
                     break;
                 case STARTING:
                     log.warn("Could not force initialization of component for resource [" + resource.getId()
@@ -2037,7 +2040,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         log.debug("Successfully deactivated resource with id [" + resource.getId() + "].");
                     }
                 } catch (Throwable t) {
-                    log.warn("Plugin Error: Failed to stop component for [" + resource + "].");
+                    log.warn("Plugin Error: Failed to stop component for [" + resource + "].", t);
                 }
 
                 container.setResourceComponentState(ResourceComponentState.STOPPED);

@@ -22,13 +22,10 @@ package org.rhq.enterprise.clienapi;
 import static org.testng.Assert.assertEquals;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.Reader;
 import java.net.URI;
-import java.net.URL;
 
-import org.apache.tools.ant.filters.StringInputStream;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;

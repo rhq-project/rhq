@@ -72,7 +72,7 @@
     <jboss-javassist.version>3.9.0.GA</jboss-javassist.version>
     <jbossws-native-dist.version>3.1.1.GA</jbossws-native-dist.version>
     <!-- End: JBoss AS Dependency Versions -->
-    
+
     <commons-logging.version>1.1.0.jboss</commons-logging.version>
     <concurrent.version>1.3.4-jboss-update1</concurrent.version> <!-- oswego-concurrent compatible with 4.2.3.GA -->
     <findbugs.version>2.3.2</findbugs.version>
@@ -100,7 +100,6 @@
     <twitter4j.version>2.2.4</twitter4j.version>
     <commons-codec.version>1.4</commons-codec.version>
     <testng.version>6.5.2</testng.version>
-    <cobertura.version>1.9.4.1</cobertura.version>
     <augeas.version>0.9.0</augeas.version>
     <augeas.classifier>el5</augeas.classifier>
     <augeas.zip.version>0.9.0</augeas.zip.version>
@@ -118,7 +117,7 @@
     Arquillian integration, and works with jacoco (as opposed to javassist 3.9.0,
        which doesn't in some cases.) -->
     <javassist.version>3.16.1-GA</javassist.version>
-    
+
     <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
     <rhq.db.admin.password>rhqadmin</rhq.db.admin.password>
 
@@ -567,13 +566,6 @@
     </dependency>
     <!-- end of workaround -->
 
-    <dependency>
-      <groupId>net.sourceforge.cobertura</groupId>
-      <artifactId>cobertura</artifactId>
-      <version>${cobertura.version}</version>
-      <scope>test</scope>
-    </dependency>
-
   </dependencies>
 
 
@@ -608,7 +600,7 @@
                </exclusions>
              </dependency>
            </dependencies>
-           
+
            <executions>
               <execution>
                  <id>pre-create target/classes</id>
@@ -774,7 +766,7 @@
                </exclusions>
             </configuration>
          </plugin>
-         
+
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>clirr-maven-plugin</artifactId>
@@ -786,7 +778,7 @@
             <artifactId>jacoco-maven-plugin</artifactId>
             <version>${jacoco.version}</version>
          </plugin>
-       </plugins>       
+       </plugins>
      </pluginManagement>
 
 
@@ -1135,7 +1127,7 @@
       </plugin>
     </plugins>
 
-  </build>  
+  </build>
 
   <repositories>
 
@@ -1234,7 +1226,7 @@
           <jacoco.integration-test.args></jacoco.integration-test.args>
        </properties>
     </profile>
-    
+
     <profile>
        <id>code-coverage</id>
        <activation>
@@ -1263,7 +1255,7 @@
                             <include>org.rhq.*</include>
                          </includes>
                       </configuration>
-                   </execution>   
+                   </execution>
                    <execution>
                       <id>prepare-agent-for-integration-tests</id>
                       <phase>pre-integration-test</phase>
@@ -1399,7 +1391,7 @@
           </plugins>
        </build>
     </profile>
-    
+
     <!-- NOTE: This profile is extended upon in several other submodules.
          If you need to change its activation policy, make sure to do that in
          *ALL* the modules that define this profile. -->
@@ -1409,16 +1401,16 @@
            <property>
               <!-- we want this always active but activeByDefault doesn't work -->
               <!-- see http://maven.apache.org/guides/introduction/introduction-to-profiles.html -->
-              <name>java.home</name> 
+              <name>java.home</name>
            </property>
         </activation>
-        
+
         <!-- Can be used to pass a flag down to deployment composing ANT scripts and somesuch -->
         <properties>
            <rhq.bundle-additional-script-languages>true</rhq.bundle-additional-script-languages>
-        </properties>            
+        </properties>
     </profile>
-    
+
     <profile>
         <id>ojdbc-driver</id>
         <activation>
@@ -1617,7 +1609,7 @@
               </configuration>
            </plugin>
         </plugins>
-     </reporting>   
+     </reporting>
   </profile>
 
   <profile>
@@ -1625,7 +1617,7 @@
         <property>
            <name>generate-dependency-graph</name>
            <value>true</value>
-        </property> 
+        </property>
      </activation>
 
      <reporting>
@@ -1638,7 +1630,7 @@
               </configuration>
            </plugin>
         </plugins>
-     </reporting>   
+     </reporting>
    </profile>
 </profiles>
 
@@ -1652,8 +1644,8 @@
               <reportSet>
               </reportSet>
            </reportSets>
-      </plugin>           
-            
+      </plugin>
+
 <!--
             <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -1850,6 +1842,10 @@
             </roles>
         </developer>
         <developer>
+            <name>Thomas Segismont</name>
+            <timezone>+1</timezone>
+        </developer>
+        <developer>
             <name>Jay Shaughnessy</name>
             <timezone>-5</timezone>
         </developer>
@@ -1857,6 +1853,9 @@
             <name>Ian Springer</name>
             <timezone>-5</timezone>
             <url>http://freshjava.blogspot.com/</url>
+          <roles>
+              <role>retired</role>
+          </roles>
         </developer>
         <developer>
             <name>Mike Thompson</name>

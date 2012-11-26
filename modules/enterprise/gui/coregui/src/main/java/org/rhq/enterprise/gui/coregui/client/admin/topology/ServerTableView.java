@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.topology;
 
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.FailoverListItemDatasourceField.FIELD_ORDINAL;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,18 +47,21 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 /**
  * @author Jiri Kremser
  */
-public class ServerTableView extends TableSection<ServerNodeDatasource> {
+public class ServerTableView extends TableSection<ServerDatasource> {
 
     public static final ViewName VIEW_ID = new ViewName("Servers(GWT)", MSG.view_adminTopology_servers() + "(GWT)",
         IconEnum.SERVERS);
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_CONFIGURATION_VIEW_ID + "/" + VIEW_ID;
+    
+    private final boolean showActions;
 
-    public ServerTableView(String locatorId, String tableTitle) {
+    public ServerTableView(String locatorId, String tableTitle, Integer agentId) {
         super(locatorId, tableTitle);
+        this.showActions = agentId == null;
         setHeight100();
         setWidth100();
-        setDataSource(new ServerNodeDatasource());
+        setDataSource(showActions ? new ServerWithAgentCountDatasource() : new FailoverListItemDatasource(agentId));
     }
 
     @Override
@@ -64,8 +69,21 @@ public class ServerTableView extends TableSection<ServerNodeDatasource> {
         List<ListGridField> fields = getDataSource().getListGridFields();
         ListGrid listGrid = getListGrid();
         listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
-        listGrid.sort(FIELD_NAME, SortDirection.ASCENDING);
+        if (showActions) {
+            listGrid.sort(FIELD_NAME, SortDirection.ASCENDING);
+            showActions();
+        } else {
+            listGrid.sort(FIELD_ORDINAL.propertyName(), SortDirection.ASCENDING);
+        }
+        super.configureTable();
+    }
 
+    @Override
+    public Canvas getDetailsView(Integer id) {
+        return new ServerDetailView(extendLocatorId("detailsView"), id);
+    }
+    
+    private void showActions() {
         addTableAction(extendLocatorId("setNormal"), MSG.view_adminTopology_server_setNormal(),
             MSG.common_msg_areYouSure(), new AuthorizedTableAction(this, TableActionEnablement.ANY,
                 Permission.MANAGE_SETTINGS) {
@@ -182,13 +200,6 @@ public class ServerTableView extends TableSection<ServerNodeDatasource> {
                     });
                 }
             });
-
-        super.configureTable();
-    }
-
-    @Override
-    public Canvas getDetailsView(Integer id) {
-        return new ServerDetailView(extendLocatorId("detailsView"), id);
     }
 
     private int[] getSelectedIds(ListGridRecord[] selections) {

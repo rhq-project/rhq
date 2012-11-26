@@ -73,8 +73,18 @@ public class AgentGWTServiceImpl extends AbstractGWTServiceImpl implements Agent
     @Override
     public PageList<Agent> getAgentsByServer(Integer serverId, PageControl pc) throws RuntimeException {
         try {
-            //security handled in AgentManagerBean. requires View_Resource. 
-            return SerialUtility.prepare(agentManager.getAgentsByServer(getSessionSubject(), serverId, pc), "AgentService.getAgentsByServer");
+            //TODO: security handled in AgentManagerBean. requires View_Resource. 
+            return SerialUtility.prepare(agentManager.getAgentsByServer(getSessionSubject(), serverId, pc),
+                "AgentService.getAgentsByServer");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public Agent getAgentByID(int agentId) throws RuntimeException {
+        try {
+            return SerialUtility.prepare(agentManager.getAgentByID(agentId), "AgentService.getAgentByID");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

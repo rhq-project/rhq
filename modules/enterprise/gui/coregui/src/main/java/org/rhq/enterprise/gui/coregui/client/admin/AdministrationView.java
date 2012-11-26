@@ -178,7 +178,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         NavigationItem serversItemGwt = new NavigationItem(ServerTableView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
                 return new ServerTableView(extendLocatorId(ServerTableView.VIEW_ID.getName()),
-                    MSG.view_adminTopology_servers() + " (GWT)");
+                    MSG.view_adminTopology_servers() + " (GWT)", null);
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
         

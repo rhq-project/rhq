@@ -27,6 +27,7 @@ import java.util.List;
 
 import org.apache.commons.lang.ArrayUtils;
 
+import org.rhq.core.domain.cloud.FailoverListDetails;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
@@ -50,7 +51,8 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     @Override
     public PageList<ServerWithAgentCountComposite> getServers(PageControl pc) throws RuntimeException {
         try {
-            return SerialUtility.prepare(cloudManager.getServerComposites(getSessionSubject(), pc), "CloudGWTServiceImpl.getServers");
+            return SerialUtility.prepare(cloudManager.getServerComposites(getSessionSubject(), pc),
+                "CloudGWTServiceImpl.getServers");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -68,13 +70,13 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     @Override
     public List<Agent> getAgentsByServerName(String serverName) throws RuntimeException {
         try {
-            List <Agent> persistentBag = SerialUtility.prepare(cloudManager.getAgentsByServerName(serverName), "CloudGWTServiceImpl.getAgentsByServerName");
+            List<Agent> persistentBag = SerialUtility.prepare(cloudManager.getAgentsByServerName(serverName),
+                "CloudGWTServiceImpl.getAgentsByServerName");
             return new ArrayList<Agent>(persistentBag);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
     }
-
 
     @Override
     public void deleteServers(int[] serverIds) throws RuntimeException {
@@ -85,11 +87,20 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
         }
     }
 
-
     @Override
     public void updateServerMode(int[] serverIds, OperationMode mode) throws RuntimeException {
         try {
             cloudManager.updateServerMode(ArrayUtils.toObject(serverIds), mode);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public List<FailoverListDetails> getFailoverListDetailsByAgentId(int agentId, PageControl pc) {
+        try {
+            return SerialUtility.prepare(cloudManager.getFailoverListDetailsByAgentId(agentId, pc),
+                "CloudGWTServiceImpl.getFailoverListDetailsByAgentId");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

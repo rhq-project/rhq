@@ -18,14 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.topology;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
@@ -61,30 +59,30 @@ public class AgentTableView extends TableSection<AgentNodeDatasource> {
 
     @Override
     public Canvas getDetailsView(Integer id) {
-        return new ServerDetailView(extendLocatorId("detailsView"), id);
+        return new AgentDetailView(extendLocatorId("detailsView"), id);
     }
 
-    private int[] getSelectedIds(ListGridRecord[] selections) {
-        if (selections == null) {
-            return new int[0];
-        }
-        int[] ids = new int[selections.length];
-        int i = 0;
-        for (ListGridRecord selection : selections) {
-            ids[i++] = selection.getAttributeAsInt(FIELD_ID);
-        }
-        return ids;
-    }
-
-    private ArrayList<String> getSelectedNames(ListGridRecord[] selections) {
-        if (selections == null) {
-            return new ArrayList<String>(0);
-        }
-        ArrayList<String> ids = new ArrayList<String>(selections.length);
-        for (ListGridRecord selection : selections) {
-            ids.add(selection.getAttributeAsString(FIELD_NAME));
-        }
-        return ids;
-    }
+//    private int[] getSelectedIds(ListGridRecord[] selections) {
+//        if (selections == null) {
+//            return new int[0];
+//        }
+//        int[] ids = new int[selections.length];
+//        int i = 0;
+//        for (ListGridRecord selection : selections) {
+//            ids[i++] = selection.getAttributeAsInt(FIELD_ID);
+//        }
+//        return ids;
+//    }
+//
+//    private ArrayList<String> getSelectedNames(ListGridRecord[] selections) {
+//        if (selections == null) {
+//            return new ArrayList<String>(0);
+//        }
+//        ArrayList<String> ids = new ArrayList<String>(selections.length);
+//        for (ListGridRecord selection : selections) {
+//            ids.add(selection.getAttributeAsString(FIELD_NAME));
+//        }
+//        return ids;
+//    }
 
 }

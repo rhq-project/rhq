@@ -18,13 +18,15 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.topology;
 
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_ADDRESS;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_AFFINITY_GROUP;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_ID;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_LAST_AVAILABILITY_REPORT;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_NAME;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_PORT;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_SERVER;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerWithAgentCountDatasourceField.FIELD_ADDRESS;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerWithAgentCountDatasourceField.FIELD_AFFINITY_GROUP;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerWithAgentCountDatasourceField.FIELD_AGENT_COUNT;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerWithAgentCountDatasourceField.FIELD_ID;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerWithAgentCountDatasourceField.FIELD_MTIME;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerWithAgentCountDatasourceField.FIELD_NAME;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerWithAgentCountDatasourceField.FIELD_OPERATION_MODE;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerWithAgentCountDatasourceField.FIELD_PORT;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerWithAgentCountDatasourceField.FIELD_SECURE_PORT;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,26 +40,21 @@ import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.criteria.Criteria;
-import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
  * @author Jirka Kremser
  *
  */
-public class AgentNodeDatasource extends RPCDataSource<Agent, Criteria> {
-    
-    private final Integer serverId; 
+public class ServerWithAgentCountDatasource extends ServerDatasource<ServerWithAgentCountComposite, Criteria> {
 
-    public AgentNodeDatasource(Integer serverId) {
+    public ServerWithAgentCountDatasource() {
         super();
-        this.serverId = serverId;
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
     }
@@ -80,15 +77,17 @@ public class AgentNodeDatasource extends RPCDataSource<Agent, Criteria> {
         fields.add(idField);
 
         fields.add(FIELD_NAME.getListGridField("*"));
-        fields.add(FIELD_SERVER.getListGridField("120"));
+        fields.add(FIELD_OPERATION_MODE.getListGridField("90"));
         fields.add(FIELD_ADDRESS.getListGridField("110"));
         fields.add(FIELD_PORT.getListGridField("90"));
+        fields.add(FIELD_SECURE_PORT.getListGridField("75"));
 
-        ListGridField lastAvailabilityReportField = FIELD_LAST_AVAILABILITY_REPORT.getListGridField("120");
-        TimestampCellFormatter.prepareDateField(lastAvailabilityReportField);
-        fields.add(lastAvailabilityReportField);
+        ListGridField lastUpdateTimeField = FIELD_MTIME.getListGridField("110");
+        TimestampCellFormatter.prepareDateField(lastUpdateTimeField);
+        fields.add(lastUpdateTimeField);
 
-        fields.add(FIELD_AFFINITY_GROUP.getListGridField("100"));
+        fields.add(FIELD_AFFINITY_GROUP.getListGridField("80"));
+        fields.add(FIELD_AGENT_COUNT.getListGridField("75"));
 
         return fields;
     }
@@ -97,8 +96,8 @@ public class AgentNodeDatasource extends RPCDataSource<Agent, Criteria> {
     protected void executeFetch(final DSRequest request, final DSResponse response, Criteria criteria) {
         final PageControl pc = getPageControl(request);
 
-        GWTServiceLookup.getAgentService().getAgentsByServer(serverId, pc, new AsyncCallback<PageList<Agent>>() {
-            public void onSuccess(PageList<Agent> result) {
+        GWTServiceLookup.getCloudService().getServers(pc, new AsyncCallback<List<ServerWithAgentCountComposite>>() {
+            public void onSuccess(List<ServerWithAgentCountComposite> result) {
                 response.setData(buildRecords(result));
                 response.setTotalRows(result.size());
                 processResponse(request.getRequestId(), response);
@@ -139,21 +138,23 @@ public class AgentNodeDatasource extends RPCDataSource<Agent, Criteria> {
     }
 
     @Override
-    public Agent copyValues(Record from) {
+    public ServerWithAgentCountComposite copyValues(Record from) {
         throw new UnsupportedOperationException("ServerTableView.CloudDataSourcepublic Server copyValues(Record from)");
     }
 
     @Override
-    public ListGridRecord copyValues(Agent from) {
+    public ListGridRecord copyValues(ServerWithAgentCountComposite from) {
         ListGridRecord record = new ListGridRecord();
-        record.setAttribute(FIELD_ID.propertyName(), from.getId());
-        record.setAttribute(FIELD_NAME.propertyName(), from.getName());
-        record.setAttribute(FIELD_ADDRESS.propertyName(), from.getAddress());
-        record.setAttribute(FIELD_PORT.propertyName(), from.getPort());
-        record.setAttribute(FIELD_SERVER.propertyName(), from.getServer() == null ? "none" : from.getServer().getName());
-        record.setAttribute(FIELD_LAST_AVAILABILITY_REPORT.propertyName(), from.getLastAvailabilityReport());
-        record.setAttribute(FIELD_AFFINITY_GROUP.propertyName(), from.getAffinityGroup() == null ? "" : from
-            .getAffinityGroup().getName());
+        record.setAttribute(FIELD_ID.propertyName(), from.getServer().getId());
+        record.setAttribute(FIELD_NAME.propertyName(), from.getServer().getName());
+        record.setAttribute(FIELD_OPERATION_MODE.propertyName(), from.getServer().getOperationMode());
+        record.setAttribute(FIELD_ADDRESS.propertyName(), from.getServer().getAddress());
+        record.setAttribute(FIELD_PORT.propertyName(), from.getServer().getPort());
+        record.setAttribute(FIELD_SECURE_PORT.propertyName(), from.getServer().getSecurePort());
+        record.setAttribute(FIELD_MTIME.propertyName(), from.getServer().getMtime());
+        record.setAttribute(FIELD_AFFINITY_GROUP.propertyName(), from.getServer().getAffinityGroup() == null ? ""
+            : from.getServer().getAffinityGroup().getName());
+        record.setAttribute(FIELD_AGENT_COUNT.propertyName(), from.getAgentCount());
         return record;
     }
 

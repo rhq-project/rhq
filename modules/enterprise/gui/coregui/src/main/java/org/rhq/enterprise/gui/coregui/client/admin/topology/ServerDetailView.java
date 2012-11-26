@@ -19,16 +19,14 @@
 
 package org.rhq.enterprise.gui.coregui.client.admin.topology;
 
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerNodeDatasourceField.FIELD_ADDRESS;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerNodeDatasourceField.FIELD_AFFINITY_GROUP;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerNodeDatasourceField.FIELD_CTIME;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerNodeDatasourceField.FIELD_MTIME;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerNodeDatasourceField.FIELD_NAME;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerNodeDatasourceField.FIELD_OPERATION_MODE;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerNodeDatasourceField.FIELD_PORT;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerNodeDatasourceField.FIELD_SECURE_PORT;
-
-import java.util.List;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerWithAgentCountDatasourceField.FIELD_ADDRESS;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerWithAgentCountDatasourceField.FIELD_AFFINITY_GROUP;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerWithAgentCountDatasourceField.FIELD_CTIME;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerWithAgentCountDatasourceField.FIELD_MTIME;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerWithAgentCountDatasourceField.FIELD_NAME;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerWithAgentCountDatasourceField.FIELD_OPERATION_MODE;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerWithAgentCountDatasourceField.FIELD_PORT;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerWithAgentCountDatasourceField.FIELD_SECURE_PORT;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -46,7 +44,6 @@ import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 
 import org.rhq.core.domain.cloud.Server;
-import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -90,16 +87,17 @@ public class ServerDetailView extends LocatableVLayout {
         GWTServiceLookup.getCloudService().getServerById(this.serverId, new AsyncCallback<Server>() {
             public void onSuccess(final Server server) {
                 prepareDetailsSection(sectionStack, server);
-                GWTServiceLookup.getCloudService().getAgentsByServerName(server.getName(),
-                    new AsyncCallback<List<Agent>>() {
-                        public void onSuccess(List<Agent> agents) {
-                            prepareAgentSection(sectionStack, server, agents);
-                        };
-
-                        public void onFailure(Throwable caught) {
-                            //TODO: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), caught);
-                        }
-                    });
+                prepareAgentSection(sectionStack, server);
+//                GWTServiceLookup.getCloudService().getAgentsByServerName(server.getName(),
+//                    new AsyncCallback<List<Agent>>() {
+//                        public void onSuccess(List<Agent> agents) {
+//                            prepareAgentSection(sectionStack, server, agents);
+//                        };
+//
+//                        public void onFailure(Throwable caught) {
+//                            //TODO: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), caught);
+//                        }
+//                    });
             }
 
             public void onFailure(Throwable caught) {
@@ -146,7 +144,7 @@ public class ServerDetailView extends LocatableVLayout {
         }.run(); // fire the timer immediately
     }
 
-    private void prepareAgentSection(SectionStack stack, Server server, List<Agent> agents) {
+    private void prepareAgentSection(SectionStack stack, Server server) {
         SectionStackSection section = new SectionStackSection(MSG.view_adminTopology_serverDetail_connectedAgents());
         section.setExpanded(true);
         AgentTableView agentsTable = new AgentTableView(extendLocatorId(AgentTableView.VIEW_ID.getName()), null, serverId);

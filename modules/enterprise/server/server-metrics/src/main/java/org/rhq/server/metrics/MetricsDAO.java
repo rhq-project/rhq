@@ -87,14 +87,13 @@ public class MetricsDAO {
         this.dataSource = dataSource;
     }
 
-    public Set<MeasurementDataNumeric> insertRawMetrics(Set<MeasurementDataNumeric> dataSet, int ttl, long timestamp) {
+    public Set<MeasurementDataNumeric> insertRawMetrics(Set<MeasurementDataNumeric> dataSet, int ttl) {
         Set<MeasurementDataNumeric> insertedMetrics = new HashSet<MeasurementDataNumeric>();
         Connection connection = null;
         PreparedStatement statement = null;
         try {
             String sql = "INSERT INTO raw_metrics (schedule_id, time, value) VALUES (?, ?, ?) " +
                 "USING TTL " + ttl;
-//            sql = "INSERT INTO raw_metrics (schedule_id, time, value) VALUES (?, ?, ?) ";
             connection = dataSource.getConnection();
             statement = connection.prepareStatement(sql);
 

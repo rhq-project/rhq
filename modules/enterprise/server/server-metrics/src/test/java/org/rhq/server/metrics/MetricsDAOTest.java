@@ -32,6 +32,7 @@ import static org.rhq.server.metrics.MetricsDAO.RAW_METRICS_TABLE;
 import static org.rhq.server.metrics.MetricsDAO.SIX_HOUR_METRICS_TABLE;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
 import java.sql.Statement;
 import java.util.HashMap;
@@ -56,22 +57,30 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
     private final long MINUTE = 60 * SECOND;
 
+    /**
+     * Tables were previously purged using a TRUNCATE statement, but with the upgrade to
+     * Cassandra 1.2.0 beta 2, the TRUNCATE command takes a really long time to complete.
+     * It was taking so long that it start causing tests to fail. At least for now,
+     * IdGenerator is used to pre-allocate ids for use so that we know which schedule ids
+     * need to be purged.
+     */
+    private IdGenerator scheduleIdGenerator;
+
     @BeforeMethod
     public void resetDB() throws Exception {
+        scheduleIdGenerator = new IdGenerator(3);
+
         Statement statement = connection.createStatement();
-//        statement.executeUpdate("TRUNCATE " + RAW_METRICS_TABLE);
-//        statement.executeUpdate("TRUNCATE " + ONE_HOUR_METRICS_TABLE);
-//        statement.executeUpdate("TRUNCATE " + METRICS_INDEX_TABLE);
-//        statement.executeUpdate("TRUNCATE " + SIX_HOUR_METRICS_TABLE);
-        statement.executeUpdate("DELETE FROM " + RAW_METRICS_TABLE + " WHERE schedule_id IN (123, 456)");
-        statement.executeUpdate("DELETE FROM " + ONE_HOUR_METRICS_TABLE + " WHERE schedule_id IN (123, 456)");
-        statement.executeUpdate("DELETE FROM " + SIX_HOUR_METRICS_TABLE + " WHERE schedule_id IN (123, 456)");
-        statement.executeUpdate("DELETE FROM " + METRICS_INDEX_TABLE + " WHERE bucket IN ('raw_metrics', 'one_hour_metrics', 'six_hour_metrics')");
+                statement.executeUpdate("TRUNCATE " + RAW_METRICS_TABLE);
+        statement.executeUpdate("TRUNCATE " + ONE_HOUR_METRICS_TABLE);
+        statement.executeUpdate("TRUNCATE " + METRICS_INDEX_TABLE);
+        statement.executeUpdate("TRUNCATE " + SIX_HOUR_METRICS_TABLE);
+        statement.executeUpdate("TRUNCATE " + METRICS_INDEX_TABLE);
     }
 
     @Test
     public void insertAndFindRawMetrics() {
-        int scheduleId = 123;
+        int scheduleId = scheduleIdGenerator.next();
 
         DateTime hour0 = hour0();
         DateTime currentTime = hour0.plusHours(4).plusMinutes(44);
@@ -87,8 +96,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
         MetricsDAO dao = new MetricsDAO(dataSource);
         int ttl = Hours.ONE.toStandardSeconds().getSeconds();
-        long timestamp = System.currentTimeMillis();
-        Set<MeasurementDataNumeric> actualUpdates = dao.insertRawMetrics(data, ttl, timestamp);
+        Set<MeasurementDataNumeric> actualUpdates = dao.insertRawMetrics(data, ttl);
 
         assertEquals(actualUpdates, data, "The updates do not match expected value.");
 
@@ -100,24 +108,18 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         );
         assertEquals(actualMetrics, expectedMetrics, "Failed to find raw metrics");
 
-        // Now verify that the column meta data was set. We do this separately  in order to
-        // exercise both versions of the findRawMetrics method. In production code (so far),
-        // we have no need to retrieve meta data when retrieving raw metrics, but we need
-        // to verify that the meta data is in fact set.
+        // Now verify that the TTL was set. We do this separately in order to exercise both
+        // versions of the findRawMetrics method. In production code (so far), we have no
+        // need to retrieve meta data when retrieving raw metrics, but we need to verify
+        // that the TTL is set.
         List<RawNumericMetric> actualMetricsWithMetadata = dao.findRawMetrics(scheduleId, currentHour,
             currentHour.plusHours(1), true) ;
-        List<RawNumericMetric> expectedMetricsWithMetadata = asList(
-            new RawNumericMetric(scheduleId, threeMinutesAgo.getMillis(), 3.2, new ColumnMetadata(ttl, timestamp)),
-            new RawNumericMetric(scheduleId, twoMinutesAgo.getMillis(), 3.9, new ColumnMetadata(ttl, timestamp)),
-            new RawNumericMetric(scheduleId, oneMinuteAgo.getMillis(), 2.6, new ColumnMetadata(ttl, timestamp))
-        );
-        assertEquals(actualMetricsWithMetadata, expectedMetricsWithMetadata, "Column meta data does not match " +
-            "expected values");
+        assertTTLEquals(actualMetricsWithMetadata, ttl);
     }
 
     @Test
     public void insertAndFindAllOneHourMetrics() {
-        int scheduleId = 123;
+        int scheduleId = scheduleIdGenerator.next();
         DateTime hour0 = hour0();
 
         MetricsDAO dao = new MetricsDAO(dataSource);
@@ -142,7 +144,8 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
     @Test
     public void findRangeOfOneHourMetrics() {
-        int scheduledId = 123;
+        int scheduledId = scheduleIdGenerator.next();
+        int nextScheduleId = scheduleIdGenerator.next();
         DateTime hour0 = hour0();
 
         MetricsDAO dao = new MetricsDAO(dataSource);
@@ -151,7 +154,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
             new AggregatedNumericMetric(scheduledId, 3.0, 3.0, 3.0, hour0.plusHours(1).getMillis()),
             new AggregatedNumericMetric(scheduledId, 4.0, 4.0, 4.0, hour0.plusHours(2).getMillis()),
             new AggregatedNumericMetric(scheduledId, 5.0, 5.0, 5.0, hour0.plusHours(3).getMillis()),
-            new AggregatedNumericMetric(456, 1.0, 1.0, 1.0, hour0.plusHours(1).getMillis())
+            new AggregatedNumericMetric(nextScheduleId, 1.0, 1.0, 1.0, hour0.plusHours(1).getMillis())
         ));
 
         DateTime startTime = hour0.plusHours(1);
@@ -170,27 +173,31 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
     @Test
     public void updateAndFindOneHourIndexEntries() {
         DateTime hour0 = hour0();
+        int scheduleId1 = scheduleIdGenerator.next();
+        int scheduleId2 = scheduleIdGenerator.next();
 
         Map<Integer, DateTime> updates = new HashMap<Integer, DateTime>();
-        updates.put(100, hour0);
-        updates.put(101, hour0);
+        updates.put(scheduleId1, hour0);
+        updates.put(scheduleId2, hour0);
 
         MetricsDAO dao = new MetricsDAO(dataSource);
         dao.updateMetricsIndex(ONE_HOUR_METRICS_TABLE, updates);
         List<MetricsIndexEntry> actual = dao.findMetricsIndexEntries(ONE_HOUR_METRICS_TABLE);
 
-        List<MetricsIndexEntry> expected = asList(new MetricsIndexEntry(ONE_HOUR_METRICS_TABLE, hour0, 100),
-            new MetricsIndexEntry(ONE_HOUR_METRICS_TABLE, hour0, 101));
+        List<MetricsIndexEntry> expected = asList(new MetricsIndexEntry(ONE_HOUR_METRICS_TABLE, hour0, scheduleId1),
+            new MetricsIndexEntry(ONE_HOUR_METRICS_TABLE, hour0, scheduleId2));
         assertCollectionMatchesNoOrder(expected, actual, "Failed to update or retrieve metrics index entries");
     }
 
     @Test
     public void purge1HourMetricsIndex() {
+        int scheduleId1 = scheduleIdGenerator.next();
+        int scheduleId2 = scheduleIdGenerator.next();
         Map<Integer, DateTime> updates = new HashMap<Integer, DateTime>();
-        updates.put(100, hour0());
-        updates.put(101, hour0());
-        updates.put(100, hour0().plusHours(1));
-        updates.put(101, hour0().plusHours(1));
+        updates.put(scheduleId1, hour0());
+        updates.put(scheduleId2, hour0());
+        updates.put(scheduleId1, hour0().plusHours(1));
+        updates.put(scheduleId2, hour0().plusHours(1));
 
         MetricsDAO dao = new MetricsDAO(dataSource);
         dao.updateMetricsIndex(ONE_HOUR_METRICS_TABLE, updates);
@@ -199,6 +206,15 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         List<MetricsIndexEntry> index = dao.findMetricsIndexEntries(ONE_HOUR_METRICS_TABLE);
         assertEquals(index.size(), 0, "Expected index for " + ONE_HOUR_METRICS_TABLE + " to be empty but found " +
             index);
+    }
+
+    private void assertTTLEquals(List<RawNumericMetric> metrics, int ttl) {
+        for (RawNumericMetric metric : metrics) {
+            assertNotNull(metric.getColumnMetadata(), metric + " does not contain column meta data. The meta data " +
+                " must be loaded in order to verify that the TTL is set correctly.");
+            assertEquals(metric.getColumnMetadata().getTtl(), (Integer) ttl, "The TTL for " + metric +
+                " does not match the expected value");
+        }
     }
 
 }

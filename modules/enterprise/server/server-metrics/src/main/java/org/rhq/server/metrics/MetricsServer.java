@@ -277,8 +277,7 @@ public class MetricsServer {
 
     public void addNumericData(Set<MeasurementDataNumeric> dataSet) {
         MetricsDAO dao = new MetricsDAO(cassandraDS);
-        long timestamp = System.currentTimeMillis();
-        Set<MeasurementDataNumeric> updates = dao.insertRawMetrics(dataSet, RAW_TTL, timestamp);
+        Set<MeasurementDataNumeric> updates = dao.insertRawMetrics(dataSet, RAW_TTL);
         updateMetricsIndex(updates);
     }
 

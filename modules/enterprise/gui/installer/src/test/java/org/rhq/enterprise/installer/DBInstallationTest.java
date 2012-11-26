@@ -115,7 +115,7 @@ public class DBInstallationTest {
         installSchemaAndData("rhq-4.3.0");
         ServerInstallUtil.upgradeExistingDatabaseSchema(getInstallProperties(), serverDetails, PASSWORD, logDir);
     }
-    
+
     @Test
     public void upgradeRHQ440Schema() throws Exception {
         installSchemaAndData("rhq-4.4.0");
@@ -133,6 +133,15 @@ public class DBInstallationTest {
 
     private void recreateTestDatabase() throws Exception {
         DBReset dbReset = new DBReset();
+
+        System.out.println("DBInstallationTest.recreateTestDatabase asking for DBReset for [" //
+            + DB_TYPE_MAPPING + "," //
+            + DB_URL + "," //
+            + DB_NAME + "," //
+            + USERNAME + "," //
+            + ADMIN_USERNAME + "," //
+            + ADMIN_PASSWORD + "]");
+
         dbReset.performDBReset(DB_TYPE_MAPPING, DB_URL, DB_NAME, USERNAME, ADMIN_USERNAME, ADMIN_PASSWORD);
     }
 
@@ -178,7 +187,7 @@ public class DBInstallationTest {
         dbProperties.put(ServerProperties.PROP_EMAIL_FROM_ADDRESS, "rhqadmin@localhost.com");
         return dbProperties;
     }
-    
+
     private static File filterXmlFile(File xmlFile, HashMap<String, String> props) throws IOException {
         // first slurp the file contents in memory
         InputStream fileInStream = new FileInputStream(xmlFile);

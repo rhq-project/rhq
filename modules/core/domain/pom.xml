@@ -272,8 +272,9 @@
                 <!-- FOR RHQ TESTING -->
                 <security-domain name="RHQDSSecurityDomain" cache-type="default">
                     <authentication>
-                        <login-module code="Identity" flag="required">
-                            <module-option name="username" value="${rhq.test.ds.user-name}"/>
+                        <login-module code="ConfiguredIdentity" flag="required">
+                            <module-option name="userName" value="${rhq.test.ds.user-name}"/>
+                            <module-option name="principal" value="${rhq.test.ds.user-name}"/>
                             <module-option name="password" value="${rhq.test.ds.password}"/>
                         </login-module>
                     </authentication>

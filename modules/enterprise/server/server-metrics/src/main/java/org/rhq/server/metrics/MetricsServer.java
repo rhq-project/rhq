@@ -317,15 +317,15 @@ public class MetricsServer {
             updateMetricsIndex(SIX_HOUR_METRICS_TABLE, updatedSchedules, Minutes.minutes(60 * 6));
         }
 
-        updatedSchedules = calculateAggregates(ONE_HOUR_METRICS_TABLE, SIX_HOUR_METRICS_TABLE, Minutes.minutes(60),
-            Minutes.minutes(60 * 6), DateTimeService.ONE_MONTH);
+        updatedSchedules = calculateAggregates(ONE_HOUR_METRICS_TABLE, SIX_HOUR_METRICS_TABLE, Minutes.minutes(60 * 6),
+            DateTimeService.ONE_MONTH);
         if (!updatedSchedules.isEmpty()) {
             dao.deleteMetricsIndexEntries(SIX_HOUR_METRICS_TABLE);
             updateMetricsIndex(TWENTY_FOUR_HOUR_METRICS_TABLE, updatedSchedules, Hours.hours(24).toStandardMinutes());
         }
 
         updatedSchedules = calculateAggregates(SIX_HOUR_METRICS_TABLE, TWENTY_FOUR_HOUR_METRICS_TABLE,
-            Hours.hours(24).toStandardMinutes(), Hours.hours(24).toStandardMinutes(), DateTimeService.ONE_YEAR);
+            Hours.hours(24).toStandardMinutes(), DateTimeService.ONE_YEAR);
         if (!updatedSchedules.isEmpty()) {
             dao.deleteMetricsIndexEntries(TWENTY_FOUR_HOUR_METRICS_TABLE);
         }
@@ -383,7 +383,7 @@ public class MetricsServer {
     }
 
     private List<AggregatedNumericMetric> calculateAggregates(String fromColumnFamily, String toColumnFamily,
-        Minutes interval, Minutes nextInterval, int ttl) {
+        Minutes nextInterval, int ttl) {
 
         MetricsDAO dao = new MetricsDAO(cassandraDS);
         List<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(toColumnFamily);

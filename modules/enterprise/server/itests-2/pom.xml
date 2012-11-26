@@ -651,6 +651,15 @@
             <clean.db>${clean.db}</clean.db>
             <log4j.configDebug>false</log4j.configDebug>
             <project.version>${project.version}</project.version>
+
+            <rhq.test.ds.type-mapping>${rhq.test.ds.type-mapping}</rhq.test.ds.type-mapping>
+            <rhq.test.ds.server-name>${rhq.test.ds.server-name}</rhq.test.ds.server-name>
+            <rhq.test.ds.db-name>${rhq.test.ds.db-name}</rhq.test.ds.db-name>
+            <rhq.test.ds.connection-url>${rhq.test.ds.connection-url}</rhq.test.ds.connection-url>
+            <rhq.db.admin.username>${rhq.db.admin.username}</rhq.db.admin.username>
+            <rhq.db.admin.password>${rhq.db.admin.password}</rhq.db.admin.password>
+            <rhq.test.ds.user-name>${rhq.test.ds.user-name}</rhq.test.ds.user-name>
+            <rhq.test.ds.password>${rhq.test.ds.password}</rhq.test.ds.password>
           </systemPropertyVariables>
           <additionalClasspathElements>
             <!-- The below is required for tests to run against Oracle. -->

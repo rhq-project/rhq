@@ -67,6 +67,7 @@ public class ProcessComponent implements ResourceComponent, MeasurementFacet {
     private String piql;
     private boolean fullProcessTree;
 
+    @Override
     public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = resourceContext;
 
@@ -89,9 +90,11 @@ public class ProcessComponent implements ResourceComponent, MeasurementFacet {
         }
     }
 
+    @Override
     public void stop() {
     }
 
+    @Override
     public AvailabilityType getAvailability() {
         try {
             return getProcess().isRunning() ? AvailabilityType.UP : AvailabilityType.DOWN;
@@ -106,6 +109,10 @@ public class ProcessComponent implements ResourceComponent, MeasurementFacet {
     private ProcessInfo getProcess() throws Exception {
         if (this.process == null || !this.process.isRunning()) {
             this.process = getProcessForConfiguration();
+        } else {
+            // Refresh previously existing ProcessInfo as it may hold stale data.
+            // SIGAR objects do not get updated when, for example, a process goes down.
+            process.refresh();
         }
         return this.process;
     }
@@ -168,6 +175,7 @@ public class ProcessComponent implements ResourceComponent, MeasurementFacet {
         return processInfo;
     }
 
+    @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) {
         if (this.process != null) {
             this.process.refresh();

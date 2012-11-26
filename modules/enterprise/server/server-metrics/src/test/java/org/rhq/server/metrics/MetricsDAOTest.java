@@ -57,19 +57,8 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
     private final long MINUTE = 60 * SECOND;
 
-    /**
-     * Tables were previously purged using a TRUNCATE statement, but with the upgrade to
-     * Cassandra 1.2.0 beta 2, the TRUNCATE command takes a really long time to complete.
-     * It was taking so long that it start causing tests to fail. At least for now,
-     * IdGenerator is used to pre-allocate ids for use so that we know which schedule ids
-     * need to be purged.
-     */
-    private IdGenerator scheduleIdGenerator;
-
     @BeforeMethod
     public void resetDB() throws Exception {
-        scheduleIdGenerator = new IdGenerator(3);
-
         Statement statement = connection.createStatement();
                 statement.executeUpdate("TRUNCATE " + RAW_METRICS_TABLE);
         statement.executeUpdate("TRUNCATE " + ONE_HOUR_METRICS_TABLE);
@@ -80,14 +69,14 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
     @Test
     public void insertAndFindRawMetrics() {
-        int scheduleId = scheduleIdGenerator.next();
-
         DateTime hour0 = hour0();
         DateTime currentTime = hour0.plusHours(4).plusMinutes(44);
         DateTime currentHour = currentTime.hourOfDay().roundFloorCopy();
         DateTime threeMinutesAgo = currentTime.minusMinutes(3);
         DateTime twoMinutesAgo = currentTime.minusMinutes(2);
         DateTime oneMinuteAgo = currentTime.minusMinutes(1);
+
+        int scheduleId = 1;
 
         Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>();
         data.add(new MeasurementDataNumeric(threeMinutesAgo.getMillis(), scheduleId, 3.2));
@@ -119,7 +108,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
     @Test
     public void insertAndFindAllOneHourMetrics() {
-        int scheduleId = scheduleIdGenerator.next();
+        int scheduleId = 1;
         DateTime hour0 = hour0();
 
         MetricsDAO dao = new MetricsDAO(dataSource);
@@ -144,8 +133,8 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
     @Test
     public void findRangeOfOneHourMetrics() {
-        int scheduledId = scheduleIdGenerator.next();
-        int nextScheduleId = scheduleIdGenerator.next();
+        int scheduledId = 1;
+        int nextScheduleId = 2;
         DateTime hour0 = hour0();
 
         MetricsDAO dao = new MetricsDAO(dataSource);
@@ -173,8 +162,8 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
     @Test
     public void updateAndFindOneHourIndexEntries() {
         DateTime hour0 = hour0();
-        int scheduleId1 = scheduleIdGenerator.next();
-        int scheduleId2 = scheduleIdGenerator.next();
+        int scheduleId1 = 1;
+        int scheduleId2 = 2;
 
         Map<Integer, DateTime> updates = new HashMap<Integer, DateTime>();
         updates.put(scheduleId1, hour0);
@@ -191,8 +180,8 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
     @Test
     public void purge1HourMetricsIndex() {
-        int scheduleId1 = scheduleIdGenerator.next();
-        int scheduleId2 = scheduleIdGenerator.next();
+        int scheduleId1 = 1;
+        int scheduleId2 = 2;
         Map<Integer, DateTime> updates = new HashMap<Integer, DateTime>();
         updates.put(scheduleId1, hour0());
         updates.put(scheduleId2, hour0());

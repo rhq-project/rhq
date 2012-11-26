@@ -362,34 +362,28 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         assert24HourMetricsIndexEmpty(scheduleId);
     }
 
-    @Test(enabled = ENABLED)
+    @Test//(enabled = ENABLED)
     public void findRawDataComposites() {
         DateTime beginTime = now().minusHours(4);
         DateTime endTime = now();
-
         Buckets buckets = new Buckets(beginTime, endTime);
-
-        String scheduleName = getClass().getName() + "_SCHEDULE";
-        MeasurementSchedule schedule = new MeasurementSchedule();
-        schedule.setId(123);
-        long interval = MINUTE * 10;
-        boolean enabled = true;
-        DataType dataType = DataType.MEASUREMENT;
-        MeasurementScheduleRequest request = new MeasurementScheduleRequest(schedule.getId(), scheduleName, interval,
-            enabled, dataType);
+        int scheduleId = 123;
 
         Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>();
-        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() + 10, request, 1.1));
-        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() + 20, request, 2.2));
-        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() + 30, request, 3.3));
-        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + 10, request, 4.4));
-        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + 20, request, 5.5));
-        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + 30, request, 6.6));
+        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() + 10, scheduleId, 1.1));
+        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() + 20, scheduleId, 2.2));
+        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() + 30, scheduleId, 3.3));
+        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + 10, scheduleId, 4.4));
+        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + 20, scheduleId, 5.5));
+        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + 30, scheduleId, 6.6));
 
         // add some data outside the range
-        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() - 100, request, 1.23));
-        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + buckets.getInterval() + 50, request,
+        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() - 100, scheduleId, 1.23));
+        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + buckets.getInterval() + 50, scheduleId,
             4.56));
+
+        MeasurementSchedule schedule = new MeasurementSchedule();
+        schedule.setId(scheduleId);
 
         metricsServer.addNumericData(data);
         List<MeasurementDataNumericHighLowComposite> actualData = metricsServer.findDataForContext(null, null,
@@ -398,9 +392,9 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         assertEquals(actualData.size(), buckets.getNumDataPoints(), "Expected to get back 60 data points.");
 
         MeasurementDataNumericHighLowComposite expectedBucket0Data = new MeasurementDataNumericHighLowComposite(
-            buckets.get(0).getStartTime(), (1.1 + 2.2 + 3.3) / 3, 3.3, 1.1);
+            buckets.get(0).getStartTime(), divide(1.1 + 2.2 + 3.3, 3), 3.3, 1.1);
         MeasurementDataNumericHighLowComposite expectedBucket59Data = new MeasurementDataNumericHighLowComposite(
-            buckets.get(59).getStartTime(), (4.4 + 5.5 + 6.6) / 3, 6.6, 4.4);
+            buckets.get(59).getStartTime(), divide(4.4 + 5.5 + 6.6, 3), 6.6, 4.4);
         MeasurementDataNumericHighLowComposite expectedBucket29Data = new MeasurementDataNumericHighLowComposite(
             buckets.get(29).getStartTime(), Double.NaN, Double.NaN, Double.NaN);
 

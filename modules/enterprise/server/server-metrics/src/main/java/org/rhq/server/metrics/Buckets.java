@@ -74,7 +74,7 @@ public class Buckets {
             if (count == 0) {
                 return Double.NaN;
             }
-            return sum / count;
+            return MetricsServer.divide(sum, count);
         }
 
         public double getMax() {

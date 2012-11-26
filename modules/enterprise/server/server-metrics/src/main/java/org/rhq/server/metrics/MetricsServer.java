@@ -33,9 +33,6 @@ import static org.rhq.server.metrics.MetricsDAO.TWENTY_FOUR_HOUR_METRICS_TABLE;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +66,6 @@ import me.prettyprint.hector.api.beans.Composite;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.ddl.ComparatorType;
 import me.prettyprint.hector.api.factory.HFactory;
-import me.prettyprint.hector.api.mutation.MutationResult;
 import me.prettyprint.hector.api.query.SliceQuery;
 
 /**
@@ -215,20 +211,13 @@ public class MetricsServer {
 
     private List<MeasurementDataNumericHighLowComposite> findRawDataForContext(MeasurementSchedule schedule,
         long beginTime, long endTime) {
-        SliceQuery<Integer, Long, Double> rawDataQuery = HFactory.createSliceQuery(keyspace, IntegerSerializer.get(),
-            LongSerializer.get(), DoubleSerializer.get());
-        rawDataQuery.setColumnFamily(rawMetricsDataCF);
-        rawDataQuery.setKey(schedule.getId());
-        rawDataQuery.setRange(beginTime, endTime, false, DEFAULT_PAGE_SIZE);
-
-        ColumnSliceIterator<Integer, Long, Double> rawDataIterator = new ColumnSliceIterator<Integer, Long, Double>(
-            rawDataQuery, beginTime, endTime, false);
+        MetricsDAO dao = new MetricsDAO(cassandraDS);
         Buckets buckets = new Buckets(beginTime, endTime);
-        HColumn<Long, Double> rawColumn = null;
 
-        while (rawDataIterator.hasNext()) {
-            rawColumn = rawDataIterator.next();
-            buckets.insert(rawColumn.getName(), rawColumn.getValue());
+        List<RawNumericMetric> rawMetrics = dao.findRawMetrics(schedule.getId(), new DateTime(beginTime),
+            new DateTime(endTime));
+        for (RawNumericMetric rawMetric : rawMetrics) {
+            buckets.insert(rawMetric.getTimestamp(), rawMetric.getValue());
         }
 
         List<MeasurementDataNumericHighLowComposite> data = new ArrayList<MeasurementDataNumericHighLowComposite>();
@@ -457,54 +446,6 @@ public class MetricsServer {
 
 //    public void addCallTimeData(Set<CallTimeData> callTimeDatas) {
 //    }
-
-    private MutationResult updateMetricsQueue(String columnFamily, Map<Integer, DateTime> updates) {
-//        Mutator<String> mutator = HFactory.createMutator(keyspace, StringSerializer.get());
-//
-//        for (Integer scheduleId : updates.keySet()) {
-//            DateTime collectionTime = new DateTime(updates.get(scheduleId));
-//            Composite composite = new Composite();
-//            composite.addComponent(collectionTime.getMillis(), LongSerializer.get());
-//            composite.addComponent(scheduleId, IntegerSerializer.get());
-//            HColumn<Composite, Integer> column = HFactory.createColumn(composite, 0, CompositeSerializer.get(),
-//                IntegerSerializer.get());
-//            mutator.addInsertion(columnFamily, metricsQueueCF, column);
-//        }
-//
-//        return mutator.execute();
-        Connection connection = null;
-        String errorMsg = "Cannot update " + columnFamily + " index for schedule ids " + updates.keySet();
-        try {
-            connection = cassandraDS.getConnection();
-        } catch (SQLException e) {
-            log.error("Failed to obtain connection", e);
-            log.warn(errorMsg);
-            return null;
-        }
-        String sql = "INSERT INTO " + metricsIndex + " (bucket, time, schedule_id, null_col) VALUES (?, ?, ?, ?)";
-        PreparedStatement statement = null;
-        try {
-            statement = connection.prepareStatement(sql);
-        } catch (SQLException e) {
-            log.error("Failed to create prepared statement [" + sql + "]", e);
-            log.warn(errorMsg);
-            return null;
-        }
-        for (Integer scheduleId : updates.keySet()) {
-            try {
-                statement.setString(1, columnFamily);
-                statement.setDate(2, new java.sql.Date(updates.get(scheduleId).getMillis()));
-                statement.setInt(3, scheduleId);
-                statement.setBoolean(4, false);
-
-                statement.executeUpdate();
-            } catch (SQLException e) {
-                log.warn("Failed to update " + columnFamily + " index for " + scheduleId + " at time slice " +
-                    updates.get(scheduleId));
-            }
-        }
-        return null;
-    }
 
     static double divide(double dividend, int divisor) {
         return new BigDecimal(Double.toString(dividend)).divide(new BigDecimal(Integer.toString(divisor)),

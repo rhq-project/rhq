@@ -215,7 +215,8 @@ public class UsersDataSource extends RPCDataSource<Subject, SubjectCriteria> {
                 String message = caught.getMessage();
                 if (message != null && message.contains("javax.persistence.EntityExistsException")) {
                     Map<String, String> errorMessages = new HashMap<String, String>();
-                    errorMessages.put(Field.NAME, "A user named [" + newSubject.getName() + "] already exists.");
+                    errorMessages.put(Field.NAME,
+                        MSG.view_adminUsers_failCreateUserWithExistingName(newSubject.getName()));
                     sendValidationErrorResponse(request, response, errorMessages);
                 } else {
                     throw new RuntimeException(caught);

@@ -24,13 +24,6 @@ import java.util.List;
 
 import javax.faces.application.FacesMessage;
 
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.Create;
-import org.jboss.seam.annotations.In;
-import org.jboss.seam.annotations.Name;
-import org.jboss.seam.annotations.Scope;
-import org.jboss.seam.annotations.web.RequestParameter;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
@@ -45,17 +38,17 @@ import org.rhq.enterprise.server.plugin.pc.ControlResults;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.ControlDefinition;
 
-@Scope(ScopeType.CONVERSATION)
-@Name("ServerPluginControlUIBean")
+//@Scope(ScopeType.CONVERSATION)
+//@Name("ServerPluginControlUIBean")
 public class ServerPluginControlUIBean implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final ServerPluginsLocal serverPluginsBean = LookupUtil.getServerPlugins();
 
-    @In("plugin")
+    //@In("plugin")
     private AbstractPlugin abstractPlugin;
 
-    @RequestParameter
+    //@RequestParameter
     private String control;
 
     private ServerPlugin serverPlugin;
@@ -67,7 +60,7 @@ public class ServerPluginControlUIBean implements Serializable {
     private Configuration params;
     private ControlResults results;
 
-    @Create
+    //@Create
     public void init() throws Exception {
         this.serverPlugin = (ServerPlugin) this.abstractPlugin;
 

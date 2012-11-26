@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<differences>
+  <difference>
+      <className>org/rhq/core/domain/configuration/ObfuscatedPropertySimple</className>
+      <differenceType>7004</differenceType><!-- number of args changed -->
+      <method>void *obfuscate()</method>
+      <justification>Protected methods used only by JPA and other internal logic. It is not visible or supposed to be used outside of this class.</justification>
+  </difference>
+  <difference>
+      <className>org/rhq/core/domain/configuration/ObfuscatedPropertySimple</className>
+      <differenceType>7006</differenceType><!-- return type changed -->
+      <method>void *obfuscate()</method>
+      <to>java.lang.String</to>
+      <justification>Protected methods used only by JPA and other internal logic. It is not visible or supposed to be used outside of this class.</justification>
+  </difference>
+  <difference>
+      <className>**/*</className>
+      <differenceType>6003</differenceType><!-- value of compile-time constant changed -->
+      <field>*</field>
+      <justification>The constants we declare on the domain objects are not supposed for public consumption.</justification>
+  </difference>
+</differences>

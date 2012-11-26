@@ -4007,9 +4007,82 @@
               <schema-javaTask className="ContentSourceConfigurationObfuscationUpgradeTask" />
             </schemaSpec>
 
-             <schemaSpec version="2.122">
+<!-- RHQ 4.4, JON 3.1.0 RELEASE uses DB Schema 2.121 -->
+            
+            <schemaSpec version="2.122">
+                <schema-directSQL>                
+                   <statement desc="Updating DOWN Alert Conditions to new format">
+                      UPDATE RHQ_ALERT_CONDITION
+                         SET NAME = 'AVAIL_GOES_DOWN', OPTION_STATUS = NULL
+                       WHERE TYPE = 'AVAILABILITY' 
+                         AND NAME IS NULL
+                         AND OPTION_STATUS = 'DOWN'
+                   </statement>
+                   <statement desc="Updating UP Alert Conditions to new format">
+                      UPDATE RHQ_ALERT_CONDITION
+                         SET NAME = 'AVAIL_GOES_UP', OPTION_STATUS = NULL 
+                       WHERE TYPE = 'AVAILABILITY'
+                         AND NAME IS NULL
+                         AND OPTION_STATUS = 'UP'
+                   </statement>      
+                </schema-directSQL>                    
+            </schemaSpec>
+            
+<!-- JON 3.1.1 RELEASE uses DB Schema 2.122 -->            
+
+            <schemaSpec version="2.123">
+
                <schema-addColumn   table="RHQ_CONFIG_PROP_DEF" column="MIN_ENTRIES" columnType="INTEGER"/>
                <schema-addColumn   table="RHQ_CONFIG_PROP_DEF" column="MAX_ENTRIES" columnType="INTEGER"/>
+
+            </schemaSpec>
+
+<!-- RHQ 4.5.0 uses DB Schema 2.123 -->
+
+            <schemaSpec version="2.124">
+
+                <schema-directSQL>
+                    <statement desc="Update the NULL to 0 for MIN_ENTRIES">
+                        UPDATE RHQ_CONFIG_PROP_DEF
+                        SET MIN_ENTRIES = 0
+                        WHERE MIN_ENTRIES IS NULL
+                          AND DTYPE = 'list'
+                    </statement>
+                    <statement desc="Update the NULL to 32767 for MAX_ENTRIES">
+                        UPDATE RHQ_CONFIG_PROP_DEF
+                        SET MAX_ENTRIES = 32767
+                        WHERE MAX_ENTRIES IS NULL
+                          AND DTYPE = 'list'
+                    </statement>
+                </schema-directSQL>
+
+            </schemaSpec>
+
+            <schemaSpec version="2.125">
+                <!-- We were using a buggy version of password obfuscation from JBoss AS. This task sets the affected
+                     passwords to NULL. Fortunately, this currently affects only CSP content sources, so the damage
+                     is not huge from the user perspective. -->
+                <schema-javaTask className="org.rhq.core.db.upgrade.ConfigurationObfuscationCorrectionUpgradeTask" />
+            </schemaSpec>
+
+            <!-- BZ 865167 -->
+            <schemaSpec version="2.126">
+                <schema-directSQL>
+                    <statement targetDBVendor="postgresql">
+                        INSERT INTO RHQ_RESOURCE_AVAIL ( ID, RESOURCE_ID, AVAILABILITY_TYPE )
+                            SELECT nextval('RHQ_RESOURCE_AVAIL_ID_SEQ'::text), res.ID, 2
+                              FROM RHQ_RESOURCE res
+                                   LEFT JOIN RHQ_RESOURCE_AVAIL avail ON res.ID = avail.RESOURCE_ID
+                             WHERE avail.ID IS NULL
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        INSERT INTO RHQ_RESOURCE_AVAIL ( ID, RESOURCE_ID, AVAILABILITY_TYPE )
+                            SELECT RHQ_RESOURCE_AVAIL_ID_SEQ.nextval, res.ID, 2
+                              FROM RHQ_RESOURCE res
+                                   LEFT JOIN RHQ_RESOURCE_AVAIL avail ON res.ID = avail.RESOURCE_ID
+                             WHERE avail.ID IS NULL
+                    </statement>
+                </schema-directSQL>
             </schemaSpec>
 
         </dbupgrade>

@@ -68,6 +68,16 @@ public interface SystemGWTService extends RemoteService {
     HashMap<String, String> getCliAlertScriptDownloads() throws RuntimeException;
 
     /**
+     * Returns the name and download URL (key and value respectively) of all script modules
+     * that are available on the server for download. These are provided by RHQ for other
+     * scripts to peruse using the module-loading mechanism of particular language.
+     * 
+     * @return info about the available script modules
+     * @throws RuntimeException
+     */
+    HashMap<String, String> getScriptModulesDownloads() throws RuntimeException;
+    
+    /**
      * @return metadata properties about the CLI download available on the server.
      */
     HashMap<String, String> getClientVersionProperties() throws RuntimeException;

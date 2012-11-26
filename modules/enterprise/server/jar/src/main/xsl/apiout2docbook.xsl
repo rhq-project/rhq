@@ -50,9 +50,12 @@
           </xsl:element>
         </xsl:for-each>
       </toc>
-      <xsl:apply-templates>
+      <xsl:apply-templates select="class">
         <xsl:sort select="@basePath"/>
         <xsl:sort select="@path"/>
+      </xsl:apply-templates>
+      <xsl:apply-templates select="data">
+        <xsl:sort select="@name"/>
       </xsl:apply-templates>
     </xsl:element>
   </xsl:template>
@@ -228,5 +231,42 @@
 
   </xsl:template>
 
+  <xsl:template match="data">
+    <xsl:element name="section">
+      <title>Data-Class: <xsl:value-of select="@name"/></title>
+      <xsl:if test="@abstract">
+        <subtitle><xsl:value-of select="@abstract"/></subtitle>
+      </xsl:if>
+      <xsl:if test="@description">
+        <simpara>
+          Description: <xsl:value-of select="@description"/>
+        </simpara>
+      </xsl:if>
+
+          <table>
+            <title>Properties</title>
+            <tr>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Description</th>
+            </tr>
+            <xsl:apply-templates/>
+          </table>
+    </xsl:element>
+  </xsl:template>
+
+  <xsl:template match="property">
+    <tr>
+      <td>
+        <xsl:value-of select="@name"/>
+      </td>
+      <td>
+        <xsl:value-of select="@type"/>
+      </td>
+      <td>
+        <xsl:value-of select="@description"/>
+      </td>
+    </tr>
+  </xsl:template>
 
 </xsl:stylesheet>

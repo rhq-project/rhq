@@ -34,7 +34,9 @@ import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 @Local
 public interface MeasurementChartsManagerLocal {
 
-    @Deprecated
+    /**
+     * @deprecated portal-war
+     */
     // TODO: jmarques - this will go away once ListChildrenAction is moved to JSF
     List<MetricDisplaySummary> getMetricDisplaySummariesForMetrics(Subject subject, int resourceId, DataType dataType,
         long begin, long end, boolean narrowed, boolean enabledOnly) throws MeasurementException;
@@ -52,10 +54,15 @@ public interface MeasurementChartsManagerLocal {
      * @return
      *
      * @throws MeasurementException
+     * 
+     * @deprecated portal-war
      */
     List<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(Subject subject, int groupId,
         int[] measurementDefinitionIds, long begin, long end, boolean enabledOnly) throws MeasurementException;
 
+    /**
+     * @deprecated portal-war
+     */
     List<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(Subject subject, int groupId, String viewName);
 
     /**
@@ -72,17 +79,28 @@ public interface MeasurementChartsManagerLocal {
      * @return
      *
      * @throws MeasurementException
+     * 
+     * @deprecated portal-war
      */
     List<MetricDisplaySummary> getMetricDisplaySummariesForAutoGroup(Subject subject, int autoGroupParentResourceId,
         int autoGroupChildResourceTypeId, int[] measurementDefinitionIds, long begin, long end, boolean enabledOnly)
         throws MeasurementException;
 
+    /**
+     * @deprecated portal-war
+     */
     List<MetricDisplaySummary> getMetricDisplaySummariesForAutoGroup(Subject subject, int parent, int type,
         String viewName);
 
+    /**
+     * @deprecated portal-war
+     */
     List<MetricDisplaySummary> getMetricDisplaySummariesForResource(Subject subject, int resourceId,
         int[] measurementScheduleIds, long begin, long end) throws MeasurementException;
 
+    /**
+     * @deprecated portal-war
+     */
     List<MetricDisplaySummary> getMetricDisplaySummariesForResource(Subject subject, int resourceId, String viewName)
         throws MeasurementException;
 
@@ -99,6 +117,8 @@ public interface MeasurementChartsManagerLocal {
      *         resources values in a List for the value.
      *
      * @throws MeasurementException throws Measurement exception
+     * 
+     * @deprecated portal-war
      */
     Map<MeasurementDefinition, List<MetricDisplaySummary>> getMetricDisplaySummariesForMetricsCompare(Subject subject,
         int[] resourceIds, int[] measurementDefinitionIds, long begin, long end) throws MeasurementException;

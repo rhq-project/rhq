@@ -23,6 +23,7 @@
 package org.rhq.plugins.jbossas5.helper;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
@@ -43,11 +44,11 @@ public class JBossInstallationInfo {
     private static final String EPP_IMPL_VERSION_PREFIX = "JBoss-EPP";
     private static final ComparableVersion VERSION_4_2 = new ComparableVersion("4.2");
 
-    private final JBossProductType productType;
-    private final String version;
-    private final String defaultBindAddress;
-    private final boolean isEap;
-    private final String majorVersion;
+    private JBossProductType productType;
+    private String version;
+    private String defaultBindAddress;
+    private boolean isEap;
+    private String majorVersion;
 
     public JBossInstallationInfo(File installationDir) throws IOException {
         File binDir = new File(installationDir, "bin");
@@ -63,9 +64,45 @@ public class JBossInstallationInfo {
         if (-1 == majorVersionIndex) {
             throw new RuntimeException("Unexpected run.jar implementation version, can't parse: " + this.version);
         }
+        
+        fixProductTypeAndVersion(jarManifestAttributes, installationDir);
+        
         this.defaultBindAddress = getDefaultServerName(this.version);
         this.isEap = determineEap(jarManifestAttributes);
         this.majorVersion = version.substring(0, version.indexOf('.'));
+    }
+
+    /**
+     * Tries to make sense of the mess of JBoss product versioning.
+     * 
+     * @param jarManifestAttributes
+     * @param installationDir
+     */
+    private void fixProductTypeAndVersion(Attributes jarManifestAttributes, File installationDir) {
+        //the main mess is with BRMS < 5.3.0 being advertised as EWP
+        if (productType == JBossProductType.EWP && version.startsWith("5.1")) {
+            //this still can be a BRMS server... We can check that by looking for drools jars
+            //in the client. Brittle you say? Yes, of course ;)
+            File client = new File(installationDir, "client");
+            if (client.exists() && client.isDirectory()) {
+                boolean containsBrmsJars = false;
+                
+                for(String file : client.list()) {
+                    if (file.endsWith("BRMS.jar")) {
+                        containsBrmsJars = true;
+                        break;
+                    }
+                }
+                
+                if (containsBrmsJars) {
+                    productType = JBossProductType.BRMS;
+                    if ("5.1.1".equals(version)) {
+                        //BRMS 5.2.0 is based on EWP 5.1.1
+                        version = "5.2.0";
+                    }
+                }
+            }
+        }
     }
 
     public JBossProductType getProductType() {

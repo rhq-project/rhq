@@ -23,11 +23,13 @@
 package org.rhq.core.domain.configuration.definition;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import javax.persistence.CascadeType;
 import javax.persistence.DiscriminatorValue;
@@ -75,7 +77,7 @@ public class PropertyDefinitionMap extends PropertyDefinition {
     }
 
     /**
-     * @return The <name,propDef> Mapping. This guarantees no ordering.
+     * @return The <name,propDef> Map. This guarantees no ordering.
      */
     @NotNull
     public Map<String, PropertyDefinition> getMap() {
@@ -91,45 +93,78 @@ public class PropertyDefinitionMap extends PropertyDefinition {
     }
 
     /**
-     * Convenience routine to get the ordered properties from the Map. 
-     * 
-     * @return Not Null. The map's property definitions sorted by PropertyDefinition.order, ascending. Min(order) is 0.
+     * For public API compatibility.
+     * @deprecated use {@link #setMap(Map)}
      */
-    public List<PropertyDefinition> getPropertyDefinitions() {
-        final List<PropertyDefinition> propDefs = new ArrayList<PropertyDefinition>(getMap().values());
-
-        Collections.sort(propDefs, new Comparator<PropertyDefinition>() {
-            public int compare(PropertyDefinition o1, PropertyDefinition o2) {
-                return Integer.valueOf(o1.getOrder()).compareTo(o2.getOrder());
-            }
-        });
-
-        return propDefs;
+    public void setPropertyDefinitions(@NotNull Map<String, PropertyDefinition> propertyDefinitions) {
+        setMap(propertyDefinitions);
     }
 
     /**
-     * Helper to get only the summary properties for this map definition. If no properties were defined as summary
-     * properties in the plugin descriptor, the full list of properties will be returned.
+     * This returned {@link Map} is backed by a {@link SortedMap} sorted on PropertyDefinition.order. This means that
+     * result.keySet() and result.values() will be sorted by PropertyDefinition.order, ascending. Min(order) is 0.
+     * <p>
+     * For an unsorted Map use {@link #getMap()}.</p>
+     * 
+     * @return The map's property definitions sorted by PropertyDefinition.order, ascending. Min(order) is 0.
+     */
+    @NotNull
+    public Map<String, PropertyDefinition> getPropertyDefinitions() {
+        Map<String, PropertyDefinition> map = getMap();
+
+        // if there is nothing to sort just return it.
+        if (map.size() <= 1) {
+            return map;
+        }
+
+        // a funky comparator that compares index order given prop def names (i.e. keys) 
+        Comparator<String> orderComparator = new Comparator<String>() {
+            public int compare(String o1, String o2) {
+                return Integer.valueOf(get(o1).getOrder()).compareTo(get(o2).getOrder());
+            }
+        };
+
+        final Map<String, PropertyDefinition> result = new TreeMap<String, PropertyDefinition>(orderComparator);
+        for (String key : map.keySet()) {
+            result.put(key, map.get(key));
+        }
+
+        return result;
+    }
+
+    /**
+     * Convenience routine to get the ordered property definitions from the Map. 
+     * 
+     * @return The map's property definitions sorted by PropertyDefinition.order, ascending. Min(order) is 0.
+     */
+    @NotNull
+    public Collection<PropertyDefinition> getOrderedPropertyDefinitions() {
+        return getPropertyDefinitions().values();
+    }
+
+    /**
+     * Convenience routine to get only the summary property definitions.
      *
-     * @return the member properties that are marked as summary properties; the properties will be returned in the same
-     *         order they were defined in the plugin descriptor; if no properties were defined as summary properties in
-     *         the plugin descriptor, the full list of properties will be returned
+     * @return the summary property definitions. If no property definitions were defined
+     * as summary properties in the plugin descriptor, all property definitions will be returned.
+     * The property definitions will be sorted by PropertyDefinition.order, ascending. Min(order) is 0.
      */
     @NotNull
     public List<PropertyDefinition> getSummaryPropertyDefinitions() {
-        List<PropertyDefinition> summaryDefinitions = new ArrayList<PropertyDefinition>();
-        for (PropertyDefinition propertyDefinition : getMap().values()) {
-            if (propertyDefinition.isSummary()) {
-                summaryDefinitions.add(propertyDefinition);
+        List<PropertyDefinition> result = new ArrayList<PropertyDefinition>();
+        Collection<PropertyDefinition> propDefs = getOrderedPropertyDefinitions();
+
+        for (PropertyDefinition pd : propDefs) {
+            if (pd.isSummary()) {
+                result.add(pd);
             }
         }
 
-        if (summaryDefinitions.isEmpty()) {
-            // No properties were defined as summary properties - return the full list of properties.
-            summaryDefinitions.addAll(getMap().values());
+        if (result.isEmpty()) {
+            result.addAll(propDefs);
         }
 
-        return summaryDefinitions;
+        return result;
     }
 
     public PropertyDefinitionSimple getPropertyDefinitionSimple(String name) {
@@ -149,13 +184,36 @@ public class PropertyDefinitionMap extends PropertyDefinition {
     }
 
     /**
-     * If an order index is not set on the propertyDefinition it will be set to the current number
-     * of propDefs for the map. So, adding props to the map in the desired order will  
-     * the 
+     * If propertyDefinition.order is <= 0 or > Map.size() it will be set to the current number of propDefs for
+     * the map (placing it at the end).  Otherwise, it will be inserted, incrementing the order of existing
+     * Map entries.
+     *  
      * @param propertyDefinition
      */
     public void put(PropertyDefinition propertyDefinition) {
-        getMap().put(propertyDefinition.getName(), propertyDefinition);
+        Map<String, PropertyDefinition> map = getMap();
+
+        if (map.isEmpty()) {
+            propertyDefinition.setOrder(0);
+
+        } else {
+            int order = propertyDefinition.getOrder();
+            int size = map.size();
+
+            if ((order <= 0) || (order >= size)) {
+                propertyDefinition.setOrder(size);
+
+            } else {
+                // insert into existing ordering by bumping up existing entries
+                for (PropertyDefinition p : map.values()) {
+                    if (p.getOrder() >= order) {
+                        p.setOrder(p.getOrder() + 1);
+                    }
+                }
+            }
+        }
+
+        map.put(propertyDefinition.getName(), propertyDefinition);
         propertyDefinition.setParentPropertyMapDefinition(this);
     }
 }

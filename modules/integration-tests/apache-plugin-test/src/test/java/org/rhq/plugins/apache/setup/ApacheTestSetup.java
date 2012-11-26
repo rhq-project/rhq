@@ -35,7 +35,6 @@ import java.util.Set;
 
 import org.jmock.Expectations;
 import org.jmock.Mockery;
-import org.jmock.lib.action.ReturnValueAction;
 
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.AvailabilityReport;
@@ -45,22 +44,20 @@ import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.upgrade.FakeServerInventory;
 import org.rhq.core.system.SystemInfoFactory;
+import org.rhq.core.util.file.FileUtil;
+import org.rhq.plugins.apache.ApacheServerComponent;
 import org.rhq.plugins.apache.ApacheServerDiscoveryComponent;
 import org.rhq.plugins.apache.ApacheVirtualHostServiceComponent;
 import org.rhq.plugins.apache.ApacheVirtualHostServiceDiscoveryComponent;
-import org.rhq.plugins.apache.parser.ApacheConfigReader;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
-import org.rhq.plugins.apache.parser.ApacheParser;
-import org.rhq.plugins.apache.parser.ApacheParserImpl;
-import org.rhq.plugins.apache.upgrade.UpgradeTestBase;
 import org.rhq.plugins.apache.util.ApacheBinaryInfo;
 import org.rhq.plugins.apache.util.ApacheDeploymentUtil;
+import org.rhq.plugins.apache.util.ApacheDeploymentUtil.DeploymentConfig;
 import org.rhq.plugins.apache.util.ApacheExecutionUtil;
+import org.rhq.plugins.apache.util.ApacheExecutionUtil.ExpectedApacheState;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
 import org.rhq.plugins.apache.util.ResourceTypes;
 import org.rhq.plugins.apache.util.VHostSpec;
-import org.rhq.plugins.apache.util.ApacheDeploymentUtil.DeploymentConfig;
-import org.rhq.plugins.apache.util.ApacheExecutionUtil.ExpectedApacheState;
 import org.rhq.test.ObjectCollectionSerializer;
 import org.rhq.test.TokenReplacingReader;
 import org.rhq.test.pc.PluginContainerTest;
@@ -76,6 +73,7 @@ public class ApacheTestSetup {
     private Map<String, String> inventoryFileReplacements;
     private Mockery context;
     private ResourceTypes apacheResourceTypes;
+    private String testId;
     
     public class ApacheSetup {
         private String serverRoot;
@@ -120,6 +118,39 @@ public class ApacheTestSetup {
             return this;
         }
 
+        public void startApache() throws Exception {
+            //clear the error log
+            File errorLog = new File(new File(new File(serverRoot), "logs"), "error_log");
+            errorLog.delete();
+
+            getExecutionUtil().invokeOperation(ExpectedApacheState.RUNNING, "start");
+        }
+
+        public void stopApache() throws Exception {
+            getExecutionUtil().invokeOperation(ExpectedApacheState.STOPPED, "stop");
+
+            //save a copy of the error log
+            File errorLog = new File(new File(new File(serverRoot), "logs"), "error_log");
+
+            if (errorLog.exists() && errorLog.canRead()) {
+                String copyName = testId + ".httpd.error_log";
+
+                FileUtil.copyFile(errorLog, new File(new File("target"), copyName));
+            }
+        }
+
+        public void reloadApache() {
+
+        }
+
+        public ApacheServerComponent getServerComponent() {
+            return getExecutionUtil().getServerComponent();
+        }
+
+        public ApacheDirectiveTree getRuntimeConfiguration() {
+            return getExecutionUtil().getRuntimeConfiguration();
+        }
+
         public ApacheExecutionUtil getExecutionUtil() {
             return execution;
         }
@@ -130,11 +161,15 @@ public class ApacheTestSetup {
             assertTrue(serverRootDir.exists(), "The configured server root denotes a non-existant directory: '"
                 + serverRootDir + "'.");
 
+            File logsDir = new File(serverRootDir, "logs");
+            
+            assertTrue(logsDir.exists(), "The configured server root denotes a directory that doesn't have a 'logs' subdirectory. This is unexpected.");
+            
             File confDir = new File(serverRootDir, "conf");
 
             assertTrue(confDir.exists(),
                 "The configured server root denotes a directory that doesn't have a 'conf' subdirectory. This is unexpected.");
-
+            
             String confFilePath = confDir.getAbsolutePath() + File.separatorChar + "httpd.conf";
             
             String snmpHost = null;
@@ -171,7 +206,7 @@ public class ApacheTestSetup {
 
         private void doSetup() throws Exception {
             init();                
-            execution.invokeOperation(ExpectedApacheState.RUNNING, "start");
+            startApache();
         }
 
         public ApacheTestSetup setup() throws Exception {
@@ -179,7 +214,9 @@ public class ApacheTestSetup {
         }
     }
 
-    public ApacheTestSetup(String configurationName, Mockery context, ResourceTypes apacheResourceTypes) {
+    public ApacheTestSetup(String testId, String configurationName, Mockery context,
+        ResourceTypes apacheResourceTypes) {
+        this.testId = testId;
         this.configurationName = configurationName;
         this.context = context;
         this.apacheResourceTypes = apacheResourceTypes;
@@ -244,6 +281,12 @@ public class ApacheTestSetup {
         expectations.allowing(ss.getDiscoveryServerService()).clearResourceConfigError(
             expectations.with(Expectations.any(int.class)));
         
+        expectations.allowing(ss.getDiscoveryServerService()).setResourceEnablement(
+            expectations.with(Expectations.any(int.class)), expectations.with(Expectations.any(boolean.class)));
+
+        expectations.allowing(ss.getDiscoveryServerService()).updateResourceVersion(
+            expectations.with(Expectations.any(int.class)), expectations.with(Expectations.any(String.class)));
+
         expectations.allowing(ss.getDriftServerService()).getDriftDefinitions(expectations.with(Expectations.any(Set.class)));
         expectations.will(Expectations.returnValue(Collections.emptyMap()));
         
@@ -274,9 +317,9 @@ public class ApacheTestSetup {
         
         ApacheDeploymentUtil.addDefaultVariables(replacements, null);
 
-        HttpdAddressUtility addressUtility = apacheSetup.getExecutionUtil().getServerComponent()
+        HttpdAddressUtility addressUtility = apacheSetup.getServerComponent()
             .getAddressUtility();
-        ApacheDirectiveTree runtimeConfig = apacheSetup.getExecutionUtil().getRuntimeConfiguration();
+        ApacheDirectiveTree runtimeConfig = apacheSetup.getRuntimeConfiguration();
 
         replacements.put("snmp.identifier",
             addressUtility.getHttpdInternalMainServerAddressRepresentation(runtimeConfig).toString(false, false));

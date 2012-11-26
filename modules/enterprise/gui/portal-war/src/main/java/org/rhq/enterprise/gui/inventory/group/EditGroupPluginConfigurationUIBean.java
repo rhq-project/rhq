@@ -20,18 +20,7 @@ package org.rhq.enterprise.gui.inventory.group;
 
 import javax.faces.application.FacesMessage;
 
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.Begin;
-import org.jboss.seam.annotations.Create;
-import org.jboss.seam.annotations.End;
-import org.jboss.seam.annotations.In;
-import org.jboss.seam.annotations.Name;
-import org.jboss.seam.annotations.Scope;
-import org.jboss.seam.core.Conversation;
-import org.jboss.seam.faces.Redirect;
-
 import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.authz.PermissionException;
 
@@ -40,20 +29,20 @@ import org.rhq.enterprise.server.authz.PermissionException;
  *
  * @author Ian Springer
  */
-@Name("EditGroupPluginConfigurationUIBean")
-@Scope(ScopeType.CONVERSATION)
+//@Name("EditGroupPluginConfigurationUIBean")
+//@Scope(ScopeType.CONVERSATION)
 public class EditGroupPluginConfigurationUIBean extends AbstractGroupPluginConfigurationUIBean {
     public static final String VIEW_ID = "/rhq/group/inventory/edit-connection.xhtml";
 
-    @In(value = "org.jboss.seam.faces.redirect")
-    private Redirect redirect;
+    //    @In(value = "org.jboss.seam.faces.redirect")
+    //    private Redirect redirect;
 
-    @Create
-    @Begin
+    //    @Create
+    //    @Begin
     public void init() {
         loadConfigurations();
         // We can set this once here, since this.redirect is scoped to the same CONVERSATION as this managed bean instance.
-        this.redirect.setParameter(ParamConstants.GROUP_ID_PARAM, getGroup().getId());
+        //        this.redirect.setParameter(ParamConstants.GROUP_ID_PARAM, getGroup().getId());
         return;
     }
 
@@ -71,41 +60,41 @@ public class EditGroupPluginConfigurationUIBean extends AbstractGroupPluginConfi
         } catch (Exception e) {
             if (e instanceof PermissionException) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, e.getLocalizedMessage());
-                this.redirect.setViewId(ViewGroupPluginConfigurationUIBean.VIEW_ID);
+                // this.redirect.setViewId(ViewGroupPluginConfigurationUIBean.VIEW_ID);
             } else {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
                     "Failed to schedule group plugin Configuration update - cause: " + e);
-                this.redirect.setViewId(VIEW_ID);
+                // this.redirect.setViewId(VIEW_ID);
             }
-            this.redirect.execute();
+            // this.redirect.execute();
             return;
         }
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Group plugin Configuration update scheduled.");
-        Conversation.instance().endBeforeRedirect();
-        this.redirect.setViewId(ViewGroupConnectionPropertyHistoryUIBean.VIEW_ID);
-        this.redirect.execute();
+        //        Conversation.instance().endBeforeRedirect();
+        //        this.redirect.setViewId(ViewGroupConnectionPropertyHistoryUIBean.VIEW_ID);
+        //        this.redirect.execute();
         return;
     }
 
     /**
      * End the convo and redirect back to view-connection.xhtml. This gets called when user clicks the CANCEL button.
      */
-    @End
+    // @End
     public void cancel() {
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Edit canceled.");
-        this.redirect.setViewId(ViewGroupPluginConfigurationUIBean.VIEW_ID);
-        this.redirect.execute();
+        //        this.redirect.setViewId(ViewGroupPluginConfigurationUIBean.VIEW_ID);
+        //        this.redirect.execute();
         return;
     }
 
     /**
      * End the convo and reload the current page (edit-connection.xhtml). This gets called when user clicks the RESET button.
      */
-    @End
+    // @End
     public void reset() {
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "All properties reset to original values.");
-        this.redirect.setViewId(VIEW_ID);
-        this.redirect.execute();
+        //        this.redirect.setViewId(VIEW_ID);
+        //        this.redirect.execute();
         return;
     }
 }

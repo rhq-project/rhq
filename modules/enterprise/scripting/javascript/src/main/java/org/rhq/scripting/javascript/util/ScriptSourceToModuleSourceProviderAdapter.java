@@ -25,47 +25,55 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.mozilla.javascript.commonjs.module.provider.ModuleSource;
+import org.mozilla.javascript.commonjs.module.provider.ModuleSourceProvider;
 import org.mozilla.javascript.commonjs.module.provider.ModuleSourceProviderBase;
 
 import org.rhq.scripting.ScriptSourceProvider;
+import org.rhq.scripting.javascript.JsEngineProvider;
 
 /**
+ * This is an adapter that acts as a {@link ModuleSourceProvider} for Rhino
+ * but uses RHQ's {@link ScriptSourceProvider} to load the scripts.
  * 
- *
  * @author Lukas Krejci
  */
 public class ScriptSourceToModuleSourceProviderAdapter extends ModuleSourceProviderBase {
     private static final long serialVersionUID = 1L;
-    
+
+    private static final String SUFFIX = "." + JsEngineProvider.SCRIPT_FILE_EXTENSION;
+
     private ScriptSourceProvider scriptSourceProvider;
-    
+
     public ScriptSourceToModuleSourceProviderAdapter(ScriptSourceProvider provider) {
         scriptSourceProvider = provider;
     }
-    
+
     @Override
     protected ModuleSource loadFromPrivilegedLocations(String moduleId, Object validator) throws IOException,
         URISyntaxException {
 
-        //if the URI is absolute, we make sure to define the ModuleSource as sandboxed.
-        //this is done by making the URI a "subpath" of the base.
         URI uri = new URI(moduleId);
-        URI base = null;
-        if (uri.isAbsolute()) {
-            base = uri;
+        if (!uri.isAbsolute()) {
+            return null;
         }
-        return loadFromUri(uri, base, validator);
+        return loadFromUri(uri, null, validator);
     }
 
     @Override
     protected ModuleSource loadFromUri(URI uri, URI base, Object validator) throws IOException, URISyntaxException {
         URI fullUri = uri;
         if (base != null) {
-            fullUri = uri.resolve(base);
+            fullUri = base.resolve(uri);
+        }
+
+        if (!fullUri.getSchemeSpecificPart().endsWith(SUFFIX)) {            
+            fullUri =
+                new URI(fullUri.getScheme(), fullUri.getAuthority(), fullUri.getPath() + SUFFIX, fullUri.getQuery(),
+                    fullUri.getFragment());
         }
         
         Reader sourceReader = scriptSourceProvider.getScriptSource(fullUri);
-        
+
         if (sourceReader == null) {
             return null;
         } else {

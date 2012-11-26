@@ -25,8 +25,6 @@ package org.rhq.enterprise.gui.configuration.resource;
 
 import java.io.File;
 
-import org.jboss.seam.core.Events;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.util.MessageDigestGenerator;
@@ -71,7 +69,7 @@ public class RawConfigUIBean {
     }
 
     private void fireRawConfigUpdateEvent() {
-        Events.instance().raiseEvent("rawConfigUpdate", this);
+        // Events.instance().raiseEvent("rawConfigUpdate", this);
     }
 
     /** @return The full path name of the raw config file */

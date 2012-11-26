@@ -18,8 +18,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -140,11 +142,19 @@ public class RolesDataSource extends RPCDataSource<Role, RoleCriteria> {
 
     @Override
     protected void executeAdd(Record recordToAdd, final DSRequest request, final DSResponse response) {
-        Role roleToAdd = copyValues(recordToAdd);
+        final Role roleToAdd = copyValues(recordToAdd);
 
         roleService.createRole(roleToAdd, new AsyncCallback<Role>() {
             public void onFailure(Throwable caught) {
-                throw new RuntimeException(caught);
+                if (caught.getMessage() != null
+                    && caught.getMessage().contains("javax.persistence.EntityExistsException")) {
+                    Map<String, String> errorMessages = new HashMap<String, String>();
+                    errorMessages.put(Field.NAME,
+                        MSG.view_adminRoles_failCreateRoleWithExistingName(roleToAdd.getName()));
+                    sendValidationErrorResponse(request, response, errorMessages);
+                } else {
+                    throw new RuntimeException(caught);
+                }
             }
 
             public void onSuccess(Role addedRole) {

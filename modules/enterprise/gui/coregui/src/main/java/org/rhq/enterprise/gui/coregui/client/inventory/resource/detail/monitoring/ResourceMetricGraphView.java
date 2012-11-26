@@ -40,6 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricGrap
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
 /**
  * @author Greg Hinkle
@@ -109,10 +110,8 @@ public class ResourceMetricGraphView extends AbstractMetricGraphView {
                                     if (def.getId() == getDefinitionId()) {
                                         setDefinition(def);
 
-                                        GWTServiceLookup.getMeasurementDataService().findDataForResource(getEntityId(),
-                                            new int[] { getDefinitionId() },
-                                            System.currentTimeMillis() - (1000L * 60 * 60 * 8),
-                                            System.currentTimeMillis(), 60,
+                                        GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(getEntityId(),
+                                            new int[] { getDefinitionId() }, 8, MeasurementUtils.UNIT_HOURS, 60,
                                             new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                                                 public void onFailure(Throwable caught) {
                                                     CoreGUI.getErrorHandler().handleError(

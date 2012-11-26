@@ -7,7 +7,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>4.5.0-SNAPSHOT</version>
+      <version>4.6.0-SNAPSHOT</version>
       <relativePath>../../pom.xml</relativePath>
    </parent>
 
@@ -17,14 +17,6 @@
 
    <name>RHQ Core Modules</name>
    <description>parent POM for modules comprising the RHQ core (i.e. modules required by both the enterprise and embedded editions of RHQ)</description>
-
-   <dependencies>
-      <dependency>
-        <groupId>net.sourceforge.cobertura</groupId>
-        <artifactId>cobertura</artifactId>
-        <version>${cobertura.version}</version>
-     </dependency>
-  </dependencies>
 
    <profiles>
 

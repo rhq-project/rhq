@@ -153,17 +153,19 @@ public class PluginContainerTest extends JMockTest {
 
     @Override
     protected void tearDownAfterTest(ITestResult testResult) {
-        try {
-            PluginContainer.getInstance().shutdown();
-        } finally {
+        if (CURRENT_SETUP.get() != null) {
             try {
-                deletePlugins(pluginContainerConfiguration.getPluginDirectory());
-            } catch (Throwable t) {
-                //hmmm
+                PluginContainer.getInstance().shutdown();
+            } finally {
+                try {
+                    deletePlugins(pluginContainerConfiguration.getPluginDirectory());
+                } catch (Throwable t) {
+                    //hmmm
+                }
             }
-
-            super.tearDownAfterTest(testResult);
         }
+
+        super.tearDownAfterTest(testResult);
     }
 
     /**

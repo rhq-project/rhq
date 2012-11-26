@@ -92,7 +92,7 @@ public class NewDefinitionAction extends BaseAction {
                 alertDefinitionId = alertTemplateManager.createAlertTemplate(subject, alertDef, defForm.getType());
             } else if (context == FormContext.Resource) {
                 AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
-                alertDefinitionId = alertDefinitionManager.createAlertDefinition(subject, alertDef, defForm.getId());
+                alertDefinitionId = alertDefinitionManager.createAlertDefinition(subject, alertDef, defForm.getId(), true);
             } else if (context == FormContext.Group) {
                 GroupAlertDefinitionManagerLocal groupAlertDefinitionManager = LookupUtil
                     .getGroupAlertDefinitionManager();

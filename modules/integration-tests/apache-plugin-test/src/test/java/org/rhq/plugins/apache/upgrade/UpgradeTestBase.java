@@ -27,7 +27,6 @@ import java.io.StringReader;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -44,6 +43,7 @@ import org.rhq.core.clientapi.agent.metadata.PluginMetadataParser;
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
@@ -51,7 +51,6 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.PluginContainerDeployment;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.plugins.apache.ApacheServerComponent;
@@ -62,11 +61,8 @@ import org.rhq.plugins.apache.PluginLocation;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.setup.ApacheTestConfiguration;
 import org.rhq.plugins.apache.setup.ApacheTestSetup;
-import org.rhq.plugins.apache.upgrade.UpgradeTestBase.ResourceKeyFormat;
 import org.rhq.plugins.apache.util.ApacheDeploymentUtil.DeploymentConfig;
-import org.rhq.plugins.apache.util.ApacheExecutionUtil.ExpectedApacheState;
 import org.rhq.plugins.apache.util.ResourceTypes;
-import org.rhq.plugins.apache.util.RuntimeApacheConfiguration;
 import org.rhq.plugins.apache.util.VHostSpec;
 import org.rhq.plugins.apache.util.VirtualHostLegacyResourceKeyUtil;
 import org.rhq.test.TokenReplacingReader;
@@ -99,8 +95,10 @@ public class UpgradeTestBase extends PluginContainerTest {
         platform = discoverPlatform();
     }
 
-    protected void testUpgrade(ApacheTestConfiguration testConfiguration) throws Throwable {
-        final ApacheTestSetup setup = new ApacheTestSetup(testConfiguration.configurationName, context, apacheResourceTypes);
+    protected void testUpgrade(String testMethod, ApacheTestConfiguration testConfiguration) throws Throwable {
+        String testId = this.getClass().getSimpleName() + "#" + testMethod;
+        final ApacheTestSetup setup = new ApacheTestSetup(testId, testConfiguration.configurationName, context,
+            apacheResourceTypes);
         boolean testFailed = false;
         try {
             
@@ -113,7 +111,11 @@ public class UpgradeTestBase extends PluginContainerTest {
                 .withServerRoot(testConfiguration.serverRoot).withExePath(testConfiguration.binPath);
             
             testConfiguration.beforeTestSetup(setup);
-            
+
+            LOG.debug("---------------------------------------------------------- Starting the upgrade test for: "
+                + testId);
+            LOG.debug("Deployment configuration: " + setup.getDeploymentConfig());
+
             setup.setup();
     
             testConfiguration.beforePluginContainerStart(setup);
@@ -193,7 +195,7 @@ public class UpgradeTestBase extends PluginContainerTest {
             throw t;
         } finally {
             try {
-                setup.withApacheSetup().getExecutionUtil().invokeOperation(ExpectedApacheState.STOPPED, "stop");
+                setup.withApacheSetup().stopApache();
             } catch (Exception e) {
                 if (testFailed) {
                     LOG.error("Failed to stop apache.", e);
@@ -201,12 +203,15 @@ public class UpgradeTestBase extends PluginContainerTest {
                     throw e;
                 }
             }
+
+            LOG.debug("---------------------------------------------------------- Finished the upgrade test for: "
+                + testId);
         }
     }
 
     protected void defineRHQ3ResourceKeys(ApacheTestConfiguration testConfig, ApacheTestSetup setup) throws Exception {
         setup.withApacheSetup().init();
-        ApacheServerComponent component = setup.withApacheSetup().getExecutionUtil().getServerComponent();
+        ApacheServerComponent component = setup.withApacheSetup().getServerComponent();
         ApacheDirectiveTree config = component.parseRuntimeConfiguration(false);
     
         DeploymentConfig deployConfig = setup.getDeploymentConfig();
@@ -302,14 +307,22 @@ public class UpgradeTestBase extends PluginContainerTest {
             Collections.<String, PluginMetadataParser> emptyMap());
     
         List<ResourceType> platformTypes = parser.getAllTypes();
-    
+
+        //this is the default container name in case of no plugin explicit plugin configuration, which we don't have.
+        String containerName = InetAddress.getLocalHost().getCanonicalHostName();
+
         for (ResourceType rt : platformTypes) {
+            if (rt.getCategory() != ResourceCategory.PLATFORM) {
+                continue;
+            }
+
             Class discoveryClass = Class.forName(parser.getDiscoveryComponentClass(rt));
     
             ResourceDiscoveryComponent discoveryComponent = (ResourceDiscoveryComponent) discoveryClass.newInstance();
     
             ResourceDiscoveryContext context = new ResourceDiscoveryContext(rt, null, null,
-                SystemInfoFactory.createSystemInfo(), null, null, PluginContainerDeployment.AGENT);
+                SystemInfoFactory.createSystemInfo(), Collections.emptyList(), Collections.emptyList(), containerName,
+                PluginContainerDeployment.AGENT);
     
             Set<DiscoveredResourceDetails> results = discoveryComponent.discoverResources(context);
     

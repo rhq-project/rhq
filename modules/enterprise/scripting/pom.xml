@@ -3,12 +3,12 @@
    <parent>
       <artifactId>rhq-enterprise-parent</artifactId>
       <groupId>org.rhq</groupId>
-      <version>4.5.0-SNAPSHOT</version>
+      <version>4.6.0-SNAPSHOT</version>
    </parent>
    <artifactId>rhq-scripting-parent</artifactId>
    <packaging>pom</packaging>
    
-   <version>4.5.0-SNAPSHOT</version>
+   <version>4.6.0-SNAPSHOT</version>
    <name>RHQ Scripting Parent Module</name>
 
    <modules>
@@ -17,11 +17,12 @@
    </modules>
    
    <profiles>
+      <!-- NOTE: this profile HAS TO have the same activation policy as the profile with the same name in the root pom.xml of RHQ -->
       <profile>
-         <id>experimental</id>
+         <id>bundle-additional-script-languages</id>
          <activation>
             <property>
-               <name>experimental-script-languages</name>
+               <name>java.home</name>
             </property>
          </activation>
          

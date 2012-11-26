@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<differences>
+  <difference>
+      <className>org/rhq/plugins/database/DatabaseQueryUtility</className>
+      <differenceType>7009</differenceType><!-- decreased visibility -->
+      <method>DatabaseQueryUtility()</method>
+      <justification>This is a static utility class, so holding a reference to it doesn't make sense. People should correct their code if they did so.</justification>
+  </difference>
+  <difference>
+      <className>org/rhq/plugins/database/DatabaseQueryUtility$StatementParameter</className>
+      <differenceType>8001</differenceType><!-- class removed -->
+      <justification>Removed an unused class.</justification>
+  </difference>
+</differences>

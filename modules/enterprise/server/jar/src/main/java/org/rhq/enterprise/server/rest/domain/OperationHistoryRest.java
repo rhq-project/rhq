@@ -25,10 +25,14 @@ import java.util.Map;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.wordnik.swagger.annotations.ApiClass;
+import com.wordnik.swagger.annotations.ApiProperty;
+
 /**
  * An operations history item
  * @author Heiko W. Rupp
  */
+@ApiClass(value = "Denotes the outcome of an operation that has been scheduled to run.")
 @XmlRootElement
 public class OperationHistoryRest {
 
@@ -42,6 +46,7 @@ public class OperationHistoryRest {
     Map<String,Object> result = new HashMap<String, Object>();
     List<Link> links = new ArrayList<Link>();
 
+    @ApiProperty(value = "The status of the history", allowableValues = "In Progress, Cancelled, Failure, Success")
     public String getStatus() {
         return status;
     }
@@ -50,6 +55,7 @@ public class OperationHistoryRest {
         this.status = status;
     }
 
+    @ApiProperty("Map with key/value pairs fo the operation result")
     public Map<String, Object> getResult() {
         return result;
     }
@@ -58,6 +64,7 @@ public class OperationHistoryRest {
         this.result = result;
     }
 
+    @ApiProperty("Error message if the operation was not successful")
     public String getErrorMessage() {
         return errorMessage;
     }
@@ -74,6 +81,7 @@ public class OperationHistoryRest {
         this.links = links;
     }
 
+    @ApiProperty("Name of the operation that was run")
     public String getOperationName() {
         return operationName;
     }
@@ -82,6 +90,7 @@ public class OperationHistoryRest {
         this.operationName = operationName;
     }
 
+    @ApiProperty("Name of the resource the operation was run on")
     public String getResourceName() {
         return resourceName;
     }
@@ -98,6 +107,7 @@ public class OperationHistoryRest {
         this.lastModified = date;
     }
 
+    @ApiProperty("Job-ID of this history item")
     public String getJobId() {
         return jobId;
     }

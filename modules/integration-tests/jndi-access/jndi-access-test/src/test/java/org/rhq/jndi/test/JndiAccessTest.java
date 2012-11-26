@@ -48,6 +48,7 @@ import org.rhq.enterprise.client.LocalClient;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.jndi.AllowRhqServerInternalsAccessPermission;
+import org.rhq.test.PortScout;
 
 /**
  * 
@@ -57,14 +58,28 @@ import org.rhq.jndi.AllowRhqServerInternalsAccessPermission;
 @Test
 public class JndiAccessTest extends AbstractEJB3Test {
     private static final Log JNP_SERVER_LOG = LogFactory.getLog("Test JNP Server");
+    private static final Log LOG = LogFactory.getLog(JndiAccessTest.class);
     
     private Process testServerProcess;
     private Thread testServerStdErrReader;
     private Thread testServerStdOutReader;
     
+    int jnpPort;
+
     @BeforeClass
-    @Parameters({"test.server.jar.path", "jnp.port", "jnp.rmiPort"})
-    public void startTestJnpServer(String testServerJar, int jnpPort, int rmiPort) throws Exception {
+    @Parameters({ "test.server.jar.path" })
+    public void startTestJnpServer(String testServerJar) throws Exception {
+        int rmiPort = 0;
+        PortScout scout = new PortScout();
+
+        try {
+            jnpPort = scout.getNextFreePort();
+            rmiPort = scout.getNextFreePort();
+        } finally {
+            scout.close();
+        }
+
+        LOG.info("Starting the remote JNP server on jnpPort=" + jnpPort + ", rmiPort=" + rmiPort);
         ProcessBuilder bld = new ProcessBuilder("java", "-Djnp.port=" + jnpPort, "-Djnp.rmiPort=" + rmiPort, "-jar", testServerJar);
         
         testServerProcess = bld.start();
@@ -124,8 +139,7 @@ public class JndiAccessTest extends AbstractEJB3Test {
         testServerStdOutReader.join();
     }
     
-    @Parameters("jnp.port")
-    public void testRemoteConnectionWorkingFromJava(int jnpPort) throws Exception {
+    public void testRemoteConnectionWorkingFromJava() throws Exception {
         Properties env = new Properties();
         env.put("java.naming.factory.initial", "org.jboss.naming.NamingContextFactory");
         env.put("java.naming.provider.url", "jnp://localhost:" + jnpPort);
@@ -153,8 +167,7 @@ public class JndiAccessTest extends AbstractEJB3Test {
         }   
     }
     
-    @Parameters("jnp.port")
-    public void testRemoteJNDILookupWorksFromScripts(int jnpPort) throws Exception {
+    public void testRemoteJNDILookupWorksFromScripts() throws Exception {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();        
         
         ScriptEngine engine = getEngine(overlord);
@@ -174,7 +187,7 @@ public class JndiAccessTest extends AbstractEJB3Test {
         
     private ScriptEngine getEngine(Subject subject) throws ScriptException, IOException {
         StandardBindings bindings = new StandardBindings(new PrintWriter(System.out), new LocalClient(subject));
-        return ScriptEngineFactory.getSecuredScriptEngine("JavaScript", new PackageFinder(Collections.<File>emptyList()), bindings, new StandardScriptPermissions());
+        return ScriptEngineFactory.getSecuredScriptEngine("javascript", new PackageFinder(Collections.<File>emptyList()), bindings, new StandardScriptPermissions());
     }
     
     private static void checkIsDesiredSecurityException(ScriptException e) {

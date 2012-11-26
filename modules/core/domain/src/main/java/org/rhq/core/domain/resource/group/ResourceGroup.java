@@ -197,7 +197,8 @@ import org.rhq.core.domain.tagging.Tag;
         + "    AND res.id NOT IN ( SELECT explicitRes.id " //
         + "                          FROM ResourceGroup rg " //
         + "                          JOIN rg.explicitResources explicitRes " //
-        + "                         WHERE rg.id = :groupId AND explicitRes.inventoryStatus = 'COMMITTED') ") })
+        + "                         WHERE rg.id = :groupId ) " //
+        + "    AND res.inventoryStatus = 'COMMITTED' ") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_RESOURCE_GROUP_ID_SEQ")
 @Table(name = "RHQ_RESOURCE_GROUP")
 @XmlAccessorType(XmlAccessType.FIELD)

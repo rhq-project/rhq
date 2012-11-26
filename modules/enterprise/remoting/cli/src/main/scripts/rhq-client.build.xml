@@ -70,6 +70,15 @@
 
       <copy file="${settings.localRepository}/org/rhq/rhq-scripting-api/${project.version}/rhq-scripting-api-${project.version}.jar" tofile="${lib.home}/rhq-scripting-api-${project.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/org/rhq/rhq-scripting-javascript/${project.version}/rhq-scripting-javascript-${project.version}.jar" tofile="${lib.home}/rhq-scripting-javascript-${project.version}.jar" verbose="true" />
+   	
+      <echo>*** Including additional script languages: ${rhq.bundle-additional-script-languages}</echo>
+      <!-- Copy all the additional script language support jars if we are told to do so -->
+      <copy todir="${lib.home}" verbose="true">
+         <fileset dir="${settings.localRepository}/org/rhq">
+            <include if="${rhq.bundle-additional-script-languages}" name="**/rhq-scripting-python-${project.version}.jar"/>
+         </fileset>
+         <mapper type="flatten" />
+      </copy>
    </target>
 
    <target name="prepare-samples-dir">
@@ -77,7 +86,7 @@
       <mkdir dir="${samples.home}" />
       <echo>*** Populating sample scripts...</echo>
       <copy verbose="true" toDir="${samples.home}">
-         <fileset dir="${basedir}/src/main/samples/" includes="*.*" />
+         <fileset dir="${basedir}/src/main/samples/" includes="**" />
       </copy>
    </target>
 

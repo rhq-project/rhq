@@ -113,7 +113,13 @@ public class DBInstallationTest {
         installSchemaAndData("rhq-4.3.0");
         installer.upgradeExistingDatabaseSchema(getInstallProperties());
     }
-    
+
+    @Test
+    public void upgradeRHQ440Schema() throws Exception {
+        installSchemaAndData("rhq-4.4.0");
+        installer.upgradeExistingDatabaseSchema(getInstallProperties());
+    }
+
     private void initLogDirectory() {
         File logDir = new File(LOG_DIRECTORY);
         if (logDir.exists()) {
@@ -169,7 +175,7 @@ public class DBInstallationTest {
         dbProperties.put(ServerProperties.PROP_EMAIL_FROM_ADDRESS, "rhqadmin@localhost.com");
         return dbProperties;
     }
-    
+
     private static File filterXmlFile(File xmlFile, Properties props) throws IOException {
         // first slurp the file contents in memory
         InputStream fileInStream = new FileInputStream(xmlFile);
@@ -198,11 +204,11 @@ public class DBInstallationTest {
 
         // we now have the finished XML content - write out the file to the tmp directory
         File filteredXmlFile = File.createTempFile("rhq", xmlFile.getName());
-        FileOutputStream xmlFileOutStream = new FileOutputStream(xmlFile);
+        FileOutputStream xmlFileOutStream = new FileOutputStream(filteredXmlFile);
         ByteArrayInputStream contentInStream = new ByteArrayInputStream(content.getBytes());
         StreamUtil.copy(contentInStream, xmlFileOutStream);
 
-        return xmlFile.getAbsoluteFile();
+        return filteredXmlFile.getAbsoluteFile();
     }
-    
+
 }

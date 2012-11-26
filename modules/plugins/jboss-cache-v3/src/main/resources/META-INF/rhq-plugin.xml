@@ -31,7 +31,7 @@
                  singleton="true">
 
             <plugin-configuration>
-                <c:simple-property name="jmx-resource" default=""/>
+                <c:simple-property name="jmx-resource" default="" required="false"/>
             </plugin-configuration>
 
             <operation name="destroy" displayName="Destroy this cache."/>

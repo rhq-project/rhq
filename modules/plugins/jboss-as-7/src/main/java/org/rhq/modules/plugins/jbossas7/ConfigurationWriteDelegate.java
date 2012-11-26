@@ -216,7 +216,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                             }
                         }
 
-                        definitions = definitionMap.getPropertyDefinitions();
+                        definitions = new ArrayList<PropertyDefinition>(definitionMap.getOrderedPropertyDefinitions());
                         PropertyMap map = conf.getMap(mapName);
                         for (PropertyDefinition def : definitions) {
                             createWriteAttribute(cop, address1, def, map.get(def.getName()));
@@ -431,15 +431,24 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
     private void createWriteAttributePropertySimple(CompositeOperation cop, PropertySimple property,
         PropertyDefinitionSimple propertyDefinition, Address address) {
 
-        // If the property value is null and the property is optional, skip too
-        if (property.getStringValue() == null && !propertyDefinition.isRequired())
-            return;
-
         if (property.getName().endsWith(":ignore")) // Caller takes care
             return;
 
         if (propertyDefinition.isReadOnly() && !createChildRequested)
             return;
+
+        //If the property value is null and the property is optional,
+        //then send default value or null to the server
+        if (property.getStringValue() == null && !propertyDefinition.isRequired()) {
+            String name = property.getName();
+            if (name.indexOf(':') != -1) {
+                name = name.substring(0, name.indexOf(":"));
+            }
+
+            Operation writeAttribute = new WriteAttribute(address, name, null);
+            cop.addStep(writeAttribute);
+            return;
+        }
 
         SimpleEntry<String, Object> entry = this.preparePropertySimple(property, propertyDefinition);
         Operation writeAttribute = new WriteAttribute(address, entry.getKey(), entry.getValue());
@@ -569,7 +578,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
             }
         }
 
-        propertyName = stripNumberIdentifier(property.getName());
+        propertyName = stripNumberIdentifier(propertyName);
 
         return new SimpleEntry<String, List<Object>>(propertyName, values);
     }
@@ -628,10 +637,14 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                 throw new IllegalArgumentException("Member names in a :collapsed map must end in :0 and :1");
         }
 
-        Map<String, Object> resultMap = new HashMap<String, Object>();
-        resultMap.put(key, value);
+        if (key != null) {
+            Map<String, Object> resultMap = new HashMap<String, Object>();
+            resultMap.put(key, value);
 
-        return resultMap;
+            return resultMap;
+        } else {
+            return null;
+        }
     }
 
 

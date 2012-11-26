@@ -40,21 +40,21 @@ public class SamplesScriptSourceProvider extends BaseRhqSchemeScriptSourceProvid
 
     private static final Log LOG = LogFactory.getLog(SamplesScriptSourceProvider.class);
 
-    private static final String PREFIX = "//samples/";
+    private static final String AUTHORITY = "samples";
 
+    public SamplesScriptSourceProvider() {
+        super(AUTHORITY);
+    }
+    
     @Override
     protected Reader doGetScriptSource(URI scriptUri) {
-        String path = scriptUri.getSchemeSpecificPart();
+        String path = scriptUri.getPath();
 
-        if (!path.startsWith(PREFIX)) {
-            return null;
-        }
-
-        path = path.substring(2); //remove the leading '//';
+        path = path.substring(1); //remove the leading '/';
 
         //here we suppose that the CLI was started using the rhq-cli.(sh|bat) script
         //which sets the working directory to the root of the CLI deployment
-        File file = new File(path);
+        File file = new File(AUTHORITY, path);
 
         try {
             return new InputStreamReader(new FileInputStream(file), Charset.forName("UTF-8"));

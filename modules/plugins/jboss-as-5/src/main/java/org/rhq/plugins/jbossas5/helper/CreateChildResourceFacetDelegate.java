@@ -59,6 +59,19 @@ public class CreateChildResourceFacetDelegate implements CreateChildResourceFace
         this.parentResourceContext = parentResourceContext;
     }
 
+    /**
+     * @deprecated This constructor is deprecated because it does not handle properly the SHA256 computation for
+     * exploded content. If used, this constructor will lead to a calculation of the SHA256 for exploded content
+     * based on exploded files. This method of computation is not preferred due to changes in content archive
+     * matching. Replaced by (@link {@link #CreateChildResourceFacetDelegate(ProfileServiceComponent, ResourceContext)}
+     *
+     * @param component component
+     */
+    @Deprecated
+    public CreateChildResourceFacetDelegate(ProfileServiceComponent component) {
+        this.component = component;
+    }
+
     public CreateResourceReport createResource(CreateResourceReport createResourceReport) {
         // ProfileServiceFactory.refreshCurrentProfileView();
         ResourceType resourceType = createResourceReport.getResourceType();

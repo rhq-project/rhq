@@ -77,6 +77,14 @@ public class DomainDeploymentComponent extends DeploymentComponent implements Op
             Result res = getASConnection().execute(operation, 120); // wait up to 2 minutes
             if (res.isSuccess()) {
                 operationResult.setSimpleResult("Successfully deployed to server groups " + serverGroups);
+
+                //request the server to discover child resources to allow the discovery of the deployments
+                //on server groups immediately
+                if (this.context.getParentResourceComponent().getClass().isInstance(HostControllerComponent.class)) {
+                    HostControllerComponent<?> hostController = (HostControllerComponent<?>) this.context
+                        .getParentResourceComponent();
+                    hostController.requestDeferredChildResourcesDiscovery();
+                }
             } else {
                 operationResult.setErrorMessage("Deployment to server groups failed: " + res.getFailureDescription());
             }

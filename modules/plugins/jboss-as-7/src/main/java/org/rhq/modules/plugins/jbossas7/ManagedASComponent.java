@@ -271,7 +271,7 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
            }
         }
 
-        Result res = getASConnection().execute(op);
+        Result res = getASConnection().execute(op, 30);
 
         OperationResult opRes;
         if (res.isSuccess()) {

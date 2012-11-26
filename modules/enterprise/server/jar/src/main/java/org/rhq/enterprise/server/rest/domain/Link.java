@@ -3,10 +3,14 @@ package org.rhq.enterprise.server.rest.domain;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.wordnik.swagger.annotations.ApiClass;
+import com.wordnik.swagger.annotations.ApiProperty;
+
 /**
  * A link between two resources
  * @author Heiko W. Rupp
  */
+@ApiClass("Link between two resources")
 @XmlRootElement
 public class Link {
 
@@ -22,11 +26,13 @@ public class Link {
     }
 
 
+    @ApiProperty("Name of the relation")
     @XmlAttribute
     public String getRel() {
         return rel;
     }
 
+    @ApiProperty("Target of the relation")
     @XmlAttribute
     public String getHref() {
         return href;

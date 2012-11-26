@@ -104,7 +104,8 @@ import org.rhq.core.domain.resource.Resource;
         + " WHERE av.resource.id IN ( SELECT ires.id " //
         + "                             FROM ResourceGroup rg " //
         + "                             JOIN rg.implicitResources ires " //
-        + "                            WHERE rg.id = :groupId AND ires.inventoryStatus = 'COMMITTED' ) " //
+        + "                            WHERE rg.id = :groupId ) " //
+        + "   AND av.resource.inventoryStatus = 'COMMITTED' " //
         + "   AND ((av.startTime <= :start AND (av.endTime >= :start OR av.endTime IS NULL) ) " /* availability straddles :start */
         + "        OR (av.startTime BETWEEN :start AND :end)) " /* interval straddles availability.startTime */
         + "ORDER BY av.startTime ASC"), //
@@ -113,6 +114,7 @@ import org.rhq.core.domain.resource.Resource;
         + "    JOIN av.resource res JOIN res.parentResource parent JOIN res.resourceType type " //
         + "   WHERE parent.id = :parentId " //
         + "     AND type.id = :typeId " //
+        + "     AND av.resource.inventoryStatus = 'COMMITTED' " //
         + "     AND ((av.startTime <= :start AND (av.endTime >= :start OR av.endTime IS NULL)) " /* availability straddles :start */
         + "          OR (av.startTime BETWEEN :start AND :end)) " /* interval straddles availability.startTime */
         + "ORDER BY av.startTime ASC"), //

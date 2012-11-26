@@ -86,46 +86,65 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
 
     @Override
     protected void onInit() {
-        super.onInit();
 
         // To properly filter Create Child and Import menus we need existing singleton child resources. If the
-        // user has creat permission and the parent type has singleton child types and creatable or importable child
+        // user has create permission and the parent type has singleton child types and creatable or importable child
         // types, perform an async call to fetch the singleton children. If we make the async call don't declare this
-        // instance initialized until after it completesas we must  have the children before the menu buttons can be drawn.
+        // instance initialized until after it completes as we must have the children before the menu buttons can be drawn.
 
         final Resource parentResource = parentResourceComposite.getResource();
         ResourceType parentType = parentResource.getResourceType();
-
         creatableChildTypes = getCreatableChildTypes(parentType);
         importableChildTypes = getImportableChildTypes(parentType);
         hasCreatableTypes = !creatableChildTypes.isEmpty();
         hasImportableTypes = !importableChildTypes.isEmpty();
-        singletonChildren = new ArrayList(); // initialize to non-null
+        refreshSingletons(parentResource, new AsyncCallback<PageList<Resource>>() {
 
-        Integer[] singletonChildTypes = getSingletonChildTypes(parentType);
+            public void onFailure(Throwable caught) {
+                ResourceCompositeSearchView.super.onInit();
+                initialized = true;
+            }
+
+            public void onSuccess(PageList<Resource> result) {
+                ResourceCompositeSearchView.super.onInit();
+                initialized = true;
+            }
+
+        });
+        
+    }
+    
+    private void refreshSingletons(final Resource parentResource, final AsyncCallback<PageList<Resource>> callback) {
+        singletonChildren = new ArrayList<Resource>(); // initialize to non-null
+
+        Integer[] singletonChildTypes = getSingletonChildTypes(parentResource.getResourceType());
 
         if (canCreate && singletonChildTypes.length > 0 && (hasCreatableTypes || hasImportableTypes)) {
             ResourceCriteria criteria = new ResourceCriteria();
             criteria.addFilterParentResourceId(parentResource.getId());
             criteria.addFilterResourceTypeIds(singletonChildTypes);
-            GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
-                new AsyncCallback<PageList<Resource>>() {
+            GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
 
-                    @Override
-                    public void onSuccess(PageList<Resource> result) {
-                        singletonChildren = result;
-                        initialized = true;
+                @Override
+                public void onSuccess(PageList<Resource> result) {
+                    singletonChildren = result;
+                    if (callback != null) {
+                        callback.onSuccess(result);
                     }
+                }
 
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        Log.error("Failed to load child resources for [" + parentResource + "]", caught);
-                        initialized = true;
+                @Override
+                public void onFailure(Throwable caught) {
+                    Log.error("Failed to load child resources for [" + parentResource + "]", caught);
+                    if (callback != null) {
+                        callback.onFailure(caught);
                     }
-                });
-
+                }
+            });
         } else {
-            initialized = true;
+            if (callback != null) {
+                callback.onSuccess(new PageList<Resource>());
+            }
         }
     }
 
@@ -135,7 +154,7 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
     }
 
     // suppress unchecked warnings because the superclass has different generic types for the datasource
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("rawtypes")
     @Override
     protected RPCDataSource getDataSourceInstance() {
         return ResourceCompositeDataSource.getInstance();
@@ -196,34 +215,37 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
                 }
             });
 
-        addImportAndCreateButtons();
+        addImportAndCreateButtons(false);
 
         super.configureTable();
     }
 
     @SuppressWarnings("unchecked")
-    private void addImportAndCreateButtons() {
+    private void addImportAndCreateButtons(boolean override) {
 
         final Resource parentResource = parentResourceComposite.getResource();
-        ResourceType parentType = parentResource.getResourceType();
 
         // Create Child Menu and Manual Import Menu
         if (canCreate && (hasCreatableTypes || hasImportableTypes)) {
-
             if (hasCreatableTypes) {
                 Map<String, ResourceType> displayNameMap = getDisplayNames(creatableChildTypes);
                 LinkedHashMap<String, ResourceType> createTypeValueMap = new LinkedHashMap<String, ResourceType>(
                     displayNameMap);
                 removeExistingSingletons(singletonChildren, createTypeValueMap);
-                addTableAction(extendLocatorId("CreateChild"), MSG.common_button_create_child(), null,
-                    createTypeValueMap, new AbstractTableAction(TableActionEnablement.ALWAYS) {
-                        public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                            ResourceFactoryCreateWizard.showCreateWizard(parentResource, (ResourceType) actionValue);
-                            // we can refresh the table buttons immediately since the wizard is a dialog, the
-                            // user can't access enabled buttons anyway.
-                            ResourceCompositeSearchView.this.refreshTableInfo();
-                        }
-                    });
+                AbstractTableAction createAction = new AbstractTableAction(TableActionEnablement.ALWAYS) {
+                    public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                        ResourceFactoryCreateWizard.showCreateWizard(parentResource, (ResourceType) actionValue);
+                        // we can refresh the table buttons immediately since the wizard is a dialog, the
+                        // user can't access enabled buttons anyway.
+                        ResourceCompositeSearchView.this.refreshTableInfo();
+                    }
+                };
+                if (override) {
+                    updateTableAction(MSG.common_button_create_child(), createTypeValueMap, createAction);
+                } else {
+                    addTableAction(extendLocatorId("CreateChild"), MSG.common_button_create_child(), null,
+                        createTypeValueMap, createAction);
+                }
             }
 
             if (hasImportableTypes) {
@@ -231,18 +253,23 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
                 LinkedHashMap<String, ResourceType> importTypeValueMap = new LinkedHashMap<String, ResourceType>(
                     displayNameMap);
                 removeExistingSingletons(singletonChildren, importTypeValueMap);
-                addTableAction(extendLocatorId("Import"), MSG.common_button_import(), null, importTypeValueMap,
-                    new AbstractTableAction(TableActionEnablement.ALWAYS) {
-                        public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                            ResourceFactoryImportWizard.showImportWizard(parentResource, (ResourceType) actionValue);
-                            // we can refresh the table buttons immediately since the wizard is a dialog, the
-                            // user can't access enabled buttons anyway.
-                            ResourceCompositeSearchView.this.refreshTableInfo();
-                        }
-                    });
+                AbstractTableAction importAction = new AbstractTableAction(TableActionEnablement.ALWAYS) {
+                    public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                        ResourceFactoryImportWizard.showImportWizard(parentResource, (ResourceType) actionValue);
+                        // we can refresh the table buttons immediately since the wizard is a dialog, the
+                        // user can't access enabled buttons anyway.
+                        ResourceCompositeSearchView.this.refreshTableInfo();
+                    }
+                };
+                if (override) {
+                    updateTableAction(MSG.common_button_import(), importTypeValueMap, importAction);
+                } else {
+                    addTableAction(extendLocatorId("Import"), MSG.common_button_import(), null, importTypeValueMap,
+                        importAction);
+                }
             }
 
-        } else {
+        } else if (!override) {
             if (!canCreate && hasCreatableTypes) {
                 addTableAction(extendLocatorId("CreateChild"), MSG.common_button_create_child(),
                     new AbstractTableAction(TableActionEnablement.NEVER) {
@@ -261,6 +288,7 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
             }
         }
     }
+   
 
     private void removeExistingSingletons(List<Resource> singletonChildren, Map<String, ResourceType> displayNameMap) {
 
@@ -358,6 +386,24 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
     public static ResourceCompositeSearchView getChildrenOf(String locatorId, ResourceComposite parentResourceComposite) {
         return new ResourceCompositeSearchView(locatorId, parentResourceComposite, new Criteria("parentId",
             String.valueOf(parentResourceComposite.getResource().getId())), MSG.view_tabs_common_child_resources());
+    }
+    
+    @Override
+    public void refresh() {
+        refreshSingletons(parentResourceComposite.getResource(), new AsyncCallback<PageList<Resource>>() {
+
+            @Override
+            public void onSuccess(PageList<Resource> result) {
+                addImportAndCreateButtons(true);
+                ResourceCompositeSearchView.super.refresh();
+            }
+
+            @Override
+            public void onFailure(Throwable caught) {
+                ResourceCompositeSearchView.super.refresh();
+            }
+        });
+
     }
 
 }

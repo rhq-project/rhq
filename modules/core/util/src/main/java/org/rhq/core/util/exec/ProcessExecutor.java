@@ -33,6 +33,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.rhq.core.util.UtilI18NResourceKeys;
 
@@ -45,6 +51,9 @@ import org.rhq.core.util.UtilI18NResourceKeys;
  * @author John Mazzitelli
  */
 public class ProcessExecutor {
+
+    private static ExecutorService threadPool = Executors.newCachedThreadPool();
+
     /**
      * This executes any operating system process as described in the given start command. When this method returns, it
      * can be assumed that the process was launched but not necessarily finished. The caller can ask this method to
@@ -78,7 +87,6 @@ public class ProcessExecutor {
      *
      * @return process exit code (if the method waited for it to exit) or <code>null</code> if this method was to only
      *         start the process but not wait or was to wait and the wait time expired before the process exited
-     *
      * @throws Exception if any error occurs while trying to start the child process
      */
     protected Integer startProgram(final ProcessToStart process) throws Exception {
@@ -91,47 +99,83 @@ public class ProcessExecutor {
         final Process childProcess = Runtime.getRuntime().exec(cmdline, environment, workingDir);
 
         // redirect the program's streams
-        // WARNING:
-        // It seems there is no way to get around a possible race condition - what if the process
-        // was so fast that it exited already?  We didn't get a chance to capture its output.
-        // I see a unit test that periodically fails because it doesn't get any captured output when
-        // it should - I think it is because of this race condition.  But there is no Java API that
-        // let's me redirect a process' streams before the process is told to start.
-        redirectStreams(process, childProcess);
-
-        final Integer[] retExitCode = new Integer[1];
+        final RedirectThreads redirect = redirectAllStreams(process, childProcess);
+        Integer exitCode = null;
 
         // wait if told to - note that the default is not to wait
         if (process.getWaitForExit().intValue() > 0) {
-            Thread waitThread = new Thread("ExecuteProcess-" + process.getProgramTitle()) {
-                public void run() {
+            Callable<Integer> call = new Callable<Integer>() {
+                @Override
+                public Integer call() throws Exception {
+                    Thread.currentThread().setName("ExecuteProcess-" + process.getProgramTitle());
                     try {
-                        int exitCode = childProcess.waitFor();
-                        retExitCode[0] = new Integer(exitCode);
-                    } catch (InterruptedException e) {
+                        return childProcess.waitFor();
+                    } finally {
+                        // wait for I/O to finish
+                        redirect.join();
                     }
                 }
             };
-
-            waitThread.setDaemon(true);
-            waitThread.start();
+            Future<Integer> future = threadPool.submit(call);
             try {
-                waitThread.join(process.getWaitForExit().intValue());
+                exitCode = future.get(process.getWaitForExit().intValue(), TimeUnit.MILLISECONDS);
             } catch (InterruptedException ie) {
                 // this might happen if the launching thread got interrupted
+                Thread.currentThread().interrupt();
+            } catch (TimeoutException e) {
+                // the documentation requires we return null
             } finally {
-                waitThread.interrupt();
+                future.cancel(true);
             }
 
-            if (retExitCode[0] == null) {
+            if (exitCode == null) {
                 // never got the exit code so the wait time must have expired, kill the process if configured to do so
                 if (process.isKillOnTimeout().booleanValue()) {
                     childProcess.destroy();
                 }
+                // cancel the output threads
+                redirect.interrupt();
             }
         }
 
-        return retExitCode[0];
+        return exitCode;
+    }
+
+    /**
+     * Wrapper for threads used for capturing output.
+     * Call {@link #join} to wait for output to be fully captured.
+     */
+    protected static class RedirectThreads {
+
+        private final StreamRedirector stdout;
+        private final StreamRedirector stderr;
+
+        private RedirectThreads(StreamRedirector stdout, StreamRedirector stderr) {
+            this.stdout = stdout;
+            this.stderr = stderr;
+        }
+
+        /**
+         * Waits for output to be fully captured.
+         */
+        public void join() throws InterruptedException {
+            stderr.join();
+            stdout.join();
+        }
+
+        /**
+         * Interrupts these threads.
+         */
+        public void interrupt() {
+            stderr.interrupt();
+            stdout.interrupt();
+        }
+
+    }
+
+    @Deprecated
+    protected void redirectStreams(ProcessToStart process, Process childProcess) throws IOException {
+        redirectAllStreams(process, childProcess);
     }
 
     /**
@@ -146,8 +190,9 @@ public class ProcessExecutor {
      * @param  childProcess the newly spawned child process
      *
      * @throws IOException if failed to pipe data to/from stdin/stdout
+     * @return RedirectThreads containing a handle to the threads redirecting output
      */
-    protected void redirectStreams(ProcessToStart process, Process childProcess) throws IOException {
+    protected RedirectThreads redirectAllStreams(ProcessToStart process, Process childProcess) throws IOException {
         // Process.getInputStream is actually the process's stdout output
         // Process.getOutputStream is actually the process's stdin intput
         // Process.getErrorStream is the process's stderr output
@@ -175,7 +220,6 @@ public class ProcessExecutor {
         }
 
         StreamRedirector stdoutThread = new StreamRedirector(threadNamePrefix + "-stdout", stdout, fileOutputStream);
-
         StreamRedirector stderrThread = new StreamRedirector(threadNamePrefix + "-stderr", stderr, fileOutputStream);
 
         stdoutThread.start();
@@ -201,7 +245,7 @@ public class ProcessExecutor {
 
         stdin.close();
 
-        return;
+        return new RedirectThreads(stdoutThread, stderrThread);
     }
 
     /**
@@ -372,7 +416,7 @@ public class ProcessExecutor {
         String result = progFile.getPath();
 
         // If executable verification has been turned off then assume the caller wants his executable "as-is".
-        // Otherwise, validate and ensure a full path. 
+        // Otherwise, validate and ensure a full path.
         if (Boolean.TRUE.equals(process.isCheckExecutableExists())) {
             if (!progFile.exists()) {
                 throw new FileNotFoundException(UtilI18NResourceKeys.MSG.getMsg(

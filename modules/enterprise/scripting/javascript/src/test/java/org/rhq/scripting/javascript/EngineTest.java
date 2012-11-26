@@ -63,8 +63,8 @@ public class EngineTest {
     
     public void modulesCanBeLoaded() throws Exception {
         String script = "" + 
-        "var m1 = require('target/test-classes/test-module1.js'); \n" + 
-        "var m2 = require('target/test-classes/test-module2.js'); \n" + 
+        "var m1 = require('target/test-classes/test-module1'); \n" + 
+        "var m2 = require('target/test-classes/test-module2'); \n" + 
         "println(typeof(m1.func1));\n" + 
         "println(typeof(m1.func2));\n" + 
         "println(typeof(m2.func3));\n" + 
@@ -85,7 +85,7 @@ public class EngineTest {
             + "var test2 = \"strstr\"\n"
             + "var test3 = new java.lang.String(\"strstr\")\n";
         
-        ScriptEngine engine = new ScriptEngineManager().getEngineByName("javascript");
+        ScriptEngine engine = getScriptEngine();
         
         engine.eval(script);
         
@@ -102,6 +102,19 @@ public class EngineTest {
                 
         ret = engine.eval("java.lang.Integer.parseInt('1' + '2');");
         assertEquals(ret, 12, "Engine failed to pass a concatenated string as a string parameter.");
+    }
+    
+    public void relativeModuleAddressingWorks() throws Exception {
+        String script = "var n = require('target/test-classes/nest');";
+        
+        ScriptEngine engine = getScriptEngine();
+        
+        Object ret = engine.eval(script + "n.nest()");
+        assertEquals(ret, "Deep nest", "A module could not be loaded using a relative path.");
+        
+        ret = engine.eval(script + "n.maze()");
+        assertEquals(ret, "func1", "A module could not be loaded using a relative path.");
+        
     }
     
     private ScriptEngine getScriptEngine() {

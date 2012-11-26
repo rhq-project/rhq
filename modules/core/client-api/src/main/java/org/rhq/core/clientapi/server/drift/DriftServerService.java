@@ -121,6 +121,11 @@ public interface DriftServerService {
     @Asynchronous
     void repeatChangeSet(int resourceId, String driftDefName, int version);
 
+    /**
+     * @param resourceIds The resourceIds for which to fetch definitions.
+     * @return A Map from resourceId to its list of DriftDefinitions.  Resources without DriftDefinitions are not included
+     * in the Map.
+     */
     Map<Integer, List<DriftDefinition>> getDriftDefinitions(Set<Integer> resourceIds);
 
     DriftSnapshot getCurrentSnapshot(int driftDefinitionId);

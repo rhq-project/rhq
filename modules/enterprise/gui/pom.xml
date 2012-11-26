@@ -8,7 +8,7 @@
     <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>4.5.0-SNAPSHOT</version>
+    <version>4.6.0-SNAPSHOT</version>
     <relativePath>../../../pom.xml</relativePath>
   </parent>
 
@@ -31,7 +31,6 @@
         <module>installer-war</module>
         <module>base-perspective-jar</module>
         <module>base-perspective-war</module>
-        <!--<module>webdav-war</module>-->
         <module>content_http-war</module>
         <module>coregui</module>
         <module>rest-war</module>

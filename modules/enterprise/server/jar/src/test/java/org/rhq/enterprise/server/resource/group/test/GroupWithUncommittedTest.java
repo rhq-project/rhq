@@ -24,7 +24,6 @@ import java.util.List;
 import javax.persistence.Query;
 
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.authz.Permission;
@@ -39,7 +38,6 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.test.LargeGroupTestBase;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -49,7 +47,6 @@ import org.rhq.enterprise.server.util.SessionTestHelper;
 public class GroupWithUncommittedTest extends LargeGroupTestBase {
 
     private static final boolean TESTS_ENABLED = true;
-    private ResourceGroupManagerLocal rgMgr;
     private LargeGroupEnvironment env;
 
     private class GroupAvailCounts {
@@ -77,11 +74,6 @@ public class GroupWithUncommittedTest extends LargeGroupTestBase {
     protected void setupMockAgentServices(TestServerCommunicationsService agentServiceContainer) {
     }
 
-    @BeforeMethod
-    public void getManagers() {
-        this.rgMgr = LookupUtil.getResourceGroupManager();
-    }
-
     /**
      * Remove the group and all its members.
      */
@@ -104,7 +96,8 @@ public class GroupWithUncommittedTest extends LargeGroupTestBase {
         SessionTestHelper.simulateLogin(env.normalSubject);
 
         // these queries were tweeked to filter uncommitted - see BZ 820981
-        PageList<ResourceGroupComposite> results = rgMgr.findResourceGroupComposites(env.normalSubject, null, null,
+        PageList<ResourceGroupComposite> results = resourceGroupManager.findResourceGroupComposites(env.normalSubject,
+            null, null,
             null, null, null, null, env.compatibleGroup.getId(), new PageControl(0, 50));
         int count = results.size();
         assert count == 1 : "results=" + results;
@@ -263,7 +256,7 @@ public class GroupWithUncommittedTest extends LargeGroupTestBase {
         assert resConfigCount == gac.visibleTotal;
         assert pluginConfigCount == gac.visibleTotal;
 
-        int groupSize = rgMgr.getExplicitGroupMemberCount(env.compatibleGroup.getId());
+        int groupSize = resourceGroupManager.getExplicitGroupMemberCount(env.compatibleGroup.getId());
         assert resConfigCount == groupSize;
         assert pluginConfigCount == groupSize;
 

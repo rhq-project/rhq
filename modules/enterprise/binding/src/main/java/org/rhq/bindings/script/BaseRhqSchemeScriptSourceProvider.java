@@ -31,19 +31,22 @@ import org.rhq.scripting.ScriptSourceProvider;
 public abstract class BaseRhqSchemeScriptSourceProvider implements ScriptSourceProvider {
 
     public static final String SCHEME = "rhq";
-
+    private final String authority;
+    
+    protected BaseRhqSchemeScriptSourceProvider(String expectedAuthority) {
+        this.authority = expectedAuthority;
+    }
+    
     @Override
     public Reader getScriptSource(URI scriptUri) {
         if (scriptUri == null || !SCHEME.equals(scriptUri.getScheme())) {
             return null;
         }
 
-        String path = scriptUri.getSchemeSpecificPart();
-
-        if (!path.startsWith("//")) {
+        if (!authority.equals(scriptUri.getAuthority())) {
             return null;
         }
-
+        
         return doGetScriptSource(scriptUri);
     }
 

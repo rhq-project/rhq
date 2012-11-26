@@ -171,6 +171,12 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
                 if (caught.getMessage().contains("SearchExpressionException")) {
                     Message message = new Message("Invalid search expression.", Message.Severity.Error);
                     CoreGUI.getMessageCenter().notify(message);
+                } else if (caught.getMessage().contains("PageList was passed an empty collection")) {
+                    // Because of bug 773626
+                    Log.warn(caught.getMessage());
+                    criteria.setPageControl(new PageControl(0, getDataPageSize()));
+                    executeFetch(request, response, criteria);
+                    return;
                 } else {
                     CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_loadFailed(), caught);
                 }

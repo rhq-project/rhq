@@ -101,8 +101,8 @@ public class ServerGroupComponent extends BaseComponent implements ContentFacet,
             ServerPluginConfiguration serverPluginConfig = getServerComponent().getServerPluginConfiguration();
             ASUploadConnection uploadConnection = new ASUploadConnection(serverPluginConfig.getHostname(),
                     serverPluginConfig.getPort(), serverPluginConfig.getUser(), serverPluginConfig.getPassword());
-            String fileName = details.getFileName();
-            OutputStream out = uploadConnection.getOutputStream(fileName);
+            String packageName = details.getName();
+            OutputStream out = uploadConnection.getOutputStream(packageName);
             contentServices.downloadPackageBits(cctx, details.getKey(), out, false);
             JsonNode uploadResult = uploadConnection.finishUpload();
             if (uploadResult.has(OUTCOME)) {
@@ -113,7 +113,7 @@ public class ServerGroupComponent extends BaseComponent implements ContentFacet,
                     ASConnection connection = getASConnection();
 
                     Address deploymentsAddress = new Address();
-                    deploymentsAddress.add("deployment", fileName);
+                    deploymentsAddress.add("deployment", packageName);
                     Operation step1 = new Operation("add",deploymentsAddress);
 //                    step1.addAdditionalProperty("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));
                     List<Object> content = new ArrayList<Object>(1);
@@ -122,10 +122,10 @@ public class ServerGroupComponent extends BaseComponent implements ContentFacet,
                     content.add(contentValues);
                     step1.addAdditionalProperty("content",content);
 
-                    step1.addAdditionalProperty("name", fileName);
+                    step1.addAdditionalProperty("name", packageName);
 
                     Address serverGroupAddress = new Address(context.getResourceKey());
-                    serverGroupAddress.add("deployment", fileName);
+                    serverGroupAddress.add("deployment", packageName);
                     Operation step2 = new Operation("add",serverGroupAddress);
                     Operation step3 = new Operation("deploy",serverGroupAddress);
 

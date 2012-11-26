@@ -111,11 +111,11 @@ public class DriftSyncManager {
             synchronizer = synchronizerFactory.getRuntimeSynchronizer(driftMgr);
         }
 
-        syncConfigs(synchronizer, resourceIds);
+        syncDriftDefinitions(synchronizer, resourceIds);
         syncContent(synchronizer);
     }
 
-    private void syncConfigs(DriftSynchronizer synchronizer, Set<Integer> resourceIds) {
+    private void syncDriftDefinitions(DriftSynchronizer synchronizer, Set<Integer> resourceIds) {
         log.info("Starting server sync for drift definitions...");
         long startTime = System.currentTimeMillis();
 
@@ -127,15 +127,15 @@ public class DriftSyncManager {
         int totalAdded = 0;
 
         for (Integer resourceId : driftDefs.keySet()) {
-            Set<DriftDefinition> resourceConfigsOnServer = new TreeSet<DriftDefinition>(comparator);
-            resourceConfigsOnServer.addAll(driftDefs.get(resourceId));
+            Set<DriftDefinition> driftDefinitionsOnServer = new TreeSet<DriftDefinition>(comparator);
+            driftDefinitionsOnServer.addAll(driftDefs.get(resourceId));
 
             List<DriftDefinition> deletedDefs = synchronizer.getDeletedDefinitions(resourceId,
-                resourceConfigsOnServer);
+                driftDefinitionsOnServer);
             totalDeleted += deletedDefs.size();
             synchronizer.purgeFromLocalInventory(resourceId, deletedDefs);
 
-            List<DriftDefinition> addedDefs = synchronizer.getAddedDefinitions(resourceId, resourceConfigsOnServer);
+            List<DriftDefinition> addedDefs = synchronizer.getAddedDefinitions(resourceId, driftDefinitionsOnServer);
             totalAdded += addedDefs.size();
             synchronizer.addToLocalInventory(resourceId, addedDefs);
         }

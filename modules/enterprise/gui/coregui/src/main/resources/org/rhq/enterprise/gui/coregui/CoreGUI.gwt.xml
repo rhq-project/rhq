@@ -1,5 +1,5 @@
-<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.4.0//EN"
-    "http://google-web-toolkit.googlecode.com/svn/tags/2.4.0/distro-source/core/src/gwt-module.dtd">
+<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.5.0//EN"
+    "http://google-web-toolkit.googlecode.com/svn/tags/2.5.0/distro-source/core/src/gwt-module.dtd">
 
 <module>
 
@@ -10,11 +10,6 @@
 
     <inherits name='com.smartgwt.SmartGwt' />
     <inherits name="com.smartgwt.tools.SmartGwtTools"/>
-
-    <!-- TODO: Consider uncommenting this instead of enabling compression in Tomcat's server.xml once we upgrade to GWT
-               2.1 or later. -->
-    <!-- precompress .html, .js, and .css files -->
-    <!--<inherits name="com.google.gwt.precompress.Precompress"/>-->
 
 
     <inherits name='ca.nanometrics.gflot.GFlot'/>
@@ -39,6 +34,12 @@
         <when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
     </replace-with>
 
+    <!-- Special case for IE8 where upload onsubmit handlers need special registration code from other browsers -->
+    <replace-with class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImplIE8">
+        <when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
+        <when-property-is name="user.agent" value="ie8"/>
+    </replace-with>
+
 
     <generate-with class="org.rhq.enterprise.gui.coregui.user.rebind.rpc.TrackingServiceInterfaceProxyGenerator">
         <when-type-assignable class="com.google.gwt.user.client.rpc.RemoteService"/>
@@ -46,12 +47,10 @@
     
     <!-- External javascript libraries -->
     <!-- jquery.sparkline requires jquery. We don't explicitly provide jquery here because it is already
-         embedded in the GFlot JAR (the charting lib used for GraphPortlet).  Furthermore, GFlot 1.0.0 requires
-         its older, embedded version of jquery (1.3.2).  Fortunately, sparkline is compatible with this older version.
-         We will need to provide jquery explicitly (like the commented version below) if we remove GFlot.
-         <script src="/coregui/js/jquery-1.4.4.js"/>
+         embedded in the GFlot JAR (the charting lib used for GraphPortlet).  Furthermore, GFlot 2.4.2 requires
+         the version of jquery (1.7.2).
     -->
-    <script src="/coregui/js/jquery.sparkline-1.6.js"/>
+    <script src="/coregui/js/jquery.sparkline-2.0.min.js"/>    
 
     <!--
          Limit compilation to your preferred browser(s) to speed up compile time.
@@ -62,7 +61,6 @@
            ie9: IE9 (new support for IE9 with GWT 2.3.0+)
            gecko1_8: FF2 and later
            safari: Safari/Chrome
-           opera: Opera
 
          *NOTE*: Since we specify the meta "X-UA-Compatible: IE=IE8" HTTP header in CoreGUI.html, IE9 and later
                  will emulate IE8 (although the gwt IE9 js libs will still get loaded).

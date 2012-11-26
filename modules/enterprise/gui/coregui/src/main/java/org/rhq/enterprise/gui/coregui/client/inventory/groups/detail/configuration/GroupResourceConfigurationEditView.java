@@ -111,9 +111,8 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
                 save();
             }
         });
+        this.saveButton.disable();
         buttonbar.addMember(saveButton);
-        // The button bar will remain hidden until the configuration has been successfully loaded.
-        buttonbar.setVisible(false);
         return buttonbar;
     }
 
@@ -125,7 +124,7 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
         }
 
         this.refreshing = true;
-        this.saveButton.disable();
+        
         if (editor != null) {
             editor.destroy();
             removeMember(editor);
@@ -146,6 +145,7 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
             this.editor.addPropertyValueChangeListener(this);
             this.editor.setReadOnly(!this.resourcePermission.isConfigureWrite());
             addMember(this.editor);
+            addMember(createButtonBar());            
             this.refreshing = false; // when we get here, we know we are done the refresh
         }
     }
@@ -197,7 +197,6 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
                                             "The server did not return the configuration for one or more member resources.");
                                     }
                                     memberConfigurations.add(memberConfiguration);
-                                    addMember(createButtonBar());
                                 }
                                 initEditor();
                             }

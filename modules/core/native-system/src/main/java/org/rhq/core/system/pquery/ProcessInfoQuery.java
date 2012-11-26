@@ -22,13 +22,20 @@
   */
 package org.rhq.core.system.pquery;
 
+import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.system.NativeSystemInfo;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.pquery.Conditional.Qualifier;
@@ -182,10 +189,13 @@ import org.rhq.core.system.pquery.Conditional.Qualifier;
  * @author John Mazzitelli
  */
 public class ProcessInfoQuery {
+
+    private static final Log log = LogFactory.getLog(ProcessInfoQuery.class);
+
     /**
      * The map of all processes keyed on their pids.
      */
-    private Map<Long, ProcessInfo> allProcesses;
+    private final Map<Long, ProcessInfo> allProcesses;
 
     /**
      * Constructor for {@link ProcessInfoQuery} given an collection of process information that represents the processes
@@ -458,16 +468,22 @@ public class ProcessInfoQuery {
         String contents;
 
         try {
-            byte[] bytes = new byte[64]; // a pid file should never come close to being 64 bytes big
             FileInputStream fis = new FileInputStream(pidfileName);
+            BufferedReader br = new BufferedReader(new InputStreamReader(fis));
             try {
-                int count = fis.read(bytes);
-                contents = new String(bytes, 0, count);
+                contents = br.readLine();
+                if (contents == null) {
+                    throw new IOException("empty pid");
+                }
             } finally {
                 fis.close();
             }
-        } catch (Exception e) {
-            contents = "";
+        } catch (FileNotFoundException e) {
+            log.trace("pid not found");
+            return "";
+        } catch (IOException e) {
+            log.warn("unable to read pid file " + pidfileName, e);
+            return "";
         }
 
         return contents.trim();

@@ -307,8 +307,10 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         DriftServerPluginManager pluginMgr = getDriftServerPluginManager();
         Map<String, String> plugins = new HashMap<String, String>();
 
-        for (ServerPluginEnvironment env : pluginMgr.getPluginEnvironments()) {
-            plugins.put(env.getPluginKey().getPluginName(), env.getPluginDescriptor().getDisplayName());
+        if (pluginMgr != null) {
+            for (ServerPluginEnvironment env : pluginMgr.getPluginEnvironments()) {
+                plugins.put(env.getPluginKey().getPluginName(), env.getPluginDescriptor().getDisplayName());
+            }
         }
 
         return plugins;

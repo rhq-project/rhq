@@ -31,6 +31,7 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -42,6 +43,7 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.components.form.DateTimeFilterItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
@@ -61,6 +63,9 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
     private static final Criteria INITIAL_CRITERIA = new Criteria();
     private EntityContext context;
     private boolean hasWriteAccess;
+
+    protected DateTimeFilterItem startDateFilter;
+    protected DateTimeFilterItem endDateFilter;
 
     static {
         EventSeverity[] severityValues = EventSeverity.values();
@@ -123,7 +128,13 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
         final EnumSelectItem severityFilter = new EnumSelectItem(EventCompositeDatasource.FILTER_SEVERITIES, MSG
             .view_inventory_eventHistory_severityFilter(), EventSeverity.class, severities, severityIcons);
 
-        setFilterFormItems(sourceFilter, detailsFilter, severityFilter);
+        startDateFilter = new DateTimeFilterItem(DateTimeFilterItem.START_DATE_FILTER, MSG.filter_from_date() );
+        endDateFilter = new DateTimeFilterItem(DateTimeFilterItem.END_DATE_FILTER, MSG.filter_to_date());
+
+        SpacerItem spacerItem = new SpacerItem();
+        spacerItem.setColSpan(2);
+
+        setFilterFormItems(sourceFilter, detailsFilter, severityFilter, startDateFilter, spacerItem, endDateFilter);
     }
 
     @Override

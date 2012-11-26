@@ -26,6 +26,8 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.annotation.ejb.TransactionTimeout;
+
 import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
@@ -101,12 +103,40 @@ public class PluginManagerBean implements PluginManagerLocal {
 
     @Override
     public boolean isReadyForPurge(Plugin plugin) {
+        if (!isMarkedForPurge(plugin.getId())) {
+            if (log.isDebugEnabled()) {
+                log.debug(plugin + " is not ready to be purged. It has not been marked for purge.");
+            }
+            return false;
+        }
+
+        int resourceTypeCount = getResourceTypeCount(plugin);
+        if (resourceTypeCount > 0) {
+            if (log.isDebugEnabled()) {
+                log.debug(plugin + " is not ready to be purged. It still has " + resourceTypeCount +
+                    " resource types in the database.");
+            }
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean isMarkedForPurge(int pluginId) {
+        Plugin plugin = entityManager.find(Plugin.class, pluginId);
+        return plugin.getStatus() == PluginStatusType.DELETED && plugin.getCtime() == Plugin.PURGED;
+    }
+
+    private int getResourceTypeCount(Plugin plugin) {
         ResourceTypeCriteria criteria = new ResourceTypeCriteria();
         criteria.addFilterPluginName(plugin.getName());
         criteria.setRestriction(Criteria.Restriction.COUNT_ONLY);
-        PageList results = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(), criteria);
+        criteria.addFilterDeleted(null);
+        criteria.setStrict(true);
 
-        return results.getTotalSize() == 0;
+        PageList<ResourceType> types = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(), criteria);
+
+        return types.getTotalSize();
     }
 
     @Override
@@ -342,6 +372,14 @@ public class PluginManagerBean implements PluginManagerLocal {
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public void registerPlugin(Plugin plugin, PluginDescriptor pluginDescriptor, File pluginFile,
                                boolean forceUpdate) throws Exception {
+
+        if (isDeleted(plugin)) {
+            String msg = "A deleted version of " + plugin + " already exists in the database. The plugin cannot be " +
+                "installed until the deleted version is purged from the database.";
+            log.warn(msg);
+            throw new IllegalStateException(msg);
+        }
+
         log.debug("Registering " + plugin + "...");
         long startTime = System.currentTimeMillis();
 
@@ -374,6 +412,15 @@ public class PluginManagerBean implements PluginManagerLocal {
 
         long endTime = System.currentTimeMillis();
         log.debug("Finished registering " + plugin + " in " + (endTime - startTime) + " ms");
+    }
+
+    private boolean isDeleted(Plugin plugin) {
+        for (Plugin deletedPlugins : findAllDeletedPlugins()) {
+            if (deletedPlugins.equals(plugin)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -414,6 +461,7 @@ public class PluginManagerBean implements PluginManagerLocal {
     }
 
     @Override
+    @TransactionTimeout(1800)
     public boolean registerPluginTypes(String newPluginName, PluginDescriptor pluginDescriptor, boolean newOrUpdated,
         boolean forceUpdate) throws Exception {
         boolean typesUpdated = false;

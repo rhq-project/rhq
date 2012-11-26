@@ -60,6 +60,8 @@ public class DownloadsView extends LocatableVLayout {
     private SectionStackSection bundleSection;
     private SectionStackSection connectorsSection;
     private SectionStackSection cliAlertScriptsSection;
+    private SectionStackSection scriptModulesSection;
+    
     private ProductInfo productInfo;
 
     public DownloadsView(String locatorId) {
@@ -81,18 +83,21 @@ public class DownloadsView extends LocatableVLayout {
         bundleSection = new SectionStackSection(MSG.view_admin_downloads_bundleDownload());
         connectorsSection = new SectionStackSection(MSG.view_admin_downloads_connectorsDownload());
         cliAlertScriptsSection = new SectionStackSection(MSG.view_admin_downloads_cliAlertScriptsDownload());
+        scriptModulesSection = new SectionStackSection(MSG.view_admin_downloads_scriptModulesDownload());
         
         agentSection.setExpanded(false);
         cliSection.setExpanded(false);
         bundleSection.setExpanded(false);
         connectorsSection.setExpanded(false);
         cliAlertScriptsSection.setExpanded(false);
+        scriptModulesSection.setExpanded(false);
         
         sectionStack.addSection(agentSection);
         sectionStack.addSection(cliSection);
         sectionStack.addSection(bundleSection);
         sectionStack.addSection(connectorsSection);
         sectionStack.addSection(cliAlertScriptsSection);
+        sectionStack.addSection(scriptModulesSection);
         
         addMember(sectionStack);
     }
@@ -106,6 +111,7 @@ public class DownloadsView extends LocatableVLayout {
         prepareBundleSection();
         prepareConnectorsSection();
         prepareCliAlertScriptsSection();
+        prepareScriptModulesSection();
     }
 
     private void prepareAgentSection() {
@@ -349,6 +355,57 @@ public class DownloadsView extends LocatableVLayout {
             @Override
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_admin_downloads_cliAlertScripts_loadError(), caught);
+            }
+        });
+    }
+
+    private void prepareScriptModulesSection() {
+        systemManager.getScriptModulesDownloads(new AsyncCallback<HashMap<String, String>>() {
+
+            @Override
+            public void onSuccess(HashMap<String, String> result) {
+                LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("scriptModules"));
+                form.setMargin(10);
+                form.setWidth100();
+
+                if (result != null && !result.isEmpty()) {
+                    int i = 0;
+                    FormItem[] items = new FormItem[result.size() + 2];
+
+                    for (Map.Entry<String, String> entry : result.entrySet()) {
+                        StaticTextItem linkItem = new StaticTextItem("link" + i);
+                        linkItem.setTitle(MSG.common_label_link());
+                        linkItem.setValue("<a href=\"" + entry.getValue() + "\">" + entry.getKey() + "</a>");
+                        items[i++] = linkItem;
+                    }
+
+                    SpacerItem spacerItem = new SpacerItem("spacer");
+                    spacerItem.setHeight(5);
+                    items[i++] = spacerItem;
+
+                    StaticTextItem helpText = new StaticTextItem("scriptModulesHelp");
+                    helpText.setColSpan(2);
+                    helpText.setShowTitle(false);
+                    helpText.setValue(MSG.view_admin_downloads_scriptModules_help());
+                    items[i++] = helpText;
+
+                    form.setItems(items);
+                } else {
+                    StaticTextItem item = new StaticTextItem("noScriptModules");
+                    item.setColSpan(2);
+                    item.setShowTitle(false);
+                    item.setValue(MSG.view_admin_downloads_scriptModules_none());
+                    form.setItems(item);
+                }
+
+                scriptModulesSection.setItems(form);
+                scriptModulesSection.setExpanded(true);
+                sectionStack.markForRedraw();
+            }
+            
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_admin_downloads_scriptModules_loadError(), caught);
             }
         });
     }

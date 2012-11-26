@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.rhq</groupId>
         <artifactId>rhq-parent</artifactId>
-        <version>4.5.0-SNAPSHOT</version>
+        <version>4.6.0-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -60,19 +60,34 @@
     <profiles>
         <profile>
             <id>integration-tests</id>
+            <activation>
+               <property>
+                  <name>integration.tests</name>
+               </property>
+            </activation>
+            
             <modules>
                 <module>apache-plugin-test</module>
                 <module>jndi-access</module>
                 <!--<module>mod_cluster-plugin-test</module>-->
+                <!--<module>rest-api</module>-->
             </modules>
         </profile>
+        
         <profile>
-            <id>as7-integration-test</id>
-            <!-- this one is separate from others, requires special setup -->
-            <modules>
-                <module>jboss-as-7-plugin-test</module>
-            </modules>
-        </profile>
+           <id>code-coverage</id>
+           <activation>
+              <property>
+                 <name>code-coverage</name>
+              </property>
+           </activation>
+           <modules>
+              <module>apache-plugin-test</module>
+              <module>jndi-access</module>
+              <!--<module>mod_cluster-plugin-test</module>-->
+              <!--<module>rest-api</module>-->
+           </modules>
+        </profile> 
     </profiles>
 
 

@@ -198,7 +198,7 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
     }
 
     @Override
-    protected void commitAlertDefinition(final AlertDefinition alertDefinition, boolean purgeInternals) {
+    protected void commitAlertDefinition(final AlertDefinition alertDefinition, boolean purgeInternals, final AsyncCallback<AlertDefinition> resultReceiver) {
         if (alertDefinition.getId() == 0) {
             GWTServiceLookup.getGroupAlertDefinitionService().createGroupAlertDefinitions(alertDefinition,
                 Integer.valueOf(this.group.getId()), new AsyncCallback<Integer>() {
@@ -208,11 +208,13 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
                             new Message(MSG.view_alert_definitions_create_success(), Severity.Info));
                         alertDefinition.setId(result.intValue());
                         GroupAlertDefinitionsView.this.refresh();
+                        resultReceiver.onSuccess(alertDefinition);
                     }
 
                     @Override
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_create_failure(), caught);
+                        resultReceiver.onFailure(caught);
                     }
                 });
         } else {
@@ -224,11 +226,13 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_alert_definitions_update_success(), Severity.Info));
                         GroupAlertDefinitionsView.this.refresh();
+                        resultReceiver.onSuccess(result);
                     }
 
                     @Override
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_update_failure(), caught);
+                        resultReceiver.onFailure(caught);
                     }
                 });
         }

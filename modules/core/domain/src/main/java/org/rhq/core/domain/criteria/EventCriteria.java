@@ -53,6 +53,7 @@ public class EventCriteria extends Criteria {
     private Integer filterResourceGroupId; // requires overrides
     private Integer filterAutoGroupResourceTypeId; // requires overrides
     private Integer filterAutoGroupParentResourceId; // requires overrides
+    private Integer filterSourceId; // requires overrides
 
     private boolean fetchSource;
 
@@ -61,6 +62,7 @@ public class EventCriteria extends Criteria {
 
     public EventCriteria() {
         filterOverrides.put("sourceName", "source.location like ?");
+        filterOverrides.put("sourceId","source.id = ?");
         filterOverrides.put("startTime", "timestamp >= ?");
         filterOverrides.put("endTime", "timestamp <= ?");
         filterOverrides.put("resourceId", "source.resourceId = ?");
@@ -97,6 +99,10 @@ public class EventCriteria extends Criteria {
 
     public void addFilterSourceName(String filterSourceName) {
         this.filterSourceName = filterSourceName;
+    }
+
+    public void addFilterSourceId(Integer sourceId) {
+        this.filterSourceId = sourceId;
     }
 
     public void addFilterStartTime(Long filterStartTime) {

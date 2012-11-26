@@ -1,13 +1,9 @@
 package org.rhq.enterprise.gui.test;
 
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.Name;
-import org.jboss.seam.annotations.Scope;
-
 import org.rhq.core.gui.util.FacesContextUtility;
 
-@Scope(ScopeType.PAGE)
-@Name("TestDynamicRenderingUIBean")
+//@Scope(ScopeType.PAGE)
+//@Name("TestDynamicRenderingUIBean")
 public class TestDynamicRenderingUIBean {
     private final static String childOne = "/rhq/test/rerender/child-1.xhtml";
     private final static String childTwo = "/rhq/test/rerender/child-2.xhtml";

@@ -41,6 +41,7 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementCategory;
@@ -88,7 +89,7 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
     private MeasurementSchedule schedule1, schedule2, schedule3;
     private ResourceType theResourceType;
     private Agent theAgent;
-    private Set<MeasurementData> expectedResult1, expectedResult2, expectedResult3;
+    private Set<MeasurementData> expectedResult1, expectedResult2, expectedResult3, expectedResult4;
 
     @BeforeMethod
     public void beforeMethod() {
@@ -363,12 +364,15 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
         long time1 = System.currentTimeMillis();
         long time2 = time1 + 1;
         long time3 = time2 + 1;
+        long time4 = time3 + 1;
         String name1 = "a";
         String name2 = "b";
         String name3 = "c";
+        String name4 = "d";
         String value1 = "test-value1";
         String value2 = "test-value2";
         String value3 = "test-value3";
+        String value4 = "test-value4";
 
         // method findLiveDataForGroup adds prefix with resource id which is part of equals
         MeasurementData expectedData1 = makeMeasurement(time1, schedule1.getId(), value1, name1);
@@ -377,6 +381,8 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
         expectedData2.setName(resource2.getId() + ":" + name2);
         MeasurementData expectedData3 = makeMeasurement(time3, schedule3.getId(), value3, name3);
         expectedData3.setName(resource2.getId() + ":" + name3);
+        MeasurementData expectedData4 = makeMeasurement(time4, schedule2.getId(), value4, name4);
+        expectedData4.setName(resource2.getId() + ":" + name4);
 
         expectedResult1 = new HashSet<MeasurementData>(1);
         expectedResult1.add(expectedData1);
@@ -386,6 +392,9 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
         expectedResult3 = new HashSet<MeasurementData>(3);
         expectedResult3.addAll(expectedResult1);
         expectedResult3.addAll(expectedResult2);
+        expectedResult4 = new HashSet<MeasurementData>(2);
+        expectedResult4.add(expectedData2);
+        expectedResult4.add(expectedData4);
 
         // mock the MeasurementAgentService
         MeasurementAgentService mockedMeasurementService = mock(MeasurementAgentService.class);
@@ -475,6 +484,238 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
             // ok, it was expected
         }
     }
+    
+    @Test
+    public void testAddAndFindTrait1() throws Exception {
+        // prepare DB
+        EntityManager em = beginTx();
+        setupGroupOfResources(em);
+        commitAndClose(em);
+        try {
+            Set<MeasurementDataTrait> expectedResult = new HashSet<MeasurementDataTrait>();
+            for (MeasurementData data : expectedResult1) {
+                data.setName(null);
+                expectedResult.add((MeasurementDataTrait) data);
+            }
+            // add the trait data (it stores it in db (without name field))
+            measurementDataManager.addTraitData(expectedResult);
+            
+            // get back the trait data
+            List<MeasurementDataTrait> actualResult = measurementDataManager.findTraits(overlord, resource1.getId(), definitionCt1.getId());
+
+            Set<MeasurementData> actualResultSet = new HashSet<MeasurementData>(actualResult);
+            assertEquals(expectedResult, actualResultSet);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+            throw e;
+        }
+    }
+    
+    @Test
+    public void testAddAndFindTrait2() throws Exception {
+        // prepare DB
+        EntityManager em = beginTx();
+        setupGroupOfResources(em);
+        commitAndClose(em);
+        try {
+            Set<MeasurementDataTrait> expectedResult = new HashSet<MeasurementDataTrait>();
+            for (MeasurementData data : expectedResult4) {
+                data.setName(null);
+                expectedResult.add((MeasurementDataTrait) data);
+            }
+            // add the trait data (it stores it in db (without name field))
+            measurementDataManager.addTraitData(expectedResult);
+            
+            // get back the trait data
+            List<MeasurementDataTrait> actualResult = measurementDataManager.findTraits(overlord, resource2.getId(), definitionCt2.getId());
+
+            Set<MeasurementData> actualResultSet = new HashSet<MeasurementData>(actualResult);
+            assertEquals(expectedResult, actualResultSet);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+            throw e;
+        }
+    }
+    
+    @Test
+    public void testAddAndFindTrait3() throws Exception {
+        // prepare DB
+        EntityManager em = beginTx();
+        setupGroupOfResources(em);
+        commitAndClose(em);
+        try {
+            Set<MeasurementDataTrait> traitsData = new HashSet<MeasurementDataTrait>();
+            Set<MeasurementDataTrait> expectedResult = new HashSet<MeasurementDataTrait>();
+            for (MeasurementData data : expectedResult2) {
+                data.setName(null);
+                traitsData.add((MeasurementDataTrait) data);
+                if (data.getScheduleId() == schedule2.getId()){
+                    expectedResult.add((MeasurementDataTrait) data);
+                }
+            }
+            
+            // add the trait data (it stores it in db (without name field))
+            measurementDataManager.addTraitData(traitsData);
+            
+            // get back the trait data
+            List<MeasurementDataTrait> actualResult = measurementDataManager.findTraits(overlord, resource2.getId(), definitionCt2.getId());
+
+            Set<MeasurementData> actualResultSet = new HashSet<MeasurementData>(actualResult);
+            assertEquals(expectedResult, actualResultSet);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+            throw e;
+        }
+    }
+    
+    @Test
+    public void testFindNonExistentTraitByResourceId() throws Exception {
+        // prepare DB
+        EntityManager em = beginTx();
+        setupGroupOfResources(em);
+        commitAndClose(em);
+        try {            
+            // get back the trait data
+            List<MeasurementDataTrait> actualResult = measurementDataManager.findTraits(overlord, resource2.getId(), definitionCt2.getId());
+
+            Set<MeasurementData> actualResultSet = new HashSet<MeasurementData>(actualResult);
+            assertEquals(Collections.<MeasurementData> emptySet(), actualResultSet);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+            throw e;
+        }
+    }
+    
+    
+    /**
+     * This test tests more combination of criteria
+     * @throws Exception
+     */
+    @Test
+    public void testAddAndFindByCriteria() throws Exception {
+        // prepare DB
+        EntityManager em = beginTx();
+        setupGroupOfResources(em);
+        commitAndClose(em);
+        try {
+            Set<MeasurementDataTrait> expectedResult = new HashSet<MeasurementDataTrait>();
+            for (MeasurementData data : expectedResult1) {
+                data.setName(null);
+                expectedResult.add((MeasurementDataTrait) data);
+            }
+            // add the trait data (it stores it in db (without name field))
+            measurementDataManager.addTraitData(expectedResult);
+            
+            // get back the trait data by schedule id
+            MeasurementDataTraitCriteria criteria = new MeasurementDataTraitCriteria();
+            criteria.addFilterScheduleId(schedule1.getId());
+            List<MeasurementDataTrait> actualResult = measurementDataManager.findTraitsByCriteria(overlord, criteria);
+            Set<MeasurementData> actualResultSet = new HashSet<MeasurementData>(actualResult);
+            assertEquals(expectedResult, actualResultSet);
+            
+            // get back the trait data by resource id
+            criteria = new MeasurementDataTraitCriteria();
+            criteria.addFilterResourceId(resource1.getId());
+            actualResult = measurementDataManager.findTraitsByCriteria(overlord, criteria);
+            actualResultSet = new HashSet<MeasurementData>(actualResult);
+            assertEquals(expectedResult, actualResultSet);
+            
+            // get back the trait data by schedule id and resource id 
+            criteria = new MeasurementDataTraitCriteria();
+            criteria.addFilterScheduleId(schedule1.getId());
+            criteria.addFilterResourceId(resource1.getId());
+            actualResult = measurementDataManager.findTraitsByCriteria(overlord, criteria);
+            actualResultSet = new HashSet<MeasurementData>(actualResult);
+            assertEquals(expectedResult, actualResultSet);
+            
+            // get back the trait data by wrong schedule id
+            criteria = new MeasurementDataTraitCriteria();
+            criteria.addFilterScheduleId(Integer.MIN_VALUE);
+            actualResult = measurementDataManager.findTraitsByCriteria(overlord, criteria);
+            assertTrue(actualResult.isEmpty());
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+            throw e;
+        }
+    }
+    
+    @Test
+    public void testAddAndFindCurrentTraitByResourceId() throws Exception {
+        // prepare DB
+        EntityManager em = beginTx();
+        setupGroupOfResources(em);
+        commitAndClose(em);
+        try {
+            // get back the trait data
+            List<MeasurementDataTrait> actualResult = measurementDataManager.findCurrentTraitsForResource(overlord, resource1.getId(), null);
+            assertTrue(actualResult.isEmpty());
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+            throw e;
+        }
+    }
+    
+    
+    @Test
+    public void testAddAndFindCurrentTraitByResourceIdAcrossMoreSchedules() throws Exception {
+        // prepare DB
+        EntityManager em = beginTx();
+        setupGroupOfResources(em);
+        commitAndClose(em);
+        try {
+            Set<MeasurementDataTrait> expectedResult = new HashSet<MeasurementDataTrait>();
+            for (MeasurementData data : expectedResult2) {
+                data.setName(null);
+                expectedResult.add((MeasurementDataTrait) data);
+            }
+            // add the trait data (it stores it in db (without name field))
+            measurementDataManager.addTraitData(expectedResult);
+            
+            // get back the trait data
+            List<MeasurementDataTrait> actualResult = measurementDataManager.findCurrentTraitsForResource(overlord, resource2.getId(), null);
+
+            Set<MeasurementData> actualResultSet = new HashSet<MeasurementData>(actualResult);
+            assertEquals(expectedResult, actualResultSet);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+            throw e;
+        }
+    }
+    
+    @Test
+    public void testFindNonExistentCurrentTraitByResourceId() throws Exception {
+        // prepare DB
+        EntityManager em = beginTx();
+        setupGroupOfResources(em);
+        commitAndClose(em);
+        try {
+            Set<MeasurementDataTrait> expectedResult = new HashSet<MeasurementDataTrait>();
+            for (MeasurementData data : expectedResult2) {
+                data.setName(null);
+                expectedResult.add((MeasurementDataTrait) data);
+            }
+            // add the trait data (it stores it in db (without name field))
+            measurementDataManager.addTraitData(expectedResult);
+            
+            // get back the trait data
+            List<MeasurementDataTrait> actualResult = measurementDataManager.findCurrentTraitsForResource(overlord, resource2.getId(), null);
+
+            Set<MeasurementData> actualResultSet = new HashSet<MeasurementData>(actualResult);
+            assertEquals(expectedResult, actualResultSet);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+            throw e;
+        }
+    }
+    
 
     private MeasurementData makeMeasurement(long time, int scheduleId, String value, String name) {
         MeasurementData measurement = new MeasurementDataTrait(new MeasurementDataPK(time, scheduleId), value);

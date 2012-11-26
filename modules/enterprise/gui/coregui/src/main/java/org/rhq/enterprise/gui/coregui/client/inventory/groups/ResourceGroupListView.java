@@ -211,7 +211,14 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
             addTableAction(extendLocatorId("New"), MSG.common_button_new(), new AuthorizedTableAction(this,
                 Permission.MANAGE_INVENTORY) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    new GroupCreateWizard(ResourceGroupListView.this).startWizard();
+                    GroupCategory category = null;
+                    String categoryString = getInitialCriteria() == null ? null : getInitialCriteria().getAttribute(
+                        ResourceGroupDataSourceField.CATEGORY.propertyName());
+                    if (categoryString != null) {
+                        category = GroupCategory.COMPATIBLE.name().equals(categoryString) ? GroupCategory.COMPATIBLE : GroupCategory.MIXED;
+                    }
+                    
+                    new GroupCreateWizard(ResourceGroupListView.this, category).startWizard();
                     // we can refresh the table buttons immediately since the wizard is a dialog, the
                     // user can't access enabled buttons anyway.
                     ResourceGroupListView.this.refreshTableInfo();

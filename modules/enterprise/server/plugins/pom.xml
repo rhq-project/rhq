@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>4.5.0-SNAPSHOT</version>
+      <version>4.6.0-SNAPSHOT</version>
       <relativePath>../../../../pom.xml</relativePath>
    </parent>
 
@@ -74,11 +74,18 @@
     <module>alert-log4j</module>
     <module>cobbler</module>
     <module>drift-rhq</module>
+    <!--
+      Taking this out of the build since it has failing tests on master and
+      because we are not and will never support mongodb as a back end for
+      drift. This module is a prime candidate to be moved to a separate repo
+      outside of the main rhq source tree.
+
+      jsanda
     <module>drift-mongodb</module>
+    -->
     <module>filetemplate-bundle</module>
     <module>ant-bundle</module>
     <module>validate-all-serverplugins</module>
-    <module>groovy-script</module>
     <module>packagetype-cli</module>
   </modules>
 

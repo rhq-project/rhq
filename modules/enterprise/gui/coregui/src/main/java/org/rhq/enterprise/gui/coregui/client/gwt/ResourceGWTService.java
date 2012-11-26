@@ -70,6 +70,9 @@ public interface ResourceGWTService extends RemoteService {
 
     PageList<Resource> findResourcesByCriteria(ResourceCriteria criteria) throws RuntimeException;
 
+    List<Resource> findResourcesByCriteriaBounded(ResourceCriteria criteria, int maxResources, int maxResourcesByType)
+        throws RuntimeException;
+
     PageList<ResourceComposite> findResourceCompositesByCriteria(ResourceCriteria criteria) throws RuntimeException;
 
     List<ResourceError> findResourceErrors(int resourceId) throws RuntimeException;

@@ -34,10 +34,8 @@ import org.testng.annotations.Test;
 @Test
 public class ProcessExecTest {
     public void testProcessExecOutputStream() {
-        int tries = 0;
-
-        while (true) {
-            tries++;
+        // run multiple times to ensure race condition fixed
+        for (int i = 0; i < 100; i++) {
             ProcessToStart start = new ProcessToStart();
 
             setupProgram(start);
@@ -52,16 +50,8 @@ public class ProcessExecTest {
             assert results.getError() == null : "Should not have failed: " + results;
             assert results.getExitCode() != null : "Should have had exit code: " + results;
 
-            // there are some times when we can't get the output - see comments in ProcessExecutor.startProgram
-            // if we failed to get the output this time, let's try again.  This is just allowing that rare
-            // condition to occur in our test - I know of no way via the Java API to avoid it, so let's not
-            // fail our test just because it happened once (but do fail if we can't get the output after so many tries)
             byte[] output = baos.toByteArray();
-            if (output.length > 0) {
-                return; // we did get output so everything succeeded! we can pass the test now and just return
-            }
-
-            if (tries >= 3) {
+            if (output.length == 0) {
                 assert false : "Should have had some output: " + results;
             }
         }

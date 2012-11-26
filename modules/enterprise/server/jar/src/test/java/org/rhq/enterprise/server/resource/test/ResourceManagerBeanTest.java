@@ -113,102 +113,89 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
         assert errors.size() == 0;
     }
 
-
     public void testResourceLineage() throws Exception {
-       // given a resource id for the leaf resource in a resource hierarchy
-       int leafResourceId = givenASampleResourceHierarchy();
+        // given a resource id for the leaf resource in a resource hierarchy
+        int leafResourceId = givenASampleResourceHierarchy();
 
-    	// when
-    	List<Resource> resourceLineage = resourceManager.getResourceLineage(leafResourceId);
+        // when
+        List<Resource> resourceLineage = resourceManager.getResourceLineage(leafResourceId);
 
         assertEquals(resourceLineage.size(), 4);
-        
-    	// then
-    	StringBuilder stringBuilder = new StringBuilder();
-    	for (Resource resource : resourceLineage) {
-			stringBuilder.append(resource.getName());
-			if (resourceLineage.indexOf(resource) != resourceLineage.size() - 1) {
-				stringBuilder.append("::");
-			}
-		}
-    	System.err.println(stringBuilder.toString());
+
+        // then
+        StringBuilder stringBuilder = new StringBuilder();
+        for (Resource resource : resourceLineage) {
+            stringBuilder.append(resource.getName());
+            if (resourceLineage.indexOf(resource) != resourceLineage.size() - 1) {
+                stringBuilder.append("::");
+            }
+        }
+        System.err.println(stringBuilder.toString());
 
         // cleanup the DB
-        for (int i = resourceLineage.size() - 1; i >=0; i--) {
+        for (int i = resourceLineage.size() - 1; i >= 0; i--) {
             deleteNewResourceAgentResourceType(resourceLineage.get(i));
         }
     }
 
-	private int givenASampleResourceHierarchy() throws NotSupportedException,
-			SystemException {
-		getTransactionManager().begin();
-    	EntityManager em = getEntityManager();
-    	int leafResourceId = 0;
-    	try {
-			ResourceType platformType = createResourceType(em, "platform"
-					+ System.currentTimeMillis(), "test", null,
-					ResourceCategory.PLATFORM);
-			ResourceType appserverType = createResourceType(em, "jboss AS 5"
-					+ System.currentTimeMillis(), "jbossas5", platformType,
-					ResourceCategory.SERVER);
-			ResourceType jvmType = createResourceType(em,
-					"JVM" + System.currentTimeMillis(), "jbossas5",
-					appserverType, ResourceCategory.SERVICE);
-			ResourceType memType = createResourceType(em, "Memory Subsystem"
-					+ System.currentTimeMillis(), "jbossas5", jvmType,
-					ResourceCategory.SERVICE);
-			Agent agent = new Agent("agent" + System.currentTimeMillis(), "host" + System.currentTimeMillis(), 1, "",
+    private int givenASampleResourceHierarchy() throws NotSupportedException, SystemException {
+        getTransactionManager().begin();
+        EntityManager em = getEntityManager();
+        int leafResourceId = 0;
+        try {
+            ResourceType platformType = createResourceType(em, "platform" + System.currentTimeMillis(), "test", null,
+                ResourceCategory.PLATFORM);
+            ResourceType appserverType = createResourceType(em, "jboss AS 5" + System.currentTimeMillis(), "jbossas5",
+                platformType, ResourceCategory.SERVER);
+            ResourceType jvmType = createResourceType(em, "JVM" + System.currentTimeMillis(), "jbossas5",
+                appserverType, ResourceCategory.SERVICE);
+            ResourceType memType = createResourceType(em, "Memory Subsystem" + System.currentTimeMillis(), "jbossas5",
+                jvmType, ResourceCategory.SERVICE);
+            Agent agent = new Agent("agent" + System.currentTimeMillis(), "host" + System.currentTimeMillis(), 1, "",
                 "token" + System.currentTimeMillis());
-			em.persist(agent);
-			em.flush();
+            em.persist(agent);
+            em.flush();
 
-			Resource platform = createResource(em, platformType, agent,
-					"platformKey" + System.currentTimeMillis(),
-					"host.dev.corp", null);
-			Resource appserver = createResource(em, appserverType, agent,
-					"JEAP" + System.currentTimeMillis(), "JBOSS EAP 5.1.1",
-					platform);
-			Resource jvm = createResource(em, jvmType, agent, "jvm"
-					+ System.currentTimeMillis(), "JBoss AS JVM", appserver);
-			Resource memSubystem = createResource(em, memType, agent,
-					"mem" + System.currentTimeMillis(), "Memory Subsystem", jvm);
-			leafResourceId = memSubystem.getId();
+            Resource platform = createResource(em, platformType, agent, "platformKey" + System.currentTimeMillis(),
+                "host.dev.corp", null);
+            Resource appserver = createResource(em, appserverType, agent, "JEAP" + System.currentTimeMillis(),
+                "JBOSS EAP 5.1.1", platform);
+            Resource jvm = createResource(em, jvmType, agent, "jvm" + System.currentTimeMillis(), "JBoss AS JVM",
+                appserver);
+            Resource memSubystem = createResource(em, memType, agent, "mem" + System.currentTimeMillis(),
+                "Memory Subsystem", jvm);
+            leafResourceId = memSubystem.getId();
 
-			getTransactionManager().commit();
-		} catch (Exception e) {
-			try {
+            getTransactionManager().commit();
+        } catch (Exception e) {
+            try {
                 System.out.println("CANNOT Prepare TEST: Cause: " + e);
                 getTransactionManager().rollback();
             } catch (Exception ignore) {
             }
-		} finally {
-			em.close();
-		}
-		return leafResourceId;
-	}
+        } finally {
+            em.close();
+        }
+        return leafResourceId;
+    }
 
-	private Resource createResource(EntityManager em, ResourceType platformType,
-			Agent agent, String resourceKey, String resourceName,
-			Resource parent) {
-		Resource resource = new Resource(resourceKey, resourceName, platformType);
+    private Resource createResource(EntityManager em, ResourceType platformType, Agent agent, String resourceKey,
+        String resourceName, Resource parent) {
+        Resource resource = new Resource(resourceKey, resourceName, platformType);
         resource.setUuid(UUID.randomUUID().toString());
         resource.setAgent(agent);
         resource.setParentResource(parent);
         em.persist(resource);
         return resource;
-	}
+    }
 
-
-	private ResourceType createResourceType(EntityManager em, String name,
-			String pluginName, ResourceType parentResourceType,
-			ResourceCategory resourceCategory) {
-		ResourceType platformType = new ResourceType(name, pluginName,
-    			resourceCategory, parentResourceType);
-    	ResourceType resourceType = platformType;
-    	em.persist(resourceType);
-		return resourceType;
-	}
-
+    private ResourceType createResourceType(EntityManager em, String name, String pluginName,
+        ResourceType parentResourceType, ResourceCategory resourceCategory) {
+        ResourceType platformType = new ResourceType(name, pluginName, resourceCategory, parentResourceType);
+        ResourceType resourceType = platformType;
+        em.persist(resourceType);
+        return resourceType;
+    }
 
     private Resource createNewResourceWithNewType() throws Exception {
         getTransactionManager().begin();
@@ -257,7 +244,7 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
                     resourceManager.uninventoryResourceAsyncWork(superuser, deletedResourceId);
                 }
                 em.flush();
-                
+
                 ResourceType type = em.find(ResourceType.class, resource.getResourceType().getId());
                 System.out.println("Removing " + type + "...");
                 em.remove(type);

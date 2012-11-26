@@ -39,6 +39,7 @@ import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.apache.mapping.ApacheAugeasMapping;
 import org.rhq.plugins.apache.util.AugeasNodeSearch;
 
@@ -74,17 +75,14 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
             throw new IllegalStateException(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
         }
 
-        ApacheVirtualHostServiceComponent parentVirtualHost = resourceContext.getParentResourceComponent();
-
         AugeasComponent comp = getAugeas();
         try {
             AugeasTree tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
             ConfigurationDefinition resourceConfigDef =
                 resourceContext.getResourceType().getResourceConfigurationDefinition();
 
-            AugeasNode virtualHostNode = parentVirtualHost.getNode(tree);
             ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
-            return mapping.updateConfiguration(getNode(virtualHostNode), resourceConfigDef);
+            return mapping.updateConfiguration(getNode(tree), resourceConfigDef);
         } finally {
             comp.close();
         }
@@ -104,7 +102,7 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
             ConfigurationDefinition resourceConfigDef =
                 resourceContext.getResourceType().getResourceConfigurationDefinition();
             ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
-            AugeasNode directoryNode = getNode(tree.getRootNode());
+            AugeasNode directoryNode = getNode(tree);
             mapping.updateAugeas(directoryNode, report.getConfiguration(), resourceConfigDef);
             tree.save();
 
@@ -114,10 +112,12 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
             resourceContext.getParentResourceComponent().finishConfigurationUpdate(report);
         } catch (Exception e) {
             if (tree != null)
-                log.error("Augeas failed to save configuration " + tree.summarizeAugeasError());
+                log.error("Augeas failed to save configuration " + tree.summarizeAugeasError(), e);
             else
                 log.error("Augeas failed to save configuration", e);
             report.setStatus(ConfigurationUpdateStatus.FAILURE);
+            report.setErrorMessage("Augeas failed to save the configuration. "
+                + ThrowableUtil.getStackAsString(e));
         } finally {
             comp.close();
         }
@@ -128,15 +128,12 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
             throw new IllegalStateException(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
         }
 
-        ApacheVirtualHostServiceComponent parentVirtualHost = resourceContext.getParentResourceComponent();
-
         AugeasComponent comp = getAugeas();
 
         try {
             AugeasTree tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
-            AugeasNode virtualHostNode = parentVirtualHost.getNode(tree);
 
-            AugeasNode myNode = getNode(virtualHostNode);
+            AugeasNode myNode = getNode(tree);
 
             if (myNode != null) {
                 tree.removeNode(myNode, true);
@@ -156,24 +153,27 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
     }
 
     /**
-     * Gets the node from under given node corresponding to the Directory this
-     * component is managing.
+     * @deprecated do not use this unless you're absolutely sure you're passing in the right virtual host
+     * node. If you're not sure, use {@link #getNode(AugeasTree)} instead.
      * 
      * @param virtualHost
-     *            the node of the parent virtualHost (or root node of the augeas
-     *            tree)
      * @return
      */
+    @Deprecated
     public AugeasNode getNode(AugeasNode virtualHost) {
         AugeasNode directory = AugeasNodeSearch.findNodeById(virtualHost, resourceContext.getResourceKey());
 
         return directory;
     }
 
+    /**
+     * Gets the node of the Directory this component is managing from the augeas tree.
+     * 
+     * @param tree the augeas tree of the whole apache configuration
+     */
     public AugeasNode getNode(AugeasTree tree) {
-        ApacheVirtualHostServiceComponent virtHost = resourceContext.getParentResourceComponent();
         AugeasNode virtHostNode = resourceContext.getParentResourceComponent().getNode(tree);
-        return getNode(virtHostNode);
+        return AugeasNodeSearch.findNodeById(virtHostNode, resourceContext.getResourceKey());
     }
 
     public AugeasComponent getAugeas() {

@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>4.5.0-SNAPSHOT</version>
+    <version>4.6.0-SNAPSHOT</version>
     <relativePath>../../../../pom.xml</relativePath>
   </parent>
 
@@ -19,7 +19,7 @@
 
   <properties>
         <!-- dependency versions -->
-    <gwt.version>2.4.0</gwt.version>
+    <gwt.version>2.5.0</gwt.version>
     <smartgwt.version>3.0</smartgwt.version>
 
         <!--  If this is too much memory to allocate to your gwt:debug process then override this property in
@@ -38,22 +38,20 @@
          specify the gwt.userAgent property on the mvn command line (e.g. -Dgwt.userAgent=gecko1_8)
          or in your ~/.m2/settings.xml
 
-         As of GWT 2.4.0, the recognized agents (defined in
+         As of GWT 2.5.0, the recognized agents (defined in
          gwt-user.jar:com/google/gwt/user/UserAgent.gwt.xml) are as follows:
 
            ie9: IE9 (although for smartgwt we fallback to IE8)
            ie8: IE8
-           gecko: FF1 (NOTE: Support for this was dropped in GWT 2.1.)
            gecko1_8: FF2 and later
            safari: Safari/Chrome
-           opera: Opera
 
          *NOTE*: Since we specify the meta "X-UA-Compatible: IE=IE8" HTTP header in CoreGUI.html, IE9 and later
                  will emulate IE8.
          Multiple agents can be specified as a comma-delimited list, as demonstrated by the default
          value below.
         -->
-    <gwt.userAgent>ie8,ie9,gecko1_8,safari,opera</gwt.userAgent>
+    <gwt.userAgent>ie8,ie9,gecko1_8,safari</gwt.userAgent>
 
         <!-- Change this to "true" via the mvn command line or your ~/.m2/settings.xml to speed
              up gwt compilation. -->
@@ -143,9 +141,10 @@
              to provide jquery explcitly for jquery.sparkline support. See CoreGUI.gwt.xml for the jquery.sparkline
              declaration and coregui/webapp/js for the lib inclusion.) -->
     <dependency>
-      <groupId>ca.nanometrics</groupId>
+      <groupId>com.googlecode.gflot</groupId>
       <artifactId>gflot</artifactId>
-      <version>1.0.0</version>
+      <version>2.4.2</version>
+      <scope>provided</scope>
     </dependency>
 
 
@@ -279,12 +278,13 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>gwt-maven-plugin</artifactId>
-        <version>2.4.0</version>
+        <!-- Cant upgrade to 2.5.0 plugin because gwt dev mode doesnt autorefresh -->
+        <version>2.5.0</version>
         <configuration>
           <noServer>true</noServer>
           <inplace>false</inplace>
-                    <!-- <logLevel>INFO' -bindAddress 0.0.0.0 -logLevel 'INFO</logLevel> -->
-          <logLevel>INFO</logLevel>
+<!--          <logLevel>INFO' -bindAddress 0.0.0.0 -logLevel 'INFO</logLevel> -->
+          <logLevel>INFO</logLevel> 
           <runTarget>${coreGuiRunTarget}</runTarget>
           <extraJvmArgs>${gwt-plugin.extraJvmArgs}</extraJvmArgs>
           <localWorkers>${gwt-plugin.localWorkers}</localWorkers>

@@ -6,7 +6,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>4.5.0-SNAPSHOT</version>
+      <version>4.6.0-SNAPSHOT</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -162,17 +162,37 @@
                <module>enterprise/agent</module>
                <module>enterprise/comm</module>
                
-               <!-- These 6 are needed for the JNDI intergration tests -->
+               <!-- These are needed for the JNDI intergration tests -->
                <module>enterprise/server/container-lib</module>
                <module>enterprise/server/xml-schemas</module>
                <module>enterprise/server/safe-invoker</module>
                <module>enterprise/server/jar</module>
+               <module>enterprise/scripting/api</module>
+               <module>enterprise/scripting/javascript</module>
+               <module>enterprise/scripting/python</module>
                <module>enterprise/binding</module>
                <module>enterprise/server/client-api</module>
                
                <module>integration-tests</module>
            </modules>
        </profile>
+
+       <profile>
+          <id>code-coverage</id>
+          <activation>
+             <property>
+                <name>code-coverage</name>
+             </property>
+          </activation>
+          <modules>
+             <module>core</module>
+             <module>common</module>
+             <module>plugins</module>
+             <module>helpers</module>
+             <module>enterprise</module>
+             <module>integration-tests</module>
+          </modules>
+       </profile>         
    </profiles>
 
 </project>

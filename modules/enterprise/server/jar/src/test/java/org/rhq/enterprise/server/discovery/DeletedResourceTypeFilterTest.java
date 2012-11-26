@@ -1,5 +1,9 @@
 package org.rhq.enterprise.server.discovery;
 
+import static org.rhq.test.AssertUtils.assertCollectionEqualsNoOrder;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -7,27 +11,23 @@ import java.util.List;
 import java.util.Set;
 
 import org.jmock.Expectations;
-
-import org.rhq.core.domain.plugin.Plugin;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.Agent;
-import org.rhq.core.domain.shared.ResourceBuilder;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.shared.ResourceBuilder;
 import org.rhq.core.domain.shared.ResourceTypeBuilder;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.test.JMockTest;
-
-import static org.testng.Assert.*;
 
 public class DeletedResourceTypeFilterTest extends JMockTest {
 
@@ -74,8 +74,9 @@ public class DeletedResourceTypeFilterTest extends JMockTest {
 
         filter = new DeletedResourceTypeFilter(subjectMgr, resourceTypeMgr, pluginMgr);
 
-        assertTrue(filter.accept(report), "Expected report to be accepted when it does not contain any deleted " +
-            "resource types");
+        Set<ResourceType> staleTypes = filter.apply(report);
+        assertTrue(staleTypes.isEmpty(), "Expected filter to return empty set when report does not contain any " +
+            "deleted resource types, but filter returned " + staleTypes);
     }
 
     @Test
@@ -119,8 +120,10 @@ public class DeletedResourceTypeFilterTest extends JMockTest {
         }});
 
         filter = new DeletedResourceTypeFilter(subjectMgr, resourceTypeMgr, pluginMgr);
+        Set<ResourceType> staleTypes = filter.apply(report);
 
-        assertFalse(filter.accept(report), "Expected report to be rejected since it contains deleted resource types");
+        assertCollectionEqualsNoOrder(staleTypes, deletedTypes, "Expected report to be rejected since it contains " +
+            "deleted resource types");
     }
 
     @Test
@@ -157,7 +160,8 @@ public class DeletedResourceTypeFilterTest extends JMockTest {
 
         filter = new DeletedResourceTypeFilter(subjectMgr, resourceTypeMgr, pluginMgr);
 
-        assertFalse(filter.accept(report), "Expected report to be rejected since it contains a deleted plugin");
+        assertFalse(filter.apply(report).isEmpty(), "Expected filter to return non-empty since it contains a deleted " +
+            "plugin but empty set was returned");
     }
 
     InventoryReport createReport() {

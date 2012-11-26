@@ -182,7 +182,12 @@ public class JavascriptCompletor implements CodeCompletion {
 
             Map<String, List<Object>> matches = getContextMatches(output, baseObject, next);
             if (!matches.isEmpty()) {
-                Object rootObject = matches.get(next).get(0);
+                // BZ 871407 NPE on auto completion for javascript object
+                List<Object> nextList = matches.get(next);
+                if (nextList == null || nextList.isEmpty()) { 
+                    return -1;
+                }
+                Object rootObject = nextList.get(0);
                 if (rootObject instanceof PropertyDescriptor && !(baseObject instanceof Class)) {
                     try {
                         rootObject = invoke(baseObject, ((PropertyDescriptor) rootObject).getReadMethod());

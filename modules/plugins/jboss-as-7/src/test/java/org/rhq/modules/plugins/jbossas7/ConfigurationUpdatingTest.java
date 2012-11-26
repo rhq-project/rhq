@@ -59,7 +59,6 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
     public void test1() throws Exception {
 
         ConfigurationDefinition definition = loadDescriptor("simple1");
-
         FakeConnection connection = new FakeConnection();
 
         ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition, connection, null);
@@ -70,12 +69,22 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
 
-        assert cop.numberOfSteps() == 1;
-        Operation step1 = cop.step(0);
-        assert step1.getOperation().equals("write-attribute");
-        Map<String, Object> props = step1.getAdditionalProperties();
-        assert props.size() == 2;
+        Assert.assertEquals(cop.numberOfSteps(), 2);
 
+        for (int i = 0; i < cop.numberOfSteps(); i++) {
+            Operation step = cop.step(0);
+            Assert.assertEquals(step.getOperation(), "write-attribute");
+            Map<String, Object> stepProps = step.getAdditionalProperties();
+            Assert.assertEquals(stepProps.size(), 2);
+
+            if (stepProps.get("name").equals("needed")) {
+                Assert.assertEquals(stepProps.get("value"), "test");
+            } else if (stepProps.get("name").equals("optional")) {
+                Assert.assertEquals(stepProps.get("value"), null);
+            } else {
+                Assert.fail("Unexepected property found!");
+            }
+        }
     }
 
     public void test2() throws Exception {

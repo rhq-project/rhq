@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<differences>
+  <difference>
+      <className>org/rhq/core/pluginapi/inventory/ResourceContext</className>
+      <differenceType>7004</differenceType><!-- number of args changed -->
+      <method>ResourceContext(*)</method>
+      <justification>Instances of this class are provided by the API, it is not supposed to be instantiated by users.</justification>
+  </difference>
+  <difference>
+      <className>org/rhq/core/pluginapi/upgrade/ResourceUpgradeContext</className>
+      <differenceType>7004</differenceType><!-- number of args changed -->
+      <method>ResourceUpgradeContext(*)</method>
+      <justification>Instances of this class are provided by the API, it is not supposed to be instantiated by users.</justification>
+  </difference>
+</differences>

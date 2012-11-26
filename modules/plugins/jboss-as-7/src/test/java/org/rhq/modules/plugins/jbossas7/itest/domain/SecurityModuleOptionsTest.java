@@ -64,8 +64,8 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
 import org.rhq.test.arquillian.RunDiscovery;
 
 /**
- * Test exercising the subsystem=security/SecurityDomain/[Authentication(Classic|Jaspi), 
- * Authorization, Mapping, Audit, Acl, 
+ * Test exercising the subsystem=security/SecurityDomain/[Authentication(Classic|Jaspi),
+ * Authorization, Mapping, Audit, Acl,
  *      Identity-Trust]
  * @author Simeon Pinder
  */
@@ -130,7 +130,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
     /* This first discovery is only so that we can leverage existing code to install the management user needed
      * in next test.
      */
-    @Test(priority = 10, groups = "discovery")
+    @Test(priority = 1040, groups = "discovery")
     @RunDiscovery(discoverServices = true, discoverServers = true)
     public void firstDiscovery() throws Exception {
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
@@ -142,16 +142,16 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
         installManagementUsers();
     }
 
-    /** This method mass loads all the supported Module Option Types(Excluding authentication=jaspi, cannot co-exist with 
+    /** This method mass loads all the supported Module Option Types(Excluding authentication=jaspi, cannot co-exist with
      * authentication=classic) into a single SecurityDomain.  This is done as
-     * -i)creating all of the related hierarchy of types needed to exercise N Module Options Types and their associated 
+     * -i)creating all of the related hierarchy of types needed to exercise N Module Options Types and their associated
      *     Module Options instances would take too long to setup(N creates would signal N discovery runs before test could complete).
-     * -ii)setting the priority of this method lower than the discovery method means that we'll get all the same types in much 
+     * -ii)setting the priority of this method lower than the discovery method means that we'll get all the same types in much
      *     less time.
-     *     
+     *
      * @throws Exception
      */
-    @Test(priority = 11)
+    @Test(priority = 1041)
     public void loadStandardModuleOptionTypes() throws Exception {
         mapper = new ObjectMapper();
         mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -226,10 +226,10 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
     }
 
     /** Runs the second discovery run to load all the new types added.
-     * 
+     *
      * @throws Exception
      */
-    @Test(priority = 12, groups = "discovery")
+    @Test(priority = 1042, groups = "discovery")
     @RunDiscovery(discoverServices = true, discoverServers = true)
     public void secondDiscovery() throws Exception {
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
@@ -243,14 +243,14 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
 
     /** This test method exercises a number of things:
      *  - that the security-domain children loaded have been created successfully
-     *  - that all of the supported Module Option Type children(excluding 'authentication=jaspi') have been 
+     *  - that all of the supported Module Option Type children(excluding 'authentication=jaspi') have been
      *    discovered as AS7 types successfully.
      *  - that the correct child attribute was specified for each type //Ex. acl=classic -> acl-modules
-     *  - 
-     * 
+     *  -
+     *
      * @throws Exception
      */
-    @Test(priority = 13)
+    @Test(priority = 1043)
     public void testDiscoveredSecurityNodes() throws Exception {
         //lazy-load configurationManager
         if (testConfigurationManager == null) {
@@ -338,7 +338,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
             Configuration loadedOptionsConfiguration = testConfigurationManager
                 .loadResourceConfiguration(moduleOptionsResource.getId());
             for (String key : loadedOptionsConfiguration.getAllProperties().keySet()) {
-                //retrieve the open map of Module Options 
+                //retrieve the open map of Module Options
                 PropertyMap map = ((PropertyMap) loadedOptionsConfiguration.getAllProperties().get(key));
                 LinkedHashMap<String, Object> options = moduleOptionType.getOptions();
                 for (String optionKey : map.getMap().keySet()) {
@@ -359,7 +359,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
         }
     }
 
-    @Test(priority = 14)
+    @Test(priority = 1044)
     public void testCreateSecurityDomain() throws Exception {
         //get the root security resource
         securityResource = getResource();
@@ -387,7 +387,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
             + response.getErrorMessage();
     }
 
-    @Test(priority = 15)
+    @Test(priority = 1045)
     public void testAuthenticationClassic() throws Exception {
         //get the root security resource
         securityResource = getResource();
@@ -426,7 +426,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
             + response.getErrorMessage();
     }
 
-    @Test(priority = 16)
+    @Test(priority = 1046)
     public void testDeleteSecurityDomain() throws Exception {
         //get the root security resource
         securityResource = getResource();
@@ -477,7 +477,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
     }
 
     /** Automates hierarchy creation for Module Option type resources and their parents
-     * 
+     *
      * @param optionAttributeType
      * @return
      */
@@ -553,7 +553,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
     }
 
     /** Automates hierarchy creation for Module Option type resources and their parents
-     * 
+     *
      * @param optionAttributeType
      * @return
      */
@@ -624,10 +624,10 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
         return created;
     }
 
-    /** For each operation 
+    /** For each operation
      *   - will write verbose json and operation details to system.out if verboseOutput = true;
      *   - will execute the operation against running server if execute = true.
-     * 
+     *
      * @param op
      * @param execute
      * @param verboseOutput
@@ -664,7 +664,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
             }
         }
         if (verboseOutput) {
-            //result wrapper details 
+            //result wrapper details
             System.out.println("\tResult:" + result);
             //detailed results
             System.out.println("\tValue:" + result.getResult());

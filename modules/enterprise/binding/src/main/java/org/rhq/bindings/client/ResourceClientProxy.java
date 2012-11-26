@@ -491,10 +491,13 @@ public class ResourceClientProxy {
         public Configuration getResourceConfiguration() {
             if (!LazyLoadScenario.isShouldLoad())
                 return null;
-
-            return remoteClient.getProxy(ConfigurationManagerRemote.class).getResourceConfiguration(
-                remoteClient.getSubject(),
-                resourceClientProxy.resourceId);
+            
+            //make sure to fetch the latest known resource config. This ensures that
+            //the server goes out to the agent if there is no known config yet and thus
+            //giving the scripting user an always up-to-date info.
+            ResourceConfigurationUpdate update = remoteClient.getProxy(ConfigurationManagerRemote.class).getLatestResourceConfigurationUpdate(
+                remoteClient.getSubject(), resourceClientProxy.resourceId);
+            return update == null ? null : update.getConfiguration();
         }
 
         public ConfigurationDefinition getResourceConfigurationDefinition() {
@@ -573,19 +576,25 @@ public class ResourceClientProxy {
 
             InstalledPackage installedPackage = getBackingContent();
 
-            if (fileName == null )
-                fileName = installedPackage.getPackageVersion().getFileName();
-            
-            File file = new File(fileName);
+            if (installedPackage != null) {
+                if (fileName == null) {
+                    fileName = installedPackage.getPackageVersion().getFileName();
+                }
 
-            byte[] data = remoteClient.getProxy(ContentManagerRemote.class).getPackageBytes(
-                            remoteClient.getSubject(), resourceClientProxy.resourceId, installedPackage.getId());
+                File file = new File(fileName);
 
-            FileOutputStream fos = new FileOutputStream(file);
-            try {
-                fos.write(data);
-            } finally {
-                fos.close();
+                byte[] data = remoteClient.getProxy(ContentManagerRemote.class).getPackageBytes(
+                    remoteClient.getSubject(), resourceClientProxy.resourceId, installedPackage.getId());
+
+                FileOutputStream fos = new FileOutputStream(file);
+                try {
+                    fos.write(data);
+                } finally {
+                    fos.close();
+                }
+            } else {
+                throw new RuntimeException(
+                    "Content not available in the content repository. If you recently deployed content to this resource, then the content repository has not yet received the content or content information. The content for a resource is available only after the deployment and discovery process completes. Please try again in a few minutes.");
             }
         }
 

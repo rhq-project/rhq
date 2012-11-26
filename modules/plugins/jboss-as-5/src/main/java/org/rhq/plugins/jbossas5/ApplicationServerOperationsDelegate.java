@@ -402,9 +402,11 @@ public class ApplicationServerOperationsDelegate {
         ProcessExecutionResults results = systemInfo.executeProcess(processExecution);
         logExecutionResults(results);
 
-        if (results.getError() != null) {
-            throw new ExecutionFailedException("Error executing shutdown script while stopping AS instance. Exit code ["
-                + results.getExitCode() + "]: " + results.getError().getMessage(), results.getError());
+        if (results.getError() != null || results.getExitCode() != 0) {
+            throw new ExecutionFailedException(
+                "Error executing shutdown script while stopping AS instance. Shutdown script returned exit code ["
+                    + results.getExitCode() + "]"
+                    + (results.getError() != null ? ": " + results.getError().getMessage() : ""), results.getError());
         }
 
         return "The server has been shut down.";

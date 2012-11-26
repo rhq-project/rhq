@@ -21,7 +21,6 @@ package org.rhq.plugins.apache.augeas;
 
 import static org.testng.Assert.assertEquals;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -55,7 +54,6 @@ import org.rhq.plugins.apache.setup.ApacheTestConfiguration;
 import org.rhq.plugins.apache.setup.ApacheTestSetup;
 import org.rhq.plugins.apache.upgrade.UpgradeTestBase;
 import org.rhq.plugins.apache.util.ResourceTypes;
-import org.rhq.plugins.apache.util.ApacheExecutionUtil.ExpectedApacheState;
 import org.rhq.test.pc.PluginContainerSetup;
 import org.rhq.test.pc.PluginContainerTest;
 
@@ -104,6 +102,9 @@ public class AugeasReferenceLeakingTest extends BMNGRunner {
 
                 allowing(ss.getDiscoveryServerService()).mergeAvailabilityReport(with(any(AvailabilityReport.class)));
                 allowing(ss.getDiscoveryServerService()).postProcessNewlyCommittedResources(with(any(Set.class)));
+
+                allowing(ss.getDiscoveryServerService()).setResourceEnablement(with(any(int.class)),
+                    with(any(boolean.class)));
 
                 ignoring(ss.getBundleServerService());
                 ignoring(ss.getConfigurationServerService());
@@ -167,7 +168,9 @@ public class AugeasReferenceLeakingTest extends BMNGRunner {
             }
         };
 
-        setup = new ApacheTestSetup(apacheConfig.configurationName, PluginContainerTest.getCurrentMockContext(),
+        setup = new ApacheTestSetup(this.getClass().getSimpleName()
+            + "#testReadingConfigurationsDoesNotLeakAugeasReferences", apacheConfig.configurationName,
+            PluginContainerTest.getCurrentMockContext(),
             new ResourceTypes(PluginLocation.APACHE_PLUGIN));
 
         Resource platform = UpgradeTestBase.discoverPlatform();
@@ -184,7 +187,7 @@ public class AugeasReferenceLeakingTest extends BMNGRunner {
 
     private void stopApache() throws Exception {
         if (setup != null) {
-            setup.withApacheSetup().getExecutionUtil().invokeOperation(ExpectedApacheState.STOPPED, "stop");
+            setup.withApacheSetup().stopApache();
             setup = null;
         }
     }

@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>4.5.0-SNAPSHOT</version>
+      <version>4.6.0-SNAPSHOT</version>
       <relativePath>../../../../pom.xml</relativePath>
    </parent>
 
@@ -33,6 +33,13 @@
             <version>${project.version}</version>
       </dependency>
       
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>rhq-scripting-javascript</artifactId>
+         <version>${project.version}</version>
+         <scope>runtime</scope>
+      </dependency>
+            
       <dependency>
           <groupId>${project.groupId}</groupId>
           <artifactId>rhq-core-domain</artifactId>
@@ -131,6 +138,7 @@
                            <property name="persistence-api.version" value="${persistence-api.version}" />
                            <property name="rhq.client.build.exclude.cli.jar" value="${rhq.client.build.exclude.cli.jar}" />
                            <property name="rhq.client.build.include.client.jar" value="${rhq.client.build.include.client.jar}" />
+                           <property name="rhq.bundle-additional-script-languages" value="${rhq.bundle-additional-script-languages}"/>
                         </ant>
                      </target>
                   </configuration>
@@ -192,7 +200,7 @@
                   <configuration>
                      <excludedGroups>${rhq.testng.excludedGroups},ws</excludedGroups>
                      <forkMode>pertest</forkMode>
-                     <argLine>-Xmx512m -Xms128m</argLine>
+                     <argLine>${jacoco.unit-test.args} -Xmx512m -Xms128m</argLine>
                      <additionalClasspathElements>
 -->
                         <!-- The below is required for WS Java Client support -->
@@ -219,6 +227,25 @@
 
 
    <profiles>
+
+      <!-- NOTE: this profile HAS TO have the same activation policy as the profile with the same name in the root pom.xml of RHQ -->
+      <profile>
+         <id>bundle-additional-script-languages</id>
+         <activation>
+            <property>
+               <name>java.home</name>
+            </property>
+         </activation>
+
+         <dependencies>
+            <dependency>
+               <groupId>${project.groupId}</groupId>
+               <artifactId>rhq-scripting-python</artifactId>
+               <version>${project.version}</version>
+               <scope>runtime</scope>
+            </dependency>
+         </dependencies>
+      </profile>
 
       <!-- Unlike most of RHQ, this module requires JDK6, so replace the Java 5 bootclasspath that was added to the compiler args by the root POM with a bootclasspath based on the java.home sysprop (which should be Java 6 or later if the enforcer plugin did its job). -->
       <profile>
@@ -299,90 +326,6 @@
             </plugins>
          </build>
       </profile>
-      <profile>
-      <id>cobertura</id>
-      <activation>
-        <activeByDefault>false</activeByDefault>
-      </activation>
-        <build>
-         <plugins>
-           <plugin>
-             <artifactId>maven-antrun-plugin</artifactId>
-              <dependencies>
-               <dependency>
-                 <groupId>net.sourceforge.cobertura</groupId>
-                 <artifactId>cobertura</artifactId>
-                 <version>${cobertura.version}</version>
-               </dependency>
-             </dependencies>
-             <executions>
-              <execution>
-               <id>cobertura-instrument</id>
-               <phase>process-test-classes</phase>
-                 <configuration>
-                   <target>
-                   <!-- prepare directory structure for cobertura-->
-                   <mkdir dir="target/cobertura" />
-                   <mkdir dir="target/cobertura/backup" />
-                   <!-- backup all classes so that we can instrument the original classes-->
-                   <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
-                      <fileset dir="target/classes">
-                         <include name="**/*.class" />
-                      </fileset>
-                   </copy>
-                   <!-- create a properties file and save there location of cobertura data file-->
-                   <touch file="target/classes/cobertura.properties" />
-                   <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
-                   <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
-                   <!-- instrument all classes in target/classes directory -->
-                   <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
-                     <fileset dir="${project.build.directory}/classes">
-                        <include name="**/*.class" />
-                      </fileset>
-                    </cobertura-instrument>
-                   </target>
-                 </configuration>
-               <goals>
-                 <goal>run</goal>
-               </goals>
-              </execution>
-              <execution>
-               <id>cobertura-report</id>
-               <phase>prepare-package</phase>
-                 <configuration>
-                   <target>
-                     <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
-                     <!-- prepare directory structure for cobertura-->
-                     <mkdir dir="target/cobertura" />
-                     <mkdir dir="target/site/cobertura" />
-                     <!-- restore classes from backup folder to classes folder -->
-                     <copy toDir="target/classes" verbose="true" overwrite="true">
-                      <fileset dir="target/cobertura/backup">
-                         <include name="**/*.class" />
-                      </fileset>
-                     </copy>
-                     <!-- delete backup folder-->
-                     <delete dir="target/cobertura/backup" />
-                     <!-- create a code coverage report -->
-                     <cobertura-report format="html" datafile="${project.build.directory}/cobertura/cobertura.ser" destdir="${project.build.directory}/site/cobertura">
-                      <fileset dir="${basedir}/src/main/java">
-                         <include name="**/*.java" />
-                      </fileset>
-                     </cobertura-report>
-                     <!-- delete cobertura.properties file -->
-                     <delete file="target/classes/cobertura.properties" />
-                   </target>
-                 </configuration>
-               <goals>
-                 <goal>run</goal>
-               </goals>
-               </execution>
-            </executions>
-           </plugin>
-          </plugins>
-       </build>
-     </profile>
    </profiles>
-
 </project>
 

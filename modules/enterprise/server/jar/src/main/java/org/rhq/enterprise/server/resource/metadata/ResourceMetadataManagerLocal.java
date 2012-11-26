@@ -46,6 +46,9 @@ public interface ResourceMetadataManagerLocal {
 
     void updateTypes(Set<ResourceType> resourceTypes) throws Exception;
 
+    /** Exists only to for transactional boundary reasons. Not for general consumption. */
+    ResourceType updateType(ResourceType resourceType) throws Exception;
+
     /** TODO: do we want to create a driftMetadataManager SLSB and put this in there */
     void updateDriftMetadata(ResourceType existingType, ResourceType resourceType);
 }

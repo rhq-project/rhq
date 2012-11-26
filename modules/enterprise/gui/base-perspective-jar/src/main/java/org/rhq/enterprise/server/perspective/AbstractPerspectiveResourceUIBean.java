@@ -3,8 +3,6 @@ package org.rhq.enterprise.server.perspective;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.seam.annotations.web.RequestParameter;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
@@ -18,7 +16,7 @@ import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 public class AbstractPerspectiveResourceUIBean extends AbstractPerspectiveUIBean {
     private final Log log = LogFactory.getLog(this.getClass());
 
-    @RequestParameter
+    //    @RequestParameter
     private Integer rhqResourceId;
 
     private Resource resource;

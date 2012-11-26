@@ -58,7 +58,7 @@ public class CacheControlFilter implements Filter {
             httpResponse.setDateHeader("Expires", now.getTime() - 1);
             httpResponse.setHeader("Pragma", "no-cache");
             httpResponse.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
-        } else if (requestURI.contains(".cache.") || requestURI.contains("/images/")) {
+        } else if (requestURI.contains(".cache.") || requestURI.contains("/images/") || requestURI.endsWith("*.jpg") || requestURI.endsWith("*.png")) {
             // Tell browser to cache the content for one year.
             Date now = new Date();
             HttpServletResponse httpResponse = (HttpServletResponse) response;

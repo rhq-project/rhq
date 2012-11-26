@@ -40,19 +40,24 @@ import org.rhq.bindings.util.PackageFinder;
  *
  * @author Lukas Krejci
  */
-@Test
-public class ScriptEngineTest {
+public class ScriptEngineTest extends ScriptedTestBase {
 
     private static StandardBindings EMPTY_BINDINGS = new StandardBindings(new PrintWriter(System.out), new FakeRhqFacade());
         
     @Test
-    public void testFactory() throws ScriptException, IOException {
+    public void testFactory_javascript() throws ScriptException, IOException {
         ScriptEngine engine = getScriptEngine();
         assertNotNull(engine);
     }
     
     @Test
-    public void testSandbox() throws ScriptException, IOException {
+    public void testFactory_python() throws ScriptException, IOException {
+        ScriptEngine engine = getScriptEngine();
+        assertNotNull(engine);
+    }
+    
+    @Test
+    public void testSandbox_javascript() throws ScriptException, IOException {
         ScriptEngine sandbox = getSecuredScriptEngine();
         
         try {
@@ -76,7 +81,44 @@ public class ScriptEngineTest {
     }
     
     @Test
-    public void testStandardBindings() throws ScriptException, IOException {
+    public void testSandbox_python() throws Exception {
+        ScriptEngine sandbox = getSecuredScriptEngine();
+        
+        try {
+            sandbox.eval("import java.lang as foo\nfoo.System.exit(1)");
+        } catch (Exception e) {
+            assertSecurityExceptionPresent(e);
+        }
+        
+        try {            
+            //try hard to get to the System.exit()
+            sandbox.eval(
+                "import java.lang as l\n" +
+                "import java.lang.reflect as r\n" +
+                "import java.beans as b\n" + 
+                "cls = l.Class.forName('java.lang.System')\n" +
+                "params = r.Array.newInstance(l.Class.forName('java.lang.Object'), 1)\n" +
+                "params[0] = l.Integer.valueOf('1')\n" +
+                "st = b.Statement(cls, 'exit', params)\n" +
+                "st.execute()");
+            
+        } catch (Exception e) {
+            assertSecurityExceptionPresent(e);
+        }
+    }
+    
+    @Test
+    public void testStandardBindings_javascript() throws ScriptException, IOException {
+        ScriptEngine scriptEngine = getScriptEngine();
+        
+        for(String var : EMPTY_BINDINGS.keySet()) {
+            boolean hasVar = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE).containsKey(var);
+            assertTrue(hasVar, "The variable '" + var + "' is not present in the script context but should be.");
+        }
+    }
+    
+    @Test
+    public void testStandardBindings_python() throws Exception {        
         ScriptEngine scriptEngine = getScriptEngine();
         
         for(String var : EMPTY_BINDINGS.keySet()) {
@@ -86,13 +128,11 @@ public class ScriptEngineTest {
     }
     
     private ScriptEngine getScriptEngine() throws ScriptException, IOException {
-        return ScriptEngineFactory.getScriptEngine("javascript", new PackageFinder(Collections.<File> emptyList()),
-            EMPTY_BINDINGS);
+        return getScriptEngine(new PackageFinder(Collections.<File> emptyList()), EMPTY_BINDINGS);
     }
     
     private ScriptEngine getSecuredScriptEngine() throws ScriptException, IOException {
-        return ScriptEngineFactory.getSecuredScriptEngine("javascript",
-            new PackageFinder(Collections.<File> emptyList()), EMPTY_BINDINGS, new StandardScriptPermissions());
+        return getSecuredScriptEngine(new PackageFinder(Collections.<File> emptyList()), EMPTY_BINDINGS, new StandardScriptPermissions());
     }
     
     private void assertSecurityExceptionPresent(Throwable t) {

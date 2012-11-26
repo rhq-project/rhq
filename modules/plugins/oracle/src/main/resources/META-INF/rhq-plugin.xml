@@ -635,6 +635,33 @@
          <metric property="usedPercent" displayName="Used Percent" description="Percentage of the Flash Recovery Area used" displayType="summary" units="percentage"/>
 
       </service>
+      
+      <service name="Oracle ASM Disk Groups"
+         discovery="org.rhq.plugins.oracle.OracleAsmDiskGroupDiscoveryComponent"
+         class="org.rhq.plugins.oracle.OracleAsmDiskGroupComponent">
+
+         <!--plugin-configuration>
+            <c:simple-property name="table" default="V$ASM_DISKGROUP"/>
+            <c:simple-property name="metricQuery" default="SELECT {key} FROM V$ASM_DISKGROUP"/>
+            <c:simple-property name="keyColumn" default="GROUP_NUMBER"/>
+            <c:simple-property name="name" default="NAME"/>
+            <c:simple-property name="description" default="Oracle ASM Disk Groups"/>
+         </plugin-configuration -->
+
+         <metric property="sectorSize" displayName="Sector Size" description="Physical block size (in bytes)" units="bytes" dataType="trait"/>
+         <metric property="blockSize" displayName="Block Size" description="Automatic Storage Management metadata block size (in bytes)" units="bytes" dataType="trait"/>
+         <metric property="allocationUnitSize" displayName="Allocation Unit Size" description="Size of the allocation unit (in bytes)" units="bytes" dataType="trait"/>
+         <metric property="state" displayName="State" description="State of the disk group relative to the instance" dataType="trait"/>
+         <metric property="type" displayName="Type" description="Redundancy type for the disk group" dataType="trait"/>
+         <metric property="totalMb" displayName="Total Size" description="Total capacity of the disk group (in megabytes)" units="megabytes" displayType="summary"/>
+         <metric property="freeMb" displayName="Free Space" description="Unused capacity of the disk group (in megabytes)" units="megabytes" displayType="summary"/>
+         <metric property="usedPercent" displayName="Used Percent" description="Percentage of the disk group used" units="percentage" displayType="summary"/>
+         <metric property="requiredMirrorFreeMb" displayName="Space Required to Mirror" description="Amount of space that is required to be available in a given disk group in order to restore redundancy after one or more disk failures" units="megabytes"/>
+         <metric property="usableFileMb" displayName="Usable Space" description="Amount of free space that can be safely utilized taking mirroring into account and yet be able to restore redundancy after a disk failure" units="megabytes"/>
+         <metric property="offlineDisks" displayName="Offline Disks" description="Number of disks in the disk group that are currently offline" dataType="trait"/>
+         <metric property="compatibility" displayName="Compatibility" description="Minimum software version required for an ASM instance to mount this disk group" dataType="trait"/>
+         <metric property="databaseCompatibility" displayName="Database Compatibility" description="Minimum software version required for a database instance to use files in this disk group" dataType="trait"/>
+      </service>
 
    </server>
 

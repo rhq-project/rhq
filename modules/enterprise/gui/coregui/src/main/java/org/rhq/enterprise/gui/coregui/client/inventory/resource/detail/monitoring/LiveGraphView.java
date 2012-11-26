@@ -24,15 +24,16 @@ import java.util.Set;
 
 import ca.nanometrics.gflot.client.Axis;
 import ca.nanometrics.gflot.client.DataPoint;
-import ca.nanometrics.gflot.client.PlotItem;
 import ca.nanometrics.gflot.client.PlotModel;
 import ca.nanometrics.gflot.client.PlotModelStrategy;
-import ca.nanometrics.gflot.client.PlotPosition;
 import ca.nanometrics.gflot.client.SeriesHandler;
 import ca.nanometrics.gflot.client.SimplePlot;
 import ca.nanometrics.gflot.client.event.PlotHoverListener;
+import ca.nanometrics.gflot.client.event.PlotItem;
+import ca.nanometrics.gflot.client.event.PlotPosition;
 import ca.nanometrics.gflot.client.jsni.Plot;
 import ca.nanometrics.gflot.client.options.AxisOptions;
+import ca.nanometrics.gflot.client.options.GlobalSeriesOptions;
 import ca.nanometrics.gflot.client.options.GridOptions;
 import ca.nanometrics.gflot.client.options.LineSeriesOptions;
 import ca.nanometrics.gflot.client.options.PlotOptions;
@@ -133,9 +134,11 @@ public class LiveGraphView extends LocatableVLayout {
 
         PlotModel model = new PlotModel();
         PlotOptions plotOptions = new PlotOptions();
-        plotOptions.setDefaultLineSeriesOptions(new LineSeriesOptions().setLineWidth(1).setShow(true));
-        plotOptions.setDefaultPointsOptions(new PointsSeriesOptions().setRadius(2).setShow(true));
-        plotOptions.setDefaultShadowSize(0);
+        GlobalSeriesOptions globalSeriesOptions = new GlobalSeriesOptions();
+        globalSeriesOptions.setLineSeriesOptions(new LineSeriesOptions().setLineWidth(1).setShow(true));
+        globalSeriesOptions.setPointsOptions(new PointsSeriesOptions().setRadius(2).setShow(true));
+        globalSeriesOptions.setShadowSize(0);
+        plotOptions.setGlobalSeriesOptions(globalSeriesOptions);
 
         // You need make the grid hoverable <<<<<<<<<
         plotOptions
@@ -243,14 +246,6 @@ public class LiveGraphView extends LocatableVLayout {
 
                             handler.add(new DataPoint(d.getTimestamp(), d.getValue()));
                             plot.redraw();
-
-                            if (d.getTimestamp() > max) {
-                                max = System.currentTimeMillis();
-                                min = max - (1000L * 60);
-
-                                //                            plotOptions.setXAxisOptions(new AxisOptions().setMinimum(min).setMaximum(max));
-                            }
-
                         }
                     });
             }
@@ -258,17 +253,14 @@ public class LiveGraphView extends LocatableVLayout {
 
         dataLoader.scheduleRepeating(1000);
 
-        plotOptions.setYAxisOptions(new AxisOptions().setLabelWidth(70).setTicks(5)
+        plotOptions.addYAxisOptions(new AxisOptions().setLabelWidth(70).setTicks(5)
             .setTickFormatter(new TickFormatter() {
                 public String formatTickValue(double v, Axis axis) {
                     return MeasurementConverterClient.format(v, definition.getUnits(), true);
                 }
             }));
 
-        min = System.currentTimeMillis();
-        max = System.currentTimeMillis() + (1000L * 60);
-
-        plotOptions.setXAxisOptions(new AxisOptions().setTicks(8).setTickFormatter(new TickFormatter() {
+        plotOptions.addXAxisOptions(new AxisOptions().setTicks(8).setTickFormatter(new TickFormatter() {
             public String formatTickValue(double tickValue, Axis axis) {
                 DateTimeFormat dateFormat = DateTimeFormat.getFormat(PredefinedFormat.DATE_TIME_MEDIUM);
                 return dateFormat.format(new Date((long) tickValue));

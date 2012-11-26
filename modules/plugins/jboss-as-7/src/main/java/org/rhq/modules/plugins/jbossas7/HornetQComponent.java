@@ -21,9 +21,7 @@ package org.rhq.modules.plugins.jbossas7;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
-import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.resource.CreateResourceStatus;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 
 /**
@@ -41,31 +39,6 @@ public class HornetQComponent extends TemplatedSubResourcesComponent {
             report.setErrorMessage("You need to provide at least one JNDI name");
             report.setStatus(CreateResourceStatus.FAILURE);
             return report;
-        }
-
-        ResourceType resourceType = report.getResourceType();
-        if (resourceType.getName().equals("Connection-Factory")) {
-            // we need to check that a connector XOR a discovery-group-name is given
-            int found = 0;
-            PropertyMap connector = resourceConfiguration.getMap("connector:collapsed");
-
-            if (connector != null) {
-
-                String name = connector.getSimpleValue("name:0", "");
-                if (!name.isEmpty())
-                    found++;
-            }
-            String discoveryGroup = resourceConfiguration.getSimpleValue("discovery-group-name", "");
-            if (!discoveryGroup.isEmpty())
-                found++;
-
-            if (found == 0 || found == 2) {
-                String errorMessage = "You need to provide either a connector name OR a discovery-group-name. You provided ";
-                errorMessage += (found == 0) ? "none" : "both";
-                report.setErrorMessage(errorMessage);
-                report.setStatus(CreateResourceStatus.FAILURE);
-                return report;
-            }
         }
 
         report = super.createResource(report);

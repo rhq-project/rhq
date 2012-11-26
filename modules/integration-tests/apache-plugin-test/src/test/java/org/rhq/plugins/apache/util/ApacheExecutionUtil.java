@@ -25,17 +25,28 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hyperic.sigar.SigarProxy;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.event.Event;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.availability.AvailabilityCollectorRunnable;
+import org.rhq.core.pluginapi.availability.AvailabilityContext;
+import org.rhq.core.pluginapi.availability.AvailabilityFacet;
+import org.rhq.core.pluginapi.event.EventContext;
+import org.rhq.core.pluginapi.event.EventPoller;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.PluginContainerDeployment;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
@@ -103,16 +114,79 @@ public class ApacheExecutionUtil {
 
         Resource resource = new Resource(result.getResourceKey(), null, apacheServerResourceType);
         resource.setPluginConfiguration(config);
-        resourceContext = new ResourceContext<PlatformComponent>(resource, null, null,
-            discoveryComponent, systemInfo, null, null, null, null, null, null, null, null);
+        resourceContext = new ResourceContext<PlatformComponent>(resource, null, null, discoveryComponent, systemInfo,
+            null, null, null, new EventContext() {
+
+                @Override
+                public void unregisterEventPoller(@NotNull
+                String eventType, @NotNull
+                String sourceLocation) {
+                }
+
+                @Override
+                public void unregisterEventPoller(@NotNull
+                String eventType) {
+                }
+
+                @Override
+                public void registerEventPoller(@NotNull
+                EventPoller poller, int pollingInterval, @NotNull
+                String sourceLocation) {
+                }
+
+                @Override
+                public void registerEventPoller(@NotNull
+                EventPoller poller, int pollingInterval) {
+                }
+
+                @Override
+                public void publishEvent(@NotNull
+                Event event) {
+                }
+
+                @Override
+                @Nullable
+                public SigarProxy getSigar() {
+                    return null;
+                }
+            }, null, null, new AvailabilityContext() {
+
+                @Override
+                public void requestAvailabilityCheck() {
+                }
+
+                @Override
+                public AvailabilityType getLastReportedAvailability() {
+                    return AvailabilityType.UP;
+                }
+
+                @Override
+                public void enable() {
+                }
+
+                @Override
+                public void disable() {
+                }
+
+                @Override
+                public AvailabilityCollectorRunnable createAvailabilityCollectorRunnable(
+                    AvailabilityFacet availChecker, long interval) {
+                    return null;
+                }
+            }, null, null);
 
         serverComponent.start(resourceContext);
     }
 
     public void invokeOperation(ExpectedApacheState desiredState, String operation) throws Exception {
         int i = 0;
+
         while (i < 10) {
-            serverComponent.invokeOperation(operation, new Configuration());
+            OperationResult res = serverComponent.invokeOperation(operation, new Configuration());
+
+            LOG.debug("Invoked operation '" + operation + "' on " + resourceContext.getResourceKey() + " (waiting for "
+                + desiredState + "), attempt " + i + ": "
+                + res.getComplexResults().getMap().toString());
 
             //wait for max 30s for the operation to "express" itself
             int w = 0;
@@ -138,10 +212,12 @@ public class ApacheExecutionUtil {
 
             ++i;
 
-            LOG.warn("Could not detect the httpd process after invoking the start operation but the operation didn't throw any exception. I will retry at most ten times and then fail loudly. This has been attempt no. " + i);
+            LOG.warn("Could not detect the httpd process after invoking the start operation but the operation didn't throw any exception. I will retry at most ten times and then fail loudly. This has been attempt no. "
+                + i);
         }
 
-        throw new IllegalStateException("Failed to start the httpd process even after 10 retries without the apache component complaining. This is super strange.");
+        throw new IllegalStateException(
+            "Failed to start the httpd process even after 10 retries without the apache component complaining. This is super strange.");
     }
 
     public ResourceContext<PlatformComponent> getResourceContext() {

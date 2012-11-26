@@ -355,7 +355,7 @@ public class AvailabilityInsertPurgeTest extends AbstractEJB3PerformanceTest {
         def.setPriority(AlertPriority.MEDIUM);
         def.setAlertDampening(new AlertDampening(AlertDampening.Category.NONE));
         def.setRecoveryId(0);
-        alertDefinitionManager.createAlertDefinition(overlord, def, res.getId());
+        alertDefinitionManager.createAlertDefinition(overlord, def, res.getId(), true);
 
         for (int MULTI : ROUNDS) {
             String round = String.format(ROUND__FORMAT, MULTI);

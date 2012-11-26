@@ -453,7 +453,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
                     this.operationParameters = (defaultTemplate != null) ? defaultTemplate.createConfiguration()
                         : new Configuration();
                 } else {
-
+                    this.operationParameters = new Configuration();
                 }
 
                 ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();

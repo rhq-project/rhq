@@ -50,7 +50,6 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
@@ -125,12 +124,16 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
                     processResponse(request.getRequestId(), response);
                 }
                 
-                private PageList<ResourceGroupComposite> filterEmptyMemberGroups(PageList<ResourceGroupComposite> result){
+                private PageList<ResourceGroupComposite> applyAvailabilitySearchFilter(
+                    PageList<ResourceGroupComposite> result){
 
+                    if (!isAvailabilitySearch(criteria)) {
+                        return result;
+                    }
                     PageList<ResourceGroupComposite> pageList = new PageList<ResourceGroupComposite>(result.getPageControl());
 
                     for (ResourceGroupComposite rgc : result) {
-                        if (rgc.getExplicitCount() > 0 ){
+                        if (rgc.getExplicitCount() > 0) {
                             pageList.add(rgc);
                         }
                     }
@@ -139,12 +142,16 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
                 }
 
                 public void onSuccess(PageList<ResourceGroupComposite> result) {
-                    PageList<ResourceGroupComposite> filteredResult =    filterEmptyMemberGroups(result);
+                    PageList<ResourceGroupComposite> filteredResult = applyAvailabilitySearchFilter(result);
                     response.setData(buildRecords(filteredResult));
                     response.setTotalRows(filteredResult.getTotalSize()); // for paging to work we have to specify size of full result set
                     processResponse(request.getRequestId(), response);
                 }
             });
+    }
+
+    private boolean isAvailabilitySearch(ResourceGroupCriteria criteria) {
+        return criteria.getSearchExpression() != null && criteria.getSearchExpression().startsWith("availability");
     }
 
     @Override

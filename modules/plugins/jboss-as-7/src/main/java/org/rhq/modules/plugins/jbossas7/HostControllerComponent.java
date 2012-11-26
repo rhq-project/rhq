@@ -92,8 +92,11 @@ public class HostControllerComponent<T extends ResourceComponent<?>> extends Bas
             Result res = getASConnection().execute(op);
             operationResult = postProcessResult(name, res);
 
-            waitUntilDown(operationResult);
-
+            if (waitUntilDown()) {
+                operationResult.setSimpleResult("Success");
+            } else {
+                operationResult.setErrorMessage("Was not able to shut down the server.");
+            }
         } else if (name.equals("installRhqUser")) {
             operationResult = installManagementUser(parameters, pluginConfiguration);
         } else {

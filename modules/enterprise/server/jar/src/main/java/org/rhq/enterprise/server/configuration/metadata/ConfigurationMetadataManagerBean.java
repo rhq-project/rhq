@@ -73,23 +73,26 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
             for (PropertyDefinition newProperty : newPropertyDefinitions) {
                 PropertyDefinition existingProp = existingDefinition.get(newProperty.getName());
                 if (existingProp != null) {
+                    log.debug("Updating nonGrouped property [" + existingProp + "]");
+
                     updatePropertyDefinition(existingProp, newProperty);
                     updateReport.addUpdatedPropertyDefinition(newProperty);
                 } else {
+                    log.debug("Adding nonGrouped property [" + newProperty + "]");
+
                     existingDefinition.put(newProperty);
                     updateReport.addNewPropertyDefinition(newProperty);
                 }
             }
 
-            // delete outdated properties
-            removeNoLongerUsedProperties(newDefinition, existingDefinition, existingPropertyDefinitions);
+            existingDefinition = removeNoLongerUsedProperties(newDefinition, existingDefinition,
+                existingPropertyDefinitions);
+
         } else {
             // TODO what if existingDefinitions is null?
             // we probably don't run in here, as the initial persisting is done
             // somewhere else.
         }
-
-        //        entityManager.flush();
 
         /*
          * Now update / delete contained groups We need to be careful here, as groups are present in PropertyDefinition
@@ -108,6 +111,8 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
 
             // first look for contained stuff
             for (PropertyDefinition def : groupedDefinitions) {
+                log.debug("Removing property [" + def + "] from group [" + group + "]");
+
                 existingPropertyDefinitions.remove(def);
                 existingDefinition.getPropertyDefinitions().remove(def.getName());
                 def.setPropertyGroupDefinition(null);
@@ -115,41 +120,44 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
             }
 
             // then remove the definition itself
+            log.debug("Removing group [" + group + "]");
+
             existingGroups.remove(group);
             entityManager.remove(group);
         }
-
-        //        entityManager.flush();
 
         // update existing groups that stay
         for (PropertyGroupDefinition group : toUpdate) {
             String groupName = group.getName();
 
-            //         System.out.println("Group to update: " + groupName + ", id=" + group.getId());
             List<PropertyDefinition> newGroupedDefinitions = newDefinition.getPropertiesInGroup(groupName);
             for (PropertyDefinition nDef : newGroupedDefinitions) {
                 PropertyDefinition existingProperty = existingDefinition.getPropertyDefinitions().get(nDef.getName());
                 if (existingProperty != null) {
+                    log.debug("Updating property [" + nDef + "] in group [" + group + "]");
+
                     updatePropertyDefinition(existingProperty, nDef);
                     updateReport.addUpdatedPropertyDefinition(nDef);
+
                 } else {
+                    log.debug("Adding property [" + nDef + "] to group [" + group + "]");
+
                     existingDefinition.put(nDef);
                     updateReport.addNewPropertyDefinition(nDef);
                 }
             }
 
             // delete outdated properties of this group
-            removeNoLongerUsedProperties(newDefinition, existingDefinition,
+            existingDefinition = removeNoLongerUsedProperties(newDefinition, existingDefinition,
                 existingDefinition.getPropertiesInGroup(groupName));
         }
 
-        //        entityManager.flush();
-
         // persist new groups
         for (PropertyGroupDefinition group : toPersist) {
-            /*
-             * First persist a new group definition and then link the properties to it
-             */
+
+            // First persist a new group definition and then link the properties to it
+            log.debug("Persisting new group [" + group + "]");
+
             entityManager.persist(group);
             existingGroups.add(group); // iterating over this does not update the underlying crap
 
@@ -185,17 +193,22 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
         }
 
         for (String name : toRemove) {
+            log.debug("Removing template [" + name + "]");
+
             ConfigurationTemplate template = existingTemplates.remove(name);
             entityManager.remove(template);
         }
 
         for (String name : templatesToUpdate) {
+            log.debug("Updating template [" + name + "]");
+
             updateTemplate(existingDefinition.getTemplate(name), newTemplates.get(name));
         }
 
         for (String name : newTemplates.keySet()) {
             // add completely new templates
             if (!existingTemplates.containsKey(name)) {
+                log.debug("Adding template [" + name + "]");
 
                 ConfigurationTemplate newTemplate = newTemplates.get(name);
 
@@ -279,8 +292,9 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
      * @param existingConfigDef  existing persisted configuration
      * @param existingProperties list of existing properties to inspect for potential removal
      */
-    private void removeNoLongerUsedProperties(ConfigurationDefinition newConfigDef,
+    private ConfigurationDefinition removeNoLongerUsedProperties(ConfigurationDefinition newConfigDef,
         ConfigurationDefinition existingConfigDef, List<PropertyDefinition> existingProperties) {
+
         List<PropertyDefinition> propDefsToDelete = new ArrayList<PropertyDefinition>();
         for (PropertyDefinition existingPropDef : existingProperties) {
             PropertyDefinition newPropDef = newConfigDef.get(existingPropDef.getName());
@@ -296,8 +310,10 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                 existingConfigDef.getPropertyDefinitions().remove(propDef.getName());
                 existingProperties.remove(propDef); // does not operate on original list!!
             }
-            entityManager.merge(existingConfigDef);
+            existingConfigDef = entityManager.merge(existingConfigDef);
         }
+
+        return existingConfigDef;
     }
 
     /**
@@ -360,7 +376,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                     }
                 }
 
-                entityManager.merge(existingProperty);
+                existingProperty = entityManager.merge(existingProperty);
 
             } else { // different type
 
@@ -412,7 +428,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                         }
                     }
                 }
-                entityManager.merge(existingPDS);
+                existingPDS = entityManager.merge(existingPDS);
 
                 // handle <constraint> [0..*]
 

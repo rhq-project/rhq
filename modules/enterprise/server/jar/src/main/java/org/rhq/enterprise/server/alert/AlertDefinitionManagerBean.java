@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.server.alert;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.ejb.EJB;
@@ -201,19 +204,19 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     public int createDependentAlertDefinition(Subject subject, AlertDefinition alertDefinition, int resourceId)
         throws InvalidAlertDefinitionException {
         
-        return createAlertDefinitionInternal(subject, alertDefinition, resourceId, false);
+        return createAlertDefinitionInternal(subject, alertDefinition, resourceId, false, false);
     }
 
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public int createAlertDefinition(Subject subject, AlertDefinition alertDefinition, Integer resourceId)
+    public int createAlertDefinition(Subject subject, AlertDefinition alertDefinition, Integer resourceId, boolean validateNotificationConfiguration)
         throws InvalidAlertDefinitionException {
         
-        return createAlertDefinitionInternal(subject, alertDefinition, resourceId, true);
+        return createAlertDefinitionInternal(subject, alertDefinition, resourceId, true, validateNotificationConfiguration);
     }
 
-    private int createAlertDefinitionInternal(Subject subject, AlertDefinition alertDefinition, Integer resourceId, boolean checkPerms) throws InvalidAlertDefinitionException {
-        checkAlertDefinition(subject, alertDefinition, resourceId);
+    private int createAlertDefinitionInternal(Subject subject, AlertDefinition alertDefinition, Integer resourceId, boolean checkPerms, boolean validateNotificationConfiguration) throws InvalidAlertDefinitionException {
+        checkAlertDefinition(subject, null, alertDefinition, resourceId, validateNotificationConfiguration);
 
         // if this is an alert definition, set up the link to a resource
         if (resourceId != null) {
@@ -463,21 +466,34 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         return list;
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public AlertDefinition updateAlertDefinition(Subject subject, int alertDefinitionId,
         AlertDefinition alertDefinition, boolean resetMatching) throws InvalidAlertDefinitionException,
         AlertDefinitionUpdateException {
+        return updateAlertDefinitionInternal(subject, alertDefinitionId, alertDefinition, resetMatching, true, true);
+    }
+    
+    @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public AlertDefinition updateDependentAlertDefinition(Subject subject, int alertDefinitionId, AlertDefinition alertDefinition, boolean resetMatching) throws InvalidAlertDefinitionException, AlertDefinitionUpdateException {
+        return updateAlertDefinitionInternal(subject, alertDefinitionId, alertDefinition, resetMatching, false, false);
+    }
+    
+    private AlertDefinition updateAlertDefinitionInternal(Subject subject, int alertDefinitionId,
+        AlertDefinition alertDefinition, boolean resetMatching, boolean checkPerms, boolean finalizeNotifications) throws InvalidAlertDefinitionException,
+        AlertDefinitionUpdateException {
         if (resetMatching) {
             alertDefinitionManager.purgeInternals(alertDefinitionId);
         }
-
+        
         /*
          * Method for catching ENABLE / DISABLE changes will use switch logic off of the delta instead of calling out to
          * the enable/disable functions
          */
         AlertDefinition oldAlertDefinition = entityManager.find(AlertDefinition.class, alertDefinitionId);
 
-        if (checkPermission(subject, oldAlertDefinition) == false) {
+        if (checkPerms && checkPermission(subject, oldAlertDefinition) == false) {
             if (oldAlertDefinition.getResourceType() != null) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to modify alert templates for type ["
@@ -498,8 +514,9 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
          * is not currently deleted
          */
         boolean isResourceLevel = (oldAlertDefinition.getResource() != null);
-        checkAlertDefinition(subject, alertDefinition, isResourceLevel ? oldAlertDefinition.getResource().getId()
-            : null);
+        
+        checkAlertDefinition(subject, oldAlertDefinition, alertDefinition, isResourceLevel ? oldAlertDefinition.getResource().getId()
+            : null, finalizeNotifications);
 
         /*
          * Should not be able to update an alert definition if the old alert definition is in an invalid state
@@ -590,6 +607,11 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
          * begin with, and nothing needs to be added to the cache as a result
          */
 
+        //we've been touching both conditions and notifications of the updated alert definition, so we should
+        //return an object with the same... let's force lazy load before we leave the persistence context
+        new ArrayList<AlertCondition>(newAlertDefinition.getConditions());
+        new ArrayList<AlertNotification>(newAlertDefinition.getAlertNotifications());
+        
         return newAlertDefinition;
     }
 
@@ -612,7 +634,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         }
     }
 
-    private void checkAlertDefinition(Subject subject, AlertDefinition alertDefinition, Integer resourceId)
+    private void checkAlertDefinition(Subject subject, AlertDefinition persistedAlertDefinition, AlertDefinition alertDefinition, Integer resourceId, boolean finalizeNotifications)
         throws InvalidAlertDefinitionException {
         // if someone enters a really long description, we need to truncate it - the column is only 250 chars
         if (alertDefinition.getDescription() != null && alertDefinition.getDescription().length() > 250) {
@@ -640,8 +662,38 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             }
         }
 
-        if (!alertNotificationManager.finalizeNotifications(subject, alertDefinition.getAlertNotifications())) {
-            throw new InvalidAlertDefinitionException("Some of the notifications failed to validate.");
+        if (finalizeNotifications) {
+            List<AlertNotification> notifications = new ArrayList<AlertNotification>(alertDefinition.getAlertNotifications());
+            
+            //now remove the notifications that have not changed
+            if (persistedAlertDefinition != null) {
+                List<AlertNotification> persistedNotifications =  persistedAlertDefinition.getAlertNotifications() == null ? Collections.<AlertNotification>emptyList() : persistedAlertDefinition.getAlertNotifications();
+                
+                if (persistedNotifications.size() > 0) {
+                    Iterator<AlertNotification> it = notifications.iterator();
+                    while (it.hasNext()) {
+                        AlertNotification newNotification = it.next();
+                        
+                        if (newNotification.getId() == 0) {
+                            //this is a fresh, not persisted notif. These guys have to be always finalized.
+                            continue;
+                        }
+                        
+                        for(AlertNotification persistedNotification : persistedNotifications) {
+                            //ignore the ids on the notifications as they may vary if we are comparing parent alert def with its children
+                            //it's enough for us they they are semantically the same.
+                            if (newNotification.getSenderName().equals(persistedNotification.getSenderName()) && newNotification.equalsData(persistedNotification)) {
+                                it.remove();
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (!alertNotificationManager.finalizeNotifications(subject, notifications)) {
+                throw new InvalidAlertDefinitionException("Some of the notifications failed to validate.");
+            }
         }
     }
 

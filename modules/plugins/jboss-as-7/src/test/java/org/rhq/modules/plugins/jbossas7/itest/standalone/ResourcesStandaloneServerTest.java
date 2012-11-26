@@ -67,7 +67,7 @@ public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest  {
 
 
     @Test(priority = 12)
-    public void loadUpdateTemplatedResourceConfiguration() throws Exception {
+    public void loadUpdateResourceConfiguration() throws Exception {
         List<String> ignoredResources = new ArrayList<String>();
 
         //ignored because of differences between test plugin container and real application
@@ -85,6 +85,9 @@ public class ResourcesStandaloneServerTest extends AbstractJBossAS7PluginTest  {
 
         //will revisit after BZ 826542 is resolved
         //        ignoredResources.add("Authentication (Classic)");
+
+        ignoredResources.add("Memory Pool");
+        ignoredResources.add("Periodic Rotating File Handler");
 
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
         Resource server = getResourceByTypeAndKey(platform, StandaloneServerComponentTest.RESOURCE_TYPE,

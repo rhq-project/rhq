@@ -257,7 +257,8 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
                     }
                 }
 
-                if (propertyName.endsWith(":expr") || propertyName.endsWith(":collapsed")) {
+                if (propertyName.endsWith(":expr") || propertyName.endsWith(":collapsed")
+                    || propertyName.endsWith(":nullable")) {
                     String realName = propertyName.substring(0, propertyName.indexOf(":"));
                     valueObject = results.get(realName);
                 } else {
@@ -333,7 +334,7 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
             propertyMap.put(additionalNameProperty);
         }
 
-        List<PropertyDefinition> propDefs = propDefMap.getPropertyDefinitions();
+        Collection<PropertyDefinition> propDefs = propDefMap.getOrderedPropertyDefinitions();
 
         if (propDefName.endsWith(":collapsed")) {
             // The result is a map of {" a" : " b" }, while the propdef is in the form

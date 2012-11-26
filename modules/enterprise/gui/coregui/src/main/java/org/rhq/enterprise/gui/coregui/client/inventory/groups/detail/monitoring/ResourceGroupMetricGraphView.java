@@ -36,6 +36,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricGraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -95,10 +96,9 @@ public class ResourceGroupMetricGraphView extends AbstractMetricGraphView {
                                     if (def.getId() == getDefinitionId()) {
                                         setDefinition(def);
 
-                                        GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroup(
-                                            getEntityId(), new int[] { getDefinitionId() },
-                                            System.currentTimeMillis() - (1000L * 60 * 60 * 8),
-                                            System.currentTimeMillis(), 60,
+                                        GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroupForLast(
+                                            getEntityId(), new int[] { getDefinitionId() }, 8,
+                                            MeasurementUtility.UNIT_HOURS, 60,
                                             new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                                                 public void onFailure(Throwable caught) {
                                                     CoreGUI.getErrorHandler().handleError(

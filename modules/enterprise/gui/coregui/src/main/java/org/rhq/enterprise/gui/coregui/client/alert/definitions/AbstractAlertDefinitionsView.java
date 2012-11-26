@@ -199,5 +199,5 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
 
     protected abstract void disableButtonPressed(ListGridRecord[] selection);
 
-    protected abstract void commitAlertDefinition(AlertDefinition alertDefinition, boolean isPurgeInternals);
+    protected abstract void commitAlertDefinition(AlertDefinition alertDefinition, boolean isPurgeInternals, AsyncCallback<AlertDefinition> resultReceiver);
 }

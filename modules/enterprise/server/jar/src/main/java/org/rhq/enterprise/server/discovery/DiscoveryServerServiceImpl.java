@@ -73,6 +73,12 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         ResourceSyncInfo syncInfo;
         try {
             syncInfo = discoveryBoss.mergeInventoryReport(report);
+        } catch (StaleTypeException e) {
+            // There is no need to log this exception as it is part of a normal work flow
+            // that occurs as a result of a user deleting a plugin. DiscoveryBossBean
+            // already logs a message about the stale types that can be useful for
+            // debugging; so, we just need to propagate the exception to the agent.
+            throw e;
         } catch (InvalidInventoryReportException e) {
             Agent agent = report.getAgent();
             if (log.isDebugEnabled()) {

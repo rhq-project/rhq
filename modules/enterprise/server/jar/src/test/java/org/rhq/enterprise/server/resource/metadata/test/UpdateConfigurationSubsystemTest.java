@@ -176,6 +176,8 @@ public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBa
         }
     }
 
+    // This test fails but I'm not sure why.  It may be a bad test or it may be a real problem. It should
+    // be investigated and either enabled or deleted.
     @Test(enabled = false)
     public void testBZ_573034() throws Exception {
         // Note, plugins are registered in new transactions. for tests, this means

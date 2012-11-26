@@ -157,6 +157,10 @@ public class ResourceTypeCriteria extends Criteria {
         this.filterDeleted = deleted;
     }
 
+    public void addFilterDeleted(Boolean deleted) {
+        this.filterDeleted = deleted;
+    }
+
     public void addFilterCategories(ResourceCategory... filterCategories) {
         this.filterCategories = new HashSet<ResourceCategory>(Arrays.asList(filterCategories));
     }

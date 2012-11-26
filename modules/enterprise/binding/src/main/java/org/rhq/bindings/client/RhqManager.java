@@ -89,14 +89,17 @@ public enum RhqManager {
     SynchronizationManager(SynchronizationManagerRemote.class, "${SynchronizationManager}");
 
     private Class<?> remote;
-    private String remoteName;
+    private String localInterfaceClassName;
     private String beanName;
     private boolean enabled;
+
+    private static final int REMOTE_IFACE_SUFFIX_LENGTH = "Remote".length();
 
     private RhqManager(Class<?> remote, String enable) {
         this.remote = remote;
         this.beanName = this.name() + "Bean";
-        this.remoteName = this.name() + "Remote";
+        localInterfaceClassName = getLocalInterfaceClassName(remote);
+
         //defaults and evaluates to TRUE unless the string contains "false". Done to defend against 
         //possible errors in string replacement during rhq build.
         this.enabled = true;
@@ -119,15 +122,25 @@ public enum RhqManager {
         return this.remote;
     }
 
+    public String localInterfaceClassName() {
+        return localInterfaceClassName;
+    }
+
     public String beanName() {
         return this.beanName;
     }
 
-    public String remoteName() {
-        return this.remoteName;
-    }
-
     public boolean enabled() {
         return this.enabled;
+    }
+
+    private static String getLocalInterfaceClassName(Class<?> remoteIface) {
+        String ifaceName = remoteIface.getName();
+        if (!ifaceName.endsWith("Remote")) {
+            throw new AssertionError("Inconsistent SLSB naming in RHQ! Remote interface '" + remoteIface.getName()
+                + "' does not follow the established naming convention. This is a bug, please report it.");
+        }
+
+        return ifaceName.substring(0, ifaceName.length() - REMOTE_IFACE_SUFFIX_LENGTH) + "Local";
     }
 }

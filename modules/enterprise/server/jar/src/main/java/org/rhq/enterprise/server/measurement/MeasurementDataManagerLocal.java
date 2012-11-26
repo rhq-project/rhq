@@ -83,6 +83,8 @@ public interface MeasurementDataManagerLocal {
      * @param  group   compatible group
      *
      * @return a Map of resource id, List of summaries for this resource
+     * 
+     * @deprecated portal-war
      */
     Map<Integer, List<MetricDisplaySummary>> findNarrowedMetricsDisplaySummariesForCompGroup(Subject subject,
         ResourceGroup group, long beginTime, long endTime);
@@ -91,10 +93,15 @@ public interface MeasurementDataManagerLocal {
      * Get the {@link MetricDisplaySummary}s for the resources passed in, that all need to be of the same
      * {@link ResourceType}. Summaries only contain a basic selection of fields for the purpose of filling the Child
      * resource popups.
+     * 
+     * @deprecated portal-war
      */
     public Map<Integer, List<MetricDisplaySummary>> findNarrowedMetricDisplaySummariesForCompatibleResources(
         Subject subject, Collection<Resource> resources, long beginTime, long endTime);
 
+    /**
+     * @deprecated portal-war (it is not used at all)
+     */
     public Map<Integer, List<MetricDisplaySummary>> findNarrowedMetricsDisplaySummariesForAutoGroup(Subject subject,
         int parentId, int cType, long beginTime, long endTime);
 
@@ -108,6 +115,8 @@ public interface MeasurementDataManagerLocal {
      * @param resourceIds    List of primary keys of the resources we are interested in
      * @param begin          begin time
      * @param end            end time
+     * 
+     * @deprecated portal-war
      */
     public Map<Integer, List<MetricDisplaySummary>> findNarrowedMetricDisplaySummariesForResourcesAndParent(
         Subject subject, int resourceTypeId, int parentId, List<Integer> resourceIds, long begin, long end);
@@ -203,5 +212,8 @@ public interface MeasurementDataManagerLocal {
     List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(Subject subject, int resourceId,
         int[] definitionIds, long beginTime, long endTime, int numPoints);
 
+    /**
+     * @deprecated portal-war (it is not used at all)
+     */
     List<MeasurementDataNumeric> findRawData(Subject subject, int scheduleId, long startTime, long endTime);
 }

@@ -44,7 +44,9 @@ public interface AlertNotificationManagerLocal {
      * @param senderName shortName of the {@link AlertSender}
      * @param configuration Properties for this alert sender.
      * @throws AlertNotificationValidationException if the alert sender of the notification failed to finalize and validate the provided notification's configuration
+     * @deprecated this is used only by the legacy JSF UI and no longer works correctly
      */
+    @Deprecated
     AlertNotification addAlertNotification(Subject user, int alertDefinitionId, AlertNotification notification) throws AlertDefinitionUpdateException, AlertNotificationValidationException;
 
     /**
@@ -52,7 +54,9 @@ public interface AlertNotificationManagerLocal {
      *
      * @param notification
      * @throws AlertNotificationValidationException if the alert sender of the notification failed to finalize and validate the notification's configuration
+     * @deprecated this is used only by the legacy JSF UI and no longer works correctly
      */
+    @Deprecated
     void updateAlertNotification(Subject subject, int alertDefinitionId, AlertNotification notification) throws AlertDefinitionUpdateException, AlertNotificationValidationException;
 
     /**
@@ -61,7 +65,9 @@ public interface AlertNotificationManagerLocal {
      * @param alertDefinitionId alert definition to modify
      * @param notificationIds Notifications to remove
      * @return number of notifications removed
+     * @deprecated this is used only by the legacy JSF UI and no longer works correctly
      */
+    @Deprecated
     int removeNotifications(Subject subject, Integer alertDefinitionId, Integer[] notificationIds);
 
     /**

@@ -481,10 +481,8 @@
                 </datasource>                    
                 <!-- FOR RHQ TESTING -->
                 <datasource jta="false" jndi-name="java:jboss/datasources/NoTxRHQDS" pool-name="NoTxRHQDS" enabled="true" use-java-context="true">
-                    <connection-url>${rhq.test.ds.connection-url:jdbc:postgresql://127.0.0.1:5432/rhq}</connection-url>
-                    <connection-property name="char.encoding">
-                        UTF-8
-                    </connection-property>
+                    <connection-url>${rhq.test.ds.connection-url}</connection-url>
+                    <connection-property name="char.encoding">UTF-8</connection-property>
                     <driver>postgres</driver>
                     <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
                     <pool>
@@ -507,15 +505,9 @@
                     </statement>
                 </datasource>
                 <xa-datasource jta="true" jndi-name="java:jboss/datasources/RHQDS" pool-name="RHQDS" enabled="true" use-java-context="true">
-                    <xa-datasource-property name="DatabaseName">
-                        ${rhq.test.ds.db-name:rhq}
-                    </xa-datasource-property>
-                    <xa-datasource-property name="PortNumber">
-                        ${rhq.test.ds.port:5432}
-                    </xa-datasource-property>
-                    <xa-datasource-property name="ServerName">
-                        ${rhq.test.ds.server-name:127.0.0.1}
-                    </xa-datasource-property>
+                    <xa-datasource-property name="DatabaseName">${rhq.test.ds.db-name}</xa-datasource-property>
+                    <xa-datasource-property name="PortNumber">${rhq.test.ds.port}</xa-datasource-property>
+                    <xa-datasource-property name="ServerName">${rhq.test.ds.server-name}</xa-datasource-property>
                     <driver>postgres</driver>
                     <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
                     <xa-pool>
@@ -566,10 +558,8 @@
                 </datasource>                    
                 <!-- FOR RHQ TESTING -->
                 <datasource jta="false" jndi-name="java:jboss/datasources/NoTxRHQDS" pool-name="NoTxRHQDS" enabled="true" use-java-context="true">
-                    <connection-url>${rhq.test.ds.connection-url:jdbc:oracle:thin:@127.0.0.1:1521:XE}</connection-url>
-                    <connection-property name="char.encoding">
-                        UTF-8
-                    </connection-property>
+                    <connection-url>${rhq.test.ds.connection-url}</connection-url>
+                    <connection-property name="char.encoding">UTF-8</connection-property>
                     <driver>oracle</driver>
                     <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
                     <pool>
@@ -593,7 +583,7 @@
                     </statement>
                 </datasource>
                 <xa-datasource jta="true" jndi-name="java:jboss/datasources/RHQDS" pool-name="RHQDS" enabled="true" use-java-context="true">
-                    <xa-datasource-property name="URL">${rhq.test.ds.connection-url:jdbc:oracle:thin:@127.0.0.1:1521:XE}</xa-datasource-property>
+                    <xa-datasource-property name="URL">${rhq.test.ds.connection-url}</xa-datasource-property>
                     <xa-datasource-property name="ConnectionProperties">SetBigStringTryClob=true</xa-datasource-property>
                     <driver>oracle</driver>
                     <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>

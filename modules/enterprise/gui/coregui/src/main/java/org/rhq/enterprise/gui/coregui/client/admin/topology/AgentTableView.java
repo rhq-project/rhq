@@ -18,27 +18,36 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.topology;
 
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_SERVER;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_SERVER_ID;
+
 import java.util.List;
 
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Jiri Kremser
  */
-public class AgentTableView extends TableSection<AgentNodeDatasource> {
+public class AgentTableView extends TableSection<AgentNodeDatasource> implements HasViewName {
 
     public static final ViewName VIEW_ID = new ViewName("Agents(GWT)", MSG.view_adminTopology_agents() + "(GWT)",
         IconEnum.SERVERS);
+    
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
-        + AdministrationView.SECTION_CONFIGURATION_VIEW_ID + "/" + VIEW_ID;
+        + AdministrationView.SECTION_TOPOLOGY_VIEW_ID + "/" + VIEW_ID;
 
     public AgentTableView(String locatorId, String tableTitle, Integer serverId) {
         super(locatorId, tableTitle);
@@ -49,12 +58,47 @@ public class AgentTableView extends TableSection<AgentNodeDatasource> {
 
     @Override
     protected void configureTable() {
+        super.configureTable();
         List<ListGridField> fields = getDataSource().getListGridFields();
         ListGrid listGrid = getListGrid();
         listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
         listGrid.sort(FIELD_NAME, SortDirection.ASCENDING);
+        
+        for (ListGridField field : fields) {
+            // adding the cell formatter for name field (clickable link)
+            if (field.getName() == FIELD_NAME) {
+                field.setCellFormatter(new CellFormatter() {
+                    @Override
+                    public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                        if (value == null) {
+                            return "";
+                        }
+                        String detailsUrl = "#" + VIEW_PATH + "/" + record.getAttributeAsString(FIELD_ID);
+                        String formattedValue = StringUtility.escapeHtml(value.toString());
+                        return SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
 
-        super.configureTable();
+                    }
+                });
+            } else if (field.getName() == FIELD_SERVER.propertyName()) {
+                field.setCellFormatter(new CellFormatter() {
+                    @Override
+                    public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                        if (value == null || value.toString().isEmpty()) {
+                            return "";
+                        }
+                        String detailsUrl = "#" + ServerTableView.VIEW_PATH + "/"
+                            + record.getAttributeAsString(FIELD_SERVER_ID.propertyName());
+                        String formattedValue = StringUtility.escapeHtml(value.toString());
+                        return SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
+
+                    }
+                });
+            }
+            // TODO: adding the cell formatter for affinity group (clickable link)
+
+        }
+
+        
     }
 
     @Override
@@ -62,27 +106,9 @@ public class AgentTableView extends TableSection<AgentNodeDatasource> {
         return new AgentDetailView(extendLocatorId("detailsView"), id);
     }
 
-//    private int[] getSelectedIds(ListGridRecord[] selections) {
-//        if (selections == null) {
-//            return new int[0];
-//        }
-//        int[] ids = new int[selections.length];
-//        int i = 0;
-//        for (ListGridRecord selection : selections) {
-//            ids[i++] = selection.getAttributeAsInt(FIELD_ID);
-//        }
-//        return ids;
-//    }
-//
-//    private ArrayList<String> getSelectedNames(ListGridRecord[] selections) {
-//        if (selections == null) {
-//            return new ArrayList<String>(0);
-//        }
-//        ArrayList<String> ids = new ArrayList<String>(selections.length);
-//        for (ListGridRecord selection : selections) {
-//            ids.add(selection.getAttributeAsString(FIELD_NAME));
-//        }
-//        return ids;
-//    }
+    @Override
+    public ViewName getViewName() {
+        return VIEW_ID;
+    }
 
 }

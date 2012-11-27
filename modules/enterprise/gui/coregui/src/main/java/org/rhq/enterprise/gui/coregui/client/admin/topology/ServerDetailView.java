@@ -44,8 +44,11 @@ import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 
 import org.rhq.core.domain.cloud.Server;
+import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -55,7 +58,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * 
  * @author Jiri Kremser
  */
-public class ServerDetailView extends LocatableVLayout {
+public class ServerDetailView extends LocatableVLayout implements BookmarkableView {
 
     //    private final CloudGWTServiceAsync cloudManager = GWTServiceLookup.getCloudService();
     private final int serverId;
@@ -151,7 +154,7 @@ public class ServerDetailView extends LocatableVLayout {
         section.setItems(agentsTable);
 
         agentSection = section;
-        ++initSectionCount;
+        initSectionCount++;
         return;
     }
 
@@ -163,7 +166,7 @@ public class ServerDetailView extends LocatableVLayout {
         form.setNumCols(2);
 
         StaticTextItem nameItem = new StaticTextItem(FIELD_NAME.propertyName(), FIELD_NAME.title());
-        nameItem.setValue(server.getName());
+        nameItem.setValue("<b>" + server.getName() + "</b>");
 
         TextItem addressItem = new TextItem(FIELD_ADDRESS.propertyName(), FIELD_ADDRESS.title());
         addressItem.setValue(server.getAddress());
@@ -179,9 +182,10 @@ public class ServerDetailView extends LocatableVLayout {
         operationModeItem.setValueMap("NORMAL", "MAINTENANCE");
         operationModeItem.setValue(server.getOperationMode());
 
+        // TODO: make clickable link
         StaticTextItem affinityGroupItem = new StaticTextItem(FIELD_AFFINITY_GROUP.propertyName(),
             FIELD_AFFINITY_GROUP.title());
-        affinityGroupItem.setValue(server.getAffinityGroup());
+        affinityGroupItem.setValue(server.getAffinityGroup() == null ? "" : server.getAffinityGroup().getName());
 
         StaticTextItem installationDateItem = new StaticTextItem(FIELD_CTIME.propertyName(), FIELD_CTIME.title());
         installationDateItem.setValue(TimestampCellFormatter.format(Long.valueOf(server.getCtime()),
@@ -209,6 +213,11 @@ public class ServerDetailView extends LocatableVLayout {
         section.setItems(form);
 
         detailsSection = section;
-        ++initSectionCount;
+        initSectionCount++;
+    }
+
+    @Override
+    public void renderView(ViewPath viewPath) {
+        Log.debug("ServerDetailView: " + viewPath);
     }
 }

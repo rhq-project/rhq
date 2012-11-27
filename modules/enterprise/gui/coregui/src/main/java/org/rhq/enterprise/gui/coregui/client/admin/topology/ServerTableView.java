@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.admin.topology;
 
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.FailoverListItemDatasourceField.FIELD_ORDINAL;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,32 +29,39 @@ import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.components.table.AuthorizedTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Jiri Kremser
+ * 
  */
-public class ServerTableView extends TableSection<ServerDatasource> {
+public class ServerTableView extends TableSection<ServerDatasource<? extends Serializable, Criteria>> implements HasViewName {
 
     public static final ViewName VIEW_ID = new ViewName("Servers(GWT)", MSG.view_adminTopology_servers() + "(GWT)",
         IconEnum.SERVERS);
+
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
-        + AdministrationView.SECTION_CONFIGURATION_VIEW_ID + "/" + VIEW_ID;
-    
+        + AdministrationView.SECTION_TOPOLOGY_VIEW_ID + "/" + VIEW_ID;
+
     private final boolean showActions;
 
     public ServerTableView(String locatorId, String tableTitle, Integer agentId) {
@@ -66,6 +74,7 @@ public class ServerTableView extends TableSection<ServerDatasource> {
 
     @Override
     protected void configureTable() {
+        super.configureTable();
         List<ListGridField> fields = getDataSource().getListGridFields();
         ListGrid listGrid = getListGrid();
         listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
@@ -73,16 +82,34 @@ public class ServerTableView extends TableSection<ServerDatasource> {
             listGrid.sort(FIELD_NAME, SortDirection.ASCENDING);
             showActions();
         } else {
+            // sorting by order field
             listGrid.sort(FIELD_ORDINAL.propertyName(), SortDirection.ASCENDING);
         }
-        super.configureTable();
+        for (ListGridField field : fields) {
+            // adding the cell formatter for name field (clickable link)
+            if (field.getName() == FIELD_NAME) {
+                field.setCellFormatter(new CellFormatter() {
+                    @Override
+                    public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                        if (value == null) {
+                            return "";
+                        }
+                        String detailsUrl = "#" + VIEW_PATH + "/" + record.getAttributeAsString(FIELD_ID);
+                        String formattedValue = StringUtility.escapeHtml(value.toString());
+                        return SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
+
+                    }
+                });
+            }
+            // TODO: adding the cell formatter for affinity group (clickable link)
+        }
     }
 
     @Override
     public Canvas getDetailsView(Integer id) {
         return new ServerDetailView(extendLocatorId("detailsView"), id);
     }
-    
+
     private void showActions() {
         addTableAction(extendLocatorId("setNormal"), MSG.view_adminTopology_server_setNormal(),
             MSG.common_msg_areYouSure(), new AuthorizedTableAction(this, TableActionEnablement.ANY,
@@ -97,8 +124,8 @@ public class ServerTableView extends TableSection<ServerDatasource> {
                             if (confirmed) {
                                 int[] selectedIds = getSelectedIds(selections);
                                 SC.say("setting servers to maintenance mode, ids: " + selectedIds);
-                                GWTServiceLookup.getCloudService().updateServerMode(selectedIds, Server.OperationMode.NORMAL, 
-                                    new AsyncCallback<Void>() {
+                                GWTServiceLookup.getCloudService().updateServerMode(selectedIds,
+                                    Server.OperationMode.NORMAL, new AsyncCallback<Void>() {
                                         public void onSuccess(Void arg0) {
                                             // TODO: msg
                                             Message msg = new Message(MSG
@@ -136,8 +163,8 @@ public class ServerTableView extends TableSection<ServerDatasource> {
                             if (confirmed) {
                                 int[] selectedIds = getSelectedIds(selections);
                                 SC.say("setting servers to maintenance mode, ids: " + selectedIds);
-                                GWTServiceLookup.getCloudService().updateServerMode(selectedIds, Server.OperationMode.MAINTENANCE, 
-                                    new AsyncCallback<Void>() {
+                                GWTServiceLookup.getCloudService().updateServerMode(selectedIds,
+                                    Server.OperationMode.MAINTENANCE, new AsyncCallback<Void>() {
                                         public void onSuccess(Void arg0) {
                                             // TODO: msg
                                             Message msg = new Message(MSG
@@ -214,15 +241,20 @@ public class ServerTableView extends TableSection<ServerDatasource> {
         return ids;
     }
 
-    private ArrayList<String> getSelectedNames(ListGridRecord[] selections) {
+    private List<String> getSelectedNames(ListGridRecord[] selections) {
         if (selections == null) {
             return new ArrayList<String>(0);
         }
-        ArrayList<String> ids = new ArrayList<String>(selections.length);
+        List<String> ids = new ArrayList<String>(selections.length);
         for (ListGridRecord selection : selections) {
             ids.add(selection.getAttributeAsString(FIELD_NAME));
         }
         return ids;
+    }
+
+    @Override
+    public ViewName getViewName() {
+        return VIEW_ID;
     }
 
 }

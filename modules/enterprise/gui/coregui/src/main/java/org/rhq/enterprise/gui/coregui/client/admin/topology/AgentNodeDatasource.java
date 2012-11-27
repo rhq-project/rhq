@@ -25,6 +25,7 @@ import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeData
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_NAME;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_PORT;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_SERVER;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_SERVER_ID;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,8 +53,8 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  *
  */
 public class AgentNodeDatasource extends RPCDataSource<Agent, Criteria> {
-    
-    private final Integer serverId; 
+
+    private final Integer serverId;
 
     public AgentNodeDatasource(Integer serverId) {
         super();
@@ -78,12 +79,15 @@ public class AgentNodeDatasource extends RPCDataSource<Agent, Criteria> {
         ListGridField idField = FIELD_ID.getListGridField();
         idField.setHidden(true);
         fields.add(idField);
-
         fields.add(FIELD_NAME.getListGridField("*"));
         fields.add(FIELD_SERVER.getListGridField("120"));
         fields.add(FIELD_ADDRESS.getListGridField("110"));
+        
+        ListGridField serverIdField = FIELD_SERVER_ID.getListGridField();
+        serverIdField.setHidden(true);
+        fields.add(serverIdField);
+        
         fields.add(FIELD_PORT.getListGridField("90"));
-
         ListGridField lastAvailabilityReportField = FIELD_LAST_AVAILABILITY_REPORT.getListGridField("120");
         TimestampCellFormatter.prepareDateField(lastAvailabilityReportField);
         fields.add(lastAvailabilityReportField);
@@ -150,7 +154,8 @@ public class AgentNodeDatasource extends RPCDataSource<Agent, Criteria> {
         record.setAttribute(FIELD_NAME.propertyName(), from.getName());
         record.setAttribute(FIELD_ADDRESS.propertyName(), from.getAddress());
         record.setAttribute(FIELD_PORT.propertyName(), from.getPort());
-        record.setAttribute(FIELD_SERVER.propertyName(), from.getServer() == null ? "none" : from.getServer().getName());
+        record.setAttribute(FIELD_SERVER.propertyName(), from.getServer() == null ? "" : from.getServer().getName());
+        record.setAttribute(FIELD_SERVER_ID.propertyName(), from.getServer() == null ? "" : from.getServer().getId());
         record.setAttribute(FIELD_LAST_AVAILABILITY_REPORT.propertyName(), from.getLastAvailabilityReport());
         record.setAttribute(FIELD_AFFINITY_GROUP.propertyName(), from.getAffinityGroup() == null ? "" : from
             .getAffinityGroup().getName());

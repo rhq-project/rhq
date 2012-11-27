@@ -39,9 +39,11 @@ import com.smartgwt.client.widgets.layout.SectionStackSection;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * Shows details of a server.
@@ -147,7 +149,7 @@ public class AgentDetailView extends LocatableVLayout {
         form.setNumCols(2);
 
         StaticTextItem nameItem = new StaticTextItem(FIELD_NAME.propertyName(), FIELD_NAME.title());
-        nameItem.setValue(agent.getName());
+        nameItem.setValue("<b>" + agent.getName() + "</b>");
 
         StaticTextItem addressItem = new StaticTextItem(FIELD_ADDRESS.propertyName(), FIELD_ADDRESS.title());
         addressItem.setValue(agent.getAddress());
@@ -164,13 +166,22 @@ public class AgentDetailView extends LocatableVLayout {
             Long.valueOf(agent.getLastAvailabilityReport()), TimestampCellFormatter.DATE_TIME_FORMAT_MEDIUM);
         lastAvailabilityItem.setValue(lastReport);
 
+        // TODO: make clickable link
         StaticTextItem affinityGroupItem = new StaticTextItem(FIELD_AFFINITY_GROUP.propertyName(),
             FIELD_AFFINITY_GROUP.title());
         affinityGroupItem.setValue(agent.getAffinityGroup() == null ? "" : agent.getAffinityGroup().getName());
 
-        // TODO: create clickable link
         StaticTextItem currentServerItem = new StaticTextItem(FIELD_SERVER.propertyName(), FIELD_SERVER.title());
-        currentServerItem.setValue(agent.getServer() == null ? "none" : agent.getServer().getName());
+        String serverValue = null;
+        if (agent.getServer() == null) {
+            serverValue = "";
+        } else {
+            String detailsUrl = "#" + ServerTableView.VIEW_PATH + "/" + agent.getServer().getId();
+            String formattedValue = StringUtility.escapeHtml(agent.getServer().getName());
+            serverValue = SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
+        }
+        currentServerItem.setValue(serverValue);
+
 
         //        ButtonItem saveButton = new ButtonItem();
         //        saveButton.setOverflow(Overflow.VISIBLE);

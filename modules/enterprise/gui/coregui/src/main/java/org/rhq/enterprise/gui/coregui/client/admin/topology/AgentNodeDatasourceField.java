@@ -33,6 +33,8 @@ public enum AgentNodeDatasourceField {
     FIELD_NAME("name", CoreGUI.getMessages().common_title_name()),
 
     FIELD_SERVER("server", CoreGUI.getMessages().view_adminTopology_agent_connectedServer()),
+    
+    FIELD_SERVER_ID("serverId", "serverId"),
 
     FIELD_ADDRESS("address", CoreGUI.getMessages().view_adminTopology_agent_agentBindAddress()),
 

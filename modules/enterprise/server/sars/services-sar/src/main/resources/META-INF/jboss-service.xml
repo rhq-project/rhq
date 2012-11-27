@@ -21,9 +21,9 @@
     <mbean code="org.rhq.enterprise.server.core.plugin.PluginDeploymentScanner"
            name="rhq:service=PluginDeploymentScanner">
         <attribute name="ScanPeriod">${rhq.server.plugin-scan-period-ms:300000}</attribute>
-        <attribute name="AgentPluginDir">${jboss.server.base.dir}/deployments/rhq.ear/rhq-downloads/rhq-plugins</attribute>
-        <attribute name="ServerPluginDir">${jboss.server.base.dir}/deployments/rhq.ear/rhq-serverplugins</attribute>
-        <attribute name="UserPluginDir">${jboss.home.dir}/../plugins</attribute>
+        <attribute name="AgentPluginDir">${rhq.server.home}/modules/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/rhq.ear/rhq-downloads/rhq-plugins</attribute>
+        <attribute name="ServerPluginDir">${rhq.server.home}/modules/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/rhq.ear/rhq-serverplugins</attribute>
+        <attribute name="UserPluginDir">${rhq.server.home}/plugins</attribute>
     </mbean>
 
     <mbean code="org.rhq.enterprise.server.scheduler.SchedulerService"

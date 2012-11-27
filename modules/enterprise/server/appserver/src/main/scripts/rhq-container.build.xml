@@ -127,7 +127,7 @@
             </not>
         </condition>
 
-        <!-- when predeploying, don't make people go to the installer - turn on the auto-installer -->
+        <!-- when predeploying, don't make people edit rhq-server.properties - turn on the auto-installer now -->
         <condition property="rhq.autoinstall.enabled" value="true">
             <equals arg1="${predeploy}" arg2="true" />
         </condition>
@@ -172,6 +172,14 @@
         <copy file="${settings.localRepository}/org/rhq/rhq-container-lib/${rhq.version}/rhq-container-lib-${rhq.version}.jar"
               tofile="${jboss.home}/server/default/lib/rhq-container-lib-${rhq.version}.jar" verbose="true"/>
         -->
+
+        <echo>Adding main EAR app module to ${jboss.modules.dir} ...</echo>
+        <unzip src="${settings.localRepository}/org/rhq/rhq-enterprise-server-startup-subsystem/${project.version}/rhq-enterprise-server-startup-subsystem-${project.version}.zip"
+               dest="${jboss.modules.dir}" />
+
+        <echo>Adding installer module to ${jboss.modules.dir} ...</echo>
+        <unzip src="${settings.localRepository}/org/rhq/rhq-installer-util/${project.version}/rhq-installer-util-${project.version}.zip"
+               dest="${jboss.modules.dir}" />
 
         <echo>Adding JDBC modules to ${jboss.modules.dir} ...</echo>
         <copy file="${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar"
@@ -231,18 +239,6 @@
             </fileset>
         </delete>
         <delete dir="${jboss.home}/bin/init.d" />
-
-        <echo>Deploying ${rhq.earName} ...</echo>
-        <mkdir dir="${jboss.deploy.dir}/${rhq.earName}" />
-        <unjar src="${settings.localRepository}/org/rhq/rhq-enterprise-server-ear/${rhq.version}/rhq-enterprise-server-ear-${rhq.version}.ear"
-               dest="${jboss.deploy.dir}/${rhq.earName}" />
-    	<touch file="${jboss.deploy.dir}/${rhq.earName}.skipdeploy" />
-
-        <echo>Deploying installer webapp ...</echo>
-        <mkdir dir="${jboss.deploy.dir}/rhq-installer.war" />
-        <unwar src="${settings.localRepository}/org/rhq/rhq-installer/${rhq.version}/rhq-installer-${rhq.version}.war"
-               dest="${jboss.deploy.dir}/rhq-installer.war" />
-        <touch file="${jboss.deploy.dir}/rhq-installer.war.dodeploy" />
 
         <!--TODO - this isn't working now - we need to:
             1) add AS7's jars jboss-as-[jmx,server]-7.x.x.Final.jar to META-INF/embedded-agent/lib
@@ -502,12 +498,13 @@ rhq.sync.endpoint-address=false
 # files that are not known binary types.
 # rhq.server.drift.store-binary-content=${rhq.server.drift.store-binary-content}
 
-# Auto-Install Pre-Configuration Settings
-# If you wish to circumvent the installer webapp and auto-install the server
-# immediately upon first startup, make sure all of the settings above are
-# correctly set for your server's deployment environment. Then make sure the
-# following rhq.autoinstall properties are defined appropriately:
-# rhq.autoinstall.enabled: must be true to trigger the automatic install
+# Auto-Install Setup
+# You normally want to install automatically when starting for the first time.
+# To do so, first ensure all values in this properties file are appropriately
+# set for your environment. Once you are sure all values are as you want them,
+# set rhq.autoinstall.enabled=true and run the server.
+#
+# rhq.autoinstall.enabled: must be true to trigger the automatic install.
 # rhq.autoinstall.database: allowed values: auto, overwrite, skip
 #                           "auto" will create a new schema if one does not
 #                           yet exist or, if a schema does exist, will simply
@@ -563,12 +560,10 @@ rhq.autoinstall.public-endpoint-address=
             description="If this is a release build, make sure it is properly prepared."
             depends="initialize,
                      fix-perms,
-                     prepare-postinstaller-war,
                      developer-release-message,
                      copy-dev-resources,
                      deploy-postgres-ds,
-                     deploy-oracle-ds,
-                     undeploy-ear">
+                     deploy-oracle-ds">
 
         <echo>Adding license files...</echo>
         <copy todir="${project.build.outputDirectory}">
@@ -582,17 +577,8 @@ rhq.autoinstall.public-endpoint-address=
         <chmod dir="${jboss.home}/bin" includes="*.sh" perm="ug+x" verbose="true" />
     </target>
 
-    <target name="prepare-postinstaller-war">
-        <!-- nothing to do here - leaving in case we need to perform things in the future -->
-    </target>
-
     <target name="developer-release-message" if="predeploy">
-        <echo>!!THIS IS A DEVELOPER CONTAINER BUILD - PRE-DEPLOYING RHQ SERVER!!</echo>
-    </target>
-
-    <target name="undeploy-ear" unless="predeploy">
-        <echo>Preparing for release - telling AS to skip ear deployment</echo>
-        <touch file="${jboss.deploy.dir}/${rhq.earName}.skipdeploy" />
+        <echo>!!THIS IS A DEVELOPER CONTAINER BUILD !!</echo>
     </target>
 
     <target name="deploy-postgres-ds" if="predeploy-postgres">

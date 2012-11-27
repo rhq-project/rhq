@@ -31,6 +31,7 @@
         <module>plugins</module>
         <module>ear</module>
         <module>startup-subsystem</module>
+        <module>installer</module>
         <module>safe-invoker</module>
         <module>client-api</module>
         <module>itests</module>

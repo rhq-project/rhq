@@ -20,6 +20,7 @@
     <properties>
         <!-- this is used to replace the variable in module.xml -->
         <moduleName>${project.groupId}.${project.artifactId}</moduleName>
+        <moduleDir>org/rhq/${project.artifactId}</moduleDir>
     </properties>
 
     <build>
@@ -38,7 +39,7 @@
                         <id>copy-ear</id>
                         <phase>process-resources</phase>
                         <goals>
-                            <goal>copy</goal>
+                            <goal>unpack</goal>
                         </goals>
                         <configuration>
                             <artifactItems>
@@ -46,10 +47,9 @@
                                     <groupId>org.rhq</groupId>
                                     <artifactId>rhq-enterprise-server-ear</artifactId>
                                     <type>ear</type>
-                                    <destFileName>rhq.ear</destFileName>
+                                    <outputDirectory>${project.build.directory}/deployments/rhq.ear</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
-                            <outputDirectory>${project.build.directory}/deployments</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>
@@ -119,5 +119,60 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>dev</id>
+
+            <properties>
+                <rhq.rootDir>../../../..</rhq.rootDir>
+                <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+                <rhq.deploymentName>${project.build.finalName}.zip</rhq.deploymentName>
+                <rhq.deploymentDir>${rhq.containerDir}/modules/</rhq.deploymentDir>
+            </properties>
+
+            <build>
+                <plugins>
+
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+
+                            <execution>
+                                <id>deploy</id>
+                                <phase>package</phase>
+                                <configuration>
+                                    <target>
+                                        <echo>*** Deploying main EAR startup module to ${rhq.deploymentDir}</echo>
+                                        <unzip src="target/${rhq.deploymentName}"
+                                               dest="${rhq.deploymentDir}"/>
+                                    </target>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+
+                            <execution>
+                                <id>undeploy</id>
+                                <phase>clean</phase>
+                                <configuration>
+                                    <target>
+                                        <echo>*** Deleting main EAR startup module... ${rhq.deploymentDir}/${moduleDir}</echo>
+                                        <delete dir="${rhq.deploymentDir}/${moduleDir}" />
+                                    </target>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+
+                        </executions>
+                    </plugin>
+
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>

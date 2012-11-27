@@ -24,6 +24,7 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUBSYSTEM;
 
+import java.io.File;
 import java.util.List;
 
 import javax.xml.stream.XMLStreamConstants;
@@ -75,6 +76,9 @@ public class StartupExtension implements Extension {
     // used to read and write the XML of our subsystem config
     private static final StartupSubsystemParser parser = new StartupSubsystemParser();
 
+    private static final String RHQ_SERVER_HOME_ENVVAR = "RHQ_SERVER_HOME";
+    private static final String RHQ_SERVER_HOME_SYSPROP = "rhq.server.home";
+
     static StandardResourceDescriptionResolver getResourceDescriptionResolver(final String... keyPrefix) {
         StringBuilder prefix = new StringBuilder(SUBSYSTEM_NAME);
         for (String kp : keyPrefix) {
@@ -91,6 +95,26 @@ public class StartupExtension implements Extension {
 
     @Override
     public void initialize(ExtensionContext context) {
+        // we know our app needs to know where RHQ is installed, so setup our sys prop now
+        String serverHome = System.getProperty(RHQ_SERVER_HOME_SYSPROP);
+        if (serverHome == null) {
+            serverHome = System.getenv(RHQ_SERVER_HOME_ENVVAR);
+            if (serverHome == null) {
+                // assume we are running our own embedded AS, so RHQ home is the parent dir of the AS home
+                try {
+                    serverHome = new File(System.getProperty("jboss.home.dir"), "..").getCanonicalPath();
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to locate server home", e);
+                }
+            }
+            System.setProperty(RHQ_SERVER_HOME_SYSPROP, serverHome);
+        }
+
+        File modulesDir = new File(serverHome, "modules"); // if this is a correct home dir, RHQ's modules directory should be here
+        if (!modulesDir.isDirectory()) {
+            throw new IllegalStateException("Invalid RHQ server home dir: " + serverHome);
+        }
+
         // register subsystem with its model version
         final SubsystemRegistration subsystem;
         subsystem = context.registerSubsystem(SUBSYSTEM_NAME, API_MAJOR_VERSION, API_MINOR_VERSION);

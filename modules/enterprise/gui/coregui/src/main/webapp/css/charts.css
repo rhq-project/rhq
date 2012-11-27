@@ -6,9 +6,11 @@
     shape-rendering: crispEdges;
 }
 
+/*
 .x.axis path {
-    display: none;
+     display: none;
 }
+*/
 
 /*.line {*/
     /*fill: none;*/

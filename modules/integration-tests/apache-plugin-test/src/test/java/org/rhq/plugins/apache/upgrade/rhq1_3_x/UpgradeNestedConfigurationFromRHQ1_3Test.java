@@ -58,7 +58,7 @@ public class UpgradeNestedConfigurationFromRHQ1_3Test extends UpgradeTestBase {
     public void testWithResolvableServerNames(final String installPath, final String exePath)
         throws Throwable {
 
-        testUpgrade(new ApacheTestConfiguration() {
+        testUpgrade("testWithResolvableServerNames", new ApacheTestConfiguration() {
             {
                 serverRoot = installPath;
                 binPath = exePath;
@@ -94,7 +94,7 @@ public class UpgradeNestedConfigurationFromRHQ1_3Test extends UpgradeTestBase {
     @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN }, numberOfInitialDiscoveries = 2)
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithNonUniqueServerNames(final String installPath, final String exePath) throws Throwable {
-        testUpgrade(new ApacheTestConfiguration() {
+        testUpgrade("testWithNonUniqueServerNames", new ApacheTestConfiguration() {
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_UNRESOLVABLE_SERVER_NAMES;
                 apacheConfigurationFiles = configuredApacheConfigurationFiles;
@@ -120,7 +120,7 @@ public class UpgradeNestedConfigurationFromRHQ1_3Test extends UpgradeTestBase {
     @PluginContainerSetup(plugins = {PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN}, numberOfInitialDiscoveries = 2)
     @Parameters({"apache2.install.dir", "apache2.exe.path" })
     public void testWithAnyAddress(final String installPath, final String exePath) throws Throwable {
-        testUpgrade(new ApacheTestConfiguration() {
+        testUpgrade("testWithAnyAddress", new ApacheTestConfiguration() {
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
                 
@@ -148,7 +148,7 @@ public class UpgradeNestedConfigurationFromRHQ1_3Test extends UpgradeTestBase {
     @PluginContainerSetup(plugins = {PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN})
     @Parameters({"apache2.install.dir", "apache2.exe.path" })
     public void testWithWildcardAddress(final String installPath, final String exePath) throws Throwable {
-        testUpgrade(new ApacheTestConfiguration() {
+        testUpgrade("testWithWildcardAddress", new ApacheTestConfiguration() {
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
                 

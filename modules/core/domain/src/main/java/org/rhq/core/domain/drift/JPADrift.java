@@ -198,7 +198,15 @@ public class JPADrift implements Serializable, Drift<JPADriftChangeSet, JPADrift
 
     @Override
     public String toString() {
-        return "JPADrift [ id=" + id + ", category=" + category + ", path=" + path + ", changeSet=" + changeSet + "]";
+        StringBuilder sb = new StringBuilder("JPADrift [");
+        sb.append("id=" + id).append(", category=" + category).append(", path=" + path);
+        try {
+            sb.append(", changeSet=" + changeSet);
+        } catch (Exception e) {
+            // not attached
+        }
+        sb.append("]");
+        return sb.toString();
     }
 
 }

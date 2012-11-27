@@ -143,6 +143,7 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
                 && !resultsConfigurationDefinition.getPropertyDefinitions().isEmpty()) {
                 ConfigurationEditor editor = new ConfigurationEditor(extendLocatorId("results"),
                     operationDefinition.getResultsConfigurationDefinition(), operationHistory.getResults());
+                editor.setPreserveTextFormatting(true);
                 editor.setReadOnly(true);
                 resultsSection.addMember(editor);
             } else {

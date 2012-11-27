@@ -116,7 +116,7 @@ public class JMSSecurityConfigAdapter extends AbstractPropertyListAdapter {
             : "none";
         MutableCompositeMetaType compositeMetaType = new MutableCompositeMetaType(name, desc);
         if (propDefMap != null) {
-            for (PropertyDefinition mapMemberPropDef : propDefMap.getPropertyDefinitions()) {
+            for (PropertyDefinition mapMemberPropDef : propDefMap.getOrderedPropertyDefinitions()) {
                 if (mapMemberPropDef.getName().equals("name"))
                     continue;
                 String mapMemberDesc = (propDefMap.getDescription() != null) ? propDefMap.getDescription() : "none";

@@ -43,12 +43,12 @@ public class ResourceErrorTest extends AbstractEJB3Test {
     private Resource newResource;
 
     @Override
-    public void beforeMethod() throws Exception {
+    protected void beforeMethod() throws Exception {
         newResource = createNewResource();
     }
 
     @Override
-    public void afterMethod() throws Exception {
+    protected void afterMethod() throws Exception {
         deleteNewResource(newResource);
     }
 

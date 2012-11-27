@@ -1,0 +1,719 @@
+<project
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-parent</artifactId>
+    <version>4.6.0-SNAPSHOT</version>
+    <relativePath>../../../../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>rhq-server-itests-2</artifactId>
+
+  <name>RHQ Server JAR Integration Tests</name>
+  <description>RHQ enterprise server JAR integration tests</description>
+
+  <scm>
+    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/itests-2/</connection>
+    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/itests-2/</developerConnection>
+  </scm>
+
+  <properties>
+    <jboss.zip>${settings.localRepository}/org/jboss/as/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip</jboss.zip>
+    <jboss.unzip.location>${basedir}/target/jboss-as-${jboss.version}</jboss.unzip.location>
+  </properties>
+
+  <dependencies>
+    <!--================ Test Deps ================ -->
+
+    <!-- Note, the test dep ordering can be important. Maven orders the [test] classpath in the order listed
+      in the pom. -->
+
+    <dependency>
+      <groupId>org.jboss.as</groupId>
+      <artifactId>jboss-as-dist</artifactId>
+      <type>zip</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jboss.spec</groupId>
+      <artifactId>jboss-javaee-6.0</artifactId>
+      <version>${jboss.javaee6.spec.version}</version>
+      <scope>provided</scope>
+      <type>pom</type>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jboss.as</groupId>
+      <artifactId>jboss-as-arquillian-container-managed</artifactId>
+      <version>${jboss.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jboss.arquillian.testng</groupId>
+      <artifactId>arquillian-testng-container</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jboss.shrinkwrap</groupId>
+      <artifactId>shrinkwrap-impl-base</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jboss.shrinkwrap.resolver</groupId>
+      <artifactId>shrinkwrap-resolver-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jboss.shrinkwrap.resolver</groupId>
+      <artifactId>shrinkwrap-resolver-api-maven</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jboss.shrinkwrap.resolver</groupId>
+      <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jboss.arquillian.protocol</groupId>
+      <artifactId>arquillian-protocol-servlet</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-core-domain</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-core-domain</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-enterprise-server</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-script-bindings</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-server-client-api</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>rhq-serverplugin-drift</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>rhq-core-client-api</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>test-utils</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.testng</groupId>
+          <artifactId>testng</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.rhq.helpers</groupId>
+      <artifactId>perftest-support</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.hibernate</groupId>
+      <artifactId>hibernate-entitymanager</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-module-testng</artifactId>
+      <version>${powermock.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-api-mockito</artifactId>
+      <version>${powermock.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.opensymphony.quartz</groupId>
+      <artifactId>quartz</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.liquibase</groupId>
+      <artifactId>liquibase-core</artifactId>
+      <version>2.0.3</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>joda-time</groupId>
+      <artifactId>joda-time</artifactId>
+      <version>2.1</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <testResources>
+      <testResource>
+        <directory>src/test/resources</directory>
+        <filtering>true</filtering>
+      </testResource>
+    </testResources>
+
+    <plugins>
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+
+          <execution>
+            <id>prepare Standalone XML</id>
+            <phase>process-test-resources</phase>
+            <configuration>
+              <target>
+                <echo>Unzipping JBossAS ${jboss.version} found at ${jboss.zip}</echo>
+                <unzip
+                  src="${jboss.zip}"
+                  dest="${jboss.unzip.location}/.." />
+                <echo>JBossAS ${jboss.version} should now be at: ${jboss.unzip.location}</echo>
+                <property
+                  name="jboss.conf"
+                  location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
+                <echo>Will now add test configuration to JBossAS config file: ${jboss.conf}</echo>
+                <replace file="${jboss.conf}">
+
+                  <replacefilter>
+                    <replacetoken>&lt;/extensions></replacetoken>
+                    <replacevalue><![CDATA[
+    </extensions>
+                    
+    <!-- FOR RHQ TESTING -->
+    <system-properties>
+        <property name="project.version" value="${project.version}"/>
+        <property name="rhq.server.content.filesystem" value="${jboss.unzip.location}/standalone/data/packagebits" />
+    </system-properties>]]></replacevalue>
+                  </replacefilter>
+
+                  <replacefilter>
+                    <replacetoken>&lt;/security-domains></replacetoken>
+                    <replacevalue><![CDATA[
+                <!-- FOR RHQ TESTING --> 
+                <security-domain name="RHQDSSecurityDomain" cache-type="default">
+                    <authentication>
+                        <login-module code="ConfiguredIdentity" flag="required">
+                            <module-option name="userName" value="${rhq.test.ds.user-name}"/>
+                            <module-option name="principal" value="${rhq.test.ds.user-name}"/>
+                            <module-option name="password" value="${rhq.test.ds.password}"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>
+            </security-domains>]]></replacevalue>
+                  </replacefilter>
+
+                  <replacefilter>
+                    <replacetoken>&lt;/session-bean></replacetoken>
+                    <replacevalue><![CDATA[
+                </session-bean>
+                <!-- FOR RHQ TESTING -->
+                <mdb>
+                    <resource-adapter-ref resource-adapter-name="hornetq-ra"/>
+                    <bean-instance-pool-ref pool-name="mdb-strict-max-pool"/>
+                </mdb>]]></replacevalue>
+                  </replacefilter>
+
+                  <replacefilter>
+                    <replacetoken>&lt;extension module="org.jboss.as.naming"/></replacetoken>
+                    <replacevalue><![CDATA[
+        <!-- FOR RHQ TESTING -->
+        <extension module="org.jboss.as.messaging"/>
+        <extension module="org.jboss.as.naming"/>]]></replacevalue>
+                  </replacefilter>
+
+                  <replacefilter>
+                    <replacetoken>&lt;socket-binding name="https" port="8443"/></replacetoken>
+                    <replacevalue><![CDATA[
+        <socket-binding name="https" port="8443"/>                    
+        <!-- FOR RHQ TESTING -->
+        <socket-binding name="messaging" port="${rhq.server.socket.binding.port.messaging:4445}"/>
+        <socket-binding name="messaging-throughput" port="${rhq.server.socket.binding.port.messaging-throughput:4455}"/>]]></replacevalue>
+                  </replacefilter>
+
+                  <replacefilter>
+                    <replacetoken>&lt;subsystem xmlns="urn:jboss:domain:naming:1.1"/></replacetoken>
+                    <replacevalue><![CDATA[
+        <!-- FOR RHQ TESTING -->
+        <subsystem xmlns="urn:jboss:domain:messaging:1.1">
+            <hornetq-server>
+                <persistence-enabled>true</persistence-enabled>
+                <journal-file-size>102400</journal-file-size>
+                <journal-min-files>2</journal-min-files>
+
+                <connectors>
+                    <netty-connector name="netty" socket-binding="messaging"/>
+                    <netty-connector name="netty-throughput" socket-binding="messaging-throughput">
+                        <param key="batch-delay" value="50"/>
+                    </netty-connector>
+                    <in-vm-connector name="in-vm" server-id="0"/>
+                </connectors>
+
+                <acceptors>
+                    <netty-acceptor name="netty" socket-binding="messaging"/>
+                    <netty-acceptor name="netty-throughput" socket-binding="messaging-throughput">
+                        <param key="batch-delay" value="50"/>
+                        <param key="direct-deliver" value="false"/>
+                    </netty-acceptor>
+                    <in-vm-acceptor name="in-vm" server-id="0"/>
+                </acceptors>
+
+                <security-settings>
+                    <security-setting match="#">
+                        <permission type="send" roles="guest"/>
+                        <permission type="consume" roles="guest"/>
+                        <permission type="createNonDurableQueue" roles="guest"/>
+                        <permission type="deleteNonDurableQueue" roles="guest"/>
+                    </security-setting>
+                </security-settings>
+
+                <address-settings>
+                    <address-setting match="#">
+                        <dead-letter-address>jms.queue.DLQ</dead-letter-address>
+                        <expiry-address>jms.queue.ExpiryQueue</expiry-address>
+                        <redelivery-delay>0</redelivery-delay>
+                        <max-size-bytes>10485760</max-size-bytes>
+                        <address-full-policy>BLOCK</address-full-policy>
+                        <message-counter-history-day-limit>10</message-counter-history-day-limit>
+                    </address-setting>
+                </address-settings>
+
+                <jms-connection-factories>
+                    <connection-factory name="InVmConnectionFactory">
+                        <connectors>
+                            <connector-ref connector-name="in-vm"/>
+                        </connectors>
+                        <entries>
+                            <entry name="java:/ConnectionFactory"/>
+                        </entries>
+                    </connection-factory>
+                    <connection-factory name="RemoteConnectionFactory">
+                        <connectors>
+                            <connector-ref connector-name="netty"/>
+                        </connectors>
+                        <entries>
+                            <entry name="RemoteConnectionFactory"/>
+                            <entry name="java:jboss/exported/jms/RemoteConnectionFactory"/>
+                        </entries>
+                    </connection-factory>
+                    <pooled-connection-factory name="hornetq-ra">
+                        <transaction mode="xa"/>
+                        <connectors>
+                            <connector-ref connector-name="in-vm"/>
+                        </connectors>
+                        <entries>
+                            <entry name="java:/JmsXA"/>
+                        </entries>
+                    </pooled-connection-factory>
+                </jms-connection-factories>
+
+                <jms-destinations>
+                    <jms-queue name="testQueue">
+                        <entry name="queue/test"/>
+                        <entry name="java:jboss/exported/jms/queue/test"/>
+                    </jms-queue>
+                    <jms-queue name="AlertConditionQueue">
+                        <entry name="queue/AlertConditionQueue"/>
+                        <durable>true</durable>
+                    </jms-queue>
+                    <jms-queue name="DriftChangesetQueue">
+                        <entry name="queue/DriftChangesetQueue"/>
+                        <durable>true</durable>
+                    </jms-queue>
+                    <jms-queue name="DriftFileQueue">
+                        <entry name="queue/DriftFileQueue"/>
+                        <durable>true</durable>
+                    </jms-queue>
+                    <jms-topic name="testTopic">
+                        <entry name="topic/test"/>
+                        <entry name="java:jboss/exported/jms/topic/test"/>
+                    </jms-topic>
+                </jms-destinations>
+            </hornetq-server>
+        </subsystem>
+        <subsystem xmlns="urn:jboss:domain:naming:1.1"/>]]></replacevalue>
+                  </replacefilter>
+
+                  <replacefilter>
+                    <replacetoken>&lt;/drivers></replacetoken>
+                    <replacevalue><![CDATA[                    
+                    <!-- FOR RHQ TESTING -->               
+                    <driver name="postgres" module="org.rhq.postgres">
+                        <xa-datasource-class>org.postgresql.xa.PGXADataSource</xa-datasource-class>
+                    </driver>
+                    <driver name="oracle" module="org.rhq.oracle">
+                        <xa-datasource-class>oracle.jdbc.xa.client.OracleXADataSource</xa-datasource-class>
+                    </driver>
+                </drivers>]]></replacevalue>
+                  </replacefilter>
+
+                  <replacefilter>
+                    <replacetoken>&lt;/cache-container></replacetoken>
+                    <replacevalue><![CDATA[
+            </cache-container>
+            <!-- FOR RHQ TESTING -->
+            <cache-container name="rhq" jndi-name="java:jboss/infinispan/rhq">
+                <local-cache name="rhqCache">
+                    <transaction mode="NONE"/>
+                    <eviction strategy="LRU" max-entries="50000"/>
+                    <expiration max-idle="100000"/>
+                </local-cache>
+            </cache-container>]]></replacevalue>
+                  </replacefilter>
+
+                </replace>
+
+                <property
+                  name="jboss.modules.dir"
+                  location="${jboss.unzip.location}/modules" />
+                <echo>Adding JDBC modules to ${jboss.modules.dir} ...</echo>
+                <copy
+                  file="${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar"
+                  toDir="${jboss.modules.dir}/org/rhq/oracle/main"
+                  failonerror="false"
+                  verbose="true" />
+                <echo file="${jboss.modules.dir}/org/rhq/oracle/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.1" name="org.rhq.oracle">
+    <resources>
+        <resource-root path="ojdbc6-${ojdbc6.version}.jar"/>
+    </resources>
+    <dependencies>
+        <module name="javax.api"/>
+        <module name="javax.transaction.api"/>
+    </dependencies>
+</module>
+]]></echo>
+                <copy
+                  file="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"
+                  toDir="${jboss.modules.dir}/org/rhq/postgres/main"
+                  verbose="true" />
+                <echo file="${jboss.modules.dir}/org/rhq/postgres/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.1" name="org.rhq.postgres">
+    <resources>
+        <resource-root path="postgresql-${postgresql.version}.jar"/>
+    </resources>
+    <dependencies>
+        <module name="javax.api"/>
+        <module name="javax.transaction.api"/>
+    </dependencies>
+</module>
+]]></echo>
+
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+
+          <execution>
+            <id>prepare Postgres datasource</id>
+            <phase>process-test-resources</phase>
+            <configuration>
+              <skip>${skip.postgres}</skip>
+              <target>
+                <property
+                  name="jboss.conf"
+                  location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
+                <echo>Will now add test configuration datasource to JBossAS config file: ${jboss.conf}</echo>
+                <replace file="${jboss.conf}">
+
+                  <replacefilter>
+                    <replacetoken>&lt;/datasource></replacetoken>
+                    <replacevalue><![CDATA[
+                </datasource>                    
+                <!-- FOR RHQ TESTING -->
+                <datasource jta="false" jndi-name="java:jboss/datasources/NoTxRHQDS" pool-name="NoTxRHQDS" enabled="true" use-java-context="true">
+                    <connection-url>${rhq.test.ds.connection-url:jdbc:postgresql://127.0.0.1:5432/rhq}</connection-url>
+                    <connection-property name="char.encoding">
+                        UTF-8
+                    </connection-property>
+                    <driver>postgres</driver>
+                    <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
+                    <pool>
+                        <min-pool-size>2</min-pool-size>
+                        <max-pool-size>5</max-pool-size>
+                    </pool>
+                    <security>
+                        <security-domain>RHQDSSecurityDomain</security-domain>
+                    </security>
+                    <validation>
+                        <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker"/>
+                        <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter"/>
+                    </validation>
+                    <timeout>
+                        <blocking-timeout-millis>30000</blocking-timeout-millis>
+                        <idle-timeout-minutes>15</idle-timeout-minutes>
+                    </timeout>
+                    <statement>
+                        <prepared-statement-cache-size>75</prepared-statement-cache-size>
+                    </statement>
+                </datasource>
+                <xa-datasource jta="true" jndi-name="java:jboss/datasources/RHQDS" pool-name="RHQDS" enabled="true" use-java-context="true">
+                    <xa-datasource-property name="DatabaseName">
+                        ${rhq.test.ds.db-name:rhq}
+                    </xa-datasource-property>
+                    <xa-datasource-property name="PortNumber">
+                        ${rhq.test.ds.port:5432}
+                    </xa-datasource-property>
+                    <xa-datasource-property name="ServerName">
+                        ${rhq.test.ds.server-name:127.0.0.1}
+                    </xa-datasource-property>
+                    <driver>postgres</driver>
+                    <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
+                    <xa-pool>
+                        <min-pool-size>5</min-pool-size>
+                        <max-pool-size>50</max-pool-size>
+                    </xa-pool>
+                    <security>
+                        <security-domain>RHQDSSecurityDomain</security-domain>
+                    </security>
+                    <validation>
+                        <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker"/>
+                        <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter"/>
+                    </validation>
+                    <timeout>
+                        <blocking-timeout-millis>30000</blocking-timeout-millis>
+                        <idle-timeout-minutes>15</idle-timeout-minutes>
+                    </timeout>
+                    <statement>
+                        <prepared-statement-cache-size>75</prepared-statement-cache-size>
+                    </statement>
+                </xa-datasource>]]></replacevalue>
+                  </replacefilter>
+
+                </replace>
+
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+
+          <execution>
+            <id>prepare Oracle datasource</id>
+            <phase>process-test-resources</phase>
+            <configuration>
+              <skip>${skip.oracle}</skip>
+              <target>
+                <property
+                  name="jboss.conf"
+                  location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
+                <echo>Will now add test configuration datasource to JBossAS config file: ${jboss.conf}</echo>
+                <replace file="${jboss.conf}">
+
+                  <replacefilter>
+                    <replacetoken>&lt;/datasource></replacetoken>
+                    <replacevalue><![CDATA[
+                </datasource>                    
+                <!-- FOR RHQ TESTING -->
+                <datasource jta="false" jndi-name="java:jboss/datasources/NoTxRHQDS" pool-name="NoTxRHQDS" enabled="true" use-java-context="true">
+                    <connection-url>${rhq.test.ds.connection-url:jdbc:oracle:thin:@127.0.0.1:1521:XE}</connection-url>
+                    <connection-property name="char.encoding">
+                        UTF-8
+                    </connection-property>
+                    <driver>oracle</driver>
+                    <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
+                    <pool>
+                        <min-pool-size>2</min-pool-size>
+                        <max-pool-size>5</max-pool-size>
+                    </pool>
+                    <security>
+                        <security-domain>RHQDSSecurityDomain</security-domain>
+                    </security>
+                    <validation>
+                        <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker" />
+                        <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker" />
+                        <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter" />
+                    </validation>
+                    <timeout>
+                        <blocking-timeout-millis>30000</blocking-timeout-millis>
+                        <idle-timeout-minutes>15</idle-timeout-minutes>
+                    </timeout>
+                    <statement>
+                        <prepared-statement-cache-size>75</prepared-statement-cache-size>
+                    </statement>
+                </datasource>
+                <xa-datasource jta="true" jndi-name="java:jboss/datasources/RHQDS" pool-name="RHQDS" enabled="true" use-java-context="true">
+                    <xa-datasource-property name="URL">${rhq.test.ds.connection-url:jdbc:oracle:thin:@127.0.0.1:1521:XE}</xa-datasource-property>
+                    <xa-datasource-property name="ConnectionProperties">SetBigStringTryClob=true</xa-datasource-property>
+                    <driver>oracle</driver>
+                    <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
+                    <xa-pool>
+                        <min-pool-size>5</min-pool-size>
+                        <max-pool-size>50</max-pool-size>
+                    </xa-pool>
+                    <security>
+                        <security-domain>RHQDSSecurityDomain</security-domain>
+                    </security>
+                    <validation>
+                        <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker" />
+                        <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker" />
+                        <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter" />
+                    </validation>
+                    <timeout>
+                        <blocking-timeout-millis>30000</blocking-timeout-millis>
+                        <idle-timeout-minutes>15</idle-timeout-minutes>
+                    </timeout>
+                    <statement>
+                        <prepared-statement-cache-size>75</prepared-statement-cache-size>
+                    </statement>
+                </xa-datasource>]]></replacevalue>
+                  </replacefilter>
+
+                </replace>
+
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+
+        </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+
+        <configuration>
+          <skipTests>true</skipTests>
+          <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
+          <groups>${rhq.testng.includedGroups}</groups>
+          <properties>
+            <property>
+              <name>listener</name>
+              <value>org.rhq.test.testng.StdoutReporter</value>
+            </property>
+          </properties>
+          <systemPropertyVariables>
+            <embeddedDeployment>true</embeddedDeployment>
+            <deploymentDirectory>target/classes</deploymentDirectory>
+            <hibernate.dialect>${rhq.test.ds.hibernate-dialect}</hibernate.dialect>
+            <clean.db>${clean.db}</clean.db>
+            <log4j.configDebug>false</log4j.configDebug>
+            <project.version>${project.version}</project.version>
+
+            <rhq.test.ds.type-mapping>${rhq.test.ds.type-mapping}</rhq.test.ds.type-mapping>
+            <rhq.test.ds.server-name>${rhq.test.ds.server-name}</rhq.test.ds.server-name>
+            <rhq.test.ds.db-name>${rhq.test.ds.db-name}</rhq.test.ds.db-name>
+            <rhq.test.ds.connection-url>${rhq.test.ds.connection-url}</rhq.test.ds.connection-url>
+            <rhq.db.admin.username>${rhq.db.admin.username}</rhq.db.admin.username>
+            <rhq.db.admin.password>${rhq.db.admin.password}</rhq.db.admin.password>
+            <rhq.test.ds.user-name>${rhq.test.ds.user-name}</rhq.test.ds.user-name>
+            <rhq.test.ds.password>${rhq.test.ds.password}</rhq.test.ds.password>
+          </systemPropertyVariables>
+          <additionalClasspathElements>
+            <!-- The below is required for tests to run against Oracle. -->
+            <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar</additionalClasspathElement>
+          </additionalClasspathElements>
+        </configuration>
+
+        <executions>
+
+          <execution>
+            <id>allExceptDbTests</id>
+            <goals>
+              <goal>test</goal>
+            </goals>
+            <configuration>
+              <skipTests>${skipTests}</skipTests>
+              <excludes>
+                <!-- NOTE: PERF GROUP AND SOME CLASSES EXCLUDED (SEE BZ 874696) -->
+                <exclude>**/JndiAccessTest.java</exclude>
+                <exclude>**/LdapGroupManagerBeanTest.java</exclude>
+                <exclude>**/SynchronizationManagerBeanTest.java</exclude>
+                <exclude>org/rhq/**/performance/**/*.java</exclude>
+
+                <!-- exclude the db tests which are not expected to run in this suite -->
+                <exclude>org/rhq/enterprise/server/db/**</exclude>
+                <!-- exclude any unexpected packages -->
+                <exclude>com/**/*.java</exclude>
+              </excludes>
+            </configuration>
+          </execution>
+
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>postgres</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <skip.postgres>false</skip.postgres>
+        <skip.oracle>true</skip.oracle>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>oracle</id>
+      <properties>
+        <skip.postgres>true</skip.postgres>
+        <skip.oracle>false</skip.oracle>
+      </properties>
+    </profile>
+  </profiles>
+</project>

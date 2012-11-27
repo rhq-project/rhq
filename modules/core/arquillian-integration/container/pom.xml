@@ -83,6 +83,8 @@
 
         <!-- 3rd party -->
 
+        <!-- Yes, this is meant to be org.javassist:javassist, and NOT
+           javassist:javassist - which is an older impl -->
         <dependency>
             <groupId>org.javassist</groupId>
             <artifactId>javassist</artifactId>

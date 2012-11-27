@@ -38,6 +38,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiClass;
 import com.wordnik.swagger.annotations.ApiError;
 import com.wordnik.swagger.annotations.ApiErrors;
 import com.wordnik.swagger.annotations.ApiOperation;
@@ -170,7 +171,7 @@ public class ClassLevelProcessor extends AbstractProcessor {
 
         log.debug("Looking at " + classElementIn.getQualifiedName().toString());
         // Process the data classes
-        if (classElementIn.getAnnotation(XmlRootElement.class)!=null) {
+        if (classElementIn.getAnnotation(ApiClass.class)!=null) {
             processDataClass(doc, classElementIn, xmlRoot);
             return;
         }
@@ -367,13 +368,23 @@ public class ClassLevelProcessor extends AbstractProcessor {
         Element elem = doc.createElement("data");
         xmlRoot.appendChild(elem);
         elem.setAttribute("name",classElementIn.getSimpleName().toString());
-        Api api = classElementIn.getAnnotation(Api.class);
+        ApiClass api = classElementIn.getAnnotation(ApiClass.class);
         if (api!=null) {
             elem.setAttribute("abstract",api.value());
             if (api.description()!=null && !api.description().isEmpty()) {
                 elem.setAttribute("description",api.description());
             }
         }
+        // Determine the name of how the elements of this class are named in the XML / JSON output
+        XmlRootElement rootElement = classElementIn.getAnnotation(XmlRootElement.class);
+        String objectName;
+        if (rootElement!=null) {
+            objectName = rootElement.name();
+        }
+        else {
+            objectName = classElementIn.getSimpleName().toString();
+        }
+        elem.setAttribute("objectName",objectName);
         processDataClassProperties(doc, classElementIn, elem);
 
     }

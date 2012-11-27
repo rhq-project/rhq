@@ -272,7 +272,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         // make sure the user is authorized to delete this resource (which implies you can delete all its children)
         // TODO: There is a pretty good argument for this being replaced with MANAGE_INVENTORY.  It takes an
         // inventory manager to import resources, so why not to remove them?  But, since no one has complained
-        // we're timid about making a change that may hamstring existing setups. 
+        // we're timid about making a change that may hamstring existing setups.
         if (!authorizationManager.hasResourcePermission(user, Permission.DELETE_RESOURCE, resourceId)) {
             throw new PermissionException("You do not have permission to uninventory resource [" + resourceId + "]");
         }
@@ -367,8 +367,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 }
             }
 
-            // now remove the dommed agent. Call flush() to force out any problems with agent removal
-            // so that we can catch them and report a better exception. 
+            // now remove the doomed agent. Call flush() to force out any problems with agent removal
+            // so that we can catch them and report a better exception.
             if (doomedAgent != null) {
                 agentManager.deleteAgent(doomedAgent);
                 entityManager.flush();
@@ -513,7 +513,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_2, // then delete the config objects
             PluginConfigurationUpdate.QUERY_DELETE_BY_RESOURCES_3, // then the history objects wrapping those configs
             AlertConditionLog.QUERY_DELETE_BY_RESOURCES, //             Don't
-            AlertConditionLog.QUERY_DELETE_BY_RESOURCES_BULK_DELETE, // alter               
+            AlertConditionLog.QUERY_DELETE_BY_RESOURCES_BULK_DELETE, // alter
             AlertNotificationLog.QUERY_DELETE_BY_RESOURCES, //          the
             Alert.QUERY_DELETE_BY_RESOURCES, //                         order
             AlertCondition.QUERY_DELETE_BY_RESOURCES, //                of
@@ -881,7 +881,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     /**
      * Get the complete set of resource type Ids in the ancestries provided. This is useful for
      * being able to load all the types in advance of generating decoded values.
-     *  
+     *
      * @return
      */
     private HashSet<Integer> getAncestryTypeIds(Collection<String> ancestries) {
@@ -2349,6 +2349,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 if (avail != null) {
                     results.setAvailabilityType(avail.getAvailabilityType());
                 }
+                entityManager.flush();
             }
         } catch (Throwable ignore) {
         }
@@ -2632,7 +2633,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
             // make sure the user is authorized to disable this resource (which implies you can disable all its children)
             // TODO: this may require its own permission, but until someone needs it we'll piggyback on DELETE, at least
-            // that gives a resource-level permission option. 
+            // that gives a resource-level permission option.
             if (!authorizationManager.hasResourcePermission(subject, Permission.DELETE_RESOURCE, resourceId)) {
                 throw new PermissionException("You do not have permission to disable resource [" + resourceId + "]");
             }
@@ -2675,7 +2676,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         // Set the resources disabled via the standard mergeInventoryReport mechanism, from the server service
         // level. We do this for a few reasons:
         // - The server service uses locking to ensure we don't conflict with an actual report from the agent
-        // - It ensure all necessary db modications take place, like avail history and current avail 
+        // - It ensure all necessary db modifications take place, like avail history and current avail
         // - It ensures that all ancillary avail change logic, like alerting, still happens.
         DiscoveryServerServiceImpl service = new DiscoveryServerServiceImpl();
         for (AvailabilityReport report : reports.values()) {
@@ -2710,7 +2711,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
             // make sure the user is authorized to enable this resource (which implies you can enable all its children)
             // TODO: this may require its own permission, but until someone needs it we'll piggyback on DELETE, at least
-            // that gives a resource-level permission option. 
+            // that gives a resource-level permission option.
             if (!authorizationManager.hasResourcePermission(subject, Permission.DELETE_RESOURCE, resourceId)) {
                 throw new PermissionException("You do not have permission to enable resource [" + resourceId + "]");
             }
@@ -2752,7 +2753,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         // Set the resources disabled via the standard mergeInventoryReport mechanism, from the server service
         // level. We do this for a few reasons:
         // - The server service uses locking to ensure we don't conflict with an actual report from the agent
-        // - It ensure all necessary db modications take place, like avail history and current avail 
+        // - It ensure all necessary db modifications take place, like avail history and current avail
         // - It ensures that all ancillary avail change logic, like alerting, still happens.
         DiscoveryServerServiceImpl service = new DiscoveryServerServiceImpl();
         for (AvailabilityReport report : reports.values()) {

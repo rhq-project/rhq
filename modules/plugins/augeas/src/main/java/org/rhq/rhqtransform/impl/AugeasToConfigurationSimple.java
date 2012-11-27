@@ -106,7 +106,7 @@ public class AugeasToConfigurationSimple implements AugeasToConfiguration {
 
     public PropertyMap createPropertyMap(PropertyDefinitionMap propDefMap, AugeasNode node) throws AugeasRhqException {
         PropertyMap propMap = new PropertyMap(propDefMap.getName());
-        for (PropertyDefinition mapEntryPropDef : propDefMap.getPropertyDefinitions()) {
+        for (PropertyDefinition mapEntryPropDef : propDefMap.getOrderedPropertyDefinitions()) {
             propMap.put(loadProperty(mapEntryPropDef, node));
         }
         return propMap;

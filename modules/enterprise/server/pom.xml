@@ -30,6 +30,7 @@
         <module>sars</module>
         <module>plugins</module>
         <module>ear</module>
+        <module>startup-subsystem</module>
         <module>safe-invoker</module>
         <module>client-api</module>
         <module>server-metrics</module>

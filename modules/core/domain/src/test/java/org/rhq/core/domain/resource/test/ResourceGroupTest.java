@@ -40,7 +40,7 @@ public class ResourceGroupTest extends AbstractEJB3Test {
     private ResourceGroup newGroup;
 
     @Override
-    public void beforeMethod() throws Exception {
+    protected void beforeMethod() throws Exception {
         try {
             newResource = createNewResource();
             newGroup = newResource.getExplicitGroups().iterator().next();
@@ -53,7 +53,7 @@ public class ResourceGroupTest extends AbstractEJB3Test {
     }
 
     @Override
-    public void afterMethod() throws Exception {
+    protected void afterMethod() throws Exception {
         deleteNewResource(newResource);
     }
 

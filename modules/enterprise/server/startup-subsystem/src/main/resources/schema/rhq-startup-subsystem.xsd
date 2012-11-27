@@ -1,0 +1,25 @@
+<xsd:schema
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    targetNamespace="urn:org.rhq:startup:1.0"
+    xmlns="urn:org.rhq:startup:1.0"
+    elementFormDefault="qualified"
+    attributeFormDefault="unqualified"
+    version="1.0">
+
+    <!-- The subsystem root element -->
+    <xsd:element name="subsystem" type="subsystemType"/>
+
+    <xsd:complexType name="subsystemType">
+        <!--
+        <xsd:sequence>
+            <xsd:element name="status" type="xsd:string" maxOccurs="1" minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Indicates the status of the deployment.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:sequence>
+        -->
+    </xsd:complexType>
+</xsd:schema>

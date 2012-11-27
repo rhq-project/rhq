@@ -15,31 +15,23 @@
   <name>RHQ JBoss AS DMR Client</name>
   <description>A library for working as an AS management client</description>
 
-  <properties>
-    <jboss.msc.version>1.0.2.GA</jboss.msc.version> <!-- this ships with our AS7 container -->
-    <jboss.dmr.version>1.1.1.Final</jboss.dmr.version> <!-- this ships with our AS7 container -->
-  </properties>
-
   <dependencies>
 
     <dependency>
       <groupId>org.jboss.msc</groupId>
       <artifactId>jboss-msc</artifactId>
-      <version>${jboss.msc.version}</version>
       <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>org.jboss</groupId>
       <artifactId>jboss-dmr</artifactId>
-      <version>${jboss.dmr.version}</version>
       <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>org.jboss.as</groupId>
       <artifactId>jboss-as-naming</artifactId>
-      <version>${jboss.version}</version>
       <scope>provided</scope>
     </dependency>
 

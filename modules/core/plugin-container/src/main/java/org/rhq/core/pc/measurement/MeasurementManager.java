@@ -24,11 +24,13 @@ package org.rhq.core.pc.measurement;
 
 import java.lang.management.ManagementFactory;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -80,6 +82,8 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
 
     private static final String COLLECTOR_THREAD_POOL_NAME = "MeasurementManager.collector";
     private static final String SENDER_THREAD_POOL_NAME = "MeasurementManager.sender";
+
+    private static final Random RANDOM = new Random();
 
     static final int FACET_METHOD_TIMEOUT = 30 * 1000; // 30 seconds
 
@@ -534,23 +538,53 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
      * @param scheduledMeasurementInfos the schedules to reschedule
      */
     public synchronized void reschedule(Set<ScheduledMeasurementInfo> scheduledMeasurementInfos) {
-        reschedule(scheduledMeasurementInfos, 0);
+
+        for (ScheduledMeasurementInfo scheduledMeasurement : scheduledMeasurementInfos) {
+            long interval = scheduledMeasurement.getInterval();
+            scheduledMeasurement.setNextCollection(scheduledMeasurement.getNextCollection() + interval);
+            this.scheduledRequests.offer(scheduledMeasurement);
+        }
     }
 
     /**
-     * Reschedules the given measurement schedules so the next collection occurs in the future.
-     * The next collection will be pushed out by the number of seconds of the schedule's collection
-     * interval plus (or minus) the given adjustment (which is provided in milliseconds).
+     * Reschedules the given [late] measurement schedules so the next collection occurs in the future, and with
+     * some randomization to the nextCollection times. Late collections are those that were not actually
+     * performed due to collection falling behind.  The nextCollection will be set to:
+     * <pre>
+     * Now + 30s + [1..Interval]
+     * 
+     * Where [1..Interval] is some random number of seconds no lower that 1 and no higher than the standard interval
+     * for the measurement.
+     * </pre> 
      *
-     * @param scheduledMeasurementInfos the schedules to reschedule
-     * @param adjustment the number of milliseconds to adjust the next collection time. If 0, the
-     *                   next collection time will be the number of seconds in the future as indicated
-     *                   by the schedule's interval.
+     * @param scheduledMeasurementInfos the late schedules to reschedule  
      */
-    public synchronized void reschedule(Set<ScheduledMeasurementInfo> scheduledMeasurementInfos, long adjustment) {
+    synchronized void rescheduleLateCollections(Set<ScheduledMeasurementInfo> scheduledMeasurementInfos) {
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Rescheduling [" + scheduledMeasurementInfos.size() + "] late collections: "
+                + scheduledMeasurementInfos);
+        }
+
+        long now = System.currentTimeMillis();
         for (ScheduledMeasurementInfo scheduledMeasurement : scheduledMeasurementInfos) {
-            scheduledMeasurement.setNextCollection(scheduledMeasurement.getNextCollection()
-                + scheduledMeasurement.getInterval() + adjustment);
+            // push out 30s from the current time to at least get a minimal 30s interval
+            long nextCollection = now + 30000L;
+
+            // then add a random number of seconds [1..interval].  This will spread out the next collection times to 
+            // hopefully avoid the "hot-spot" that caused us to fall behind.
+            long interval = scheduledMeasurement.getInterval();
+            int maxRandomInterval = (int) (interval / 1000L); // exclusive upper bound
+            long randomInterval = ((RANDOM.nextInt(maxRandomInterval) + 1) * 1000L);
+
+            nextCollection += randomInterval;
+
+            if (LOG.isTraceEnabled()) {
+                LOG.trace("Rescheduling next collection of [" + scheduledMeasurement + "] for "
+                    + new Date(nextCollection));
+            }
+
+            scheduledMeasurement.setNextCollection(nextCollection);
             this.scheduledRequests.offer(scheduledMeasurement);
         }
     }

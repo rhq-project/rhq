@@ -249,7 +249,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
         List<MetricSchedule> schedules = new ArrayList<MetricSchedule>(definitions.size());
         for (MeasurementDefinition def : definitions) {
             MetricSchedule schedule = new MetricSchedule(def.getId(),def.getName(),def.getDisplayName(),false,def.getDefaultInterval(),
-                    def.getUnits().getName(),def.getDisplayType().toString());
+                    def.getUnits().getName(),def.getDataType().toString());
             if (def.getDataType()== DataType.MEASUREMENT) {
                 UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
                 uriBuilder.path("/metric/data/group/{groupId}/{definitionId}");

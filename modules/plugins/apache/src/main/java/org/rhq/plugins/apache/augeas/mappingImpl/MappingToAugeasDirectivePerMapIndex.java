@@ -95,7 +95,7 @@ public class MappingToAugeasDirectivePerMapIndex extends ConfigurationToAugeasAp
         String propertyName = prop.getName();
         StringBuffer param = new StringBuffer();
 
-        for (PropertyDefinition propVal : propDefMap.getPropertyDefinitions()) {
+        for (PropertyDefinition propVal : propDefMap.getOrderedPropertyDefinitions()) {
 
             PropertySimple property = propMap.getSimple(propVal.getName());
             if (property != null) {

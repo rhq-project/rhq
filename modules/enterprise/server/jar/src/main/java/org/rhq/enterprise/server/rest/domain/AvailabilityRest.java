@@ -22,6 +22,9 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.wordnik.swagger.annotations.ApiClass;
+import com.wordnik.swagger.annotations.ApiProperty;
+
 import org.jboss.resteasy.links.RESTServiceDiscovery;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -30,6 +33,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
  * Availability implementation for exposing via REST
  * @author Heiko W. Rupp
  */
+@ApiClass("Represents the availability of a resource")
 @XmlRootElement(name = "availability")
 public class AvailabilityRest {
 
@@ -55,16 +59,19 @@ public class AvailabilityRest {
         this.resourceId = resourceId;
     }
 
+    @ApiProperty("Time since the type is valid")
     @XmlElement
     public long getSince() {
         return since;
     }
 
+    @ApiProperty(value = "Type of availability", allowableValues = "UP, DOWN, DISABLED, UNKNOWN")
     @XmlElement
     public String getType() {
         return type;
     }
 
+    @ApiProperty("Id of the resource that reports the availability")
     @XmlElement
     public int getResourceId() {
         return resourceId;
@@ -82,6 +89,7 @@ public class AvailabilityRest {
         this.resourceId = resourceId;
     }
 
+    @ApiProperty("Time until the type is valid. May be null if type is ongoing")
     public Long getUntil() {
         return until;
     }

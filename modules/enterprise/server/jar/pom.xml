@@ -26,14 +26,27 @@
   </properties>
 
   <dependencies>
-
+    
       <!-- Internal Deps -->
 
-    <dependency>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-enterprise-comm</artifactId>
-      <version>${project.version}</version>
-    </dependency>
+  <!-- rhq-enterprise-comm pulls in the old version of jboss remoting.  The old version of remoting
+       depends on jboss/jboss-common/1.2.1.GA/jboss-common-1.2.1.GA.jar, which includes on old
+       implementation of the org.jboss.logging package.  Arquillian testing leverages AS7 modules
+       (xnio e.g.) that require the up to date logging impl.  Since server jar depends on
+       rhq-enterprise-comm to run, and arquillian to test, place the current version jboss-logging
+       as a dependency before the rhq-comm dependency. This ensure the classpath is set up to use the
+       newer package impl.  -->
+  <dependency>
+    <groupId>org.jboss.logging</groupId>
+    <artifactId>jboss-logging</artifactId>
+    <version>3.1.0.GA</version>
+    <scope>test</scope>
+  </dependency>
+  <dependency>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-enterprise-comm</artifactId>
+    <version>${project.version}</version>
+  </dependency>
 
     <dependency>
       <groupId>org.rhq</groupId>
@@ -132,6 +145,7 @@
 
       <!-- Note, the test deps are intentionally placed above the other scoped deps because of classpath
            reasons.  Maven orders the [test] classpath in the order listed in the pom.  -->
+ 
 
   <dependency>
     <groupId>org.jboss.spec</groupId>
@@ -141,58 +155,6 @@
     <type>pom</type>
   </dependency>
  
-  <dependency>
-    <groupId>org.jboss.as</groupId>
-    <artifactId>jboss-as-arquillian-container-managed</artifactId>
-    <version>${jboss.version}</version>
-    <scope>test</scope>
-  </dependency>
-         
-  <dependency>
-    <groupId>org.jboss.arquillian.testng</groupId>
-    <artifactId>arquillian-testng-container</artifactId>    
-    <scope>test</scope>
-  </dependency>
-
-  <dependency>
-    <groupId>org.jboss.shrinkwrap</groupId>
-    <artifactId>shrinkwrap-impl-base</artifactId>
-    <scope>test</scope>
-  </dependency>
-
-  <dependency>
-    <groupId>org.jboss.shrinkwrap.resolver</groupId>
-    <artifactId>shrinkwrap-resolver-api</artifactId>
-    <scope>test</scope>
-  </dependency>
-
-  <dependency>
-    <groupId>org.jboss.shrinkwrap.resolver</groupId>
-    <artifactId>shrinkwrap-resolver-api-maven</artifactId>
-    <scope>test</scope>
-  </dependency>
-
-  <dependency>
-    <groupId>org.jboss.shrinkwrap.resolver</groupId>
-    <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
-    <scope>test</scope>
-  </dependency>
-
-  <dependency>
-    <groupId>org.jboss.arquillian.protocol</groupId>
-    <artifactId>arquillian-protocol-servlet</artifactId>
-    <scope>test</scope>
-  </dependency>              
-
-
-
-    <dependency>
-      <groupId>org.jboss.as</groupId>
-      <artifactId>jboss-as-dist</artifactId>
-      <type>zip</type>
-      <scope>test</scope>
-    </dependency>
-
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>test-utils</artifactId>
@@ -205,7 +167,7 @@
         </exclusion>
       </exclusions>
     </dependency>
-
+ 
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-domain</artifactId>
@@ -213,68 +175,8 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
-
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>rhq-core-client-api</artifactId>
-      <version>${project.version}</version>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.rhq.helpers</groupId>
-      <artifactId>perftest-support</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>ant</groupId>
-          <artifactId>ant</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>ant</groupId>
-          <artifactId>ant-launcher</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-      <!-- NOTE: The remaining test deps correspond to the classes contained in hibernate-all.jar and thirdparty-all.jar. -->
-    <dependency>
-      <groupId>org.javassist</groupId>
-      <artifactId>javassist</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>trove</groupId>
-      <artifactId>trove</artifactId>
-      <version>1.0.2</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>xerces</groupId>
-      <artifactId>xercesImpl</artifactId>
-      <version>${xercesImpl.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>net.sf.opencsv</groupId>
-      <artifactId>opencsv</artifactId>
-      <version>1.8</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>commons-jxpath</groupId>
-      <artifactId>commons-jxpath</artifactId>
-      <version>1.3</version>
-      <scope>test</scope>
-    </dependency>
-
-
+  
+ 
       <!-- 3rd Party Deps -->
 
     <!-- do we really need this version, for now use the version provided by AS7, declare just below --> 
@@ -341,49 +243,15 @@
       <version>1.1.4</version>
     </dependency>
 
-      <!-- required by RHQ server classes, as well as EJB3 Embedded -->
-    <dependency>
-      <groupId>dom4j</groupId>
-      <artifactId>dom4j</artifactId>
-      <version>1.6.1-jboss</version>
-      <scope>provided</scope>
-    </dependency>
-
     <dependency>
       <groupId>gnu-getopt</groupId>
       <artifactId>getopt</artifactId>
     </dependency>
-
+ 
     <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-entitymanager</artifactId>
       <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>i18nlog</groupId>
-      <artifactId>i18nlog</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>javax.mail</groupId>
-      <artifactId>mail</artifactId>
-      <version>${javax.mail.api.version}</version>
-      <scope>provided</scope> <!-- by JBossAS -->
-    </dependency>
-
-    <dependency>
-      <groupId>javax.persistence</groupId>
-      <artifactId>persistence-api</artifactId>
-      <version>1.0.2</version>
-      <scope>provided</scope> <!-- by JBossAS -->
-    </dependency>
-
-    <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>jsp-api</artifactId>
-      <version>2.0</version>
-      <scope>provided</scope> <!-- by JBossAS -->
     </dependency>
 
     <dependency>
@@ -395,17 +263,16 @@
     <dependency>
       <groupId>org.jboss</groupId>
       <artifactId>jboss-common-core</artifactId>
-      <scope>provided</scope> <!-- by JBossAS -->
+      <scope>provided</scope>
     </dependency>
 
-    <!-- JBoss annotations like @TransactionTimeout -->
+    <!-- JBoss annotations like @TransactionTimeout --> 
     <dependency>
        <groupId>org.jboss.ejb3</groupId>
        <artifactId>jboss-ejb3-ext-api</artifactId>
-       <version>2.0.0</version>
        <scope>provided</scope>
     </dependency>
-
+ 
     <!-- annotations like @ExcludeDefaultInterceptors -->
     <dependency>
        <groupId>org.jboss.spec.javax.interceptor</groupId>
@@ -445,42 +312,11 @@
       <scope>provided</scope>
     </dependency>
 
-    <!-- TODO: find out the AS7 equivalent -->
-    <dependency>
-      <groupId>jboss</groupId>
-      <artifactId>jboss-jmx</artifactId>
-    </dependency>
- 
-    <!-- TODO: find out the AS7 equivalent -->
-    <dependency>
-      <groupId>jboss</groupId>
-      <artifactId>jboss-system</artifactId>
-    </dependency>
-
-    <!-- TODO: find out the AS7 equivalent -->
-    <dependency>
-      <groupId>jboss</groupId>
-      <artifactId>jbosssx</artifactId>
-    </dependency>
- 
-    <dependency>
-      <groupId>jboss</groupId>
-      <artifactId>jbpm</artifactId>
-      <version>3.1.1</version>
-    </dependency>
-
     <dependency>
       <groupId>org.jboss.jbossts</groupId>
       <artifactId>jbossjts</artifactId>
       <version>${jboss-jts.version}</version>
       <scope>provided</scope>
-    </dependency>
-
-      <!-- TODO: remove this - tests should all be moved under the test source tree -->
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>3.8.1</version>
     </dependency>
 
     <dependency>
@@ -587,7 +423,7 @@
     <dependency>
       <groupId>com.wordnik</groupId>
       <artifactId>swagger-annotations_2.9.1</artifactId>
-      <version>1.1-SNAPSHOT</version>
+      <version>1.1.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
 
@@ -596,12 +432,7 @@
       <artifactId>snakeyaml</artifactId>
       <version>1.8</version>
     </dependency>
-    <dependency>
-      <groupId>org.jboss.el</groupId>
-      <artifactId>jboss-el</artifactId>
-      <version>2.0.1.GA</version>
-      <scope>provided</scope>
-    </dependency>
+    
     <dependency>
       <groupId>org.freemarker</groupId>
       <artifactId>freemarker</artifactId>
@@ -620,13 +451,6 @@
       <groupId>org.powermock</groupId>
       <artifactId>powermock-api-mockito</artifactId>
       <version>${powermock.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.liquibase</groupId>
-      <artifactId>liquibase-core</artifactId>
-      <version>2.0.3</version>
       <scope>test</scope>
     </dependency>
 
@@ -1334,6 +1158,7 @@
         <plugin>
            <groupId>org.codehaus.mojo</groupId>
            <artifactId>clirr-maven-plugin</artifactId>
+           <version>${clirr.version}</version>
            <configuration>
               <includes>
                  <include>**/*Remote</include>

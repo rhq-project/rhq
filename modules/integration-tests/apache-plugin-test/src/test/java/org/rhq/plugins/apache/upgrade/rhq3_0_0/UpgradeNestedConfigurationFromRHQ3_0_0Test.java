@@ -66,7 +66,7 @@ public class UpgradeNestedConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
     @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN }, numberOfInitialDiscoveries = 2)
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithResolvableNamesWithoutSNMP(final String installDir, final String exePath) throws Throwable {
-        testUpgrade(new ApacheTestConfiguration() {
+        testUpgrade("testWithResolvableNamesWithoutSNMP", new ApacheTestConfiguration() {
             {
                 apacheConfigurationFiles = configuredApacheConfigurationFiles;
                 inventoryFile = configuredInventoryFileWithoutSNMP;
@@ -91,7 +91,7 @@ public class UpgradeNestedConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
     @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN }, numberOfInitialDiscoveries = 2)
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithUnresolvableNamesWithoutSNMP(final String installDir, final String exePath) throws Throwable {
-        testUpgrade(new ApacheTestConfiguration() {
+        testUpgrade("testWithUnresolvableNamesWithoutSNMP", new ApacheTestConfiguration() {
             {
                 apacheConfigurationFiles = configuredApacheConfigurationFiles;
                 inventoryFile = configuredInventoryFileWithoutSNMP;
@@ -124,7 +124,7 @@ public class UpgradeNestedConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
     @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN }, numberOfInitialDiscoveries = 2)
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithNonUniqueNamesWithoutSNMP(final String installDir, final String exePath) throws Throwable {
-        testUpgrade(new ApacheTestConfiguration() {
+        testUpgrade("testWithNonUniqueNamesWithoutSNMP", new ApacheTestConfiguration() {
             {
                 apacheConfigurationFiles = configuredApacheConfigurationFiles;
                 inventoryFile = configuredInventoryFileWithoutSNMP;
@@ -168,7 +168,7 @@ public class UpgradeNestedConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
     @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithResolvableNamesWithSNMP(final String installDir, final String exePath) throws Throwable {
-        testUpgrade(new ApacheTestConfiguration() {
+        testUpgrade("testWithResolvableNamesWithSNMP", new ApacheTestConfiguration() {
             {
                 apacheConfigurationFiles = configuredApacheConfigurationFiles;
                 inventoryFile = configuredInventoryFileWithSNMP;
@@ -193,7 +193,7 @@ public class UpgradeNestedConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
     @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithUnresolvableNamesWithSNMP(final String installDir, final String exePath) throws Throwable {
-        testUpgrade(new ApacheTestConfiguration() {
+        testUpgrade("testWithUnresolvableNamesWithSNMP", new ApacheTestConfiguration() {
             {
                 apacheConfigurationFiles = configuredApacheConfigurationFiles;
                 inventoryFile = configuredInventoryFileWithSNMP;
@@ -229,7 +229,7 @@ public class UpgradeNestedConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
     @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithNonUniqueNamesWithSNMP(final String installDir, final String exePath) throws Throwable {
-        testUpgrade(new ApacheTestConfiguration() {
+        testUpgrade("testWithNonUniqueNamesWithSNMP", new ApacheTestConfiguration() {
             {
                 apacheConfigurationFiles = configuredApacheConfigurationFiles;
                 inventoryFile = configuredInventoryFileWithSNMP;
@@ -265,7 +265,7 @@ public class UpgradeNestedConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
     @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithAnyAddressWithoutSNMP(final String installPath, final String exePath) throws Throwable {
-        testUpgrade(new ApacheTestConfiguration() {
+        testUpgrade("testWithAnyAddressWithoutSNMP", new ApacheTestConfiguration() {
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
 
@@ -296,7 +296,7 @@ public class UpgradeNestedConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
     @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithAnyAddressWithSNMP(final String installPath, final String exePath) throws Throwable {
-        testUpgrade(new ApacheTestConfiguration() {
+        testUpgrade("testWithAnyAddressWithSNMP", new ApacheTestConfiguration() {
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
 
@@ -328,7 +328,7 @@ public class UpgradeNestedConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
     @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithWildcardAddressWithoutSNMP(final String installPath, final String exePath) throws Throwable {
-        testUpgrade(new ApacheTestConfiguration() {
+        testUpgrade("testWithWildcardAddressWithoutSNMP", new ApacheTestConfiguration() {
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
 
@@ -359,7 +359,7 @@ public class UpgradeNestedConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
     @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithWildcardAddressWithSNMP(final String installPath, final String exePath) throws Throwable {
-        testUpgrade(new ApacheTestConfiguration() {
+        testUpgrade("testWithWildcardAddressWithSNMP", new ApacheTestConfiguration() {
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
 

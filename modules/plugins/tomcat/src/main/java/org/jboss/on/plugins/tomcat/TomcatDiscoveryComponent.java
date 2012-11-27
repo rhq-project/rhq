@@ -55,7 +55,7 @@ import org.rhq.core.system.SystemInfo;
 import org.rhq.plugins.jmx.JMXDiscoveryComponent;
 
 /**
- * Discovers JBoss EWS and Apache Tomcat5, Tomcat6 server instances.
+ * Discovers JBoss EWS and Apache Tomcat5, Tomcat6, Tomcat7 server instances.
  *
  * @author Jay Shaughnessy
  */
@@ -106,6 +106,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
     /**
      * EWS RPM Install path substrings used to identify EWS tomcat version
      */
+    public static final String EWS_TOMCAT_7 = "tomcat7";
     public static final String EWS_TOMCAT_6 = "tomcat6";
     public static final String EWS_TOMCAT_5 = "tomcat5";
 
@@ -242,7 +243,7 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
 
         if (catalinaHome == null && isWindows(context)) {
             log.debug("catalina.home not found. Checking to see if this is an EWS installation.");
-            // On Windows EWS uses the tomcat5.exe and tomcat6.exe executables to start tomcat. They currently do
+            // On Windows EWS uses the tomcat5.exe, tomcat6.exe or Tomcat7.exe executables to start tomcat. They currently do
             // not provide the command line args that we get with the normal start up scripts that are used to
             // determine catalina.home. See https://bugzilla.redhat.com/show_bug.cgi?id=580931 for more information.
             //
@@ -353,8 +354,8 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
             return null;
         }
         
-        //EWS supports tomcat 5 or 6 and starts them using the tomcat5.exe or
-        //tomcat6.exe. The catalina homes we want for them are stored inside
+        //EWS supports tomcat 5, 6 or 7 and starts them using the tomcat5.exe,
+        //tomcat6.exe or Tomcat7.exe. The catalina homes we want for them are stored inside
         //$EWS_HOME/share/tomcat-<version>, where version differs.
         //EWS 1.0.1 uses tomcat 6.0.24, while EWS 1.0.2 uses tomcat 6.0.32
         

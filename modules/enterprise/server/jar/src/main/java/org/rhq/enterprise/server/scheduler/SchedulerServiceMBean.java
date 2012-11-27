@@ -44,7 +44,7 @@ import org.rhq.enterprise.server.operation.OperationManagerLocal;
 
 /**
  * MBean interface which is also the local interface to the scheduler SLSB. This is essentially the same interface as
- * the Quartz scheduler. We have both an MBean and SLSB fascade to Quartz - see {@link SchedulerLocal}.
+ * the Quartz scheduler. We have both an MBean and SLSB facade to Quartz - see {@link SchedulerLocal}.
  */
 public interface SchedulerServiceMBean extends Scheduler {
     /**

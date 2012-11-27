@@ -8,6 +8,12 @@
 
   <!-- Change from using the default JMX protocol due to https://issues.jboss.org/browse/AS7-1696 -->
   <defaultProtocol type="Servlet 3.0" />
+
+  <!--  The Deployment used by the SuiteDeploymentArquillianExtension in order to execute an entire
+        test suite against a single deployment. -->
+  <extension qualifier="suite">
+    <property name="deploymentClass">org.rhq.core.domain.test.AbstractEJB3Test</property>
+  </extension>
   
   <container
     qualifier="jbossas-managed"

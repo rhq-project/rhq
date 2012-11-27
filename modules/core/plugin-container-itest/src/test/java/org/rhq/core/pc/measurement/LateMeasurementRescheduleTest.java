@@ -108,17 +108,16 @@ public class LateMeasurementRescheduleTest extends Arquillian {
         //   (MUST make sure metric2 is no less than 35s, else the collections won't be late!)
         // - the resource component will sleep in its getValues for 91s - no metrics will be reported the first 91s
         // - the PC will call getValues() in this sequence:
-        // ** metric1 - starting at time 0  (due to the sleep in our getValues, this won't compete until time 91)
+        // ** metric1 - starting at time 0  (due to the sleep in our getValues, this won't complete until time 91)
         // ** metric2 - starting at time 0  (completes at time 91)
         // ** metric1 - starting at time 30 (completes at time 91)
         // ** metric2 - starting at time 60 (completes at time 91)
         // ** metric2 - starting at time 90 (completes at time 91)
         // ** metric2 - starting at time 105 (completes at time 105)
-        // ** metric1 - starting at time 121 (completes at time 121)
-        // Now, I can't explain this behavior entirely, however, it appears that metric1 is considered late so it
-        // is pushed back by our fix. It is last collected at time 30, but doesn't finish timely. The next time it should
-        // be collected is time 60 but because it has been late, that collection is skipped and our fix will re-schedule it
-        // next at time (interval+31), which means: 60 + (interval+31) == 60 + (30+31) == 60+61 == 121.
+        // ** metric1 - starting at time [121..150] (completes at time 90 + 30 + [1..30])
+        // 
+        // Metric 1 is late because it was supposed to start at t60 but instead came up for eval at t=90. It is then
+        // rescheduled by our fix for (currentTime=t90 + delay=30s + randomInterval=[1..30] based on the 30s Interval).
         // And you can see above, that is when the next request to collect metric1 is done.
         // Without the fix, the next collection of metric1 would have been at around time 60 + (interval) == 60 + (30) == 90
 
@@ -139,7 +138,7 @@ public class LateMeasurementRescheduleTest extends Arquillian {
             if (numberOfTimesMetric1WasCollectedSoFar >= 3) {
                 keepWaiting = false;
             }
-            if (waitCycles++ > 140) {
+            if (waitCycles++ > 180) {
                 keepWaiting = false; // stop waiting but the test will probably fail because we should have had three metric1 collections by now
             }
         }
@@ -162,7 +161,7 @@ public class LateMeasurementRescheduleTest extends Arquillian {
                 } else if (collectionNumber == 2) {
                     assert metric.collectedTime >= 29 && metric.collectedTime <= 32; // should be 30, but give it some leeway
                 } else if (collectionNumber == 3) {
-                    assert metric.collectedTime >= 119 && metric.collectedTime <= 123; // should be 121, but give it some leeway
+                    assert metric.collectedTime >= 120 && metric.collectedTime <= 151; // should between 90 + 30 + [1..30] = [121..150], but give it some leeway
                 }
             }
         }

@@ -107,12 +107,16 @@ public class ProcessComponent implements ResourceComponent, MeasurementFacet {
     }
 
     private ProcessInfo getProcess() throws Exception {
+        if (this.process != null && this.process.isRunning()) {
+            // Refresh existing ProcessInfo when underlying process is apparently running.
+            // ProcessInfo may hold stale data.
+            // SIGAR objects do not get updated when a process goes down.
+            this.process.refresh();
+        }
         if (this.process == null || !this.process.isRunning()) {
+            // Create ProcessInfo for the first time or when the underlying process is no longer running.
+            // When a process is no longer running we need to make a new PIQL or pid file discovery.
             this.process = getProcessForConfiguration();
-        } else {
-            // Refresh previously existing ProcessInfo as it may hold stale data.
-            // SIGAR objects do not get updated when, for example, a process goes down.
-            process.refresh();
         }
         return this.process;
     }

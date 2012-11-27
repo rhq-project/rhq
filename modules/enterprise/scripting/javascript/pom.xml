@@ -27,6 +27,10 @@
       </dependency>
    </dependencies>
 
+   <properties>
+      <failIfNoTests>true</failIfNoTests>
+   </properties>
+   
    <build>
       <plugins>
          <plugin>
@@ -61,7 +65,7 @@
                   -Djava.security.policy==${project.build.testOutputDirectory}/allow-all.policy</argLine>
                <!-- This is important, because some of the tests try to exit 
                   the JVM. -->
-               <failIfNoTests>true</failIfNoTests>
+               <failIfNoTests>${failIfNoTests}</failIfNoTests>
             </configuration>
          </plugin>
       </plugins>

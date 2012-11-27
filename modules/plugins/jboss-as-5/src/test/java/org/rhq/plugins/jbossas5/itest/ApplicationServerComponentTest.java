@@ -23,9 +23,9 @@
 package org.rhq.plugins.jbossas5.itest;
 
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 import java.io.File;
 import java.util.Arrays;
@@ -220,8 +220,8 @@ public class ApplicationServerComponentTest extends AbstractJBossAS5PluginTest {
         operationResult = invokeOperation(getServerResource(), SHUTDOWN_OPERATION_NAME, null);
         avail = getAvailability(getServerResource());        
         assertEquals(avail, AvailabilityType.DOWN);
-        assertNull(operationResult.getErrorMessage());
-        assertEquals(operationResult.getSimpleResult(), "The server has been shut down.");
+        assertNotNull(operationResult.getErrorMessage());
+        assertNull(operationResult.getSimpleResult());
         
         // Before restarting it, add some stuff to the 'startScriptEnv' and 'startScriptArgs' props so we can verify
         // they are used correctly by the Start op.

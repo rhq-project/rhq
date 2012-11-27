@@ -129,7 +129,6 @@
     <twitter4j.version>2.2.4</twitter4j.version>
     <commons-codec.version>1.4</commons-codec.version>
     <testng.version>6.5.2</testng.version>
-    <cobertura.version>1.9.4.1</cobertura.version>
     <augeas.version>0.9.0</augeas.version>
     <augeas.classifier>el5</augeas.classifier>
     <augeas.zip.version>0.9.0</augeas.zip.version>
@@ -650,13 +649,6 @@
       <artifactId>annotations</artifactId>
       <version>7.0.2</version>
       <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>net.sourceforge.cobertura</groupId>
-      <artifactId>cobertura</artifactId>
-      <version>${cobertura.version}</version>
-      <scope>test</scope>
     </dependency>
 
   </dependencies>

@@ -67,11 +67,11 @@ public class RhqDownloadsScriptSourceProvider extends BaseRhqSchemeScriptSourceP
 
         ServerDetails serverDetails = systemManager.getServerDetails(overlord);
 
-        String serverHomeDir = serverDetails.getDetails().get(ServerDetails.Detail.SERVER_HOME_DIR);
-
-        File downloads = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/script-modules");
-
-        File file = new File(downloads, path);
+        String installHomeDir = serverDetails.getDetails().get(ServerDetails.Detail.SERVER_INSTALL_DIR);
+        File downloadsDir = new File(installHomeDir,
+            "modules/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/rhq.ear/rhq-downloads");
+        File scriptDownloads = new File(downloadsDir, "script-modules");
+        File file = new File(scriptDownloads, path);
 
         try {
             return new InputStreamReader(new FileInputStream(file));

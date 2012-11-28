@@ -214,8 +214,8 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
     }
 
     private File getConnectorDownloadsDir() {
-        File serverHomeDir = getServerHomeDir();
-        File downloadDir = new File(serverHomeDir, "deployments/rhq.ear/rhq-downloads/connectors");
+        File homeDir = getDownloadHomeDir();
+        File downloadDir = new File(homeDir, "connectors");
         if (!downloadDir.exists()) {
             throw new RuntimeException("Server is missing connectors download directory at [" + downloadDir + "]");
         }
@@ -223,8 +223,8 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
     }
 
     private File getCliAlertScriptDownloadsDir() {
-        File serverHomeDir = getServerHomeDir();
-        File downloadDir = new File(serverHomeDir, "deployments/rhq.ear/rhq-downloads/cli-alert-scripts");
+        File homeDir = getDownloadHomeDir();
+        File downloadDir = new File(homeDir, "cli-alert-scripts");
         if (!downloadDir.exists()) {
             throw new RuntimeException("Server is missing connectors download directory at [" + downloadDir + "]");
         }
@@ -232,8 +232,8 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
     }
 
     private File getScriptModulesDownloadsDir() {
-        File serverHomeDir = getServerHomeDir();
-        File downloadDir = new File(serverHomeDir, "deployments/rhq.ear/rhq-downloads/script-modules");
+        File homeDir = getDownloadHomeDir();
+        File downloadDir = new File(homeDir, "script-modules");
         if (!downloadDir.exists()) {
             throw new RuntimeException("Server is missing connectors download directory at [" + downloadDir + "]");
         }
@@ -241,8 +241,8 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
     }
 
     private File getClientDownloadDir() {
-        File serverHomeDir = getServerHomeDir();
-        File downloadDir = new File(serverHomeDir, "deployments/rhq.ear/rhq-downloads/rhq-client");
+        File homeDir = getDownloadHomeDir();
+        File downloadDir = new File(homeDir, "rhq-client");
         if (!downloadDir.exists()) {
             throw new RuntimeException("Server is missing client download directory at [" + downloadDir + "]");
         }
@@ -250,18 +250,18 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
     }
 
     private File getBundleDeployerDownloadDir() {
-        File serverHomeDir = getServerHomeDir();
-        File downloadDir = new File(serverHomeDir, "deployments/rhq.ear/rhq-downloads/bundle-deployer");
+        File homeDir = getDownloadHomeDir();
+        File downloadDir = new File(homeDir, "bundle-deployer");
         if (!downloadDir.exists()) {
             throw new RuntimeException("Missing bundle deployer download directory at [" + downloadDir + "]");
         }
         return downloadDir;
     }
 
-    private File getServerHomeDir() {
-        ServerDetails details = systemManager.getServerDetails(LookupUtil.getSubjectManager().getOverlord());
-        File serverHomeDir = new File(details.getDetails().get(ServerDetails.Detail.SERVER_HOME_DIR));
-        return serverHomeDir;
+    private File getDownloadHomeDir() {
+        File earDeployDir = LookupUtil.getCoreServer().getEarDeploymentDir();
+        File downloadDir = new File(earDeployDir, "rhq-downloads");
+        return downloadDir;
     }
 
     private static List<File> getFiles(File downloadDir) {

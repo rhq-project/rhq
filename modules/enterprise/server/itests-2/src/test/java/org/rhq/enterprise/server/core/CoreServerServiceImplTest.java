@@ -545,6 +545,11 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
         }
 
         @Override
+        public File getEarDeploymentDir() {
+            return null;
+        }
+
+        @Override
         public ProductInfo getProductInfo() {
             return null;
         }

@@ -83,6 +83,13 @@ public interface CoreServerMBean {
     File getJBossServerTempDir();
 
     /**
+     * Where the main app EAR is located.
+     *
+     * @return the ear deployment directory
+     */
+    File getEarDeploymentDir();
+
+    /**
      * Product information - the product name, homepage URL, docs URL, etc.
      *
      * @return product information - the product name, homepage URL, docs URL, etc.

@@ -25,18 +25,15 @@
 
 package org.rhq.server.metrics;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Session;
 
-import org.apache.cassandra.cql.jdbc.CassandraDataSource;
 import org.joda.time.DateTime;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Listeners;
 
 import org.rhq.cassandra.CassandraClusterManager;
-import org.rhq.cassandra.CassandraException;
 import org.rhq.cassandra.DeployCluster;
 import org.rhq.cassandra.ShutdownCluster;
 
@@ -46,24 +43,16 @@ import org.rhq.cassandra.ShutdownCluster;
 @Listeners({CassandraClusterManager.class})
 public class CassandraIntegrationTest {
 
-    protected CassandraDataSource dataSource;
-
-    protected Connection connection;
+    protected Session session;
 
     private DateTimeService dateTimeService;
 
     @BeforeClass
     @DeployCluster
-    public void deployCluster() throws CassandraException {
+    public void deployCluster() throws Exception {
         dateTimeService = new DateTimeService();
-        dataSource = new CassandraDataSource("127.0.0.1", 9160, "rhq", null, null, "3.0.0");
-        try {
-            connection = dataSource.getConnection();
-            Statement statement = connection.createStatement();
-            statement.execute("use rhq;");
-        } catch (SQLException e) {
-            throw new CassandraException("Unable to get JDBC connection.", e);
-        }
+        Cluster cluster = Cluster.builder().addContactPoints("127.0.0.1", "127.0.0.2").build();
+        session = cluster.connect("rhq");
     }
 
     @AfterClass

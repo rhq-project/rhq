@@ -43,9 +43,6 @@ import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -131,22 +128,19 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     @BeforeMethod
     public void initServer() throws Exception {
         metricsServer = new MetricsServerStub();
-        metricsServer.setCassandraDS(dataSource);
+        metricsServer.setSession(session);
 
-        dao = new MetricsDAO(dataSource);
+        dao = new MetricsDAO(session);
 
         purgeDB();
     }
 
-    private void purgeDB() throws SQLException {
-        Statement statement = connection.createStatement();
-        statement.executeUpdate("TRUNCATE " + RAW_METRICS_TABLE);
-        statement.executeUpdate("TRUNCATE " + ONE_HOUR_METRICS_TABLE);
-        statement.executeUpdate("TRUNCATE " + SIX_HOUR_METRICS_TABLE);
-        statement.executeUpdate("TRUNCATE " + TWENTY_FOUR_HOUR_METRICS_TABLE);
-        statement.executeUpdate("TRUNCATE " + METRICS_INDEX_TABLE);
-
-        statement.close();
+    private void purgeDB() throws Exception {
+        session.execute("TRUNCATE " + RAW_METRICS_TABLE);
+        session.execute("TRUNCATE " + ONE_HOUR_METRICS_TABLE);
+        session.execute("TRUNCATE " + SIX_HOUR_METRICS_TABLE);
+        session.execute("TRUNCATE " + TWENTY_FOUR_HOUR_METRICS_TABLE);
+        session.execute("TRUNCATE " + METRICS_INDEX_TABLE);
     }
 
     @Test//(enabled = ENABLED)
@@ -636,21 +630,9 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     }
 
     private void assertMetricsIndexEquals(String columnFamily, List<MetricsIndexEntry> expected, String msg) {
-        Statement statement = null;
-        ResultSet resultSet = null;
-        try {
-            List<MetricsIndexEntry> actual = new ArrayList<MetricsIndexEntry>();
-            statement = connection.createStatement();
-            resultSet = statement.executeQuery("SELECT bucket, time, schedule_id FROM " + METRICS_INDEX +
-                " WHERE bucket = '" + columnFamily + "'");
-            while (resultSet.next()) {
-                actual.add(new MetricsIndexEntry(resultSet.getString(1), resultSet.getDate(2), resultSet.getInt(3)));
-            }
-            assertCollectionMatchesNoOrder("Failed to retrieve raw metric data", expected, actual, msg + ": " +
-                columnFamily + " index not match expected values.");
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        List<MetricsIndexEntry> actual = dao.findMetricsIndexEntries(columnFamily);
+        assertCollectionMatchesNoOrder("Failed to retrieve raw metric data", expected, actual, msg + ": " +
+            columnFamily + " index not match expected values.");
     }
 
     private void assert1HourDataEquals(int scheduleId, List<AggregatedNumericMetric> expected) {

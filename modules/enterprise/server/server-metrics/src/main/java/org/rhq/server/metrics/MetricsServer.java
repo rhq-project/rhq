@@ -39,7 +39,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import javax.sql.DataSource;
+import com.datastax.driver.core.Session;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -101,7 +101,7 @@ public class MetricsServer {
 
     private DateTimeService dateTimeService = new DateTimeService();
 
-    private DataSource cassandraDS;
+    private Session session;
 
     // These property getters/setters are here right now primarily to facilitate
     // testing.
@@ -186,8 +186,8 @@ public class MetricsServer {
         this.keyspace = keyspace;
     }
 
-    public void setCassandraDS(DataSource dataSource) {
-        cassandraDS = dataSource;
+    public void setSession(Session session) {
+        this.session = session;
     }
 
     public List<MeasurementDataNumericHighLowComposite> findDataForContext(Subject subject, EntityContext entityContext,
@@ -211,7 +211,7 @@ public class MetricsServer {
 
     private List<MeasurementDataNumericHighLowComposite> findRawDataForContext(MeasurementSchedule schedule,
         long beginTime, long endTime) {
-        MetricsDAO dao = new MetricsDAO(cassandraDS);
+        MetricsDAO dao = new MetricsDAO(session);
         Buckets buckets = new Buckets(beginTime, endTime);
 
         List<RawNumericMetric> rawMetrics = dao.findRawMetrics(schedule.getId(), new DateTime(beginTime),
@@ -267,13 +267,13 @@ public class MetricsServer {
     }
 
     public void addNumericData(Set<MeasurementDataNumeric> dataSet) {
-        MetricsDAO dao = new MetricsDAO(cassandraDS);
+        MetricsDAO dao = new MetricsDAO(session);
         Set<MeasurementDataNumeric> updates = dao.insertRawMetrics(dataSet, RAW_TTL);
         updateMetricsIndex(updates);
     }
 
     void updateMetricsIndex(Set<MeasurementDataNumeric> rawMetrics) {
-        MetricsDAO dao = new MetricsDAO(cassandraDS);
+        MetricsDAO dao = new MetricsDAO(session);
         Map<Integer, DateTime> updates = new TreeMap<Integer, DateTime>();
         for (MeasurementDataNumeric rawMetric : rawMetrics) {
             updates.put(rawMetric.getScheduleId(), new DateTime(rawMetric.getTimestamp()).hourOfDay().roundFloorCopy());
@@ -282,7 +282,7 @@ public class MetricsServer {
     }
 
     public void calculateAggregates() {
-        MetricsDAO dao = new MetricsDAO(cassandraDS);
+        MetricsDAO dao = new MetricsDAO(session);
 
         // We first query the metrics index table to determine which schedules have data to
         // be aggregated. Then we retrieve the metric data and aggregate or compress the
@@ -321,7 +321,7 @@ public class MetricsServer {
     }
 
     private void updateMetricsIndex(String bucket, List<AggregatedNumericMetric> metrics, Minutes interval) {
-        MetricsDAO dao = new MetricsDAO(cassandraDS);
+        MetricsDAO dao = new MetricsDAO(session);
         Map<Integer, DateTime> updates = new TreeMap<Integer, DateTime>();
         for (AggregatedNumericMetric metric : metrics) {
             updates.put(metric.getScheduleId(), dateTimeService.getTimeSlice(new DateTime(metric.getTimestamp()),
@@ -331,7 +331,7 @@ public class MetricsServer {
     }
 
     private List<AggregatedNumericMetric> aggregateRawData() {
-       MetricsDAO dao = new MetricsDAO(cassandraDS);
+       MetricsDAO dao = new MetricsDAO(session);
         List<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(ONE_HOUR_METRICS_TABLE);
         List<AggregatedNumericMetric> oneHourMetrics = new ArrayList<AggregatedNumericMetric>();
 
@@ -374,7 +374,7 @@ public class MetricsServer {
     private List<AggregatedNumericMetric> calculateAggregates(String fromColumnFamily, String toColumnFamily,
         Minutes nextInterval, int ttl) {
 
-        MetricsDAO dao = new MetricsDAO(cassandraDS);
+        MetricsDAO dao = new MetricsDAO(session);
         List<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(toColumnFamily);
         List<AggregatedNumericMetric> toMetrics = new ArrayList<AggregatedNumericMetric>();
 

@@ -28,6 +28,8 @@ package org.rhq.server.metrics;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import com.datastax.driver.core.Row;
+
 /**
  * @author John Sanda
  */
@@ -45,6 +47,18 @@ public class AggregateMetricMapper implements ResultSetMapper<AggregatedNumericM
 
         resultSet.next();
         metric.setAvg(resultSet.getDouble(4));
+
+        return metric;
+    }
+
+    @Override
+    public AggregatedNumericMetric map(Row... row) {
+        AggregatedNumericMetric metric = new AggregatedNumericMetric();
+        metric.setScheduleId(row[0].getInt(0));
+        metric.setTimestamp(row[0].getDate(1).getTime());
+        metric.setMax(row[0].getDouble(3));
+        metric.setMin(row[1].getDouble(3));
+        metric.setAvg(row[2].getDouble(3));
 
         return metric;
     }

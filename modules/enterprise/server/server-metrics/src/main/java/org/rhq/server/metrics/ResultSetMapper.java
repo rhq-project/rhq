@@ -28,11 +28,15 @@ package org.rhq.server.metrics;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import com.datastax.driver.core.Row;
+
 /**
  * @author John Sanda
  */
 public interface ResultSetMapper<T> {
 
     T map(ResultSet resultSet) throws SQLException;
+
+    T map(Row... row);
 
 }

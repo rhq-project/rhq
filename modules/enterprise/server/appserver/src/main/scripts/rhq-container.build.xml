@@ -76,11 +76,11 @@
             </fail>
         -->
 
-        <property name="jboss.deploy.dir" location="${jboss.home}/standalone/deployments" />
-
         <!-- we will put our own JBossAS modules in our own location - this will augment JBossAS's own modules -->
         <property name="jboss.modules.dir" location="${project.build.outputDirectory}/modules" />
         <mkdir dir="${jboss.modules.dir}" />
+
+        <property name="rhq.ear.dir" location="${jboss.modules.dir}/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/${rhq.earName}" />
 
         <condition property="use-postgres" value="true">
             <contains string="${rhq.server.database.type-mapping}" substring="postgres" casesensitive="false" />
@@ -163,16 +163,6 @@
         <available file="${jboss.home}/jboss-modules.jar" type="file" property="jboss.home.is.valid" />
         <fail unless="jboss.home.is.valid" message="${jboss.home} does not contain a valid JBossAS installation - aborting!" />
 
-        <!-- TODO: THESE WERE NEEDED IN THE OLD 4.2.3 CONTAINER - WE SHOULD BE ABLE TO DELETE THESE
-        <echo>Installing patched hibernate jar ...</echo>
-        <copy file="${settings.localRepository}/hibernate/hibernate3/${hibernate3.version}/hibernate3-${hibernate3.version}.jar"
-              tofile="${jboss.home}/server/default/lib/hibernate3.jar" verbose="true"/>
-
-        <echo>Installing custom container library...</echo>
-        <copy file="${settings.localRepository}/org/rhq/rhq-container-lib/${rhq.version}/rhq-container-lib-${rhq.version}.jar"
-              tofile="${jboss.home}/server/default/lib/rhq-container-lib-${rhq.version}.jar" verbose="true"/>
-        -->
-
         <echo>Adding main EAR app module to ${jboss.modules.dir} ...</echo>
         <unzip src="${settings.localRepository}/org/rhq/rhq-enterprise-server-startup-subsystem/${project.version}/rhq-enterprise-server-startup-subsystem-${project.version}.zip"
                dest="${jboss.modules.dir}" />
@@ -240,7 +230,7 @@
         </delete>
         <delete dir="${jboss.home}/bin/init.d" />
 
-        <!--TODO - this isn't working now - we need to:
+        <!--TODO - embedded agent isn't working now - we need to:
             1) add AS7's jars jboss-as-[jmx,server]-7.x.x.Final.jar to META-INF/embedded-agent/lib
             2) get the agent to successfully see that the server is started (AgentMain.waitForServer was hanging for me)
             So until we fix this we need to not deploy this at all.
@@ -252,11 +242,8 @@
             rhq.server.embedded-agent.reset-configuration=true
             rhq.server.embedded-agent.disable-native-system=false
 
-        <echo>Deploying embedded agent sar ...</echo>
-        <mkdir dir="${jboss.deploy.dir}/rhq-agent.sar" />
         <unjar src="${settings.localRepository}/org/rhq/rhq-enterprise-server-agent-sar/${rhq.version}/rhq-enterprise-server-agent-sar-${rhq.version}.sar"
-               dest="${jboss.deploy.dir}/rhq-agent.sar" />
-        <touch file="${jboss.deploy.dir}/rhq-agent.sar.dodeploy" />
+               dest="....todo..../rhq-agent.sar" />
         -->
 
         <echo>Delete docs, README, et. al. files</echo>
@@ -275,37 +262,37 @@
         -->
 
         <echo>Make sure the top level downloads directory exists</echo>
-        <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads" />
+        <mkdir dir="${rhq.ear.dir}/rhq-downloads" />
 
         <echo>Deploying static downloadable content</echo>
-        <copy todir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads" 
+        <copy todir="${rhq.ear.dir}/rhq-downloads" 
               verbose="true"
               failonerror="false">
             <fileset dir="${basedir}/src/main/downloadable-resources" />
         </copy>
       
         <echo>Make sure our downloads directories exist</echo>
-        <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-agent" />
-        <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-client" />
-        <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-plugins" />
-        <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connectors" />
-        <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/bundle-deployer" />
+        <mkdir dir="${rhq.ear.dir}/rhq-downloads/rhq-agent" />
+        <mkdir dir="${rhq.ear.dir}/rhq-downloads/rhq-client" />
+        <mkdir dir="${rhq.ear.dir}/rhq-downloads/rhq-plugins" />
+        <mkdir dir="${rhq.ear.dir}/rhq-downloads/connectors" />
+        <mkdir dir="${rhq.ear.dir}/rhq-downloads/bundle-deployer" />
 
         <echo>Deploying the latest agent update binary and renaming it rhq-enterprise-agent-${rhq.version}.jar</echo>
         <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-agentupdate/${rhq.version}/rhq-enterprise-agentupdate-${rhq.version}.jar"
-              tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-agent/rhq-enterprise-agent-${rhq.version}.jar"
+              tofile="${rhq.ear.dir}/rhq-downloads/rhq-agent/rhq-enterprise-agent-${rhq.version}.jar"
               verbose="true"
               failonerror="true"/>
 
         <echo>Deploying the latest remote client binary</echo>
         <copy file="${settings.localRepository}/org/rhq/rhq-remoting-cli/${rhq.version}/rhq-remoting-cli-${rhq.version}.zip"
-              tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-client/rhq-remoting-cli-${rhq.version}.zip"
+              tofile="${rhq.ear.dir}/rhq-downloads/rhq-client/rhq-remoting-cli-${rhq.version}.zip"
               verbose="true"
               failonerror="false"/>
 
         <echo>Deploying the latest command-line bundle deployer to the downloads location</echo>
         <copy file="${settings.localRepository}/org/rhq/rhq-ant-bundle-common/${rhq.version}/rhq-ant-bundle-common-${rhq.version}.zip"
-              tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/bundle-deployer/rhq-bundle-deployer-${rhq.version}.zip"
+              tofile="${rhq.ear.dir}/rhq-downloads/bundle-deployer/rhq-bundle-deployer-${rhq.version}.zip"
               verbose="true"
               failonerror="false"/>
 
@@ -324,8 +311,8 @@
 
     <target name="package-connectors">
         <echo>Packaging the response-time (RT) servlet filter connectors ...</echo>
-        <delete file="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connectors/connector-rtfilter.zip" />
-        <zip destfile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connectors/connector-rtfilter.zip">
+        <delete file="${rhq.ear.dir}/rhq-downloads/connectors/connector-rtfilter.zip" />
+        <zip destfile="${rhq.ear.dir}/rhq-downloads/connectors/connector-rtfilter.zip">
             <zipfileset dir="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter/${project.version}">
                 <include name="rhq-rtfilter-${project.version}.jar" />
             </zipfileset>
@@ -336,10 +323,10 @@
 
         <!-- rtfilter AS7 modules -->
         <copy file="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter/${project.version}/rhq-rtfilter-${project.version}.zip" 
-              tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connectors/rhq-rtfilter-module.zip" />
+              tofile="${rhq.ear.dir}/rhq-downloads/connectors/rhq-rtfilter-module.zip" />
 
         <copy file="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter-subsystem/${project.version}/rhq-rtfilter-subsystem-${project.version}.zip" 
-              tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connectors/rhq-rtfilter-subsystem-module.zip" />
+              tofile="${rhq.ear.dir}/rhq-downloads/connectors/rhq-rtfilter-subsystem-module.zip" />
     </target>
 
     <target name="prepare-bin-dir">

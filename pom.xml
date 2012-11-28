@@ -40,6 +40,13 @@
     <rhq.earName>rhq.ear</rhq.earName>
     <!-- the below path is relative to {rhq-trunk} -->
     <rhq.defaultDevContainerPath>dev-container</rhq.defaultDevContainerPath>
+    <!-- path relative to under dev container path where the EAR is deployed -->
+    <rhq.earDeployDir>modules/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/${rhq.earName}</rhq.earDeployDir>
+    <!-- path relative to under dev container path where other things are stored -->
+    <rhq.agentPluginDir>${rhq.earDeployDir}/rhq-downloads/rhq-plugins</rhq.agentPluginDir>
+    <rhq.serverPluginDir>${rhq.earDeployDir}/rhq-serverplugins</rhq.serverPluginDir>
+    <rhq.earLibDir>${rhq.earDeployDir}/lib</rhq.earLibDir>
+
     <!-- set the below prop to true to enable misc extra build output -->
     <rhq.debug>false</rhq.debug>
 

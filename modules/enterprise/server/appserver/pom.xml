@@ -277,10 +277,6 @@
                                             <fileset dir="${basedir}/target/${project.build.finalName}" />
                                         </copy>
                                         
-                                        <property name="rhq.earDoDeploy" location="${rhq.containerDir}/jbossas/standalone/deployments/${rhq.earName}.dodeploy" />
-                                        <echo>*** Deleting ${rhq.earDoDeploy}.dodeploy...</echo>                                                
-                                        <delete file="${rhq.earDoDeploy}" />
-                                        
                                         <!-- Make sure shell scripts are readable and executable. -->
                                         <chmod perm="ug+x" verbose="true">
                                             <fileset dir="${deployment.dir}/bin"         includes="*.sh" />

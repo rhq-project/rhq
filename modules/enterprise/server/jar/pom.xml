@@ -91,12 +91,14 @@
       <version>${project.version}</version>
     </dependency>
  
+<!--
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-container-lib</artifactId>
       <version>${project.version}</version>
     </dependency>
-   
+-->
+
     <dependency>
       <groupId>com.googlecode.java-diff-utils</groupId>
       <artifactId>diffutils</artifactId>
@@ -785,7 +787,7 @@
         <rhq.rootDir>../../../..</rhq.rootDir>
         <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
         <rhq.deploymentName>${project.build.finalName}-ejb3.jar</rhq.deploymentName>
-        <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.earName}/${rhq.deploymentName}</rhq.deploymentDir>
+        <rhq.deploymentDir>${rhq.containerDir}/${rhq.earDeployDir}/${rhq.deploymentName}</rhq.deploymentDir>
       </properties>
 
       <build>

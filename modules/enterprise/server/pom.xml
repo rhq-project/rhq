@@ -25,7 +25,7 @@
       </activation>
       <modules>
         <module>xml-schemas</module>
-        <module>container-lib</module>
+        <!-- <module>container-lib</module> --> <!-- TODO: do we need this still? -->
         <module>jar</module>
         <module>sars</module>
         <module>plugins</module>
@@ -47,7 +47,7 @@
       </activation>
       <modules>
         <module>xml-schemas</module>
-        <module>container-lib</module>
+         <!-- <module>container-lib</module> --> <!-- TODO: do we need this still? -->
         <module>jar</module>
         <module>safe-invoker</module>
       </modules>

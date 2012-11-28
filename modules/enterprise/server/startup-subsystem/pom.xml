@@ -47,7 +47,7 @@
                                     <groupId>org.rhq</groupId>
                                     <artifactId>rhq-enterprise-server-ear</artifactId>
                                     <type>ear</type>
-                                    <outputDirectory>${project.build.directory}/deployments/rhq.ear</outputDirectory>
+                                    <outputDirectory>${project.build.directory}/deployments/${rhq.earName}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>

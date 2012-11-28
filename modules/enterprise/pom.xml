@@ -28,7 +28,7 @@
             <module>comm</module>
             <module>agent</module>
             <module>agentupdate</module>
-            <module>server/container-lib</module>            
+            <!-- <module>server/container-lib</module> --> <!-- TODO: do we still need this? -->
             <module>server/xml-schemas</module>
             <module>server/jar</module>
             <module>server/safe-invoker</module>
@@ -57,7 +57,7 @@
             <module>comm</module>
             <module>agent</module>
             <module>agentupdate</module>
-            <module>server/container-lib</module>            
+            <!-- <module>server/container-lib</module> --> <!-- TODO: do we still need this? -->
             <module>server/xml-schemas</module>
             <module>server/jar</module>
             <module>server/safe-invoker</module>

@@ -866,7 +866,7 @@
                 <rhq.rootDir>../../../..</rhq.rootDir>
                 <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
                 <rhq.deploymentName>${project.build.finalName}.ear</rhq.deploymentName>
-                <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.deploymentName}</rhq.deploymentDir>
+                <rhq.deploymentDir>${rhq.containerDir}/modules/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/${rhq.deploymentName}</rhq.deploymentDir>
             </properties>
 
             <build>
@@ -922,55 +922,6 @@
                                         <property name="deployment.dir" location="${rhq.deploymentDir}" />
                                         <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
                                         <delete dir="${deployment.dir}" />
-                                        <property name="dodeploy.file" location="${deployment.dir}.dodeploy" />
-                                        <delete file="${dodeploy.file}" />
-                                    </target>
-                                </configuration>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                            </execution>
-
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>create-dodeploy-file</id>
-
-            <properties>
-                <!-- can't currently use these in the File activation :( -->
-                <rhq.rootDir>../../../..</rhq.rootDir>
-                <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-                <rhq.deploymentName>${project.build.finalName}.ear</rhq.deploymentName>
-                <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.deploymentName}</rhq.deploymentDir>
-            </properties>
-
-            <activation>
-              <file>
-                <!-- TODO(jshaughn): if and when maven allows for non-local property substitution use it. -->                
-                <missing>../../../../dev-container/jbossas/standalone/deployments/rhq.ear.skipdeploy</missing>
-              </file>
-            </activation>
-
-            <build>
-                <plugins>
-
-                    <plugin>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <executions>
-
-                            <execution>
-                                <id>deploy</id>
-                                <phase>package</phase>
-                                <configuration>
-                                    <target>
-                                        <property name="deployment.dir" location="${rhq.deploymentDir}" />                                    
-                                        <property name="dodeploy.file" location="${deployment.dir}.dodeploy" />
-                                        <echo>*** Touching ${dodeploy.file} to force redeployment of ${rhq.deploymentName}</echo>
-                                        <touch file="${dodeploy.file}" />
                                     </target>
                                 </configuration>
                                 <goals>

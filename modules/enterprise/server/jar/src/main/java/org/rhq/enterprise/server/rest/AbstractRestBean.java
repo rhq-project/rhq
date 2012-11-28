@@ -65,10 +65,11 @@ import org.rhq.enterprise.server.rest.domain.ResourceWithType;
  * For the cache and its eviction policies see standalone-full.xml (in
  * the RHQ Server's AS7/standalone/configuration directory, as modified
  * by the installer.)
- * 
+ *
  * @author Heiko W. Rupp
  * @author Jay Shaughnessy
  */
+@javax.annotation.Resource(name = "ISPN", mappedName = "java:jboss/infinispan/rhq")
 @SuppressWarnings("unchecked")
 public class AbstractRestBean {
 
@@ -76,7 +77,7 @@ public class AbstractRestBean {
 
     static private final CacheKey META_KEY = new CacheKey("rhq.rest.resourceMeta", 0);
 
-    @javax.annotation.Resource(lookup = "java:jboss/infinispan/rhq")
+    @javax.annotation.Resource( name = "ISPN")
     protected CacheContainer container;
     protected Cache<CacheKey, Object> cache;
 
@@ -90,7 +91,7 @@ public class AbstractRestBean {
 
     @PostConstruct
     public void start() {
-        this.cache = this.container.getCache();
+        this.cache = this.container.getCache("REST-API");
     }
 
     /**
@@ -140,7 +141,7 @@ public class AbstractRestBean {
      * @param id Id of the object to load.
      * @param clazz Wanted return type
      * @return Object if found and the caller has access to it.
-     * @see #getFqn(int, Class)
+     * @see #getFromCache(int, Class)
      */
     protected <T> T getFromCache(int id, Class<T> clazz) {
         CacheKey key = new CacheKey(clazz, id);
@@ -152,10 +153,10 @@ public class AbstractRestBean {
      * We need to be careful here as we must not return objects the current
      * caller has no access to. We do this by checking the "readers" attribute
      * of the selected node to see if the caller has put the object there
-     * @param fqn FullyQualified name (=path in cache) of the object to retrieve
+     * @param key FullyQualified name (=path in cache) of the object to retrieve
      * @param clazz Return type
      * @return The desired object if found and valid for the current caller. Null otherwise.
-     * @see #putToCache(org.jboss.cache.Fqn, Object)
+     * @see #putToCache(CacheKey, Object)
      */
     protected <T> T getFromCache(CacheKey key, Class<T> clazz) {
         Object o = null;
@@ -190,7 +191,7 @@ public class AbstractRestBean {
      * @param clazz Type to put in
      * @param o Object to put
      * @return true if put was successful
-     * @see #putToCache(org.jboss.cache.Fqn, Object)
+     * @see #putToCache(CacheKey, Object)
      */
     protected <T> boolean putToCache(int id, Class<T> clazz, T o) {
         CacheKey key = new CacheKey(clazz, id);
@@ -200,10 +201,10 @@ public class AbstractRestBean {
     /**
      * Put an object into the cache. We need to record the caller so that we can later
      * check if the caller can access that object or not.
-     * @param fqn Fully qualified name (=path to object)
+     * @param key Fully qualified name (=path to object)
      * @param o Object to put
      * @return true if put was successful
-     * @see #getFromCache(org.jboss.cache.Fqn, Class)
+     * @see #getFromCache(CacheKey, Class)
      */
     @SuppressWarnings("unchecked")
     protected <T> boolean putToCache(CacheKey key, T o) {

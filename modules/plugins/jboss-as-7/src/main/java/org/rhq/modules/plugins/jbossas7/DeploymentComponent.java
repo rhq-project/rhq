@@ -43,6 +43,7 @@ import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
+import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
@@ -51,6 +52,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  */
 public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> implements OperationFacet,  ContentFacet {
 
+    private static final String DOMAIN_DATA_CONTENT_SUBDIR = "/data/content";
     private boolean verbose = ASConnection.verbose;
     private File deploymentFile;
 
@@ -234,6 +236,17 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
         }
     }
 
+    /**
+     * Determine the location of the physical content of a deployment.
+     * We need to check several cases here:
+     * <ul>
+     *     <li>Standalone server</li>
+     *     <li>Domain Deployment: here the content is under /deployment=xxx and in the filesystem at $AS/domain/data/content</li>
+     *     <li>Server-group deployment: there is no real physical content, it is a logical link to a domain deployment</li>
+     *     <li>Manages server: here the content exists below /host=xx/server=server-name/deployment=xxx</li>
+     * </ul>
+     * @return A file object pointing to the deployed file or null if there is no content
+     */
     private File determineDeploymentFile() {
         Operation op = new ReadAttribute(getAddress(), "content");
         Result result = getASConnection().execute(op);
@@ -241,8 +254,35 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> content = (List<Map<String, Object>>) result.getResult();
         if (content == null || content.isEmpty()) {
-            log.warn("Could not determine the location of the deployment - the content descriptor wasn't found for deployment" + getAddress() + ".");
-            return null;
+            // No content -> check for server group
+            if (path.startsWith(("server-group="))) {
+                // Server group has no content of its own - use the domain deployment
+                String name = (String) path.substring(path.lastIndexOf("=")+1);
+                op = new ReadResource(new Address("deployment",name));
+                result = getASConnection().execute(op);
+                if (result.isSuccess()) {
+                    @SuppressWarnings("unchecked")
+                    Map<String,Object> contentMap = (Map<String, Object>) result.getResult();
+                    content = (List<Map<String, Object>>) contentMap.get("content");
+                    if (content.get(0).containsKey("path")) {
+                        String path = (String) content.get(0).get("path");
+                        String relativeTo = (String) content.get(0).get("relative-to");
+                        deploymentFile = getDeploymentFileFromPath(relativeTo, path);
+                    } else if (content.get(0).containsKey("hash")) {
+                        @SuppressWarnings("unchecked")
+                        String base64Hash = ((Map<String, String>)content.get(0).get("hash")).get("BYTES_VALUE");
+                        byte[] hash = Base64.decode(base64Hash);
+                        ServerGroupComponent sgc = (ServerGroupComponent) context.getParentResourceComponent();
+                        String baseDir = ((HostControllerComponent) sgc.context.getParentResourceComponent()).pluginConfiguration.getSimpleValue("baseDir");
+                        String contentPath = new File(baseDir , "/data/content").getAbsolutePath();
+                        deploymentFile = getDeploymentFileFromHash(hash, contentPath);
+                    }
+                    return deploymentFile;
+                }
+            }
+            else {
+                log.warn("Could not determine the location of the deployment - the content descriptor wasn't found for deployment" + getAddress() + ".");
+                return null;}
         }
 
         Boolean archive = (Boolean) content.get(0).get("archive");
@@ -260,11 +300,34 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
             @SuppressWarnings("unchecked")
             String base64Hash = ((Map<String, String>)content.get(0).get("hash")).get("BYTES_VALUE");
             byte[] hash = Base64.decode(base64Hash);
-            Address contentPathAddress = new Address("core-service", "server-environment");
+            Address contentPathAddress;
+            if (context.getParentResourceComponent() instanceof ManagedASComponent) {
+                // -> managed server we need to check for host=x/server=y, but the path brings host=x,server-config=y
+                String p = ((ManagedASComponent) context.getParentResourceComponent()).getPath();
+                p = p.replaceAll("server-config=","server=");
+                contentPathAddress = new Address(p);
+                contentPathAddress.add("core-service", "server-environment");
+            }
+            else {
+                // standalone
+                contentPathAddress = new Address("core-service", "server-environment");
+            }
             op = new ReadAttribute(contentPathAddress, "content-dir");
             result = getASConnection().execute(op);
 
-            String contentPath = (String) result.getResult();
+            String contentPath;
+            if (result.isSuccess()) {
+                contentPath = (String) result.getResult();
+            } else {
+                // No success above -> check if this is a domain deployment
+                if (this instanceof DomainDeploymentComponent) {
+                    String baseDir = ((HostControllerComponent) context.getParentResourceComponent()).pluginConfiguration.getSimpleValue("baseDir");
+                    contentPath = new File(baseDir , DOMAIN_DATA_CONTENT_SUBDIR).getAbsolutePath();
+                }
+                else {
+                    contentPath = "-unknown-";
+                }
+            }
             deploymentFile = getDeploymentFileFromHash(hash, contentPath);
         } else {
             log.warn("Failed to determine the deployment file of " + getAddress() + " deployment. Neither path nor hash attributes were available.");

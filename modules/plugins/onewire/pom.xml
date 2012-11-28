@@ -7,24 +7,17 @@
     <groupId>org.rhq</groupId>
     <version>4.3.0-SNAPSHOT</version>
   </parent>
-  
+
   <modelVersion>4.0.0</modelVersion>
-  
+
   <groupId>org.rhq</groupId>
   <artifactId>rhq-onewire-plugin</artifactId>
   <name>snmptrapd</name>
   <description>RHQ OneWire Plugin</description>
-  
+
   <build>
     <plugins>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>1.5</source>
-          <target>1.5</target>
-        </configuration>
-      </plugin>
-      
+
       <plugin>
             <artifactId>maven-dependency-plugin</artifactId>
             <executions>
@@ -66,11 +59,11 @@
 -->
             </executions>
          </plugin>
-      
-      
+
+
     </plugins>
   </build>
-  
+
   <profiles>
         <profile>
          <id>dev</id>
@@ -109,12 +102,12 @@
                         <phase>package</phase>
                         <configuration>
                           <target>
-                             <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />                             
+                             <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                              <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
                              <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${project.build.outputDirectory}">
                                <patternset><include name="META-INF/**" /></patternset>
                              </unjar>
-                             <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">                                
+                             <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">
                              </jar>
                           </target>
                         </configuration>
@@ -122,7 +115,7 @@
                           <goal>run</goal>
                         </goals>
                      </execution>
-                     
+
                      <execution>
                         <id>undeploy</id>
                         <phase>clean</phase>
@@ -145,7 +138,7 @@
          </build>
       </profile>
    </profiles>
-  
+
 
   <dependencies>
     <dependency>
@@ -154,6 +147,6 @@
       <version>1.10</version>
     </dependency>
   </dependencies>
-  
+
 </project>
 

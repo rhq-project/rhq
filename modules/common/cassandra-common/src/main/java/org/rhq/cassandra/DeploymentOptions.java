@@ -49,6 +49,8 @@ public class DeploymentOptions {
     private String loggingLevel;
     private Long ringDelay;
     private Integer numTokens;
+    private Integer nativeTransportPort;
+    private Integer nativeTransportMaxThreads;
 
     public DeploymentOptions() {
     }
@@ -97,6 +99,9 @@ public class DeploymentOptions {
         }
 
         setNumTokens(Integer.valueOf(loadProperty("rhq.cassandra.node.num-tokens", properties)));
+        setNativeTransportPort(Integer.valueOf(loadProperty("rhq.cassandra.native-transport-port", properties)));
+        setNativeTransportMaxThreads(Integer.valueOf(loadProperty("rhq.casandra.node.native-transport-max-threads",
+            properties)));
     }
 
     private String loadProperty(String key, Properties properties) {
@@ -204,6 +209,26 @@ public class DeploymentOptions {
     public void setNumTokens(int numTokens) {
         if (this.numTokens == null) {
             this.numTokens = numTokens;
+        }
+    }
+
+    public Integer getNativeTransportPort() {
+        return nativeTransportPort;
+    }
+
+    public void setNativeTransportPort(Integer port) {
+        if (nativeTransportPort == null) {
+            nativeTransportPort = port;
+        }
+    }
+
+    public Integer getNativeTransportMaxThreads() {
+        return nativeTransportMaxThreads;
+    }
+
+    public void setNativeTransportMaxThreads(int numThreads) {
+        if (nativeTransportMaxThreads == null) {
+            nativeTransportMaxThreads = numThreads;
         }
     }
 

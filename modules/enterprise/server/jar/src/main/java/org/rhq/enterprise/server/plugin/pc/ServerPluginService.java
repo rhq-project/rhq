@@ -113,8 +113,8 @@ public class ServerPluginService implements ServerPluginServiceMBean {
     }
 
     public File getServerPluginsDirectory() {
-        File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
-        File pluginDir = new File(serverHomeDir, "deployments/rhq.ear/rhq-serverplugins");
+        File earDir = LookupUtil.getCoreServer().getEarDeploymentDir();
+        File pluginDir = new File(earDir, "rhq-serverplugins");
         return pluginDir;
     }
 

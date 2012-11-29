@@ -173,10 +173,23 @@ public class RemoteClientServlet extends HttpServlet {
     }
 
     private File getDownloadDir() throws Exception {
-        File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
-        File downloadDir = new File(serverHomeDir, "deployments/rhq.ear/rhq-downloads/rhq-client");
+        File earDir = LookupUtil.getCoreServer().getEarDeploymentDir();
+        File downloadDir = new File(earDir, "rhq-downloads/rhq-client");
         if (!downloadDir.exists()) {
             throw new FileNotFoundException("Missing remote client download directory at [" + downloadDir + "]");
+        }
+        return downloadDir;
+    }
+
+    private File getDataDownloadDir() throws Exception {
+        File earDir = LookupUtil.getCoreServer().getJBossServerDataDir();
+        File downloadDir = new File(earDir, "rhq-downloads/rhq-client");
+        if (!downloadDir.isDirectory()) {
+            downloadDir.mkdirs();
+            if (!downloadDir.isDirectory()) {
+                throw new FileNotFoundException("Missing remote client data download directory at [" + downloadDir
+                    + "]");
+            }
         }
         return downloadDir;
     }
@@ -236,7 +249,7 @@ public class RemoteClientServlet extends HttpServlet {
     }
 
     private File getVersionFile() throws Exception {
-        File versionFile = new File(getDownloadDir(), "rhq-client-version.properties");
+        File versionFile = new File(getDataDownloadDir(), "rhq-client-version.properties");
         if (!versionFile.exists()) {
             // we do not have the version properties file yet, let's extract some info and create one
             StringBuilder serverVersionInfo = new StringBuilder();

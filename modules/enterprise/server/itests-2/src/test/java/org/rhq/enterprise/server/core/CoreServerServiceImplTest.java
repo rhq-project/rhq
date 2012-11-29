@@ -145,8 +145,8 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
         // in order to register, we need to mock out the agent version file used by the server
         // to determine the agent version it supports.
         agentVersion = new AgentVersion("1.2.3", "12345");
-        File agentVersionFile = new File(mbean.getJBossServerHomeDir(),
-            "deployments/rhq.ear/rhq-downloads/rhq-agent/rhq-server-agent-versions.properties");
+        File agentVersionFile = new File(mbean.getJBossServerDataDir(),
+            "rhq-downloads/rhq-agent/rhq-server-agent-versions.properties");
         agentVersionFile.getParentFile().mkdirs();
         agentVersionFile.delete();
         Properties agentVersionProps = new Properties();
@@ -531,12 +531,12 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
 
         @Override
         public File getJBossServerHomeDir() {
-            return new File(System.getProperty("java.io.tmpdir"), "CoreServerServiceImplTest");
+            return null;
         }
 
         @Override
         public File getJBossServerDataDir() {
-            return null;
+            return new File(System.getProperty("java.io.tmpdir"), "CoreServerServiceImplTest");
         }
 
         @Override
@@ -546,7 +546,7 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
 
         @Override
         public File getEarDeploymentDir() {
-            return null;
+            return new File(System.getProperty("java.io.tmpdir"), "CoreServerServiceImplTest");
         }
 
         @Override

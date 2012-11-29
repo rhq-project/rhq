@@ -490,7 +490,7 @@ public class AgentManagerBean implements AgentManagerLocal {
 
     @ExcludeDefaultInterceptors
     public File getAgentUpdateVersionFile() throws Exception {
-        File agentDownloadDir = getAgentDownloadDir();
+        File agentDownloadDir = getAgentDataDownloadDir();
         File versionFile = new File(agentDownloadDir, "rhq-server-agent-versions.properties");
         if (!versionFile.exists()) {
             // we do not have the version properties file yet, let's extract some info and create one
@@ -562,12 +562,38 @@ public class AgentManagerBean implements AgentManagerLocal {
         throw new FileNotFoundException("Missing agent update binary in [" + agentDownloadDir + "]");
     }
 
-    @ExcludeDefaultInterceptors
+    /**
+     * The directory on the server's file system where the agent update binary file is found.
+     *
+     * @return directory where the agent binary downloads are found
+     *
+     * @throws Exception if could not determine the location or it does not exist
+     */
+    // SHOULD BE PRIVATE AND REMOVED FROM LOCAL INTERFACE - NOTHING (OTHER THAN THIS CLASS ITSELF) SHOULD USE THIS
     public File getAgentDownloadDir() throws Exception {
-        File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
-        File agentDownloadDir = new File(serverHomeDir, "deployments/rhq.ear/rhq-downloads/rhq-agent");
+        File earDir = LookupUtil.getCoreServer().getEarDeploymentDir();
+        File agentDownloadDir = new File(earDir, "rhq-downloads/rhq-agent");
         if (!agentDownloadDir.exists()) {
             throw new FileNotFoundException("Missing agent downloads directory at [" + agentDownloadDir + "]");
+        }
+        return agentDownloadDir;
+    }
+
+    /**
+     * The directory on the server's file system where the agent update version file is found.
+     *
+     * @return directory where the agent version file is found
+     *
+     * @throws Exception if could not determine the location or it does not exist
+     */
+    private File getAgentDataDownloadDir() throws Exception {
+        File earDir = LookupUtil.getCoreServer().getJBossServerDataDir();
+        File agentDownloadDir = new File(earDir, "rhq-downloads/rhq-agent");
+        if (!agentDownloadDir.exists()) {
+            agentDownloadDir.mkdirs();
+            if (!agentDownloadDir.exists()) {
+                throw new FileNotFoundException("Missing agent data downloads directory at [" + agentDownloadDir + "]");
+            }
         }
         return agentDownloadDir;
     }

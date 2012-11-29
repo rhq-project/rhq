@@ -564,7 +564,9 @@ rhq.autoinstall.enabled=${rhq.autoinstall.enabled}
 rhq.autoinstall.database=auto
 rhq.autoinstall.public-endpoint-address=
 
+#############################################
 # Cassandra cluster configuration settings
+#############################################
 # A comma-delimited list of hostnames on which Cassandra will run. Cassandra
 # nodes use this list to discover other nodes and learn about the cluster
 # topology.
@@ -583,6 +585,13 @@ rhq.cassandra.cluster.seeds=
 # some variation. Either increasing this value or increasing the number of
 # nodes in the cluster will help even out the distribution.
 rhq.cassandra.node.num-tokens=${rhq.cassandra.node.num-tokens}
+
+# The port for the CQL native transport to listen for clients on. Default value
+# is 9042.
+rhq.cassandra.native-transport-port=${rhq.cassandra.native-transport-port}
+
+# The maximum number of threads handling native CQL requests. The default value is 64.
+rhq.casandra.node.native-transport-max-threads=${rhq.casandra.node.native-transport-max-threads}
 </echo>
 
     </target>

@@ -108,24 +108,18 @@
                         defaultValue=""
                         type="string"/>
 
-<!--
-  The next two properties, install.schema and replication.factor deal with
-  running a CLI or CQL script to install and configure a keyspace.
-
-    <rhq:input-property name="install.schema"
-                        description="If set to true, executes the dbsetup script to install the rhq schema."
+    <rhq:input-property name="rhq.casandra.node.native_transport_max_threads"
+                        description="The maximum number of threads handling native CQL requests."
                         required="false"
-                        defaultValue="false"
-                        type="boolean"/>
-
-    <rhq:input-property name="replication.factor"
-                        description="This sets the replication_factor setting in the RHQ keyspace definition. The
-                           replication factor indicates the total number of replicas; so, a replication factor of 2
-                           means that there will a total of two copies of data."
-                        required="false"
-                        defaultValue="1"
+                        defaultValue="64"
                         type="integer"/>
--->
+
+    <rhq:input-property name="rhq.cassandra.native_transport_port"
+                        description="The port for the CQL native transport to listen for clients on."
+                        required="false"
+                        defaultValue="9042"
+                        type="integer"/>
+
 
     <rhq:deployment-unit name="cassandra" preinstallTarget="pre-install" postinstallTarget="post-install">
 <!--

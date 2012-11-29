@@ -309,10 +309,10 @@ listen_address: @@listen.address@@
 # same as the rpc_address. The port however is different and specified below.
 start_native_transport: true
 # port for the CQL native transport to listen for clients on
-native_transport_port: 9042
+native_transport_port: @@rhq.cassandra.native_transport_port@@
 # The maximum of thread handling requests. The meaning is the same than
-# rpc_max_threads. The default is unlimited.
-#native_transport_max_threads: 2048
+# rpc_max_threads.
+native_transport_max_threads: @@rhq.casandra.node.native_transport_max_threads@@
 
 
 # Whether to start the thrift rpc server.

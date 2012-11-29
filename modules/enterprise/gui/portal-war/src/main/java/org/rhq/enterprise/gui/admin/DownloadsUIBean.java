@@ -62,21 +62,11 @@ public class DownloadsUIBean implements Serializable {
     }
 
     private File getConnectorDownloadsDir() throws Exception {
-        File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
-        File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/connectors");
-        if (!downloadDir.exists()) {
-            throw new FileNotFoundException("Missing connectors download directory at [" + downloadDir + "]");
-        }
-        return downloadDir;
+        throw new FileNotFoundException("Missing connectors download directory");
     }
 
     private File getClientDownloadDir() throws Exception {
-        File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
-        File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/rhq-client");
-        if (!downloadDir.exists()) {
-            throw new FileNotFoundException("Missing remote client download directory at [" + downloadDir + "]");
-        }
-        return downloadDir;
+        throw new FileNotFoundException("Missing remote client download directory");
     }
 
     public Properties getClientVersionProperties() throws Exception {
@@ -103,12 +93,7 @@ public class DownloadsUIBean implements Serializable {
     }
 
     private File getBundleDeployerDownloadDir() throws Exception {
-        File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
-        File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/bundle-deployer");
-        if (!downloadDir.exists()) {
-            throw new FileNotFoundException("Missing bundle deployer download directory at [" + downloadDir + "]");
-        }
-        return downloadDir;
+        throw new FileNotFoundException("Missing bundle deployer download directory");
     }
 
     private static List<File> getFiles(File downloadDir) {

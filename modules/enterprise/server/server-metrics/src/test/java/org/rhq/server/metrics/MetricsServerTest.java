@@ -27,10 +27,6 @@ package org.rhq.server.metrics;
 
 import static java.util.Arrays.asList;
 import static org.joda.time.DateTime.now;
-import static org.rhq.server.metrics.DateTimeService.ONE_MONTH;
-import static org.rhq.server.metrics.DateTimeService.ONE_YEAR;
-import static org.rhq.server.metrics.DateTimeService.SEVEN_DAYS;
-import static org.rhq.server.metrics.DateTimeService.TWO_WEEKS;
 import static org.rhq.server.metrics.MetricsDAO.METRICS_INDEX_TABLE;
 import static org.rhq.server.metrics.MetricsDAO.ONE_HOUR_METRICS_TABLE;
 import static org.rhq.server.metrics.MetricsDAO.RAW_METRICS_TABLE;
@@ -43,7 +39,6 @@ import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -60,17 +55,7 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 
-import me.prettyprint.cassandra.serializers.CompositeSerializer;
-import me.prettyprint.cassandra.serializers.DoubleSerializer;
-import me.prettyprint.cassandra.serializers.IntegerSerializer;
-import me.prettyprint.cassandra.serializers.LongSerializer;
-import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.cassandra.service.ColumnSliceIterator;
 import me.prettyprint.hector.api.Keyspace;
-import me.prettyprint.hector.api.beans.Composite;
-import me.prettyprint.hector.api.beans.HColumn;
-import me.prettyprint.hector.api.factory.HFactory;
-import me.prettyprint.hector.api.query.SliceQuery;
 
 /**
  * @author John Sanda
@@ -473,19 +458,6 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             actualData.get(29));
     }
 
-    private HColumn<Long, Double> createRawDataColumn(DateTime timestamp, double value) {
-        return HFactory.createColumn(timestamp.getMillis(), value, SEVEN_DAYS, LongSerializer.get(),
-            DoubleSerializer.get());
-    }
-
-    private Composite createQueueColumnName(DateTime dateTime, int scheduleId) {
-        Composite composite = new Composite();
-        composite.addComponent(dateTime.getMillis(), LongSerializer.get());
-        composite.addComponent(scheduleId, IntegerSerializer.get());
-
-        return composite;
-    }
-
     private void assertColumnMetadataEquals(int scheduleId, DateTime startTime, DateTime endTime, Integer ttl,
         long timestamp) {
         List<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, startTime, endTime, true);
@@ -494,43 +466,6 @@ public class MetricsServerTest extends CassandraIntegrationTest {
                 metric);
             assertTrue(metric.getColumnMetadata().getWriteTime() >= timestamp, "The column timestamp for " + metric +
                 " should be >= " + timestamp + " but it is " + metric.getColumnMetadata().getWriteTime());
-        }
-    }
-
-    private void assert1HourMetricsQueueEquals(List<HColumn<Composite, Integer>> expected) {
-        assertMetricsQueueEquals(ONE_HOUR_METRIC_DATA_CF, expected);
-    }
-
-    private void assert6HourMetricsQueueEquals(List<HColumn<Composite, Integer>> expected) {
-        assertMetricsQueueEquals(SIX_HOUR_METRIC_DATA_CF, expected);
-    }
-
-    private void assert24HourMetricsQueueEquals(List<HColumn<Composite, Integer>> expected) {
-        assertMetricsQueueEquals(TWENTY_FOUR_HOUR_METRIC_DATA_CF, expected);
-    }
-
-    private void assertMetricsQueueEquals(String columnFamily, List<HColumn<Composite, Integer>> expected) {
-        SliceQuery<String,Composite, Integer> sliceQuery = HFactory.createSliceQuery(keyspace, StringSerializer.get(),
-            new CompositeSerializer().get(), IntegerSerializer.get());
-        sliceQuery.setColumnFamily(METRICS_INDEX);
-        sliceQuery.setKey(columnFamily);
-
-        ColumnSliceIterator<String, Composite, Integer> iterator = new ColumnSliceIterator<String, Composite, Integer>(
-            sliceQuery, (Composite) null, (Composite) null, false);
-
-        List<HColumn<Composite, Integer>> actual = new ArrayList<HColumn<Composite, Integer>>();
-        while (iterator.hasNext()) {
-            actual.add(iterator.next());
-        }
-
-        assertEquals(actual.size(), expected.size(), "The number of entries in the queue do not match.");
-        int i = 0;
-        for (HColumn<Composite, Integer> expectedColumn :  expected) {
-            HColumn<Composite, Integer> actualColumn = actual.get(i++);
-            assertEquals(getTimestamp(actualColumn.getName()), getTimestamp(expectedColumn.getName()),
-                "The timestamp does not match the expected value.");
-            assertEquals(getScheduleId(actualColumn.getName()), getScheduleId(expectedColumn.getName()),
-                "The schedule id does not match the expected value.");
         }
     }
 
@@ -550,45 +485,6 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
     private void assert24HourDataEquals(int scheduleId, List<AggregatedNumericMetric> expected) {
         assertMetricDataEquals(TWENTY_FOUR_HOUR_METRICS_TABLE, scheduleId, expected);
-    }
-
-    private void assertMetricDataEquals(int scheduleId, String columnFamily, List<HColumn<Composite,
-        Double>> expected) {
-        SliceQuery<Integer, Composite, Double> query = HFactory.createSliceQuery(keyspace, IntegerSerializer.get(),
-            CompositeSerializer.get(), DoubleSerializer.get());
-        query.setColumnFamily(columnFamily);
-        query.setKey(scheduleId);
-
-        ColumnSliceIterator<Integer, Composite, Double> iterator = new ColumnSliceIterator<Integer, Composite, Double>(
-            query, (Composite) null, (Composite) null, false);
-
-        List<HColumn<Composite, Double>> actual = new ArrayList<HColumn<Composite, Double>>();
-        while (iterator.hasNext()) {
-            actual.add(iterator.next());
-        }
-
-        String prefix;
-        if (columnFamily.equals(ONE_HOUR_METRIC_DATA_CF)) {
-            prefix = "The one hour data for schedule id " + scheduleId + " is wrong.";
-        } else if (columnFamily.equals(SIX_HOUR_METRIC_DATA_CF)) {
-            prefix = "The six hour data for schedule id " + scheduleId + " is wrong.";
-        } else if (columnFamily.equals(TWENTY_FOUR_HOUR_METRIC_DATA_CF)) {
-            prefix = "The twenty-four hour data for schedule id " + scheduleId + " is wrong.";
-        } else {
-            throw new IllegalArgumentException(columnFamily + " is not a recognized column family");
-        }
-
-        assertEquals(actual.size(), expected.size(), prefix + " The number of columns do not match.");
-        int i = 0;
-        for (HColumn<Composite, Double> expectedColumn : expected) {
-            HColumn<Composite, Double> actualColumn = actual.get(i++);
-            assertEquals(getTimestamp(actualColumn.getName()), getTimestamp(expectedColumn.getName()),
-                prefix + " The timestamp does not match the expected value.");
-            assertEquals(getAggregateType(actualColumn.getName()), getAggregateType(expectedColumn.getName()),
-                prefix + " The column data type does not match the expected value");
-            assertEquals(actualColumn.getValue(), expectedColumn.getValue(), "The column value is wrong");
-            assertEquals(actualColumn.getTtl(), expectedColumn.getTtl(), "The ttl for the column is wrong.");
-        }
     }
 
     private void assertMetricDataEquals(String columnFamily, int scheduleId, List<AggregatedNumericMetric> expected) {
@@ -628,39 +524,4 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         assertEquals(index.size(), 0, "Expected metrics index for " + table + " to be empty but found " + index);
     }
 
-    private Integer getScheduleId(Composite composite) {
-        return composite.get(1, IntegerSerializer.get());
-    }
-
-    private Long getTimestamp(Composite composite) {
-        return composite.get(0, LongSerializer.get());
-    }
-
-    private AggregateType getAggregateType(Composite composite) {
-        Integer type = composite.get(1, IntegerSerializer.get());
-        return AggregateType.valueOf(type);
-    }
-
-    private HColumn<Composite, Double> create1HourColumn(DateTime dateTime, AggregateType type, double value) {
-        return HFactory.createColumn(createAggregateKey(dateTime, type), value, TWO_WEEKS, CompositeSerializer.get(),
-            DoubleSerializer.get());
-    }
-
-    private HColumn<Composite, Double> create6HourColumn(DateTime dateTime, AggregateType type, double value) {
-        return HFactory.createColumn(createAggregateKey(dateTime, type), value, ONE_MONTH, CompositeSerializer.get(),
-            DoubleSerializer.get());
-    }
-
-    private HColumn<Composite, Double> create24HourColumn(DateTime dateTime, AggregateType type, double value) {
-        return HFactory.createColumn(createAggregateKey(dateTime, type), value, ONE_YEAR, CompositeSerializer.get(),
-            DoubleSerializer.get());
-    }
-
-    private Composite createAggregateKey(DateTime dateTime, AggregateType type) {
-        Composite composite = new Composite();
-        composite.addComponent(dateTime.getMillis(), LongSerializer.get());
-        composite.addComponent(type.ordinal(), IntegerSerializer.get());
-
-        return composite;
-    }
 }

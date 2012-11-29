@@ -26,6 +26,9 @@ import java.util.HashMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.enterprise.server.installer.InstallerService.AlreadyInstalledException;
+import org.rhq.enterprise.server.installer.InstallerService.AutoInstallDisabledException;
+
 /**
  * The entry point to the RHQ Installer.
  *
@@ -65,27 +68,29 @@ public class Installer {
             displayUsage();
             return;
         } catch (TestRequestedException vre) {
-            new InstallerServiceImpl(installerConfig).test();
+            try {
+                new InstallerServiceImpl(installerConfig).test();
+            } catch (AutoInstallDisabledException e) {
+                LOG.error(e.getMessage());
+                System.exit(1);
+            } catch (AlreadyInstalledException e) {
+                LOG.info(e.getMessage());
+                System.exit(0);
+            }
             return;
         }
 
-        final InstallerService installerService = new InstallerServiceImpl(installerConfig);
-        HashMap<String, String> serverProperties = installerService.preInstall();
-        if (serverProperties == null) {
-            LOG.error("Auto-installation is disabled. Please fully configure rhq-server.properties");
-            System.exit(1);
-        }
-
-        String result = installerService.getInstallationResults();
-        if (result == null) {
+        try {
+            final InstallerService installerService = new InstallerServiceImpl(installerConfig);
+            final HashMap<String, String> serverProperties = installerService.preInstall();
             installerService.install(serverProperties, null, null);
             LOG.info("Installation is complete. The server should be ready shortly.");
-        } else if (result.length() == 0) {
-            LOG.info("Already installed.");
+        } catch (AutoInstallDisabledException e) {
+            LOG.error(e.getMessage());
+            System.exit(1);
+        } catch (AlreadyInstalledException e) {
+            LOG.info(e.getMessage());
             System.exit(0);
-        } else {
-            LOG.error("Not properly installed: " + result);
-            System.exit(2);
         }
 
         return;

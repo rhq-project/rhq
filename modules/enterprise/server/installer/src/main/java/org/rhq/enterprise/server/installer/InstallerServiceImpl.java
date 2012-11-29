@@ -66,14 +66,11 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     @Override
-    public void test() throws Exception {
+    public void test() throws AutoInstallDisabledException, AlreadyInstalledException, Exception {
         // checks to make sure we can read rhq-server.properties and auto-install is turned on
         // checks to make sure we aren't already installed
         // checks to make sure we can successfully connect to the AS instance
         HashMap<String, String> serverProperties = preInstall();
-        if (serverProperties == null) {
-            throw new Exception("Auto-installation is disabled. Please fully configure rhq-server.properties");
-        }
 
         // make sure the data is valid
         verifyDataFormats(serverProperties);
@@ -116,7 +113,8 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     @Override
-    public HashMap<String, String> preInstall() {
+    public HashMap<String, String> preInstall() throws AutoInstallDisabledException, AlreadyInstalledException,
+        Exception {
         // first, make sure auto-install mode has been enabled, this at least tells us
         // the user edited the server properties for their environment.
         final boolean autoInstallMode;
@@ -126,36 +124,30 @@ public class InstallerServiceImpl implements InstallerService {
             serverProperties = getServerProperties();
             autoInstallMode = ServerInstallUtil.isAutoinstallEnabled(serverProperties);
         } catch (Throwable t) {
-            log("Cannot determine if in auto-install mode", t);
-            return null;
+            throw new Exception("Cannot determine if in auto-install mode", t);
         }
 
         if (autoInstallMode) {
             log("The server is preconfigured and ready for auto-install.");
         } else {
-            log("User must complete the installation configuration.");
-            return null;
+            throw new AutoInstallDisabledException(
+                "Auto-installation is disabled. Please fully configure rhq-server.properties");
         }
 
         // make an attempt to connect to the app server - we must make sure its running and we can connect to it
         final String asVersion = testModelControllerClient(serverProperties);
         log("Installing into app server version [" + asVersion + "]");
 
-        try {
-            // If we are already fully installed, we don't have to do anything. Just return false immediately.
-            final String installationResults = getInstallationResults();
-            if (installationResults != null) {
-                if (installationResults.length() == 0) {
-                    log("The installer has already been told to perform its work. The server should be ready soon.");
-                } else {
-                    log("The installer has already attempted to install the server but errors occurred:\n"
-                        + installationResults);
-                }
-                return null;
+        // If we are already fully installed, we don't have to do anything. Just return false immediately.
+        final String installationResults = getInstallationResults();
+        if (installationResults != null) {
+            if (installationResults.length() == 0) {
+                throw new AlreadyInstalledException(
+                    "The installer has already been told to perform its work. The server should be ready soon.");
+            } else {
+                throw new Exception("The installer has already attempted to install the server but errors occurred:\n"
+                    + installationResults);
             }
-        } catch (Throwable t) {
-            log("Cannot determine if server has already been installed.", t);
-            return null;
         }
 
         // ready for installation
@@ -164,22 +156,20 @@ public class InstallerServiceImpl implements InstallerService {
 
     @Override
     public String getInstallationResults() throws Exception {
-        ModelControllerClient mcc = null;
-        try {
-            mcc = getModelControllerClient();
-            DeploymentJBossASClient client = new DeploymentJBossASClient(mcc);
-            if (client.isDeployment(EAR_NAME)) {
-                return ""; // everything looks OK and the ear either has been successfully deployed or is deploying
-            }
-            return null;
-        } finally {
-            safeClose(mcc);
+        if (isEarDeployed()) {
+            return ""; // if the ear is deployed, we've already been fully installed
         }
+        return null;
     }
 
     @Override
     public void install(HashMap<String, String> serverProperties, ServerDetails serverDetails,
-        String existingSchemaOption) throws Exception {
+        String existingSchemaOption) throws AutoInstallDisabledException, AlreadyInstalledException, Exception {
+
+        if (isEarDeployed()) {
+            throw new AlreadyInstalledException(
+                "It looks like the installation has already been completed - there is nothing for the installer to do.");
+        }
 
         verifyDataFormats(serverProperties);
 
@@ -212,7 +202,7 @@ public class InstallerServiceImpl implements InstallerService {
 
         SupportedDatabaseType supportedDbType = ServerInstallUtil.getSupportedDatabaseType(databaseType);
         if (supportedDbType == null) {
-            throw new IllegalArgumentException("Invalid database type: " + databaseType);
+            throw new Exception("Invalid database type: " + databaseType);
         }
 
         // parse the database connection URL to extract the servername/port/dbname; this is needed for the XA datasource
@@ -244,7 +234,7 @@ public class InstallerServiceImpl implements InstallerService {
                 serverProperties.put(ServerProperties.PROP_DATABASE_DB_NAME, "");
             }
         } catch (Exception e) {
-            throw new Exception("JDBC connection URL seems to be invalid: " + ThrowableUtil.getAllMessages(e));
+            throw new Exception("JDBC connection URL seems to be invalid", e);
         }
 
         // make sure the internal database related settings are correct
@@ -268,7 +258,7 @@ public class InstallerServiceImpl implements InstallerService {
             serverProperties.put(ServerProperties.PROP_QUARTZ_LOCK_HANDLER_CLASS, quartzLockHandlerClass);
 
         } catch (Exception e) {
-            throw new Exception("Cannot configure internal database settings: " + ThrowableUtil.getAllMessages(e));
+            throw new Exception("Cannot configure internal database settings", e);
         }
 
         // test the connection to make sure everything is OK - note that if we are in auto-install mode,
@@ -307,24 +297,28 @@ public class InstallerServiceImpl implements InstallerService {
             existingSchemaOptionEnum = ExistingSchemaOption.valueOf(existingSchemaOption);
         }
 
-        if (ExistingSchemaOption.SKIP != existingSchemaOptionEnum) {
-            if (isDatabaseSchemaExist(dbUrl, dbUsername, clearTextDbPassword)) {
-                if (ExistingSchemaOption.OVERWRITE == existingSchemaOptionEnum) {
-                    log("Database schema exists but installer was told to overwrite it - a new schema will be created now.");
+        try {
+            if (ExistingSchemaOption.SKIP != existingSchemaOptionEnum) {
+                if (isDatabaseSchemaExist(dbUrl, dbUsername, clearTextDbPassword)) {
+                    if (ExistingSchemaOption.OVERWRITE == existingSchemaOptionEnum) {
+                        log("Database schema exists but installer was told to overwrite it - a new schema will be created now.");
+                        ServerInstallUtil.createNewDatabaseSchema(serverProperties, serverDetails, clearTextDbPassword,
+                            getLogDir());
+                    } else {
+                        log("Database schema exists - it will now be updated.");
+                        ServerInstallUtil.upgradeExistingDatabaseSchema(serverProperties, serverDetails,
+                            clearTextDbPassword, getLogDir());
+                    }
+                } else {
+                    log("Database schema does not yet exist - it will now be created.");
                     ServerInstallUtil.createNewDatabaseSchema(serverProperties, serverDetails, clearTextDbPassword,
                         getLogDir());
-                } else {
-                    log("Database schema exists - it will now be updated.");
-                    ServerInstallUtil.upgradeExistingDatabaseSchema(serverProperties, serverDetails,
-                        clearTextDbPassword, getLogDir());
                 }
             } else {
-                log("Database schema does not yet exist - it will now be created.");
-                ServerInstallUtil.createNewDatabaseSchema(serverProperties, serverDetails, clearTextDbPassword,
-                    getLogDir());
+                log("Ignoring database schema - installer will assume it exists and is already up-to-date.");
             }
-        } else {
-            log("Ignoring database schema - installer will assume it exists and is already up-to-date.");
+        } catch (Exception e) {
+            throw new Exception("Could not complete the database schema installation", e);
         }
 
         // ensure the server info is up to date and stored in the DB
@@ -372,7 +366,7 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     @Override
-    public ArrayList<String> getServerNames(String connectionUrl, String username, String password) throws Exception {
+    public ArrayList<String> getServerNames(String connectionUrl, String username, String password) {
         try {
             return ServerInstallUtil.getServerNames(connectionUrl, username, password);
         } catch (Exception e) {
@@ -382,8 +376,7 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     @Override
-    public ServerDetails getServerDetails(String connectionUrl, String username, String password, String serverName)
-        throws Exception {
+    public ServerDetails getServerDetails(String connectionUrl, String username, String password, String serverName) {
         try {
             final ServerDetails sd = ServerInstallUtil.getServerDetails(connectionUrl, username, password, serverName);
             if (sd != null) {
@@ -410,7 +403,7 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     @Override
-    public boolean isDatabaseSchemaExist(String connectionUrl, String username, String password) throws Exception {
+    public boolean isDatabaseSchemaExist(String connectionUrl, String username, String password) {
         try {
             return ServerInstallUtil.isDatabaseSchemaExist(connectionUrl, username, password);
         } catch (Exception e) {
@@ -420,7 +413,7 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     @Override
-    public String testConnection(String connectionUrl, String username, String password) throws Exception {
+    public String testConnection(String connectionUrl, String username, String password) {
         final String results = ServerInstallUtil.testConnection(connectionUrl, username, password);
         return results;
     }
@@ -488,7 +481,6 @@ public class InstallerServiceImpl implements InstallerService {
      * this data outside of the normal installation process (see {@link #install()}).
      * 
      * @param serverProperties the server properties to save
-     * 
      * @throws Exception if failed to save the properties to the .properties file
      */
     private void saveServerProperties(HashMap<String, String> serverProperties) throws Exception {
@@ -557,6 +549,18 @@ public class InstallerServiceImpl implements InstallerService {
             final CoreJBossASClient client = new CoreJBossASClient(mcc);
             final String dir = client.getAppServerConfigDir();
             return dir;
+        } finally {
+            safeClose(mcc);
+        }
+    }
+
+    private boolean isEarDeployed() throws Exception {
+        ModelControllerClient mcc = null;
+        try {
+            mcc = getModelControllerClient();
+            final DeploymentJBossASClient client = new DeploymentJBossASClient(mcc);
+            boolean isDeployed = client.isDeployment(EAR_NAME);
+            return isDeployed;
         } finally {
             safeClose(mcc);
         }
@@ -701,17 +705,17 @@ public class InstallerServiceImpl implements InstallerService {
      * @param secsToWait the number of seconds to wait before aborting the test
      * @return the app server version that we are connected to
      * 
-     * @throws RuntimeException if the connection attempts fail
+     * @throws Exception if the connection attempts fail
      */
-    private String testModelControllerClient(int secsToWait) throws RuntimeException {
+    private String testModelControllerClient(int secsToWait) throws Exception {
         final long start = System.currentTimeMillis();
         final long end = start + (secsToWait * 1000L);
-        RuntimeException error = null;
+        Exception error = null;
 
         while (System.currentTimeMillis() < end) {
             try {
                 return testModelControllerClient(null);
-            } catch (RuntimeException e) {
+            } catch (Exception e) {
                 error = e;
                 try {
                     Thread.sleep(1000L);
@@ -734,9 +738,9 @@ public class InstallerServiceImpl implements InstallerService {
      *                      if the initial connection attempt fails. If null, will be ignored.
      * @return the app server version that we are connected to
      * 
-     * @throws RuntimeException if the connection attempts fail
+     * @throws Exception if the connection attempts fail
      */
-    private String testModelControllerClient(HashMap<String, String> fallbackProps) throws RuntimeException {
+    private String testModelControllerClient(HashMap<String, String> fallbackProps) throws Exception {
         String host = this.installerConfiguration.getManagementHost();
         int port = this.installerConfiguration.getManagementPort();
         ModelControllerClient mcc = null;
@@ -757,7 +761,7 @@ public class InstallerServiceImpl implements InstallerService {
 
             // if the caller didn't give us any fallback props, just immediately fail
             if (fallbackProps == null) {
-                throw new RuntimeException("Cannot obtain client connection to the app server", e);
+                throw new Exception("Cannot obtain client connection to the app server", e);
             }
 
             try {
@@ -776,7 +780,7 @@ public class InstallerServiceImpl implements InstallerService {
                     differentValues = true;
                 }
                 if (!differentValues) {
-                    throw new RuntimeException("Cannot obtain client connection to the app server", e);
+                    throw new Exception("Cannot obtain client connection to the app server", e);
                 }
 
                 mcc = ModelControllerClient.Factory.create(host, port);
@@ -787,7 +791,7 @@ public class InstallerServiceImpl implements InstallerService {
                 return asVersion;
             } catch (Exception e2) {
                 // make the cause the very first exception in case it was something other than bad host/port as the problem
-                throw new RuntimeException("Cannot obtain client connection to the app server!", e);
+                throw new Exception("Cannot obtain client connection to the app server!", e);
             } finally {
                 safeClose(mcc);
             }
@@ -879,7 +883,7 @@ public class InstallerServiceImpl implements InstallerService {
         }
     }
 
-    private void reloadConfiguration() throws Exception {
+    private void reloadConfiguration() {
         log("Will now ask the app server to reload its configuration");
         ModelControllerClient mcc = null;
         try {

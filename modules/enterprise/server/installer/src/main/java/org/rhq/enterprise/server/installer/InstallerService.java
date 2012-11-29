@@ -21,7 +21,6 @@ package org.rhq.enterprise.server.installer;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-
 /**
  * @author John Mazzitelli
  */
@@ -32,18 +31,24 @@ public interface InstallerService {
      * You can use this to see if, for example, the database settings are correct or the installer
      * can successfully connect to the running AS instance where RHQ is to be installed.
      * 
-     * @throws Exception if the test fails meaning something in the server configuration is not valid
+     * @throws AutoInstallDisabledException if the server configuration properties does not have auto-install enabled
+     * @throws AlreadyInstalledException if it appears the installer was already run and the server is fully installed
+     * @throws Exception some other exception that should disallow the installation from continuing
      */
-    void test() throws Exception;
+    void test() throws AutoInstallDisabledException, AlreadyInstalledException, Exception;
 
     /**
      * Call this prior to installing to see if we are ready to install.
      * This will do some pre-install checks - if the installation should proceed, the map of server properties is returned.
-     * If null is returned, the install should not proceed.
+     * Exceptions are thrown if the install should not proceed.
      * 
      * @return properties if the caller should next call {@link #install(HashMap, ServerDetails, String)}.
+     *
+     * @throws AutoInstallDisabledException if the server configuration properties does not have auto-install enabled
+     * @throws AlreadyInstalledException if it appears the installer was already run and the server is fully installed
+     * @throws Exception some other exception that should disallow the installation from continuing
      */
-    HashMap<String, String> preInstall();
+    HashMap<String, String> preInstall() throws AutoInstallDisabledException, AlreadyInstalledException, Exception;
 
     /**
      * Use this to determine if the server has already been completely installed or not.
@@ -71,10 +76,12 @@ public interface InstallerService {
      *                             existing schema. Must be one of the names of the
      *                             {@link ServerInstallUtil.ExistingSchemaOption} enum.
      *                             If in auto-install mode, this value is ignored and can be anything.
-     * @throws Exception
+     * @throws AutoInstallDisabledException if the server configuration properties does not have auto-install enabled
+     * @throws AlreadyInstalledException if it appears the installer was already run and the server is fully installed
+     * @throws Exception some other exception that should disallow the installation from continuing
      */
     void install(HashMap<String, String> serverProperties, ServerDetails serverDetails, String existingSchemaOption)
-        throws Exception;
+        throws AutoInstallDisabledException, AlreadyInstalledException, Exception;
 
     /**
      * Returns a list of all registered servers in the database.
@@ -141,4 +148,20 @@ public interface InstallerService {
      * @throws Exception
      */
     String getOperatingSystem() throws Exception;
+
+    class AutoInstallDisabledException extends Exception {
+        private static final long serialVersionUID = 1L;
+
+        public AutoInstallDisabledException(String msg) {
+            super(msg);
+        }
+    }
+
+    class AlreadyInstalledException extends Exception {
+        private static final long serialVersionUID = 1L;
+
+        public AlreadyInstalledException(String msg) {
+            super(msg);
+        }
+    }
 }

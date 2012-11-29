@@ -48,7 +48,6 @@ import org.joda.time.Hours;
 import org.joda.time.Minutes;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
-import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 
 import me.prettyprint.cassandra.serializers.CompositeSerializer;
@@ -83,21 +82,21 @@ public class MetricsServer {
         DateTime begin = new DateTime(beginTime);
 
         if (dateTimeService.isInRawDataRange(begin)) {
-            return findRawDataForContext(scheduleId, beginTime, endTime);
+            return findRawDataForResource(scheduleId, beginTime, endTime);
         }
 
-//        if (dateTimeService.isIn1HourDataRange(begin)) {
-//            return findAggregateDataForContext(schedule, beginTime, endTime, ONE_HOUR_METRICS_TABLE);
-//        }
-//
-//        if (dateTimeService.isIn6HourDataRnage(begin)) {
-//            return findAggregateDataForContext(schedule, beginTime, endTime, SIX_HOUR_METRICS_TABLE);
-//        }
+        if (dateTimeService.isIn1HourDataRange(begin)) {
+            return findAggregateDataForResource(scheduleId, beginTime, endTime, ONE_HOUR_METRICS_TABLE);
+        }
+
+        if (dateTimeService.isIn6HourDataRnage(begin)) {
+            return findAggregateDataForResource(scheduleId, beginTime, endTime, SIX_HOUR_METRICS_TABLE);
+        }
 
         return null;
     }
 
-    private List<MeasurementDataNumericHighLowComposite> findRawDataForContext(int scheduleId, long beginTime,
+    private List<MeasurementDataNumericHighLowComposite> findRawDataForResource(int scheduleId, long beginTime,
         long endTime) {
         MetricsDAO dao = new MetricsDAO(session);
         Buckets buckets = new Buckets(beginTime, endTime);
@@ -117,42 +116,24 @@ public class MetricsServer {
         return data;
     }
 
-    private List<MeasurementDataNumericHighLowComposite> findAggregateDataForContext(MeasurementSchedule schedule,
-        long beginTime, long endTime, String columnFamily) {
-//        SliceQuery<Integer, Composite, Double> dataQuery = HFactory.createSliceQuery(keyspace, IntegerSerializer.get(),
-//            CompositeSerializer.get(), DoubleSerializer.get());
-//        dataQuery.setColumnFamily(oneHourMetricsDataCF);
-//        dataQuery.setKey(schedule.getId());
-//
-//        Composite begin = new Composite();
-//        begin.addComponent(beginTime, LongSerializer.get(), ComparatorType.LONGTYPE.getTypeName(), EQUAL);
-//
-//        Composite end = new Composite();
-//        end.addComponent(endTime, LongSerializer.get(), ComparatorType.LONGTYPE.getTypeName(), LESS_THAN_EQUAL);
-//        dataQuery.setRange(begin, end, true, DEFAULT_PAGE_SIZE);
-//
-//        ColumnSliceIterator<Integer, Composite, Double> dataIterator = new ColumnSliceIterator<Integer, Composite, Double>(
-//            dataQuery, begin, end, false);
-//        Buckets buckets = new Buckets(beginTime, endTime);
-//        HColumn<Composite, Double> column = null;
-//
-//        while (dataIterator.hasNext()) {
-//            column = dataIterator.next();
-//            Composite columnName = column.getName();
-//            if (AggregateType.valueOf(columnName.get(1, IntegerSerializer.get())) != AggregateType.AVG) {
-//                continue;
-//            }
-//            buckets.insert((Long) columnName.get(0, LongSerializer.get()), column.getValue());
-//        }
-//
-//        List<MeasurementDataNumericHighLowComposite> data = new ArrayList<MeasurementDataNumericHighLowComposite>();
-//        for (int i = 0; i < buckets.getNumDataPoints(); ++i) {
-//            Buckets.Bucket bucket = buckets.get(i);
-//            data.add(new MeasurementDataNumericHighLowComposite(bucket.getStartTime(), bucket.getAvg(),
-//                bucket.getMax(), bucket.getMin()));
-//        }
-//        return data;
-        return null;
+    private List<MeasurementDataNumericHighLowComposite> findAggregateDataForResource(int scheduleId, long beginTime,
+        long endTime, String columnFamily) {
+        MetricsDAO dao = new MetricsDAO(session);
+        Buckets buckets = new Buckets(beginTime, endTime);
+
+        List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(columnFamily, scheduleId,
+            new DateTime(beginTime), new DateTime(endTime));
+        for (AggregatedNumericMetric metric : metrics) {
+            buckets.insert(metric.getTimestamp(), metric.getAvg());
+        }
+
+        List<MeasurementDataNumericHighLowComposite> data = new ArrayList<MeasurementDataNumericHighLowComposite>();
+        for (int i = 0; i < buckets.getNumDataPoints(); ++i) {
+            Buckets.Bucket bucket = buckets.get(i);
+            data.add(new MeasurementDataNumericHighLowComposite(bucket.getStartTime(), bucket.getAvg(),
+                bucket.getMax(), bucket.getMin()));
+        }
+        return data;
     }
 
     public void addNumericData(Set<MeasurementDataNumeric> dataSet) {

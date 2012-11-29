@@ -22,7 +22,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -51,9 +50,6 @@ import org.jetbrains.annotations.Nullable;
 
 import org.jboss.ejb3.annotation.TransactionTimeout;
 
-import org.rhq.core.db.DatabaseType;
-import org.rhq.core.db.DatabaseTypeFactory;
-import org.rhq.core.db.Postgresql83DatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
@@ -148,6 +144,12 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
     //@IgnoreDependency
     private MeasurementDefinitionManagerLocal measurementDefinitionManager;
 
+    @EJB
+    private MetricsManagerLocal metricsManager;
+
+    @EJB
+    private MeasurementScheduleManagerLocal measurementScheduleManager;
+
     // doing a bulk delete in here, need to be in its own tx
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @TransactionTimeout(6 * 60 * 60)
@@ -213,81 +215,82 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
             return;
         }
 
-        int expectedCount = data.size();
-
-        Connection conn = null;
-        DatabaseType dbType = null;
-
-        Map<String, PreparedStatement> statements = new HashMap<String, PreparedStatement>();
-
-        try {
-            conn = rhqDs.getConnection();
-            dbType = DatabaseTypeFactory.getDatabaseType(conn);
-
-            if (dbType instanceof Postgresql83DatabaseType) {
-                Statement st = null;
-                try {
-                    // Take advantage of async commit here
-                    st = conn.createStatement();
-                    st.execute("SET synchronous_commit = off");
-                } finally {
-                    JDBCUtil.safeClose(st);
-                }
-            }
-
-            for (MeasurementDataNumeric aData : data) {
-                Double value = aData.getValue();
-                if ((value == null) || Double.isNaN(value) || Double.isInfinite(value)) {
-                    expectedCount--;
-                    continue;
-                }
-
-                String table = MeasurementDataManagerUtility.getTable(aData.getTimestamp());
-
-                PreparedStatement ps = statements.get(table);
-
-                if (ps == null) {
-                    String insertSql = "INSERT  /*+ APPEND */ INTO " + table
-                        + "(schedule_id,time_stamp,value) VALUES(?,?,?)";
-                    ps = conn.prepareStatement(insertSql);
-                    statements.put(table, ps);
-                }
-
-                ps.setInt(1, aData.getScheduleId());
-                ps.setLong(2, aData.getTimestamp());
-                ps.setDouble(3, value);
-                ps.addBatch();
-            }
-
-            int count = 0;
-            for (PreparedStatement ps : statements.values()) {
-                int[] res = ps.executeBatch();
-                for (int updates : res) {
-                    if ((updates != 1) && (updates != -2)) // oracle returns -2 on success
-                    {
-                        throw new MeasurementStorageException("Unexpected batch update size [" + updates + "]");
-                    }
-
-                    count++;
-                }
-            }
-
-            if (count != expectedCount) {
-                throw new MeasurementStorageException("Failure to store measurement data.");
-            }
-
-            notifyAlertConditionCacheManager("mergeMeasurementReport", data.toArray(new MeasurementData[data.size()]));
-        } catch (SQLException e) {
-            log.warn("Failure saving measurement numeric data:\n" + ThrowableUtil.getAllMessages(e));
-        } catch (Exception e) {
-            log.error("Error persisting numeric data", e);
-        } finally {
-            for (PreparedStatement ps : statements.values()) {
-                JDBCUtil.safeClose(ps);
-            }
-
-            JDBCUtil.safeClose(conn);
-        }
+        metricsManager.addNumericData(data);
+//        int expectedCount = data.size();
+//
+//        Connection conn = null;
+//        DatabaseType dbType = null;
+//
+//        Map<String, PreparedStatement> statements = new HashMap<String, PreparedStatement>();
+//
+//        try {
+//            conn = rhqDs.getConnection();
+//            dbType = DatabaseTypeFactory.getDatabaseType(conn);
+//
+//            if (dbType instanceof Postgresql83DatabaseType) {
+//                Statement st = null;
+//                try {
+//                    // Take advantage of async commit here
+//                    st = conn.createStatement();
+//                    st.execute("SET synchronous_commit = off");
+//                } finally {
+//                    JDBCUtil.safeClose(st);
+//                }
+//            }
+//
+//            for (MeasurementDataNumeric aData : data) {
+//                Double value = aData.getValue();
+//                if ((value == null) || Double.isNaN(value) || Double.isInfinite(value)) {
+//                    expectedCount--;
+//                    continue;
+//                }
+//
+//                String table = MeasurementDataManagerUtility.getTable(aData.getTimestamp());
+//
+//                PreparedStatement ps = statements.get(table);
+//
+//                if (ps == null) {
+//                    String insertSql = "INSERT  /*+ APPEND */ INTO " + table
+//                        + "(schedule_id,time_stamp,value) VALUES(?,?,?)";
+//                    ps = conn.prepareStatement(insertSql);
+//                    statements.put(table, ps);
+//                }
+//
+//                ps.setInt(1, aData.getScheduleId());
+//                ps.setLong(2, aData.getTimestamp());
+//                ps.setDouble(3, value);
+//                ps.addBatch();
+//            }
+//
+//            int count = 0;
+//            for (PreparedStatement ps : statements.values()) {
+//                int[] res = ps.executeBatch();
+//                for (int updates : res) {
+//                    if ((updates != 1) && (updates != -2)) // oracle returns -2 on success
+//                    {
+//                        throw new MeasurementStorageException("Unexpected batch update size [" + updates + "]");
+//                    }
+//
+//                    count++;
+//                }
+//            }
+//
+//            if (count != expectedCount) {
+//                throw new MeasurementStorageException("Failure to store measurement data.");
+//            }
+//
+//            notifyAlertConditionCacheManager("mergeMeasurementReport", data.toArray(new MeasurementData[data.size()]));
+//        } catch (SQLException e) {
+//            log.warn("Failure saving measurement numeric data:\n" + ThrowableUtil.getAllMessages(e));
+//        } catch (Exception e) {
+//            log.error("Error persisting numeric data", e);
+//        } finally {
+//            for (PreparedStatement ps : statements.values()) {
+//                JDBCUtil.safeClose(ps);
+//            }
+//
+//            JDBCUtil.safeClose(conn);
+//        }
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -736,6 +739,13 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view measurement data for resource[id=" + context.resourceId + "]");
             }
+            MeasurementSchedule schedule = measurementScheduleManager.getSchedule(subject, context.getResourceId(),
+                definitionId, false);
+            List<List<MeasurementDataNumericHighLowComposite>> data =
+                new ArrayList<List<MeasurementDataNumericHighLowComposite>>();
+            data.add(metricsManager.findDataForResource(schedule.getId(), beginTime, endTime));
+
+            return data;
         } else if (context.type == EntityContext.Type.ResourceGroup) {
             if (authorizationManager.canViewGroup(subject, context.groupId) == false) {
                 throw new PermissionException("User [" + subject.getName()

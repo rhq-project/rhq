@@ -41,9 +41,9 @@ import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementCompressionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
+import org.rhq.enterprise.server.measurement.MetricsManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -86,7 +86,8 @@ public class DataPurgeJob extends AbstractStatefulJob {
         try {
             Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration(
                 LookupUtil.getSubjectManager().getOverlord());
-            compressMeasurementData(LookupUtil.getMeasurementCompressionManager());
+//            compressMeasurementData(LookupUtil.getMeasurementCompressionManager());
+            compressMeasurementData(LookupUtil.getMetricsManager());
             purgeEverything(systemConfig);
             performDatabaseMaintenance(LookupUtil.getSystemManager(), systemConfig);
             calculateAutoBaselines(LookupUtil.getMeasurementBaselineManager());
@@ -99,12 +100,12 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
-    private void compressMeasurementData(MeasurementCompressionManagerLocal compressionManager) {
+    private void compressMeasurementData(MetricsManagerLocal metricsManager) {
         long timeStart = System.currentTimeMillis();
         LOG.info("Measurement data compression starting at " + new Date(timeStart));
 
         try {
-            compressionManager.compressPurgeAndTruncate();
+            metricsManager.calculateAggregates();
         } catch (Exception e) {
             LOG.error("Failed to compress measurement data. Cause: " + e, e);
         } finally {

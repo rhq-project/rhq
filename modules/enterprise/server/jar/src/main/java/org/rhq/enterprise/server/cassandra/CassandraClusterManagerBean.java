@@ -101,14 +101,19 @@ public class CassandraClusterManagerBean implements CassandraClusterManagerLocal
     @Override
     @TransactionAttribute(NEVER)
     public void installBundle() throws CassandraException {
-        DeploymentOptions deploymentOptions = new DeploymentOptions();
-        File deployBaseDir = getDeployBaseDir();
         Subject overlord = subjectManager.getOverlord();
-        String bundleName = deploymentOptions.getBundleName();
-        String bundleVersionString = deploymentOptions.getBundleVersion();
-        String bundleFileName = deploymentOptions.getBundleFileName();
+        DeploymentOptions deploymentOptions = new DeploymentOptions();
+        String bundleName = null;
+        String bundleVersionString = null;
+        String bundleFileName = null;
         Bundle bundle = null;
         try {
+            deploymentOptions.load();
+            File deployBaseDir = getDeployBaseDir();
+
+            bundleName = deploymentOptions.getBundleName();
+            bundleVersionString = deploymentOptions.getBundleVersion();
+            bundleFileName = deploymentOptions.getBundleFileName();
             bundle = getBundle(overlord, bundleName);
         } catch (Exception e) {
             String msg = "Failed to create bundle [" + bundleName + "]";

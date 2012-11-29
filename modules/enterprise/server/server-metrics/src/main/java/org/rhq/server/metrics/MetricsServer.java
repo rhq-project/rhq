@@ -25,8 +25,6 @@
 
 package org.rhq.server.metrics;
 
-import static me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality.EQUAL;
-import static me.prettyprint.hector.api.beans.AbstractComposite.ComponentEquality.LESS_THAN_EQUAL;
 import static org.rhq.server.metrics.MetricsDAO.ONE_HOUR_METRICS_TABLE;
 import static org.rhq.server.metrics.MetricsDAO.SIX_HOUR_METRICS_TABLE;
 import static org.rhq.server.metrics.MetricsDAO.TWENTY_FOUR_HOUR_METRICS_TABLE;
@@ -49,8 +47,6 @@ import org.joda.time.Days;
 import org.joda.time.Hours;
 import org.joda.time.Minutes;
 
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
@@ -59,14 +55,9 @@ import me.prettyprint.cassandra.serializers.CompositeSerializer;
 import me.prettyprint.cassandra.serializers.DoubleSerializer;
 import me.prettyprint.cassandra.serializers.IntegerSerializer;
 import me.prettyprint.cassandra.serializers.LongSerializer;
-import me.prettyprint.cassandra.service.ColumnSliceIterator;
-import me.prettyprint.hector.api.Cluster;
-import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.beans.Composite;
 import me.prettyprint.hector.api.beans.HColumn;
-import me.prettyprint.hector.api.ddl.ComparatorType;
 import me.prettyprint.hector.api.factory.HFactory;
-import me.prettyprint.hector.api.query.SliceQuery;
 
 /**
  * @author John Sanda
@@ -79,142 +70,39 @@ public class MetricsServer {
 
     private final Log log = LogFactory.getLog(MetricsServer.class);
 
-    private Cluster cluster;
-
-    private String keyspaceName;
-
-    private String rawMetricsDataCF;
-
-    private String oneHourMetricsDataCF;
-
-    private String sixHourMetricsDataCF;
-
-    private String twentyFourHourMetricsDataCF;
-
-    private String metricsIndex;
-
-    private String traitsCF;
-
-    private String resourceTraitsCF;
-
-    private Keyspace keyspace;
-
     private DateTimeService dateTimeService = new DateTimeService();
 
     private Session session;
-
-    // These property getters/setters are here right now primarily to facilitate
-    // testing.
-
-    public Cluster getCluster() {
-        return cluster;
-    }
-
-    public void setCluster(Cluster cluster) {
-        this.cluster = cluster;
-    }
-
-    public String getKeyspaceName() {
-        return keyspaceName;
-    }
-
-    public void setKeyspaceName(String keyspaceName) {
-        this.keyspaceName = keyspaceName;
-    }
-
-    public String getRawMetricsDataCF() {
-        return rawMetricsDataCF;
-    }
-
-    public void setRawMetricsDataCF(String rawMetricsDataCF) {
-        this.rawMetricsDataCF = rawMetricsDataCF;
-    }
-
-    public String getOneHourMetricsDataCF() {
-        return oneHourMetricsDataCF;
-    }
-
-    public void setOneHourMetricsDataCF(String oneHourMetricsDataCF) {
-        this.oneHourMetricsDataCF = oneHourMetricsDataCF;
-    }
-
-    public String getSixHourMetricsDataCF() {
-        return sixHourMetricsDataCF;
-    }
-
-    public void setSixHourMetricsDataCF(String sixHourMetricsDataCF) {
-        this.sixHourMetricsDataCF = sixHourMetricsDataCF;
-    }
-
-    public String getTwentyFourHourMetricsDataCF() {
-        return twentyFourHourMetricsDataCF;
-    }
-
-    public void setTwentyFourHourMetricsDataCF(String twentyFourHourMetricsDataCF) {
-        this.twentyFourHourMetricsDataCF = twentyFourHourMetricsDataCF;
-    }
-
-    public String getMetricsIndex() {
-        return metricsIndex;
-    }
-
-    public void setMetricsIndex(String metricsIndex) {
-        this.metricsIndex = metricsIndex;
-    }
-
-    public String getTraitsCF() {
-        return traitsCF;
-    }
-
-    public void setTraitsCF(String traitsCF) {
-        this.traitsCF = traitsCF;
-    }
-
-    public String getResourceTraitsCF() {
-        return resourceTraitsCF;
-    }
-
-    public void setResourceTraitsCF(String resourceTraitsCF) {
-        this.resourceTraitsCF = resourceTraitsCF;
-    }
-
-    public Keyspace getKeyspace() {
-        return keyspace;
-    }
-
-    public void setKeyspace(Keyspace keyspace) {
-        this.keyspace = keyspace;
-    }
 
     public void setSession(Session session) {
         this.session = session;
     }
 
-    public List<MeasurementDataNumericHighLowComposite> findDataForContext(Subject subject, EntityContext entityContext,
-        MeasurementSchedule schedule, long beginTime, long endTime) {
+    public List<MeasurementDataNumericHighLowComposite> findDataForResource(int scheduleId, long beginTime,
+        long endTime) {
         DateTime begin = new DateTime(beginTime);
 
         if (dateTimeService.isInRawDataRange(begin)) {
-            return findRawDataForContext(schedule, beginTime, endTime);
+            return findRawDataForContext(scheduleId, beginTime, endTime);
         }
 
-        if (dateTimeService.isIn1HourDataRange(begin)) {
-            return findAggregateDataForContext(schedule, beginTime, endTime, oneHourMetricsDataCF);
-        }
-
-        if (dateTimeService.isIn6HourDataRnage(begin)) {
-            return findAggregateDataForContext(schedule, beginTime, endTime, sixHourMetricsDataCF);
-        }
+//        if (dateTimeService.isIn1HourDataRange(begin)) {
+//            return findAggregateDataForContext(schedule, beginTime, endTime, ONE_HOUR_METRICS_TABLE);
+//        }
+//
+//        if (dateTimeService.isIn6HourDataRnage(begin)) {
+//            return findAggregateDataForContext(schedule, beginTime, endTime, SIX_HOUR_METRICS_TABLE);
+//        }
 
         return null;
     }
 
-    private List<MeasurementDataNumericHighLowComposite> findRawDataForContext(MeasurementSchedule schedule,
-        long beginTime, long endTime) {
+    private List<MeasurementDataNumericHighLowComposite> findRawDataForContext(int scheduleId, long beginTime,
+        long endTime) {
         MetricsDAO dao = new MetricsDAO(session);
         Buckets buckets = new Buckets(beginTime, endTime);
 
-        List<RawNumericMetric> rawMetrics = dao.findRawMetrics(schedule.getId(), new DateTime(beginTime),
+        List<RawNumericMetric> rawMetrics = dao.findRawMetrics(scheduleId, new DateTime(beginTime),
             new DateTime(endTime));
         for (RawNumericMetric rawMetric : rawMetrics) {
             buckets.insert(rawMetric.getTimestamp(), rawMetric.getValue());
@@ -231,39 +119,40 @@ public class MetricsServer {
 
     private List<MeasurementDataNumericHighLowComposite> findAggregateDataForContext(MeasurementSchedule schedule,
         long beginTime, long endTime, String columnFamily) {
-        SliceQuery<Integer, Composite, Double> dataQuery = HFactory.createSliceQuery(keyspace, IntegerSerializer.get(),
-            CompositeSerializer.get(), DoubleSerializer.get());
-        dataQuery.setColumnFamily(oneHourMetricsDataCF);
-        dataQuery.setKey(schedule.getId());
-
-        Composite begin = new Composite();
-        begin.addComponent(beginTime, LongSerializer.get(), ComparatorType.LONGTYPE.getTypeName(), EQUAL);
-
-        Composite end = new Composite();
-        end.addComponent(endTime, LongSerializer.get(), ComparatorType.LONGTYPE.getTypeName(), LESS_THAN_EQUAL);
-        dataQuery.setRange(begin, end, true, DEFAULT_PAGE_SIZE);
-
-        ColumnSliceIterator<Integer, Composite, Double> dataIterator = new ColumnSliceIterator<Integer, Composite, Double>(
-            dataQuery, begin, end, false);
-        Buckets buckets = new Buckets(beginTime, endTime);
-        HColumn<Composite, Double> column = null;
-
-        while (dataIterator.hasNext()) {
-            column = dataIterator.next();
-            Composite columnName = column.getName();
-            if (AggregateType.valueOf(columnName.get(1, IntegerSerializer.get())) != AggregateType.AVG) {
-                continue;
-            }
-            buckets.insert((Long) columnName.get(0, LongSerializer.get()), column.getValue());
-        }
-
-        List<MeasurementDataNumericHighLowComposite> data = new ArrayList<MeasurementDataNumericHighLowComposite>();
-        for (int i = 0; i < buckets.getNumDataPoints(); ++i) {
-            Buckets.Bucket bucket = buckets.get(i);
-            data.add(new MeasurementDataNumericHighLowComposite(bucket.getStartTime(), bucket.getAvg(),
-                bucket.getMax(), bucket.getMin()));
-        }
-        return data;
+//        SliceQuery<Integer, Composite, Double> dataQuery = HFactory.createSliceQuery(keyspace, IntegerSerializer.get(),
+//            CompositeSerializer.get(), DoubleSerializer.get());
+//        dataQuery.setColumnFamily(oneHourMetricsDataCF);
+//        dataQuery.setKey(schedule.getId());
+//
+//        Composite begin = new Composite();
+//        begin.addComponent(beginTime, LongSerializer.get(), ComparatorType.LONGTYPE.getTypeName(), EQUAL);
+//
+//        Composite end = new Composite();
+//        end.addComponent(endTime, LongSerializer.get(), ComparatorType.LONGTYPE.getTypeName(), LESS_THAN_EQUAL);
+//        dataQuery.setRange(begin, end, true, DEFAULT_PAGE_SIZE);
+//
+//        ColumnSliceIterator<Integer, Composite, Double> dataIterator = new ColumnSliceIterator<Integer, Composite, Double>(
+//            dataQuery, begin, end, false);
+//        Buckets buckets = new Buckets(beginTime, endTime);
+//        HColumn<Composite, Double> column = null;
+//
+//        while (dataIterator.hasNext()) {
+//            column = dataIterator.next();
+//            Composite columnName = column.getName();
+//            if (AggregateType.valueOf(columnName.get(1, IntegerSerializer.get())) != AggregateType.AVG) {
+//                continue;
+//            }
+//            buckets.insert((Long) columnName.get(0, LongSerializer.get()), column.getValue());
+//        }
+//
+//        List<MeasurementDataNumericHighLowComposite> data = new ArrayList<MeasurementDataNumericHighLowComposite>();
+//        for (int i = 0; i < buckets.getNumDataPoints(); ++i) {
+//            Buckets.Bucket bucket = buckets.get(i);
+//            data.add(new MeasurementDataNumericHighLowComposite(bucket.getStartTime(), bucket.getAvg(),
+//                bucket.getMax(), bucket.getMin()));
+//        }
+//        return data;
+        return null;
     }
 
     public void addNumericData(Set<MeasurementDataNumeric> dataSet) {

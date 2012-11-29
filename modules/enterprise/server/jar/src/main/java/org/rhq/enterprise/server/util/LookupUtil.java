@@ -143,6 +143,8 @@ import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementViewManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementViewManagerLocal;
+import org.rhq.enterprise.server.measurement.MetricsManagerBean;
+import org.rhq.enterprise.server.measurement.MetricsManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerBean;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.plugin.ServerPluginsBean;
@@ -376,6 +378,10 @@ public final class LookupUtil {
 
     public static GroupDefinitionExpressionBuilderManagerLocal getGroupDefinitionExpressionBuilderManager() {
         return lookupLocal(GroupDefinitionExpressionBuilderManagerBean.class);
+    }
+
+    public static MetricsManagerLocal getMetricsManager() {
+        return lookupLocal(MetricsManagerBean.class);
     }
 
     public static MeasurementDefinitionManagerLocal getMeasurementDefinitionManager() {

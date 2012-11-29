@@ -312,7 +312,7 @@ start_native_transport: true
 native_transport_port: @@rhq.cassandra.native_transport_port@@
 # The maximum of thread handling requests. The meaning is the same than
 # rpc_max_threads.
-native_transport_max_threads: @@rhq.casandra.node.native_transport_max_threads@@
+native_transport_max_threads: @@rhq.casandra.native_transport_max_threads@@
 
 
 # Whether to start the thrift rpc server.

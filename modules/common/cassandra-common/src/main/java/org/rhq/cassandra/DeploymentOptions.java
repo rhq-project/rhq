@@ -55,10 +55,6 @@ public class DeploymentOptions {
     public DeploymentOptions() {
     }
 
-    public DeploymentOptions(Properties properties) {
-        init(properties);
-    }
-
     public void load() throws IOException {
         InputStream stream = null;
         try {
@@ -100,7 +96,7 @@ public class DeploymentOptions {
 
         setNumTokens(Integer.valueOf(loadProperty("rhq.cassandra.node.num-tokens", properties)));
         setNativeTransportPort(Integer.valueOf(loadProperty("rhq.cassandra.native-transport-port", properties)));
-        setNativeTransportMaxThreads(Integer.valueOf(loadProperty("rhq.casandra.node.native-transport-max-threads",
+        setNativeTransportMaxThreads(Integer.valueOf(loadProperty("rhq.casandra.native-transport-max-threads",
             properties)));
     }
 

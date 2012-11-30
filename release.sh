@@ -349,7 +349,7 @@ run_release_version_and_tag_process()
    [ "$?" -ne 0 ] && abort "Failed to cleanup snbapshot jars produced by test build from module target dirs. Please see above Maven output for details, fix any issues, then try again."
 
    echo "3) Increment version on all poms."
-   mvn org.codehaus.mojo:versions-maven-plugin:1.3.1:set org.codehaus.mojo:versions-maven-plugin:1.3.1:use-releases -DnewVersion=$RELEASE_VERSION  -DallowSnapshots=false -DgenerateBackupPoms=false
+   mvn versions:set versions:use-releases -DnewVersion=$RELEASE_VERSION  -DallowSnapshots=false -DgenerateBackupPoms=false
    [ "$?" -ne 0 ] && abort "Version set failed. Please see output for details, fix any issues, then try again."
 
    echo "4) Perform a test build with the new version."
@@ -417,7 +417,7 @@ update_development_version()
    fi
 
    echo "1) Set version to the current development version"
-   mvn org.codehaus.mojo:versions-maven-plugin:1.3.1:set org.codehaus.mojo:versions-maven-plugin:1.3.1:use-releases -DnewVersion=$DEVELOPMENT_VERSION  -DallowSnapshots=false -DgenerateBackupPoms=false
+   mvn versions:set versions:use-releases -DnewVersion=$DEVELOPMENT_VERSION  -DallowSnapshots=false -DgenerateBackupPoms=false
    [ "$?" -ne 0 ] && abort "Version set failed. Please see output for details, fix any issues, then try again."
 
    echo "2) Commit the change in version."

@@ -28,8 +28,6 @@ import org.dbunit.dataset.datatype.IDataTypeFactory;
 import org.dbunit.dataset.xml.FlatXmlDataSet;
 import org.dbunit.dataset.xml.FlatXmlProducer;
 import org.dbunit.operation.DatabaseOperation;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.xml.sax.InputSource;
 
@@ -51,30 +49,28 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class MetadataBeanTest extends AbstractEJB3Test {
 
     private List<Integer> pluginIds = new ArrayList<Integer>();
-
-    // Arquillian (1.0.2) executes @BeforeGroups only as client (remote). So, we can't get DS here.
-    // Also, it is called for each test.  For now call from BeforeMethod.
-    //
-    //@BeforeGroups(groups = { "plugin.metadata" }, dependsOnGroups = { "integration.ejb3" })
-    public void beforeGroups() throws Exception {
-        setupDB();
-    }
+    protected boolean disableAfterClassStandIn = false;
 
     // Arquillian (1.0.2) executes @AfterClass after each test. So, instead turn it into a low priority
     // test that should execute last.
     /**
+     * !! Important !! This should be disabled if the subclass has tests in groups other than plugin.metadata because<br/>
+     * !! priority applies only to the tests in the same grouping.<br/>
+     * <br/>
      * Need to delete rows from RHQ_PLUGINS because subsequent tests in server/jar would otherwise fail. Some tests look
      * at what plugins are in the database, and then look for corresponding plugin files on the file system. MetadataTest
      * however removes the generated plugin files during each test run.
      */
     @Test(priority = 10, alwaysRun = true, groups = { "plugin.metadata" })
     void afterClassStandIn() throws Exception {
-        // Although its documented that AfterXXX don't execute in-container (only as client), in practice this is not true
-        // and we perform in-container work here. 
-        if (!inContainer()) {
-            return;
+        if (!disableAfterClassStandIn) {
+            afterClassWork();
+        } else {
+            System.out.println("Skipping MetadataBeanTest.afterClassStandIn, it is disabled by a subclass.");
         }
+    }
 
+    protected void afterClassWork() throws Exception {
         PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
         pluginMgr.deletePlugins(overlord, pluginIds);
@@ -83,14 +79,13 @@ public class MetadataBeanTest extends AbstractEJB3Test {
         new PurgeResourceTypesJob().executeJobCode(null);
     }
 
-    @BeforeMethod(groups = { "plugin.metadata" }, dependsOnGroups = { "integration.ejb3" })
-    protected void before() throws Exception {
+    @Override
+    protected void beforeMethod() throws Exception {
         if (!inContainer()) {
             return;
         }
 
-        // @BeforeGroups currently executed only as client (remote) only with Arquillian/testNg, so call from here instead 
-        beforeGroups();
+        setupDB();
 
         TestBundleServerPluginService bundleService = new TestBundleServerPluginService();
         prepareCustomServerPluginService(bundleService);
@@ -103,8 +98,8 @@ public class MetadataBeanTest extends AbstractEJB3Test {
      * at what plugins are in the database, and then look for corresponding plugin files on the file system. MetadataTest
      * however removes the generated plugin files during each test run.
      */
-    @AfterMethod(alwaysRun = true, groups = { "plugin.metadata" })
-    protected void after() throws Exception {
+    @Override
+    protected void afterMethod() throws Exception {
         if (!inContainer()) {
             return;
         }
@@ -220,6 +215,8 @@ public class MetadataBeanTest extends AbstractEJB3Test {
         criteria.addFilterName(resourceTypeName);
         criteria.addFilterPluginName(plugin);
         criteria.setStrict(true);
+        criteria.fetchBundleConfiguration(true);
+        criteria.fetchDriftDefinitionTemplates(true);
         MethodUtils.invokeMethod(criteria, fetch, true);
 
         List<ResourceType> resourceTypes = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(),

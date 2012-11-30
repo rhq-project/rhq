@@ -46,9 +46,17 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
     private SubjectManagerLocal subjectMgr;
     private PluginManagerLocal pluginMgr;
 
-    public void registerPlugins() throws Exception {
+    @Override
+    protected void beforeMethod() throws Exception {
+        super.beforeMethod();
+
         subjectMgr = LookupUtil.getSubjectManager();
         pluginMgr = LookupUtil.getPluginManager();
+
+        disableAfterClassStandIn = true;
+    }
+
+    public void registerPlugins() throws Exception {
 
         List<Plugin> plugins = getEntityManager()
             .createQuery(
@@ -215,6 +223,12 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         pluginMgr.markPluginsForPurge(subjectMgr.getOverlord(), asList(plugin1.getId(), plugin2.getId()));
 
         assertEquals("Failed to purge plugins from the database", 1, pluginMgr.getPlugins().size());
+    }
+
+    // this needs to be the last test executed in the class, it does cleanup
+    @Test(priority = 10, alwaysRun = true, dependsOnMethods = { "pluginPurgeCheckShouldUseExactMatchesInQuery" })
+    public void afterClassWorkTest() throws Exception {
+        afterClassWork();
     }
 
     private Plugin getPlugin(String name) {

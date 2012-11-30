@@ -121,6 +121,62 @@ public abstract class AbstractEJB3Test extends Arquillian {
             .addAsResource("org/rhq/enterprise/server/configuration/metadata/configuration_metadata_manager_bean_test_v2.xml");
         testClassesJar.addAsResource("org/rhq/enterprise/server/discovery/DiscoveryBossBeanTest.xml");
         testClassesJar.addAsResource("org/rhq/enterprise/server/inventory/InventoryManagerBeanTest.xml");
+        testClassesJar.addAsResource("org/rhq/enterprise/server/resource/metadata/MetadataTest.xml");
+
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/AlertMetadataManagerBeanTest/plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/AlertMetadataManagerBeanTest/plugin_v2.xml");
+
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/ContentMetadataManagerBeanTest/plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/ContentMetadataManagerBeanTest/plugin_v2.xml");
+
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/EventMetadataManagerBeanTest/plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/EventMetadataManagerBeanTest/plugin_v2.xml");
+
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/MeasurementMetadataManagerBeanTest/plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/MeasurementMetadataManagerBeanTest/plugin_v2.xml");
+
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/MultiplePluginExtensionMetadataTest/child1_plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/MultiplePluginExtensionMetadataTest/child2_plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/MultiplePluginExtensionMetadataTest/parent_plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/MultiplePluginExtensionMetadataTest/parent_plugin_v2.xml");
+
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/MultiplePluginExtensionSinglePluginDescriptorMetadataTest/child_plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/MultiplePluginExtensionSinglePluginDescriptorMetadataTest/parent_plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/MultiplePluginExtensionSinglePluginDescriptorMetadataTest/parent_plugin_v2.xml");
+
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/OperationMetadataManagerBeanTest/plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/OperationMetadataManagerBeanTest/plugin_v2.xml");
+
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/PluginExtensionMetadataTest/child_plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/PluginExtensionMetadataTest/parent_plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/PluginExtensionMetadataTest/parent_plugin_v2.xml");
+
+        testClassesJar.addAsResource("org/rhq/enterprise/server/resource/metadata/PluginManagerBeanTest/plugin_1.xml");
+        testClassesJar.addAsResource("org/rhq/enterprise/server/resource/metadata/PluginManagerBeanTest/plugin_2.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/PluginManagerBeanTest/plugin_3.1.xml");
+        testClassesJar.addAsResource("org/rhq/enterprise/server/resource/metadata/PluginManagerBeanTest/plugin_3.xml");
+
         testClassesJar
             .addAsResource("org/rhq/enterprise/server/resource/metadata/PluginScanningExtensionMetadataTest/child1_plugin_v1.xml");
         testClassesJar
@@ -129,6 +185,24 @@ public abstract class AbstractEJB3Test extends Arquillian {
             .addAsResource("org/rhq/enterprise/server/resource/metadata/PluginScanningExtensionMetadataTest/parent_plugin_v1.xml");
         testClassesJar
             .addAsResource("org/rhq/enterprise/server/resource/metadata/PluginScanningExtensionMetadataTest/parent_plugin_v2.xml");
+
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/ResourceMetadataManagerBeanTest/dup_drift.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/ResourceMetadataManagerBeanTest/parent_resource_type-plugin.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/ResourceMetadataManagerBeanTest/plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/ResourceMetadataManagerBeanTest/plugin_v2.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/ResourceMetadataManagerBeanTest/remove_bundle_drift_config_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/ResourceMetadataManagerBeanTest/remove_bundle_drift_config_v2.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/ResourceMetadataManagerBeanTest/remove_types_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/ResourceMetadataManagerBeanTest/remove_types_v2.xml");
+
         testClassesJar.addAsResource("perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip");
         testClassesJar.addAsResource("serverplugins/simple-generic-serverplugin.xml");
         testClassesJar.addAsResource("test/deployment/1.0-feb-2.xml");

@@ -102,9 +102,6 @@ public class UpgradeTestBase extends PluginContainerTest {
         boolean testFailed = false;
         try {
             
-            LOG.debug("---------------------------------------------------------- Starting the upgrade test for: "
-                + testId);
-
             String[] configFiles = Arrays.copyOf(testConfiguration.apacheConfigurationFiles, testConfiguration.apacheConfigurationFiles.length + 1);
             configFiles[testConfiguration.apacheConfigurationFiles.length] = "/snmpd.conf";
             
@@ -114,7 +111,11 @@ public class UpgradeTestBase extends PluginContainerTest {
                 .withServerRoot(testConfiguration.serverRoot).withExePath(testConfiguration.binPath);
             
             testConfiguration.beforeTestSetup(setup);
-            
+
+            LOG.debug("---------------------------------------------------------- Starting the upgrade test for: "
+                + testId);
+            LOG.debug("Deployment configuration: " + setup.getDeploymentConfig());
+
             setup.setup();
     
             testConfiguration.beforePluginContainerStart(setup);

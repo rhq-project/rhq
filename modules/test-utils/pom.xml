@@ -40,12 +40,6 @@
       <artifactId>commons-beanutils</artifactId>
       <version>1.8.2</version>
     </dependency>
-    <dependency>
-      <groupId>net.sourceforge.cobertura</groupId>
-      <artifactId>cobertura</artifactId>
-      <version>${cobertura.version}</version>
-      <scope>test</scope>
-     </dependency>
      <dependency>
        <groupId>org.unitils</groupId>
        <artifactId>unitils-dbunit</artifactId>
@@ -70,6 +64,11 @@
            using the version that we use else where.
 
            jsanda 10/20/2010
+
+           Cobertura is not used anymore so no ASM clashes should
+           be present. We still maintain this exclusion though
+           to force the usage of "our" version of Hibernate.
+           lkrejci 2012-11-21
          -->
          <exclusion>
            <groupId>org.hibernate</groupId>

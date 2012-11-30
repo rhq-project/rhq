@@ -23,6 +23,7 @@ import java.util.Map;
 
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.plugin.testutil.AbstractAgentPluginTest;
 import org.rhq.modules.plugins.jbossas7.itest.domain.ManagedServerTest;
@@ -53,6 +54,13 @@ public class GenericJBossAS7PluginTest extends AbstractJBossAS7PluginTest {
         // It's normal for the "startTime" trait to be null for a Managed Server that is down/disabled.
         // It's normal for the "multicastAddress" trait to be null for a Managed Server that is not configured for JGroups HA.
         excludedMetricNamesByType.put(ManagedServerTest.RESOURCE_TYPE, new String[] {"startTime", "multicastAddress"});
+        // Some memory pools do not expose those statistics (by default), so in case they
+        // are not exposed, it is normal that the server returns 'undefined' for the value
+        // Note that those
+        excludedMetricNamesByType.put(new ResourceType("Memory Pool Resource",PLUGIN_NAME, ResourceCategory.SERVICE,null),
+                new String[] {"collection-usage-threshold-count","collection-usage-threshold","collection-usage",
+                        "collection-usage-threshold-exceeded","collection-usage:committed","collection-usage:init",
+                        "collection-usage:max","collection-usage:used","usage-threshold-count","usage-threshold-exceeded"});
         assertAllNumericMetricsAndTraitsHaveNonNullValues(excludedMetricNamesByType);
     }
 

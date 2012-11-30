@@ -22,13 +22,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
+import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -64,9 +64,12 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     @EJB
     GroupDefinitionManagerLocal definitionManager;
 
-    public Response getGroups(@Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+    public Response getGroups(String q, @Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+        if (q!=null) {
+            criteria.addFilterName(q);
+        }
         List<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(caller,criteria);
 
         List<GroupRest> list = new ArrayList<GroupRest>(groups.size());
@@ -299,10 +302,14 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     }
 
     @Override
-    public Response getGroupDefinitions(@Context Request request, @Context HttpHeaders headers,
+    public Response getGroupDefinitions(String q, @Context Request request, @Context HttpHeaders headers,
                                         @Context UriInfo uriInfo) {
 
-        PageList<GroupDefinition> gdlist =  definitionManager.getGroupDefinitions(caller,new PageControl());
+        ResourceGroupDefinitionCriteria criteria = new ResourceGroupDefinitionCriteria();
+        if (q!=null) {
+            criteria.addFilterName(q);
+        }
+        PageList<GroupDefinition> gdlist =  definitionManager.findGroupDefinitionsByCriteria(caller, criteria);
         List<GroupDefinitionRest> list = new ArrayList<GroupDefinitionRest>(gdlist.getTotalSize());
         for (GroupDefinition def: gdlist) {
             GroupDefinitionRest definitionRest = buildGDRestFromDefinition(def);

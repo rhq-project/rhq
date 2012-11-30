@@ -56,7 +56,7 @@ import org.rhq.enterprise.server.rest.domain.*;
 @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
 @Path("/resource")
 @Local
-@Api(value="Resource related", description = "This endpoint deals with single resources, not groups")
+@Api(value="Resource related", description = "This endpoint deals with individual resources, not resource groups")
 public interface ResourceHandlerLocal {
 
     static String NO_RESOURCE_FOR_ID = "If no resource with the passed id exists";
@@ -74,6 +74,13 @@ public interface ResourceHandlerLocal {
             @ApiParam("Id of the resource to retrieve") @PathParam("id") int id,
             @Context Request request, @Context HttpHeaders headers,
                          @Context UriInfo uriInfo);
+
+    @GET
+    @Path("/")
+    @ApiOperation(value = "Search for resources by the given search string", responseClass = "ResourceWithType")
+    Response getResourcesByQuery(@ApiParam("String to search in the resource name") @QueryParam("q")String q,
+                                 @Context Request request, @Context HttpHeaders headers,
+                             @Context UriInfo uriInfo);
 
     @GZIP
     @GET
@@ -170,7 +177,7 @@ public interface ResourceHandlerLocal {
     @ApiOperation(value = "Create a resource with a given type below a certain parent")
     @POST
     @Path("{name}")
-    public javax.ws.rs.core.Response createResource(
+    public Response createResource(
             @ApiParam("Name of the new resource") @PathParam("name") String name,
             @ApiParam("Name of the Resource tpye") StringValue type,
             @ApiParam("Name of the plugin providing the type") @QueryParam("plugin") String plugin,

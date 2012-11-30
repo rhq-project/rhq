@@ -173,7 +173,6 @@
 	<classpathentry kind="src" path="modules/core/arquillian-integration/container/src/test/java"/>
 	<classpathentry kind="src" path="modules/core/arquillian-integration/archive/src/main/java"/>
 	<classpathentry kind="src" path="modules/core/arquillian-integration/container/src/main/java"/>
-	<classpathentry kind="src" path="modules/enterprise/server/itests/src/test/java"/>
 	<classpathentry kind="src" path="modules/test-utils/src/main/java"/>
 	<classpathentry kind="src" path="modules/integration-tests/mod_cluster-plugin-test/src/test/java"/>
 	<classpathentry kind="src" path="etc/samples/skeleton-plugin/src/main/java"/>
@@ -218,7 +217,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/struts-menu/struts-menu/2.3/struts-menu-2.3.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/junit/junit/3.8.2/junit-3.8.2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/velocity/velocity/1.5/velocity-1.5.jar"/>
-	<classpathentry kind="var" path="M2_REPO/javax/xml/bind/jaxb-api/2.2.3/jaxb-api-2.2.3.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/javax/xml/bind/jaxb-api/2.2.3/jaxb-api-2.2.3.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/xml/bind/jsr173_api/1.0/jsr173_api-1.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jboss/jbpm/3.1.1/jbpm-3.1.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jetbrains/annotations/7.0.2/annotations-7.0.2.jar"/>
@@ -239,14 +238,14 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/richfaces/ui/richfaces-ui/3.3.3.Final/richfaces-ui-3.3.3.Final.jar" sourcepath="/M2_REPO/org/richfaces/ui/richfaces-ui/3.3.0.GA/richfaces-ui-3.3.0.GA-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/postgresql/postgresql/9.1-902.jdbc4/postgresql-9.1-902.jdbc4.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jboss/jboss-cache/1.4.1.SP9/jboss-cache-1.4.1.SP9.jar"/>
-	<classpathentry kind="var" path="M2_REPO/org/hyperic/sigar/1.6.5.132-3/sigar-1.6.5.132-3.jar" sourcepath="/M2_REPO/org/hyperic/sigar/1.6.3.82/sigar-1.6.3.82-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/hyperic/sigar/1.6.5.132-3/sigar-1.6.5.132-3.jar" sourcepath="/M2_REPO/org/hyperic/sigar/1.6.3.82/sigar-1.6.3.82-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/jbossts/jbossjts/4.16.2.Final/jbossjts-4.16.2.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/maven/maven-project/2.0.8/maven-project-2.0.8.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/maven/maven-plugin-api/2.0.8/maven-plugin-api-2.0.8.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/codehaus/swizzle/swizzle-confluence/1.6.1/swizzle-confluence-1.6.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jvnet/inflector/0.7.0/inflector-0.7.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/net/augeas/augeas/0.0.2/augeas-0.0.2.jar"/>
-	<classpathentry kind="var" path="M2_REPO/org/json/json/20090211/json-20090211.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/json/json/20090211/json-20090211.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/net/java/dev/jna/jna/3.2.5/jna-3.2.5.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/freemarker/freemarker/2.3.11/freemarker-2.3.11.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jline/jline/0.9.94/jline-0.9.94.jar"/>
@@ -263,8 +262,8 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/jboss/web/jbossweb/2.0.1.GA/jbossweb-2.0.1.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/libvirt/libvirt/0.4.1/libvirt-0.4.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/fedorahosted/cobbler/cobbler4j/0.1/cobbler4j-0.1.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/com/google/gwt/gwt-user/2.4.0/gwt-user-2.4.0.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/com/google/gwt/gwt-dev/2.4.0/gwt-dev-2.4.0.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/com/google/gwt/gwt-user/2.5.0/gwt-user-2.5.0.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/com/google/gwt/gwt-dev/2.5.0/gwt-dev-2.5.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/smartgwt/smartgwt/3.0/smartgwt-3.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/googlecode/gflot/gflot/2.4.2/gflot-2.4.2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/jcraft/jsch/0.1.29/jsch-0.1.29.jar"/>
@@ -303,11 +302,11 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/jaxrs-api/2.3.4.Final/jaxrs-api-2.3.4.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/sasl/jboss-sasl/1.0.0.Final/jboss-sasl-1.0.0.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/mockito/mockito-all/1.9.0/mockito-all-1.9.0.jar"/>
-	<classpathentry kind="var" path="M2_REPO/org/powermock/powermock-api-mockito/1.4.12/powermock-api-mockito-1.4.12.jar"/>
-	<classpathentry kind="var" path="M2_REPO/org/powermock/powermock-core/1.4.12/powermock-core-1.4.12.jar"/>
-	<classpathentry kind="var" path="M2_REPO/org/powermock/powermock-api-support/1.4.12/powermock-api-support-1.4.12.jar"/>
-	<classpathentry kind="var" path="M2_REPO/org/powermock/powermock-module-testng-common/1.4.12/powermock-module-testng-common-1.4.12.jar"/>
-	<classpathentry kind="var" path="M2_REPO/org/powermock/powermock-module-testng/1.4.12/powermock-module-testng-1.4.12.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/powermock/powermock-api-mockito/1.4.12/powermock-api-mockito-1.4.12.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/powermock/powermock-core/1.4.12/powermock-core-1.4.12.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/powermock/powermock-api-support/1.4.12/powermock-api-support-1.4.12.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/powermock/powermock-module-testng-common/1.4.12/powermock-module-testng-common-1.4.12.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/powermock/powermock-module-testng/1.4.12/powermock-module-testng-1.4.12.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/liquibase/liquibase-core/2.0.3/liquibase-core-2.0.3.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/shrinkwrap/shrinkwrap-impl-base/1.0.1/shrinkwrap-impl-base-1.0.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/shrinkwrap/shrinkwrap-api/1.0.1/shrinkwrap-api-1.0.1.jar"/>

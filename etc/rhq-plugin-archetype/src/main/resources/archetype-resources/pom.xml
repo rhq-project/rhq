@@ -14,10 +14,10 @@
   <name>${rhq-plugin-name}</name>
   <description>RHQ Plugin</description>
 
-  <properties>        
+  <properties>
     <rhq.version>3.0.0.B04</rhq.version>
-  </properties>    
-  
+  </properties>
+
   <dependencies>
 
     <!-- Below are the core modules that are required dependencies of all plugins -->
@@ -68,7 +68,7 @@
       <version>2.1</version>
       <scope>provided</scope> <!-- provided by the agent/plugin-container -->
     </dependency>
-    
+
     <!-- Uncomment the one of the three logging systems your plugin uses: log4j, commons-logging or i18nlog
          all three are provided to your plugin by the agent/plugin-container -->
 
@@ -109,14 +109,6 @@
 
   <build>
     <plugins>
-
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>1.5</source>
-          <target>1.5</target>
-        </configuration>
-      </plugin>
 
       <plugin>
         <groupId>org.rhq</groupId>

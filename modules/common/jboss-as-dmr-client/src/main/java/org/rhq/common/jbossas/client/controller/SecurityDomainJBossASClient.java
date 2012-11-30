@@ -25,7 +25,7 @@ import org.jboss.dmr.ModelNode;
 
 /**
  * Provides convenience methods associated with security domain management.
- * 
+ *
  * @author John Mazzitelli
  */
 public class SecurityDomainJBossASClient extends JBossASClient {
@@ -66,12 +66,12 @@ public class SecurityDomainJBossASClient extends JBossASClient {
     /**
      * Convenience method that builds a request which can create a new security-domain
      * using the SecureIdentity authentication method. This is used when you want
-     * to obfuscate a database password in the configuration. 
+     * to obfuscate a database password in the configuration.
      *
      * @param securityDomainName the name of the new security domain
      * @param username the username associated with the security domain
      * @param password the value of the password to store in the configuration (e.g. the obfuscated password itself)
-     * 
+     *
      * @throws Exception if failed to create security domain
      */
     public void createNewSecureIdentitySecurityDomainRequest(String securityDomainName, String username, String password)
@@ -107,7 +107,7 @@ public class SecurityDomainJBossASClient extends JBossASClient {
     /**
      * Convenience method that builds a request which can create a new security domain
      * using the database server authentication method. This is used when you want to directly
-     * authenticate against a db entry. 
+     * authenticate against a db entry.
      *
      * @param securityDomainName the name of the new security domain
      * @param dsJndiName the jndi name for the datasource to query against
@@ -127,7 +127,7 @@ public class SecurityDomainJBossASClient extends JBossASClient {
         ModelNode addAuthNode = createRequest(ADD, addr.clone().add(AUTHENTICATION, CLASSIC));
         ModelNode loginModulesNode = addAuthNode.get(LOGIN_MODULES);
         ModelNode loginModule = new ModelNode();
-        loginModule.get(CODE).set("DatabaseServer");
+        loginModule.get(CODE).set("Database");
         loginModule.get(FLAG).set("required");
         ModelNode moduleOptions = loginModule.get(MODULE_OPTIONS);
         moduleOptions.setEmptyList();
@@ -150,7 +150,7 @@ public class SecurityDomainJBossASClient extends JBossASClient {
     /**
      * Convenience method that builds a request which can create a new security domain
      * using the database server authentication method. This is used when you want to directly
-     * authenticate against a db entry. 
+     * authenticate against a db entry.
      *
      * @param securityDomainName the name of the new security domain
      * @param loginModuleFQCN fully qualified class name to be set as the login-module "code".

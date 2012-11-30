@@ -584,7 +584,7 @@ rhq.cassandra.cluster.seeds=
 # with the expectation of an even distribution. With that said, there can be
 # some variation. Either increasing this value or increasing the number of
 # nodes in the cluster will help even out the distribution.
-rhq.cassandra.node.num-tokens=${rhq.cassandra.node.num-tokens}
+rhq.cassandra.num-tokens=${rhq.cassandra.num-tokens}
 
 # The port for the CQL native transport to listen for clients on. Default value
 # is 9042.

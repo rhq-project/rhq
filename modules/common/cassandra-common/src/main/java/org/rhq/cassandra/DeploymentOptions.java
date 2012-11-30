@@ -94,7 +94,7 @@ public class DeploymentOptions {
             setRingDelay(Long.valueOf(ringDelay));
         }
 
-        setNumTokens(Integer.valueOf(loadProperty("rhq.cassandra.node.num-tokens", properties)));
+        setNumTokens(Integer.valueOf(loadProperty("rhq.cassandra.num-tokens", properties)));
         setNativeTransportPort(Integer.valueOf(loadProperty("rhq.cassandra.native-transport-port", properties)));
         setNativeTransportMaxThreads(Integer.valueOf(loadProperty("rhq.casandra.native-transport-max-threads",
             properties)));

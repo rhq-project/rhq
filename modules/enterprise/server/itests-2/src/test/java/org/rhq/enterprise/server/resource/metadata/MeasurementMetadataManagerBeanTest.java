@@ -16,6 +16,13 @@ import org.rhq.test.AssertUtils;
 
 public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
 
+    @Override
+    protected void beforeMethod() throws Exception {
+        super.beforeMethod();
+
+        disableAfterClassStandIn = true;
+    }
+
     @Test(groups = { "plugin.metadata", "Metrics.NewPlugin" })
     void registerMetricsPlugin() throws Exception {
         createPlugin("metric-test-plugin", "1.0", "plugin_v1.xml");
@@ -38,7 +45,7 @@ public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
         expected.setDisplayOrder(1);
 
         AssertUtils.assertPropertiesMatch("Failed to persist properties for a trait metric definition", expected,
-            traitDef, asList("id", "resourceType"));
+            traitDef, asList("id", "resourceType", "schedules", "alertCondition"));
     }
 
     @Test(groups = { "plugin.metadata", "Metrics.NewPlugin" }, dependsOnMethods = { "persistNewMetrics" })
@@ -53,7 +60,7 @@ public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
         expected.setDisplayOrder(2);
 
         AssertUtils.assertPropertiesMatch("Failed to persist properties for numeric metric definition", expected,
-            measurementDef, asList("id", "resourceType"));
+            measurementDef, asList("id", "resourceType", "schedules", "alertCondition"));
 
         MeasurementDefinition perMinuteDef = loadMeasurementDef("metric2", "MetricServer1", "metric2 per Minute");
 
@@ -66,7 +73,7 @@ public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
 
         AssertUtils.assertPropertiesMatch(
             "Failed to create and persist per minute metric definition for numeric metric definition", expected,
-            perMinuteDef, asList("id", "resourceType"));
+            perMinuteDef, asList("id", "resourceType", "schedules", "alertCondition"));
     }
 
     @Test(groups = { "plugin.metadata", "Metrics.NewPlugin" }, dependsOnMethods = { "persistNewMetrics" })
@@ -82,7 +89,7 @@ public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
         expected.setDisplayOrder(4);
 
         AssertUtils.assertPropertiesMatch("Failed to create calltime metric definition", expected, calltimeDef,
-            asList("id", "resourceType"));
+            asList("id", "resourceType", "schedules", "alertCondition"));
     }
 
     @Test(groups = { "plugin.metadata", "Metrics.NewPlugin" }, dependsOnMethods = { "persistNewMetrics" })
@@ -98,7 +105,7 @@ public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
         expected.setDescription(MeasurementDefinition.AVAILABILITY_DESCRIPTION);
 
         AssertUtils.assertPropertiesMatch("Failed to create avail metric definition", expected, serverAvailDef,
-            asList("id", "resourceType", "destinationType", "displayOrder"));
+            asList("id", "resourceType", "destinationType", "displayOrder", "alertCondition", "schedules"));
 
         MeasurementDefinition serviceAvailDef = loadMeasurementDef("rhq.availability", "MetricService1",
             MeasurementDefinition.AVAILABILITY_DISPLAY_NAME);
@@ -110,7 +117,7 @@ public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
         expected.setDescription(MeasurementDefinition.AVAILABILITY_DESCRIPTION);
 
         AssertUtils.assertPropertiesMatch("Failed to create avail metric definition", expected, serviceAvailDef,
-            asList("id", "resourceType", "destinationType", "displayOrder"));
+            asList("id", "resourceType", "destinationType", "displayOrder", "schedules", "alertCondition"));
 
         serviceAvailDef = loadMeasurementDef("rhq.availability", "MetricService2",
             MeasurementDefinition.AVAILABILITY_DISPLAY_NAME);
@@ -123,7 +130,7 @@ public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
         expected.setDescription(MeasurementDefinition.AVAILABILITY_DESCRIPTION);
 
         AssertUtils.assertPropertiesMatch("Failed to create avail metric definition", expected, serviceAvailDef,
-            asList("id", "resourceType", "destinationType", "displayOrder"));
+            asList("id", "resourceType", "destinationType", "displayOrder", "schedules", "alertCondition"));
 
     }
 
@@ -151,7 +158,7 @@ public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
         expected.setDisplayOrder(1);
 
         AssertUtils.assertPropertiesMatch("Failed to change trait definition to a measurement defintion", expected,
-            measurementDef, asList("id", "resourceType"));
+            measurementDef, asList("id", "resourceType", "schedules", "alertCondition"));
 
         MeasurementDefinition perMinuteDef = loadMeasurementDef("metric1", "MetricServer3", "metric1 per Minute");
         expected.setDisplayName("metric1 per Minute");
@@ -163,7 +170,7 @@ public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
 
         AssertUtils.assertPropertiesMatch(
             "Failed to create and persist per minute metric definition for updated metric definition", expected,
-            perMinuteDef, asList("id", "resourceType"));
+            perMinuteDef, asList("id", "resourceType", "schedules", "alertCondition"));
     }
 
     @Test(groups = { "plugin.metadata", "Metrics.UpradePlugin" }, dependsOnMethods = { "upgradeMetricsPlugin" })
@@ -195,7 +202,7 @@ public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
         expected.setDescription(MeasurementDefinition.AVAILABILITY_DESCRIPTION);
 
         AssertUtils.assertPropertiesMatch("Failed to create avail metric definition", expected, serverAvailDef,
-            asList("id", "resourceType", "destinationType", "displayOrder"));
+            asList("id", "resourceType", "destinationType", "displayOrder", "schedules", "alertCondition"));
 
         MeasurementDefinition serviceAvailDef = loadMeasurementDef("rhq.availability", "MetricService1",
             MeasurementDefinition.AVAILABILITY_DISPLAY_NAME);
@@ -208,7 +215,7 @@ public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
         expected.setDescription(MeasurementDefinition.AVAILABILITY_DESCRIPTION);
 
         AssertUtils.assertPropertiesMatch("Failed to create avail metric definition", expected, serviceAvailDef,
-            asList("id", "resourceType", "destinationType", "displayOrder"));
+            asList("id", "resourceType", "destinationType", "displayOrder", "schedules", "alertCondition"));
 
         serviceAvailDef = loadMeasurementDef("rhq.availability", "MetricService2",
             MeasurementDefinition.AVAILABILITY_DISPLAY_NAME);
@@ -220,7 +227,13 @@ public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
         expected.setDescription(MeasurementDefinition.AVAILABILITY_DESCRIPTION);
 
         AssertUtils.assertPropertiesMatch("Failed to create avail metric definition", expected, serviceAvailDef,
-            asList("id", "resourceType", "destinationType", "displayOrder"));
+            asList("id", "resourceType", "destinationType", "displayOrder", "schedules", "alertCondition"));
+    }
+
+    // this needs to be the last test executed in the class, it does cleanup
+    @Test(priority = 10, alwaysRun = true, dependsOnGroups = { "Metrics.UpradePlugin" })
+    public void afterClassWorkTest() throws Exception {
+        afterClassWork();
     }
 
     MeasurementDefinition loadMeasurementDef(String name, String resourceType) {

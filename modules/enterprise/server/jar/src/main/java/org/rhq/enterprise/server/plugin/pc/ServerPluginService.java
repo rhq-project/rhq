@@ -132,7 +132,7 @@ public class ServerPluginService implements ServerPluginServiceMBean {
         File pluginDir = getServerPluginsDirectory();
 
         File serverDataDir = LookupUtil.getCoreServer().getJBossServerDataDir();
-        File dataDir = new File(serverDataDir, "server-plugins");
+        File dataDir = new File(serverDataDir, "rhq-masterpc-server-plugins");
         dataDir.mkdirs(); // make sure the data directory exists
 
         File tmpDir = LookupUtil.getCoreServer().getJBossServerTempDir();

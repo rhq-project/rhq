@@ -88,9 +88,6 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         createPluginJarFile("test-plugin3.jar", "plugin_3.xml");
         createPluginJarFile("test-plugin3.1.jar", "plugin_3.1.xml");
 
-        System.out.println("***** SLEEP");
-        Thread.sleep(60000);
-
         pluginScanner.startDeployment();
     }
 

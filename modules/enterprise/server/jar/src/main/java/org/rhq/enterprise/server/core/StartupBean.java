@@ -55,6 +55,7 @@ import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
 import org.rhq.enterprise.communications.util.SecurityUtil;
+import org.rhq.enterprise.gui.client.RemoteClientServlet;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator;
 import org.rhq.enterprise.server.auth.SessionManager;
@@ -141,9 +142,6 @@ public class StartupBean {
         initialized = false;
 
         log.info("All business tier deployments are complete - finishing the startup...");
-
-        // As a security measure, make sure the installer has been undeployed
-        systemManager.undeployInstaller();
 
         // get singletons right now so we load the classes immediately into our classloader
         AlertConditionCacheCoordinator.getInstance();

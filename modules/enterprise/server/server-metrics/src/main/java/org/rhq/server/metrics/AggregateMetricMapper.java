@@ -35,6 +35,62 @@ import com.datastax.driver.core.Row;
  */
 public class AggregateMetricMapper implements ResultSetMapper<AggregatedNumericMetric> {
 
+    private ResultSetMapper<AggregatedNumericMetric> resultSetMapper;
+
+    public AggregateMetricMapper() {
+        this(false);
+    }
+
+    public AggregateMetricMapper(boolean includeMetadata) {
+        if (includeMetadata) {
+            resultSetMapper = new ResultSetMapper<AggregatedNumericMetric>() {
+                @Override
+                public AggregatedNumericMetric map(ResultSet resultSet) throws SQLException {
+                    return null;
+                }
+
+                @Override
+                public AggregatedNumericMetric map(Row... row) {
+                    AggregatedNumericMetric metric = new AggregatedNumericMetric();
+                    metric.setScheduleId(row[0].getInt(0));
+                    metric.setTimestamp(row[0].getDate(1).getTime());
+                    metric.setMax(row[0].getDouble(3));
+                    metric.setMin(row[1].getDouble(3));
+                    metric.setAvg(row[2].getDouble(3));
+
+                    ColumnMetadata maxMetadata = new ColumnMetadata(row[0].getInt(4), row[0].getLong(5));
+                    ColumnMetadata minMetadata = new ColumnMetadata(row[1].getInt(4), row[1].getLong(5));
+                    ColumnMetadata avgMetadata = new ColumnMetadata(row[2].getInt(4), row[2].getLong(5));
+
+                    metric.setAvgColumnMetadata(avgMetadata);
+                    metric.setMaxColumnMetadata(maxMetadata);
+                    metric.setMinColumnMetadata(minMetadata);
+
+                    return metric;
+                }
+            };
+        } else {
+            resultSetMapper = new ResultSetMapper<AggregatedNumericMetric>() {
+                @Override
+                public AggregatedNumericMetric map(ResultSet resultSet) throws SQLException {
+                    return null;
+                }
+
+                @Override
+                public AggregatedNumericMetric map(Row... row) {
+                    AggregatedNumericMetric metric = new AggregatedNumericMetric();
+                    metric.setScheduleId(row[0].getInt(0));
+                    metric.setTimestamp(row[0].getDate(1).getTime());
+                    metric.setMax(row[0].getDouble(3));
+                    metric.setMin(row[1].getDouble(3));
+                    metric.setAvg(row[2].getDouble(3));
+
+                    return metric;
+                }
+            };
+        }
+    }
+
     @Override
     public AggregatedNumericMetric map(ResultSet resultSet) throws SQLException {
         AggregatedNumericMetric metric = new AggregatedNumericMetric();
@@ -52,14 +108,7 @@ public class AggregateMetricMapper implements ResultSetMapper<AggregatedNumericM
     }
 
     @Override
-    public AggregatedNumericMetric map(Row... row) {
-        AggregatedNumericMetric metric = new AggregatedNumericMetric();
-        metric.setScheduleId(row[0].getInt(0));
-        metric.setTimestamp(row[0].getDate(1).getTime());
-        metric.setMax(row[0].getDouble(3));
-        metric.setMin(row[1].getDouble(3));
-        metric.setAvg(row[2].getDouble(3));
-
-        return metric;
+    public AggregatedNumericMetric map(Row... rows) {
+        return resultSetMapper.map(rows);
     }
 }

@@ -266,7 +266,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             new AggregatedNumericMetric(scheduleId, avg1, min1, max1, hour7.getMillis()),
             new AggregatedNumericMetric(scheduleId, avg2, min2, max2, hour8.getMillis())
         );
-        dao.insertAggregates(ONE_HOUR_METRICS_TABLE, oneHourMetrics);
+        dao.insertAggregates(ONE_HOUR_METRICS_TABLE, oneHourMetrics, DateTimeService.TWO_WEEKS);
 
         // update the 6 hour queue
         Map<Integer, DateTime> indexUpdates = new HashMap<Integer, DateTime>();
@@ -317,7 +317,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             new AggregatedNumericMetric(scheduleId, avg1, min1, max1, hour6.getMillis()),
             new AggregatedNumericMetric(scheduleId, avg2, min2, max2, hour12.getMillis())
         );
-        dao.insertAggregates(SIX_HOUR_METRICS_TABLE, sixHourMetrics);
+        dao.insertAggregates(SIX_HOUR_METRICS_TABLE, sixHourMetrics, DateTimeService.ONE_MONTH);
 
         // update the 24 queue
         Map<Integer, DateTime> indexUpdates = new HashMap<Integer, DateTime>();
@@ -396,7 +396,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             new AggregatedNumericMetric(scheduleId, 5.0, 4.0, 6.0, bucket59Time.plusHours(1).getMillis()),
             new AggregatedNumericMetric(scheduleId, 3.0, 3.0, 3.0, bucket59Time.plusHours(2).getMillis())
         );
-        dao.insertAggregates(ONE_HOUR_METRICS_TABLE, metrics);
+        dao.insertAggregates(ONE_HOUR_METRICS_TABLE, metrics, DateTimeService.TWO_WEEKS);
 
         List<MeasurementDataNumericHighLowComposite> actualData = metricsServer.findDataForResource(scheduleId,
             beginTime.getMillis(), endTime.getMillis());
@@ -436,7 +436,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             new AggregatedNumericMetric(scheduleId, 5.0, 4.0, 6.0, bucket59Time.plusHours(1).getMillis()),
             new AggregatedNumericMetric(scheduleId, 3.0, 3.0, 3.0, bucket59Time.plusHours(2).getMillis())
         );
-        dao.insertAggregates(SIX_HOUR_METRICS_TABLE, metrics);
+        dao.insertAggregates(SIX_HOUR_METRICS_TABLE, metrics, DateTimeService.ONE_MONTH);
 
         List<MeasurementDataNumericHighLowComposite> actualData = metricsServer.findDataForResource(scheduleId,
             beginTime.getMillis(), endTime.getMillis());

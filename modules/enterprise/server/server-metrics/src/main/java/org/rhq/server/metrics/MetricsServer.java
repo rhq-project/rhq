@@ -25,6 +25,7 @@
 
 package org.rhq.server.metrics;
 
+import static org.rhq.server.metrics.DateTimeService.TWO_WEEKS;
 import static org.rhq.server.metrics.MetricsDAO.ONE_HOUR_METRICS_TABLE;
 import static org.rhq.server.metrics.MetricsDAO.SIX_HOUR_METRICS_TABLE;
 import static org.rhq.server.metrics.MetricsDAO.TWENTY_FOUR_HOUR_METRICS_TABLE;
@@ -237,7 +238,7 @@ public class MetricsServer {
         }
 
         List<AggregatedNumericMetric> updatedSchedules = dao.insertAggregates(ONE_HOUR_METRICS_TABLE,
-            oneHourMetrics);
+            oneHourMetrics, TWO_WEEKS);
         return updatedSchedules;
     }
 
@@ -284,7 +285,7 @@ public class MetricsServer {
                 startTime.getMillis()));
         }
 
-        List<AggregatedNumericMetric> updatedSchedules = dao.insertAggregates(toColumnFamily, toMetrics);
+        List<AggregatedNumericMetric> updatedSchedules = dao.insertAggregates(toColumnFamily, toMetrics, ttl);
         return updatedSchedules;
     }
 

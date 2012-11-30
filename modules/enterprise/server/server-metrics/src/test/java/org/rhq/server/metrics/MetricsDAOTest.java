@@ -117,7 +117,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         // that the TTL is set.
         List<RawNumericMetric> actualMetricsWithMetadata = dao.findRawMetrics(scheduleId, currentHour,
             currentHour.plusHours(1), true) ;
-        assertTTLSet(actualMetricsWithMetadata);
+        assertRawTTLSet(actualMetricsWithMetadata);
     }
 
     @Test
@@ -130,8 +130,8 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
             new AggregatedNumericMetric(scheduleId, 4.0, 2.0, 10.0, hour0.plusHours(1).getMillis()),
             new AggregatedNumericMetric(456, 2.0, 2.0, 2.0, hour0.getMillis())
         );
-
-        List<AggregatedNumericMetric> actualUpdates = dao.insertAggregates(ONE_HOUR_METRICS_TABLE, metrics);
+        int ttl = Hours.ONE.getHours();
+        List<AggregatedNumericMetric> actualUpdates = dao.insertAggregates(ONE_HOUR_METRICS_TABLE, metrics, ttl);
         List<AggregatedNumericMetric> expectedUpdates = metrics;
 
         assertEquals(actualUpdates, expectedUpdates, "The updates do not match the expected values");
@@ -142,6 +142,11 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         );
         List<AggregatedNumericMetric> actual = dao.findAggregateMetrics(ONE_HOUR_METRICS_TABLE, scheduleId);
         assertEquals(actual, expected, "Failed to find one hour metrics");
+
+        // verify that the TTL is set
+        List<AggregatedNumericMetric> actualMetricsWithMetadata = dao.findAggregateMetricsWithMetadata(
+            ONE_HOUR_METRICS_TABLE, scheduleId, hour0, hour0().plusHours(1).plusSeconds(1));
+        assertAggrgateTTLSet(actualMetricsWithMetadata);
     }
 
     @Test
@@ -149,14 +154,15 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         int scheduledId = 1;
         int nextScheduleId = 2;
         DateTime hour0 = hour0();
-
-        dao.insertAggregates(ONE_HOUR_METRICS_TABLE, asList(
+        int ttl = Hours.ONE.getHours();
+        List<AggregatedNumericMetric> metrics = asList(
             new AggregatedNumericMetric(scheduledId, 2.0, 2.0, 2.0, hour0.getMillis()),
             new AggregatedNumericMetric(scheduledId, 3.0, 3.0, 3.0, hour0.plusHours(1).getMillis()),
             new AggregatedNumericMetric(scheduledId, 4.0, 4.0, 4.0, hour0.plusHours(2).getMillis()),
             new AggregatedNumericMetric(scheduledId, 5.0, 5.0, 5.0, hour0.plusHours(3).getMillis()),
             new AggregatedNumericMetric(nextScheduleId, 1.0, 1.0, 1.0, hour0.plusHours(1).getMillis())
-        ));
+        );
+        dao.insertAggregates(ONE_HOUR_METRICS_TABLE, metrics, ttl);
 
         DateTime startTime = hour0.plusHours(1);
         DateTime endTime = hour0.plusHours(3);
@@ -207,11 +213,28 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
             index);
     }
 
-    private void assertTTLSet(List<RawNumericMetric> metrics) {
+    private void assertRawTTLSet(List<RawNumericMetric> metrics) {
         for (RawNumericMetric metric : metrics) {
             assertNotNull(metric.getColumnMetadata(), metric + " does not contain column meta data. The meta data " +
                 " must be loaded in order to verify that the TTL is set correctly.");
             assertNotNull(metric.getColumnMetadata().getTtl(), "The TTL for " + metric + " is not set.");
+        }
+    }
+
+    private void assertAggrgateTTLSet(List<AggregatedNumericMetric> metrics) {
+        for (AggregatedNumericMetric metric : metrics) {
+            assertNotNull(metric.getAvgColumnMetadata(), metric + " does not contain column meta data for its " +
+                " average value. The meta data must be loaded in order to verify that the TTL is set correctly.");
+            assertNotNull(metric.getAvgColumnMetadata().getTtl(), "The TTL for average column of " + metric +
+                " is not set.");
+            assertNotNull(metric.getMinColumnMetadata(), metric + " does not contain column meta data for its " +
+                " minimum value. The meta data must be loaded in order to verify that the TTL is set correctly.");
+            assertNotNull(metric.getMinColumnMetadata().getTtl(), "The TTL for minimum column of " + metric +
+                " is not set.");
+            assertNotNull(metric.getMaxColumnMetadata(), metric + " does not contain column meta data for its " +
+                " maximum value. The meta data must be loaded in order to verify that the TTL is set correctly.");
+            assertNotNull(metric.getMaxColumnMetadata().getTtl(), "The TTL for maximum column of " + metric +
+                " is not set.");
         }
     }
 

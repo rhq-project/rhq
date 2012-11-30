@@ -40,7 +40,11 @@ public class AggregatedNumericMetric {
 
     private long timestamp;
 
-    private ColumnMetadata columnMetadata;
+    private ColumnMetadata avgColumnMetadata;
+
+    private ColumnMetadata minColumnMetadata;
+
+    private ColumnMetadata maxColumnMetadata;
 
     public AggregatedNumericMetric() {
     }
@@ -93,22 +97,39 @@ public class AggregatedNumericMetric {
         this.timestamp = timestamp;
     }
 
-    public ColumnMetadata getColumnMetadata() {
-        return columnMetadata;
+    public ColumnMetadata getAvgColumnMetadata() {
+        return avgColumnMetadata;
     }
 
-    public void setColumnMetadata(ColumnMetadata metadata) {
-        columnMetadata = metadata;
+    public void setAvgColumnMetadata(ColumnMetadata avgColumnMetadata) {
+        this.avgColumnMetadata = avgColumnMetadata;
+    }
+
+    public ColumnMetadata getMinColumnMetadata() {
+        return minColumnMetadata;
+    }
+
+    public void setMinColumnMetadata(ColumnMetadata minColumnMetadata) {
+        this.minColumnMetadata = minColumnMetadata;
+    }
+
+    public ColumnMetadata getMaxColumnMetadata() {
+        return maxColumnMetadata;
+    }
+
+    public void setMaxColumnMetadata(ColumnMetadata maxColumnMetadata) {
+        this.maxColumnMetadata = maxColumnMetadata;
     }
 
     @Override
     public String toString() {
-        if (columnMetadata == null) {
+        if (avgColumnMetadata == null && minColumnMetadata == null && maxColumnMetadata == null) {
             return "AggregatedNumericMetric[scheduleId=" + scheduleId + ", avg=" + avg + ", min=" + min + ", max="
                 + max + ", timestamp=" + timestamp + "]";
         }
         return "AggregatedNumericMetric[scheduleId=" + scheduleId + ", avg=" + avg + ", min=" + min + ", max="
-            + max + " timestamp=" + timestamp + ", columnMetadata=" + columnMetadata + "]";
+            + max + " timestamp=" + timestamp + ", avgColumnMetadata=" + avgColumnMetadata + ", minColumnMetadata=" +
+            minColumnMetadata + ", maxColumnMetadata=" + maxColumnMetadata + "]";
     }
 
     @Override

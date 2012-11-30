@@ -120,10 +120,12 @@ public class MetricsDAO {
         }
     }
 
-    public List<AggregatedNumericMetric> insertAggregates(String bucket, List<AggregatedNumericMetric> metrics) {
+    public List<AggregatedNumericMetric> insertAggregates(String bucket, List<AggregatedNumericMetric> metrics,
+        int ttl) {
         List<AggregatedNumericMetric> updates = new ArrayList<AggregatedNumericMetric>();
         try {
-            String cql = "INSERT INTO " + bucket + " (schedule_id, time, type, value) VALUES (?, ?, ?, ?)";
+            String cql = "INSERT INTO " + bucket + " (schedule_id, time, type, value) VALUES (?, ?, ?, ?) USING TTL " +
+                ttl;
             PreparedStatement statement = session.prepare(cql);
 
             for (AggregatedNumericMetric metric : metrics) {
@@ -196,7 +198,7 @@ public class MetricsDAO {
     public List<AggregatedNumericMetric> findAggregateMetrics(String bucket, int scheduleId) {
         try {
             String cql =
-                "SELECT schedule_id, time, type, value, ttl(value), writetime(value) " +
+                "SELECT schedule_id, time, type, value " +
                 "FROM " + bucket + " " +
                 "WHERE schedule_id = " + scheduleId + " " +
                 "ORDER BY time, type";
@@ -225,6 +227,29 @@ public class MetricsDAO {
                     " AND time < " + endTime.getMillis();
             List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
             ResultSetMapper<AggregatedNumericMetric> resultSetMapper = new AggregateMetricMapper();
+            ResultSet resultSet = session.execute(cql);
+
+            while (!resultSet.isExhausted()) {
+                metrics.add(resultSetMapper.map(resultSet.fetchOne(), resultSet.fetchOne(), resultSet.fetchOne()));
+            }
+
+            return metrics;
+        } catch (NoHostAvailableException e) {
+            throw new CQLException(e);
+        }
+    }
+
+    List<AggregatedNumericMetric> findAggregateMetricsWithMetadata(String bucket, int scheduleId, DateTime startTime,
+        DateTime endTime) {
+
+        try {
+            String cql =
+                "SELECT schedule_id, time, type, value, ttl(value), writetime(value) " +
+                    "FROM " + bucket + " " +
+                    "WHERE schedule_id = " + scheduleId + " AND time >= " + startTime.getMillis() +
+                    " AND time < " + endTime.getMillis();
+            List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
+            ResultSetMapper<AggregatedNumericMetric> resultSetMapper = new AggregateMetricMapper(true);
             ResultSet resultSet = session.execute(cql);
 
             while (!resultSet.isExhausted()) {

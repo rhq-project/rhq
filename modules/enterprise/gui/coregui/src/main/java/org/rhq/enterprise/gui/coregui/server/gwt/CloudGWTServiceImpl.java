@@ -28,15 +28,18 @@ import java.util.List;
 import org.apache.commons.lang.ArrayUtils;
 
 import org.rhq.core.domain.cloud.FailoverListDetails;
+import org.rhq.core.domain.cloud.PartitionEvent;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
+import org.rhq.core.domain.criteria.PartitionEventCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.CloudGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.cloud.CloudManagerLocal;
+import org.rhq.enterprise.server.cloud.PartitionEventManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -47,6 +50,8 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     private static final long serialVersionUID = 1L;
 
     private CloudManagerLocal cloudManager = LookupUtil.getCloudManager();
+    
+    private PartitionEventManagerLocal partitionEventManager = LookupUtil.getPartitionEventManager();
 
     @Override
     public PageList<ServerWithAgentCountComposite> getServers(PageControl pc) throws RuntimeException {
@@ -97,7 +102,7 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     }
 
     @Override
-    public List<FailoverListDetails> getFailoverListDetailsByAgentId(int agentId, PageControl pc) {
+    public List<FailoverListDetails> getFailoverListDetailsByAgentId(int agentId, PageControl pc) throws RuntimeException {
         try {
             return SerialUtility.prepare(cloudManager.getFailoverListDetailsByAgentId(agentId, pc),
                 "CloudGWTServiceImpl.getFailoverListDetailsByAgentId");
@@ -106,4 +111,14 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
         }
     }
 
+    @Override
+    public PageList<PartitionEvent> findPartitionEventsByCriteria(PartitionEventCriteria criteria) throws RuntimeException {
+    try {
+        return SerialUtility.prepare(partitionEventManager.findPartitionEventsByCriteria(getSessionSubject(), criteria),
+            "CloudGWTServiceImpl.findPartitionEventsByCriteria");
+    } catch (Throwable t) {
+        throw getExceptionToThrowToClient(t);
+    }
+    }
+    
 }

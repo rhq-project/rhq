@@ -18,14 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.topology;
 
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_ADDRESS;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_AFFINITY_GROUP;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_ID;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_LAST_AVAILABILITY_REPORT;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_NAME;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_PORT;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_SERVER;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_SERVER_ID;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_CTIME;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_EVENT_DETAIL;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_EVENT_TYPE;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_EXECUTION_STATUS;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_ID;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.PartitionEventDatasourceField.FIELD_SUBJECT_NAME;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,8 +37,8 @@ import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.core.domain.criteria.Criteria;
-import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.cloud.PartitionEvent;
+import org.rhq.core.domain.criteria.PartitionEventCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -52,13 +50,10 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  * @author Jirka Kremser
  *
  */
-public class AgentNodeDatasource extends RPCDataSource<Agent, Criteria> {
+public class PartitionEventDatasource extends RPCDataSource<PartitionEvent, PartitionEventCriteria> {
 
-    private final Integer serverId;
-
-    public AgentNodeDatasource(Integer serverId) {
+    public PartitionEventDatasource() {
         super();
-        this.serverId = serverId;
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
     }
@@ -79,31 +74,25 @@ public class AgentNodeDatasource extends RPCDataSource<Agent, Criteria> {
         ListGridField idField = FIELD_ID.getListGridField();
         idField.setHidden(true);
         fields.add(idField);
-        fields.add(FIELD_NAME.getListGridField("*"));
-        fields.add(FIELD_SERVER.getListGridField("120"));
-        fields.add(FIELD_ADDRESS.getListGridField("110"));
-        
-        ListGridField serverIdField = FIELD_SERVER_ID.getListGridField();
-        serverIdField.setHidden(true);
-        fields.add(serverIdField);
-        
-        fields.add(FIELD_PORT.getListGridField("90"));
-        ListGridField lastAvailabilityReportField = FIELD_LAST_AVAILABILITY_REPORT.getListGridField("120");
-        TimestampCellFormatter.prepareDateField(lastAvailabilityReportField);
-        fields.add(lastAvailabilityReportField);
-
-        fields.add(FIELD_AFFINITY_GROUP.getListGridField("100"));
+        ListGridField executionTimeField = FIELD_CTIME.getListGridField("120");
+        TimestampCellFormatter.prepareDateField(executionTimeField);
+        fields.add(executionTimeField);
+        fields.add(FIELD_EVENT_TYPE.getListGridField("140"));
+        fields.add(FIELD_EVENT_DETAIL.getListGridField("165"));
+        fields.add(FIELD_SUBJECT_NAME.getListGridField("90"));
+        fields.add(FIELD_EXECUTION_STATUS.getListGridField("90"));
 
         return fields;
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response, Criteria criteria) {
+    protected void executeFetch(final DSRequest request, final DSResponse response, PartitionEventCriteria criteria) {
         final PageControl pc = getPageControl(request);
 
-        GWTServiceLookup.getAgentService().getAgentsByServer(serverId, pc, new AsyncCallback<PageList<Agent>>() {
-            public void onSuccess(PageList<Agent> result) {
-                response.setData(buildRecords(result));
+        // TODO: call find by criteria method on PartitionEventManagerBean
+        GWTServiceLookup.getCloudService().findPartitionEventsByCriteria(criteria, new AsyncCallback<PageList<PartitionEvent>>() {
+            public void onSuccess(PageList<PartitionEvent> result) {
+//                response.setData(buildRecords(result));
                 response.setTotalRows(result.size());
                 processResponse(request.getRequestId(), response);
             }
@@ -143,28 +132,25 @@ public class AgentNodeDatasource extends RPCDataSource<Agent, Criteria> {
     }
 
     @Override
-    public Agent copyValues(Record from) {
-        throw new UnsupportedOperationException("AgentNodeDatasource.copyValues(Record from)");
+    public PartitionEvent copyValues(Record from) {
+        throw new UnsupportedOperationException("PartitionEventDatasource.copyValues(Record from)");
     }
 
     @Override
-    public ListGridRecord copyValues(Agent from) {
+    public ListGridRecord copyValues(PartitionEvent from) {
         ListGridRecord record = new ListGridRecord();
         record.setAttribute(FIELD_ID.propertyName(), from.getId());
-        record.setAttribute(FIELD_NAME.propertyName(), from.getName());
-        record.setAttribute(FIELD_ADDRESS.propertyName(), from.getAddress());
-        record.setAttribute(FIELD_PORT.propertyName(), from.getPort());
-        record.setAttribute(FIELD_SERVER.propertyName(), from.getServer() == null ? "" : from.getServer().getName());
-        record.setAttribute(FIELD_SERVER_ID.propertyName(), from.getServer() == null ? "" : from.getServer().getId());
-        record.setAttribute(FIELD_LAST_AVAILABILITY_REPORT.propertyName(), from.getLastAvailabilityReport());
-        record.setAttribute(FIELD_AFFINITY_GROUP.propertyName(), from.getAffinityGroup() == null ? "" : from
-            .getAffinityGroup().getName());
+        record.setAttribute(FIELD_CTIME.propertyName(), from.getCtime());
+        record.setAttribute(FIELD_EVENT_TYPE.propertyName(), from.getEventType());
+        record.setAttribute(FIELD_EVENT_DETAIL.propertyName(), from.getEventDetail());
+        record.setAttribute(FIELD_SUBJECT_NAME.propertyName(), from.getSubjectName());
+        record.setAttribute(FIELD_EXECUTION_STATUS.propertyName(), from.getExecutionStatus());
         return record;
     }
 
     @Override
-    protected Criteria getFetchCriteria(DSRequest request) {
+    protected PartitionEventCriteria getFetchCriteria(DSRequest request) {
         // we don't use criteria for this datasource, just return null
-        return null;
+        return new PartitionEventCriteria();
     }
 }

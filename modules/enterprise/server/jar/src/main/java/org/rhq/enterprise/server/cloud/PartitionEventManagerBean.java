@@ -38,10 +38,11 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.FailoverList;
 import org.rhq.core.domain.cloud.PartitionEvent;
+import org.rhq.core.domain.cloud.PartitionEvent.ExecutionStatus;
 import org.rhq.core.domain.cloud.PartitionEventDetails;
 import org.rhq.core.domain.cloud.PartitionEventType;
-import org.rhq.core.domain.cloud.PartitionEvent.ExecutionStatus;
 import org.rhq.core.domain.cloud.composite.FailoverListComposite;
+import org.rhq.core.domain.criteria.PartitionEventCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.domain.util.PageControl;
@@ -50,6 +51,8 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.QueryUtility;
 
 /**
@@ -246,5 +249,12 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
         long count = (Long) countQuery.getSingleResult();
 
         return new PageList<PartitionEventDetails>(detailsList, (int) count, pageControl);
+    }
+    
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public PageList<PartitionEvent> findPartitionEventsByCriteria(Subject subject, PartitionEventCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        CriteriaQueryRunner<PartitionEvent> runner = new CriteriaQueryRunner<PartitionEvent>(criteria, generator, entityManager);
+        return runner.execute();
     }
 }

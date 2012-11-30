@@ -82,7 +82,7 @@ public class ServerWithAgentCountDatasource extends ServerDatasource<ServerWithA
         fields.add(FIELD_PORT.getListGridField("90"));
         fields.add(FIELD_SECURE_PORT.getListGridField("75"));
 
-        ListGridField lastUpdateTimeField = FIELD_MTIME.getListGridField("110");
+        ListGridField lastUpdateTimeField = FIELD_MTIME.getListGridField("120");
         TimestampCellFormatter.prepareDateField(lastUpdateTimeField);
         fields.add(lastUpdateTimeField);
 
@@ -139,7 +139,7 @@ public class ServerWithAgentCountDatasource extends ServerDatasource<ServerWithA
 
     @Override
     public ServerWithAgentCountComposite copyValues(Record from) {
-        throw new UnsupportedOperationException("ServerTableView.CloudDataSourcepublic Server copyValues(Record from)");
+        throw new UnsupportedOperationException("ServerWithAgentCountDatasource.copyValues(Record from)");
     }
 
     @Override

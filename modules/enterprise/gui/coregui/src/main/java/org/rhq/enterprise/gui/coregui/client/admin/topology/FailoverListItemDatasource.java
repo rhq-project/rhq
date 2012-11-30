@@ -82,7 +82,7 @@ public class FailoverListItemDatasource extends ServerDatasource<FailoverListDet
         fields.add(FIELD_ORDINAL.getListGridField("55"));
         fields.add(FIELD_NAME.getListGridField("*"));
         fields.add(FIELD_OPERATION_MODE.getListGridField("90"));
-        fields.add(FIELD_ADDRESS.getListGridField("110"));
+        fields.add(FIELD_ADDRESS.getListGridField("120"));
         fields.add(FIELD_PORT.getListGridField("90"));
         fields.add(FIELD_SECURE_PORT.getListGridField("75"));
 
@@ -142,7 +142,7 @@ public class FailoverListItemDatasource extends ServerDatasource<FailoverListDet
 
     @Override
     public FailoverListDetails copyValues(Record from) {
-        throw new UnsupportedOperationException("ServerTableView.CloudDataSourcepublic Server copyValues(Record from)");
+        throw new UnsupportedOperationException("FailoverListItemDatasource.copyValues(Record from)");
     }
 
     @Override

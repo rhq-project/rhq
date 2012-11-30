@@ -24,10 +24,11 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.PartitionEvent;
+import org.rhq.core.domain.cloud.PartitionEvent.ExecutionStatus;
 import org.rhq.core.domain.cloud.PartitionEventDetails;
 import org.rhq.core.domain.cloud.PartitionEventType;
-import org.rhq.core.domain.cloud.PartitionEvent.ExecutionStatus;
 import org.rhq.core.domain.cloud.composite.FailoverListComposite;
+import org.rhq.core.domain.criteria.PartitionEventCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -94,4 +95,13 @@ public interface PartitionEventManagerLocal {
 
     PageList<PartitionEventDetails> getPartitionEventDetails(Subject subject, int partitionEventId,
         PageControl pageControl);
+    
+    /**
+     * the subject needs to have MANAGE_INVENTORY permission.
+     * 
+     * @param subject
+     * @param criteria
+     * @return list with partition events
+     */
+    PageList<PartitionEvent> findPartitionEventsByCriteria(Subject subject, PartitionEventCriteria criteria);
 }

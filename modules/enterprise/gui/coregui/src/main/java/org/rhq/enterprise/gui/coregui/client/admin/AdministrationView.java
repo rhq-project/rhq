@@ -188,13 +188,20 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
                     MSG.view_adminTopology_agents() + " (GWT)", null);
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
+        
+        NavigationItem partitionEventsGwt = new NavigationItem(ServerTableView.VIEW_ID, new ViewFactory() {
+            public Canvas createView() {
+                return new ServerTableView(extendLocatorId(ServerTableView.VIEW_ID.getName()),
+                    MSG.view_adminTopology_servers() + " (GWT)", null);
+            }
+        }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
         NavigationSection topologyRegion = null;
         if (isRHQ) {
             topologyRegion = new NavigationSection(SECTION_TOPOLOGY_VIEW_ID, serversItem, agentsItem,
-                affinityGroupsItem, partitionEventsItem, serversItemGwt, agentsItemGwt, remoteAgentInstallItem);
+                affinityGroupsItem, partitionEventsItem, serversItemGwt, agentsItemGwt, partitionEventsGwt, remoteAgentInstallItem);
         } else {
-            topologyRegion = new NavigationSection(SECTION_TOPOLOGY_VIEW_ID, serversItem, agentsItem,
+            topologyRegion = new NavigationSection(SECTION_TOPOLOGY_VIEW_ID, serversItem, partitionEventsGwt, agentsItem,
                 affinityGroupsItem, partitionEventsItem, serversItemGwt, agentsItemGwt);
         }
         return topologyRegion;

@@ -222,7 +222,7 @@ public class Agent implements Serializable {
     /**
      * Creates a new instance of Agent
      */
-    protected Agent() {
+    public Agent() {
     }
 
     /**

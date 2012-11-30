@@ -27,10 +27,13 @@ import java.util.List;
 import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.cloud.FailoverListDetails;
+import org.rhq.core.domain.cloud.PartitionEvent;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
+import org.rhq.core.domain.criteria.PartitionEventCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 
 /**
  * @author Jiri Kremser
@@ -52,6 +55,8 @@ public interface CloudGWTService extends RemoteService {
 
     void updateServerMode(int[] serverIds, Server.OperationMode mode) throws RuntimeException;
     
-    List<FailoverListDetails> getFailoverListDetailsByAgentId(int agentId, PageControl pc);
+    List<FailoverListDetails> getFailoverListDetailsByAgentId(int agentId, PageControl pc) throws RuntimeException;;
+    
+    PageList<PartitionEvent> findPartitionEventsByCriteria(PartitionEventCriteria criteria) throws RuntimeException;
 
 }

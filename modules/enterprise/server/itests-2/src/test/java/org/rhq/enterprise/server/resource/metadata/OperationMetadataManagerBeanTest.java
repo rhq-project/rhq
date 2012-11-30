@@ -111,6 +111,12 @@ public class OperationMetadataManagerBeanTest extends MetadataBeanTest {
         assertNull("Results definition should have been removed", resultsDef);
     }
 
+    // this needs to be the last test executed in the class, it does cleanup
+    @Test(priority = 10, alwaysRun = true, dependsOnGroups = { "Operations.UpgradePlugin" })
+    public void afterClassWorkTest() throws Exception {
+        afterClassWork();
+    }
+
     ResourceType loadResourceTypeWithOperationDefs(String resourceType, String plugin) {
         return (ResourceType) getEntityManager().createQuery(
                 "from  ResourceType t left join fetch t.operationDefinitions tod "

@@ -123,6 +123,12 @@ public class PluginExtensionMetadataTest extends MetadataBeanTest {
         checkChildPlugin(); // check that the changes to the parent type propogated to the child
     }
 
+    // this needs to be the last test executed in the class, it does cleanup
+    @Test(priority = 10, alwaysRun = true, dependsOnMethods = { "testRegisterPlugins" })
+    public void afterClassWorkTest() throws Exception {
+        afterClassWork();
+    }
+
     private void registerParentPluginV1() throws Exception {
         // register the plugin, load the new type and test to make sure its what we expect
         createPlugin("parent-plugin.jar", "1.0", "parent_plugin_v1.xml");

@@ -28,7 +28,6 @@ import org.dbunit.dataset.datatype.IDataTypeFactory;
 import org.dbunit.dataset.xml.FlatXmlDataSet;
 import org.dbunit.dataset.xml.FlatXmlProducer;
 import org.dbunit.operation.DatabaseOperation;
-import org.testng.annotations.Test;
 import org.xml.sax.InputSource;
 
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
@@ -40,6 +39,7 @@ import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.bundle.TestBundleServerPluginService;
+import org.rhq.enterprise.server.core.plugin.PluginDeploymentScanner;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob;
 import org.rhq.enterprise.server.scheduler.jobs.PurgeResourceTypesJob;
@@ -48,28 +48,21 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public class MetadataBeanTest extends AbstractEJB3Test {
 
-    private List<Integer> pluginIds = new ArrayList<Integer>();
-    protected boolean disableAfterClassStandIn = false;
+    protected PluginDeploymentScanner pluginScanner;
 
-    // Arquillian (1.0.2) executes @AfterClass after each test. So, instead turn it into a low priority
-    // test that should execute last.
-    /**
-     * !! Important !! This should be disabled if the subclass has tests in groups other than plugin.metadata because<br/>
-     * !! priority applies only to the tests in the same grouping.<br/>
-     * <br/>
+    private List<Integer> pluginIds = new ArrayList<Integer>();
+
+    /** 
+     * <pre>IMPORTANT NOTE FOR SUBCLASS IMPLEMENTORS
+     * Arquillian (1.0.2) executes @AfterXXX after each test. The work below would normally be done in
+     * an AfterClass method, but instead we'll use mock tests, that perform last for each subclass, to
+     * perform this cleanup code. 
+     * </pre>
      * Need to delete rows from RHQ_PLUGINS because subsequent tests in server/jar would otherwise fail. Some tests look
      * at what plugins are in the database, and then look for corresponding plugin files on the file system. MetadataTest
      * however removes the generated plugin files during each test run.
+     * 
      */
-    @Test(priority = 10, alwaysRun = true, groups = { "plugin.metadata" })
-    void afterClassStandIn() throws Exception {
-        if (!disableAfterClassStandIn) {
-            afterClassWork();
-        } else {
-            System.out.println("Skipping MetadataBeanTest.afterClassStandIn, it is disabled by a subclass.");
-        }
-    }
-
     protected void afterClassWork() throws Exception {
         PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
@@ -81,9 +74,6 @@ public class MetadataBeanTest extends AbstractEJB3Test {
 
     @Override
     protected void beforeMethod() throws Exception {
-        if (!inContainer()) {
-            return;
-        }
 
         setupDB();
 
@@ -100,9 +90,6 @@ public class MetadataBeanTest extends AbstractEJB3Test {
      */
     @Override
     protected void afterMethod() throws Exception {
-        if (!inContainer()) {
-            return;
-        }
 
         unprepareServerPluginService();
         unprepareScheduler();
@@ -158,8 +145,7 @@ public class MetadataBeanTest extends AbstractEJB3Test {
     protected void createPlugin(String pluginFileName, String version, String descriptorFileName) throws Exception {
         URL descriptorURL = getDescriptorURL(descriptorFileName);
         PluginDescriptor pluginDescriptor = loadPluginDescriptor(descriptorURL);
-        String pluginFilePath = getCurrentWorkingDir() + "/" + pluginFileName + ".jar";
-        File pluginFile = new File(pluginFilePath);
+        String pluginFilePath = getPluginWorkDir() + "/" + pluginFileName + ".jar";
 
         Plugin plugin = new Plugin(pluginDescriptor.getName(), pluginFilePath);
         plugin.setDisplayName(pluginDescriptor.getName());
@@ -169,12 +155,29 @@ public class MetadataBeanTest extends AbstractEJB3Test {
         plugin.setVersion(pluginDescriptor.getVersion());
         plugin.setMD5(MessageDigestGenerator.getDigestString(descriptorURL));
 
-        SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
         PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
 
         pluginMgr.registerPlugin(plugin, pluginDescriptor, null, true);
 
         pluginIds.add(plugin.getId());
+    }
+
+    protected void preparePluginScannerService() {
+        if (this.pluginScanner == null) {
+            this.pluginScanner = new PluginDeploymentScanner();
+
+            String pluginDirPath = null;
+            try {
+                pluginDirPath = getPluginWorkDir();
+            } catch (Exception e) {
+                throw new RuntimeException("Cannot determine where to put the plugin jar files", e);
+            }
+            this.pluginScanner.setAgentPluginDir(pluginDirPath); // we don't want to scan for these
+            this.pluginScanner.setServerPluginDir(null); // we don't want to scan for these
+            this.pluginScanner.setScanPeriod("9999999"); // we want to manually scan - don't allow for auto-scan to happen
+        }
+
+        preparePluginScannerService(this.pluginScanner);
     }
 
     private URL getDescriptorURL(String descriptor) {
@@ -183,7 +186,7 @@ public class MetadataBeanTest extends AbstractEJB3Test {
     }
 
     protected String getPluginWorkDir() throws Exception {
-        return getCurrentWorkingDir() + "/rhqtest";
+        return getCurrentWorkingDir() + "/" + this.getClass().getSimpleName() + "/" + "plugins";
     }
 
     protected String getCurrentWorkingDir() throws Exception {

@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.resource.metadata;
 
 import static java.util.Arrays.asList;
 
+import java.io.File;
 import java.util.List;
 
 import javax.ejb.EJBException;
@@ -30,6 +31,7 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.inventory.InventoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -53,7 +55,14 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         subjectMgr = LookupUtil.getSubjectManager();
         pluginMgr = LookupUtil.getPluginManager();
 
-        disableAfterClassStandIn = true;
+        FileUtil.purge(new File(getPluginWorkDir()), true);
+
+        preparePluginScannerService();
+    }
+
+    @Override
+    protected void afterMethod() throws Exception {
+        unpreparePluginScannerService();
     }
 
     public void registerPlugins() throws Exception {
@@ -71,16 +80,24 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
             new PurgeResourceTypesJob().execute(null);
             new PurgePluginsJob().execute(null);
         }
+        
+        //createPluginJarFile("child1-plugin.jar", "child1_plugin_v1.xml"));
 
-        createPlugin("test-plugin1", "1.0", "plugin_1.xml");
-        createPlugin("test-plugin2", "1.0", "plugin_2.xml");
-        createPlugin("test-plugin3", "1.0", "plugin_3.xml");
-        createPlugin("test-plugin3.1", "1.0", "plugin_3.1.xml");
+        createPluginJarFile("test-plugin1.jar", "plugin_1.xml");
+        createPluginJarFile("test-plugin2.jar", "plugin_2.xml");
+        createPluginJarFile("test-plugin3.jar", "plugin_3.xml");
+        createPluginJarFile("test-plugin3.1.jar", "plugin_3.1.xml");
+
+        System.out.println("***** SLEEP");
+        Thread.sleep(60000);
+
+        pluginScanner.startDeployment();
     }
 
     @Test(dependsOnMethods = { "registerPlugins" })
     public void disablePlugin() throws Exception {
         Plugin plugin = getPlugin("PluginManagerBeanTestPlugin3");
+        assertTrue("Plugin should not already be disabled", plugin.isEnabled());
 
         pluginMgr.disablePlugins(subjectMgr.getOverlord(), asList(plugin.getId()));
         plugin = pluginMgr.getPlugin("PluginManagerBeanTestPlugin3");
@@ -92,18 +109,23 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
     @Test(dependsOnMethods = { "registerPlugins" })
     public void doNotDisablePluginIfDependentPluginsAreNotAlsoDisabled() throws Exception {
         Plugin plugin = getPlugin("PluginManagerBeanTestPlugin1");
-        EJBException exception = null;
+        assertTrue("Plugin should not already be disabled", plugin.isEnabled());
+
+        Exception exception = null;
 
         try {
             pluginMgr.disablePlugins(subjectMgr.getOverlord(), asList(plugin.getId()));
-        } catch (EJBException e) {
+        } catch (Exception e) {
             exception = e;
         }
+
+        plugin = getPlugin("PluginManagerBeanTestPlugin1");
+        assertTrue("Plugin should not have been disabled", plugin.isEnabled());
 
         assertNotNull("Expected exception to be thrown when trying to disable a plugin that has dependent plugins",
             exception);
         assertTrue("Expected an IllegalArgumentException when trying to disable a plugin with dependent plugins",
-            exception.getCausedByException() instanceof IllegalArgumentException);
+            exception.getCause() instanceof IllegalArgumentException);
     }
 
     @Test(dependsOnMethods = { "doNotDisablePluginIfDependentPluginsAreNotAlsoDisabled" })

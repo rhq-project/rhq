@@ -108,6 +108,12 @@ public class ContentMetadataManagerBeanTest extends MetadataBeanTest {
             bundleType.getName());
     }
 
+    // this needs to be the last test executed in the class, it does cleanup
+    @Test(priority = 10, alwaysRun = true, dependsOnGroups = { "Content.UpgradePlugin" })
+    public void afterClassWorkTest() throws Exception {
+        afterClassWork();
+    }
+
     PackageType loadPackageType(String resourceType, String plugin, String packageType) {
         return (PackageType) getEntityManager()
             .createQuery(

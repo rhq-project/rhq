@@ -341,7 +341,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testEar.addAsLibraries(dependencies);
 
         // Print out the test EAR structure
-        // System.out.println("** The Deployment EAR: " + ear.toString(true) + "\n");
+        //System.out.println("** The Deployment EAR: " + testEar.toString(true) + "\n");
 
         // Save the test EAR to a zip file for inspection (set file explicitly)
         //exportZip(testEar, new File("/home/jshaughn/temp/test-ear.ear"));

@@ -178,8 +178,9 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
         }
     };
 
-    private boolean formBuilt;
+    private static String FAILED_LAST_TIME = "failed";
 
+    private boolean formBuilt;
     private SelectItem repoSelector;
     private RadioGroupWithComponentsItem packageSelector;
     private SelectItem existingPackageSelector;
@@ -403,9 +404,18 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
 
     private void validatePackage(final AsyncCallback<Void> callback) {
         if (config.selectedRepo == null) {
-            repoSelector.setIcons(failureIcon);
+            setFailed(repoSelector);
             callback.onFailure(null);
             return;
+        }
+        setOk(repoSelector);
+        if (!existingPackageSelector.isDisabled()) {
+            if (config.selectedPackage == null) {
+                setFailed(existingPackageSelector);
+                callback.onFailure(null);
+                return;
+            }
+            setOk(existingPackageSelector);
         }
         getConfiguration().put(new PropertySimple(PROP_REPO_ID, config.selectedRepo.getId()));
 
@@ -417,7 +427,8 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
             if (cliScriptPackageType.getVersionFormat() != null) {
                 String versionRegex = cliScriptPackageType.getVersionFormat().getFullFormatRegex();
                 if (versionRegex != null) {
-                    if (!matches(uploadForm.getField("version").getValue().toString(), versionRegex)) {
+                    Object version = uploadForm.getField("version").getValue();
+                    if (version == null ||!matches(version.toString(), versionRegex)) {
                         uploadForm.getItem("editableVersion").setIcons(failureIcon);
                         callback.onFailure(null);
                         return;
@@ -677,6 +688,19 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
 
     private void loadPackageType(AsyncCallback<PackageTypeAndVersionFormatComposite> handler) {
         GWTServiceLookup.getContentService().findPackageType(null, PACKAGE_TYPE_NAME, handler);
+    }
+
+    private void setFailed(FormItem item) {
+        item.setIcons(failureIcon);
+        item.setAttribute(FAILED_LAST_TIME, true);
+    }
+
+    private void setOk(FormItem item) {
+        Boolean lastTimeFail = item.getAttributeAsBoolean(FAILED_LAST_TIME);
+        if (lastTimeFail != null && lastTimeFail) {
+            item.setIcons(successIcon);
+            item.setAttribute(FAILED_LAST_TIME, false);
+        }
     }
 
     private void checkAuthenticationAndDo(final AsyncCallback<Void> action) {

@@ -31,6 +31,7 @@ import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.enterprise.gui.coregui.client.gwt.SystemGWTService;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.core.RemoteClientManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -47,6 +48,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
 
     private SystemManagerLocal systemManager = LookupUtil.getSystemManager();
     private AgentManagerLocal agentManager = LookupUtil.getAgentManager();
+    private RemoteClientManagerLocal remoteClientManager = LookupUtil.getRemoteClientManager();
 
     @Override
     public ProductInfo getProductInfo() throws RuntimeException {
@@ -171,18 +173,11 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
 
     @Override
     public HashMap<String, String> getClientVersionProperties() throws RuntimeException {
-        File versionFile = new File(getClientDataDownloadDir(), "rhq-client-version.properties");
         try {
-            Properties p = new Properties();
-            FileInputStream inStream = new FileInputStream(versionFile);
-            try {
-                p.load(inStream);
-            } finally {
-                inStream.close();
-            }
-            return convertFromProperties(p);
+            Properties props = remoteClientManager.getRemoteClientVersionFileContent();
+            return convertFromProperties(props);
         } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t, "Unable to retrieve client version info.");
+            throw getExceptionToThrowToClient(t, "Unable to retrieve CLI version info.");
         }
     }
 
@@ -236,15 +231,6 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
         File downloadDir = new File(homeDir, "script-modules");
         if (!downloadDir.isDirectory()) {
             throw new RuntimeException("Server is missing connectors download directory at [" + downloadDir + "]");
-        }
-        return downloadDir;
-    }
-
-    private File getClientDataDownloadDir() {
-        File earDir = LookupUtil.getCoreServer().getJBossServerDataDir();
-        File downloadDir = new File(earDir, "rhq-downloads/rhq-client");
-        if (!downloadDir.isDirectory()) {
-            throw new RuntimeException("Server is missing client download directory at [" + downloadDir + "]");
         }
         return downloadDir;
     }

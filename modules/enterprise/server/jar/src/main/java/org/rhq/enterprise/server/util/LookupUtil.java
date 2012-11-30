@@ -102,6 +102,8 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.core.CoreServerMBean;
 import org.rhq.enterprise.server.core.EmailManagerBean;
 import org.rhq.enterprise.server.core.EmailManagerLocal;
+import org.rhq.enterprise.server.core.RemoteClientManagerBean;
+import org.rhq.enterprise.server.core.RemoteClientManagerLocal;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.dashboard.DashboardManagerBean;
 import org.rhq.enterprise.server.dashboard.DashboardManagerLocal;
@@ -273,6 +275,10 @@ public final class LookupUtil {
 
     public static AlertConditionConsumerBean getActiveConditionConsumer() {
         return lookupLocal(AlertConditionConsumerBean.class);
+    }
+
+    public static RemoteClientManagerLocal getRemoteClientManager() {
+        return lookupLocal(RemoteClientManagerBean.class);
     }
 
     public static AgentManagerLocal getAgentManager() {

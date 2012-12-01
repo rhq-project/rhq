@@ -20,25 +20,24 @@ package org.rhq.enterprise.server.core.plugin;
 
 import java.io.File;
 import java.util.Date;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import org.jboss.util.StringPropertyReplacer;
 
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileUtil;
-import org.rhq.enterprise.server.util.LoggingThreadFactory;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorUtil;
 
 /**
  * This looks at both the file system and the database for new agent and server plugins.
+ * This does not perform any polling - it only performs scanning on-demand. It provides
+ * some configuration settings that a timer could use to determine when to periodically
+ * scan (see {@link #getScanPeriod()} for example.
  *
  * @author John Mazzitelli
  */
@@ -49,9 +48,6 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
     /** time, in millis, between each scans */
     private long scanPeriod = 300000L;
 
-    /** handles the scheduled scanning */
-    private ScheduledExecutorService poller;
-
     /** where the user can copy agent or server plugins */
     private File userPluginDir = null;
 
@@ -61,45 +57,85 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
     /** what looks for new or changed agent plugins */
     private ServerPluginScanner serverPluginScanner = new ServerPluginScanner();
 
-    @NotNull
-    public Long getScanPeriod() {
-        return this.scanPeriod;
+    // https://issues.jboss.org/browse/AS7-5343 forces us to change the attribute values as Strings
+    // we then must convert ourselves.
+
+    //public Long getScanPeriod() {
+    public String getScanPeriod() {
+        //return this.scanPeriod;
+        return Long.toString(this.scanPeriod);
     }
 
-    public void setScanPeriod(@Nullable Long ms) {
+    //public void setScanPeriod(Long ms) {
+    public void setScanPeriod(String ms) {
         if (ms != null) {
-            this.scanPeriod = ms;
+            //this.scanPeriod = ms;
+            this.scanPeriod = Long.parseLong(StringPropertyReplacer.replaceProperties(ms));
         } else {
             this.scanPeriod = 300000L;
         }
     }
 
-    public File getUserPluginDir() {
-        return this.userPluginDir;
+    //public File getUserPluginDir() {
+    public String getUserPluginDir() {
+        //return this.userPluginDir;
+        return this.userPluginDir.getAbsolutePath();
     }
 
-    public void setUserPluginDir(File dir) {
-        this.userPluginDir = dir;
+    //public void setUserPluginDir(File dir) {
+    public void setUserPluginDir(String dir) {
+        if (dir == null) {
+            return;
+        }
+        //this.userPluginDir = dir;
+        this.userPluginDir = new File(StringPropertyReplacer.replaceProperties(dir));
     }
 
-    public File getServerPluginDir() {
-        return this.serverPluginScanner.getServerPluginDir();
+    //public File getServerPluginDir() {
+    public String getServerPluginDir() {
+        //return this.serverPluginScanner.getServerPluginDir();
+        return this.serverPluginScanner.getServerPluginDir().getAbsolutePath();
     }
 
-    public void setServerPluginDir(File dir) {
-        this.serverPluginScanner.setServerPluginDir(dir);
+    //public void setServerPluginDir(File dir) {
+    public void setServerPluginDir(String dir) {
+        if (dir == null) {
+            return;
+        }
+        //this.serverPluginScanner.setServerPluginDir(dir);
+        this.serverPluginScanner.setServerPluginDir(new File(StringPropertyReplacer.replaceProperties(dir)));
     }
 
-    public File getAgentPluginDir() {
-        return this.agentPluginScanner.getAgentPluginDeployer().getPluginDir();
+    //public File getAgentPluginDir() {
+    public String getAgentPluginDir() {
+        //return this.agentPluginScanner.getAgentPluginDeployer().getPluginDir();
+        return this.agentPluginScanner.getAgentPluginDeployer().getPluginDir().getAbsolutePath();
     }
 
-    public void setAgentPluginDir(File dir) {
-        this.agentPluginScanner.getAgentPluginDeployer().setPluginDir(dir);
+    //public void setAgentPluginDir(File dir) {
+    public void setAgentPluginDir(String dir) {
+        if (dir == null) {
+            return;
+        }
+        //this.agentPluginScanner.getAgentPluginDeployer().setPluginDir(dir);
+        this.agentPluginScanner.getAgentPluginDeployer().setPluginDir(
+            new File(StringPropertyReplacer.replaceProperties(dir)));
     }
 
     public PluginMetadataManager getPluginMetadataManager() {
         return this.agentPluginScanner.getAgentPluginDeployer().getPluginMetadataManager();
+    }
+
+    private File getUserPluginDirAsFile() {
+        return this.userPluginDir;
+    }
+
+    private File getAgentPluginDirAsFile() {
+        return this.agentPluginScanner.getAgentPluginDeployer().getPluginDir();
+    }
+
+    private File getServerPluginDirAsFile() {
+        return this.serverPluginScanner.getServerPluginDir();
     }
 
     public void start() throws Exception {
@@ -112,51 +148,31 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
         this.agentPluginScanner.fixMissingAgentPluginContent();
         this.agentPluginScanner.getAgentPluginDeployer().start();
 
-        shutdownPoller(); // paranoia - just in case somehow one is still running
-        this.poller = Executors.newSingleThreadScheduledExecutor(new LoggingThreadFactory("PluginScanner", true));
         return;
     }
 
     public void stop() {
         this.agentPluginScanner.getAgentPluginDeployer().stop();
-        shutdownPoller();
-        return;
-    }
-
-    private void shutdownPoller() {
-        if (this.poller != null) {
-            this.poller.shutdownNow();
-            this.poller = null;
-        }
         return;
     }
 
     public void startDeployment() {
-        // We are being called by the server's startup servlet which essentially informs us that
+        // We are being called by the server's startup bean which essentially informs us that
         // the server's internal EJB/SLSBs are ready and can be called. This means we are allowed to start.
         // NOTE: Make sure we are called BEFORE the master plugin container is started!
 
         this.agentPluginScanner.getAgentPluginDeployer().startDeployment();
 
-        // this is the runnable task that executes each scan period - it runs in our thread pool
-        Runnable runnable = new Runnable() {
-            public void run() {
-                try {
-                    scanAndRegister();
-                } catch (Throwable t) {
-                    log.error("Scan failed. Cause: " + ThrowableUtil.getAllMessages(t));
-                    if (log.isDebugEnabled()) {
-                        log.debug("Scan failure stack trace follows:", t);
-                    }
-                }
-            }
-        };
-
         // do the initial scan now
-        runnable.run();
+        try {
+            scanAndRegister();
+        } catch (Throwable t) {
+            log.error("Scan failed. Cause: " + ThrowableUtil.getAllMessages(t));
+            if (log.isDebugEnabled()) {
+                log.debug("Scan failure stack trace follows:", t);
+            }
+        }
 
-        // schedule it to run periodically from here on out
-        this.poller.scheduleWithFixedDelay(runnable, this.scanPeriod, this.scanPeriod, TimeUnit.MILLISECONDS);
         return;
     }
 
@@ -191,7 +207,7 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
      * in the server.
      */
     private void scanUserDirectory() {
-        File userDir = getUserPluginDir();
+        File userDir = getUserPluginDirAsFile(); // 
         if (userDir == null || !userDir.isDirectory()) {
             return; // not configured for a user directory, just return immediately and do nothing
         }
@@ -208,7 +224,7 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
                     if (!isJarLess && null == AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL())) {
                         throw new NullPointerException("no xml descriptor found in jar");
                     }
-                    destinationDirectory = getAgentPluginDir();
+                    destinationDirectory = getAgentPluginDirAsFile(); //
                 } catch (Exception e) {
                     try {
                         log.debug("[" + file.getAbsolutePath() + "] is not an agent plugin jar (Cause: "
@@ -217,7 +233,7 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
                         if (null == ServerPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL())) {
                             throw new NullPointerException("no xml descriptor found in jar");
                         }
-                        destinationDirectory = getServerPluginDir();
+                        destinationDirectory = getServerPluginDirAsFile(); //
                     } catch (Exception e1) {
                         // skip it, doesn't look like a valid plugin jar
                         File fixmeFile = new File(file.getAbsolutePath() + ".fixme");

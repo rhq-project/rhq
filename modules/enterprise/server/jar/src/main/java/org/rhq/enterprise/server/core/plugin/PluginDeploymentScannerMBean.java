@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.server.core.plugin;
 
-import java.io.File;
-
 import javax.management.ObjectName;
 
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
@@ -58,19 +56,23 @@ public interface PluginDeploymentScannerMBean {
      */
     void scanAndRegister() throws Exception;
 
+    // https://issues.jboss.org/browse/AS7-5343 forces us to change the attribute values as Strings
+
     /**
      * Sets the amount of time (in milliseconds) between scans.
      *
      * @param ms time in millis between each scans
      */
-    void setScanPeriod(Long ms);
+    //void setScanPeriod(Long ms);
+    void setScanPeriod(String ms);
 
     /**
      * Gets the amount of time (in milliseconds) between scans.
      *
      * @return the time in millis between each scans
      */
-    Long getScanPeriod();
+    //Long getScanPeriod();
+    String getScanPeriod();
 
     /**
      * Sets the directory where the user can place agent or server plugin jars.
@@ -79,7 +81,8 @@ public interface PluginDeploymentScannerMBean {
      *
      * @param name the name of the plugins dir where the user can copy plugins
      */
-    void setUserPluginDir(File name);
+    //void setUserPluginDir(File name);
+    void setUserPluginDir(String name);
 
     /**
      * Gets the directory name where the user can place agent or server plugin jars.
@@ -87,35 +90,40 @@ public interface PluginDeploymentScannerMBean {
      *
      * @return plugin directory name where the user puts plugins
      */
-    File getUserPluginDir();
+    //File getUserPluginDir();
+    String getUserPluginDir();
 
     /**
      * Sets the directory where the server plugin jars are located.
      *
      * @param name the name of the server plugins dir
      */
-    void setServerPluginDir(File name);
+    //void setServerPluginDir(File name);
+    void setServerPluginDir(String name);
 
     /**
      * Gets the directory name where the server plugin jars are located.
      *
      * @return server plugin directory name
      */
-    File getServerPluginDir();
+    //File getServerPluginDir();
+    String getServerPluginDir();
 
     /**
      * Sets the directory where the agent plugin jars are located.
      *
      * @param name the name of the agent plugins dir
      */
-    void setAgentPluginDir(File name);
+    //void setAgentPluginDir(File name);
+    void setAgentPluginDir(String name);
 
     /**
      * Gets the directory name where the agent plugin jars are located.
      *
      * @return agent plugin directory name
      */
-    File getAgentPluginDir();
+    //File getAgentPluginDir();
+    String getAgentPluginDir();
 
     /**
      * Returns the object that is managing the plugin metadata and types built from that metadata.

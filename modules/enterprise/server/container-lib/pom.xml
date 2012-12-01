@@ -19,16 +19,15 @@
    <dependencies>
 
       <dependency>
-         <groupId>org.jboss.transaction</groupId>
-         <artifactId>jboss-jta</artifactId>
-         <version>4.2.3.SP5</version>
+         <groupId>org.jboss.jbossts</groupId>
+         <artifactId>jbossjts</artifactId>
+         <version>4.16.2.Final</version>
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
     <dependency>
-      <groupId>jboss</groupId>
-      <artifactId>jboss-common</artifactId>
-      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      <groupId>org.jboss</groupId>
+      <artifactId>jboss-common-core</artifactId>
       <scope>provided</scope> <!-- by JBossAS -->
     </dependency>
 
@@ -55,7 +54,7 @@
          <properties>
             <rhq.rootDir>../../../..</rhq.rootDir>
             <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/lib</rhq.deploymentDir>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/lib</rhq.deploymentDir>
          </properties>
 
          <build>

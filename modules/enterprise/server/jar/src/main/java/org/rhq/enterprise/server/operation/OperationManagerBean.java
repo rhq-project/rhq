@@ -31,7 +31,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -92,7 +91,6 @@ import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.exception.ScheduleException;
 import org.rhq.enterprise.server.exception.UnscheduleException;
-import org.rhq.enterprise.server.jaxb.adapter.ConfigurationAdapter;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -141,9 +139,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     public ResourceOperationSchedule scheduleResourceOperation(Subject subject, int resourceId, String operationName,
-        long delay, long repeatInterval, int repeatCount, int timeout,//
-        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
-        Configuration parameters, String notes) throws ScheduleException {
+        long delay, long repeatInterval, int repeatCount, int timeout, Configuration parameters, String notes)
+        throws ScheduleException {
         try {
 
             SimpleTrigger trigger = new SimpleTrigger();
@@ -174,8 +171,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         Trigger trigger = convertToTrigger(jobTrigger);
         try {
             ResourceOperationSchedule resourceOperationSchedule = scheduleResourceOperation(subject, schedule
-                .getResource().getId(), schedule.getOperationName(), schedule.getParameters(), trigger, schedule
-                .getDescription());
+                .getResource().getId(), schedule.getOperationName(), schedule.getParameters(), trigger,
+                schedule.getDescription());
             return resourceOperationSchedule.getId();
         } catch (SchedulerException e) {
             throw new ScheduleException(e);
@@ -198,8 +195,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                 }
             }
             GroupOperationSchedule groupOperationSchedule = scheduleGroupOperation(subject,
-                schedule.getGroup().getId(), executionOrderResourceIds, schedule.getHaltOnFailure(), schedule
-                    .getOperationName(), schedule.getParameters(), trigger, schedule.getDescription());
+                schedule.getGroup().getId(), executionOrderResourceIds, schedule.getHaltOnFailure(),
+                schedule.getOperationName(), schedule.getParameters(), trigger, schedule.getDescription());
             return groupOperationSchedule.getId();
         } catch (SchedulerException e) {
             throw new ScheduleException(e);
@@ -249,8 +246,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
         // We need to create our own schedule tracking entity.
         ResourceOperationScheduleEntity schedule;
-        schedule = new ResourceOperationScheduleEntity(jobDetail.getName(), jobDetail.getGroup(), trigger
-            .getStartTime(), resource);
+        schedule = new ResourceOperationScheduleEntity(jobDetail.getName(), jobDetail.getGroup(),
+            trigger.getStartTime(), resource);
         entityManager.persist(schedule);
 
         // Add the id of the entity bean, so we can easily map the Quartz job to the associated entity bean.
@@ -1054,9 +1051,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                     // We still flag the operation as canceled to indicate that the agent did attempt to cancel it;
                     // hopefully, the plugin did the right thing.
                     canceled = true;
-                    LOG
-                        .debug("Agent attempted to cancel the operation - it interrupted the operation while it was running. "
-                            + "agent=[" + agent + "], op=[" + doomedHistory + "]");
+                    LOG.debug("Agent attempted to cancel the operation - it interrupted the operation while it was running. "
+                        + "agent=[" + agent + "], op=[" + doomedHistory + "]");
                     break;
                 }
 
@@ -1187,7 +1183,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
     }
 
-    @SuppressWarnings( { "unchecked" })
+    @SuppressWarnings({ "unchecked" })
     public List<OperationDefinition> findSupportedGroupOperations(Subject subject, int compatibleGroupId,
         boolean eagerLoaded) {
         if (!authorizationManager.canViewGroup(subject, compatibleGroupId)) {
@@ -1588,8 +1584,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         for (ResourceOperationScheduleComposite composite : results) {
             try {
                 ResourceOperationSchedule sched = getResourceOperationSchedule(subject, composite.getJobId().toString());
-                OperationDefinition def = getSupportedResourceOperation(overlord, composite.getResourceId(), sched
-                    .getOperationName(), false);
+                OperationDefinition def = getSupportedResourceOperation(overlord, composite.getResourceId(),
+                    sched.getOperationName(), false);
                 composite.setOperationName((def.getDisplayName() != null) ? def.getDisplayName() : sched
                     .getOperationName());
             } catch (SchedulerException se) {
@@ -1641,8 +1637,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         for (GroupOperationScheduleComposite composite : results) {
             try {
                 GroupOperationSchedule sched = getGroupOperationSchedule(subject, composite.getJobId().toString());
-                OperationDefinition def = getSupportedGroupOperation(overlord, composite.getGroupId(), sched
-                    .getOperationName(), false);
+                OperationDefinition def = getSupportedGroupOperation(overlord, composite.getGroupId(),
+                    sched.getOperationName(), false);
                 composite.setOperationName((def.getDisplayName() != null) ? def.getDisplayName() : sched
                     .getOperationName());
             } catch (SchedulerException se) {
@@ -1973,8 +1969,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         ResourceOperationHistoryCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         if (authorizationManager.isInventoryManager(subject) == false) {
-            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE, subject
-                .getId());
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
+                subject.getId());
         }
 
         CriteriaQueryRunner<ResourceOperationHistory> queryRunner = new CriteriaQueryRunner(criteria, generator,
@@ -1987,8 +1983,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         GroupOperationHistoryCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         if (authorizationManager.isInventoryManager(subject) == false) {
-            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.GROUP, subject
-                .getId());
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.GROUP,
+                subject.getId());
         }
 
         CriteriaQueryRunner<GroupOperationHistory> queryRunner = new CriteriaQueryRunner(criteria, generator,

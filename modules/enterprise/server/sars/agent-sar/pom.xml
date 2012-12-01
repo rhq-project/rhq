@@ -26,12 +26,6 @@
       <version>${project.version}</version>
     </dependency>
 
-    <dependency>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-core-domain</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
     <!-- we want to explicitly include these (do not use scope=provided) -->
     <dependency>
       <groupId>commons-logging</groupId>
@@ -73,15 +67,20 @@
       <plugin>
         <artifactId>maven-antrun-plugin</artifactId>
         <executions>
-          <!-- we are packaging the agent in isolation - but the sar needs the agent jar itself, put a copy in the lib directory -->
+          <!-- we are packaging the agent in isolation - but the sar needs the agent jar/core-util jars, put a copy in the lib directory -->
           <execution>
             <phase>package</phase>
             <configuration>
               <target>
                  <echo>sarDirectory="${sarDirectory}"</echo>
-                 <echo>Putting the agent jar in the sar's classpath</echo>
+                 <echo>Putting some jars required by the embedded agent bootstrap service in the sar's classpath</echo>
+                 <!--  if you add jars in here, make sure you add them in  jboss-deployment-structure.xml also -->
                  <mkdir dir="${sarDirectory}/lib" />
                  <copy file="${sarDirectory}/META-INF/embedded-agent/lib/rhq-enterprise-agent-${project.version}.jar" todir="${sarDirectory}/lib" />
+                 <copy file="${sarDirectory}/META-INF/embedded-agent/lib/rhq-enterprise-comm-${project.version}.jar" todir="${sarDirectory}/lib" />
+                 <copy file="${sarDirectory}/META-INF/embedded-agent/lib/rhq-core-comm-api-${project.version}.jar" todir="${sarDirectory}/lib" />
+                 <copy file="${sarDirectory}/META-INF/embedded-agent/lib/rhq-core-util-${project.version}.jar" todir="${sarDirectory}/lib" />
+                 <copy file="${sarDirectory}/META-INF/embedded-agent/lib/i18nlog-${i18nlog.version}.jar" todir="${sarDirectory}/lib" />
 
                  <echo>Populating the sar with the native libraries found at ${settings.localRepository}/org/hyperic/sigar-dist/${sigar.version}/sigar-dist-${sigar.version}.zip</echo>
                  <unzip dest="${sarDirectory}/META-INF/embedded-agent/lib">
@@ -100,13 +99,15 @@
                        <include name="**/lib/*" />
                     </fileset>
                  </move>
-                 <delete dir="${sarDirectory}/META-INF/embedded-agent/lib/hyperic-sigar-${sigar.version}" />
+
+                 <delete includeemptydirs="true">
+                    <fileset dir="${sarDirectory}/META-INF/embedded-agent/lib/" includes="hyperic-sigar*/**"/>
+                 </delete>
 
                  <echo>Removing libraries that are either unused or in the RHQ Server's JBossAS endorsed dir</echo>
                  <delete>
                     <fileset dir="${sarDirectory}/META-INF/embedded-agent/lib">
                        <include name="jdom*.jar" /> <!-- never needed; only for deprecated XML code for the license stuff -->
-                       <include name="jaxb*.jar" /> <!-- JAXB is in JBossAS's endorsed directory -->
                     </fileset>
                  </delete>
 
@@ -147,7 +148,7 @@
             <rhq.rootDir>../../../../..</rhq.rootDir>
             <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
             <rhq.deploymentName>${project.build.finalName}.sar</rhq.deploymentName>
-            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.deploymentName}</rhq.deploymentDir>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.deploymentName}</rhq.deploymentDir>
          </properties>
 
          <build>

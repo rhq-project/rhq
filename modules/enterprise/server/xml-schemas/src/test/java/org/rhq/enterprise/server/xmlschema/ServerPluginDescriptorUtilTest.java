@@ -47,9 +47,7 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginCo
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.AlertPluginDescriptorType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.bundle.BundlePluginDescriptorType;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.entitlement.EntitlementPluginDescriptorType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.generic.GenericPluginDescriptorType;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PerspectivePluginDescriptorType;
 
 /**
  * Tests that we can parse server-side plugin descriptors.
@@ -228,43 +226,6 @@ public class ServerPluginDescriptorUtilTest {
         config = ServerPluginDescriptorMetadataParser.getPluginConfigurationDefinition(descriptor);
         assert config != null;
         assert config.getPropertyDefinitionSimple("alertprop1") != null;
-    }
-
-    public void testPerspectivePluginDescriptor() throws Exception {
-        String testXml = "test-serverplugin-perspective.xml";
-        ServerPluginDescriptorType data = parseTestXml(testXml);
-        assert data instanceof PerspectivePluginDescriptorType;
-        PerspectivePluginDescriptorType descriptor = (PerspectivePluginDescriptorType) data;
-
-        assert descriptor.getApiVersion().equals("1.0");
-        assert descriptor.getVersion().equals("1.0");
-        assert descriptor.getName().equals("SamplePerspective");
-        assert descriptor.getDisplayName().equals("Sample Perspective");
-        assert descriptor.getDescription().equals("A Sample Perspective Utilizing Every Extension Point and Filter");
-        assert descriptor.getPackage().equals("org.rhq.perspective.sample");
-    }
-
-    public void testEntitlementPluginDescriptor() throws Exception {
-        String testXml = "test-serverplugin-entitlement.xml";
-        ServerPluginDescriptorType data = parseTestXml(testXml);
-        assert data instanceof EntitlementPluginDescriptorType;
-        EntitlementPluginDescriptorType descriptor = (EntitlementPluginDescriptorType) data;
-
-        // check the validity of the root element
-        assert descriptor.getApiVersion().equals("1.2");
-        assert descriptor.getVersion().equals("2.3");
-        assert descriptor.getName().equals("entitlement name");
-        assert descriptor.getDisplayName().equals("entitlement display");
-        assert descriptor.getDescription().equals("entitlement description");
-        assert descriptor.getPackage().equals("entitlement.package");
-
-        // check the validity of the plugin config definition
-        ConfigurationDescriptor pluginConfigXml = descriptor.getPluginConfiguration();
-        assert pluginConfigXml != null : "should have parsed the plugin config";
-        ConfigurationDefinition configDef = ConfigurationMetadataParser.parse("test", pluginConfigXml);
-        assert configDef != null : "should have parsed the plugin config properties";
-        PropertyDefinitionSimple propDef = configDef.getPropertyDefinitionSimple("entitlementprop1");
-        assert propDef != null : "missing a simple property definition";
     }
 
     public void testBundlePluginDescriptor() throws Exception {

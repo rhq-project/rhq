@@ -55,7 +55,6 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>xml-maven-plugin</artifactId>
-                <version>1.0-beta-3</version>
                 <executions>
                     <execution>
                         <!-- translate the tokens.xml file to confluence markup -->
@@ -94,7 +93,7 @@
             <properties>
                 <rhq.rootDir>../../../../..</rhq.rootDir>
                 <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-                <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-serverplugins</rhq.deploymentDir>
+                <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.earName}/rhq-serverplugins</rhq.deploymentDir>
             </properties>
 
             <build>

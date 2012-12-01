@@ -84,7 +84,7 @@ import org.rhq.core.domain.util.StringUtils;
         + "SELECT gd " //
         + "  FROM GroupDefinition AS gd " //
         + " WHERE gd.recalculationInterval != 0 ") })
-@SequenceGenerator(name = "id", sequenceName = "RHQ_GROUP_DEF_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "id", sequenceName = "RHQ_GROUP_DEF_ID_SEQ")
 @Table(name = "RHQ_GROUP_DEF")
 public class GroupDefinition implements Serializable {
     private static final long serialVersionUID = 1L;

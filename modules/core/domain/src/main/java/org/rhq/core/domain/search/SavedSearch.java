@@ -58,7 +58,7 @@ import org.rhq.core.domain.auth.Subject;
  * @author Joseph Marques
  */
 @Entity
-@SequenceGenerator(name = "id", sequenceName = "RHQ_SAVED_SEARCH_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "id", sequenceName = "RHQ_SAVED_SEARCH_ID_SEQ")
 @Table(name = "RHQ_SAVED_SEARCH")
 public class SavedSearch implements Serializable {
 

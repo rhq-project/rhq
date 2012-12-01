@@ -30,7 +30,10 @@
   </build>
 
   <modules>
+    <!--
     <module>agent-sar</module>
+    -->
+    <module>services-sar</module>
   </modules>
 
   <pluginRepositories>

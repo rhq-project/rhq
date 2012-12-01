@@ -1,119 +1,73 @@
-<!DOCTYPE web-app PUBLIC
- "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
- "http://java.sun.com/dtd/web-app_2_3.dtd" >
+<web-app version="3.0" xmlns="http://java.sun.com/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd">
 
-<web-app>
-    <display-name>RHQ Rest interface</display-name>
+  <display-name>RHQ Rest interface</display-name>
 
-    <context-param>
-        <param-name>resteasy.jndi.resources</param-name>
-        <param-value>rhq/StatusHandlerBean/local,rhq/ResourceHandlerBean/local,rhq/MetricHandlerBean/local,rhq/UserHandlerBean/local,rhq/AlertHandlerBean/local,rhq/OperationsHandlerBean/local,rhq/GroupHandlerBean/local,rhq/EventHandlerBean/local</param-value>
-        <description>List of jndi names of EJBs local interfaces that define REST stuff</description>
-    </context-param>
-    <context-param>
-        <param-name>resteasy.providers</param-name>
-        <param-value>org.rhq.enterprise.server.rest.CustomExceptionMapper</param-value>
-        <description>Maps Exceptions to HTTP response codes</description>
-    </context-param>
-    <context-param>
-        <param-name>resteasy.servlet.mapping.prefix</param-name>
-        <param-value>/1</param-value>
-        <description>Prefix of the REST api</description>
-    </context-param>
-    <context-param>
-        <param-name>resteasy.media.type.mappings</param-name>
-        <param-value>html : text/html, json : application/json, xml : application/xml, csv : text/csv, txt: text/plain, yaml: application/yaml</param-value>
-    </context-param>
-    <filter>
-      <filter-name>JsonPFilter</filter-name>
-      <filter-class>org.rhq.enterprise.rest.JsonPFilter</filter-class>
-      <init-param>
-        <param-name>filter.jsonp.callback</param-name>
-        <param-value>jsonp</param-value>
-        <description>Name of the callback to use for JsonP (?jsonp=...)</description>
-      </init-param>
-    </filter>
-
-<!-- Simple request header dumper for debugging purposes
+  <context-param>
+    <param-name>resteasy.media.type.mappings</param-name>
+    <param-value>html : text/html, json : application/json, xml : application/xml, csv : text/csv, txt: text/plain,
+      yaml: application/yaml
+    </param-value>
+  </context-param>
   <filter>
-    <filter-name>DumperFilter</filter-name>
-    <filter-class>org.rhq.enterprise.rest.HeaderDumperFilter</filter-class>
+    <filter-name>JsonPFilter</filter-name>
+    <filter-class>org.rhq.enterprise.rest.JsonPFilter</filter-class>
+    <init-param>
+      <description>Name of the callback to use for JsonP (?jsonp=...)</description>
+      <param-name>filter.jsonp.callback</param-name>
+      <param-value>jsonp</param-value>
+    </init-param>
   </filter>
--->
 
-  <!--
-      <filter>
+  <filter>
+    <filter-name>RhqRtFilter</filter-name>
+    <filter-class>org.rhq.helpers.rtfilter.filter.RtFilter</filter-class>
+  </filter>
 
-          <filter-name>AuthFilter</filter-name>
-          <filter-class>org.rhq.enterprise.rest.AuthFilter</filter-class>
-      </filter>
-      <filter-mapping>
-          <filter-name>AuthFilter</filter-name>
-          <servlet-name>Resteasy</servlet-name>
-      </filter-mapping>
+  <!-- Simple request header dumper for debugging purposes
+    <filter>
+      <filter-name>DumperFilter</filter-name>
+      <filter-class>org.rhq.enterprise.rest.HeaderDumperFilter</filter-class>
+    </filter>
   -->
 
 
-    <filter-mapping>
-      <filter-name>JsonPFilter</filter-name>
-      <url-pattern>/1/*</url-pattern>
-    </filter-mapping>
-<!--
   <filter-mapping>
-    <filter-name>DumperFilter</filter-name>
+    <filter-name>JsonPFilter</filter-name>
     <url-pattern>/1/*</url-pattern>
   </filter-mapping>
--->
+  <!--
+    <filter-mapping>
+      <filter-name>DumperFilter</filter-name>
+      <url-pattern>/1/*</url-pattern>
+    </filter-mapping>
+  -->
 
-    <servlet>
-        <servlet-name>Resteasy</servlet-name>
-        <servlet-class>
-            org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher
-        </servlet-class>
+  <filter-mapping>
+    <filter-name>RhqRtFilter</filter-name>
+    <url-pattern>/1/*</url-pattern>
+  </filter-mapping>
 
-        <init-param>
-            <param-name>resteasy.scan</param-name>
-            <param-value>false</param-value>
-        </init-param>
 
-        <init-param>
-            <param-name>javax.ws.rs.Application</param-name>
-            <param-value>org.rhq.enterprise.server.rest.RHQApplication</param-value>
-        </init-param>
-    </servlet>
+  <security-constraint>
+    <web-resource-collection>
+      <web-resource-name>REST</web-resource-name>
+      <url-pattern>/*</url-pattern>
+    </web-resource-collection>
+    <auth-constraint>
+      <role-name>all</role-name>
+    </auth-constraint>
+  </security-constraint>
 
-    <servlet-mapping>
-        <servlet-name>Resteasy</servlet-name>
-        <url-pattern>/1/*</url-pattern>
-    </servlet-mapping>
+  <login-config>
+    <auth-method>BASIC</auth-method>
+    <realm-name>RHQ REST</realm-name>
+  </login-config>
 
-    <security-constraint>
-        <web-resource-collection>
-            <web-resource-name>REST</web-resource-name>
-            <url-pattern>/*</url-pattern>
-<!--
-            <http-method>DELETE</http-method>
-            <http-method>PUT</http-method>
-            <http-method>HEAD</http-method>
-            <http-method>OPTIONS</http-method>
-            <http-method>TRACE</http-method>
-            <http-method>GET</http-method>
-            <http-method>POST</http-method>
--->
-        </web-resource-collection>
-        <auth-constraint>
-            <role-name>all</role-name>
-        </auth-constraint>
-    </security-constraint>
-
-    <login-config>
-        <auth-method>BASIC</auth-method>
-        <realm-name>RHQ REST</realm-name>
-    </login-config>
-
-    <security-role>
-        <description>This is valid for all principals, as we do internal checks</description>
-        <role-name>all</role-name>
-    </security-role>
+  <security-role>
+    <description>This is valid for all principals, as we do internal checks</description>
+    <role-name>all</role-name>
+  </security-role>
 
 </web-app>

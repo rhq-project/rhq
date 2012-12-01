@@ -28,9 +28,7 @@
       </activation>
       <modules>
         <module>portal-war</module>
-        <module>installer-war</module>
-        <module>base-perspective-jar</module>
-        <module>base-perspective-war</module>
+        <module>installer</module>
         <module>content_http-war</module>
         <module>coregui</module>
         <module>rest-war</module>

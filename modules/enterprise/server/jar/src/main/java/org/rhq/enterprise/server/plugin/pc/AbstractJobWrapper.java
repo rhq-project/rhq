@@ -170,7 +170,7 @@ abstract class AbstractJobWrapper implements Job {
         }
 
         // do not execute the job if the master plugin container has been stopped
-        ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
+        ServerPluginServiceMBean serverPluginService = LookupUtil.getServerPluginService();
         if (!serverPluginService.isMasterPluginContainerStarted()) {
             String msg = "The master plugin container is shutdown, will not execute job here, will resubmit";
             log.error(logMsg(pluginName, pluginType, jobId, msg, null));

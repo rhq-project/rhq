@@ -35,8 +35,6 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.IgnoreDependency;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
@@ -79,11 +77,11 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     private AuthorizationManagerLocal authorizationManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private AlertNotificationManagerLocal alertNotificationManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private LdapGroupManagerLocal ldapGroupManager;
 
     /**

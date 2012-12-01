@@ -10,6 +10,10 @@
     <name>RHQ Python support</name>
     <description>Provides RHQ scripting in Python using Jython</description>
 
+    <properties>
+        <failIfNoTests>true</failIfNoTests>
+    </properties>
+    
     <dependencies>
        <dependency>
           <groupId>${project.groupId}</groupId>
@@ -60,7 +64,7 @@
                      -Djava.security.policy==${project.build.testOutputDirectory}/allow-all.policy</argLine>
                   <!-- This is important, because some of the tests try to exit 
                      the JVM. -->
-                  <failIfNoTests>true</failIfNoTests>
+                  <failIfNoTests>${failIfNoTests}</failIfNoTests>
                </configuration>
             </plugin>
         </plugins>
@@ -74,7 +78,7 @@
             <properties>
                 <rhq.rootDir>../../..</rhq.rootDir>
                 <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-                <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/lib</rhq.deploymentDir>
+                <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.earName}/lib</rhq.deploymentDir>
             </properties>
 
             <build>

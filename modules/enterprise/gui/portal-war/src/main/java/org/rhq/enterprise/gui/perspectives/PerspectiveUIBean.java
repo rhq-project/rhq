@@ -43,9 +43,9 @@ public class PerspectiveUIBean {
 
     //PerspectiveManagerLocal perspectiveManager = LookupUtil.getPerspectiveManager();
 
-    public List<org.rhq.enterprise.server.perspective.MenuItem> getCoreMenu() {
+    public List<?> getCoreMenu() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
-        List<org.rhq.enterprise.server.perspective.MenuItem> result = null;
+        List<?> result = null;
 
         try {
             //result = perspectiveManager.getMenu(subject);

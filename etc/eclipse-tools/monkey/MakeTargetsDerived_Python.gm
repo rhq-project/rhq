@@ -1,0 +1,20 @@
+/*
+ * Menu: Make Targets Derived > Python
+ * Script-Path: /rhq/etc/eclipse-tools/monkey/MakeTargetsDerived_Python.gm
+ * Kudos: jshaughn
+ * License: EPL 1.0
+ * LANG: Python
+ * Job: UIJob
+ */
+
+files = resources.filesMatching(".*/pom\\.xml")
+for file in files: 
+  targetFolder = file.eclipseObject.parent.findMember("target")
+  if targetFolder != None: 
+    targetFolder.setDerived(True)
+
+files = resources.filesMatching(".*/dev-container/jbossas/bin/run\\.sh")
+for file in files:
+  files.eclipseObject.parent.parent.parent.setDerived(True)
+
+window.getActivePage().showView( 'org.eclipse.ui.views.TaskList' )

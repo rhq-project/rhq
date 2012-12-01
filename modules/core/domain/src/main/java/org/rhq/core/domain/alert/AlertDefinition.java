@@ -24,7 +24,6 @@ package org.rhq.core.domain.alert;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -233,7 +232,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "                       AND ad.resource.id = res.id " // correlated to the resource
         + "                       AND ad.deleted = false ) ") // and not deleted
 })
-@SequenceGenerator(name = "RHQ_ALERT_DEFINITION_ID_SEQ", sequenceName = "RHQ_ALERT_DEFINITION_ID_SEQ", allocationSize = 10)
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_ALERT_DEFINITION_ID_SEQ", sequenceName = "RHQ_ALERT_DEFINITION_ID_SEQ")
 @Table(name = "RHQ_ALERT_DEFINITION")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class AlertDefinition implements Serializable {
@@ -294,6 +293,7 @@ public class AlertDefinition implements Serializable {
 
     // do not cascade remove - group removal will be detaching children alert defs from the group def,
     // and then letting the children be deleted slowly by existing alert def removal mechanisms
+    @SuppressWarnings("unused")
     @OneToMany(mappedBy = "groupAlertDefinition", fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST })
     @OrderBy
     private Set<AlertDefinition> groupAlertDefinitionChildren = new LinkedHashSet<AlertDefinition>();
@@ -367,15 +367,6 @@ public class AlertDefinition implements Serializable {
     // by the loss of the AlertNotification that spawned the notification.
     @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
     private List<AlertNotification> alertNotifications = new ArrayList<AlertNotification>();
-
-    /*
-     * As of Sept 29, 2007 there is no reason to expose this at the java layer.  However, this is required if we want to
-     * be able to cascade delete the AlertDampeningEvents when an AlertDefinition is removed from the db, due to
-     * deleting a Resource from inventory.
-     */
-    @OneToMany(mappedBy = "alertDefinition", cascade = { CascadeType.REFRESH, CascadeType.REMOVE })
-    @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
-    private Set<AlertDampeningEvent> alertDampeningEvents = new HashSet<AlertDampeningEvent>();
 
     /**
      * NOTE: This field is currently not accessed, so we don't need cascading for PERSIST/MERGE/REFRESH. However, we
@@ -725,11 +716,11 @@ public class AlertDefinition implements Serializable {
     }
 
     public Set<AlertDampeningEvent> getAlertDampeningEvents() {
-        return alertDampeningEvents;
+        return alertDampening.getAlertDampeningEvents();
     }
 
     public boolean removeAlertDampeningEvent(AlertDampeningEvent event) {
-        return alertDampeningEvents.remove(event);
+        return alertDampening.getAlertDampeningEvents().remove(event);
     }
 
     public void calculateContext() {

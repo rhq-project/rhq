@@ -41,9 +41,6 @@ import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.util.MessageDigestGenerator;
-import org.rhq.enterprise.server.core.concurrency.LatchedServiceCircularityException;
-import org.rhq.enterprise.server.core.concurrency.LatchedServiceController;
-import org.rhq.enterprise.server.core.concurrency.LatchedServiceException;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
@@ -313,10 +310,8 @@ public class ProductPluginDeployer {
         }
 
         PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
-        Plugin plugin;
-        try {
-            plugin = pluginMgr.getPlugin(pluginName);
-        } catch (RuntimeException e) {
+        Plugin plugin = pluginMgr.getPlugin(pluginName);
+        if (null == plugin) {
             log.debug("New plugin [" + pluginName + "] detected.");
             return true;
         }
@@ -346,19 +341,20 @@ public class ProductPluginDeployer {
 
     private void registerPlugins(PluginDependencyGraph dependencyGraph, Set<String> pluginsToBeRegistered) {
         log.debug("Dependency graph deployment order: " + dependencyGraph.getDeploymentOrder());
-        Map<String, LatchedPluginDeploymentService> latchedDependencyMap = new HashMap<String, LatchedPluginDeploymentService>();
+        Map<String, DeploymentRunnable> dependencyRunnableMap = new HashMap<String, DeploymentRunnable>();
         for (String pluginName : pluginsToBeRegistered) {
-            LatchedPluginDeploymentService service = getServiceIfExists(pluginName, latchedDependencyMap);
+            DeploymentRunnable service = getServiceIfExists(pluginName, dependencyRunnableMap);
+            if (service == null) {
+                log.warn("Cannot create the initial deployment runnable for plugin [" + pluginName + "]");
+            }
+
             // We need to register dependencies also even if they aren't new or updated. This is because
             // PluginMetadataManager requires dependency plugins to be loaded in its pluginsByParser map.
             // ResourceMetadataManagerBean.register() will be smart enough to pass these plugins to
             // PluginMetadataManager to be parsed, but not to unnecessarily merge their types into the DB.
             for (String dependencyPluginName : dependencyGraph.getPluginDependencies(pluginName)) {
-                LatchedPluginDeploymentService dependencyService = getServiceIfExists(dependencyPluginName,
-                    latchedDependencyMap);
-                if (null != dependencyService) {
-                    service.addDependency(dependencyService);
-                } else {
+                DeploymentRunnable dependencyService = getServiceIfExists(dependencyPluginName, dependencyRunnableMap);
+                if (null == dependencyService) {
                     log.warn("Ignoring [" + pluginName + "] dependency on missing dependency plugin: "
                         + dependencyPluginName);
                 }
@@ -368,11 +364,9 @@ public class ProductPluginDeployer {
             // in order to allow the dependents to refresh themselves and add any new child types that need to be registered.
             List<String> optionalDependents = dependencyGraph.getOptionalDependents(pluginName);
             for (String dependentPluginName : optionalDependents) {
-                LatchedPluginDeploymentService dependentService = getServiceIfExists(dependentPluginName,
-                    latchedDependencyMap);
+                DeploymentRunnable dependentService = getServiceIfExists(dependentPluginName, dependencyRunnableMap);
                 if (null != dependentService) {
                     dependentService.setForceUpdate(true); // make sure it updates its types, even if plugin hasn't changed
-                    dependentService.addDependency(service);
                 } else {
                     log.warn("Ignoring [" + pluginName + "] dependent on missing dependent plugin: "
                         + dependentPluginName);
@@ -380,22 +374,20 @@ public class ProductPluginDeployer {
             }
         }
 
-        // submit them to the controller in the order they should be deployed
-        ArrayList<LatchedPluginDeploymentService> orderedLatchedServices = new ArrayList<LatchedPluginDeploymentService>();
+        // get the order in which they should be deployed
+        ArrayList<DeploymentRunnable> orderedDeploymentRunnables = new ArrayList<DeploymentRunnable>();
         List<String> pluginOrder = dependencyGraph.getDeploymentOrder();
         for (String nextPlugin : pluginOrder) {
-            LatchedPluginDeploymentService nextService = latchedDependencyMap.get(nextPlugin);
-            if (nextService != null) {
-                orderedLatchedServices.add(nextService);
+            DeploymentRunnable nextRunnable = dependencyRunnableMap.get(nextPlugin);
+            if (nextRunnable != null) {
+                orderedDeploymentRunnables.add(nextRunnable);
             }
         }
 
+        // now do the actual deployments in the correct order
         long startDeployTime = System.currentTimeMillis();
-        LatchedServiceController controller = new LatchedServiceController(orderedLatchedServices);
-        try {
-            controller.executeServices();
-        } catch (LatchedServiceCircularityException lsce) {
-            log.error(lsce.getMessage());
+        for (DeploymentRunnable currentRunnable : orderedDeploymentRunnables) {
+            currentRunnable.run();
         }
         long endDeployTime = System.currentTimeMillis();
 
@@ -418,16 +410,24 @@ public class ProductPluginDeployer {
     }
     */
 
-    private LatchedPluginDeploymentService getServiceIfExists(String pluginName,
-        Map<String, LatchedPluginDeploymentService> latchedServiceMap) {
+    /**
+     * This will return the deployment runnable for the associated plugin.
+     * This will create a DeploymentRunnable if one doesn't yet exist.
+     * If it can't create one, null is returned.
+     * 
+     * @param pluginName
+     * @param runnableMap
+     * @return the deployment runnable that can be used to deploy the plugin; null if not able to create one
+     */
+    private DeploymentRunnable getServiceIfExists(String pluginName, Map<String, DeploymentRunnable> runnableMap) {
 
-        LatchedPluginDeploymentService result = latchedServiceMap.get(pluginName);
+        DeploymentRunnable result = runnableMap.get(pluginName);
         if (result == null) {
             DeploymentInfo deploymentInfo = this.deploymentInfos.get(pluginName);
             PluginDescriptor descriptor = this.metadataManager.getPluginDescriptor(pluginName);
             if ((null != deploymentInfo) && (null != descriptor)) {
-                result = new LatchedPluginDeploymentService(pluginName, deploymentInfo, descriptor);
-                latchedServiceMap.put(pluginName, result);
+                result = new DeploymentRunnable(pluginName, deploymentInfo, descriptor);
+                runnableMap.put(pluginName, result);
             }
         }
         return result;
@@ -565,14 +565,14 @@ public class ProductPluginDeployer {
         return new File(di.url.getPath()).getName();
     }
 
-    class LatchedPluginDeploymentService extends LatchedServiceController.LatchedService {
+    class DeploymentRunnable implements Runnable {
         private final DeploymentInfo pluginDeploymentInfo;
         private final PluginDescriptor pluginDescriptor;
+        private final String pluginName;
         private boolean forceUpdate;
 
-        public LatchedPluginDeploymentService(String pluginName, DeploymentInfo di, PluginDescriptor descriptor) {
-
-            super(pluginName);
+        public DeploymentRunnable(String pluginName, DeploymentInfo di, PluginDescriptor descriptor) {
+            this.pluginName = pluginName;
             this.pluginDeploymentInfo = di;
             this.pluginDescriptor = descriptor;
             this.forceUpdate = false;
@@ -583,12 +583,9 @@ public class ProductPluginDeployer {
         }
 
         @Override
-        public void executeService() throws LatchedServiceException {
-            try {
-                registerPluginJar(this.pluginDescriptor, this.pluginDeploymentInfo, this.forceUpdate);
-            } catch (Throwable t) {
-                throw new LatchedServiceException(t);
-            }
+        public void run() {
+            log.debug("Being asked to deploy plugin [" + this.pluginName + "]...");
+            registerPluginJar(this.pluginDescriptor, this.pluginDeploymentInfo, this.forceUpdate);
         }
     }
 

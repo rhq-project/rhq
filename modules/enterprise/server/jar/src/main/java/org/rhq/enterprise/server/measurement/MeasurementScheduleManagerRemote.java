@@ -19,23 +19,16 @@
 package org.rhq.enterprise.server.measurement;
 
 import javax.ejb.Remote;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
-import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.system.ServerVersion;
 
 /**
  * @author Jay Shaughnessy
  *
  */
-@SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface MeasurementScheduleManagerRemote {
 
@@ -47,20 +40,12 @@ public interface MeasurementScheduleManagerRemote {
      * @param measurementDefinitionIds
      * @param resourceId
      */
-    @WebMethod
-    void disableSchedulesForResource(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds);
+    void disableSchedulesForResource(Subject subject, int resourceId, int[] measurementDefinitionIds);
 
     /**
      * Disable the measurement schedules for the passed definitions for the resources of the passed compatible group.
      */
-    @WebMethod
-    void disableSchedulesForCompatibleGroup(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "groupId") int groupId, //
-        @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds);
+    void disableSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds);
 
     /**
      * Requires MANAGE_SETTINGS global permission.
@@ -69,18 +54,13 @@ public interface MeasurementScheduleManagerRemote {
      * @param measurementDefinitionIds
      * @param updateExistingSchedules
      */
-    void disableSchedulesForResourceType(//
-        Subject subject, //
-        int[] measurementDefinitionIds, //
+    void disableSchedulesForResourceType(Subject subject, int[] measurementDefinitionIds,
         boolean updateExistingSchedules);
 
     /**
      * @deprecated use {@link #disableSchedulesForResourceType(Subject, int[], boolean)  
      */
-    @WebMethod
-    void disableMeasurementTemplates(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds);
+    void disableMeasurementTemplates(Subject subject, int[] measurementDefinitionIds);
 
     /**
      * Enable the schedules for the provided definitions and resource
@@ -88,20 +68,12 @@ public interface MeasurementScheduleManagerRemote {
      * @param measurementDefinitionIds
      * @param resourceId
      */
-    @WebMethod
-    void enableSchedulesForResource(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds);
+    void enableSchedulesForResource(Subject subject, int resourceId, int[] measurementDefinitionIds);
 
     /**
      * Enable the measurement schedules for the passed definitions for the resources of the passed compatible group.
      */
-    @WebMethod
-    void enableSchedulesForCompatibleGroup(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "groupId") int groupId, //
-        @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds);
+    void enableSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds);
 
     /**
      * Requires MANAGE_SETTINGS global permission.
@@ -110,37 +82,20 @@ public interface MeasurementScheduleManagerRemote {
      * @param measurementDefinitionIds
      * @param updateExistingSchedules
      */
-    void enableSchedulesForResourceType(//
-        Subject subject, //
-        int[] measurementDefinitionIds, //
-        boolean updateExistingSchedules);
+    void enableSchedulesForResourceType(Subject subject, int[] measurementDefinitionIds, boolean updateExistingSchedules);
 
     /**
      * @deprecated use {@link #enableSchedulesForResourceType(Subject, int[], boolean)  
      */
-    @WebMethod
-    void enableMeasurementTemplates(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds);
+    void enableMeasurementTemplates(Subject subject, int[] measurementDefinitionIds);
 
-    @WebMethod
-    void updateSchedule( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "measurementSchedule") MeasurementSchedule measurementSchedule);
+    void updateSchedule(Subject subject, MeasurementSchedule measurementSchedule);
 
-    @WebMethod
-    void updateSchedulesForResource(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds, //
-        @WebParam(name = "collectionInterval") long collectionInterval);
+    void updateSchedulesForResource(Subject subject, int resourceId, int[] measurementDefinitionIds,
+        long collectionInterval);
 
-    @WebMethod
-    void updateSchedulesForCompatibleGroup(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int groupId, //
-        @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds, //
-        @WebParam(name = "collectionInterval") long collectionInterval);
+    void updateSchedulesForCompatibleGroup(Subject subject, int groupId, int[] measurementDefinitionIds,
+        long collectionInterval);
 
     /**
      * Requires MANAGE_SETTINGS global permission.
@@ -150,24 +105,13 @@ public interface MeasurementScheduleManagerRemote {
      * @param collectionInterval
      * @param updateExistingSchedules
      */
-    void updateSchedulesForResourceType(//
-        Subject subject, //
-        int[] measurementDefinitionIds, //
-        long collectionInterval, //
+    void updateSchedulesForResourceType(Subject subject, int[] measurementDefinitionIds, long collectionInterval,
         boolean updateExistingSchedules);
 
     /**
      * @deprecated use {@link #updateSchedulesForResourceType(Subject, int[], boolean)  
      */
-    @WebMethod
-    void updateMeasurementTemplates(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "measurementDefinitionIds") int[] measurementDefinitionIds, //
-        @WebParam(name = "collectionInterval") long collectionInterval);
+    void updateMeasurementTemplates(Subject subject, int[] measurementDefinitionIds, long collectionInterval);
 
-    @WebMethod
-    PageList<MeasurementSchedule> findSchedulesByCriteria(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "criteria") MeasurementScheduleCriteria criteria);
-
+    PageList<MeasurementSchedule> findSchedulesByCriteria(Subject subject, MeasurementScheduleCriteria criteria);
 }

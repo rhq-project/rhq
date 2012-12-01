@@ -32,14 +32,11 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
-import javax.jws.WebParam;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.xml.bind.annotation.XmlType;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -118,15 +115,12 @@ import org.rhq.enterprise.server.configuration.job.GroupPluginConfigurationUpdat
 import org.rhq.enterprise.server.configuration.job.GroupResourceConfigurationUpdateJob;
 import org.rhq.enterprise.server.configuration.util.ConfigurationMaskingUtility;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
-import org.rhq.enterprise.server.jaxb.WebServiceTypeAdapter;
-import org.rhq.enterprise.server.jaxb.adapter.ConfigurationAdapter;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
-import org.rhq.enterprise.server.system.ServerVersion;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.QuartzUtil;
@@ -138,7 +132,6 @@ import org.rhq.enterprise.server.util.QuartzUtil;
  * @author Ian Springer
  */
 @Stateless
-@XmlType(namespace = ServerVersion.namespace)
 public class ConfigurationManagerBean implements ConfigurationManagerLocal, ConfigurationManagerRemote {
     private final Log log = LogFactory.getLog(ConfigurationManagerBean.class);
 
@@ -162,9 +155,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     @EJB
     private SubjectManagerLocal subjectManager;
 
+    @Override
     @Nullable
-    public @XmlJavaTypeAdapter(ConfigurationAdapter.class)
-    Configuration getPluginConfiguration(Subject subject, int resourceId) {
+    public Configuration getPluginConfiguration(Subject subject, int resourceId) {
         log.debug("Getting current plugin configuration for resource [" + resourceId + "]");
 
         Resource resource = entityManager.find(Resource.class, resourceId);
@@ -185,6 +178,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     // Use new transaction because this only works if the resource in question has not
     // yet been loaded by Hibernate.  We want the query to return a non-proxied configuration,
     // this is critical for remote API use.
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public Configuration getPluginConfiguration(int resourceId) {
         // Ensure that we return a non-proxied Configuration object that can survive after the
@@ -205,6 +199,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return pluginConfiguration;
     }
 
+    @Override
     public void completePluginConfigurationUpdate(Integer updateId) {
         PluginConfigurationUpdate update = entityManager.find(PluginConfigurationUpdate.class, updateId);
         configurationManager.completePluginConfigurationUpdate(update);
@@ -214,6 +209,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
      * this method will not fire off the update asynchronously (like the completeResourceConfigurationUpdate method
      * does); instead, it will block until an update response is retrieved from the agent-side resource
      */
+    @Override
     public void completePluginConfigurationUpdate(PluginConfigurationUpdate update) {
         // use EJB3 reference to ourself so that transaction semantics are correct
         ConfigurationUpdateResponse response = configurationManager.executePluginConfigurationUpdate(update);
@@ -243,6 +239,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     // use requires new so that exceptions bubbling up from the agent.updatePluginConfiguration don't force callers to rollback as well
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public ConfigurationUpdateResponse executePluginConfigurationUpdate(PluginConfigurationUpdate update) {
         Resource resource = update.getResource();
@@ -271,9 +268,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return response;
     }
 
+    @Override
     public PluginConfigurationUpdate updatePluginConfiguration(Subject subject, int resourceId,
-        @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration newPluginConfiguration)
-        throws ResourceNotFoundException {
+        Configuration newPluginConfiguration) throws ResourceNotFoundException {
+
         Subject overlord = subjectManager.getOverlord();
         Resource resource = resourceManager.getResourceById(overlord, resourceId);
 
@@ -304,8 +302,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return update;
     }
 
-    public @XmlJavaTypeAdapter(ConfigurationAdapter.class)
-    Configuration getResourceConfiguration(Subject subject, int resourceId) {
+    @Override
+    public Configuration getResourceConfiguration(Subject subject, int resourceId) {
         Resource resource = entityManager.find(Resource.class, resourceId);
 
         if (resource == null) {
@@ -323,6 +321,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     // local only
+    @Override
     public void setResourceConfiguration(int resourceId, Configuration configuration) {
         Resource resource = entityManager.find(Resource.class, resourceId);
         if (resource == null) {
@@ -335,6 +334,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     // Use new transaction because this only works if the resource in question has not
     // yet been loaded by Hibernate.  We want the query to return a non-proxied configuration,
     // this is critical for remote API use.
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public Configuration getResourceConfiguration(int resourceId) {
         // Ensure that we return a non-proxied Configuration object that can survive after the
@@ -356,6 +356,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return resourceConfiguration;
     }
 
+    @Override
     public ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId,
         boolean fromStructured) {
         log.debug("Getting current Resource configuration for Resource [" + resourceId + "]...");
@@ -458,6 +459,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return current;
     }
 
+    @Override
     @Nullable
     public ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId) {
         return getLatestResourceConfigurationUpdate(subject, resourceId, true);
@@ -494,6 +496,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return update;
     }
 
+    @Override
     public PluginConfigurationUpdate getLatestPluginConfigurationUpdate(Subject subject, int resourceId) {
         log.debug("Getting current plugin configuration for resource [" + resourceId + "]...");
 
@@ -533,6 +536,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return current;
     }
 
+    @Override
     public boolean isResourceConfigurationUpdateInProgress(Subject subject, int resourceId) {
         boolean updateInProgress;
         try {
@@ -553,6 +557,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updateInProgress;
     }
 
+    @Override
     public boolean isPluginConfigurationUpdateInProgress(Subject subject, int resourceId) {
         boolean updateInProgress;
         try {
@@ -572,6 +577,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updateInProgress;
     }
 
+    @Override
     public boolean isGroupResourceConfigurationUpdateInProgress(Subject subject, int groupId) {
         boolean updateInProgress;
         try {
@@ -595,6 +601,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updateInProgress;
     }
 
+    @Override
     public boolean isGroupPluginConfigurationUpdateInProgress(Subject subject, int groupId) {
         boolean updateInProgress;
         try {
@@ -617,6 +624,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updateInProgress;
     }
 
+    @Override
     public Map<Integer, Configuration> getResourceConfigurationsForCompatibleGroup(Subject subject, int groupId)
         throws ConfigurationUpdateStillInProgressException, Exception {
 
@@ -688,6 +696,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return currentPersistedConfigs;
     }
 
+    @Override
     public Map<Integer, Configuration> getPluginConfigurationsForCompatibleGroup(Subject subject, int groupId)
         throws ConfigurationUpdateStillInProgressException, Exception {
         // The below call will also handle the check to see if the subject has perms to view the group.
@@ -766,7 +775,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             query.setParameter("status", ConfigurationUpdateStatus.INPROGRESS);
             List<PluginConfigurationUpdate> pluginConfigUpdates = query.getResultList();
             if (!pluginConfigUpdates.isEmpty()) {
-                List<Integer> resourceIds = new ArrayList(pluginConfigUpdates.size());
+                List<Integer> resourceIds = new ArrayList<Integer>(pluginConfigUpdates.size());
                 for (PluginConfigurationUpdate pluginConfigUpdate : pluginConfigUpdates) {
                     resourceIds.add(pluginConfigUpdate.getResource().getId());
                 }
@@ -863,11 +872,13 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return results;
     }
 
+    @Override
     public Configuration getLiveResourceConfiguration(Subject subject, int resourceId, boolean pingAgentFirst)
         throws Exception {
         return getLiveResourceConfiguration(subject, resourceId, pingAgentFirst, true);
     }
 
+    @Override
     public Configuration getLiveResourceConfiguration(Subject subject, int resourceId, boolean pingAgentFirst,
         boolean fromStructured) throws Exception {
         Resource resource = entityManager.find(Resource.class, resourceId);
@@ -887,6 +898,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return liveConfig;
     }
 
+    @Override
     public void checkForTimedOutConfigurationUpdateRequests() {
         log.debug("Begin scanning for timed out configuration update requests");
         checkForTimedOutResourceConfigurationUpdateRequests();
@@ -955,6 +967,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     /**
      * @deprecated use {@link #findPluginConfigurationUpdatesByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria)}
      */
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<PluginConfigurationUpdate> findPluginConfigurationUpdates(Subject subject, int resourceId,
         Long beginDate, Long endDate, PageControl pc) {
@@ -1014,6 +1027,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     /**
      * @deprecated use {@link #findResourceConfigurationUpdatesByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria)}
      */
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdates(Subject subject, Integer resourceId,
         Long beginDate, Long endDate, boolean suppressOldest, PageControl pc) {
@@ -1076,6 +1090,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     /**
      * @deprecated use criteria-based API
      */
+    @Override
     public PluginConfigurationUpdate getPluginConfigurationUpdate(Subject subject, int configurationUpdateId) {
         PluginConfigurationUpdate update = entityManager.find(PluginConfigurationUpdate.class, configurationUpdateId);
 
@@ -1092,6 +1107,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     /**
      * @deprecated use criteria-based API
      */
+    @Override
     public ResourceConfigurationUpdate getResourceConfigurationUpdate(Subject subject, int configurationUpdateId) {
         ResourceConfigurationUpdate update = entityManager.find(ResourceConfigurationUpdate.class,
             configurationUpdateId);
@@ -1106,6 +1122,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return update;
     }
 
+    @Override
     public void purgePluginConfigurationUpdate(Subject subject, int configurationUpdateId, boolean purgeInProgress) {
         PluginConfigurationUpdate doomedRequest = entityManager.find(PluginConfigurationUpdate.class,
             configurationUpdateId);
@@ -1136,6 +1153,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return;
     }
 
+    @Override
     public void purgePluginConfigurationUpdates(Subject subject, int[] configurationUpdateIds, boolean purgeInProgress) {
         if ((configurationUpdateIds == null) || (configurationUpdateIds.length == 0)) {
             return;
@@ -1149,6 +1167,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return;
     }
 
+    @Override
     public void purgeResourceConfigurationUpdate(Subject subject, int configurationUpdateId, boolean purgeInProgress) {
         ResourceConfigurationUpdate doomedRequest = entityManager.find(ResourceConfigurationUpdate.class,
             configurationUpdateId);
@@ -1179,6 +1198,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return;
     }
 
+    @Override
     public void purgeResourceConfigurationUpdates(Subject subject, int[] configurationUpdateIds, boolean purgeInProgress) {
         if ((configurationUpdateIds == null) || (configurationUpdateIds.length == 0)) {
             return;
@@ -1192,6 +1212,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return;
     }
 
+    @Override
     public ResourceConfigurationUpdate updateStructuredOrRawConfiguration(Subject subject, int resourceId,
         Configuration newConfiguration, boolean fromStructured) throws ResourceNotFoundException,
         ConfigurationUpdateStillInProgressException {
@@ -1258,10 +1279,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return ConfigurationFormat.STRUCTURED_AND_RAW == configDef.getConfigurationFormat();
     }
 
+    @Override
     @Nullable
     public ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
-        @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration newResourceConfiguration)
-        throws ResourceNotFoundException {
+        Configuration newResourceConfiguration) throws ResourceNotFoundException {
 
         if (isStructuredAndRawSupported(resourceId)) {
             throw new ConfigurationUpdateNotSupportedException("Cannot update a resource configuration that "
@@ -1295,6 +1316,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return newUpdate;
     }
 
+    @Override
     public void executeResourceConfigurationUpdate(int updateId) {
         ResourceConfigurationUpdate update = getResourceConfigurationUpdate(subjectManager.getOverlord(), updateId);
         Configuration originalConfig = update.getConfiguration();
@@ -1326,6 +1348,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
     }
 
+    @Override
     public void rollbackResourceConfiguration(Subject subject, int resourceId, int configHistoryId)
         throws ConfigurationUpdateException {
         ResourceConfigurationUpdate configurationUpdateHistory = entityManager.find(ResourceConfigurationUpdate.class,
@@ -1343,6 +1366,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
     }
 
+    @Override
     public void rollbackPluginConfiguration(Subject subject, int resourceId, int configHistoryId)
         throws ConfigurationUpdateException {
         PluginConfigurationUpdate configurationUpdateHistory = entityManager.find(PluginConfigurationUpdate.class,
@@ -1356,6 +1380,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         updatePluginConfiguration(subject, resourceId, configuration);
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public ResourceConfigurationUpdate persistNewResourceConfigurationUpdateHistory(Subject subject, int resourceId,
         Configuration newConfiguration, ConfigurationUpdateStatus newStatus, String newSubject,
@@ -1453,6 +1478,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         log.debug(callingMethod + ": " + stats);
     }
 
+    @Override
     public void completeResourceConfigurationUpdate(ConfigurationUpdateResponse response) {
         log.debug("Received a configuration-update-completed message: " + response);
 
@@ -1489,6 +1515,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public void checkForCompletedGroupResourceConfigurationUpdate(int resourceConfigUpdateId) {
         ResourceConfigurationUpdate resourceConfigUpdate = entityManager.find(ResourceConfigurationUpdate.class,
@@ -1537,6 +1564,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return;
     }
 
+    @Override
     public ConfigurationDefinition getPackageTypeConfigurationDefinition(Subject subject, int packageTypeId) {
         Query query = entityManager.createNamedQuery(ConfigurationDefinition.QUERY_FIND_DEPLOYMENT_BY_PACKAGE_TYPE_ID);
         query.setParameter("packageTypeId", packageTypeId);
@@ -1553,7 +1581,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return configurationDefinition;
     }
 
-    @Nullable
+    @Override
     public ConfigurationDefinition getResourceConfigurationDefinitionForResourceType(Subject subject, int resourceTypeId) {
         Query query = entityManager.createNamedQuery(ConfigurationDefinition.QUERY_FIND_RESOURCE_BY_RESOURCE_TYPE_ID);
         query.setParameter("resourceTypeId", resourceTypeId);
@@ -1570,6 +1598,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return configurationDefinition;
     }
 
+    @Override
     @Nullable
     public ConfigurationDefinition getResourceConfigurationDefinitionWithTemplatesForResourceType(Subject subject,
         int resourceTypeId) {
@@ -1593,17 +1622,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return configurationDefinition;
     }
 
-    public boolean hasPluginConfiguration(int resourceTypeId) {
-        Query countQuery = PersistenceUtility.createCountQuery(entityManager,
-            ConfigurationDefinition.QUERY_FIND_PLUGIN_BY_RESOURCE_TYPE_ID);
-
-        countQuery.setParameter("resourceTypeId", resourceTypeId);
-        long count = (Long) countQuery.getSingleResult();
-
-        return (count != 0L);
-    }
-
-    @Nullable
+    @Override
     public ConfigurationDefinition getPluginConfigurationDefinitionForResourceType(Subject subject, int resourceTypeId) {
         Query query = entityManager.createNamedQuery(ConfigurationDefinition.QUERY_FIND_PLUGIN_BY_RESOURCE_TYPE_ID);
         query.setParameter("resourceTypeId", resourceTypeId);
@@ -1672,21 +1691,25 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return liveConfig;
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public AbstractResourceConfigurationUpdate mergeConfigurationUpdate(
         AbstractResourceConfigurationUpdate configurationUpdate) {
         return this.entityManager.merge(configurationUpdate);
     }
 
+    @Override
     public Configuration getConfigurationById(int id) {
         return entityManager.find(Configuration.class, id);
     }
 
+    @Override
     public Configuration getConfiguration(Subject subject, int configurationId) {
         Configuration configuration = getConfigurationById(configurationId);
         return configuration;
     }
 
+    @Override
     public Configuration getConfigurationFromDefaultTemplate(ConfigurationDefinition definition) {
         ConfigurationDefinition managedDefinition = entityManager.find(ConfigurationDefinition.class,
             definition.getId());
@@ -1706,12 +1729,14 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         this.resourceManager.clearResourceConfigError(resource.getId());
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public int createGroupConfigurationUpdate(AbstractGroupConfigurationUpdate update) throws SchedulerException {
         entityManager.persist(update);
         return update.getId();
     }
 
+    @Override
     public int scheduleGroupPluginConfigurationUpdate(Subject subject, int compatibleGroupId,
         Map<Integer, Configuration> memberPluginConfigurations) throws SchedulerException {
 
@@ -1765,10 +1790,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updateId;
     }
 
-    public int scheduleGroupResourceConfigurationUpdate(Subject subject, int compatibleGroupId,//
-        @WebParam(targetNamespace = ServerVersion.namespace)//
-        @XmlJavaTypeAdapter(WebServiceTypeAdapter.class)//
+    @Override
+    public int scheduleGroupResourceConfigurationUpdate(Subject subject, int compatibleGroupId,
         Map<Integer, Configuration> newResourceConfigurationMap) {
+
         if (newResourceConfigurationMap == null) {
             throw new IllegalArgumentException(
                 "GroupResourceConfigurationUpdate must have non-null member configurations.");
@@ -1868,6 +1893,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     /**
      * @deprecated use {@link #findGroupPluginConfigurationUpdatesByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria)}
      */
+    @Override
     public GroupPluginConfigurationUpdate getGroupPluginConfigurationById(int configurationUpdateId) {
         GroupPluginConfigurationUpdate update = entityManager.find(GroupPluginConfigurationUpdate.class,
             configurationUpdateId);
@@ -1877,12 +1903,14 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     /**
      * @deprecated use {@link #findGroupResourceConfigurationUpdatesByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria)}
      */
+    @Override
     public GroupResourceConfigurationUpdate getGroupResourceConfigurationById(int configurationUpdateId) {
         GroupResourceConfigurationUpdate update = entityManager.find(GroupResourceConfigurationUpdate.class,
             configurationUpdateId);
         return update;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<ConfigurationUpdateComposite> findPluginConfigurationUpdateCompositesByParentId(
         int configurationUpdateId, PageControl pageControl) {
@@ -1899,6 +1927,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return new PageList<ConfigurationUpdateComposite>(results, (int) count, pageControl);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<ConfigurationUpdateComposite> findResourceConfigurationUpdateCompositesByParentId(Subject subject,
         int configurationUpdateId, PageControl pageControl) {
@@ -1923,6 +1952,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     /**
      * @deprecated use {@link #findPluginConfigurationUpdatesByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria)}
      */
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<Integer> findPluginConfigurationUpdatesByParentId(int configurationUpdateId, PageControl pageControl) {
         pageControl.initDefaultOrderingField("cu.modifiedTime");
@@ -1938,6 +1968,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return new PageList<Integer>(results, (int) count, pageControl);
     }
 
+    @Override
     public long getPluginConfigurationUpdateCountByParentId(int configurationUpdateId) {
         Query countQuery = PersistenceUtility.createCountQuery(entityManager,
             PluginConfigurationUpdate.QUERY_FIND_BY_PARENT_UPDATE_ID);
@@ -1948,6 +1979,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     /**
      * @deprecated use {@link #findResourceConfigurationUpdatesByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria)}
      */
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<Integer> findResourceConfigurationUpdatesByParentId(int groupConfigurationUpdateId,
         PageControl pageControl) {
@@ -1964,6 +1996,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return new PageList<Integer>(results, (int) count, pageControl);
     }
 
+    @Override
     public long getResourceConfigurationUpdateCountByParentId(int groupConfigurationUpdateId) {
         Query countQuery = PersistenceUtility.createCountQuery(entityManager,
             ResourceConfigurationUpdate.QUERY_FIND_BY_PARENT_UPDATE_ID);
@@ -1971,6 +2004,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return (Long) countQuery.getSingleResult();
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public Map<Integer, Configuration> getResourceConfigurationMapForGroupUpdate(Subject subject,
         Integer groupResourceConfigurationUpdateId) {
@@ -1998,6 +2032,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return results;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public Map<Integer, Configuration> getPluginConfigurationMapForGroupUpdate(Subject subject,
         Integer groupPluginConfigurationUpdateId) {
@@ -2062,6 +2097,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     /**
      * @deprecated use {@link #findGroupPluginConfigurationUpdatesByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria)}
      */
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdates(int groupId, PageControl pc) {
         pc.initDefaultOrderingField("modifiedTime", PageOrdering.DESC);
@@ -2083,6 +2119,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     /**
      * @deprecated use {@link #findGroupResourceConfigurationUpdatesByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria)}
      */
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<GroupResourceConfigurationUpdate> findGroupResourceConfigurationUpdates(Subject subject,
         int groupId, PageControl pc) {
@@ -2107,6 +2144,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return new PageList<GroupResourceConfigurationUpdate>(results, (int) count, pc);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public ConfigurationUpdateStatus updateGroupResourceConfigurationUpdateStatus(
         int groupResourceConfigurationUpdateId, String errorMessages) {
@@ -2121,6 +2159,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return completeGroupConfigurationUpdate(groupResourceConfigUpdate, updateStatusTuples, errorMessages);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public ConfigurationUpdateStatus updateGroupPluginConfigurationUpdateStatus(int groupPluginConfigurationUpdateId,
         String errorMessages) {
@@ -2151,6 +2190,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return groupConfigUpdateStatus; // if the caller wants to know what the new status was
     }
 
+    @Override
     public int deleteGroupPluginConfigurationUpdates(Subject subject, Integer resourceGroupId,
         Integer[] groupPluginConfigurationUpdateIds) {
 
@@ -2186,6 +2226,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return removed;
     }
 
+    @Override
     public int deleteGroupResourceConfigurationUpdates(Subject subject, Integer resourceGroupId,
         Integer[] groupResourceConfigurationUpdateIds) {
 
@@ -2219,11 +2260,13 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return removed;
     }
 
+    @Override
     public void updateGroupConfigurationUpdate(AbstractGroupConfigurationUpdate groupUpdate) {
         // TODO jmarques: if (errorMessages != null) set any remaining INPROGRESS children to FAILURE
         entityManager.merge(groupUpdate);
     }
 
+    @Override
     public void deleteConfigurations(List<Integer> configurationIds) {
         if (configurationIds == null || configurationIds.size() == 0) {
             return;
@@ -2249,6 +2292,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         configurationsQuery.executeUpdate(); // uses DB-level cascades to delete properties
     }
 
+    @Override
     public void deleteProperties(int[] propertyIds) {
         if (propertyIds == null || propertyIds.length == 0) {
             return;
@@ -2262,6 +2306,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     /**
      * @deprecated use {@link #findGroupPluginConfigurationUpdatesByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria)}
      */
+    @Override
     public GroupPluginConfigurationUpdate getGroupPluginConfigurationUpdate(Subject subject, int configurationUpdateId) {
         GroupPluginConfigurationUpdate update = getGroupPluginConfigurationById(configurationUpdateId);
 
@@ -2279,6 +2324,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     /**
      * @deprecated use {@link #findGroupResourceConfigurationUpdatesByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria)}
      */
+    @Override
     public GroupResourceConfigurationUpdate getGroupResourceConfigurationUpdate(Subject subject,
         int configurationUpdateId) {
         GroupResourceConfigurationUpdate update = getGroupResourceConfigurationById(configurationUpdateId);
@@ -2292,6 +2338,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return update;
     }
 
+    @Override
     public Configuration translateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
         boolean fromStructured) {
 
@@ -2323,11 +2370,13 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
     }
 
+    @Override
     public Configuration mergeConfiguration(Configuration config) {
         Configuration out = entityManager.merge(config);
         return out;
     }
 
+    @Override
     public PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdatesByCriteria(Subject subject,
         ResourceConfigurationUpdateCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
@@ -2361,6 +2410,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updates;
     }
 
+    @Override
     public PageList<PluginConfigurationUpdate> findPluginConfigurationUpdatesByCriteria(Subject subject,
         PluginConfigurationUpdateCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
@@ -2394,6 +2444,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updates;
     }
 
+    @Override
     public PageList<GroupResourceConfigurationUpdate> findGroupResourceConfigurationUpdatesByCriteria(Subject subject,
         GroupResourceConfigurationUpdateCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
@@ -2426,6 +2477,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updates;
     }
 
+    @Override
     public PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdatesByCriteria(Subject subject,
         GroupPluginConfigurationUpdateCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
@@ -2458,6 +2510,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updates;
     }
 
+    @Override
     public ConfigurationDefinition getOptionsForConfigurationDefinition(Subject subject, ConfigurationDefinition def) {
 
         for (Map.Entry<String, PropertyDefinition> entry : def.getPropertyDefinitions().entrySet()) {
@@ -2532,7 +2585,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                         return;
                     }
 
-                    expr = expr.substring(expr.indexOf(':')+1);
+                    expr = expr.substring(expr.indexOf(':') + 1);
                     criteria.setSearchExpression(expr);
                 } else {
                     criteria.setSearchExpression(expression);
@@ -2599,9 +2652,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             String mapPropName;
             if (mapPropLocation.contains("/")) {
                 // List of maps
-                mapPropName = mapPropLocation.substring(0,mapPropLocation.indexOf('/'));
-            }
-            else {
+                mapPropName = mapPropLocation.substring(0, mapPropLocation.indexOf('/'));
+            } else {
                 mapPropName = mapPropLocation;
             }
             p = configuration.get(mapPropName);
@@ -2669,12 +2721,4 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         return true;
     }
-
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //
-    // Remote Interface Impl
-    //
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    // ***TODO***: Move all remoted methods below this line.
 }

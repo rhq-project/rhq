@@ -32,7 +32,6 @@ import java.util.StringTokenizer;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpUtils;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspTagException;
 import javax.servlet.jsp.JspWriter;
@@ -713,7 +712,7 @@ public class TableTag extends TablePropertyTag {
             String base = url.substring(0, index);
             StringBuilder buf = new StringBuilder(base);
             String queryString = url.substring(index + 1);
-            Map<String, Object> params = HttpUtils.parseQueryString(queryString);
+            Map<String, Object> params = new java.util.HashMap<String, Object>();//HttpUtils.parseQueryString(queryString);
             params.remove(ParamConstants.SORTCOL_PARAM);
             params.remove(ParamConstants.SORTORDER_PARAM);
             params.remove(ParamConstants.PAGESIZE_PARAM);

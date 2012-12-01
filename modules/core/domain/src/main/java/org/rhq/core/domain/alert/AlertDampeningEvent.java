@@ -71,7 +71,7 @@ import javax.persistence.Table;
     @NamedQuery(name = AlertDampeningEvent.QUERY_DELETE_BY_ALERT_DEFINITION_ID, query = "" //
         + "DELETE AlertDampeningEvent ade " //
         + " WHERE ade.alertDefinition.id = :alertDefinitionId") })
-@SequenceGenerator(name = "RHQ_ALERT_DAMPEN_EVENT_ID_SEQ", sequenceName = "RHQ_ALERT_DAMPEN_EVENT_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_ALERT_DAMPEN_EVENT_ID_SEQ", sequenceName = "RHQ_ALERT_DAMPEN_EVENT_ID_SEQ")
 @Table(name = "RHQ_ALERT_DAMPEN_EVENT")
 public class AlertDampeningEvent implements Serializable {
     public static final String QUERY_FIND_LATEST_BY_ALERT_DEFINITION_ID = "AlertDampeningEvent.findLatestByAlertDefinitionId";

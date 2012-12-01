@@ -88,14 +88,6 @@
    <build>
       <plugins>
 
-         <plugin>
-            <artifactId>maven-compiler-plugin</artifactId>
-            <configuration>
-               <source>1.5</source>
-               <target>1.5</target>
-            </configuration>
-         </plugin>
-
          <!--
          If your plugin has third-party jar dependencies that are not already
          available when deployed in the plugin container, you can package these

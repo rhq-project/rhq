@@ -95,9 +95,9 @@
                                     <version>1.0</version>
                                 </artifactItem>
                                 <artifactItem>
-                                    <groupId>javassist</groupId>
+                                    <groupId>org.javassist</groupId>
                                     <artifactId>javassist</artifactId>
-                                    <version>3.8.0.GA</version>
+                                    <version>${javassist.version}</version>
                                 </artifactItem>
                             </artifactItems>
                             <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
@@ -141,7 +141,7 @@
             <properties>
                 <rhq.rootDir>../../../../..</rhq.rootDir>
                 <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-                <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-serverplugins</rhq.deploymentDir>
+                <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.earName}/rhq-serverplugins</rhq.deploymentDir>
             </properties>
 
             <build>

@@ -18,15 +18,13 @@
 
   <dependencies>
     <dependency>
-      <groupId>javax.xml.bind</groupId>
-      <artifactId>jaxb-api</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+      <groupId>org.jboss.spec.javax.xml.bind</groupId>
+      <artifactId>jboss-jaxb-api_2.2_spec</artifactId>
     </dependency>
 
     <dependency>
       <groupId>com.sun.xml.bind</groupId>
       <artifactId>jaxb-impl</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
     </dependency>
   </dependencies>
 
@@ -61,8 +59,8 @@
             <configuration>
               <artifactItems>
                 <artifactItem>
-                  <groupId>javax.xml.bind</groupId>
-                  <artifactId>jaxb-api</artifactId>
+                  <groupId>org.jboss.spec.javax.xml.bind</groupId>
+                  <artifactId>jboss-jaxb-api_2.2_spec</artifactId>
                 </artifactItem>
                 <artifactItem>
                   <groupId>com.sun.xml.bind</groupId>
@@ -135,7 +133,7 @@
       <properties>
         <rhq.rootDir>../../..</rhq.rootDir>
         <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-        <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-downloads/rhq-plugins</rhq.deploymentDir>
+        <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.earName}/rhq-downloads/rhq-plugins</rhq.deploymentDir>
       </properties>
 
       <build>

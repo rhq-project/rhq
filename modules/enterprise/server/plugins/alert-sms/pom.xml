@@ -27,26 +27,7 @@
              <artifactId>rhq-enterprise-server</artifactId>
              <version>${project.version}</version>
              <scope>provided</scope> <!-- by JBossAS -->
-         </dependency>
-
-         <!--
-             TODO: This is a fix for the Javac bug requiring annotations to be available when compiling dependent classes.
-         -->
-         <dependency>
-             <groupId>javax.persistence</groupId>
-             <artifactId>persistence-api</artifactId>
-             <version>1.0</version>
-             <scope>provided</scope>
-         </dependency>
-
-         <dependency>
-             <groupId>jboss.jboss-embeddable-ejb3</groupId>
-             <artifactId>hibernate-all</artifactId>
-             <version>1.0.0.Alpha9</version>
-             <scope>provided</scope>
-             <!-- needed for referenced domain entities that use Hibernate annotations -->
-         </dependency>
-
+         </dependency>         
 
          <dependency>
              <groupId>org.jboss.resteasy</groupId>
@@ -80,7 +61,7 @@
              <properties>
                  <rhq.rootDir>../../../../..</rhq.rootDir>
                  <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-                 <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-serverplugins</rhq.deploymentDir>
+                 <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.earName}/rhq-serverplugins</rhq.deploymentDir>
              </properties>
 
              <build>

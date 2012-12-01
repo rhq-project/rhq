@@ -37,7 +37,7 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.ejb.TransactionTimeout;
+import org.jboss.ejb3.annotation.TransactionTimeout;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;

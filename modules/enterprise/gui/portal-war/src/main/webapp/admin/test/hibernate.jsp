@@ -1,9 +1,9 @@
 <%@ page import="org.hibernate.EmptyInterceptor" %>
-<%@ page import="org.hibernate.engine.NamedQueryDefinition" %>
-<%@ page import="org.hibernate.engine.SessionFactoryImplementor" %>
-<%@ page import="org.hibernate.hql.ParameterTranslations" %>
-<%@ page import="org.hibernate.hql.QueryTranslator" %>
-<%@ page import="org.hibernate.hql.ast.ASTQueryTranslatorFactory" %>
+<%@ page import="org.hibernate.engine.spi.NamedQueryDefinition" %>
+<%@ page import="org.hibernate.engine.spi.SessionFactoryImplementor" %>
+<%@ page import="org.hibernate.hql.spi.ParameterTranslations" %>
+<%@ page import="org.hibernate.hql.spi.QueryTranslator" %>
+<%@ page import="org.hibernate.hql.internal.ast.ASTQueryTranslatorFactory" %>
 <%@ page import="org.hibernate.type.IntegerType" %>
 <%@ page import="org.hibernate.type.LongType" %>
 <%@ page import="org.hibernate.type.Type" %>
@@ -34,7 +34,7 @@
 <jsp:include page="/admin/include/adminTestLinks.html" flush="true" />
 
 <%!
-    public static final String ENTITY_MANAGER_FACTORY_JNDI = "java:/RHQEntityManagerFactory";
+    public static final String ENTITY_MANAGER_FACTORY_JNDI = "java:jboss/RHQEntityManagerFactory";
     public static final int MAX_ROWS = 100;
 %>
 
@@ -61,13 +61,14 @@
 
     org.hibernate.Session s = getHibernateSession(em);
     SessionFactoryImplementor sfi = (SessionFactoryImplementor) s.getSessionFactory();
-
-    s = sfi.openSession(new EmptyInterceptor() {
-        public String onPrepareStatement(String s) {
-            executedSQL.add(s);
-            return super.onPrepareStatement(s);
-        }
-    });
+    
+    s = sfi.withOptions().interceptor(
+        new EmptyInterceptor() {
+            public String onPrepareStatement(String s) {
+                executedSQL.add(s);
+                return super.onPrepareStatement(s);
+            }
+        }).openSession();
 
     if (namedQuery != null) {
         NamedQueryDefinition queryDef = sfi.getNamedQuery(namedQuery);
@@ -109,14 +110,14 @@
         System.out.println("hql: " + hql);
         List<String> sqlStrings = null;
         Set<String> parameterNames = null;
-        try {
+        try {            
             qt = new ASTQueryTranslatorFactory().createQueryTranslator(
-                    "test query",
+                    "Test Query",
                     hql,
-                    null,
+                    new HashMap(),
                     (SessionFactoryImplementor) s.getSessionFactory());
 
-            qt.compile(null, false);
+            qt.compile(new HashMap(), false);
             sqlStrings = qt.collectSqlStrings();
 
             for (String nextSQL : sqlStrings) {
@@ -129,6 +130,8 @@
                 request.setAttribute("parameterNames", parameterNames);
             }
         } catch (Exception e) {
+            System.out.println("ERROR in hql: " + hql + " : " + e);            
+            e.printStackTrace();
             error = getExceptionString(e);
             request.setAttribute("error", error);
         }

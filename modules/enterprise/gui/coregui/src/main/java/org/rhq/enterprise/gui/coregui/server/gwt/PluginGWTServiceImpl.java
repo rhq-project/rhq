@@ -461,6 +461,10 @@ public class PluginGWTServiceImpl extends AbstractGWTServiceImpl implements Plug
 
             // first load the full original plugin data
             ServerPlugin plugin = serverPlugins.getServerPlugin(serverPluginKey);
+            if (plugin == null) {
+                throw new IllegalArgumentException("Unknown plugin key: " + serverPluginKey);
+            }
+
             plugin = serverPlugins.getServerPluginRelationships(plugin);
 
             // now overwrite the config that we want to set and tell the server about it
@@ -490,6 +494,10 @@ public class PluginGWTServiceImpl extends AbstractGWTServiceImpl implements Plug
 
             // first load the full original plugin data
             ServerPlugin plugin = serverPlugins.getServerPlugin(serverPluginKey);
+            if (plugin == null) {
+                throw new IllegalArgumentException("Unknown plugin key: " + serverPluginKey);
+            }
+
             plugin = serverPlugins.getServerPluginRelationships(plugin);
 
             // now overwrite the config that we want to set and tell the server about it

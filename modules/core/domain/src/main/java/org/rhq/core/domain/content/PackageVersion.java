@@ -264,7 +264,7 @@ import org.rhq.core.domain.util.OSGiVersionComparator;
         + "   (SELECT pv2.id, (SELECT COUNT(rpv) FROM RepoPackageVersion rpv WHERE rpv.packageVersion.id = pv2.id)"
         + "    FROM PackageVersion pv2" + "    WHERE pv2.id IN ( :packageVersionIds )"
         + "      AND pv2.id IN (SELECT rpv.packageVersion.id FROM RepoPackageVersion rpv WHERE rpv.repo.id = :repoId))") })
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_PACKAGE_VERSION_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_PACKAGE_VERSION_ID_SEQ")
 @Table(name = "RHQ_PACKAGE_VERSION")
 public class PackageVersion implements Serializable {
     // Constants  --------------------------------------------

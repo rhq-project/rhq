@@ -32,8 +32,6 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.IgnoreDependency;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.FailoverList;
@@ -82,7 +80,7 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
     FailoverListManagerLocal failoverListManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     PartitionEventManagerLocal partitionEventManager;
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)

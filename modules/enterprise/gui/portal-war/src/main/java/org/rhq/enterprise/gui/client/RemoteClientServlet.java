@@ -31,6 +31,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.stream.StreamUtil;
@@ -173,7 +174,7 @@ public class RemoteClientServlet extends HttpServlet {
 
     private File getDownloadDir() throws Exception {
         File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
-        File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/rhq-client");
+        File downloadDir = new File(serverHomeDir, "deployments/rhq.ear/rhq-downloads/rhq-client");
         if (!downloadDir.exists()) {
             throw new FileNotFoundException("Missing remote client download directory at [" + downloadDir + "]");
         }

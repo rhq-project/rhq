@@ -13,30 +13,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>hibernate-entitymanager</groupId>
-            <artifactId>hibernate-entitymanager</artifactId>
-            <version>${hibernate-entitymanager.version}</version>
-        </dependency>
-        <dependency>
             <groupId>gnu-getopt</groupId>
             <artifactId>getopt</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>javax.persistence</groupId>
-            <artifactId>persistence-api</artifactId>
-            <version>1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>hibernate</groupId>
-            <artifactId>hibernate3</artifactId>
-            <version>${hibernate3.version}</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>hibernate-annotations</groupId>
-            <artifactId>hibernate-annotations</artifactId>
-            <version>${hibernate-annotations.version}</version>
-            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>jboss</groupId>
@@ -52,8 +30,8 @@
         </dependency>
         <dependency>
             <groupId>javassist</groupId>
-            <artifactId>javassist</artifactId>
-            <version>3.12.1.GA</version>
+            <artifactId>javassist</artifactId>            
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>commons-collections</groupId>

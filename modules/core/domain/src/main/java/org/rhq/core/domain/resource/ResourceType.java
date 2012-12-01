@@ -80,7 +80,7 @@ import org.rhq.core.domain.util.Summary;
  */
 @Entity
 @Table(name = ResourceType.TABLE_NAME)
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_RESOURCE_TYPE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_RESOURCE_TYPE_ID_SEQ")
 @NamedQueries( {
     @NamedQuery(name = ResourceType.QUERY_GET_BUNDLE_CONFIG_BY_GROUP_ID, query = "SELECT rg.resourceType.bundleConfiguration FROM ResourceGroup rg WHERE rg.id = :groupId"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_PLUGIN, query = "SELECT rt FROM ResourceType AS rt "
@@ -169,8 +169,8 @@ import org.rhq.core.domain.util.Summary;
         + "WHERE rt.subCategory = :subCategory AND rt.deleted = false"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_ID_WITH_ALL_OPERATIONS, query = "SELECT DISTINCT rt "
         + "FROM ResourceType rt " + "LEFT JOIN FETCH rt.operationDefinitions def "
-        + "LEFT JOIN FETCH def.parametersConfigurationDefinition "
-        + "LEFT JOIN FETCH def.resultsConfigurationDefinition " + "WHERE rt.id = :id AND rt.deleted = false"),
+        + "LEFT JOIN FETCH def.parametersConfigurationDefinition psDef "
+        + "LEFT JOIN FETCH def.resultsConfigurationDefinition rcDef " + "WHERE rt.id = :id AND rt.deleted = false"),
     @NamedQuery(name = ResourceType.QUERY_FIND_RESOURCE_FACETS, query = "" //
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceFacets " //
         + "       ( " //

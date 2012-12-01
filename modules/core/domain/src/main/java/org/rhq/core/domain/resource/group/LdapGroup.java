@@ -47,7 +47,7 @@ import org.rhq.core.domain.authz.Role;
     @NamedQuery(name = LdapGroup.QUERY_FIND_ALL, query = "SELECT g FROM LdapGroup AS g"), //
     @NamedQuery(name = LdapGroup.FIND_BY_ROLES_GROUP_NAMES, query = "SELECT distinct l.role FROM LdapGroup l WHERE l.name in (:names)") })
 @Table(name = "RHQ_ROLE_LDAP_GROUP")
-@SequenceGenerator(name = "id", sequenceName = "RHQ_ROLE_LDAP_GROUP_ID_SEQ", allocationSize = 100)
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "id", sequenceName = "RHQ_ROLE_LDAP_GROUP_ID_SEQ")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class LdapGroup implements Serializable {
     

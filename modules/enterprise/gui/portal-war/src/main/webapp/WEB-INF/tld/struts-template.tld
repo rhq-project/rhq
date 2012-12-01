@@ -12,6 +12,7 @@
 <jspversion>1.1</jspversion>
 <shortname>template</shortname>
 <uri>http://jakarta.apache.org/struts/tags-template</uri>
+<!--
 <tag>
 <name>insert</name>
 <tagclass>org.apache.struts.taglib.template.InsertTag</tagclass>
@@ -22,6 +23,8 @@
 <rtexprvalue>true</rtexprvalue>
 </attribute>
 </tag>
+-->
+<!--
 <tag>
 <name>put</name>
 <tagclass>org.apache.struts.taglib.template.PutTag</tagclass>
@@ -47,6 +50,8 @@
 <rtexprvalue>true</rtexprvalue>
 </attribute>
 </tag>
+-->
+<!--
 <tag>
 <name>get</name>
 <tagclass>org.apache.struts.taglib.template.GetTag</tagclass>
@@ -67,6 +72,7 @@
 <rtexprvalue>true</rtexprvalue>
 </attribute>
 </tag>
+-->
 </taglib>
 
 

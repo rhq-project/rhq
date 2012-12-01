@@ -44,12 +44,9 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
 import javax.sql.DataSource;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import org.jboss.annotation.IgnoreDependency;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
@@ -88,7 +85,6 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-import org.rhq.enterprise.server.jaxb.adapter.ResourceGroupAdapter;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -112,17 +108,17 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     private EntityManager entityManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private OperationManagerLocal operationManager;
     @EJB
     private SubjectManagerLocal subjectManager;
     @EJB
     private AuthorizationManagerLocal authorizationManager;
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private ResourceTypeManagerLocal resourceTypeManager;
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private ResourceManagerLocal resourceManager;
     @EJB
     private ResourceGroupManagerLocal resourceGroupManager;
@@ -146,8 +142,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         }
     }
 
-    public ResourceGroup createPrivateResourceGroup(Subject subject, //
-        @XmlJavaTypeAdapter(ResourceGroupAdapter.class) ResourceGroup group) {
+    public ResourceGroup createPrivateResourceGroup(Subject subject, ResourceGroup group) {
 
         group.setSubject(subject);
         group.setRecursive(false);
@@ -156,13 +151,13 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public ResourceGroup createResourceGroup(Subject user, //
-        @XmlJavaTypeAdapter(ResourceGroupAdapter.class) ResourceGroup group) {
+    public ResourceGroup createResourceGroup(Subject user, ResourceGroup group) {
 
         // We are now allowing Groups where names collide if the group is not visible as for autogroups and clusters
         Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_NAME_VISIBLE_GROUP);
         query.setParameter("name", group.getName());
 
+        @SuppressWarnings("unchecked")
         List<ResourceGroup> groups = query.getResultList();
         if (groups.size() != 0) {
             throw new ResourceGroupAlreadyExistsException("ResourceGroup with name " + group.getName()
@@ -347,8 +342,11 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         throws ResourceGroupDeleteException {
 
         // for compatible groups, first recursively remove any referring backing groups for auto-clusters
-        for (ResourceGroup referringGroup : group.getClusterBackingGroups()) {
-            deleteResourceGroup(subject, referringGroup.getId());
+        List<ResourceGroup> clusterBackingGroups = group.getClusterBackingGroups();
+        if (null != clusterBackingGroups) {
+            for (ResourceGroup referringGroup : clusterBackingGroups) {
+                deleteResourceGroup(subject, referringGroup.getId());
+            }
         }
 
         Subject overlord = subjectManager.getOverlord();
@@ -356,10 +354,10 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             List<GroupOperationSchedule> ops = operationManager.findScheduledGroupOperations(overlord, group.getId());
 
             for (GroupOperationSchedule schedule : ops) {
-                    operationManager.unscheduleGroupOperation(overlord, schedule.getJobId().toString(), group.getId());
+                operationManager.unscheduleGroupOperation(overlord, schedule.getJobId().toString(), group.getId());
             }
         } catch (Exception e) {
-            throw new ResourceGroupDeleteException( "Failed to get jobs for a group being deleted [" + group
+            throw new ResourceGroupDeleteException("Failed to get jobs for a group being deleted [" + group
                 + "]; will not attempt to unschedule anything", e);
         }
 
@@ -1005,7 +1003,6 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         }
     }
 
-    @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void setResourceType(int resourceGroupId) throws ResourceGroupDeleteException {
         Query query = entityManager.createNamedQuery(ResourceType.QUERY_GET_EXPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP);
@@ -1014,7 +1011,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         Subject overlord = subjectManager.getOverlord();
         ResourceGroup resourceGroup = getResourceGroupById(overlord, resourceGroupId, null);
 
-        List results = query.getResultList();
+        @SuppressWarnings("unchecked")
+        List<Object> results = query.getResultList();
         if (results.size() == 1) {
             Object[] info = (Object[]) results.get(0);
             int resourceTypeId = (Integer) info[0];
@@ -1511,14 +1509,14 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             : RecursivityChangeType.RemovedRecursion);
     }
 
-    @SuppressWarnings("unchecked")
     public PageList<ResourceGroup> findResourceGroupsByCriteria(Subject subject, ResourceGroupCriteria criteria) {
 
         CriteriaAuthzType authzType = getCriteriaAuthzType(subject, criteria);
 
         CriteriaQueryGenerator generator = getCriteriaQueryGenerator(subject, criteria, authzType);
 
-        CriteriaQueryRunner<ResourceGroup> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+        CriteriaQueryRunner<ResourceGroup> queryRunner = new CriteriaQueryRunner<ResourceGroup>(criteria, generator,
+            entityManager);
 
         PageList<ResourceGroup> result = queryRunner.execute();
 

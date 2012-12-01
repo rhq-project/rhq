@@ -39,7 +39,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.shared.ResourceBuilder;
 import org.rhq.core.domain.shared.ResourceTypeBuilder;
-import org.rhq.test.TransactionCallback;
+import org.rhq.core.domain.shared.TransactionCallback;
 
 public class JPADriftChangeSetTest extends DriftDataAccessTest {
 
@@ -57,7 +57,11 @@ public class JPADriftChangeSetTest extends DriftDataAccessTest {
 
     @BeforeMethod(groups = {"JPADriftChangeSet", "drift.ejb"})
     public void init() {
-        executeInTransaction(new TransactionCallback() {
+        if (!inContainer()) {
+            return;
+        }
+
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 purgeDB();
@@ -124,17 +128,13 @@ public class JPADriftChangeSetTest extends DriftDataAccessTest {
 
     @Test(groups = {"JPADriftChangeSet", "drift.ejb"})
     public void saveAndLoadInitialChangeSet() {
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 EntityManager em = getEntityManager();
 
-                JPADriftChangeSet changeSet = new JPADriftChangeSet();
-                changeSet.setCategory(COVERAGE);
-                changeSet.setVersion(0);
-                changeSet.setDriftDefinition(definition);
+                JPADriftChangeSet changeSet = new JPADriftChangeSet(resource, 0, COVERAGE, definition);
                 changeSet.setDriftHandlingMode(DriftHandlingMode.normal);
-                changeSet.setResource(resource);
 
                 em.persist(changeSet);
                 em.flush();

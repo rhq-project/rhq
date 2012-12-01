@@ -8,8 +8,8 @@
       <version>4.6.0-SNAPSHOT</version>
    </parent>
 
-   <groupId>org.jboss.on</groupId>
-   <artifactId>jopr-rhq-server-plugin</artifactId>
+   <groupId>org.rhq</groupId>
+   <artifactId>rhq-rhqserver-plugin</artifactId>
    <packaging>jar</packaging>
 
    <name>RHQ Server Plugin</name>
@@ -18,17 +18,23 @@
    <dependencies>
         <dependency>
           <groupId>${rhq.groupId}</groupId>
-          <artifactId>rhq-jmx-plugin</artifactId>
+          <artifactId>rhq-enterprise-comm</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
 
         <dependency>
           <groupId>${rhq.groupId}</groupId>
-          <artifactId>rhq-enterprise-comm</artifactId>
+          <artifactId>rhq-jmx-plugin</artifactId>
           <version>${project.version}</version>
-          <scope>provided</scope> <!-- to be bundled in the plugin -->
+          <scope>provided</scope>
         </dependency>
+        
+        <dependency>
+          <groupId>mc4j</groupId>
+          <artifactId>org-mc4j-ems</artifactId>
+          <scope>provided</scope>         
+        </dependency>        
    </dependencies>
 
    <build>
@@ -49,6 +55,16 @@
                            <artifactId>rhq-enterprise-comm</artifactId>
                            <version>${project.version}</version>
                         </artifactItem>
+                        <artifactItem>
+                           <groupId>${rhq.groupId}</groupId>
+                           <artifactId>rhq-jmx-plugin</artifactId>
+                           <version>${project.version}</version>
+                        </artifactItem>
+                        <artifactItem>
+                           <groupId>mc4j</groupId>
+                           <artifactId>org-mc4j-ems</artifactId>
+                           <version>${ems.version}</version>
+                        </artifactItem>                                               
                      </artifactItems>
                      <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
                   </configuration>
@@ -88,9 +104,10 @@
                                  <fileset dir="${settings.localRepository}/">
                                     <include name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar" />
                                     <include name="org/rhq/rhq-jmx-plugin/${project.version}/rhq-jmx-plugin-${project.version}.jar" />
+                                    <include name="org/rhq/rhq-jboss-as-7-jmx-plugin/${project.version}/rhq-jboss-as-7-jmx-plugin-${project.version}.jar" />
                                  </fileset>
                                  <fileset dir="${project.build.directory}">
-                                    <include name="rhq-server-plugin-${project.version}.jar" />
+                                    <include name="rhq-rhqserver-plugin-${project.version}.jar" />
                                  </fileset>
                               </copy>
                               <unzip dest="target/itest/lib">
@@ -161,7 +178,7 @@
          <properties>
             <rhq.rootDir>../../..</rhq.rootDir>
             <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-downloads/rhq-plugins</rhq.deploymentDir>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.earName}/rhq-downloads/rhq-plugins</rhq.deploymentDir>
          </properties>
 
          <build>

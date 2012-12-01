@@ -56,7 +56,7 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = EventSource.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM EventSource evs WHERE evs.resource.id IN ( :resourceIds ) "),
     @NamedQuery(name = EventSource.QUERY_BY_EVENT_DEFINITION, query = "SELECT evs FROM EventSource evs WHERE evs.eventDefinition = :definition") })
 @Table(name = EventSource.TABLE_NAME)
-@SequenceGenerator(name = "idGenerator", sequenceName = EventSource.TABLE_NAME + "_ID_SEQ", allocationSize = 100)
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "idGenerator", sequenceName = EventSource.TABLE_NAME + "_ID_SEQ")
 public class EventSource implements Serializable {
     private static final long serialVersionUID = 1L;
 

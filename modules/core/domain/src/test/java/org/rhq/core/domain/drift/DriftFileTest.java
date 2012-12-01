@@ -1,5 +1,7 @@
 package org.rhq.core.domain.drift;
 
+import static org.apache.commons.io.IOUtils.toInputStream;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -11,14 +13,14 @@ import java.sql.Blob;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.persistence.EntityManager;
+
 import org.apache.commons.io.IOUtils;
-import org.hibernate.Hibernate;
+import org.hibernate.Session;
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.shared.TransactionCallback;
 import org.rhq.core.util.MessageDigestGenerator;
-import org.rhq.test.TransactionCallback;
-
-import static org.apache.commons.io.IOUtils.toInputStream;
 
 public class DriftFileTest extends DriftDataAccessTest {
 
@@ -32,12 +34,13 @@ public class DriftFileTest extends DriftDataAccessTest {
         String hashId = digestGen.calcDigestString(content);
 
         // Create the initial driftFile
-        final JPADriftFileBits df1 = new JPADriftFileBits();
-        df1.setHashId(hashId);
+        final JPADriftFileBits df1 = new JPADriftFileBits(hashId);
         df1.setDataSize((long) content.length());
-        df1.setData(Hibernate.createBlob(toInputStream(content), content.length()));
+        EntityManager em = getEntityManager();
+        Session session = (Session) em.getDelegate();
+        df1.setData(session.getLobHelper().createBlob(toInputStream(content), content.length()));
 
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() {
                 getEntityManager().persist(df1);
@@ -46,17 +49,19 @@ public class DriftFileTest extends DriftDataAccessTest {
 
         // Make the update
         final String newContent = "driftFile data updated...";
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() {
-                JPADriftFileBits df2 = getEntityManager().find(JPADriftFileBits.class, df1.getHashId());
-                df2.setData(Hibernate.createBlob(toInputStream(newContent), newContent.length()));
+                EntityManager em = getEntityManager();
+                Session session = (Session) em.getDelegate();
+                JPADriftFileBits df2 = em.find(JPADriftFileBits.class, df1.getHashId());
+                df2.setData(session.getLobHelper().createBlob(toInputStream(newContent), newContent.length()));
                 getEntityManager().merge(df2);
             }
         });
 
         // Fetch the driftFile to verify that the update was persisted
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() {
                 try {
@@ -84,13 +89,16 @@ public class DriftFileTest extends DriftDataAccessTest {
 
         for (int i = 0; i < numDriftFiles; ++i) {
             File dataFile = createDataFile("test_data.txt", 1, (char) ('a' + i));
-            final JPADriftFileBits driftFile = new JPADriftFileBits();
+            String hashId = digestGen.calcDigestString(dataFile);
+            final JPADriftFileBits driftFile = new JPADriftFileBits(hashId);
             driftFile.setDataSize(dataFile.length());
-            driftFile.setHashId(digestGen.calcDigestString(dataFile));
-            driftFile.setData(Hibernate.createBlob(new BufferedInputStream(new FileInputStream(dataFile))));
+            EntityManager em = getEntityManager();
+            Session session = (Session) em.getDelegate();            
+            driftFile.setData(session.getLobHelper().createBlob(new BufferedInputStream(new FileInputStream(dataFile)),
+                dataFile.length()));
             dataFile.delete();
 
-            executeInTransaction(new TransactionCallback() {
+            executeInTransaction(false, new TransactionCallback() {
                 @Override
                 public void execute() {
                     getEntityManager().persist(driftFile);
@@ -102,10 +110,11 @@ public class DriftFileTest extends DriftDataAccessTest {
         final List<Blob> blobs = new ArrayList<Blob>();
         final List<JPADriftFileBits> driftFiles = new ArrayList<JPADriftFileBits>();
         for (final String hashId : driftFileHashIds) {
-            executeInTransaction(new TransactionCallback() {
+            executeInTransaction(false, new TransactionCallback() {
                 @Override
                 public void execute() {
-                    JPADriftFileBits driftFileBits = getEntityManager().find(JPADriftFileBits.class, hashId);
+                    EntityManager em = getEntityManager();
+                    JPADriftFileBits driftFileBits = em.find(JPADriftFileBits.class, hashId);
                     blobs.add(driftFileBits.getBlob());
                     driftFiles.add(driftFileBits);
                 }
@@ -124,14 +133,17 @@ public class DriftFileTest extends DriftDataAccessTest {
 
         for (int driftFileNum = 0; driftFileNum < numDriftFiles; ++driftFileNum) {
             File dataFile = createDataFile("test_data.txt", 10, 'X');
-            final JPADriftFileBits driftFile = new JPADriftFileBits();
+            String hashId = digestGen.calcDigestString(dataFile);
+            final JPADriftFileBits driftFile = new JPADriftFileBits(hashId);
             driftFile.setDataSize(dataFile.length());
-            driftFile.setHashId(digestGen.calcDigestString(dataFile));
-            driftFile.setData(Hibernate.createBlob(new BufferedInputStream(new FileInputStream(dataFile))));
+            EntityManager em = getEntityManager();
+            Session session = (Session) em.getDelegate();
+            driftFile.setData(session.getLobHelper().createBlob(new BufferedInputStream(new FileInputStream(dataFile)),
+                dataFile.length()));
             dataFile.delete();
 
             try {
-                executeInTransaction(new TransactionCallback() {
+                executeInTransaction(false, new TransactionCallback() {
                     @Override
                     public void execute() {
                         getEntityManager().persist(driftFile);
@@ -153,7 +165,7 @@ public class DriftFileTest extends DriftDataAccessTest {
         final List<Blob> blobs = new ArrayList<Blob>();
         final List<JPADriftFileBits> driftFiles = new ArrayList<JPADriftFileBits>();
         for (final String hashId : driftFileHashIds) {
-            executeInTransaction(new TransactionCallback() {
+            executeInTransaction(false, new TransactionCallback() {
                 @Override
                 public void execute() {
                     JPADriftFileBits driftFileBits = getEntityManager().find(JPADriftFileBits.class, hashId);
@@ -167,7 +179,7 @@ public class DriftFileTest extends DriftDataAccessTest {
     }
 
     File workDir() throws URISyntaxException {
-        File dir = new File(new File(getClass().getResource(".").toURI()), "work");
+        File dir = new File(new File("target"), "work");
         dir.mkdir();
         return dir;
     }

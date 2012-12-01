@@ -46,7 +46,7 @@ import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hibernate.Hibernate;
+import org.hibernate.Session;
 
 import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.ChangeSetReaderImpl;
@@ -296,14 +296,15 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         if (null == df) {
             throw new IllegalArgumentException("JPADriftFile not found [" + driftFile.getHashId() + "]");
         }
+        Session session = (Session)entityManager.getDelegate();
         df.setDataSize(numBytes);
-        df.setData(Hibernate.createBlob(new BufferedInputStream(data)));
+        df.setData(session.getLobHelper().createBlob(new BufferedInputStream(data), numBytes));
         df.setStatus(LOADED);
     }
 
     // This facade does not start, or participate in, a transaction so that it can execute its work
     // in two new transactions.  The first transaction ensures all new entities are committed to the
-    // database.  The second transaction can then safely ackknowledge that the changeset is persisted
+    // database.  The second transaction can then safely acknowledge that the changeset is persisted
     // and request drift file content, if necessary.
     @Override
     @TransactionAttribute(NOT_SUPPORTED)

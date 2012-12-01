@@ -28,7 +28,8 @@ import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Date;
+
+import javax.naming.InitialContext;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,13 +37,6 @@ import org.dbunit.database.DatabaseConfig;
 import org.dbunit.database.DatabaseDataSourceConnection;
 import org.dbunit.database.IDatabaseConnection;
 import org.dbunit.dataset.datatype.IDataTypeFactory;
-import org.rhq.core.db.ant.dbupgrade.SST_DirectSQL;
-import org.rhq.helpers.perftest.support.FileFormat;
-import org.rhq.helpers.perftest.support.Importer;
-import org.rhq.helpers.perftest.support.Input;
-import org.rhq.helpers.perftest.support.dbsetup.DbSetup;
-import org.rhq.helpers.perftest.support.input.FileInputStreamProvider;
-import org.rhq.helpers.perftest.support.input.InputStreamProvider;
 import org.testng.IInvokedMethod;
 import org.testng.IInvokedMethodListener;
 import org.testng.ITestResult;
@@ -53,7 +47,12 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.BeforeTest;
 
-import javax.naming.InitialContext;
+import org.rhq.helpers.perftest.support.FileFormat;
+import org.rhq.helpers.perftest.support.Importer;
+import org.rhq.helpers.perftest.support.Input;
+import org.rhq.helpers.perftest.support.dbsetup.DbSetup;
+import org.rhq.helpers.perftest.support.input.FileInputStreamProvider;
+import org.rhq.helpers.perftest.support.input.InputStreamProvider;
 
 /**
  * An {@link IInvokedMethodListener method listener} that performs the database setup
@@ -85,7 +84,7 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
         try {
             InputStreamProvider streamProvider = getInputStreamProvider(state.url(), state.storage(), method);
             IDatabaseConnection connection = new DatabaseDataSourceConnection(new InitialContext(),
-                    "java:/RHQDS");
+                "java:jboss/datasources/RHQDS");
             jdbcConnection = connection.getConnection();
             dbUrl = jdbcConnection.getMetaData().getURL();
             System.out.println("Using database at " + dbUrl);
@@ -185,7 +184,7 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
         Statement statement=null;
         try {
             IDatabaseConnection connection = new DatabaseDataSourceConnection(new InitialContext(),
-                    "java:/RHQDS");
+                "java:jboss/datasources/RHQDS");
             jdbcConnection = connection.getConnection();
             statement = jdbcConnection.createStatement();
             statement.execute("DROP TABLE RHQ_SUBJECT CASCADE");

@@ -26,9 +26,6 @@ import java.util.List;
 import java.util.Set;
 
 import javax.ejb.Local;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.PageControl;
@@ -148,18 +145,8 @@ public class RemoteAPIValidator {
             localInterface = interfaces[1];
         }
 
-        WebService webService = remoteInterface.getAnnotation(WebService.class);
-        if (webService == null) {
-            errors.add(remoteInterface.getSimpleName() + ", missing @WebService class annotation");
-        }
-
         Method[] remoteMethods = remoteInterface.getMethods();
         for (Method remoteMethod : remoteMethods) {
-            WebMethod webMethod = remoteMethod.getAnnotation(WebMethod.class);
-            if (webMethod == null) {
-                errors.add(format(remoteMethod) + ", missing @WebMethod method annotation");
-            }
-
             String methodName = remoteMethod.getName();
             Class<?>[] parameterTypes = remoteMethod.getParameterTypes();
             try {
@@ -235,23 +222,6 @@ public class RemoteAPIValidator {
             return;
         }
         Annotation[] parameterAnnotations = remoteMethod.getParameterAnnotations()[parameterIndex];
-        WebParam webParam = null;
-        for (int i = 0; i < parameterAnnotations.length; i++) {
-            if (parameterAnnotations[i] instanceof WebParam) {
-                webParam = (WebParam) parameterAnnotations[i];
-                break;
-            }
-        }
-        if (webParam == null) {
-            errors.add(format(remoteMethod) + ", missing @WebParam parameter annotation for "
-                + parameterType.getSimpleName());
-            return;
-        }
-
-        String name = webParam.name();
-        if (name.equals(namingConvention) == false) {
-            errors.add(format(remoteMethod) + ", convention should be @WebParam(name = \"" + namingConvention + "\")");
-        }
     }
 
     private static String format(Method method) {

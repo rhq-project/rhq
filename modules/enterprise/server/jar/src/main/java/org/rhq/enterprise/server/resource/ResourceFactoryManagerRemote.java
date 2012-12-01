@@ -21,11 +21,6 @@ package org.rhq.enterprise.server.resource;
 import java.util.List;
 
 import javax.ejb.Remote;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
-import javax.jws.soap.SOAPBinding;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
@@ -35,14 +30,10 @@ import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.jaxb.adapter.ConfigurationAdapter;
-import org.rhq.enterprise.server.system.ServerVersion;
 
 /*
  * @author Jay Shaughnessy
  */
-@SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface ResourceFactoryManagerRemote {
 
@@ -63,15 +54,8 @@ public interface ResourceFactoryManagerRemote {
      * @param resourceConfiguration resource configuration for the new resource
      * @param timeout               number of milliseconds before the agent suffers a timeout when creating the resource. If null uses default.  
      */
-    @WebMethod
-    CreateResourceHistory createResource( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "parentResourceId") int parentResourceId, //
-        @WebParam(name = "resourceTypeId") int resourceTypeId, //
-        @WebParam(name = "resourceName") String resourceName, //        
-        @WebParam(name = "pluginConfiguration") Configuration pluginConfiguration, //
-        @WebParam(name = "resourceConfiguration") Configuration resourceConfiguration, //
-        @WebParam(name = "timeout") Integer timeout);
+    CreateResourceHistory createResource(Subject subject, int parentResourceId, int resourceTypeId,
+        String resourceName, Configuration pluginConfiguration, Configuration resourceConfiguration, Integer timeout);
 
     /**
      * Creates a new physical resource. The resource will be created as a child of the specified parent. In other words,
@@ -95,23 +79,9 @@ public interface ResourceFactoryManagerRemote {
      * @param packageBits                 content of the package to create
      * @param timeout                     number of milliseconds before the agent suffers a timeout when creating the resource. If null uses default. 
      */
-    @WebMethod
-    CreateResourceHistory createPackageBackedResource(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "parentResourceId") int parentResourceId, //
-        @WebParam(name = "newResourceTypeId") int newResourceTypeId, //
-        @WebParam(name = "newResourceName") String newResourceName, //
-        @WebParam(name = "pluginConfiguration")//
-        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
-        Configuration pluginConfiguration, //
-        @WebParam(name = "packageName") String packageName, //
-        @WebParam(name = "packageVersion") String packageVersion, //
-        @WebParam(name = "architectureId") Integer architectureId, //
-        @WebParam(name = "deploymentTimeConfiguration")//
-        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
-        Configuration deploymentTimeConfiguration, //
-        @WebParam(name = "packageBits") byte[] packageBits, //
-        @WebParam(name = "timeout") Integer timeout);
+    CreateResourceHistory createPackageBackedResource(Subject subject, int parentResourceId, int newResourceTypeId,
+        String newResourceName, Configuration pluginConfiguration, String packageName, String packageVersion,
+        Integer architectureId, Configuration deploymentTimeConfiguration, byte[] packageBits, Integer timeout);
 
     /**
      * Creates a new physical resource. The resource will be created as a child of the specified parent. In other words,
@@ -132,20 +102,9 @@ public interface ResourceFactoryManagerRemote {
      * @param packageVersionId            An existing package version to back this resource
      * @param timeout                     number of milliseconds before the agent suffers a timeout when creating the resource. If null uses default. 
      */
-    @WebMethod
-    public CreateResourceHistory createPackageBackedResourceViaPackageVersion(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "parentResourceId") int parentResourceId, //
-        @WebParam(name = "newResourceTypeId") int newResourceTypeId, //
-        @WebParam(name = "newResourceName") String newResourceName, //
-        @WebParam(name = "pluginConfiguration")//
-        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
-        Configuration pluginConfiguration, //
-        @WebParam(name = "deploymentTimeConfiguration")//
-        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
-        Configuration deploymentTimeConfiguration, //
-        @WebParam(name = "packageVersionId") int packageVersionId, //
-        @WebParam(name = "timeout") Integer timeout);
+    public CreateResourceHistory createPackageBackedResourceViaPackageVersion(Subject subject, int parentResourceId,
+        int newResourceTypeId, String newResourceName, Configuration pluginConfiguration,
+        Configuration deploymentTimeConfiguration, int packageVersionId, Integer timeout);
 
     /**
      * Deletes a physical resource from the agent machine. After this call, the resource will no longer be accessible
@@ -155,10 +114,7 @@ public interface ResourceFactoryManagerRemote {
      * @param subject    user requesting the deletion. must have resource delete perm on the resource.
      * @param resourceId resource being deleted
      */
-    @WebMethod
-    DeleteResourceHistory deleteResource( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId);
+    DeleteResourceHistory deleteResource(Subject subject, int resourceId);
 
     /**
      * Deletes physical resources from the agent machine. After this call, the resource will no longer be accessible
@@ -168,10 +124,7 @@ public interface ResourceFactoryManagerRemote {
      * @param subject    user requesting the deletion. must have resource delete perm on the resources.
      * @param resourceIds the resources being deleted
      */
-    @WebMethod
-    List<DeleteResourceHistory> deleteResources( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceIds") int[] resourceIds);
+    List<DeleteResourceHistory> deleteResources(Subject subject, int[] resourceIds);
 
     /**
      * Returns a pagination enabled list of requests for the creation of new child resources to the specified parent.
@@ -186,13 +139,8 @@ public interface ResourceFactoryManagerRemote {
      *
      * @return list of requests
      */
-    @WebMethod
-    PageList<CreateResourceHistory> findCreateChildResourceHistory( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "parentResourceId") int parentResourceId, //
-        @WebParam(name = "beginDate") Long beginDate, //
-        @WebParam(name = "endDate") Long endDate, //
-        @WebParam(name = "pageControl") PageControl pageControl);
+    PageList<CreateResourceHistory> findCreateChildResourceHistory(Subject subject, int parentResourceId,
+        Long beginDate, Long endDate, PageControl pageControl);
 
     /**
      * Returns a pagination enabled list of requests to delete a child resource on the specified parent. These requests
@@ -207,11 +155,6 @@ public interface ResourceFactoryManagerRemote {
      *
      * @return list of requests
      */
-    @WebMethod
-    PageList<DeleteResourceHistory> findDeleteChildResourceHistory( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "parentResourceId") int parentResourceId, //
-        @WebParam(name = "beginDate") Long beginDate, //
-        @WebParam(name = "endDate") Long endDate, //
-        @WebParam(name = "pageControl") PageControl pageControl);
+    PageList<DeleteResourceHistory> findDeleteChildResourceHistory(Subject subject, int parentResourceId,
+        Long beginDate, Long endDate, PageControl pageControl);
 }

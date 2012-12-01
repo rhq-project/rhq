@@ -50,7 +50,7 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.ejb.TransactionTimeout;
+import org.jboss.ejb3.annotation.TransactionTimeout;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.content.ContentAgentService;

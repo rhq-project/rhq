@@ -86,7 +86,7 @@ import org.rhq.core.domain.configuration.Property;
         + "         AND notifParam.name = :propertyName" //
         + ")"
     )})
-@SequenceGenerator(name = "RHQ_ALERT_NOTIFICATION_ID_SEQ", sequenceName = "RHQ_ALERT_NOTIFICATION_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_ALERT_NOTIFICATION_ID_SEQ", sequenceName = "RHQ_ALERT_NOTIFICATION_ID_SEQ")
 @Table(name = "RHQ_ALERT_NOTIFICATION")
 public class AlertNotification implements Serializable {
 

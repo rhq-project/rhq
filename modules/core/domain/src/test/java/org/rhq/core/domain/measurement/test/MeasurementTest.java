@@ -52,7 +52,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.test.AbstractEJB3Test;
-import org.rhq.core.util.collection.ArrayUtils;
+import org.rhq.core.domain.util.collection.ArrayUtils;
 
 /**
  * @author Heiko W. Rupp

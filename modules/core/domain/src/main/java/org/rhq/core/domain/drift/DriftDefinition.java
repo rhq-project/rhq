@@ -65,7 +65,7 @@ import org.rhq.core.domain.util.StringUtils;
  */
 @Entity
 @Table(name = "RHQ_DRIFT_DEFINITION")
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_DEFINITION_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_DRIFT_DEFINITION_ID_SEQ")
 public class DriftDefinition implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -284,10 +284,16 @@ public class DriftDefinition implements Serializable {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("DriftDefinition [id=").append(id).append(", name=").append(name).append(", enabled=").append(
-            isEnabled).append(", interval=").append(interval).append(", resource=").append(resource).append(
-            ", basedir=").append(getBasedir()).append(", includes=").append(getIncludes()).append(", excludes=")
-            .append(getExcludes()).append("]");
+        builder.append("DriftDefinition [id=").append(id).append(", name=").append(name).append(", enabled=")
+            .append(isEnabled).append(", interval=").append(interval).append(", resource=").append(resource);
+        try {
+            builder.append(", basedir=").append(getBasedir()).append(", includes=").append(getIncludes())
+                .append(", excludes=").append(getExcludes());
+        } catch (Exception e) {
+            // ignore, not attached
+        }
+        builder.append("]");
+
         return builder.toString();
     }
 
@@ -425,8 +431,8 @@ public class DriftDefinition implements Serializable {
     }
 
     private Long getIntervalProperty() {
-        return Long.parseLong(configuration.getSimpleValue(DriftConfigurationDefinition.PROP_INTERVAL, String
-            .valueOf(DriftConfigurationDefinition.DEFAULT_INTERVAL)));
+        return Long.parseLong(configuration.getSimpleValue(DriftConfigurationDefinition.PROP_INTERVAL,
+            String.valueOf(DriftConfigurationDefinition.DEFAULT_INTERVAL)));
     }
 
     private void setIntervalProperty(Long interval) {

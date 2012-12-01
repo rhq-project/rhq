@@ -30,9 +30,7 @@ import java.util.TreeMap;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
-import javax.transaction.TransactionManager;
 
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -49,6 +47,7 @@ import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.shared.TransactionCallback;
 import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
@@ -59,18 +58,8 @@ import org.rhq.core.util.exception.ThrowableUtil;
 public class QueriesTest extends AbstractEJB3Test {
     private Map<String, Map<String, Object>> queries; // here just so we dont have to pass it to the add()
 
-    @AfterMethod
-    public void afterMethod() throws Exception {
-        try {
-            TransactionManager tx = getTransactionManager();
-            if (tx != null) {
-                tx.rollback();
-            }
-        } catch (Exception who_cares) {
-        }
-    }
-
     public void testQueries() throws Exception {
+
         queries = new HashMap<String, Map<String, Object>>();
 
         //////////////////////////////////////////
@@ -150,34 +139,43 @@ public class QueriesTest extends AbstractEJB3Test {
     }
 
     public void testAsyncUninventory() throws Exception {
-        TransactionManager tx = getTransactionManager();
-        tx.begin();
 
-        EntityManager entityManager = getEntityManager();
-        Query q = entityManager.createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION_QUICK);
-        List<Integer> ids = new ArrayList<Integer>();
-        ids.add(1);
-        q.setParameter("resourceIds", ids);
-        q.setParameter("status", InventoryStatus.UNINVENTORIED);
-        q.executeUpdate();
+        executeInTransaction(new TransactionCallback() {
+
+            public void execute() throws Exception {
+
+                EntityManager entityManager = getEntityManager();
+                Query q = entityManager.createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION_QUICK);
+                List<Integer> ids = new ArrayList<Integer>();
+                ids.add(1);
+                q.setParameter("resourceIds", ids);
+                q.setParameter("status", InventoryStatus.UNINVENTORIED);
+                q.executeUpdate();
+            }
+        });
     }
 
     public void testLongVarChar() throws Exception {
-        TransactionManager tx = getTransactionManager();
-        tx.begin();
 
-        EntityManager entityManager = getEntityManager();
+        executeInTransaction(new TransactionCallback() {
 
-        // I just want to see this tested even though I haven't seen this fail on oracle or postgres ever
-        ContentSourceType cst = new ContentSourceType("testLongVarCharCST");
-        entityManager.persist(cst);
-        ContentSource cs = new ContentSource("testLongVarCharCS", cst);
-        cs.setLoadErrorMessage("longvarchar column here");
-        entityManager.persist(cs);
+            public void execute() throws Exception {
 
-        Query q = entityManager.createNamedQuery(ContentSource.QUERY_FIND_BY_ID_WITH_CONFIG);
-        ContentSource result = (ContentSource) q.setParameter("id", cs.getId()).getSingleResult();
-        assert result != null;
-        assert "longvarchar column here".equals(result.getLoadErrorMessage());
+                EntityManager entityManager = getEntityManager();
+
+                // I just want to see this tested even though I haven't seen this fail on oracle or postgres ever
+                ContentSourceType cst = new ContentSourceType("testLongVarCharCST");
+                entityManager.persist(cst);
+                ContentSource cs = new ContentSource("testLongVarCharCS", cst);
+                cs.setLoadErrorMessage("longvarchar column here");
+                entityManager.persist(cs);
+
+                Query q = entityManager.createNamedQuery(ContentSource.QUERY_FIND_BY_ID_WITH_CONFIG);
+                ContentSource result = (ContentSource) q.setParameter("id", cs.getId()).getSingleResult();
+                assert result != null;
+                assert "longvarchar column here".equals(result.getLoadErrorMessage());
+
+            }
+        });
     }
 }

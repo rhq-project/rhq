@@ -78,7 +78,7 @@ import org.rhq.core.domain.tagging.Tag;
         + " WHERE bd.replacedBundleDeploymentId IN " //        
         + "     ( SELECT innerbd.id FROM BundleDeployment innerbd " //
         + "        WHERE innerbd.bundleVersion.id  = :bundleVersionId ) ") })
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_DEPLOYMENT_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_BUNDLE_DEPLOYMENT_ID_SEQ")
 @Table(name = "RHQ_BUNDLE_DEPLOYMENT")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class BundleDeployment implements Serializable {

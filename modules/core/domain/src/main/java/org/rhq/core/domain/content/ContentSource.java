@@ -61,12 +61,12 @@ import org.rhq.core.domain.configuration.Configuration;
 @Entity
 @NamedQueries( {
     @NamedQuery(name = ContentSource.QUERY_FIND_ALL, query = "SELECT cs FROM ContentSource cs "),
-    @NamedQuery(name = ContentSource.QUERY_FIND_ALL_WITH_CONFIG, query = "SELECT cs FROM ContentSource cs LEFT JOIN FETCH cs.configuration"),
+    @NamedQuery(name = ContentSource.QUERY_FIND_ALL_WITH_CONFIG, query = "SELECT cs FROM ContentSource cs LEFT JOIN FETCH cs.configuration config"),
     @NamedQuery(name = ContentSource.QUERY_FIND_BY_NAME_AND_TYPENAME, query = "SELECT cs " + "  FROM ContentSource cs "
-        + "       LEFT JOIN FETCH cs.configuration" + " WHERE cs.name = :name "
+        + "       LEFT JOIN FETCH cs.configuration config" + " WHERE cs.name = :name "
         + "   AND cs.contentSourceType.name = :typeName "),
     @NamedQuery(name = ContentSource.QUERY_FIND_BY_ID_WITH_CONFIG, query = "SELECT cs " + "  FROM ContentSource cs "
-        + "       LEFT JOIN FETCH cs.configuration" + " WHERE cs.id = :id "),
+        + "       LEFT JOIN FETCH cs.configuration config" + " WHERE cs.id = :id "),
     @NamedQuery(name = ContentSource.QUERY_FIND_BY_REPO_ID, // do not do a fetch join here
     query = "SELECT cs FROM ContentSource cs LEFT JOIN cs.repoContentSources ccs WHERE ccs.repo.id = :id"),
     @NamedQuery(name = ContentSource.QUERY_FIND_AVAILABLE_BY_REPO_ID, //
@@ -76,7 +76,7 @@ import org.rhq.core.domain.configuration.Configuration;
         + "       ( SELECT ccs.contentSource.id " // 
         + "           FROM RepoContentSource ccs " //
         + "          WHERE ccs.repo.id = :repoId ) ") })
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONTENT_SOURCE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_CONTENT_SOURCE_ID_SEQ")
 @Table(name = "RHQ_CONTENT_SOURCE")
 public class ContentSource implements Serializable {
     public static final String QUERY_FIND_ALL = "ContentSource.findAll";

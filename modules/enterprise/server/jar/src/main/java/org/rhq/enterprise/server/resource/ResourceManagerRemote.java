@@ -22,11 +22,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.ejb.Remote;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
-import javax.jws.soap.SOAPBinding;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -37,17 +32,12 @@ import org.rhq.core.domain.resource.ResourceAncestryFormat;
 import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.jaxb.WebServiceMapAdapter;
-import org.rhq.enterprise.server.jaxb.adapter.ResourceListAdapter;
-import org.rhq.enterprise.server.system.ServerVersion;
 
 /**
- * @author Asaf Shakarchi
  * @author Jay Shaughnessy 
  * @author Simeon Pinder
+ * @author Asaf Shakarchi 
  */
-@SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface ResourceManagerRemote {
 
@@ -60,10 +50,7 @@ public interface ResourceManagerRemote {
      *
      * @return summary POJO
      */
-    @WebMethod
-    ResourceAvailabilitySummary getAvailabilitySummary( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId);
+    ResourceAvailabilitySummary getAvailabilitySummary(Subject subject, int resourceId);
 
     /**
      * Returns the availability of the resource with the specified id.
@@ -80,10 +67,7 @@ public interface ResourceManagerRemote {
      * @throws FetchException if the resource represented by the resourceId parameter does not exist, or if the
      *                        passed subject does not have permission to view this resource.
      */
-    @WebMethod
-    ResourceAvailability getLiveResourceAvailability( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId);
+    ResourceAvailability getLiveResourceAvailability(Subject subject, int resourceId);
 
     /**
      * Returns the Resource with the specified id.
@@ -95,10 +79,7 @@ public interface ResourceManagerRemote {
      * @throws FetchException if the resource represented by the resourceId parameter does not exist, or if the
      *                        passed subject does not have permission to view this resource.
      */
-    @WebMethod
-    Resource getResource( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId);
+    Resource getResource(Subject subject, int resourceId);
 
     /**
      * Returns the lineage of the Resource with the specified id. The lineage is represented as a List of Resources,
@@ -112,11 +93,7 @@ public interface ResourceManagerRemote {
      * @return the lineage of the Resource with the specified id
      * @throws FetchException on any issue. Wraps ResourceNotFoundException when necessary. 
      */
-    @WebMethod
-    @XmlJavaTypeAdapter(value = ResourceListAdapter.class)
-    List<Resource> findResourceLineage( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId);
+    List<Resource> findResourceLineage(Subject subject, int resourceId);
 
     /**
      * Update resource's editable properties (name, description, location).
@@ -125,10 +102,7 @@ public interface ResourceManagerRemote {
      * @param resource the resource to update
      * @return the updated resource
      */
-    @WebMethod
-    Resource updateResource( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resource") Resource resource);
+    Resource updateResource(Subject subject, Resource resource);
 
     /**
      * Removes these resources from inventory.  The resources may subsequently be rediscovered.  Note that for
@@ -138,26 +112,13 @@ public interface ResourceManagerRemote {
      * @param subject The logged in user's subject.
      * @param resourceIds The resources to uninventory.
      */
-    @WebMethod
-    List<Integer> uninventoryResources( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceIds") int[] resourceIds);
+    List<Integer> uninventoryResources(Subject subject, int[] resourceIds);
 
-    @WebMethod
-    PageList<Resource> findResourcesByCriteria( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "criteria") ResourceCriteria criteria);
+    PageList<Resource> findResourcesByCriteria(Subject subject, ResourceCriteria criteria);
 
-    @WebMethod
-    PageList<Resource> findChildResources( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "pageControl") PageControl pageControl);
+    PageList<Resource> findChildResources(Subject subject, int resourceId, PageControl pageControl);
 
-    @WebMethod
-    Resource getParentResource( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId);
+    Resource getParentResource(Subject subject, int resourceId);
 
     /**
      * Resource.ancestry is an encoded value that holds the resource's parental ancestry. It is not suitable for display.
@@ -170,12 +131,7 @@ public interface ResourceManagerRemote {
      * @param format
      * @return A Map of ResourceIds to FormattedAncestryStrings, one entry for each unique, valid, resourceId passed in. 
      */
-    @WebMethod
-    @XmlJavaTypeAdapter(value = WebServiceMapAdapter.class)
-    Map<Integer, String> getResourcesAncestry( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceIds") Integer[] resourceIds, //
-        @WebParam(name = "format") ResourceAncestryFormat format);
+    Map<Integer, String> getResourcesAncestry(Subject subject, Integer[] resourceIds, ResourceAncestryFormat format);
 
     /**
      * Set these resources to {@link AvailabilityType.DISABLED}. While disabled resource availability reported
@@ -191,9 +147,7 @@ public interface ResourceManagerRemote {
      * 
      * @see #enableResources(Subject, int[])
      */
-    List<Integer> disableResources( //
-        Subject subject, //
-        int[] resourceIds);
+    List<Integer> disableResources(Subject subject, int[] resourceIds);
 
     /**
      * Set these resources enabled. Resources already enabled are ignored. The availability will be set to UNKNOWN
@@ -207,8 +161,6 @@ public interface ResourceManagerRemote {
      * 
      * @see #disableResources(Subject, int[])
      */
-    List<Integer> enableResources( //
-        Subject subject, //
-        int[] resourceIds);
+    List<Integer> enableResources(Subject subject, int[] resourceIds);
 
 }

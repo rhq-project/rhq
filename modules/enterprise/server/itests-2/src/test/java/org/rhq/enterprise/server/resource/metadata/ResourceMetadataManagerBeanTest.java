@@ -53,13 +53,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
 @Test(groups = { "plugin.metadata" })
 public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
 
-    @Override
-    protected void beforeMethod() throws Exception {
-        super.beforeMethod();
-
-        disableAfterClassStandIn = true;
-    }
-
     @Test(groups = { "plugin.resource.metadata.test", "NewPlugin" })
     public void testRemovalOfObsoleteBundleAndDriftConfig() throws Exception {
         // create the initial type that has bundle and drift definitions 

@@ -16,13 +16,6 @@ import org.rhq.test.AssertUtils;
 
 public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
 
-    @Override
-    protected void beforeMethod() throws Exception {
-        super.beforeMethod();
-
-        disableAfterClassStandIn = true;
-    }
-
     @Test(groups = { "plugin.metadata", "Metrics.NewPlugin" })
     void registerMetricsPlugin() throws Exception {
         createPlugin("metric-test-plugin", "1.0", "plugin_v1.xml");

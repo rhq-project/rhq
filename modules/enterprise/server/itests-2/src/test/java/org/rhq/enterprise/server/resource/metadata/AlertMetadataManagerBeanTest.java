@@ -41,6 +41,12 @@ public class AlertMetadataManagerBeanTest extends MetadataBeanTest {
         assertEquals("Alert templates should have been deleted.", 0, templates.size());
     }
 
+    // this needs to be the last test executed in the class, it does cleanup
+    @Test(priority = 10, alwaysRun = true, dependsOnGroups = { "Alerts.UpgradePlugin" })
+    public void afterClassWorkTest() throws Exception {
+        afterClassWork();
+    }
+
     void createAlertTemplate(String name, String resourceTypeName, String pluginName) throws Exception {
         SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
         ResourceTypeManagerLocal resourceTypeMgr = LookupUtil.getResourceTypeManager();

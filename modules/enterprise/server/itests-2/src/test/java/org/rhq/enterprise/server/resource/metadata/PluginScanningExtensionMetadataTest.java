@@ -56,8 +56,6 @@ public class PluginScanningExtensionMetadataTest extends MetadataBeanTest {
     protected void beforeMethod() throws Exception {
         super.beforeMethod();
 
-        preparePluginScannerService();
-
         subjectMgr = LookupUtil.getSubjectManager();
         resourceTypeMgr = LookupUtil.getResourceTypeManager();
 
@@ -79,8 +77,6 @@ public class PluginScanningExtensionMetadataTest extends MetadataBeanTest {
             }
         }
         createdJarFiles.clear();
-
-        unpreparePluginScannerService();
 
         super.afterMethod();
     }
@@ -110,7 +106,7 @@ public class PluginScanningExtensionMetadataTest extends MetadataBeanTest {
     private void registerParentPluginV1() throws Exception {
         // register the plugin, load the new type and test to make sure its what we expect
         createdJarFiles.add(createPluginJarFile("parent-plugin.jar", "parent_plugin_v1.xml"));
-        this.pluginScanner.startDeployment(); // first time we need to scan so call startDeployment which will call scanAndRegister
+        getPluginScannerService().startDeployment(); // first time we need to scan so call startDeployment which will call scanAndRegister
         ResourceType resourceType = loadResourceTypeFully(TYPE_NAME_PARENT, PLUGIN_NAME_PARENT);
         assert resourceType.getName().equals(TYPE_NAME_PARENT);
         assert resourceType.getPlugin().equals(PLUGIN_NAME_PARENT);
@@ -120,7 +116,7 @@ public class PluginScanningExtensionMetadataTest extends MetadataBeanTest {
     private void registerChild1PluginV1() throws Exception {
         // register the plugin, load the new type and test to make sure its what we expect
         createdJarFiles.add(createPluginJarFile("child1-plugin.jar", "child1_plugin_v1.xml"));
-        this.pluginScanner.scanAndRegister();
+        getPluginScannerService().scanAndRegister();
         ResourceType resourceType = loadResourceTypeFully(TYPE_NAME_CHILD1, PLUGIN_NAME_CHILD1);
         assert resourceType.getName().equals(TYPE_NAME_CHILD1);
         assert resourceType.getPlugin().equals(PLUGIN_NAME_CHILD1);
@@ -137,7 +133,7 @@ public class PluginScanningExtensionMetadataTest extends MetadataBeanTest {
     private void registerChild2PluginV1() throws Exception {
         // register the plugin, load the new type and test to make sure its what we expect
         createdJarFiles.add(createPluginJarFile("child2-plugin.jar", "child2_plugin_v1.xml"));
-        this.pluginScanner.scanAndRegister();
+        getPluginScannerService().scanAndRegister();
         ResourceType resourceType = loadResourceTypeFully(TYPE_NAME_CHILD2, PLUGIN_NAME_CHILD2);
         assert resourceType.getName().equals(TYPE_NAME_CHILD2);
         assert resourceType.getPlugin().equals(PLUGIN_NAME_CHILD2);
@@ -147,7 +143,7 @@ public class PluginScanningExtensionMetadataTest extends MetadataBeanTest {
     private void registerParentPluginV2() throws Exception {
         // register the plugin, load the new type and test to make sure its what we expect
         createdJarFiles.add(createPluginJarFile("parent-plugin.jar", "parent_plugin_v2.xml"));
-        this.pluginScanner.scanAndRegister();
+        getPluginScannerService().scanAndRegister();
         ResourceType resourceType = loadResourceTypeFully(TYPE_NAME_PARENT, PLUGIN_NAME_PARENT);
         assert resourceType.getName().equals(TYPE_NAME_PARENT);
         assert resourceType.getPlugin().equals(PLUGIN_NAME_PARENT);

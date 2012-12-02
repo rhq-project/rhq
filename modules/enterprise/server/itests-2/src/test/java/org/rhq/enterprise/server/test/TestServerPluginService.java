@@ -46,7 +46,7 @@ public class TestServerPluginService extends ServerPluginService implements Test
 
     public TestServerPluginService() {
         // build the config at constructor time so tests have it even before the PC is initialized
-        File dir = new File(System.getProperty("java.io.tmpdir"), "test-server-plugins");
+        File dir = new File(System.getProperty("java.io.tmpdir") + "/rhq", this.getClass().getSimpleName());
         this.masterConfig = new MasterServerPluginContainerConfiguration(dir, dir, dir, null);
     }
 

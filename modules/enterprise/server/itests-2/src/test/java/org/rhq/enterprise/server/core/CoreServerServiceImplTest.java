@@ -531,7 +531,7 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
 
         @Override
         public File getJBossServerHomeDir() {
-            return new File(System.getProperty("java.io.tmpdir"), "CoreServerServiceImplTest");
+            return getTempDir();
         }
 
         @Override

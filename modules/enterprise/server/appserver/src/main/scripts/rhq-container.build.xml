@@ -567,6 +567,12 @@ rhq.autoinstall.public-endpoint-address=
 #############################################
 # Cassandra cluster configuration settings
 #############################################
+# The username RHQ will use to authenticate against Cassandra.
+rhq.cassandra.username=${rhq.cassandra.username}
+
+# The password RHQ will use to authenticate against Cassandra.
+rhq.cassandra.password=${rhq.cassandra.password}
+
 # A comma-delimited list of hostnames on which Cassandra will run. Cassandra
 # nodes use this list to discover other nodes and learn about the cluster
 # topology.

@@ -27,6 +27,7 @@ package org.rhq.server.metrics;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.SimpleAuthInfoProvider;
 
 import org.joda.time.DateTime;
 import org.testng.annotations.AfterClass;
@@ -48,10 +49,17 @@ public class CassandraIntegrationTest {
     private DateTimeService dateTimeService;
 
     @BeforeClass
-    @DeployCluster
+    @DeployCluster(numNodes = 2)
     public void deployCluster() throws Exception {
         dateTimeService = new DateTimeService();
-        Cluster cluster = Cluster.builder().addContactPoints("127.0.0.1", "127.0.0.2").build();
+
+        SimpleAuthInfoProvider authInfoProvider = new SimpleAuthInfoProvider();
+        authInfoProvider.add("username", "rhqadmin").add("password", "rhqadmin");
+
+        Cluster cluster = Cluster.builder()
+            .addContactPoints("127.0.0.1", "127.0.0.2")
+            .withAuthInfoProvider(authInfoProvider)
+            .build();
         session = cluster.connect("rhq");
     }
 

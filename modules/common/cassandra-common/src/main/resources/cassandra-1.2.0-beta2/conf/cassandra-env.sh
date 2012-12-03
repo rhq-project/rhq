@@ -145,6 +145,8 @@ JMX_PORT="@@jmx.port@@"
 # starting cassandra.
 
 JVM_EXTRA_OPTS="@@cassandra.ring.delay.property@@@@cassandra.ring.delay@@"
+JVM_EXTRA_OPTS="$JVM_EXTRA_OPTS -Dpasswd.properties=@@rhq.cassandra.password.properties.file@@"
+JVM_EXTRA_OPTS="$JVM_EXTRA_OPTS -Daccess.properties=@@rhq.cassandra.access.properties.file@@"
 
 # enable assertions.  disabling this in production will give a modest
 # performance benefit (around 5%).

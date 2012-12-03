@@ -220,7 +220,8 @@ public class BootstrapDeployer {
         ProcessExecution cliExe = ProcessExecutionUtility.createProcessExecution(script);
         cliExe.setWaitForCompletion(30000L);
         cliExe.setCaptureOutput(true);
-        cliExe.setArguments(asList("-3", "--debug", "-f", dbsetupFile.getAbsolutePath()));
+        cliExe.setArguments(asList("-3", "--debug", "-u", "rhqadmin", "-p", "rhqadmin", "-f",
+            dbsetupFile.getAbsolutePath()));
 
         ProcessExecutionResults results = systemInfo.executeProcess(cliExe);
         String output = results.getCapturedOutput();

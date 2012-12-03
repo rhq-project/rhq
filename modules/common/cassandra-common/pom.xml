@@ -121,6 +121,10 @@
                 <property name="cassandra.distro.filename" value="cassandra.zip"/>
                 <property name="cassandra.distro.zip"
                           value="${project.build.outputDirectory}/${cassandra.distro.filename}"/>
+                <copy file="${settings.localRepository}/org/rhq/rhq-cassandra-auth/${project.version}/rhq-cassandra-auth-${project.version}.jar"
+                      todir="${cassandra.dir}/lib"/>
+                <move file="${project.build.outputDirectory}/passwd.properties" todir="${cassandra.dir}/conf"/>
+                <move file="${project.build.outputDirectory}/access.properties" todir="${cassandra.dir}/conf"/>
                 <zip basedir="${cassandra.dir}" destfile="${cassandra.distro.zip}"/>
                 <delete dir="${cassandra.dir}"/>
                 <zip basedir="${project.build.outputDirectory}"

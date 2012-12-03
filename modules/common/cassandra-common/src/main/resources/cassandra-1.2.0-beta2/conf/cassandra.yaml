@@ -54,10 +54,10 @@ max_hints_delivery_threads: 2
 # populate_io_cache_on_flush: false
 
 # authentication backend, implementing IAuthenticator; used to identify users
-authenticator: org.apache.cassandra.auth.AllowAllAuthenticator
+authenticator: @@rhq.cassandra.authenticator@@
 
 # authorization backend, implementing IAuthority; used to limit access/provide permissions
-authority: org.apache.cassandra.auth.AllowAllAuthority
+authority: @@rhq.cassandra.authority@@
 
 # The partitioner is responsible for distributing rows (by key) across
 # nodes in the cluster.  Any IPartitioner may be used, including your

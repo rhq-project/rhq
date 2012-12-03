@@ -41,9 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Session;
-
 import org.joda.time.DateTime;
 import org.joda.time.Hours;
 import org.testng.annotations.BeforeClass;
@@ -61,15 +58,13 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
     private final long MINUTE = 60 * SECOND;
 
-    private Session session;
-
     private MetricsDAO dao;
 
     @BeforeClass
     public void initDAO() throws Exception {
-        Cluster cluster = Cluster.builder().addContactPoints("127.0.0.1", "127.0.0.2").build();
-        session = cluster.connect("rhq");
-
+//        Cluster cluster = Cluster.builder().addContactPoints("127.0.0.1", "127.0.0.2").build();
+//        session = cluster.connect("rhq");
+//
         dao = new MetricsDAO(session);
     }
 

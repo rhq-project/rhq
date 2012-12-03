@@ -86,6 +86,8 @@ public class CassandraClusterManager implements IInvokedMethodListener {
         DeploymentOptions deploymentOptions = new DeploymentOptions();
         deploymentOptions.setClusterDir(clusterDir.getAbsolutePath());
         deploymentOptions.setNumNodes(numNodes);
+        deploymentOptions.setUsername(annotation.username());
+        deploymentOptions.setPassword(annotation.password());
         try {
             deploymentOptions.load();
         } catch (IOException e) {

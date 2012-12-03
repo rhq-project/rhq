@@ -144,6 +144,16 @@
                         defaultValue="../conf/access.properties"
                         type="file"/>
 
+    <rhq:input-property name="rhq.cassandra.username"
+                        description="The username with which to authenticate requests to Cassandra."
+                        required="true"
+                        type="string"/>
+
+    <rhq:input-property name="rhq.cassandra.password"
+                        description="The password with which to authenticate requests to Cassandra."
+                        required="true"
+                        type="string"/>
+
     <rhq:deployment-unit name="cassandra" preinstallTarget="pre-install" postinstallTarget="post-install">
 <!--
       <rhq:file name="dbsetup.script" destinationFile="scripts/dbsetup.script" replace="true"/>
@@ -158,6 +168,9 @@
           </rhq:fileset>
           <rhq:fileset dir="conf">
             <include name="log4j-server.properties"/>
+          </rhq:fileset>
+          <rhq:fileset dir="conf">
+            <include name="passwd.properties"/>
           </rhq:fileset>
 <!--
           <rhq:fileset dir="scripts">

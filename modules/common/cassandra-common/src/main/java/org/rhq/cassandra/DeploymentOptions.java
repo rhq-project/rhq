@@ -51,6 +51,8 @@ public class DeploymentOptions {
     private Integer numTokens;
     private Integer nativeTransportPort;
     private Integer nativeTransportMaxThreads;
+    private String username;
+    private String password;
 
     public DeploymentOptions() {
     }
@@ -98,6 +100,8 @@ public class DeploymentOptions {
         setNativeTransportPort(Integer.valueOf(loadProperty("rhq.cassandra.native-transport-port", properties)));
         setNativeTransportMaxThreads(Integer.valueOf(loadProperty("rhq.casandra.native-transport-max-threads",
             properties)));
+        setUsername(loadProperty("rhq.cassandra.username", properties));
+        setPassword(loadProperty("rhq.cassandra.password", properties));
     }
 
     private String loadProperty(String key, Properties properties) {
@@ -225,6 +229,26 @@ public class DeploymentOptions {
     public void setNativeTransportMaxThreads(int numThreads) {
         if (nativeTransportMaxThreads == null) {
             nativeTransportMaxThreads = numThreads;
+        }
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        if (this.username == null) {
+            this.username = username;
+        }
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        if (this.password == null) {
+            this.password = password;
         }
     }
 

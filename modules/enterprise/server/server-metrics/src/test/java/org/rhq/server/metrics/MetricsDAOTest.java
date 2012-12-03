@@ -62,9 +62,6 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
     @BeforeClass
     public void initDAO() throws Exception {
-//        Cluster cluster = Cluster.builder().addContactPoints("127.0.0.1", "127.0.0.2").build();
-//        session = cluster.connect("rhq");
-//
         dao = new MetricsDAO(session);
     }
 

@@ -57,4 +57,14 @@ public @interface DeployCluster {
      */
     boolean waitForSchemaAgreement() default true;
 
+    /**
+     * @return The username with which to authenticate against Cassandra
+     */
+    String username() default "rhqadmin";
+
+    /**
+     * @return The password with which to authenticate against Cassandra
+     */
+    String password() default "rhqadmin";
+
 }

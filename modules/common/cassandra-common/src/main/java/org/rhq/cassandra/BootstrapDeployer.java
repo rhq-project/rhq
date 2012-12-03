@@ -88,6 +88,7 @@ public class BootstrapDeployer {
         File bundleDir = null;
 
         try {
+            deploymentOptions.load();
             bundleZipeFile = unpackBundleZipFile();
             bundleDir = unpackBundle(bundleZipeFile);
 
@@ -100,7 +101,7 @@ public class BootstrapDeployer {
                 Properties props = new Properties();
                 props.put("cluster.name", "rhq");
                 props.put("cluster.dir", clusterDir.getAbsolutePath());
-                props.put("auto.bootstrap", "false");
+                props.put("auto.bootstrap", deploymentOptions.isAutoDeploy());
                 props.put("data.dir", "data");
                 props.put("commitlog.dir", "commit_log");
                 props.put("log.dir", "logs");
@@ -115,6 +116,8 @@ public class BootstrapDeployer {
                 props.put("listen.address", address);
                 props.put("rpc.address", address);
                 props.put("logging.level", deploymentOptions.getLoggingLevel());
+                props.put("rhq.cassandra.username", deploymentOptions.getUsername());
+                props.put("rhq.cassandra.password", deploymentOptions.getPassword());
 
                 if (deploymentOptions.getRingDelay() != null) {
                     props.put("cassandra.ring.delay.property", "-Dcassandra.ring_delay_ms=");

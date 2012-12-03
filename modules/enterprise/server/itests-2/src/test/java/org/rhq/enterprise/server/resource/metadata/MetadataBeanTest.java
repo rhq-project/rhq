@@ -197,6 +197,7 @@ public class MetadataBeanTest extends AbstractEJB3Test {
 
         List<ResourceType> resourceTypes = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(),
             criteria);
+        assertEquals("too many types!", 1, resourceTypes.size());
         ResourceType resourceType = resourceTypes.get(0);
         Set<String> expectedSet = new HashSet<String>(expected);
         List<String> missing = new ArrayList<String>();

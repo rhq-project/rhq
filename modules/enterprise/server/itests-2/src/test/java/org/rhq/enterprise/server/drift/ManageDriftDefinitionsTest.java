@@ -63,9 +63,9 @@ import org.rhq.test.AssertUtils;
 @Test
 public class ManageDriftDefinitionsTest extends AbstractDriftServerTest {
 
-    private final String DRIFT_NOT_SUPPORTED_TYPE = getClass().getSimpleName() + "DRIFT_NOT_SUPPORTED_RESOURCE_TYPE";
+    private final String DRIFT_NOT_SUPPORTED_TYPE = NAME_PREFIX + "DRIFT_NOT_SUPPORTED_RESOURCE_TYPE";
 
-    private final String DRIFT_NOT_SUPPORTED_RESOURCE = getClass().getSimpleName() + "DRIFT_NOT_SUPPORTED_RESOURCE";
+    private final String DRIFT_NOT_SUPPORTED_RESOURCE = NAME_PREFIX + "DRIFT_NOT_SUPPORTED_RESOURCE";
 
     private DriftManagerLocal driftMgr;
 
@@ -94,7 +94,7 @@ public class ManageDriftDefinitionsTest extends AbstractDriftServerTest {
     public void createDefinitionFromUnpinnedTemplate() {
         // first create a template
         final DriftDefinition templateDef = new DriftDefinition(new Configuration());
-        templateDef.setName("test_createUnpinnedDefinition");
+        templateDef.setName(NAME_PREFIX + "createUnpinnedDefinition");
         templateDef.setEnabled(true);
         templateDef.setDriftHandlingMode(normal);
         templateDef.setInterval(2400L);
@@ -184,8 +184,8 @@ public class ManageDriftDefinitionsTest extends AbstractDriftServerTest {
         final JPADriftChangeSet changeSet0 = new JPADriftChangeSet(null, 0, COVERAGE, null);
         changeSet0.setDriftHandlingMode(DriftConfigurationDefinition.DriftHandlingMode.normal);
 
-        final JPADriftFile driftFile1 = new JPADriftFile("a1b2c3");
-        final JPADriftFile driftFile2 = new JPADriftFile("1a2b3c");
+        final JPADriftFile driftFile1 = new JPADriftFile(NAME_PREFIX + "a1b2c3");
+        final JPADriftFile driftFile2 = new JPADriftFile(NAME_PREFIX + "1a2b3c");
 
         JPADrift drift1 = new JPADrift(changeSet0, "drift.1", FILE_ADDED, null, driftFile1);
         JPADrift drift2 = new JPADrift(changeSet0, "drift.2", FILE_ADDED, null, driftFile2);
@@ -196,7 +196,7 @@ public class ManageDriftDefinitionsTest extends AbstractDriftServerTest {
 
         // create the template
         final DriftDefinition templateDef = new DriftDefinition(new Configuration());
-        templateDef.setName("test_createUnpinnedDefinition");
+        templateDef.setName(NAME_PREFIX + "createUnpinnedDefinition");
         templateDef.setEnabled(true);
         templateDef.setDriftHandlingMode(normal);
         templateDef.setInterval(2400L);
@@ -288,7 +288,7 @@ public class ManageDriftDefinitionsTest extends AbstractDriftServerTest {
     public void unpinDefinition() {
         // First create the template
         final DriftDefinition templateDef = new DriftDefinition(new Configuration());
-        templateDef.setName("test_unpin_def_template");
+        templateDef.setName(NAME_PREFIX + "unpin_def_template");
         templateDef.setEnabled(true);
         templateDef.setDriftHandlingMode(normal);
         templateDef.setInterval(2400L);
@@ -299,7 +299,7 @@ public class ManageDriftDefinitionsTest extends AbstractDriftServerTest {
 
         // First create the definition
         DriftDefinition definition = template.createDefinition();
-        definition.setName("test_unpin");
+        definition.setName(NAME_PREFIX + "unpin");
         definition.setEnabled(true);
         definition.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
         definition.setComplianceStatus(DriftComplianceStatus.OUT_OF_COMPLIANCE_DRIFT);

@@ -53,13 +53,15 @@ import org.rhq.enterprise.server.util.LookupUtil;
 @Test(groups = { "plugin.metadata" })
 public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
 
+    private static final String PLUGIN_NAME = "ResourceMetadataManagerBeanTestPlugin";
+
     @Test(groups = { "plugin.resource.metadata.test", "NewPlugin" })
     public void testRemovalOfObsoleteBundleAndDriftConfig() throws Exception {
         // create the initial type that has bundle and drift definitions 
         createPlugin("test-plugin.jar", "1.0", "remove_bundle_drift_config_v1.xml");
 
         // make sure the drift definition was persisted, and remember the type
-        ResourceType type1 = assertResourceTypeAssociationEquals("ServerWithBundleAndDriftConfig", "TestPlugin",
+        ResourceType type1 = assertResourceTypeAssociationEquals("ServerWithBundleAndDriftConfig", PLUGIN_NAME,
             "driftDefinitionTemplates", asList("drift1"));
 
         // sanity check, make sure our queries work and that we did persist these things
@@ -85,8 +87,6 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
             getTransactionManager().commit();
         }
 
-        // make sure the bundle config was also persisted
-        // NOTE: WHY DOES THIS WORK? I DIDN'T ASK TO FETCH IT AND IT IS MARKED AS LAZY LOAD
         assertNotNull(type1.getResourceTypeBundleConfiguration());
         assertEquals("destdir1", type1.getResourceTypeBundleConfiguration().getBundleDestinationBaseDirectories()
             .iterator().next().getName());
@@ -139,14 +139,14 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
     @Test(dependsOnMethods = { "registerPlugin" }, groups = { "plugin.resource.metadata.test", "NewPlugin" })
     public void persistNewTypes() {
         List<String> newTypes = asList("ServerA", "ServerB");
-        assertTypesPersisted("Failed to persist new types", newTypes, "TestPlugin");
+        assertTypesPersisted("Failed to persist new types", newTypes, PLUGIN_NAME);
     }
 
     //    @Test(dependsOnMethods = {"persistNewTypes"}, groups = {"plugin.resource.metadata.test", "NewPlugin"})
     //    public void persistSubcategories() throws Exception {
     //        assertResourceTypeAssociationEquals(
     //            "ServerA",
-    //            "TestPlugin",
+    //            PLUGIN_NAME,
     //            "childSubCategories",
     //            asList("Resources", "Applications")
     //        );
@@ -154,29 +154,30 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
 
     @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.resource.metadata.test", "NewPlugin" })
     public void persistMeasurementDefinitions() throws Exception {
-        assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "metricDefinitions",
+        assertResourceTypeAssociationEquals("ServerA", PLUGIN_NAME, "metricDefinitions",
             asList("metric1", "metric2", "rhq.availability"));
     }
 
     @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.resource.metadata.test", "NewPlugin" })
     public void persistEventDefinitions() throws Exception {
-        assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "eventDefinitions",
+        assertResourceTypeAssociationEquals("ServerA", PLUGIN_NAME, "eventDefinitions",
             asList("logAEntry", "logBEntry"));
     }
 
     @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.resource.metadata.test", "NewPlugin" })
     public void persistOperationDefinitions() throws Exception {
-        assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "operationDefinitions", asList("start", "stop"));
+        assertResourceTypeAssociationEquals("ServerA", PLUGIN_NAME, "operationDefinitions", asList("start", "stop"));
     }
 
     @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.resource.metadata.test", "NewPlugin" })
     public void persistProcessScans() throws Exception {
-        assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "processScans", asList("serverA"));
+        assertResourceTypeAssociationEquals("ServerA", PLUGIN_NAME, "processScans", asList("serverA"));
     }
+
 
     @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.resource.metadata.test", "NewPlugin" })
     public void persistDriftDefinitionTemplates() throws Exception {
-        ResourceType type = assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "driftDefinitionTemplates",
+        ResourceType type = assertResourceTypeAssociationEquals("ServerA", PLUGIN_NAME, "driftDefinitionTemplates",
             asList("drift-pc", "drift-fs"));
 
         DriftDefinition driftDef = null;
@@ -216,7 +217,7 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
     @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.resource.metadata.test", "NewPlugin" })
     public void persistBundleTargetConfigurations() throws Exception {
         String resourceTypeName = "ServerA";
-        String plugin = "TestPlugin";
+        String plugin = PLUGIN_NAME;
 
         SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
         ResourceTypeManagerLocal resourceTypeMgr = LookupUtil.getResourceTypeManager();
@@ -227,6 +228,7 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         criteria.fetchBundleConfiguration(true);
         List<ResourceType> resourceTypes = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(),
             criteria);
+        assertEquals("too many types returned!", 1, resourceTypes.size());
         ResourceType resourceType = resourceTypes.get(0);
 
         ResourceTypeBundleConfiguration rtbc = resourceType.getResourceTypeBundleConfiguration();
@@ -250,7 +252,7 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
 
     @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.resource.metadata.test", "NewPlugin" })
     public void persistChildTypes() throws Exception {
-        assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "childResourceTypes", asList("Child1", "Child2"));
+        assertResourceTypeAssociationEquals("ServerA", PLUGIN_NAME, "childResourceTypes", asList("Child1", "Child2"));
     }
 
     @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.resource.metadata.test", "NewPlugin" })
@@ -260,7 +262,7 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
 
     @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.resource.metadata.test", "NewPlugin" })
     public void persistPackageTypes() throws Exception {
-        assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "packageTypes",
+        assertResourceTypeAssociationEquals("ServerA", PLUGIN_NAME, "packageTypes",
             asList("ServerA.Content.1", "ServerA.Content.2"));
     }
 
@@ -271,34 +273,34 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
 
     @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.resource.metadata.test", "UpgradePlugin" })
     public void upgradeOperationDefinitions() throws Exception {
-        assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "operationDefinitions",
+        assertResourceTypeAssociationEquals("ServerA", PLUGIN_NAME, "operationDefinitions",
             asList("start", "shutdown", "restart"));
     }
 
     @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.resource.metadata.test", "UpgradePlugin" })
     public void upgradeChildResources() throws Exception {
-        assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "childResourceTypes", asList("Child1", "Child3"));
+        assertResourceTypeAssociationEquals("ServerA", PLUGIN_NAME, "childResourceTypes", asList("Child1", "Child3"));
     }
 
     @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.resource.metadata.test", "UpgradePlugin" })
     public void upgradeParentTypeOfChild() throws Exception {
-        assertResourceTypeAssociationEquals("ServerB", "TestPlugin", "childResourceTypes", asList("Child2"));
+        assertResourceTypeAssociationEquals("ServerB", PLUGIN_NAME, "childResourceTypes", asList("Child2"));
     }
 
     @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.resource.metadata.test", "UpgradePlugin" })
     public void upgradeEventDefinitions() throws Exception {
-        assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "eventDefinitions",
+        assertResourceTypeAssociationEquals("ServerA", PLUGIN_NAME, "eventDefinitions",
             asList("logAEntry", "logCEntry"));
     }
 
     @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.resource.metadata.test", "UpgradePlugin" })
     public void upgradeProcessScans() throws Exception {
-        assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "processScans", asList("processA", "processB"));
+        assertResourceTypeAssociationEquals("ServerA", PLUGIN_NAME, "processScans", asList("processA", "processB"));
     }
 
     @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.resource.metadata.test", "UpgradePlugin" })
     public void upgradeDriftDefinitionTemplates() throws Exception {
-        ResourceType type = assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "driftDefinitionTemplates",
+        ResourceType type = assertResourceTypeAssociationEquals("ServerA", PLUGIN_NAME, "driftDefinitionTemplates",
             asList("drift-rc", "drift-mt"));
 
         DriftDefinition driftDef = null;
@@ -329,7 +331,7 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
     @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.resource.metadata.test", "UpgradePlugin" })
     public void upgradeBundleTargetConfigurations() throws Exception {
         String resourceTypeName = "ServerA";
-        String plugin = "TestPlugin";
+        String plugin = PLUGIN_NAME;
 
         SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
         ResourceTypeManagerLocal resourceTypeMgr = LookupUtil.getResourceTypeManager();
@@ -363,7 +365,7 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
 
     @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.resource.metadata.test", "UpgradePlugin" })
     public void upgradePackageTypes() throws Exception {
-        assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "packageTypes",
+        assertResourceTypeAssociationEquals("ServerA", PLUGIN_NAME, "packageTypes",
             asList("ServerA.Content.1", "ServerA.Content.3"));
     }
 
@@ -591,7 +593,7 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         String fetch = "fetch" + WordUtils.capitalize(propertyName);
         ResourceTypeCriteria criteria = new ResourceTypeCriteria();
         criteria.addFilterName(resourceTypeName);
-        criteria.addFilterPluginName("TestPlugin");
+        criteria.addFilterPluginName(PLUGIN_NAME);
         MethodUtils.invokeMethod(criteria, fetch, true);
 
         List<ResourceType> resourceTypes = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(),

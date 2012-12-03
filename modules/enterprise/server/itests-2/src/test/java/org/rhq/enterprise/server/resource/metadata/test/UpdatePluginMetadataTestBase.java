@@ -62,7 +62,7 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
 
     protected TestServerCommunicationsService agentServiceContainer;
 
-    protected static final String PLUGIN_NAME = "ResourceMetaDataManagerBeanTest"; // don't change this - our test descriptor .xml files use it as plugin name
+    protected static final String PLUGIN_NAME = "UpdatePluginMetadataTestBasePlugin"; // don't change this - our test descriptor .xml files use it as plugin name
     protected static final String AGENT_NAME = "-dummy agent-";
     protected static final String COMMON_PATH_PREFIX = "./test/metadata/";
 

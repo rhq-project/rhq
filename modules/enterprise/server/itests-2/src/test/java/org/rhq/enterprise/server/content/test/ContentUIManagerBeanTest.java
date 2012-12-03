@@ -268,12 +268,13 @@ public class ContentUIManagerBeanTest extends AbstractEJB3Test {
                     // contents into memory every time.
 
                     // destination once pulled from db
-                    String pulledFilename = System.getProperty("java.io.tmpdir") + "/"
-                        + this.getClass().getSimpleName()
-                        + "/pulled.jar";
-                    File retrieved = new File(pulledFilename);
+                    File tempDir = getTempDir();
+                    if (!tempDir.exists()) {
+                        assertTrue("Unable to mkdirs " + tempDir + " for test.", tempDir.mkdirs());
+                    }
+                    File retrieved = new File(tempDir, "pulled.jar");
                     if (retrieved.exists()) {
-                        assertTrue("Unable to delete " + pulledFilename + " for test cleanup.", retrieved.delete());
+                        assertTrue("Unable to delete " + retrieved.getPath() + " for test cleanup.", retrieved.delete());
                     }
 
                     //any jar should be fine. Use canned jar

@@ -38,6 +38,8 @@ import java.sql.Statement;
 import java.util.Collections;
 import java.util.List;
 
+import javax.ejb.EJB;
+
 import org.joda.time.DateTime;
 import org.joda.time.Hours;
 import org.testng.annotations.Test;
@@ -58,12 +60,21 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author John Sanda
  */
 public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
+
+    // Tests in this class are failing currently do to a system initialization problem.
+    // MeasurementDataManagerUtility looks up config settings from SystemManagerBean.
+    // SystemManagerBean is however failing in its getDriftServerPluginManager method on
+    // the call to LookupUtil.getServerPluginService(). An InstanceNotFoundException is
+    // thrown,
+    //
+    //     javax.management.InstanceNotFoundException: rhq:service=ServerPluginService
+    //
+    // Looks like the server plugin service is not getting deployed.
 
     //private final Log log = LogFactory.getLog(MeasurementDataManagerBeanTest.class);
 
@@ -99,9 +110,14 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
 
     private Subject overlord;
 
+    @EJB
+    private SubjectManagerLocal subjectManager;
+
+    @EJB
+    private MeasurementDataManagerLocal dataManager;
+
     @Override
     protected void beforeMethod() throws Exception {
-        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
         overlord = subjectManager.getOverlord();
 
         createInventory();
@@ -130,7 +146,6 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
         report.addData(new MeasurementDataNumeric(buckets.get(59) + 20, request, 5.5));
         report.addData(new MeasurementDataNumeric(buckets.get(59) + 30, request, 6.6));
 
-        MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
         dataManager.mergeMeasurementReport(report);
 
         List<MeasurementDataNumericHighLowComposite> actualData = findDataForContext(overlord,
@@ -254,7 +269,7 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
         em.createQuery("delete from MeasurementDefinition " +
             "where dataType = :dataType and " +
             "name = :name")
-            .setParameter("dataType", DYNAMIC)
+            .setParameter("dataType", MEASUREMENT)
             .setParameter("name", DYNAMIC_DEF_NAME)
             .executeUpdate();
     }
@@ -291,7 +306,6 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
         MeasurementReport dummyReport = new MeasurementReport();
         dummyReport.addData(new MeasurementDataNumeric(now.getMillis(), -1, 0.0));
 
-        MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
         dataManager.mergeMeasurementReport(dummyReport);
     }
 
@@ -380,7 +394,6 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
 
     private List<MeasurementDataNumericHighLowComposite> findDataForContext(Subject subject, EntityContext context,
         MeasurementSchedule schedule, long beginTime, long endTime) {
-        MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
         List<List<MeasurementDataNumericHighLowComposite>> data = dataManager.findDataForContext(subject, context,
             schedule.getDefinition().getId(), beginTime, endTime, 60);
 

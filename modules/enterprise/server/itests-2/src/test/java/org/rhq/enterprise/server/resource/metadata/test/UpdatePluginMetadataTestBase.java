@@ -75,6 +75,7 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
         agentServiceContainer = prepareForTestAgents();
         prepareMockAgentServiceContainer();
         prepareScheduler();
+        preparePluginScannerService();
 
         pluginMgr = LookupUtil.getPluginManager();
         resourceTypeManager = LookupUtil.getResourceTypeManager();
@@ -85,6 +86,7 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
     protected void afterMethod() throws Exception {
         cleanupTest();
 
+        unpreparePluginScannerService();
         unprepareScheduler();
         unprepareForTestAgents();
     }

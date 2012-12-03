@@ -55,9 +55,7 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         subjectMgr = LookupUtil.getSubjectManager();
         pluginMgr = LookupUtil.getPluginManager();
 
-        FileUtil.purge(new File(getPluginWorkDir()), true);
-
-        preparePluginScannerService();
+        FileUtil.purge(new File(getPluginScannerService().getAgentPluginDir()), true);
     }
 
     @Override
@@ -88,7 +86,7 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         createPluginJarFile("test-plugin3.jar", "plugin_3.xml");
         createPluginJarFile("test-plugin3.1.jar", "plugin_3.1.xml");
 
-        pluginScanner.startDeployment();
+        getPluginScannerService().startDeployment();
     }
 
     @Test(dependsOnMethods = { "registerPlugins" })

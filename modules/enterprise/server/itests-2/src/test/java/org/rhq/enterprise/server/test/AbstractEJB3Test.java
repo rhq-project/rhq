@@ -58,6 +58,7 @@ import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
+import org.rhq.enterprise.server.core.plugin.PluginDeploymentScanner;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceMBean;
@@ -292,9 +293,10 @@ public abstract class AbstractEJB3Test extends Arquillian {
         EnterpriseArchive testEar = ShrinkWrap.create(EnterpriseArchive.class, "rhq.ear");
         EnterpriseArchive rhqEar = earResolver.artifact("org.rhq:rhq-enterprise-server-ear:ear:4.6.0-SNAPSHOT")
             .resolveAs(EnterpriseArchive.class).iterator().next();
-        // merge rhq.ear into testEar but include only the EJB jars, the SAR, and the supporting libraries
-        testEar = testEar.merge(rhqEar,
-            Filters.include("/lib.*|/rhq.*ejb3\\.jar.*|/rhq-enterprise-server-services-sar.*"));
+        // merge rhq.ear into testEar but include only the EJB jars and the supporting libraries. Note that we
+        // don't include the services sar because tests are responsible for prepare/unprepare of all required services,
+        // we don't want the production services performig any unexpected work. 
+        testEar = testEar.merge(rhqEar, Filters.include("/lib.*|/rhq.*ejb3\\.jar.*"));
         // remove startup beans and shutdown listeners, we don't want this to be a full server deployment. The tests
         // start/stop what they need, typically with test services or mocks.
         testEar.delete(ArchivePaths
@@ -932,12 +934,33 @@ public abstract class AbstractEJB3Test extends Arquillian {
     }
 
     /**
+     * Prepares a test deployment scanner with the following characteristics<br/>.
+     * -  start() is called but startDeployment() is not called.<br/>
+     * - agentPluginDir is set to getTempDir() + "/plugins"<br/>
+     * - serverPluginDir is set to null (no scanning for server plugins)<br/>
+     * - scanPeriod is set to 9999999 (basically prevent autoscan)<br/>
+     */
+    protected PluginDeploymentScannerMBean preparePluginScannerService() {
+        if (null != pluginScannerService) {
+            return pluginScannerService;
+        }
+
+        PluginDeploymentScanner scanner = new PluginDeploymentScanner();
+        String pluginDirPath = getTempDir() + "/plugins";
+        scanner.setAgentPluginDir(pluginDirPath); // we don't want to scan for these
+        scanner.setServerPluginDir(null); // we don't want to scan for these
+        scanner.setScanPeriod("9999999"); // we want to manually scan - don't allow for auto-scan to happen        
+
+        return preparePluginScannerService(scanner);
+    }
+
+    /**
      * Note that the standard plugin scanner service is deployed automatically with the test rhq ear,
      * this is only necessary if you want a custom service.
      *  
      * @param scannerService
      */
-    public void preparePluginScannerService(PluginDeploymentScannerMBean scannerService) {
+    public PluginDeploymentScannerMBean preparePluginScannerService(PluginDeploymentScannerMBean scannerService) {
         try {
             MBeanServer mbs = getPlatformMBeanServer();
             if (mbs.isRegistered(PluginDeploymentScannerMBean.OBJECT_NAME)) {
@@ -948,6 +971,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
             mbs.registerMBean(scannerService, PluginDeploymentScannerMBean.OBJECT_NAME);
             pluginScannerService = scannerService;
             pluginScannerService.start();
+
+            return pluginScannerService;
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -998,7 +1023,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
      * @throws Exception
      */
     protected void writeObjects(String filename, Object... objects) throws Exception {
-        File file = new File(System.getProperty("java.io.tmpdir"), this.getClass().getName() + "-" + filename);
+        File file = new File(getTempDir(), "-" + filename);
         file.delete();
         ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file));
         for (Object o : objects) {
@@ -1021,7 +1046,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
         ObjectInputStream ois = null;
 
         try {
-            File file = new File(System.getProperty("java.io.tmpdir"), this.getClass().getName() + "-" + filename);
+            File file = new File(getTempDir(), "-" + filename);
             ois = new ObjectInputStream(new FileInputStream(file));
             for (int i = 0; i < numObjects; ++i) {
                 result.add(ois.readObject());
@@ -1040,8 +1065,15 @@ public abstract class AbstractEJB3Test extends Arquillian {
      * @return true if deleted, false otherwise. 
      */
     protected boolean deleteObjects(String filename) {
-        File file = new File(System.getProperty("java.io.tmpdir"), this.getClass().getName() + "-" + filename);
+        File file = new File(getTempDir(), "-" + filename);
         return file.delete();
+    }
+
+    /**
+     * @return a temp directory for testing that is specific to this test class.
+     */
+    protected File getTempDir() {
+        return new File(System.getProperty("java.io.tmpdir") + "/rhq", this.getClass().getSimpleName());
     }
 
 }

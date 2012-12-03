@@ -111,7 +111,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
     @Test
     public void testStoreChangeSet() throws Exception {
-        File rootDir = new File(System.getProperty("java.io.tmpdir"));
+        File rootDir = getTempDir();
         File changeSetsDir = new File(rootDir, "changesets");
         deleteDirectory(changeSetsDir);
         changeSetsDir.mkdirs();

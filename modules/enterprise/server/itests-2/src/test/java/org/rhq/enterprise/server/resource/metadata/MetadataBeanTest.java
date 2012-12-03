@@ -39,7 +39,6 @@ import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.bundle.TestBundleServerPluginService;
-import org.rhq.enterprise.server.core.plugin.PluginDeploymentScanner;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob;
 import org.rhq.enterprise.server.scheduler.jobs.PurgeResourceTypesJob;
@@ -47,8 +46,6 @@ import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class MetadataBeanTest extends AbstractEJB3Test {
-
-    protected PluginDeploymentScanner pluginScanner;
 
     private List<Integer> pluginIds = new ArrayList<Integer>();
 
@@ -81,6 +78,7 @@ public class MetadataBeanTest extends AbstractEJB3Test {
         prepareCustomServerPluginService(bundleService);
         bundleService.startMasterPluginContainerWithoutSchedulingJobs();
         prepareScheduler();
+        preparePluginScannerService();
     }
 
     /**
@@ -91,6 +89,7 @@ public class MetadataBeanTest extends AbstractEJB3Test {
     @Override
     protected void afterMethod() throws Exception {
 
+        unpreparePluginScannerService();
         unprepareServerPluginService();
         unprepareScheduler();
     }
@@ -145,7 +144,7 @@ public class MetadataBeanTest extends AbstractEJB3Test {
     protected void createPlugin(String pluginFileName, String version, String descriptorFileName) throws Exception {
         URL descriptorURL = getDescriptorURL(descriptorFileName);
         PluginDescriptor pluginDescriptor = loadPluginDescriptor(descriptorURL);
-        String pluginFilePath = getPluginWorkDir() + "/" + pluginFileName + ".jar";
+        String pluginFilePath = getPluginScannerService().getAgentPluginDir() + "/" + pluginFileName + ".jar";
 
         Plugin plugin = new Plugin(pluginDescriptor.getName(), pluginFilePath);
         plugin.setDisplayName(pluginDescriptor.getName());
@@ -162,35 +161,9 @@ public class MetadataBeanTest extends AbstractEJB3Test {
         pluginIds.add(plugin.getId());
     }
 
-    protected void preparePluginScannerService() {
-        if (this.pluginScanner == null) {
-            this.pluginScanner = new PluginDeploymentScanner();
-
-            String pluginDirPath = null;
-            try {
-                pluginDirPath = getPluginWorkDir();
-            } catch (Exception e) {
-                throw new RuntimeException("Cannot determine where to put the plugin jar files", e);
-            }
-            this.pluginScanner.setAgentPluginDir(pluginDirPath); // we don't want to scan for these
-            this.pluginScanner.setServerPluginDir(null); // we don't want to scan for these
-            this.pluginScanner.setScanPeriod("9999999"); // we want to manually scan - don't allow for auto-scan to happen
-        }
-
-        preparePluginScannerService(this.pluginScanner);
-    }
-
     private URL getDescriptorURL(String descriptor) {
         String dir = getClass().getSimpleName();
         return getClass().getResource(dir + "/" + descriptor);
-    }
-
-    protected String getPluginWorkDir() throws Exception {
-        return getCurrentWorkingDir() + "/" + this.getClass().getSimpleName() + "/" + "plugins";
-    }
-
-    protected String getCurrentWorkingDir() throws Exception {
-        return System.getProperty("java.io.tmpdir");
     }
 
     String getAmpsVersion(PluginDescriptor pluginDescriptor) {
@@ -283,7 +256,7 @@ public class MetadataBeanTest extends AbstractEJB3Test {
         InputStream in = null;
 
         try {
-            String pluginDirPath = getPluginWorkDir();
+            String pluginDirPath = getPluginScannerService().getAgentPluginDir();
             File pluginDir = new File(pluginDirPath);
             pluginDir.mkdirs();
             File jarFile = new File(pluginDir, jarName);

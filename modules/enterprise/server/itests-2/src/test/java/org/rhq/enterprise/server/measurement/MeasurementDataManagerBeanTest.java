@@ -57,6 +57,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.drift.DriftServerPluginService;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
@@ -65,16 +66,6 @@ import org.rhq.enterprise.server.test.TransactionCallback;
  * @author John Sanda
  */
 public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
-
-    // Tests in this class are failing currently do to a system initialization problem.
-    // MeasurementDataManagerUtility looks up config settings from SystemManagerBean.
-    // SystemManagerBean is however failing in its getDriftServerPluginManager method on
-    // the call to LookupUtil.getServerPluginService(). An InstanceNotFoundException is
-    // thrown,
-    //
-    //     javax.management.InstanceNotFoundException: rhq:service=ServerPluginService
-    //
-    // Looks like the server plugin service is not getting deployed.
 
     //private final Log log = LogFactory.getLog(MeasurementDataManagerBeanTest.class);
 
@@ -120,13 +111,21 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
     protected void beforeMethod() throws Exception {
         overlord = subjectManager.getOverlord();
 
+        // MeasurementDataManagerUtility looks up config settings from SystemManagerBean.
+        // SystemManagerBean.getDriftServerPluginManager method requires drift server plugin. 
+        DriftServerPluginService driftServerPluginService = new DriftServerPluginService();
+        prepareCustomServerPluginService(driftServerPluginService);
+        driftServerPluginService.masterConfig.getPluginDirectory().mkdirs();
+
         createInventory();
         insertDummyReport();
     }
 
     @Override
-    protected void afterMethod() {
+    protected void afterMethod() throws Exception {
         purgeDB();
+
+        unprepareServerPluginService();
     }
 
     @Test(enabled = ENABLED)

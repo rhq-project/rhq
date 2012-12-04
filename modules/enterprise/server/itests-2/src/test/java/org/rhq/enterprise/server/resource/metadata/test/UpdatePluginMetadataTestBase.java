@@ -50,6 +50,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.MessageDigestGenerator;
+import org.rhq.enterprise.server.drift.DriftServerPluginService;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
@@ -76,6 +77,11 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
         prepareMockAgentServiceContainer();
         prepareScheduler();
         preparePluginScannerService();
+        // we perform lookups of config settings from SystemManagerBean.
+        // SystemManagerBean.getDriftServerPluginManager method requires drift server plugin. 
+        DriftServerPluginService driftServerPluginService = new DriftServerPluginService();
+        prepareCustomServerPluginService(driftServerPluginService);
+        driftServerPluginService.masterConfig.getPluginDirectory().mkdirs();
 
         pluginMgr = LookupUtil.getPluginManager();
         resourceTypeManager = LookupUtil.getResourceTypeManager();
@@ -86,6 +92,7 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
     protected void afterMethod() throws Exception {
         cleanupTest();
 
+        unprepareServerPluginService();
         unpreparePluginScannerService();
         unprepareScheduler();
         unprepareForTestAgents();

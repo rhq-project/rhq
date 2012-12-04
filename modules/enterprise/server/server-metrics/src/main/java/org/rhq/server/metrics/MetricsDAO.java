@@ -29,6 +29,7 @@ import static com.datastax.driver.core.utils.querybuilder.Clause.eq;
 import static com.datastax.driver.core.utils.querybuilder.Clause.gte;
 import static com.datastax.driver.core.utils.querybuilder.Clause.lt;
 import static com.datastax.driver.core.utils.querybuilder.QueryBuilder.select;
+import static org.rhq.core.util.StringUtil.listToString;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -186,6 +187,45 @@ public class MetricsDAO {
             );
             List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
             ResultSetMapper<RawNumericMetric> resultSetMapper = new RawNumericMetricMapper(true);
+            for (Row row : resultSet) {
+                metrics.add(resultSetMapper.map(row));
+            }
+            return metrics;
+        } catch (NoHostAvailableException e) {
+            throw new CQLException(e);
+        }
+    }
+
+    public List<RawNumericMetric> findRawMetrics(List<Integer> scheduleIds, DateTime startTime, DateTime endTime) {
+        try {
+            // TODO investigate possible bug in datastax driver for binding lists as parameters
+            // I was not able to get the below query working by directly binding the List
+            // object. From a quick glance at the driver code, it looks like it might not
+            // yet be properly supported in which case we need to report a bug.
+            //
+            // jsanda
+
+//            String cql = "SELECT schedule_id, time, value FROM " + RAW_METRICS_TABLE +
+//                " WHERE schedule_id IN (?) AND time >= ? AND time < ? ORDER BY time";
+//            PreparedStatement statement = session.prepare(cql);
+//            BoundStatement boundStatement = statement.bind(scheduleIds, startTime.toDate(), endTime.toDate());
+//            ResultSet resultSet = session.execute(boundStatement);
+//            String cql =
+//                select("schedule_id", "time", "value")
+//                .from(RAW_METRICS_TABLE)
+//                .where(
+//                    in("schedule_id", listToString(scheduleIds)),
+//                    gte("time", startTime.toDate()),
+//                    lt("time", endTime.toDate()))
+//                .getQueryString();
+
+            String cql = "SELECT schedule_id, time, value FROM " + RAW_METRICS_TABLE + " WHERE schedule_id IN (" +
+                listToString(scheduleIds) + ") AND time >= " + startTime.getMillis() + " AND time <= " +
+                endTime.getMillis();
+            ResultSet resultSet = session.execute(cql);
+
+            List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
+            ResultSetMapper<RawNumericMetric> resultSetMapper = new RawNumericMetricMapper(false);
             for (Row row : resultSet) {
                 metrics.add(resultSetMapper.map(row));
             }

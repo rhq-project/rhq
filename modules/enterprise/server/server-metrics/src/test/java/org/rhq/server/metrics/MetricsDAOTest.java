@@ -113,6 +113,41 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
     }
 
     @Test
+    public void findRawMetricsForMultipleSchedules() throws Exception {
+        DateTime currentTime = hour0().plusHours(4).plusMinutes(44);
+        DateTime currentHour = currentTime.hourOfDay().roundFloorCopy();
+        DateTime threeMinutesAgo = currentTime.minusMinutes(3);
+        DateTime twoMinutesAgo = currentTime.minusMinutes(2);
+        DateTime oneMinuteAgo = currentTime.minusMinutes(1);
+
+        int scheduleId1 = 1;
+        int scheduleId2 = 2;
+
+        Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>();
+        data.add(new MeasurementDataNumeric(threeMinutesAgo.getMillis(), scheduleId1, 1.1));
+        data.add(new MeasurementDataNumeric(threeMinutesAgo.getMillis(), scheduleId2, 1.2));
+        data.add(new MeasurementDataNumeric(twoMinutesAgo.getMillis(), scheduleId1, 2.1));
+        data.add(new MeasurementDataNumeric(twoMinutesAgo.getMillis(), scheduleId2, 2.2));
+        data.add(new MeasurementDataNumeric(oneMinuteAgo.getMillis(), scheduleId1, 3.1));
+        data.add(new MeasurementDataNumeric(oneMinuteAgo.getMillis(), scheduleId2, 3.2));
+
+        int ttl = Hours.ONE.toStandardSeconds().getSeconds();
+        Set<MeasurementDataNumeric> actualUpdates = dao.insertRawMetrics(data, ttl);
+
+        List<RawNumericMetric> actualMetrics = dao.findRawMetrics(asList(scheduleId1, scheduleId2), currentHour,
+            currentHour.plusHours(1));
+        List<RawNumericMetric> expectedMetrics = asList(
+            new RawNumericMetric(scheduleId1, threeMinutesAgo.getMillis(), 1.1),
+            new RawNumericMetric(scheduleId1, twoMinutesAgo.getMillis(), 2.1),
+            new RawNumericMetric(scheduleId1, oneMinuteAgo.getMillis(), 3.1),
+            new RawNumericMetric(scheduleId2, threeMinutesAgo.getMillis(), 1.2),
+            new RawNumericMetric(scheduleId2, twoMinutesAgo.getMillis(), 2.2),
+            new RawNumericMetric(scheduleId2, oneMinuteAgo.getMillis(), 3.2)
+        );
+        assertEquals(actualMetrics, expectedMetrics, "Failed to find raw metrics for multiple schedules");
+    }
+
+    @Test
     public void insertAndFindAllOneHourMetrics() {
         int scheduleId = 1;
         DateTime hour0 = hour0();

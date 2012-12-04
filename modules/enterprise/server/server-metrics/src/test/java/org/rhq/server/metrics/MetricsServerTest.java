@@ -338,7 +338,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     }
 
     @Test//(enabled = ENABLED)
-    public void findRawDataComposites() {
+    public void findRawDataCompositesForResource() {
         DateTime beginTime = now().minusHours(4);
         DateTime endTime = now();
         Buckets buckets = new Buckets(beginTime, endTime);
@@ -367,6 +367,63 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             buckets.get(0).getStartTime(), divide(1.1 + 2.2 + 3.3, 3), 3.3, 1.1);
         MeasurementDataNumericHighLowComposite expectedBucket59Data = new MeasurementDataNumericHighLowComposite(
             buckets.get(59).getStartTime(), divide(4.4 + 5.5 + 6.6, 3), 6.6, 4.4);
+        MeasurementDataNumericHighLowComposite expectedBucket29Data = new MeasurementDataNumericHighLowComposite(
+            buckets.get(29).getStartTime(), Double.NaN, Double.NaN, Double.NaN);
+
+        assertPropertiesMatch("The data for bucket 0 does not match the expected values.", expectedBucket0Data,
+            actualData.get(0));
+        assertPropertiesMatch("The data for bucket 59 does not match the expected values.", expectedBucket59Data,
+            actualData.get(59));
+        assertPropertiesMatch("The data for bucket 29 does not match the expected values.", expectedBucket29Data,
+            actualData.get(29));
+    }
+
+    @Test
+    public void findRawDataCompositesForGroup() {
+        DateTime beginTime = now().minusHours(4);
+        DateTime endTime = now();
+        Buckets buckets = new Buckets(beginTime, endTime);
+        int scheduleId1 = 123;
+        int scheduleId2 = 456;
+
+        Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>();
+        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() + 10, scheduleId1, 1.1));
+        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() + 10, scheduleId2, 1.2));
+
+        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() + 20, scheduleId1, 2.1));
+        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() + 20, scheduleId2, 2.2));
+
+        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() + 30, scheduleId1, 3.1));
+        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() + 30, scheduleId2, 3.2));
+
+        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + 10, scheduleId1, 4.1));
+        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + 10, scheduleId2, 4.2));
+
+        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + 20, scheduleId1, 5.1));
+        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + 20, scheduleId2, 5.2));
+
+        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + 30, scheduleId1, 6.1));
+        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + 30, scheduleId2, 6.2));
+
+        // add some data outside the range
+        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() - 100, scheduleId1, 1.23));
+        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() - 100, scheduleId2, 2.23));
+        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + buckets.getInterval() + 50, scheduleId1,
+            4.56));
+        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + buckets.getInterval() + 50, scheduleId2,
+            4.56));
+
+        metricsServer.addNumericData(data);
+
+        List<MeasurementDataNumericHighLowComposite> actualData = metricsServer.findDataForGroup(
+            asList(scheduleId1, scheduleId2), beginTime.getMillis(), endTime.getMillis());
+
+        assertEquals(actualData.size(), buckets.getNumDataPoints(), "Expected to get back 60 data points.");
+
+        MeasurementDataNumericHighLowComposite expectedBucket0Data = new MeasurementDataNumericHighLowComposite(
+            buckets.get(0).getStartTime(), divide(1.1 + 1.2 + 2.1 + 2.2 + 3.1 + 3.2, 6), 3.2, 1.1);
+        MeasurementDataNumericHighLowComposite expectedBucket59Data = new MeasurementDataNumericHighLowComposite(
+            buckets.get(59).getStartTime(), divide(4.1 + 4.2 + 5.1 + 5.2 + 6.1 + 6.2, 6), 6.2, 4.1);
         MeasurementDataNumericHighLowComposite expectedBucket29Data = new MeasurementDataNumericHighLowComposite(
             buckets.get(29).getStartTime(), Double.NaN, Double.NaN, Double.NaN);
 

@@ -89,12 +89,43 @@ public class MetricsServer {
         return null;
     }
 
+    public List<MeasurementDataNumericHighLowComposite> findDataForGroup(List<Integer> scheduleIds, long beginTime,
+        long endTime) {
+        DateTime begin = new DateTime(beginTime);
+
+        if (dateTimeService.isInRawDataRange(begin)) {
+            return findRawDataForGroup(scheduleIds, beginTime, endTime);
+        }
+        throw new UnsupportedOperationException("MetricsServer.findDataForGroup currently only supports querying " +
+            "raw data");
+    }
+
     private List<MeasurementDataNumericHighLowComposite> findRawDataForResource(int scheduleId, long beginTime,
         long endTime) {
         MetricsDAO dao = new MetricsDAO(session);
         Buckets buckets = new Buckets(beginTime, endTime);
 
         List<RawNumericMetric> rawMetrics = dao.findRawMetrics(scheduleId, new DateTime(beginTime),
+            new DateTime(endTime));
+        for (RawNumericMetric rawMetric : rawMetrics) {
+            buckets.insert(rawMetric.getTimestamp(), rawMetric.getValue());
+        }
+
+        List<MeasurementDataNumericHighLowComposite> data = new ArrayList<MeasurementDataNumericHighLowComposite>();
+        for (int i = 0; i < buckets.getNumDataPoints(); ++i) {
+            Buckets.Bucket bucket = buckets.get(i);
+            data.add(new MeasurementDataNumericHighLowComposite(bucket.getStartTime(), bucket.getAvg(),
+                bucket.getMax(), bucket.getMin()));
+        }
+        return data;
+    }
+
+    private List<MeasurementDataNumericHighLowComposite> findRawDataForGroup(List<Integer> scheduleIds, long beginTime,
+        long endTime) {
+        MetricsDAO dao = new MetricsDAO(session);
+        Buckets buckets = new Buckets(beginTime, endTime);
+
+        List<RawNumericMetric> rawMetrics = dao.findRawMetrics(scheduleIds, new DateTime(beginTime),
             new DateTime(endTime));
         for (RawNumericMetric rawMetric : rawMetrics) {
             buckets.insert(rawMetric.getTimestamp(), rawMetric.getValue());

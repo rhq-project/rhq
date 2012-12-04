@@ -29,6 +29,7 @@ import org.apache.commons.lang.ArrayUtils;
 
 import org.rhq.core.domain.cloud.FailoverListDetails;
 import org.rhq.core.domain.cloud.PartitionEvent;
+import org.rhq.core.domain.cloud.PartitionEventType;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
@@ -50,7 +51,7 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     private static final long serialVersionUID = 1L;
 
     private CloudManagerLocal cloudManager = LookupUtil.getCloudManager();
-    
+
     private PartitionEventManagerLocal partitionEventManager = LookupUtil.getPartitionEventManager();
 
     @Override
@@ -102,7 +103,8 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     }
 
     @Override
-    public List<FailoverListDetails> getFailoverListDetailsByAgentId(int agentId, PageControl pc) throws RuntimeException {
+    public List<FailoverListDetails> getFailoverListDetailsByAgentId(int agentId, PageControl pc)
+        throws RuntimeException {
         try {
             return SerialUtility.prepare(cloudManager.getFailoverListDetailsByAgentId(agentId, pc),
                 "CloudGWTServiceImpl.getFailoverListDetailsByAgentId");
@@ -112,13 +114,43 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     }
 
     @Override
-    public PageList<PartitionEvent> findPartitionEventsByCriteria(PartitionEventCriteria criteria) throws RuntimeException {
-    try {
-        return SerialUtility.prepare(partitionEventManager.findPartitionEventsByCriteria(getSessionSubject(), criteria),
-            "CloudGWTServiceImpl.findPartitionEventsByCriteria");
-    } catch (Throwable t) {
-        throw getExceptionToThrowToClient(t);
+    public PageList<PartitionEvent> findPartitionEventsByCriteria(PartitionEventCriteria criteria)
+        throws RuntimeException {
+        try {
+            return SerialUtility.prepare(
+                partitionEventManager.findPartitionEventsByCriteria(getSessionSubject(), criteria),
+                "CloudGWTServiceImpl.findPartitionEventsByCriteria");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
     }
+
+    @Override
+    public void cloudPartitionEventRequest() throws RuntimeException {
+        try {
+            partitionEventManager.cloudPartitionEventRequest(getSessionSubject(),
+                PartitionEventType.ADMIN_INITIATED_PARTITION, "");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
     }
-    
+
+    @Override
+    public void purgeAllEvents() throws RuntimeException {
+        try {
+            partitionEventManager.purgeAllEvents(getSessionSubject());
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public void deletePartitionEvents(int[] eventIds) throws RuntimeException {
+        try {
+            partitionEventManager.deletePartitionEvents(getSessionSubject(), ArrayUtils.toObject(eventIds));
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
 }

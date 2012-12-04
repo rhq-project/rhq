@@ -23,7 +23,6 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.cloud.PartitionEvent;
-import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -36,6 +35,8 @@ import org.rhq.core.domain.util.PageOrdering;
 public class PartitionEventCriteria extends Criteria {
 
     private static final long serialVersionUID = 1L;
+    
+    public static final String SORT_FIELD_CTIME = "ctime";
 
     private Integer filterId;
     private String filterEventType;
@@ -52,7 +53,7 @@ public class PartitionEventCriteria extends Criteria {
     }
     
     public Class<?> getPersistentClass() {
-        return Package.class;
+        return PartitionEvent.class;
     }
 
     public void addFilterId(Integer id) {
@@ -72,7 +73,7 @@ public class PartitionEventCriteria extends Criteria {
     }
     
     public void addSortCtime(PageOrdering sort) {
-        addSortField("ctime");
+        addSortField(SORT_FIELD_CTIME);
         this.sortCtime = sort;
     }
 }

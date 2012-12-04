@@ -58,5 +58,10 @@ public interface CloudGWTService extends RemoteService {
     List<FailoverListDetails> getFailoverListDetailsByAgentId(int agentId, PageControl pc) throws RuntimeException;;
     
     PageList<PartitionEvent> findPartitionEventsByCriteria(PartitionEventCriteria criteria) throws RuntimeException;
-
+    
+    void cloudPartitionEventRequest() throws RuntimeException;
+    
+    void purgeAllEvents() throws RuntimeException;
+    
+    void deletePartitionEvents(int[] eventIds)  throws RuntimeException;
 }

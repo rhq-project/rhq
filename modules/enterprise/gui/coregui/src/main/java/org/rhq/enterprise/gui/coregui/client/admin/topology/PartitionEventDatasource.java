@@ -52,6 +52,11 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  */
 public class PartitionEventDatasource extends RPCDataSource<PartitionEvent, PartitionEventCriteria> {
 
+    // filters
+    public static final String FILTER_EVENT_DETAIL = "eventDetail";
+    public static final String FILTER_EXECUTION_STATUS = "executionStatus";
+    public static final String FILTER_EVENT_TYPE = "eventType";
+
     public PartitionEventDatasource() {
         super();
         List<DataSourceField> fields = addDataSourceFields();
@@ -87,23 +92,24 @@ public class PartitionEventDatasource extends RPCDataSource<PartitionEvent, Part
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response, PartitionEventCriteria criteria) {
-        final PageControl pc = getPageControl(request);
+        //        final PageControl pc = getPageControl(request);
 
         // TODO: call find by criteria method on PartitionEventManagerBean
-        GWTServiceLookup.getCloudService().findPartitionEventsByCriteria(criteria, new AsyncCallback<PageList<PartitionEvent>>() {
-            public void onSuccess(PageList<PartitionEvent> result) {
-//                response.setData(buildRecords(result));
-                response.setTotalRows(result.size());
-                processResponse(request.getRequestId(), response);
-            }
+        GWTServiceLookup.getCloudService().findPartitionEventsByCriteria(criteria,
+            new AsyncCallback<PageList<PartitionEvent>>() {
+                public void onSuccess(PageList<PartitionEvent> result) {
+                    response.setData(buildRecords(result));
+                    response.setTotalRows(result.size());
+                    processResponse(request.getRequestId(), response);
+                }
 
-            @Override
-            public void onFailure(Throwable t) {
-                //todo: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), t);
-                response.setStatus(DSResponse.STATUS_FAILURE);
-                processResponse(request.getRequestId(), response);
-            }
-        });
+                @Override
+                public void onFailure(Throwable t) {
+                    //todo: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), t);
+                    response.setStatus(DSResponse.STATUS_FAILURE);
+                    processResponse(request.getRequestId(), response);
+                }
+            });
     }
 
     /**

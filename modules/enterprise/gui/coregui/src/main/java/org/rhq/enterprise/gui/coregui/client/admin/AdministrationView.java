@@ -35,6 +35,7 @@ import org.rhq.enterprise.gui.coregui.client.admin.templates.AlertDefinitionTemp
 import org.rhq.enterprise.gui.coregui.client.admin.templates.DriftDefinitionTemplateTypeView;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.MetricTemplateTypeView;
 import org.rhq.enterprise.gui.coregui.client.admin.topology.AgentTableView;
+import org.rhq.enterprise.gui.coregui.client.admin.topology.PartitionEventTableView;
 import org.rhq.enterprise.gui.coregui.client.admin.topology.ServerTableView;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
@@ -189,10 +190,10 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
         
-        NavigationItem partitionEventsGwt = new NavigationItem(ServerTableView.VIEW_ID, new ViewFactory() {
+        NavigationItem partitionEventsGwt = new NavigationItem(PartitionEventTableView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
-                return new ServerTableView(extendLocatorId(ServerTableView.VIEW_ID.getName()),
-                    MSG.view_adminTopology_servers() + " (GWT)", null);
+                return new PartitionEventTableView(extendLocatorId(PartitionEventTableView.VIEW_ID.getName()),
+                    MSG.view_adminTopology_partitionEvents() + " (GWT)");
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 

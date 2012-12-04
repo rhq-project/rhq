@@ -18,35 +18,36 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.topology;
 
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.FailoverListItemDatasourceField.FIELD_ORDINAL;
-
 import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.form.fields.SpacerItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.domain.cloud.PartitionEvent;
+import org.rhq.core.domain.criteria.PartitionEventCriteria;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
+import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.AuthorizedTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Jiri Kremser
@@ -55,18 +56,46 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 public class PartitionEventTableView extends TableSection<PartitionEventDatasource> implements HasViewName {
 
     public static final ViewName VIEW_ID = new ViewName("PartitionEvents(GWT)", "Partition Events(GWT)",
-        IconEnum.SERVERS);
+        IconEnum.EVENTS);
 
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_TOPOLOGY_VIEW_ID + "/" + VIEW_ID;
 
     private final boolean showActions = true;
 
+    private static final Criteria INITIAL_CRITERIA = new Criteria();
+
+    private static SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(PartitionEventCriteria.SORT_FIELD_CTIME,
+        SortDirection.DESCENDING);
+
     public PartitionEventTableView(String locatorId, String tableTitle) {
-        super(locatorId, tableTitle);
+        super(locatorId, tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
         setHeight100();
         setWidth100();
+
+        setInitialCriteriaFixed(false);
         setDataSource(new PartitionEventDatasource());
+    }
+
+    @Override
+    protected void configureTableFilters() {
+        final EnumSelectItem statusFilter = new EnumSelectItem(PartitionEventDatasource.FILTER_EXECUTION_STATUS,
+            "i18n Execution Status", PartitionEvent.ExecutionStatus.class, null, null);
+
+        final EnumSelectItem typeFilter = new EnumSelectItem(PartitionEventDatasource.FILTER_EVENT_TYPE, "i18n Type",
+            PartitionEvent.ExecutionStatus.class, null, null);
+
+        final TextItem detail = new TextItem(PartitionEventDatasource.FILTER_EVENT_DETAIL, "i18n Details Filter");
+
+        //        startDateFilter = new DateFilterItem(DateFilterItem.START_DATE_FILTER, MSG.filter_from_date());
+        //        endDateFilter = new DateFilterItem(DateFilterItem.END_DATE_FILTER, MSG.filter_to_date());
+
+        SpacerItem spacerItem = new SpacerItem();
+        spacerItem.setColSpan(2);
+
+        if (isShowFilterForm()) {
+            setFilterFormItems(statusFilter, detail, typeFilter);
+        }
     }
 
     @Override
@@ -76,29 +105,8 @@ public class PartitionEventTableView extends TableSection<PartitionEventDatasour
         ListGrid listGrid = getListGrid();
         listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
         if (showActions) {
-            listGrid.sort(FIELD_NAME, SortDirection.ASCENDING);
+            //            listGrid.sort(FIELD_NAME, SortDirection.ASCENDING);
             showActions();
-        } else {
-            // sorting by order field
-            listGrid.sort(FIELD_ORDINAL.propertyName(), SortDirection.ASCENDING);
-        }
-        for (ListGridField field : fields) {
-            // adding the cell formatter for name field (clickable link)
-            if (field.getName() == FIELD_NAME) {
-                field.setCellFormatter(new CellFormatter() {
-                    @Override
-                    public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                        if (value == null) {
-                            return "";
-                        }
-                        String detailsUrl = "#" + VIEW_PATH + "/" + record.getAttributeAsString(FIELD_ID);
-                        String formattedValue = StringUtility.escapeHtml(value.toString());
-                        return SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
-
-                    }
-                });
-            }
-            // TODO: adding the cell formatter for affinity group (clickable link)
         }
     }
 
@@ -108,84 +116,6 @@ public class PartitionEventTableView extends TableSection<PartitionEventDatasour
     }
 
     private void showActions() {
-        addTableAction(extendLocatorId("setNormal"), MSG.view_adminTopology_server_setNormal(),
-            MSG.common_msg_areYouSure(), new AuthorizedTableAction(this, TableActionEnablement.ANY,
-                Permission.MANAGE_SETTINGS) {
-                public void executeAction(final ListGridRecord[] selections, Object actionValue) {
-                    List<String> selectedNames = getSelectedNames(selections);
-                    // TODO: msg
-                    //                       String message = MSG.view_admin_plugins_serverDisableConfirm(selectedNames.toString());
-                    String message = "Really? Normal? For all I've done for you? " + selectedNames;
-                    SC.ask(message, new BooleanCallback() {
-                        public void execute(Boolean confirmed) {
-                            if (confirmed) {
-                                int[] selectedIds = getSelectedIds(selections);
-                                SC.say("setting servers to maintenance mode, ids: " + selectedIds);
-                                GWTServiceLookup.getCloudService().updateServerMode(selectedIds,
-                                    Server.OperationMode.NORMAL, new AsyncCallback<Void>() {
-                                        public void onSuccess(Void arg0) {
-                                            // TODO: msg
-                                            Message msg = new Message(MSG
-                                                .view_admin_plugins_disabledServerPlugins("sdf"), Message.Severity.Info);
-                                            CoreGUI.getMessageCenter().notify(msg);
-                                            refresh();
-                                        }
-
-                                        public void onFailure(Throwable caught) {
-                                            // TODO: msg
-                                            CoreGUI.getErrorHandler().handleError(
-                                                MSG.view_admin_plugins_disabledServerPluginsFailure() + " "
-                                                    + caught.getMessage(), caught);
-                                            refreshTableInfo();
-                                        }
-
-                                    });
-                            } else {
-                                refreshTableInfo();
-                            }
-                        }
-                    });
-                }
-            });
-
-        addTableAction(extendLocatorId("setMaintenance"), MSG.view_adminTopology_server_setMaintenance(),
-            new AuthorizedTableAction(this, TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
-                public void executeAction(final ListGridRecord[] selections, Object actionValue) {
-                    List<String> selectedNames = getSelectedNames(selections);
-                    // TODO: msg
-                    //                String message = MSG.view_admin_plugins_serverDisableConfirm(selectedNames.toString());
-                    String message = "Really? Maitenance? For all I've done for you? " + selectedNames;
-                    SC.ask(message, new BooleanCallback() {
-                        public void execute(Boolean confirmed) {
-                            if (confirmed) {
-                                int[] selectedIds = getSelectedIds(selections);
-                                SC.say("setting servers to maintenance mode, ids: " + selectedIds);
-                                GWTServiceLookup.getCloudService().updateServerMode(selectedIds,
-                                    Server.OperationMode.MAINTENANCE, new AsyncCallback<Void>() {
-                                        public void onSuccess(Void arg0) {
-                                            // TODO: msg
-                                            Message msg = new Message(MSG
-                                                .view_admin_plugins_disabledServerPlugins("sdf"), Message.Severity.Info);
-                                            CoreGUI.getMessageCenter().notify(msg);
-                                            refresh();
-                                        }
-
-                                        public void onFailure(Throwable caught) {
-                                            // TODO: msg
-                                            CoreGUI.getErrorHandler().handleError(
-                                                MSG.view_admin_plugins_disabledServerPluginsFailure() + " "
-                                                    + caught.getMessage(), caught);
-                                            refreshTableInfo();
-                                        }
-
-                                    });
-                            } else {
-                                refreshTableInfo();
-                            }
-                        }
-                    });
-                }
-            });
 
         addTableAction(extendLocatorId("removeSelected"), MSG.view_adminTopology_server_removeSelected(),
             MSG.common_msg_areYouSure(), new AuthorizedTableAction(this, TableActionEnablement.ANY,
@@ -198,8 +128,84 @@ public class PartitionEventTableView extends TableSection<PartitionEventDatasour
                             if (confirmed) {
                                 int[] selectedIds = getSelectedIds(selections);
                                 SC.say("setting servers to maintenance mode, ids: " + selectedIds);
-                                GWTServiceLookup.getCloudService().deleteServers(selectedIds,
+                                GWTServiceLookup.getCloudService().deletePartitionEvents(selectedIds,
                                     new AsyncCallback<Void>() {
+                                        public void onSuccess(Void arg0) {
+                                            // TODO: msg
+                                            Message msg = new Message(MSG
+                                                .view_admin_plugins_disabledServerPlugins("sdf"), Message.Severity.Info);
+                                            CoreGUI.getMessageCenter().notify(msg);
+                                            refresh();
+                                        }
+
+                                        public void onFailure(Throwable caught) {
+                                            // TODO: msg
+                                            CoreGUI.getErrorHandler().handleError(
+                                                MSG.view_admin_plugins_disabledServerPluginsFailure() + " "
+                                                    + caught.getMessage(), caught);
+                                            refreshTableInfo();
+                                        }
+
+                                    });
+                            } else {
+                                refreshTableInfo();
+                            }
+                        }
+                    });
+                }
+            });
+
+        addTableAction(extendLocatorId("purgeAll"), "i18n purge all",
+            MSG.common_msg_areYouSure(), new AuthorizedTableAction(this, TableActionEnablement.ANY,
+                Permission.MANAGE_SETTINGS) {
+                public void executeAction(final ListGridRecord[] selections, Object actionValue) {
+                    List<String> selectedNames = getSelectedNames(selections);
+                    // TODO: msg
+                    //                       String message = MSG.view_admin_plugins_serverDisableConfirm(selectedNames.toString());
+                    String message = "Really? Normal? For all I've done for you? " + selectedNames;
+                    SC.ask(message, new BooleanCallback() {
+                        public void execute(Boolean confirmed) {
+                            if (confirmed) {
+                                int[] selectedIds = getSelectedIds(selections);
+                                SC.say("setting servers to maintenance mode, ids: " + selectedIds);
+                                GWTServiceLookup.getCloudService().purgeAllEvents(new AsyncCallback<Void>() {
+                                        public void onSuccess(Void arg0) {
+                                            // TODO: msg
+                                            Message msg = new Message(MSG
+                                                .view_admin_plugins_disabledServerPlugins("sdf"), Message.Severity.Info);
+                                            CoreGUI.getMessageCenter().notify(msg);
+                                            refresh();
+                                        }
+
+                                        public void onFailure(Throwable caught) {
+                                            // TODO: msg
+                                            CoreGUI.getErrorHandler().handleError(
+                                                MSG.view_admin_plugins_disabledServerPluginsFailure() + " "
+                                                    + caught.getMessage(), caught);
+                                            refreshTableInfo();
+                                        }
+
+                                    });
+                            } else {
+                                refreshTableInfo();
+                            }
+                        }
+                    });
+                }
+            });
+
+        addTableAction(extendLocatorId("forceRepartition"), MSG.view_adminTopology_server_setMaintenance(),
+            new AuthorizedTableAction(this, TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
+                public void executeAction(final ListGridRecord[] selections, Object actionValue) {
+                    List<String> selectedNames = getSelectedNames(selections);
+                    // TODO: msg
+                    //                String message = MSG.view_admin_plugins_serverDisableConfirm(selectedNames.toString());
+                    String message = "Really? Repartition? For all I've done for you? " + selectedNames;
+                    SC.ask(message, new BooleanCallback() {
+                        public void execute(Boolean confirmed) {
+                            if (confirmed) {
+                                SC.say("repartition is now forced");
+                                GWTServiceLookup.getCloudService().cloudPartitionEventRequest(new AsyncCallback<Void>() {
                                         public void onSuccess(Void arg0) {
                                             // TODO: msg
                                             Message msg = new Message(MSG

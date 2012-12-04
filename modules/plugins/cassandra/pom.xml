@@ -70,7 +70,6 @@
       <artifactId>snakeyaml</artifactId>
       <version>1.10</version>
     </dependency>
-
     <dependency>
       <groupId>${rhq.groupId}</groupId>
       <artifactId>rhq-core-plugin-test-api</artifactId>
@@ -120,6 +119,11 @@
                 <artifactItem>
                   <groupId>org.slf4j</groupId>
                   <artifactId>slf4j-api</artifactId>
+                  <version>1.6.0</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.slf4j</groupId>
+                  <artifactId>slf4j-log4j12</artifactId>
                   <version>1.6.0</version>
                 </artifactItem>
                 <artifactItem>

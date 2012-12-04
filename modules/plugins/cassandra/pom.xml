@@ -70,6 +70,21 @@
       <artifactId>snakeyaml</artifactId>
       <version>1.10</version>
     </dependency>
+
+    <dependency>
+      <groupId>${rhq.groupId}</groupId>
+      <artifactId>rhq-core-plugin-test-api</artifactId>
+      <version>${project.version}</version>
+      <type>pom</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>${rhq.groupId}</groupId>
+      <artifactId>rhq-core-plugin-test-util</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -191,6 +206,82 @@
               <goal>run</goal>
             </goals>
           </execution>
+
+          <execution>
+            <phase>pre-integration-test</phase>
+            <configuration>
+               <target>
+                  <echo>Setting up plugin dependencies...</echo>
+                  <property name="settings.localRepository" location="${user.home}/.m2/repository" />
+                  <mkdir dir="target/testsetup" />
+
+                  <mkdir dir="target/testsetup/plugins" />
+                  <copy toDir="target/testsetup/plugins" flatten="true">
+                     <fileset dir="${settings.localRepository}/">
+                        <include name="org/rhq/rhq-jmx-plugin/${project.version}/rhq-jmx-plugin-${project.version}.jar" />
+                     </fileset>
+                     <fileset dir="${rhq.deploymentDir}">
+                        <include name="${project.artifactId}-${project.version}.jar" />
+                     </fileset>
+                     <fileset dir="${project.build.directory}" includes="${project.artifactId}-${project.version}.jar" />
+                  </copy>
+
+                  <mkdir dir="target/testsetup/lib" />
+                  <unzip dest="target/testsetup/lib">
+                     <fileset dir="${settings.localRepository}/org/hyperic/sigar-dist/${sigar.version}" includes="*.zip" />
+                     <patternset>
+                        <include name="**/lib/sigar.jar" />
+                        <include name="**/lib/bcel*.jar" />
+                        <include name="**/lib/*.so" />
+                        <include name="**/lib/*.sl" />
+                        <include name="**/lib/*.dll" />
+                        <include name="**/lib/*.dylib" />
+                     </patternset>
+                  </unzip>
+                  <move todir="target/testsetup/lib" flatten="true">
+                     <fileset dir="target/testsetup/lib">
+                        <include name="**/lib/*" />
+                     </fileset>
+                  </move>
+                  <delete dir="target/testsetup/lib/hyperic-sigar-${sigar.version}" />
+               </target>
+            </configuration>
+            <goals>
+               <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+       <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+           <skip>true</skip>
+        </configuration>
+        <executions>
+           <execution>
+              <id>surefire-it</id>
+              <phase>integration-test</phase>
+              <goals>
+                 <goal>test</goal>
+              </goals>
+              <configuration>
+                 <skip>${maven.test.skip}</skip>
+                 <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
+                 <useSystemClassLoader>false</useSystemClassLoader>
+                 <argLine>-Dorg.hyperic.sigar.path=${basedir}/target/testsetup/lib</argLine>
+                 <systemProperties>
+                    <property>
+                       <name>project.artifactId</name>
+                       <value>${project.artifactId}</value>
+                    </property>
+                    <property>
+                       <name>project.version</name>
+                       <value>${project.version}</value>
+                    </property>
+                 </systemProperties>
+              </configuration>
+           </execution>
         </executions>
       </plugin>
     </plugins>

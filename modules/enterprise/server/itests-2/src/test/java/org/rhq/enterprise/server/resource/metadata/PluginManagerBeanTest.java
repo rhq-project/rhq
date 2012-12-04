@@ -55,11 +55,13 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         subjectMgr = LookupUtil.getSubjectManager();
         pluginMgr = LookupUtil.getPluginManager();
 
-        FileUtil.purge(new File(getPluginScannerService().getAgentPluginDir()), true);
+        getPluginScannerService().startDeployment();
     }
 
     @Override
     protected void afterMethod() throws Exception {
+        FileUtil.purge(new File(getPluginScannerService().getAgentPluginDir()), true);
+
         unpreparePluginScannerService();
     }
 
@@ -86,7 +88,7 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         createPluginJarFile("test-plugin3.jar", "plugin_3.xml");
         createPluginJarFile("test-plugin3.1.jar", "plugin_3.1.xml");
 
-        getPluginScannerService().startDeployment();
+        getPluginScannerService().scanAndRegister();
     }
 
     @Test(dependsOnMethods = { "registerPlugins" })
@@ -104,6 +106,8 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
     @Test(dependsOnMethods = { "registerPlugins" })
     public void doNotDisablePluginIfDependentPluginsAreNotAlsoDisabled() throws Exception {
         Plugin plugin = getPlugin("PluginManagerBeanTestPlugin1");
+        assertTrue("Plugin should not already be disabled", plugin.isEnabled());
+        Plugin plugin2 = getPlugin("PluginManagerBeanTestPlugin2");
         assertTrue("Plugin should not already be disabled", plugin.isEnabled());
 
         Exception exception = null;

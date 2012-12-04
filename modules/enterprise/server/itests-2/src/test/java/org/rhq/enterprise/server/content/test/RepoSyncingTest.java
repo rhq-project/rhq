@@ -6,7 +6,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.transaction.TransactionManager;
 
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -52,6 +51,41 @@ public class RepoSyncingTest extends AbstractEJB3Test {
         repo.addContentSource(contentSource);
         em.persist(repo);
         em.flush();
+    }
+
+    @Override
+    protected void afterMethod() throws Exception {
+        unprepareServerPluginService();
+
+        getTransactionManager().begin();
+        EntityManager em = getEntityManager();
+        ContentSource deleteSrc = em.find(ContentSource.class, contentSource.getId());
+        // em.remove(deleteSrc.getContentSourceType());
+        em.remove(deleteSrc);
+
+        Query q = em.createNamedQuery(RepoDistribution.QUERY_FIND_BY_REPO_ID);
+        q.setParameter("repoId", repo.getId());
+        List<RepoDistribution> rds = q.getResultList();
+        for (RepoDistribution rd : rds) {
+            Distribution d = rd.getRepoDistributionPK().getDistribution();
+            List<DistributionFile> dfiles = LookupUtil.getDistributionManagerLocal().getDistributionFilesByDistId(
+                d.getId());
+            for (DistributionFile df : dfiles) {
+                DistributionFile dfl = em.find(DistributionFile.class, df.getId());
+                em.remove(dfl);
+            }
+            em.remove(rd);
+            em.remove(d);
+        }
+
+        Repo delRepo = em.find(Repo.class, repo.getId());
+        em.remove(delRepo);
+
+        TransactionManager tx = getTransactionManager();
+        if (tx != null) {
+            tx.commit();
+        }
+
     }
 
     @Test(enabled = ENABLED)
@@ -198,41 +232,6 @@ public class RepoSyncingTest extends AbstractEJB3Test {
         } else {
             return null;
         }
-    }
-
-    @AfterMethod
-    public void tearDownAfterMethod() throws Exception {
-        unprepareServerPluginService();
-
-        getTransactionManager().begin();
-        EntityManager em = getEntityManager();
-        ContentSource deleteSrc = em.find(ContentSource.class, contentSource.getId());
-        // em.remove(deleteSrc.getContentSourceType());
-        em.remove(deleteSrc);
-
-        Query q = em.createNamedQuery(RepoDistribution.QUERY_FIND_BY_REPO_ID);
-        q.setParameter("repoId", repo.getId());
-        List<RepoDistribution> rds = q.getResultList();
-        for (RepoDistribution rd : rds) {
-            Distribution d = rd.getRepoDistributionPK().getDistribution();
-            List<DistributionFile> dfiles = LookupUtil.getDistributionManagerLocal().getDistributionFilesByDistId(
-                d.getId());
-            for (DistributionFile df : dfiles) {
-                DistributionFile dfl = em.find(DistributionFile.class, df.getId());
-                em.remove(dfl);
-            }
-            em.remove(rd);
-            em.remove(d);
-        }
-
-        Repo delRepo = em.find(Repo.class, repo.getId());
-        em.remove(delRepo);
-
-        TransactionManager tx = getTransactionManager();
-        if (tx != null) {
-            tx.commit();
-        }
-
     }
 
     class SyncerThread extends Thread {

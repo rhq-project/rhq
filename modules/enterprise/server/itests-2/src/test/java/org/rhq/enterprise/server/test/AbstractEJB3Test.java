@@ -948,7 +948,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
         PluginDeploymentScanner scanner = new PluginDeploymentScanner();
         String pluginDirPath = getTempDir() + "/plugins";
         scanner.setAgentPluginDir(pluginDirPath); // we don't want to scan for these
-        scanner.setServerPluginDir(null); // we don't want to scan for these
+        scanner.setServerPluginDir("ignore no plugins here"); // we don't want to scan for these
+        scanner.setUserPluginDir("ignore no plugins here"); // we don't want to scan for these
         scanner.setScanPeriod("9999999"); // we want to manually scan - don't allow for auto-scan to happen        
 
         return preparePluginScannerService(scanner);

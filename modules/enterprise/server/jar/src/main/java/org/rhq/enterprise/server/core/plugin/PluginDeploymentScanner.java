@@ -153,16 +153,35 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
         // the server's internal EJB/SLSBs are ready and can be called. This means we are allowed to start.
         // NOTE: Make sure we are called BEFORE the master plugin container is started!
 
-        // setup our attributes
-        File homeDir = LookupUtil.getCoreServer().getInstallDir();
-        File earDir = LookupUtil.getCoreServer().getEarDeploymentDir();
-        setUserPluginDir(new File(homeDir, "plugins").getAbsolutePath());
-        setAgentPluginDir(new File(earDir, "rhq-downloads/rhq-plugins").getAbsolutePath());
-        setServerPluginDir(new File(earDir, "rhq-serverplugins").getAbsolutePath());
+        // setup our attributes - skip if the plugin dirs were already set (e.g. from test code)
+        String upd = getUserPluginDir();
+        String apd = getAgentPluginDir();
+        String spd = getServerPluginDir();
 
-        log.info("user plugin dir=" + getUserPluginDir());
-        log.info("agent plugin dir=" + getAgentPluginDir());
-        log.info("server plugin dir=" + getServerPluginDir());
+        // don't look up the core server mbean if we don't need do
+        if (upd == null || apd == null || spd == null) {
+            File homeDir = LookupUtil.getCoreServer().getInstallDir();
+            File earDir = LookupUtil.getCoreServer().getEarDeploymentDir();
+
+            if (upd == null) {
+                upd = new File(homeDir, "plugins").getAbsolutePath();
+                setUserPluginDir(upd);
+            }
+
+            if (apd == null) {
+                apd = new File(earDir, "rhq-downloads/rhq-plugins").getAbsolutePath();
+                setAgentPluginDir(apd);
+            }
+
+            if (spd == null) {
+                spd = new File(earDir, "rhq-serverplugins").getAbsolutePath();
+                setServerPluginDir(spd);
+            }
+        }
+
+        log.info("user plugin dir=" + upd);
+        log.info("agent plugin dir=" + apd);
+        log.info("server plugin dir=" + spd);
 
         // This will check to see if there are any agent plugin records in the database
         // that do not have content associated with them and if so, will stream

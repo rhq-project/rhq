@@ -51,14 +51,6 @@ import org.joda.time.Minutes;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 
-import me.prettyprint.cassandra.serializers.CompositeSerializer;
-import me.prettyprint.cassandra.serializers.DoubleSerializer;
-import me.prettyprint.cassandra.serializers.IntegerSerializer;
-import me.prettyprint.cassandra.serializers.LongSerializer;
-import me.prettyprint.hector.api.beans.Composite;
-import me.prettyprint.hector.api.beans.HColumn;
-import me.prettyprint.hector.api.factory.HFactory;
-
 /**
  * @author John Sanda
  */
@@ -336,25 +328,4 @@ public class MetricsServer {
         DateTime now = new DateTime();
         return now.hourOfDay().roundFloorCopy();
     }
-
-    private HColumn<Composite, Double> createAvgColumn(DateTime timestamp, double value, int ttl) {
-        return createAggregateColumn(AggregateType.AVG, timestamp, value, ttl);
-    }
-
-    private HColumn<Composite, Double> createMaxColumn(DateTime timestamp, double value, int ttl) {
-        return createAggregateColumn(AggregateType.MAX, timestamp, value, ttl);
-    }
-
-    private HColumn<Composite, Double> createMinColumn(DateTime timestamp, double value, int ttl) {
-        return createAggregateColumn(AggregateType.MIN, timestamp, value, ttl);
-    }
-
-    private HColumn<Composite, Double> createAggregateColumn(AggregateType type, DateTime timestamp, double value,
-                                                             int ttl) {
-        Composite composite = new Composite();
-        composite.addComponent(timestamp.getMillis(), LongSerializer.get());
-        composite.addComponent(type.ordinal(), IntegerSerializer.get());
-        return HFactory.createColumn(composite, value, ttl, CompositeSerializer.get(), DoubleSerializer.get());
-    }
-
 }

@@ -113,6 +113,23 @@
          </modules>
        </profile>
 
+     <profile>
+       <id>metrics</id>
+       <activation>
+         <property>
+           <name>metrics</name>
+         </property>
+       </activation>
+       <modules>
+         <module>core</module>
+         <module>common/cassandra-auth</module>
+         <module>common/cassandra-common</module>
+         <module>common/cassandra-common-itests</module>
+         <module>enterprise/server/server-metrics</module>
+         <module>enterprise/server/jar</module>
+       </modules>
+     </profile>
+
       <profile>
          <id>plugins</id>
          <activation>

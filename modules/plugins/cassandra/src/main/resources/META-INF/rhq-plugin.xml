@@ -80,7 +80,6 @@
       </plugin-configuration>
     </server>
 
-
     <service name="StorageProxy"
              discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
              class="org.rhq.plugins.jmx.MBeanResourceComponent"
@@ -104,10 +103,11 @@
       <metric property="TotalWriteLatencyMicros" measurementType="trendsup" displayType="detail" displayName="Total Write Latency (microseconds)" description="The latency of all write operations since execution start"/>
       <metric property="WriteOperations" measurementType="trendsup" displayType="summary" description="Total number of write operations since execution start"/>
 
+
       <resource-configuration>
         <c:simple-property name="HintedHandoffEnabled" type="boolean" required="true" description="Hinted Handoff Enabled"/>
-        <c:simple-property name="MaxHintsInProgress" type="long" required="true" description="Max Hints in Progress"/>
-        <c:simple-property name="MaxHintWindow" type="long" required="true" description="Max Hint Window"/>
+        <c:simple-property name="MaxHintsInProgress" type="integer" required="true" description="Max Hints in Progress"/>
+        <c:simple-property name="MaxHintWindow" type="integer" required="true" description="Max Hint Window"/>
         <c:simple-property name="RPCTimeout" type="long" required="true" displayName="RPC Timeout" description="RPC Timeout"/>
       </resource-configuration>
     </service>
@@ -162,7 +162,7 @@
       <metric property="Load" dataType="measurement" units="bytes" displayType="summary" description="Amount of load in disk usage on the node being queried"/>
       <metric property="OperationMode" dataType="trait" displayType="summary" description="Current operation mode"/>
       <metric property="ReleaseVersion" dataType="trait" displayType="summary" description="Cassandra version"/>
-      <metric property="RPCServiceRunning" dataType="trait" displayType="summary" displayName="RPC Service Running" description="RPC Service Running"/>
+      <metric property="RPCServerRunning" dataType="trait" displayType="summary" displayName="RPC Service Running" description="RPC Service Running"/>
       <metric property="SchemaVersion" dataType="trait" displayType="summary"
               description="The current schema version for this node. The value is calculated as a checksum of all rows
                in the system.schema_* column families. This value is used in an algorithm to compare schema versions
@@ -240,7 +240,7 @@
         <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Commit Log" />
       </plugin-configuration>
 
-      <metric property="TotalCommitLogSize" measurementType="trendsup" displayType="summary" description="Size of all commit log segments"/>
+      <metric property="TotalCommitlogSize" measurementType="trendsup" dataType="measurement" displayType="summary" description="Size of all commit log segments"/>
       <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Number of tasks waiting to be executed"/>
       <metric property="CompletedTasks" measurementType="trendsup" displayType="summary" description="Number of completed tasks"/>
     </service>
@@ -343,7 +343,7 @@
       <operation name="invalidateRowCache" description="Invalidate the row cache."/>
 
       <metric property="KeyCacheHits" measurementType="dynamic" displayType="summary" description="Number of key cache hits"/>
-      <metric property="RowCacheHists" measurementType="dynamic" displayType="summary" description="Number of row cache hits"/>
+      <metric property="RowCacheHits" measurementType="dynamic" displayType="summary" description="Number of row cache hits"/>
 
       <metric property="KeyCacheRequests" measurementType="dynamic" displayType="summary" description="Number of key cache requests"/>
       <metric property="RowCacheRequests" measurementType="dynamic" displayType="summary" description="Number of row cache requests"/>
@@ -552,7 +552,7 @@
       </plugin-configuration>
 
       <metric property="TotalTimeouts" measurementType="trendsup" displayType="detail" description="Total timeouts."/>
-      <metric property="RecentTotalTimeouts" measurementType="trendsup" displayType="detail" description="Recent total timeouts."/>
+      <metric property="RecentTotalTimouts" measurementType="trendsup" displayType="detail" description="Recent total timeouts."/>
 
       <resource-configuration>
         <c:list-property name="CommandPendingTasks" readOnly="true">
@@ -737,7 +737,7 @@
                               defaults to 10 days and allows for a large amount of time for consistency to be achived prior to deletion. In a single node cluster
                               this can be reduced to zero."/>
           <c:simple-property name="CompactionStrategyClass" type="string" required="true" description="Compaction strategy class name."/>
-          <c:simple-property name="CompressionParameters" type="string" required="true" description="Compression parameters"/>
+          <c:simple-property name="CompressionParameters" type="string" readOnly="true" description="Compression parameters"/>
           <c:simple-property name="MinimumCompactionThreshold" type="integer" required="true" description="Minimum number of sstables in queue before compaction kicks off."/>
           <c:simple-property name="MaximumCompactionThreshold" type="integer" required="true" description="Maximum number of sstables in queue before compaction kicks off."/>
           <c:list-property name="snapshots" readOnly="true" required="false">

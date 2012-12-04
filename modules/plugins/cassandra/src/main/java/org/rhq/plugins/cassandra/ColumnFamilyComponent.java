@@ -47,13 +47,11 @@ import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.util.file.FileUtil;
-import org.rhq.plugins.jmx.JMXComponent;
-import org.rhq.plugins.jmx.MBeanResourceComponent;
 
 /**
  * @author John Sanda
  */
-public class ColumnFamilyComponent extends MBeanResourceComponent<JMXComponent<?>> {
+public class ColumnFamilyComponent extends ComplexConfigurationResourceComponent {
 
     private Log log = LogFactory.getLog(ColumnFamilyComponent.class);
 

@@ -72,10 +72,12 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
         this.overlord = LookupUtil.getSubjectManager().getOverlord();
 
         this.prepareScheduler();
+        this.prepareForTestAgents();
     }
 
     @Override
     protected void afterMethod() throws Exception {
+        this.unprepareForTestAgents();
         this.unprepareScheduler();
     }
 

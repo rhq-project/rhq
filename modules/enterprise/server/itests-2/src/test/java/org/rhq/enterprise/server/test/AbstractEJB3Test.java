@@ -462,7 +462,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
 
             } catch (Throwable t) {
                 // Arquillian is eating these, make sure they show up in some way
-                System.out.println("BEFORE METHOD FAILURE, TEST DID NOT RUN!!! ");
+                System.out.println("BEFORE METHOD FAILURE, TEST DID NOT RUN!!! [" + method.getName() + "]");
                 t.printStackTrace();
                 throw t;
             }
@@ -484,7 +484,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
             }
         } catch (Throwable t) {
             System.out
-                .println("AFTER METHOD FAILURE, TEST CLEAN UP FAILED!!! MAY NEED TO CLEAN DB BEFORE RUNNING MORE TESTS!");
+                .println("AFTER METHOD FAILURE, TEST CLEAN UP FAILED!!! MAY NEED TO CLEAN DB BEFORE RUNNING MORE TESTS! ["
+                    + method.getName() + "]");
             t.printStackTrace();
             throw t;
         }
@@ -722,11 +723,12 @@ public abstract class AbstractEJB3Test extends Arquillian {
     }
 
     /**
-     * If you need to test server plugins, you must first prepare the server plugin service.
-     * After this returns, the caller must explicitly start the PC by using the appropriate API
-     * on the given mbean; this method will only start the service, it will NOT start the master PC.
+     * This will register any custom service, replacing any service with the same objectName.
+     * <br/>
+     * It does nothing more than registration, any calls to the service (e.g. start) are up to the caller.
      *
-     * @param testServiceMBean the object that will house your test server plugins
+     * @param testServiceMBean the test service MBean to register
+     * @param objectNameStr the name of the service, which will be converted to an ObjectName
      *
      * @throws RuntimeException
      */
@@ -740,11 +742,12 @@ public abstract class AbstractEJB3Test extends Arquillian {
     }
 
     /**
-     * If you need to test server plugins, you must first prepare the server plugin service.
-     * After this returns, the caller must explicitly start the PC by using the appropriate API
-     * on the given mbean; this method will only start the service, it will NOT start the master PC.
+     * This will register any custom service, replacing any service with the same objectName.
+     * <br/>
+     * It does nothing more than registration, any calls to the service (e.g. start) are up to the caller.
      *
-     * @param testServiceMBean the object that will house your test server plugins
+     * @param testServiceMBean the test service MBean to register
+     * @param objectName the name of the service
      *
      * @throws RuntimeException
      */

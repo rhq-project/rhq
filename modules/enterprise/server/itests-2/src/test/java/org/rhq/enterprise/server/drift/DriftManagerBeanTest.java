@@ -94,6 +94,10 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
         prepareScheduler();
 
+        DriftServerPluginService driftServerPluginService = new DriftServerPluginService();
+        prepareCustomServerPluginService(driftServerPluginService);
+        driftServerPluginService.masterConfig.getPluginDirectory().mkdirs();
+
         deleteDriftFiles();
 
         newResource = createNewResource();
@@ -104,6 +108,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         try {
             deleteNewResource(newResource);
         } finally {
+            unprepareServerPluginService();
             unprepareForTestAgents();
             unprepareScheduler();
         }

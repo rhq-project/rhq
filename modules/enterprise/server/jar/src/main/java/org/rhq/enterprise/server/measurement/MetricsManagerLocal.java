@@ -50,4 +50,7 @@ public interface MetricsManagerLocal {
 
     List<MeasurementDataNumericHighLowComposite> findDataForResource(int scheduleId, long beginTime, long endTime);
 
+    List<MeasurementDataNumericHighLowComposite> findDataForResourceGroup(List<Integer> scheduleIds, long beginTime,
+        long endTime);
+
 }

@@ -69,6 +69,14 @@ public class MetricsManagerBean implements MetricsManagerLocal {
         return metricsServer.findDataForResource(scheduleId, beginTime, endTime);
     }
 
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public List<MeasurementDataNumericHighLowComposite> findDataForResourceGroup(List<Integer> scheduleIds,
+        long beginTime, long endTime) {
+        MetricsServer metricsServer = getMetricsServer();
+        return metricsServer.findDataForGroup(scheduleIds, beginTime, endTime);
+    }
+
     private MetricsServer getMetricsServer() {
         MetricsServer metricsServer = new MetricsServer();
         metricsServer.setSession(sessionManager.getSession());

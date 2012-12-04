@@ -53,6 +53,7 @@ import org.jboss.ejb3.annotation.TransactionTimeout;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
+import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementData;
@@ -71,6 +72,7 @@ import org.rhq.core.domain.resource.composite.ResourceIdWithAgentComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.domain.util.OrderingField;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.util.collection.ArrayUtils;
@@ -735,7 +737,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         EntityContext context, int definitionId, long beginTime, long endTime, int numDataPoints) {
 
         if (context.type == EntityContext.Type.Resource) {
-            if (authorizationManager.canViewResource(subject, context.resourceId) == false) {
+            if (!authorizationManager.canViewResource(subject, context.resourceId)) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view measurement data for resource[id=" + context.resourceId + "]");
             }
@@ -747,13 +749,23 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
             return data;
         } else if (context.type == EntityContext.Type.ResourceGroup) {
-            if (authorizationManager.canViewGroup(subject, context.groupId) == false) {
+            if (!authorizationManager.canViewGroup(subject, context.groupId)) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view measurement data for resourceGroup[id=" + context.groupId
                     + "]");
             }
+            MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
+            criteria.addFilterResourceGroupId(context.getGroupId());
+            criteria.setPageControl(PageControl.getUnlimitedInstance());
+            PageList<MeasurementSchedule> schedules = measurementScheduleManager.findSchedulesByCriteria(subject,
+                criteria);
+            List<List<MeasurementDataNumericHighLowComposite>> data =
+                new ArrayList<List<MeasurementDataNumericHighLowComposite>>();
+            data.add(metricsManager.findDataForResourceGroup(map(schedules), beginTime, endTime));
+
+            return data;
         } else if (context.type == EntityContext.Type.AutoGroup) {
-            if (authorizationManager.canViewAutoGroup(subject, context.parentResourceId, context.resourceTypeId) == false) {
+            if (!authorizationManager.canViewAutoGroup(subject, context.parentResourceId, context.resourceTypeId)) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view measurement data for autoGroup[parentResourceId="
                     + context.parentResourceId + ", resourceTypeId=" + context.resourceTypeId + "]");
@@ -763,6 +775,14 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         List<List<MeasurementDataNumericHighLowComposite>> results = getConnectedUtilityInstance()
             .getMeasurementDataAggregatesForContext(beginTime, endTime, context, definitionId, numDataPoints);
         return results;
+    }
+
+    private List<Integer> map(List<MeasurementSchedule> schedules) {
+        List<Integer> scheduleIds = new ArrayList<Integer>(schedules.size());
+        for (MeasurementSchedule schedule : schedules) {
+            scheduleIds.add(schedule.getId());
+        }
+        return scheduleIds;
     }
 
     public List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(Subject subject, int resourceId,

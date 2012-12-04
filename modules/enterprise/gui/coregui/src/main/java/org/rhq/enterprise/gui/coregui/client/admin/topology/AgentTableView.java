@@ -73,7 +73,7 @@ public class AgentTableView extends TableSection<AgentNodeDatasource> implements
                         if (value == null) {
                             return "";
                         }
-                        String detailsUrl = "#" + VIEW_PATH + "/" + record.getAttributeAsString(FIELD_ID);
+                        String detailsUrl = "#" + VIEW_PATH + "/" + getId(record);
                         String formattedValue = StringUtility.escapeHtml(value.toString());
                         return SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
 

@@ -19,10 +19,15 @@
 
 package org.rhq.core.domain.criteria;
 
+import java.util.Arrays;
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.cloud.PartitionEvent;
+import org.rhq.core.domain.cloud.PartitionEvent.ExecutionStatus;
+import org.rhq.core.domain.cloud.PartitionEventType;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -39,17 +44,15 @@ public class PartitionEventCriteria extends Criteria {
     public static final String SORT_FIELD_CTIME = "ctime";
 
     private Integer filterId;
-    private String filterEventType;
-    private String filterExecutionStatus;
+    private List<PartitionEventType> filterEventType; // requires override
+    private List<ExecutionStatus> filterExecutionStatus; // requires override
     private String filterEventDetail;
         
     private PageOrdering sortCtime;
     
     public PartitionEventCriteria() {
-        //        filterOverrides.put("packageTypeId", "packageType.id = ? ");
-        //        filterOverrides.put("repoId", "id IN (" +
-        //            "SELECT rpv.packageVersion.generalPackage.id FROM RepoPackageVersion rpv WHERE rpv.repo.id = ?" +
-        //            ")");
+        filterOverrides.put("eventType", "eventType IN ( ? )");
+        filterOverrides.put("executionStatus", "executionStatus IN ( ? )");
     }
     
     public Class<?> getPersistentClass() {
@@ -60,12 +63,16 @@ public class PartitionEventCriteria extends Criteria {
         this.filterId = id;
     }
     
-    public void addFilterEventType(String eventType) {
-        this.filterEventType = eventType;
+    public void addFilterEventType(PartitionEventType... filterEventType) {
+        if (filterEventType != null && filterEventType.length > 0) {
+            this.filterEventType = Arrays.asList(filterEventType);
+        }
     }
     
-    public void addFilterExecutionStatus(String executionStatus) {
-        this.filterExecutionStatus = executionStatus;
+    public void addFilterExecutionStatus(ExecutionStatus... filterExecutionStatus) {
+        if (filterExecutionStatus != null && filterExecutionStatus.length > 0) {
+            this.filterExecutionStatus = Arrays.asList(filterExecutionStatus);
+        }
     }
     
     public void addFilterEventDetail(String eventDetail) {

@@ -27,6 +27,7 @@ import static org.rhq.enterprise.gui.coregui.client.admin.topology.PartitionEven
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -38,6 +39,8 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.cloud.PartitionEvent;
+import org.rhq.core.domain.cloud.PartitionEvent.ExecutionStatus;
+import org.rhq.core.domain.cloud.PartitionEventType;
 import org.rhq.core.domain.criteria.PartitionEventCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -82,8 +85,8 @@ public class PartitionEventDatasource extends RPCDataSource<PartitionEvent, Part
         ListGridField executionTimeField = FIELD_CTIME.getListGridField("120");
         TimestampCellFormatter.prepareDateField(executionTimeField);
         fields.add(executionTimeField);
-        fields.add(FIELD_EVENT_TYPE.getListGridField("140"));
-        fields.add(FIELD_EVENT_DETAIL.getListGridField("165"));
+        fields.add(FIELD_EVENT_TYPE.getListGridField("170"));
+        fields.add(FIELD_EVENT_DETAIL.getListGridField("200"));
         fields.add(FIELD_SUBJECT_NAME.getListGridField("90"));
         fields.add(FIELD_EXECUTION_STATUS.getListGridField("90"));
 
@@ -147,16 +150,45 @@ public class PartitionEventDatasource extends RPCDataSource<PartitionEvent, Part
         ListGridRecord record = new ListGridRecord();
         record.setAttribute(FIELD_ID.propertyName(), from.getId());
         record.setAttribute(FIELD_CTIME.propertyName(), from.getCtime());
-        record.setAttribute(FIELD_EVENT_TYPE.propertyName(), from.getEventType());
-        record.setAttribute(FIELD_EVENT_DETAIL.propertyName(), from.getEventDetail());
-        record.setAttribute(FIELD_SUBJECT_NAME.propertyName(), from.getSubjectName());
-        record.setAttribute(FIELD_EXECUTION_STATUS.propertyName(), from.getExecutionStatus());
+        record.setAttribute(FIELD_EVENT_TYPE.propertyName(), from.getEventType() == null ? "" : from.getEventType());
+        record.setAttribute(FIELD_EVENT_DETAIL.propertyName(), from.getEventDetail() == null ? "" : from.getEventDetail());
+        record.setAttribute(FIELD_SUBJECT_NAME.propertyName(), from.getSubjectName() == null ? "" : from.getSubjectName());
+        record.setAttribute(FIELD_EXECUTION_STATUS.propertyName(), from.getExecutionStatus() == null ? "" : from.getExecutionStatus());
         return record;
     }
 
     @Override
     protected PartitionEventCriteria getFetchCriteria(DSRequest request) {
-        // we don't use criteria for this datasource, just return null
-        return new PartitionEventCriteria();
+        ExecutionStatus[] statuses = getArrayFilter(request, FILTER_EXECUTION_STATUS, ExecutionStatus.class);
+        PartitionEventType[] types = getArrayFilter(request, FILTER_EVENT_TYPE, PartitionEventType.class);
+        if (types == null || types.length == 0 || statuses == null || statuses.length == 0) {
+            return null; // user didn't select any type or status - return null to indicate no data should be displayed
+        }
+
+        PartitionEventCriteria criteria = new PartitionEventCriteria();
+        // This code is unlikely to be necessary as the encompassing view should be using an initial
+        // sort specifier. But just in case, make sure we set the initial sort.  Note that we have to
+        // manipulate the PageControl directly as per the restrictions on getFetchCriteria() (see jdoc).
+        PageControl pageControl = getPageControl(request);
+        if (pageControl.getOrderingFields().isEmpty()) {
+            pageControl.initDefaultOrderingField(FIELD_CTIME.propertyName(), PageOrdering.DESC);
+        }
+
+        // TODO: This call is broken in 2.2, http://code.google.com/p/smartgwt/issues/detail?id=490
+        // when using AdvancedCriteria
+        Map<String, Object> criteriaMap = request.getCriteria().getValues();
+        criteria.addFilterEventDetail((String) criteriaMap.get(FILTER_EVENT_DETAIL));
+
+        // There's no need to add a exec. status filter to the criteria if the user specified all exec. statuses.
+        if (statuses.length != ExecutionStatus.values().length) {
+            criteria.addFilterExecutionStatus(statuses);
+        }
+        
+        // There's no need to add a event type filter to the criteria if the user specified all event types.
+        if (types.length != PartitionEventType.values().length) {
+            criteria.addFilterEventType(types);
+        }
+
+        return criteria;
     }
 }

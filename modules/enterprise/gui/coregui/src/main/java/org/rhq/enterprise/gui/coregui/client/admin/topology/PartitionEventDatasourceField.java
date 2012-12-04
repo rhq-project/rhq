@@ -30,15 +30,16 @@ public enum PartitionEventDatasourceField {
 
     FIELD_ID("id", CoreGUI.getMessages().common_title_id()),
 
-    FIELD_CTIME("ctime", "i18n ex time"),
-    
-    FIELD_EVENT_TYPE("eventType", "i18n ev type"),
+    FIELD_CTIME("ctime", CoreGUI.getMessages().view_adminTopology_partitionEvents_execTime()),
 
-    FIELD_EVENT_DETAIL("eventDetail", "i18n ev detail"),
+    FIELD_EVENT_TYPE("eventType", CoreGUI.getMessages().view_adminTopology_partitionEvents_type()),
 
-    FIELD_SUBJECT_NAME("subjectName", "i18n by"),
+    FIELD_EVENT_DETAIL("eventDetail", CoreGUI.getMessages().view_adminTopology_partitionEvents_details()),
 
-    FIELD_EXECUTION_STATUS("executionStatus", "i18n ex status");
+    FIELD_SUBJECT_NAME("subjectName", CoreGUI.getMessages().view_adminTopology_partitionEvents_initiatedBy()),
+
+    FIELD_EXECUTION_STATUS("executionStatus", CoreGUI.getMessages()
+        .view_adminTopology_partitionEvents_executionStatus());
 
     /**
      * Corresponds to a property name of Server (e.g. operationMode).

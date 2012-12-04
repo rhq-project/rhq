@@ -73,7 +73,7 @@ public class EnumSelectItem extends SelectItem {
         for (Object o : EnumSet.allOf(e)) {
             Enum v = (Enum) o;
             String name = v.name();
-            if (!valueMap.containsKey(name)) {
+            if (!map.containsKey(name)) {
                 map.put(name, v.toString());
             }
         }

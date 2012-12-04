@@ -36,6 +36,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
@@ -109,5 +110,11 @@ public class ComplexConfigurationResourceComponent extends MBeanResourceComponen
         }
 
         return configuration;
+    }
+
+    @Override
+    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+        // don't try to update the read only properties, it will fail
+        super.updateResourceConfiguration(report, true);
     }
 }

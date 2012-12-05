@@ -188,7 +188,6 @@ public class StatusManagerBean implements StatusManagerLocal {
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void markGlobalCache() {
         Query updateServerQuery = entityManager.createNamedQuery(Server.QUERY_UPDATE_STATUS_BY_NAME);
-        updateServerQuery.setParameter("identity", serverManager.getIdentity());
         int serversUpdated = updateServerQuery.executeUpdate();
 
         /*

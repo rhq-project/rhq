@@ -1,4 +1,4 @@
-<plugin name="ResourceMetaDataManagerBeanTest"
+<plugin name="UpdatePluginMetadataTestBasePlugin"
    version="2.0"
    displayName="Mock JBoss AS" package="org.rhq.plugins.mock.jboss"
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

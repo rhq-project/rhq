@@ -60,6 +60,12 @@ public class EventMetadataManagerBeanTest extends MetadataBeanTest {
         assertEquals("The description property should have been updated", "EVENT ONE", eventDef.getDescription());
     }
 
+    // this needs to be the last test executed in the class, it does cleanup
+    @Test(priority = 10, alwaysRun = true, dependsOnGroups = { "Events.UpgradePlugin" })
+    public void afterClassWorkTest() throws Exception {
+        afterClassWork();
+    }
+
     EventDefinition loadEventDef(String name, String resourceType) {
         return (EventDefinition) getEntityManager()
             .createQuery("from  EventDefinition e where e.name = :name and e.resourceType.name = :resourceType")

@@ -51,7 +51,12 @@ import org.rhq.jndi.AllowRhqServerInternalsAccessPermission;
 import org.rhq.test.PortScout;
 
 /**
+ *
+ * !!!!!!! THIS TEST CLASS HAS BEEN MOVED TO ENTERPRISE/SERVER/ITESTS-2 !!!!!!
  * 
+ * TODO: since this class has been updated and now differs from the version in itests-2 it is left here for
+ *       reference. Also, the jndi access strategy needs to be updated for AS7.  When all is settled, this
+ *       whole src branch should be deleted. 
  *
  * @author Lukas Krejci
  */

@@ -48,11 +48,13 @@ import org.rhq.enterprise.server.util.ResourceTreeHelper;
 @Test(groups = "drift", singleThreaded = true)
 public abstract class AbstractDriftServerTest extends AbstractEJB3Test {
 
-    protected final String RESOURCE_TYPE_NAME = getClass().getSimpleName() + "_RESOURCE_TYPE";
+    protected final String NAME_PREFIX = getClass().getSimpleName() + "_";
 
-    protected final String AGENT_NAME = getClass().getSimpleName() + "_AGENT";
+    protected final String RESOURCE_TYPE_NAME = NAME_PREFIX + "RESOURCE_TYPE";
 
-    protected final String RESOURCE_NAME = getClass().getSimpleName() + "_RESOURCE";
+    protected final String AGENT_NAME = NAME_PREFIX + "AGENT";
+
+    protected final String RESOURCE_NAME = NAME_PREFIX + "RESOURCE";
 
     protected DriftServerPluginService driftServerPluginService;
 
@@ -128,13 +130,29 @@ public abstract class AbstractDriftServerTest extends AbstractEJB3Test {
         executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
+                String name = " '" + NAME_PREFIX + "%' ";
 
-                em.createQuery("delete from JPADrift ").executeUpdate();
-                em.createQuery("delete from JPADriftChangeSet").executeUpdate();
-                em.createQuery("delete from JPADriftSet").executeUpdate();
-                em.createQuery("delete from JPADriftFile").executeUpdate();
-                em.createQuery("delete from DriftDefinition").executeUpdate();
-                em.createQuery("delete from DriftDefinitionTemplate").executeUpdate();
+                em.createQuery("delete from JPADrift d where d.newDriftFile like" + name).executeUpdate();
+
+                em.createQuery(
+                    "delete from JPADriftChangeSet cs where cs.id in ( select cs1.id from JPADriftChangeSet cs1 where cs1.driftDefinition.name like"
+                        + name + ")").executeUpdate();
+
+                em.createQuery(
+                    "delete from JPADriftChangeSet cs where cs.id in ( select cast(ddt.changeSetId as int) from DriftDefinitionTemplate ddt where ddt.name like"
+                        + name + ")").executeUpdate();
+
+                em.createNativeQuery("" //
+                    + "delete from rhq_drift_set ds " //
+                    + "  where not exists ( select * from rhq_drift d where d.drift_set_id = ds.id ) " //
+                    + "    and not exists ( select * from rhq_drift_change_set cs where cs.drift_set_id = ds.id ) ")
+                    .executeUpdate();
+
+                em.createQuery("delete from JPADriftFile df where df.hashId like" + name).executeUpdate();
+
+                em.createQuery("delete from DriftDefinition dd where dd.name like" + name).executeUpdate();
+
+                em.createQuery("delete from DriftDefinitionTemplate ddt where ddt.name like" + name).executeUpdate();
 
                 deleteEntity(Resource.class, RESOURCE_NAME);
                 deleteEntity(Agent.class, AGENT_NAME);

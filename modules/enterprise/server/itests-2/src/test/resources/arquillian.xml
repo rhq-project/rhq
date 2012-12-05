@@ -21,6 +21,7 @@
 
     <configuration>
       <property name="jbossHome">${jboss.unzip.location}</property>
+      <property name="javaVmArguments">${jboss.vm.args} ${jboss.vm.args.debug}</property>
     </configuration>
   </container>
 </arquillian>

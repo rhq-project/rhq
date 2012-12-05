@@ -30,8 +30,8 @@
                 <!-- Empty initial schema to avoid install failure on default latest schema version -->
             </schemaSpec>
 
-            <!-- 2.1 through 2.69 removed, no longer needed as these versions are not in use -->        	
-        	
+            <!-- 2.1 through 2.69 removed, no longer needed as these versions are not in use -->
+
             <schemaSpec version="2.70">
                 <schema-addColumn table="RHQ_ALERT" column="ACK_TIME" columnType="LONG" />
                 <schema-addColumn table="RHQ_ALERT" column="ACK_SUBJECT" precision="100" columnType="VARCHAR2" />
@@ -1267,10 +1267,10 @@
                         UPDATE RHQ_RESOURCE_TYPE
                         SET DELETED = false
                     </statement>
-                	<statement targetDBVendor="oracle" desc="Set deleted flag for existing resources types to false">
+                    <statement targetDBVendor="oracle" desc="Set deleted flag for existing resources types to false">
                         UPDATE RHQ_RESOURCE_TYPE
                         SET DELETED = 0
-                	</statement>
+                    </statement>
                 </schema-directSQL>
                 <schema-alterColumn table="RHQ_RESOURCE_TYPE" column="DELETED" nullable="FALSE" />
             </schemaSpec>
@@ -1351,14 +1351,14 @@
             <schemaSpec version="2.105">
                 <schema-addColumn table="RHQ_REPO" column="OWNER_ID" columnType="INTEGER" />
                 <schema-addColumn table="RHQ_REPO" column="IS_PRIVATE" columnType="BOOLEAN" />
-            	<schema-directSQL>
+                <schema-directSQL>
                     <statement targetDBVendor="postgresql" desc="Set is_private flag for existing repos to false">
                         UPDATE RHQ_REPO SET IS_PRIVATE = false
                     </statement>
                     <statement targetDBVendor="oracle" desc="Set is_private flag for existing repos to false">
                         UPDATE RHQ_REPO SET IS_PRIVATE = 0
                     </statement>
-            	</schema-directSQL>
+                </schema-directSQL>
                 <schema-alterColumn table="RHQ_REPO" column="IS_PRIVATE" nullable="FALSE"/>
                 <schema-directSQL>
                     <statement desc="Creating OWNER_ID foreign key relation on RHQ_REPO">
@@ -1970,7 +1970,7 @@
                 </schema-directSQL>
             </schemaSpec>
 
-        	<!-- Remove unnecessary tables for RHQ on AS7 -->
+            <!-- Remove unnecessary tables for RHQ on AS7 -->
             <schemaSpec version="2.127">
                 <schema-dropTable table="JMS_MESSAGES" ignoreError="true" />
                 <schema-dropTable table="JMS_TRANSACTIONS" ignoreError="true" />
@@ -1978,7 +1978,16 @@
                 <schema-dropTable table="JMS_ROLES" ignoreError="true" />
                 <schema-dropTable table="JMS_SUBSCRIPTIONS" ignoreError="true" />
             </schemaSpec>
-        	
+
+            <!-- The perspective server plugin type has been removed - delete perspective plugin from DB -->
+            <schemaSpec version="2.128">
+                <schema-directSQL>
+                    <statement>
+                        DELETE FROM RHQ_PLUGIN WHERE NAME = 'CorePerspective'
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

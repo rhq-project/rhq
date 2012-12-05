@@ -1,6 +1,4 @@
-<project
-  xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
@@ -25,13 +23,14 @@
   <properties>
     <jboss.zip>${settings.localRepository}/org/jboss/as/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip</jboss.zip>
     <jboss.unzip.location>${basedir}/target/jboss-as-${jboss.version}</jboss.unzip.location>
+    <jboss.vm.args>-Xmx700m -XX:MaxPermSize=200m</jboss.vm.args>
+    <jboss.vm.args.debug></jboss.vm.args.debug> <!-- -Ditest.debug can override this, see below -->
   </properties>
 
   <dependencies>
     <!--================ Test Deps ================ -->
 
-    <!-- Note, the test dep ordering can be important. Maven orders the [test] classpath in the order listed
-      in the pom. -->
+    <!-- Note, the test dep ordering can be important. Maven orders the [test] classpath in the order listed in the pom. -->
 
     <dependency>
       <groupId>org.jboss.as</groupId>
@@ -222,13 +221,9 @@
             <configuration>
               <target>
                 <echo>Unzipping JBossAS ${jboss.version} found at ${jboss.zip}</echo>
-                <unzip
-                  src="${jboss.zip}"
-                  dest="${jboss.unzip.location}/.." />
+                <unzip src="${jboss.zip}" dest="${jboss.unzip.location}/.." />
                 <echo>JBossAS ${jboss.version} should now be at: ${jboss.unzip.location}</echo>
-                <property
-                  name="jboss.conf"
-                  location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
+                <property name="jboss.conf" location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
                 <echo>Will now add test configuration to JBossAS config file: ${jboss.conf}</echo>
                 <replace file="${jboss.conf}">
 
@@ -420,15 +415,10 @@
 
                 </replace>
 
-                <property
-                  name="jboss.modules.dir"
-                  location="${jboss.unzip.location}/modules" />
+                <property name="jboss.modules.dir" location="${jboss.unzip.location}/modules" />
                 <echo>Adding JDBC modules to ${jboss.modules.dir} ...</echo>
-                <copy
-                  file="${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar"
-                  toDir="${jboss.modules.dir}/org/rhq/oracle/main"
-                  failonerror="false"
-                  verbose="true" />
+                <copy file="${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar"
+                  toDir="${jboss.modules.dir}/org/rhq/oracle/main" failonerror="false" verbose="true" />
                 <echo file="${jboss.modules.dir}/org/rhq/oracle/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
 <module xmlns="urn:jboss:module:1.1" name="org.rhq.oracle">
     <resources>
@@ -442,8 +432,7 @@
 ]]></echo>
                 <copy
                   file="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"
-                  toDir="${jboss.modules.dir}/org/rhq/postgres/main"
-                  verbose="true" />
+                  toDir="${jboss.modules.dir}/org/rhq/postgres/main" verbose="true" />
                 <echo file="${jboss.modules.dir}/org/rhq/postgres/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
 <module xmlns="urn:jboss:module:1.1" name="org.rhq.postgres">
     <resources>
@@ -469,9 +458,7 @@
             <configuration>
               <skip>${skip.postgres}</skip>
               <target>
-                <property
-                  name="jboss.conf"
-                  location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
+                <property name="jboss.conf" location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
                 <echo>Will now add test configuration datasource to JBossAS config file: ${jboss.conf}</echo>
                 <replace file="${jboss.conf}">
 
@@ -546,9 +533,7 @@
             <configuration>
               <skip>${skip.oracle}</skip>
               <target>
-                <property
-                  name="jboss.conf"
-                  location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
+                <property name="jboss.conf" location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
                 <echo>Will now add test configuration datasource to JBossAS config file: ${jboss.conf}</echo>
                 <replace file="${jboss.conf}">
 
@@ -703,6 +688,18 @@
       <properties>
         <skip.postgres>true</skip.postgres>
         <skip.oracle>false</skip.oracle>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>itest.debug</id>
+      <activation>
+        <property>
+          <name>itest.debug</name>
+        </property>
+      </activation>
+      <properties>
+        <jboss.vm.args.debug>-Xrunjdwp:transport=dt_socket,address=8798,server=y,suspend=y</jboss.vm.args.debug>
       </properties>
     </profile>
   </profiles>

@@ -64,17 +64,18 @@ import org.rhq.test.AssertUtils;
 
 public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
 
-    private static final String TEST_CREATE_TEMPLATE = "test-createTemplateForNegativeUpdateTests";
-    private static final String TEST_PIN_TEMPLATE = "test-pinTemplate";
+    private static final String drift1Path = "drift.1";
+    private static final String drift2Path = "drift.2";
+
+    private final String TEST_CREATE_TEMPLATE = NAME_PREFIX + "createTemplateForNegativeUpdateTests";
+    private final String TEST_PIN_TEMPLATE = NAME_PREFIX + "pinTemplate";
+
+    private final String driftFile1Hash = NAME_PREFIX + "a1b2c3";
+    private final String driftFile2Hash = NAME_PREFIX + "1a2b3c";
 
     private DriftTemplateManagerLocal templateMgr;
     private DriftManagerLocal driftMgr;
 
-    private static final String drift1Path = "drift.1";
-    private static final String drift2Path = "drift.2";
-
-    private static final String driftFile1Hash = "a1b2c3";
-    private static final String driftFile2Hash = "1a2b3c";
 
     // Note: Arquillian currently (1.0.2) runs each test in its own testng lifecycle. Think of it as each
     // test being in its own suite, and the test class being new'd for each test. Instance variables
@@ -127,7 +128,7 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
     @Test(dependsOnGroups = "pinning")
     public void createNewTemplate() {
         final DriftDefinition definition = new DriftDefinition(new Configuration());
-        definition.setName("test-createNewTemplate");
+        definition.setName(NAME_PREFIX + "createNewTemplate");
         definition.setEnabled(true);
         definition.setDriftHandlingMode(normal);
         definition.setInterval(2400L);
@@ -265,7 +266,7 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
     //@Test(groups = "negativeUpdate", dependsOnMethods = "createTemplateForNegativeUpdateTests", expectedExceptions = EJBException.class, expectedExceptionsMessageRegExp = ".*name.*cannot be modified")
     private void doNotAllowTemplateNameToBeUpdated() {
         DriftDefinitionTemplate template = loadTemplate(TEST_CREATE_TEMPLATE);
-        template.setName("A new name");
+        template.setName(NAME_PREFIX + "A new name");
 
         templateMgr.updateTemplate(getOverlord(), template);
     }
@@ -286,7 +287,7 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
     public void createAndUpdateTemplate() {
         // create the template
         DriftDefinition definition = new DriftDefinition(new Configuration());
-        definition.setName("test-updateTemplate");
+        definition.setName(NAME_PREFIX + "test-updateTemplate");
         definition.setDescription("update template test");
         definition.setEnabled(true);
         definition.setDriftHandlingMode(normal);
@@ -297,10 +298,10 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
             definition);
 
         // next create some definitions from the template
-        final DriftDefinition attachedDef1 = createDefinition(template, "attachedDef1", true);
-        final DriftDefinition attachedDef2 = createDefinition(template, "attachedDef2", true);
-        final DriftDefinition detachedDef1 = createDefinition(template, "detachedDef1", false);
-        final DriftDefinition detachedDef2 = createDefinition(template, "detachedDef2", false);
+        final DriftDefinition attachedDef1 = createDefinition(template, NAME_PREFIX + "attachedDef1", true);
+        final DriftDefinition attachedDef2 = createDefinition(template, NAME_PREFIX + "attachedDef2", true);
+        final DriftDefinition detachedDef1 = createDefinition(template, NAME_PREFIX + "detachedDef1", false);
+        final DriftDefinition detachedDef2 = createDefinition(template, NAME_PREFIX + "detachedDef2", false);
 
         driftMgr.updateDriftDefinition(getOverlord(), forResource(resource.getId()), attachedDef1);
         driftMgr.updateDriftDefinition(getOverlord(), forResource(resource.getId()), attachedDef2);
@@ -384,10 +385,10 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
             templateDef);
 
         // next create some resource level definitions
-        final DriftDefinition attachedDef1 = createDefinition(template, "attachedDef1", true);
-        final DriftDefinition attachedDef2 = createDefinition(template, "attachedDef2", true);
-        final DriftDefinition detachedDef1 = createDefinition(template, "detachedDef1", false);
-        final DriftDefinition detachedDef2 = createDefinition(template, "detachedDef2", false);
+        final DriftDefinition attachedDef1 = createDefinition(template, NAME_PREFIX + "attachedDef1", true);
+        final DriftDefinition attachedDef2 = createDefinition(template, NAME_PREFIX + "attachedDef2", true);
+        final DriftDefinition detachedDef1 = createDefinition(template, NAME_PREFIX + "detachedDef1", false);
+        final DriftDefinition detachedDef2 = createDefinition(template, NAME_PREFIX + "detachedDef2", false);
 
         // create initial change set from which the snapshot will be generated
         final JPADriftChangeSet changeSet0 = new JPADriftChangeSet(resource, 0, COVERAGE, attachedDef1);
@@ -474,7 +475,9 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
         // get the attached definitions
         List<DriftDefinition> attachedDefs = new LinkedList<DriftDefinition>();
         for (DriftDefinition d : template.getDriftDefinitions()) {
-            if (d.isAttached() && (d.getName().equals("attachedDef1") || d.getName().equals("attachedDef2"))) {
+            if (d.isAttached()
+                && (d.getName().equals(NAME_PREFIX + "attachedDef1") || d.getName()
+                    .equals(NAME_PREFIX + "attachedDef2"))) {
                 attachedDefs.add(d);
             }
         }
@@ -490,7 +493,9 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
         // get the detached definitions
         List<DriftDefinition> detachedDefs = new LinkedList<DriftDefinition>();
         for (DriftDefinition d : template.getDriftDefinitions()) {
-            if (!d.isAttached() && (d.getName().equals("detachedDef1") || d.getName().equals("detachedDef2"))) {
+            if (!d.isAttached()
+                && (d.getName().equals(NAME_PREFIX + "detachedDef1") || d.getName()
+                    .equals(NAME_PREFIX + "detachedDef2"))) {
                 detachedDefs.add(d);
             }
         }
@@ -513,10 +518,10 @@ public class DriftTemplateManagerBeanTest extends AbstractDriftServerTest {
             templateDef);
 
         // next create some resource level definitions
-        final DriftDefinition attachedDef1 = createDefinition(template, "attachedDef1", true);
-        final DriftDefinition attachedDef2 = createDefinition(template, "attachedDef2", true);
-        final DriftDefinition detachedDef1 = createDefinition(template, "detachedDef1", false);
-        final DriftDefinition detachedDef2 = createDefinition(template, "detachedDef2", false);
+        final DriftDefinition attachedDef1 = createDefinition(template, NAME_PREFIX + "attachedDef1", true);
+        final DriftDefinition attachedDef2 = createDefinition(template, NAME_PREFIX + "attachedDef2", true);
+        final DriftDefinition detachedDef1 = createDefinition(template, NAME_PREFIX + "detachedDef1", false);
+        final DriftDefinition detachedDef2 = createDefinition(template, NAME_PREFIX + "detachedDef2", false);
 
         // create some change sets
         final JPADriftChangeSet changeSet0 = new JPADriftChangeSet(resource, 0, COVERAGE, attachedDef1);

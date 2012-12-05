@@ -48,13 +48,12 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 //make sure we run this after the plugins.metadata tests are done so that
 //the db contents don't interfere
-@Test
-//(dependsOnGroups = "plugin.metadata")
+//@Test(dependsOnGroups = "plugin.metadata")
 public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
 
     private static final String PLUGIN_NAME = "DeployTest"; // as defined in our test descriptors
     private static final String DESCRIPTORS_LOCATION = "test/deployment/";
-    private static final String TEST_DIR = System.getProperty("java.io.tmpdir") + "/"
+    private static final String TEST_DIR = System.getProperty("java.io.tmpdir") + "/rhq/"
         + DatabaseAndFilePluginDeploymentTest.class.getName() + "/";
     private static final String JARS_LOCATION = TEST_DIR + "jars";
     private static final String DEPLOY_LOCATION = TEST_DIR + "deploy";
@@ -116,7 +115,7 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
     // is important that afterClassStandIn() have a dependency such that it runs in the last test-set.
 
     //@BeforeClass
-    public void beforeClass() throws Exception {
+    private void beforeClass() throws Exception {
         Calendar cal = Calendar.getInstance();
         cal.set(2009, Calendar.FEBRUARY, 1, 1, 0, 0);
         cal.set(Calendar.MILLISECOND, 0);

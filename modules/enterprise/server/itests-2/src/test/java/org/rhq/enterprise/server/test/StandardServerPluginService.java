@@ -84,7 +84,7 @@ public class StandardServerPluginService extends ServerPluginService implements 
     public List<Class<? extends AbstractTypeServerPluginContainer>> pluginContainerClasses;
 
     public StandardServerPluginService() {
-        File dir = new File(System.getProperty("java.io.tmpdir"), "test-server-plugins");
+        File dir = new File(System.getProperty("java.io.tmpdir") + "/rhq", this.getClass().getSimpleName());
         this.masterConfig = new MasterServerPluginContainerConfiguration(dir, dir, dir, null);
         pluginContainerClasses = new ArrayList<Class<? extends AbstractTypeServerPluginContainer>>();
         pluginContainerClasses.add(AlertServerPluginContainer.class);

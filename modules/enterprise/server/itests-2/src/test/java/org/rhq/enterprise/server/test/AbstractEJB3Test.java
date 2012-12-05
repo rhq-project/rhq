@@ -58,6 +58,7 @@ import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
+import org.rhq.enterprise.server.core.plugin.PluginDeploymentScanner;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceMBean;
@@ -121,6 +122,62 @@ public abstract class AbstractEJB3Test extends Arquillian {
             .addAsResource("org/rhq/enterprise/server/configuration/metadata/configuration_metadata_manager_bean_test_v2.xml");
         testClassesJar.addAsResource("org/rhq/enterprise/server/discovery/DiscoveryBossBeanTest.xml");
         testClassesJar.addAsResource("org/rhq/enterprise/server/inventory/InventoryManagerBeanTest.xml");
+        testClassesJar.addAsResource("org/rhq/enterprise/server/resource/metadata/MetadataTest.xml");
+
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/AlertMetadataManagerBeanTest/plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/AlertMetadataManagerBeanTest/plugin_v2.xml");
+
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/ContentMetadataManagerBeanTest/plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/ContentMetadataManagerBeanTest/plugin_v2.xml");
+
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/EventMetadataManagerBeanTest/plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/EventMetadataManagerBeanTest/plugin_v2.xml");
+
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/MeasurementMetadataManagerBeanTest/plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/MeasurementMetadataManagerBeanTest/plugin_v2.xml");
+
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/MultiplePluginExtensionMetadataTest/child1_plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/MultiplePluginExtensionMetadataTest/child2_plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/MultiplePluginExtensionMetadataTest/parent_plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/MultiplePluginExtensionMetadataTest/parent_plugin_v2.xml");
+
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/MultiplePluginExtensionSinglePluginDescriptorMetadataTest/child_plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/MultiplePluginExtensionSinglePluginDescriptorMetadataTest/parent_plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/MultiplePluginExtensionSinglePluginDescriptorMetadataTest/parent_plugin_v2.xml");
+
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/OperationMetadataManagerBeanTest/plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/OperationMetadataManagerBeanTest/plugin_v2.xml");
+
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/PluginExtensionMetadataTest/child_plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/PluginExtensionMetadataTest/parent_plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/PluginExtensionMetadataTest/parent_plugin_v2.xml");
+
+        testClassesJar.addAsResource("org/rhq/enterprise/server/resource/metadata/PluginManagerBeanTest/plugin_1.xml");
+        testClassesJar.addAsResource("org/rhq/enterprise/server/resource/metadata/PluginManagerBeanTest/plugin_2.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/PluginManagerBeanTest/plugin_3.1.xml");
+        testClassesJar.addAsResource("org/rhq/enterprise/server/resource/metadata/PluginManagerBeanTest/plugin_3.xml");
+
         testClassesJar
             .addAsResource("org/rhq/enterprise/server/resource/metadata/PluginScanningExtensionMetadataTest/child1_plugin_v1.xml");
         testClassesJar
@@ -129,6 +186,24 @@ public abstract class AbstractEJB3Test extends Arquillian {
             .addAsResource("org/rhq/enterprise/server/resource/metadata/PluginScanningExtensionMetadataTest/parent_plugin_v1.xml");
         testClassesJar
             .addAsResource("org/rhq/enterprise/server/resource/metadata/PluginScanningExtensionMetadataTest/parent_plugin_v2.xml");
+
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/ResourceMetadataManagerBeanTest/dup_drift.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/ResourceMetadataManagerBeanTest/parent_resource_type-plugin.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/ResourceMetadataManagerBeanTest/plugin_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/ResourceMetadataManagerBeanTest/plugin_v2.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/ResourceMetadataManagerBeanTest/remove_bundle_drift_config_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/ResourceMetadataManagerBeanTest/remove_bundle_drift_config_v2.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/ResourceMetadataManagerBeanTest/remove_types_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/ResourceMetadataManagerBeanTest/remove_types_v2.xml");
+
         testClassesJar.addAsResource("perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip");
         testClassesJar.addAsResource("serverplugins/simple-generic-serverplugin.xml");
         testClassesJar.addAsResource("test/deployment/1.0-feb-2.xml");
@@ -218,9 +293,10 @@ public abstract class AbstractEJB3Test extends Arquillian {
         EnterpriseArchive testEar = ShrinkWrap.create(EnterpriseArchive.class, "rhq.ear");
         EnterpriseArchive rhqEar = earResolver.artifact("org.rhq:rhq-enterprise-server-ear:ear:4.6.0-SNAPSHOT")
             .resolveAs(EnterpriseArchive.class).iterator().next();
-        // merge rhq.ear into testEar but include only the EJB jars, the SAR, and the supporting libraries
-        testEar = testEar.merge(rhqEar,
-            Filters.include("/lib.*|/rhq.*ejb3\\.jar.*|/rhq-enterprise-server-services-sar.*"));
+        // merge rhq.ear into testEar but include only the EJB jars and the supporting libraries. Note that we
+        // don't include the services sar because tests are responsible for prepare/unprepare of all required services,
+        // we don't want the production services performig any unexpected work. 
+        testEar = testEar.merge(rhqEar, Filters.include("/lib.*|/rhq.*ejb3\\.jar.*"));
         // remove startup beans and shutdown listeners, we don't want this to be a full server deployment. The tests
         // start/stop what they need, typically with test services or mocks.
         testEar.delete(ArchivePaths
@@ -267,7 +343,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testEar.addAsLibraries(dependencies);
 
         // Print out the test EAR structure
-        // System.out.println("** The Deployment EAR: " + ear.toString(true) + "\n");
+        //System.out.println("** The Deployment EAR: " + testEar.toString(true) + "\n");
 
         // Save the test EAR to a zip file for inspection (set file explicitly)
         //exportZip(testEar, new File("/home/jshaughn/temp/test-ear.ear"));
@@ -386,7 +462,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
 
             } catch (Throwable t) {
                 // Arquillian is eating these, make sure they show up in some way
-                System.out.println("BEFORE METHOD FAILURE, TEST DID NOT RUN!!! ");
+                System.out.println("BEFORE METHOD FAILURE, TEST DID NOT RUN!!! [" + method.getName() + "]");
                 t.printStackTrace();
                 throw t;
             }
@@ -408,7 +484,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
             }
         } catch (Throwable t) {
             System.out
-                .println("AFTER METHOD FAILURE, TEST CLEAN UP FAILED!!! MAY NEED TO CLEAN DB BEFORE RUNNING MORE TESTS!");
+                .println("AFTER METHOD FAILURE, TEST CLEAN UP FAILED!!! MAY NEED TO CLEAN DB BEFORE RUNNING MORE TESTS! ["
+                    + method.getName() + "]");
             t.printStackTrace();
             throw t;
         }
@@ -646,11 +723,12 @@ public abstract class AbstractEJB3Test extends Arquillian {
     }
 
     /**
-     * If you need to test server plugins, you must first prepare the server plugin service.
-     * After this returns, the caller must explicitly start the PC by using the appropriate API
-     * on the given mbean; this method will only start the service, it will NOT start the master PC.
+     * This will register any custom service, replacing any service with the same objectName.
+     * <br/>
+     * It does nothing more than registration, any calls to the service (e.g. start) are up to the caller.
      *
-     * @param testServiceMBean the object that will house your test server plugins
+     * @param testServiceMBean the test service MBean to register
+     * @param objectNameStr the name of the service, which will be converted to an ObjectName
      *
      * @throws RuntimeException
      */
@@ -664,11 +742,12 @@ public abstract class AbstractEJB3Test extends Arquillian {
     }
 
     /**
-     * If you need to test server plugins, you must first prepare the server plugin service.
-     * After this returns, the caller must explicitly start the PC by using the appropriate API
-     * on the given mbean; this method will only start the service, it will NOT start the master PC.
+     * This will register any custom service, replacing any service with the same objectName.
+     * <br/>
+     * It does nothing more than registration, any calls to the service (e.g. start) are up to the caller.
      *
-     * @param testServiceMBean the object that will house your test server plugins
+     * @param testServiceMBean the test service MBean to register
+     * @param objectName the name of the service
      *
      * @throws RuntimeException
      */
@@ -858,12 +937,33 @@ public abstract class AbstractEJB3Test extends Arquillian {
     }
 
     /**
+     * Prepares a test deployment scanner with the following characteristics<br/>.
+     * -  start() is called but startDeployment() is not called.<br/>
+     * - agentPluginDir is set to getTempDir() + "/plugins"<br/>
+     * - serverPluginDir is set to null (no scanning for server plugins)<br/>
+     * - scanPeriod is set to 9999999 (basically prevent autoscan)<br/>
+     */
+    protected PluginDeploymentScannerMBean preparePluginScannerService() {
+        if (null != pluginScannerService) {
+            return pluginScannerService;
+        }
+
+        PluginDeploymentScanner scanner = new PluginDeploymentScanner();
+        String pluginDirPath = getTempDir() + "/plugins";
+        scanner.setAgentPluginDir(pluginDirPath); // we don't want to scan for these
+        scanner.setServerPluginDir(null); // we don't want to scan for these
+        scanner.setScanPeriod("9999999"); // we want to manually scan - don't allow for auto-scan to happen        
+
+        return preparePluginScannerService(scanner);
+    }
+
+    /**
      * Note that the standard plugin scanner service is deployed automatically with the test rhq ear,
      * this is only necessary if you want a custom service.
      *  
      * @param scannerService
      */
-    public void preparePluginScannerService(PluginDeploymentScannerMBean scannerService) {
+    public PluginDeploymentScannerMBean preparePluginScannerService(PluginDeploymentScannerMBean scannerService) {
         try {
             MBeanServer mbs = getPlatformMBeanServer();
             if (mbs.isRegistered(PluginDeploymentScannerMBean.OBJECT_NAME)) {
@@ -874,6 +974,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
             mbs.registerMBean(scannerService, PluginDeploymentScannerMBean.OBJECT_NAME);
             pluginScannerService = scannerService;
             pluginScannerService.start();
+
+            return pluginScannerService;
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -924,7 +1026,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
      * @throws Exception
      */
     protected void writeObjects(String filename, Object... objects) throws Exception {
-        File file = new File(System.getProperty("java.io.tmpdir"), this.getClass().getName() + "-" + filename);
+        File file = new File(getTempDir(), "-" + filename);
         file.delete();
         ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file));
         for (Object o : objects) {
@@ -947,7 +1049,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
         ObjectInputStream ois = null;
 
         try {
-            File file = new File(System.getProperty("java.io.tmpdir"), this.getClass().getName() + "-" + filename);
+            File file = new File(getTempDir(), "-" + filename);
             ois = new ObjectInputStream(new FileInputStream(file));
             for (int i = 0; i < numObjects; ++i) {
                 result.add(ois.readObject());
@@ -966,8 +1068,15 @@ public abstract class AbstractEJB3Test extends Arquillian {
      * @return true if deleted, false otherwise. 
      */
     protected boolean deleteObjects(String filename) {
-        File file = new File(System.getProperty("java.io.tmpdir"), this.getClass().getName() + "-" + filename);
+        File file = new File(getTempDir(), "-" + filename);
         return file.delete();
+    }
+
+    /**
+     * @return a temp directory for testing that is specific to this test class.
+     */
+    protected File getTempDir() {
+        return new File(System.getProperty("java.io.tmpdir") + "/rhq", this.getClass().getSimpleName());
     }
 
 }

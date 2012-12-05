@@ -48,10 +48,19 @@ public class UninventoryTest extends AbstractEJB3Test {
     private Resource newResource;
 
     @Override
+    protected void beforeMethod() throws Exception {
+        prepareForTestAgents();
+    }
+
+    @Override
     protected void afterMethod() throws Exception {
-        if (newResource != null) {
-            deleteNewResource(newResource);
-            newResource = null;
+        try {
+            if (newResource != null) {
+                deleteNewResource(newResource);
+                newResource = null;
+            }
+        } finally {
+            unprepareForTestAgents();
         }
     }
 

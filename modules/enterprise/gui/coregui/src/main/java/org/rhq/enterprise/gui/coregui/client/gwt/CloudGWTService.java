@@ -26,6 +26,7 @@ import java.util.List;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 
+import org.rhq.core.domain.cloud.AffinityGroup;
 import org.rhq.core.domain.cloud.FailoverListDetails;
 import org.rhq.core.domain.cloud.PartitionEvent;
 import org.rhq.core.domain.cloud.PartitionEventDetails;
@@ -70,5 +71,9 @@ public interface CloudGWTService extends RemoteService {
     PageList<PartitionEventDetails> getPartitionEventDetails(int partitionEventId,
         PageControl pageControl) throws RuntimeException;
     
-    PageList<AffinityGroupCountComposite> getComposites(PageControl pageControl) throws RuntimeException;
+    PageList<AffinityGroupCountComposite> getAffinityGroupCountComposites(PageControl pageControl) throws RuntimeException;
+    
+    int deleteAffinityGroups(int[] affinityGroupIds) throws RuntimeException;
+    
+    int createAffinityGroup(AffinityGroup affinityGroup) throws RuntimeException;
 }

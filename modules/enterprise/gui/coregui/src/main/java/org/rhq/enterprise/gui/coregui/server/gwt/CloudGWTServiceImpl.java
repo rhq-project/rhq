@@ -27,6 +27,7 @@ import java.util.List;
 
 import org.apache.commons.lang.ArrayUtils;
 
+import org.rhq.core.domain.cloud.AffinityGroup;
 import org.rhq.core.domain.cloud.FailoverListDetails;
 import org.rhq.core.domain.cloud.PartitionEvent;
 import org.rhq.core.domain.cloud.PartitionEventDetails;
@@ -56,7 +57,7 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     private CloudManagerLocal cloudManager = LookupUtil.getCloudManager();
 
     private PartitionEventManagerLocal partitionEventManager = LookupUtil.getPartitionEventManager();
-    
+
     private AffinityGroupManagerLocal affinityGroupManager = LookupUtil.getAffinityGroupManager();
 
     @Override
@@ -171,11 +172,29 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     }
 
     @Override
-    public PageList<AffinityGroupCountComposite> getComposites(PageControl pageControl) throws RuntimeException {
+    public PageList<AffinityGroupCountComposite> getAffinityGroupCountComposites(PageControl pageControl)
+        throws RuntimeException {
         try {
-            return SerialUtility.prepare(
-                affinityGroupManager.getComposites(getSessionSubject(), pageControl),
-                "CloudGWTServiceImpl.getComposites");
+            return SerialUtility.prepare(affinityGroupManager.getComposites(getSessionSubject(), pageControl),
+                "CloudGWTServiceImpl.getAffinityGroupCountComposites");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public int deleteAffinityGroups(int[] affinityGroupIds) throws RuntimeException {
+        try {
+            return affinityGroupManager.delete(getSessionSubject(), ArrayUtils.toObject(affinityGroupIds));
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public int createAffinityGroup(AffinityGroup affinityGroup) throws RuntimeException {
+        try {
+            return affinityGroupManager.create(getSessionSubject(), affinityGroup);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

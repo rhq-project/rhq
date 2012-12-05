@@ -73,8 +73,8 @@ function MeasurementModule() {
    */
   this.time = {
     seconds: 1000,
-    minutes: 60 * this.seconds,
-    hours:   60 * this.minutes
+    minutes: 60 * 1000,
+    hours:   60 * 60 * 1000
   }
 
   /**

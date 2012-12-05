@@ -335,13 +335,20 @@
 
         <property name="rhq.bin.dir" location="${project.build.outputDirectory}/bin" />
         <mkdir dir="${rhq.bin.dir}" />
-        <echo file="${rhq.bin.dir}/rhq-server.properties">### RHQ Server Configuration Properties
+        <echo file="${rhq.bin.dir}/rhq-server.properties">
+#################### RHQ Server Configuration Properties ####################
 
-## Database Settings
+#############################################################################
+# Database Settings
+# -----------------
 # These should point to the database that your RHQ Server will use as
 # its backend RDBMS storage.
 # If you are using Oracle, comment out the Postgres settings and
 # uncomment the Oracle settings below, adjusting the values as appropriate.
+# NOTE: rhq.server.database.password is not to be set to the actual password
+# but should instead be that actual password in encrypted form as generated
+# by the generate-db-password.sh(.bat) script.
+#############################################################################
 
 # PostgreSQL database
 rhq.server.database.connection-url=${rhq.server.database.connection-url}
@@ -365,10 +372,13 @@ rhq.server.quartz.driverDelegateClass=${rhq.server.quartz.driverDelegateClass}
 #hibernate.dialect=org.hibernate.dialect.Oracle10gDialect
 #rhq.server.quartz.driverDelegateClass=org.quartz.impl.jdbcjobstore.oracle.OracleDelegate
 
-## Server Settings
+#############################################################################
+# Server Settings
+# ---------------
 # These are miscallenous settings that the server will use to customize itself
 # to the environment in which it is running. These are settings you usually
 # want to change or at least be aware of.
+#############################################################################
 
 # Defines what this server's name is to be known as to the RHQ system.
 # It doesn't necessarily have to be an IP address or hostname, but it can be.
@@ -383,13 +393,16 @@ rhq.server.email.smtp-host=localhost
 rhq.server.email.smtp-port=25
 rhq.server.email.from-address=rhqadmin@localhost
 
-## Host and Port Bindings
+#############################################################################
+# Host and Port Bindings
+# ----------------------
 # These define the ports the RHQ Server will bind to. Most of the time
 # you can leave these alone. You can change these default values to
 # conform to your own environment's requirements, such as the IP address
 # the RHQ Server will bind to (jboss.bind.address) and the ports
 # browsers will use to access the RHQ web application
 # (rhq.server.socket.binding.port.http, rhq.server.socket.binding.port.https)
+#############################################################################
 
 jboss.bind.address=0.0.0.0
 jboss.bind.address.management=127.0.0.1
@@ -417,7 +430,9 @@ rhq.server.socket.binding.port.txn-status-manager=3713
 # value - setting it to ${jboss.bind.address} will *not* work.
 #java.rmi.server.hostname=0.0.0.0
 
-## Installer Settings
+#############################################################################
+# Installer Settings
+# ------------------
 # These enable the installer when starting for the first time.
 # To do so, first ensure all values in this properties file are appropriately
 # set for your environment. Once you are sure all values are as you want them,
@@ -437,15 +452,18 @@ rhq.server.socket.binding.port.txn-status-manager=3713
 #                                          will use to talk to this server.
 #                                          If not set, a value to use is
 #                                          determined at auto-install time.
+#############################################################################
 
 rhq.autoinstall.enabled=${rhq.autoinstall.enabled}
 rhq.autoinstall.database=auto
 rhq.autoinstall.public-endpoint-address=
 
-## Miscellaneous Settings
-# The settings below can usually be left as-is.
-# These are advanced settings and should only be changed if you know
-# what you are doing.
+#############################################################################
+# Advanced Settings
+# -----------------
+# The settings below can usually be left as-is. These are advanced settings
+# and should only be changed if you know what you are doing.
+#############################################################################
 
 # Set this to true to have the server reject agent requests upon startup.
 rhq.server.maintenance-mode-at-startup=false

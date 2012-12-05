@@ -55,8 +55,6 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 
-import me.prettyprint.hector.api.Keyspace;
-
 /**
  * @author John Sanda
  */
@@ -70,23 +68,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
     private final long MINUTE = 60 * SECOND;
 
-    private final String RAW_METRIC_DATA_CF = "raw_metrics";
-
-    private final String ONE_HOUR_METRIC_DATA_CF = "one_hour_metrics";
-
-    private final String SIX_HOUR_METRIC_DATA_CF = "six_hour_metrics";
-
-    private final String TWENTY_FOUR_HOUR_METRIC_DATA_CF = "twenty_four_hour_metrics";
-
-    private final String METRICS_INDEX = "metrics_index";
-
-    private final String TRAITS_CF = "traits";
-
-    private final String RESOURCE_TRAITS_CF = "resource_traits";
-
     private MetricsServerStub metricsServer;
-
-    private Keyspace keyspace;
 
     private MetricsDAO dao;
 
@@ -152,10 +134,10 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         assertEquals(actual, expected, "Failed to retrieve raw metric data");
         assertColumnMetadataEquals(scheduleId, hour0.plusHours(4), hour0.plusHours(5), RAW_TTL, timestamp);
 
-        List<MetricsIndexEntry> expectedIndex = asList(new MetricsIndexEntry(ONE_HOUR_METRIC_DATA_CF,
+        List<MetricsIndexEntry> expectedIndex = asList(new MetricsIndexEntry(ONE_HOUR_METRICS_TABLE,
             hour0.plusHours(4), scheduleId));
-            assertMetricsIndexEquals(ONE_HOUR_METRIC_DATA_CF, expectedIndex, "Failed to update index for " +
-                ONE_HOUR_METRIC_DATA_CF);
+            assertMetricsIndexEquals(ONE_HOUR_METRICS_TABLE, expectedIndex, "Failed to update index for " +
+                ONE_HOUR_METRICS_TABLE);
     }
 
     @Test//(enabled = ENABLED)
@@ -379,6 +361,37 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     }
 
     @Test
+    public void getSummaryRawAggregate() {
+        DateTime beginTime = now().minusHours(4);
+        DateTime endTime = now();
+        Buckets buckets = new Buckets(beginTime, endTime);
+        int scheduleId = 123;
+
+        Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>();
+        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() + 10, scheduleId, 1.1));
+        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() + 20, scheduleId, 2.2));
+        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() + 30, scheduleId, 3.3));
+        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + 10, scheduleId, 4.4));
+        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + 20, scheduleId, 5.5));
+        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + 30, scheduleId, 6.6));
+
+        // add some data outside the range
+        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() - 100, scheduleId, 1.23));
+        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + buckets.getInterval() + 50, scheduleId,
+            4.56));
+
+        metricsServer.addNumericData(data);
+
+        AggregatedNumericMetric actual = metricsServer.getSummaryAggregate(scheduleId, beginTime.getMillis(),
+            endTime.getMillis());
+        double avg = divide(1.1 + 2.2 + 3.3 + 4.4 + 5.5 + 6.6, 6);
+        AggregatedNumericMetric expected = new AggregatedNumericMetric(scheduleId, avg, 1.1, 6.6,
+            beginTime.getMillis());
+
+        assertEquals(actual, expected, "Failed to get summary aggregate for raw data.");
+    }
+
+    @Test
     public void findRawDataCompositesForGroup() {
         DateTime beginTime = now().minusHours(4);
         DateTime endTime = now();
@@ -555,7 +568,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     }
 
     private void assert24HourDataEmpty(int scheduleId) {
-        assertMetricDataEmpty(scheduleId, TWENTY_FOUR_HOUR_METRIC_DATA_CF);
+        assertMetricDataEmpty(scheduleId, TWENTY_FOUR_HOUR_METRICS_TABLE);
     }
 
     private void assertMetricDataEmpty(int scheduleId, String columnFamily) {

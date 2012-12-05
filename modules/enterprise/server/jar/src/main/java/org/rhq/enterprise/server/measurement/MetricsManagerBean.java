@@ -36,6 +36,7 @@ import javax.ejb.TransactionAttributeType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.enterprise.server.cassandra.SessionManagerBean;
+import org.rhq.server.metrics.AggregatedNumericMetric;
 import org.rhq.server.metrics.MetricsServer;
 
 /**
@@ -67,6 +68,15 @@ public class MetricsManagerBean implements MetricsManagerLocal {
         long endTime) {
         MetricsServer metricsServer = getMetricsServer();
         return metricsServer.findDataForResource(scheduleId, beginTime, endTime);
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public MeasurementAggregate getSummaryAggregate(int scheduleId, long beginTime, long endTime) {
+        MetricsServer metricsServer = getMetricsServer();
+        AggregatedNumericMetric summary = metricsServer.getSummaryAggregate(scheduleId, beginTime, endTime);
+
+        return new MeasurementAggregate(summary.getMin(), summary.getAvg(), summary.getMax());
     }
 
     @Override

@@ -53,4 +53,6 @@ public interface MetricsManagerLocal {
     List<MeasurementDataNumericHighLowComposite> findDataForResourceGroup(List<Integer> scheduleIds, long beginTime,
         long endTime);
 
+    MeasurementAggregate getSummaryAggregate(int scheduleId, long beginTime, long endTime);
+
 }

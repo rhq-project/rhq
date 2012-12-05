@@ -80,6 +80,9 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
     //public File getUserPluginDir() {
     public String getUserPluginDir() {
         //return this.userPluginDir;
+        if (this.userPluginDir == null) {
+            return null;
+        }
         return this.userPluginDir.getAbsolutePath();
     }
 
@@ -95,7 +98,11 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
     //public File getServerPluginDir() {
     public String getServerPluginDir() {
         //return this.serverPluginScanner.getServerPluginDir();
-        return this.serverPluginScanner.getServerPluginDir().getAbsolutePath();
+        File dir = this.serverPluginScanner.getServerPluginDir();
+        if (dir == null) {
+            return null;
+        }
+        return dir.getAbsolutePath();
     }
 
     //public void setServerPluginDir(File dir) {
@@ -110,7 +117,11 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
     //public File getAgentPluginDir() {
     public String getAgentPluginDir() {
         //return this.agentPluginScanner.getAgentPluginDeployer().getPluginDir();
-        return this.agentPluginScanner.getAgentPluginDeployer().getPluginDir().getAbsolutePath();
+        File dir = this.agentPluginScanner.getAgentPluginDeployer().getPluginDir();
+        if (dir == null) {
+            return null;
+        }
+        return dir.getAbsolutePath();
     }
 
     //public void setAgentPluginDir(File dir) {

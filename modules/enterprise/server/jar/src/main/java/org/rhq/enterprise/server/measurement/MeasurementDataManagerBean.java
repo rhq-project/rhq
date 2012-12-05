@@ -936,7 +936,4 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         return results;
     }
 
-//    private MeasurementDataManagerUtility getConnectedUtilityInstance() {
-//        return MeasurementDataManagerUtility.getInstance(rhqDs);
-//    }
 }

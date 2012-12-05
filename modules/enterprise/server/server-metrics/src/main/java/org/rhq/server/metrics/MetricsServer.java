@@ -67,12 +67,14 @@ public class MetricsServer {
 
     private Session session;
 
+    private MetricsDAO dao;
+
     public void setSession(Session session) {
         this.session = session;
+        dao = new MetricsDAO(session);
     }
 
     public RawNumericMetric findLatestValueForResource(int scheduleId) {
-        MetricsDAO dao = new MetricsDAO(session);
         List<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, DESC, 1);
 
         if (metrics.isEmpty()) {
@@ -131,7 +133,6 @@ public class MetricsServer {
 
     private List<MeasurementDataNumericHighLowComposite> findRawDataForResource(int scheduleId, long beginTime,
         long endTime) {
-        MetricsDAO dao = new MetricsDAO(session);
         Buckets buckets = new Buckets(beginTime, endTime);
 
         List<RawNumericMetric> rawMetrics = dao.findRawMetrics(scheduleId, new DateTime(beginTime),
@@ -151,7 +152,6 @@ public class MetricsServer {
 
     private List<MeasurementDataNumericHighLowComposite> findRawDataForGroup(List<Integer> scheduleIds, long beginTime,
         long endTime) {
-        MetricsDAO dao = new MetricsDAO(session);
         Buckets buckets = new Buckets(beginTime, endTime);
 
         List<RawNumericMetric> rawMetrics = dao.findRawMetrics(scheduleIds, new DateTime(beginTime),
@@ -170,7 +170,6 @@ public class MetricsServer {
     }
 
     private AggregatedNumericMetric getSummaryRawAggregate(int scheduleId, long beginTime, long endTime) {
-        MetricsDAO dao = new MetricsDAO(session);
         List<RawNumericMetric> rawMetrics = dao.findRawMetrics(scheduleId, new DateTime(beginTime),
             new DateTime(endTime));
 
@@ -181,7 +180,6 @@ public class MetricsServer {
     }
 
     private AggregatedNumericMetric getSummaryRawAggregate(List<Integer> scheduleIds, long beginTime, long endTime) {
-        MetricsDAO dao = new MetricsDAO(session);
         List<RawNumericMetric> rawMetrics = dao.findRawMetrics(scheduleIds, new DateTime(beginTime),
             new DateTime(endTime));
 
@@ -194,7 +192,6 @@ public class MetricsServer {
 
     private List<MeasurementDataNumericHighLowComposite> findAggregateDataForResource(int scheduleId, long beginTime,
         long endTime, String columnFamily) {
-        MetricsDAO dao = new MetricsDAO(session);
         Buckets buckets = new Buckets(beginTime, endTime);
 
         List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(columnFamily, scheduleId,
@@ -213,13 +210,11 @@ public class MetricsServer {
     }
 
     public void addNumericData(Set<MeasurementDataNumeric> dataSet) {
-        MetricsDAO dao = new MetricsDAO(session);
         Set<MeasurementDataNumeric> updates = dao.insertRawMetrics(dataSet, RAW_TTL);
         updateMetricsIndex(updates);
     }
 
     void updateMetricsIndex(Set<MeasurementDataNumeric> rawMetrics) {
-        MetricsDAO dao = new MetricsDAO(session);
         Map<Integer, DateTime> updates = new TreeMap<Integer, DateTime>();
         for (MeasurementDataNumeric rawMetric : rawMetrics) {
             updates.put(rawMetric.getScheduleId(), new DateTime(rawMetric.getTimestamp()).hourOfDay().roundFloorCopy());
@@ -228,8 +223,6 @@ public class MetricsServer {
     }
 
     public void calculateAggregates() {
-        MetricsDAO dao = new MetricsDAO(session);
-
         // We first query the metrics index table to determine which schedules have data to
         // be aggregated. Then we retrieve the metric data and aggregate or compress the
         // data, writing the compressed values into the next wider (i.e., longer life span
@@ -267,7 +260,6 @@ public class MetricsServer {
     }
 
     private void updateMetricsIndex(String bucket, List<AggregatedNumericMetric> metrics, Minutes interval) {
-        MetricsDAO dao = new MetricsDAO(session);
         Map<Integer, DateTime> updates = new TreeMap<Integer, DateTime>();
         for (AggregatedNumericMetric metric : metrics) {
             updates.put(metric.getScheduleId(), dateTimeService.getTimeSlice(new DateTime(metric.getTimestamp()),
@@ -277,7 +269,6 @@ public class MetricsServer {
     }
 
     private List<AggregatedNumericMetric> aggregateRawData() {
-       MetricsDAO dao = new MetricsDAO(session);
         List<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(ONE_HOUR_METRICS_TABLE);
         List<AggregatedNumericMetric> oneHourMetrics = new ArrayList<AggregatedNumericMetric>();
 
@@ -327,7 +318,6 @@ public class MetricsServer {
     private List<AggregatedNumericMetric> calculateAggregates(String fromColumnFamily, String toColumnFamily,
         Minutes nextInterval, int ttl) {
 
-        MetricsDAO dao = new MetricsDAO(session);
         List<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(toColumnFamily);
         List<AggregatedNumericMetric> toMetrics = new ArrayList<AggregatedNumericMetric>();
 
@@ -403,15 +393,6 @@ public class MetricsServer {
     static double divide(double dividend, int divisor) {
         return new BigDecimal(Double.toString(dividend)).divide(new BigDecimal(Integer.toString(divisor)),
             MathContext.DECIMAL64).doubleValue();
-    }
-
-    double avg(double... values) {
-        BigDecimal sum = new BigDecimal("0.00");
-        for (double value : values) {
-            sum = sum.add(new BigDecimal(Double.toString(value)));
-        }
-        BigDecimal avg = sum.divide(new BigDecimal(Integer.toString(values.length), MathContext.DECIMAL64));
-        return avg.doubleValue();
     }
 
     protected DateTime getCurrentHour() {

@@ -155,9 +155,8 @@ public class Installer {
             }
 
             case 1: {
-                // this will catch non-option arguments (which we don't currently care about)
-                LOG.warn("Unknown option" + getopt.getOptarg());
-                break;
+                // this will catch non-option arguments (which we don't currently support)
+                throw new IllegalArgumentException("Unknown option: " + getopt.getOptarg());
             }
 
             case 'H': {

@@ -66,6 +66,12 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     @Override
+    public String obfuscatePassword(String clearTextPassword) throws Exception {
+        String obfuscatedPassword = ServerInstallUtil.obfuscatePassword(clearTextPassword);
+        return obfuscatedPassword;
+    }
+
+    @Override
     public void listServers() throws Exception {
         HashMap<String, String> serverProperties = getServerProperties();
         final String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);

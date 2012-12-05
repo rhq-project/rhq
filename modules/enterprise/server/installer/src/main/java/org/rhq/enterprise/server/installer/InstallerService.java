@@ -27,6 +27,23 @@ import java.util.HashMap;
 public interface InstallerService {
 
     /**
+     * Given a database password, this will obfuscate it. The obfuscated password
+     * should be used within rhq-server.properties.
+     *
+     * @param clearTextPassword the password to obfuscate
+     * @return the obfuscated password
+     * @throws Exception
+     */
+    String obfuscatePassword(String clearTextPassword) throws Exception;
+
+    /**
+     * This simply logs a list of all known registered servers found in the database.
+     *
+     * @throws Exception
+     */
+    void listServers() throws Exception;
+
+    /**
      * This simply verifies the server configuration but doesn't perform the actual install.
      * You can use this to see if, for example, the database settings are correct or the installer
      * can successfully connect to the running AS instance where RHQ is to be installed.
@@ -36,13 +53,6 @@ public interface InstallerService {
      * @throws Exception some other exception that should disallow the installation from continuing
      */
     void test() throws AutoInstallDisabledException, AlreadyInstalledException, Exception;
-
-    /**
-     * This simply logs a list of all known registered servers found in the database.
-     *
-     * @throws Exception
-     */
-    void listServers() throws Exception;
 
     /**
      * Call this prior to installing to see if we are ready to install.

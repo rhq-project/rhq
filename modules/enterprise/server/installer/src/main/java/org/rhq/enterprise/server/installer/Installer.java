@@ -46,7 +46,7 @@ public class Installer {
     private InstallerConfiguration installerConfig;
 
     private enum WhatToDo {
-        DISPLAY_USAGE, TEST, LIST_SERVERS, INSTALL
+        DISPLAY_USAGE, DO_NOTHING, TEST, LIST_SERVERS, INSTALL
     }
 
     public static void main(String[] args) {
@@ -111,6 +111,9 @@ public class Installer {
                 }
                 continue;
             }
+            case DO_NOTHING: {
+                continue; // this will occur if processArguments() already did the work
+            }
             default: {
                 throw new IllegalStateException("Please report this bug: " + whatToDo);
             }
@@ -128,19 +131,23 @@ public class Installer {
         usage.append("\t--port=<port>, -p: talk to the app server over this management port").append("\n");
         usage.append("\t--test, -t: test the validity of the server properties (install not performed)").append("\n");
         usage.append("\t--listservers, -l: show list of known installed servers (install not performed)").append("\n");
+        usage.append("\t--dbpassword, -d: encodes a DB password for rhq-server.properties (install not performed)")
+            .append("\n");
         LOG.info(usage);
     }
 
     private WhatToDo[] processArguments(String[] args) throws Exception {
-        String sopts = "-:HD:h:p:lt";
+        String sopts = "-:HD:h:p:d:lt";
         LongOpt[] lopts = { new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'H'),
             new LongOpt("host", LongOpt.REQUIRED_ARGUMENT, null, 'h'),
             new LongOpt("port", LongOpt.REQUIRED_ARGUMENT, null, 'p'),
+            new LongOpt("dbpassword", LongOpt.REQUIRED_ARGUMENT, null, 'd'),
             new LongOpt("listservers", LongOpt.NO_ARGUMENT, null, 'l'),
             new LongOpt("test", LongOpt.NO_ARGUMENT, null, 't') };
 
         boolean test = false;
         boolean listservers = false;
+        String dbpassword = null;
 
         Getopt getopt = new Getopt("installer", args, sopts, lopts);
         int code;
@@ -202,6 +209,14 @@ public class Installer {
                 break;
             }
 
+            case 'd': {
+                dbpassword = getopt.getOptarg();
+                if (dbpassword == null) {
+                    throw new IllegalArgumentException("Missing password");
+                }
+                break;
+            }
+
             case 'l': {
                 listservers = true;
                 break; // don't return, we need to allow more args to be processed, like -p or -h
@@ -212,6 +227,13 @@ public class Installer {
                 break; // don't return, we need to allow more args to be processed, like -p or -h
             }
             }
+        }
+
+        // if a password was asked to be obfuscated, that's all we are to do
+        if (dbpassword != null) {
+            String pw = new InstallerServiceImpl(installerConfig).obfuscatePassword(dbpassword);
+            LOG.info("*** Encoded Password: " + pw);
+            return new WhatToDo[] { WhatToDo.DO_NOTHING };
         }
 
         if (test || listservers) {

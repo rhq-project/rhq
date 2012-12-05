@@ -345,8 +345,8 @@
 # If you are using Oracle, comment out the Postgres settings and
 # uncomment the Oracle settings below, adjusting the values as appropriate.
 # NOTE: rhq.server.database.password is not to be set to the actual password
-# but should instead be that actual password in encrypted form as generated
-# by the generate-db-password.sh(.bat) script.
+# but instead should be that actual password in encoded form as generated
+# by the "rhq-installer.sh(.bat) --dbpassword=&lt;your password>".
 #############################################################################
 
 # PostgreSQL database

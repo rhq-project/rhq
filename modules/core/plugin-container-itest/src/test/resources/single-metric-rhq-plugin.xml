@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin name="SingleMetricPlugin"
+        displayName="Plugin that has a single server with a single enabled metric."
+        description="This will help test measurement collections by providing a server with an enabled metric."
+        version="1.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <server name="SingleMetricServer"
+           discovery="@@@discovery@@@"
+           class="@@@class@@@">
+      <metric property="metric1"
+              dataType="measurement"
+              defaultOn="true"
+              displayType="summary"
+              defaultInterval="30000" />
+   </server>
+</plugin>
+        

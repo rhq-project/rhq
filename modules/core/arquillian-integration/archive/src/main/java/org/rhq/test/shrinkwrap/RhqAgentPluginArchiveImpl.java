@@ -3,7 +3,9 @@
  */
 package org.rhq.test.shrinkwrap;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -41,6 +43,7 @@ import org.jboss.shrinkwrap.impl.base.container.ContainerBase;
 import org.jboss.shrinkwrap.impl.base.path.BasicPath;
 
 import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
+import org.rhq.core.util.stream.StreamUtil;
 
 /**
  * @author Lukas Krejci
@@ -119,6 +122,31 @@ public class RhqAgentPluginArchiveImpl extends ContainerBase<RhqAgentPluginArchi
     @Override
     public ArchivePath getLibraryPath() {
         return LIBRARY_PATH;
+    }
+
+    @Override
+    public RhqAgentPluginArchive setPluginDescriptorFromTemplate(String resourceName,
+        Map<String, String> replacementValues) throws IllegalArgumentException {
+
+        Validate.notNull(resourceName, "resourceName should be specified");
+        Validate.notNull(replacementValues, "replacementValues should be specified");
+
+        // get the template text and replace all tokens with their replacement values
+        String templateXml = new String(StreamUtil.slurp(new ClassLoaderAsset(resourceName).openStream()));
+        for (Map.Entry<String, String> entry : replacementValues.entrySet()) {
+            templateXml = templateXml.replace(entry.getKey(), entry.getValue());
+        }
+
+        // Make a new descriptor file with the new template content (with variables replaced) in a tmp directory.
+        File newDescriptorFile;
+        try {
+            newDescriptorFile = File.createTempFile(resourceName.replace(".xml", ""), ".xml");
+            StreamUtil.copy(new ByteArrayInputStream(templateXml.getBytes()), new FileOutputStream(newDescriptorFile));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return setPluginDescriptor(newDescriptorFile);
     }
 
     @Override

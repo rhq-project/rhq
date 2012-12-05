@@ -361,7 +361,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     }
 
     @Test
-    public void getSummaryRawAggregate() {
+    public void getSummaryRawAggregateForResource() {
         DateTime beginTime = now().minusHours(4);
         DateTime endTime = now();
         Buckets buckets = new Buckets(beginTime, endTime);
@@ -385,10 +385,56 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         AggregatedNumericMetric actual = metricsServer.getSummaryAggregate(scheduleId, beginTime.getMillis(),
             endTime.getMillis());
         double avg = divide(1.1 + 2.2 + 3.3 + 4.4 + 5.5 + 6.6, 6);
-        AggregatedNumericMetric expected = new AggregatedNumericMetric(scheduleId, avg, 1.1, 6.6,
+        AggregatedNumericMetric expected = new AggregatedNumericMetric(0, avg, 1.1, 6.6,
             beginTime.getMillis());
 
-        assertEquals(actual, expected, "Failed to get summary aggregate for raw data.");
+        assertEquals(actual, expected, "Failed to get resource summary aggregate for raw data.");
+    }
+
+    @Test
+    public void getSummaryRawAggregateForGroup() {
+        DateTime beginTime = now().minusHours(4);
+        DateTime endTime = now();
+        Buckets buckets = new Buckets(beginTime, endTime);
+        int scheduleId1 = 123;
+        int scheduleId2 = 456;
+
+        Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>();
+        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() + 10, scheduleId1, 1.1));
+        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() + 10, scheduleId2, 1.2));
+
+        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() + 20, scheduleId1, 2.1));
+        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() + 20, scheduleId2, 2.2));
+
+        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() + 30, scheduleId1, 3.1));
+        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() + 30, scheduleId2, 3.2));
+
+        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + 10, scheduleId1, 4.1));
+        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + 10, scheduleId2, 4.2));
+
+        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + 20, scheduleId1, 5.1));
+        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + 20, scheduleId2, 5.2));
+
+        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + 30, scheduleId1, 6.1));
+        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + 30, scheduleId2, 6.2));
+
+        // add some data outside the range
+        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() - 100, scheduleId1, 1.23));
+        data.add(new MeasurementDataNumeric(buckets.get(0).getStartTime() - 100, scheduleId2, 2.23));
+        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + buckets.getInterval() + 50, scheduleId1,
+            4.56));
+        data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + buckets.getInterval() + 50, scheduleId2,
+            4.56));
+
+        metricsServer.addNumericData(data);
+
+        AggregatedNumericMetric actual = metricsServer.getSummaryAggregate(asList(scheduleId1, scheduleId2),
+            beginTime.getMillis(), endTime.getMillis());
+
+        double avg = divide(1.1 + 1.2 + 2.1 + 2.2 + 3.1 + 3.2 + 4.1 + 4.2 + 5.1 + 5.2 + 6.1 + 6.2, 12);
+        AggregatedNumericMetric expected = new AggregatedNumericMetric(0, avg, 1.1, 6.2, beginTime.getMillis());
+
+        assertEquals(actual, expected, "Failed to get group summary aggregate for raw data.");
     }
 
     @Test

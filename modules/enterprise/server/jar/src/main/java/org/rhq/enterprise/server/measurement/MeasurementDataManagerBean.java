@@ -666,9 +666,18 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
             throw new IllegalArgumentException("Start date " + startTime + " is not before " + endTime);
         }
 
-        MeasurementAggregate aggregate = getConnectedUtilityInstance().getAggregateByDefinitionAndContext(startTime,
-            endTime, definitionId, EntityContext.forGroup(groupId));
-        return aggregate;
+//        MeasurementAggregate aggregate = getConnectedUtilityInstance().getAggregateByDefinitionAndContext(startTime,
+//            endTime, definitionId, EntityContext.forGroup(groupId));
+//        return aggregate;
+
+        MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
+        criteria.addFilterResourceGroupId(groupId);
+        criteria.addFilterDefinitionIds(definitionId);
+        criteria.setPageControl(PageControl.getUnlimitedInstance());
+        PageList<MeasurementSchedule> schedules = measurementScheduleManager.findSchedulesByCriteria(subject,
+            criteria);
+
+        return metricsManager.getSummaryAggregate(map(schedules), startTime, endTime);
     }
 
     /**
@@ -754,6 +763,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
             }
             MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
             criteria.addFilterResourceGroupId(context.getGroupId());
+            criteria.addFilterDefinitionIds(definitionId);
             criteria.setPageControl(PageControl.getUnlimitedInstance());
             PageList<MeasurementSchedule> schedules = measurementScheduleManager.findSchedulesByCriteria(subject,
                 criteria);

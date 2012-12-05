@@ -510,7 +510,12 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
                 log.warn("No metric schedules found for def=[" + definition + "] and " + context
                     + ", using empty aggregate");
             } else {
-                aggregate = dataUtil.getAggregateByDefinitionAndContext(begin, end, definitionId, context);
+                if (context.type == EntityContext.Type.ResourceGroup &&
+                    definition.getDataType() == DataType.MEASUREMENT) {
+                    aggregate = dataManager.getAggregate(subject, context.getGroupId(), definitionId, begin, end);
+                } else {
+                    aggregate = dataUtil.getAggregateByDefinitionAndContext(begin, end, definitionId, context);
+                }
             }
             if (aggregate.isEmpty()) {
                 if (log.isTraceEnabled()) {

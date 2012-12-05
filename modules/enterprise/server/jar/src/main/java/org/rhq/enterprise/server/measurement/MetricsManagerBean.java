@@ -81,6 +81,15 @@ public class MetricsManagerBean implements MetricsManagerLocal {
 
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public MeasurementAggregate getSummaryAggregate(List<Integer> scheduleIds, long beginTime, long endTime) {
+        MetricsServer metricsServer = getMetricsServer();
+        AggregatedNumericMetric summary = metricsServer.getSummaryAggregate(scheduleIds, beginTime, endTime);
+
+        return new MeasurementAggregate(summary.getMin(), summary.getAvg(), summary.getMax());
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public List<MeasurementDataNumericHighLowComposite> findDataForResourceGroup(List<Integer> scheduleIds,
         long beginTime, long endTime) {
         MetricsServer metricsServer = getMetricsServer();

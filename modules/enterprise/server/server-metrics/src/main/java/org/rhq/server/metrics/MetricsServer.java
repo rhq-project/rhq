@@ -109,6 +109,14 @@ public class MetricsServer {
         throw new UnsupportedOperationException("MetricsServer.getSummaryAggregate currently only supports raw data.");
     }
 
+    public AggregatedNumericMetric getSummaryAggregate(List<Integer> scheduleIds, long beginTime, long endTime) {
+        if (dateTimeService.isInRawDataRange(new DateTime(beginTime))) {
+            return getSummaryRawAggregate(scheduleIds, beginTime, endTime);
+        }
+        throw new UnsupportedOperationException("MetricServer.getSummaryAggregate (for resource group) currently " +
+            "only supports raw data");
+    }
+
     private List<MeasurementDataNumericHighLowComposite> findRawDataForResource(int scheduleId, long beginTime,
         long endTime) {
         MetricsDAO dao = new MetricsDAO(session);
@@ -156,6 +164,18 @@ public class MetricsServer {
 
         if (rawMetrics.isEmpty()) {
             return new AggregatedNumericMetric(scheduleId, Double.NaN, Double.NaN,Double.NaN, beginTime);
+        }
+        return calculateAggregatedRaw(rawMetrics, beginTime);
+    }
+
+    private AggregatedNumericMetric getSummaryRawAggregate(List<Integer> scheduleIds, long beginTime, long endTime) {
+        MetricsDAO dao = new MetricsDAO(session);
+        List<RawNumericMetric> rawMetrics = dao.findRawMetrics(scheduleIds, new DateTime(beginTime),
+            new DateTime(endTime));
+
+        if (rawMetrics.isEmpty()) {
+            // We do not care about the scheudule id here so can just use a dummy value of zero.
+            return new AggregatedNumericMetric(0, Double.NaN, Double.NaN,Double.NaN, beginTime);
         }
         return calculateAggregatedRaw(rawMetrics, beginTime);
     }
@@ -255,6 +275,7 @@ public class MetricsServer {
 
             List<RawNumericMetric> rawMetrics = dao.findRawMetrics(indexEntry.getScheduleId(), startTime, endTime);
             AggregatedNumericMetric aggregatedRaw = calculateAggregatedRaw(rawMetrics, startTime.getMillis());
+            aggregatedRaw.setScheduleId(indexEntry.getScheduleId());
             oneHourMetrics.add(aggregatedRaw);
         }
 
@@ -286,7 +307,9 @@ public class MetricsServer {
         }
         double avg = divide(sum, count);
 
-        return new AggregatedNumericMetric(rawMetrics.get(0).getScheduleId(), avg, min, max, timestamp);
+        // We let the caller handle setting the schedule id because in some cases we do
+        // not care about it.
+        return new AggregatedNumericMetric(0, avg, min, max, timestamp);
     }
 
     private List<AggregatedNumericMetric> calculateAggregates(String fromColumnFamily, String toColumnFamily,

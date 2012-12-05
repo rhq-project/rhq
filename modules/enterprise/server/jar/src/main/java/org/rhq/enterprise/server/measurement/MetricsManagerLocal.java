@@ -55,4 +55,6 @@ public interface MetricsManagerLocal {
 
     MeasurementAggregate getSummaryAggregate(int scheduleId, long beginTime, long endTime);
 
+    MeasurementAggregate getSummaryAggregate(List<Integer> scheduleIds, long beginTime, long endTime);
+
 }

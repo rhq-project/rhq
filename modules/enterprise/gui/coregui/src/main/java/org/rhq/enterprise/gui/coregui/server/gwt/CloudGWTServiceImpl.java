@@ -29,9 +29,11 @@ import org.apache.commons.lang.ArrayUtils;
 
 import org.rhq.core.domain.cloud.FailoverListDetails;
 import org.rhq.core.domain.cloud.PartitionEvent;
+import org.rhq.core.domain.cloud.PartitionEventDetails;
 import org.rhq.core.domain.cloud.PartitionEventType;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.Server.OperationMode;
+import org.rhq.core.domain.cloud.composite.AffinityGroupCountComposite;
 import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.criteria.PartitionEventCriteria;
 import org.rhq.core.domain.resource.Agent;
@@ -39,6 +41,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.CloudGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
+import org.rhq.enterprise.server.cloud.AffinityGroupManagerLocal;
 import org.rhq.enterprise.server.cloud.CloudManagerLocal;
 import org.rhq.enterprise.server.cloud.PartitionEventManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -53,6 +56,8 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     private CloudManagerLocal cloudManager = LookupUtil.getCloudManager();
 
     private PartitionEventManagerLocal partitionEventManager = LookupUtil.getPartitionEventManager();
+    
+    private AffinityGroupManagerLocal affinityGroupManager = LookupUtil.getAffinityGroupManager();
 
     @Override
     public PageList<ServerWithAgentCountComposite> getServers(PageControl pc) throws RuntimeException {
@@ -148,6 +153,29 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     public void deletePartitionEvents(int[] eventIds) throws RuntimeException {
         try {
             partitionEventManager.deletePartitionEvents(getSessionSubject(), ArrayUtils.toObject(eventIds));
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public PageList<PartitionEventDetails> getPartitionEventDetails(int partitionEventId, PageControl pageControl)
+        throws RuntimeException {
+        try {
+            return SerialUtility.prepare(
+                partitionEventManager.getPartitionEventDetails(getSessionSubject(), partitionEventId, pageControl),
+                "CloudGWTServiceImpl.getPartitionEventDetails");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public PageList<AffinityGroupCountComposite> getComposites(PageControl pageControl) throws RuntimeException {
+        try {
+            return SerialUtility.prepare(
+                affinityGroupManager.getComposites(getSessionSubject(), pageControl),
+                "CloudGWTServiceImpl.getComposites");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

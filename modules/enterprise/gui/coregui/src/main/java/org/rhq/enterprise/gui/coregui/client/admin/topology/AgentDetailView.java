@@ -163,7 +163,7 @@ public class AgentDetailView extends LocatableVLayout {
         StaticTextItem lastAvailabilityItem = new StaticTextItem(FIELD_LAST_AVAILABILITY_REPORT.propertyName(),
             FIELD_LAST_AVAILABILITY_REPORT.title());
         String lastReport = agent.getLastAvailabilityReport() == null ? "unknown" : TimestampCellFormatter.format(
-            Long.valueOf(agent.getLastAvailabilityReport()), TimestampCellFormatter.DATE_TIME_FORMAT_MEDIUM);
+            Long.valueOf(agent.getLastAvailabilityReport()), TimestampCellFormatter.DATE_TIME_FORMAT_LONG);
         lastAvailabilityItem.setValue(lastReport);
 
         // TODO: make clickable link

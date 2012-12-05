@@ -41,7 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 /**
  * @author Jiri Kremser
  */
-public class AgentTableView extends TableSection<AgentNodeDatasource> implements HasViewName {
+public class AgentTableView extends TableSection<AffinityGroupWithCountsDatasource> implements HasViewName {
 
     public static final ViewName VIEW_ID = new ViewName("Agents(GWT)", MSG.view_adminTopology_agents() + "(GWT)",
         IconEnum.SERVERS);
@@ -53,7 +53,7 @@ public class AgentTableView extends TableSection<AgentNodeDatasource> implements
         super(locatorId, tableTitle);
         setHeight100();
         setWidth100();
-        setDataSource(new AgentNodeDatasource(serverId));
+        setDataSource(new AffinityGroupWithCountsDatasource(serverId));
     }
 
     @Override

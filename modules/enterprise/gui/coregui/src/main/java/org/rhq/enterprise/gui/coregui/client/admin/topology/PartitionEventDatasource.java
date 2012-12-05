@@ -85,8 +85,8 @@ public class PartitionEventDatasource extends RPCDataSource<PartitionEvent, Part
         ListGridField executionTimeField = FIELD_CTIME.getListGridField("120");
         TimestampCellFormatter.prepareDateField(executionTimeField);
         fields.add(executionTimeField);
-        fields.add(FIELD_EVENT_TYPE.getListGridField("170"));
-        fields.add(FIELD_EVENT_DETAIL.getListGridField("200"));
+        fields.add(FIELD_EVENT_TYPE.getListGridField("190"));
+        fields.add(FIELD_EVENT_DETAIL.getListGridField("220"));
         fields.add(FIELD_SUBJECT_NAME.getListGridField("90"));
         fields.add(FIELD_EXECUTION_STATUS.getListGridField("90"));
 
@@ -97,7 +97,6 @@ public class PartitionEventDatasource extends RPCDataSource<PartitionEvent, Part
     protected void executeFetch(final DSRequest request, final DSResponse response, PartitionEventCriteria criteria) {
         //        final PageControl pc = getPageControl(request);
 
-        // TODO: call find by criteria method on PartitionEventManagerBean
         GWTServiceLookup.getCloudService().findPartitionEventsByCriteria(criteria,
             new AsyncCallback<PageList<PartitionEvent>>() {
                 public void onSuccess(PageList<PartitionEvent> result) {

@@ -189,11 +189,11 @@ public class ServerDetailView extends LocatableVLayout implements BookmarkableVi
 
         StaticTextItem installationDateItem = new StaticTextItem(FIELD_CTIME.propertyName(), FIELD_CTIME.title());
         installationDateItem.setValue(TimestampCellFormatter.format(Long.valueOf(server.getCtime()),
-            TimestampCellFormatter.DATE_TIME_FORMAT_MEDIUM));
+            TimestampCellFormatter.DATE_TIME_FORMAT_LONG));
 
         StaticTextItem lastUpdatetem = new StaticTextItem(FIELD_MTIME.propertyName(), FIELD_MTIME.title());
         lastUpdatetem.setValue(TimestampCellFormatter.format(Long.valueOf(server.getMtime()),
-            TimestampCellFormatter.DATE_TIME_FORMAT_MEDIUM));
+            TimestampCellFormatter.DATE_TIME_FORMAT_LONG));
 
         ButtonItem saveButton = new ButtonItem();
         saveButton.setOverflow(Overflow.VISIBLE);

@@ -28,7 +28,9 @@ import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.cloud.FailoverListDetails;
 import org.rhq.core.domain.cloud.PartitionEvent;
+import org.rhq.core.domain.cloud.PartitionEventDetails;
 import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.domain.cloud.composite.AffinityGroupCountComposite;
 import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.criteria.PartitionEventCriteria;
 import org.rhq.core.domain.resource.Agent;
@@ -54,14 +56,19 @@ public interface CloudGWTService extends RemoteService {
     void deleteServers(int[] serverIds) throws RuntimeException;
 
     void updateServerMode(int[] serverIds, Server.OperationMode mode) throws RuntimeException;
-    
+
     List<FailoverListDetails> getFailoverListDetailsByAgentId(int agentId, PageControl pc) throws RuntimeException;;
-    
+
     PageList<PartitionEvent> findPartitionEventsByCriteria(PartitionEventCriteria criteria) throws RuntimeException;
-    
+
     void cloudPartitionEventRequest() throws RuntimeException;
-    
+
     void purgeAllEvents() throws RuntimeException;
+
+    void deletePartitionEvents(int[] eventIds) throws RuntimeException;
+
+    PageList<PartitionEventDetails> getPartitionEventDetails(int partitionEventId,
+        PageControl pageControl) throws RuntimeException;
     
-    void deletePartitionEvents(int[] eventIds)  throws RuntimeException;
+    PageList<AffinityGroupCountComposite> getComposites(PageControl pageControl) throws RuntimeException;
 }

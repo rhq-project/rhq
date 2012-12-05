@@ -27,10 +27,7 @@ import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
-import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -66,7 +63,6 @@ public class PartitionEventTableView extends TableSection<PartitionEventDatasour
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_TOPOLOGY_VIEW_ID + "/" + VIEW_ID;
 
-    private final boolean showActions = true;
 
     private static final Criteria INITIAL_CRITERIA = new Criteria();
 
@@ -81,13 +77,6 @@ public class PartitionEventTableView extends TableSection<PartitionEventDatasour
 
         setInitialCriteriaFixed(false);
         setDataSource(new PartitionEventDatasource());
-    }
-
-    @Override
-    protected void onInit() {
-        setFlexRowDisplay(false);
-
-        super.onInit();
     }
 
     @Override
@@ -107,17 +96,18 @@ public class PartitionEventTableView extends TableSection<PartitionEventDatasour
 
 //        SpacerItem spacerItem = new SpacerItem();
 //        spacerItem.setColSpan(1);
-        final ButtonItem showAll = new ButtonItem("showAll", "Show All");
-        showAll.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                statusFilter.init(ExecutionStatus.class, null, null);
-                typeFilter.init(PartitionEventType.class, null, null);
-                detail.setValue("");
-            }
-        });
+//        final ButtonItem showAll = new ButtonItem("showAll", "Show All");
+//        showAll.addClickHandler(new ClickHandler() {
+//            public void onClick(ClickEvent event) {
+//                statusFilter.init(ExecutionStatus.class, null, null);
+//                typeFilter.init(PartitionEventType.class, null, null);
+//                detail.setValue("");
+//                refresh();
+//            }
+//        });
 
         if (isShowFilterForm()) {
-            setFilterFormItems(statusFilter, detail, typeFilter, showAll);
+            setFilterFormItems(statusFilter, detail, typeFilter);
         }
     }
 
@@ -127,9 +117,8 @@ public class PartitionEventTableView extends TableSection<PartitionEventDatasour
         List<ListGridField> fields = getDataSource().getListGridFields();
         ListGrid listGrid = getListGrid();
         listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
-        if (showActions) {
-            showActions();
-        }
+        showActions();
+        
         for (ListGridField field : fields) {
             // adding the cell formatter for name field (clickable link)
             if (field.getName() == PartitionEventDatasourceField.FIELD_EVENT_TYPE.propertyName()) {
@@ -142,7 +131,6 @@ public class PartitionEventTableView extends TableSection<PartitionEventDatasour
                         String detailsUrl = "#" + VIEW_PATH + "/" + getId(record);
                         String formattedValue = StringUtility.escapeHtml(value.toString());
                         return SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
-
                     }
                 });
             }
@@ -167,11 +155,10 @@ public class PartitionEventTableView extends TableSection<PartitionEventDatasour
 
     @Override
     public Canvas getDetailsView(Integer id) {
-        return new ServerDetailView(extendLocatorId("detailsView"), id);
+        return new PartitionEventDetailView(extendLocatorId("detailsView"), id);
     }
 
     private void showActions() {
-
         addTableAction(extendLocatorId("removeSelected"), MSG.view_adminTopology_server_removeSelected(),
             MSG.common_msg_areYouSure(), new AuthorizedTableAction(this, TableActionEnablement.ANY,
                 Permission.MANAGE_SETTINGS) {

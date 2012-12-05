@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-parent</artifactId>
-      <version>3.1.2.ER3</version>
+      <version>4.4.0.JON310ER3</version>
    </parent>
 
    <groupId>org.rhq</groupId>

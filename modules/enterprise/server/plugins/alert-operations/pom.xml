@@ -2,14 +2,14 @@
     <parent>
         <artifactId>rhq-enterprise-server-plugins-parent</artifactId>
         <groupId>org.rhq</groupId>
-        <version>3.1.2.ER3</version>
+        <version>4.4.0.JON310ER3</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.rhq</groupId>
     <artifactId>alert-operations</artifactId>
     <packaging>jar</packaging>
-    <version>3.1.2.ER3</version>
+    <version>4.4.0.JON310ER3</version>
 
     <name>RHQ Enterprise Server Opertions Alert Plugin</name>
 

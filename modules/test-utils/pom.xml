@@ -7,7 +7,7 @@
   <parent>
     <artifactId>rhq-modules-parent</artifactId>
     <groupId>org.rhq</groupId>
-    <version>4.4.0.JON310ER3</version>
+    <version>4.4.0_JON312ER3</version>
   </parent>
 
   <artifactId>test-utils</artifactId>

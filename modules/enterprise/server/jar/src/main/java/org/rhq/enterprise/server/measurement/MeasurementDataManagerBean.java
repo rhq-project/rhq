@@ -617,7 +617,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
     @Nullable
     public MeasurementDataNumeric getCurrentNumericForSchedule(int scheduleId) {
-        return getConnectedUtilityInstance().getLatestValueForSchedule(scheduleId);
+        return metricsManager.findLatestValueForResource(scheduleId);
     }
 
     private void notifyAlertConditionCacheManager(String callingMethod, MeasurementData[] data) {
@@ -936,7 +936,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         return results;
     }
 
-    private MeasurementDataManagerUtility getConnectedUtilityInstance() {
-        return MeasurementDataManagerUtility.getInstance(rhqDs);
-    }
+//    private MeasurementDataManagerUtility getConnectedUtilityInstance() {
+//        return MeasurementDataManagerUtility.getInstance(rhqDs);
+//    }
 }

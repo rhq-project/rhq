@@ -48,6 +48,8 @@ public interface MetricsManagerLocal {
 
     void calculateAggregates();
 
+    MeasurementDataNumeric findLatestValueForResource(int scheduleId);
+
     List<MeasurementDataNumericHighLowComposite> findDataForResource(int scheduleId, long beginTime, long endTime);
 
     List<MeasurementDataNumericHighLowComposite> findDataForResourceGroup(List<Integer> scheduleIds, long beginTime,

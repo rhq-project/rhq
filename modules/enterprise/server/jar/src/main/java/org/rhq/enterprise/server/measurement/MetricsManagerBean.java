@@ -38,6 +38,7 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.enterprise.server.cassandra.SessionManagerBean;
 import org.rhq.server.metrics.AggregatedNumericMetric;
 import org.rhq.server.metrics.MetricsServer;
+import org.rhq.server.metrics.RawNumericMetric;
 
 /**
  * @author John Sanda
@@ -60,6 +61,15 @@ public class MetricsManagerBean implements MetricsManagerLocal {
     public void calculateAggregates() {
         MetricsServer metricsServer = getMetricsServer();
         metricsServer.calculateAggregates();
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public MeasurementDataNumeric findLatestValueForResource(int scheduleId) {
+        MetricsServer metricsServer = getMetricsServer();
+        RawNumericMetric metric = metricsServer.findLatestValueForResource(scheduleId);
+
+        return new MeasurementDataNumeric(metric.getTimestamp(), scheduleId, metric.getValue());
     }
 
     @Override

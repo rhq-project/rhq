@@ -52,8 +52,8 @@ import javassist.bytecode.annotation.ShortMemberValue;
 import javassist.bytecode.annotation.StringMemberValue;
 
 import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
+import org.rhq.bindings.security.SecurityActions;
 import org.rhq.core.domain.auth.Subject;
 
 /**
@@ -64,7 +64,7 @@ import org.rhq.core.domain.auth.Subject;
  * @author Lukas Krejci
  */
 public class InterfaceSimplifier {
-    private static final Log LOG = LogFactory.getLog(InterfaceSimplifier.class);
+    private static final Log LOG = SecurityActions.getLog(InterfaceSimplifier.class);
 
     private InterfaceSimplifier() {
 

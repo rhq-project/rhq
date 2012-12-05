@@ -9,7 +9,6 @@
       <relativePath>../../../../pom.xml</relativePath>
    </parent>
 
-   <groupId>org.rhq</groupId>
    <artifactId>rhq-container-lib</artifactId>
    <packaging>jar</packaging>
 
@@ -17,33 +16,10 @@
    <description>A library of classes that will be deployed in the server container itself, above the main EAR</description>
 
    <dependencies>
-
       <dependency>
-         <groupId>org.jboss.jbossts</groupId>
-         <artifactId>jbossjts</artifactId>
-         <version>4.16.2.Final</version>
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
-    <dependency>
-      <groupId>org.jboss</groupId>
-      <artifactId>jboss-common-core</artifactId>
-      <scope>provided</scope> <!-- by JBossAS -->
-    </dependency>
-
-    <dependency>
-        <groupId>jboss</groupId>
-        <artifactId>jbosssx</artifactId>
-        <version>4.2.3.GA</version>
-        <scope>provided</scope> <!-- by JBossAS -->
-    </dependency>
-
-    <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jnpserver</artifactId>
-         <version>4.2.2.GA</version>
-         <scope>provided</scope>
-    </dependency>
+        <groupId>org.jboss.as</groupId>
+        <artifactId>jboss-as-naming</artifactId>
+      </dependency> 
    </dependencies>
 
    <profiles>

@@ -17,29 +17,20 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.jndi.mbean;
+package org.rhq.enterprise.server;
 
-import javax.naming.spi.NamingManager;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import org.rhq.enterprise.server.naming.AccessCheckingInitialContextFactoryBuilder;
+import java.security.BasicPermission;
 
 /**
  * 
  *
  * @author Lukas Krejci
  */
-public class AccessCheckingInitialContextFactoryBuilderInstaller implements AccessCheckingInitialContextFactoryBuilderInstallerMBean {
-    private static final Log LOG = LogFactory.getLog(AccessCheckingInitialContextFactoryBuilderInstaller.class);
-    
-    public void start() throws Exception {
-        LOG.info("Installing RHQ's access permission checking initial context factory builder");
-        
-        NamingManager.setInitialContextFactoryBuilder(new AccessCheckingInitialContextFactoryBuilder());
-    }
+public class AllowRhqServerInternalsAccessPermission extends BasicPermission {
 
-    public void stop() throws Exception {
+    private static final long serialVersionUID = 1L;
+
+    public AllowRhqServerInternalsAccessPermission() {
+        super("org.rhq.allow.server.internals.access");
     }
 }

@@ -61,6 +61,7 @@ import org.rhq.enterprise.server.drift.DriftServerPluginService;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
+import org.rhq.test.AssertUtils;
 
 /**
  * @author John Sanda
@@ -166,6 +167,34 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
             actualData.get(59));
         assertPropertiesMatch("The data for bucket 29 does not match the expected values.", expectedBucket29Data,
             actualData.get(29));
+    }
+
+    @Test(enabled = true)
+    public void getRawAggregate() {
+        DateTime now = new DateTime();
+        DateTime beginTime = now.minusHours(4);
+        DateTime endTime = now;
+
+        Buckets buckets = new Buckets(beginTime, endTime);
+
+        MeasurementScheduleRequest request = new MeasurementScheduleRequest(dynamicSchedule);
+        MeasurementReport report = new MeasurementReport();
+        report.addData(new MeasurementDataNumeric(buckets.get(0) + 10, request, 1.1));
+        report.addData(new MeasurementDataNumeric(buckets.get(0) + 20, request, 2.2));
+        report.addData(new MeasurementDataNumeric(buckets.get(0) + 30, request, 3.3));
+        report.addData(new MeasurementDataNumeric(buckets.get(59) + 10, request, 4.4));
+        report.addData(new MeasurementDataNumeric(buckets.get(59) + 20, request, 5.5));
+        report.addData(new MeasurementDataNumeric(buckets.get(59) + 30, request, 6.6));
+
+        dataManager.mergeMeasurementReport(report);
+
+        MeasurementAggregate actual = dataManager.getAggregate(overlord, dynamicSchedule.getId(),
+            beginTime.getMillis(), endTime.getMillis());
+
+        MeasurementAggregate expected = new MeasurementAggregate(1.1, (1.1 + 2.2 + 3.3 + 4.4 + 5.5 + 6.6) / 6,
+            6.6);
+
+        AssertUtils.assertPropertiesMatch(expected, actual, "Aggregate does not match");
     }
 
     @Test(enabled = ENABLED)

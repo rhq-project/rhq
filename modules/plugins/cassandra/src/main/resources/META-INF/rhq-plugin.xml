@@ -39,6 +39,7 @@
                          description="The RMI URL with which to connect to the Cassandra node (e.g. service:jmx:rmi:///jndi/rmi://localhost:7199/jmxrmi)."/>
       <c:simple-property name="type" readOnly="true" default="org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor"
                          description="The type used to establish the EMS connection to the Cassandra node."/>
+      <c:simple-property name="thriftPort" displayName="Thrift Port" default="9160" required="true" readOnly="false" type="string" description="Thrift interface port"/>
       <c:simple-property name="installURI" required="false" type="string" description="The installation path for the selected server type which will be used to find client libraries (if appropriate)"/>
       <c:simple-property name="principal" required="false" description="The login principal/username"/>
       <c:simple-property name="credentials" required="false" type="password" description="The login credentials/password"/>

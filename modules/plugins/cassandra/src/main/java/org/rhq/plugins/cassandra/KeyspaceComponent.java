@@ -28,6 +28,7 @@ package org.rhq.plugins.cassandra;
 import java.io.File;
 import java.util.Map;
 
+import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
 
 import org.mc4j.ems.connection.EmsConnection;
@@ -154,7 +155,7 @@ public class KeyspaceComponent implements ResourceComponent<ResourceComponent<?>
     }
 
     public KeyspaceDefinition getKeyspaceDefinition() {
-        return CassandraUtil.getKeyspaceDefinition(context.getResourceKey());
+        return this.getThriftConnection().describeKeyspace(context.getResourceKey());
     }
 
     public OperationResult takeSnapshot(Configuration parameters, String... columnFamilies) {
@@ -249,4 +250,13 @@ public class KeyspaceComponent implements ResourceComponent<ResourceComponent<?>
         return null;
     }
 
+    /**
+     * Retrieves a cluster connection from the parent resource.
+     *
+     * @return the cluster connection.
+     */
+    public Cluster getThriftConnection() {
+        CassandraNodeComponent parent = (CassandraNodeComponent) context.getParentResourceComponent();
+        return parent.getThriftConnection();
+    }
 }

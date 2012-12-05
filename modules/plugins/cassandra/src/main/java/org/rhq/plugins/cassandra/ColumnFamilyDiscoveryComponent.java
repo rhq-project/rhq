@@ -25,8 +25,6 @@
 
 package org.rhq.plugins.cassandra;
 
-import static org.rhq.plugins.cassandra.CassandraUtil.getKeyspaceDefinition;
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -51,7 +49,10 @@ public class ColumnFamilyDiscoveryComponent implements ResourceDiscoveryComponen
         Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
 
         String keyspace = context.getParentResourceContext().getResourceKey();
-        KeyspaceDefinition keyspaceDef = getKeyspaceDefinition(keyspace);
+
+        KeyspaceComponent parent = (KeyspaceComponent) context.getParentResourceComponent();
+
+        KeyspaceDefinition keyspaceDef = parent.getKeyspaceDefinition();
 
         for (ColumnFamilyDefinition columnFamilyDef : keyspaceDef.getCfDefs()) {
             String resourceKey = keyspace + "." + columnFamilyDef.getName();

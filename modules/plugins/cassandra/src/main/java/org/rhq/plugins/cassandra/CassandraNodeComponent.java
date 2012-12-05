@@ -26,12 +26,12 @@ import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
 import static org.rhq.core.domain.measurement.AvailabilityType.UNKNOWN;
 import static org.rhq.core.domain.measurement.AvailabilityType.UP;
 import static org.rhq.core.system.OperatingSystemType.WINDOWS;
-import static org.rhq.plugins.cassandra.CassandraUtil.getCluster;
 
 import java.io.File;
 import java.util.Set;
 
 import me.prettyprint.hector.api.Cluster;
+import me.prettyprint.hector.api.factory.HFactory;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -192,7 +192,12 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
             return;
         }
 
-        Cluster cluster = getCluster();
+        Cluster cluster = this.getThriftConnection();
         report.addData(new MeasurementDataTrait(scheduleRequest, cluster.describeClusterName()));
+    }
+
+    public Cluster getThriftConnection() {
+        String thriftPort = this.getResourceContext().getPluginConfiguration().getSimpleValue("thriftPort");
+        return HFactory.getOrCreateCluster("rhq", "localhost:" + thriftPort);
     }
 }

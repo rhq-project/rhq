@@ -27,7 +27,6 @@ package org.rhq.plugins.cassandra;
 
 import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.FAILURE;
 import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.SUCCESS;
-import static org.rhq.plugins.cassandra.CassandraUtil.getCluster;
 
 import java.io.File;
 
@@ -96,7 +95,7 @@ public class ColumnFamilyComponent extends ComplexConfigurationResourceComponent
             log.debug("Updating resource configuration for column family " + context.getResourceKey());
         }
 
-        Cluster cluster = getCluster();
+        Cluster cluster = this.getThriftConnection();
         ColumnFamilyDefinition cfDef = getColumnFamilyDefinition();
         Configuration updatedConfig = report.getConfiguration();
 
@@ -249,7 +248,19 @@ public class ColumnFamilyComponent extends ComplexConfigurationResourceComponent
         return null;
     }
 
+    /**
+     * @return parent resource component
+     */
     private KeyspaceComponent getParentKeyspace() {
         return (KeyspaceComponent) this.getResourceContext().getParentResourceComponent();
+    }
+
+    /**
+     * Retrieves a cluster connection from the parent resource.
+     *
+     * @return the cluster connection.
+     */
+    private Cluster getThriftConnection() {
+        return getParentKeyspace().getThriftConnection();
     }
 }

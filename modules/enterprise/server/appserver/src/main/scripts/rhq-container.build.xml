@@ -335,8 +335,7 @@
 
         <property name="rhq.bin.dir" location="${project.build.outputDirectory}/bin" />
         <mkdir dir="${rhq.bin.dir}" />
-        <echo file="${rhq.bin.dir}/rhq-server.properties">
-#################### RHQ Server Configuration Properties ####################
+        <echo file="${rhq.bin.dir}/rhq-server.properties">#################### RHQ Server Configuration Properties ####################
 
 #############################################################################
 # Database Settings

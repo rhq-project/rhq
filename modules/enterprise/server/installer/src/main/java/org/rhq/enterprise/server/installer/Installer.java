@@ -127,16 +127,16 @@ public class Installer {
         usage.append("\t--host=<hostname>, -h: hostname where the app server is running").append("\n");
         usage.append("\t--port=<port>, -p: talk to the app server over this management port").append("\n");
         usage.append("\t--test, -t: test the validity of the server properties (install not performed)").append("\n");
-        usage.append("\t--servers, -s: show list of known installed servers (install not performed)").append("\n");
+        usage.append("\t--listservers, -l: show list of known installed servers (install not performed)").append("\n");
         LOG.info(usage);
     }
 
     private WhatToDo[] processArguments(String[] args) throws Exception {
-        String sopts = "-:HD:h:p:st";
+        String sopts = "-:HD:h:p:lt";
         LongOpt[] lopts = { new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'H'),
             new LongOpt("host", LongOpt.REQUIRED_ARGUMENT, null, 'h'),
             new LongOpt("port", LongOpt.REQUIRED_ARGUMENT, null, 'p'),
-            new LongOpt("servers", LongOpt.NO_ARGUMENT, null, 's'),
+            new LongOpt("listservers", LongOpt.NO_ARGUMENT, null, 'l'),
             new LongOpt("test", LongOpt.NO_ARGUMENT, null, 't') };
 
         boolean test = false;
@@ -203,7 +203,7 @@ public class Installer {
                 break;
             }
 
-            case 's': {
+            case 'l': {
                 listservers = true;
                 break; // don't return, we need to allow more args to be processed, like -p or -h
             }

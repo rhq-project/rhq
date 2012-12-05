@@ -26,6 +26,7 @@
 package org.rhq.server.metrics;
 
 import static java.util.Arrays.asList;
+import static org.rhq.core.domain.util.PageOrdering.DESC;
 import static org.rhq.server.metrics.MetricsDAO.METRICS_INDEX_TABLE;
 import static org.rhq.server.metrics.MetricsDAO.ONE_HOUR_METRICS_TABLE;
 import static org.rhq.server.metrics.MetricsDAO.RAW_METRICS_TABLE;
@@ -75,7 +76,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
     }
 
     @Test
-    public void insertAndFindRawMetrics() throws Exception {
+    public void insertAndFindRawMetrics() {
         DateTime hour0 = hour0();
         DateTime currentTime = hour0.plusHours(4).plusMinutes(44);
         DateTime currentHour = currentTime.hourOfDay().roundFloorCopy();
@@ -113,7 +114,34 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
     }
 
     @Test
-    public void findRawMetricsForMultipleSchedules() throws Exception {
+    public void findLimitedRawMetricsInDescendingOrder() {
+        DateTime hour0 = hour0();
+        DateTime currentTime = hour0.plusHours(4).plusMinutes(44);
+        DateTime threeMinutesAgo = currentTime.minusMinutes(3);
+        DateTime twoMinutesAgo = currentTime.minusMinutes(2);
+        DateTime oneMinuteAgo = currentTime.minusMinutes(1);
+
+        int scheduleId = 1;
+
+        Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>();
+        data.add(new MeasurementDataNumeric(threeMinutesAgo.getMillis(), scheduleId, 3.2));
+        data.add(new MeasurementDataNumeric(twoMinutesAgo.getMillis(), scheduleId, 3.9));
+        data.add(new MeasurementDataNumeric(oneMinuteAgo.getMillis(), scheduleId, 2.6));
+
+        int ttl = Hours.ONE.toStandardSeconds().getSeconds();
+        dao.insertRawMetrics(data, ttl);
+
+        List<RawNumericMetric> actualMetrics = dao.findRawMetrics(scheduleId, DESC, 2);
+        List<RawNumericMetric> expectedMetrics = asList(
+            new RawNumericMetric(scheduleId, oneMinuteAgo.getMillis(), 2.6),
+            new RawNumericMetric(scheduleId, twoMinutesAgo.getMillis(), 3.9)
+        );
+
+        assertEquals(actualMetrics, expectedMetrics, "Failed to find raw metrics with order and limit specified");
+    }
+
+    @Test
+    public void findRawMetricsForMultipleSchedules() {
         DateTime currentTime = hour0().plusHours(4).plusMinutes(44);
         DateTime currentHour = currentTime.hourOfDay().roundFloorCopy();
         DateTime threeMinutesAgo = currentTime.minusMinutes(3);

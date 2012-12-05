@@ -361,6 +361,27 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     }
 
     @Test
+    public void findLatestValueForResource() {
+        int scheduleId = 123;
+
+        DateTime fifteenMinutesAgo = now().minusMinutes(15);
+        DateTime tenMinutesAgo = now().minusMinutes(10);
+        DateTime fiveMinutesAgo = now().minusMinutes(5);
+
+        Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>();
+        data.add(new MeasurementDataNumeric(fifteenMinutesAgo.getMillis(), scheduleId, 1.1));
+        data.add(new MeasurementDataNumeric(tenMinutesAgo.getMillis(), scheduleId, 2.2));
+        data.add(new MeasurementDataNumeric(fiveMinutesAgo.getMillis(), scheduleId, 3.3));
+
+        metricsServer.addNumericData(data);
+
+        RawNumericMetric actual = metricsServer.findLatestValueForResource(scheduleId);
+        RawNumericMetric expected = new RawNumericMetric(scheduleId, fiveMinutesAgo.getMillis(), 3.3);
+
+        assertEquals(actual, expected, "Failed to find latest metric value for resource");
+    }
+
+    @Test
     public void getSummaryRawAggregateForResource() {
         DateTime beginTime = now().minusHours(4);
         DateTime endTime = now();

@@ -48,6 +48,7 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import org.joda.time.DateTime;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.util.PageOrdering;
 
 /**
  * @author John Sanda
@@ -155,7 +156,30 @@ public class MetricsDAO {
             List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
 
             String cql = "SELECT schedule_id, time, value FROM " + RAW_METRICS_TABLE + " WHERE schedule_id = " +
-                scheduleId + " AND time >= " + startTime.getMillis() + " AND time < " + endTime.getMillis();
+                scheduleId + " AND time >= " + startTime.getMillis() + " AND time < " + endTime.getMillis() +
+                " ORDER BY time";
+
+            ResultSet resultSet = session.execute(cql);
+            ResultSetMapper<RawNumericMetric> resultSetMapper = new RawNumericMetricMapper();
+            for (Row row : resultSet) {
+                metrics.add(resultSetMapper.map(row));
+            }
+            return metrics;
+        } catch (NoHostAvailableException e) {
+            throw new CQLException(e);
+        }
+    }
+
+    public List<RawNumericMetric> findRawMetrics(int scheduleId,  PageOrdering ordering, int limit) {
+        try {
+            List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
+
+            String cql = "SELECT schedule_id, time, value FROM " + RAW_METRICS_TABLE + " WHERE schedule_id = " +
+                scheduleId + " ORDER BY time " + ordering;
+
+            if (limit > 0) {
+                cql += " LIMIT " + limit;
+            }
 
             ResultSet resultSet = session.execute(cql);
             ResultSetMapper<RawNumericMetric> resultSetMapper = new RawNumericMetricMapper();

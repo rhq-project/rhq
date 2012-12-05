@@ -25,6 +25,7 @@
 
 package org.rhq.server.metrics;
 
+import static org.rhq.core.domain.util.PageOrdering.DESC;
 import static org.rhq.server.metrics.DateTimeService.TWO_WEEKS;
 import static org.rhq.server.metrics.MetricsDAO.ONE_HOUR_METRICS_TABLE;
 import static org.rhq.server.metrics.MetricsDAO.SIX_HOUR_METRICS_TABLE;
@@ -68,6 +69,17 @@ public class MetricsServer {
 
     public void setSession(Session session) {
         this.session = session;
+    }
+
+    public RawNumericMetric findLatestValueForResource(int scheduleId) {
+        MetricsDAO dao = new MetricsDAO(session);
+        List<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, DESC, 1);
+
+        if (metrics.isEmpty()) {
+            return null;
+        }
+
+        return metrics.get(0);
     }
 
     public List<MeasurementDataNumericHighLowComposite> findDataForResource(int scheduleId, long beginTime,

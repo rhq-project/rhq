@@ -37,6 +37,11 @@ import org.rhq.enterprise.server.installer.InstallerService.AutoInstallDisabledE
 public class Installer {
     private static final Log LOG = LogFactory.getLog(Installer.class);
 
+    private static final int EXIT_CODE_ALREADY_INSTALLED = 0;
+    private static final int EXIT_CODE_INSTALLATION_DONE = 0;
+    private static final int EXIT_CODE_AUTOINSTALL_DISABLED = 1;
+    private static final int EXIT_CODE_INSTALLATION_ERROR = 2;
+
     private InstallerConfiguration installerConfig;
 
     public static void main(String[] args) {
@@ -46,10 +51,10 @@ public class Installer {
             installer.doInstall(args);
         } catch (Exception e) {
             LOG.error("An error occurred", e);
-            System.exit(100);
+            System.exit(EXIT_CODE_INSTALLATION_ERROR);
         }
 
-        System.exit(0);
+        System.exit(EXIT_CODE_INSTALLATION_DONE);
     }
 
     public Installer() {
@@ -72,10 +77,10 @@ public class Installer {
                 new InstallerServiceImpl(installerConfig).test();
             } catch (AutoInstallDisabledException e) {
                 LOG.error(e.getMessage());
-                System.exit(1);
+                System.exit(EXIT_CODE_AUTOINSTALL_DISABLED);
             } catch (AlreadyInstalledException e) {
                 LOG.info(e.getMessage());
-                System.exit(0);
+                System.exit(EXIT_CODE_ALREADY_INSTALLED);
             }
             return;
         }
@@ -87,10 +92,10 @@ public class Installer {
             LOG.info("Installation is complete. The server should be ready shortly.");
         } catch (AutoInstallDisabledException e) {
             LOG.error(e.getMessage());
-            System.exit(1);
+            System.exit(EXIT_CODE_AUTOINSTALL_DISABLED);
         } catch (AlreadyInstalledException e) {
             LOG.info(e.getMessage());
-            System.exit(0);
+            System.exit(EXIT_CODE_ALREADY_INSTALLED);
         }
 
         return;

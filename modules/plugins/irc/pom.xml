@@ -5,7 +5,7 @@
     <parent>
          <artifactId>rhq-plugins-parent</artifactId>
          <groupId>org.rhq</groupId>
-         <version>4.4.0.JON312</version>
+         <version>3.1.2.ER3</version>
     </parent>
 
     <groupId>org.rhq</groupId>

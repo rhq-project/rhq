@@ -666,10 +666,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
             throw new IllegalArgumentException("Start date " + startTime + " is not before " + endTime);
         }
 
-//        MeasurementAggregate aggregate = getConnectedUtilityInstance().getAggregateByDefinitionAndContext(startTime,
-//            endTime, definitionId, EntityContext.forGroup(groupId));
-//        return aggregate;
-
         MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
         criteria.addFilterResourceGroupId(groupId);
         criteria.addFilterDefinitionIds(definitionId);
@@ -772,17 +768,10 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
             data.add(metricsManager.findDataForResourceGroup(map(schedules), beginTime, endTime));
 
             return data;
-        } else if (context.type == EntityContext.Type.AutoGroup) {
-            if (!authorizationManager.canViewAutoGroup(subject, context.parentResourceId, context.resourceTypeId)) {
-                throw new PermissionException("User [" + subject.getName()
-                    + "] does not have permission to view measurement data for autoGroup[parentResourceId="
-                    + context.parentResourceId + ", resourceTypeId=" + context.resourceTypeId + "]");
-            }
+        } else {
+            throw new UnsupportedOperationException("The findDataForContext method does not support " +
+                context);
         }
-
-        List<List<MeasurementDataNumericHighLowComposite>> results = getConnectedUtilityInstance()
-            .getMeasurementDataAggregatesForContext(beginTime, endTime, context, definitionId, numDataPoints);
-        return results;
     }
 
     private List<Integer> map(List<MeasurementSchedule> schedules) {
@@ -796,16 +785,17 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
     public List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(Subject subject, int resourceId,
         int[] definitionIds, long beginTime, long endTime, int numDataPoints) {
 
-        if (authorizationManager.canViewResource(subject, resourceId) == false) {
+        if (!authorizationManager.canViewResource(subject, resourceId)) {
             throw new PermissionException("User[" + subject.getName()
                 + "] does not have permission to view measurement data for resource[id=" + resourceId + "]");
         }
 
-        List<List<MeasurementDataNumericHighLowComposite>> results = new ArrayList<List<MeasurementDataNumericHighLowComposite>>();
-        EntityContext context = EntityContext.forResource(resourceId);
+        List<List<MeasurementDataNumericHighLowComposite>> results =
+            new ArrayList<List<MeasurementDataNumericHighLowComposite>>();
         for (int nextDefinitionId : definitionIds) {
-            results.addAll(getConnectedUtilityInstance().getMeasurementDataAggregatesForContext(beginTime, endTime,
-                context, nextDefinitionId, numDataPoints));
+            MeasurementSchedule schedule = measurementScheduleManager.getSchedule(subject, resourceId, nextDefinitionId,
+                false);
+              results.add(metricsManager.findDataForResource(schedule.getId(), beginTime, endTime));
         }
         return results;
     }
@@ -813,7 +803,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
     @Override
     @SuppressWarnings("unchecked")
     public Set<MeasurementData> findLiveData(Subject subject, int resourceId, int[] definitionIds) {
-        if (authorizationManager.canViewResource(subject, resourceId) == false) {
+        if (!authorizationManager.canViewResource(subject, resourceId)) {
             throw new PermissionException("User[" + subject.getName()
                 + "] does not have permission to view live measurement data for resource[id=" + resourceId + "]");
         }

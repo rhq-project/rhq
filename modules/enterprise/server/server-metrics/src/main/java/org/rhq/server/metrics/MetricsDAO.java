@@ -303,6 +303,28 @@ public class MetricsDAO {
         }
     }
 
+    public List<AggregatedNumericMetric> findAggregateMetrics(String bucket, List<Integer> scheduleIds,
+        DateTime startTime, DateTime endTime) {
+        try {
+            String cql =
+                "SELECT schedule_id, time, type, value " +
+                    "FROM " + bucket + " " +
+                    "WHERE schedule_id IN (" + listToString(scheduleIds) + ") AND time >= " + startTime.getMillis() +
+                    " AND time < " + endTime.getMillis();
+            List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
+            ResultSetMapper<AggregatedNumericMetric> resultSetMapper = new AggregateMetricMapper();
+            ResultSet resultSet = session.execute(cql);
+
+            while (!resultSet.isExhausted()) {
+                metrics.add(resultSetMapper.map(resultSet.fetchOne(), resultSet.fetchOne(), resultSet.fetchOne()));
+            }
+
+            return metrics;
+        } catch (NoHostAvailableException e) {
+            throw new CQLException(e);
+        }
+    }
+
     List<AggregatedNumericMetric> findAggregateMetricsWithMetadata(String bucket, int scheduleId, DateTime startTime,
         DateTime endTime) {
 

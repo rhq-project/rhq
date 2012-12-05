@@ -555,6 +555,52 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             actualData.get(29));
     }
 
+    @Test
+    public void find1HourDatCompositesForGroup() {
+        DateTime beginTime = now().minusDays(11);
+        DateTime endTime = now();
+
+        Buckets buckets = new Buckets(beginTime, endTime);
+        DateTime bucket0Time = new DateTime(buckets.get(0).getStartTime());
+        DateTime bucket59Time = new DateTime(buckets.get(59).getStartTime());
+
+        int scheduleId1 = 123;
+        int scheduleId2 = 456;
+
+        List<AggregatedNumericMetric> metrics = asList(
+            new AggregatedNumericMetric(scheduleId1, 1.1, 1.1, 1.1, bucket0Time.getMillis()),
+            new AggregatedNumericMetric(scheduleId2, 1.2, 1.2, 1.2, bucket0Time.getMillis()),
+
+            new AggregatedNumericMetric(scheduleId1, 3.1, 3.1, 3.1, bucket0Time.plusHours(2).getMillis()),
+            new AggregatedNumericMetric(scheduleId2, 3.2, 3.2, 3.2, bucket0Time.plusHours(2).getMillis()),
+
+            new AggregatedNumericMetric(scheduleId1, 4.1, 4.1, 4.1, bucket59Time.getMillis()),
+            new AggregatedNumericMetric(scheduleId2, 4.2, 4.2, 4.2, bucket59Time.getMillis())
+        );
+        dao.insertAggregates(ONE_HOUR_METRICS_TABLE, metrics, DateTimeService.TWO_WEEKS);
+
+        List<MeasurementDataNumericHighLowComposite> actual = metricsServer.findDataForGroup(
+            asList(scheduleId1, scheduleId2), beginTime.getMillis(), endTime.getMillis());
+
+        assertEquals(actual.size(), buckets.getNumDataPoints(), "Expected to get back " + buckets.getNumDataPoints() +
+            " data points.");
+
+        MeasurementDataNumericHighLowComposite expectedBucket0 = new MeasurementDataNumericHighLowComposite(
+            buckets.get(0).getStartTime(), divide(1.1 + 1.2, 2), 1.2, 1.1);
+        assertPropertiesMatch("The data for bucket 0 does not match the expected values.", expectedBucket0,
+            actual.get(0));
+
+        MeasurementDataNumericHighLowComposite expectedBucket2 = new MeasurementDataNumericHighLowComposite(
+            buckets.get(2).getStartTime(), divide(3.1 + 3.2, 2), 3.2, 3.1);
+        assertPropertiesMatch("The data for bucket 2 does not match the expected values.", expectedBucket2,
+            actual.get(2));
+
+        MeasurementDataNumericHighLowComposite expectedBucket59 = new MeasurementDataNumericHighLowComposite(
+            buckets.get(59).getStartTime(), divide(4.1 + 4.2, 2), 4.2, 4.1);
+        assertPropertiesMatch("The data for bucket 59 does not match the expected values.", expectedBucket59,
+            actual.get(59));
+    }
+
     @Test//(enabled = ENABLED)
     public void find6HourDataComposites() {
         DateTime beginTime = now().minusDays(20);

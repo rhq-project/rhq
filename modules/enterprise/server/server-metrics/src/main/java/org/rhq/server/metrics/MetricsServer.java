@@ -100,7 +100,7 @@ public class MetricsServer {
             return findAggregateDataForResource(scheduleId, beginTime, endTime, SIX_HOUR_METRICS_TABLE);
         }
 
-        return null;
+        return findAggregateDataForResource(scheduleId, beginTime, endTime, TWENTY_FOUR_HOUR_METRICS_TABLE);
     }
 
     public List<MeasurementDataNumericHighLowComposite> findDataForGroup(List<Integer> scheduleIds, long beginTime,
@@ -110,8 +110,16 @@ public class MetricsServer {
         if (dateTimeService.isInRawDataRange(begin)) {
             return findRawDataForGroup(scheduleIds, beginTime, endTime);
         }
-        throw new UnsupportedOperationException("MetricsServer.findDataForGroup currently only supports querying " +
-            "raw data");
+
+        if (dateTimeService.isIn1HourDataRange(begin)) {
+            return findAggregateDataForGroup(ONE_HOUR_METRICS_TABLE, scheduleIds, beginTime, endTime);
+        }
+
+        if (dateTimeService.isIn6HourDataRnage(begin)) {
+            return findAggregateDataForGroup(SIX_HOUR_METRICS_TABLE, scheduleIds, beginTime, endTime);
+        }
+
+        return findAggregateDataForGroup(TWENTY_FOUR_HOUR_METRICS_TABLE, scheduleIds, beginTime, endTime);
     }
 
     public AggregatedNumericMetric getSummaryAggregate(int scheduleId, long beginTime, long endTime) {
@@ -191,11 +199,30 @@ public class MetricsServer {
     }
 
     private List<MeasurementDataNumericHighLowComposite> findAggregateDataForResource(int scheduleId, long beginTime,
-        long endTime, String columnFamily) {
+        long endTime, String table) {
         Buckets buckets = new Buckets(beginTime, endTime);
 
-        List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(columnFamily, scheduleId,
+        List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleId,
             new DateTime(beginTime), new DateTime(endTime));
+        for (AggregatedNumericMetric metric : metrics) {
+            buckets.insert(metric.getTimestamp(), metric.getAvg());
+        }
+
+        List<MeasurementDataNumericHighLowComposite> data = new ArrayList<MeasurementDataNumericHighLowComposite>();
+        for (int i = 0; i < buckets.getNumDataPoints(); ++i) {
+            Buckets.Bucket bucket = buckets.get(i);
+            data.add(new MeasurementDataNumericHighLowComposite(bucket.getStartTime(), bucket.getAvg(),
+                bucket.getMax(), bucket.getMin()));
+        }
+        return data;
+    }
+
+    private List<MeasurementDataNumericHighLowComposite> findAggregateDataForGroup(String table,
+        List<Integer> scheduleIds, long beginTime, long endTime) {
+        Buckets buckets = new Buckets(beginTime, endTime);
+
+        List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleIds, new DateTime(beginTime),
+            new DateTime(endTime));
         for (AggregatedNumericMetric metric : metrics) {
             buckets.insert(metric.getTimestamp(), metric.getAvg());
         }

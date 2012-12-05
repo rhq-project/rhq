@@ -205,6 +205,32 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
     }
 
     @Test
+    public void findOneHourMetricsForMultipleSchedules() {
+        int schedule1 = 1;
+        int schedule2 = 2;
+        int schedule3 = 3;
+
+        List<AggregatedNumericMetric> metrics = asList(
+            new AggregatedNumericMetric(schedule1, 1.1, 1.1, 1.1, hour0().getMillis()),
+            new AggregatedNumericMetric(schedule2, 1.2, 1.2, 1.2, hour0().getMillis()),
+            new AggregatedNumericMetric(schedule1, 2.1, 2.1, 2.1, hour0().plusHours(1).getMillis()),
+            new AggregatedNumericMetric(schedule2, 2.2, 2.2, 2.2, hour0().plusHours(1).getMillis()),
+            new AggregatedNumericMetric(schedule3, 3.2, 3.2, 3.2, hour0().plusHours(1).getMillis())
+        );
+        int ttl = Hours.ONE.getHours();
+
+        dao.insertAggregates(ONE_HOUR_METRICS_TABLE, metrics, ttl);
+        List<AggregatedNumericMetric> actual = dao.findAggregateMetrics(ONE_HOUR_METRICS_TABLE,
+            asList(schedule1, schedule2), hour0().plusHours(1), hour0().plusHours(2));
+        List<AggregatedNumericMetric> expected = asList(
+            new AggregatedNumericMetric(schedule1, 2.1, 2.1, 2.1, hour0().plusHours(1).getMillis()),
+            new AggregatedNumericMetric(schedule2, 2.2, 2.2, 2.2, hour0().plusHours(1).getMillis())
+        );
+
+        assertEquals(actual, expected, "Failed to find one hour metrics for multiple schedules");
+    }
+
+    @Test
     public void findRangeOfOneHourMetrics() {
         int scheduledId = 1;
         int nextScheduleId = 2;

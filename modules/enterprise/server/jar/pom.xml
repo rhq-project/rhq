@@ -17,11 +17,7 @@
   <description>RHQ enterprise server main JAR</description>
 
   <properties>
-    <jboss.zip>${settings.localRepository}/org/jboss/as/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip</jboss.zip>
-    <jboss.unzip.location>${basedir}/target/jboss-as-${jboss.version}</jboss.unzip.location>
-
     <clean.db>true</clean.db>
-
     <rhq.internal>false</rhq.internal>
   </properties>
 

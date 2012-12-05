@@ -212,8 +212,4 @@ public interface MeasurementDataManagerLocal {
     List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(Subject subject, int resourceId,
         int[] definitionIds, long beginTime, long endTime, int numPoints);
 
-    /**
-     * @deprecated portal-war (it is not used at all)
-     */
-    List<MeasurementDataNumeric> findRawData(Subject subject, int scheduleId, long startTime, long endTime);
 }

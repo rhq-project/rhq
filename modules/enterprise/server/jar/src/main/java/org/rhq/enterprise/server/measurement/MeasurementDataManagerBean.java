@@ -876,36 +876,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         return values;
     }
 
-    @Override
-    public List<MeasurementDataNumeric> findRawData(Subject subject, int scheduleId, long startTime, long endTime) {
-
-        List<MeasurementDataNumeric> result = new ArrayList<MeasurementDataNumeric>();
-        String table = MeasurementDataManagerUtility.getCurrentRawTable();
-        Connection connection = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        try {
-            connection = rhqDs.getConnection();
-            ps = connection.prepareStatement( // TODO supply real impl that spans multiple tables
-                "SELECT time_stamp,value FROM " + table + " WHERE schedule_id= ? AND time_stamp BETWEEN ? AND ?");
-            ps.setLong(1, scheduleId);
-            ps.setLong(2, startTime);
-            ps.setLong(3, endTime);
-            rs = ps.executeQuery();
-
-            while (rs.next()) {
-                MeasurementDataNumeric point = new MeasurementDataNumeric(rs.getLong(1), scheduleId, rs.getDouble(2));
-                result.add(point);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace(); // TODO: Customise this generated block
-        } finally {
-            JDBCUtil.safeClose(connection, ps, rs);
-        }
-
-        return result;
-    }
-
     /**
      * Return all known trait data for the passed schedule, defined by resourceId and definitionId
      *

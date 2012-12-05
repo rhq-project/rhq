@@ -66,6 +66,45 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     @Override
+    public void listServers() throws Exception {
+        HashMap<String, String> serverProperties = getServerProperties();
+        final String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
+        final String dbUsername = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
+        String obfuscatedDbPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
+        String clearTextDbPassword = ServerInstallUtil.deobfuscatePassword(obfuscatedDbPassword);
+        ArrayList<ServerDetails> allServerDetails = getAllServerDetails(dbUrl, dbUsername, clearTextDbPassword);
+        if (allServerDetails == null) {
+            log.warn("Cannot get details on all servers");
+            return;
+        }
+        if (allServerDetails.size() == 0) {
+            log.info("There are no known servers currently registered");
+            return;
+        }
+
+        StringBuilder info = new StringBuilder("Details on currently registered servers");
+        info.append("\n");
+        info.append("Server Name");
+        info.append("\t");
+        info.append("Public Endpoint Address");
+        info.append("\t");
+        info.append("Secure Port");
+        info.append("\n");
+        for (ServerDetails serverDetails : allServerDetails) {
+            info.append(serverDetails.getName());
+            info.append("\t");
+            info.append(serverDetails.getEndpointAddress());
+            info.append("\t");
+            info.append(serverDetails.getEndpointPortString());
+            info.append("\t");
+            info.append(serverDetails.getEndpointSecurePortString());
+            info.append("\n");
+        }
+        log.info(info.toString());
+        return;
+    }
+
+    @Override
     public void test() throws AutoInstallDisabledException, AlreadyInstalledException, Exception {
         // checks to make sure we can read rhq-server.properties and auto-install is turned on
         // checks to make sure we aren't already installed
@@ -78,7 +117,7 @@ public class InstallerServiceImpl implements InstallerService {
         // checks to make sure we can connect to the DB
         final String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
         final String dbUsername = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
-        String obfuscatedDbPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
+        final String obfuscatedDbPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
         String clearTextDbPassword = ServerInstallUtil.deobfuscatePassword(obfuscatedDbPassword);
         String dbErrorStr = testConnection(dbUrl, dbUsername, clearTextDbPassword);
         if (dbErrorStr != null) {
@@ -373,6 +412,25 @@ public class InstallerServiceImpl implements InstallerService {
             log("Could not get the list of registered server names", e);
             return null;
         }
+    }
+
+    @Override
+    public ArrayList<ServerDetails> getAllServerDetails(String connectionUrl, String username, String password) {
+        ArrayList<String> serverNames = getServerNames(connectionUrl, username, password);
+        if (serverNames == null) {
+            return null;
+        }
+
+        ArrayList<ServerDetails> serverDetails = new ArrayList<ServerDetails>(serverNames.size());
+        for (String serverName : serverNames) {
+            ServerDetails currentDetails = getServerDetails(connectionUrl, username, password, serverName);
+            if (currentDetails == null) {
+                return null; // just abort - this error should not occur unless the db has problems
+            }
+            serverDetails.add(currentDetails);
+        }
+
+        return serverDetails;
     }
 
     @Override

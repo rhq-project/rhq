@@ -38,6 +38,13 @@ public interface InstallerService {
     void test() throws AutoInstallDisabledException, AlreadyInstalledException, Exception;
 
     /**
+     * This simply logs a list of all known registered servers found in the database.
+     *
+     * @throws Exception
+     */
+    void listServers() throws Exception;
+
+    /**
      * Call this prior to installing to see if we are ready to install.
      * This will do some pre-install checks - if the installation should proceed, the map of server properties is returned.
      * Exceptions are thrown if the install should not proceed.
@@ -93,6 +100,18 @@ public interface InstallerService {
      * @throws Exception
      */
     ArrayList<String> getServerNames(String connectionUrl, String username, String password) throws Exception;
+
+    /**
+     * Returns details on all servers that are registered in the database.
+     * 
+     * @param connectionUrl
+     * @param username
+     * @param password
+     * @return the details of all known servers
+     * @throws Exception
+     */
+    ArrayList<ServerDetails> getAllServerDetails(String connectionUrl, String username, String password)
+        throws Exception;
 
     /**
      * Returns details on a specific server that is registered in the database.

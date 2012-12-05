@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.installer;
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.apache.commons.logging.Log;
@@ -43,6 +44,10 @@ public class Installer {
     private static final int EXIT_CODE_INSTALLATION_ERROR = 2;
 
     private InstallerConfiguration installerConfig;
+
+    private enum WhatToDo {
+        DISPLAY_USAGE, TEST, LIST_SERVERS, INSTALL
+    }
 
     public static void main(String[] args) {
         try {
@@ -67,35 +72,49 @@ public class Installer {
 
     public void doInstall(String[] args) throws Exception {
 
-        try {
-            processArguments(args);
-        } catch (DisplayUsageRequestedException dure) {
-            displayUsage();
-            return;
-        } catch (TestRequestedException vre) {
-            try {
-                new InstallerServiceImpl(installerConfig).test();
-            } catch (AutoInstallDisabledException e) {
-                LOG.error(e.getMessage());
-                System.exit(EXIT_CODE_AUTOINSTALL_DISABLED);
-            } catch (AlreadyInstalledException e) {
-                LOG.info(e.getMessage());
-                System.exit(EXIT_CODE_ALREADY_INSTALLED);
-            }
-            return;
-        }
+        WhatToDo[] thingsToDo = processArguments(args);
 
-        try {
-            final InstallerService installerService = new InstallerServiceImpl(installerConfig);
-            final HashMap<String, String> serverProperties = installerService.preInstall();
-            installerService.install(serverProperties, null, null);
-            LOG.info("Installation is complete. The server should be ready shortly.");
-        } catch (AutoInstallDisabledException e) {
-            LOG.error(e.getMessage());
-            System.exit(EXIT_CODE_AUTOINSTALL_DISABLED);
-        } catch (AlreadyInstalledException e) {
-            LOG.info(e.getMessage());
-            System.exit(EXIT_CODE_ALREADY_INSTALLED);
+        for (WhatToDo whatToDo : thingsToDo) {
+            switch (whatToDo) {
+            case DISPLAY_USAGE: {
+                displayUsage();
+                continue;
+            }
+            case LIST_SERVERS: {
+                new InstallerServiceImpl(installerConfig).listServers();
+                continue;
+            }
+            case TEST: {
+                try {
+                    new InstallerServiceImpl(installerConfig).test();
+                } catch (AutoInstallDisabledException e) {
+                    LOG.error(e.getMessage());
+                    System.exit(EXIT_CODE_AUTOINSTALL_DISABLED);
+                } catch (AlreadyInstalledException e) {
+                    LOG.info(e.getMessage());
+                    System.exit(EXIT_CODE_ALREADY_INSTALLED);
+                }
+                continue;
+            }
+            case INSTALL: {
+                try {
+                    final InstallerService installerService = new InstallerServiceImpl(installerConfig);
+                    final HashMap<String, String> serverProperties = installerService.preInstall();
+                    installerService.install(serverProperties, null, null);
+                    LOG.info("Installation is complete. The server should be ready shortly.");
+                } catch (AutoInstallDisabledException e) {
+                    LOG.error(e.getMessage());
+                    System.exit(EXIT_CODE_AUTOINSTALL_DISABLED);
+                } catch (AlreadyInstalledException e) {
+                    LOG.info(e.getMessage());
+                    System.exit(EXIT_CODE_ALREADY_INSTALLED);
+                }
+                continue;
+            }
+            default: {
+                throw new IllegalStateException("Please report this bug: " + whatToDo);
+            }
+            }
         }
 
         return;
@@ -108,17 +127,20 @@ public class Installer {
         usage.append("\t--host=<hostname>, -h: hostname where the app server is running").append("\n");
         usage.append("\t--port=<port>, -p: talk to the app server over this management port").append("\n");
         usage.append("\t--test, -t: test the validity of the server properties (install not performed)").append("\n");
+        usage.append("\t--servers, -s: show list of known installed servers (install not performed)").append("\n");
         LOG.info(usage);
     }
 
-    private void processArguments(String[] args) throws Exception {
-        String sopts = "-:HD:h:p:t";
+    private WhatToDo[] processArguments(String[] args) throws Exception {
+        String sopts = "-:HD:h:p:st";
         LongOpt[] lopts = { new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'H'),
             new LongOpt("host", LongOpt.REQUIRED_ARGUMENT, null, 'h'),
             new LongOpt("port", LongOpt.REQUIRED_ARGUMENT, null, 'p'),
+            new LongOpt("servers", LongOpt.NO_ARGUMENT, null, 's'),
             new LongOpt("test", LongOpt.NO_ARGUMENT, null, 't') };
 
         boolean test = false;
+        boolean listservers = false;
 
         Getopt getopt = new Getopt("installer", args, sopts, lopts);
         int code;
@@ -139,7 +161,7 @@ public class Installer {
             }
 
             case 'H': {
-                throw new DisplayUsageRequestedException();
+                return new WhatToDo[] { WhatToDo.DISPLAY_USAGE };
             }
 
             case 'D': {
@@ -181,25 +203,29 @@ public class Installer {
                 break;
             }
 
+            case 's': {
+                listservers = true;
+                break; // don't return, we need to allow more args to be processed, like -p or -h
+            }
+
             case 't': {
                 test = true;
-                break;
+                break; // don't return, we need to allow more args to be processed, like -p or -h
             }
             }
         }
 
-        if (test) {
-            throw new TestRequestedException();
+        if (test || listservers) {
+            ArrayList<WhatToDo> whatToDo = new ArrayList<WhatToDo>();
+            if (test) {
+                whatToDo.add(WhatToDo.TEST);
+            }
+            if (listservers) {
+                whatToDo.add(WhatToDo.LIST_SERVERS);
+            }
+            return whatToDo.toArray(new WhatToDo[whatToDo.size()]);
         }
 
-        return;
-    }
-
-    private class DisplayUsageRequestedException extends Exception {
-        private static final long serialVersionUID = 1L;
-    }
-
-    private class TestRequestedException extends Exception {
-        private static final long serialVersionUID = 1L;
+        return new WhatToDo[] { WhatToDo.INSTALL };
     }
 }

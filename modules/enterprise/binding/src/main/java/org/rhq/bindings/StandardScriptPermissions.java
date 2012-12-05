@@ -23,19 +23,14 @@ import java.io.FilePermission;
 import java.io.SerializablePermission;
 import java.lang.reflect.ReflectPermission;
 import java.net.SocketPermission;
-import java.security.CodeSource;
 import java.security.Permission;
 import java.security.PermissionCollection;
 import java.security.Permissions;
-import java.security.ProtectionDomain;
-import java.security.cert.Certificate;
 import java.util.Enumeration;
 import java.util.PropertyPermission;
-import java.util.logging.LoggingPermission;
 
 import javax.management.MBeanPermission;
 import javax.management.ObjectName;
-import javax.security.auth.PrivateCredentialPermission;
 
 /**
  * @author Lukas Krejci
@@ -63,11 +58,13 @@ public class StandardScriptPermissions extends PermissionCollection {
         //JVM defined runtime perms
         add(new RuntimePermission("createClassLoader"));
         add(new RuntimePermission("getClassLoader"));
+        add(new RuntimePermission("setContextClassLoader"));
         add(new RuntimePermission("getenv.*"));
         add(new RuntimePermission("getProtectionDomain"));
         add(new RuntimePermission("getFileSystemAttributes"));
         add(new RuntimePermission("readFileDescriptor"));
         add(new RuntimePermission("writeFileDescriptor"));
+        add(new RuntimePermission("loadLibrary.*"));
         add(new RuntimePermission("accessClassInPackage.*"));
         add(new RuntimePermission("defineClassInPackage.*"));
         add(new RuntimePermission("accessDeclaredMembers"));
@@ -88,18 +85,10 @@ public class StandardScriptPermissions extends PermissionCollection {
         
         add(new ReflectPermission("suppressAccessChecks"));
         
-        //these are required for server-side scripts to be able to 
+        //these 2 are required for server-side scripts to be able to 
         //invoke remote EJBs.
-        add(new SerializablePermission("creator"));
-        add(new SerializablePermission("allowSerializationReflection"));
         add(new SerializablePermission("enableSubclassImplementation"));
-        add(new RuntimePermission("reflectionFactoryAccess"));
-
-        //by default allow the scripts access to any credentials of any user
-        //we don't consider the scripts malevolent.
-        add(new PrivateCredentialPermission("* * \"*\"", "read"));
-
-        add(new LoggingPermission("control", null));
+        add(new RuntimePermission("reflectionFactoryAccess"));                
     }
     
     public void add(Permission permission) {

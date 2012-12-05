@@ -112,14 +112,10 @@
   <dependency>
     <groupId>org.jboss.as</groupId>
     <artifactId>jboss-as-server</artifactId>
+    <version>${jboss.version}</version>
     <scope>provided</scope> <!-- provided by AS7 -->
   </dependency>
 
-  <dependency>
-    <groupId>org.jboss.as</groupId>
-    <artifactId>jboss-as-naming</artifactId>
-    <scope>provided</scope> <!-- provided by AS7 -->
-  </dependency>
 
       <!--================ Test Deps ================-->
 

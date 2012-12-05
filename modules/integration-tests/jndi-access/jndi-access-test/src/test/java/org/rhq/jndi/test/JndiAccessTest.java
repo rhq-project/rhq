@@ -45,9 +45,9 @@ import org.rhq.bindings.StandardScriptPermissions;
 import org.rhq.bindings.util.PackageFinder;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.client.LocalClient;
-import org.rhq.enterprise.server.AllowRhqServerInternalsAccessPermission;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.jndi.AllowRhqServerInternalsAccessPermission;
 import org.rhq.test.PortScout;
 
 /**

@@ -24,7 +24,6 @@ import java.io.PrintWriter;
 import java.security.PermissionCollection;
 import java.util.Collections;
 
-import javax.naming.Context;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
@@ -38,9 +37,10 @@ import org.rhq.bindings.util.PackageFinder;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.client.LocalClient;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.system.SystemManagerBean;
+import org.rhq.enterprise.server.auth.SubjectManagerBean;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.jndi.AllowRhqServerInternalsAccessPermission;
 
 /**
  * 
@@ -49,21 +49,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Test
 public class JndiAccessTest extends AbstractEJB3Test {
-
-    public void testScriptCantOverrideSystemProperties() throws Exception {
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-
-        ScriptEngine engine = getEngine(overlord);
-
-        try {
-            engine.eval("java.lang.System.setProperty('java.naming.factory.url.pkgs', 'counterfeit');");
-        } catch (ScriptException e) {
-            Assert.assertTrue(
-                e.getMessage().contains(
-                    "access denied (\"java.util.PropertyPermission\" \"java.naming.factory.url.pkgs\" \"write\")"),
-                "The script shouldn't have write access to the system properties.");
-        }
-    }
 
     public void testEjbsAccessibleThroughPrivilegedCode() {
         LookupUtil.getSubjectManager().getOverlord();
@@ -82,18 +67,14 @@ public class JndiAccessTest extends AbstractEJB3Test {
         
         ScriptEngine engine = getEngine(overlord);
         
-        String jndiName = "java:global/rhq/rhq-enterprise-server-ejb3/"
-            + SystemManagerBean.class.getSimpleName()
-            + "!"
-            + SystemManagerBean.class.getName().replace("Bean", "Local");
+        String jndiName = "java:global/rhq/rhq-enterprise-server-ejb3/" + SubjectManagerBean.class.getSimpleName()
+            + "!" + SubjectManagerBean.class.getName().replace("Bean", "Local");
 
         try {
             engine.eval(""
                 + "var ctx = new javax.naming.InitialContext();\n"
-                + "var systemManager = ctx.lookup('"
-                + jndiName
-                + "');\n"
-                + "systemManager.isDebugModeEnabled();");
+                + "var subjectManager = ctx.lookup('" + jndiName + "');\n"
+                + "subjectManager.getOverlord();");
             
             Assert.fail("The script shouldn't have been able to call local SLSB method.");
         } catch (ScriptException e) {
@@ -101,51 +82,19 @@ public class JndiAccessTest extends AbstractEJB3Test {
         }
     }
     
-    public void testLocalEjbsInaccessibleThroughJndiLookupWithCustomUrlPackages() throws ScriptException, IOException {
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-
-        ScriptEngine engine = getEngine(overlord);
-
-        String jndiName = "java:global/rhq/rhq-enterprise-server-ejb3/"
-            + SystemManagerBean.class.getSimpleName()
-            + "!"
-            + SystemManagerBean.class.getName().replace("Bean", "Local");
-
-        try {
-            engine.eval(""
-                + "var env = new java.util.Hashtable();\n"
-                + "env.put('"
-                + Context.URL_PKG_PREFIXES
-                + "', 'org.jboss.as.naming.interfaces');\n"
-                + "var ctx = new javax.naming.InitialContext(env);\n"
-                + "var systemManager = ctx.lookup('"
-                + jndiName
-                + "');\n"
-                + "systemManager.isDebugModeEnabled();");
-
-            Assert.fail("The script shouldn't have been able to call local SLSB method.");
-        } catch (ScriptException e) {
-            checkIsDesiredSecurityException(e);
-        }
-    }
-
     public void testRemoteEjbsInaccessibleThroughJndiLookup() throws ScriptException, IOException {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
         
         ScriptEngine engine = getEngine(overlord);
 
-        String jndiName = "java:global/rhq/rhq-enterprise-server-ejb3/"
-            + SystemManagerBean.class.getSimpleName()
-            + "!"
-            + SystemManagerBean.class.getName().replace("Bean", "Remote");
+        String jndiName = "java:global/rhq/rhq-enterprise-server-ejb3/" + SubjectManagerBean.class.getSimpleName()
+            + "!" + SubjectManagerBean.class.getName().replace("Bean", "Remote");
 
         try {
             engine.eval(""
                 + "var ctx = new javax.naming.InitialContext();\n"
-                + "var systemManager = ctx.lookup('"
-                + jndiName
-                + "');\n"
-                + "systemManager.getSystemSettings(subject);");
+                + "var subjectManager = ctx.lookup('" + jndiName + "');\n"
+                + "subjectManager.getSubjectByName('rhqadmin');");
             
             Assert.fail("The script shouldn't have been able to call remote SLSB method directly.");
         } catch (ScriptException e) {
@@ -249,29 +198,7 @@ public class JndiAccessTest extends AbstractEJB3Test {
             checkIsNotASecurityException(e);
         }
     }
-
-    //THIS IS A NEW REQUIREMENT THAT DOESN'T CURRENTLY WORK...
-    //    public void testInitialContextFactoryBuilderNotReplaceableUsingScripts() throws Exception {
-    //        Subject overlord = LookupUtil.getSubjectManager().getOverlord();        
-    //        
-    //        ScriptEngine engine = getEngine(overlord);
-    //        
-    //        try {
-    //            engine.eval(""
-    //                + "var mgrCls = java.lang.Class.forName('javax.naming.spi.NamingManager');\n"
-    //                + "var fld = mgrCls.getDeclaredField('initctx_factory_builder');\n"
-    //                + "fld.setAccessible(true);\n"
-    //                + "fld.set(null, null);\n");
-    //
-    //            Assert.fail("It should not be possible to use reflection to reset the initial context factory builder.");
-    //        } catch (ScriptException e) {
-    //            checkIsDesiredSecurityException(e);
-    //        } finally {
-    //            //restore the default behavior
-    //            NamingHack.bruteForceInitialContextFactoryBuilder();
-    //        }
-    //    }
-    
+        
     private ScriptEngine getEngine(Subject subject) throws ScriptException, IOException {
         StandardBindings bindings = new StandardBindings(new PrintWriter(System.out), new LocalClient(subject));
         
@@ -283,25 +210,15 @@ public class JndiAccessTest extends AbstractEJB3Test {
     
     private static void checkIsDesiredSecurityException(ScriptException e) {
         String message = e.getMessage();
-        String permissionTrace = "org.rhq.allow.server.internals.access";
+        String permissionTrace = AllowRhqServerInternalsAccessPermission.class.getName();
         
-        if (!message.contains(permissionTrace)) {
-            Assert
-                .fail(
-                    "The script exception doesn't seem to be caused by the AllowRhqServerInternalsAccessPermission security exception. ",
-                    e);
-        }
+        Assert.assertTrue(message.contains(permissionTrace), "The script exception doesn't seem to be caused by the AllowRhqServerInternalsAccessPermission security exception. " + message);
     }
 
     private static void checkIsNotASecurityException(ScriptException e) {
         String message = e.getMessage();
-        String permissionTrace = "org.rhq.allow.server.internals.access";
+        String permissionTrace = AllowRhqServerInternalsAccessPermission.class.getName();
         
-        if (message.contains(permissionTrace)) {
-            Assert
-                .fail(
-                    "The script exception does seem to be caused by the AllowRhqServerInternalsAccessPermission security exception although it shouldn't. ",
-                e);
-        }
+        Assert.assertFalse(message.contains(permissionTrace), "The script exception does seem to be caused by the AllowRhqServerInternalsAccessPermission security exception although it shouldn't. " + message);
     }
 }

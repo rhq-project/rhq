@@ -16,7 +16,6 @@
             <module name="org.dom4j" export="true" /> <!-- rhq ejb jar module declares this with runtime/provided scope -->
             <module name="javax.mail.api" export="true" /> <!-- for sending email notifications -->
             <module name="org.picketbox" export="true" /> <!-- for obfuscating passwords -->
-            <module name="org.jboss.as.naming" export="true" />
         </dependencies>
     </deployment>
 
@@ -38,8 +37,6 @@
             <module name="org.jboss.msc" export="true" />
             <module name="org.jboss.as.controller" export="true" />
             <module name="org.jboss.as.server" export="true" />
-            <module name="org.jboss.modules" export="true" />
-            <module name="org.jboss.as.naming" export="true" />
         </dependencies>
     </sub-deployment>
 

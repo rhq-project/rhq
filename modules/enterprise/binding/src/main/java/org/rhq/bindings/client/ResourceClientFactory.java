@@ -9,6 +9,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
+import javax.jws.WebParam;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
@@ -21,11 +26,6 @@ import javassist.bytecode.annotation.StringMemberValue;
 import javassist.util.proxy.MethodHandler;
 import javassist.util.proxy.ProxyFactory;
 
-import javax.jws.WebParam;
-
-import org.apache.commons.logging.Log;
-
-import org.rhq.bindings.security.SecurityActions;
 import org.rhq.bindings.util.ConfigurationClassBuilder;
 import org.rhq.bindings.util.ResourceTypeFingerprint;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
@@ -42,7 +42,7 @@ public class ResourceClientFactory {
         public Class<?> iface;
     }
     
-    private static final Log LOG = SecurityActions.getLog(ResourceClientFactory.class);
+    private static final Log LOG = LogFactory.getLog(ResourceClientFactory.class);
     
     //keys are resource type ids
     private static HashMap<Integer, CacheRecord> CUSTOM_CLASS_CACHE = new HashMap<Integer, CacheRecord>();

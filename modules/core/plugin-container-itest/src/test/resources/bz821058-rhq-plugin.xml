@@ -3,6 +3,7 @@
 <plugin name="bz821058Plugin"
         displayName="Plugin to test BZ 821058"
         description="This will help test that measurement facet is given a read-only schedule set."
+        package="org.rhq.plugins.test.measurement"
         version="1.0"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"

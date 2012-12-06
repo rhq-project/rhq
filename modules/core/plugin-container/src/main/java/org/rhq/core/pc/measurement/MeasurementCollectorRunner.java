@@ -23,6 +23,7 @@
 package org.rhq.core.pc.measurement;
 
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -131,7 +132,7 @@ public class MeasurementCollectorRunner implements Callable<MeasurementReport>, 
         Set<? extends MeasurementScheduleRequest> requests, Resource resource) {
         try {
             long start = System.currentTimeMillis();
-            measurementComponent.getValues(report, (Set<MeasurementScheduleRequest>) requests);
+            measurementComponent.getValues(report, Collections.unmodifiableSet(requests));
             long duration = (System.currentTimeMillis() - start);
             if (duration > 2000L) {
                 String message = "[PERF] Collection of measurements for [" + resource + "] (component=["

@@ -21,6 +21,7 @@ import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.plugins.test.SingleResourceDiscoveryComponent;
 import org.rhq.plugins.test.measurement.BZ834019ResourceComponent;
+import org.rhq.plugins.test.measurement.BZ834019ResourceComponent.CollectedMetric;
 import org.rhq.test.arquillian.AfterDiscovery;
 import org.rhq.test.arquillian.BeforeDiscovery;
 import org.rhq.test.arquillian.FakeServerInventory;

@@ -58,7 +58,7 @@ import org.rhq.core.pluginapi.operation.OperationResult;
  * @author Stefan Negrea
  *
  */
-@Test(groups = { "integration" }, singleThreaded = true)
+@Test(groups = { "integration" }, singleThreaded = true, enabled = false)
 public class DiscoveryAndConfigurationTest {
 
     private static final int TYPE_HIERARCHY_DEPTH = 6;
@@ -106,7 +106,7 @@ public class DiscoveryAndConfigurationTest {
         PluginContainer.getInstance().shutdown();
     }
 
-    @Test
+    @Test(enabled = false)
     public void pluginLoad() {
         PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
         PluginEnvironment pluginEnvironment = pluginManager.getPlugin(PLUGIN_NAME);
@@ -114,7 +114,7 @@ public class DiscoveryAndConfigurationTest {
         assert (pluginEnvironment.getPluginName().equals(PLUGIN_NAME));
     }
 
-    @Test(dependsOnMethods = "pluginLoad")
+    @Test(dependsOnMethods = "pluginLoad", enabled = false)
     public void discoverResources() throws Exception {
         InventoryReport report = PluginContainer.getInstance().getInventoryManager().executeServerScanImmediately();
         Assert.assertNotNull(report);

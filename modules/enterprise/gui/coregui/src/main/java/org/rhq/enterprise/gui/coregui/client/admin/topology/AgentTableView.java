@@ -18,20 +18,26 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.topology;
 
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_AFFINITY_GROUP;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_AFFINITY_GROUP_ID;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_SERVER;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_SERVER_ID;
 
 import java.util.List;
 
 import com.smartgwt.client.types.SortDirection;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
+import org.rhq.enterprise.gui.coregui.client.components.table.AuthorizedTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
@@ -45,15 +51,22 @@ public class AgentTableView extends TableSection<AgentNodeDatasource> implements
 
     public static final ViewName VIEW_ID = new ViewName("Agents(GWT)", MSG.view_adminTopology_agents() + "(GWT)",
         IconEnum.AGENT);
-    
+
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_TOPOLOGY_VIEW_ID + "/" + VIEW_ID;
 
-    public AgentTableView(String locatorId, String tableTitle, Integer serverId) {
+    private final boolean isAffinityGroupId;
+
+    public AgentTableView(String locatorId, String tableTitle, Integer id, boolean isAffinityGroupId) {
         super(locatorId, tableTitle);
+        this.isAffinityGroupId = isAffinityGroupId;
         setHeight100();
         setWidth100();
-        setDataSource(new AgentNodeDatasource(serverId));
+        setDataSource(new AgentNodeDatasource(id, isAffinityGroupId));
+    }
+
+    public AgentTableView(String locatorId, String tableTitle, Integer id) {
+        this(locatorId, tableTitle, id, false);
     }
 
     @Override
@@ -63,7 +76,7 @@ public class AgentTableView extends TableSection<AgentNodeDatasource> implements
         ListGrid listGrid = getListGrid();
         listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
         listGrid.sort(FIELD_NAME, SortDirection.ASCENDING);
-        
+
         for (ListGridField field : fields) {
             // adding the cell formatter for name field (clickable link)
             if (field.getName() == FIELD_NAME) {
@@ -80,6 +93,7 @@ public class AgentTableView extends TableSection<AgentNodeDatasource> implements
                     }
                 });
             } else if (field.getName() == FIELD_SERVER.propertyName()) {
+             // adding the cell formatter for server field (clickable link)
                 field.setCellFormatter(new CellFormatter() {
                     @Override
                     public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
@@ -90,15 +104,33 @@ public class AgentTableView extends TableSection<AgentNodeDatasource> implements
                             + record.getAttributeAsString(FIELD_SERVER_ID.propertyName());
                         String formattedValue = StringUtility.escapeHtml(value.toString());
                         return SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
-
+                    }
+                });
+            } else if (field.getName() == FIELD_AFFINITY_GROUP.propertyName()) {
+             // adding the cell formatter for affinity group field (clickable link)
+                field.setCellFormatter(new CellFormatter() {
+                    @Override
+                    public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                        if (value == null || value.toString().isEmpty()) {
+                            return "";
+                        }
+                        String detailsUrl = "#" + AffinityGroupTableView.VIEW_PATH + "/"
+                            + record.getAttributeAsString(FIELD_AFFINITY_GROUP_ID.propertyName());
+                        String formattedValue = StringUtility.escapeHtml(value.toString());
+                        return SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
                     }
                 });
             }
-            // TODO: adding the cell formatter for affinity group (clickable link)
-
         }
 
-        
+        if (isAffinityGroupId)
+            addTableAction(extendLocatorId("editGroupAgents"), "i18nEditGroupAgents",
+                new AuthorizedTableAction(this, TableActionEnablement.ALWAYS, Permission.MANAGE_SETTINGS) {
+                    public void executeAction(final ListGridRecord[] selections, Object actionValue) {
+                        SC.say("working..");
+                        // todo: open editor for agent members
+                    }
+                });
     }
 
     @Override

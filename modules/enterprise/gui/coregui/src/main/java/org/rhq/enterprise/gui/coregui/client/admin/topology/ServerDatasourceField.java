@@ -26,7 +26,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
  * @author Jirka Kremser
  *
  */
-public enum FailoverListItemDatasourceField {
+public enum ServerDatasourceField {
 
     FIELD_ID("id", CoreGUI.getMessages().common_title_id()),
     
@@ -41,10 +41,14 @@ public enum FailoverListItemDatasourceField {
     FIELD_PORT("port", CoreGUI.getMessages().view_adminTopology_server_nonSecurePort()),
 
     FIELD_SECURE_PORT("securePort", CoreGUI.getMessages().view_adminTopology_server_securePort()),
+    
+    FIELD_CTIME("ctime", CoreGUI.getMessages().view_adminTopology_serverDetail_installationDate()),
 
     FIELD_MTIME("mtime", CoreGUI.getMessages().view_adminTopology_server_lastUpdateTime()),
 
     FIELD_AFFINITY_GROUP("affinityGroup", CoreGUI.getMessages().view_adminTopology_server_affinityGroup()),
+    
+    FIELD_AFFINITY_GROUP_ID("affinityGroupId", "affinityGroupId"),
 
     FIELD_AGENT_COUNT("agentCount", CoreGUI.getMessages().view_adminTopology_server_agentCount());
 
@@ -58,7 +62,7 @@ public enum FailoverListItemDatasourceField {
      */
     private String title;
 
-    private FailoverListItemDatasourceField(String propertyName, String title) {
+    private ServerDatasourceField(String propertyName, String title) {
         this.propertyName = propertyName;
         this.title = title;
     }

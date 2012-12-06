@@ -19,14 +19,14 @@
 
 package org.rhq.enterprise.gui.coregui.client.admin.topology;
 
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerWithAgentCountDatasourceField.FIELD_ADDRESS;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerWithAgentCountDatasourceField.FIELD_AFFINITY_GROUP;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerWithAgentCountDatasourceField.FIELD_CTIME;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerWithAgentCountDatasourceField.FIELD_MTIME;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerWithAgentCountDatasourceField.FIELD_NAME;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerWithAgentCountDatasourceField.FIELD_OPERATION_MODE;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerWithAgentCountDatasourceField.FIELD_PORT;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerWithAgentCountDatasourceField.FIELD_SECURE_PORT;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_AFFINITY_GROUP;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_ADDRESS;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_CTIME;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_MTIME;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_NAME;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_OPERATION_MODE;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_PORT;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_SECURE_PORT;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -43,15 +43,18 @@ import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 
+import org.rhq.core.domain.cloud.AffinityGroup;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * Shows details of a server.
@@ -91,16 +94,16 @@ public class ServerDetailView extends LocatableVLayout implements BookmarkableVi
             public void onSuccess(final Server server) {
                 prepareDetailsSection(sectionStack, server);
                 prepareAgentSection(sectionStack, server);
-//                GWTServiceLookup.getCloudService().getAgentsByServerName(server.getName(),
-//                    new AsyncCallback<List<Agent>>() {
-//                        public void onSuccess(List<Agent> agents) {
-//                            prepareAgentSection(sectionStack, server, agents);
-//                        };
-//
-//                        public void onFailure(Throwable caught) {
-//                            //TODO: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), caught);
-//                        }
-//                    });
+                //                GWTServiceLookup.getCloudService().getAgentsByServerName(server.getName(),
+                //                    new AsyncCallback<List<Agent>>() {
+                //                        public void onSuccess(List<Agent> agents) {
+                //                            prepareAgentSection(sectionStack, server, agents);
+                //                        };
+                //
+                //                        public void onFailure(Throwable caught) {
+                //                            //TODO: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), caught);
+                //                        }
+                //                    });
             }
 
             public void onFailure(Throwable caught) {
@@ -150,7 +153,8 @@ public class ServerDetailView extends LocatableVLayout implements BookmarkableVi
     private void prepareAgentSection(SectionStack stack, Server server) {
         SectionStackSection section = new SectionStackSection(MSG.view_adminTopology_serverDetail_connectedAgents());
         section.setExpanded(true);
-        AgentTableView agentsTable = new AgentTableView(extendLocatorId(AgentTableView.VIEW_ID.getName()), null, serverId);
+        AgentTableView agentsTable = new AgentTableView(extendLocatorId(AgentTableView.VIEW_ID.getName()), null,
+            serverId);
         section.setItems(agentsTable);
 
         agentSection = section;
@@ -182,10 +186,17 @@ public class ServerDetailView extends LocatableVLayout implements BookmarkableVi
         operationModeItem.setValueMap("NORMAL", "MAINTENANCE");
         operationModeItem.setValue(server.getOperationMode());
 
-        // TODO: make clickable link
+        // make clickable link for affinity group
         StaticTextItem affinityGroupItem = new StaticTextItem(FIELD_AFFINITY_GROUP.propertyName(),
             FIELD_AFFINITY_GROUP.title());
-        affinityGroupItem.setValue(server.getAffinityGroup() == null ? "" : server.getAffinityGroup().getName());
+        String affinityGroupItemText = "";
+        AffinityGroup ag = server.getAffinityGroup();
+        if (ag != null && ag.getName() != null && !ag.getName().isEmpty()) {
+            String detailsUrl = "#" + AffinityGroupTableView.VIEW_PATH + "/" + ag.getId();
+            String formattedValue = StringUtility.escapeHtml(ag.getName());
+            affinityGroupItemText = SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
+        }
+        affinityGroupItem.setValue(affinityGroupItemText);
 
         StaticTextItem installationDateItem = new StaticTextItem(FIELD_CTIME.propertyName(), FIELD_CTIME.title());
         installationDateItem.setValue(TimestampCellFormatter.format(Long.valueOf(server.getCtime()),

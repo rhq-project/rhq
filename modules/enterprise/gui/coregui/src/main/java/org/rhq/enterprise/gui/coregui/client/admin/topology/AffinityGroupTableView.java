@@ -83,30 +83,11 @@ public class AffinityGroupTableView extends TableSection<AffinityGroupWithCounts
         listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
         showActions();
         super.configureTable();
-
-        //        for (ListGridField field : fields) {
-        //            // adding the cell formatter for name field (clickable link)
-        //            if (field.getName() == FIELD_NAME) {
-        //                field.setCellFormatter(new CellFormatter() {
-        //                    @Override
-        //                    public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-        //                        if (value == null) {
-        //                            return "";
-        //                        }
-        //                        String detailsUrl = "#" + VIEW_PATH + "/" + getId(record);
-        //                        String formattedValue = StringUtility.escapeHtml(value.toString());
-        //                        return SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
-        //
-        //                    }
-        //                });
-        //            }
-        //            // TODO: adding the cell formatter for affinity group (clickable link)
-        //        }
     }
 
     @Override
     public Canvas getDetailsView(Integer id) {
-        return new ServerDetailView(extendLocatorId("detailsView"), id);
+        return new AffinityGroupDetailView(extendLocatorId("detailsView"), id);
     }
 
     private void showActions() {
@@ -252,10 +233,8 @@ public class AffinityGroupTableView extends TableSection<AffinityGroupWithCounts
         buttons.addMember(cancel);
         buttons.addMember(save);
         layout.addMember(buttons);
-
         modalWindow.addItem(layout);
         modalWindow.show();
-
     }
 
     @Override

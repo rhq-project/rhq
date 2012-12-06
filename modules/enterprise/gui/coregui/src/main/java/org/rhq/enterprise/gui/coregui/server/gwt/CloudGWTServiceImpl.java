@@ -200,4 +200,62 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
         }
     }
 
+    @Override
+    public PageList<Server> getServerMembersByAffinityGroupId(int affinityGroupId, PageControl pageControl)
+        throws RuntimeException {
+        try {
+            return SerialUtility.prepare(
+                affinityGroupManager.getServerMembers(getSessionSubject(), affinityGroupId, pageControl),
+                "CloudGWTServiceImpl.getServerMembersByAffinityGroupId");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public PageList<Server> getServerNonMembersByAffinityGroupId(int affinityGroupId, PageControl pageControl)
+        throws RuntimeException {
+        try {
+            return SerialUtility.prepare(
+                affinityGroupManager.getServerNonMembers(getSessionSubject(), affinityGroupId, pageControl),
+                "CloudGWTServiceImpl.getServerNonMembersByAffinityGroupId");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public PageList<Agent> getAgentMembersByAffinityGroupId(int affinityGroupId, PageControl pageControl)
+        throws RuntimeException {
+        try {
+            return SerialUtility.prepare(
+                affinityGroupManager.getAgentMembers(getSessionSubject(), affinityGroupId, pageControl),
+                "CloudGWTServiceImpl.getAgentMembersByAffinityGroupId");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public PageList<Agent> getAgentNonMembersByAffinityGroupId(int affinityGroupId, PageControl pageControl)
+        throws RuntimeException {
+        try {
+            return SerialUtility.prepare(
+                affinityGroupManager.getAgentNonMembers(getSessionSubject(), affinityGroupId, pageControl),
+                "CloudGWTServiceImpl.getAgentNonMembersByAffinityGroupId");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public AffinityGroup getAffinityGroupById(int affinityGroupId) throws RuntimeException {
+        try {
+            return SerialUtility.prepare(affinityGroupManager.getById(getSessionSubject(), affinityGroupId),
+                "CloudGWTServiceImpl.getAffinityGroupById");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
 }

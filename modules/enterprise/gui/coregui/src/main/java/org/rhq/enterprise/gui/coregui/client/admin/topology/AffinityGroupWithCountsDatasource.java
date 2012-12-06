@@ -51,7 +51,7 @@ public class AffinityGroupWithCountsDatasource extends RPCDataSource<AffinityGro
 
         FIELD_NAME("name", CoreGUI.getMessages().common_title_name()),
 
-        FIELD_AGENT_COUNT("serverCount", CoreGUI.getMessages().view_adminTopology_affinityGroups_agentCount()),
+        FIELD_AGENT_COUNT("agentCount", CoreGUI.getMessages().view_adminTopology_affinityGroups_agentCount()),
 
         FIELD_SERVER_COUNT("serverCount", CoreGUI.getMessages().view_adminTopology_affinityGroups_serverCount());
 

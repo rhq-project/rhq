@@ -44,7 +44,9 @@ public enum AgentNodeDatasourceField {
 
     FIELD_AGENT_TOKEN("agentToken", CoreGUI.getMessages().view_adminTopology_agentDetail_token()),
 
-    FIELD_AFFINITY_GROUP("affinityGroup", CoreGUI.getMessages().view_adminTopology_server_affinityGroup());
+    FIELD_AFFINITY_GROUP("affinityGroup", CoreGUI.getMessages().view_adminTopology_server_affinityGroup()),
+    
+    FIELD_AFFINITY_GROUP_ID("affinityGroupId", "affinityGroupId");
 
     /**
      * Corresponds to a property name of Server (e.g. operationMode).

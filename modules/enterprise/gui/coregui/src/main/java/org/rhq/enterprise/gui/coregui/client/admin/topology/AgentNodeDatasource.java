@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.admin.topology;
 
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_ADDRESS;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_AFFINITY_GROUP;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_AFFINITY_GROUP_ID;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_ID;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_LAST_AVAILABILITY_REPORT;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_NAME;
@@ -54,11 +55,13 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  */
 public class AgentNodeDatasource extends RPCDataSource<Agent, Criteria> {
 
-    private final Integer serverId;
+    private final Integer id;
+    private final boolean isAffinityGroupId;
 
-    public AgentNodeDatasource(Integer serverId) {
+    public AgentNodeDatasource(Integer id, boolean isAffinityGroupId) {
         super();
-        this.serverId = serverId;
+        this.id = id;
+        this.isAffinityGroupId = isAffinityGroupId;
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
     }
@@ -82,17 +85,22 @@ public class AgentNodeDatasource extends RPCDataSource<Agent, Criteria> {
         fields.add(FIELD_NAME.getListGridField("*"));
         fields.add(FIELD_SERVER.getListGridField("120"));
         fields.add(FIELD_ADDRESS.getListGridField("110"));
-        
+
         ListGridField serverIdField = FIELD_SERVER_ID.getListGridField();
         serverIdField.setHidden(true);
         fields.add(serverIdField);
-        
+
         fields.add(FIELD_PORT.getListGridField("90"));
         ListGridField lastAvailabilityReportField = FIELD_LAST_AVAILABILITY_REPORT.getListGridField("120");
         TimestampCellFormatter.prepareDateField(lastAvailabilityReportField);
         fields.add(lastAvailabilityReportField);
-
-        fields.add(FIELD_AFFINITY_GROUP.getListGridField("100"));
+        
+        if (!isAffinityGroupId) {
+            fields.add(FIELD_AFFINITY_GROUP.getListGridField("100"));
+            ListGridField affinityGroupIdField = FIELD_AFFINITY_GROUP_ID.getListGridField();
+            affinityGroupIdField.setHidden(true);
+            fields.add(affinityGroupIdField);
+        }
 
         return fields;
     }
@@ -101,7 +109,7 @@ public class AgentNodeDatasource extends RPCDataSource<Agent, Criteria> {
     protected void executeFetch(final DSRequest request, final DSResponse response, Criteria criteria) {
         final PageControl pc = getPageControl(request);
 
-        GWTServiceLookup.getAgentService().getAgentsByServer(serverId, pc, new AsyncCallback<PageList<Agent>>() {
+        AsyncCallback<PageList<Agent>> callback = new AsyncCallback<PageList<Agent>>() {
             public void onSuccess(PageList<Agent> result) {
                 response.setData(buildRecords(result));
                 response.setTotalRows(result.size());
@@ -114,7 +122,14 @@ public class AgentNodeDatasource extends RPCDataSource<Agent, Criteria> {
                 response.setStatus(DSResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }
-        });
+        };
+
+        if (isAffinityGroupId) {
+            GWTServiceLookup.getCloudService().getAgentMembersByAffinityGroupId(id, pc, callback);
+        } else {
+            // if id == null all agent are returned
+            GWTServiceLookup.getAgentService().getAgentsByServer(id, pc, callback);
+        }
     }
 
     /**
@@ -159,6 +174,9 @@ public class AgentNodeDatasource extends RPCDataSource<Agent, Criteria> {
         record.setAttribute(FIELD_LAST_AVAILABILITY_REPORT.propertyName(), from.getLastAvailabilityReport());
         record.setAttribute(FIELD_AFFINITY_GROUP.propertyName(), from.getAffinityGroup() == null ? "" : from
             .getAffinityGroup().getName());
+        record.setAttribute(FIELD_AFFINITY_GROUP_ID.propertyName(), from.getAffinityGroup() == null ? "" : from
+            .getAffinityGroup().getId());
+        
         return record;
     }
 

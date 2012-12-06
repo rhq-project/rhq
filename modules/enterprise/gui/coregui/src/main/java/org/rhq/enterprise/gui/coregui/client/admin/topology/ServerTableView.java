@@ -18,7 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.topology;
 
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.FailoverListItemDatasourceField.FIELD_ORDINAL;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_AFFINITY_GROUP;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_AFFINITY_GROUP_ID;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_ORDINAL;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -54,7 +56,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Jiri Kremser
  * 
  */
-public class ServerTableView extends TableSection<ServerDatasource<? extends Serializable, Criteria>> implements HasViewName {
+public class ServerTableView extends TableSection<AbstractServerNodeDatasource<? extends Serializable, Criteria>>
+    implements HasViewName {
 
     public static final ViewName VIEW_ID = new ViewName("Servers(GWT)", MSG.view_adminTopology_servers() + "(GWT)",
         IconEnum.SERVERS);
@@ -64,12 +67,24 @@ public class ServerTableView extends TableSection<ServerDatasource<? extends Ser
 
     private final boolean showActions;
 
-    public ServerTableView(String locatorId, String tableTitle, Integer agentId) {
+    private final boolean isAffinityGroupId;
+
+    public ServerTableView(String locatorId, String tableTitle, Integer id, boolean isAffinityGroupId) {
         super(locatorId, tableTitle);
-        this.showActions = agentId == null;
+        this.showActions = id == null && !isAffinityGroupId;
+        this.isAffinityGroupId = isAffinityGroupId;
         setHeight100();
         setWidth100();
-        setDataSource(showActions ? new ServerWithAgentCountDatasource() : new FailoverListItemDatasource(agentId));
+        if (isAffinityGroupId) {
+            setDataSource(new ServerDatasource(id));
+        } else {
+            setDataSource(showActions ? new ServerWithAgentCountDatasource() : new FailoverListItemDatasource(id));
+        }
+
+    }
+
+    public ServerTableView(String locatorId, String tableTitle, Integer id) {
+        this(locatorId, tableTitle, id, false);
     }
 
     @Override
@@ -80,9 +95,12 @@ public class ServerTableView extends TableSection<ServerDatasource<? extends Ser
         listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
         if (showActions) {
             listGrid.sort(FIELD_NAME, SortDirection.ASCENDING);
-            showActions();
+            showCommonActions();
+        } else if (isAffinityGroupId) {
+         // displayed from AffinityGroupDetailView
+            showUpdateMembersAction();
         } else {
-            // sorting by order field
+            // sorting by order field (displayed from AgentDetailView)
             listGrid.sort(FIELD_ORDINAL.propertyName(), SortDirection.ASCENDING);
         }
         for (ListGridField field : fields) {
@@ -100,8 +118,21 @@ public class ServerTableView extends TableSection<ServerDatasource<? extends Ser
 
                     }
                 });
+            } else if (field.getName() == FIELD_AFFINITY_GROUP.propertyName()) {
+                // adding the cell formatter for affinity group field (clickable link)
+                field.setCellFormatter(new CellFormatter() {
+                    @Override
+                    public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                        if (value == null || value.toString().isEmpty()) {
+                            return "";
+                        }
+                        String detailsUrl = "#" + AffinityGroupTableView.VIEW_PATH + "/"
+                            + record.getAttributeAsString(FIELD_AFFINITY_GROUP_ID.propertyName());
+                        String formattedValue = StringUtility.escapeHtml(value.toString());
+                        return SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
+                    }
+                });
             }
-            // TODO: adding the cell formatter for affinity group (clickable link)
         }
     }
 
@@ -110,7 +141,7 @@ public class ServerTableView extends TableSection<ServerDatasource<? extends Ser
         return new ServerDetailView(extendLocatorId("detailsView"), id);
     }
 
-    private void showActions() {
+    private void showCommonActions() {
         addTableAction(extendLocatorId("setNormal"), MSG.view_adminTopology_server_setNormal(),
             MSG.common_msg_areYouSure(), new AuthorizedTableAction(this, TableActionEnablement.ANY,
                 Permission.MANAGE_SETTINGS) {
@@ -225,6 +256,15 @@ public class ServerTableView extends TableSection<ServerDatasource<? extends Ser
                             }
                         }
                     });
+                }
+            });
+    }
+    
+    private void showUpdateMembersAction() {
+        addTableAction(extendLocatorId("foo"), "olala", new AuthorizedTableAction(this, TableActionEnablement.ANY,
+                Permission.MANAGE_SETTINGS) {
+                public void executeAction(final ListGridRecord[] selections, Object actionValue) {
+                    SC.say("fooparek");
                 }
             });
     }

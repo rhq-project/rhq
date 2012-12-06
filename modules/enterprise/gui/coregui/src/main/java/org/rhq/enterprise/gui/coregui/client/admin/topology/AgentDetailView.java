@@ -36,6 +36,7 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 
+import org.rhq.core.domain.cloud.AffinityGroup;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -166,10 +167,17 @@ public class AgentDetailView extends LocatableVLayout {
             Long.valueOf(agent.getLastAvailabilityReport()), TimestampCellFormatter.DATE_TIME_FORMAT_LONG);
         lastAvailabilityItem.setValue(lastReport);
 
-        // TODO: make clickable link
+        // make clickable link for affinity group
         StaticTextItem affinityGroupItem = new StaticTextItem(FIELD_AFFINITY_GROUP.propertyName(),
             FIELD_AFFINITY_GROUP.title());
-        affinityGroupItem.setValue(agent.getAffinityGroup() == null ? "" : agent.getAffinityGroup().getName());
+        String affinityGroupItemText = "";
+        AffinityGroup ag = agent.getAffinityGroup();
+        if (ag != null && ag.getName() != null && !ag.getName().isEmpty()) {
+            String detailsUrl = "#" + AffinityGroupTableView.VIEW_PATH + "/" + ag.getId();
+            String formattedValue = StringUtility.escapeHtml(ag.getName());
+            affinityGroupItemText = SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
+        }
+        affinityGroupItem.setValue(affinityGroupItemText);
 
         StaticTextItem currentServerItem = new StaticTextItem(FIELD_SERVER.propertyName(), FIELD_SERVER.title());
         String serverValue = null;
@@ -181,7 +189,6 @@ public class AgentDetailView extends LocatableVLayout {
             serverValue = SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
         }
         currentServerItem.setValue(serverValue);
-
 
         //        ButtonItem saveButton = new ButtonItem();
         //        saveButton.setOverflow(Overflow.VISIBLE);

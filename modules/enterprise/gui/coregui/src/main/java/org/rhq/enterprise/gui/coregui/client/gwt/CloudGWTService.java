@@ -76,4 +76,14 @@ public interface CloudGWTService extends RemoteService {
     int deleteAffinityGroups(int[] affinityGroupIds) throws RuntimeException;
     
     int createAffinityGroup(AffinityGroup affinityGroup) throws RuntimeException;
+    
+    PageList<Server> getServerMembersByAffinityGroupId(int affinityGroupId, PageControl pageControl) throws RuntimeException;
+    
+    PageList<Server> getServerNonMembersByAffinityGroupId(int affinityGroupId, PageControl pageControl) throws RuntimeException;
+    
+    PageList<Agent> getAgentMembersByAffinityGroupId(int affinityGroupId, PageControl pageControl) throws RuntimeException;
+    
+    PageList<Agent> getAgentNonMembersByAffinityGroupId(int affinityGroupId, PageControl pageControl) throws RuntimeException;
+    
+    AffinityGroup getAffinityGroupById(int affinityGroupId) throws RuntimeException;
 }

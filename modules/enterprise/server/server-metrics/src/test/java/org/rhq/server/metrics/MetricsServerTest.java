@@ -441,6 +441,35 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     }
 
     @Test
+    public void getSummaryAggregateForGroup() {
+        DateTime beginTime = now().minusDays(11);
+        DateTime endTime = now();
+
+        Buckets buckets = new Buckets(beginTime, endTime);
+        DateTime bucket0Time = new DateTime(buckets.get(0).getStartTime());
+        DateTime bucket59Time = new DateTime(buckets.get(59).getStartTime());
+
+        int scheduleId1 = 123;
+        int scheduleId2 = 456;
+
+        List<AggregatedNumericMetric> metrics = asList(
+            new AggregatedNumericMetric(scheduleId1, 1.1, 1.1, 1.1, bucket0Time.getMillis()),
+            new AggregatedNumericMetric(scheduleId2, 1.2, 1.2, 1.2, bucket0Time.getMillis()),
+
+            new AggregatedNumericMetric(scheduleId1, 5.1, 5.1, 5.1, bucket59Time.getMillis()),
+            new AggregatedNumericMetric(scheduleId2, 5.2, 5.2, 5.2, bucket59Time.getMillis())
+        );
+        dao.insertAggregates(ONE_HOUR_METRICS_TABLE, metrics, DateTimeService.TWO_WEEKS);
+
+        AggregatedNumericMetric actual = metricsServer.getSummaryAggregate(asList(scheduleId1, scheduleId2),
+            beginTime.getMillis(), endTime.getMillis());
+        double avg = divide(1.1 + 1.2 + 5.1 + 5.2, 4);
+        AggregatedNumericMetric expected = new AggregatedNumericMetric(0, avg, 1.1, 5.2, beginTime.getMillis());
+
+        assertEquals(actual, expected, "Failed to get group summary aggregate for one hour data");
+    }
+
+    @Test
     public void getSummaryRawAggregateForGroup() {
         DateTime beginTime = now().minusHours(4);
         DateTime endTime = now();

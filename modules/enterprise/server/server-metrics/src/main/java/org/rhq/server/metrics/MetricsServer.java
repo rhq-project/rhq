@@ -148,14 +148,14 @@ public class MetricsServer {
         }
 
         if (dateTimeService.isIn1HourDataRange(begin)) {
-            return getSummaryAggregate(scheduleIds, beginTime, endTime);
+            return getSummaryAggregate(ONE_HOUR_METRICS_TABLE, scheduleIds, beginTime, endTime);
         }
 
         if (dateTimeService.isIn6HourDataRnage(begin)) {
-            return getSummaryAggregate(scheduleIds, beginTime, endTime);
+            return getSummaryAggregate(SIX_HOUR_METRICS_TABLE, scheduleIds, beginTime, endTime);
         }
 
-        return getSummaryAggregate(scheduleIds, beginTime, endTime);
+        return getSummaryAggregate(TWENTY_FOUR_HOUR_METRICS_TABLE, scheduleIds, beginTime, endTime);
     }
 
     private List<MeasurementDataNumericHighLowComposite> findRawDataForResource(int scheduleId, long beginTime,

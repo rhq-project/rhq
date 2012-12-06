@@ -456,6 +456,16 @@
         <configuration>
           <ejbVersion>3.0</ejbVersion>
           <generateClient>true</generateClient>
+          <!-- We shoudn't need Class-Path manifest entry, at least when deployed in AS
+               but we might need it for CLI. If we don't need the manifest entry in CLI,
+               then we should uncomment this because we get annoying errors in AS7 logs
+               with the manifest entry.
+          <archive>
+            <manifest>
+               <addClasspath>false</addClasspath>
+            </manifest>
+          </archive>
+          -->
         </configuration>
       </plugin>
 

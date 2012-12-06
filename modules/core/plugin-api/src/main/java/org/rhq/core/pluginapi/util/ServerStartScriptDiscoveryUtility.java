@@ -290,12 +290,21 @@ public class ServerStartScriptDiscoveryUtility {
         }
 
         int startScriptIndex;
-        // Advance past any shell (e.g. /bin/sh or cmd.exe) options.
+        // Advance past any shell (e.g. /bin/sh or cmd.exe) options or empty args
         for (startScriptIndex = 1; (startScriptIndex < serverParentProcessCommandLine.length); ++startScriptIndex) {
-            if (serverParentProcessCommandLine[startScriptIndex].charAt(0) != OPTION_PREFIX) {
+            // the arg should not be null or empty, but we've seen empty args from Sigar...            
+            String arg = serverParentProcessCommandLine[startScriptIndex];
+
+            if (arg != null && !arg.isEmpty() && arg.charAt(0) != OPTION_PREFIX) {
                 break;
             }
         }
+
+        // for whatever unanticipated reason, we advanced past all of the args
+        if (startScriptIndex == serverParentProcessCommandLine.length) {
+            return null;
+        }
+
         String possibleStartScript = serverParentProcessCommandLine[startScriptIndex];
         return (isScript(possibleStartScript)) ? startScriptIndex : null;
     }

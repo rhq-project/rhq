@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,9 +18,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring;
 
+import java.util.List;
+
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -36,37 +37,31 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricGraphView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.MetricLineGraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
-/**
- * @deprecated should be replaced with new d3 graph views
- * @author Greg Hinkle
- * @author Jay Shaughnessy
- */
-@Deprecated
-public class ResourceMetricGraphView extends AbstractMetricGraphView {
 
-    private HTMLFlow resourceTitle;
+public class ResourceMetricD3GraphView extends MetricLineGraphView
+{
 
-    public ResourceMetricGraphView(String locatorId) {
+
+    public ResourceMetricD3GraphView(String locatorId){
         super(locatorId);
+        setChartHeight("150px");
     }
 
 
-    public ResourceMetricGraphView(String locatorId, int resourceId, MeasurementDefinition def,
-        List<MeasurementDataNumericHighLowComposite> data) {
+    public ResourceMetricD3GraphView(String locatorId, int resourceId, MeasurementDefinition def,
+                                     List<MeasurementDataNumericHighLowComposite> data) {
 
         super(locatorId, resourceId, def, data);
+        setChartHeight("150px");
     }
 
-    @Override
-    protected HTMLFlow getEntityTitle() {
-        return resourceTitle;
-    }
 
     @Override
     protected void renderGraph() {
@@ -97,43 +92,44 @@ public class ResourceMetricGraphView extends AbstractMetricGraphView {
                     typesSet.addAll(AncestryUtil.getAncestryTypeIds(ancestries));
 
                     ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-                        typesSet.toArray(new Integer[typesSet.size()]),
-                        EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
-                        new ResourceTypeRepository.TypesLoadedCallback() {
+                            typesSet.toArray(new Integer[typesSet.size()]),
+                            EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
+                            new ResourceTypeRepository.TypesLoadedCallback() {
 
-                            public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                                String url = LinkManager.getResourceLink(resource.getId());
-                                resourceTitle = new HTMLFlow(SeleniumUtility.getLocatableHref(url, resource.getName(),
-                                    null));
-                                resourceTitle.setTooltip(AncestryUtil.getAncestryHoverHTMLForResource(resource, types,
-                                    0));
+                                @Override
+                                public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                                    String url = LinkManager.getResourceLink(resource.getId());
+                                    resourceTitle = new HTMLFlow(SeleniumUtility.getLocatableHref(url, resource.getName(),
+                                            null));
+                                    resourceTitle.setTooltip(AncestryUtil.getAncestryHoverHTMLForResource(resource, types,
+                                            0));
 
-                                ResourceType type = types.get(resource.getResourceType().getId());
-                                for (MeasurementDefinition def : type.getMetricDefinitions()) {
-                                    if (def.getId() == getDefinitionId()) {
-                                        setDefinition(def);
+                                    ResourceType type = types.get(resource.getResourceType().getId());
+                                    for (MeasurementDefinition def : type.getMetricDefinitions()) {
+                                        if (def.getId() == getDefinitionId()) {
+                                            setDefinition(def);
 
-                                        GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(getEntityId(),
-                                            new int[] { getDefinitionId() }, 8, MeasurementUtils.UNIT_HOURS, 60,
-                                            new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
-                                                @Override
-                                                public void onFailure(Throwable caught) {
-                                                    CoreGUI.getErrorHandler().handleError(
-                                                        MSG.view_resource_monitor_graphs_loadFailed(), caught);
-                                                }
+                                            GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(getEntityId(),
+                                                    new int[] { getDefinitionId() }, 8, MeasurementUtils.UNIT_HOURS, 60,
+                                                    new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
+                                                        @Override
+                                                        public void onFailure(Throwable caught) {
+                                                            CoreGUI.getErrorHandler().handleError(
+                                                                    MSG.view_resource_monitor_graphs_loadFailed(), caught);
+                                                        }
 
-                                                @Override
-                                                public void onSuccess(
-                                                    List<List<MeasurementDataNumericHighLowComposite>> result) {
-                                                    setData(result.get(0));
+                                                        @Override
+                                                        public void onSuccess(
+                                                                List<List<MeasurementDataNumericHighLowComposite>> result) {
+                                                            setData(result.get(0));
 
-                                                    drawGraph();
-                                                }
-                                            });
+                                                            drawGraph();
+                                                        }
+                                                    });
+                                        }
                                     }
                                 }
-                            }
-                        });
+                            });
                 }
             });
 
@@ -141,7 +137,6 @@ public class ResourceMetricGraphView extends AbstractMetricGraphView {
             drawGraph();
         }
     }
-
     @Override
     protected boolean supportsLiveGraphViewDialog() {
         return true;
@@ -149,13 +144,13 @@ public class ResourceMetricGraphView extends AbstractMetricGraphView {
 
     @Override
     protected void displayLiveGraphViewDialog() {
-        LiveGraphView.displayAsDialog(getLocatorId(), getEntityId(), getDefinition());
+        LiveGraphD3View.displayAsDialog(getLocatorId(), getEntityId(), getDefinition());
     }
 
     @Override
-    public AbstractMetricGraphView getInstance(String locatorId, int entityId, MeasurementDefinition def,
+    public AbstractMetricD3GraphView getInstance(String locatorId, int entityId, MeasurementDefinition def,
         List<MeasurementDataNumericHighLowComposite> data) {
 
-        return new ResourceMetricGraphView(locatorId, entityId, def, data);
+        return new ResourceMetricD3GraphView(locatorId, entityId, def, data);
     }
 }

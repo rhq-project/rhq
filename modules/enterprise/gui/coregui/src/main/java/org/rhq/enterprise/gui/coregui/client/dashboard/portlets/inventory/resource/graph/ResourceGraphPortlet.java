@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph;
 
+import java.util.List;
+
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
@@ -37,14 +39,15 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceMetricGraphView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceMetricD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceScheduledMetricDatasource;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 
 /**
  * @author Greg Hinkle
  * @author Jay Shaughnessy
  */
-public class ResourceGraphPortlet extends ResourceMetricGraphView implements CustomSettingsPortlet {
+public class ResourceGraphPortlet extends ResourceMetricD3GraphView implements CustomSettingsPortlet {
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "ResourceMetric";
@@ -59,9 +62,11 @@ public class ResourceGraphPortlet extends ResourceMetricGraphView implements Cus
 
     public ResourceGraphPortlet(String locatorId) {
         super(locatorId);
+        setChartHeight("100%");
         setOverflow(Overflow.HIDDEN);
     }
 
+    @Override
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
 
         if (null == this.portletWindow && null != portletWindow) {
@@ -89,6 +94,7 @@ public class ResourceGraphPortlet extends ResourceMetricGraphView implements Cus
         }
     }
 
+    @Override
     public Canvas getHelpCanvas() {
         return new HTMLFlow(MSG.view_portlet_help_graph());
     }
@@ -106,6 +112,7 @@ public class ResourceGraphPortlet extends ResourceMetricGraphView implements Cus
         }
     }
 
+    @Override
     public DynamicForm getCustomSettingsForm() {
         final DynamicForm form = new DynamicForm();
 
@@ -176,6 +183,7 @@ public class ResourceGraphPortlet extends ResourceMetricGraphView implements Cus
 
     @Override
     public void redraw() {
+        Log.debug(" *** Redraw Portlet");
         super.redraw();
 
         removeMembers(getMembers());
@@ -189,9 +197,11 @@ public class ResourceGraphPortlet extends ResourceMetricGraphView implements Cus
         }
     }
 
+
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
+        @Override
         public final Portlet getInstance(String locatorId, EntityContext context) {
 
             return new ResourceGraphPortlet(locatorId);

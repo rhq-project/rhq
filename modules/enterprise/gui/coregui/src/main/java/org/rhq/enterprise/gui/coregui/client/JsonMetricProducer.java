@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,22 +16,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource;
-
-import org.rhq.core.domain.resource.composite.ResourceComposite;
+package org.rhq.enterprise.gui.coregui.client;
 
 /**
- * @author Greg Hinkle
+ * Marks the ability to produce Json metrics.
+ * Useful for standardization/traceability.
+ *
+ * @author Mike Thompson
  */
-@Deprecated
-public interface ResourceSelectListener {
-
-    /**
-     * An event handler that is called when the user selects a Resource.
-     *
-     * @param resourceComposite a Resource composite for the Resource that was just selected by the user; the Resource
-     *                          wrapped by the composite's ResourceType will be mostly fetched.
-     */
-    void onResourceSelected(ResourceComposite resourceComposite);
-
+public interface JsonMetricProducer
+{
+    String getJsonMetrics();
 }

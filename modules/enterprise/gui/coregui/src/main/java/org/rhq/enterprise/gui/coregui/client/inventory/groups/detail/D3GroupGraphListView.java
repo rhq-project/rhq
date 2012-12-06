@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring;
+package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,31 +32,30 @@ import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityBarView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceMetricD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
 /**
- * @author Greg Hinkle
+ * Build the Group version of the View that shows the individual graph views.
+ * @author Mike Thompson
  */
-@Deprecated
-public class GraphListView extends LocatableVLayout implements ResourceSelectListener {
+public class D3GroupGraphListView extends LocatableVLayout {
 
-    private Resource resource;
+    private ResourceGroup resourceGroup;
     private Label loadingLabel = new Label(MSG.common_msg_loading());
+    private UserPreferencesMeasurementRangeEditor measurementRangeEditor;
 
-    public GraphListView(String locatorId, Resource resource) {
+    public D3GroupGraphListView(String locatorId, ResourceGroup resourceGroup) {
         super(locatorId);
-
-        this.resource = resource;
+        measurementRangeEditor = new UserPreferencesMeasurementRangeEditor(this.getLocatorId());
+        this.resourceGroup = resourceGroup;
         setOverflow(Overflow.AUTO);
     }
 
@@ -66,20 +65,23 @@ public class GraphListView extends LocatableVLayout implements ResourceSelectLis
 
         destroyMembers();
 
-        addMember(new AvailabilityBarView(resource));
+        addMember(measurementRangeEditor);
 
-        //        addMember(loadingLabel);
-
-        addMember(new UserPreferencesMeasurementRangeEditor(this.getLocatorId()));
-
-        if (resource != null) {
+        if (resourceGroup != null) {
             buildGraphs();
         }
     }
 
+    /**
+     * Build whatever graph metrics (MeasurementDefinitions) are defined for the resource.
+     */
     private void buildGraphs() {
 
-        ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
+        List<Long> startEndList =  measurementRangeEditor.getBeginEndTimes();
+        final long startTime = startEndList.get(0);
+        final long endTime = startEndList.get(1);
+
+        ResourceTypeRepository.Cache.getInstance().getResourceTypes(resourceGroup.getResourceType().getId(),
             EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
             new ResourceTypeRepository.TypeLoadedCallback() {
                 public void onTypesLoaded(final ResourceType type) {
@@ -103,45 +105,49 @@ public class GraphListView extends LocatableVLayout implements ResourceSelectLis
                         measDefIdArray[i] = measurementDefinitions.get(i).getId();
                     }
 
-                    GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(resource.getId(), measDefIdArray,
-                        8, MeasurementUtils.UNIT_HOURS, 60,
-                        new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_loadFailed(),
-                                    caught);
-                                loadingLabel.setContents(MSG.view_resource_monitor_graphs_loadFailed());
-                            }
+                    GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroup(resourceGroup.getId(), measDefIdArray, startTime, endTime,60,
+                            new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>()
+                            {
+                                @Override
+                                public void onFailure(Throwable caught)
+                                {
+                                    CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_loadFailed(),
+                                            caught);
+                                    loadingLabel.setContents(MSG.view_resource_monitor_graphs_loadFailed());
+                                }
 
-                            public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> result) {
-                                if (result.isEmpty()) {
-                                    loadingLabel.setContents(MSG.view_resource_monitor_graphs_noneAvailable());
-                                } else {
-                                    loadingLabel.hide();
-                                    int i = 0;
-                                    for (List<MeasurementDataNumericHighLowComposite> data : result) {
-                                        buildGraph(measurementDefinitions.get(i++), data);
+                                @Override
+                                public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> result)
+                                {
+                                    if (result.isEmpty())
+                                    {
+                                        loadingLabel.setContents(MSG.view_resource_monitor_graphs_noneAvailable());
+                                    }
+                                    else
+                                    {
+                                        loadingLabel.hide();
+                                        int i = 0;
+                                        for (List<MeasurementDataNumericHighLowComposite> data : result)
+                                        {
+                                            buildIndividualGraph(measurementDefinitions.get(i++), data);
+                                        }
                                     }
                                 }
-                            }
-                        });
+                            });
 
                 }
             });
     }
 
-    private void buildGraph(MeasurementDefinition def, List<MeasurementDataNumericHighLowComposite> data) {
-        ResourceMetricGraphView graph = new ResourceMetricGraphView(extendLocatorId(def.getName()), resource.getId(),
-            def, data);
+    private void buildIndividualGraph(MeasurementDefinition measurementDefinition, List<MeasurementDataNumericHighLowComposite> data) {
+
+        ResourceMetricD3GraphView graph = new ResourceMetricD3GraphView(extendLocatorId(measurementDefinition.getName()), resourceGroup.getId(),
+            measurementDefinition, data);
+
         graph.setWidth("95%");
-        graph.setHeight(220);
+        graph.setHeight(120);
 
         addMember(graph);
     }
 
-    public void onResourceSelected(ResourceComposite resourceComposite) {
-        this.resource = resourceComposite.getResource();
-
-        buildGraphs();
-        markForRedraw();
-    }
 }

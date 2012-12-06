@@ -19,7 +19,6 @@
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.TreeMap;
 
@@ -135,8 +134,7 @@ public class PortletFactory {
         globalPortletNameMap.put(OperationSchedulePortlet.NAME, OperationSchedulePortlet.KEY);
 
         globalPortletMenuMap = new LinkedHashMap<String, String>(globalPortletNameMap.size());
-        for (Iterator<String> i = globalPortletNameMap.keySet().iterator(); i.hasNext();) {
-            String portletName = i.next();
+        for (String portletName : globalPortletNameMap.keySet()) {
             globalPortletMenuMap.put(globalPortletNameMap.get(portletName), portletName);
         }
 
@@ -166,8 +164,7 @@ public class PortletFactory {
         groupPortletNameMap.put(GroupConfigurationUpdatesPortlet.NAME, GroupConfigurationUpdatesPortlet.KEY);
 
         groupPortletMenuMap = new LinkedHashMap<String, String>(groupPortletNameMap.size());
-        for (Iterator<String> i = groupPortletNameMap.keySet().iterator(); i.hasNext();) {
-            String portletName = i.next();
+        for (String portletName : groupPortletNameMap.keySet()) {
             groupPortletMenuMap.put(groupPortletNameMap.get(portletName), portletName);
         }
 
@@ -198,8 +195,7 @@ public class PortletFactory {
         resourcePortletNameMap.put(ResourceConfigurationUpdatesPortlet.NAME, ResourceConfigurationUpdatesPortlet.KEY);
 
         resourcePortletMenuMap = new LinkedHashMap<String, String>(resourcePortletNameMap.size());
-        for (Iterator<String> i = resourcePortletNameMap.keySet().iterator(); i.hasNext();) {
-            String portletName = i.next();
+        for (String portletName : resourcePortletNameMap.keySet()) {
             resourcePortletMenuMap.put(resourcePortletNameMap.get(portletName), portletName);
         }
 
@@ -222,6 +218,10 @@ public class PortletFactory {
         portletIconMap.put(ResourceBundleDeploymentsPortlet.KEY, ImageManager.getBundleIcon());
         portletIconMap.put(GroupConfigurationUpdatesPortlet.KEY, ImageManager.getConfigureIcon());
         portletIconMap.put(ResourceConfigurationUpdatesPortlet.KEY, ImageManager.getConfigureIcon());
+    }
+
+    private PortletFactory(){
+        // static utility class
     }
 
     public static Portlet buildPortlet(String locatorId, PortletWindow portletWindow, DashboardPortlet storedPortlet,

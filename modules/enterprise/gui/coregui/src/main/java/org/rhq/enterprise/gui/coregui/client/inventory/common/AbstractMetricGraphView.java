@@ -63,6 +63,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWidgetCanvas
  * @author Greg Hinkle
  * @author Jay Shaughnessy
  */
+@Deprecated
 public abstract class AbstractMetricGraphView extends LocatableVLayout {
 
     private static final String INSTRUCTIONS = MSG.view_resource_monitor_graph_instructions();
@@ -78,6 +79,8 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
     private final Label selectedPointLabel = new Label(INSTRUCTIONS);
     private final Label positionLabel = new Label();
     private final Label hoverLabel = new Label();
+
+    private HTMLFlow resourceTitle;
 
     private int entityId;
     private int definitionId;
@@ -112,7 +115,9 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
 
     protected abstract void renderGraph();
 
-    protected abstract HTMLFlow getEntityTitle();
+    protected HTMLFlow getEntityTitle(){
+        return resourceTitle;
+    }
 
     public int getEntityId() {
         return this.entityId;

@@ -39,4 +39,17 @@ public class BrowserUtility {
      //find all elements where attribute class contains 'dynamicsparkline' and graph their contents
      $wnd.jQuery('.dynamicsparkline').sparkline();
     }-*/;
+
+
+    public static native boolean isBrowserIE8()
+        /*-{
+            var myUserAgent = $wnd.navigator.userAgent;
+            if (/MSIE (\d+\.\d+);/.test(myUserAgent)){ //test for MSIE x.x;
+                var ieversion=new Number(RegExp.$1); // capture x.x portion and store as a number
+                if (ieversion>=8){
+                    return true;
+                }
+            }
+            return false;
+        }-*/;
 }

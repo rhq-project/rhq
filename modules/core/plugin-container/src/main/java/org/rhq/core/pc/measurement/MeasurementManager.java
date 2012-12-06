@@ -463,7 +463,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         }
 
         try {
-            measurementFacet.getValues(report, requests);
+            measurementFacet.getValues(report, Collections.unmodifiableSet(requests));
         } catch (Throwable t) {
             LOG.error("Could not get measurement values", t);
             return Collections.emptySet();

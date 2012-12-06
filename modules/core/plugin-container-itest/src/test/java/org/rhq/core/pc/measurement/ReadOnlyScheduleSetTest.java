@@ -29,7 +29,6 @@ import org.rhq.test.arquillian.ResourceComponentInstances;
 import org.rhq.test.arquillian.ResourceContainers;
 import org.rhq.test.arquillian.RunDiscovery;
 import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
-
 /**
  * Test for BZ 821058
  */

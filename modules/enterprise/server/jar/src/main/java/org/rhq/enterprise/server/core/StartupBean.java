@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.server.core;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -53,6 +56,7 @@ import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
 import org.rhq.enterprise.communications.util.SecurityUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -124,6 +128,9 @@ public class StartupBean {
     @EJB
     private SystemManagerLocal systemManager;
 
+    @EJB
+    private ShutdownListener shutdownListener;
+
     @Resource
     private TimerService timerService; // needed to schedule our plugin scanner
 
@@ -188,6 +195,31 @@ public class StartupBean {
 
         initialized = true;
         return;
+    }
+
+    private long readShutdownTimeLogFile() throws Exception {
+        File timeFile = shutdownListener.getShutdownTimeLogFile();
+        if (!timeFile.exists()) {
+            // this is probably ok, perhaps its the first time we started this server, so this exception
+            // just forces the caller to use startup time instead
+            throw new FileNotFoundException();
+        }
+
+        try {
+            FileInputStream input = new FileInputStream(timeFile);
+            String timeString = new String(StreamUtil.slurp(input));
+            return Long.parseLong(timeString);
+        } catch (Exception e) {
+            if (log.isDebugEnabled()) {
+                log.warn("Failed to read the shutdown time log file", e);
+            } else {
+                log.warn("Failed to read the shutdown time log file: " + e.getMessage());
+            }
+            throw e;
+        } finally {
+            // since we are starting again, we want to remove the now obsolete shutdown time file
+            timeFile.delete();
+        }
     }
 
     private void initializeServer() {
@@ -414,7 +446,7 @@ public class StartupBean {
         } catch (Exception e) {
             ensureDownTimeSecs = 70;
         }
-        long elapsed = getElapsedTimeSinceStartup();
+        long elapsed = getElapsedTimeSinceLastShutdown();
         long sleepTime = (ensureDownTimeSecs * 1000L) - elapsed;
         if (sleepTime > 0) {
             try {
@@ -757,19 +789,30 @@ public class StartupBean {
     }
 
     /**
-     * Gets the number of milliseconds since the time when the server was started.
+     * Gets the number of milliseconds since the time when the server was last shutdown.
+     * If we don't know, then return the time since it was started.
      * @return elapsed time since server started, 0 if not known
      */
-    private long getElapsedTimeSinceStartup() throws RuntimeException {
+    private long getElapsedTimeSinceLastShutdown() throws RuntimeException {
         long elapsed;
+
         try {
-            CoreServerMBean coreServer = LookupUtil.getCoreServer();
-            Date startTime = coreServer.getBootTime();
+            long shutdownTime = readShutdownTimeLogFile();
             long currentTime = System.currentTimeMillis();
-            elapsed = currentTime - startTime.getTime();
-        } catch (Exception e) {
-            elapsed = 0;
+            elapsed = currentTime - shutdownTime;
+        } catch (Exception ignore) {
+            // we will have already logged an error, don't bother logging more
+            // but now at least try to see how long its been since we've started
+            try {
+                CoreServerMBean coreServer = LookupUtil.getCoreServer();
+                Date startTime = coreServer.getBootTime();
+                long currentTime = System.currentTimeMillis();
+                elapsed = currentTime - startTime.getTime();
+            } catch (Exception e1) {
+                elapsed = 0;
+            }
         }
+
         return elapsed;
     }
 

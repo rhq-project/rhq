@@ -19,4 +19,11 @@
       <field>*</field>
       <justification>The constants we declare on the domain objects are not supposed for public consumption.</justification>
   </difference>
+  <difference>
+      <className>org/rhq/core/domain/configuration/definition/PropertyDefinitionMap</className>
+      <differenceType>7006</differenceType><!-- return type changed -->
+      <method>java.util.List getPropertyDefinitions()</method>
+      <to>java.util.Map</to>
+      <justification>[BZ 878661] reverting unintentional api changes.</justification>
+  </difference>
 </differences>

@@ -20,7 +20,8 @@
 
 package org.rhq.plugins.cassandra;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -67,10 +68,14 @@ public class ComplexConfigurationResourceComponent extends MBeanResourceComponen
                     if (result instanceof Map) {
                         PropertyDefinitionMap propertyDefinitionMap = (PropertyDefinitionMap) ((PropertyDefinitionList) propertyDefinition)
                             .getMemberDefinition();
-                        List<PropertyDefinition> subPropertyDefinitions = propertyDefinitionMap.getPropertyDefinitions();
+
                         String mapName = propertyDefinitionMap.getName();
-                        String keyName = ((PropertyDefinitionSimple) subPropertyDefinitions.get(0)).getName();
-                        String valueName = ((PropertyDefinitionSimple) subPropertyDefinitions.get(1)).getName();
+
+                        Collection<PropertyDefinition> subPropertyDefinitions = propertyDefinitionMap
+                            .getOrderedPropertyDefinitions();
+                        Iterator<PropertyDefinition> iterator = subPropertyDefinitions.iterator();
+                        String keyName = ((PropertyDefinitionSimple) iterator.next()).getName();
+                        String valueName = ((PropertyDefinitionSimple) iterator.next()).getName();
 
                         Map<Object, Object> mapValue = (Map<Object, Object>) result;
 

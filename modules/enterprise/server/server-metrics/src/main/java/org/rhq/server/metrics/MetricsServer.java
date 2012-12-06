@@ -89,18 +89,15 @@ public class MetricsServer {
         DateTime begin = new DateTime(beginTime);
 
         if (dateTimeService.isInRawDataRange(begin)) {
-            return findRawDataForResource(scheduleId, beginTime, endTime);
+            List<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, begin, new DateTime(endTime));
+            return createRawComposites(metrics, beginTime, endTime);
         }
 
-        if (dateTimeService.isIn1HourDataRange(begin)) {
-            return findAggregateDataForResource(scheduleId, beginTime, endTime, ONE_HOUR_METRICS_TABLE);
-        }
+        String table = getTable(begin);
+        List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleId, begin,
+            new DateTime(endTime));
 
-        if (dateTimeService.isIn6HourDataRnage(begin)) {
-            return findAggregateDataForResource(scheduleId, beginTime, endTime, SIX_HOUR_METRICS_TABLE);
-        }
-
-        return findAggregateDataForResource(scheduleId, beginTime, endTime, TWENTY_FOUR_HOUR_METRICS_TABLE);
+        return createComposites(metrics, beginTime, endTime);
     }
 
     public List<MeasurementDataNumericHighLowComposite> findDataForGroup(List<Integer> scheduleIds, long beginTime,
@@ -108,64 +105,52 @@ public class MetricsServer {
         DateTime begin = new DateTime(beginTime);
 
         if (dateTimeService.isInRawDataRange(begin)) {
-            return findRawDataForGroup(scheduleIds, beginTime, endTime);
+            List<RawNumericMetric> metrics = dao.findRawMetrics(scheduleIds, begin, new DateTime(endTime));
+            return createRawComposites(metrics, beginTime, endTime);
         }
 
-        if (dateTimeService.isIn1HourDataRange(begin)) {
-            return findAggregateDataForGroup(ONE_HOUR_METRICS_TABLE, scheduleIds, beginTime, endTime);
-        }
+        String table = getTable(begin);
+        List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleIds, begin,
+            new DateTime(endTime));
 
-        if (dateTimeService.isIn6HourDataRnage(begin)) {
-            return findAggregateDataForGroup(SIX_HOUR_METRICS_TABLE, scheduleIds, beginTime, endTime);
-        }
-
-        return findAggregateDataForGroup(TWENTY_FOUR_HOUR_METRICS_TABLE, scheduleIds, beginTime, endTime);
+        return createComposites(metrics, beginTime, endTime);
     }
 
     public AggregatedNumericMetric getSummaryAggregate(int scheduleId, long beginTime, long endTime) {
         DateTime begin = new DateTime(beginTime);
 
         if (dateTimeService.isInRawDataRange(begin)) {
-            return getSummaryRawAggregate(scheduleId, beginTime, endTime);
+            List<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, begin, new DateTime(endTime));
+            return createSummaryRawAggregate(metrics, beginTime);
         }
 
-        if (dateTimeService.isIn1HourDataRange(begin)) {
-            return getSummarizedAggregate(ONE_HOUR_METRICS_TABLE, scheduleId, beginTime, endTime);
-        }
+        String table = getTable(begin);
+        List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleId, begin,
+            new DateTime(endTime));
 
-        if (dateTimeService.isIn6HourDataRnage(begin)) {
-            return getSummarizedAggregate(SIX_HOUR_METRICS_TABLE, scheduleId, beginTime, endTime);
-        }
-
-        return getSummarizedAggregate(TWENTY_FOUR_HOUR_METRICS_TABLE, scheduleId, beginTime, endTime);
+        return createSummaryAggregate(metrics, beginTime);
     }
 
     public AggregatedNumericMetric getSummaryAggregate(List<Integer> scheduleIds, long beginTime, long endTime) {
         DateTime begin = new DateTime(beginTime);
 
         if (dateTimeService.isInRawDataRange(new DateTime(beginTime))) {
-            return getSummaryRawAggregate(scheduleIds, beginTime, endTime);
+            List<RawNumericMetric> metrics = dao.findRawMetrics(scheduleIds, begin, new DateTime(endTime));
+            return createSummaryRawAggregate(metrics, beginTime);
         }
 
-        if (dateTimeService.isIn1HourDataRange(begin)) {
-            return getSummaryAggregate(ONE_HOUR_METRICS_TABLE, scheduleIds, beginTime, endTime);
-        }
+        String table = getTable(begin);
+        List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleIds, begin,
+            new DateTime(endTime));
 
-        if (dateTimeService.isIn6HourDataRnage(begin)) {
-            return getSummaryAggregate(SIX_HOUR_METRICS_TABLE, scheduleIds, beginTime, endTime);
-        }
-
-        return getSummaryAggregate(TWENTY_FOUR_HOUR_METRICS_TABLE, scheduleIds, beginTime, endTime);
+        return createSummaryAggregate(metrics, beginTime);
     }
 
-    private List<MeasurementDataNumericHighLowComposite> findRawDataForResource(int scheduleId, long beginTime,
-        long endTime) {
+    private List<MeasurementDataNumericHighLowComposite> createRawComposites(List<RawNumericMetric> metrics,
+        long beginTime, long endTime) {
         Buckets buckets = new Buckets(beginTime, endTime);
-
-        List<RawNumericMetric> rawMetrics = dao.findRawMetrics(scheduleId, new DateTime(beginTime),
-            new DateTime(endTime));
-        for (RawNumericMetric rawMetric : rawMetrics) {
-            buckets.insert(rawMetric.getTimestamp(), rawMetric.getValue());
+        for (RawNumericMetric metric : metrics) {
+            buckets.insert(metric.getTimestamp(), metric.getValue());
         }
 
         List<MeasurementDataNumericHighLowComposite> data = new ArrayList<MeasurementDataNumericHighLowComposite>();
@@ -177,61 +162,15 @@ public class MetricsServer {
         return data;
     }
 
-    private List<MeasurementDataNumericHighLowComposite> findRawDataForGroup(List<Integer> scheduleIds, long beginTime,
-        long endTime) {
-        Buckets buckets = new Buckets(beginTime, endTime);
-
-        List<RawNumericMetric> rawMetrics = dao.findRawMetrics(scheduleIds, new DateTime(beginTime),
-            new DateTime(endTime));
-        for (RawNumericMetric rawMetric : rawMetrics) {
-            buckets.insert(rawMetric.getTimestamp(), rawMetric.getValue());
-        }
-
-        List<MeasurementDataNumericHighLowComposite> data = new ArrayList<MeasurementDataNumericHighLowComposite>();
-        for (int i = 0; i < buckets.getNumDataPoints(); ++i) {
-            Buckets.Bucket bucket = buckets.get(i);
-            data.add(new MeasurementDataNumericHighLowComposite(bucket.getStartTime(), bucket.getAvg(),
-                bucket.getMax(), bucket.getMin()));
-        }
-        return data;
-    }
-
-    private AggregatedNumericMetric getSummaryRawAggregate(int scheduleId, long beginTime, long endTime) {
-        List<RawNumericMetric> rawMetrics = dao.findRawMetrics(scheduleId, new DateTime(beginTime),
-            new DateTime(endTime));
-
-        if (rawMetrics.isEmpty()) {
-            return new AggregatedNumericMetric(scheduleId, Double.NaN, Double.NaN,Double.NaN, beginTime);
-        }
-        return calculateAggregatedRaw(rawMetrics, beginTime);
-    }
-
-    private AggregatedNumericMetric getSummarizedAggregate(String table, int scheduleId, long beginTime, long endTime) {
-        List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleId, new DateTime(beginTime),
-            new DateTime(endTime));
-
+    private AggregatedNumericMetric createSummaryRawAggregate(List<RawNumericMetric> metrics, long beginTime) {
         if (metrics.isEmpty()) {
-            return new AggregatedNumericMetric(scheduleId, Double.NaN, Double.NaN,Double.NaN, beginTime);
-        }
-        return calculateAggregate(metrics, beginTime);
-    }
-
-    private AggregatedNumericMetric getSummaryRawAggregate(List<Integer> scheduleIds, long beginTime, long endTime) {
-        List<RawNumericMetric> rawMetrics = dao.findRawMetrics(scheduleIds, new DateTime(beginTime),
-            new DateTime(endTime));
-
-        if (rawMetrics.isEmpty()) {
             // We do not care about the scheudule id here so can just use a dummy value of zero.
             return new AggregatedNumericMetric(0, Double.NaN, Double.NaN,Double.NaN, beginTime);
         }
-        return calculateAggregatedRaw(rawMetrics, beginTime);
+        return calculateAggregatedRaw(metrics, beginTime);
     }
 
-    private AggregatedNumericMetric getSummaryAggregate(String bucket, List<Integer> scheduleIds, long beginTime,
-        long endTime) {
-        List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(bucket, scheduleIds, new DateTime(beginTime),
-            new DateTime(endTime));
-
+    private AggregatedNumericMetric createSummaryAggregate(List<AggregatedNumericMetric> metrics, long beginTime) {
         if (metrics.isEmpty()) {
             // We do not care about the scheudule id here so can just use a dummy value of zero.
             return new AggregatedNumericMetric(0, Double.NaN, Double.NaN,Double.NaN, beginTime);
@@ -239,31 +178,9 @@ public class MetricsServer {
         return calculateAggregate(metrics, beginTime);
     }
 
-    private List<MeasurementDataNumericHighLowComposite> findAggregateDataForResource(int scheduleId, long beginTime,
-        long endTime, String table) {
+    private List<MeasurementDataNumericHighLowComposite> createComposites(List<AggregatedNumericMetric> metrics,
+        long beginTime, long endTime) {
         Buckets buckets = new Buckets(beginTime, endTime);
-
-        List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleId,
-            new DateTime(beginTime), new DateTime(endTime));
-        for (AggregatedNumericMetric metric : metrics) {
-            buckets.insert(metric.getTimestamp(), metric.getAvg());
-        }
-
-        List<MeasurementDataNumericHighLowComposite> data = new ArrayList<MeasurementDataNumericHighLowComposite>();
-        for (int i = 0; i < buckets.getNumDataPoints(); ++i) {
-            Buckets.Bucket bucket = buckets.get(i);
-            data.add(new MeasurementDataNumericHighLowComposite(bucket.getStartTime(), bucket.getAvg(),
-                bucket.getMax(), bucket.getMin()));
-        }
-        return data;
-    }
-
-    private List<MeasurementDataNumericHighLowComposite> findAggregateDataForGroup(String table,
-        List<Integer> scheduleIds, long beginTime, long endTime) {
-        Buckets buckets = new Buckets(beginTime, endTime);
-
-        List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleIds, new DateTime(beginTime),
-            new DateTime(endTime));
         for (AggregatedNumericMetric metric : metrics) {
             buckets.insert(metric.getTimestamp(), metric.getAvg());
         }
@@ -435,6 +352,18 @@ public class MetricsServer {
         // We let the caller handle setting the schedule id because in some cases we do
         // not care about it.
         return new AggregatedNumericMetric(0, avg, min, max, timestamp);
+    }
+
+    private String getTable(DateTime begin) {
+        String table;
+        if (dateTimeService.isIn1HourDataRange(begin)) {
+            table = ONE_HOUR_METRICS_TABLE;
+        } else if (dateTimeService.isIn6HourDataRnage(begin)) {
+            table = SIX_HOUR_METRICS_TABLE;
+        } else {
+            table = TWENTY_FOUR_HOUR_METRICS_TABLE;
+        }
+        return table;
     }
 
 //    public void addTraitData(Set<MeasurementDataTrait> dataSet) {

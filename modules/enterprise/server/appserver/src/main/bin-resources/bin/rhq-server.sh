@@ -443,7 +443,8 @@ case "$1" in
         echo "$$" > "$_SERVER_PIDFILE"
         echo "$$" > "$_JVM_PIDFILE"
 
-        # start the server, making sure its working directory is the JBossAS bin directory
+        # START SERVER
+        # first, making sure working directory is the JBossAS bin directory
         cd "${RHQ_SERVER_JBOSS_HOME}/bin"
         "$_JBOSS_RUN_SCRIPT" $_CMDLINE_OPTS
 

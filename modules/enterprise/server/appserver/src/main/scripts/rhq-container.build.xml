@@ -598,6 +598,13 @@ rhq.sync.endpoint-address=false
         </copy>
         <echo>Putting a developer setting in rhq-server.properties to turn on/off strict agent update version checking</echo>
         <echo file="${project.build.outputDirectory}/bin/rhq-server.properties" append="true">rhq.server.agent-update.nonstrict-version-check=true</echo>
+        <echo>Add auto-installer to rhq-server.sh script so developers don't have to run the installer in a separate step</echo>
+        <replace file="${project.build.outputDirectory}/bin/rhq-server.sh">
+            <replacefilter>
+                <replacetoken># START SERVER</replacetoken>
+                <replacevalue><![CDATA[export RHQ_SERVER_HOME; ${RHQ_SERVER_HOME}/bin/rhq-autoinstall.sh &]]></replacevalue>
+            </replacefilter>
+        </replace>
     </target>
 
     <!-- The prepare-release target must be run AFTER the resources:resources goal has executed. -->
@@ -606,9 +613,9 @@ rhq.sync.endpoint-address=false
     <target name="prepare-release"
             description="If this is a release build, make sure it is properly prepared."
             depends="initialize,
-                     fix-perms,
                      developer-release-message,
                      copy-dev-resources,
+                     fix-perms,
                      deploy-postgres-ds,
                      deploy-oracle-ds">
 
@@ -619,7 +626,7 @@ rhq.sync.endpoint-address=false
     </target>
 
     <target name="fix-perms">
-        <!-- Make sure shell scripts are readable and executable. -->
+        <echo>Make sure shell scripts are readable and executable.</echo>
         <chmod dir="${project.build.outputDirectory}/bin" includes="*.sh" perm="ug+x" verbose="true" />
         <chmod dir="${jboss.home}/bin" includes="*.sh" perm="ug+x" verbose="true" />
     </target>

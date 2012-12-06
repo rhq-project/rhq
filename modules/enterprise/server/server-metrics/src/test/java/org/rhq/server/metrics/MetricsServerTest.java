@@ -413,6 +413,34 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     }
 
     @Test
+    public void getSummary1HourAggregateForResource() {
+        DateTime beginTime = now().minusDays(11);
+        DateTime endTime = now();
+
+        Buckets buckets = new Buckets(beginTime, endTime);
+        DateTime bucket0Time = new DateTime(buckets.get(0).getStartTime());
+        DateTime bucket59Time = new DateTime(buckets.get(59).getStartTime());
+
+        int scheduleId = 123;
+        List<AggregatedNumericMetric> metrics = asList(
+            new AggregatedNumericMetric(scheduleId, 2.0, 1.0, 3.0, bucket0Time.getMillis()),
+            new AggregatedNumericMetric(scheduleId, 5.0, 4.0, 6.0, bucket0Time.plusHours(1).getMillis()),
+            new AggregatedNumericMetric(scheduleId, 3.0, 3.0, 3.0, bucket0Time.plusHours(2).getMillis()),
+            new AggregatedNumericMetric(scheduleId, 5.0, 2.0, 9.0, bucket59Time.getMillis()),
+            new AggregatedNumericMetric(scheduleId, 5.0, 4.0, 6.0, bucket59Time.plusHours(1).getMillis()),
+            new AggregatedNumericMetric(scheduleId, 3.0, 3.0, 3.0, bucket59Time.plusHours(2).getMillis())
+        );
+        dao.insertAggregates(ONE_HOUR_METRICS_TABLE, metrics, DateTimeService.TWO_WEEKS);
+
+        AggregatedNumericMetric actual = metricsServer.getSummaryAggregate(scheduleId, beginTime.getMillis(),
+            endTime.getMillis());
+        double avg = divide(2.0 + 5.0 + 3.0 + 5.0 + 5.0 + 3.0, 6);
+        AggregatedNumericMetric expected = new AggregatedNumericMetric(0, avg, 1.0, 9.0, beginTime.getMillis());
+
+        assertEquals(actual, expected, "Failed to get resource summary aggregate for one hour data");
+    }
+
+    @Test
     public void getSummaryRawAggregateForGroup() {
         DateTime beginTime = now().minusHours(4);
         DateTime endTime = now();
@@ -586,14 +614,9 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             " data points.");
 
         MeasurementDataNumericHighLowComposite expectedBucket0 = new MeasurementDataNumericHighLowComposite(
-            buckets.get(0).getStartTime(), divide(1.1 + 1.2, 2), 1.2, 1.1);
+            buckets.get(0).getStartTime(), divide(1.1 + 1.2 + 3.1 + 3.2, 4), 3.2, 1.1);
         assertPropertiesMatch("The data for bucket 0 does not match the expected values.", expectedBucket0,
             actual.get(0));
-
-        MeasurementDataNumericHighLowComposite expectedBucket2 = new MeasurementDataNumericHighLowComposite(
-            buckets.get(2).getStartTime(), divide(3.1 + 3.2, 2), 3.2, 3.1);
-        assertPropertiesMatch("The data for bucket 2 does not match the expected values.", expectedBucket2,
-            actual.get(2));
 
         MeasurementDataNumericHighLowComposite expectedBucket59 = new MeasurementDataNumericHighLowComposite(
             buckets.get(59).getStartTime(), divide(4.1 + 4.2, 2), 4.2, 4.1);

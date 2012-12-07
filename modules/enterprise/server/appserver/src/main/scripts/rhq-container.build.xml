@@ -598,7 +598,7 @@ rhq.sync.endpoint-address=false
         </copy>
         <echo>Putting a developer setting in rhq-server.properties to turn on/off strict agent update version checking</echo>
         <echo file="${project.build.outputDirectory}/bin/rhq-server.properties" append="true">rhq.server.agent-update.nonstrict-version-check=true</echo>
-        <echo>Add auto-installer to rhq-server.sh script so developers don't have to run the installer in a separate step</echo>
+        <echo>Add auto-installer to rhq-server scripts so developers don't have to run the installer in a separate step</echo>
         <replace file="${project.build.outputDirectory}/bin/rhq-server.sh">
             <replacefilter>
                 <replacetoken># START SERVER</replacetoken>

@@ -42,6 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedE
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedHandler;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.D3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -58,6 +59,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
     private String subTabName;
     private U titleBar;
     protected Set<Permission> globalPermissions;
+    protected D3GraphListView d3GraphListView;
 
     public AbstractTwoLevelTabSetView(String locatorId, String baseViewPath) {
         super(locatorId);
@@ -232,6 +234,9 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
             // safely rendered.  Make sure to notify even on failure.            
             try {
                 this.selectTab(this.tabName, this.subTabName, viewPath);
+                if(null != d3GraphListView){
+                    d3GraphListView.redrawGraphs();
+                }
             } finally {
                 notifyViewRenderedListeners();
             }

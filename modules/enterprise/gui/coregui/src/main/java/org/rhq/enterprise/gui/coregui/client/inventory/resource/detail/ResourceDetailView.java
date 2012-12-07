@@ -23,6 +23,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 
@@ -426,13 +427,15 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         };
         updateSubTab(this.monitoringTab, this.monitorGraphs, visible, true, viewFactory);
 
-        boolean visibleToIE8 = !BrowserUtility.isBrowserIE8();
+        //boolean visibleToIE8 = !BrowserUtility.isBrowserIE8();
+        boolean visibleToIE8 = true;
 
 
         viewFactory = (!visibleToIE8) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                return D3GraphListView.createSummaryMultipleGraphs(monitoringTab.extendLocatorId("NewGraphs"), resourceComposite.getResource());
+                d3GraphListView = D3GraphListView.createSummaryMultipleGraphs(monitoringTab.extendLocatorId("NewGraphs"), resourceComposite.getResource());
+                return d3GraphListView;
             }
         };
         updateSubTab(this.monitoringTab, this.monitorNewGraphs, visible, visibleToIE8, viewFactory);

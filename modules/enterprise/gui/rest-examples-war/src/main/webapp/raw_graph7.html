@@ -58,13 +58,13 @@ var w = 960,
     h = 600;
 
 // Get the platforms and then the first one
-$.getJSON('/rest/1/resource/platforms.json', function (json) {
+$.getJSON('/rest/resource/platforms.json', function (json) {
     var res = json[0];
     var rid = res.resourceId;
     $("#resId").text("Resource " + rid + " (" + res.resourceName + ")");
 
     // Now get the metrical schedules of the platform
-    $.getJSON("/rest/1/resource/"+rid+"/schedules.json?type=metric", function (json2) {
+    $.getJSON("/rest/resource/"+rid+"/schedules.json?type=metric", function (json2) {
 
         // Take the first and render it
         var schId = json2[0].scheduleId;
@@ -73,7 +73,7 @@ $.getJSON('/rest/1/resource/platforms.json', function (json) {
         var now = new Date().getTime();
         var startTime = now - (7 * 86400*1000);
         d3.json(
-                '/rest/1/metric/data/' + schId + '/raw.json?duration=604800',
+                '/rest/metric/data/' + schId + '/raw.json?duration=604800',
                 function (jsondata) {
 
 

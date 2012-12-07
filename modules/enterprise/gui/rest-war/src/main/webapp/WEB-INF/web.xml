@@ -10,6 +10,7 @@
       yaml: application/yaml
     </param-value>
   </context-param>
+
   <filter>
     <filter-name>JsonPFilter</filter-name>
     <filter-class>org.rhq.enterprise.rest.JsonPFilter</filter-class>
@@ -35,18 +36,18 @@
 
   <filter-mapping>
     <filter-name>JsonPFilter</filter-name>
-    <url-pattern>/1/*</url-pattern>
+    <url-pattern>/*</url-pattern>
   </filter-mapping>
   <!--
     <filter-mapping>
       <filter-name>DumperFilter</filter-name>
-      <url-pattern>/1/*</url-pattern>
+      <url-pattern>/*</url-pattern>
     </filter-mapping>
   -->
 
   <filter-mapping>
     <filter-name>RhqRtFilter</filter-name>
-    <url-pattern>/1/*</url-pattern>
+    <url-pattern>/*</url-pattern>
   </filter-mapping>
 
 

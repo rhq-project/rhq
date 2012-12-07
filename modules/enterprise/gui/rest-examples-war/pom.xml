@@ -10,50 +10,14 @@
     </parent>
 
     <groupId>org.rhq</groupId>
-    <artifactId>rhq-rest</artifactId>
+    <artifactId>rhq-rest-examples</artifactId>
     <packaging>war</packaging>
 
-    <name>RHQ REST interface</name>
-    <description>RHQ Rest interface for the RHQ server</description>
+    <name>RHQ REST interface examples</name>
+    <description>RHQ Rest interface for the RHQ server (Examples)</description>
 
-    <dependencies>
-        <dependency>
-           <groupId>org.rhq</groupId>
-           <artifactId>rhq-core-domain</artifactId>
-           <version>${project.version}</version>
-           <scope>provided</scope> <!-- by rhq.ear (as ejb-jar) -->
-        </dependency>
-
-        <dependency>
-           <groupId>org.rhq</groupId>
-           <artifactId>rhq-enterprise-server</artifactId>
-           <version>${project.version}</version>
-           <scope>provided</scope> <!-- by rhq.ear (as ejb-jar) -->
-        </dependency>
-
-        <!-- 3rd Party Deps -->
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>3.0.1</version>
-            <scope>provided</scope> <!-- by JBossAS -->
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-jaxrs</artifactId>
-            <version>${resteasy.version}</version>
-            <scope>provided</scope>
-        </dependency>
-      <dependency>
-        <groupId>org.jboss.spec.javax.ejb</groupId>
-        <artifactId>jboss-ejb-api_3.1_spec</artifactId>
-        <version>1.0.2.Final</version>
-      </dependency>
-
-    </dependencies>
     <build>
-        <finalName>rhq-rest</finalName>
+        <finalName>rhq-rest-examples</finalName>
 
         <plugins>
 

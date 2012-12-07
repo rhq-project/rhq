@@ -16,14 +16,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.rest;
+package org.rhq.enterprise.rest;
 
 import javax.ws.rs.ApplicationPath;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * JAX-RS application class, defining the base http context.
@@ -32,13 +30,12 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  * @author Heiko W. Rupp
  */
-@ApplicationPath("/1")
+@ApplicationPath("/")
 public class RHQApplication extends javax.ws.rs.core.Application {
 
     Log log = LogFactory.getLog(RHQApplication.class);
 
     public RHQApplication() {
-        log.info("Starting RHQ REST ");
-
+        log.info("Starting RHQ REST interface");
     }
 }

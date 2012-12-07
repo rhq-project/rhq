@@ -15,8 +15,8 @@ var r = 960 / 2;
    .append("svg:g")
  .attr("transform", "translate(" + r + "," + r + ")");
 
-// d3.json("/rest/1/resource/10702/hierarchy.json", function(json) {
- d3.json("/rest/1/resource/" + resourceId + "/hierarchy.json", function(json) {
+// d3.json("/rest/resource/10702/hierarchy.json", function(json) {
+ d3.json("/rest/resource/" + resourceId + "/hierarchy.json", function(json) {
    var nodes = tree.nodes(json);
 
    var link = vis.selectAll("path.link")
@@ -49,7 +49,7 @@ var r = 960 / 2;
        });
 
 //   var hyperLink = node.append("a") // TODO works in adding to tree, but
-//     .attr("xlink:href",function(d) { return "/rest/1/resource/" + d.id; });
+//     .attr("xlink:href",function(d) { return "/rest/resource/" + d.id; });
 
    node.append("svg:text")
    .attr("dx", function(d) { return d.x < 180 ? 8 : -8; })
@@ -57,7 +57,7 @@ var r = 960 / 2;
    .attr("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
    .attr("transform", function(d) { return d.x < 180 ? null : "rotate(180)"; })
    .text(function(d) { return d.name; })
-   .on("mousedown",function(d) { window.location= "/rest/1/resource/" + d.id; })
+   .on("mousedown",function(d) { window.location= "/rest/resource/" + d.id; })
    .on("mouseover", function() {d3.select(this).style("fill","red").style("font-size","20px");})
    .on("mouseout", function() {d3.select(this).style("fill","black").style("font-size","10px");});
 

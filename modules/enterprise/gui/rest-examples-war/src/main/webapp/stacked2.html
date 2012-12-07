@@ -40,13 +40,13 @@ var svg = d3.select("body").append("svg:svg")
     .attr("transform", "translate(" + p[3] + "," + (h - p[2]) + ")");
 
 // Get the platforms and then the first one
-$.getJSON('/rest/1/resource/platforms.json', function (json) {
+$.getJSON('/rest/resource/platforms.json', function (json) {
     var res = json[0];
     var rid = res.resourceId;
     $("#resId").text("Resource " + rid + " (" + res.resourceName + ")");
 
     // Now get the metrical schedules of the platform
-    $.getJSON("/rest/1/resource/"+rid+"/schedules.json?type=metric", function (json2) {
+    $.getJSON("/rest/resource/"+rid+"/schedules.json?type=metric", function (json2) {
 
         // Take the first
         var schId = json2[0].scheduleId;
@@ -54,7 +54,7 @@ $.getJSON('/rest/1/resource/platforms.json', function (json) {
 
         // And call d3 graphing on it
         d3.json(
-                '/rest/1/metric/data/'+schId+'.json',
+                '/rest/metric/data/'+schId+'.json',
                 function (jsondata) {
 
                     var points = jsondata.dataPoints;

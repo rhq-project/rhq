@@ -2,7 +2,7 @@ var rhq = {
 
 dashboard : function() {
     // get all platforms
-    $.get('/rest/1/resource/platforms', function(data) {
+    $.get('/rest/resource/platforms', function(data) {
 
     var table = $("#table");
     for (var i = 0; i < data.length ; i++ ) {
@@ -15,7 +15,7 @@ dashboard : function() {
       var resId = resource.resourceId;
       console.log(resId);
 
-         $.getJSON("/rest/1/resource/"+resId+"/schedules.json?type=metric&enabledOnly=true", function (json2) {
+         $.getJSON("/rest/resource/"+resId+"/schedules.json?type=metric&enabledOnly=true", function (json2) {
 
          var tr = $("#" + rowId);
          for ( var n = 0 ; n < json2.length ; n ++ ) {
@@ -32,7 +32,7 @@ dashboard : function() {
 whisker: function(scheduleId,divId,w,h) {
 
     d3.json(
-            '/rest/1/metric/data/'+scheduleId+'.json?hideEmpty=true',
+            '/rest/metric/data/'+scheduleId+'.json?hideEmpty=true',
             function (jsondata) {
 //   console.log(scheduleId +", "+ divId);
     var svg = d3.select("body").select("#"+divId);

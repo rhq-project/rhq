@@ -32,8 +32,8 @@ import java.util.Set;
 import javassist.util.proxy.MethodHandler;
 
 import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
+import org.rhq.bindings.security.SecurityActions;
 import org.rhq.bindings.util.ConfigurationClassBuilder;
 import org.rhq.bindings.util.LazyLoadScenario;
 import org.rhq.bindings.util.ResourceTypeFingerprint;
@@ -84,7 +84,7 @@ import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
  */
 public class ResourceClientProxy {
 
-    private static final Log LOG = LogFactory.getLog(ResourceClientProxy.class);
+    private static final Log LOG = SecurityActions.getLog(ResourceClientProxy.class);
     
     private ResourceClientFactory proxyFactory;
     private RhqFacade remoteClient;

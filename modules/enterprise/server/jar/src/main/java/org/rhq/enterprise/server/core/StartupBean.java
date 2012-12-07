@@ -69,6 +69,7 @@ import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.SyncEndpointAddressException;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
+import org.rhq.enterprise.server.naming.NamingHack;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceMBean;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -138,6 +139,16 @@ public class StartupBean {
     private DataSource dataSource;
 
     /**
+     * Modifies the naming subsystem to be able to check for Java security permissions on JNDI lookup.
+     * <p>
+     * Made public so that this can be reused in tests.
+     */
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void secureNaming() {
+        NamingHack.bruteForceInitialContextFactoryBuilder();
+    }
+
+    /**
      * Performs the final RHQ Server initialization work that needs to talk place. EJBs are available in this method.
      *
      * @throws RuntimeException
@@ -145,6 +156,8 @@ public class StartupBean {
     //@PostConstruct // when AS7-5530 is fixed, uncomment this and remove class StartupBeanToWorkaroundAS7_5530
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void init() throws RuntimeException {
+        secureNaming();
+
         initialized = false;
 
         log.info("All business tier deployments are complete - finishing the startup...");
@@ -824,5 +837,4 @@ public class StartupBean {
             + ") Server started.");
         log.info("--------------------------------------------------"); // 50 dashes
     }
-
 }

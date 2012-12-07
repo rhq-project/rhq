@@ -16,13 +16,6 @@
     <description>The implementation of the client API when accessing the server locally</description>
 
   <dependencies>
-  <!-- 
-      <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>rhq-container-lib</artifactId>
-         <version>${project.version}</version>
-      </dependency>
- -->      
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-enterprise-server</artifactId>

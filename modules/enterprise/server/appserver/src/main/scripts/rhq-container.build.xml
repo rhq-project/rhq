@@ -167,10 +167,6 @@
         <echo>Installing patched hibernate jar ...</echo>
         <copy file="${settings.localRepository}/hibernate/hibernate3/${hibernate3.version}/hibernate3-${hibernate3.version}.jar"
               tofile="${jboss.home}/server/default/lib/hibernate3.jar" verbose="true"/>
-
-        <echo>Installing custom container library...</echo>
-        <copy file="${settings.localRepository}/org/rhq/rhq-container-lib/${rhq.version}/rhq-container-lib-${rhq.version}.jar"
-              tofile="${jboss.home}/server/default/lib/rhq-container-lib-${rhq.version}.jar" verbose="true"/>
         -->
 
         <echo>Adding JDBC modules to ${jboss.modules.dir} ...</echo>

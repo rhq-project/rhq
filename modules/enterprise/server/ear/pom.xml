@@ -125,10 +125,6 @@
             <exclusions>
                 <exclusion>
                     <groupId>${project.groupId}</groupId>
-                    <artifactId>rhq-container-lib</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>${project.groupId}</groupId>
                     <artifactId>rhq-enterprise-server</artifactId>
                 </exclusion>
             </exclusions>

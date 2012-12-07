@@ -28,10 +28,10 @@ import java.nio.charset.Charset;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import org.rhq.bindings.StandardBindings;
 import org.rhq.bindings.client.RhqFacade;
+import org.rhq.bindings.security.SecurityActions;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
 import org.rhq.core.domain.criteria.PackageCriteria;
@@ -53,7 +53,7 @@ import org.rhq.enterprise.server.content.RepoManagerRemote;
 public class RepoScriptSourceProvider extends BaseRhqSchemeScriptSourceProvider implements
     StandardBindings.RhqFacadeChangeListener {
 
-    private static final Log LOG = LogFactory.getLog(RepoScriptSourceProvider.class);
+    private static final Log LOG = SecurityActions.getLog(RepoScriptSourceProvider.class);
 
     private static final String AUTHORITY = "repositories";
 

@@ -47,6 +47,8 @@ import org.rhq.enterprise.server.installer.ServerInstallUtil.SupportedDatabaseTy
  */
 public class InstallerServiceImpl implements InstallerService {
 
+    private static final String RHQ_EXTENSION_NAME = "org.rhq.rhq-enterprise-server-startup-subsystem";
+    private static final String RHQ_SUBSYSTEM_NAME = "rhq-startup";
     private static final String EAR_NAME = "rhq.ear";
     private static final String SYSPROP_PROPFILE = "rhq.server.properties-file";
 
@@ -204,6 +206,17 @@ public class InstallerServiceImpl implements InstallerService {
         if (isEarDeployed()) {
             return ""; // if the ear is deployed, we've already been fully installed
         }
+
+        // its possible the ear is not yet deployed (during server init/startup, it won't show up)
+        // but our extension should always show up and its one of the last things our installer deploys.
+        // if this doesn't exist, our installation isn't done yet
+        if (isExtensionDeployed()) {
+            return ""; // installer has done all it could - just need to wait for the EAR to fully startup
+        }
+
+        // in the future, if we can determine if any errors occurred during past installations,
+        // we can return that error message here. For now, just assume the installer is free to try to install.
+
         return null;
     }
 
@@ -630,6 +643,18 @@ public class InstallerServiceImpl implements InstallerService {
         }
     }
 
+    private boolean isExtensionDeployed() throws Exception {
+        ModelControllerClient mcc = null;
+        try {
+            mcc = getModelControllerClient();
+            final CoreJBossASClient client = new CoreJBossASClient(mcc);
+            boolean isDeployed = client.isExtension(RHQ_EXTENSION_NAME);
+            return isDeployed;
+        } finally {
+            safeClose(mcc);
+        }
+    }
+
     private String getLogDir() throws Exception {
         ModelControllerClient mcc = null;
         try {
@@ -920,7 +945,7 @@ public class InstallerServiceImpl implements InstallerService {
             mcc = getModelControllerClient();
             CoreJBossASClient client = new CoreJBossASClient(mcc);
             log("Installing RHQ EAR startup subsystem extension");
-            client.addExtension("org.rhq.rhq-enterprise-server-startup-subsystem");
+            client.addExtension(RHQ_EXTENSION_NAME);
         } finally {
             safeClose(mcc);
         }
@@ -932,7 +957,7 @@ public class InstallerServiceImpl implements InstallerService {
             mcc = getModelControllerClient();
             CoreJBossASClient client = new CoreJBossASClient(mcc);
             log("Installing RHQ EAR subsystem");
-            client.addSubsystem("rhq-startup");
+            client.addSubsystem(RHQ_SUBSYSTEM_NAME);
         } finally {
             safeClose(mcc);
         }

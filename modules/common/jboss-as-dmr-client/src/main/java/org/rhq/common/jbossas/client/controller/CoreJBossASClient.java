@@ -209,6 +209,17 @@ public class CoreJBossASClient extends JBossASClient {
     }
 
     /**
+     * Returns true if the given extension is already in existence.
+     *
+     * @param name the name of the extension to check
+     * @return true if the extension already exists; false if not
+     * @throws Exception
+     */
+    public boolean isExtension(String name) throws Exception {
+        return null != readResource(Address.root().add(EXTENSION, name));
+    }
+
+    /**
      * Adds a new subsystem to the core system.
      *
      * @param name the name of the new subsystem
@@ -222,6 +233,17 @@ public class CoreJBossASClient extends JBossASClient {
             throw new FailureException(response, "Failed to add new subsystem [" + name + "]");
         }
         return;
+    }
+
+    /**
+     * Returns true if the given subsystem is already in existence.
+     *
+     * @param name the name of the subsystem to check
+     * @return true if the subsystem already exists; false if not
+     * @throws Exception
+     */
+    public boolean isSubsystem(String name) throws Exception {
+        return null != readResource(Address.root().add(SUBSYSTEM, name));
     }
 
     /**

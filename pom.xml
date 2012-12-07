@@ -226,7 +226,7 @@
 
     <jacoco.version>0.6.0.201210061924</jacoco.version>
   </properties>
-
+ 
 
   <dependencyManagement>
 
@@ -1646,6 +1646,7 @@
            <plugin>
               <groupId>org.codehaus.mojo</groupId>
               <artifactId>clirr-maven-plugin</artifactId>
+              <version>${clirr.version}</version>
               <executions>
                  <execution>
                     <id>signature-check</id>
@@ -1665,8 +1666,6 @@
                        <failOnError>true</failOnError>
                        <failOnWarning>true</failOnWarning>
                        <skip>${rhq.internal}</skip>
-                       <!-- note that this is only available in clirr maven plugin 2.5, but internally we use a patched version for our CI builds.
-                            Once new Clirr maven plugin is released, this will work for you, too. -->
                        <ignoredDifferencesFile>${intentional-api-changes-file}</ignoredDifferencesFile>
                     </configuration>
                  </execution>
@@ -1680,6 +1679,7 @@
            <plugin>
               <groupId>org.codehaus.mojo</groupId>
               <artifactId>clirr-maven-plugin</artifactId>
+              <version>${clirr.version}</version>
               <configuration>
                  <comparisonVersion>${signature-check-base-version}</comparisonVersion>
                  <comparisonArtifacts>

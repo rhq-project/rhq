@@ -54,7 +54,7 @@
             <td>Groups</td>
             <td>
                 <#list var.generatedGroupIds as groupId>
-                    <a href="/rest/1/group/${groupId?c}.html">${groupId?c}</a>
+                    <a href="/rest/group/${groupId?c}.html">${groupId?c}</a>
                 </#list>
             </td>
         </tr>

@@ -117,6 +117,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
     }
 
     protected abstract boolean hasControlPermission();
+    protected abstract int getResourceId();
 
     @Override
     public String getListViewPath() {
@@ -457,7 +458,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
                 }
 
                 ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
-                configurationService.getOptionValuesForConfigDefinition(parametersDefinition,
+                configurationService.getOptionValuesForConfigDefinition(getResourceId(), parametersDefinition,
                     new AsyncCallback<ConfigurationDefinition>() {
 
                         @Override

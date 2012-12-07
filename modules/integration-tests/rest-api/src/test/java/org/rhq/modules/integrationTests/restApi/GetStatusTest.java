@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -45,7 +45,7 @@ public class GetStatusTest {
 
 
     @Rule
-    public Destination destination = new Destination("http://" + System.getProperty("rest.server","localhost") + ":7080/rest/1");
+    public Destination destination = new Destination("http://" + System.getProperty("rest.server","localhost") + ":7080/rest");
 
     @Context
     private Response response;
@@ -71,7 +71,7 @@ public class GetStatusTest {
         @Authentication(type = AuthenticationType.BASIC, user = "user", password = "name23")
     )
     public void testAuthRestricted() {
-        com.eclipsesource.restfuse.Assert.assertForbidden(response);
+        com.eclipsesource.restfuse.Assert.assertUnauthorized(response);
     }
 
 

@@ -27,6 +27,13 @@ import java.util.TreeSet;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.HttpHeaders;
@@ -34,6 +41,13 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+
+import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiOperation;
+import com.wordnik.swagger.annotations.ApiParam;
+
+import org.jboss.resteasy.annotations.GZIP;
+import org.jboss.resteasy.annotations.cache.Cache;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
@@ -49,9 +63,12 @@ import org.rhq.enterprise.server.rest.domain.UserRest;
  * Class that deals with user specific stuff
  * @author Heiko W. Rupp
  */
+@Produces({"application/json","application/xml","text/plain","text/html"})
+@Path("/user")
+@Api(value="Api that deals with user related stuff")
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
-public class UserHandlerBean extends AbstractRestBean implements UserHandlerLocal {
+public class UserHandlerBean extends AbstractRestBean {
 
 //    private final Log log = LogFactory.getLog(UserHandlerBean.class);
 
@@ -71,13 +88,13 @@ public class UserHandlerBean extends AbstractRestBean implements UserHandlerLoca
     SubjectManagerLocal subjectManager;
 
     @EJB
-    ResourceHandlerLocal resourceHandler;
-
-    @EJB
     ResourceManagerLocal resourceManager;
 
-    @Override
-    public Response getFavorites(UriInfo uriInfo, HttpHeaders httpHeaders) {
+    @GZIP
+    @GET
+    @Path("favorites/resource")
+    @ApiOperation(value = "Return a list of favorite resources of the caller", multiValueResponse = true, responseClass = "ResourceWithType")
+    public Response getFavorites(@Context UriInfo uriInfo, @Context HttpHeaders httpHeaders) {
 
         Set<Integer> favIds = getResourceIdsForFavorites();
         List<ResourceWithType> ret = new ArrayList<ResourceWithType>();
@@ -111,8 +128,11 @@ public class UserHandlerBean extends AbstractRestBean implements UserHandlerLoca
     }
 
 
-    @Override
-    public void addFavoriteResource(int id) {
+    @PUT
+    @Path("favorites/resource/{id}")
+    @ApiOperation(value = "Add a resource as favorite for the caller")
+    public void addFavoriteResource(@ApiParam(name = "id", value = "Id of the resource")
+                @PathParam("id") int id) {
         Set<Integer> favIds = getResourceIdsForFavorites();
         if (!favIds.contains(id)) {
             favIds.add(id);
@@ -120,8 +140,11 @@ public class UserHandlerBean extends AbstractRestBean implements UserHandlerLoca
         }
     }
 
-    @Override
-    public void removeResourceFromFavorites(int id) {
+    @DELETE
+    @Path("favorites/resource/{id}")
+    @ApiOperation(value="Remove a resource from favorites")
+    public void removeResourceFromFavorites(@ApiParam(name="id", value = "Id of the resource")
+                @PathParam("id") int id) {
         Set<Integer> favIds = getResourceIdsForFavorites();
         if (favIds.contains(id)) {
             favIds.remove(id);
@@ -130,7 +153,12 @@ public class UserHandlerBean extends AbstractRestBean implements UserHandlerLoca
 
     }
 
-    public Response getUserDetails(String loginName, Request request, HttpHeaders headers) {
+    @GET
+    @Cache(maxAge = 600)
+    @Path("{id}")
+    @ApiOperation(value = "Get info about a user", responseClass = "UserRest")
+    public Response getUserDetails(@ApiParam(value="Login of the user") @PathParam("id") String loginName,
+                                   @Context Request request, @Context HttpHeaders headers) {
 
         Subject subject = subjectManager.getSubjectByName(loginName);
         if (subject == null)

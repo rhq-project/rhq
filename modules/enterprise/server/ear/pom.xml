@@ -62,6 +62,13 @@
 
         <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>rhq-rest-examples</artifactId>
+            <version>${project.version}</version>
+            <type>war</type>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>rhq-content_http</artifactId>
             <version>${project.version}</version>
             <type>war</type>
@@ -97,7 +104,7 @@
                 <exclusion>
                     <groupId>javassist</groupId>
                     <artifactId>javassist</artifactId>
-                </exclusion>                
+                </exclusion>
                 <exclusion>
                     <groupId>org.javassist</groupId>
                     <artifactId>javassist</artifactId>
@@ -268,6 +275,13 @@
                             <artifactId>rhq-rest</artifactId>
                             <bundleFileName>rhq-rest.war</bundleFileName>
                             <contextRoot>/rest</contextRoot>
+                        </webModule>
+
+                        <webModule>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-rest-examples</artifactId>
+                            <bundleFileName>rhq-rest-examples.war</bundleFileName>
+                            <contextRoot>/rest-examples</contextRoot>
                         </webModule>
 
                         <!-- ** EJB-JARs -->
@@ -530,16 +544,16 @@
               <property>
                  <!-- we want this always active but activeByDefault doesn't work -->
                  <!-- see http://maven.apache.org/guides/introduction/introduction-to-profiles.html -->
-                 <name>java.home</name> 
+                 <name>java.home</name>
               </property>
            </activation>
-           
+
            <dependencies>
               <dependency>
                  <groupId>org.rhq</groupId>
                  <artifactId>rhq-scripting-python</artifactId>
                  <version>${project.version}</version>
-              </dependency>                     
+              </dependency>
            </dependencies>
         </profile>
 

@@ -36,7 +36,7 @@
         <#if var.isGroup()>
             <td>DefinitionId</td><td>${sched?c}</a></td>
         <#else>
-            <td>ScheduleId</td><td><a href="/rest/1/metric/schedule/${sched?c}.html">${sched?c}</a></td>
+            <td>ScheduleId</td><td><a href="/rest/metric/schedule/${sched?c}.html">${sched?c}</a></td>
         </#if>
     </tr>
 

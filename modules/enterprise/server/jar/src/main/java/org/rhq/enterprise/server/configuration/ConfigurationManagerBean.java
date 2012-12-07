@@ -2511,26 +2511,27 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @Override
-    public ConfigurationDefinition getOptionsForConfigurationDefinition(Subject subject, ConfigurationDefinition def) {
+    public ConfigurationDefinition getOptionsForConfigurationDefinition(Subject subject, int resourceId,
+        ConfigurationDefinition def) {
 
         for (Map.Entry<String, PropertyDefinition> entry : def.getPropertyDefinitions().entrySet()) {
             PropertyDefinition pd = entry.getValue();
 
             if (pd instanceof PropertyDefinitionSimple) {
                 PropertyDefinitionSimple pds = (PropertyDefinitionSimple) pd;
-                handlePDS(subject, pds);
+                handlePDS(subject, resourceId, pds);
 
             } else if (pd instanceof PropertyDefinitionList) {
                 PropertyDefinitionList pdl = (PropertyDefinitionList) pd;
                 PropertyDefinition memberDef = pdl.getMemberDefinition();
                 if (memberDef instanceof PropertyDefinitionSimple) {
                     PropertyDefinitionSimple pds = (PropertyDefinitionSimple) memberDef;
-                    handlePDS(subject, pds);
+                    handlePDS(subject, resourceId, pds);
                 } else if (memberDef instanceof PropertyDefinitionMap) {
                     PropertyDefinitionMap pdm = (PropertyDefinitionMap) memberDef;
                     for (PropertyDefinition inner : pdm.getOrderedPropertyDefinitions()) {
                         if (inner instanceof PropertyDefinitionSimple) {
-                            handlePDS(subject, (PropertyDefinitionSimple) inner);
+                            handlePDS(subject, resourceId, (PropertyDefinitionSimple) inner);
                         }
                         log.debug("3 ____[ " + inner.toString() + " in " + pdl.toString() + " ]____ not yet supported");
                     }
@@ -2542,7 +2543,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 PropertyDefinitionMap pdm = (PropertyDefinitionMap) pd;
                 for (PropertyDefinition inner : pdm.getOrderedPropertyDefinitions()) {
                     if (inner instanceof PropertyDefinitionSimple) {
-                        handlePDS(subject, (PropertyDefinitionSimple) inner);
+                        handlePDS(subject, resourceId, (PropertyDefinitionSimple) inner);
                     } else {
                         log.debug("4 ____[ " + inner.toString() + " in " + pdm.toString() + " ]____ not yet supported");
                     }
@@ -2560,7 +2561,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
      * @param subject Subject of the caller - may limit search results
      * @param pds the PropertyDefinitionSimple to work on
      */
-    private void handlePDS(Subject subject, PropertyDefinitionSimple pds) {
+    private void handlePDS(Subject subject, int resourceId, PropertyDefinitionSimple pds) {
 
         if (pds.getOptionsSource() != null) {
             // evaluate the source parameters
@@ -2573,33 +2574,42 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 filterPattern = Pattern.compile(filter);
 
             if (tt == PropertyOptionsSource.TargetType.RESOURCE || tt == PropertyOptionsSource.TargetType.CONFIGURATION) {
+                List<Resource> resources = null;
                 ResourceCriteria criteria = new ResourceCriteria();
 
                 if (tt == PropertyOptionsSource.TargetType.CONFIGURATION) {
                     // split out expression part for target=configuration
                     // return if no property specifier is given
                     String expr = expression;
-                    if (!expr.contains(":")) {
+                    if (expr.contains(":")) {
+                        expr = expr.substring(expr.indexOf(':') + 1);
+
+                        if (!"self".equals(expr)) {
+                            criteria.setSearchExpression(expr);
+                            resources = resourceManager.findResourcesByCriteria(subject, criteria);
+                        } else if (resourceId >= 0) {
+                            resources = new ArrayList<Resource>();
+                            resources.add(resourceManager.getResourceById(subject, resourceId));
+                        } else {
+                            log.warn("Self reference requested but resource id is not valid."
+                                + "Option source expression:" + expression);
+                            return;
+                        }
+                    } else {
                         log.warn("Option source expression for property " + pds.getName()
                             + " and target configuration contains no ':'");
                         return;
                     }
-
-                    expr = expr.substring(expr.indexOf(':') + 1);
-                    criteria.setSearchExpression(expr);
                 } else {
                     criteria.setSearchExpression(expression);
+                    resources = resourceManager.findResourcesByCriteria(subject, criteria);
                 }
 
-                List<ResourceComposite> composites = resourceManager
-                    .findResourceCompositesByCriteria(subject, criteria);
-                for (ResourceComposite composite : composites) {
-
+                for (Resource resource : resources) {
                     if (tt == PropertyOptionsSource.TargetType.RESOURCE) {
+                        String name = resource.getName();
 
-                        String name = composite.getResource().getName();
                         // filter if the user provided a filter
-
                         if (filterPattern != null) {
                             Matcher m = filterPattern.matcher(name);
                             if (m.matches()) {
@@ -2609,12 +2619,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                         } else { // Filter is null -> none provided -> do not filter
                             PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(name, "" + name);
                             pds.getEnumeratedValues().add(pde);
-
                         }
-
                     } else if (tt == PropertyOptionsSource.TargetType.CONFIGURATION) {
                         //  for configuration we need to drill down into the resource configuration
-                        if (!handleConfigurationTarget(pds, expression, composite.getResource()))
+                        if (!handleConfigurationTarget(pds, expression, resource))
                             return;
 
                     }
@@ -2643,22 +2651,22 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
      */
     private boolean handleConfigurationTarget(PropertyDefinitionSimple pds, String expression, Resource resource) {
         Configuration configuration = resource.getResourceConfiguration();
-        Property p;
-        String propName = expression.substring(0, expression.indexOf(":"));
-        boolean isMapOrList = expression.contains("=");
 
+        if (expression.indexOf(":") != -1) {
+            expression = expression.substring(0, expression.indexOf(":"));
+        }
+
+        boolean isMapOrList = expression.contains("=");
+        Property p;
         if (isMapOrList) {
-            String mapPropLocation = propName.substring(0, propName.indexOf("="));
-            String mapPropName;
+            String mapPropLocation = expression.substring(0, expression.indexOf("="));
             if (mapPropLocation.contains("/")) {
-                // List of maps
-                mapPropName = mapPropLocation.substring(0, mapPropLocation.indexOf('/'));
-            } else {
-                mapPropName = mapPropLocation;
+                mapPropLocation = mapPropLocation.substring(0, mapPropLocation.indexOf('/'));
             }
-            p = configuration.get(mapPropName);
-        } else
-            p = configuration.get(propName);
+            p = configuration.get(mapPropLocation);
+        } else {
+            p = configuration.get(expression);
+        }
 
         if (p == null) {
             log.warn("Option source expression for property " + pds.getName() + " and target configuration not found");
@@ -2696,7 +2704,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 return false;
             }
             String subPropName;
-            subPropName = propName.substring(propName.indexOf("=") + 1);
+            subPropName = expression.substring(expression.indexOf("=") + 1);
 
             for (Property tmp : propertyList) {
                 PropertyMap pm = (PropertyMap) tmp;

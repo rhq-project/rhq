@@ -29,7 +29,7 @@
             <td>Name</td><td>${var.resourceName}</td>
         </tr>
         <tr>
-            <td>Id</td><td><a href="/rest/1/resource/${var.resourceId}.html">${var.resourceId}</a></td>
+            <td>Id</td><td><a href="/rest/resource/${var.resourceId}.html">${var.resourceId}</a></td>
         </tr>
         <tr>
             <td>Type name</td><td>${var.typeName}</td>
@@ -42,13 +42,13 @@
         </tr>
         <#if var.parentId??>
         <tr>
-            <td>Parent Id</td><td><a href="/rest/1/resource/${var.parentId?c}.html">${var.parentId?c}</a></td>
+            <td>Parent Id</td><td><a href="/rest/resource/${var.parentId?c}.html">${var.parentId?c}</a></td>
         </tr>
         </#if>
     </table>
-    <a href="/rest/1/resource/${var.resourceId}/children.html">Children</a><br/>
-    <a href="/rest/1/resource/${var.resourceId}/schedules.html">Schedules</a><br/>
-    <a href="/rest/1/resource/${var.resourceId}/availability.html">Current availability</a><br/>
-    <a href="/rest/1/resource/${var.resourceId}/availability/history.html">Availability History</a><br/>
-    <a href="/rest/1/alert.html?resourceId=${var.resourceId}">Up to 20 Alerts for this resource</a><br/>
-    <a href="/rest/1/operation/history.html?resourceId=${var.resourceId}">Operations history</a>
+    <a href="/rest/resource/${var.resourceId}/children.html">Children</a><br/>
+    <a href="/rest/resource/${var.resourceId}/schedules.html">Schedules</a><br/>
+    <a href="/rest/resource/${var.resourceId}/availability.html">Current availability</a><br/>
+    <a href="/rest/resource/${var.resourceId}/availability/history.html">Availability History</a><br/>
+    <a href="/rest/alert.html?resourceId=${var.resourceId}">Up to 20 Alerts for this resource</a><br/>
+    <a href="/rest/operation/history.html?resourceId=${var.resourceId}">Operations history</a>

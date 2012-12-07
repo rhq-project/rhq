@@ -35,7 +35,7 @@ mobile client (Android) of the API.
 <ul>
 <#list var as var>
  <li>
-    <a href="${var.href}">${var.rel}</a>
+    <a href="/rest/${var.href}">${var.rel}</a>
  </li>
 </#list>
 </ul>

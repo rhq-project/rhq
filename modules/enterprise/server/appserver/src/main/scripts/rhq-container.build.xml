@@ -605,6 +605,12 @@ rhq.sync.endpoint-address=false
                 <replacevalue><![CDATA[export RHQ_SERVER_HOME; ${RHQ_SERVER_HOME}/bin/rhq-autoinstall.sh &]]></replacevalue>
             </replacefilter>
         </replace>
+        <replace file="${project.build.outputDirectory}/bin/rhq-server.bat">
+            <replacefilter>
+                <replacetoken>rem START SERVER</replacetoken>
+                <replacevalue><![CDATA[start /B %RHQ_SERVER_HOME%\bin\rhq-autoinstall.bat]]></replacevalue>
+            </replacefilter>
+        </replace>
     </target>
 
     <!-- The prepare-release target must be run AFTER the resources:resources goal has executed. -->

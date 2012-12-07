@@ -21,7 +21,6 @@ package org.rhq.enterprise.server.util;
 import java.lang.management.ManagementFactory;
 
 import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
@@ -591,13 +590,9 @@ public final class LookupUtil {
     }
 
     public static CoreServerMBean getCoreServer() {
-        CoreServerMBean rhqServer;
-        try {
-            MBeanServer mbs = getJBossMBeanServer();
-            rhqServer = (CoreServerMBean) MBeanProxyExt.create(CoreServerMBean.class, CoreServerMBean.OBJECT_NAME, mbs);
-        } catch (MalformedObjectNameException e) {
-            throw new RuntimeException(e);
-        }
+        MBeanServer mbs = getJBossMBeanServer();
+        CoreServerMBean rhqServer = (CoreServerMBean) MBeanProxyExt.create(CoreServerMBean.class,
+            CoreServerMBean.OBJECT_NAME, mbs);
         return rhqServer;
     }
 
@@ -646,7 +641,8 @@ public final class LookupUtil {
         return "java:global/rhq/rhq-enterprise-server-ejb3/" + beanName + "!" + interfaceName;
     }
 
-    private static <T> String getLocalJNDIName(@NotNull Class<? super T> beanClass) {
+    private static <T> String getLocalJNDIName(@NotNull
+    Class<? super T> beanClass) {
         return getLocalJNDIName(beanClass.getSimpleName(), beanClass.getName().replace("Bean", "Local"));
     }
 

@@ -87,14 +87,6 @@
       <version>${project.version}</version>
     </dependency>
  
-<!--
-    <dependency>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-container-lib</artifactId>
-      <version>${project.version}</version>
-    </dependency>
--->
-
     <dependency>
       <groupId>com.googlecode.java-diff-utils</groupId>
       <artifactId>diffutils</artifactId>
@@ -110,10 +102,14 @@
   <dependency>
     <groupId>org.jboss.as</groupId>
     <artifactId>jboss-as-server</artifactId>
-    <version>${jboss.version}</version>
     <scope>provided</scope> <!-- provided by AS7 -->
   </dependency>
 
+  <dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-naming</artifactId>
+    <scope>provided</scope> <!-- provided by AS7 -->
+  </dependency>
 
       <!--================ Test Deps ================-->
 
@@ -1060,6 +1056,31 @@
         </plugins>
       </build>
     </profile>
+
+    <profile>
+      <id>signature-check</id>
+      <activation>
+        <property>
+          <name>signature-check-base-version</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>clirr-maven-plugin</artifactId>
+            <version>${clirr.version}</version>
+            <configuration>
+              <includes>
+                <include>**/*Remote</include>
+                <include>**/ServerVersion</include>
+              </includes>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    
   </profiles>
 
   <reporting>

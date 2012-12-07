@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Random;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.server.AllowRhqServerInternalsAccessPermission;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**

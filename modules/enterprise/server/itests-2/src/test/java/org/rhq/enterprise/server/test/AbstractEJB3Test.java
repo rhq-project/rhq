@@ -39,6 +39,7 @@ import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ArchivePaths;
 import org.jboss.shrinkwrap.api.Filters;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.asset.ClassAsset;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
@@ -307,6 +308,13 @@ public abstract class AbstractEJB3Test extends Arquillian {
             .create("/rhq-enterprise-server-ejb3.jar/org/rhq/enterprise/server/core/StartupBeanPreparation.class"));
         testEar.delete(ArchivePaths
             .create("/rhq-enterprise-server-ejb3.jar/org/rhq/enterprise/server/core/ShutdownListener.class"));
+
+        //replace the above startup beans with stripped down versions
+        testEar.add(new ClassAsset(StrippedDownStartupBean.class), ArchivePaths
+            .create("/rhq-enterprise-server-ejb3.jar/org/rhq/enterprise/server/test/StrippedDownStartupBean.class"));
+        testEar.add(new ClassAsset(StrippedDownStartupBeanPreparation.class), ArchivePaths
+            .create("/rhq-enterprise-server-ejb3.jar/org/rhq/enterprise/server/test/"
+                + "StrippedDownStartupBeanPreparation.class"));
 
         // add the test classes to the deployment
         testEar.addAsLibrary(testClassesJar);

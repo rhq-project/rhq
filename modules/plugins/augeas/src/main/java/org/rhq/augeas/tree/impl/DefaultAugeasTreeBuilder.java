@@ -51,7 +51,7 @@ public class DefaultAugeasTreeBuilder implements AugeasTreeBuilder {
 
         AugeasTree tree;
         AugeasModuleConfig module = moduleConfig.getModuleByName(name);
-        if (lazy = true)
+        if (lazy)
             tree = new AugeasTreeLazy(component.getAugeas(), module);
         else
             tree = new AugeasTreeReal(component.getAugeas(), module);

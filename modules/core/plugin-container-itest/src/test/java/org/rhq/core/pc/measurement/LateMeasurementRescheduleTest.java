@@ -32,20 +32,22 @@ import org.rhq.test.arquillian.RunDiscovery;
 import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
 
 /**
- * Test for BZ 834019.
+ * Test for BZ 834019. This test requires a long time to complete (about 2.5 minutes) because
+ * we have to wait for the minimum collection intervals (30s) to pass several times.
  */
 @RunDiscovery
 public class LateMeasurementRescheduleTest extends Arquillian {
 
-    @Deployment(name = "SingleMetricPlugin")
+    @Deployment(name = "TwoMetricPlugin")
     @TargetsContainer("connected-pc-with-metric-collection")
     public static RhqAgentPluginArchive getTestPlugin() {
-        RhqAgentPluginArchive pluginJar = ShrinkWrap
-            .create(RhqAgentPluginArchive.class, "single-metric-plugin-1.0.jar");
+        RhqAgentPluginArchive pluginJar = ShrinkWrap.create(RhqAgentPluginArchive.class, "bz834019-plugin-1.0.jar");
         HashMap<String, String> replacements = new HashMap<String, String>();
         replacements.put("@@@discovery@@@", SingleResourceDiscoveryComponent.class.getName());
         replacements.put("@@@class@@@", BZ834019ResourceComponent.class.getName());
-        return pluginJar.setPluginDescriptorFromTemplate("single-metric-rhq-plugin.xml", replacements).addClasses(
+        replacements.put("@@@metric1.interval@@@", "30000");
+        replacements.put("@@@metric2.interval@@@", "35000"); // this MUST be 35s - if you make it 30s, the collections won't be late!
+        return pluginJar.setPluginDescriptorFromTemplate("two-metric-rhq-plugin.xml", replacements).addClasses(
             SingleResourceDiscoveryComponent.class, BZ834019ResourceComponent.class);
     }
 
@@ -58,10 +60,10 @@ public class LateMeasurementRescheduleTest extends Arquillian {
     private FakeServerInventory fakeServerInventory;
     private FakeServerInventory.CompleteDiscoveryChecker discoveryCompleteChecker;
 
-    @ResourceContainers(plugin = "SingleMetricPlugin", resourceType = "SingleMetricServer")
+    @ResourceContainers(plugin = "TwoMetricPlugin", resourceType = "TwoMetricServer")
     private Set<ResourceContainer> containers;
 
-    @ResourceComponentInstances(plugin = "SingleMetricPlugin", resourceType = "SingleMetricServer")
+    @ResourceComponentInstances(plugin = "TwoMetricPlugin", resourceType = "TwoMetricServer")
     private Set<BZ834019ResourceComponent> components;
 
     @BeforeDiscovery(testMethods = "testBZ834019")

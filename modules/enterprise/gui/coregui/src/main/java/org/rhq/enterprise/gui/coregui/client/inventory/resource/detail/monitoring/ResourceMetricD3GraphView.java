@@ -38,6 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.MetricAreaBarGraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.MetricBarWhiskerGraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.MetricLineGraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
@@ -46,7 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
 
-public class ResourceMetricD3GraphView extends MetricBarWhiskerGraphView
+public class ResourceMetricD3GraphView extends MetricAreaBarGraphView
 {
     public ResourceMetricD3GraphView(String locatorId){
         super(locatorId);

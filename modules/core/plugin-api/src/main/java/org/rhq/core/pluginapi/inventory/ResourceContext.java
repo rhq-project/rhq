@@ -310,6 +310,9 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      * Returns the information on the native operating system process in which the managed resource is running. If
      * native support is not available or the process for some reason can no longer be found, this may return <code>
      * null</code>.
+     * 
+     * The returned {@link ProcessInfo} always has a fresh snapshot of non static data: it's whether newly created
+     * or got refreshed in order to determine if the process was still running.
      *
      * @return information on the resource's process
      */
@@ -350,9 +353,9 @@ public class ResourceContext<T extends ResourceComponent<?>> {
 
                         details = this.resourceDiscoveryComponent.discoverResources(context);
                     }
-                    
+
                     trackedProcesses.update(details);
-                    processInfo = trackedProcesses.getProcessInfo(resourceKey);                    
+                    processInfo = trackedProcesses.getProcessInfo(resourceKey);
                 } catch (Exception e) {
                     LOG.warn("Cannot get native process for resource [" + this.resourceKey + "] - discovery failed", e);
                 }
@@ -366,22 +369,8 @@ public class ResourceContext<T extends ResourceComponent<?>> {
         return processInfo;
     }
 
-    /**
-     * @param processInfo
-     * @return
-     */
     private boolean isRediscoveryRequired(ProcessInfo processInfo) {
-        boolean rediscover = processInfo == null;
-
-        if (!rediscover) {
-            //if the process info thinks the process is running,
-            //refresh it to check its facts again
-            if (processInfo.isRunning()) {
-                processInfo.refresh();
-            }
-            rediscover = !processInfo.isRunning();
-        }
-        return rediscover;
+        return processInfo == null || !processInfo.freshSnapshot().isRunning();
     }
 
     /**
@@ -519,6 +508,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     /**
      * @deprecated Use {@link AvailabilityContext#createAvailabilityCollectorRunnable(AvailabilityFacet, long)}
      */
+    @Deprecated
     public AvailabilityCollectorRunnable createAvailabilityCollectorRunnable(AvailabilityFacet availChecker,
         long interval) {
 

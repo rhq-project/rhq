@@ -54,6 +54,7 @@ import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.core.system.ProcessInfo.ProcessInfoSnapshot;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.jmx.JMXServerComponent;
@@ -73,10 +74,14 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
 
         if (processInfo == null) {
             return UNKNOWN;
-        } else if (processInfo.isRunning()) {
-            return UP;
         } else {
-            return DOWN;
+            // It is safe to read prior snapshot as getNativeProcess always return a fresh instance
+            ProcessInfoSnapshot processInfoSnaphot = processInfo.priorSnaphot();
+            if (processInfoSnaphot.isRunning()) {
+                return UP;
+            } else {
+                return DOWN;
+            }
         }
     }
 

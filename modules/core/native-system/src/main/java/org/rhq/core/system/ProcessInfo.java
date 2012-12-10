@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -49,39 +51,229 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * <p>
  * Encapsulates information about a known process.
+ * </p>
+ * <p>
+ * A few process properties (i.e. PID, command line) will never change during the lifetime of the process and can be
+ * read directly with this class accessors. Other process properties (i.e. state, cpu usage) will vary and their values
+ * are grouped in {@link ProcessInfoSnapshot} instances.
+ * </p>
+ * <p>
+ * Operations on static properties of the process must be implemented in the {@link ProcessInfo} type. Operations on
+ * non static properties must be implemented in the {@link ProcessInfoSnapshot} type. The {@link ProcessInfoSnapshot}
+ * subtype has been created to remind users of the class that they are working with cached data.
+ * </p>
+ * <p>For example, if you want to be sure a process is still alive, you should use this code:<br>
+ * <code>processInfo.freshSnapshot().isRunning()</code>
+ * </p>
+ * <p>Rather than:<br>
+ * <code>processInfo.priorSnapshot().isRunning()</code>
+ * </p>
  *
  * @author John Mazzitelli
  * @author Ian Springer
+ * @author Thomas Segismont
  */
 public class ProcessInfo {
-    private final Log log = LogFactory.getLog(ProcessInfo.class.getName());
+
+    /**
+     * <p>
+     * Exposes non static process properties and operations computed on them (like {@link #isRunning()} method).
+     * Operations on non static process properties should all be implemented here.
+     * </p>
+     * <p>
+     * New snapshots are created when {@link ProcessInfo#refresh()} or {@link ProcessInfo#freshSnapshot()} are
+     * called.
+     * </p>
+     * <p>
+     * Note the current implementation does not actually encapsulate these properties for backward compatibility
+     * reasons (we have to keep the write access to {@link ProcessInfo} protected properties).
+     * </p>
+     */
+    public final class ProcessInfoSnapshot {
+
+        public long getParentPid() throws SystemInfoException {
+            return (ProcessInfo.this.procState != null) ? ProcessInfo.this.procState.getPpid() : 0L;
+        }
+
+        public ProcState getState() throws SystemInfoException {
+            return ProcessInfo.this.procState;
+        }
+
+        public ProcExe getExecutable() throws SystemInfoException {
+            return ProcessInfo.this.procExe;
+        }
+
+        public ProcTime getTime() throws SystemInfoException {
+            return ProcessInfo.this.procTime;
+        }
+
+        public ProcMem getMemory() throws SystemInfoException {
+            return ProcessInfo.this.procMem;
+        }
+
+        public ProcCpu getCpu() throws SystemInfoException {
+            return ProcessInfo.this.procCpu;
+        }
+
+        public ProcFd getFileDescriptor() throws SystemInfoException {
+            return ProcessInfo.this.procFd;
+        }
+
+        public ProcCred getCredentials() throws SystemInfoException {
+            return ProcessInfo.this.procCred;
+        }
+
+        public ProcCredName getCredentialsName() throws SystemInfoException {
+            return ProcessInfo.this.procCredName;
+        }
+
+        /**
+         * @return null if process executable or cwd is unavailable. Otherwise the Cwd as returned from the
+         * process executable.
+         * @throws SystemInfoException
+         */
+        public String getCurrentWorkingDirectory() throws SystemInfoException {
+            String result = null;
+            try {
+                if (null != ProcessInfo.this.procExe) {
+                    result = ProcessInfo.this.procExe.getCwd();
+                }
+            } catch (Exception e) {
+                ProcessInfo.this.handleSigarCallException(e, "procExe.getCwd()");
+            }
+            return result;
+        }
+
+        /**
+         * Checks if the process is alive.
+         *
+         * @return true if the process is running, sleeping or idle
+         * @throws SystemInfoException
+         */
+        public boolean isRunning() throws SystemInfoException {
+            boolean running = false;
+            if (ProcessInfo.this.procState != null) {
+                running = (ProcessInfo.this.procState.getState() == ProcState.RUN
+                    || ProcessInfo.this.procState.getState() == ProcState.SLEEP || ProcessInfo.this.procState
+                    .getState() == ProcState.IDLE);
+
+            }
+            return running;
+        }
+
+    }
+
+    private static final Log LOG = LogFactory.getLog(ProcessInfo.class);
+
+    // This interval was introduced because of a SIGAR bug: too close calls to getProcState could
+    // return different values even if the underlying process state has not changed.
+    private static final int REFRESH_INTERVAL_MILLIS = 1000 * 2;
+
+    // This timeout should always be greater than the refresh interval as one thread which acquired the lock
+    // could be waiting for the refresh interval to elapse. This value is deliberately high because multiple
+    // threads could wait for the lock and each of them will also have to wait for the refresh interval to elapse.
+    private static final int REFRESH_LOCK_ACQUIRE_TIMEOUT_SECONDS = 30;
+
+    private static final String UNKNOWN_PROCESS_NAME = "?";
+
+    private static final Set<String> MS_WINDOWS_TERMINATE_SIGNAL_NAMES = new HashSet<String>();
+    static {
+        MS_WINDOWS_TERMINATE_SIGNAL_NAMES.add("INT");
+        MS_WINDOWS_TERMINATE_SIGNAL_NAMES.add("KILL");
+        MS_WINDOWS_TERMINATE_SIGNAL_NAMES.add("QUIT");
+        MS_WINDOWS_TERMINATE_SIGNAL_NAMES.add("TERM");
+    }
 
     protected boolean initialized;
+
+    protected SigarProxy sigar;
 
     // these are static - values remain for the life of this object
     protected long pid;
     protected String name;
-    protected String baseName;
     protected String[] commandLine;
+    protected Map<String, String> procEnv;
+
+    // these are computed once with static data (purposely lazy in order to speed up discovery process)
     protected Map<String, String> environmentVariables;
-    protected SigarProxy sigar;
+    protected String baseName;
+
+    // this one is computed once with non static data
+    protected ProcessInfo parentProcess;
 
     // these are refreshed and may change during the life of the process
-    protected ProcState procState;
-    protected ProcExe procExe;
-    protected ProcTime procTime;
-    protected ProcMem procMem;
-    protected ProcCpu procCpu;
-    protected ProcFd procFd;
-    protected ProcCred procCred;
-    protected ProcCredName procCredName;
-    protected Map<String, String> procEnv;
-    protected transient ProcessInfo parentProcess;
-    protected transient boolean processDied;
 
+    /**
+     * @deprecated as of 4.6. To read this property call {@link #priorSnaphot()} and then corresponding method
+     * from the returned {@link ProcessInfoSnapshot}.
+     */
+    @Deprecated
+    protected ProcState procState;
+
+    /**
+     * @deprecated as of 4.6. To read this property call {@link #priorSnaphot()} and then corresponding method
+     * from the returned {@link ProcessInfoSnapshot}.
+     */
+    @Deprecated
+    protected ProcExe procExe;
+
+    /**
+     * @deprecated as of 4.6. To read this property call {@link #priorSnaphot()} and then corresponding method
+     * from the returned {@link ProcessInfoSnapshot}.
+     */
+    @Deprecated
+    protected ProcTime procTime;
+
+    /**
+     * @deprecated as of 4.6. To read this property call {@link #priorSnaphot()} and then corresponding method
+     * from the returned {@link ProcessInfoSnapshot}.
+     */
+    @Deprecated
+    protected ProcMem procMem;
+
+    /**
+     * @deprecated as of 4.6. To read this property call {@link #priorSnaphot()} and then corresponding method
+     * from the returned {@link ProcessInfoSnapshot}.
+     */
+    @Deprecated
+    protected ProcCpu procCpu;
+
+    /**
+     * @deprecated as of 4.6. To read this property call {@link #priorSnaphot()} and then corresponding method
+     * from the returned {@link ProcessInfoSnapshot}.
+     */
+    @Deprecated
+    protected ProcFd procFd;
+
+    /**
+     * @deprecated as of 4.6. To read this property call {@link #priorSnaphot()} and then corresponding method
+     * from the returned {@link ProcessInfoSnapshot}.
+     */
+    @Deprecated
+    protected ProcCred procCred;
+
+    /**
+     * @deprecated as of 4.6. To read this property call {@link #priorSnaphot()} and then corresponding method
+     * from the returned {@link ProcessInfoSnapshot}.
+     */
+    @Deprecated
+    protected ProcCredName procCredName;
+
+    // Set to true in handleSigarCallException
+    protected boolean processDied;
+
+    // Set to true if a SIGAR permission error has already been logged
     private boolean loggedPermissionsError = false;
-    private static final String UNKNOWN = "?";
+
+    // The last snasphot of non static process properties
+    // In a future implementation a new snapshot will be created on each call to refresh
+    private ProcessInfoSnapshot snapshot = new ProcessInfoSnapshot();
+
+    private long nextRefreshTime = System.currentTimeMillis();
+
+    private ReentrantLock refreshLock = new ReentrantLock();
 
     // useful for mocking this object, this is purposely not public
     protected ProcessInfo() {
@@ -97,14 +289,57 @@ public class ProcessInfo {
         update(pid);
     }
 
+    /**
+     * Takes a fresh snapshot of non static properties of the underlying process
+     *
+     * @throws SystemInfoException
+     */
     public void refresh() throws SystemInfoException {
-        update(this.pid);
+        // SIGAR has a bug: too close calls to getProcState could return different values even if the underlying
+        // process state has not changed. To be sure to get correct data, a lock and an interval were introduced.
+        // Calling threads must acquire the lock and then make sure the interval has elapsed before calling update.  
+        boolean acquiredLock = false;
+        try {
+            acquiredLock = refreshLock.tryLock(REFRESH_LOCK_ACQUIRE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            LOG.error("Thread interrupted while trying to acquire ProcessInfo[" + this.pid + "] refresh lock", e);
+        }
+        if (!acquiredLock) {
+            throw new RuntimeException("Could not acquire ProcessInfo[" + this.pid + "] refresh lock");
+        }
+        try {
+            waitForNextRefreshTime();
+            update(this.pid);
+        } finally {
+            nextRefreshTime = System.currentTimeMillis() + REFRESH_INTERVAL_MILLIS;
+            refreshLock.unlock();
+        }
     }
 
+    private void waitForNextRefreshTime() {
+        for (;;) {
+            long timeToNextRefresh = nextRefreshTime - System.currentTimeMillis();
+            if (timeToNextRefresh > 0) {
+                try {
+                    Thread.sleep(timeToNextRefresh);
+                    break;
+                } catch (InterruptedException ignore) {
+                }
+            } else {
+                break;
+            }
+        }
+    }
+
+    // Refresh and update methods cannot be merged because subclasses may override refresh behavior
+    // and we can't be sure that instances will already be properly initialized.
     private void update(long pid) throws SystemInfoException {
         long startTime = System.currentTimeMillis();
         try {
+
             this.processDied = false;
+
+            // Get ProcState and ProcExe before static data as they can help to determine the name field in some cases.
 
             ProcState procState = null;
             try {
@@ -138,7 +373,7 @@ public class ProcessInfo {
                 try {
                     this.procEnv = sigar.getProcEnv(pid);
                     if (this.procEnv == null) {
-                        log.debug("SIGAR returned a null environment for [" + this.baseName + "] process with pid ["
+                        LOG.debug("SIGAR returned a null environment for [" + getBaseName() + "] process with pid ["
                             + this.pid + "].");
                     }
                 } catch (Exception e) {
@@ -190,12 +425,37 @@ public class ProcessInfo {
         } catch (Exception e) {
             throw new SystemInfoException(e);
         }
-        if (log.isTraceEnabled()) {
+        if (LOG.isTraceEnabled()) {
             long elapsedTime = System.currentTimeMillis() - startTime;
-            log.trace("Retrieval of process info for pid " + pid + " took " + elapsedTime + " ms.");
+            LOG.trace("Retrieval of process info for pid " + pid + " took " + elapsedTime + " ms.");
         }
 
         this.processDied = false;
+    }
+
+    /**
+     * <p>
+     * Returns the last snasphot of the non static process properties.
+     * </p>
+     * <p>
+     * Caveat the returned may hold stale data has it was taken with previous SIGAR calls.
+     * Calling {@link #freshSnapshot()} instead is almost always a better idea.
+     * </p>
+     *
+     * @return a {@link ProcessInfoSnapshot} possibly holding stale data
+     */
+    public ProcessInfoSnapshot priorSnaphot() {
+        return snapshot;
+    }
+
+    /**
+     * Takes a fresh snapshot of the non static process properties.
+     *
+     * @return a fresh {@link ProcessInfoSnapshot}
+     */
+    public ProcessInfoSnapshot freshSnapshot() {
+        refresh();
+        return snapshot;
     }
 
     public void destroy() throws SystemInfoException {
@@ -215,7 +475,7 @@ public class ProcessInfo {
             return;
         }
 
-        if (isWindows() && (this.pid == 0 || this.pid == 4)) {
+        if (OperatingSystem.IS_WIN32 && (this.pid == 0 || this.pid == 4)) {
             // On Windows, Pid 0 and Pid 4 are special Kernel processes (Pid 0 is the "System Idle Process" and Pid 4 is
             // the "System" process). For these processes, it's normal for many of the Sigar.getProc calls to fail, so
             // there's no need to log anything.
@@ -227,29 +487,28 @@ public class ProcessInfo {
             if (!this.loggedPermissionsError) {
                 // Only log permissions errors once per process.
                 String currentUserName = System.getProperty("user.name");
-                log
-                    .trace("Unable to obtain all info for ["
-                        + procName
-                        + "] process with pid ["
-                        + this.pid
-                        + "] - call to "
-                        + methodName
-                        + "failed. "
-                        + "The process is most likely owned by a user other than the user that owns the RHQ plugin container's process ("
-                        + currentUserName + ").");
+                LOG.trace("Unable to obtain all info for ["
+                    + procName
+                    + "] process with pid ["
+                    + this.pid
+                    + "] - call to "
+                    + methodName
+                    + "failed. "
+                    + "The process is most likely owned by a user other than the user that owns the RHQ plugin container's process ("
+                    + currentUserName + ").");
                 this.loggedPermissionsError = true;
             }
         } else if (e instanceof SigarNotImplementedException) {
-            log.trace("Unable to obtain all info for [" + procName + "] process with pid [" + this.pid + "] - call to "
+            LOG.trace("Unable to obtain all info for [" + procName + "] process with pid [" + this.pid + "] - call to "
                 + methodName + "failed. Cause: " + e);
         } else {
             if (!exists()) {
-                log.debug("Attempt to refresh info for process with pid [" + this.pid
-                        + "] failed, because the process is no longer running.");
+                LOG.debug("Attempt to refresh info for process with pid [" + this.pid
+                    + "] failed, because the process is no longer running.");
                 this.processDied = true;
             }
 
-            log.debug("Unexpected error occurred while looking up info for [" + procName + "] process with pid ["
+            LOG.debug("Unexpected error occurred while looking up info for [" + procName + "] process with pid ["
                 + this.pid + "] - call to " + methodName + " failed. Did the process die? Cause: " + e);
         }
     }
@@ -260,7 +519,7 @@ public class ProcessInfo {
             pids = sigar.getProcList();
         } catch (SigarException e1) {
             // TODO (ips, 04/30/12): It probably makes more sense to let this exception bubble up.
-            log.error("Failed to obtain process list.", e1);
+            LOG.error("Failed to obtain process list.", e1);
             return true;
         }
 
@@ -274,10 +533,6 @@ public class ProcessInfo {
         return foundProcess;
     }
 
-    private static boolean isWindows() {
-        return File.separatorChar == '\\';
-    }
-
     private String determineName(String[] procArgs, ProcExe procExe, ProcState procState) {
         String name;
         if ((procArgs != null) && (procArgs.length != 0)) {
@@ -286,9 +541,10 @@ public class ProcessInfo {
             name = procExe.getName();
         } else if ((procState != null) && (procState.getName() != null)) {
             String stateName = procState.getName();
-            name = ((stateName.indexOf(File.separatorChar) >= 0) && (new File(stateName).exists())) ? stateName : UNKNOWN;
+            name = ((stateName.indexOf(File.separatorChar) >= 0) && (new File(stateName).exists())) ? stateName
+                : UNKNOWN_PROCESS_NAME;
         } else {
-            name = UNKNOWN;
+            name = UNKNOWN_PROCESS_NAME;
         }
         return name;
     }
@@ -323,7 +579,7 @@ public class ProcessInfo {
      */
     public String getBaseName() {
         if (baseName == null) {
-            baseName = (getName() != null) ? new File(getName()).getName() : UNKNOWN;
+            baseName = (getName() != null) ? new File(getName()).getName() : UNKNOWN_PROCESS_NAME;
         }
         return baseName;
     }
@@ -361,82 +617,114 @@ public class ProcessInfo {
      * @return the environment value
      */
     @Nullable
-    public String getEnvironmentVariable(@NotNull String name) {
+    public String getEnvironmentVariable(@NotNull
+    String name) {
         if (this.procEnv == null) {
             return null;
         }
-
         SystemInfo systemInfo = SystemInfoFactory.createJavaSystemInfo();
         boolean isWindows = systemInfo.getOperatingSystemType() == OperatingSystemType.WINDOWS;
         // Windows env names are case insensitive, so convert the specified name to all-caps before doing the lookup.
         return getEnvironmentVariables().get((isWindows) ? name.toUpperCase() : name);
     }
 
+    /**
+     * @deprecated as of 4.6. For similar purpose, call {@link #priorSnaphot()} and then corresponding method
+     * from the returned {@link ProcessInfoSnapshot}.
+     */
+    @Deprecated
     public long getParentPid() throws SystemInfoException {
-        return (this.procState != null) ? this.procState.getPpid() : 0L;
-    }
-
-    public ProcState getState() throws SystemInfoException {
-        return this.procState;
-    }
-
-    public ProcExe getExecutable() throws SystemInfoException {
-        return this.procExe;
-    }
-
-    public ProcTime getTime() throws SystemInfoException {
-        return this.procTime;
-    }
-
-    public ProcMem getMemory() throws SystemInfoException {
-        return this.procMem;
-    }
-
-    public ProcCpu getCpu() throws SystemInfoException {
-        return this.procCpu;
-    }
-
-    public ProcFd getFileDescriptor() throws SystemInfoException {
-        return this.procFd;
-    }
-
-    public ProcCred getCredentials() throws SystemInfoException {
-        return this.procCred;
-    }
-
-    public ProcCredName getCredentialsName() throws SystemInfoException {
-        return this.procCredName;
+        return priorSnaphot().getParentPid();
     }
 
     /**
-     * @return null if process executable or cwd is unavailable. Otherwise the Cwd as returned from the
-     * process executable. 
-     * @throws SystemInfoException
+     * @deprecated as of 4.6. For similar purpose, call {@link #priorSnaphot()} and then corresponding method
+     * from the returned {@link ProcessInfoSnapshot}.
      */
-    public String getCurrentWorkingDirectory() throws SystemInfoException {
-        String result = null;
-
-        try {
-            if (null != this.procExe) {
-                result = this.procExe.getCwd();
-            }
-        } catch (Exception e) {
-            handleSigarCallException(e, "procExe.getCwd()");
-        }
-
-        return result;
+    @Deprecated
+    public ProcState getState() throws SystemInfoException {
+        return priorSnaphot().getState();
     }
 
+    /**
+     * @deprecated as of 4.6. For similar purpose, call {@link #priorSnaphot()} and then corresponding method
+     * from the returned {@link ProcessInfoSnapshot}.
+     */
+    @Deprecated
+    public ProcExe getExecutable() throws SystemInfoException {
+        return priorSnaphot().getExecutable();
+    }
+
+    /**
+     * @deprecated as of 4.6. For similar purpose, call {@link #priorSnaphot()} and then corresponding method
+     * from the returned {@link ProcessInfoSnapshot}.
+     */
+    @Deprecated
+    public ProcTime getTime() throws SystemInfoException {
+        return priorSnaphot().getTime();
+    }
+
+    /**
+     * @deprecated as of 4.6. For similar purpose, call {@link #priorSnaphot()} and then corresponding method
+     * from the returned {@link ProcessInfoSnapshot}.
+     */
+    @Deprecated
+    public ProcMem getMemory() throws SystemInfoException {
+        return priorSnaphot().getMemory();
+    }
+
+    /**
+     * @deprecated as of 4.6. For similar purpose, call {@link #priorSnaphot()} and then corresponding method
+     * from the returned {@link ProcessInfoSnapshot}.
+     */
+    @Deprecated
+    public ProcCpu getCpu() throws SystemInfoException {
+        return priorSnaphot().getCpu();
+    }
+
+    /**
+     * @deprecated as of 4.6. For similar purpose, call {@link #priorSnaphot()} and then corresponding method
+     * from the returned {@link ProcessInfoSnapshot}.
+     */
+    @Deprecated
+    public ProcFd getFileDescriptor() throws SystemInfoException {
+        return priorSnaphot().getFileDescriptor();
+    }
+
+    /**
+     * @deprecated as of 4.6. For similar purpose, call {@link #priorSnaphot()} and then corresponding method
+     * from the returned {@link ProcessInfoSnapshot}.
+     */
+    @Deprecated
+    public ProcCred getCredentials() throws SystemInfoException {
+        return priorSnaphot().getCredentials();
+    }
+
+    /**
+     * @deprecated as of 4.6. For similar purpose, call {@link #priorSnaphot()} and then corresponding method
+     * from the returned {@link ProcessInfoSnapshot}.
+     */
+    @Deprecated
+    public ProcCredName getCredentialsName() throws SystemInfoException {
+        return priorSnaphot().getCredentialsName();
+    }
+
+    /**
+     * @deprecated as of 4.6. For similar purpose, call {@link #priorSnaphot()} and then corresponding method
+     * from the returned {@link ProcessInfoSnapshot}.
+     */
+    @Deprecated
+    public String getCurrentWorkingDirectory() throws SystemInfoException {
+        return priorSnaphot().getCurrentWorkingDirectory();
+    }
+
+    /**
+     * @deprecated as of 4.6. For similar purpose, call {@link #priorSnaphot()} and then corresponding method
+     * from the returned {@link ProcessInfoSnapshot}.
+     */
+    @Deprecated
     public boolean isRunning() throws SystemInfoException {
-        boolean running = false;
-
-        if (this.procState != null) {
-            running = (this.procState.getState() == ProcState.RUN || this.procState.getState() == ProcState.SLEEP || this.procState
-                .getState() == ProcState.IDLE);
-
-        }
-
-        return running;
+        return priorSnaphot().isRunning();
     }
 
     /**
@@ -450,13 +738,18 @@ public class ProcessInfo {
     }
 
     /**
-     * Returns the parent process of this process.
+     * Returns a {@link ProcessInfo} instance for the parent of this process.
+     *
+     * This method uses the parent process id which is not static (it can change if the parent process dies before its
+     * child). So in theory it should be moved to the {@link ProcessInfoSnapshot} type.
+     *
+     * In practice, it stays here because the parent {@link ProcessInfo} instance is cached after creation.
      *
      * @since 4.4
      */
     public ProcessInfo getParentProcess() throws SystemInfoException {
         if (this.parentProcess == null) {
-            this.parentProcess = new ProcessInfo(getParentPid(), sigar);
+            this.parentProcess = new ProcessInfo(priorSnaphot().getParentPid(), sigar);
         } else {
             this.parentProcess.refresh();
         }
@@ -515,44 +808,32 @@ public class ProcessInfo {
     @Override
     public String toString() {
         StringBuilder s = new StringBuilder("process: ");
-
         s.append("pid=[");
         s.append(getPid());
         s.append("], name=[");
-        s.append((!getName().equals(UNKNOWN)) ? getName() : getBaseName());
+        s.append((!getName().equals(UNKNOWN_PROCESS_NAME)) ? getName() : getBaseName());
         s.append("], ppid=[");
         try {
-            s.append(getParentPid());
+            s.append(priorSnaphot().getParentPid());
         } catch (Exception e) {
             s.append(e);
         }
-
         s.append("]");
-
         return s.toString();
-    }
-
-    private static final Set<String> TERMINATE_SIGNAL_NAMES = new HashSet<String>();
-    static {
-        TERMINATE_SIGNAL_NAMES.add("INT");
-        TERMINATE_SIGNAL_NAMES.add("KILL");
-        TERMINATE_SIGNAL_NAMES.add("QUIT");
-        TERMINATE_SIGNAL_NAMES.add("TERM");
     }
 
     private static int getSignalNumber(String signalName) {
         if (signalName == null) {
             throw new IllegalArgumentException("Signal name is null.");
         }
-
         int signalNumber;
         if (OperatingSystem.IS_WIN32) {
-            if (TERMINATE_SIGNAL_NAMES.contains(signalName)) {
+            if (MS_WINDOWS_TERMINATE_SIGNAL_NAMES.contains(signalName)) {
                 signalNumber = 1;
             } else {
                 throw new IllegalArgumentException("Unsupported signal name: " + signalName
-                        + " - on Windows, the only supported signal names are " + TERMINATE_SIGNAL_NAMES
-                        + ", all of which return 1.");
+                    + " - on Windows, the only supported signal names are " + MS_WINDOWS_TERMINATE_SIGNAL_NAMES
+                    + ", all of which return 1.");
             }
         } else {
             signalNumber = Sigar.getSigNum(signalName);

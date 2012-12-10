@@ -575,7 +575,6 @@
                 </datasource>
                 <xa-datasource jta="true" jndi-name="java:jboss/datasources/RHQDS" pool-name="RHQDS" enabled="true" use-java-context="true">
                     <xa-datasource-property name="URL">${rhq.test.ds.connection-url}</xa-datasource-property>
-                    <xa-datasource-property name="ConnectionProperties">SetBigStringTryClob=true</xa-datasource-property>
                     <driver>oracle</driver>
                     <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
                     <xa-pool>

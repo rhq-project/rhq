@@ -64,18 +64,25 @@ public class JPADriftChangeSetTest extends DriftDataAccessTest {
         executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
-                purgeDB();
+                try {
+                    purgeDB();
 
-                EntityManager em = getEntityManager();
+                    EntityManager em = getEntityManager();
 
-                resourceType = createResourceType();
-                em.persist(resourceType);
+                    resourceType = createResourceType();
+                    em.persist(resourceType);
 
-                resource = createResource(resourceType);
+                    resource = createResource(resourceType);
 
-                definition = createDriftDefinition();
-                resource.addDriftDefinition(definition);
-                getEntityManager().persist(resource);
+                    definition = createDriftDefinition();
+                    resource.addDriftDefinition(definition);
+                    getEntityManager().persist(resource);
+
+                } catch (Exception e) {
+                    System.out.println("BEFORE METHOD FAILURE, TEST DID NOT RUN!!!");
+                    e.printStackTrace();
+                    throw e;
+                }
             }
         });
     }

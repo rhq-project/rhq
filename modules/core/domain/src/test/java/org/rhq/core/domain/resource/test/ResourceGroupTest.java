@@ -24,8 +24,6 @@ package org.rhq.core.domain.resource.test;
 
 import java.util.Random;
 
-import javax.persistence.EntityManager;
-
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.Availability;
@@ -80,11 +78,8 @@ public class ResourceGroupTest extends AbstractEJB3Test {
 
     private Resource createNewResource() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
-
         Resource resource;
 
-        try {
             try {
                 ResourceType resourceType = new ResourceType("plat" + System.currentTimeMillis(), "test",
                     ResourceCategory.PLATFORM, null);
@@ -97,16 +92,14 @@ public class ResourceGroupTest extends AbstractEJB3Test {
                 ResourceGroup group = new ResourceGroup("testgroupRG" + System.currentTimeMillis(), resourceType);
                 em.persist(group);
                 group.addExplicitResource(resource);
+
+            getTransactionManager().commit();
+
             } catch (Exception e) {
                 System.out.println(e);
                 getTransactionManager().rollback();
                 throw e;
             }
-
-            getTransactionManager().commit();
-        } finally {
-            em.close();
-        }
 
         return resource;
     }
@@ -114,7 +107,7 @@ public class ResourceGroupTest extends AbstractEJB3Test {
     private void deleteNewResource(Resource resource) throws Exception {
         if (resource != null) {
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
+
             try {
                 ResourceType type = em.find(ResourceType.class, resource.getResourceType().getId());
                 Resource res = em.find(Resource.class, resource.getId());
@@ -137,8 +130,6 @@ public class ResourceGroupTest extends AbstractEJB3Test {
                 }
 
                 throw e;
-            } finally {
-                em.close();
             }
         }
     }

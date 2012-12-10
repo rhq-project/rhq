@@ -24,7 +24,6 @@ package org.rhq.core.domain.operation;
 
 import java.util.Random;
 
-import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.Query;
 
@@ -65,12 +64,11 @@ public class OperationHistoryTest extends AbstractEJB3Test {
 
     @Test(groups = "integration.ejb3")
     public void testUpdate() throws Exception {
-        EntityManager em = getEntityManager();
         getTransactionManager().begin();
         try {
-            ResourceOperationHistory r1 = createIndividualResourceHistory(em);
-            GroupOperationHistory g1 = createGroupResourceHistory(em);
-            ResourceOperationHistory r2 = createGroupIndividualResourceHistory(em, g1);
+            ResourceOperationHistory r1 = createIndividualResourceHistory();
+            GroupOperationHistory g1 = createGroupResourceHistory();
+            ResourceOperationHistory r2 = createGroupIndividualResourceHistory(g1);
 
             Configuration results = new Configuration();
             results.put(new PropertySimple("exitCode", "1"));
@@ -134,10 +132,9 @@ public class OperationHistoryTest extends AbstractEJB3Test {
 
     @Test(groups = "integration.ejb3")
     public void testCreate() throws Exception {
-        EntityManager em = getEntityManager();
         getTransactionManager().begin();
         try {
-            ResourceOperationHistory r1 = createIndividualResourceHistory(em);
+            ResourceOperationHistory r1 = createIndividualResourceHistory();
 
             Thread.sleep(100); // without sleeping, test goes so fast that the getDuration() is saying 0
             assert r1.getId() > 0;
@@ -160,7 +157,7 @@ public class OperationHistoryTest extends AbstractEJB3Test {
             assert r1.getSubjectName().equals("user");
             assert r1.getStatus() == OperationRequestStatus.INPROGRESS;
 
-            GroupOperationHistory g1 = createGroupResourceHistory(em);
+            GroupOperationHistory g1 = createGroupResourceHistory();
 
             Thread.sleep(100); // without sleeping, test goes so fast that the getDuration() is saying 0
             assert g1.getId() > 0;
@@ -178,7 +175,7 @@ public class OperationHistoryTest extends AbstractEJB3Test {
             assert g1.getStatus() == OperationRequestStatus.INPROGRESS;
 
             // the individual resource history that was part of a group execution
-            ResourceOperationHistory r2 = createGroupIndividualResourceHistory(em, g1);
+            ResourceOperationHistory r2 = createGroupIndividualResourceHistory(g1);
 
             Thread.sleep(100); // without sleeping, test goes so fast that the getDuration() is saying 0
             assert r2.getId() > 0;
@@ -205,28 +202,24 @@ public class OperationHistoryTest extends AbstractEJB3Test {
 
     @Test(groups = "integration.ejb3")
     public void testQueryByJobId() throws Exception {
-        EntityManager em;
         ResourceOperationHistory r1;
         GroupOperationHistory g1;
         ResourceOperationHistory r2;
 
         getTransactionManager().begin();
-        em = getEntityManager();
 
         try {
-            r1 = createIndividualResourceHistory(em);
-            g1 = createGroupResourceHistory(em);
-            r2 = createGroupIndividualResourceHistory(em, g1);
+            r1 = createIndividualResourceHistory();
+            g1 = createGroupResourceHistory();
+            r2 = createGroupIndividualResourceHistory(g1);
             getTransactionManager().commit();
-            em.close();
+
         } catch (Throwable t) {
             getTransactionManager().rollback();
-            em.close();
             throw new Exception(t);
         }
 
         getTransactionManager().begin();
-        em = getEntityManager();
 
         ResourceOperationHistory r1_dup;
         GroupOperationHistory g1_dup;
@@ -270,10 +263,8 @@ public class OperationHistoryTest extends AbstractEJB3Test {
             assert r2_dup.getStatus().equals(r2.getStatus());
         } finally {
             getTransactionManager().rollback();
-            em.close();
 
             getTransactionManager().begin();
-            em = getEntityManager();
 
             r1 = em.find(ResourceOperationHistory.class, r1.getId());
             em.remove(r1);
@@ -281,21 +272,18 @@ public class OperationHistoryTest extends AbstractEJB3Test {
             em.remove(g1); // this should cascade and delete r2
 
             getTransactionManager().commit();
-            em.close();
 
             try {
                 // make sure our cascading on remove worked
                 getTransactionManager().begin();
-                em = getEntityManager();
                 assert em.find(ResourceOperationHistory.class, r2.getId()) == null;
             } finally {
                 getTransactionManager().rollback();
-                em.close();
             }
         }
     }
 
-    private ResourceOperationHistory createGroupIndividualResourceHistory(EntityManager em, GroupOperationHistory g1) {
+    private ResourceOperationHistory createGroupIndividualResourceHistory(GroupOperationHistory g1) {
         ResourceOperationHistory r2 = new ResourceOperationHistory("job3" + System.currentTimeMillis(), "group3",
             "user", newOperation, null, newResource, g1);
         r2.setStartedTime();
@@ -303,14 +291,14 @@ public class OperationHistoryTest extends AbstractEJB3Test {
         return r2;
     }
 
-    private GroupOperationHistory createGroupResourceHistory(EntityManager em) {
+    private GroupOperationHistory createGroupResourceHistory() {
         GroupOperationHistory g1 = new GroupOperationHistory("job2" + System.currentTimeMillis(), "group2", "user",
             newOperation, null, newGroup);
         em.persist(g1);
         return g1;
     }
 
-    private ResourceOperationHistory createIndividualResourceHistory(EntityManager em) {
+    private ResourceOperationHistory createIndividualResourceHistory() {
         ResourceOperationHistory r1 = new ResourceOperationHistory("job1" + System.currentTimeMillis(), "group1",
             "user", newOperation, null, newResource, null);
         r1.setStartedTime();
@@ -320,37 +308,32 @@ public class OperationHistoryTest extends AbstractEJB3Test {
 
     private Resource createNewResource() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
-
         Resource resource;
 
         try {
-            try {
-                ResourceType resourceType = new ResourceType("plat" + System.currentTimeMillis(), "test",
-                    ResourceCategory.PLATFORM, null);
+            ResourceType resourceType = new ResourceType("plat" + System.currentTimeMillis(), "test",
+                ResourceCategory.PLATFORM, null);
 
-                OperationDefinition def = new OperationDefinition(resourceType, "testOp");
-                def.setTimeout(1);
-                resourceType.addOperationDefinition(def);
+            OperationDefinition def = new OperationDefinition(resourceType, "testOp");
+            def.setTimeout(1);
+            resourceType.addOperationDefinition(def);
 
-                em.persist(resourceType);
+            em.persist(resourceType);
 
-                resource = new Resource("key" + System.currentTimeMillis(), "name", resourceType);
-                resource.setUuid("" + new Random().nextInt());
-                em.persist(resource);
+            resource = new Resource("key" + System.currentTimeMillis(), "name", resourceType);
+            resource.setUuid("" + new Random().nextInt());
+            em.persist(resource);
 
-                ResourceGroup group = new ResourceGroup("testgroupOH" + System.currentTimeMillis(), resourceType);
-                em.persist(group);
-                group.addExplicitResource(resource);
-            } catch (Exception e) {
-                System.out.println(e);
-                getTransactionManager().rollback();
-                throw e;
-            }
+            ResourceGroup group = new ResourceGroup("testgroupOH" + System.currentTimeMillis(), resourceType);
+            em.persist(group);
+            group.addExplicitResource(resource);
 
             getTransactionManager().commit();
-        } finally {
-            em.close();
+
+        } catch (Exception e) {
+            System.out.println(e);
+            getTransactionManager().rollback();
+            throw e;
         }
 
         return resource;
@@ -359,7 +342,7 @@ public class OperationHistoryTest extends AbstractEJB3Test {
     private void deleteNewResource(Resource resource) throws Exception {
         if (resource != null) {
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
+
             try {
                 ResourceType type = em.find(ResourceType.class, resource.getResourceType().getId());
                 Resource res = em.find(Resource.class, resource.getId());
@@ -382,8 +365,6 @@ public class OperationHistoryTest extends AbstractEJB3Test {
                 }
 
                 throw e;
-            } finally {
-                em.close();
             }
         }
     }

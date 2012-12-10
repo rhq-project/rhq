@@ -38,7 +38,14 @@ public class DriftDataAccessTest extends AbstractEJB3Test {
         executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
-                purgeDB();
+                try {
+                    purgeDB();
+
+                } catch (Exception e) {
+                    System.out.println("BEFORE METHOD FAILURE, TEST DID NOT RUN!!!");
+                    e.printStackTrace();
+                    throw e;
+                }
             }
         });
     }

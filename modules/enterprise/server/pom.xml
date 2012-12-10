@@ -26,6 +26,7 @@
       <modules>
         <module>xml-schemas</module>
         <module>container-lib</module>
+        <module>server-metrics</module>
         <module>jar</module>
         <module>sars</module>
         <module>plugins</module>
@@ -33,7 +34,6 @@
         <module>startup-subsystem</module>
         <module>safe-invoker</module>
         <module>client-api</module>
-        <module>server-metrics</module>
         <module>itests</module>
       </modules>
     </profile>

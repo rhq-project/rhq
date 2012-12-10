@@ -23,12 +23,9 @@ import java.io.FilePermission;
 import java.io.SerializablePermission;
 import java.lang.reflect.ReflectPermission;
 import java.net.SocketPermission;
-import java.security.CodeSource;
 import java.security.Permission;
 import java.security.PermissionCollection;
 import java.security.Permissions;
-import java.security.ProtectionDomain;
-import java.security.cert.Certificate;
 import java.util.Enumeration;
 import java.util.PropertyPermission;
 import java.util.logging.LoggingPermission;
@@ -99,6 +96,7 @@ public class StandardScriptPermissions extends PermissionCollection {
         //we don't consider the scripts malevolent.
         add(new PrivateCredentialPermission("* * \"*\"", "read"));
 
+        //adding this so that new classes with loggers can be initialized.
         add(new LoggingPermission("control", null));
     }
     

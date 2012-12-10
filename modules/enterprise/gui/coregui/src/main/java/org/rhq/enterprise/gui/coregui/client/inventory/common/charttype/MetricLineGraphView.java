@@ -16,30 +16,31 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common;
+package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
 
 import java.util.List;
 
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.enterprise.gui.coregui.client.HasD3JsniChart;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView;
 
 /**
- * Contains the chart definition for a Multi-Line graph chart.
+ * Contains the chart definition for a Line graph chart.
  *
  * @author Mike Thompson
  */
-public abstract class MetricLineGraphView extends AbstractMetricD3GraphView implements HasD3JsniChart
+public class MetricLineGraphView extends AbstractMetricD3GraphView implements HasD3JsniChart
 {
-   public MetricLineGraphView(String locatorId){
-            super(locatorId);
-   }
-
-
     public MetricLineGraphView(String locatorId, int entityId, MeasurementDefinition def,
                                List<MeasurementDataNumericHighLowComposite> data) {
         super(locatorId,entityId, def,data);
 
+    }
+
+    @Override
+    protected void renderGraph()
+    {
+        drawJsniChart();
     }
 
     /**
@@ -87,12 +88,7 @@ public abstract class MetricLineGraphView extends AbstractMetricD3GraphView impl
                     .ticks(5)
                     .orient("left");
 
-//d3.select("y axis").append().text(" Metric Label")
-//        .attr("transform", "rotate (90, "+margin.right + ", 0)")
-//        .attr("x",20).attr("y",0);
-
             var interpolation = "basis";
-            //var interpolation = "step-after";
 
             var line = $wnd.d3.svg.line()
                     .interpolate(interpolation)
@@ -160,47 +156,6 @@ public abstract class MetricLineGraphView extends AbstractMetricD3GraphView impl
                     .attr("stroke-dasharray", "5,5")
                     .attr("stroke-opacity", ".3")
                     .attr("d", lowLine);
-
-//            svg.selectAll("circle")
-//                    .data(data)
-//                    .enter()
-//                    .append("circle")
-//                    .attr("class", "tooltip")
-//                    .attr("cx", function(d){ return timeScale(d.x);  })
-//                    .attr("cy", function(d){ return yScale(d.y);  })
-//                    .attr("r", 2)
-//                    .attr("stroke", "black")
-//                    .attr("fill", "none");
-
-//            svg.selectAll("circle")
-//                    .on("mouseover",  function(d){
-//                        $wnd.d3.select(this)
-//                                .transition().attr("r",7).attr("stroke", "red").attr("fill","red");
-//                    })
-//                    .on("mouseout",  function(d){
-//                        $wnd.d3.select(this)
-//                                .transition().attr("r",2).attr("stroke","black").attr("fill","none");
-//                    });
-//
-//            svg.selectAll("circle")
-//                    .on("mouseover.tooltip", function(d){
-//               $wnd.d3.select("text#" + d.x).remove();
-//               $wnd.d3.select(chartHandle)
-//                       .append("text")
-//                       .text("Value: "+ d.y)
-//                       .attr("x", timeScale(d.x) + 10)
-//                       .attr("y", yScale(d.y) - 10)
-//                       .attr("id", d.x);
-//            });
-//            svg.selectAll("circle")
-//                    .on("mouseout.tooltip", function(d){
-//                        $wnd.d3.select("text#" + d.x)
-//                                .transition()
-//                                .duration(500)
-//                                .style("opacity",0)
-//                                .style("transform","translate(10, -10)")
-//                                .remove();
-//                    });
 
             console.log("finished paths");
         }

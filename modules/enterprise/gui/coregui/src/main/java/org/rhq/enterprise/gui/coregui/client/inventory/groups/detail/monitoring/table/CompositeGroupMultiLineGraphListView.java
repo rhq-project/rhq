@@ -18,7 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table;
 
-import org.rhq.enterprise.gui.coregui.client.HasD3JsniChart;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.HasD3JsniChart;
 
 /**
  * A MultiLine version of the Composite group single metric multiple resource charts.

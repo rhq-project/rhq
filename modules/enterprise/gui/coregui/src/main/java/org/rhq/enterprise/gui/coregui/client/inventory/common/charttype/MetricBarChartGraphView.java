@@ -16,30 +16,32 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common;
+package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
 
 import java.util.List;
 
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.enterprise.gui.coregui.client.HasD3JsniChart;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView;
 
 /**
  * Contains the chart definition for a Bar Chart Graph.
  *
  * @author Mike Thompson
  */
-public abstract class MetricBarChartGraphView extends AbstractMetricD3GraphView implements HasD3JsniChart
+public class MetricBarChartGraphView extends AbstractMetricD3GraphView implements HasD3JsniChart
 {
-   public MetricBarChartGraphView(String locatorId){
-            super(locatorId);
-   }
-
 
     public MetricBarChartGraphView(String locatorId, int entityId, MeasurementDefinition def,
                                      List<MeasurementDataNumericHighLowComposite> data) {
         super(locatorId,entityId, def,data);
 
+    }
+
+    @Override
+    protected void renderGraph()
+    {
+        drawJsniChart();
     }
 
     /**

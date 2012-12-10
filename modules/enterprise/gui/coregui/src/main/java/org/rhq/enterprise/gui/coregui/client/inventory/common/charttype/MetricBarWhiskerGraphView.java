@@ -16,30 +16,32 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common;
+package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
 
 import java.util.List;
 
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.enterprise.gui.coregui.client.HasD3JsniChart;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView;
 
 /**
  * Contains the chart definition for a Bar graph with whiskers.
  *
  * @author Mike Thompson
  */
-public abstract class MetricBarWhiskerGraphView extends AbstractMetricD3GraphView implements HasD3JsniChart
+public class MetricBarWhiskerGraphView extends AbstractMetricD3GraphView implements HasD3JsniChart
 {
-   public MetricBarWhiskerGraphView(String locatorId){
-            super(locatorId);
-   }
-
 
     public MetricBarWhiskerGraphView(String locatorId, int entityId, MeasurementDefinition def,
                                      List<MeasurementDataNumericHighLowComposite> data) {
         super(locatorId,entityId, def,data);
 
+    }
+
+    @Override
+    protected void renderGraph()
+    {
+        drawJsniChart();
     }
 
     /**
@@ -259,34 +261,7 @@ public abstract class MetricBarWhiskerGraphView extends AbstractMetricD3GraphVie
                     .attr("stroke-dasharray", "2,2")
                     .attr("stroke", "black");
 
-//    svg.append("path")
-//            .datum(data)
-//            .attr("class", "line")
-//            .attr("fill", "none")
-//            .attr("stroke", "steelblue")
-//            .attr("stroke-width", "2")
-//            .attr("d", line);
-//
-//    svg.append("path")
-//            .datum(data)
-//            .attr("class", "highLine")
-//            .attr("fill", "none")
-//            .attr("stroke", "red")
-//            .attr("stroke-width", "1.5")
-//        //.attr("stroke-dasharray", "20,10,5,5,5,10")
-//            .attr("stroke-dasharray", "5,5")
-//            .attr("stroke-opacity", ".3")
-//            .attr("d", highLine);
-//
-//    svg.append("path")
-//            .datum(data)
-//            .attr("class", "lowLine")
-//            .attr("fill", "none")
-//            .attr("stroke", "blue")
-//            .attr("stroke-width", "1.5")
-//            .attr("stroke-dasharray", "5,5")
-//            .attr("stroke-opacity", ".3")
-//            .attr("d", lowLine);
+
 
             console.log("finished drawing paths");
         }

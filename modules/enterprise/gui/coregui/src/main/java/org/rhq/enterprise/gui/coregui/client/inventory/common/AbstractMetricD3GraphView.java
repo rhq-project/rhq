@@ -73,8 +73,8 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
         setWidth100();
     }
 
-    public abstract AbstractMetricD3GraphView getInstance(String locatorId, int entityId, MeasurementDefinition def,
-        List<MeasurementDataNumericHighLowComposite> data);
+//    public abstract AbstractMetricD3GraphView getInstance(String locatorId, int entityId, MeasurementDefinition def,
+//        List<MeasurementDataNumericHighLowComposite> data, HasD3JsniChart jsniChart);
 
     protected abstract void renderGraph();
 
@@ -137,6 +137,8 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
     /**
      * Setup the page elements especially the div and svg elements that serve as
      * placeholders for the d3 stuff to grab onto and add svg tags to render the chart.
+     * Later the drawJsniGraph() is called to actually fill in the div/svg element
+     * created here with the actual svg element.
      *
      */
     protected void drawGraph() {

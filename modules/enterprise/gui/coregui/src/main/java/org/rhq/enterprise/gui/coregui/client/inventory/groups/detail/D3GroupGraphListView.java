@@ -37,10 +37,10 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricAreaBarGraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceMetricD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
 /**
  * Build the Group version of the View that shows the individual graph views.
@@ -141,8 +141,9 @@ public class D3GroupGraphListView extends LocatableVLayout {
 
     private void buildIndividualGraph(MeasurementDefinition measurementDefinition, List<MeasurementDataNumericHighLowComposite> data) {
 
+        MetricAreaBarGraphView graphView = new MetricAreaBarGraphView("groupBarAreaGraph",resourceGroup.getId(), measurementDefinition, data);
         ResourceMetricD3GraphView graph = new ResourceMetricD3GraphView(extendLocatorId(measurementDefinition.getName()), resourceGroup.getId(),
-            measurementDefinition, data);
+            measurementDefinition, data, graphView);
 
         graph.setWidth("95%");
         graph.setHeight(120);

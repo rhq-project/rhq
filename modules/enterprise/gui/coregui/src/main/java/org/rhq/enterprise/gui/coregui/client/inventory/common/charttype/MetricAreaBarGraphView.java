@@ -16,30 +16,32 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common;
+package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
 
 import java.util.List;
 
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.enterprise.gui.coregui.client.HasD3JsniChart;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView;
 
 /**
  * Contains the chart definition for a Area/Bar graph chart.
  *
  * @author Mike Thompson
  */
-public abstract class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements HasD3JsniChart
+public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements HasD3JsniChart
 {
-   public MetricAreaBarGraphView(String locatorId){
-            super(locatorId);
-   }
 
 
     public MetricAreaBarGraphView(String locatorId, int entityId, MeasurementDefinition def,
-                                  List<MeasurementDataNumericHighLowComposite> data) {
-        super(locatorId,entityId, def,data);
+                                  List<MeasurementDataNumericHighLowComposite> data ) {
+        super(locatorId, entityId, def, data);
+    }
 
+    @Override
+    protected void renderGraph()
+    {
+        drawJsniChart();
     }
 
     /**
@@ -258,47 +260,6 @@ public abstract class MetricAreaBarGraphView extends AbstractMetricD3GraphView i
                     .text(yAxisUnits === "NONE" ? "" : yAxisUnits);
 
             console.log("finished axes");
-
-
-
-
-//    var radius = 2;
-//    var edgeToCenter = 2;
-
-
-            // The bars of the bar graph
-//    svg.selectAll("rect.candle")
-//            .data(data)
-//            .enter().append("rect")
-//            .attr("class", "candle")
-//            .attr("x", function (d) {
-//                return timeScale(d.x);
-//            })
-//            .attr("y", function (d) {
-//                return yScale(d.high);
-//            })
-//            .attr("height", function (d) {
-//                return (height - yScale(d.high)) - (height - yScale(d.low));
-//            })
-//            .attr("width", function (d) {
-//                return  (width / data.length -12  );
-//            })
-//            .attr("data-rhq-value", function (d) {
-//                return d.y;
-//            })
-//            .attr("data-rhq-high-value", function (d) {
-//                return d.high;
-//            })
-//            .attr("data-rhq-low-value", function (d) {
-//                return d.low;
-//            })
-//            .attr("data-rhq-time", function (d) {
-//                var myDate = new Date(d.x);
-//                return myDate.getHours() + ":" + myDate.getMinutes();
-//            })
-//            .attr("opacity", 0.6)
-//            .attr("fill", "grey");
-
 
 
             // peak Line (must be before line.high to look right

@@ -34,21 +34,25 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.HasD3JsniChart;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.MetricAreaBarGraphView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.MetricBarWhiskerGraphView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.MetricLineGraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
 
-public class ResourceMetricD3GraphView extends MetricAreaBarGraphView
+public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView
 {
+    /**
+     * Defines the jsniChart type like area, line, etc...
+     *
+     */
+    private HasD3JsniChart jsniChart;
+
     public ResourceMetricD3GraphView(String locatorId){
         super(locatorId);
         setChartHeight("150px");
@@ -56,11 +60,13 @@ public class ResourceMetricD3GraphView extends MetricAreaBarGraphView
 
 
     public ResourceMetricD3GraphView(String locatorId, int resourceId, MeasurementDefinition def,
-                                     List<MeasurementDataNumericHighLowComposite> data) {
+                                     List<MeasurementDataNumericHighLowComposite> data, HasD3JsniChart jsniChart ) {
 
         super(locatorId, resourceId, def, data);
+        this.jsniChart = jsniChart;
         setChartHeight("150px");
     }
+
 
 
     @Override
@@ -142,15 +148,26 @@ public class ResourceMetricD3GraphView extends MetricAreaBarGraphView
         return true;
     }
 
+
+
+    @Override
+    /**
+     * Delegate the call to rendering the JSNI chart.
+     * This way the chart type can be swapped out at any time.
+     */
+    public void drawJsniChart()
+    {
+        jsniChart.drawJsniChart();
+    }
+
     @Override
     protected void displayLiveGraphViewDialog() {
         LiveGraphD3View.displayAsDialog(getLocatorId(), getEntityId(), getDefinition());
     }
 
-    @Override
     public AbstractMetricD3GraphView getInstance(String locatorId, int entityId, MeasurementDefinition def,
-        List<MeasurementDataNumericHighLowComposite> data) {
+        List<MeasurementDataNumericHighLowComposite> data, HasD3JsniChart jsniChart) {
 
-        return new ResourceMetricD3GraphView(locatorId, entityId, def, data);
+        return new ResourceMetricD3GraphView(locatorId, entityId, def, data, jsniChart);
     }
 }

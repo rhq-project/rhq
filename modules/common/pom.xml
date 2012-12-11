@@ -31,6 +31,7 @@
       <module>drift</module>      
       <module>jboss-as-dmr-client</module>
       <module>cassandra-auth</module>
+      <module>cassandra-schema</module>
       <module>cassandra-common</module>
       <module>cassandra-common-itests</module>
    </modules>

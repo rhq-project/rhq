@@ -34,6 +34,7 @@
          </modules>
       </profile>
 
+<!--
       <profile>
          <id>enterprise</id>
 
@@ -47,6 +48,7 @@
             <module>webservices</module>
          </modules>
       </profile>
+-->
 
 
    </profiles>

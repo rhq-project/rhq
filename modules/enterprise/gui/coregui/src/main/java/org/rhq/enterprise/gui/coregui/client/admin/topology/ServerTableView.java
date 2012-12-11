@@ -53,7 +53,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
- * @author Jiri Kremser
+ * @author Jirka Kremser
  * 
  */
 public class ServerTableView extends TableSection<AbstractServerNodeDatasource<? extends Serializable, Criteria>>
@@ -69,14 +69,17 @@ public class ServerTableView extends TableSection<AbstractServerNodeDatasource<?
 
     private final boolean isAffinityGroupId;
 
+    private final Integer id;
+
     public ServerTableView(String locatorId, String tableTitle, Integer id, boolean isAffinityGroupId) {
         super(locatorId, tableTitle);
         this.showActions = id == null && !isAffinityGroupId;
         this.isAffinityGroupId = isAffinityGroupId;
+        this.id = id;
         setHeight100();
         setWidth100();
         if (isAffinityGroupId) {
-            setDataSource(new ServerDatasource(id));
+            setDataSource(new ServerDatasource(id, true));
         } else {
             setDataSource(showActions ? new ServerWithAgentCountDatasource() : new FailoverListItemDatasource(id));
         }
@@ -97,7 +100,7 @@ public class ServerTableView extends TableSection<AbstractServerNodeDatasource<?
             listGrid.sort(FIELD_NAME, SortDirection.ASCENDING);
             showCommonActions();
         } else if (isAffinityGroupId) {
-         // displayed from AffinityGroupDetailView
+            // displayed from AffinityGroupDetailView
             showUpdateMembersAction();
         } else {
             // sorting by order field (displayed from AgentDetailView)
@@ -259,14 +262,16 @@ public class ServerTableView extends TableSection<AbstractServerNodeDatasource<?
                 }
             });
     }
-    
+
     private void showUpdateMembersAction() {
-        addTableAction(extendLocatorId("foo"), "olala", new AuthorizedTableAction(this, TableActionEnablement.ANY,
-                Permission.MANAGE_SETTINGS) {
-                public void executeAction(final ListGridRecord[] selections, Object actionValue) {
-                    SC.say("fooparek");
-                }
-            });
+        addTableAction(extendLocatorId("foo"), "olala", new AuthorizedTableAction(this, TableActionEnablement.ALWAYS,
+            Permission.MANAGE_SETTINGS) {
+            public void executeAction(final ListGridRecord[] selections, Object actionValue) {
+                //                    AffinityGroupServersSelector selector = new AffinityGroupServersSelector(extendLocatorId("foo"), id);
+
+                AffinityGroupServersSelector.show(id);
+            }
+        });
     }
 
     private int[] getSelectedIds(ListGridRecord[] selections) {

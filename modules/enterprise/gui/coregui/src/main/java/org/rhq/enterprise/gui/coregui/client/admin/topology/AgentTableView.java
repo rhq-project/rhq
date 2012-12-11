@@ -45,7 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
- * @author Jiri Kremser
+ * @author Jirka Kremser
  */
 public class AgentTableView extends TableSection<AgentNodeDatasource> implements HasViewName {
 

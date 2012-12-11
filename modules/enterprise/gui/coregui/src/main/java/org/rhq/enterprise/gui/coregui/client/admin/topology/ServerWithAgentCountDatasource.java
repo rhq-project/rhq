@@ -45,7 +45,7 @@ public class ServerWithAgentCountDatasource extends AbstractServerNodeDatasource
 
     public ServerWithAgentCountDatasource() {
         super();
-        serverDatasource = new ServerDatasource(null);
+        serverDatasource = new ServerDatasource(null, false);
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
     }

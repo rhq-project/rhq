@@ -58,7 +58,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 
 /**
- * @author Jiri Kremser
+ * @author Jirka Kremser
  * 
  */
 public class AffinityGroupTableView extends TableSection<AffinityGroupWithCountsDatasource> implements HasViewName {

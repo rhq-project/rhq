@@ -52,7 +52,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
- * @author Jiri Kremser
+ * @author Jirka Kremser
  * 
  */
 public class PartitionEventTableView extends TableSection<PartitionEventDatasource> implements HasViewName {

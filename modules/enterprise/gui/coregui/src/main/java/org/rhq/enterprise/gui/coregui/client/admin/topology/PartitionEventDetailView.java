@@ -56,7 +56,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 /**
  * Shows details of a partition event.
  * 
- * @author Jiri Kremser
+ * @author Jirka Kremser
  */
 public class PartitionEventDetailView extends LocatableVLayout implements BookmarkableView {
 

@@ -56,10 +56,13 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 public class ServerDatasource extends AbstractServerNodeDatasource<Server, Criteria> {
 
     private final Integer affinityGroupId;
+    
+    private final boolean fetchMembers;
 
-    public ServerDatasource(Integer affinityGroupId) {
+    public ServerDatasource(Integer affinityGroupId, boolean fetchMembers) {
         super();
         this.affinityGroupId = affinityGroupId;
+        this.fetchMembers = fetchMembers;
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
     }
@@ -105,21 +108,25 @@ public class ServerDatasource extends AbstractServerNodeDatasource<Server, Crite
             return;
         }
         final PageControl pc = getPageControl(request);
-        GWTServiceLookup.getCloudService().getServerMembersByAffinityGroupId(affinityGroupId, pc,
-            new AsyncCallback<PageList<Server>>() {
-                public void onSuccess(PageList<Server> result) {
-                    response.setData(buildRecords(result));
-                    response.setTotalRows(result.size());
-                    processResponse(request.getRequestId(), response);
-                }
+        AsyncCallback<PageList<Server>> callback = new AsyncCallback<PageList<Server>>() {
+            public void onSuccess(PageList<Server> result) {
+                response.setData(buildRecords(result));
+                response.setTotalRows(result.size());
+                processResponse(request.getRequestId(), response);
+            }
 
-                @Override
-                public void onFailure(Throwable t) {
-                    //todo: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), t);
-                    response.setStatus(DSResponse.STATUS_FAILURE);
-                    processResponse(request.getRequestId(), response);
-                }
-            });
+            @Override
+            public void onFailure(Throwable t) {
+                //todo: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), t);
+                response.setStatus(DSResponse.STATUS_FAILURE);
+                processResponse(request.getRequestId(), response);
+            }
+        };
+        if(fetchMembers) {
+            GWTServiceLookup.getCloudService().getServerMembersByAffinityGroupId(affinityGroupId, pc, callback);
+        } else {
+            GWTServiceLookup.getCloudService().getServerNonMembersByAffinityGroupId(affinityGroupId, pc, callback);
+        }
     }
 
     /**

@@ -58,7 +58,7 @@ public class FailoverListItemDatasource extends AbstractServerNodeDatasource<Fai
     public FailoverListItemDatasource(int agentId) {
         super();
         this.agentId = agentId;
-        this.serverDatasource = new ServerDatasource(null);
+        this.serverDatasource = new ServerDatasource(null, false);
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
     }

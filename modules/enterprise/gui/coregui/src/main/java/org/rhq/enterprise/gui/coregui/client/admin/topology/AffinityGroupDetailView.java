@@ -46,7 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 /**
  * Shows details of a server.
  * 
- * @author Jiri Kremser
+ * @author Jirka Kremser
  */
 public class AffinityGroupDetailView extends LocatableVLayout implements BookmarkableView {
 
@@ -105,7 +105,7 @@ public class AffinityGroupDetailView extends LocatableVLayout implements Bookmar
     }
 
     public boolean isInitialized() {
-        return initSectionCount >= 2;
+        return initSectionCount >= 3;
     }
 
     @Override

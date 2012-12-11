@@ -59,7 +59,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 /**
  * Shows details of a server.
  * 
- * @author Jiri Kremser
+ * @author Jirka Kremser
  */
 public class ServerDetailView extends LocatableVLayout implements BookmarkableView {
 

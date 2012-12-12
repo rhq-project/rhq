@@ -21,6 +21,7 @@ Ant Script that provides ways to package the Agent.
    <property name="jaxb-api.version" value="2.1"/>
    <property name="jaxb-impl.version" value="2.1"/>
    <property name="log4j.version" value="1.2.16"/>
+   <property name="so.exts" value="*.so.*"/>
 
    <!--
    =======================================================================
@@ -128,6 +129,7 @@ Ant Script that provides ways to package the Agent.
             <include name="**/lib/sigar.jar"/>
             <include name="**/lib/bcel*.jar"/>
             <include name="**/lib/*.so"/>
+            <include name="**/lib/${so.exts}"/>
             <include name="**/lib/*.sl"/>
             <include name="**/lib/*.dll"/>
             <include name="**/lib/*.dylib"/>
@@ -138,21 +140,21 @@ Ant Script that provides ways to package the Agent.
        <fileset refid="augeas.native.fileset" />
        <patternset>
           <include name="**/lib*/*.so"/>
-          <include name="**/lib*/*.so.1"/>
+          <include name="**/lib*/${so.exts}"/>
        </patternset>
     </unzip>
 
      <move todir="${agent.distro.dir}/lib/augeas/lib" flatten="true" overwrite="false">
        <fileset dir="${agent.distro.dir}/lib/augeas-native-${augeas.zip.version}/lib">
           <include name="*.so" />
-       	  <include name="*.so.1" />
+       	  <include name="${so.exts}" />
        </fileset>
      </move>
    	
     <move todir="${agent.distro.dir}/lib/augeas/lib64" flatten="true" overwrite="false">
       <fileset dir="${agent.distro.dir}/lib/augeas-native-${augeas.zip.version}/lib64">
          <include name="*.so" />
-         <include name="*.so.1" />
+         <include name="${so.exts}" />
       </fileset>
     </move>
    	
@@ -171,9 +173,9 @@ Ant Script that provides ways to package the Agent.
     <delete failonerror="false" includeEmptyDirs="true" verbose="true">
         <fileset dir="${agent.distro.dir}/lib" includes="hyperic-sigar-*/"/>
     </delete>       
-    <chmod dir="${agent.distro.dir}/lib" perm="ug+rx" includes="*.so,*.sl,*.dylib"/>
-    <chmod dir="${agent.distro.dir}/lib/augeas/lib" perm="ug+rx" includes="*.so,*.so.1"/>
-    <chmod dir="${agent.distro.dir}/lib/augeas/lib64" perm="ug+rx" includes="*.so,*.so.1"/>
+    <chmod dir="${agent.distro.dir}/lib" perm="ug+rx" includes="*.so,${so.exts},*.sl,*.dylib"/>
+    <chmod dir="${agent.distro.dir}/lib/augeas/lib" perm="ug+rx" includes="*.so,${so.exts}"/>
+    <chmod dir="${agent.distro.dir}/lib/augeas/lib64" perm="ug+rx" includes="*.so,${so.exts}"/>
     
     <copy todir="${agent.distro.dir}/bin">
        <fileset dir="${basedir}/src/etc"
@@ -216,7 +218,7 @@ Ant Script that provides ways to package the Agent.
           <include name="rhq-agent/**"/>
           <exclude name="rhq-agent/bin/*.sh"/>
           <exclude name="rhq-agent/lib/*.so"/>
-          <exclude name="rhq-agent/lib/*.so.1"/>
+          <exclude name="rhq-agent/lib/${so.exts}"/>
           <exclude name="rhq-agent/lib/*.sl"/>
           <exclude name="rhq-agent/lib/*.dylib"/>
        	  <exclude name="rhq-agent/lib/augeas/**" />
@@ -224,12 +226,13 @@ Ant Script that provides ways to package the Agent.
        <zipfileset dir="${basedir}/target" filemode="755" dirmode="755">
           <include name="rhq-agent/bin/*.sh"/>
           <include name="rhq-agent/lib/*.so"/>
+          <include name="rhq-agent/lib/${so.exts}"/>
           <include name="rhq-agent/lib/*.sl"/>
           <include name="rhq-agent/lib/*.dylib"/>
           <include name="rhq-agent/lib/augeas/lib/*.so"/>
-          <include name="rhq-agent/lib/augeas/lib/*.so.1"/>
+          <include name="rhq-agent/lib/augeas/lib/${so.exts}"/>
           <include name="rhq-agent/lib/augeas/lib64/*.so"/>
-          <include name="rhq-agent/lib/augeas/lib64/*.so.1"/>
+          <include name="rhq-agent/lib/augeas/lib64/${so.exts}"/>
        </zipfileset>
     </zip>
 

@@ -106,7 +106,8 @@ public class DatasourceJBossASClientTest {
         xaDSProps.put("ConnectionProperties", "SetBigStringTryClob=true");
 
         ModelNode request = client.createNewXADatasourceRequest("RHQDS", 30000, "oracle",
-            "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter", 15, 2, 5, 75, "RHQDSSecurityDomain",
+            "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter", 15, 2, 5, (Boolean) null,
+            Boolean.TRUE, 75, (String) null, "RHQDSSecurityDomain",
             "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker", "TRANSACTION_READ_COMMITTED",
             "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker", xaDSProps);
 

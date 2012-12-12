@@ -338,6 +338,13 @@ public abstract class AbstractEJB3Test extends Arquillian {
         dependencies.addAll(resolver.artifact("org.rhq:test-utils").resolveAs(JavaArchive.class));
         dependencies.addAll(resolver.artifact("org.rhq.helpers:perftest-support").resolveAs(JavaArchive.class));
 
+        // If we're running oracle we need to include the OJDBC driver because dbunit needs it. Note that we need
+        // add it explicitly even though it is a provided module used by the datasource.
+        if (!Boolean.valueOf(System.getProperty("rhq.skip.oracle"))) {
+            dependencies.addAll(resolver.artifact("com.oracle:ojdbc6:jar:" + System.getProperty("rhq.ojdbc.version"))
+                .resolveAs(JavaArchive.class));
+        }
+
         // Transitive deps required by the above and for some reason not sucked in. Note that
         // these require an explicit version. TODO (jshaughn): Can we make these transitive or
         // avoid the explicit version?

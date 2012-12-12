@@ -23,7 +23,8 @@
   <properties>
     <jboss.zip>${settings.localRepository}/org/jboss/as/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip</jboss.zip>
     <jboss.unzip.location>${basedir}/target/jboss-as-${jboss.version}</jboss.unzip.location>
-    <jboss.vm.args>-Xmx700m -XX:MaxPermSize=200m -Djava.security.manager -Djava.security.policy==${jboss.unzip.location}/security.policy</jboss.vm.args>
+    <jboss.vm.args>-Xmx700m -XX:MaxPermSize=200m -Djava.security.manager
+      -Djava.security.policy==${jboss.unzip.location}/security.policy</jboss.vm.args>
     <jboss.vm.args.debug></jboss.vm.args.debug> <!-- -Ditest.debug can override this, see below -->
   </properties>
 
@@ -225,11 +226,9 @@
                 <echo>JBossAS ${jboss.version} should now be at: ${jboss.unzip.location}</echo>
 
                 <echo>Copying security policy to JBossAS</echo>
-                <copy file="${project.build.directory}/test-classes/security.policy" tofile="${jboss.unzip.location}/security.policy"/>
-                
-                <property
-                  name="jboss.conf"
-                  location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
+                <copy file="${project.build.directory}/test-classes/security.policy" tofile="${jboss.unzip.location}/security.policy" />
+
+                <property name="jboss.conf" location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
                 <echo>Will now add test configuration to JBossAS config file: ${jboss.conf}</echo>
                 <replace file="${jboss.conf}">
 
@@ -520,7 +519,10 @@
                     </timeout>
                     <statement>
                         <prepared-statement-cache-size>75</prepared-statement-cache-size>
-                    </statement>
+                    </statement> 
+                    <recovery no-recovery="false">
+                      <recover-plugin class-name="org.jboss.jca.core.recovery.ValidatingManagedConnectionFactoryRecoveryPlugin"/>
+                    </recovery>                    
                 </xa-datasource>]]></replacevalue>
                   </replacefilter>
 
@@ -580,6 +582,11 @@
                     <xa-pool>
                         <min-pool-size>5</min-pool-size>
                         <max-pool-size>50</max-pool-size>
+                        <!--
+                        Oracle does not like XA connections getting used both inside and outside a JTA transaction.
+                        To workaround the problem you can create separate sub-pools for the different contexts using <no-tx-separate-pools/>
+                        -->                        
+                        <no-tx-separate-pools>true</no-tx-separate-pools>
                     </xa-pool>
                     <security>
                         <security-domain>RHQDSSecurityDomain</security-domain>
@@ -631,15 +638,8 @@
             <clean.db>${clean.db}</clean.db>
             <log4j.configDebug>false</log4j.configDebug>
             <project.version>${project.version}</project.version>
-
-            <rhq.test.ds.type-mapping>${rhq.test.ds.type-mapping}</rhq.test.ds.type-mapping>
-            <rhq.test.ds.server-name>${rhq.test.ds.server-name}</rhq.test.ds.server-name>
-            <rhq.test.ds.db-name>${rhq.test.ds.db-name}</rhq.test.ds.db-name>
-            <rhq.test.ds.connection-url>${rhq.test.ds.connection-url}</rhq.test.ds.connection-url>
-            <rhq.db.admin.username>${rhq.db.admin.username}</rhq.db.admin.username>
-            <rhq.db.admin.password>${rhq.db.admin.password}</rhq.db.admin.password>
-            <rhq.test.ds.user-name>${rhq.test.ds.user-name}</rhq.test.ds.user-name>
-            <rhq.test.ds.password>${rhq.test.ds.password}</rhq.test.ds.password>
+            <rhq.skip.oracle>${skip.oracle}</rhq.skip.oracle>
+            <rhq.ojdbc.version>${ojdbc6.version}</rhq.ojdbc.version>
           </systemPropertyVariables>
           <additionalClasspathElements>
             <!-- The below is required for tests to run against Oracle. -->

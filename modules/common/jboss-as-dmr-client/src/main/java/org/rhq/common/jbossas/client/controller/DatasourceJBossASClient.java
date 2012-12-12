@@ -261,9 +261,12 @@ public class DatasourceJBossASClient extends JBossASClient {
      * @param idleTimeoutMinutes
      * @param minPoolSize
      * @param maxPoolSize
+     * @param noRecovery optional, left unset if null
+     * @param noTxSeparatePools optional, left unset if null
      * @param preparedStatementCacheSize
+     * @param recoveryPluginClassName optional, left unset if null
      * @param securityDomain
-     * @param staleConnectionCheckerClassName
+     * @param staleConnectionCheckerClassName optional, left unset if null
      * @param transactionIsolation
      * @param validConnectionCheckerClassName
      * @param xaDatasourceProperties
@@ -271,9 +274,10 @@ public class DatasourceJBossASClient extends JBossASClient {
      * @return the request that can be used to create the XA datasource
      */
     public ModelNode createNewXADatasourceRequest(String name, int blockingTimeoutWaitMillis, String driverName,
-        String exceptionSorterClassName, int idleTimeoutMinutes, int minPoolSize, int maxPoolSize,
-        int preparedStatementCacheSize, String securityDomain, String staleConnectionCheckerClassName,
-        String transactionIsolation, String validConnectionCheckerClassName, Map<String, String> xaDatasourceProperties) {
+        String exceptionSorterClassName, int idleTimeoutMinutes, int minPoolSize, int maxPoolSize, Boolean noRecovery,
+        Boolean noTxSeparatePools, int preparedStatementCacheSize, String recoveryPluginClassName,
+        String securityDomain, String staleConnectionCheckerClassName, String transactionIsolation,
+        String validConnectionCheckerClassName, Map<String, String> xaDatasourceProperties) {
 
         String jndiName = "java:jboss/datasources/" + name;
 
@@ -286,8 +290,11 @@ public class DatasourceJBossASClient extends JBossASClient {
             + ", \"jndi-name\" => \"%s\" " //
             + ", \"jta\" => true " //
             + ", \"min-pool-size\" => %d " //
-            + ", \"max-pool-size\" => %d " //
+            + ", \"max-pool-size\" => %d " //            
+            + ", \"no-recovery\" => %b " //            
+            + ", \"no-tx-separate-pools\" => %b " //            
             + ", \"prepared-statements-cache-size\" => %dL " //
+            + ", \"recovery-plugin-class-name\" => \"%s\" " //            
             + ", \"security-domain\" => \"%s\" " //
             + ", \"stale-connection-checker-class-name\" => \"%s\" " //
             + ", \"transaction-isolation\" => \"%s\" " //
@@ -296,8 +303,11 @@ public class DatasourceJBossASClient extends JBossASClient {
             + "}";
 
         String dmr = String.format(dmrTemplate, blockingTimeoutWaitMillis, driverName, exceptionSorterClassName,
-            idleTimeoutMinutes, jndiName, minPoolSize, maxPoolSize, preparedStatementCacheSize, securityDomain,
-            staleConnectionCheckerClassName, transactionIsolation, validConnectionCheckerClassName);
+            idleTimeoutMinutes, jndiName, minPoolSize, maxPoolSize, noRecovery, noTxSeparatePools,
+            preparedStatementCacheSize, recoveryPluginClassName, securityDomain, staleConnectionCheckerClassName,
+            transactionIsolation, validConnectionCheckerClassName);
+
+        System.out.println("**** \n" + dmr);
 
         Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_DATASOURCES, XA_DATA_SOURCE, name);
         final ModelNode request1 = ModelNode.fromString(dmr);
@@ -327,6 +337,22 @@ public class DatasourceJBossASClient extends JBossASClient {
             batch[n++] = requestN;
         }
 
-        return createBatchRequest(batch);
+        ModelNode result = createBatchRequest(batch);
+
+        // remove unset args
+        if (null == noRecovery) {
+            result.get("steps").get(0).remove("no-recovery");
+        }
+        if (null == noTxSeparatePools) {
+            result.get("steps").get(0).remove("no-tx-separate-pools");
+        }
+        if (null == recoveryPluginClassName) {
+            result.get("steps").get(0).remove("recovery-plugin-class-name");
+        }
+        if (null == staleConnectionCheckerClassName) {
+            result.get("steps").get(0).remove("stale-connection-checker-class-name");
+        }
+
+        return result;
     }
 }

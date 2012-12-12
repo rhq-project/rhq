@@ -307,8 +307,6 @@ public class DatasourceJBossASClient extends JBossASClient {
             preparedStatementCacheSize, recoveryPluginClassName, securityDomain, staleConnectionCheckerClassName,
             transactionIsolation, validConnectionCheckerClassName);
 
-        System.out.println("**** \n" + dmr);
-
         Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_DATASOURCES, XA_DATA_SOURCE, name);
         final ModelNode request1 = ModelNode.fromString(dmr);
         request1.get(OPERATION).set(ADD);

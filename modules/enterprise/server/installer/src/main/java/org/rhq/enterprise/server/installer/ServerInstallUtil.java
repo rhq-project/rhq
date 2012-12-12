@@ -522,13 +522,6 @@ public class ServerInstallUtil {
             props.put("PortNumber", "${rhq.server.database.port:5432}");
             props.put("DatabaseName", "${rhq.server.database.db-name:rhq}");
 
-            /* TODO: Use this version which defines the recovery plugin
-            xaDsRequest = client.createNewXADatasourceRequest(RHQ_DATASOURCE_NAME_XA, 30000, JDBC_DRIVER_POSTGRES,
-                "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter", 15, 5, 50, Boolean.FALSE,
-                (Boolean) null, 75, "org.jboss.jca.core.recovery.ValidatingManagedConnectionFactoryRecoveryPlugin",
-                RHQ_DS_SECURITY_DOMAIN, (String) null, "TRANSACTION_READ_COMMITTED",
-                "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker", props);
-                */
             xaDsRequest = client.createNewXADatasourceRequest(RHQ_DATASOURCE_NAME_XA, 30000, JDBC_DRIVER_POSTGRES,
                 "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter", 15, 5, 50, (Boolean) null,
                 (Boolean) null, 75, (String) null, RHQ_DS_SECURITY_DOMAIN, (String) null, "TRANSACTION_READ_COMMITTED",

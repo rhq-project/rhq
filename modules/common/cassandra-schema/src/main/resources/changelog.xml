@@ -12,7 +12,7 @@
         time timestamp,
         value double,
         PRIMARY KEY (schedule_id, time)
-      );
+      ) WITH COMPACT STORAGE;
 
       CREATE TABLE rhq.one_hour_metrics (
         schedule_id int,
@@ -20,7 +20,7 @@
         type int,
         value double,
         PRIMARY KEY (schedule_id, time, type)
-      );
+      ) WITH COMPACT STORAGE;
 
       CREATE TABLE rhq.six_hour_metrics (
         schedule_id int,
@@ -28,7 +28,7 @@
         type int,
         value double,
         PRIMARY KEY (schedule_id, time, type)
-      );
+      ) WITH COMPACT STORAGE;
 
       CREATE TABLE rhq.twenty_four_hour_metrics (
         schedule_id int,
@@ -36,7 +36,7 @@
         type int,
         value double,
         PRIMARY KEY (schedule_id, time, type)
-      );
+      ) WITH COMPACT STORAGE;
 
       CREATE TABLE rhq.metrics_index (
         bucket varchar,
@@ -44,7 +44,7 @@
         schedule_id int,
         null_col boolean,
         PRIMARY KEY (bucket, time, schedule_id)
-      );
+      ) WITH COMPACT STORAGE;
     </sql>
   </changeSet>
 

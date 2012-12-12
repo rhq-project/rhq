@@ -45,8 +45,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public final class SessionManager {
     
-    // TODO JNDI
-    // private static final AllowRhqServerInternalsAccessPermission ACCESS_PERMISSION = new AllowRhqServerInternalsAccessPermission();
+    private static final AllowRhqServerInternalsAccessPermission ACCESS_PERMISSION = new AllowRhqServerInternalsAccessPermission();
     
     /**
      * Our source for random session IDs.
@@ -278,8 +277,7 @@ public final class SessionManager {
     }
     
     private static void checkPermission() {
-        // TODO JNDI
-        // SecurityManager sm = System.getSecurityManager();
-        // if (sm != null) sm.checkPermission(ACCESS_PERMISSION);
+         SecurityManager sm = System.getSecurityManager();
+         if (sm != null) sm.checkPermission(ACCESS_PERMISSION);
     }
 }

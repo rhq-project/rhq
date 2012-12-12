@@ -47,8 +47,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  * @author Lukas Krejci
  */
-@Test(enabled = false)
-// TODO JNDI: reenable after fixing secure jndi lookups
+@Test
 public class JndiAccessTest extends AbstractEJB3Test {
 
     public void testScriptCantOverrideSystemProperties() throws Exception {

@@ -23,7 +23,7 @@
   <properties>
     <jboss.zip>${settings.localRepository}/org/jboss/as/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip</jboss.zip>
     <jboss.unzip.location>${basedir}/target/jboss-as-${jboss.version}</jboss.unzip.location>
-    <jboss.vm.args>-Xmx700m -XX:MaxPermSize=200m</jboss.vm.args>
+    <jboss.vm.args>-Xmx700m -XX:MaxPermSize=200m -Djava.security.manager -Djava.security.policy==${jboss.unzip.location}/security.policy</jboss.vm.args>
     <jboss.vm.args.debug></jboss.vm.args.debug> <!-- -Ditest.debug can override this, see below -->
   </properties>
 
@@ -223,7 +223,13 @@
                 <echo>Unzipping JBossAS ${jboss.version} found at ${jboss.zip}</echo>
                 <unzip src="${jboss.zip}" dest="${jboss.unzip.location}/.." />
                 <echo>JBossAS ${jboss.version} should now be at: ${jboss.unzip.location}</echo>
-                <property name="jboss.conf" location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
+
+                <echo>Copying security policy to JBossAS</echo>
+                <copy file="${project.build.directory}/test-classes/security.policy" tofile="${jboss.unzip.location}/security.policy"/>
+                
+                <property
+                  name="jboss.conf"
+                  location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
                 <echo>Will now add test configuration to JBossAS config file: ${jboss.conf}</echo>
                 <replace file="${jboss.conf}">
 
@@ -569,7 +575,6 @@
                 </datasource>
                 <xa-datasource jta="true" jndi-name="java:jboss/datasources/RHQDS" pool-name="RHQDS" enabled="true" use-java-context="true">
                     <xa-datasource-property name="URL">${rhq.test.ds.connection-url}</xa-datasource-property>
-                    <xa-datasource-property name="ConnectionProperties">SetBigStringTryClob=true</xa-datasource-property>
                     <driver>oracle</driver>
                     <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
                     <xa-pool>
@@ -653,7 +658,6 @@
               <skipTests>${skipTests}</skipTests>
               <excludes>
                 <!-- NOTE: PERF GROUP AND SOME CLASSES EXCLUDED (SEE BZ 874696) -->
-                <exclude>**/JndiAccessTest.java</exclude>
                 <exclude>**/LdapGroupManagerBeanTest.java</exclude>
                 <exclude>**/SynchronizationManagerBeanTest.java</exclude>
                 <exclude>org/rhq/**/performance/**/*.java</exclude>

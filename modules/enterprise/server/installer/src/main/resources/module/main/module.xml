@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.0" name="${moduleName}">
+
+    <main-class name="org.rhq.enterprise.server.installer.Installer"/>
+
+    <resources>
+        <resource-root path="${project.build.finalName}.jar"/>
+        <resource-root path="rhq-core-dbutils-${project.version}.jar"/>
+        <resource-root path="rhq-core-util-${project.version}.jar"/>
+        <resource-root path="rhq-enterprise-comm-${project.version}.jar"/>
+        <resource-root path="rhq-jboss-as-dmr-client-${project.version}.jar"/>
+        <resource-root path="ant-${ant.version}.jar"/>
+        <resource-root path="ant-launcher-${ant.version}.jar"/>
+        <resource-root path="i18nlog-${i18nlog.version}.jar"/>
+    </resources>
+
+    <dependencies>
+        <module name="gnu.getopt"/>
+        <module name="org.apache.commons.logging"/>
+        <module name="org.apache.log4j"/>
+        <module name="org.jboss.logmanager" services="import"/>
+        <module name="org.jboss.as.controller-client"/>
+        <module name="org.jboss.logging"/>
+        <module name="org.jboss.as.protocol"/>
+        <module name="org.jboss.dmr"/>
+        <module name="org.jboss.sasl"/>
+        <module name="org.jboss.staxmapper"/>
+        <module name="org.picketbox"/>
+        <module name="org.rhq.postgres"/>
+        <module name="org.rhq.oracle" optional="true" />
+        <module name="javax.api"/>
+    </dependencies>
+
+</module>

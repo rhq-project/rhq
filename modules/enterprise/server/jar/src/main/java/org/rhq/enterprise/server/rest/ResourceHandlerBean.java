@@ -33,6 +33,15 @@ import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.HttpHeaders;
@@ -41,6 +50,16 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+
+import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiError;
+import com.wordnik.swagger.annotations.ApiOperation;
+import com.wordnik.swagger.annotations.ApiParam;
+
+import org.jboss.resteasy.annotations.GZIP;
+import org.jboss.resteasy.annotations.cache.Cache;
+import org.jboss.resteasy.links.AddLinks;
+import org.jboss.resteasy.links.LinkResource;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.criteria.AlertCriteria;
@@ -72,9 +91,14 @@ import org.rhq.enterprise.server.rest.domain.*;
  * Class that deals with getting data about resources
  * @author Heiko W. Rupp
  */
+@Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
+@Path("/resource")
+@Api(value="Resource related", description = "This endpoint deals with individual resources, not resource groups")
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
-public class ResourceHandlerBean extends AbstractRestBean implements ResourceHandlerLocal {
+public class ResourceHandlerBean extends AbstractRestBean {
+
+    private static final String NO_RESOURCE_FOR_ID = "If no resource with the passed id exists";
 
     @EJB
     AvailabilityManagerLocal availMgr;
@@ -90,8 +114,15 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-    @Override
-    public Response getResource(int id, Request request, HttpHeaders headers, UriInfo uriInfo) {
+    @GET
+    @Path("/{id}")
+    @Cache(isPrivate = true,maxAge = 120)
+    @ApiOperation(value = "Retrieve a single resource", responseClass = "ResourceWithType")
+    @ApiError(code = 404, reason = NO_RESOURCE_FOR_ID)
+
+    public Response getResource(@ApiParam("Id of the resource to retrieve") @PathParam("id") int id,
+                @Context Request request, @Context HttpHeaders headers,
+                             @Context UriInfo uriInfo) {
 
         Resource res;
         res = fetchResource(id);
@@ -118,9 +149,12 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         return builder.build();
     }
 
-    @Override
-    public Response getResourcesByQuery(String q, Request request, HttpHeaders headers,
-                             UriInfo uriInfo) {
+    @GET @GZIP
+    @Path("/")
+    @ApiOperation(value = "Search for resources by the given search string", responseClass = "ResourceWithType")
+    public Response getResourcesByQuery(@ApiParam("String to search in the resource name") @QueryParam("q") String q,
+                                        @Context HttpHeaders headers,
+                                        @Context UriInfo uriInfo) {
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterName(q);
         List<Resource> ret = resMgr.findResourcesByCriteria(caller,criteria);
@@ -130,8 +164,13 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         return builder.build();
     }
 
-    @Override
-    public Response getPlatforms(Request request, HttpHeaders headers, UriInfo uriInfo) {
+    @GZIP
+    @GET
+    @Path("/platforms")
+    @Cache(isPrivate = true,maxAge = 300)
+    @ApiOperation(value = "List all platforms in the system", multiValueResponse = true, responseClass = "ResourceWithType")
+    public Response getPlatforms(@Context HttpHeaders headers,
+                                 @Context UriInfo uriInfo) {
 
         PageControl pc = new PageControl();
         List<Resource> ret = resMgr.findResourcesByCategory(caller, ResourceCategory.PLATFORM,
@@ -170,27 +209,18 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         return builder;
     }
 
-    @Override
-    public ResourceWithChildren getHierarchy(int baseResourceId) {
+    @GET @GZIP
+    @Path("/{id}/hierarchy")
+    @Produces({"application/json","application/xml"})
+    @ApiOperation(value = "Retrieve the hierarchy of resources starting with the passed one", multiValueResponse = true, responseClass = "ResourceWithType")
+    @ApiError(code = 404, reason = NO_RESOURCE_FOR_ID)
+    public ResourceWithChildren getHierarchy(@ApiParam("Id of the resource to start with") @PathParam("id")int baseResourceId) {
         // TODO optimize to do less recursion
         Resource start = obtainResource(baseResourceId);
-        ResourceWithChildren rwc = getHierarchy(start);
-        /*new ResourceWithChildren(""+start.getId(),start.getName());
-
-        PageControl pc = new PageControl();
-        List<Resource> ret = resMgr.findResourceByParentAndInventoryStatus(caller,start,InventoryStatus.COMMITTED,pc);
-        if (!ret.isEmpty()) {
-            List<ResourceWithChildren> resList = new ArrayList<ResourceWithChildren>(ret.size());
-            for (Resource res : ret) {
-                ResourceWithChildren child = getHierarchy(res.getId());
-                resList.add(child);
-            }
-            rwc.setChildren(resList);
-        }*/
-        return rwc;
+        return getHierarchy(start);
     }
 
-    ResourceWithChildren getHierarchy(Resource baseResource) {
+    private ResourceWithChildren getHierarchy(Resource baseResource) {
         ResourceWithChildren rwc = new ResourceWithChildren("" + baseResource.getId(), baseResource.getName());
 
         PageControl pc = new PageControl();
@@ -209,8 +239,11 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         return rwc;
     }
 
-    @Override
-    public Response getAvailability(int resourceId, HttpHeaders headers) {
+    @GET
+    @Path("/{id}/availability")
+    @ApiError(code = 404, reason = NO_RESOURCE_FOR_ID)
+    @ApiOperation(value = "Return the current availability for the passed resource", responseClass = "AvailabilityRest")
+    public Response getAvailability(@ApiParam("Id of the resource to query") @PathParam("id") int resourceId, @Context HttpHeaders headers) {
 
         Availability avail = availMgr.getCurrentAvailabilityForResource(caller, resourceId);
         AvailabilityRest availabilityRest;
@@ -231,8 +264,16 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         return builder.build();
     }
 
-    @Override
-    public Response getAvailabilityHistory(int resourceId, long start, long end, HttpHeaders headers) {
+    @GZIP
+    @GET
+    @Path("/{id}/availability/history")
+    @ApiError(code = 404, reason = NO_RESOURCE_FOR_ID)
+    @ApiOperation(value = "Return the availability history for the passed resource", responseClass = "AvailabilityRest", multiValueResponse = true)
+    public Response getAvailabilityHistory(
+            @ApiParam("Id of the resource to query") @PathParam("id") int resourceId,
+            @ApiParam(value="Start time", defaultValue = "30 days ago") @QueryParam("start") long start,
+            @ApiParam(value="End time", defaultValue = "Now") @QueryParam("end") long end,
+            @Context HttpHeaders headers) {
         if (end==0)
             end = System.currentTimeMillis();
 
@@ -272,8 +313,11 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
     }
 
 
-    @Override
-    public void reportAvailability(int resourceId, AvailabilityRest avail) {
+    @PUT
+    @Path("/{id}/availability")
+    @ApiOperation("Set the current availability of the passed resource")
+    public void reportAvailability(@ApiParam("Id of the resource to update") @PathParam("id") int resourceId,
+                @ApiParam(value= "New Availability setting", required = true) AvailabilityRest avail) {
         if (avail.getResourceId() != resourceId)
             throw new IllegalArgumentException("Resource Ids do not match");
 
@@ -289,8 +333,23 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         availMgr.mergeAvailabilityReport(report);
     }
 
-    public Response getSchedules(int resourceId, String scheduleType, boolean enabledOnly, String name,
-        Request request, HttpHeaders headers, UriInfo uriInfo) {
+    @GZIP
+    @GET
+    @Path("/{id}/schedules")
+    @LinkResource(rel="schedules",value = MetricSchedule.class)
+    @Cache(isPrivate = true,maxAge = 60)
+    @ApiOperation(value ="Get the metric schedules of the passed resource id", multiValueResponse = true, responseClass = "MetricSchedule")
+    @ApiError(code = 404, reason = NO_RESOURCE_FOR_ID)
+    public Response getSchedules(
+            @ApiParam("Id of the resource to obtain the schedules for") @PathParam("id") int resourceId,
+            @ApiParam(value = "Limit by type",
+                    allowableValues = "<empty>, all, metric, trait, measurement") @QueryParam("type") @DefaultValue(
+                    "all") String scheduleType,
+            @ApiParam(value = "Limit by enabled schedules") @QueryParam("enabledOnly") @DefaultValue(
+                    "true") boolean enabledOnly,
+            @ApiParam(value = "Limit by name") @QueryParam("name") String name,
+            @Context HttpHeaders headers,
+            @Context UriInfo uriInfo) {
 
         // allow metric as input
         if (scheduleType.equals("metric"))
@@ -355,8 +414,17 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         return builder.build();
     }
 
-    @Override
-    public Response getChildren(int id, Request request, HttpHeaders headers, UriInfo uriInfo) {
+    @GZIP
+    @GET
+    @Path("/{id}/children")
+    @LinkResource(rel="children", value = ResourceWithType.class)
+    @ApiOperation(value = "Get the direct children of the passed resource")
+    @ApiError(code = 404, reason = NO_RESOURCE_FOR_ID)
+    public Response getChildren(
+            @ApiParam("Id of the resource to get children") @PathParam("id") int id,
+            @Context HttpHeaders headers,
+            @Context UriInfo uriInfo) {
+
         PageControl pc = new PageControl();
         Resource parent;
         parent = fetchResource(id);
@@ -394,8 +462,13 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         return resource;
     }
 
-    @Override
-    public List<Link> getAlertsForResource(int resourceId) {
+    @GZIP
+    @AddLinks
+    @GET
+    @Path(("/{id}/alerts"))
+    @ApiError(code = 404, reason = NO_RESOURCE_FOR_ID)
+    @ApiOperation("Get a list of links to the alerts for the passed resource")
+    public List<Link> getAlertsForResource(@ApiParam("Id of the resource to query") @PathParam("id") int resourceId) {
         AlertCriteria criteria = new AlertCriteria();
         criteria.addFilterResourceIds(resourceId);
         List<Alert> alerts = alertManager.findAlertsByCriteria(caller, criteria);
@@ -409,8 +482,16 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         return links;
     }
 
-    @Override
-    public Response createPlatform(String name, StringValue typeValue, UriInfo uriInfo) {
+    @ApiOperation(value = "Creata a new platform in the Server. If the platform already exists, this is a no-op." +
+            "The platform internally has a special name so that it will not clash with one that was generated" +
+            "via a normal RHQ agent")
+    @POST
+    @Path("platform/{name}")
+
+    public Response createPlatform(
+            @ApiParam(value = "Name of the platform") @PathParam("name") String name,
+            @ApiParam(value = "Type of the platform", allowableValues = "Linux,Windows,... TODO") StringValue typeValue,
+            @Context UriInfo uriInfo) {
         String typeName = typeValue.getValue();
 
         ResourceType type = resourceTypeManager.getResourceTypeByNameAndPlugin(typeName,"Platforms");
@@ -484,13 +565,17 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         }
     }
 
-    @Override
-    public Response createResource(String name, StringValue typeValue,
-                                   String plugin, int parentId, UriInfo uriInfo) {
+    @ApiOperation(value = "Create a resource with a given type below a certain parent")
+    @POST
+    @Path("{name}")
+    public Response createResource(
+            @ApiParam("Name of the new resource") @PathParam("name") String name,
+            @ApiParam("Name of the Resource tpye") StringValue typeValue,
+            @ApiParam("Name of the plugin providing the type") @QueryParam("plugin") String plugin,
+            @ApiParam("Id of the future parent to attach this to") @QueryParam("parentId") int parentId,
+            @Context UriInfo uriInfo) {
 
         Resource parent = resMgr.getResourceById(caller,parentId);
-        if (parent==null)
-            throw new StuffNotFoundException("Parent with id [" + parentId + "]");
 
         String typeName = typeValue.getValue();
         ResourceType resType = resourceTypeManager.getResourceTypeByNameAndPlugin(typeName,plugin);

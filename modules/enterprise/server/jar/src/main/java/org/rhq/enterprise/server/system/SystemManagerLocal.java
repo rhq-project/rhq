@@ -117,6 +117,7 @@ public interface SystemManagerLocal {
      * Ensures the installer has been undeployed. Installer must be undeployed
      * to ensure the server deployment is secure.
      */
+    @Deprecated
     void undeployInstaller();
 
     /**

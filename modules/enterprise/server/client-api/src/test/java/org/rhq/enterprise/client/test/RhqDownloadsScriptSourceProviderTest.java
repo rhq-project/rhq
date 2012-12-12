@@ -25,20 +25,16 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.Reader;
 import java.net.URI;
-import java.util.HashMap;
 
 import org.mockito.Mockito;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.client.RhqDownloadsScriptSourceProvider;
-import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.system.SystemManagerLocal;
+import org.rhq.enterprise.server.core.CoreServerMBean;
 
 /**
  * 
@@ -54,7 +50,7 @@ public class RhqDownloadsScriptSourceProviderTest {
     @BeforeClass
     public void createTmpDir() throws Exception {
         tmpDir = FileUtil.createTempDirectory(getClass().getName(), null, null);
-        File downloadsDir = new File(new File(new File(new File(tmpDir, "deploy"), "rhq.ear"), "rhq-downloads"), "script-modules");
+        File downloadsDir = new File(tmpDir, "rhq-downloads/script-modules");
         downloadsDir.mkdirs();
         
         File testScript = new File(downloadsDir, "test-script.js");
@@ -76,17 +72,11 @@ public class RhqDownloadsScriptSourceProviderTest {
     }
     
     public void canLocateScripts() throws Exception {
-        SystemManagerLocal systemManager = Mockito.mock(SystemManagerLocal.class);
-        SubjectManagerLocal subjectManager = Mockito.mock(SubjectManagerLocal.class);
+        CoreServerMBean coreServer = Mockito.mock(CoreServerMBean.class);
                 
-        ServerDetails details = new ServerDetails();
-        HashMap<ServerDetails.Detail, String> map = new HashMap<ServerDetails.Detail, String>();
-        map.put(ServerDetails.Detail.SERVER_HOME_DIR, tmpDir.getAbsolutePath());
-        details.setDetails(map);
-                
-        Mockito.when(systemManager.getServerDetails(Mockito.<Subject>any())).thenReturn(details);
+        Mockito.when(coreServer.getEarDeploymentDir()).thenReturn(tmpDir);
         
-        RhqDownloadsScriptSourceProvider provider = new RhqDownloadsScriptSourceProvider(systemManager, subjectManager);
+        RhqDownloadsScriptSourceProvider provider = new RhqDownloadsScriptSourceProvider(coreServer);
         
         URI location = new URI("rhq://downloads/test-script.js");
         

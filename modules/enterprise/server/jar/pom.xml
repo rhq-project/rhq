@@ -17,11 +17,7 @@
   <description>RHQ enterprise server main JAR</description>
 
   <properties>
-    <jboss.zip>${settings.localRepository}/org/jboss/as/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip</jboss.zip>
-    <jboss.unzip.location>${basedir}/target/jboss-as-${jboss.version}</jboss.unzip.location>
-
     <clean.db>true</clean.db>
-
     <rhq.internal>false</rhq.internal>
   </properties>
 
@@ -103,11 +99,6 @@
       <version>${project.version}</version>
     </dependency>
 
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>rhq-container-lib</artifactId>
-      <version>${project.version}</version>
-    </dependency>
    
     <dependency>
       <groupId>com.googlecode.java-diff-utils</groupId>
@@ -124,7 +115,12 @@
   <dependency>
     <groupId>org.jboss.as</groupId>
     <artifactId>jboss-as-server</artifactId>
-    <version>${jboss.version}</version>
+    <scope>provided</scope> <!-- provided by AS7 -->
+  </dependency>
+
+  <dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-naming</artifactId>
     <scope>provided</scope> <!-- provided by AS7 -->
   </dependency>
 
@@ -469,6 +465,16 @@
         <configuration>
           <ejbVersion>3.0</ejbVersion>
           <generateClient>true</generateClient>
+          <!-- We shoudn't need Class-Path manifest entry, at least when deployed in AS
+               but we might need it for CLI. If we don't need the manifest entry in CLI,
+               then we should uncomment this because we get annoying errors in AS7 logs
+               with the manifest entry.
+          <archive>
+            <manifest>
+               <addClasspath>false</addClasspath>
+            </manifest>
+          </archive>
+          -->
         </configuration>
       </plugin>
 
@@ -527,81 +533,6 @@
               <goal>run</goal>
             </goals>
           </execution>
-
-            <execution>
-              <id>prepare AS container</id>
-              <phase>process-test-resources</phase>
-              <configuration>
-                <target>
-                    <echo>Unzipping JBossAS ${jboss.version} found at ${jboss.zip}</echo>
-                    <unzip src="${jboss.zip}" dest="${jboss.unzip.location}/.." />
-                    <echo>JBossAS ${jboss.version} should now be at: ${jboss.unzip.location}</echo>
-                    <property name="jboss.conf" location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
-                    <echo>Will now add test configuration to JBossAS config file: ${jboss.conf}</echo>
-                    <replace file="${jboss.conf}">
-                      <replacefilter>
-                        <replacetoken>&lt;/drivers></replacetoken>
-                        <replacevalue><![CDATA[
-                    <!-- FOR RHQ TESTING -->
-                    <driver name="postgres" module="org.rhq.postgres">
-                        <xa-datasource-class>org.postgresql.xa.PGXADataSource</xa-datasource-class>
-                    </driver>
-                    <driver name="oracle" module="org.rhq.oracle">
-                        <xa-datasource-class>oracle.jdbc.xa.client.OracleXADataSource</xa-datasource-class>
-                    </driver>
-                </drivers>]]></replacevalue>
-                      </replacefilter>
-                      <replacefilter>
-                        <replacetoken>&lt;/security-domains></replacetoken>
-                        <replacevalue><![CDATA[
-                <!-- FOR RHQ TESTING -->
-                <security-domain name="RHQDSSecurityDomain" cache-type="default">
-                    <authentication>
-                        <login-module code="SecureIdentity" flag="required">
-                            <module-option name="username" value="rhqadmin"/>
-                            <module-option name="password" value="1eeb2f255e832171df8592078de921bc"/>
-                        </login-module>
-                    </authentication>
-                </security-domain>
-            </security-domains>]]></replacevalue>
-                      </replacefilter>
-                    </replace>
-
-                    <property name="jboss.modules.dir" location="${jboss.unzip.location}/modules" />
-                    <echo>Adding JDBC modules to ${jboss.modules.dir} ...</echo>
-                    <copy file="${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar"
-                          toDir="${jboss.modules.dir}/org/rhq/oracle/main" failonerror="false" verbose="true" />
-                    <echo file="${jboss.modules.dir}/org/rhq/oracle/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
-<module xmlns="urn:jboss:module:1.1" name="org.rhq.oracle">
-    <resources>
-        <resource-root path="ojdbc6-${ojdbc6.version}.jar"/>
-    </resources>
-    <dependencies>
-        <module name="javax.api"/>
-        <module name="javax.transaction.api"/>
-    </dependencies>
-</module>
-]]></echo>
-                    <copy file="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"
-                          toDir="${jboss.modules.dir}/org/rhq/postgres/main" verbose="true" />
-                    <echo file="${jboss.modules.dir}/org/rhq/postgres/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
-<module xmlns="urn:jboss:module:1.1" name="org.rhq.postgres">
-    <resources>
-        <resource-root path="postgresql-${postgresql.version}.jar"/>
-    </resources>
-    <dependencies>
-        <module name="javax.api"/>
-        <module name="javax.transaction.api"/>
-    </dependencies>
-</module>
-]]></echo>
-
-                </target>
-              </configuration>
-              <goals>
-                <goal>run</goal>
-              </goals>
-            </execution>
 
         </executions>
       </plugin>
@@ -796,7 +727,7 @@
         <rhq.rootDir>../../../..</rhq.rootDir>
         <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
         <rhq.deploymentName>${project.build.finalName}-ejb3.jar</rhq.deploymentName>
-        <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.earName}/${rhq.deploymentName}</rhq.deploymentDir>
+        <rhq.deploymentDir>${rhq.containerDir}/${rhq.earDeployDir}/${rhq.deploymentName}</rhq.deploymentDir>
       </properties>
 
       <build>
@@ -1138,6 +1069,31 @@
         </plugins>
       </build>
     </profile>
+
+    <profile>
+      <id>signature-check</id>
+      <activation>
+        <property>
+          <name>signature-check-base-version</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>clirr-maven-plugin</artifactId>
+            <version>${clirr.version}</version>
+            <configuration>
+              <includes>
+                <include>**/*Remote</include>
+                <include>**/ServerVersion</include>
+              </includes>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    
   </profiles>
 
   <reporting>

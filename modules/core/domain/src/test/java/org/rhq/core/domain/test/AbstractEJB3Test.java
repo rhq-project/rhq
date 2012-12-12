@@ -1,6 +1,7 @@
 package org.rhq.core.domain.test;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -16,6 +17,7 @@ import javax.persistence.PersistenceContext;
 import javax.transaction.TransactionManager;
 
 import org.testng.AssertJUnit;
+import org.testng.ITestResult;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
@@ -58,23 +60,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
     @Deployment
     protected static EnterpriseArchive getBaseDeployment() {
 
-        // depending on the db in use, set up the necessary datasource 
-        String dialect = System.getProperty("hibernate.dialect");
-        if (dialect == null) {
-            System.out.println("!!! hibernate.dialect is not set! Assuming you want to test on postgres");
-            dialect = "postgres";
-        }
-
-        String dataSourceXml;
-        if (dialect.toLowerCase().contains("postgres")) {
-            dataSourceXml = "jbossas-postgres-ds.xml";
-        } else {
-            dataSourceXml = "jbossas-oracle-ds.xml";
-        }
-
         // Create the domain jar which will subsequently be packaged in the ear deployment   
         JavaArchive ejbJar = ShrinkWrap.create(JavaArchive.class, "rhq-core-domain-ejb3.jar") //
-            .addAsManifestResource(dataSourceXml) // the datasource
             .addAsManifestResource("ejb-jar.xml") // the empty ejb jar descriptor
             .addAsManifestResource("test-persistence.xml", "persistence.xml") //  the test persistence context            
             .addAsManifestResource(EmptyAsset.INSTANCE, ArchivePaths.create("beans.xml") // add CDI injection (needed by arquillian injection)
@@ -213,12 +200,20 @@ public abstract class AbstractEJB3Test extends Arquillian {
      * and {@link #inContainer()} call.
      */
     @BeforeMethod
-    protected void __beforeMethod() throws Exception {
+    protected void __beforeMethod(Method method) throws Throwable {
         // Note that Arquillian calls the testng BeforeMethod twice (as of 1.0.2.Final, once 
         // out of container and once in container. In general the expectation is to execute it 
         // one time, and doing it in container allows for the expected injections and context.
         if (inContainer()) {
-            beforeMethod();
+            try {
+                beforeMethod();
+
+            } catch (Throwable t) {
+                // Arquillian is eating these, make sure they show up in some way
+                System.out.println("BEFORE METHOD FAILURE, TEST DID NOT RUN!!! [" + method.getName() + "]");
+                t.printStackTrace();
+                throw t;
+            }
         }
     }
 
@@ -229,9 +224,18 @@ public abstract class AbstractEJB3Test extends Arquillian {
      * Instead, override {@link #afterMethod()}.
      */
     @AfterMethod(alwaysRun = true)
-    protected void __afterMethod() throws Exception {
-        // currently no special handling necessary
-        afterMethod();
+    protected void __afterMethod(ITestResult result, Method method) throws Throwable {
+        try {
+            if (inContainer()) {
+                afterMethod();
+            }
+        } catch (Throwable t) {
+            System.out
+                .println("AFTER METHOD FAILURE, TEST CLEAN UP FAILED!!! MAY NEED TO CLEAN DB BEFORE RUNNING MORE TESTS! ["
+                    + method.getName() + "]");
+            t.printStackTrace();
+            throw t;
+        }
     }
 
     protected boolean inContainer() {

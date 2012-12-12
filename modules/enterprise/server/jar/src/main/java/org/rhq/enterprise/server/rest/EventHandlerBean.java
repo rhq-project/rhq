@@ -32,11 +32,25 @@ import javax.interceptor.Interceptors;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+
+import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiOperation;
+import com.wordnik.swagger.annotations.ApiParam;
+
+import org.jboss.resteasy.annotations.GZIP;
 
 import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.event.Event;
@@ -55,9 +69,12 @@ import org.rhq.enterprise.server.rest.domain.EventSourceRest;
  * Handle event related things
  * @author Heiko W. Rupp
  */
+@Path("/event")
+@Api("Api that deals with Events (e.g snmp traps, logfile lines)")
+@Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
 @Stateless
 @Interceptors(SetCallerInterceptor.class)
-public class EventHandlerBean extends AbstractRestBean implements EventHandlerLocal {
+public class EventHandlerBean extends AbstractRestBean {
 
     @EJB
     EventManagerLocal eventManager;
@@ -65,9 +82,12 @@ public class EventHandlerBean extends AbstractRestBean implements EventHandlerLo
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     EntityManager em;
 
-    @Override
-    public Response listEventSourcesForResource( int resourceId, Request request,
-                                           HttpHeaders headers) {
+    @GET
+    @Path("/{id}/sources")
+    @ApiOperation(value = "List the defined event sources for the resource", responseClass = "EventSourceRest", multiValueResponse = true)
+    public Response listEventSourcesForResource(@ApiParam("id of the resource") @PathParam("id") int resourceId,
+                                                @Context Request request,
+                                                @Context HttpHeaders headers) {
 
         Resource res = fetchResource(resourceId);
         Set<EventSource> eventSources = res.getEventSources();
@@ -91,8 +111,10 @@ public class EventHandlerBean extends AbstractRestBean implements EventHandlerLo
         return builder.build();
     }
 
-    @Override
-    public EventSourceRest getEventSource(int sourceId) {
+    @GET
+    @Path("/source/{id}")
+    @ApiOperation(value = "Retrieve the event source with the passed id", responseClass = "EventSourceRest")
+    public EventSourceRest getEventSource(@ApiParam("Id of the source to retrieve") @PathParam("id") int sourceId) {
 
         EventSource source = findEventSourceById(sourceId);
         EventSourceRest esr = convertEventSource(source);
@@ -100,7 +122,14 @@ public class EventHandlerBean extends AbstractRestBean implements EventHandlerLo
         return esr;
     }
 
-    public EventSourceRest addEventSource(int resourceId, EventSourceRest esr) {
+    @POST
+    @Path("/{id}/sources")
+    @ApiOperation("Add a new event source for a resource. This can e.g. be a different logfile. " +
+            "The source.name must match an existing definition fo this resource. " +
+            "If an event source for the definition name and resource with the same location already exists, no new source is created. " +
+            "NOTE: An Event source added this way will not sow up in the connection properties.")
+    public EventSourceRest addEventSource(@ApiParam("id of the resource") @PathParam("id") int resourceId,
+                                          EventSourceRest esr) {
 
         Resource resource = fetchResource(resourceId);
         ResourceType rt = resource.getResourceType();
@@ -136,8 +165,10 @@ public class EventHandlerBean extends AbstractRestBean implements EventHandlerLo
         return result;
     }
 
-    @Override
-    public Response deleteEventSource(int sourceId) {
+    @DELETE
+    @Path("/source/{id}")
+    @ApiOperation(value = "Delete the event source with the passed id")
+    public Response deleteEventSource(@ApiParam("Id of the source to delete") @PathParam("id")  int sourceId) {
 
         EventSource source = findEventSourceById(sourceId);
         em.remove(source); // We have a cascade delete on the events TODO make operation async ?
@@ -145,10 +176,17 @@ public class EventHandlerBean extends AbstractRestBean implements EventHandlerLo
         return Response.ok().build();
     }
 
-    @Override
-    public Response getEventsForSource(int sourceId, long startTime,
-                                       long endTime, String severity, Request request,
-                                       HttpHeaders headers) {
+    @GET @GZIP
+        @Path("/source/{id}/events")
+        @ApiOperation(value = "List the events for the event source with the passed id. If no time range is given, the last 200 entries will be displayed",
+                responseClass = "EventRest", multiValueResponse = true)
+    public Response getEventsForSource(@PathParam("id") int sourceId,
+                                       @QueryParam("startTime") long startTime,
+                                       @QueryParam("endTime")  long endTime,
+                                       @ApiParam(value="Select the severity to display. Default is to show all",
+                                                                       allowableValues = "DEBUG, INFO, WARN, ERROR, FATAL") @QueryParam("severity") String severity,
+                                       @Context Request request,
+                                       @Context HttpHeaders headers) {
 
         EventSource source = findEventSourceById(sourceId);
 
@@ -172,11 +210,16 @@ public class EventHandlerBean extends AbstractRestBean implements EventHandlerLo
     }
 
 
-    @Override
-    public Response getEventsForResource(int resourceId,
-                                         long startTime,
-                                         long endTime, String severity, Request request,
-                                         HttpHeaders headers) {
+    @GET @GZIP
+    @Path("/{id}/events")
+    @ApiOperation(value="List the events for the resource with the passed id. If no time range is given, the last 200 entries will be displayed",
+            responseClass = "EventRest", multiValueResponse = true)
+    public Response getEventsForResource(@PathParam("id")  int resourceId,
+                                         @QueryParam("startTime") long startTime,
+                                         @QueryParam("endTime")  long endTime,
+                                         @QueryParam("severity") String severity,
+                                         @Context Request request,
+                                         @Context HttpHeaders headers) {
 
         EventCriteria criteria = new EventCriteria();
         criteria.addFilterResourceId(resourceId);
@@ -198,7 +241,11 @@ public class EventHandlerBean extends AbstractRestBean implements EventHandlerLo
 
     }
 
-    public Response addEventsToSource(int sourceId, List<EventRest> eventRest) {
+    @POST
+    @Path("/source/{id}/events")
+    @ApiOperation("Submit multiple events for one given event source; the event source in the passed Events is ignored.")
+    public Response addEventsToSource(@ApiParam("Id of the source to add data to")  @PathParam("id") int sourceId,
+                                      List<EventRest> eventRest) {
 
         EventSource source = findEventSourceById(sourceId);
         Map<EventSource,Set<Event>> eventMap = new HashMap<EventSource, Set<Event>>();

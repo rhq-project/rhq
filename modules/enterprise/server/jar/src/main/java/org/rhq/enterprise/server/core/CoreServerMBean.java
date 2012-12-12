@@ -21,7 +21,10 @@ package org.rhq.enterprise.server.core;
 import java.io.File;
 import java.util.Date;
 
+import javax.management.ObjectName;
+
 import org.rhq.core.domain.common.ProductInfo;
+import org.rhq.core.util.ObjectNameFactory;
 
 /**
  * An MBean that exposes various global attributes of the underlying AS Server (version, uptime, etc.).
@@ -30,7 +33,7 @@ public interface CoreServerMBean {
     /**
      * The name of this MBean when deployed.
      */
-    String OBJECT_NAME = "rhq:service=CoreServer";
+    ObjectName OBJECT_NAME = ObjectNameFactory.create("rhq:service=CoreServer");
 
     /**
      * Returns the version of the core RHQ server.
@@ -81,6 +84,13 @@ public interface CoreServerMBean {
      * @return jboss server home directory
      */
     File getJBossServerTempDir();
+
+    /**
+     * Where the main app EAR is located.
+     *
+     * @return the ear deployment directory
+     */
+    File getEarDeploymentDir();
 
     /**
      * Product information - the product name, homepage URL, docs URL, etc.

@@ -25,8 +25,8 @@ import java.util.Map;
 import java.util.Random;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.server.AllowRhqServerInternalsAccessPermission;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.jndi.AllowRhqServerInternalsAccessPermission;
 
 /**
  * This is the JON Server's own session ID generator. It is outside any container-provided session mechanism. Its sole
@@ -45,7 +45,8 @@ import org.rhq.jndi.AllowRhqServerInternalsAccessPermission;
  */
 public final class SessionManager {
     
-    private static final AllowRhqServerInternalsAccessPermission ACCESS_PERMISSION = new AllowRhqServerInternalsAccessPermission();
+    // TODO JNDI
+    // private static final AllowRhqServerInternalsAccessPermission ACCESS_PERMISSION = new AllowRhqServerInternalsAccessPermission();
     
     /**
      * Our source for random session IDs.
@@ -277,7 +278,8 @@ public final class SessionManager {
     }
     
     private static void checkPermission() {
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) sm.checkPermission(ACCESS_PERMISSION);
+        // TODO JNDI
+        // SecurityManager sm = System.getSecurityManager();
+        // if (sm != null) sm.checkPermission(ACCESS_PERMISSION);
     }
 }

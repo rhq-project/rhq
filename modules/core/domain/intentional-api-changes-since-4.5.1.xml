@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<differences>
+    <difference>
+        <className>org/rhq/core/domain/configuration/definition/PropertyDefinitionMap</className>
+        <differenceType>7006</differenceType><!-- method return type changed -->
+        <method>java.util.List getPropertyDefinitions()</method>
+        <to>java.util.Map</to>
+        <justification>
+            We are reverting back to the previous signature for this method, correcting the prior change
+            that broke API compatibility.
+        </justification>
+    </difference>
+    <difference>
+        <className>org/rhq/core/domain/criteria/MeasurementScheduleCriteria</className>
+        <differenceType>6011</differenceType><!-- removed constant field -->
+        <field>SORT_FIELD_*</field>
+        <justification>
+            A few sort specifiers that were actually in error and if used would have produced a downstream error.
+        </justification>
+    </difference>            
+</differences>

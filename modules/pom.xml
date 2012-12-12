@@ -180,7 +180,6 @@
                <module>enterprise/comm</module>
                
                <!-- These are needed for the JNDI intergration tests -->
-               <module>enterprise/server/container-lib</module>
                <module>enterprise/server/xml-schemas</module>
                <module>enterprise/server/safe-invoker</module>
                <module>enterprise/server/jar</module>

@@ -1114,9 +1114,9 @@
         <c:simple-property name="path" default="deployment" readOnly="true"/>
       </plugin-configuration>
 
-      <operation name="promote" displayName="Deploy to Server-Group" description="Deploy this deployment to a server group">
+      <operation name="promote" displayName="Assign to Server-Group" description="Assigns this deployment to one or all server group(s)">
         <parameters>
-          <c:simple-property name="server-group" required="true" description="Server group to deploy to" type="string">
+          <c:simple-property name="server-group" required="true" description="Server group to assign to" type="string">
             <c:property-options>
               <c:option value="__all" name="All"/>
             </c:property-options>

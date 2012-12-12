@@ -318,6 +318,157 @@
                 <goal>run</goal>
               </goals>
             </execution>
+            
+            <execution>
+              <id>prepare Postgres datasource</id>
+              <phase>process-test-resources</phase>
+              <configuration>
+                <skip>${skip.postgres}</skip>
+                <target>
+                  <property name="jboss.conf" location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
+                  <echo>Will now add test configuration datasource to JBossAS config file: ${jboss.conf}</echo>
+                  <replace file="${jboss.conf}">
+  
+                    <replacefilter>
+                      <replacetoken>&lt;/datasource></replacetoken>
+                      <replacevalue><![CDATA[
+                  </datasource>                    
+                  <!-- FOR RHQ TESTING -->
+                  <datasource jta="false" jndi-name="java:jboss/datasources/NoTxRHQDS" pool-name="NoTxRHQDS" enabled="true" use-java-context="true">
+                      <connection-url>${rhq.test.ds.connection-url}</connection-url>
+                      <connection-property name="char.encoding">UTF-8</connection-property>
+                      <driver>postgres</driver>
+                      <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
+                      <pool>
+                          <min-pool-size>2</min-pool-size>
+                          <max-pool-size>5</max-pool-size>
+                      </pool>
+                      <security>
+                          <security-domain>RHQDSSecurityDomain</security-domain>
+                      </security>
+                      <validation>
+                          <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker"/>
+                          <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter"/>
+                      </validation>
+                      <timeout>
+                          <blocking-timeout-millis>30000</blocking-timeout-millis>
+                          <idle-timeout-minutes>15</idle-timeout-minutes>
+                      </timeout>
+                      <statement>
+                          <prepared-statement-cache-size>75</prepared-statement-cache-size>
+                      </statement>
+                  </datasource>
+                  <xa-datasource jta="true" jndi-name="java:jboss/datasources/RHQDS" pool-name="RHQDS" enabled="true" use-java-context="true">
+                      <xa-datasource-property name="DatabaseName">${rhq.test.ds.db-name}</xa-datasource-property>
+                      <xa-datasource-property name="PortNumber">${rhq.test.ds.port}</xa-datasource-property>
+                      <xa-datasource-property name="ServerName">${rhq.test.ds.server-name}</xa-datasource-property>
+                      <driver>postgres</driver>
+                      <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
+                      <xa-pool>
+                          <min-pool-size>5</min-pool-size>
+                          <max-pool-size>50</max-pool-size>
+                      </xa-pool>
+                      <security>
+                          <security-domain>RHQDSSecurityDomain</security-domain>
+                      </security>
+                      <validation>
+                          <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker"/>
+                          <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter"/>
+                      </validation>
+                      <timeout>
+                          <blocking-timeout-millis>30000</blocking-timeout-millis>
+                          <idle-timeout-minutes>15</idle-timeout-minutes>
+                      </timeout>
+                      <statement>
+                          <prepared-statement-cache-size>75</prepared-statement-cache-size>
+                      </statement>
+                  </xa-datasource>]]></replacevalue>
+                    </replacefilter>
+  
+                  </replace>
+  
+                </target>
+              </configuration>
+              <goals>
+                <goal>run</goal>
+              </goals>
+            </execution>
+            
+            <execution>
+              <id>prepare Oracle datasource</id>
+              <phase>process-test-resources</phase>
+              <configuration>
+                <skip>${skip.oracle}</skip>
+                <target>
+                  <property name="jboss.conf" location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
+                  <echo>Will now add test configuration datasource to JBossAS config file: ${jboss.conf}</echo>
+                  <replace file="${jboss.conf}">
+  
+                    <replacefilter>
+                      <replacetoken>&lt;/datasource></replacetoken>
+                      <replacevalue><![CDATA[
+                  </datasource>                    
+                  <!-- FOR RHQ TESTING -->
+                  <datasource jta="false" jndi-name="java:jboss/datasources/NoTxRHQDS" pool-name="NoTxRHQDS" enabled="true" use-java-context="true">
+                      <connection-url>${rhq.test.ds.connection-url}</connection-url>
+                      <connection-property name="char.encoding">UTF-8</connection-property>
+                      <driver>oracle</driver>
+                      <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
+                      <pool>
+                          <min-pool-size>2</min-pool-size>
+                          <max-pool-size>5</max-pool-size>
+                      </pool>
+                      <security>
+                          <security-domain>RHQDSSecurityDomain</security-domain>
+                      </security>
+                      <validation>
+                          <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker" />
+                          <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker" />
+                          <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter" />
+                      </validation>
+                      <timeout>
+                          <blocking-timeout-millis>30000</blocking-timeout-millis>
+                          <idle-timeout-minutes>15</idle-timeout-minutes>
+                      </timeout>
+                      <statement>
+                          <prepared-statement-cache-size>75</prepared-statement-cache-size>
+                      </statement>
+                  </datasource>
+                  <xa-datasource jta="true" jndi-name="java:jboss/datasources/RHQDS" pool-name="RHQDS" enabled="true" use-java-context="true">
+                      <xa-datasource-property name="URL">${rhq.test.ds.connection-url}</xa-datasource-property>
+                      <driver>oracle</driver>
+                      <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
+                      <xa-pool>
+                          <min-pool-size>5</min-pool-size>
+                          <max-pool-size>50</max-pool-size>
+                      </xa-pool>
+                      <security>
+                          <security-domain>RHQDSSecurityDomain</security-domain>
+                      </security>
+                      <validation>
+                          <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker" />
+                          <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker" />
+                          <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter" />
+                      </validation>
+                      <timeout>
+                          <blocking-timeout-millis>30000</blocking-timeout-millis>
+                          <idle-timeout-minutes>15</idle-timeout-minutes>
+                      </timeout>
+                      <statement>
+                          <prepared-statement-cache-size>75</prepared-statement-cache-size>
+                      </statement>
+                  </xa-datasource>]]></replacevalue>
+                    </replacefilter>
+  
+                  </replace>
+  
+                </target>
+              </configuration>
+              <goals>
+                <goal>run</goal>
+              </goals>
+            </execution>
+            
           </executions>
         </plugin>
 
@@ -407,7 +558,7 @@
             <rhq.rootDir>../../..</rhq.rootDir>
             <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
             <rhq.deploymentName>${project.build.finalName}.jar</rhq.deploymentName>
-            <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.earName}/${rhq.deploymentName}</rhq.deploymentDir>
+            <rhq.deploymentDir>${rhq.containerDir}/${rhq.earDeployDir}/${rhq.deploymentName}</rhq.deploymentDir>
          </properties>
 
          <build>
@@ -513,6 +664,38 @@
             </plugins>
          </build>
       </profile>
+      
+      <profile>
+        <id>postgres</id>
+        <activation>
+          <activeByDefault>true</activeByDefault>
+        </activation>
+        <properties>
+          <skip.postgres>false</skip.postgres>
+          <skip.oracle>true</skip.oracle>
+        </properties>
+      </profile>
+  
+      <profile>
+        <id>oracle</id>
+        <properties>
+          <skip.postgres>true</skip.postgres>
+          <skip.oracle>false</skip.oracle>
+        </properties>
+      </profile>
+  
+      <profile>
+        <id>itest.debug</id>
+        <activation>
+          <property>
+            <name>itest.debug</name>
+          </property>
+        </activation>
+        <properties>
+          <jboss.vm.args.debug>-Xrunjdwp:transport=dt_socket,address=8798,server=y,suspend=y</jboss.vm.args.debug>
+        </properties>
+      </profile>
+      
    </profiles>
 
 

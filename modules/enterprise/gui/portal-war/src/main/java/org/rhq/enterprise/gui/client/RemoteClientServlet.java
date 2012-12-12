@@ -20,8 +20,6 @@ package org.rhq.enterprise.gui.client;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 
 import javax.servlet.ServletException;
@@ -33,9 +31,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.cloud.Server.OperationMode;
-import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.stream.StreamUtil;
-import org.rhq.enterprise.server.core.CoreServerMBean;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -46,10 +42,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class RemoteClientServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
-
-    private static final String RHQ_SERVER_VERSION = "rhq-server.version";
-    private static final String RHQ_SERVER_BUILD_NUMBER = "rhq-server.build-number";
-    private static final String RHQ_CLIENT_MD5 = "rhq-client.md5";
 
     // the system property that defines how many concurrent downloads we will allow
     private static String SYSPROP_CLIENT_DOWNLOADS_LIMIT = "rhq.server.client-downloads-limit";
@@ -67,29 +59,6 @@ public class RemoteClientServlet extends HttpServlet {
     private static int numActiveDownloads = 0;
 
     private Log log = LogFactory.getLog(this.getClass());
-
-    @Override
-    public void init() throws ServletException {
-        log.info("Starting the RHQ remote client servlet...");
-
-        // make sure we have a binary distro file; log its location
-        try {
-            log.info("Remote Client Binary File: " + getRemoteClientZip());
-        } catch (Throwable t) {
-            log.error("Remote client is not available for deployment - cause: " + t);
-            return;
-        }
-
-        // make sure we create a version file if we have to by getting the version file now
-        try {
-            File versionFile = getVersionFile();
-
-            // log the version info - this also makes sure we can read it back in
-            log.debug(versionFile + ":\n" + new String(StreamUtil.slurp(new FileInputStream(versionFile))));
-        } catch (Throwable t) {
-            log.error("Cannot determine the remote client version information.", t);
-        }
-    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -133,7 +102,7 @@ public class RemoteClientServlet extends HttpServlet {
         }
 
         try {
-            File zip = getRemoteClientZip();
+            File zip = LookupUtil.getRemoteClientManager().getRemoteClientBinaryFile();
             if (!zip.exists()) {
                 disableBrowserCache(resp);
                 resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Remote Client binary does not exist: "
@@ -161,29 +130,9 @@ public class RemoteClientServlet extends HttpServlet {
         return;
     }
 
-    private File getRemoteClientZip() throws Exception {
-        File dir = getDownloadDir();
-        for (File file : dir.listFiles()) {
-            if (file.getName().endsWith(".zip")) {
-                return file;
-            }
-        }
-
-        throw new FileNotFoundException("Missing remote client binary in [" + dir + "]");
-    }
-
-    private File getDownloadDir() throws Exception {
-        File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
-        File downloadDir = new File(serverHomeDir, "deployments/rhq.ear/rhq-downloads/rhq-client");
-        if (!downloadDir.exists()) {
-            throw new FileNotFoundException("Missing remote client download directory at [" + downloadDir + "]");
-        }
-        return downloadDir;
-    }
-
     private void getVersion(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
-            File versionFile = getVersionFile();
+            File versionFile = LookupUtil.getRemoteClientManager().getRemoteClientVersionFile();
             resp.setContentType("text/plain");
             resp.setDateHeader("Last-Modified", versionFile.lastModified());
 
@@ -233,36 +182,6 @@ public class RemoteClientServlet extends HttpServlet {
         disableBrowserCache(resp);
         resp.setHeader("Retry-After", "30");
         resp.sendError(ERROR_CODE_TOO_MANY_DOWNLOADS, "Maximum limit exceeded - download client later");
-    }
-
-    private File getVersionFile() throws Exception {
-        File versionFile = new File(getDownloadDir(), "rhq-client-version.properties");
-        if (!versionFile.exists()) {
-            // we do not have the version properties file yet, let's extract some info and create one
-            StringBuilder serverVersionInfo = new StringBuilder();
-
-            CoreServerMBean coreServer = LookupUtil.getCoreServer();
-            serverVersionInfo.append(RHQ_SERVER_VERSION + '=').append(coreServer.getVersion()).append('\n');
-            serverVersionInfo.append(RHQ_SERVER_BUILD_NUMBER + '=').append(coreServer.getBuildNumber()).append('\n');
-
-            // calculate the MD5 of the client zip
-            File zip = getRemoteClientZip();
-            String md5Property = RHQ_CLIENT_MD5 + '=' + MessageDigestGenerator.getDigestString(zip) + '\n';
-
-            // now write the server version info in our internal version file our servlet will use
-            FileOutputStream versionFileOutputStream = new FileOutputStream(versionFile);
-            try {
-                versionFileOutputStream.write(serverVersionInfo.toString().getBytes());
-                versionFileOutputStream.write(md5Property.getBytes());
-            } finally {
-                try {
-                    versionFileOutputStream.close();
-                } catch (Exception ignore) {
-                }
-            }
-        }
-
-        return versionFile;
     }
 
     private boolean isServerAcceptingRequests() {

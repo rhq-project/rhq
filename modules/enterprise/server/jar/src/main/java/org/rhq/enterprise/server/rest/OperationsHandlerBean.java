@@ -27,10 +27,17 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.CacheControl;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.HttpHeaders;
@@ -43,6 +50,9 @@ import javax.ws.rs.core.UriInfo;
 import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
 
+import org.jboss.resteasy.annotations.GZIP;
+import org.jboss.resteasy.annotations.cache.Cache;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -50,7 +60,6 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
-import org.rhq.core.domain.operation.HistoryJobId;
 import org.rhq.core.domain.operation.JobId;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
@@ -71,9 +80,11 @@ import org.rhq.enterprise.server.rest.domain.SimplePropDef;
  * Deal with operations
  * @author Heiko W. Rupp
  */
+@Path("/operation")
+@Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
 @Stateless
 @Interceptors(SetCallerInterceptor.class)
-public class OperationsHandlerBean extends AbstractRestBean implements OperationsHandlerLocal {
+public class OperationsHandlerBean extends AbstractRestBean  {
 
     @EJB
     OperationManagerLocal opsManager;
@@ -81,11 +92,16 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
     @EJB
     ResourceManagerLocal resourceManager;
 
-    @Override
-    public Response getOperationDefinition(int definitionId,
-                                           Integer resourceId,
-                                           UriInfo uriInfo,
-                                           Request request, HttpHeaders httpHeaders) {
+    @GET
+    @Path("definition/{id}")
+    @Cache(maxAge = 1200)
+    @ApiOperation("Retrieve a single operation definition by its id")
+    public Response getOperationDefinition(
+            @ApiParam("Id of the definition to retrieve") @PathParam("id") int definitionId,
+            @ApiParam("Id of a resource that supports this operation") @QueryParam("resourceId") Integer resourceId,
+               @Context UriInfo uriInfo,
+               @Context Request request,
+               @Context HttpHeaders httpHeaders) {
 
 
 
@@ -148,8 +164,16 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
         }
     }
 
-    @Override
-    public Response getOperationDefinitions(Integer resourceId, UriInfo uriInfo, Request request, HttpHeaders httpHeaders) {
+    @GZIP
+    @GET
+    @Path("definitions")
+    @Cache(maxAge = 1200)
+    @ApiOperation("List all operation definitions for a resource")
+    public Response getOperationDefinitions(
+            @ApiParam(value = "Id of the resource",required = true) @QueryParam("resourceId") Integer resourceId,
+                                            @Context UriInfo uriInfo,
+                                            @Context Request request,
+                                            @Context HttpHeaders httpHeaders) {
 
         if (resourceId == null)
             throw new ParameterMissingException("resourceId");
@@ -193,8 +217,13 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
 
     }
 
-    @Override
-    public Response createOperation(int definitionId, Integer resourceId, UriInfo uriInfo) {
+    @POST
+    @Path("definition/{id}")
+    @ApiOperation("Create a new (draft) operation from the passed definition id for the passed resource")
+    public Response createOperation(
+            @ApiParam("Id of the definition") @PathParam("id") int definitionId,
+            @ApiParam(value = "Id of the resource", required = true) @QueryParam("resourceId") Integer resourceId,
+                                    @Context UriInfo uriInfo) {
 
         if (resourceId == null)
             throw new ParameterMissingException("resourceId");
@@ -232,8 +261,10 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
 
     }
 
-    @Override
-    public Response getOperation(int operationId) {
+    @GET
+    @Path("{id}")
+    @ApiOperation("Return a (draft) operation")
+    public Response getOperation(@ApiParam("Id of the operation to retrieve") @PathParam("id") int operationId) {
         OperationRest op = getFromCache(operationId,OperationRest.class);
         if (op==null)
             throw new StuffNotFoundException("Operation with id " + operationId);
@@ -241,8 +272,12 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
         return Response.ok(op).build();
     }
 
-    @Override
-    public Response updateOperation(int operationId, OperationRest operation, UriInfo uriInfo) {
+    @PUT
+    @Path("{id}")
+    @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
+    @ApiOperation("Update a (draft) operation. If the state is set to 'ready', the operation will be scheduled")
+    public Response updateOperation(@ApiParam("Id of the operation to update") @PathParam("id") int operationId,
+                OperationRest operation, @Context UriInfo uriInfo) {
 
         if (!operation.isReadyToSubmit() && operation.getDefinitionId()>0 && !operation.getName().isEmpty()) {
             // TODO check all the required parameters for presence before allowing to submit
@@ -280,8 +315,10 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
         return builder.build();
     }
 
-    @Override
-    public Response cancelOperation(int operationId) {
+    @DELETE
+    @Path("{id}")
+    @ApiOperation("Delete a (draft) operation")
+    public Response cancelOperation(@ApiParam("Id of the operation to remove") @PathParam("id") int operationId) {
 
         log.info("Cancel called");
 
@@ -290,8 +327,16 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
         return null;  // TODO: Customise this generated block
     }
 
-    @Override
-    public Response outcome(String jobName, UriInfo uriInfo, Request request, HttpHeaders httpHeaders) {
+    @GZIP
+    @GET
+    @Path("history/{id}")
+    @ApiOperation("Return the outcome of the scheduled operation")
+    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
+    public Response outcome(
+            @ApiParam("Name of the submitted job.") @PathParam("id") String jobName,
+            @Context UriInfo uriInfo,
+            @Context Request request,
+            @Context HttpHeaders httpHeaders) {
 
         MediaType mediaType = httpHeaders.getAcceptableMediaTypes().get(0);
 
@@ -325,7 +370,16 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
 
     }
 
-    public Response listHistory(int resourceId, UriInfo uriInfo, Request request, HttpHeaders httpHeaders) {
+    @GZIP
+    @GET
+    @Path("history")
+    @ApiOperation("Return the outcome of the executed operations for a resource")
+    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
+    public Response listHistory(
+            @ApiParam("Id of a resource to limit to") @QueryParam("resourceId") int resourceId,
+            @Context UriInfo uriInfo,
+            @Context Request request,
+            @Context HttpHeaders httpHeaders) {
 
         ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
         if (resourceId>0)
@@ -352,8 +406,10 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
         return builder.build();
     }
 
-    @Override
-    public Response deleteOperationHistoryItem(String jobName) {
+    @DELETE
+    @Path("history/{id}")
+    @ApiOperation(value = "Delete the operation history item with the passed id")
+    public Response deleteOperationHistoryItem(@ApiParam("Name fo the submitted job") @PathParam("id") String jobName) {
 
         ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
         criteria.addFilterJobId(new JobId(jobName));

@@ -196,6 +196,7 @@
            <module>virt</module>
            <module>kickstart</module>
            <module>pattern-generator</module>
+           <module>cassandra</module>
         </modules>
     </profile>
 

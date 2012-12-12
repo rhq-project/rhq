@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -46,7 +46,7 @@ import static junit.framework.Assert.assertTrue;
 public class ResourcesTest {
 
     @Rule
-    public Destination destination = new Destination("http://" + System.getProperty("rest.server","localhost") + ":7080/rest/1");
+    public Destination destination = new Destination("http://" + System.getProperty("rest.server","localhost") + ":7080/rest");
 
     @Context
     private Response response;

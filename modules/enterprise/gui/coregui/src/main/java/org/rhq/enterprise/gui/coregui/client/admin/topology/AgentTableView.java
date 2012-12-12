@@ -124,7 +124,7 @@ public class AgentTableView extends TableSection<AgentNodeDatasource> implements
         }
 
         if (isAffinityGroupId)
-            addTableAction(extendLocatorId("editGroupAgents"), "i18nEditGroupAgents",
+            addTableAction(extendLocatorId("editGroupAgents"), MSG.view_groupInventoryMembers_button_updateMembership(),
                 new AuthorizedTableAction(this, TableActionEnablement.ALWAYS, Permission.MANAGE_SETTINGS) {
                     public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                         SC.say("working..");

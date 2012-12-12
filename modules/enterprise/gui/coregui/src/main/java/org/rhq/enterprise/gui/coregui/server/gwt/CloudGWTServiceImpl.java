@@ -258,4 +258,60 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
         }
     }
 
+    @Override
+    public void addServersToGroup(int affinityGroupId, Integer[] serverIds) throws RuntimeException {
+        try {
+            affinityGroupManager.addServersToGroup(getSessionSubject(), affinityGroupId, serverIds);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public void removeServersFromGroup(Integer[] serverIds) throws RuntimeException {
+        try {
+            affinityGroupManager.removeServersFromGroup(getSessionSubject(), serverIds);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public void addAgentsToGroup(int affinityGroupId, Integer[] agentIds) throws RuntimeException {
+        try {
+            affinityGroupManager.addAgentsToGroup(getSessionSubject(), affinityGroupId, agentIds);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public void removeAgentsFromGroup(Integer[] agentIds) throws RuntimeException {
+        try {
+            affinityGroupManager.removeAgentsFromGroup(getSessionSubject(), agentIds);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+
+    @Override
+    public void updateServer(Server server) throws RuntimeException {
+        try {
+            cloudManager.updateServer(getSessionSubject(), server);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+
+    @Override
+    public void updateAffinityGroup(AffinityGroup affinityGroup) throws RuntimeException {
+        try {
+            affinityGroupManager.update(getSessionSubject(), affinityGroup);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
 }

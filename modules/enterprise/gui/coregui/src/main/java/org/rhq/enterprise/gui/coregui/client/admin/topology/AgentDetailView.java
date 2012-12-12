@@ -190,16 +190,6 @@ public class AgentDetailView extends LocatableVLayout {
         }
         currentServerItem.setValue(serverValue);
 
-        //        ButtonItem saveButton = new ButtonItem();
-        //        saveButton.setOverflow(Overflow.VISIBLE);
-        //        saveButton.setTitle(MSG.common_button_save());
-        //        saveButton.addClickHandler(new ClickHandler() {
-        //            public void onClick(ClickEvent event) {
-        //                RecordList list = form.getRecordList();
-        //                SC.say("name is " + list.get(0).getAttribute("name"));
-        //            }
-        //        });
-
         form.setItems(nameItem, addressItem, portItem, tokenItem, lastAvailabilityItem, affinityGroupItem,
             currentServerItem);
 

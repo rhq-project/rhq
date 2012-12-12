@@ -157,6 +157,10 @@ public class ServerDatasource extends AbstractServerNodeDatasource<Server, Crite
     @Override
     public Server copyValues(Record from) {
         throw new UnsupportedOperationException("ServerDatasource.copyValues(Record from)");
+//        Server server = new Server();
+//        server.setId(from.getAttributeAsInt(FIELD_ID.propertyName()));
+//        server.setName(from.getAttributeAsString(FIELD_NAME.propertyName()));
+//        return server;
     }
 
     @Override

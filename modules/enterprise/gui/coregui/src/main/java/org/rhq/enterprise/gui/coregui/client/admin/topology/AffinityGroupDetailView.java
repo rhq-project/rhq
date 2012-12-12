@@ -23,7 +23,6 @@ import static org.rhq.enterprise.gui.coregui.client.admin.topology.AffinityGroup
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.data.RecordList;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.util.SC;
@@ -168,14 +167,14 @@ public class AffinityGroupDetailView extends LocatableVLayout implements Bookmar
         return;
     }
 
-    private void prepareDetailsSection(SectionStack stack, AffinityGroup affinityGroup) {
+    private void prepareDetailsSection(SectionStack stack, final AffinityGroup affinityGroup) {
         final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("detailsForm"));
         form.setMargin(10);
         form.setWidth100();
         form.setWrapItemTitles(false);
         form.setNumCols(2);
 
-        TextItem nameItem = new TextItem(FIELD_NAME.propertyName(), FIELD_NAME.title());
+        final TextItem nameItem = new TextItem(FIELD_NAME.propertyName(), FIELD_NAME.title());
         nameItem.setValue(affinityGroup.getName());
 
         ButtonItem saveButton = new ButtonItem();
@@ -183,8 +182,16 @@ public class AffinityGroupDetailView extends LocatableVLayout implements Bookmar
         saveButton.setTitle(MSG.common_button_save());
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
-                RecordList list = form.getRecordList();
-                SC.say("name is " + list.get(0).getAttribute("name"));
+                affinityGroup.setName(nameItem.getValueAsString());
+                GWTServiceLookup.getCloudService().updateAffinityGroup(affinityGroup, new AsyncCallback<Void>() {
+                    public void onSuccess(Void result) {
+                        // todo: notify
+                    }
+
+                    public void onFailure(Throwable caught) {
+                        // todo: handle
+                    }
+                });
             }
         });
 

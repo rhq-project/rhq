@@ -211,11 +211,9 @@ public class AffinityGroupTableView extends TableSection<AffinityGroupWithCounts
                     String name = form.getValueAsString(FIELD_NAME);
                     AffinityGroup affinityGroup = new AffinityGroup(name);
                     GWTServiceLookup.getCloudService().createAffinityGroup(affinityGroup, new AsyncCallback<Integer>() {
-                        public void onSuccess(Integer result) {
-                            Map<String, String> errors = new HashMap<String, String>();
-                            errors.put(FIELD_NAME, result + "");
-                            form.setErrors(errors, true);
-                            // todo: hide dialog and open the detail window
+                        public void onSuccess(Integer affinityGroupId) {
+                            modalWindow.destroy();
+                            CoreGUI.goToView(VIEW_PATH + "/" + affinityGroupId);
                         }
 
                         public void onFailure(Throwable caught) {
@@ -230,8 +228,8 @@ public class AffinityGroupTableView extends TableSection<AffinityGroupWithCounts
 
         HLayout buttons = new HLayout(10);
         buttons.setLayoutAlign(Alignment.CENTER);
-        buttons.addMember(cancel);
         buttons.addMember(save);
+        buttons.addMember(cancel);
         layout.addMember(buttons);
         modalWindow.addItem(layout);
         modalWindow.show();

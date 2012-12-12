@@ -264,14 +264,12 @@ public class ServerTableView extends TableSection<AbstractServerNodeDatasource<?
     }
 
     private void showUpdateMembersAction() {
-        addTableAction(extendLocatorId("foo"), "olala", new AuthorizedTableAction(this, TableActionEnablement.ALWAYS,
-            Permission.MANAGE_SETTINGS) {
-            public void executeAction(final ListGridRecord[] selections, Object actionValue) {
-                //                    AffinityGroupServersSelector selector = new AffinityGroupServersSelector(extendLocatorId("foo"), id);
-
-                AffinityGroupServersSelector.show(id);
-            }
-        });
+        addTableAction(extendLocatorId("editGroupServers"), MSG.view_groupInventoryMembers_button_updateMembership(),
+            new AuthorizedTableAction(this, TableActionEnablement.ALWAYS, Permission.MANAGE_SETTINGS) {
+                public void executeAction(final ListGridRecord[] selections, Object actionValue) {
+                    AffinityGroupServersSelector.show(id, ServerTableView.this);
+                }
+            });
     }
 
     private int[] getSelectedIds(ListGridRecord[] selections) {

@@ -57,6 +57,8 @@ public interface CloudGWTService extends RemoteService {
     void deleteServers(int[] serverIds) throws RuntimeException;
 
     void updateServerMode(int[] serverIds, Server.OperationMode mode) throws RuntimeException;
+    
+    void updateServer(Server server) throws RuntimeException;
 
     List<FailoverListDetails> getFailoverListDetailsByAgentId(int agentId, PageControl pc) throws RuntimeException;;
 
@@ -77,6 +79,8 @@ public interface CloudGWTService extends RemoteService {
     
     int createAffinityGroup(AffinityGroup affinityGroup) throws RuntimeException;
     
+    void updateAffinityGroup(AffinityGroup affinityGroup) throws RuntimeException;
+    
     PageList<Server> getServerMembersByAffinityGroupId(int affinityGroupId, PageControl pageControl) throws RuntimeException;
     
     PageList<Server> getServerNonMembersByAffinityGroupId(int affinityGroupId, PageControl pageControl) throws RuntimeException;
@@ -86,4 +90,12 @@ public interface CloudGWTService extends RemoteService {
     PageList<Agent> getAgentNonMembersByAffinityGroupId(int affinityGroupId, PageControl pageControl) throws RuntimeException;
     
     AffinityGroup getAffinityGroupById(int affinityGroupId) throws RuntimeException;
+    
+    void addServersToGroup(int affinityGroupId, Integer[] serverIds) throws RuntimeException;
+    
+    void removeServersFromGroup(Integer[] serverIds) throws RuntimeException;
+    
+    void addAgentsToGroup(int affinityGroupId, Integer[] agentIds) throws RuntimeException;
+    
+    void removeAgentsFromGroup(Integer[] agentIds) throws RuntimeException;
 }

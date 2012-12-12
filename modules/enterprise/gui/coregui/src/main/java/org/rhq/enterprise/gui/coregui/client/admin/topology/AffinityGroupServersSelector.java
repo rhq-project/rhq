@@ -22,6 +22,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.topology;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
@@ -42,6 +45,7 @@ import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
@@ -52,14 +56,15 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 public class AffinityGroupServersSelector extends AbstractSelector<Server, org.rhq.core.domain.criteria.Criteria> {
 
     private static final String ITEM_ICON = "types/Server_up_16.png";
-    
+
     private final Integer affinityGroupId;
-    
+
     private static RPCDataSource<Server, org.rhq.core.domain.criteria.Criteria> datasource = null;
-    
-    private static Window modalWindow = null;
-    private static VLayout layout = null;
-    
+
+    private static Window modalWindow;
+    private static VLayout layout;
+    private List<Integer> originallyAssignedIds;
+
     private AffinityGroupServersSelector() {
         super("");
         affinityGroupId = -1;
@@ -68,31 +73,33 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, org.r
     private AffinityGroupServersSelector(String id, Integer affinityGroupId) {
         super(id, false);
         this.affinityGroupId = affinityGroupId;
-        prepareMembers();
+        prepareMembers(this);
     }
-    
-    private void prepareMembers() {
-        GWTServiceLookup.getCloudService().getServerMembersByAffinityGroupId(affinityGroupId, PageControl.getUnlimitedInstance(), new AsyncCallback<PageList<Server>>() {
-            public void onSuccess(PageList<Server> result) {
-                ListGridRecord[] records = getDataSource().buildRecords(result);
-                setAssigned(records);
-//                AffinityGroupServersSelector.super.onInit();
-                new Timer(){
-                    @Override
-                    public void run() {
-                        modalWindow.addItem(layout);
-                        modalWindow.show();
-                    }
-                }.schedule(2000);
 
-                
-            }
+    private void prepareMembers(final AffinityGroupServersSelector selector) {
+        GWTServiceLookup.getCloudService().getServerMembersByAffinityGroupId(affinityGroupId,
+            PageControl.getUnlimitedInstance(), new AsyncCallback<PageList<Server>>() {
+                public void onSuccess(PageList<Server> result) {
+                    ListGridRecord[] records = getDataSource().buildRecords(result);
+                    originallyAssignedIds = getIdList(records);
+                    setAssigned(records);
+                    new Timer() {
+                        @Override
+                        public void run() {
+                            modalWindow.addItem(layout);
+                            modalWindow.show();
+                            selector.reset();
+                        }
+                    }.schedule(2000);
 
-            @Override
-            public void onFailure(Throwable t) {
-                //todo: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), t);
-            }
-        });
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    //todo: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), t);
+                }
+            });
+
     }
 
     @Override
@@ -127,16 +134,16 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, org.r
     protected String getItemIcon() {
         return ITEM_ICON;
     }
-    
-    public static void show(Integer affinityGroupId) {
+
+    public static void show(Integer affinityGroupId, final TableSection parrent) {
         modalWindow = new Window();
         modalWindow.setTitle(MSG.view_adminTopology_affinityGroups() + ": "
             + MSG.view_adminTopology_affinityGroups_createNew());
         modalWindow.setOverflow(Overflow.VISIBLE);
-        modalWindow.setMinWidth(800);
-        modalWindow.setMinHeight(400);
-        modalWindow.setWidth(800);
-        modalWindow.setHeight(400);
+//        modalWindow.setMinWidth(800);
+//        modalWindow.setMinHeight(400);
+                modalWindow.setWidth(800);
+                modalWindow.setHeight(400);
 //        modalWindow.setAutoSize(true);
         modalWindow.setAutoCenter(true);
         modalWindow.setCanDragResize(true);
@@ -149,7 +156,7 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, org.r
         layout.setLayoutMargin(20);
         layout.setVPolicy(LayoutPolicy.FILL);
 
-        AffinityGroupServersSelector selector = new AffinityGroupServersSelector("foo", affinityGroupId);
+        final AffinityGroupServersSelector selector = new AffinityGroupServersSelector("foo", affinityGroupId);
         layout.addMember(selector);
 
         VLayout spacer = new VLayout();
@@ -162,11 +169,49 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, org.r
                 modalWindow.destroy();
             }
         });
-        IButton save = new LocatableIButton(selector.extendLocatorId("Save"),
-            MSG.common_button_save());
+        IButton save = new LocatableIButton(selector.extendLocatorId("Save"), MSG.common_button_save());
         save.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-               SC.say("asdf..");
+                List<Integer> actuallySelected = getIdList(selector.getSelectedRecords());
+                List<Integer> originallySelected = selector.getOriginallyAssignedIds();
+                originallySelected.removeAll(actuallySelected);
+                actuallySelected.removeAll(selector.getOriginallyAssignedIds());
+                if (!originallySelected.isEmpty()) {
+                    GWTServiceLookup.getCloudService().removeServersFromGroup(
+                        originallySelected.toArray(new Integer[originallySelected.size()]), new AsyncCallback<Void>() {
+
+                            public void onSuccess(Void result) {
+                                if (modalWindow != null) {
+                                    modalWindow.destroy();
+                                }
+                                parrent.refresh();
+                            }
+
+                            public void onFailure(Throwable caught) {
+                                //todo: error handling
+                                SC.say("errX");
+                            }
+                        });
+                }
+                if (!actuallySelected.isEmpty()) {
+                    GWTServiceLookup.getCloudService().addServersToGroup(selector.getAffinityGroupId(),
+                        originallySelected.toArray(new Integer[originallySelected.size()]), new AsyncCallback<Void>() {
+
+                            public void onSuccess(Void result) {
+                                if (modalWindow != null) {
+                                    modalWindow.destroy();
+                                }
+                                parrent.refresh();
+                            }
+
+                            public void onFailure(Throwable caught) {
+                                //todo: error handling
+                                SC.say("errX");
+                            }
+                        });
+                }
+                SC.say("To del: " + originallySelected + "\n\nTo add: " + actuallySelected);
+
             }
         });
 
@@ -175,6 +220,25 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, org.r
         buttons.addMember(cancel);
         buttons.addMember(save);
         layout.addMember(buttons);
+    }
+
+    private static List<Integer> getIdList(ListGridRecord[] records) {
+        if (records == null) {
+            return null;
+        }
+        List<Integer> ids = new ArrayList<Integer>(records.length);
+        for (ListGridRecord record : records) {
+            ids.add(record.getAttributeAsInt(ServerDatasourceField.FIELD_ID.propertyName()));
+        }
+        return ids;
+    }
+
+    public List<Integer> getOriginallyAssignedIds() {
+        return new ArrayList<Integer>(originallyAssignedIds);
+    }
+
+    public Integer getAffinityGroupId() {
+        return affinityGroupId;
     }
 
 }

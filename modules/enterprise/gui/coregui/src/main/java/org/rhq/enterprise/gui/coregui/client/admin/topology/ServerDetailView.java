@@ -30,7 +30,6 @@ import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasou
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.data.RecordList;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.util.SC;
@@ -40,11 +39,13 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
+import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 
 import org.rhq.core.domain.cloud.AffinityGroup;
 import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
@@ -162,7 +163,7 @@ public class ServerDetailView extends LocatableVLayout implements BookmarkableVi
         return;
     }
 
-    private void prepareDetailsSection(SectionStack stack, Server server) {
+    private void prepareDetailsSection(SectionStack stack, final Server server) {
         final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("detailsForm"));
         form.setMargin(10);
         form.setWidth100();
@@ -172,16 +173,24 @@ public class ServerDetailView extends LocatableVLayout implements BookmarkableVi
         StaticTextItem nameItem = new StaticTextItem(FIELD_NAME.propertyName(), FIELD_NAME.title());
         nameItem.setValue("<b>" + server.getName() + "</b>");
 
-        TextItem addressItem = new TextItem(FIELD_ADDRESS.propertyName(), FIELD_ADDRESS.title());
+        final TextItem addressItem = new TextItem(FIELD_ADDRESS.propertyName(), FIELD_ADDRESS.title());
+        addressItem.setRequired(true);
         addressItem.setValue(server.getAddress());
 
-        TextItem portItem = new TextItem(FIELD_PORT.propertyName(), FIELD_PORT.title());
+        IntegerRangeValidator portValidator = new IntegerRangeValidator();
+        portValidator.setMin(0);
+        portValidator.setMax(65535);
+        final TextItem portItem = new TextItem(FIELD_PORT.propertyName(), FIELD_PORT.title());
+        portItem.setRequired(true);
+        portItem.setValidators(portValidator);
         portItem.setValue(server.getPort());
 
-        TextItem securePortItem = new TextItem(FIELD_SECURE_PORT.propertyName(), FIELD_SECURE_PORT.title());
+        final TextItem securePortItem = new TextItem(FIELD_SECURE_PORT.propertyName(), FIELD_SECURE_PORT.title());
+        securePortItem.setRequired(true);
+        securePortItem.setValidators(portValidator);
         securePortItem.setValue(server.getSecurePort());
 
-        SelectItem operationModeItem = new SelectItem(FIELD_OPERATION_MODE.propertyName(),
+        final SelectItem operationModeItem = new SelectItem(FIELD_OPERATION_MODE.propertyName(),
             MSG.view_adminTopology_serverDetail_operationMode());
         operationModeItem.setValueMap("NORMAL", "MAINTENANCE");
         operationModeItem.setValue(server.getOperationMode());
@@ -211,8 +220,21 @@ public class ServerDetailView extends LocatableVLayout implements BookmarkableVi
         saveButton.setTitle(MSG.common_button_save());
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
-                RecordList list = form.getRecordList();
-                SC.say("name is " + list.get(0).getAttribute("name"));
+                if (form.validate()) {
+                    server.setAddress(addressItem.getValueAsString());
+                    server.setPort(Integer.parseInt(portItem.getValueAsString()));
+                    server.setSecurePort(Integer.parseInt(securePortItem.getValueAsString()));
+                    server.setOperationMode(OperationMode.valueOf(operationModeItem.getValueAsString()));
+                    GWTServiceLookup.getCloudService().updateServer(server, new AsyncCallback<Void>() {
+                        public void onSuccess(Void result) {
+                            // todo: notify
+                        }
+
+                        public void onFailure(Throwable caught) {
+                            // todo: handle
+                        }
+                    });
+                }
             }
         });
 
@@ -231,4 +253,5 @@ public class ServerDetailView extends LocatableVLayout implements BookmarkableVi
     public void renderView(ViewPath viewPath) {
         Log.debug("ServerDetailView: " + viewPath);
     }
+
 }

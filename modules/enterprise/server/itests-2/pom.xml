@@ -656,7 +656,6 @@
               <excludes>
                 <!-- NOTE: PERF GROUP AND SOME CLASSES EXCLUDED (SEE BZ 874696) -->
                 <exclude>**/LdapGroupManagerBeanTest.java</exclude>
-                <exclude>**/SynchronizationManagerBeanTest.java</exclude>
                 <exclude>org/rhq/**/performance/**/*.java</exclude>
 
                 <!-- exclude the db tests which are not expected to run in this suite -->

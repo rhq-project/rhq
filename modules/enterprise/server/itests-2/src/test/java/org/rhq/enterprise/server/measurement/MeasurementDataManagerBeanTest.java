@@ -203,7 +203,8 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
         MeasurementAggregate actual = dataManager.getAggregate(overlord, dynamicSchedule.getId(),
             beginTime.getMillis(), endTime.getMillis());
 
-        MeasurementAggregate expected = new MeasurementAggregate(1.1, (1.1 + 2.2 + 3.3 + 4.4 + 5.5 + 6.6) / 6, 6.6);
+        MeasurementAggregate expected = new MeasurementAggregate(1.1, divide((1.1 + 2.2 + 3.3 + 4.4 + 5.5 + 6.6), 6),
+            6.6);
 
         AssertUtils.assertPropertiesMatch(expected, actual, "Aggregate does not match");
     }
@@ -236,9 +237,9 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
         assertEquals("Expected to get back 60 data points.", buckets.getNumDataPoints(), actualData.size());
 
         MeasurementDataNumericHighLowComposite expectedBucket0Data = new MeasurementDataNumericHighLowComposite(
-            buckets.get(0), (2.0 + 5.0 + 3.0) / 3, 6.0, 1.0);
+            buckets.get(0), divide((2.0 + 5.0 + 3.0), 3), 6.0, 1.0);
         MeasurementDataNumericHighLowComposite expectedBucket59Data = new MeasurementDataNumericHighLowComposite(
-            buckets.get(59), (5.0 + 5.0 + 3.0) / 3, 9.0, 2.0);
+            buckets.get(59), divide((5.0 + 5.0 + 3.0), 3), 9.0, 2.0);
 
         assertPropertiesMatch("The data for bucket 0 does not match the expected values.", expectedBucket0Data,
             actualData.get(0));

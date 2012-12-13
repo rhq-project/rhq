@@ -694,19 +694,6 @@
       </build>
     </profile>
 
-    <!-- if you want to test on oracle, this can pull down the oracle jdbc driver that is needed -->
-    <profile>
-        <id>ojdbc-driver</id>
-        <dependencies>
-            <dependency>
-                <groupId>com.oracle</groupId>
-                <artifactId>ojdbc6</artifactId>
-                <version>${ojdbc6.version}</version>
-            </dependency>
-        </dependencies>
-    </profile>
-
-
     <profile>
       <id>dev</id>
 

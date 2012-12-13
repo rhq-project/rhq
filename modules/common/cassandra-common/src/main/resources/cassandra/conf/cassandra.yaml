@@ -56,8 +56,8 @@ max_hints_delivery_threads: 2
 # authentication backend, implementing IAuthenticator; used to identify users
 authenticator: @@rhq.cassandra.authenticator@@
 
-# authorization backend, implementing IAuthority; used to limit access/provide permissions
-authority: @@rhq.cassandra.authority@@
+# authorization backend, implementing IAUthorizer; used to limit access/provide permissions
+authorizer: @@rhq.cassandra.authorizer@@
 
 # The partitioner is responsible for distributing rows (by key) across
 # nodes in the cluster.  Any IPartitioner may be used, including your
@@ -310,8 +310,11 @@ listen_address: @@listen.address@@
 start_native_transport: true
 # port for the CQL native transport to listen for clients on
 native_transport_port: @@rhq.cassandra.native_transport_port@@
-# The maximum of thread handling requests. The meaning is the same than
-# rpc_max_threads.
+# The minimum and maximum threads for handling requests when the native
+# transport is used. The meaning is those is similar to the one of
+# rpc_min_threads and rpc_max_threads, though the default differ slightly and
+# are the ones below:
+# native_transport_min_threads: 16
 native_transport_max_threads: @@rhq.casandra.native_transport_max_threads@@
 
 
@@ -623,13 +626,10 @@ server_encryption_options:
     # cipher_suites: [TLS_RSA_WITH_AES_128_CBC_SHA,TLS_RSA_WITH_AES_256_CBC_SHA]
 
 # enable or disable client/server encryption.
-# The available internode options are: none, all
 client_encryption_options:
-    internode_encryption: none
+    enabled: false
     keystore: conf/.keystore
     keystore_password: cassandra
-    truststore: conf/.truststore
-    truststore_password: cassandra
     # More advanced defaults below:
     # protocol: TLS
     # algorithm: SunX509
@@ -642,4 +642,4 @@ client_encryption_options:
 # can be:  all  - all traffic is compressed
 #          dc   - traffic between different datacenters is compressed
 #          none - nothing is compressed.
-internode_compression: none
+internode_compression: all

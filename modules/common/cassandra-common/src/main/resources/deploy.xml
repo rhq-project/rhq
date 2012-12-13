@@ -126,22 +126,22 @@
                         defaultValue="org.rhq.cassandra.auth.SimpleAuthenticator"
                         type="string"/>
 
-    <rhq:input-property name="rhq.cassandra.authority"
-                        description="A class that performs authorization. Used to limit/provide permissions. The value should be a fully qualified class name and implement IAuthority."
+    <rhq:input-property name="rhq.cassandra.authorizer"
+                        description="A class that performs authorization. Used to limit/provide permissions. The value should be a fully qualified class name and implement IAuthorizer."
                         required="false"
-                        defaultValue="org.rhq.cassandra.auth.SimpleAuthority"
+                        defaultValue="org.rhq.cassandra.auth.SimpleAuthorizer"
                         type="string"/>
 
     <rhq:input-property name="rhq.cassandra.password.properties.file"
                         description="The location of the password properties file used by SimpleAuthenticator. If a relative path is specified, its location is resolved relative to Cassandra's bin directory."
                         required="false"
-                        defaultValue="../conf/passwd.properties"
+                        defaultValue="./../conf/passwd.properties"
                         type="file"/>
 
     <rhq:input-property name="rhq.cassandra.access.properties.file"
                         description="The location of the authorization properties file used by SimpleAuthority. If a relative path is specified, its location is resolved relative to Cassandra's bin directory."
                         required="false"
-                        defaultValue="../conf/access.properties"
+                        defaultValue="./../conf/access.properties"
                         type="file"/>
 
     <rhq:input-property name="rhq.cassandra.username"

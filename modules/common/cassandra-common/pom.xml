@@ -13,7 +13,7 @@
   <name>RHQ Cassandra Common</name>
 
   <properties>
-    <cassandra.version>1.2.0-beta2</cassandra.version>
+    <cassandra.version>1.2.0-beta3</cassandra.version>
     <local.repo>${settings.localRepository}</local.repo>
   </properties>
 
@@ -46,6 +46,12 @@
       <groupId>org.hectorclient</groupId>
       <artifactId>hector-core</artifactId>
       <version>1.1-1</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
@@ -135,14 +141,17 @@
                           value="${project.build.outputDirectory}/${cassandra.distro.filename}"/>
                 <copy file="${settings.localRepository}/org/rhq/rhq-cassandra-auth/${project.version}/rhq-cassandra-auth-${project.version}.jar"
                       todir="${cassandra.dir}/lib"/>
-                <move file="${project.build.outputDirectory}/passwd.properties" todir="${cassandra.dir}/conf"/>
-                <move file="${project.build.outputDirectory}/access.properties" todir="${cassandra.dir}/conf"/>
+                <move file="${project.build.outputDirectory}/cassandra/conf" todir="${cassandra.dir}"/>
+                <move file="${project.build.outputDirectory}/cassandra/lib" todir="${cassandra.dir}"/>
+                <!--<move file="${project.build.outputDirectory}/passwd.properties" todir="${cassandra.dir}/conf"/>-->
+                <!--<move file="${project.build.outputDirectory}/access.properties" todir="${cassandra.dir}/conf"/>-->
                 <zip basedir="${cassandra.dir}" destfile="${cassandra.distro.zip}"/>
                 <delete dir="${cassandra.dir}"/>
                 <zip basedir="${project.build.outputDirectory}"
                      destfile="${project.build.outputDirectory}/cassandra-bundle.zip"
                      includes="${cassandra.distro.filename},deploy.xml"/>
                 <delete file="${project.build.outputDirectory}/deploy.xml"/>
+                <delete file="${project.build.outputDirectory}/cassandra}"/>
                 <delete file="${cassandra.distro.zip}"/>
               </target>
             </configuration>

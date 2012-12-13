@@ -17,6 +17,12 @@
       <groupId>org.liquibase</groupId>
       <artifactId>liquibase-core</artifactId>
       <version>3.0.0-SNAPSHOT</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.jboss.weld.se</groupId>
+          <artifactId>weld-se</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>

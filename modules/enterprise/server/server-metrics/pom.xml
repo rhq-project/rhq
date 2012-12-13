@@ -121,12 +121,6 @@
       </exclusions>
     </dependency>
 
-    <!--<dependency>-->
-      <!--<groupId>org.apache.cassandra</groupId>-->
-      <!--<artifactId>cassandra-clientutil</artifactId>-->
-
-    <!--</dependency>-->
-
     <dependency>
       <groupId>org.apache.thrift</groupId>
       <artifactId>libthrift</artifactId>
@@ -165,7 +159,7 @@
       <properties>
         <rhq.rootDir>../../..</rhq.rootDir>
         <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-        <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.earName}/lib</rhq.deploymentDir>
+        <rhq.deploymentDir>${rhq.containerDir}/${rhq.earLibDir}</rhq.deploymentDir>
       </properties>
 
       <build>

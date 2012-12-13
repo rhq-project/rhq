@@ -42,49 +42,9 @@ import javax.persistence.Table;
 
 @Entity
 @NamedQueries( {
-    // Unfortunately, hibernate is broken after 3.2.0.rc4 - we can't process these insert/delete HQL queries.
-    // http://opensource.atlassian.com/projects/hibernate/browse/HHH-2833
-    // Instead, take these HQLs, plug into Eclipse Hibernate Tool and look at the generated native SQL.
-    // Take those native queries (for each supported database) and create native queries here.
-    // Can't use NamedNativeQuery either, hibernate doesn't support that.
-
-    // update: RHQ-716 proved that this still isn't working, even with a version of Hibernate containing a fix
-    // for HHH-2833.  Basically, CURRENT_TIMESTAMP returns a timestamp data type, but computeTime field expects
-    // a long.  this incompatibility forces the query analysis to bomb at compile time.  this issue could have been
-    // by-passed if Hibernate allows binding parameters in the select list, but that is disallowed as well.
-    /*
-    @NamedQuery(name = MeasurementBaseline.QUERY_CALC_FIRST_AUTOBASELINE, query = "" //
-        + " INSERT INTO MeasurementBaseline (baselineMin,baselineMax,baselineMean,computeTime,scheduleId) "
-        + "    SELECT min(d.min) AS baselineMin, "
-        + "           max(d.max) AS baselineMax, "
-        + "           avg(d.value) AS baselineMean, "
-        + "           CURRENT_TIMESTAMP AS currentTime, "
-        + "           d.id.scheduleId AS scheduleId "
-        + "      FROM MeasurementDataNumeric1H d "
-        + "           JOIN d.schedule s "
-        + "           LEFT JOIN s.baseline b "
-        + "     WHERE s.definition.numericType = 0 "
-        + "       AND b.id IS NULL "
-        + "       AND d.id.timestamp BETWEEN :startTime AND :endTime "
-        + "  GROUP BY d.id.scheduleId "
-        + "    HAVING d.id.scheduleId IN (SELECT d1.id.scheduleId "
-        + "                                 FROM MeasurementDataNumeric1H d1 "
-        + "                                WHERE d1.id.timestamp <= :startTime) "),
-    @NamedQuery(name = MeasurementBaseline.QUERY_DELETE_EXISTING_AUTOBASELINES, query = "" //
-        + " DELETE MeasurementBaseline AS doomed WHERE doomed.scheduleId IN "
-        + "( "
-        + "   SELECT d.id.scheduleId AS scheduleId "
-        + "     FROM MeasurementDataNumeric1H d "
-        + "          JOIN d.schedule s "
-        + "          LEFT JOIN s.baseline b "
-        + "    WHERE b.id IS NOT NULL "
-        + "      AND d.id.timestamp BETWEEN :startTime AND :endTime "
-        + "      AND b.userEntered = FALSE "
-        + " GROUP BY d.id.scheduleId "
-        + "   HAVING d.id.scheduleId IN (SELECT d1.id.scheduleId "
-        + "                                FROM MeasurementDataNumeric1H d1 "
-        + "                               WHERE d1.id.timestamp <= :startTime) " + ") "),
-        */
+    @NamedQuery(name = MeasurementBaseline.QUERY_FIND_MEASUREMENT_SCHEDULES_WITHOUT_AUTOBASELINES, query = "SELECT schedule.id FROM MeasurementSchedule schedule "
+        + "WHERE schedule.definition.numericType = 0 AND "
+        + "schedule.id NOT IN (SELECT scheduleId FROM MeasurementBaseline)"),
     @NamedQuery(name = MeasurementBaseline.QUERY_FIND_BY_RESOURCE, query = "SELECT mb FROM MeasurementBaseline mb WHERE mb.schedule.resource.id = :resourceId"),
     @NamedQuery(name = MeasurementBaseline.QUERY_FIND_BY_RESOURCE_IDS_AND_DEF_IDS, query = "SELECT mb FROM MeasurementBaseline mb "
         + "WHERE mb.schedule.resource.id IN (:resourceIds) AND  mb.schedule.definition.id IN (:definitionIds)"),
@@ -112,9 +72,8 @@ public class MeasurementBaseline implements Serializable {
     public static final String QUERY_DELETE_BY_RESOURCES = "MeasurementBaseline.deleteByResources";
     public static final String QUERY_CALC_FIRST_AUTOBASELINE = "MeasurementBaseline.calcFirstAutoBaseline";
     public static final String QUERY_DELETE_EXISTING_AUTOBASELINES = "MeasurementBaseline.deleteExistingAutoBaseline";
+    public static final String QUERY_FIND_MEASUREMENT_SCHEDULES_WITHOUT_AUTOBASELINES = "MeasurementBaseline.findMetricSchedulesWithoutAutoBaselines";
     public static final String NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_POSTGRES;
-    public static final String NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_ORACLE;
-    public static final String NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_SQLSERVER;
 
     static {
         /*
@@ -131,7 +90,7 @@ public class MeasurementBaseline implements Serializable {
             + "           FROM RHQ_MEASUREMENT_DATA_NUM_1H data1h  " // baselines are 1H data statistics
             + "     INNER JOIN RHQ_MEASUREMENT_SCHED sched  " // baselines are aggregates of schedules
             + "             ON data1h.SCHEDULE_ID = sched.id  " //
-            + "     INNER JOIN RHQ_MEASUREMENT_DEF def " // only compute off of dynamic types 
+            + "     INNER JOIN RHQ_MEASUREMENT_DEF def " // only compute off of dynamic types
             + "             ON sched.definition = def.id " //
             + "LEFT OUTER JOIN RHQ_MEASUREMENT_BLINE bline " // we want null entries on purpose
             + "             ON sched.id = bline.SCHEDULE_ID  " //
@@ -144,55 +103,6 @@ public class MeasurementBaseline implements Serializable {
             + "                                          FROM RHQ_MEASUREMENT_DATA_NUM_1H mdata  " //
             + "                                         WHERE mdata.TIME_STAMP <= ? ) " // ?4=startTime
             + "          LIMIT 100000 "; // batch at most 100K inserts at a time to shrink the xtn size
-
-        NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_ORACLE = "" //
-            + "    INSERT INTO RHQ_MEASUREMENT_BLINE ( id, BL_MIN, BL_MAX, BL_MEAN, BL_COMPUTE_TIME, SCHEDULE_ID ) "
-            + "         SELECT RHQ_MEASUREMENT_BLINE_ID_SEQ.nextval, " //
-            + "                blMin, blMax, blAvg, coTime, schId "
-            + "           FROM ( SELECT MIN(data1h.minvalue) AS blMin, " //
-            + "                         MAX(data1h.maxvalue) AS blMax, " //
-            + "                         AVG(data1h.value) AS blAvg, " //
-            + "                         ? as coTime, " // ?1=computeTime
-            + "                         data1h.SCHEDULE_ID as schId  " //
-            + "                    FROM RHQ_MEASUREMENT_DATA_NUM_1H data1h " // baselines are 1H data statistics
-            + "              INNER JOIN RHQ_MEASUREMENT_SCHED sched " // baselines are aggregates of schedules
-            + "                      ON data1h.SCHEDULE_ID = sched.id " //
-            + "              INNER JOIN RHQ_MEASUREMENT_DEF def " // only compute off of dynamic types
-            + "                      ON sched.definition = def.id " //
-            + "         LEFT OUTER JOIN RHQ_MEASUREMENT_BLINE bline " // we want null entries on purpose
-            + "                      ON sched.id = bline.SCHEDULE_ID  " //
-            + "                   WHERE ( def.numeric_type = 0 ) " // only dynamics (NumericType.DYNAMIC)
-            + "                     AND ( bline.id IS NULL ) " // no baseline means it was deleted or never calculated
-            + "                     AND ( data1h.TIME_STAMP BETWEEN ? AND ? ) " // ?2=startTime, ?3=endTime
-            + "                     AND ROWNUM < 100001 " // batch at most 100K inserts at a time to shrink the xtn size
-            + "                GROUP BY data1h.SCHEDULE_ID  " // baselines are aggregates per schedule
-            // but only calculate baselines for schedules where we have data that fills (startTime, endTime)
-            + "                  HAVING data1h.SCHEDULE_ID in ( SELECT distinct (mdata.SCHEDULE_ID) " //
-            + "                                                   FROM RHQ_MEASUREMENT_DATA_NUM_1H mdata "
-            + "                                                  WHERE mdata.TIME_STAMP <= ? ) ) "; // ?4=startTime
-
-        NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_SQLSERVER = "" //
-            + "    INSERT INTO RHQ_MEASUREMENT_BLINE ( BL_MIN, BL_MAX, BL_MEAN, BL_COMPUTE_TIME, SCHEDULE_ID ) "
-            + "         SELECT MIN(data1h.minvalue) AS blMin, " //
-            + "                MAX(data1h.maxvalue) AS blMax, " //
-            + "                AVG(data1h.value) AS blAvg, " //
-            + "                ? as coTime, " // ?1=computeTime
-            + "                data1h.SCHEDULE_ID as schId  " //
-            + "           FROM RHQ_MEASUREMENT_DATA_NUM_1H data1h " // baselines are 1H data statistics
-            + "     INNER JOIN RHQ_MEASUREMENT_SCHED sched " // baselines are aggregates of schedules
-            + "             ON data1h.SCHEDULE_ID = sched.id " //
-            + "     INNER JOIN RHQ_MEASUREMENT_DEF def " // only compute off of dynamic types
-            + "             ON sched.definition = def.id " //
-            + "LEFT OUTER JOIN RHQ_MEASUREMENT_BLINE bline " // we want null entries on purpose
-            + "             ON sched.id = bline.SCHEDULE_ID  " //
-            + "          WHERE ( def.numeric_type = 0 ) " // only dynamics (NumericType.DYNAMIC)
-            + "            AND ( bline.id IS NULL ) " // no baseline means it was deleted or never calculated
-            + "            AND ( data1h.TIME_STAMP BETWEEN ? AND ? ) " // ?2=startTime, ?3=endTime
-            + "       GROUP BY data1h.SCHEDULE_ID  " // baselines are aggregates per schedule
-            // but only calculate baselines for schedules where we have data that fills (startTime, endTime)
-            + "         HAVING data1h.SCHEDULE_ID in ( SELECT distinct (mdata.SCHEDULE_ID) " //
-            + "                                          FROM RHQ_MEASUREMENT_DATA_NUM_1H mdata "
-            + "                                         WHERE mdata.TIME_STAMP <= ? ) "; // ?4=startTime
     }
     private static final long serialVersionUID = 1L;
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "MEAS_BL_GEN")

@@ -18,6 +18,10 @@
      <jboss.zip>${settings.localRepository}/org/jboss/as/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip</jboss.zip>
      <jboss.unzip.location>${basedir}/target/jboss-as-${jboss.version}</jboss.unzip.location>
      <rhq.internal>false</rhq.internal>
+     <!-- These properties guide which datasources are used for integration tests. Only one should be true.
+          The default is Postgres, specify -Pitest.oracle to use Oracle -->
+     <skip.postgres>false</skip.postgres>
+     <skip.oracle>true</skip.oracle>     
    </properties>
 
 
@@ -542,18 +546,14 @@
    </build>
 
 
-   <profiles>
-
-        <!-- if you want to test on oracle, this can pull down the oracle jdbc driver that is needed -->
-        <profile>
-            <id>ojdbc-driver</id>
-            <dependencies>
-                <dependency>
-                    <groupId>com.oracle</groupId>
-                    <artifactId>ojdbc6</artifactId>
-                    <version>${ojdbc6.version}</version>
-                </dependency>
-            </dependencies>
+   <profiles>    
+       <!--  If testing against oracle, override the default property settings  -->
+       <profile>
+         <id>itest.oracle</id>
+         <properties>
+           <skip.postgres>true</skip.postgres>
+           <skip.oracle>false</skip.oracle>
+         </properties>
        </profile>
 
        <profile>
@@ -669,26 +669,7 @@
             </plugins>
          </build>
       </profile>
-      
-      <profile>
-        <id>postgres</id>
-        <activation>
-          <activeByDefault>true</activeByDefault>
-        </activation>
-        <properties>
-          <skip.postgres>false</skip.postgres>
-          <skip.oracle>true</skip.oracle>
-        </properties>
-      </profile>
-  
-      <profile>
-        <id>oracle</id>
-        <properties>
-          <skip.postgres>true</skip.postgres>
-          <skip.oracle>false</skip.oracle>
-        </properties>
-      </profile>
-  
+        
       <profile>
         <id>itest.debug</id>
         <activation>

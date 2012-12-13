@@ -106,7 +106,7 @@ public class DecoratingInvocationHandlerTest {
     @BeforeClass
     public void setBuilder() throws Exception {
         NamingManager.setInitialContextFactoryBuilder(new AccessCheckingInitialContextFactoryBuilder(
-            new org.jboss.as.naming.InitialContextFactory()));
+            new org.jboss.as.naming.InitialContextFactory(), false));
     }
     
     public void testSimpleDispatch() throws Exception {

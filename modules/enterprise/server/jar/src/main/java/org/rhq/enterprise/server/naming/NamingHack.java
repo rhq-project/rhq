@@ -79,7 +79,7 @@ public class NamingHack {
                 }
 
                 NamingManager.setInitialContextFactoryBuilder(new AccessCheckingInitialContextFactoryBuilder(
-                    defaultFactory));
+                    defaultFactory, originalBuilder == null));
             } catch (Exception e) {
                 LOG.error("Failed to install a custom initial context factory builder. RHQ installation is unsecure!",
                     e);

@@ -33,9 +33,9 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
 {
 
 
-    public MetricAreaBarGraphView(String locatorId, int entityId, MeasurementDefinition def,
+    public MetricAreaBarGraphView(String locatorId, int entityId, String entityName, MeasurementDefinition def,
                                   List<MeasurementDataNumericHighLowComposite> data ) {
-        super(locatorId, entityId, def, data);
+        super(locatorId, entityId, entityName, def, data);
     }
 
     @Override
@@ -45,7 +45,7 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
     }
 
     /**
-     * The magic JSNI to draw the charts with $wnd.d3.
+     * The magic JSNI to draw the charts with $wnd.$wnd.d3.
      */
     public native void drawJsniChart() /*-{
 
@@ -54,7 +54,7 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                 chartHandle = "#rChart-"+chartId,
                 chartSelection = chartHandle + " svg",
                 json = eval(this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getJsonMetrics()()),
-                yAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisTitle()(),
+                yAxisTitle = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisTitle()(),
                 yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisUnits()(),
                 xAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getXAxisTitle()();
 
@@ -67,9 +67,11 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
         function draw(data) {
             "use strict";
 
-            var margin = {top:10, right:5, bottom:30, left:70},
-                    width = 500 - margin.left - margin.right,
-                    height = 150 - margin.top - margin.bottom;
+            var margin = {top: 10, right: 5, bottom: 30, left: 40},
+                    width = 700 - margin.left - margin.right,
+                    height = 250 - margin.top - margin.bottom;
+
+            var titleHeight = 43, titleSpace = 10;
 
             var avg = $wnd.d3.mean(data.map(function (d) {
                 return d.y;
@@ -81,6 +83,7 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                 return d.low;
             }));
 
+
             var timeScale = $wnd.d3.time.scale()
                     .range([0, width])
                     .domain($wnd.d3.extent(data, function (d) {
@@ -88,23 +91,26 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                     }));
 
             // adjust the min scale so blue low line is not in axis
-            var lowBound = min - ((peak - min)* 0.1);
-            var highBound = peak + ((peak - min)* 0.1);
+            var lowBound = min - ((peak - min) * 0.1);
+            var highBound = peak + ((peak - min) * 0.1);
 
             var yScale = $wnd.d3.scale.linear()
                     .rangeRound([height, 0])
-                    .domain([lowBound,highBound]);
+                    .domain([lowBound, highBound]);
 
-            var xAxis = $wnd.d3.svg.axis()
-                    .scale(timeScale)
-                    .ticks(5)
-                    .tickSubdivide(5)
-                    .orient("bottom");
+//    var xAxis = $wnd.d3.svg.axis()
+//            .scale(timeScale)
+//            .ticks(0)
+//            .tickSize(0, 0, 0)
+//            .orient("bottom");
 
             var yAxis = $wnd.d3.svg.axis()
                     .scale(yScale)
-                    .ticks(5)
+                    .tickSubdivide(2)
+                    .ticks(10)
+                    .tickSize(4, 4, 0)
                     .orient("left");
+
 
             var interpolation = "basis";
             var avgLine = $wnd.d3.svg.line()
@@ -129,68 +135,307 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                         return timeScale(d.x);
                     })
                     .y(function (d) {
-                        return yScale((min));
-                    });
-            var line = $wnd.d3.svg.line()
-                    .interpolate("linear")
-                    .x(function (d) {
-                        return timeScale(d.x);
-                    })
-                    .y(function (d) {
-                        return yScale((+d.y));
+                        return yScale(min);
                     });
 
-            var highLine = $wnd.d3.svg.line()
+            // our own x-axis because ours is custom
+            var xAxisLine = $wnd.d3.svg.line()
                     .interpolate(interpolation)
                     .x(function (d) {
                         return timeScale(d.x);
                     })
                     .y(function (d) {
-                        return yScale(+d.high);
+                        return yScale(lowBound);
                     });
 
-            var lowLine = $wnd.d3.svg.line()
-                    .interpolate(interpolation)
-                    .x(function (d) {
-                        return timeScale(d.x);
-                    })
-                    .y(function (d) {
-                        return yScale(+d.low);
-                    });
 
-            var areaHigh = $wnd.d3.svg.area()
-                    .defined(function(d) { return !isNaN(d.y); })
-                    .x(function(d) { return timeScale(d.x); })
-                    .y0(function(d) { return yScale(+d.y); })
-                    .y1(function(d) { return yScale(+d.high); });
-
-            var areaLow = $wnd.d3.svg.area()
-                    .x(function(d) { return timeScale(d.x); })
-                    .y0(function(d) { return yScale(+d.low); })
-                    .y1(function(d) { return yScale(+d.y); });
 
             // create the actual chart group
             var chart = $wnd.d3.select(chartSelection);
 
-            // add the gradient background
-//    chart.append("rect")
-//            .attr("class", "frame")
-//            .attr("x", margin.left)
-//            .attr("y", margin.top)
-//            .attr("height", height)
-//            .attr("width", width+10)
-//            .attr("fill", "url(#gradBackground)");
+
+            var createHeader = (function (resourceName,minLabel,minValue,avgLabel, avgValue, highLabel, highValue) {
+                var fontSize = 14,
+                        yTitle = 37,
+                        fgColor = "#FFFFFF",
+                        baseX = 440,
+                        xInc = 50;
+
+
+                // title/header
+                var title = chart.append("g").append("rect")
+                        .attr("class", "title")
+                        .attr("x", 10)
+                        .attr("y", margin.top)
+                        .attr("height", titleHeight)
+                        .attr("width", width + 30 + margin.left)
+                        .attr("fill", "url(#headerGrad)");
+
+                chart.append("text")
+                        .attr("class", "titleName")
+                        .attr("x", 30)
+                        .attr("y", yTitle)
+                        .attr("font-size", fontSize)
+                        .attr("font-weight", "bold")
+                        .attr("text-anchor", "left")
+                        .text(resourceName)
+                        .attr("fill", fgColor);
+
+
+                chart.append("text")
+                        .attr("class", "minLabel")
+                        .attr("x", baseX)
+                        .attr("y", yTitle)
+                        .attr("font-size", fontSize)
+                        .attr("font-weight", "bold")
+                        .attr("text-anchor", "left")
+                        .text(minLabel)
+                        .attr("fill", fgColor);
+
+                chart.append("text")
+                        .attr("class", "minText")
+                        .attr("x", baseX + xInc)
+                        .attr("y", yTitle)
+                        .attr("font-size", fontSize)
+                        .attr("font-weight", "bold")
+                        .attr("text-anchor", "left")
+                        .text(minValue.toPrecision(3))
+                        .attr("fill", fgColor);
+
+                //avg
+                chart.append("text")
+                        .attr("class", "avgLabel")
+                        .attr("x", baseX + 2 * xInc)
+                        .attr("y", yTitle)
+                        .attr("font-size", fontSize)
+                        .attr("font-weight", "bold")
+                        .attr("text-anchor", "left")
+                        .text(avgLabel)
+                        .attr("fill", fgColor);
+
+                chart.append("text")
+                        .attr("class", "avgText")
+                        .attr("x", baseX +  3 * xInc)
+                        .attr("y", yTitle)
+                        .attr("font-size", fontSize)
+                        .attr("font-weight", "bold")
+                        .attr("text-anchor", "left")
+                        .text(avgValue.toPrecision(3))
+                        .attr("fill", fgColor);
+
+                // high
+                chart.append("text")
+                        .attr("class", "highLabel")
+                        .attr("x", baseX + 4 * xInc)
+                        .attr("y", yTitle)
+                        .attr("font-size", fontSize)
+                        .attr("font-weight", "bold")
+                        .attr("text-anchor", "left")
+                        .text(highLabel)
+                        .attr("fill", fgColor);
+
+                chart.append("text")
+                        .attr("class", "highText")
+                        .attr("x", baseX +  5 * xInc)
+                        .attr("y", yTitle)
+                        .attr("font-size", fontSize)
+                        .attr("font-weight", "bold")
+                        .attr("text-anchor", "left")
+                        .text(highValue.toPrecision(3))
+                        .attr("fill", fgColor);
+
+            });
+
+            // create the title/header area
+            createHeader(yAxisTitle, "Min -",min,"Avg -",avg,"High -",peak);
+
 
             var svg = chart.append("g")
                     .attr("width", width + margin.left + margin.right)
-                    .attr("height", height + margin.top + margin.bottom)
-                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                    .attr("height", height + margin.top - titleHeight - titleSpace + margin.bottom)
+                    .attr("transform", "translate(" + margin.left + "," + (+titleHeight + titleSpace + margin.top) + ")");
 
-            // The bars of the bar graph
-            svg.selectAll("rect.bar")
+
+            // create the y axis grid lines
+            svg.append("g").classed("grid y_grid", true)
+                    .call($wnd.d3.svg.axis()
+                            .scale(yScale)
+                            .orient("left")
+                            .ticks(10)
+                            .tickSize(-width, 0, 0)
+                            .tickFormat("")
+                    );
+
+
+            var barOffset = 19, pixelsOffHeight = 0;
+
+            // The gray bars at the bottom leading up
+            svg.selectAll("rect.leaderBar")
                     .data(data)
                     .enter().append("rect")
-                    .attr("class", "bar")
+                    .attr("class", "leaderBar")
+                    .attr("x", function (d) {
+                        return timeScale(d.x);
+                    })
+                    .attr("y", function (d) {
+                        if (d.down || d.nodata) {
+                            return yScale(highBound);
+                        } else {
+                            return yScale(d.low);
+                        }
+                    })
+                    .attr("height", function (d) {
+                        if (d.down || d.nodata) {
+                            return height - yScale(highBound) - pixelsOffHeight;
+                        } else {
+                            return height - yScale(d.low) - pixelsOffHeight;
+                        }
+                    })
+                    .attr("width", function (d) {
+                        return  (width / data.length - barOffset  );
+                    })
+
+                    .attr("opacity", ".55")
+                    .attr("fill", function (d, i) {
+                        if (d.down) {
+                            return  "url(#redStripes)";
+                        } else if (d.nodata) {
+                            return  "url(#grayStripes)";
+                        } else {
+                            if (i % 5 == 0) {
+                                return  "url(#heavyLeaderBarGrad)";
+                            } else {
+                                return  "url(#leaderBarGrad)";
+                            }
+                        }
+                    });
+
+            // custom x-axis
+            svg.selectAll("rect.customXAxis")
+                    .data(data)
+                    .enter().append("rect")
+                    .attr("class", "customXAxis")
+                    .attr("x", function (d) {
+                        return timeScale(d.x);
+                    })
+                    .attr("y", function (d) {
+                        return  yScale(lowBound) + 2;
+                    })
+                    .attr("height", function (d, i) {
+                        if (i % 5 == 0) {
+                            return height - yScale(lowBound) + 3;
+                        } else {
+                            return height - yScale(lowBound) + 3;
+                        }
+                    })
+                    .attr("width", function (d) {
+                        return  (width / data.length - barOffset  );
+                    })
+                    .attr("opacity", 1)
+                    .attr("fill", function (d, i) {
+                        if (i % 5 == 0) {
+                            return  "#a7a7ac";
+                        } else {
+                            return  "#d3d3d6";
+                        }
+                    });
+
+            // Custom knobs on xaxis every 5th one
+            svg.selectAll("rect.customXAxisKnobs")
+                    .data(data)
+                    .enter().append("rect")
+                    .attr("class", "customXAxisKnobs")
+                    .attr("x", function (d) {
+                        return timeScale(d.x) + 4;
+                    })
+                    .attr("y", function (d) {
+                        return  yScale(lowBound) + 3;
+                    })
+                    .attr("height", function (d, i) {
+                        if (i % 5 == 0) {
+                            return (height - yScale(lowBound)) + 4;
+                        } else {
+                            return 0;
+                        }
+                    })
+                    .attr("width", function (d) {
+                        return  (((width / data.length - barOffset) / 2) - 3 );
+                    })
+                    .attr("opacity", 1)
+                    .attr("fill", function (d, i) {
+
+                        if (i % 5 == 0) {
+                            return  "#a7a7ac";
+                        } else {
+                            return  "#d3d3d6";
+                        }
+                    });
+            // Custom knobs on
+            svg.selectAll("rect.customXAxisKnobsSmall")
+                    .data(data)
+                    .enter().append("rect")
+                    .attr("class", "customXAxisKnobsSmall")
+                    .attr("x", function (d) {
+                        return timeScale(d.x) + 5;
+                    })
+                    .attr("y", function (d) {
+                        return  yScale(lowBound) + 5;
+                    })
+                    .attr("height", function (d, i) {
+                        if (i % 5 != 0) {
+                            return (height - yScale(lowBound)) + 2;
+                        } else {
+                            return 0;
+                        }
+                    })
+                    .attr("width", function (d) {
+                        return  (((width / data.length - barOffset) / 2) - 4);
+                    })
+                    .attr("opacity", 1)
+                    .attr("fill", function (d, i) {
+
+                        if (i % 5 == 0) {
+                            return  "#a7a7ac";
+                        } else {
+                            return  "#d3d3d6";
+                        }
+                    });
+
+
+            var dateFormatter = $wnd.d3.time.format("%I:%M:%S %P");
+
+            // the labels for x axis
+            svg.selectAll("rect.customXAxisLabel")
+                    .data(data)
+                    .enter().append("text")
+                    .attr("class", "customXAxisLabel")
+                    .attr("x", function (d) {
+                        return timeScale(d.x);
+                    })
+                    .attr("y", function (d) {
+                        return  yScale(lowBound) + 10;
+                    })
+                    .attr("dy", "1.2em")
+                    .attr("dx", function (d) {
+                        return  (((width / data.length - barOffset) / 2) - 2 );
+                    })
+                    .attr("text-anchor", "left").
+                    text(function (d, i) {
+                        var date = new Date(+d.x);
+                        if (i % 5 == 0) {
+                            return dateFormatter(date);
+                        } else {
+                            return  "";
+                        }
+                    })
+                    .attr("fill", "#50505a");
+
+
+            // upper portion representing avg to high
+            svg.selectAll("rect.high")
+                    .data(data)
+                    .enter().append("rect")
+                    .attr("class", "high")
                     .attr("x", function (d) {
                         return timeScale(d.x);
                     })
@@ -198,54 +443,50 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                         return yScale(d.high);
                     })
                     .attr("height", function (d) {
-                        return height - yScale(d.high);
+                        if (d.down || d.nodata) {
+                            return height - yScale(lowBound);
+                        } else {
+                            return  yScale(d.y) - yScale(d.high);
+                        }
                     })
                     .attr("width", function (d) {
-                        return  (width / data.length -12  );
+                        return  (width / data.length - barOffset  );
                     })
-                    .attr("data-rhq-value", function (d) {
-                        return d.y;
-                    })
-                    .attr("data-rhq-high-value", function (d) {
-                        return d.high;
-                    })
-                    .attr("data-rhq-low-value", function (d) {
-                        return d.low;
-                    })
-                    .attr("data-rhq-time", function (d) {
-                        var myDate = new Date(d.x);
-                        return myDate.getHours() + ":" + myDate.getMinutes();
-                    })
-                //.attr("opacity", 0.3)
-                    .attr("fill", "#dadde0");
+                    .attr("opacity", 0.8)
+                //.attr("fill", "#084581");
+                    .attr("fill", "url(#topBarGrad)");
 
 
-            svg.append("path")
-                    .datum(data)
-                    .attr("class", "areaHigh")
-                    .attr("fill", "#41cdfb")
-                    .attr("opacity", ".4")
-                    .attr("stroke", "black")
-                    .attr("stroke-width", ".5")
-                    .attr("stroke-opacity", ".6")
-                    .attr("d", areaHigh);
-
-            svg.append("path")
-                    .datum(data)
-                    .attr("class", "areaLow")
-                    .attr("opacity", ".4")
-                    .attr("fill", "#075ef4")
-                    .attr("stroke", "black")
-                    .attr("stroke-width", ".5")
-                    .attr("stroke-opacity", ".6")
-                    .attr("d", areaLow);
-
+            // lower portion representing avg to low
+            svg.selectAll("rect.low")
+                    .data(data)
+                    .enter().append("rect")
+                    .attr("class", "low")
+                    .attr("x", function (d) {
+                        return timeScale(d.x);
+                    })
+                    .attr("y", function (d) {
+                        return yScale(d.y);
+                    })
+                    .attr("height", function (d) {
+                        if (d.down || d.nodata) {
+                            return height - yScale(lowBound);
+                        } else {
+                            return  yScale(d.low) - yScale(d.y);
+                        }
+                    })
+                    .attr("width", function (d) {
+                        return  (width / data.length - barOffset );
+                    })
+                    .attr("opacity", 0.8)
+                //.attr("fill", "#42aadf");
+                    .attr("fill", "url(#bottomBarGrad)");
 
             // create x-axis
-            svg.append("g")
-                    .attr("class", "x axis")
-                    .attr("transform", "translate(0," + height + ")")
-                    .call(xAxis);
+//    svg.append("g")
+//            .attr("class", "x axis")
+//            .attr("transform", "translate(0," + height + ")")
+//            .call(xAxis);
 
 
             // create y-axis
@@ -253,24 +494,25 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                     .attr("class", "y axis")
                     .call(yAxis)
                     .append("text")
-                    .attr("transform", "rotate(-90)")
-                    .attr("y", -60)
-                    .attr("dy", ".71em")
+                    .attr("transform", "rotate(-90),translate( -60,0)")
+                    .attr("y", -30)
+                //.attr("dy", ".71em")
+                    .attr("font-size", "10px")
+                    .attr("font-family", "'Liberation Sans', Arial, Helvetica, sans-serif")
+                    .attr("letter-spacing", "3")
                     .style("text-anchor", "end")
                     .text(yAxisUnits === "NONE" ? "" : yAxisUnits);
 
             console.log("finished axes");
-
 
             // peak Line (must be before line.high to look right
             svg.append("path")
                     .datum(data)
                     .attr("class", "peakLine")
                     .attr("fill", "none")
-                    .attr("stroke", "red")
-                    .attr("stroke-width", "2")
-                //.attr("stroke-dasharray", "5,5")
-                    .attr("stroke-dasharray", "20,10,5,5,5,10")
+                    .attr("stroke", "#ff8a9a")
+                    .attr("stroke-width", "1")
+                    .attr("stroke-dasharray", "3,3")
                     .attr("stroke-opacity", ".4")
                     .attr("d", peakLine);
 
@@ -279,146 +521,38 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                     .datum(data)
                     .attr("class", "minLine")
                     .attr("fill", "none")
-                    .attr("stroke", "steelblue")
-                    .attr("stroke-width", "2")
-                //.attr("stroke-dasharray", "5,5")
-                    .attr("stroke-dasharray", "20,10,5,5,5,10")
+                    .attr("stroke", "#8ad6ff")
+                    .attr("stroke-width", "1")
+                    .attr("stroke-dasharray", "3,3")
+                //.attr("stroke-dasharray", "20,10,5,5,5,10")
                     .attr("stroke-opacity", ".6")
                     .attr("d", minLine);
 
+            // avg line
             svg.append("path")
                     .datum(data)
                     .attr("class", "avgLine")
                     .attr("fill", "none")
-                    .attr("stroke", "green")
-                    .attr("stroke-width", "2")
-                    .attr("stroke-dasharray", "5,5")
+                    .attr("stroke", "#b0d9b0")
+                    .attr("stroke-width", "1")
+                    .attr("stroke-dasharray", "3,3")
                     .attr("stroke-opacity", ".6")
                     .attr("d", avgLine);
-
+            // xaxis line
             svg.append("path")
                     .datum(data)
-                    .attr("class", "yLine")
+                    .attr("class", "xAxisLine")
                     .attr("fill", "none")
-                    .attr("stroke", "black")
-                    .attr("stroke-width", "2")
-                    .attr("stroke-opacity", ".6")
-                    .attr("d", line);
-
-
-//    svg.selectAll("line.middleWhisker")
-//            .data(data)
-//            .enter().append("line")
-//            .attr("class", "middleWhisker")
-//            .attr("x1", function (d) {
-//                return timeScale(d.x);
-//            })
-//            .attr("x2", function (d) {
-//                return timeScale(d.x) + ( 4 * edgeToCenter);
-//            })
-//            .attr("y1", function (d) {
-//                return yScale(d.y);
-//            })
-//            .attr("y2", function (d) {
-//                return yScale(d.y);
-//            })
-//            .attr("stroke-width", "2")
-//            .attr("stroke-opacity", ".5")
-//            .attr("stroke", "black");
-
-//    svg.selectAll("line.highWhisker")
-//            .data(data)
-//            .enter().append("line")
-//            .attr("class", "highWhisker")
-//            .attr("x1", function (d) {
-//                return timeScale(d.x);
-//            })
-//            .attr("x2", function (d) {
-//                return timeScale(d.x) + ( 4 * edgeToCenter);
-//            })
-//            .attr("y1", function (d) {
-//                return yScale(d.high);
-//            })
-//            .attr("y2", function (d) {
-//                return yScale(d.high);
-//            })
-//            .attr("stroke-width", "1")
-//            .attr("stroke-opacity", ".7")
-//            .attr("stroke", "magenta");
-
-//    svg.selectAll("line.lowWhisker")
-//            .data(data)
-//            .enter().append("line")
-//            .attr("class", "lowWhisker")
-//            .attr("x1", function (d) {
-//                return timeScale(d.x);
-//            })
-//            .attr("x2", function (d) {
-//                return timeScale(d.x) + ( 4 * edgeToCenter);
-//            })
-//            .attr("y1", function (d) {
-//                return yScale(d.low);
-//            })
-//            .attr("y2", function (d) {
-//                return yScale(d.low);
-//            })
-//            .attr("stroke-width", "1")
-//            .attr("stroke-opacity", ".7")
-//            .attr("stroke", "magenta");
-
-
-            // Whisker stem
-//    svg.selectAll("line.stem")
-//            .data(data)
-//            .enter().append("line")
-//            .attr("class", "stem")
-//            .attr("x1", function (d) {
-//                return timeScale(d.x) + (2 * edgeToCenter);
-//            })
-//            .attr("x2", function (d) {
-//                return timeScale(d.x) + (2 * edgeToCenter);
-//            })
-//            .attr("y1", function (d) {
-//                return yScale(d.high) -2;
-//            })
-//            .attr("y2", function (d) {
-//                return yScale(d.low) +2;
-//            })
-//            .attr("stroke-width", "3")
-//            .attr("stroke-opacity", ".7")
-//            //.attr("stroke-dasharray", "2,2")
-//            .attr("stroke", "magenta");
-//
-
-//    svg.selectAll("line.base.stem")
-//            .data(data)
-//            .enter().append("line")
-//            .attr("class", "base.stem")
-//            .attr("x1", function (d) {
-//                return timeScale(d.x) + (2 * edgeToCenter);
-//            })
-//            .attr("x2", function (d) {
-//                return timeScale(d.x) + (2 * edgeToCenter);
-//            })
-//            .attr("y1", function (d) {
-//                return yScale(d.low) +2;
-//            })
-//            .attr("y2", function (d) {
-//                return height ;
-//            })
-//            .attr("stroke-opacity", function (d,i) {
-//                return i % 5 == 0 ? 1 : .6;
-//            })
-//            .attr("stroke", function (d,i) {
-//                return i % 5 == 0 ? "#919191" : "#cccccc";
-//            })
-//            .attr("stroke-width", "1");
-
-
+                    .attr("stroke", "#cccdcf")
+                    .attr("stroke-width", "1")
+                //.attr("stroke-dasharray", "3,3")
+                //.attr("stroke-opacity", ".6")
+                    .attr("d", xAxisLine);
 
             console.log("finished drawing paths");
         }
-     draw(json);
+        draw(json);
+
     }-*/;
 
 }

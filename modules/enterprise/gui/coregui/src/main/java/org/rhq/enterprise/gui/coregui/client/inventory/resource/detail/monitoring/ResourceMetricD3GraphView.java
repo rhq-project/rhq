@@ -55,16 +55,16 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView
 
     public ResourceMetricD3GraphView(String locatorId){
         super(locatorId);
-        setChartHeight("150px");
+        //setChartHeight("150px");
     }
 
 
-    public ResourceMetricD3GraphView(String locatorId, int resourceId, MeasurementDefinition def,
+    public ResourceMetricD3GraphView(String locatorId, int entityId, String entityName, MeasurementDefinition def,
                                      List<MeasurementDataNumericHighLowComposite> data, HasD3JsniChart jsniChart ) {
 
-        super(locatorId, resourceId, def, data);
+        super(locatorId, entityId, entityName, def, data);
         this.jsniChart = jsniChart;
-        setChartHeight("150px");
+        //setChartHeight("150px");
     }
 
 
@@ -165,9 +165,9 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView
         LiveGraphD3View.displayAsDialog(getLocatorId(), getEntityId(), getDefinition());
     }
 
-    public AbstractMetricD3GraphView getInstance(String locatorId, int entityId, MeasurementDefinition def,
+    public AbstractMetricD3GraphView getInstance(String locatorId, int entityId, String entityName, MeasurementDefinition def,
         List<MeasurementDataNumericHighLowComposite> data, HasD3JsniChart jsniChart) {
 
-        return new ResourceMetricD3GraphView(locatorId, entityId, def, data, jsniChart);
+        return new ResourceMetricD3GraphView(locatorId, entityId, entityName, def, data, jsniChart);
     }
 }

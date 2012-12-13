@@ -218,11 +218,11 @@ public class D3GraphListView extends LocatableVLayout {
                             if (null != selectedDefinitionId) {
                                 // single graph case
                                 if (measurementId == selectedDefinitionId) {
-                                    buildIndividualGraph(measurementDefinition, measurement, 160);
+                                    buildIndividualGraph(measurementDefinition, measurement, 360);
                                 }
                             } else {
                                 // multiple graph case
-                                buildIndividualGraph(measurementDefinition, measurement, 130);
+                                buildIndividualGraph(measurementDefinition, measurement, 330);
                             }
                         }
                         i++;
@@ -235,10 +235,11 @@ public class D3GraphListView extends LocatableVLayout {
     private void buildIndividualGraph(MeasurementDefinition measurementDefinition,
         List<MeasurementDataNumericHighLowComposite> data, int height) {
 
-        MetricLineGraphView graphView = new MetricLineGraphView("areaBarGraph", resource.getId(), measurementDefinition, data);
+        //MetricLineGraphView graphView = new MetricLineGraphView("areaBarGraph", resource.getId(),resource.getName(), measurementDefinition, data);
+        MetricAreaBarGraphView graphView = new MetricAreaBarGraphView("areaBarGraph", resource.getId(),resource.getName(), measurementDefinition, data);
 
         ResourceMetricD3GraphView graph = new ResourceMetricD3GraphView(
-            extendLocatorId(measurementDefinition.getName()), resource.getId(), measurementDefinition, data, graphView);
+            extendLocatorId(measurementDefinition.getName()), resource.getId(),resource.getName(), measurementDefinition, data, graphView);
 
         graph.setWidth("95%");
         graph.setHeight(height);

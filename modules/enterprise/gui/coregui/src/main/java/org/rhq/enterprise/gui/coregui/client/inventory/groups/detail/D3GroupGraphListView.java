@@ -141,9 +141,10 @@ public class D3GroupGraphListView extends LocatableVLayout {
 
     private void buildIndividualGraph(MeasurementDefinition measurementDefinition, List<MeasurementDataNumericHighLowComposite> data) {
 
-        MetricAreaBarGraphView graphView = new MetricAreaBarGraphView("groupBarAreaGraph",resourceGroup.getId(), measurementDefinition, data);
+        MetricAreaBarGraphView graphView = new MetricAreaBarGraphView("groupBarAreaGraph",resourceGroup.getId(), resourceGroup.getName(),
+                measurementDefinition, data);
         ResourceMetricD3GraphView graph = new ResourceMetricD3GraphView(extendLocatorId(measurementDefinition.getName()), resourceGroup.getId(),
-            measurementDefinition, data, graphView);
+                resourceGroup.getName(), measurementDefinition, data, graphView);
 
         graph.setWidth("95%");
         graph.setHeight(120);

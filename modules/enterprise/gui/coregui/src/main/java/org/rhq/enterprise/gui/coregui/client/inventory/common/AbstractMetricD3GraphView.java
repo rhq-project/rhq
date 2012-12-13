@@ -31,6 +31,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.JsonMetricProducer;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -49,23 +50,25 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
     protected HTMLFlow resourceTitle;
 
     private int entityId;
+    private String entityName;
     private int definitionId;
 
     private MeasurementUnits adjustedMeasurementUnits;
     private MeasurementDefinition definition;
     private List<MeasurementDataNumericHighLowComposite> data;
 
-    private String chartHeight;
+    //private String chartHeight;
 
     public AbstractMetricD3GraphView(String locatorId) {
         super(locatorId);
     }
 
 
-    public AbstractMetricD3GraphView(String locatorId, int entityId, MeasurementDefinition def,
+    public AbstractMetricD3GraphView(String locatorId, int entityId, String entityName, MeasurementDefinition def,
                                      List<MeasurementDataNumericHighLowComposite> data) {
         this(locatorId);
 
+        this.entityName = entityName;
         this.entityId = entityId;
         this.definition = def;
         this.data = data;
@@ -163,11 +166,16 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
 
             addMember(titleHLayout);
 
-            HTMLFlow title = new HTMLFlow("<b>" + definition.getDisplayName() + "</b> " + definition.getDescription());
-            title.setWidth100();
-            addMember(title);
-            chartHeight = (chartHeight != null) ? chartHeight : "100%";
-            HTMLFlow graph = new HTMLFlow("<div id=\"rChart-"+getChartId()+"\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:"+ chartHeight +";\"></svg></div>");
+            //HTMLFlow title = new HTMLFlow("<b>" + definition.getDisplayName() + "</b> " + definition.getDescription());
+            //title.setWidth100();
+            //addMember(title);
+            //chartHeight = (chartHeight != null) ? chartHeight : "100%";
+            //HTMLFlow graph = new HTMLFlow("<div id=\"rChart-"+getChartId()+"\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:"+ chartHeight +";\"></svg></div>");
+            StringBuilder divAndSvgDefs = new StringBuilder();
+            divAndSvgDefs.append("<div id=\"rChart-" + getChartId() + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:320px;\">");
+            divAndSvgDefs.append(getSvgDefs());
+            divAndSvgDefs.append("</svg></div>");
+            HTMLFlow graph = new HTMLFlow(divAndSvgDefs.toString());
             graph.setWidth100();
             graph.setHeight100();
             addMember(graph);
@@ -180,6 +188,43 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
                 }
             }.schedule(100);
         }
+    }
+
+    /**
+     * Svg definitions for patterns and gradients to use on SVG shapes.
+     * @return xml String
+     */
+    private static String getSvgDefs(){
+        return "<defs>" +
+                "                <linearGradient id=\"headerGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\">" +
+                "                    <stop offset=\"0%\" style=\"stop-color:#707883;stop-opacity:1\"/>" +
+                "                    <stop offset=\"100%\" style=\"stop-color:#425b64;stop-opacity:1\"/>" +
+                "                </linearGradient>" +
+                "                <linearGradient id=\"leaderBarGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\">" +
+                "                    <stop offset=\"0%\" style=\"stop-color:#d3d3d6;stop-opacity:1\"/>" +
+                "                    <stop offset=\"100%\" style=\"stop-color:#d3d3d6;stop-opacity:.3\"/>" +
+                "                </linearGradient>" +
+                "                <linearGradient id=\"heavyLeaderBarGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\">" +
+                "                    <stop offset=\"0%\" style=\"stop-color:#a7a7ac;stop-opacity:1\"/>" +
+                "                    <stop offset=\"100%\" style=\"stop-color:#a7a7ac;stop-opacity:.3\"/>" +
+                "                </linearGradient>" +
+                "                <linearGradient id=\"topBarGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\">" +
+                "                    <stop offset=\"0%\" style=\"stop-color:#067aba;stop-opacity:1\"/>" +
+                "                    <stop offset=\"100%\" style=\"stop-color:#1278a8;stop-opacity:1\"/>" +
+                "                </linearGradient>" +
+                "                <linearGradient id=\"bottomBarGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\">" +
+                "                    <stop offset=\"0%\" style=\"stop-color:#4fb9e6;stop-opacity:1\"/>" +
+                "                    <stop offset=\"100%\" style=\"stop-color:#388bb0;stop-opacity:1\"/>" +
+                "                </linearGradient>" +
+                "                <pattern id=\"grayStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\"" +
+                "                         width=\"6\" height=\"3\">" +
+                "                    <path d=\"M 0 0 6 0\" style=\"stroke:gray; fill:none;\"/>" +
+                "                </pattern>" +
+                "                <pattern id=\"redStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\"" +
+                "                         width=\"6\" height=\"3\">" +
+                "                    <path d=\"M 0 0 6 0\" style=\"stroke:red; fill:none;\"/>" +
+                "                </pattern>" +
+                "            </defs>" ;
     }
 
     public abstract  void drawJsniChart();
@@ -197,9 +242,9 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
         return liveGraph;
     }
 
-    public void setChartHeight(String height) {
-        this.chartHeight = height;
-    }
+//    public void setChartHeight(String height) {
+//        this.chartHeight = height;
+//    }
 
     protected boolean supportsLiveGraphViewDialog() {
         return false;
@@ -220,7 +265,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
     }
 
     public String getYAxisTitle(){
-       return definition.getName();
+       return entityName+" - " +definition.getDisplayName()  ;
     }
 
     /**

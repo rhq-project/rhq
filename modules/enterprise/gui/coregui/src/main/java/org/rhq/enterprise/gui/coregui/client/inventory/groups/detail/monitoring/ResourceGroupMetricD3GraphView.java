@@ -60,12 +60,12 @@ public class ResourceGroupMetricD3GraphView extends AbstractMetricD3GraphView {
 //    }
 
 
-    public ResourceGroupMetricD3GraphView(String locatorId, int resourceId, MeasurementDefinition def,
+    public ResourceGroupMetricD3GraphView(String locatorId, int entityId, String entityName, MeasurementDefinition def,
                                           List<MeasurementDataNumericHighLowComposite> data, HasD3JsniChart jsniChart) {
 
-        super(locatorId, resourceId, def, data);
+        super(locatorId, entityId, entityName, def, data);
         this.jsniChart = jsniChart;
-        setChartHeight("150px");
+        //setChartHeight("150px");
     }
 
 
@@ -163,9 +163,9 @@ public class ResourceGroupMetricD3GraphView extends AbstractMetricD3GraphView {
     }
 
 
-    public AbstractMetricD3GraphView getInstance(String locatorId, int entityId, MeasurementDefinition def,
+    public AbstractMetricD3GraphView getInstance(String locatorId, int entityId, String entityName, MeasurementDefinition def,
                                                  List<MeasurementDataNumericHighLowComposite> data, HasD3JsniChart jsniChart) {
 
-        return new ResourceGroupMetricD3GraphView(locatorId, entityId, def, data, jsniChart);
+        return new ResourceGroupMetricD3GraphView(locatorId, entityId, entityName, def, data, jsniChart);
     }
 }

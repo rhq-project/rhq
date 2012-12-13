@@ -1,32 +1,30 @@
 
-.axis path,
-.axis line {
+.axis path,  .axis line {
     fill: none;
     stroke: #000;
     shape-rendering: crispEdges;
 }
 
-/*
-.x.axis path {
-     display: none;
+/* Horizontal gridlines */
+
+.grid .tick {
+    stroke: #f7f7f7;
 }
-*/
 
-/*.line {*/
-    /*fill: none;*/
-    /*stroke: steelblue;*/
-    /*stroke-width: 1.5px;*/
-/*}*/
+.y.axis  .tick.minor {
+    stroke: #a7a7ac;
+}
 
-/*.highLine {*/
-    /*fill: none;*/
-    /*stroke: red;*/
-    /*stroke-opacity: 0.2;*/
-    /*stroke-width: 1.5px;*/
-/*}*/
-/*.lowLine {*/
-    /*fill: none;*/
-    /*stroke: lightblue;*/
-    /*stroke-opacity: 0.25;*/
-    /*stroke-width: 1.5px;*/
-/*}*/
+.y.axis  text {
+    font-family: "Liberation Sans", Arial, Helvetica, sans-serif;
+    font-size: 10px;
+    font-weight: normal;
+    font-style: normal;
+    stroke: #50505a;
+}
+
+.y.axis path {
+    display: none;
+}
+
+

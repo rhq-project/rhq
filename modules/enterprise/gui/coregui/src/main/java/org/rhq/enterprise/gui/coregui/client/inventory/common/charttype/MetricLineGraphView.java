@@ -31,10 +31,9 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3Gr
  */
 public class MetricLineGraphView extends AbstractMetricD3GraphView implements HasD3JsniChart
 {
-    public MetricLineGraphView(String locatorId, int entityId, MeasurementDefinition def,
+    public MetricLineGraphView(String locatorId, int entityId, String entityName, MeasurementDefinition def,
                                List<MeasurementDataNumericHighLowComposite> data) {
-        super(locatorId,entityId, def,data);
-
+        super(locatorId,entityId, entityName,def,data);
     }
 
     @Override

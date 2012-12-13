@@ -522,7 +522,7 @@ public class ServerInstallUtil {
                 "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter", 15, false, 2, 5, 75,
                 RHQ_DS_SECURITY_DOMAIN, "-unused-stale-conn-checker-", "TRANSACTION_READ_COMMITTED",
                 "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker", props);
-            noTxDsRequest.get("steps").get(0).remove("stale-connection-checker-class-name"); // we don't have one of these for postgres
+            noTxDsRequest.get("steps").get(0).remove("stale-connection-checker-class-name"); // we don't have one of these for postgres            
         } else {
             LOG.info("Postgres datasource [" + RHQ_DATASOURCE_NAME_NOTX + "] already exists");
         }
@@ -534,10 +534,10 @@ public class ServerInstallUtil {
             props.put("DatabaseName", "${rhq.server.database.db-name:rhq}");
 
             xaDsRequest = client.createNewXADatasourceRequest(RHQ_DATASOURCE_NAME_XA, 30000, JDBC_DRIVER_POSTGRES,
-                "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter", 15, 5, 50, 75,
-                RHQ_DS_SECURITY_DOMAIN, "-unused-stale-conn-checker-", "TRANSACTION_READ_COMMITTED",
+                "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter", 15, 5, 50, (Boolean) null,
+                (Boolean) null, 75, (String) null, RHQ_DS_SECURITY_DOMAIN, (String) null, "TRANSACTION_READ_COMMITTED",
                 "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker", props);
-            xaDsRequest.get("steps").get(0).remove("stale-connection-checker-class-name"); // we don't have one of these for postgres
+
         } else {
             LOG.info("Postgres XA datasource [" + RHQ_DATASOURCE_NAME_XA + "] already exists");
         }
@@ -575,7 +575,6 @@ public class ServerInstallUtil {
 
         if (!client.isDatasource(RHQ_DATASOURCE_NAME_NOTX)) {
             props.put("char.encoding", "UTF-8");
-            props.put("SetBigStringTryClob", "true");
 
             noTxDsRequest = client.createNewDatasourceRequest(RHQ_DATASOURCE_NAME_NOTX, 30000,
                 "${rhq.server.database.connection-url:jdbc:oracle:thin:@127.0.0.1:1521:rhq}", JDBC_DRIVER_ORACLE,
@@ -590,11 +589,11 @@ public class ServerInstallUtil {
         if (!client.isDatasource(RHQ_DATASOURCE_NAME_XA)) {
             props.clear();
             props.put("URL", "${rhq.server.database.connection-url:jdbc:oracle:thin:@127.0.0.1:1521:rhq}");
-            props.put("ConnectionProperties", "SetBigStringTryClob=true");
 
             xaDsRequest = client.createNewXADatasourceRequest(RHQ_DATASOURCE_NAME_XA, 30000, JDBC_DRIVER_ORACLE,
-                "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter", 15, 5, 50, 75,
-                RHQ_DS_SECURITY_DOMAIN, "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker",
+                "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter", 15, 5, 50, (Boolean) null,
+                Boolean.TRUE, 75, (String) null, RHQ_DS_SECURITY_DOMAIN,
+                "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker",
                 "TRANSACTION_READ_COMMITTED",
                 "org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker", props);
         } else {

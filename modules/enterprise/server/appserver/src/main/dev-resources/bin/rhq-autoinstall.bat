@@ -19,7 +19,7 @@ rem we are normally executed just before the server starts, so give it time to i
 rem yes, this is a sleep of 5s, backwards compatible to XP
 ping 127.0.0.1 -n 5 -w 1000 > nul
 
-for /L %%i in (1,1,5) do (
+for /L %%i in (1,1,2) do (
    echo Running Installer Now...
    CALL "%_INSTALLER_SCRIPT%"
    if ERRORLEVEL 2 (

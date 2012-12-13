@@ -381,7 +381,7 @@
                       </timeout>
                       <statement>
                           <prepared-statement-cache-size>75</prepared-statement-cache-size>
-                      </statement>
+                      </statement> 
                   </xa-datasource>]]></replacevalue>
                     </replacefilter>
   
@@ -441,6 +441,11 @@
                       <xa-pool>
                           <min-pool-size>5</min-pool-size>
                           <max-pool-size>50</max-pool-size>
+                          <!--
+                          Oracle does not like XA connections getting used both inside and outside a JTA transaction.
+                          To workaround the problem you can create separate sub-pools for the different contexts using <no-tx-separate-pools/>
+                          -->                        
+                          <no-tx-separate-pools>true</no-tx-separate-pools>                         
                       </xa-pool>
                       <security>
                           <security-domain>RHQDSSecurityDomain</security-domain>

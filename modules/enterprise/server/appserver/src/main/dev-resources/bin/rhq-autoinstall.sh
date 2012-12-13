@@ -11,7 +11,7 @@ _INSTALLER_SCRIPT="${RHQ_SERVER_HOME}/bin/rhq-installer.sh"
 # we are normally executed just before the server starts, so give it time to initialize
 sleep 5
 
-_TRIES="1 2 3 4 5"
+_TRIES="1 2"
 for _TRY in $_TRIES
 do
    echo Running Installer Now...

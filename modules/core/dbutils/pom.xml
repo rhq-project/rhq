@@ -435,6 +435,17 @@
         
         <profile>
             <id>ojdbc-driver</id>
+            <dependencies>
+                <!--  The provided scope in the root pom is not sufficient, we need this
+                      dependency for dbreset, if it is used. -->
+                <dependency>
+                    <groupId>com.oracle</groupId>
+                    <artifactId>ojdbc6</artifactId>
+                    <version>${ojdbc6.version}</version>
+                    <scope>compile</scope>
+                </dependency>
+            </dependencies>
+            
             <!-- TODO: defer to root pom version when we can agree on a version -->
             <build>
                 <plugins>

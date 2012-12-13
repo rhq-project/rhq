@@ -30,7 +30,8 @@ public enum ServerDatasourceField {
 
     FIELD_ID("id", CoreGUI.getMessages().common_title_id()),
     
-    FIELD_ORDINAL("ordinal", "poradi"),
+    // todo: i18n
+    FIELD_ORDINAL("ordinal", "Order"),
 
     FIELD_NAME("name", CoreGUI.getMessages().common_title_name()),
 

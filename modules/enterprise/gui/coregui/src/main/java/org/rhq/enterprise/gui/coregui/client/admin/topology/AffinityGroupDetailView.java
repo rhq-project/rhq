@@ -26,10 +26,10 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.util.SC;
-import com.smartgwt.client.widgets.form.fields.ButtonItem;
+import com.smartgwt.client.widgets.IButton;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
-import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 
@@ -40,6 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -146,7 +147,7 @@ public class AffinityGroupDetailView extends LocatableVLayout implements Bookmar
     private void prepareAgentSection(SectionStack stack) {
         SectionStackSection section = new SectionStackSection(MSG.view_adminTopology_affinityGroups_agetnMembers());
         section.setExpanded(true);
-        AgentTableView agentsTable = new AgentTableView(extendLocatorId(AgentTableView.VIEW_ID.getName()), null,
+        AgentTableView agentsTable = new AgentTableView(extendLocatorId(AgentTableView.VIEW_ID.getName()),
             affinityGroupId, true);
         section.setItems(agentsTable);
 
@@ -158,7 +159,7 @@ public class AffinityGroupDetailView extends LocatableVLayout implements Bookmar
     private void prepareServerSection(SectionStack stack) {
         SectionStackSection section = new SectionStackSection(MSG.view_adminTopology_affinityGroups_serverMembers());
         section.setExpanded(true);
-        ServerTableView serverTable = new ServerTableView(extendLocatorId(AgentTableView.VIEW_ID.getName()), null,
+        ServerTableView serverTable = new ServerTableView(extendLocatorId(AgentTableView.VIEW_ID.getName()),
             affinityGroupId, true);
         section.setItems(serverTable);
 
@@ -176,10 +177,16 @@ public class AffinityGroupDetailView extends LocatableVLayout implements Bookmar
 
         final TextItem nameItem = new TextItem(FIELD_NAME.propertyName(), FIELD_NAME.title());
         nameItem.setValue(affinityGroup.getName());
+        
+        LocatableToolStrip footer = new LocatableToolStrip(extendLocatorId("detailsFooter"));
+        footer.setPadding(5);
+        footer.setWidth100();
+        footer.setMembersMargin(15);
 
-        ButtonItem saveButton = new ButtonItem();
+        IButton saveButton = new IButton();
         saveButton.setOverflow(Overflow.VISIBLE);
         saveButton.setTitle(MSG.common_button_save());
+//        saveButton.setWidth(70);
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 affinityGroup.setName(nameItem.getValueAsString());
@@ -194,12 +201,13 @@ public class AffinityGroupDetailView extends LocatableVLayout implements Bookmar
                 });
             }
         });
+        footer.addMember(saveButton);
 
-        form.setItems(nameItem, saveButton);
+        form.setItems(nameItem);
 
         SectionStackSection section = new SectionStackSection(MSG.common_title_details());
         section.setExpanded(true);
-        section.setItems(form);
+        section.setItems(form, footer);
 
         detailsSection = section;
         initSectionCount++;

@@ -69,8 +69,8 @@ public class AffinityGroupTableView extends TableSection<AffinityGroupWithCounts
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_TOPOLOGY_VIEW_ID + "/" + VIEW_ID;
 
-    public AffinityGroupTableView(String locatorId, String tableTitle) {
-        super(locatorId, tableTitle);
+    public AffinityGroupTableView(String locatorId) {
+        super(locatorId, null);
         setHeight100();
         setWidth100();
         setDataSource(new AffinityGroupWithCountsDatasource());
@@ -233,6 +233,7 @@ public class AffinityGroupTableView extends TableSection<AffinityGroupWithCounts
         layout.addMember(buttons);
         modalWindow.addItem(layout);
         modalWindow.show();
+        name.focusInItem();
     }
 
     @Override

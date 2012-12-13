@@ -33,12 +33,12 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.util.SC;
-import com.smartgwt.client.widgets.form.fields.ButtonItem;
+import com.smartgwt.client.widgets.IButton;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
-import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
@@ -54,6 +54,7 @@ import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -154,8 +155,8 @@ public class ServerDetailView extends LocatableVLayout implements BookmarkableVi
     private void prepareAgentSection(SectionStack stack, Server server) {
         SectionStackSection section = new SectionStackSection(MSG.view_adminTopology_serverDetail_connectedAgents());
         section.setExpanded(true);
-        AgentTableView agentsTable = new AgentTableView(extendLocatorId(AgentTableView.VIEW_ID.getName()), null,
-            serverId);
+        AgentTableView agentsTable = new AgentTableView(extendLocatorId(AgentTableView.VIEW_ID.getName()), serverId,
+            false);
         section.setItems(agentsTable);
 
         agentSection = section;
@@ -215,7 +216,7 @@ public class ServerDetailView extends LocatableVLayout implements BookmarkableVi
         lastUpdatetem.setValue(TimestampCellFormatter.format(Long.valueOf(server.getMtime()),
             TimestampCellFormatter.DATE_TIME_FORMAT_LONG));
 
-        ButtonItem saveButton = new ButtonItem();
+        IButton saveButton = new IButton();
         saveButton.setOverflow(Overflow.VISIBLE);
         saveButton.setTitle(MSG.common_button_save());
         saveButton.addClickHandler(new ClickHandler() {
@@ -237,13 +238,19 @@ public class ServerDetailView extends LocatableVLayout implements BookmarkableVi
                 }
             }
         });
-
+        
         form.setItems(nameItem, addressItem, portItem, securePortItem, operationModeItem, affinityGroupItem,
-            installationDateItem, lastUpdatetem, saveButton);
+            installationDateItem, lastUpdatetem);
+        
+        LocatableToolStrip footer = new LocatableToolStrip(extendLocatorId("detailsFooter"));
+        footer.setPadding(5);
+        footer.setWidth100();
+        footer.setMembersMargin(15);
+        footer.addMember(saveButton);
 
         SectionStackSection section = new SectionStackSection(MSG.common_title_details());
         section.setExpanded(true);
-        section.setItems(form);
+        section.setItems(form, footer);
 
         detailsSection = section;
         initSectionCount++;

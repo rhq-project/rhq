@@ -82,13 +82,13 @@ public class PartitionEventDatasource extends RPCDataSource<PartitionEvent, Part
         ListGridField idField = FIELD_ID.getListGridField();
         idField.setHidden(true);
         fields.add(idField);
-        ListGridField executionTimeField = FIELD_CTIME.getListGridField("120");
+        ListGridField executionTimeField = FIELD_CTIME.getListGridField("125");
         TimestampCellFormatter.prepareDateField(executionTimeField);
         fields.add(executionTimeField);
-        fields.add(FIELD_EVENT_TYPE.getListGridField("190"));
+        fields.add(FIELD_EVENT_TYPE.getListGridField("215"));
         fields.add(FIELD_EVENT_DETAIL.getListGridField("*"));
-        fields.add(FIELD_SUBJECT_NAME.getListGridField("90"));
-        fields.add(FIELD_EXECUTION_STATUS.getListGridField("90"));
+        fields.add(FIELD_SUBJECT_NAME.getListGridField("100"));
+        fields.add(FIELD_EXECUTION_STATUS.getListGridField("100"));
 
         return fields;
     }

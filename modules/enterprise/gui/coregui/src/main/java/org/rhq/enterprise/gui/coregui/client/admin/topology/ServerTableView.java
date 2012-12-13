@@ -71,8 +71,8 @@ public class ServerTableView extends TableSection<AbstractServerNodeDatasource<?
 
     private final Integer id;
 
-    public ServerTableView(String locatorId, String tableTitle, Integer id, boolean isAffinityGroupId) {
-        super(locatorId, tableTitle);
+    public ServerTableView(String locatorId, Integer id, boolean isAffinityGroupId) {
+        super(locatorId, null);
         this.showActions = id == null && !isAffinityGroupId;
         this.isAffinityGroupId = isAffinityGroupId;
         this.id = id;
@@ -84,10 +84,6 @@ public class ServerTableView extends TableSection<AbstractServerNodeDatasource<?
             setDataSource(showActions ? new ServerWithAgentCountDatasource() : new FailoverListItemDatasource(id));
         }
 
-    }
-
-    public ServerTableView(String locatorId, String tableTitle, Integer id) {
-        this(locatorId, tableTitle, id, false);
     }
 
     @Override

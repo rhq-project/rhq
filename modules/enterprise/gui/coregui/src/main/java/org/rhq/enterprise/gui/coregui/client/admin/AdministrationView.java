@@ -151,57 +151,51 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
-        NavigationItem agentsItem = new NavigationItem(PAGE_AGENTS_VIEW_ID,  new ViewFactory() {
+        NavigationItem agentsItem = new NavigationItem(PAGE_AGENTS_VIEW_ID, new ViewFactory() {
             public Canvas createView() {
                 return new FullHTMLPane(extendLocatorId(PAGE_AGENTS_VIEW_ID.getName()),
                     "/rhq/ha/listAgents-plain.xhtml?nomenu=true");
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
-        NavigationItem affinityGroupsItem = new NavigationItem(PAGE_AFFINITY_GROUPS_VIEW_ID,
-            new ViewFactory() {
-                public Canvas createView() {
-                    return new FullHTMLPane(extendLocatorId(PAGE_AFFINITY_GROUPS_VIEW_ID.getName()),
-                        "/rhq/ha/listAffinityGroups-plain.xhtml?nomenu=true");
-                }
-            }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
+        NavigationItem affinityGroupsItem = new NavigationItem(PAGE_AFFINITY_GROUPS_VIEW_ID, new ViewFactory() {
+            public Canvas createView() {
+                return new FullHTMLPane(extendLocatorId(PAGE_AFFINITY_GROUPS_VIEW_ID.getName()),
+                    "/rhq/ha/listAffinityGroups-plain.xhtml?nomenu=true");
+            }
+        }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
-        NavigationItem partitionEventsItem = new NavigationItem(PAGE_PARTITION_EVENTS_VIEW_ID,
-             new ViewFactory() {
-                public Canvas createView() {
-                    return new FullHTMLPane(extendLocatorId(PAGE_PARTITION_EVENTS_VIEW_ID.getName()),
-                        "/rhq/ha/listPartitionEvents-plain.xhtml?nomenu=true");
-                }
-            }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
+        NavigationItem partitionEventsItem = new NavigationItem(PAGE_PARTITION_EVENTS_VIEW_ID, new ViewFactory() {
+            public Canvas createView() {
+                return new FullHTMLPane(extendLocatorId(PAGE_PARTITION_EVENTS_VIEW_ID.getName()),
+                    "/rhq/ha/listPartitionEvents-plain.xhtml?nomenu=true");
+            }
+        }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
-        NavigationItem remoteAgentInstallItem = new NavigationItem(RemoteAgentInstallView.VIEW_ID,
-             new ViewFactory() {
-                public Canvas createView() {
-                    return new RemoteAgentInstallView(extendLocatorId("RemoteAgentInstall"));
-                }
-            }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
+        NavigationItem remoteAgentInstallItem = new NavigationItem(RemoteAgentInstallView.VIEW_ID, new ViewFactory() {
+            public Canvas createView() {
+                return new RemoteAgentInstallView(extendLocatorId("RemoteAgentInstall"));
+            }
+        }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
         NavigationItem serversItemGwt = new NavigationItem(ServerTableView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
-                return new ServerTableView(extendLocatorId(ServerTableView.VIEW_ID.getName()),
-                    ServerTableView.VIEW_ID.getTitle(), null);
+                return new ServerTableView(extendLocatorId(ServerTableView.VIEW_ID.getName()), null, false);
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
-        
+
         NavigationItem agentsItemGwt = new NavigationItem(AgentTableView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
-                return new AgentTableView(extendLocatorId(AgentTableView.VIEW_ID.getName()),
-                    AgentTableView.VIEW_ID.getTitle(), null);
+                return new AgentTableView(extendLocatorId(AgentTableView.VIEW_ID.getName()), null, false);
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
-        
+
         NavigationItem affinityGroupsItemGwt = new NavigationItem(AffinityGroupTableView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
-                return new AffinityGroupTableView(extendLocatorId(AffinityGroupTableView.VIEW_ID.getName()),
-                    AffinityGroupTableView.VIEW_ID.getTitle());
+                return new AffinityGroupTableView(extendLocatorId(AffinityGroupTableView.VIEW_ID.getName()));
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
-        
+
         NavigationItem partitionEventsGwt = new NavigationItem(PartitionEventTableView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
                 return new PartitionEventTableView(extendLocatorId(PartitionEventTableView.VIEW_ID.getName()),
@@ -211,11 +205,13 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
 
         // Arrays.asList returns a list with a fixed size, therefore there is the wrapping ArrayList
         List<NavigationItem> navigationItems = new ArrayList<NavigationItem>(Arrays.asList(serversItem, agentsItem,
-            affinityGroupsItem, partitionEventsItem, serversItemGwt, agentsItemGwt, affinityGroupsItemGwt, partitionEventsGwt));
+            affinityGroupsItem, partitionEventsItem, serversItemGwt, agentsItemGwt, affinityGroupsItemGwt,
+            partitionEventsGwt));
         if (isRHQ) {
             navigationItems.add(remoteAgentInstallItem);
         }
-        NavigationSection topologyRegion = new NavigationSection(SECTION_TOPOLOGY_VIEW_ID, navigationItems.toArray(new NavigationItem[]{}));
+        NavigationSection topologyRegion = new NavigationSection(SECTION_TOPOLOGY_VIEW_ID,
+            navigationItems.toArray(new NavigationItem[] {}));
         return topologyRegion;
     }
 

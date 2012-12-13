@@ -25,17 +25,17 @@ package org.rhq.enterprise.gui.coregui.client.admin.topology;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.LayoutPolicy;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.events.CloseClickEvent;
+import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -62,6 +62,7 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, org.r
     private static RPCDataSource<Server, org.rhq.core.domain.criteria.Criteria> datasource = null;
 
     private static Window modalWindow;
+    private static boolean shouldBeClosed;
     private static VLayout layout;
     private List<Integer> originallyAssignedIds;
 
@@ -83,15 +84,9 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, org.r
                     ListGridRecord[] records = getDataSource().buildRecords(result);
                     originallyAssignedIds = getIdList(records);
                     setAssigned(records);
-                    new Timer() {
-                        @Override
-                        public void run() {
-                            modalWindow.addItem(layout);
-                            modalWindow.show();
-                            selector.reset();
-                        }
-                    }.schedule(2000);
-
+                    modalWindow.addItem(layout);
+                    modalWindow.show();
+                    selector.reset();
                 }
 
                 @Override
@@ -137,14 +132,16 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, org.r
 
     public static void show(Integer affinityGroupId, final TableSection parrent) {
         modalWindow = new Window();
+        modalWindow.addCloseClickHandler(new CloseClickHandler() {
+            public void onCloseClick(CloseClickEvent event) {
+                closeAndRefresh(parrent, false);
+            }
+        });
         modalWindow.setTitle(MSG.view_adminTopology_affinityGroups() + ": "
             + MSG.view_adminTopology_affinityGroups_createNew());
         modalWindow.setOverflow(Overflow.VISIBLE);
-//        modalWindow.setMinWidth(800);
-//        modalWindow.setMinHeight(400);
-                modalWindow.setWidth(800);
-                modalWindow.setHeight(400);
-//        modalWindow.setAutoSize(true);
+        modalWindow.setWidth(800);
+        modalWindow.setHeight(400);
         modalWindow.setAutoCenter(true);
         modalWindow.setCanDragResize(true);
         modalWindow.setCanDragReposition(true);
@@ -152,21 +149,16 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, org.r
         layout = new VLayout();
         layout.setWidth100();
         layout.setHeight100();
-        layout.setPadding(15);
-        layout.setLayoutMargin(20);
-        layout.setVPolicy(LayoutPolicy.FILL);
+        layout.setPadding(10);
+        layout.setLayoutMargin(10);
 
         final AffinityGroupServersSelector selector = new AffinityGroupServersSelector("foo", affinityGroupId);
         layout.addMember(selector);
 
-        VLayout spacer = new VLayout();
-        spacer.setHeight(10);
-        layout.addMember(spacer);
-
         IButton cancel = new LocatableIButton(selector.extendLocatorId("Cancel"), MSG.common_button_cancel());
         cancel.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                modalWindow.destroy();
+                closeAndRefresh(parrent, false);
             }
         });
         IButton save = new LocatableIButton(selector.extendLocatorId("Save"), MSG.common_button_save());
@@ -176,15 +168,14 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, org.r
                 List<Integer> originallySelected = selector.getOriginallyAssignedIds();
                 originallySelected.removeAll(actuallySelected);
                 actuallySelected.removeAll(selector.getOriginallyAssignedIds());
+                shouldBeClosed = true;
                 if (!originallySelected.isEmpty()) {
+                    shouldBeClosed = false;
                     GWTServiceLookup.getCloudService().removeServersFromGroup(
                         originallySelected.toArray(new Integer[originallySelected.size()]), new AsyncCallback<Void>() {
 
                             public void onSuccess(Void result) {
-                                if (modalWindow != null) {
-                                    modalWindow.destroy();
-                                }
-                                parrent.refresh();
+                                closeAndRefresh(parrent, true);
                             }
 
                             public void onFailure(Throwable caught) {
@@ -194,14 +185,12 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, org.r
                         });
                 }
                 if (!actuallySelected.isEmpty()) {
+                    shouldBeClosed = false;
                     GWTServiceLookup.getCloudService().addServersToGroup(selector.getAffinityGroupId(),
-                        originallySelected.toArray(new Integer[originallySelected.size()]), new AsyncCallback<Void>() {
+                        actuallySelected.toArray(new Integer[actuallySelected.size()]), new AsyncCallback<Void>() {
 
                             public void onSuccess(Void result) {
-                                if (modalWindow != null) {
-                                    modalWindow.destroy();
-                                }
-                                parrent.refresh();
+                                closeAndRefresh(parrent, true);
                             }
 
                             public void onFailure(Throwable caught) {
@@ -210,16 +199,32 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, org.r
                             }
                         });
                 }
-                SC.say("To del: " + originallySelected + "\n\nTo add: " + actuallySelected);
+                if (shouldBeClosed) {
+                    closeAndRefresh(parrent, false);
+                }
+                //                SC.say("To del: " + originallySelected + "\n\nTo add: " + actuallySelected);
 
             }
         });
 
         HLayout buttons = new HLayout(10);
+        buttons.setHeight(20);
         buttons.setLayoutAlign(Alignment.CENTER);
-        buttons.addMember(cancel);
+        buttons.setLayoutBottomMargin(0);
         buttons.addMember(save);
+        buttons.addMember(cancel);
         layout.addMember(buttons);
+    }
+
+    private static void closeAndRefresh(TableSection parrent, boolean fullRefresh) {
+        if (modalWindow != null) {
+            modalWindow.destroy();
+        }
+        if (fullRefresh) {
+            parrent.refresh();
+        } else {
+            parrent.refreshTableInfo();
+        }
     }
 
     private static List<Integer> getIdList(ListGridRecord[] records) {

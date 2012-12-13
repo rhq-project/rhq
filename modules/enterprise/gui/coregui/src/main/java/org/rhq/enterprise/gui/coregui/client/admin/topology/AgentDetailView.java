@@ -133,8 +133,8 @@ public class AgentDetailView extends LocatableVLayout {
     private void prepareFailoverListSection(SectionStack stack, Agent agent) {
         SectionStackSection section = new SectionStackSection(MSG.view_adminTopology_agentDetail_agentFailoverList());
         section.setExpanded(true);
-        ServerTableView agentsTable = new ServerTableView(extendLocatorId(ServerTableView.VIEW_ID.getName()), null,
-            agent.getId());
+        ServerTableView agentsTable = new ServerTableView(extendLocatorId(ServerTableView.VIEW_ID.getName()),
+            agent.getId(), false);
         section.setItems(agentsTable);
 
         failoverListSection = section;

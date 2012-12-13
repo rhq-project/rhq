@@ -57,16 +57,12 @@ public class AgentTableView extends TableSection<AgentNodeDatasource> implements
 
     private final boolean isAffinityGroupId;
 
-    public AgentTableView(String locatorId, String tableTitle, Integer id, boolean isAffinityGroupId) {
-        super(locatorId, tableTitle);
+    public AgentTableView(String locatorId, Integer id, boolean isAffinityGroupId) {
+        super(locatorId, null);
         this.isAffinityGroupId = isAffinityGroupId;
         setHeight100();
         setWidth100();
         setDataSource(new AgentNodeDatasource(id, isAffinityGroupId));
-    }
-
-    public AgentTableView(String locatorId, String tableTitle, Integer id) {
-        this(locatorId, tableTitle, id, false);
     }
 
     @Override

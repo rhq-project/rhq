@@ -86,7 +86,7 @@ public class ServerDatasource extends AbstractServerNodeDatasource<Server, Crite
 
         fields.add(FIELD_NAME.getListGridField("*"));
         fields.add(FIELD_OPERATION_MODE.getListGridField("90"));
-        fields.add(FIELD_ADDRESS.getListGridField("110"));
+        fields.add(FIELD_ADDRESS.getListGridField("190"));
         fields.add(FIELD_PORT.getListGridField("90"));
         fields.add(FIELD_SECURE_PORT.getListGridField("75"));
 

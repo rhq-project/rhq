@@ -607,6 +607,7 @@ rhq.sync.endpoint-address=false
 # etc. The server does however persist content for text files or any other
 # files that are not known binary types.
 #rhq.server.drift.store-binary-content=${rhq.server.drift.store-binary-content}
+
 #############################################
 # Cassandra cluster configuration settings
 #############################################
@@ -668,8 +669,42 @@ rhq.casandra.native-transport-max-threads=${rhq.casandra.native-transport-max-th
         <copy todir="${project.build.outputDirectory}" verbose="true">
             <fileset dir="src/main/dev-resources" />
         </copy>
+      <loadproperties>
+        <zipentry zipfile="${settings.localRepository}/org/rhq/rhq-cassandra-common/${project.version}/rhq-cassandra-common-${project.version}.jar"
+                  name="cassandra.properties"/>
+      </loadproperties>
         <echo>Putting a developer setting in rhq-server.properties to turn on/off strict agent update version checking</echo>
-        <echo file="${project.build.outputDirectory}/bin/rhq-server.properties" append="true">rhq.server.agent-update.nonstrict-version-check=true</echo>
+        <echo file="${project.build.outputDirectory}/bin/rhq-server.properties" append="true">
+rhq.server.agent-update.nonstrict-version-check=true
+
+# Accepts a value of true or false and specifies whether or not the cluster is embedded.
+# Note that if this property is set to false, the other, remaining cluster configuration
+# properties that are set will be ignored as they are only used with embedded clusters.
+rhq.cassandra.cluster.is-embedded=${rhq.cassandra.cluster.is-embedded}
+
+# The directory in which cluster nodes will be installed.
+rhq.cassandra.cluster.dir=${rhq.cassandra.cluster.dir}
+
+# The number of nodes in the cluster. This specifies how many nodes to install
+# and configure. The top level or base directory for each node will be nodeN
+# where N is the node number.
+rhq.cassandra.cluster.num-nodes=${rhq.cassandra.cluster.num-nodes}
+
+# The log4j logging level to use on each node.
+rhq.cassandra.logging.level=${rhq.cassandra.logging.level}
+</echo>
+      <replace file="${project.build.outputDirectory}/bin/rhq-server.sh">
+        <replacefilter>
+          <replacetoken># START SERVER</replacetoken>
+          <replacevalue><![CDATA[export RHQ_SERVER_HOME; ${RHQ_SERVER_HOME}/bin/rhq-autoinstall.sh &]]></replacevalue>
+        </replacefilter>
+      </replace>
+      <replace file="${project.build.outputDirectory}/bin/rhq-server.bat">
+        <replacefilter>
+          <replacetoken>rem START SERVER</replacetoken>
+          <replacevalue><![CDATA[start /B %RHQ_SERVER_HOME%\bin\rhq-autoinstall.bat]]></replacevalue>
+        </replacefilter>
+      </replace>
     </target>
 
     <!-- The prepare-release target must be run AFTER the resources:resources goal has executed. -->

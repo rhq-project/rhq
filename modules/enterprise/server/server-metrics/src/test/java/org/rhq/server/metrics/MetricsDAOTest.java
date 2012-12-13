@@ -55,6 +55,8 @@ import org.rhq.core.domain.measurement.MeasurementDataNumeric;
  */
 public class MetricsDAOTest extends CassandraIntegrationTest {
 
+    private static final boolean ENABLED = true;
+
     private final long SECOND = 1000;
 
     private final long MINUTE = 60 * SECOND;
@@ -75,7 +77,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         session.execute("TRUNCATE " + METRICS_INDEX_TABLE);
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void insertAndFindRawMetrics() {
         DateTime hour0 = hour0();
         DateTime currentTime = hour0.plusHours(4).plusMinutes(44);
@@ -113,7 +115,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         assertRawTTLSet(actualMetricsWithMetadata);
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void findLimitedRawMetricsInDescendingOrder() {
         DateTime hour0 = hour0();
         DateTime currentTime = hour0.plusHours(4).plusMinutes(44);
@@ -140,7 +142,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         assertEquals(actualMetrics, expectedMetrics, "Failed to find raw metrics with order and limit specified");
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void findRawMetricsForMultipleSchedules() {
         DateTime currentTime = hour0().plusHours(4).plusMinutes(44);
         DateTime currentHour = currentTime.hourOfDay().roundFloorCopy();
@@ -175,7 +177,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         assertEquals(actualMetrics, expectedMetrics, "Failed to find raw metrics for multiple schedules");
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void insertAndFindAllOneHourMetrics() {
         int scheduleId = 1;
         DateTime hour0 = hour0();
@@ -204,7 +206,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         assertAggrgateTTLSet(actualMetricsWithMetadata);
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void findOneHourMetricsForMultipleSchedules() {
         int schedule1 = 1;
         int schedule2 = 2;
@@ -230,7 +232,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         assertEquals(actual, expected, "Failed to find one hour metrics for multiple schedules");
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void findRangeOfOneHourMetrics() {
         int scheduledId = 1;
         int nextScheduleId = 2;
@@ -258,7 +260,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         assertEquals(actual, expected, "Failed to find one hour metrics for date range");
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void updateAndFindOneHourIndexEntries() {
         DateTime hour0 = hour0();
         int scheduleId1 = 1;
@@ -276,7 +278,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         assertCollectionMatchesNoOrder(expected, actual, "Failed to update or retrieve metrics index entries");
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void purge1HourMetricsIndex() {
         int scheduleId1 = 1;
         int scheduleId2 = 2;

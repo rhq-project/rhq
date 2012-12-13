@@ -3,13 +3,13 @@
     <parent>
         <artifactId>rhq-enterprise-server-plugins-parent</artifactId>
         <groupId>org.rhq</groupId>
-        <version>4.4.0.JON312</version>
+        <version>4.4.0.JON312ER5</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.rhq</groupId>
     <artifactId>packagetype-cli</artifactId>
-    <version>4.4.0.JON312</version>
+    <version>4.4.0.JON312ER5</version>
 
     <name>RHQ Enterprise Server CLI Package Type Plugin</name>
 

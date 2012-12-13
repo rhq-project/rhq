@@ -32,6 +32,7 @@ import java.util.EnumMap;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Set;
 
 import javax.naming.Context;
@@ -138,7 +139,7 @@ public class AccessCheckingInitialContextFactoryBuilder implements InitialContex
     }
 
     private enum FactoryType {
-        ACCESS_CHECKING {
+        ACCESS_CHECKING_URL_PREFERRING {
 
             @Override
             public InitialContextFactory wrap(InitialContextFactory factory) {
@@ -158,15 +159,34 @@ public class AccessCheckingInitialContextFactoryBuilder implements InitialContex
 
                 return new DecoratingInitialContextFactory(factory, pickers);
             }
+        },
+        ACCESS_CHECKING {
+
+            @Override
+            public InitialContextFactory wrap(InitialContextFactory factory) {
+                ArrayList<DecoratorPicker<Context, ContextDecorator>> pickers = new ArrayList<DecoratorPicker<Context, ContextDecorator>>();
+                pickers.add(getAccessCheckingDecoratorPicker());
+
+                return new DecoratingInitialContextFactory(factory, pickers);
+            }
+        },
+        PASS_THROUGH {
+
+            @Override
+            public InitialContextFactory wrap(InitialContextFactory factory) {
+                List<DecoratorPicker<Context, ContextDecorator>> pickers = Collections.emptyList();
+
+                return new DecoratingInitialContextFactory(factory, pickers);
+            }
         };
 
         public abstract InitialContextFactory wrap(InitialContextFactory factory);
 
-        public static FactoryType detect(Hashtable<?, ?> environment) {
+        public static FactoryType detect(Hashtable<?, ?> environment, boolean pretendNoFactoryBuilder) {
             String providerUrl = (String) environment.get(Context.PROVIDER_URL);
 
             if (providerUrl == null) {
-                return ACCESS_CHECKING;
+                return pretendNoFactoryBuilder ? ACCESS_CHECKING_URL_PREFERRING : ACCESS_CHECKING;
             } else {
                 try {
                     URI uri = new URI(providerUrl);
@@ -175,9 +195,9 @@ public class AccessCheckingInitialContextFactoryBuilder implements InitialContex
                     //check if we are accessing the RHQ server through some remoting
                     //interface.
                     if (uri.getPort() == JNP_PORT && SERVER_BIND_IPS.contains(providerHost)) {
-                        return ACCESS_CHECKING;
+                        return pretendNoFactoryBuilder ? ACCESS_CHECKING_URL_PREFERRING : ACCESS_CHECKING;
                     } else {
-                        return URL_PREFERRING;
+                        return pretendNoFactoryBuilder ? URL_PREFERRING : PASS_THROUGH;
                     }
                 } catch (URISyntaxException e) {
                     if (LOG.isDebugEnabled()) {
@@ -185,7 +205,7 @@ public class AccessCheckingInitialContextFactoryBuilder implements InitialContex
                             + Context.PROVIDER_URL
                             + " is not a valid URI. Falling back to using the access checking wrapper.", e);
                     }
-                    return ACCESS_CHECKING;
+                    return pretendNoFactoryBuilder ? ACCESS_CHECKING_URL_PREFERRING : ACCESS_CHECKING;
                 } catch (UnknownHostException e) {
                     //let the factory deal with the unknown host...
                     //this most probably shouldn't be secured because localhost addresses
@@ -195,7 +215,7 @@ public class AccessCheckingInitialContextFactoryBuilder implements InitialContex
                             + Context.PROVIDER_URL
                             + " is not resolvable. Falling back to using the URL preferring wrapper.", e);
                     }
-                    return URL_PREFERRING;
+                    return pretendNoFactoryBuilder ? URL_PREFERRING : PASS_THROUGH;
                 }
             }
         }
@@ -219,15 +239,19 @@ public class AccessCheckingInitialContextFactoryBuilder implements InitialContex
         FactoryType.class);
 
     private final String defaultFactoryClassName;
-
+    private final boolean pretendNoFactoryBuilder;
+    
     /**
      * @param defaultFactory the default factory to use if none can be deduced from the environment. If null, an attempt
      * is made to obtain the default InitialContextFactory of JBoss AS (which may fail depending on the classloading
      * "situation").
+     * @param pretendNoFactoryBuilder true if the naming contexts should pretend as if there was no initial context
+     * factory builder installed. This is to support environments as AS4, where there really was no builder initially
+     * and the lookup relied on that fact.
      * 
      * @throws NamingException
      */
-    public AccessCheckingInitialContextFactoryBuilder(InitialContextFactory defaultFactory) throws NamingException {
+    public AccessCheckingInitialContextFactoryBuilder(InitialContextFactory defaultFactory, final boolean pretendNoFactoryBuilder) throws NamingException {
         if (defaultFactory == null) {
             defaultFactory = getJbossDefaultInitialContextFactory();
         }
@@ -237,21 +261,22 @@ public class AccessCheckingInitialContextFactoryBuilder implements InitialContex
         for (FactoryType ft : FactoryType.values()) {
             typeDefaults.put(ft, ft.wrap(defaultFactory));
         }
+        
+        this.pretendNoFactoryBuilder = pretendNoFactoryBuilder;
+    
+        this.defaultFactory = new InitialContextFactory() {
+            public Context getInitialContext(Hashtable<?, ?> environment) throws NamingException {
+                return typeDefaults.get(FactoryType.detect(environment, pretendNoFactoryBuilder)).getInitialContext(
+                    environment);
+            }
+        };
     }
 
     /**
      * This is the default initial context factory that is returned when no other is 
      * configured using the environment variables.
-     * <p>
-     * It uses {@link NamingContextFactory} as the underlying mechanism - the same
-     * as the default configuration in JBoss 4.
      */
-    private final InitialContextFactory defaultFactory = new InitialContextFactory() {
-        public Context getInitialContext(Hashtable<?, ?> environment) throws NamingException {
-            return typeDefaults.get(FactoryType.detect(environment)).getInitialContext(
-                environment);
-        }
-    };
+    private final InitialContextFactory defaultFactory;
 
     /**
      * Create a InitialContext factory.  If the environment does not override the factory class it will use the
@@ -273,7 +298,7 @@ public class AccessCheckingInitialContextFactoryBuilder implements InitialContex
         try {
             final Class<?> factoryClass = Class.forName(factoryClassName, true, classLoader);
             InitialContextFactory configuredFactory = (InitialContextFactory) factoryClass.newInstance();            
-            return FactoryType.detect(environment).wrap(configuredFactory);
+            return FactoryType.detect(environment, pretendNoFactoryBuilder).wrap(configuredFactory);
         } catch (Exception e) {
             NamingException ne = new NamingException("Failed instantiate InitialContextFactory "
                 + factoryClassName

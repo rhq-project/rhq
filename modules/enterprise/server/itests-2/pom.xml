@@ -520,9 +520,6 @@
                     <statement>
                         <prepared-statement-cache-size>75</prepared-statement-cache-size>
                     </statement> 
-                    <recovery no-recovery="false">
-                      <recover-plugin class-name="org.jboss.jca.core.recovery.ValidatingManagedConnectionFactoryRecoveryPlugin"/>
-                    </recovery>                    
                 </xa-datasource>]]></replacevalue>
                   </replacefilter>
 

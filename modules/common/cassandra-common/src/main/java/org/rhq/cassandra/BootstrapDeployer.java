@@ -53,12 +53,6 @@ import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 
-import liquibase.Liquibase;
-import liquibase.database.Database;
-import liquibase.exception.DatabaseException;
-import liquibase.integration.commandline.CommandLineUtils;
-import liquibase.resource.ClassLoaderResourceAccessor;
-
 /**
  * @author John Sanda
  */
@@ -134,10 +128,10 @@ public class BootstrapDeployer {
 
                 doLocalDeploy(props, bundleDir);
                 startNode(nodeBasedir);
-                if (i == 0) {
-                    waitForNodeToStart(10, address);
-                    updateSchema(nodeBasedir, address, 9160);
-                }
+//                if (i == 0) {
+//                    waitForNodeToStart(10, address);
+//                    updateSchema(nodeBasedir, address, 9160);
+//                }
             }
             FileUtil.writeFile(new ByteArrayInputStream(new byte[] {0}), installedMarker);
         } catch (IOException e) {
@@ -210,84 +204,6 @@ public class BootstrapDeployer {
         Date timestamp = new Date();
         throw new CassandraException("[" + timestamp + "] Could not connect to " + host + " after " + maxRetries +
             " tries");
-    }
-
-    private void updateSchema(File basedir, String host, int port) throws CassandraException {
-//        File binDir = new File(basedir, "bin");
-//        File script = new File(binDir, "cqlsh");
-//        SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
-//
-//        File dbsetupFile = null;
-//        try {
-//            dbsetupFile = File.createTempFile("dbsetup.cql", null);
-//            InputStream inputStream = getClass().getResourceAsStream("/dbsetup.cql");
-//            FileOutputStream outputStream = new FileOutputStream(dbsetupFile);
-//            StreamUtil.copy(inputStream, outputStream);
-//        } catch (IOException e) {
-//            throw new CassandraException("Failed to load schema update script", e);
-//        }
-//        ProcessExecution cliExe = ProcessExecutionUtility.createProcessExecution(script);
-//        cliExe.setWaitForCompletion(30000L);
-//        cliExe.setCaptureOutput(true);
-//        cliExe.setArguments(asList("-3", "--debug", "-u", "rhqadmin", "-p", "rhqadmin", "-f",
-//            dbsetupFile.getAbsolutePath()));
-//
-//        ProcessExecutionResults results = systemInfo.executeProcess(cliExe);
-//        String output = results.getCapturedOutput();
-        createSchema(basedir);
-        runLiquibase(host);
-    }
-
-    private void createSchema(File basedir) throws CassandraException {
-        File binDir = new File(basedir, "bin");
-        File script = new File(binDir, "cqlsh");
-        SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
-
-        File dbsetupFile = null;
-        try {
-            dbsetupFile = File.createTempFile("dbsetup.cql", null);
-            InputStream inputStream = getClass().getResourceAsStream("/create_keyspace.cql");
-            FileOutputStream outputStream = new FileOutputStream(dbsetupFile);
-            StreamUtil.copy(inputStream, outputStream);
-        } catch (IOException e) {
-            throw new CassandraException("Failed to load schema update script", e);
-        }
-        ProcessExecution cliExe = ProcessExecutionUtility.createProcessExecution(script);
-        cliExe.setWaitForCompletion(30000L);
-        cliExe.setCaptureOutput(true);
-        cliExe.setArguments(asList("-3", "--debug", "-u", "rhqadmin", "-p", "rhqadmin", "-f",
-            dbsetupFile.getAbsolutePath()));
-
-        ProcessExecutionResults results = systemInfo.executeProcess(cliExe);
-    }
-
-    private void runLiquibase(String host) throws CassandraException {
-        try {
-            Database database = createDatabase(host);
-
-//            URL url = getClass().getResource("/changelog.xml");
-//            File changeLog = new File(url.toURI());
-
-            ClassLoaderResourceAccessor resourceAccessor = new ClassLoaderResourceAccessor();
-
-            Liquibase liquibase = new Liquibase("changelog.xml", resourceAccessor, database);
-            liquibase.update(null);
-        } catch (Exception e) {
-            throw new CassandraException(e);
-        }
-    }
-
-    private Database createDatabase(String host) throws DatabaseException {
-        String url = "jdbc:cassandra://" + host + ":9160/system?version=3.0.0";
-        String username = deploymentOptions.getUsername();
-        String password = deploymentOptions.getPassword();
-        String driver = "org.apache.cassandra.cql.jdbc.CassandraDriver";
-        String databaseClass = "liquibase.database.ext.CassandraDatabase";
-        String defaultCatalog = null;
-        String defaultSchema = "rhq";
-
-        return CommandLineUtils.createDatabaseObject(getClass().getClassLoader(), url, username, password, driver,
-            null, defaultSchema, databaseClass, null);
     }
 
     private File unpackBundleZipFile() throws IOException {

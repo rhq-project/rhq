@@ -35,6 +35,7 @@ import javax.script.ScriptException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -253,7 +254,14 @@ public class JndiAccessTest extends Arquillian {
     }
 
     private void checkIsDesiredSecurityException(Throwable t) {
-        //TODO implement
-        System.out.println(t);
+        String message = t.getMessage();
+        String permissionTrace = "org.rhq.allow.server.internals.access";
+
+        if (!message.contains(permissionTrace)) {
+            Assert
+                .fail(
+                    "The script exception doesn't seem to be caused by the AllowRhqServerInternalsAccessPermission security exception. ",
+                    t);
+        }
     }
 }

@@ -39,6 +39,7 @@ import org.testng.IInvokedMethod;
 import org.testng.IInvokedMethodListener;
 import org.testng.ITestResult;
 
+import org.rhq.cassandra.schema.SchemaManager;
 import org.rhq.core.util.stream.StreamUtil;
 
 import me.prettyprint.cassandra.service.CassandraHost;
@@ -116,6 +117,11 @@ public class CassandraClusterManager implements IInvokedMethodListener {
             // jsanda
             clusterInitService.waitForSchemaAgreement("rhq", cassandraHosts);
         }
+
+        String[] hostNames = getHostNames(deployer.getCassandraHosts());
+        SchemaManager schemaManager = new SchemaManager(annotation.username(), annotation.password(), hostNames);
+        schemaManager.createSchema();
+        schemaManager.updateSchema();
     }
 
     private void shutdownCluster() throws Exception {
@@ -147,5 +153,14 @@ public class CassandraClusterManager implements IInvokedMethodListener {
 
         }
         return cassandraHosts;
+    }
+
+    private String[] getHostNames(String hosts) {
+        List<String> hostNames = new ArrayList<String>();
+        for (String s : hosts.split(",")) {
+            String[] params = s.split(":");
+            hostNames.add(params[0]);
+        }
+        return hostNames.toArray(new String[hostNames.size()]);
     }
 }

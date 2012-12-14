@@ -42,18 +42,28 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.cloud.Server;
-import org.rhq.core.domain.criteria.Criteria;
+import org.rhq.core.domain.cloud.Server.OperationMode;
+import org.rhq.core.domain.criteria.ServerCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 
 /**
  * @author Jirka Kremser
  *
  */
-public class ServerDatasource extends AbstractServerNodeDatasource<Server, Criteria> {
+public class ServerDatasource extends AbstractServerNodeDatasource<Server, ServerCriteria> {
+    
+    // filters
+    public static final String FILTER_ADDRESS = FIELD_ADDRESS.propertyName();
+    public static final String FILTER_PORT = FIELD_PORT.propertyName();
+    public static final String FILTER_SECURE_PORT = FIELD_SECURE_PORT.propertyName();
+    public static final String FILTER_OPERATION_MODE = FIELD_OPERATION_MODE.propertyName();
+    public static final String FILTER_COMPUTE_POWER = "computePower";
+    public static final String FILTER_AFFINITY_GROUP_ID = "affinityGroupId";
 
     private final Integer affinityGroupId;
     
@@ -103,7 +113,7 @@ public class ServerDatasource extends AbstractServerNodeDatasource<Server, Crite
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response, Criteria criteria) {
+    protected void executeFetch(final DSRequest request, final DSResponse response, ServerCriteria criteria) {
         if (affinityGroupId == null) {
             return;
         }
@@ -122,8 +132,10 @@ public class ServerDatasource extends AbstractServerNodeDatasource<Server, Crite
                 processResponse(request.getRequestId(), response);
             }
         };
+        
         if(fetchMembers) {
-            GWTServiceLookup.getCloudService().getServerMembersByAffinityGroupId(affinityGroupId, pc, callback);
+            criteria.addFilterAffinityGroupId(affinityGroupId);
+            GWTServiceLookup.getCloudService().findServersByCriteria(criteria, callback);
         } else {
             GWTServiceLookup.getCloudService().getServerNonMembersByAffinityGroupId(affinityGroupId, pc, callback);
         }
@@ -181,8 +193,22 @@ public class ServerDatasource extends AbstractServerNodeDatasource<Server, Crite
     }
 
     @Override
-    protected Criteria getFetchCriteria(DSRequest request) {
-        // we don't use criteria for this datasource, just return null
-        return null;
+    protected ServerCriteria getFetchCriteria(DSRequest request) {
+        ServerCriteria criteria = new ServerCriteria();
+        printRequestCriteria(request);
+        criteria.addFilterId(getFilter(request, FIELD_ID.propertyName(), Integer.class));
+        criteria.addFilterName(getFilter(request, FIELD_NAME.propertyName(), String.class));
+        criteria.addFilterAddress(getFilter(request, FILTER_ADDRESS, String.class));
+        criteria.addFilterPort(getFilter(request, FILTER_PORT, Integer.class));
+        criteria.addFilterSecurePort(getFilter(request, FILTER_SECURE_PORT, Integer.class));
+        criteria.addFilterOperationMode(getFilter(request, FILTER_OPERATION_MODE, OperationMode.class));
+        criteria.addFilterComputePower(getFilter(request, FILTER_COMPUTE_POWER, Integer.class));
+        criteria.addFilterAffinityGroupId(getFilter(request, FILTER_AFFINITY_GROUP_ID, Integer.class));
+        
+        //@todo: Remove me when finished debugging search expression
+        Log.debug(" *** ServerCriteria Search String: " + getFilter(request, "search", String.class));
+        criteria.setSearchExpression(getFilter(request, "search", String.class));
+
+        return criteria;
     }
 }

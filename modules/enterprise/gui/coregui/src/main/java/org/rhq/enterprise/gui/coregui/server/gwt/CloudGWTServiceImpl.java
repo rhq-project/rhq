@@ -37,6 +37,7 @@ import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.cloud.composite.AffinityGroupCountComposite;
 import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.criteria.PartitionEventCriteria;
+import org.rhq.core.domain.criteria.ServerCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -126,6 +127,18 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
             return SerialUtility.prepare(
                 partitionEventManager.findPartitionEventsByCriteria(getSessionSubject(), criteria),
                 "CloudGWTServiceImpl.findPartitionEventsByCriteria");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
+    @Override
+    public PageList<Server> findServersByCriteria(ServerCriteria criteria)
+        throws RuntimeException {
+        try {
+            return SerialUtility.prepare(
+                cloudManager.findServersByCriteria(getSessionSubject(), criteria),
+                "CloudGWTServiceImpl.findServersByCriteria");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

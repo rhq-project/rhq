@@ -158,6 +158,9 @@ public class PartitionEventDatasource extends RPCDataSource<PartitionEvent, Part
 
     @Override
     protected PartitionEventCriteria getFetchCriteria(DSRequest request) {
+        //todo: do it like in ResourceDatasource.class
+        
+        
         ExecutionStatus[] statuses = getArrayFilter(request, FILTER_EXECUTION_STATUS, ExecutionStatus.class);
         PartitionEventType[] types = getArrayFilter(request, FILTER_EVENT_TYPE, PartitionEventType.class);
         if (types == null || types.length == 0 || statuses == null || statuses.length == 0) {

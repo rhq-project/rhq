@@ -26,6 +26,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.FailoverListDetails;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
+import org.rhq.core.domain.criteria.ServerCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -89,4 +90,6 @@ public interface CloudManagerLocal {
     PageList<FailoverListDetails> getFailoverListDetailsByAgentId(int agentId, PageControl pc);
 
     void markStaleServersDown(Subject subject);
+    
+    PageList<Server> findServersByCriteria(Subject subject, ServerCriteria criteria);
 }

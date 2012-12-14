@@ -36,6 +36,7 @@ import org.rhq.core.domain.cloud.FailoverListDetails;
 import org.rhq.core.domain.cloud.PartitionEventType;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
+import org.rhq.core.domain.criteria.ServerCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.domain.util.PageControl;
@@ -44,6 +45,8 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -291,5 +294,12 @@ public class CloudManagerBean implements CloudManagerLocal {
         // Perform requested partition events. Note that we only need to execute one cloud partition
         // regardless of the number of pending requests, as the work would be duplicated.
         partitionEventManager.processRequestedPartitionEvents();
+    }
+    
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public PageList<Server> findServersByCriteria(Subject subject, ServerCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        CriteriaQueryRunner<Server> runner = new CriteriaQueryRunner<Server>(criteria, generator, entityManager);
+        return runner.execute();
     }
 }

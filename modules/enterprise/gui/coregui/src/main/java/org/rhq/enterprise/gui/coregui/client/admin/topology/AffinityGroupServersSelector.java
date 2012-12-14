@@ -42,6 +42,7 @@ import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.domain.criteria.ServerCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
@@ -53,13 +54,13 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 /**
  * @author Jirka Kremser
  */
-public class AffinityGroupServersSelector extends AbstractSelector<Server, org.rhq.core.domain.criteria.Criteria> {
+public class AffinityGroupServersSelector extends AbstractSelector<Server, ServerCriteria> {
 
     private static final String ITEM_ICON = "types/Server_up_16.png";
 
     private final Integer affinityGroupId;
 
-    private static RPCDataSource<Server, org.rhq.core.domain.criteria.Criteria> datasource = null;
+    private static RPCDataSource<Server, ServerCriteria> datasource = null;
 
     private static Window modalWindow;
     private static boolean shouldBeClosed;
@@ -98,7 +99,7 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, org.r
     }
 
     @Override
-    protected RPCDataSource<Server, org.rhq.core.domain.criteria.Criteria> getDataSource() {
+    protected RPCDataSource<Server, ServerCriteria> getDataSource() {
         if (datasource == null) {
             datasource = new ServerDatasource(affinityGroupId, false);
         }

@@ -34,6 +34,7 @@ import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.composite.AffinityGroupCountComposite;
 import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.criteria.PartitionEventCriteria;
+import org.rhq.core.domain.criteria.ServerCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -63,6 +64,8 @@ public interface CloudGWTService extends RemoteService {
     List<FailoverListDetails> getFailoverListDetailsByAgentId(int agentId, PageControl pc) throws RuntimeException;;
 
     PageList<PartitionEvent> findPartitionEventsByCriteria(PartitionEventCriteria criteria) throws RuntimeException;
+    
+    PageList<Server> findServersByCriteria(ServerCriteria criteria) throws RuntimeException;
 
     void cloudPartitionEventRequest() throws RuntimeException;
 

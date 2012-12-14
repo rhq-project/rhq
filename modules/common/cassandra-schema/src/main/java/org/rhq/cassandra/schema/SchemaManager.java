@@ -83,6 +83,14 @@ public class SchemaManager {
         }
     }
 
+    public void dropSchema() {
+        try {
+            session.execute("DROP KEYSPACE rhq");
+        } catch (NoHostAvailableException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public boolean schemaExists() {
         try {
             String cql = "SELECT keyspace_name FROM schema_keyspaces WHERE keyspace_name = 'rhq'";
@@ -100,6 +108,10 @@ public class SchemaManager {
         } catch (DatabaseException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void shutdown() {
+        session.getCluster().shutdown();
     }
 
     private void runLiquibase(Database database) {

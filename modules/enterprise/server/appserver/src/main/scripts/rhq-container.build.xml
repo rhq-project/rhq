@@ -186,38 +186,6 @@
 </module>
 ]]></echo>
 
-      <echo>Adding Cassandra JDBC module to ${jboss.modules.dir}...</echo>
-      <copy file="${settings.localRepository}/org/apache-extras/cassandra-jdbc/cassandra-jdbc/${cassandra.jdbc.version}/cassandra-jdbc-${cassandra.jdbc.version}.jar"
-            toDir="${jboss.modules.dir}/org/apache-extras/cassandra-jdbc/main" failonerror="false" verbose="true"/>
-      <copy file="${settings.localRepository}/org/apache/cassandra/cassandra-clientutil/${cassandra.version}/cassandra-clientutil-${cassandra.version}.jar"
-            toDir="${jboss.modules.dir}/org/apache-extras/cassandra-jdbc/main" failonerror="false" verbose="true"/>
-      <copy file="${settings.localRepository}/org/apache/cassandra/cassandra-thrift/${cassandra.version}/cassandra-thrift-${cassandra.version}.jar"
-            toDir="${jboss.modules.dir}/org/apache-extras/cassandra-jdbc/main" failonerror="false" verbose="true"/>
-      <copy file="${settings.localRepository}/org/apache/thrift/libthrift/${cassandra.thrift.version}/libthrift-${cassandra.thrift.version}.jar"
-            toDir="${jboss.modules.dir}/org/apache-extras/cassandra-jdbc/main" failonerror="false" verbose="true"/>
-      <copy file="${settings.localRepository}/com/google/guava/guava/${cassandra.jdbc.guava.version}/guava-${cassandra.jdbc.guava.version}.jar"
-            toDir="${jboss.modules.dir}/org/apache-extras/cassandra-jdbc/main" failonerror="false" verbose="true"/>
-      <copy file="${settings.localRepository}/com/google/code/findbugs/jsr305/${cassandra.jdbc.jsr305.version}/jsr305-${cassandra.jdbc.jsr305.version}.jar"
-            toDir="${jboss.modules.dir}/org/apache-extras/cassandra-jdbc/main" failonerror="false" verbose="true"/>
-      <echo file="${jboss.modules.dir}/org/apache-extras/cassandra-jdbc/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
-<module xmlns="urn:jboss:module:1.1" name="org.apache-extras.cassandra-jdbc">
-  <resources>
-    <resource-root path="cassandra-jdbc-${cassandra.jdbc.version}.jar"/>
-    <resource-root path="cassandra-clientutil-${cassandra.version}.jar"/>
-    <resource-root path="cassandra-thrift-${cassandra.version}.jar"/>
-    <resource-root path="libthrift-${cassandra.thrift.version}.jar"/>
-    <resource-root path="jsr305-${cassandra.jdbc.jsr305.version}.jar"/>
-    <resource-root path="guava-${cassandra.jdbc.guava.version}.jar"/>
-  </resources>
-
-  <dependencies>
-    <module name="org.slf4j"/>
-    <module name="org.apache.commons.lang"/>
-  </dependencies>
-</module>
-]]>
-      </echo>
-
         <copy file="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"
               toDir="${jboss.modules.dir}/org/rhq/postgres/main" verbose="true" />
         <echo file="${jboss.modules.dir}/org/rhq/postgres/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>

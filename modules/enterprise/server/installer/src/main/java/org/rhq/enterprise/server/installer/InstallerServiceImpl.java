@@ -33,6 +33,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.jboss.as.controller.client.ModelControllerClient;
 
+import org.rhq.cassandra.schema.SchemaManager;
 import org.rhq.common.jbossas.client.controller.CoreJBossASClient;
 import org.rhq.common.jbossas.client.controller.DeploymentJBossASClient;
 import org.rhq.common.jbossas.client.controller.WebJBossASClient;
@@ -366,7 +367,6 @@ public class InstallerServiceImpl implements InstallerService {
                         log("Database schema exists - it will now be updated.");
                         ServerInstallUtil.upgradeExistingDatabaseSchema(serverProperties, serverDetails,
                             clearTextDbPassword, getLogDir());
-                        ServerInstallUtil.installOrUpdateCassandraSchema(serverProperties);
                     }
                 } else {
                     log("Database schema does not yet exist - it will now be created.");
@@ -378,6 +378,33 @@ public class InstallerServiceImpl implements InstallerService {
             }
         } catch (Exception e) {
             throw new Exception("Could not complete the database schema installation", e);
+        }
+
+        SchemaManager cassandraSchemaManager = null;
+        try {
+            cassandraSchemaManager = createCassandraSchemaManager(serverProperties);
+            if (ExistingSchemaOption.SKIP != existingSchemaOptionEnum) {
+                if (cassandraSchemaManager.schemaExists()) {
+                    if (ExistingSchemaOption.OVERWRITE == existingSchemaOptionEnum) {
+                        log("Cassandra schema exists but installer was told to overwrite it - a new schema will be " +
+                            "created now.");
+                        cassandraSchemaManager.dropSchema();
+                        cassandraSchemaManager.createSchema();
+
+                    }
+                    log("Updating Cassandra schema.");
+                    cassandraSchemaManager.updateSchema();
+                } else {
+                    cassandraSchemaManager.createSchema();
+                    cassandraSchemaManager.updateSchema();
+                }
+            } else {
+                log("Ignoring Cassandra schema - installer will assume it exists and is already up-to-date.");
+            }
+        } catch (Exception e) {
+            throw new Exception("Could not complete Cassandra schema installation.", e);
+        } finally {
+            cassandraSchemaManager.shutdown();
         }
 
         // ensure the server info is up to date and stored in the DB
@@ -986,5 +1013,13 @@ public class InstallerServiceImpl implements InstallerService {
         } finally {
             safeClose(mcc);
         }
+    }
+
+    private SchemaManager createCassandraSchemaManager(HashMap<String, String> serverProps) {
+        String[] hosts = serverProps.get("rhq.cassandra.cluster.seeds").split(",");
+        String username = serverProps.get("rhq.cassandra.username");
+        String password = serverProps.get("rhq.cassandra.password");
+
+        return new SchemaManager(username, password, hosts);
     }
 }

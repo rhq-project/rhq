@@ -366,6 +366,7 @@ public class InstallerServiceImpl implements InstallerService {
                         log("Database schema exists - it will now be updated.");
                         ServerInstallUtil.upgradeExistingDatabaseSchema(serverProperties, serverDetails,
                             clearTextDbPassword, getLogDir());
+                        ServerInstallUtil.installOrUpdateCassandraSchema(serverProperties);
                     }
                 } else {
                     log("Database schema does not yet exist - it will now be created.");

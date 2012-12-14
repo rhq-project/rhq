@@ -46,6 +46,7 @@ import org.apache.tools.ant.helper.ProjectHelper2;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
 
+import org.rhq.cassandra.schema.SchemaManager;
 import org.rhq.common.jbossas.client.controller.Address;
 import org.rhq.common.jbossas.client.controller.CoreJBossASClient;
 import org.rhq.common.jbossas.client.controller.DatasourceJBossASClient;
@@ -402,8 +403,8 @@ public class ServerInstallUtil {
             "org.rhq.postgres", "org.postgresql.xa.PGXADataSource");
         final ModelNode oracleDriverRequest = client.createNewJdbcDriverRequest(JDBC_DRIVER_ORACLE, "org.rhq.oracle",
             "oracle.jdbc.xa.client.OracleXADataSource");
-        final ModelNode cassandraDriverRequest = client.createNewJdbcDriverRequest(JDBC_DRIVER_CASSANDRA,
-            "org.apache-extras.cassandra-jdbc", null);
+//        final ModelNode cassandraDriverRequest = client.createNewJdbcDriverRequest(JDBC_DRIVER_CASSANDRA,
+//            "org.apache-extras.cassandra-jdbc", null);
 
         // if we are to use Oracle, we throw an exception if we can't create the Oracle datasource. We also try to
         // create the Postgres datasource but because it isn't needed, we don't throw exceptions if that fails, we
@@ -465,12 +466,12 @@ public class ServerInstallUtil {
             throw new RuntimeException("bad db type"); // this should never happen; should have never gotten to this point with a bad type
         }
 
-        ModelNode cassandraResults = client.execute(cassandraDriverRequest);
-        if (!DatasourceJBossASClient.isSuccess(cassandraResults)) {
-            throw new FailureException(cassandraResults, "Failed to create Cassandra database driver");
-        } else {
-            LOG.info("Deployed Cassandra JDBC driver");
-        }
+//        ModelNode cassandraResults = client.execute(cassandraDriverRequest);
+//        if (!DatasourceJBossASClient.isSuccess(cassandraResults)) {
+//            throw new FailureException(cassandraResults, "Failed to create Cassandra database driver");
+//        } else {
+//            LOG.info("Deployed Cassandra JDBC driver");
+//        }
     }
 
     /**
@@ -496,7 +497,7 @@ public class ServerInstallUtil {
         default:
             throw new RuntimeException("bad db type"); // this should never happen; should have never gotten to this point with a bad type
         }
-        createNewDatasources_Cassandra(mcc);
+//        createNewDatasources_Cassandra(mcc);
 
         LOG.info("Created datasources");
 
@@ -551,20 +552,20 @@ public class ServerInstallUtil {
         }
     }
 
-    private static void createNewDatasources_Cassandra(ModelControllerClient mcc) throws Exception {
-        DatasourceJBossASClient client = new DatasourceJBossASClient(mcc);
-        String connectionURL = "jdbc:cassandra://localhost:9160/system?version=3.0.0";
-        ModelNode dsRequest = client.createNewDatasourceRequest(CASSANDRA_DATASOURCE_NAME, connectionURL,
-            JDBC_DRIVER_CASSANDRA, false, new HashMap<String, String>());
-
-        ModelNode batch = DatasourceJBossASClient.createBatchRequest(dsRequest);
-        ModelNode results = client.execute(batch);
-        if (!DatasourceJBossASClient.isSuccess(results)) {
-            throw new FailureException(results, "Failed to create Cassandra data source");
-        } else {
-            LOG.info("Created Cassandra data source");
-        }
-    }
+//    private static void createNewDatasources_Cassandra(ModelControllerClient mcc) throws Exception {
+//        DatasourceJBossASClient client = new DatasourceJBossASClient(mcc);
+//        String connectionURL = "jdbc:cassandra://localhost:9160/system?version=3.0.0";
+//        ModelNode dsRequest = client.createNewDatasourceRequest(CASSANDRA_DATASOURCE_NAME, connectionURL,
+//            JDBC_DRIVER_CASSANDRA, false, new HashMap<String, String>());
+//
+//        ModelNode batch = DatasourceJBossASClient.createBatchRequest(dsRequest);
+//        ModelNode results = client.execute(batch);
+//        if (!DatasourceJBossASClient.isSuccess(results)) {
+//            throw new FailureException(results, "Failed to create Cassandra data source");
+//        } else {
+//            LOG.info("Created Cassandra data source");
+//        }
+//    }
 
     private static void createNewDatasources_Oracle(ModelControllerClient mcc) throws Exception {
         final HashMap<String, String> props = new HashMap<String, String>(2);
@@ -1052,6 +1053,18 @@ public class ServerInstallUtil {
         }
 
         return;
+    }
+
+    public static void installOrUpdateCassandraSchema(HashMap<String, String> props) {
+        String[] hosts = props.get("rhq.cassandra.cluster.seeds").split(",");
+        String username = props.get("rhq.cassandra.username");
+        String password = props.get("rhq.cassandra.password");
+
+        SchemaManager schemaManager = new SchemaManager(username, password, hosts);
+        if (!schemaManager.schemaExists()) {
+            schemaManager.createSchema();
+        }
+        schemaManager.updateSchema();
     }
 
     /**

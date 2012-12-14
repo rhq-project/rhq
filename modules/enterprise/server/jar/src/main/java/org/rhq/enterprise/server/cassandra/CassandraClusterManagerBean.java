@@ -149,7 +149,13 @@ public class CassandraClusterManagerBean implements CassandraClusterManagerLocal
                 log.warn("Failed to update rhq.cassandra.cluster.seeds property in " + serverProperties, e);
             }
 
-            deployer.deploy();
+            // Commenting out the call to deploy as this was here only to support dev
+            // environments. Now that the new AS 7 installer is in place, the embedded
+            // cluster will be deployed during the auto installation that happens with the
+            // dev-container and a separate script will be made available for managing the
+            // embedded cluster.
+            //
+            //deployer.deploy();
 
         } else {
             seeds = System.getProperty("rhq.cassandra.cluster.seeds");

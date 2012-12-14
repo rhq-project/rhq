@@ -87,14 +87,14 @@ public class SystemServiceType extends AbstractBundleType {
     }
 
     public void init() throws BuildException {
-        if (!OS_NAME.equals("Linux") || !REDHAT_RELEASE_FILE.exists()) {
+        if (!"Linux".equals(OS_NAME) || !REDHAT_RELEASE_FILE.exists()) {
             throw new BuildException("The system-service element is only supported on Red Hat Linux systems.");
         }
 
         if (!this.scriptFile.exists() || this.scriptFile.isDirectory()) {
             throw new BuildException("The 'scriptFile' attribute must be set to the path of an existing regular file.");
         }
-        if (this.configFile != null && !this.configFile.exists() || this.configFile.isDirectory()) {
+        if (this.configFile != null && (!this.configFile.exists() || this.configFile.isDirectory())) {
             throw new BuildException("The 'configFile' attribute must be set to the path of an existing regular file.");
         }
     }

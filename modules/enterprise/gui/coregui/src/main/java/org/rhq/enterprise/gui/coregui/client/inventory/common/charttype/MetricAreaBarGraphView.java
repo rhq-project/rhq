@@ -45,7 +45,7 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
     }
 
     /**
-     * The magic JSNI to draw the charts with $wnd.$wnd.d3.
+     * The magic JSNI to draw the charts with d3.js
      */
     public native void drawJsniChart() /*-{
 
@@ -64,14 +64,14 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
         //var jsonData = eval([{ x:1352204720548, high:0.016642348035599646, low:0.016642348035599646, y:0.016642348035599646},{ x:1352211680548, high:12.000200003333388, low:0.0, y:3.500050000833347},{ x:1352211920548, high:2.000033333888898, low:1.999966667222213, y:2.000000000277778},{ x:1352212160548, high:5.0, low:1.999966667222213, y:2.750000000277778},{ x:1352212400548, high:4.0, low:2.0, y:2.5000083334722243},{ x:1352212640548, high:2.0, low:1.999966667222213, y:1.9999916668055533},{ x:1352212880548, high:3.0, low:2.0, y:2.2500083334722243},{ x:1352213120548, high:3.000050000833347, low:1.999966667222213, y:2.2500041672916677},{ x:1352213360548, high:4.0, low:1.999966667222213, y:2.7499916668055535},{ x:1352213600548, high:2.000033333888898, low:1.999966667222213, y:2.000008333750002},{ x:1352213840548, high:2.0, low:1.999966667222213, y:1.9999916668055533},{ x:1352214080548, high:3.0, low:1.999966667222213, y:2.250000000277778},{ x:1352214320548, high:4.0, low:2.0, y:2.5},{ x:1352214560548, high:3.0, low:1.999966667222213, y:2.250000000833347},{ x:1352214800548, high:2.000033333888898, low:1.999966667222213, y:2.000000000277778},{ x:1352215040548, high:4.0, low:2.0, y:2.5},{ x:1352215280548, high:3.0, low:2.0, y:2.2500083334722243},{ x:1352215520548, high:2.0, low:1.999966667222213, y:1.9999916668055533},{ x:1352215760548, high:3.0, low:1.999966667222213, y:2.250000000277778},{ x:1352216000548, high:4.0, low:2.0, y:2.5},{ x:1352216240548, high:2.000066668888963, low:1.999966667222213, y:2.000008334027794},{ x:1352216480548, high:3.0, low:1.999966667222213, y:2.2499916668055535}]);
 
 
+
         function draw(data) {
             "use strict";
 
             var margin = {top: 10, right: 5, bottom: 30, left: 40},
-                    width = 700 - margin.left - margin.right,
-                    height = 250 - margin.top - margin.bottom;
-
-            var titleHeight = 43, titleSpace = 10;
+                    width = 850 - margin.left - margin.right,
+                    height = 250 - margin.top - margin.bottom,
+                    titleHeight = 43, titleSpace = 10;
 
             var avg = $wnd.d3.mean(data.map(function (d) {
                 return d.y;
@@ -91,10 +91,20 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                     }));
 
             // adjust the min scale so blue low line is not in axis
-            var lowBound = min - ((peak - min) * 0.1);
+            var determineLowBound = function (min, peak) {
+                var newLow = min - ((peak - min) * 0.1);
+                if (newLow < 0) {
+                    return 0;
+                } else {
+                    return newLow;
+                }
+            };
+            //var lowBound = min - ((peak - min) * 0.1);
+            var lowBound = determineLowBound(min,peak);
             var highBound = peak + ((peak - min) * 0.1);
 
             var yScale = $wnd.d3.scale.linear()
+                    .clamp(true)
                     .rangeRound([height, 0])
                     .domain([lowBound, highBound]);
 
@@ -149,12 +159,11 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                     });
 
 
-
             // create the actual chart group
             var chart = $wnd.d3.select(chartSelection);
 
 
-            var createHeader = (function (resourceName,minLabel,minValue,avgLabel, avgValue, highLabel, highValue) {
+            var createHeader = (function (resourceName, minLabel, minValue, avgLabel, avgValue, highLabel, highValue) {
                 var fontSize = 14,
                         yTitle = 37,
                         fgColor = "#FFFFFF",
@@ -197,7 +206,6 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                         .attr("x", baseX + xInc)
                         .attr("y", yTitle)
                         .attr("font-size", fontSize)
-                        .attr("font-weight", "bold")
                         .attr("text-anchor", "left")
                         .text(minValue.toPrecision(3))
                         .attr("fill", fgColor);
@@ -215,10 +223,9 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
 
                 chart.append("text")
                         .attr("class", "avgText")
-                        .attr("x", baseX +  3 * xInc)
+                        .attr("x", baseX + 3 * xInc)
                         .attr("y", yTitle)
                         .attr("font-size", fontSize)
-                        .attr("font-weight", "bold")
                         .attr("text-anchor", "left")
                         .text(avgValue.toPrecision(3))
                         .attr("fill", fgColor);
@@ -236,18 +243,15 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
 
                 chart.append("text")
                         .attr("class", "highText")
-                        .attr("x", baseX +  5 * xInc)
+                        .attr("x", baseX + 5 * xInc)
                         .attr("y", yTitle)
                         .attr("font-size", fontSize)
-                        .attr("font-weight", "bold")
                         .attr("text-anchor", "left")
                         .text(highValue.toPrecision(3))
                         .attr("fill", fgColor);
 
             });
-
-            // create the title/header area
-            createHeader(yAxisTitle, "Min -",min,"Avg -",avg,"High -",peak);
+            createHeader(yAxisTitle, "Min -", min, "Avg -", avg, "High -", peak);
 
 
             var svg = chart.append("g")
@@ -267,7 +271,7 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                     );
 
 
-            var barOffset = 19, pixelsOffHeight = 0;
+            var barOffset = 2, pixelsOffHeight = 0;
 
             // The gray bars at the bottom leading up
             svg.selectAll("rect.leaderBar")
@@ -302,7 +306,7 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                         } else if (d.nodata) {
                             return  "url(#grayStripes)";
                         } else {
-                            if (i % 5 == 0) {
+                            if (i % 10 == 0) {
                                 return  "url(#heavyLeaderBarGrad)";
                             } else {
                                 return  "url(#leaderBarGrad)";
@@ -322,7 +326,7 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                         return  yScale(lowBound) + 2;
                     })
                     .attr("height", function (d, i) {
-                        if (i % 5 == 0) {
+                        if (i % 10 == 0) {
                             return height - yScale(lowBound) + 3;
                         } else {
                             return height - yScale(lowBound) + 3;
@@ -333,7 +337,7 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                     })
                     .attr("opacity", 1)
                     .attr("fill", function (d, i) {
-                        if (i % 5 == 0) {
+                        if (i % 10 == 0) {
                             return  "#a7a7ac";
                         } else {
                             return  "#d3d3d6";
@@ -352,7 +356,7 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                         return  yScale(lowBound) + 3;
                     })
                     .attr("height", function (d, i) {
-                        if (i % 5 == 0) {
+                        if (i % 10 == 0) {
                             return (height - yScale(lowBound)) + 4;
                         } else {
                             return 0;
@@ -364,7 +368,7 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                     .attr("opacity", 1)
                     .attr("fill", function (d, i) {
 
-                        if (i % 5 == 0) {
+                        if (i % 10 == 0) {
                             return  "#a7a7ac";
                         } else {
                             return  "#d3d3d6";
@@ -382,7 +386,7 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                         return  yScale(lowBound) + 5;
                     })
                     .attr("height", function (d, i) {
-                        if (i % 5 != 0) {
+                        if (i % 10 != 0) {
                             return (height - yScale(lowBound)) + 2;
                         } else {
                             return 0;
@@ -394,7 +398,7 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                     .attr("opacity", 1)
                     .attr("fill", function (d, i) {
 
-                        if (i % 5 == 0) {
+                        if (i % 10 == 0) {
                             return  "#a7a7ac";
                         } else {
                             return  "#d3d3d6";
@@ -422,7 +426,7 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                     .attr("text-anchor", "left").
                     text(function (d, i) {
                         var date = new Date(+d.x);
-                        if (i % 5 == 0) {
+                        if (i % 10 == 0) {
                             return dateFormatter(date);
                         } else {
                             return  "";

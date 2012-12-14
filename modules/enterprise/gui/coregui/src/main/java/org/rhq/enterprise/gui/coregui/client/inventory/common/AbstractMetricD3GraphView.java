@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
+import java.util.Date;
 import java.util.List;
 
 import com.google.gwt.user.client.Timer;
@@ -31,7 +32,6 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.JsonMetricProducer;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -41,6 +41,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
+ * Provide common functionality for drawing JSNI graphs and manipulating metric
+ * data so that it can be graphed.
+ *
  * @author Greg Hinkle
  * @author Jay Shaughnessy
  * @author Mike Thompson
@@ -195,36 +198,36 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
      * @return xml String
      */
     private static String getSvgDefs(){
-        return "<defs>" +
-                "                <linearGradient id=\"headerGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\">" +
-                "                    <stop offset=\"0%\" style=\"stop-color:#707883;stop-opacity:1\"/>" +
-                "                    <stop offset=\"100%\" style=\"stop-color:#425b64;stop-opacity:1\"/>" +
-                "                </linearGradient>" +
-                "                <linearGradient id=\"leaderBarGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\">" +
-                "                    <stop offset=\"0%\" style=\"stop-color:#d3d3d6;stop-opacity:1\"/>" +
-                "                    <stop offset=\"100%\" style=\"stop-color:#d3d3d6;stop-opacity:.3\"/>" +
-                "                </linearGradient>" +
-                "                <linearGradient id=\"heavyLeaderBarGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\">" +
-                "                    <stop offset=\"0%\" style=\"stop-color:#a7a7ac;stop-opacity:1\"/>" +
-                "                    <stop offset=\"100%\" style=\"stop-color:#a7a7ac;stop-opacity:.3\"/>" +
-                "                </linearGradient>" +
-                "                <linearGradient id=\"topBarGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\">" +
-                "                    <stop offset=\"0%\" style=\"stop-color:#067aba;stop-opacity:1\"/>" +
-                "                    <stop offset=\"100%\" style=\"stop-color:#1278a8;stop-opacity:1\"/>" +
-                "                </linearGradient>" +
-                "                <linearGradient id=\"bottomBarGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\">" +
-                "                    <stop offset=\"0%\" style=\"stop-color:#4fb9e6;stop-opacity:1\"/>" +
-                "                    <stop offset=\"100%\" style=\"stop-color:#388bb0;stop-opacity:1\"/>" +
-                "                </linearGradient>" +
-                "                <pattern id=\"grayStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\"" +
-                "                         width=\"6\" height=\"3\">" +
-                "                    <path d=\"M 0 0 6 0\" style=\"stroke:gray; fill:none;\"/>" +
-                "                </pattern>" +
-                "                <pattern id=\"redStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\"" +
-                "                         width=\"6\" height=\"3\">" +
-                "                    <path d=\"M 0 0 6 0\" style=\"stroke:red; fill:none;\"/>" +
-                "                </pattern>" +
-                "            </defs>" ;
+      return " <defs>" +
+              "               <linearGradient id=\"headerGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\">" +
+              "                   <stop offset=\"0%\" style=\"stop-color:#707883;stop-opacity:1\"/>" +
+              "                   <stop offset=\"100%\" style=\"stop-color:#425b64;stop-opacity:1\"/>" +
+              "               </linearGradient>\n" +
+              "               <linearGradient id=\"leaderBarGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\">" +
+              "                   <stop offset=\"0%\" style=\"stop-color:#d3d3d6;stop-opacity:1\"/>" +
+              "                   <stop offset=\"100%\" style=\"stop-color:#d3d3d6;stop-opacity:1\"/>" +
+              "               </linearGradient>" +
+              "               <linearGradient id=\"heavyLeaderBarGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\">" +
+              "                   <stop offset=\"0%\" style=\"stop-color:#a7a7ac;stop-opacity:1\"/>" +
+              "                   <stop offset=\"100%\" style=\"stop-color:#a7a7ac;stop-opacity:1\"/>" +
+              "               </linearGradient>" +
+              "               <linearGradient id=\"topBarGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\">" +
+              "                   <stop offset=\"0%\" style=\"stop-color:#067aba;stop-opacity:1\"/>" +
+              "                   <stop offset=\"100%\" style=\"stop-color:#1278a8;stop-opacity:1\"/>" +
+              "               </linearGradient>" +
+              "               <linearGradient id=\"bottomBarGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\">" +
+              "                   <stop offset=\"0%\" style=\"stop-color:#6bc0e6;stop-opacity:1\"/>" +
+              "                   <stop offset=\"100%\" style=\"stop-color:#388bb0;stop-opacity:1\"/>" +
+              "               </linearGradient>" +
+              "               <pattern id=\"grayStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\"" +
+              "                        width=\"6\" height=\"3\">" +
+              "                   <path d=\"M 0 0 6 0\" style=\"stroke:gray; fill:none;\"/>" +
+              "               </pattern>" +
+              "               <pattern id=\"redStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\"" +
+              "                        width=\"6\" height=\"3\">" +
+              "                   <path d=\"M 0 0 6 0\" style=\"stroke:red; fill:none;\"/>" +
+              "               </pattern>" +
+              "           </defs>";
     }
 
     public abstract  void drawJsniChart();
@@ -290,8 +293,8 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
         StringBuilder sb = new StringBuilder("[");
         boolean gotAdjustedMeasurementUnits = false;
         for (MeasurementDataNumericHighLowComposite measurement : data) {
+            sb.append("{ x:"+measurement.getTimestamp()+",");
             if(!Double.isNaN(measurement.getValue())){
-                sb.append("{ x:"+measurement.getTimestamp()+",");
 
                 MeasurementNumericValueAndUnits newHigh = normalizeUnitsAndValues(measurement.getHighValue(), definition.getUnits());
                 MeasurementNumericValueAndUnits newLow = normalizeUnitsAndValues(measurement.getLowValue(), definition.getUnits());
@@ -303,6 +306,9 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
                 sb.append(" high:"+newHigh.getValue()+",");
                 sb.append(" low:"+newLow.getValue()+",");
                 sb.append(" y:"+newValue.getValue()+"},");
+            }else {
+                // NaN measure no measurement was collected
+                sb.append(" nodata:true },");
             }
         }
         sb.setLength(sb.length()-1); // delete the last ','
@@ -311,6 +317,39 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
         Log.debug(sb.toString());
         return sb.toString();
     }
+
+    /**
+     * @todo: this is not needed
+     * The way the charts are setup, they look best when missing time interval is filled in
+     * @param sourceData list of metric data to process
+     * @return new List with the missing time intervals filled in.
+     */
+//    public static List<MeasurementDataNumericHighLowComposite> fillInMissingTimeIntervals(List<MeasurementDataNumericHighLowComposite> sourceData){
+//
+//        final long MINUTES =  1000 *60;
+//        //Date firstTimestamp = new Date(sourceData.get(0).getTimestamp());
+//        //Date secondTimestamp = new Date(sourceData.get(1).getTimestamp());
+//        long firstTimestamp = sourceData.get(0).getTimestamp();
+//        long secondTimestamp = sourceData.get(1).getTimestamp();
+//        Log.debug("Minutes difference: "+(secondTimestamp - firstTimestamp)/MINUTES);
+//
+//        for (int j = 0; j < sourceData.size(); j++)
+//        {
+//            MeasurementDataNumericHighLowComposite current = sourceData.get(j);
+//            Log.debug(" **** All Timestamps("+j+") : ["+new Date(current.getTimestamp()) + "] --> "+current.getValue());
+//            // once we have enough data to start measuring
+//            if(j >= 1){
+//                MeasurementDataNumericHighLowComposite previous = sourceData.get(j-1);
+//                long time = current.getTimestamp() - previous.getTimestamp();
+//                Log.debug(" ** Date : "+new Date(current.getTimestamp()) + " "+new Date(previous.getTimestamp()));
+//                Log.debug(" ** minutes diff: "+time/MINUTES );
+//
+//            }
+//
+//        }
+//
+//        return sourceData;
+//    }
 
     private  MeasurementNumericValueAndUnits normalizeUnitsAndValues(double value, MeasurementUnits measurementUnits){
         MeasurementNumericValueAndUnits newValue = MeasurementConverterClient.fit(value, measurementUnits);

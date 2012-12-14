@@ -144,7 +144,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
                 + (System.currentTimeMillis() - now) + ")ms");
 
             now = System.currentTimeMillis();
-            int totalInserted = 0;
+            int totalProcessed = 0;
             while (true) {
                 /*
                  * each call is done in a separate xtn of at most 100K inserted rows; this helps to keep the xtn
@@ -185,14 +185,15 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
                  * In any event, an appropriate chunking solution needs to be found, and that partitioning strategy
                  * needs to replace the limits in the query today.
                  */
-                int inserted = measurementBaselineManager._calculateAutoBaselinesINSERT(amountOfData);
-                totalInserted += inserted;
-                // since we're batch 100K inserts at a time, we're done if we didn't have that many to insert
-                if (inserted < BASELINE_PROCESSING_LIMIT) {
+                int schedulesWithoutBaselines = measurementBaselineManager
+                    ._calculateAutoBaselinesINSERT(amountOfData);
+                totalProcessed += schedulesWithoutBaselines;
+
+                if (schedulesWithoutBaselines < BASELINE_PROCESSING_LIMIT) {
                     break;
                 }
             }
-            log.info("Calculated and inserted [" + totalInserted + "] new baselines. ("
+            log.info("Calculated and inserted [" + totalProcessed + "] new baselines. ("
                 + (System.currentTimeMillis() - now) + ")ms");
 
             MeasurementMonitor.getMBean().incrementBaselineCalculationTime(System.currentTimeMillis() - computeTime);
@@ -224,7 +225,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         Query query = this.entityManager
             .createNamedQuery(MeasurementBaseline.QUERY_FIND_MEASUREMENT_SCHEDULES_WITHOUT_AUTOBASELINES);
         query.setMaxResults(BASELINE_PROCESSING_LIMIT);
-        List<String> scheduleIdsWithoutBaselines = query.getResultList();
+        List<Integer> scheduleIdsWithoutBaselines = query.getResultList();
 
         //2. calculate the baselines based metrics data
         MetricBaselineCalculator baselineCalculator = new MetricBaselineCalculator();

@@ -9,9 +9,4 @@
            <property name="javaVmArguments">-Xmx512m -XX:MaxPermSize=128m -Djava.security.manager -Djava.security.policy==${jboss.unzip.location}/security.policy -Djnp.port=${jnp.port}</property>
         </configuration>
     </container>
-
-    <extension qualifier="jacoco">
-        <property name="includes">org.rhq.*</property>
-    </extension>
- 
 </arquillian>

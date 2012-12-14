@@ -96,6 +96,13 @@
     </dependency>
 
     <dependency>
+        <groupId>org.rhq</groupId>
+        <artifactId>rhq-arquillian-suite-extension</artifactId>
+        <version>${project.version}</version>
+        <scope>test</scope>
+    </dependency>
+    
+    <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-domain</artifactId>
       <version>${project.version}</version>
@@ -670,6 +677,17 @@
             </configuration>
           </execution>
 
+        </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
         </executions>
       </plugin>
     </plugins>

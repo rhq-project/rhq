@@ -53,6 +53,8 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 public class FailoverListItemDatasource extends AbstractServerNodeDatasource<FailoverListDetails, Criteria> {
 
     private final int agentId;
+    
+    // this delegate is there to not repeat the copyValues code
     private final ServerDatasource serverDatasource;
 
     public FailoverListItemDatasource(int agentId) {

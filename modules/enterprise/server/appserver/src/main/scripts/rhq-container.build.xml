@@ -693,18 +693,18 @@ rhq.cassandra.cluster.num-nodes=${rhq.cassandra.cluster.num-nodes}
 # The log4j logging level to use on each node.
 rhq.cassandra.logging.level=${rhq.cassandra.logging.level}
 </echo>
-      <replace file="${project.build.outputDirectory}/bin/rhq-server.sh">
-        <replacefilter>
-          <replacetoken># START SERVER</replacetoken>
-          <replacevalue><![CDATA[export RHQ_SERVER_HOME; ${RHQ_SERVER_HOME}/bin/rhq-autoinstall.sh &]]></replacevalue>
-        </replacefilter>
-      </replace>
-      <replace file="${project.build.outputDirectory}/bin/rhq-server.bat">
-        <replacefilter>
-          <replacetoken>rem START SERVER</replacetoken>
-          <replacevalue><![CDATA[start /B %RHQ_SERVER_HOME%\bin\rhq-autoinstall.bat]]></replacevalue>
-        </replacefilter>
-      </replace>
+        <replace file="${project.build.outputDirectory}/bin/rhq-server.sh">
+          <replacefilter>
+            <replacetoken># START SERVER</replacetoken>
+            <replacevalue><![CDATA[export RHQ_SERVER_HOME; ${RHQ_SERVER_HOME}/bin/rhq-autoinstall.sh &]]></replacevalue>
+          </replacefilter>
+        </replace>
+        <replace file="${project.build.outputDirectory}/bin/rhq-server.bat">
+            <replacefilter>
+            <replacetoken>rem START SERVER</replacetoken>
+            <replacevalue><![CDATA[start /B %RHQ_SERVER_HOME%\bin\rhq-autoinstall.bat]]></replacevalue>
+          </replacefilter>
+        </replace>
     </target>
 
     <!-- The prepare-release target must be run AFTER the resources:resources goal has executed. -->

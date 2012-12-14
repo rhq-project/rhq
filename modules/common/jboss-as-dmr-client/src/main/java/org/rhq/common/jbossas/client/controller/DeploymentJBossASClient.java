@@ -30,6 +30,8 @@ public class DeploymentJBossASClient extends JBossASClient {
 
     public static final String SUBSYSTEM_DEPLOYMENT = "deployment";
     public static final String ENABLED = "enabled";
+    public static final String CONTENT = "content";
+    public static final String PATH = "path";
 
     public DeploymentJBossASClient(ModelControllerClient client) {
         super(client);
@@ -80,5 +82,35 @@ public class DeploymentJBossASClient extends JBossASClient {
             throw new FailureException(results);
         }
         return; // everything is OK
+    }
+
+    /**
+     * Given the name of a deployment, this returns where the deployment is (specifically,
+     * it returns the PATH of the deployment).
+     *
+     * @param name the name of the deployment
+     * @return the path where the deployment is found
+     *
+     * @throws Exception
+     */
+    public String getDeploymentPath(String name) throws Exception {
+        Address addr = Address.root().add(SUBSYSTEM_DEPLOYMENT, name);
+        ModelNode op = createReadAttributeRequest(CONTENT, addr);
+        final ModelNode results = execute(op);
+        if (isSuccess(results)) {
+            ModelNode path;
+            try {
+                path = getResults(results).asList().get(0).asObject().get(PATH);
+            } catch (Exception e) {
+                throw new Exception("Cannot get path associated with deployment [" + name + "]");
+            }
+            if (path != null) {
+                return path.asString();
+            } else {
+                throw new Exception("No path associated with deployment [" + name + "]");
+            }
+        } else {
+            throw new FailureException(results, "Cannot get the deployment path");
+        }
     }
 }

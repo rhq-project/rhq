@@ -32,8 +32,13 @@ import javax.management.ObjectName;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.as.controller.client.ModelControllerClient;
+
+import org.rhq.common.jbossas.client.controller.DeploymentJBossASClient;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.util.ObjectNameFactory;
+import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.core.service.ManagementService;
 
 /**
  * Get information about RHQ's underlying AS Server.
@@ -83,40 +88,70 @@ public class CoreServer implements CoreServerMBean {
         return "RHQ Server";
     }
 
+    @Override
     public String getVersion() {
         return this.buildProps.getProperty(PROP_PRODUCT_VERSION, "?");
     }
 
+    @Override
     public String getBuildNumber() {
         return this.buildProps.getProperty(PROP_BUILD_NUMBER, "?");
     }
 
+    @Override
     public Date getBootTime() {
         return bootTime;
     }
 
+    @Override
     public File getInstallDir() {
-        // use logDir explicitly - NOT homeDir because AS could be installed elsewhere (e.g. via rpm)
-        // but our log dir is always under our own installation directory
+        String rhqHome = System.getProperty("rhq.server.home");
+        if (rhqHome != null) {
+            return new File(rhqHome);
+        }
+
+        // I think that sysprop should always be set, but just in case, fallback on using
+        // logDir explicitly - log dir is always under our own installation directory
         File homeDir = new File(getServerEnvironmentAttribute("logDir"));
         return homeDir.getParentFile(); // logDir is "rhq-install-dir/logs", so the install dir is .. from there
     }
 
+    @Override
     public File getJBossServerHomeDir() {
         File baseDir = new File(getServerEnvironmentAttribute("baseDir"));
         return baseDir;
     }
 
+    @Override
     public File getJBossServerDataDir() {
         File dataDir = new File(getServerEnvironmentAttribute("dataDir"));
         return dataDir;
     }
 
+    @Override
     public File getJBossServerTempDir() {
         File tempDir = new File(getServerEnvironmentAttribute("tempDir"));
         return tempDir;
     }
 
+    @Override
+    public File getEarDeploymentDir() {
+        ModelControllerClient mcc = ManagementService.getClient();
+        try {
+            DeploymentJBossASClient client = new DeploymentJBossASClient(mcc);
+            String earPath = client.getDeploymentPath(RHQConstants.EAR_FILE_NAME);
+            return new File(earPath);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            try {
+                mcc.close();
+            } catch (IOException ignore) {
+            }
+        }
+    }
+
+    @Override
     public ProductInfo getProductInfo() {
         ClassLoader classLoader = this.getClass().getClassLoader();
         InputStream inputStream = classLoader.getResourceAsStream(PRODUCT_INFO_PROPERTIES_RESOURCE_PATH);

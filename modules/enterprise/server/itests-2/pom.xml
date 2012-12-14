@@ -1,6 +1,4 @@
-<project
-  xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
@@ -25,13 +23,15 @@
   <properties>
     <jboss.zip>${settings.localRepository}/org/jboss/as/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip</jboss.zip>
     <jboss.unzip.location>${basedir}/target/jboss-as-${jboss.version}</jboss.unzip.location>
+    <jboss.vm.args>-Xmx700m -XX:MaxPermSize=200m -Djava.security.manager
+      -Djava.security.policy==${jboss.unzip.location}/security.policy</jboss.vm.args>
+    <jboss.vm.args.debug></jboss.vm.args.debug> <!-- -Ditest.debug can override this, see below -->
   </properties>
 
   <dependencies>
     <!--================ Test Deps ================ -->
 
-    <!-- Note, the test dep ordering can be important. Maven orders the [test] classpath in the order listed
-      in the pom. -->
+    <!-- Note, the test dep ordering can be important. Maven orders the [test] classpath in the order listed in the pom. -->
 
     <dependency>
       <groupId>org.jboss.as</groupId>
@@ -222,13 +222,13 @@
             <configuration>
               <target>
                 <echo>Unzipping JBossAS ${jboss.version} found at ${jboss.zip}</echo>
-                <unzip
-                  src="${jboss.zip}"
-                  dest="${jboss.unzip.location}/.." />
+                <unzip src="${jboss.zip}" dest="${jboss.unzip.location}/.." />
                 <echo>JBossAS ${jboss.version} should now be at: ${jboss.unzip.location}</echo>
-                <property
-                  name="jboss.conf"
-                  location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
+
+                <echo>Copying security policy to JBossAS</echo>
+                <copy file="${project.build.directory}/test-classes/security.policy" tofile="${jboss.unzip.location}/security.policy" />
+
+                <property name="jboss.conf" location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
                 <echo>Will now add test configuration to JBossAS config file: ${jboss.conf}</echo>
                 <replace file="${jboss.conf}">
 
@@ -420,15 +420,10 @@
 
                 </replace>
 
-                <property
-                  name="jboss.modules.dir"
-                  location="${jboss.unzip.location}/modules" />
+                <property name="jboss.modules.dir" location="${jboss.unzip.location}/modules" />
                 <echo>Adding JDBC modules to ${jboss.modules.dir} ...</echo>
-                <copy
-                  file="${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar"
-                  toDir="${jboss.modules.dir}/org/rhq/oracle/main"
-                  failonerror="false"
-                  verbose="true" />
+                <copy file="${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar"
+                  toDir="${jboss.modules.dir}/org/rhq/oracle/main" failonerror="false" verbose="true" />
                 <echo file="${jboss.modules.dir}/org/rhq/oracle/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
 <module xmlns="urn:jboss:module:1.1" name="org.rhq.oracle">
     <resources>
@@ -442,8 +437,7 @@
 ]]></echo>
                 <copy
                   file="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"
-                  toDir="${jboss.modules.dir}/org/rhq/postgres/main"
-                  verbose="true" />
+                  toDir="${jboss.modules.dir}/org/rhq/postgres/main" verbose="true" />
                 <echo file="${jboss.modules.dir}/org/rhq/postgres/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
 <module xmlns="urn:jboss:module:1.1" name="org.rhq.postgres">
     <resources>
@@ -469,9 +463,7 @@
             <configuration>
               <skip>${skip.postgres}</skip>
               <target>
-                <property
-                  name="jboss.conf"
-                  location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
+                <property name="jboss.conf" location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
                 <echo>Will now add test configuration datasource to JBossAS config file: ${jboss.conf}</echo>
                 <replace file="${jboss.conf}">
 
@@ -527,7 +519,7 @@
                     </timeout>
                     <statement>
                         <prepared-statement-cache-size>75</prepared-statement-cache-size>
-                    </statement>
+                    </statement> 
                 </xa-datasource>]]></replacevalue>
                   </replacefilter>
 
@@ -546,9 +538,7 @@
             <configuration>
               <skip>${skip.oracle}</skip>
               <target>
-                <property
-                  name="jboss.conf"
-                  location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
+                <property name="jboss.conf" location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
                 <echo>Will now add test configuration datasource to JBossAS config file: ${jboss.conf}</echo>
                 <replace file="${jboss.conf}">
 
@@ -584,12 +574,16 @@
                 </datasource>
                 <xa-datasource jta="true" jndi-name="java:jboss/datasources/RHQDS" pool-name="RHQDS" enabled="true" use-java-context="true">
                     <xa-datasource-property name="URL">${rhq.test.ds.connection-url}</xa-datasource-property>
-                    <xa-datasource-property name="ConnectionProperties">SetBigStringTryClob=true</xa-datasource-property>
                     <driver>oracle</driver>
                     <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
                     <xa-pool>
                         <min-pool-size>5</min-pool-size>
                         <max-pool-size>50</max-pool-size>
+                        <!--
+                        Oracle does not like XA connections getting used both inside and outside a JTA transaction.
+                        To workaround the problem you can create separate sub-pools for the different contexts using <no-tx-separate-pools/>
+                        -->                        
+                        <no-tx-separate-pools>true</no-tx-separate-pools>
                     </xa-pool>
                     <security>
                         <security-domain>RHQDSSecurityDomain</security-domain>
@@ -641,15 +635,8 @@
             <clean.db>${clean.db}</clean.db>
             <log4j.configDebug>false</log4j.configDebug>
             <project.version>${project.version}</project.version>
-
-            <rhq.test.ds.type-mapping>${rhq.test.ds.type-mapping}</rhq.test.ds.type-mapping>
-            <rhq.test.ds.server-name>${rhq.test.ds.server-name}</rhq.test.ds.server-name>
-            <rhq.test.ds.db-name>${rhq.test.ds.db-name}</rhq.test.ds.db-name>
-            <rhq.test.ds.connection-url>${rhq.test.ds.connection-url}</rhq.test.ds.connection-url>
-            <rhq.db.admin.username>${rhq.db.admin.username}</rhq.db.admin.username>
-            <rhq.db.admin.password>${rhq.db.admin.password}</rhq.db.admin.password>
-            <rhq.test.ds.user-name>${rhq.test.ds.user-name}</rhq.test.ds.user-name>
-            <rhq.test.ds.password>${rhq.test.ds.password}</rhq.test.ds.password>
+            <rhq.skip.oracle>${skip.oracle}</rhq.skip.oracle>
+            <rhq.ojdbc.version>${ojdbc6.version}</rhq.ojdbc.version>
           </systemPropertyVariables>
           <additionalClasspathElements>
             <!-- The below is required for tests to run against Oracle. -->
@@ -668,9 +655,7 @@
               <skipTests>${skipTests}</skipTests>
               <excludes>
                 <!-- NOTE: PERF GROUP AND SOME CLASSES EXCLUDED (SEE BZ 874696) -->
-                <exclude>**/JndiAccessTest.java</exclude>
                 <exclude>**/LdapGroupManagerBeanTest.java</exclude>
-                <exclude>**/SynchronizationManagerBeanTest.java</exclude>
                 <exclude>org/rhq/**/performance/**/*.java</exclude>
 
                 <!-- exclude the db tests which are not expected to run in this suite -->
@@ -703,6 +688,18 @@
       <properties>
         <skip.postgres>true</skip.postgres>
         <skip.oracle>false</skip.oracle>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>itest.debug</id>
+      <activation>
+        <property>
+          <name>itest.debug</name>
+        </property>
+      </activation>
+      <properties>
+        <jboss.vm.args.debug>-Xrunjdwp:transport=dt_socket,address=8798,server=y,suspend=y</jboss.vm.args.debug>
       </properties>
     </profile>
   </profiles>

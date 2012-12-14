@@ -31,6 +31,7 @@ import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorUtil;
 
 /**
@@ -79,6 +80,9 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
     //public File getUserPluginDir() {
     public String getUserPluginDir() {
         //return this.userPluginDir;
+        if (this.userPluginDir == null) {
+            return null;
+        }
         return this.userPluginDir.getAbsolutePath();
     }
 
@@ -94,7 +98,11 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
     //public File getServerPluginDir() {
     public String getServerPluginDir() {
         //return this.serverPluginScanner.getServerPluginDir();
-        return this.serverPluginScanner.getServerPluginDir().getAbsolutePath();
+        File dir = this.serverPluginScanner.getServerPluginDir();
+        if (dir == null) {
+            return null;
+        }
+        return dir.getAbsolutePath();
     }
 
     //public void setServerPluginDir(File dir) {
@@ -109,7 +117,11 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
     //public File getAgentPluginDir() {
     public String getAgentPluginDir() {
         //return this.agentPluginScanner.getAgentPluginDeployer().getPluginDir();
-        return this.agentPluginScanner.getAgentPluginDeployer().getPluginDir().getAbsolutePath();
+        File dir = this.agentPluginScanner.getAgentPluginDeployer().getPluginDir();
+        if (dir == null) {
+            return null;
+        }
+        return dir.getAbsolutePath();
     }
 
     //public void setAgentPluginDir(File dir) {
@@ -139,15 +151,6 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
     }
 
     public void start() throws Exception {
-        // This will check to see if there are any agent plugin records in the database
-        // that do not have content associated with them and if so, will stream
-        // the content from the file system to the database. This is needed only
-        // in the case when this server has recently been upgraded from an old
-        // version of the software that did not originally have content stored in the DB.
-        // Once we do that, we can start the agent plugin deployer.
-        this.agentPluginScanner.fixMissingAgentPluginContent();
-        this.agentPluginScanner.getAgentPluginDeployer().start();
-
         return;
     }
 
@@ -160,6 +163,49 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
         // We are being called by the server's startup bean which essentially informs us that
         // the server's internal EJB/SLSBs are ready and can be called. This means we are allowed to start.
         // NOTE: Make sure we are called BEFORE the master plugin container is started!
+
+        // setup our attributes - skip if the plugin dirs were already set (e.g. from test code)
+        String upd = getUserPluginDir();
+        String apd = getAgentPluginDir();
+        String spd = getServerPluginDir();
+
+        // don't look up the core server mbean if we don't need do
+        if (upd == null || apd == null || spd == null) {
+            File homeDir = LookupUtil.getCoreServer().getInstallDir();
+            File earDir = LookupUtil.getCoreServer().getEarDeploymentDir();
+
+            if (upd == null) {
+                upd = new File(homeDir, "plugins").getAbsolutePath();
+                setUserPluginDir(upd);
+            }
+
+            if (apd == null) {
+                apd = new File(earDir, "rhq-downloads/rhq-plugins").getAbsolutePath();
+                setAgentPluginDir(apd);
+            }
+
+            if (spd == null) {
+                spd = new File(earDir, "rhq-serverplugins").getAbsolutePath();
+                setServerPluginDir(spd);
+            }
+        }
+
+        log.info("user plugin dir=" + upd);
+        log.info("agent plugin dir=" + apd);
+        log.info("server plugin dir=" + spd);
+
+        // This will check to see if there are any agent plugin records in the database
+        // that do not have content associated with them and if so, will stream
+        // the content from the file system to the database. This is needed only
+        // in the case when this server has recently been upgraded from an old
+        // version of the software that did not originally have content stored in the DB.
+        // Once we do that, we can start the agent plugin deployer.
+        try {
+            this.agentPluginScanner.fixMissingAgentPluginContent();
+            this.agentPluginScanner.getAgentPluginDeployer().start();
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot start plugin deployment scanner properly", e);
+        }
 
         this.agentPluginScanner.getAgentPluginDeployer().startDeployment();
 

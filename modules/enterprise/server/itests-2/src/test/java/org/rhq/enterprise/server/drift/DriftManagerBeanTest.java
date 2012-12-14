@@ -94,6 +94,10 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
         prepareScheduler();
 
+        DriftServerPluginService driftServerPluginService = new DriftServerPluginService();
+        prepareCustomServerPluginService(driftServerPluginService);
+        driftServerPluginService.masterConfig.getPluginDirectory().mkdirs();
+
         deleteDriftFiles();
 
         newResource = createNewResource();
@@ -104,6 +108,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         try {
             deleteNewResource(newResource);
         } finally {
+            unprepareServerPluginService();
             unprepareForTestAgents();
             unprepareScheduler();
         }
@@ -111,7 +116,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
     @Test
     public void testStoreChangeSet() throws Exception {
-        File rootDir = new File(System.getProperty("java.io.tmpdir"));
+        File rootDir = getTempDir();
         File changeSetsDir = new File(rootDir, "changesets");
         deleteDirectory(changeSetsDir);
         changeSetsDir.mkdirs();

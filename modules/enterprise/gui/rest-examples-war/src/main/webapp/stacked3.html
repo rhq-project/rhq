@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Stacked metrics (free mem, schedule 10003)</title>
+    <script type="text/javascript" src="js/d3.js"></script>
+    <script type="text/javascript" src="js/d3.layout.js"></script>
+    <script type="text/javascript" src="js/d3.time.js"></script>
+    <script type="text/javascript" src="js/jquery.js"></script>
+    <style type="text/css">
+
+
+div.bar {
+    display: inline-block;
+    width: 20px;
+    height: 2px; /* for NaN entries */
+}
+
+    </style>
+  </head>
+  <body>
+
+
+<h1 id="resId">Resource</h1>
+Those bars show the average value during the respective time slot. Scale is from
+min-value to max value. Mouseover the bar to see the actual value.
+<br/>
+<h2 id="header">Schedule</h2>
+<table>
+    <tr>
+        <td>Minimum:</td><td id="minval"></td>
+    </tr>
+    <tr>
+        <td>Maximum:</td><td id="maxval"></td>
+    </tr>
+</table>
+Value: <span id="currval"></span>
+<br/>
+<div id="graph"></div>
+  <script type="text/javascript">
+
+      // Get the platforms and then the first one
+      $.getJSON('/rest/resource/platforms.json', function (json) {
+          var res = json[0];
+          var rid = res.resourceId;
+          $("#resId").text("Resource " + rid + " (" + res.resourceName + ")");
+
+          // Now get the metrical schedules of the platform
+          $.getJSON("/rest/resource/" + rid + "/schedules.json?type=metric", function (json2) {
+
+              // Take the first
+              var schId = json2[0].scheduleId;
+              $("#header").text("Schedule " + schId + " (" + json2[0].scheduleName + ")");
+
+              // And call d3 graphing on it
+              d3.json('/rest/metric/data/' + schId + '.json',
+                  function (jsondata) {
+
+                      var theDiv = d3.select("div#graph");
+
+                      var points = jsondata.dataPoints;
+                      var min = jsondata.min;
+                      var max = jsondata.max;
+
+                      d3.select("td#minval").text(min);
+                      d3.select("td#maxval").text(max);
+
+                      y = d3.scale.linear().range([0, 400]).domain([min,max]);
+
+                      // Add a group for each cause.
+                      var bar = theDiv.selectAll("div")
+                              .data(points)
+                              .enter().append("div")
+                              .attr("class", "bar")
+                              .style("background-color","lightblue")
+                              .style("width","10px")
+                              .style("margin-right", "2px")
+                              .style("height",
+                              function (d) {
+                                  return  (y(d.value) + "px");
+                              })
+                              .on('mouseover',function(d){
+                                 d3.select("#currval").append('text')
+                                          .text(d.value)
+                                          .attr('class','tip');
+                                })
+                              .on('mouseout',function(d) {
+                                  d3.selectAll(".tip").remove();
+                              })
+                              ;
+                  });
+          });
+      });
+  </script>
+  </body>
+</html>

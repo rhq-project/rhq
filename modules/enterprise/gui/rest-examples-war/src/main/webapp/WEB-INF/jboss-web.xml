@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+
+<jboss-web>
+    <security-domain>RHQRESTSecurityDomain</security-domain>
+</jboss-web>

@@ -344,7 +344,6 @@ public class ProblemResourceTest extends AbstractEJB3Test {
         SystemException {
         entityManager.flush();
         getTransactionManager().commit();
-        entityManager.close();
     }
 
     private void begin() throws NotSupportedException, SystemException {

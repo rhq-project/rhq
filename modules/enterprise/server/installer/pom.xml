@@ -1,0 +1,250 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.rhq</groupId>
+        <artifactId>rhq-parent</artifactId>
+        <version>4.6.0-SNAPSHOT</version>
+        <relativePath>../../../../pom.xml</relativePath>
+    </parent>
+
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-installer-util</artifactId>
+    <packaging>jar</packaging>
+
+    <name>RHQ Enterprise Installer Utility</name>
+    <description>The RHQ Enterprise Installer Utility</description>
+
+    <properties>
+        <moduleName>org.rhq.${project.artifactId}</moduleName>
+        <moduleDir>org/rhq/${project.artifactId}</moduleDir>
+        <ant.version>1.6.5</ant.version> <!-- the version used by dbutils that we need to depend on -->
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-core-util</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-core-dbutils</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <!-- need this solely for SecurityUtils -->
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-enterprise-comm</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-jboss-as-dmr-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>gnu-getopt</groupId>
+            <artifactId>getopt</artifactId>
+        </dependency>
+
+        <!-- rhq-jboss-as-dmr-client has this as provided dep - but we need it too -->
+        <dependency>
+            <groupId>org.jboss.as</groupId>
+            <artifactId>jboss-as-controller-client</artifactId>
+            <version>${jboss.version}</version>
+        </dependency>
+
+        <!-- we need to package this (and ant) in our module -->
+        <dependency>
+            <groupId>ant</groupId>
+            <artifactId>ant-launcher</artifactId>
+            <version>${ant.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>ant</groupId>
+            <artifactId>ant</artifactId>
+            <version>${ant.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>i18nlog</groupId>
+            <artifactId>i18nlog</artifactId>
+        </dependency>
+
+        <!-- test deps -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>1.9.0</version>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+
+        <plugins>
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>org.rhq.enterprise.server.installer.Installer</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-deps</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.rhq</groupId>
+                                    <artifactId>rhq-core-util</artifactId>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.rhq</groupId>
+                                    <artifactId>rhq-core-dbutils</artifactId>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.rhq</groupId>
+                                    <artifactId>rhq-enterprise-comm</artifactId>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.rhq</groupId>
+                                    <artifactId>rhq-jboss-as-dmr-client</artifactId>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>ant</groupId>
+                                    <artifactId>ant-launcher</artifactId>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>ant</groupId>
+                                    <artifactId>ant</artifactId>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>i18nlog</groupId>
+                                    <artifactId>i18nlog</artifactId>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${project.build.directory}/installer-deps</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <descriptors>
+                        <descriptor>src/main/scripts/module-assembly.xml</descriptor>
+                    </descriptors>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>module-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <!-- this is needed for the DBInstallationTest -->
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <rhq.test.ds.type-mapping>${rhq.test.ds.type-mapping}</rhq.test.ds.type-mapping>
+                        <rhq.test.ds.server-name>${rhq.test.ds.server-name}</rhq.test.ds.server-name>
+                        <rhq.test.ds.db-name>${rhq.test.ds.db-name}</rhq.test.ds.db-name>
+                        <rhq.test.ds.connection-url>${rhq.test.ds.connection-url}</rhq.test.ds.connection-url>
+                        <rhq.db.admin.username>${rhq.db.admin.username}</rhq.db.admin.username>
+                        <rhq.db.admin.password>${rhq.db.admin.password}</rhq.db.admin.password>
+                        <rhq.test.ds.user-name>${rhq.test.ds.user-name}</rhq.test.ds.user-name>
+                        <rhq.test.ds.password>${rhq.test.ds.password}</rhq.test.ds.password>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>dev</id>
+
+            <properties>
+                <rhq.rootDir>../../../..</rhq.rootDir>
+                <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+                <rhq.deploymentName>${project.build.finalName}.zip</rhq.deploymentName>
+                <rhq.deploymentDir>${rhq.containerDir}/modules/</rhq.deploymentDir>
+            </properties>
+
+            <build>
+                <plugins>
+
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+
+                            <execution>
+                                <id>deploy</id>
+                                <phase>package</phase>
+                                <configuration>
+                                    <target>
+                                        <echo>*** Deploying installer module to ${rhq.deploymentDir} ...</echo>
+                                        <unzip src="target/${rhq.deploymentName}"
+                                               dest="${rhq.deploymentDir}"/>
+                                    </target>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+
+                            <execution>
+                                <id>undeploy</id>
+                                <phase>clean</phase>
+                                <configuration>
+                                    <target>
+                                        <echo>*** Deleting installer module ${rhq.deploymentDir}/${moduleDir} ...</echo>
+                                        <delete dir="${rhq.deploymentDir}/${moduleDir}" />
+                                    </target>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+
+                        </executions>
+                    </plugin>
+
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>

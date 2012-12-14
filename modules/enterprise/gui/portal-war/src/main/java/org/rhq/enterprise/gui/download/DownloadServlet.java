@@ -68,7 +68,7 @@ public class DownloadServlet extends HttpServlet {
         disableBrowserCache(resp);
 
         if (isServerAcceptingRequests()) {
-            File requestedDirectory = getRequestedDirectory(req);
+            String requestedDirectory = getRequestedDirectory(req);
             if (requestedDirectory == null) {
                 numActiveDownloads++;
                 download(req, resp);
@@ -87,24 +87,35 @@ public class DownloadServlet extends HttpServlet {
         return;
     }
 
-    private File getRequestedDirectory(HttpServletRequest req) throws ServletException {
+    /**
+     * Returns the relative path of the requested directory but only if it exists in
+     * one of the root directories. If the requested path is a file or the directory
+     * doesn't exist under a root directory, null is returned.
+     *
+     * @param req
+     * @return relative path of the directory being requested
+     * @throws ServletException
+     */
+    private String getRequestedDirectory(HttpServletRequest req) throws ServletException {
 
         String pathInfo = req.getPathInfo();
 
-        File rootDownloadsDir;
+        File[] rootDownloadsDirs;
         try {
-            rootDownloadsDir = getRootDownloadsDir();
+            rootDownloadsDirs = getRootDownloadsDirs();
         } catch (Throwable t) {
             throw new ServletException(t);
         }
 
         if (pathInfo == null || pathInfo.equals("") || pathInfo.equals("/")) {
-            return rootDownloadsDir;
+            return "";
         }
 
-        File downloadDir = new File(rootDownloadsDir, pathInfo);
-        if (downloadDir.isDirectory()) {
-            return downloadDir;
+        for (File rootDownloadsDir : rootDownloadsDirs) {
+            File downloadDir = new File(rootDownloadsDir, pathInfo);
+            if (downloadDir.isDirectory()) {
+                return pathInfo;
+            }
         }
 
         // either the path does not exist or its a file, not a directory
@@ -113,26 +124,38 @@ public class DownloadServlet extends HttpServlet {
 
     private void download(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
-            File downloadDir = getRootDownloadsDir();
-            File downloadFile = new File(downloadDir, req.getPathInfo());
-            if (!isForbiddenPath(downloadFile, resp)) {
-                if (!downloadFile.exists()) {
-                    disableBrowserCache(resp);
-                    resp.sendError(HttpServletResponse.SC_NOT_FOUND, "File does not exist: " + downloadFile.getName());
-                    return;
-                }
-                resp.setContentType(getMimeType(downloadFile));
-                resp.setHeader("Content-Disposition", "attachment; filename=" + downloadFile.getName());
-                resp.setContentLength((int) downloadFile.length());
-                resp.setDateHeader("Last-Modified", downloadFile.lastModified());
+            if (isForbiddenPath(req.getPathInfo(), resp)) {
+                return;
+            }
 
-                FileInputStream stream = new FileInputStream(downloadFile);
+            // look for the file in one of the root download directories
+            File fileToDownload = null;
+            File[] downloadDirs = getRootDownloadsDirs();
+            for (File downloadDir : downloadDirs) {
+                File file = new File(downloadDir, req.getPathInfo());
+                if (file.exists()) {
+                    fileToDownload = file;
+                    break;
+                }
+            }
+
+            if (fileToDownload == null) {
+                disableBrowserCache(resp);
+                resp.sendError(HttpServletResponse.SC_NOT_FOUND, "File does not exist: " + req.getPathInfo());
+                return;
+            }
+
+            resp.setContentType(getMimeType(fileToDownload));
+            resp.setHeader("Content-Disposition", "attachment; filename=" + fileToDownload.getName());
+            resp.setContentLength((int) fileToDownload.length());
+            resp.setDateHeader("Last-Modified", fileToDownload.lastModified());
+
+            FileInputStream stream = new FileInputStream(fileToDownload);
                 try {
                     StreamUtil.copy(stream, resp.getOutputStream(), false);
                 } finally {
                     stream.close();
                 }
-            }
         } catch (Throwable t) {
             log.error("Failed to stream download content.", t);
             disableBrowserCache(resp);
@@ -158,12 +181,13 @@ public class DownloadServlet extends HttpServlet {
         return mimeType;
     }
 
-    private void outputFileList(File requestedDirectory, HttpServletRequest req, HttpServletResponse resp)
+    private void outputFileList(String requestedDirectory, HttpServletRequest req, HttpServletResponse resp)
         throws ServletException {
 
         try {
             if (!isForbiddenPath(requestedDirectory, resp)) {
-                String dirName = requestedDirectory.getName();
+                File requestedDirectoryRelativePath = new File(requestedDirectory);
+                String dirName = requestedDirectoryRelativePath.getName();
                 disableBrowserCache(resp);
                 resp.setContentType("text/html");
                 PrintWriter writer = resp.getWriter();
@@ -192,11 +216,11 @@ public class DownloadServlet extends HttpServlet {
         }
     }
 
-    private boolean isForbiddenPath(File requestedFile, HttpServletResponse resp) throws IOException {
+    private boolean isForbiddenPath(String requestedPath, HttpServletResponse resp) throws IOException {
         boolean forbidden = true; // assume it is forbidden
-        if (requestedFile.toString().contains("rhq-agent")) {
+        if (requestedPath.toString().contains("rhq-agent")) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Use /agentupdate/download to obtain the agent");
-        } else if (requestedFile.toString().contains("rhq-client")) {
+        } else if (requestedPath.toString().contains("rhq-client")) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Use /client/download to obtain the client");
         } else {
             forbidden = false;
@@ -215,28 +239,46 @@ public class DownloadServlet extends HttpServlet {
         resp.setHeader("Pragma", "no-cache");
     }
 
-    private List<File> getDownloadFiles(File requestedDirectory) throws Exception {
-        File[] filesArray = requestedDirectory.listFiles();
-
-        // this is simple - we only serve up files located in the requested directory - no content from subdirectories
-        List<File> files = new ArrayList<File>();
-        if (filesArray != null) {
-            for (File file : filesArray) {
-                if (file.isFile()) {
-                    files.add(file);
+    private List<File> getDownloadFiles(String requestedDirectory) throws Exception {
+        // its possible if more than one root dir has the file, we'll get duplicates.
+        // this should never happen, so ignore this edge case.
+        List<File> returnFiles = new ArrayList<File>();
+        File[] rootDownloadDirs = getRootDownloadsDirs();
+        for (File rootDownloadDir : rootDownloadDirs) {
+            File dir = new File(rootDownloadDir, requestedDirectory);
+            File[] filesArray = dir.listFiles();
+            // this is simple - we only serve up files located in the requested directory - no content from subdirectories
+            if (filesArray != null) {
+                for (File file : filesArray) {
+                    if (file.isFile()) {
+                        returnFiles.add(file);
+                    }
                 }
             }
         }
-        return files;
+
+        return returnFiles;
     }
 
-    private File getRootDownloadsDir() throws Exception {
-        File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
-        File downloadDir = new File(serverHomeDir, "deployments/rhq.ear/rhq-downloads");
+    /**
+     * There are two locations for downloads - the static content under the EAR's rhq-downloads
+     * and dynamic content in the data directory.
+     *
+     * @return the two root locations
+     *
+     * @throws Exception
+     */
+    private File[] getRootDownloadsDirs() throws Exception {
+        File earDir = LookupUtil.getCoreServer().getEarDeploymentDir();
+        File downloadDir = new File(earDir, "rhq-downloads");
         if (!downloadDir.exists()) {
             throw new FileNotFoundException("Missing downloads directory at [" + downloadDir + "]");
         }
-        return downloadDir;
+
+        File dataDir = LookupUtil.getCoreServer().getJBossServerDataDir();
+        File dataDownloadDir = new File(dataDir, "rhq-downloads");
+
+        return new File[] { dataDownloadDir, downloadDir }; // put the data dir first, I think that should take precedence
     }
 
     private boolean isServerAcceptingRequests() {

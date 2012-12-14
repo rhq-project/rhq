@@ -76,11 +76,11 @@
             </fail>
         -->
 
-        <property name="jboss.deploy.dir" location="${jboss.home}/standalone/deployments" />
-
         <!-- we will put our own JBossAS modules in our own location - this will augment JBossAS's own modules -->
         <property name="jboss.modules.dir" location="${project.build.outputDirectory}/modules" />
         <mkdir dir="${jboss.modules.dir}" />
+
+        <property name="rhq.ear.dir" location="${jboss.modules.dir}/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/${rhq.earName}" />
 
         <condition property="use-postgres" value="true">
             <contains string="${rhq.server.database.type-mapping}" substring="postgres" casesensitive="false" />
@@ -127,7 +127,7 @@
             </not>
         </condition>
 
-        <!-- when predeploying, don't make people go to the installer - turn on the auto-installer -->
+        <!-- when predeploying, don't make people edit rhq-server.properties - turn on the auto-installer now -->
         <condition property="rhq.autoinstall.enabled" value="true">
             <equals arg1="${predeploy}" arg2="true" />
         </condition>
@@ -163,15 +163,13 @@
         <available file="${jboss.home}/jboss-modules.jar" type="file" property="jboss.home.is.valid" />
         <fail unless="jboss.home.is.valid" message="${jboss.home} does not contain a valid JBossAS installation - aborting!" />
 
-        <!-- TODO: THESE WERE NEEDED IN THE OLD 4.2.3 CONTAINER - WE SHOULD BE ABLE TO DELETE THESE
-        <echo>Installing patched hibernate jar ...</echo>
-        <copy file="${settings.localRepository}/hibernate/hibernate3/${hibernate3.version}/hibernate3-${hibernate3.version}.jar"
-              tofile="${jboss.home}/server/default/lib/hibernate3.jar" verbose="true"/>
+        <echo>Adding main EAR app module to ${jboss.modules.dir} ...</echo>
+        <unzip src="${settings.localRepository}/org/rhq/rhq-enterprise-server-startup-subsystem/${project.version}/rhq-enterprise-server-startup-subsystem-${project.version}.zip"
+               dest="${jboss.modules.dir}" />
 
-        <echo>Installing custom container library...</echo>
-        <copy file="${settings.localRepository}/org/rhq/rhq-container-lib/${rhq.version}/rhq-container-lib-${rhq.version}.jar"
-              tofile="${jboss.home}/server/default/lib/rhq-container-lib-${rhq.version}.jar" verbose="true"/>
-        -->
+        <echo>Adding installer module to ${jboss.modules.dir} ...</echo>
+        <unzip src="${settings.localRepository}/org/rhq/rhq-installer-util/${project.version}/rhq-installer-util-${project.version}.zip"
+               dest="${jboss.modules.dir}" />
 
         <echo>Adding JDBC modules to ${jboss.modules.dir} ...</echo>
         <copy file="${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar"
@@ -232,19 +230,7 @@
         </delete>
         <delete dir="${jboss.home}/bin/init.d" />
 
-        <echo>Deploying ${rhq.earName} ...</echo>
-        <mkdir dir="${jboss.deploy.dir}/${rhq.earName}" />
-        <unjar src="${settings.localRepository}/org/rhq/rhq-enterprise-server-ear/${rhq.version}/rhq-enterprise-server-ear-${rhq.version}.ear"
-               dest="${jboss.deploy.dir}/${rhq.earName}" />
-    	<touch file="${jboss.deploy.dir}/${rhq.earName}.skipdeploy" />
-
-        <echo>Deploying installer webapp ...</echo>
-        <mkdir dir="${jboss.deploy.dir}/rhq-installer.war" />
-        <unwar src="${settings.localRepository}/org/rhq/rhq-installer/${rhq.version}/rhq-installer-${rhq.version}.war"
-               dest="${jboss.deploy.dir}/rhq-installer.war" />
-        <touch file="${jboss.deploy.dir}/rhq-installer.war.dodeploy" />
-
-        <!--TODO - this isn't working now - we need to:
+        <!--TODO - embedded agent isn't working now - we need to:
             1) add AS7's jars jboss-as-[jmx,server]-7.x.x.Final.jar to META-INF/embedded-agent/lib
             2) get the agent to successfully see that the server is started (AgentMain.waitForServer was hanging for me)
             So until we fix this we need to not deploy this at all.
@@ -256,11 +242,8 @@
             rhq.server.embedded-agent.reset-configuration=true
             rhq.server.embedded-agent.disable-native-system=false
 
-        <echo>Deploying embedded agent sar ...</echo>
-        <mkdir dir="${jboss.deploy.dir}/rhq-agent.sar" />
         <unjar src="${settings.localRepository}/org/rhq/rhq-enterprise-server-agent-sar/${rhq.version}/rhq-enterprise-server-agent-sar-${rhq.version}.sar"
-               dest="${jboss.deploy.dir}/rhq-agent.sar" />
-        <touch file="${jboss.deploy.dir}/rhq-agent.sar.dodeploy" />
+               dest="....todo..../rhq-agent.sar" />
         -->
 
         <echo>Delete docs, README, et. al. files</echo>
@@ -279,37 +262,37 @@
         -->
 
         <echo>Make sure the top level downloads directory exists</echo>
-        <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads" />
+        <mkdir dir="${rhq.ear.dir}/rhq-downloads" />
 
         <echo>Deploying static downloadable content</echo>
-        <copy todir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads" 
+        <copy todir="${rhq.ear.dir}/rhq-downloads" 
               verbose="true"
               failonerror="false">
             <fileset dir="${basedir}/src/main/downloadable-resources" />
         </copy>
       
         <echo>Make sure our downloads directories exist</echo>
-        <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-agent" />
-        <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-client" />
-        <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-plugins" />
-        <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connectors" />
-        <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/bundle-deployer" />
+        <mkdir dir="${rhq.ear.dir}/rhq-downloads/rhq-agent" />
+        <mkdir dir="${rhq.ear.dir}/rhq-downloads/rhq-client" />
+        <mkdir dir="${rhq.ear.dir}/rhq-downloads/rhq-plugins" />
+        <mkdir dir="${rhq.ear.dir}/rhq-downloads/connectors" />
+        <mkdir dir="${rhq.ear.dir}/rhq-downloads/bundle-deployer" />
 
         <echo>Deploying the latest agent update binary and renaming it rhq-enterprise-agent-${rhq.version}.jar</echo>
         <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-agentupdate/${rhq.version}/rhq-enterprise-agentupdate-${rhq.version}.jar"
-              tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-agent/rhq-enterprise-agent-${rhq.version}.jar"
+              tofile="${rhq.ear.dir}/rhq-downloads/rhq-agent/rhq-enterprise-agent-${rhq.version}.jar"
               verbose="true"
               failonerror="true"/>
 
         <echo>Deploying the latest remote client binary</echo>
         <copy file="${settings.localRepository}/org/rhq/rhq-remoting-cli/${rhq.version}/rhq-remoting-cli-${rhq.version}.zip"
-              tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-client/rhq-remoting-cli-${rhq.version}.zip"
+              tofile="${rhq.ear.dir}/rhq-downloads/rhq-client/rhq-remoting-cli-${rhq.version}.zip"
               verbose="true"
               failonerror="false"/>
 
         <echo>Deploying the latest command-line bundle deployer to the downloads location</echo>
         <copy file="${settings.localRepository}/org/rhq/rhq-ant-bundle-common/${rhq.version}/rhq-ant-bundle-common-${rhq.version}.zip"
-              tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/bundle-deployer/rhq-bundle-deployer-${rhq.version}.zip"
+              tofile="${rhq.ear.dir}/rhq-downloads/bundle-deployer/rhq-bundle-deployer-${rhq.version}.zip"
               verbose="true"
               failonerror="false"/>
 
@@ -328,8 +311,8 @@
 
     <target name="package-connectors">
         <echo>Packaging the response-time (RT) servlet filter connectors ...</echo>
-        <delete file="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connectors/connector-rtfilter.zip" />
-        <zip destfile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connectors/connector-rtfilter.zip">
+        <delete file="${rhq.ear.dir}/rhq-downloads/connectors/connector-rtfilter.zip" />
+        <zip destfile="${rhq.ear.dir}/rhq-downloads/connectors/connector-rtfilter.zip">
             <zipfileset dir="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter/${project.version}">
                 <include name="rhq-rtfilter-${project.version}.jar" />
             </zipfileset>
@@ -340,10 +323,10 @@
 
         <!-- rtfilter AS7 modules -->
         <copy file="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter/${project.version}/rhq-rtfilter-${project.version}.zip" 
-              tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connectors/rhq-rtfilter-module.zip" />
+              tofile="${rhq.ear.dir}/rhq-downloads/connectors/rhq-rtfilter-module.zip" />
 
         <copy file="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter-subsystem/${project.version}/rhq-rtfilter-subsystem-${project.version}.zip" 
-              tofile="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/connectors/rhq-rtfilter-subsystem-module.zip" />
+              tofile="${rhq.ear.dir}/rhq-downloads/connectors/rhq-rtfilter-subsystem-module.zip" />
     </target>
 
     <target name="prepare-bin-dir">
@@ -352,9 +335,21 @@
 
         <property name="rhq.bin.dir" location="${project.build.outputDirectory}/bin" />
         <mkdir dir="${rhq.bin.dir}" />
-        <echo file="${rhq.bin.dir}/rhq-server.properties">### RHQ Server Configuration Properties
+        <echo file="${rhq.bin.dir}/rhq-server.properties">#################### RHQ Server Configuration Properties ####################
 
-# Database
+#############################################################################
+# Database Settings
+# -----------------
+# These should point to the database that your RHQ Server will use as
+# its backend RDBMS storage.
+# If you are using Oracle, comment out the Postgres settings and
+# uncomment the Oracle settings below, adjusting the values as appropriate.
+# NOTE: rhq.server.database.password is not to be set to the actual password
+# but instead should be the password in encoded form as generated by:
+#    rhq-installer.sh(.bat) --dbpassword=&lt;your password>
+#############################################################################
+
+# PostgreSQL database
 rhq.server.database.connection-url=${rhq.server.database.connection-url}
 rhq.server.database.user-name=${rhq.server.database.user-name}
 rhq.server.database.password=${rhq.server.database.password}
@@ -363,13 +358,51 @@ rhq.server.database.server-name=${rhq.server.database.server-name}
 rhq.server.database.port=${rhq.server.database.port}
 rhq.server.database.db-name=${rhq.server.database.db-name}
 hibernate.dialect=${rhq.server.database.hibernate-dialect}
-
-# Quartz
 rhq.server.quartz.driverDelegateClass=${rhq.server.quartz.driverDelegateClass}
-rhq.server.quartz.selectWithLockSQL=${rhq.server.quartz.selectWithLockSQL}
-rhq.server.quartz.lockHandlerClass=${rhq.server.quartz.lockHandlerClass}
 
+# Oracle database
+#rhq.server.database.connection-url=jdbc:oracle:thin:@127.0.0.1:1521:xe
+#rhq.server.database.user-name=${rhq.server.database.user-name}
+#rhq.server.database.password=${rhq.server.database.password}
+#rhq.server.database.type-mapping=Oracle10g
+#rhq.server.database.server-name=unused
+#rhq.server.database.port=unused
+#rhq.server.database.db-name=unused
+#hibernate.dialect=org.hibernate.dialect.Oracle10gDialect
+#rhq.server.quartz.driverDelegateClass=org.quartz.impl.jdbcjobstore.oracle.OracleDelegate
+
+#############################################################################
+# Server Settings
+# ---------------
+# These are miscallenous settings that the server will use to customize itself
+# to the environment in which it is running. These are settings you usually
+# want to change or at least be aware of.
+#############################################################################
+
+# Defines what this server's name is to be known as to the RHQ system.
+# It doesn't necessarily have to be an IP address or hostname, but it can be.
+# If left blank, the RHQ Server will pick a name for itself based on the
+# hostname it is running on.
+# NOTE! If you are upgrading an existing server, this must be the same name
+# as the server being upgraded.
+rhq.server.high-availability.name=
+
+# Email settings used to connect to an SMTP server to send alert emails.
+rhq.server.email.smtp-host=localhost
+rhq.server.email.smtp-port=25
+rhq.server.email.from-address=rhqadmin@localhost
+
+#############################################################################
 # Host and Port Bindings
+# ----------------------
+# These define the ports the RHQ Server will bind to. Most of the time
+# you can leave these alone. You can change these default values to
+# conform to your own environment's requirements, such as the IP address
+# the RHQ Server will bind to (jboss.bind.address) and the ports
+# browsers will use to access the RHQ web application
+# (rhq.server.socket.binding.port.http, rhq.server.socket.binding.port.https)
+#############################################################################
+
 jboss.bind.address=0.0.0.0
 jboss.bind.address.management=127.0.0.1
 
@@ -391,19 +424,53 @@ rhq.server.socket.binding.port.remoting=3447
 rhq.server.socket.binding.port.txn-recovery-environment=3712
 rhq.server.socket.binding.port.txn-status-manager=3713
 
-# ********************************** NOTE ************************************
 # If the jboss.bind.address property is set to anything besides 0.0.0.0,
 # uncomment the java.rmi.server.hostname property below and set it to the same
 # value - setting it to ${jboss.bind.address} will *not* work.
 #java.rmi.server.hostname=0.0.0.0
 
-# High Availability (HA)
-rhq.server.high-availability.name=
+#############################################################################
+# Installer Settings
+# ------------------
+# These enable the installer when starting for the first time.
+# To do so, first ensure all values in this properties file are appropriately
+# set for your environment. Once you are sure all values are as you want them,
+# set rhq.autoinstall.enabled=true and run the server then run the installer.
+#
+# rhq.autoinstall.enabled: must be true to trigger the automatic install.
+# rhq.autoinstall.database: allowed values: auto, overwrite, skip
+#                           "auto" will create a new schema if one does not
+#                           yet exist or, if a schema does exist, will simply
+#                           upgrade it as needed (which keeps existing data).
+#                           "overwrite" if you want to create an empty schema,
+#                           even if one already exists (loses existing data).
+#                           "skip" if you don't want to do any database
+#                           upgrade or creation. WARNING! You must ensure your
+#                           database schema already exists and is up to date.
+# rhq.autoinstall.public-endpoint-address: public IP/hostname that all agents
+#                                          will use to talk to this server.
+#                                          If not set, a value to use is
+#                                          determined at auto-install time.
+#############################################################################
+
+rhq.autoinstall.enabled=${rhq.autoinstall.enabled}
+rhq.autoinstall.database=auto
+rhq.autoinstall.public-endpoint-address=
+
+#############################################################################
+# Advanced Settings
+# -----------------
+# The settings below can usually be left as-is. These are advanced settings
+# and should only be changed if you know what you are doing.
+#############################################################################
+
+# Set this to true to have the server reject agent requests upon startup.
 rhq.server.maintenance-mode-at-startup=false
 
 # RHQ Server's remote endpoint for agents to talk to
 # bind-address and bind-port are derived from the HA server definition,
-# if you set the address/port here, they will override the HA server definition found in the database
+# if you set the address/port here, they will override the HA server
+# definition found in the database
 rhq.communications.connector.transport=servlet
 rhq.communications.connector.bind-address=
 rhq.communications.connector.bind-port=
@@ -416,7 +483,8 @@ rhq.communications.multicast-detector.multicast-address=224.16.16.16
 rhq.communications.multicast-detector.port=16162
 
 # Server-side SSL Security Configuration for HTTPS thru Tomcat
-# These are used for browser https: access and for incoming messages from agents over sslservlet transport
+# These are used for browser https access and
+# for incoming messages from agents over sslservlet transport
 # [you cannot use ${x} variables - see https://jira.jboss.org/jira/browse/JBWEB-74]
 rhq.server.tomcat.security.client-auth-mode=want
 rhq.server.tomcat.security.secure-socket-protocol=TLS
@@ -458,14 +526,13 @@ rhq.server.client.security.truststore.type=JKS
 rhq.server.client.security.truststore.password=RHQManagement
 rhq.server.client.security.server-auth-mode-enabled=false
 
-# Email
-rhq.server.email.smtp-host=localhost
-rhq.server.email.smtp-port=25
-rhq.server.email.from-address=rhqadmin@localhost
-
 # Operations/controls timeout
 # Defines the default timeout for all operations (specified in seconds)
 rhq.server.operation-timeout=600
+
+# Additional Quartz settings
+rhq.server.quartz.selectWithLockSQL=${rhq.server.quartz.selectWithLockSQL}
+rhq.server.quartz.lockHandlerClass=${rhq.server.quartz.lockHandlerClass}
 
 # Concurrency limits for incoming UI and agent messages
 rhq.server.startup.web.max-connections=200
@@ -500,30 +567,7 @@ rhq.sync.endpoint-address=false
 # persist content for well known binary file types like .ear, .war, .zip, .so,
 # etc. The server does however persist content for text files or any other
 # files that are not known binary types.
-# rhq.server.drift.store-binary-content=${rhq.server.drift.store-binary-content}
-
-# Auto-Install Pre-Configuration Settings
-# If you wish to circumvent the installer webapp and auto-install the server
-# immediately upon first startup, make sure all of the settings above are
-# correctly set for your server's deployment environment. Then make sure the
-# following rhq.autoinstall properties are defined appropriately:
-# rhq.autoinstall.enabled: must be true to trigger the automatic install
-# rhq.autoinstall.database: allowed values: auto, overwrite, skip
-#                           "auto" will create a new schema if one does not
-#                           yet exist or, if a schema does exist, will simply
-#                           upgrade it as needed (which keeps existing data).
-#                           "overwrite" if you want to create an empty schema,
-#                           even if one already exists (loses existing data).
-#                           "skip" if you don't want to do any database
-#                           upgrade or creation. WARNING! You must ensure your
-#                           database schema already exists and is up to date.
-# rhq.autoinstall.public-endpoint-address: public IP/hostname that all agents
-#                                          will use to talk to this server.
-#                                          If not set, a value to use is
-#                                          determined at auto-install time.
-rhq.autoinstall.enabled=${rhq.autoinstall.enabled}
-rhq.autoinstall.database=auto
-rhq.autoinstall.public-endpoint-address=
+#rhq.server.drift.store-binary-content=${rhq.server.drift.store-binary-content}
 
 </echo>
 
@@ -554,6 +598,19 @@ rhq.autoinstall.public-endpoint-address=
         </copy>
         <echo>Putting a developer setting in rhq-server.properties to turn on/off strict agent update version checking</echo>
         <echo file="${project.build.outputDirectory}/bin/rhq-server.properties" append="true">rhq.server.agent-update.nonstrict-version-check=true</echo>
+        <echo>Add auto-installer to rhq-server scripts so developers don't have to run the installer in a separate step</echo>
+        <replace file="${project.build.outputDirectory}/bin/rhq-server.sh">
+            <replacefilter>
+                <replacetoken># START SERVER</replacetoken>
+                <replacevalue><![CDATA[export RHQ_SERVER_HOME; ${RHQ_SERVER_HOME}/bin/rhq-autoinstall.sh &]]></replacevalue>
+            </replacefilter>
+        </replace>
+        <replace file="${project.build.outputDirectory}/bin/rhq-server.bat">
+            <replacefilter>
+                <replacetoken>rem START SERVER</replacetoken>
+                <replacevalue><![CDATA[start /B %RHQ_SERVER_HOME%\bin\rhq-autoinstall.bat]]></replacevalue>
+            </replacefilter>
+        </replace>
     </target>
 
     <!-- The prepare-release target must be run AFTER the resources:resources goal has executed. -->
@@ -562,13 +619,11 @@ rhq.autoinstall.public-endpoint-address=
     <target name="prepare-release"
             description="If this is a release build, make sure it is properly prepared."
             depends="initialize,
-                     fix-perms,
-                     prepare-postinstaller-war,
                      developer-release-message,
                      copy-dev-resources,
+                     fix-perms,
                      deploy-postgres-ds,
-                     deploy-oracle-ds,
-                     undeploy-ear">
+                     deploy-oracle-ds">
 
         <echo>Adding license files...</echo>
         <copy todir="${project.build.outputDirectory}">
@@ -577,22 +632,13 @@ rhq.autoinstall.public-endpoint-address=
     </target>
 
     <target name="fix-perms">
-        <!-- Make sure shell scripts are readable and executable. -->
+        <echo>Make sure shell scripts are readable and executable.</echo>
         <chmod dir="${project.build.outputDirectory}/bin" includes="*.sh" perm="ug+x" verbose="true" />
         <chmod dir="${jboss.home}/bin" includes="*.sh" perm="ug+x" verbose="true" />
     </target>
 
-    <target name="prepare-postinstaller-war">
-        <!-- nothing to do here - leaving in case we need to perform things in the future -->
-    </target>
-
     <target name="developer-release-message" if="predeploy">
-        <echo>!!THIS IS A DEVELOPER CONTAINER BUILD - PRE-DEPLOYING RHQ SERVER!!</echo>
-    </target>
-
-    <target name="undeploy-ear" unless="predeploy">
-        <echo>Preparing for release - telling AS to skip ear deployment</echo>
-        <touch file="${jboss.deploy.dir}/${rhq.earName}.skipdeploy" />
+        <echo>!!THIS IS A DEVELOPER CONTAINER BUILD !!</echo>
     </target>
 
     <target name="deploy-postgres-ds" if="predeploy-postgres">

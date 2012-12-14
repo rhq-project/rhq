@@ -72,12 +72,12 @@ public class ManageSnapshotsTest extends AbstractDriftServerTest {
     }
 
     public void pinningSnapshotShouldSetDriftDefAsPinned() {
-        final DriftDefinition driftDef = createAndPersistDriftDef("test::setPinnedFlag");
+        final DriftDefinition driftDef = createAndPersistDriftDef(NAME_PREFIX + "setPinnedFlag");
 
         // create initial change set
         final JPADriftChangeSet changeSet = new JPADriftChangeSet(resource, 0, COVERAGE, driftDef);
 
-        final JPADriftFile driftFile1 = new JPADriftFile("a1b2c3");
+        final JPADriftFile driftFile1 = new JPADriftFile(NAME_PREFIX + "a1b2c3");
         JPADrift drift = new JPADrift(changeSet, "drift.1", FILE_ADDED, null, driftFile1);
 
         final JPADriftSet driftSet = new JPADriftSet();
@@ -104,19 +104,19 @@ public class ManageSnapshotsTest extends AbstractDriftServerTest {
 
     @SuppressWarnings("unchecked")
     public void pinningSnapshotShouldMakeSnapshotTheInitialChangeSet() throws Exception {
-        final DriftDefinition driftDef = createAndPersistDriftDef("test::makeSnapshotVersionZero");
+        final DriftDefinition driftDef = createAndPersistDriftDef(NAME_PREFIX + "makeSnapshotVersionZero");
 
         // create initial change set
         final JPADriftChangeSet changeSet0 = new JPADriftChangeSet(resource, 0, COVERAGE, driftDef);
 
-        final JPADriftFile driftFile1 = new JPADriftFile("a1b2c3");
+        final JPADriftFile driftFile1 = new JPADriftFile(NAME_PREFIX + "a1b2c3");
         JPADrift drift1 = new JPADrift(changeSet0, "drift.1", FILE_ADDED, null, driftFile1);
 
         final JPADriftSet driftSet = new JPADriftSet();
         driftSet.addDrift(drift1);
 
         // create change set v1
-        final JPADriftFile driftFile2 = new JPADriftFile("1a2b3c");
+        final JPADriftFile driftFile2 = new JPADriftFile(NAME_PREFIX + "1a2b3c");
         final JPADriftChangeSet changeSet1 = new JPADriftChangeSet(resource, 1, DRIFT, driftDef);
         final JPADrift drift2 = new JPADrift(changeSet1, "drift.2", FILE_ADDED, null, driftFile2);
 
@@ -170,12 +170,12 @@ public class ManageSnapshotsTest extends AbstractDriftServerTest {
     }
 
     public void pinningSnapshotShouldSendRequestToAgent() {
-        final DriftDefinition driftDef = createAndPersistDriftDef("test::setPinnedFlag");
+        final DriftDefinition driftDef = createAndPersistDriftDef(NAME_PREFIX + "setPinnedFlag");
 
         // create initial change set
         final JPADriftChangeSet changeSet = new JPADriftChangeSet(resource, 0, COVERAGE, driftDef);
 
-        final JPADriftFile driftFile1 = new JPADriftFile("a1b2c3");
+        final JPADriftFile driftFile1 = new JPADriftFile(NAME_PREFIX + "a1b2c3");
         JPADrift drift = new JPADrift(changeSet, "drift.1", FILE_ADDED, null, driftFile1);
 
         final JPADriftSet driftSet = new JPADriftSet();
@@ -221,7 +221,7 @@ public class ManageSnapshotsTest extends AbstractDriftServerTest {
     public void doNotAllowSnapshotToBePinnedWhenDefinitionIsAttachedToPinnedTemplate() {
         // First create the template
         final DriftDefinition templateDef = new DriftDefinition(new Configuration());
-        templateDef.setName("Template-Pinned_Test");
+        templateDef.setName(NAME_PREFIX + "Template-Pinned_Test");
         templateDef.setEnabled(true);
         templateDef.setDriftHandlingMode(normal);
         templateDef.setInterval(2400L);

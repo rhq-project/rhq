@@ -235,12 +235,8 @@ public class JBossASClient {
      * @throws Exception
      */
     public ModelNode execute(ModelNode request) throws Exception {
-        try {
-            return getModelControllerClient().execute(request, OperationMessageHandler.logging);
-        } catch (Exception e) {
-            log.error("Failed to execute request", e);
-            throw e;
-        }
+        ModelControllerClient mcc = getModelControllerClient();
+        return mcc.execute(request, OperationMessageHandler.logging);
     }
 
     /**

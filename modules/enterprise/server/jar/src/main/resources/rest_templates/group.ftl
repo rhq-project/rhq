@@ -56,11 +56,11 @@
             </td>
         </tr>
     </table>
-    <a href="/rest/1/group/${var.id?c}/resources.html">Resources</a><br/>
+    <a href="/rest/group/${var.id?c}/resources.html">Resources</a><br/>
     <#if (var.category?contains("compatible"))>
-        <a href="/rest/1/group/${var.id?c}/metricDefinitions.html">Metric Definitions</a><br/>
+        <a href="/rest/group/${var.id?c}/metricDefinitions.html">Metric Definitions</a><br/>
     </#if>
     <#if (var.dynaGroupDefinitionId >0)>
-        <a href="/rest/1/group/definition/${var.dynaGroupDefinitionId?c}.html">DynaGroup definition</a>
+        <a href="/rest/group/definition/${var.dynaGroupDefinitionId?c}.html">DynaGroup definition</a>
     </#if>
 </html>

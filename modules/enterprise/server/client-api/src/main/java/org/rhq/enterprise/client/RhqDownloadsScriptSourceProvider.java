@@ -31,10 +31,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.bindings.script.BaseRhqSchemeScriptSourceProvider;
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.common.ServerDetails;
-import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.system.SystemManagerLocal;
+import org.rhq.enterprise.server.core.CoreServerMBean;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -46,32 +43,24 @@ public class RhqDownloadsScriptSourceProvider extends BaseRhqSchemeScriptSourceP
 
     private static final String AUTHORITY = "downloads";
 
-    private SystemManagerLocal systemManager;
-    private SubjectManagerLocal subjectManager;
+    private CoreServerMBean coreServer;
 
     public RhqDownloadsScriptSourceProvider() {
-        this(LookupUtil.getSystemManager(), LookupUtil.getSubjectManager());
+        this(LookupUtil.getCoreServer());
     }
     
-    public RhqDownloadsScriptSourceProvider(SystemManagerLocal systemManager, SubjectManagerLocal subjectManager) {
+    public RhqDownloadsScriptSourceProvider(CoreServerMBean coreServerMBean) {
         super(AUTHORITY);
-        this.systemManager = systemManager;
-        this.subjectManager = subjectManager;
+        this.coreServer = coreServerMBean;
     }
     
     @Override
     protected Reader doGetScriptSource(URI scriptUri) {
         String path = scriptUri.getPath().substring(1); //remove the leading /
 
-        Subject overlord = subjectManager.getOverlord();
-
-        ServerDetails serverDetails = systemManager.getServerDetails(overlord);
-
-        String serverHomeDir = serverDetails.getDetails().get(ServerDetails.Detail.SERVER_HOME_DIR);
-
-        File downloads = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/script-modules");
-
-        File file = new File(downloads, path);
+        File downloadsDir = getDownloadHomeDir();
+        File scriptDownloads = new File(downloadsDir, "script-modules");
+        File file = new File(scriptDownloads, path);
 
         try {
             return new InputStreamReader(new FileInputStream(file));
@@ -81,4 +70,9 @@ public class RhqDownloadsScriptSourceProvider extends BaseRhqSchemeScriptSourceP
         }
     }
 
+    private File getDownloadHomeDir() {
+        File earDeployDir = this.coreServer.getEarDeploymentDir();
+        File downloadDir = new File(earDeployDir, "rhq-downloads");
+        return downloadDir;
+    }
 }

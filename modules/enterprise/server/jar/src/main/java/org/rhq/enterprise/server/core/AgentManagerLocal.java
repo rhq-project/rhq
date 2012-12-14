@@ -269,13 +269,13 @@ public interface AgentManagerLocal {
     File getAgentUpdateBinaryFile() throws Exception;
 
     /**
-     * The directory on the server's file system where the agent update version file
-     * and binary file are found.
+     * DO NOT USE THIS. You should be using one of the getAgentUpdateXXX methods directly rather
+     * than looking in the download directory. Not all agent update files are located in this download
+     * directory anymore. This API will be removed from the public API in the near future.
      * 
-     * @return directory where the agent downloads are found
-     *
-     * @throws Exception if could not determine the location or it does not exist
+     * @deprecated
      */
+    @Deprecated
     File getAgentDownloadDir() throws Exception;
 
     void setAgentBackfilled(int agentId, boolean backfilled);

@@ -57,9 +57,9 @@ public class JPADriftServerBeanTest extends AbstractDriftServerTest {
 
     private JPADriftServerLocal jpaDriftServer;
 
-    private final String DRIFT_FILE_1_ID = "a1b2c3d4";
+    private final String DRIFT_FILE_1_ID = NAME_PREFIX + "a1b2c3d4";
 
-    private final String DRIFT_FILE_2_ID = "1ab2b3c4d";
+    private final String DRIFT_FILE_2_ID = NAME_PREFIX + "1ab2b3c4d";
 
     private JPADriftFile driftFile1;
 
@@ -90,7 +90,7 @@ public class JPADriftServerBeanTest extends AbstractDriftServerTest {
     public void persistResourceChangeSet() {
         // first create and persist the drift definition
         final DriftDefinition driftDef = new DriftDefinition(new Configuration());
-        driftDef.setName("test::persistResourceChangeSet");
+        driftDef.setName(NAME_PREFIX + "persistResourceChangeSet");
         driftDef.setEnabled(true);
         driftDef.setDriftHandlingMode(normal);
         driftDef.setInterval(2400L);
@@ -245,7 +245,7 @@ public class JPADriftServerBeanTest extends AbstractDriftServerTest {
 
         // next create the drift definition
         final DriftDefinition driftDef = new DriftDefinition(new Configuration());
-        driftDef.setName("test::copyChangeSet");
+        driftDef.setName(NAME_PREFIX + "copyChangeSet");
         driftDef.setEnabled(true);
         driftDef.setDriftHandlingMode(normal);
         driftDef.setInterval(2400L);

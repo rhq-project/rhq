@@ -50,6 +50,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.MessageDigestGenerator;
+import org.rhq.enterprise.server.drift.DriftServerPluginService;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
@@ -62,7 +63,7 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
 
     protected TestServerCommunicationsService agentServiceContainer;
 
-    protected static final String PLUGIN_NAME = "ResourceMetaDataManagerBeanTest"; // don't change this - our test descriptor .xml files use it as plugin name
+    protected static final String PLUGIN_NAME = "UpdatePluginMetadataTestBasePlugin"; // don't change this - our test descriptor .xml files use it as plugin name
     protected static final String AGENT_NAME = "-dummy agent-";
     protected static final String COMMON_PATH_PREFIX = "./test/metadata/";
 
@@ -75,6 +76,12 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
         agentServiceContainer = prepareForTestAgents();
         prepareMockAgentServiceContainer();
         prepareScheduler();
+        preparePluginScannerService();
+        // we perform lookups of config settings from SystemManagerBean.
+        // SystemManagerBean.getDriftServerPluginManager method requires drift server plugin. 
+        DriftServerPluginService driftServerPluginService = new DriftServerPluginService();
+        prepareCustomServerPluginService(driftServerPluginService);
+        driftServerPluginService.masterConfig.getPluginDirectory().mkdirs();
 
         pluginMgr = LookupUtil.getPluginManager();
         resourceTypeManager = LookupUtil.getResourceTypeManager();
@@ -85,6 +92,8 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
     protected void afterMethod() throws Exception {
         cleanupTest();
 
+        unprepareServerPluginService();
+        unpreparePluginScannerService();
         unprepareScheduler();
         unprepareForTestAgents();
     }

@@ -31,6 +31,8 @@ import static org.rhq.core.domain.measurement.NumericType.DYNAMIC;
 import static org.rhq.core.domain.resource.ResourceCategory.SERVER;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -38,12 +40,15 @@ import java.sql.Statement;
 import java.util.Collections;
 import java.util.List;
 
+import javax.ejb.EJB;
+
 import org.joda.time.DateTime;
 import org.joda.time.Hours;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -55,10 +60,13 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.drift.DriftServerPluginService;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
-import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.ResourceTreeHelper;
+import org.rhq.test.AssertUtils;
 
 /**
  * @author John Sanda
@@ -99,18 +107,34 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
 
     private Subject overlord;
 
+    @EJB
+    private SubjectManagerLocal subjectManager;
+
+    @EJB
+    private MeasurementDataManagerLocal dataManager;
+
+    @EJB
+    private ResourceManagerLocal resourceManager;
+
     @Override
     protected void beforeMethod() throws Exception {
-        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
         overlord = subjectManager.getOverlord();
+
+        // MeasurementDataManagerUtility looks up config settings from SystemManagerBean.
+        // SystemManagerBean.getDriftServerPluginManager method requires drift server plugin. 
+        DriftServerPluginService driftServerPluginService = new DriftServerPluginService();
+        prepareCustomServerPluginService(driftServerPluginService);
+        driftServerPluginService.masterConfig.getPluginDirectory().mkdirs();
 
         createInventory();
         insertDummyReport();
     }
 
     @Override
-    protected void afterMethod() {
+    protected void afterMethod() throws Exception {
         purgeDB();
+
+        unprepareServerPluginService();
     }
 
     @Test(enabled = ENABLED)
@@ -130,19 +154,17 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
         report.addData(new MeasurementDataNumeric(buckets.get(59) + 20, request, 5.5));
         report.addData(new MeasurementDataNumeric(buckets.get(59) + 30, request, 6.6));
 
-        MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
         dataManager.mergeMeasurementReport(report);
 
         List<MeasurementDataNumericHighLowComposite> actualData = findDataForContext(overlord,
-            EntityContext.forResource(resource.getId()), dynamicSchedule, beginTime.getMillis(),
-            endTime.getMillis());
+            EntityContext.forResource(resource.getId()), dynamicSchedule, beginTime.getMillis(), endTime.getMillis());
 
         assertEquals("Expected to get back 60 data points.", buckets.getNumDataPoints(), actualData.size());
 
         MeasurementDataNumericHighLowComposite expectedBucket0Data = new MeasurementDataNumericHighLowComposite(
-            buckets.get(0), (1.1 + 2.2 + 3.3) / 3, 3.3, 1.1);
+            buckets.get(0), divide((1.1 + 2.2 + 3.3), 3), 3.3, 1.1);
         MeasurementDataNumericHighLowComposite expectedBucket59Data = new MeasurementDataNumericHighLowComposite(
-            buckets.get(59), (4.4 + 5.5 + 6.6) / 3, 6.6, 4.4);
+            buckets.get(59), divide((4.4 + 5.5 + 6.6), 3), 6.6, 4.4);
         MeasurementDataNumericHighLowComposite expectedBucket29Data = new MeasurementDataNumericHighLowComposite(
             buckets.get(29), Double.NaN, Double.NaN, Double.NaN);
 
@@ -154,6 +176,39 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
             actualData.get(29));
     }
 
+    static double divide(double dividend, int divisor) {
+        return new BigDecimal(Double.toString(dividend)).divide(new BigDecimal(Integer.toString(divisor)),
+            MathContext.DECIMAL64).doubleValue();
+    }
+
+    @Test(enabled = true)
+    public void getRawAggregate() {
+        DateTime now = new DateTime();
+        DateTime beginTime = now.minusHours(4);
+        DateTime endTime = now;
+
+        Buckets buckets = new Buckets(beginTime, endTime);
+
+        MeasurementScheduleRequest request = new MeasurementScheduleRequest(dynamicSchedule);
+        MeasurementReport report = new MeasurementReport();
+        report.addData(new MeasurementDataNumeric(buckets.get(0) + 10, request, 1.1));
+        report.addData(new MeasurementDataNumeric(buckets.get(0) + 20, request, 2.2));
+        report.addData(new MeasurementDataNumeric(buckets.get(0) + 30, request, 3.3));
+        report.addData(new MeasurementDataNumeric(buckets.get(59) + 10, request, 4.4));
+        report.addData(new MeasurementDataNumeric(buckets.get(59) + 20, request, 5.5));
+        report.addData(new MeasurementDataNumeric(buckets.get(59) + 30, request, 6.6));
+
+        dataManager.mergeMeasurementReport(report);
+
+        MeasurementAggregate actual = dataManager.getAggregate(overlord, dynamicSchedule.getId(),
+            beginTime.getMillis(), endTime.getMillis());
+
+        MeasurementAggregate expected = new MeasurementAggregate(1.1, divide((1.1 + 2.2 + 3.3 + 4.4 + 5.5 + 6.6), 6),
+            6.6);
+
+        AssertUtils.assertPropertiesMatch(expected, actual, "Aggregate does not match");
+    }
+
     @Test(enabled = ENABLED)
     public void find1HourNumericData() throws Exception {
         DateTime now = new DateTime();
@@ -163,19 +218,16 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
         // results in an interval or bucket size of 4.4 hours
         Buckets buckets = new Buckets(beginTime, endTime);
 
-        List<AggregateTestData> data = asList(
-            new AggregateTestData(buckets.get(0), dynamicSchedule.getId(), 2.0, 3.0, 1.0),
-            new AggregateTestData(buckets.get(0) + Hours.ONE.toStandardDuration().getMillis(),
-                dynamicSchedule.getId(), 5.0, 6.0, 4.0),
-            new AggregateTestData(buckets.get(0) + Hours.TWO.toStandardDuration().getMillis(),
+        List<AggregateTestData> data = asList(new AggregateTestData(buckets.get(0), dynamicSchedule.getId(), 2.0, 3.0,
+            1.0),
+            new AggregateTestData(buckets.get(0) + Hours.ONE.toStandardDuration().getMillis(), dynamicSchedule.getId(),
+                5.0, 6.0, 4.0), new AggregateTestData(buckets.get(0) + Hours.TWO.toStandardDuration().getMillis(),
                 dynamicSchedule.getId(), 3.0, 3.0, 3.0),
 
-            new AggregateTestData(buckets.get(59), dynamicSchedule.getId(), 5.0, 9.0, 2.0),
-            new AggregateTestData(buckets.get(59) + Hours.ONE.toStandardDuration().getMillis(),
-                dynamicSchedule.getId(), 5.0, 6.0, 4.0),
+            new AggregateTestData(buckets.get(59), dynamicSchedule.getId(), 5.0, 9.0, 2.0), new AggregateTestData(
+                buckets.get(59) + Hours.ONE.toStandardDuration().getMillis(), dynamicSchedule.getId(), 5.0, 6.0, 4.0),
             new AggregateTestData(buckets.get(59) + Hours.TWO.toStandardDuration().getMillis(),
-                dynamicSchedule.getId(), 3.0, 3.0, 3.0)
-        );
+                dynamicSchedule.getId(), 3.0, 3.0, 3.0));
 
         insert1HourData(data);
 
@@ -185,9 +237,9 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
         assertEquals("Expected to get back 60 data points.", buckets.getNumDataPoints(), actualData.size());
 
         MeasurementDataNumericHighLowComposite expectedBucket0Data = new MeasurementDataNumericHighLowComposite(
-            buckets.get(0), (2.0 + 5.0 + 3.0) / 3, 6.0, 1.0);
+            buckets.get(0), divide((2.0 + 5.0 + 3.0), 3), 6.0, 1.0);
         MeasurementDataNumericHighLowComposite expectedBucket59Data = new MeasurementDataNumericHighLowComposite(
-            buckets.get(59), (5.0 + 5.0 + 3.0) / 3, 9.0, 2.0);
+            buckets.get(59), divide((5.0 + 5.0 + 3.0), 3), 9.0, 2.0);
 
         assertPropertiesMatch("The data for bucket 0 does not match the expected values.", expectedBucket0Data,
             actualData.get(0));
@@ -238,11 +290,20 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
         executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
+                ResourceCriteria c = new ResourceCriteria();
+                c.addFilterInventoryStatus(null);
+                c.addFilterResourceKey(RESOURCE_KEY);
+                c.fetchSchedules(true);
+                List<Resource> r = resourceManager.findResourcesByCriteria(subjectManager.getOverlord(), c);
 
                 // Note that the order of deletes is important due to FK
                 // constraints.
-                deleteMeasurementSchedules();
-                deleteResource();
+                if (!r.isEmpty()) {
+                    assertTrue("Should be only 1 resource", r.size() == 1);
+                    Resource doomedResource = r.get(0);
+                    deleteMeasurementSchedules(doomedResource);
+                    deleteResource(doomedResource);
+                }
                 deleteAgent();
                 deleteDynamicMeasurementDef();
                 deleteResourceType();
@@ -251,38 +312,31 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
     }
 
     private void deleteDynamicMeasurementDef() {
-        em.createQuery("delete from MeasurementDefinition " +
-            "where dataType = :dataType and " +
-            "name = :name")
-            .setParameter("dataType", DYNAMIC)
-            .setParameter("name", DYNAMIC_DEF_NAME)
-            .executeUpdate();
+        em.createQuery("delete from MeasurementDefinition " + "where dataType = :dataType and " + "name = :name")
+            .setParameter("dataType", MEASUREMENT).setParameter("name", DYNAMIC_DEF_NAME).executeUpdate();
     }
 
     private void deleteAgent() {
-        em.createQuery("delete from Agent where name = :name")
-            .setParameter("name", AGENT_NAME)
-            .executeUpdate();
+        em.createQuery("delete from Agent where name = :name").setParameter("name", AGENT_NAME).executeUpdate();
     }
 
     private void deleteResourceType() {
         em.createQuery("delete from ResourceType where name = :name and plugin = :plugin")
-            .setParameter("name", RESOURCE_TYPE)
-            .setParameter("plugin", PLUGIN)
-            .executeUpdate();
+            .setParameter("name", RESOURCE_TYPE).setParameter("plugin", PLUGIN).executeUpdate();
     }
 
-    private void deleteResource() {
-        em.createQuery("delete from Availability").executeUpdate();
-
-        em.createQuery("delete from Resource where resourceKey = :key and uuid = :uuid")
-            .setParameter("key", RESOURCE_KEY)
-            .setParameter("uuid", RESOURCE_UUID)
-            .executeUpdate();
+    private void deleteResource(Resource doomedResource) {
+        ResourceTreeHelper.deleteResource(em, doomedResource);
+        em.flush();
     }
 
-    private void deleteMeasurementSchedules() {
-        em.createQuery("delete from MeasurementSchedule").executeUpdate();
+    private void deleteMeasurementSchedules(Resource doomedResource) {
+        for (MeasurementSchedule ms : doomedResource.getSchedules()) {
+            int i = em.createQuery("delete from MeasurementSchedule where id = :msId").setParameter("msId", ms.getId())
+                .executeUpdate();
+            em.flush();
+            System.out.println("Deleted [" + i + "] schedules with id [" + ms.getId() + "]");
+        }
     }
 
     private void insertDummyReport() {
@@ -291,7 +345,6 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
         MeasurementReport dummyReport = new MeasurementReport();
         dummyReport.addData(new MeasurementDataNumeric(now.getMillis(), -1, 0.0));
 
-        MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
         dataManager.mergeMeasurementReport(dummyReport);
     }
 
@@ -380,7 +433,6 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
 
     private List<MeasurementDataNumericHighLowComposite> findDataForContext(Subject subject, EntityContext context,
         MeasurementSchedule schedule, long beginTime, long endTime) {
-        MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
         List<List<MeasurementDataNumericHighLowComposite>> data = dataManager.findDataForContext(subject, context,
             schedule.getDefinition().getId(), beginTime, endTime, 60);
 

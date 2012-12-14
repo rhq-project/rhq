@@ -86,7 +86,7 @@ public class TestContentServerPluginService extends ServerPluginService implemen
 
     protected MasterServerPluginContainer createMasterPluginContainer() {
         MasterServerPluginContainer master = new TestMasterServerPluginContainer();
-        File dir = new File(System.getProperty("java.io.tmpdir"), "test-server-plugins");
+        File dir = new File(System.getProperty("java.io.tmpdir") + "/rhq", this.getClass().getSimpleName());
         MasterServerPluginContainerConfiguration config = new MasterServerPluginContainerConfiguration(dir, dir, dir,
             null);
         master.initialize(config);

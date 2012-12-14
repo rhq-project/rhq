@@ -59,7 +59,7 @@
            </activation>
            <modules>
               <module>apache-plugin-test</module>
-              <module>jndi-access</module>
+              <!--<module>jndi-access</module> commented out until Lukas updates for AS7 -->
               <!--<module>mod_cluster-plugin-test</module>-->
               <!--<module>rest-api</module>-->
            </modules>

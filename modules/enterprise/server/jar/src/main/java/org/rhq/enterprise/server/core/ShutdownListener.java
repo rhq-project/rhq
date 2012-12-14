@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.core;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -36,11 +38,13 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.Server.OperationMode;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.cloud.CloudManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * This listens for the RHQ server's shutdown notification and when it hears it, will start shutting down RHQ components
@@ -56,6 +60,7 @@ import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 public class ShutdownListener {
     private final Log log = LogFactory.getLog(ShutdownListener.class);
 
+    private final String RHQ_SHUTDOWN_TIME_LOG_FILE = "rhq-shutdown-time.dat";
     private final String RHQ_DB_TYPE_MAPPING_PROPERTY = "rhq.server.database.type-mapping";
 
     @EJB
@@ -70,6 +75,8 @@ public class ShutdownListener {
     @Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
     private DataSource dataSource;
 
+    private File shutdownTimeLogFile;
+
     /**
      * This is called when the shutdown notification is received from the JBoss server. This gives a chance for us to
      * cleanly shutdown our application in an orderly fashion.
@@ -81,12 +88,64 @@ public class ShutdownListener {
         // JBossAS 4.2.3 used to send us this JMX notification on shutdown - AS7 does not have shutdown notifications.
         // So we are using the @PreDestroy mechanism on a singleton EJB to attempt to clean up the application before it is shutdown
         log.info("Shutdown listener has been told we are shutting down - starting to clean up now...");
+        logShutdownTime();
         stopScheduler();
         updateServerOperationMode();
         stopEmbeddedDatabase();
         log.info("Shutdown listener completed its shutdown tasks. It is safe to shutdown now.");
     }
 
+    /**
+     * This is the file that the {@link ShutdownListener} will write to when it logs
+     * the last time the server was shutdown.
+     *
+     * @return shutdown time log file location
+     * @throws Exception
+     */
+    public File getShutdownTimeLogFile() throws Exception {
+        if (shutdownTimeLogFile == null) {
+            try {
+                CoreServerMBean coreServer = LookupUtil.getCoreServer();
+                File dataDir = coreServer.getJBossServerDataDir();
+                File timeFile = new File(dataDir, RHQ_SHUTDOWN_TIME_LOG_FILE);
+                if (!timeFile.exists()) {
+                    ByteArrayInputStream data = new ByteArrayInputStream("0".getBytes());
+                    FileUtil.writeFile(data, timeFile);
+                }
+                shutdownTimeLogFile = timeFile;
+            } catch (Exception e) {
+                // only show ugly stack traces if the user runs the server in debug mode
+                if (log.isDebugEnabled()) {
+                    log.warn("Failed to get shutdown time log file", e);
+                } else {
+                    log.warn("Failed to get shutdown time log file: " + e.getMessage());
+                }
+                throw e;
+            }
+        }
+
+        return shutdownTimeLogFile;
+    }
+
+    /**
+     * Stores the current epoch millis time in a file in the data directory. This is used by the
+     * StartupBean so it knows how long to wait (if at all) before completing startup (this is to
+     * give enough time to allow agents to realize the server has been down).
+     */
+    private void logShutdownTime() {
+        try {
+            File shutdownTimeLogFile = getShutdownTimeLogFile();
+            ByteArrayInputStream input = new ByteArrayInputStream(String.valueOf(System.currentTimeMillis()).getBytes());
+            FileUtil.writeFile(input, shutdownTimeLogFile);
+        } catch (Throwable t) {
+            // only show ugly stack traces if the user runs the server in debug mode
+            if (log.isDebugEnabled()) {
+                log.warn("Failed to store shutdown time", t);
+            } else {
+                log.warn("Failed to store shutdown time: " + t.getMessage());
+            }
+        }
+    }
     /**
      * This will shutdown the scheduler.
      */

@@ -15,12 +15,17 @@
     <property name="deploymentClass">org.rhq.enterprise.server.test.AbstractEJB3Test</property>
   </extension>
   
+  <extension qualifier="jacoco">
+    <property name="includes">org.rhq.*</property>
+  </extension>
+
   <container
     qualifier="RHQAS7"
     default="true">
 
     <configuration>
       <property name="jbossHome">${jboss.unzip.location}</property>
+      <property name="javaVmArguments">${jboss.vm.args} ${jboss.vm.args.debug}</property>
     </configuration>
   </container>
 </arquillian>

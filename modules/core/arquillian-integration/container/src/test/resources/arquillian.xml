@@ -26,4 +26,11 @@
         </configuration>
      </container>
  </group>
+
+  <!-- We actually have to exclude all the classes from instrumentation by Arquillian Jacoco extension, because our
+  Arquillian RHQ agent plugin extension only runs in-process with the test execution that does the Jacoco instrumentation, too. -->
+  <extension qualifier="jacoco">
+    <property name="excludes">*</property>
+  </extension>
+
 </arquillian>

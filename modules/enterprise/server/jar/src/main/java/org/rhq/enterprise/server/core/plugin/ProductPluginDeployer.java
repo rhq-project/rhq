@@ -92,7 +92,7 @@ public class ProductPluginDeployer {
      * allowed to begin registering types from deployed plugins.
      */
     public void startDeployment() {
-        // we can now register our initial set of plugins
+        // we can now register our initial set of plugins (This may be a no-op at this point)
         registerPlugins();
 
         // indicate that we are now ready for hot-deployment of new plugins

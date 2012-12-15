@@ -149,7 +149,7 @@
     <opencsv.version>1.8</opencsv.version>
 
     <!-- cassandra dependency versions -->
-    <cassandra.version>1.2.0-beta3</cassandra.version>
+    <cassandra.version>1.2.0-rc1</cassandra.version>
     <cassandra.thrift.version>0.7.0</cassandra.thrift.version>
     <cassandra.jdbc.version>1.2.0-SNAPSHOT</cassandra.jdbc.version>
     <!--

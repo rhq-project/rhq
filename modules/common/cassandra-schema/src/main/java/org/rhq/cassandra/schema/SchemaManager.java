@@ -62,7 +62,7 @@ public class SchemaManager {
             this.hosts = hosts;
 
             SimpleAuthInfoProvider authInfoProvider = new SimpleAuthInfoProvider();
-            authInfoProvider.add("username", "rhqadmin").add("password", "rhqadmin");
+            authInfoProvider.add("username", "cassandra").add("password", "cassandra");
 
             Cluster cluster = Cluster.builder()
                 .addContactPoints("127.0.0.1", "127.0.0.2")
@@ -76,8 +76,9 @@ public class SchemaManager {
 
     public void createSchema() {
         try {
-            String cql = "CREATE KEYSPACE rhq WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};";
-            session.execute(cql);
+            session.execute("CREATE USER rhqadmin SUPERUSER");
+            session.execute(
+                "CREATE KEYSPACE rhq WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};");
         } catch (NoHostAvailableException e) {
             throw new RuntimeException(e);
         }

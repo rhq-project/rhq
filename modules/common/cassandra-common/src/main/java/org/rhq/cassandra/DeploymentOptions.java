@@ -53,6 +53,8 @@ public class DeploymentOptions {
     private Integer nativeTransportMaxThreads;
     private String username;
     private String password;
+    private String authenticator;
+    private String authorizer;
 
     public DeploymentOptions() {
     }
@@ -102,6 +104,8 @@ public class DeploymentOptions {
             properties)));
         setUsername(loadProperty("rhq.cassandra.username", properties));
         setPassword(loadProperty("rhq.cassandra.password", properties));
+        setAuthenticator(loadProperty("rhq.cassandra.authenticator", properties));
+        setAuthorizer(loadProperty("rhq.cassandra.authorizer", properties));
     }
 
     private String loadProperty(String key, Properties properties) {
@@ -249,6 +253,26 @@ public class DeploymentOptions {
     public void setPassword(String password) {
         if (this.password == null) {
             this.password = password;
+        }
+    }
+
+    public String getAuthenticator() {
+        return authenticator;
+    }
+
+    public void setAuthenticator(String authenticator) {
+        if (this.authenticator == null) {
+            this.authenticator = authenticator;
+        }
+    }
+
+    public String getAuthorizer() {
+        return authorizer;
+    }
+
+    public void setAuthorizer(String authorizer) {
+        if (this.authorizer == null) {
+            this.authorizer = authorizer;
         }
     }
 

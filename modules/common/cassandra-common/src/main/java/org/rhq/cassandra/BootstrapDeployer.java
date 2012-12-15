@@ -125,6 +125,8 @@ public class BootstrapDeployer {
                 }
 
                 props.put("rhq.cassandra.node.num_tokens", deploymentOptions.getNumTokens());
+                props.put("rhq.cassandra.authenticator", deploymentOptions.getAuthenticator());
+                props.put("rhq.cassandra.authorizer", deploymentOptions.getAuthorizer());
 
                 doLocalDeploy(props, bundleDir);
                 startNode(nodeBasedir);

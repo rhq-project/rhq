@@ -87,7 +87,7 @@ public class SimpleAuthorizer extends LegacyAuthorizer {
             if (keyspace == KEYSPACES_WRITE_PROPERTY) {
                 String kspAdmins = accessProperties.getProperty(KEYSPACES_WRITE_PROPERTY);
                 for (String admin : kspAdmins.split(","))
-                    if (admin.equals(user.username))
+                    if (admin.equals(user.getName()))
                         return EnumSet.copyOf(Permission.ALL);
             }
 
@@ -104,7 +104,7 @@ public class SimpleAuthorizer extends LegacyAuthorizer {
 
             if (readers != null) {
                 for (String reader : readers.split(",")) {
-                    if (reader.equals(user.username)) {
+                    if (reader.equals(user.getName())) {
                         canRead = true;
                         break;
                     }
@@ -113,7 +113,7 @@ public class SimpleAuthorizer extends LegacyAuthorizer {
 
             if (writers != null) {
                 for (String writer : writers.split(",")) {
-                    if (writer.equals(user.username)) {
+                    if (writer.equals(user.getName())) {
                         canWrite = true;
                         break;
                     }

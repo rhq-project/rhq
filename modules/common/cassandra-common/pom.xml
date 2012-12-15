@@ -13,7 +13,7 @@
   <name>RHQ Cassandra Common</name>
 
   <properties>
-    <cassandra.version>1.2.0-beta3</cassandra.version>
+    <cassandra.version>1.2.0-rc1</cassandra.version>
     <local.repo>${settings.localRepository}</local.repo>
   </properties>
 

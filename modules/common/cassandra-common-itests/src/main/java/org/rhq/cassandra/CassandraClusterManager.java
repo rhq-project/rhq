@@ -120,8 +120,11 @@ public class CassandraClusterManager implements IInvokedMethodListener {
 
         String[] hostNames = getHostNames(deployer.getCassandraHosts());
         SchemaManager schemaManager = new SchemaManager(annotation.username(), annotation.password(), hostNames);
-        schemaManager.createSchema();
+        if (!schemaManager.schemaExists()) {
+            schemaManager.createSchema();
+        }
         schemaManager.updateSchema();
+        schemaManager.shutdown();
     }
 
     private void shutdownCluster() throws Exception {

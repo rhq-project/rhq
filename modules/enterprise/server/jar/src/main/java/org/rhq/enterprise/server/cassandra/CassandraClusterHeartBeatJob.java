@@ -39,13 +39,12 @@ import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
+import org.rhq.cassandra.CassandraNode;
 import org.rhq.cassandra.ClusterInitService;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.enterprise.server.cloud.CloudManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
-
-import me.prettyprint.cassandra.service.CassandraHost;
 
 /**
  * @author John Sanda
@@ -65,11 +64,11 @@ public class CassandraClusterHeartBeatJob implements Job {
         JobDataMap dataMap = context.getMergedJobDataMap();
         String hosts = (String) dataMap.get(KEY_CASSANDRA_HOSTS);
         int timeout =  Integer.parseInt((String) dataMap.get(KEY_CONNECTION_TIMEOUT));
-        List<CassandraHost> cassandraHosts = new ArrayList<CassandraHost>();
+        List<CassandraNode> cassandraHosts = new ArrayList<CassandraNode>();
 
         for (String s : hosts.split(",")) {
             String[] params = s.split(":");
-            cassandraHosts.add(new CassandraHost(params[0], Integer.parseInt(params[1])));
+            cassandraHosts.add(new CassandraNode(params[0], Integer.parseInt(params[1])));
 
         }
         if (clusterInitService.ping(cassandraHosts, 1)) {

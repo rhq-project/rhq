@@ -30,14 +30,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
+import org.apache.cassandra.thrift.Cassandra;
+import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransportException;
-
-import me.prettyprint.cassandra.service.CassandraHost;
-import me.prettyprint.hector.api.Cluster;
-import me.prettyprint.hector.api.factory.HFactory;
 
 /**
  * This class provides operations to ensure a cluster is initialized and in a consistent
@@ -61,13 +63,13 @@ public class ClusterInitService {
      * @return true if connections are made to the number of specified hosts, false
      * otherwise.
      */
-    public boolean ping(List<CassandraHost> hosts, int numHosts) {
+    public boolean ping(List<CassandraNode> hosts, int numHosts) {
         long sleep = 100;
         int timeout = 50;
         int connections = 0;
 
-        for (CassandraHost host : hosts) {
-            TSocket socket = new TSocket(host.getHost(), host.getPort(), timeout);
+        for (CassandraNode host : hosts) {
+            TSocket socket = new TSocket(host.getHostName(), host.getThriftPort(), timeout);
             try {
                 socket.open();
                 if (log.isDebugEnabled()) {
@@ -98,7 +100,7 @@ public class ClusterInitService {
      *
      * @param hosts The cluster nodes to which a connection should be made
      */
-    public void waitForClusterToStart(List<CassandraHost> hosts) {
+    public void waitForClusterToStart(List<CassandraNode> hosts) {
         waitForClusterToStart(hosts, hosts.size());
     }
 
@@ -113,15 +115,15 @@ public class ClusterInitService {
      * @param numHosts The number of hosts to which a successful connection has to be made
      *                 before returning.
      */
-    public void waitForClusterToStart(List<CassandraHost> hosts, int numHosts) {
+    public void waitForClusterToStart(List<CassandraNode> hosts, int numHosts) {
         long sleep = 100;
         int timeout = 50;
         int connections = 0;
-        Queue<CassandraHost> queue = new LinkedList<CassandraHost>(hosts);
-        CassandraHost host = queue.poll();
+        Queue<CassandraNode> queue = new LinkedList<CassandraNode>(hosts);
+        CassandraNode host = queue.poll();
 
         while (host != null) {
-            TSocket socket = new TSocket(host.getHost(), host.getPort(), timeout);
+            TSocket socket = new TSocket(host.getHostName(), host.getThriftPort(), timeout);
             try {
                 socket.open();
                 if (log.isDebugEnabled()) {
@@ -154,14 +156,22 @@ public class ClusterInitService {
      * @param clusterName The cluster name used by underlying Hector APIs.
      * @param hosts The cluster nodes
      */
-    public void waitForSchemaAgreement(String clusterName, List<CassandraHost> hosts) {
+    public void waitForSchemaAgreement(String clusterName, List<CassandraNode> hosts) {
         long sleep = 100L;
-        Cluster cluster = HFactory.getOrCreateCluster(clusterName, hosts.get(0).getIp());
+        CassandraClient client = createClient(hosts.get(0));
+        client.openConnection();
         boolean schemaInAgreement = false;
         String schemaVersion = null;
 
         while (!schemaInAgreement) {
-            Map<String, List<String>> schemaVersions = cluster.describeSchemaVersions();
+            Map<String, List<String>> schemaVersions = null;
+            try {
+                schemaVersions = client.describe_schema_versions();
+            } catch (InvalidRequestException e) {
+                throw new RuntimeException("Unable to get schema versions from " + hosts.get(0), e);
+            } catch (TException e) {
+                throw new RuntimeException("Unable to get schema versions from " + hosts.get(0), e);
+            }
             if (schemaVersions.size() > 1) {
                 if (log.isInfoEnabled()) {
                     log.info("Schema agreement has not been reached. Found " + schemaVersions.size() +
@@ -195,10 +205,19 @@ public class ClusterInitService {
                 }
             }
         }
+        client.closeConnection();
 
         if (log.isInfoEnabled()) {
             log.info("Schema agreement has been reached at version [" + schemaVersion + "]");
         }
+    }
+
+    private CassandraClient createClient(CassandraNode node) {
+        TSocket socket = new TSocket(node.getHostName(), node.getThriftPort());
+        TFramedTransport transport = new TFramedTransport(socket);
+        TProtocol protocol = new TBinaryProtocol(transport);
+
+        return new CassandraClient(socket, protocol, node);
     }
 
     private void logException(String msg, Exception e) {
@@ -208,6 +227,29 @@ public class ClusterInitService {
             log.info(msg + ": " + e.getMessage());
         } else {
             log.warn(msg);
+        }
+    }
+
+    private static class CassandraClient extends Cassandra.Client {
+        private TSocket socket;
+        private CassandraNode node;
+
+        public CassandraClient(TSocket socket, TProtocol protocol, CassandraNode node) {
+            super(protocol);
+            this.socket = socket;
+            this.node = node;
+        }
+
+        public void openConnection() {
+            try {
+                socket.open();
+            } catch (TTransportException e) {
+                throw new RuntimeException("Could not open thrift connection to " + node, e);
+            }
+        }
+
+        public void closeConnection() {
+            socket.close();
         }
     }
 

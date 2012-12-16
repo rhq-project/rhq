@@ -42,8 +42,6 @@ import org.testng.ITestResult;
 import org.rhq.cassandra.schema.SchemaManager;
 import org.rhq.core.util.stream.StreamUtil;
 
-import me.prettyprint.cassandra.service.CassandraHost;
-
 /**
  * @author John Sanda
  */
@@ -101,7 +99,7 @@ public class CassandraClusterManager implements IInvokedMethodListener {
         deployer.deploy();
 
         ClusterInitService clusterInitService = new ClusterInitService();
-        List<CassandraHost> cassandraHosts = getCassandraHosts(deployer.getCassandraHosts());
+        List<CassandraNode> cassandraHosts = getCassandraHosts(deployer.getCassandraHosts());
 
         if (annotation.waitForClusterToStart()) {
             clusterInitService.waitForClusterToStart(cassandraHosts);
@@ -147,12 +145,12 @@ public class CassandraClusterManager implements IInvokedMethodListener {
         return Long.parseLong(writer.getBuffer().toString());
     }
 
-    private List<CassandraHost> getCassandraHosts(String hosts) {
-        List<CassandraHost> cassandraHosts = new ArrayList<CassandraHost>();
+    private List<CassandraNode> getCassandraHosts(String hosts) {
+        List<CassandraNode> cassandraHosts = new ArrayList<CassandraNode>();
 
         for (String s : hosts.split(",")) {
             String[] params = s.split(":");
-            cassandraHosts.add(new CassandraHost(params[0], Integer.parseInt(params[1])));
+            cassandraHosts.add(new CassandraNode(params[0], Integer.parseInt(params[1])));
 
         }
         return cassandraHosts;

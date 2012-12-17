@@ -27,9 +27,6 @@ package org.rhq.server.metrics;
 
 import static org.rhq.core.domain.util.PageOrdering.DESC;
 import static org.rhq.server.metrics.DateTimeService.TWO_WEEKS;
-import static org.rhq.server.metrics.MetricsDAO.ONE_HOUR_METRICS_TABLE;
-import static org.rhq.server.metrics.MetricsDAO.SIX_HOUR_METRICS_TABLE;
-import static org.rhq.server.metrics.MetricsDAO.TWENTY_FOUR_HOUR_METRICS_TABLE;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -93,7 +90,7 @@ public class MetricsServer {
             return createRawComposites(metrics, beginTime, endTime);
         }
 
-        String table = getTable(begin);
+        MetricsTable table = getTable(begin);
         List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleId, begin,
             new DateTime(endTime));
 
@@ -109,7 +106,7 @@ public class MetricsServer {
             return createRawComposites(metrics, beginTime, endTime);
         }
 
-        String table = getTable(begin);
+        MetricsTable table = getTable(begin);
         List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleIds, begin,
             new DateTime(endTime));
 
@@ -124,7 +121,7 @@ public class MetricsServer {
             return createSummaryRawAggregate(metrics, beginTime);
         }
 
-        String table = getTable(begin);
+        MetricsTable table = getTable(begin);
         List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleId, begin,
             new DateTime(endTime));
 
@@ -139,7 +136,7 @@ public class MetricsServer {
             return createSummaryRawAggregate(metrics, beginTime);
         }
 
-        String table = getTable(begin);
+        MetricsTable table = getTable(begin);
         List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleIds, begin,
             new DateTime(endTime));
 
@@ -204,7 +201,7 @@ public class MetricsServer {
         for (MeasurementDataNumeric rawMetric : rawMetrics) {
             updates.put(rawMetric.getScheduleId(), new DateTime(rawMetric.getTimestamp()).hourOfDay().roundFloorCopy());
         }
-        dao.updateMetricsIndex(ONE_HOUR_METRICS_TABLE, updates);
+        dao.updateMetricsIndex(MetricsTable.ONE_HOUR, updates);
     }
 
     public void calculateAggregates() {
@@ -226,25 +223,25 @@ public class MetricsServer {
 
         List<AggregatedNumericMetric> updatedSchedules = aggregateRawData();
         if (!updatedSchedules.isEmpty()) {
-            dao.deleteMetricsIndexEntries(ONE_HOUR_METRICS_TABLE);
-            updateMetricsIndex(SIX_HOUR_METRICS_TABLE, updatedSchedules, Minutes.minutes(60 * 6));
+            dao.deleteMetricsIndexEntries(MetricsTable.ONE_HOUR);
+            updateMetricsIndex(MetricsTable.SIX_HOUR, updatedSchedules, Minutes.minutes(60 * 6));
         }
 
-        updatedSchedules = calculateAggregates(ONE_HOUR_METRICS_TABLE, SIX_HOUR_METRICS_TABLE, Minutes.minutes(60 * 6),
+        updatedSchedules = calculateAggregates(MetricsTable.ONE_HOUR, MetricsTable.SIX_HOUR, Minutes.minutes(60 * 6),
             DateTimeService.ONE_MONTH);
         if (!updatedSchedules.isEmpty()) {
-            dao.deleteMetricsIndexEntries(SIX_HOUR_METRICS_TABLE);
-            updateMetricsIndex(TWENTY_FOUR_HOUR_METRICS_TABLE, updatedSchedules, Hours.hours(24).toStandardMinutes());
+            dao.deleteMetricsIndexEntries(MetricsTable.SIX_HOUR);
+            updateMetricsIndex(MetricsTable.TWENTY_FOUR_HOUR, updatedSchedules, Hours.hours(24).toStandardMinutes());
         }
 
-        updatedSchedules = calculateAggregates(SIX_HOUR_METRICS_TABLE, TWENTY_FOUR_HOUR_METRICS_TABLE,
+        updatedSchedules = calculateAggregates(MetricsTable.SIX_HOUR, MetricsTable.TWENTY_FOUR_HOUR,
             Hours.hours(24).toStandardMinutes(), DateTimeService.ONE_YEAR);
         if (!updatedSchedules.isEmpty()) {
-            dao.deleteMetricsIndexEntries(TWENTY_FOUR_HOUR_METRICS_TABLE);
+            dao.deleteMetricsIndexEntries(MetricsTable.TWENTY_FOUR_HOUR);
         }
     }
 
-    private void updateMetricsIndex(String bucket, List<AggregatedNumericMetric> metrics, Minutes interval) {
+    private void updateMetricsIndex(MetricsTable bucket, List<AggregatedNumericMetric> metrics, Minutes interval) {
         Map<Integer, DateTime> updates = new TreeMap<Integer, DateTime>();
         for (AggregatedNumericMetric metric : metrics) {
             updates.put(metric.getScheduleId(), dateTimeService.getTimeSlice(new DateTime(metric.getTimestamp()),
@@ -254,7 +251,7 @@ public class MetricsServer {
     }
 
     private List<AggregatedNumericMetric> aggregateRawData() {
-        List<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(ONE_HOUR_METRICS_TABLE);
+        List<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(MetricsTable.ONE_HOUR);
         List<AggregatedNumericMetric> oneHourMetrics = new ArrayList<AggregatedNumericMetric>();
 
         for (MetricsIndexEntry indexEntry : indexEntries) {
@@ -267,7 +264,7 @@ public class MetricsServer {
             oneHourMetrics.add(aggregatedRaw);
         }
 
-        List<AggregatedNumericMetric> updatedSchedules = dao.insertAggregates(ONE_HOUR_METRICS_TABLE,
+        List<AggregatedNumericMetric> updatedSchedules = dao.insertAggregates(MetricsTable.ONE_HOUR,
             oneHourMetrics, TWO_WEEKS);
         return updatedSchedules;
     }
@@ -300,8 +297,8 @@ public class MetricsServer {
         return new AggregatedNumericMetric(0, avg, min, max, timestamp);
     }
 
-    private List<AggregatedNumericMetric> calculateAggregates(String fromColumnFamily, String toColumnFamily,
-        Minutes nextInterval, int ttl) {
+    private List<AggregatedNumericMetric> calculateAggregates(MetricsTable fromColumnFamily,
+        MetricsTable toColumnFamily, Minutes nextInterval, int ttl) {
 
         List<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(toColumnFamily);
         List<AggregatedNumericMetric> toMetrics = new ArrayList<AggregatedNumericMetric>();
@@ -354,14 +351,14 @@ public class MetricsServer {
         return new AggregatedNumericMetric(0, avg, min, max, timestamp);
     }
 
-    private String getTable(DateTime begin) {
-        String table;
+    private MetricsTable getTable(DateTime begin) {
+        MetricsTable table;
         if (dateTimeService.isIn1HourDataRange(begin)) {
-            table = ONE_HOUR_METRICS_TABLE;
+            table = MetricsTable.ONE_HOUR;
         } else if (dateTimeService.isIn6HourDataRnage(begin)) {
-            table = SIX_HOUR_METRICS_TABLE;
+            table = MetricsTable.SIX_HOUR;
         } else {
-            table = TWENTY_FOUR_HOUR_METRICS_TABLE;
+            table = MetricsTable.TWENTY_FOUR_HOUR;
         }
         return table;
     }

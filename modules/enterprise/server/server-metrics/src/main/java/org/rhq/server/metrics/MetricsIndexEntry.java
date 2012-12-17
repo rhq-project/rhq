@@ -30,12 +30,13 @@ import java.util.Date;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 
+
 /**
  * @author John Sanda
  */
 public class MetricsIndexEntry {
 
-    private String bucket;
+    private MetricsTable bucket;
 
     private int scheduleId;
 
@@ -44,24 +45,24 @@ public class MetricsIndexEntry {
     public MetricsIndexEntry () {
     }
 
-    public MetricsIndexEntry(String bucket, Date time, int scheduleId) {
+    public MetricsIndexEntry(MetricsTable bucket, Date time, int scheduleId) {
         this.bucket = bucket;
         this.scheduleId = scheduleId;
         this.time = new DateTime(time);
     }
 
-    public MetricsIndexEntry(String bucket, DateTime time, int scheduleId) {
+    public MetricsIndexEntry(MetricsTable bucket, DateTime time, int scheduleId) {
         this.bucket = bucket;
         this.scheduleId = scheduleId;
         this.time = time;
     }
 
-    public String getBucket() {
+    public MetricsTable getBucket() {
 
         return bucket;
     }
 
-    public void setBucket(String bucket) {
+    public void setBucket(MetricsTable bucket) {
         this.bucket = bucket;
     }
 

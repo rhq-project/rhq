@@ -30,14 +30,15 @@ import java.sql.SQLException;
 
 import com.datastax.driver.core.Row;
 
+
 /**
  * @author John Sanda
  */
 public class MetricsIndexResultSetMapper implements ResultSetMapper<MetricsIndexEntry> {
 
-    private String bucket;
+    private MetricsTable bucket;
 
-    public MetricsIndexResultSetMapper(String bucket) {
+    public MetricsIndexResultSetMapper(MetricsTable bucket) {
         this.bucket = bucket;
     }
 

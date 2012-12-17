@@ -342,7 +342,7 @@ public class MetricsDAO {
     public List<MetricsIndexEntry> findMetricsIndexEntries(MetricsTable table) {
         try {
             PreparedStatement statement = session.prepare(METRICS_INDEX_QUERY);
-            BoundStatement boundStatement = statement.bind(table);
+            BoundStatement boundStatement = statement.bind(table.toString());
             ResultSet resultSet = session.execute(boundStatement);
             List<MetricsIndexEntry> indexEntries = new ArrayList<MetricsIndexEntry>();
             ResultSetMapper<MetricsIndexEntry> resultSetMapper = new MetricsIndexResultSetMapper(table);
@@ -362,7 +362,8 @@ public class MetricsDAO {
         try {
             PreparedStatement statement = session.prepare(UPDATE_METRICS_INDEX);
             for (Integer scheduleId : updates.keySet()) {
-                BoundStatement boundStatement = statement.bind(table, updates.get(scheduleId).toDate(), scheduleId,
+                BoundStatement boundStatement = statement.bind(table.toString(), updates.get(scheduleId).toDate(),
+                    scheduleId,
                     false);
                 session.execute(boundStatement);
             }

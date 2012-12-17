@@ -19,8 +19,10 @@ source `dirname $0`/rhq_bash.lib
 build_datastax_driver()
 {
     echo "Building DataStax Java driver..."
-    clone_repo "git://github.com/datastax/java-driver.git"
+    #clone_repo "git://github.com/datastax/java-driver.git"
+    clone_repo "git@github.com:jsanda/java-driver.git"
     pushd java-driver
+    git checkout -b master-1.2.0-rc1 origin/master-1.2.0-rc1
     run_mvn install -DskipTests
     popd
 }
@@ -28,10 +30,12 @@ build_datastax_driver()
 build_cassandra_jdbc()
 {
     echo "Building cassandra-jdbc..."
-    clone_repo "https://code.google.com/a/apache-extras.org/p/cassandra-jdbc/"
+    #clone_repo "https://code.google.com/a/apache-extras.org/p/cassandra-jdbc/"
+    clone_repo "git@github.com:jsanda/cassandra-jdbc.git"
     pushd cassandra-jdbc
     git fetch origin
-    git checkout -b trunk origin/trunk
+    #git checkout -b trunk origin/trunk
+    git checkout -b trunk-1.2.0-rc1 origin/trunk-1.2.0-rc1
     run_mvn install -DskipTests
     popd
 }

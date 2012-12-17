@@ -97,7 +97,6 @@ public class ASUploadConnection {
             connection.setReadTimeout(timeout * 1000); // default 60s
             connection.setDoInput(true);
             connection.setDoOutput(true);
-            connection.setChunkedStreamingMode(1024 * 64); // 64k chunks
             connection.setRequestMethod(POST_REQUEST_METHOD);
             connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + BOUNDARY_PARAM);
 

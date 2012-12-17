@@ -401,6 +401,8 @@ rhq.server.email.from-address=rhqadmin@localhost
 # the RHQ Server will bind to (jboss.bind.address) and the ports
 # browsers will use to access the RHQ web application
 # (rhq.server.socket.binding.port.http, rhq.server.socket.binding.port.https)
+# If you change the binding address, you might also want to change
+# "rhq.autoinstall.public-endpoint-address" as well.
 #############################################################################
 
 jboss.bind.address=0.0.0.0

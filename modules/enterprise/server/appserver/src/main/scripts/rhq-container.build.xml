@@ -673,6 +673,10 @@ rhq.cassandra.logging.level=${rhq.cassandra.logging.level}
             <replacevalue><![CDATA[start /B %RHQ_SERVER_HOME%\bin\rhq-autoinstall.bat]]></replacevalue>
           </replacefilter>
         </replace>
+
+        <echo>Adding cassandra-db module to ${jboss.modules.dir} ...</echo>
+        <unzip src="${settings.localRepository}/org/rhq/rhq-cassandra-common/${project.version}/rhq-cassandra-common-${project.version}.zip"
+             dest="${jboss.modules.dir}" />
     </target>
 
     <!-- The prepare-release target must be run AFTER the resources:resources goal has executed. -->

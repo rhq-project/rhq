@@ -25,10 +25,10 @@
         <resource-root path="slf4j-api-1.7.2.jar"/>
         <resource-root path="slf4j-log4j12-1.6.6.jar"/>
         <resource-root path="netty-3.5.9.Final.jar"/>
-        <resource-root path="cassandra-all-1.2.0-beta3.jar"/>
+        <resource-root path="cassandra-all-1.2.0-rc1.jar"/>
         <resource-root path="metrics-core-2.2.0.jar"/>
         <resource-root path="guava-12.0.jar"/>
-        <resource-root path="cassandra-thrift-1.2.0-beta3.jar"/>
+        <resource-root path="cassandra-thrift-1.2.0-rc1.jar"/>
         <resource-root path="libthrift-0.7.0.jar"/>
         <resource-root path="jackson-mapper-asl-1.4.0.jar"/>
         <resource-root path="jackson-core-asl-1.4.0.jar"/>
@@ -36,6 +36,7 @@
       <resource-root path="liquibase-core-3.0.0-SNAPSHOT.jar"/>
       <resource-root path="cassandra-jdbc-1.2.0-SNAPSHOT.jar"/>
       <resource-root path="cassandra-liquibase-ext-0.1.0-SNAPSHOT.jar"/>
+      <resource-root path="commons-codec-1.3.jar"/>
     </resources>
 
     <dependencies>

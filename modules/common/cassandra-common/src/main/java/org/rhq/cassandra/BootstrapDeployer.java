@@ -149,6 +149,24 @@ public class BootstrapDeployer {
         }
     }
 
+    public static void main(String[] args) {
+        BootstrapDeployer deployer = new BootstrapDeployer();
+
+        DeploymentOptions deploymentOptions = new DeploymentOptions();
+        try {
+            deploymentOptions.setNumNodes(2);
+            deploymentOptions.load();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load deployment options.", e);
+        }
+        deployer.setDeploymentOptions(deploymentOptions);
+        try {
+            deployer.deploy();
+        } catch (CassandraException e) {
+            throw new RuntimeException("A deployment error occurred.", e);
+        }
+    }
+
     private boolean isClusterInstalled() {
         File clusterDir = new File(deploymentOptions.getClusterDir());
         File installedMarker = new File(clusterDir, ".installed");

@@ -20,18 +20,14 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.server.rest.domain;
+package org.rhq.modules.integrationTests.restApi.d;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
-import com.wordnik.swagger.annotations.ApiClass;
-import com.wordnik.swagger.annotations.ApiProperty;
-
 /**
- * A baseline
+ * A metric baseline
  * @author Heiko W. Rupp
  */
-@ApiClass("Representation of a metric baseline/-band")
 @XmlRootElement
 public class Baseline {
 
@@ -50,7 +46,6 @@ public class Baseline {
         this.computeTime = computeTime;
     }
 
-    @ApiProperty("The lower value of the base band")
     public double getMin() {
         return min;
     }
@@ -59,7 +54,6 @@ public class Baseline {
         this.min = min;
     }
 
-    @ApiProperty("The higher value of the base band")
     public double getMax() {
         return max;
     }
@@ -68,7 +62,6 @@ public class Baseline {
         this.max = max;
     }
 
-    @ApiProperty("The baseline value (i.e. the average of the metrics")
     public double getMean() {
         return mean;
     }
@@ -77,12 +70,38 @@ public class Baseline {
         this.mean = mean;
     }
 
-    @ApiProperty("Time this value was computed")
     public long getComputeTime() {
         return computeTime;
     }
 
     public void setComputeTime(long computeTime) {
         this.computeTime = computeTime;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Baseline baseline = (Baseline) o;
+
+        if (Double.compare(baseline.max, max) != 0) return false;
+        if (Double.compare(baseline.mean, mean) != 0) return false;
+        if (Double.compare(baseline.min, min) != 0) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result;
+        long temp;
+        temp = min != +0.0d ? Double.doubleToLongBits(min) : 0L;
+        result = (int) (temp ^ (temp >>> 32));
+        temp = max != +0.0d ? Double.doubleToLongBits(max) : 0L;
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        temp = mean != +0.0d ? Double.doubleToLongBits(mean) : 0L;
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        return result;
     }
 }

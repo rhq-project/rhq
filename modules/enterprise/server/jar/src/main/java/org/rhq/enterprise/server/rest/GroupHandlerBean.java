@@ -54,6 +54,7 @@ import com.wordnik.swagger.annotations.ApiParam;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.resteasy.annotations.Form;
 import org.jboss.resteasy.annotations.GZIP;
 import org.jboss.resteasy.annotations.cache.Cache;
 
@@ -114,7 +115,7 @@ public class GroupHandlerBean extends AbstractRestBean  {
         if (q!=null) {
             criteria.addFilterName(q);
         }
-        List<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(caller,criteria);
+        List<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(caller, criteria);
 
         List<GroupRest> list = new ArrayList<GroupRest>(groups.size());
         for (ResourceGroup group : groups) {
@@ -177,14 +178,13 @@ public class GroupHandlerBean extends AbstractRestBean  {
                 resourceType = resourceTypeManager.getResourceTypeById(caller,group.getResourceTypeId());
                 newGroup.setResourceType(resourceType);
             } catch (ResourceTypeNotFoundException e) {
-                e.printStackTrace();  // TODO: Customise this generated block
                 throw new StuffNotFoundException("ResourceType with id " + group.getResourceTypeId());
             }
         }
 
         Response.ResponseBuilder builder;
         try {
-            newGroup = resourceGroupManager.createResourceGroup(caller,newGroup);
+            newGroup = resourceGroupManager.createResourceGroup(caller, newGroup);
             UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
             uriBuilder.path("/group/{id}");
             URI uri = uriBuilder.build(newGroup.getId());
@@ -200,7 +200,7 @@ public class GroupHandlerBean extends AbstractRestBean  {
 
     @PUT
     @Path("{id}")
-    @ApiOperation(value = "Update the passed group")
+    @ApiOperation(value = "Update the passed group. Currently only name change is supported")
     public Response updateGroup(@ApiParam(value = "Id of the group to update") @PathParam("id") int id,
                                 @ApiParam(value = "New version of the group") GroupRest in,
                                 @Context HttpHeaders headers,
@@ -304,7 +304,7 @@ public class GroupHandlerBean extends AbstractRestBean  {
                                    @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         ResourceGroup resourceGroup = fetchGroup(id, false);
-        Resource res = resourceManager.getResource(caller,resourceId);
+        Resource res = resourceManager.getResource(caller, resourceId);
         if (res==null)
             throw new StuffNotFoundException("Resource with id " + resourceId);
 
@@ -349,31 +349,6 @@ public class GroupHandlerBean extends AbstractRestBean  {
             builder = Response.ok(ret);
         }
         return builder.build();
-    }
-
-    private GroupRest fillGroup(ResourceGroup group, UriInfo uriInfo) {
-
-        GroupRest gr = new GroupRest(group.getName());
-        gr.setId(group.getId());
-        gr.setCategory(group.getGroupCategory());
-        gr.setRecursive(group.isRecursive());
-        if (group.getGroupDefinition()!=null)
-            gr.setDynaGroupDefinitionId(group.getGroupDefinition().getId());
-        gr.setExplicitCount(group.getExplicitResources().size());
-        gr.setImplicitCount(group.getImplicitResources().size());
-        UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
-        uriBuilder.path("/group/{id}");
-        URI uri = uriBuilder.build(group.getId());
-        Link link = new Link("edit",uri.toASCIIString());
-        gr.getLinks().add(link);
-
-        uriBuilder = uriInfo.getBaseUriBuilder();
-        uriBuilder.path("/group/{id}/metricDefinitions");
-        uri = uriBuilder.build(group.getId());
-        link = new Link("metricDefinitions",uri.toASCIIString());
-        gr.getLinks().add(link);
-
-        return gr;
     }
 
     @GZIP
@@ -523,9 +498,11 @@ public class GroupHandlerBean extends AbstractRestBean  {
 
         } catch (GroupDefinitionAlreadyExistsException e) {
             builder =Response.status(Response.Status.CONFLICT);
+            builder.entity(e.getMessage());
         } catch (GroupDefinitionCreateException e) {
             e.printStackTrace();  // TODO: Customise this generated block
-            builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR);
+            builder = Response.status(Response.Status.NOT_ACCEPTABLE);
+            builder.entity(e.getMessage());
         }
         return builder.build();
     }
@@ -533,10 +510,11 @@ public class GroupHandlerBean extends AbstractRestBean  {
     @PUT
     @Path("/definition/{id}")
     @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
-    @ApiOperation("Update an existing GroupDefinition")
+    @ApiOperation("Update an existing GroupDefinition or recalculate it if the query param 'recalculate' is set to true")
     public Response updateGroupDefinition(@ApiParam("Id fo the definition to update") @PathParam("id") int definitionId,
                                           @ApiParam("If true, trigger a re-calculation") @QueryParam( "recalculate")
-                                          @DefaultValue("false") boolean recalculate, GroupDefinitionRest definition,
+                                          @DefaultValue("false") boolean recalculate,
+                                          GroupDefinitionRest definition, // TODO mark as optional?
                                           @Context HttpHeaders headers,
                                           @Context UriInfo uriInfo) {
 
@@ -548,6 +526,19 @@ public class GroupHandlerBean extends AbstractRestBean  {
         }
 
         Response.ResponseBuilder builder = null;
+
+        if (recalculate) {
+            try {
+                definitionManager.calculateGroupMembership(caller,gd.getId());
+                builder = Response.noContent();
+            } catch (Exception e) {
+                builder = Response.status(Response.Status.NOT_ACCEPTABLE);
+                builder.entity(e.getLocalizedMessage());
+            }
+            return builder.build();
+        }
+
+        // Not recalculation, but an update
 
         if (!definition.getName().isEmpty())
             gd.setName(definition.getName());
@@ -566,18 +557,11 @@ public class GroupHandlerBean extends AbstractRestBean  {
         try {
             definitionManager.updateGroupDefinition(caller,gd);
         } catch (Exception e) {
-            e.printStackTrace();  // TODO: Customise this generated block
             builder = Response.status(Response.Status.NOT_ACCEPTABLE);
             builder.entity(e.getLocalizedMessage());
             return builder.build();
         }
 
-        if (recalculate) {
-            try {
-                definitionManager.calculateGroupMembership(caller,gd.getId());
-            } catch (Exception e) {
-            }
-        }
 
         try {
             // Re-fetch, as groups may have changed

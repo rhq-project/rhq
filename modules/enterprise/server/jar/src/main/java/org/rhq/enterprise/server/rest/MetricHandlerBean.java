@@ -747,14 +747,20 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     @Path("data/{scheduleId}/baseline")
     @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
     @ApiOperation(value = "Set a new baseline for the schedule")
-    @ApiError(code = 404, reason = NO_SCHEDULE_FOR_ID)
-    public void setBaseline(@ApiParam("Id of the schedule")  @PathParam("scheduleId") int scheduleId,
-                                Baseline baseline, HttpHeaders headers, @Context UriInfo uriInfo) {
+    @ApiErrors({
+        @ApiError(code = 404, reason = NO_SCHEDULE_FOR_ID),
+        @ApiError(code = 406 ,reason = "Baseline data is incorrect")
+    })
+    public Response setBaseline(@ApiParam("Id of the schedule")  @PathParam("scheduleId") int scheduleId,
+                                Baseline baseline, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
         MeasurementSchedule schedule = obtainSchedule(scheduleId, false, DataType.MEASUREMENT);
 
         // little bit of sanity checking
-        if (baseline.getMin()>baseline.getMean() || baseline.getMean()>baseline.getMax() || baseline.getMin()>baseline.getMax())
-            throw new IllegalArgumentException("Baseline not correct. it should be min<=mean<=max");
+        if (baseline.getMin()>baseline.getMean() || baseline.getMean()>baseline.getMax() || baseline.getMin()>baseline.getMax()) {
+            Response.ResponseBuilder builder = Response.status(Response.Status.NOT_ACCEPTABLE);
+            builder.entity("Baseline not correct. it should be min<=mean<=max");
+            return builder.build();
+        }
 
         MeasurementBaseline mBase = schedule.getBaseline();
         if (mBase == null) {
@@ -769,6 +775,8 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         mBase.setUserEntered(true);
 
         scheduleManager.updateSchedule(caller,schedule);
+
+        return Response.created(uriInfo.getRequestUriBuilder().build()).build();
 
     }
 

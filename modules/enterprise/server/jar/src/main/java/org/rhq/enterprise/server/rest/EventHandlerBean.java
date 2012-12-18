@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.enterprise.server.rest;
 
 import java.util.ArrayList;
@@ -62,6 +61,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.event.EventManagerLocal;
+import org.rhq.enterprise.server.rest.domain.EventDefinitionRest;
 import org.rhq.enterprise.server.rest.domain.EventRest;
 import org.rhq.enterprise.server.rest.domain.EventSourceRest;
 
@@ -112,6 +112,40 @@ public class EventHandlerBean extends AbstractRestBean {
     }
 
     @GET
+    @Path("/{id}/definitions")
+    @ApiOperation(value = "List the defined event source definitions for the resource", responseClass = "EventDefintionRest", multiValueResponse = true)
+    public Response listEventDefinitionsForResource(@ApiParam("id of the resource") @PathParam("id") int resourceId,
+                                                @Context Request request,
+                                                @Context HttpHeaders headers) {
+
+        Resource res = fetchResource(resourceId);
+        ResourceType resourceType = res.getResourceType();
+        em.refresh(resourceType);
+        Set<EventDefinition> eventDefinitions = resourceType.getEventDefinitions();
+
+        List<EventDefinitionRest> definitionsRest = new ArrayList<EventDefinitionRest>(eventDefinitions.size());
+        for (EventDefinition source : eventDefinitions) {
+            EventDefinitionRest esr = new EventDefinitionRest();
+            esr.setDescription(source.getDescription());
+            esr.setId(source.getId());
+            esr.setDisplayName(source.getDisplayName());
+            esr.setName(source.getName());
+            definitionsRest.add(esr);
+        }
+
+        Response.ResponseBuilder builder;
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        if (mediaType.equals(MediaType.APPLICATION_XML_TYPE)) {
+            GenericEntity<List<EventDefinitionRest>> list = new GenericEntity<List<EventDefinitionRest>>(definitionsRest) {};
+            builder = Response.ok(list, mediaType);
+        }
+        else {
+            builder = Response.ok(definitionsRest, mediaType);
+        }
+        return builder.build();
+    }
+
+    @GET
     @Path("/source/{id}")
     @ApiOperation(value = "Retrieve the event source with the passed id", responseClass = "EventSourceRest")
     public EventSourceRest getEventSource(@ApiParam("Id of the source to retrieve") @PathParam("id") int sourceId) {
@@ -127,7 +161,7 @@ public class EventHandlerBean extends AbstractRestBean {
     @ApiOperation("Add a new event source for a resource. This can e.g. be a different logfile. " +
             "The source.name must match an existing definition fo this resource. " +
             "If an event source for the definition name and resource with the same location already exists, no new source is created. " +
-            "NOTE: An Event source added this way will not sow up in the connection properties.")
+            "NOTE: An Event source added this way will not show up in the connection properties.")
     public EventSourceRest addEventSource(@ApiParam("id of the resource") @PathParam("id") int resourceId,
                                           EventSourceRest esr) {
 
@@ -177,8 +211,8 @@ public class EventHandlerBean extends AbstractRestBean {
     }
 
     @GET @GZIP
-        @Path("/source/{id}/events")
-        @ApiOperation(value = "List the events for the event source with the passed id. If no time range is given, the last 200 entries will be displayed",
+    @Path("/source/{id}/events")
+    @ApiOperation(value = "List the events for the event source with the passed id. If no time range is given, the last 200 entries will be displayed",
                 responseClass = "EventRest", multiValueResponse = true)
     public Response getEventsForSource(@PathParam("id") int sourceId,
                                        @QueryParam("startTime") long startTime,

@@ -57,6 +57,7 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.rest.domain.GroupRest;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 
@@ -424,6 +425,31 @@ public class AbstractRestBean {
             }
         }
         return resourceGroup;
+    }
+
+    protected GroupRest fillGroup(ResourceGroup group, UriInfo uriInfo) {
+
+        GroupRest gr = new GroupRest(group.getName());
+        gr.setId(group.getId());
+        gr.setCategory(group.getGroupCategory());
+        gr.setRecursive(group.isRecursive());
+        if (group.getGroupDefinition()!=null)
+            gr.setDynaGroupDefinitionId(group.getGroupDefinition().getId());
+        gr.setExplicitCount(group.getExplicitResources().size());
+        gr.setImplicitCount(group.getImplicitResources().size());
+        UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.path("/group/{id}");
+        URI uri = uriBuilder.build(group.getId());
+        Link link = new Link("edit",uri.toASCIIString());
+        gr.getLinks().add(link);
+
+        uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.path("/group/{id}/metricDefinitions");
+        uri = uriBuilder.build(group.getId());
+        link = new Link("metricDefinitions",uri.toASCIIString());
+        gr.getLinks().add(link);
+
+        return gr;
     }
 
     private static class CacheKey {

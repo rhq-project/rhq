@@ -287,6 +287,7 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
             .setParameter("key", RESOURCE_KEY)
             .setParameter("uuid", RESOURCE_UUID)
             .executeUpdate();
+        em.flush();
     }
 
     private void deleteMeasurementSchedules(EntityManager em) {

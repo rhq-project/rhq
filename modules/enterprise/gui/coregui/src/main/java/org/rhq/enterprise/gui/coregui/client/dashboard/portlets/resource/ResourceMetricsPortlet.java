@@ -290,7 +290,7 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                             });
                                                             window.addItem(graphView);
                                                             window.show();
-                                                            draw();
+                                                            markForRedraw();
                                                         }
                                                     });
 

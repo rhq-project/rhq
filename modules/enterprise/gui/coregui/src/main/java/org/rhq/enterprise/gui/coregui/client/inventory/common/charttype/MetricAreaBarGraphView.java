@@ -47,6 +47,7 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
     /**
      * The magic JSNI to draw the charts with d3.js
      */
+    @Override
     public native void drawJsniChart() /*-{
 
         console.log("Draw Line jsni chart");
@@ -167,7 +168,7 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                 var fontSize = 14,
                         yTitle = 37,
                         fgColor = "#FFFFFF",
-                        baseX = 440,
+                        baseX = 470,
                         xInc = 50;
 
 
@@ -502,6 +503,7 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                     .attr("y", -30)
                 //.attr("dy", ".71em")
                     .attr("font-size", "10px")
+                    .attr("font-weight", "normal")
                     .attr("font-family", "'Liberation Sans', Arial, Helvetica, sans-serif")
                     .attr("letter-spacing", "3")
                     .style("text-anchor", "end")
@@ -549,7 +551,6 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                     .attr("fill", "none")
                     .attr("stroke", "#cccdcf")
                     .attr("stroke-width", "1")
-                //.attr("stroke-dasharray", "3,3")
                 //.attr("stroke-opacity", ".6")
                     .attr("d", xAxisLine);
 

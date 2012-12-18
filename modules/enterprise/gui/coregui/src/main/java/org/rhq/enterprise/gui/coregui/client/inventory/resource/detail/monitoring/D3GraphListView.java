@@ -31,12 +31,17 @@ import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
+import org.rhq.core.domain.criteria.AvailabilityCriteria;
+import org.rhq.core.domain.measurement.Availability;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -232,19 +237,51 @@ public class D3GraphListView extends LocatableVLayout {
 
     }
 
-    private void buildIndividualGraph(MeasurementDefinition measurementDefinition,
-        List<MeasurementDataNumericHighLowComposite> data, int height) {
+    private void buildIndividualGraph(final MeasurementDefinition measurementDefinition,
+        final List<MeasurementDataNumericHighLowComposite> data, final int height) {
 
-        //MetricLineGraphView graphView = new MetricLineGraphView("areaBarGraph", resource.getId(),resource.getName(), measurementDefinition, data);
-        MetricAreaBarGraphView graphView = new MetricAreaBarGraphView("areaBarGraph", resource.getId(),resource.getName(), measurementDefinition, data);
+        // augment our data with availability data
+        AvailabilityCriteria c = new AvailabilityCriteria();
+        c.addFilterResourceId(resource.getId());
+        c.addFilterInitialAvailability(false);
+        c.addSortStartTime(PageOrdering.ASC);
+        GWTServiceLookup.getAvailabilityService().findAvailabilityByCriteria(c,
+                new AsyncCallback<PageList<Availability>>()
+                {
+                    @Override
+                    public void onFailure(Throwable caught)
+                    {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
+                    }
 
-        ResourceMetricD3GraphView graph = new ResourceMetricD3GraphView(
-            extendLocatorId(measurementDefinition.getName()), resource.getId(),resource.getName(), measurementDefinition, data, graphView);
+                    @Override
+                    public void onSuccess(PageList<Availability> availList)
+                    {
+                        PageList<Availability> downAvailList = new PageList<Availability>();
+                        for (Availability availability : availList)
+                        {
+                            if(availability.getAvailabilityType().equals(AvailabilityType.DOWN)
+                                    || availability.getAvailabilityType().equals(AvailabilityType.DISABLED)){
+                                downAvailList.add(availability);
+                            }
+                        }
+                        Log.debug("************** ** Down availList: "+ downAvailList.size()+"\n\n");
+                        //MetricLineGraphView graphView = new MetricLineGraphView("areaBarGraph", resource.getId(),resource.getName(), measurementDefinition, data);
+                        MetricAreaBarGraphView graphView = new MetricAreaBarGraphView("areaBarGraph", resource.getId(), resource.getName(), measurementDefinition, data);
+                        graphView.setAvailabilityDownList(downAvailList);
 
-        graph.setWidth("95%");
-        graph.setHeight(height);
+                        ResourceMetricD3GraphView graph = new ResourceMetricD3GraphView(
+                                extendLocatorId(measurementDefinition.getName()), resource.getId(), resource.getName(), measurementDefinition, data, graphView);
 
-        addMember(graph);
+                        graph.setWidth("95%");
+                        graph.setHeight(height);
+
+                        addMember(graph);
+
+                    }
+                });
+
+
     }
 
 }

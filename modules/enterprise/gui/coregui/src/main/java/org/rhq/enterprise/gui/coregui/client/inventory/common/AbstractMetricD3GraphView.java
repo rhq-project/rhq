@@ -28,10 +28,12 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 
+import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.JsonMetricProducer;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -59,6 +61,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
     private MeasurementUnits adjustedMeasurementUnits;
     private MeasurementDefinition definition;
     private List<MeasurementDataNumericHighLowComposite> data;
+    private PageList<Availability> availabilityDownList;
 
     //private String chartHeight;
 
@@ -68,11 +71,12 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
 
 
     public AbstractMetricD3GraphView(String locatorId, int entityId, String entityName, MeasurementDefinition def,
-                                     List<MeasurementDataNumericHighLowComposite> data) {
+                                     List<MeasurementDataNumericHighLowComposite> data ) {
         this(locatorId);
 
         this.entityName = entityName;
-        this.entityId = entityId;
+        setEntityId(entityId);
+        setDefinitionId(def.getId());
         this.definition = def;
         this.data = data;
         setHeight100();
@@ -124,6 +128,16 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
 
     public void setData(List<MeasurementDataNumericHighLowComposite> data) {
         this.data = data;
+    }
+
+    public PageList<Availability> getAvailabilityDownList()
+    {
+        return availabilityDownList;
+    }
+
+    public void setAvailabilityDownList(PageList<Availability> availabilityDownList)
+    {
+        this.availabilityDownList = availabilityDownList;
     }
 
     @Override
@@ -202,7 +216,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
               "               <linearGradient id=\"headerGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\">" +
               "                   <stop offset=\"0%\" style=\"stop-color:#707883;stop-opacity:1\"/>" +
               "                   <stop offset=\"100%\" style=\"stop-color:#425b64;stop-opacity:1\"/>" +
-              "               </linearGradient>\n" +
+              "               </linearGradient>" +
               "               <linearGradient id=\"leaderBarGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\">" +
               "                   <stop offset=\"0%\" style=\"stop-color:#d3d3d6;stop-opacity:1\"/>" +
               "                   <stop offset=\"100%\" style=\"stop-color:#d3d3d6;stop-opacity:1\"/>" +
@@ -221,13 +235,13 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
               "               </linearGradient>" +
               "               <pattern id=\"grayStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\"" +
               "                        width=\"6\" height=\"3\">" +
-              "                   <path d=\"M 0 0 6 0\" style=\"stroke:gray; fill:none;\"/>" +
+              "                   <path d=\"M 0 0 6 0\" style=\"stroke:#dfdfdf; fill:none;\"/>" +
               "               </pattern>" +
               "               <pattern id=\"redStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\"" +
               "                        width=\"6\" height=\"3\">" +
-              "                   <path d=\"M 0 0 6 0\" style=\"stroke:red; fill:none;\"/>" +
+              "                   <path d=\"M 0 0 6 0\" style=\"stroke:#ff8a9a; fill:none;\"/>" +
               "               </pattern>" +
-              "           </defs>";
+              "</defs>";
     }
 
     public abstract  void drawJsniChart();
@@ -268,7 +282,11 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
     }
 
     public String getYAxisTitle(){
-       return entityName+" - " +definition.getDisplayName()  ;
+        if(null != definition.getDisplayName() && definition.getDisplayName().length() > 55){
+            return entityName+" - " +definition.getDisplayName().substring(0,55)+"..."  ;
+        }else {
+            return entityName+" - " +definition.getDisplayName()  ;
+        }
     }
 
     /**
@@ -292,8 +310,13 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
     public String getJsonMetrics(){
         StringBuilder sb = new StringBuilder("[");
         boolean gotAdjustedMeasurementUnits = false;
+        //Log.debug(" avail records loaded: "+getAvailabilityDownList().size());
         for (MeasurementDataNumericHighLowComposite measurement : data) {
             sb.append("{ x:"+measurement.getTimestamp()+",");
+            if(isTimestampDownOrDisabled(measurement.getTimestamp())){
+                Log.debug(" ** ** DOWN=true  ");
+                sb.append(" down:true, ");
+            }
             if(!Double.isNaN(measurement.getValue())){
 
                 MeasurementNumericValueAndUnits newHigh = normalizeUnitsAndValues(measurement.getHighValue(), definition.getUnits());
@@ -318,38 +341,25 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
         return sb.toString();
     }
 
-    /**
-     * @todo: this is not needed
-     * The way the charts are setup, they look best when missing time interval is filled in
-     * @param sourceData list of metric data to process
-     * @return new List with the missing time intervals filled in.
-     */
-//    public static List<MeasurementDataNumericHighLowComposite> fillInMissingTimeIntervals(List<MeasurementDataNumericHighLowComposite> sourceData){
-//
-//        final long MINUTES =  1000 *60;
-//        //Date firstTimestamp = new Date(sourceData.get(0).getTimestamp());
-//        //Date secondTimestamp = new Date(sourceData.get(1).getTimestamp());
-//        long firstTimestamp = sourceData.get(0).getTimestamp();
-//        long secondTimestamp = sourceData.get(1).getTimestamp();
-//        Log.debug("Minutes difference: "+(secondTimestamp - firstTimestamp)/MINUTES);
-//
-//        for (int j = 0; j < sourceData.size(); j++)
-//        {
-//            MeasurementDataNumericHighLowComposite current = sourceData.get(j);
-//            Log.debug(" **** All Timestamps("+j+") : ["+new Date(current.getTimestamp()) + "] --> "+current.getValue());
-//            // once we have enough data to start measuring
-//            if(j >= 1){
-//                MeasurementDataNumericHighLowComposite previous = sourceData.get(j-1);
-//                long time = current.getTimestamp() - previous.getTimestamp();
-//                Log.debug(" ** Date : "+new Date(current.getTimestamp()) + " "+new Date(previous.getTimestamp()));
-//                Log.debug(" ** minutes diff: "+time/MINUTES );
-//
-//            }
-//
-//        }
-//
-//        return sourceData;
-//    }
+
+    private boolean isTimestampDownOrDisabled(long timestamp){
+        Date timestampDate = new Date(timestamp);
+        if(null == availabilityDownList){
+            Log.debug(" ****    Yo! AvailabilityList is null");
+        }
+        if(null != availabilityDownList){
+            for (Availability availability : availabilityDownList)
+            {
+                if(timestampDate.after(new Date(availability.getStartTime()))
+                        && timestampDate.before(new Date(availability.getEndTime()))){
+                    Log.debug("** found down timestamp: "+timestampDate);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 
     private  MeasurementNumericValueAndUnits normalizeUnitsAndValues(double value, MeasurementUnits measurementUnits){
         MeasurementNumericValueAndUnits newValue = MeasurementConverterClient.fit(value, measurementUnits);

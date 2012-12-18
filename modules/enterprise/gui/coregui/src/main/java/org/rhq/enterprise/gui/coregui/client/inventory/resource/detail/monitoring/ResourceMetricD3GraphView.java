@@ -25,23 +25,25 @@ import java.util.HashSet;
 import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.widgets.HTMLFlow;
 
+import org.rhq.core.domain.criteria.AvailabilityCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.measurement.Availability;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.HasD3JsniChart;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
 
@@ -71,7 +73,9 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView
 
     @Override
     protected void renderGraph() {
+
         if (null == getDefinition()) {
+            Log.debug(" ***  RenderGraph  Single Graph path *** ");
 
             ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
@@ -88,58 +92,93 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView
                     if (result.isEmpty()) {
                         return;
                     }
+                    final Resource firstResource = result.get(0);
 
-                    final Resource resource = result.get(0);
-                    HashSet<Integer> typesSet = new HashSet<Integer>();
-                    typesSet.add(resource.getResourceType().getId());
-                    HashSet<String> ancestries = new HashSet<String>();
-                    ancestries.add(resource.getAncestry());
-                    // In addition to the types of the result resources, get the types of their ancestry
-                    typesSet.addAll(AncestryUtil.getAncestryTypeIds(ancestries));
-
-                    ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-                            typesSet.toArray(new Integer[typesSet.size()]),
-                            EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
-                            new ResourceTypeRepository.TypesLoadedCallback() {
+                    // now return the availability
+                    AvailabilityCriteria c = new AvailabilityCriteria();
+                    c.addFilterResourceId(firstResource.getId());
+                    c.addFilterInitialAvailability(false);
+                    c.addSortStartTime(PageOrdering.ASC);
+                    GWTServiceLookup.getAvailabilityService().findAvailabilityByCriteria(c,
+                            new AsyncCallback<PageList<Availability>>() {
+                                @Override
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
+                                }
 
                                 @Override
-                                public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                                    String url = LinkManager.getResourceLink(resource.getId());
-                                    resourceTitle = new HTMLFlow(SeleniumUtility.getLocatableHref(url, resource.getName(),
-                                            null));
-                                    resourceTitle.setTooltip(AncestryUtil.getAncestryHoverHTMLForResource(resource, types,
-                                            0));
+                                public void onSuccess(PageList<Availability> availList) {
+                                    Log.debug("************** ** availList: "+ availList.size()+"\n\n");
 
-                                    ResourceType type = types.get(resource.getResourceType().getId());
-                                    for (MeasurementDefinition def : type.getMetricDefinitions()) {
-                                        if (def.getId() == getDefinitionId()) {
-                                            setDefinition(def);
-
-                                            GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(getEntityId(),
-                                                    new int[] { getDefinitionId() }, 8, MeasurementUtils.UNIT_HOURS, 60,
-                                                    new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
-                                                        @Override
-                                                        public void onFailure(Throwable caught) {
-                                                            CoreGUI.getErrorHandler().handleError(
-                                                                    MSG.view_resource_monitor_graphs_loadFailed(), caught);
-                                                        }
-
-                                                        @Override
-                                                        public void onSuccess(
-                                                                List<List<MeasurementDataNumericHighLowComposite>> result) {
-                                                            setData(result.get(0));
-
-                                                            drawGraph();
-                                                        }
-                                                    });
+                                    PageList<Availability> downAvailList = new PageList<Availability>();
+                                    for (Availability availability : availList)
+                                    {
+                                        if(availability.getAvailabilityType().equals(AvailabilityType.DOWN)
+                                                || availability.getAvailabilityType().equals(AvailabilityType.DISABLED)){
+                                           downAvailList.add(availability);
                                         }
+
                                     }
+                                    Log.debug("************** ** Down availList: "+ downAvailList.size()+"\n\n");
+                                    setAvailabilityDownList(downAvailList);
+
+                                    HashSet<Integer> typesSet = new HashSet<Integer>();
+                                    typesSet.add(firstResource.getResourceType().getId());
+                                    HashSet<String> ancestries = new HashSet<String>();
+                                    ancestries.add(firstResource.getAncestry());
+                                    // In addition to the types of the result resources, get the types of their ancestry
+                                    typesSet.addAll(AncestryUtil.getAncestryTypeIds(ancestries));
+
+                                    ResourceTypeRepository.Cache.getInstance().getResourceTypes(
+                                            typesSet.toArray(new Integer[typesSet.size()]),
+                                            EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
+                                            new ResourceTypeRepository.TypesLoadedCallback() {
+
+                                                @Override
+                                                public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                                                    ResourceType type = types.get(firstResource.getResourceType().getId());
+                                                    for (MeasurementDefinition def : type.getMetricDefinitions()) {
+                                                        Log.debug("  **** MIKE Before data: "+getDefinitionId());
+                                                        if (def.getId() == getDefinitionId()) {
+                                                            setDefinition(def);
+
+                                                            //GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(getEntityId(),
+                                                             GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(firstResource.getId(),
+                                                                    new int[] { getDefinitionId() }, 8, MeasurementUtils.UNIT_HOURS, 60,
+                                                                    new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
+                                                                        @Override
+                                                                        public void onFailure(Throwable caught) {
+                                                                            CoreGUI.getErrorHandler().handleError(
+                                                                                    MSG.view_resource_monitor_graphs_loadFailed(), caught);
+                                                                        }
+
+                                                                        @Override
+                                                                        public void onSuccess(final
+                                                                                              List<List<MeasurementDataNumericHighLowComposite>> measurementData) {
+                                                                            // return the data
+                                                                            Log.debug(" ********** Got the metric data!");
+
+                                                                            setData(measurementData.get(0));
+
+                                                                            drawGraph();
+                                                                        }
+                                                                    });
+                                                        }
+                                                    }
+                                                }
+                                            });
+
                                 }
                             });
+
+
+
                 }
             });
 
         } else {
+            // path for monitoring d3 Graphs multiple charts
+            Log.debug("Chart path for: multiple charts");
             drawGraph();
         }
     }

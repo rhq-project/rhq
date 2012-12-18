@@ -135,10 +135,8 @@ public class ServerDatasource extends AbstractServerNodeDatasource<Server, Serve
         
         if(fetchMembers) {
             criteria.addFilterAffinityGroupId(affinityGroupId);
-            GWTServiceLookup.getCloudService().findServersByCriteria(criteria, callback);
-        } else {
-            GWTServiceLookup.getCloudService().getServerNonMembersByAffinityGroupId(affinityGroupId, pc, callback);
         }
+        GWTServiceLookup.getCloudService().findServersByCriteria(criteria, callback);
     }
 
     /**
@@ -195,7 +193,7 @@ public class ServerDatasource extends AbstractServerNodeDatasource<Server, Serve
     @Override
     protected ServerCriteria getFetchCriteria(DSRequest request) {
         ServerCriteria criteria = new ServerCriteria();
-        printRequestCriteria(request);
+//        printRequestCriteria(request);
         criteria.addFilterId(getFilter(request, FIELD_ID.propertyName(), Integer.class));
         criteria.addFilterName(getFilter(request, FIELD_NAME.propertyName(), String.class));
         criteria.addFilterAddress(getFilter(request, FILTER_ADDRESS, String.class));

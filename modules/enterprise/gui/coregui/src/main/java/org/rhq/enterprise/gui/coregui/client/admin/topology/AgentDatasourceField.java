@@ -26,7 +26,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
  * @author Jirka Kremser
  *
  */
-public enum AgentNodeDatasourceField {
+public enum AgentDatasourceField {
 
     FIELD_ID("id", CoreGUI.getMessages().common_title_id()),
 
@@ -58,7 +58,7 @@ public enum AgentNodeDatasourceField {
      */
     private String title;
 
-    private AgentNodeDatasourceField(String propertyName, String title) {
+    private AgentDatasourceField(String propertyName, String title) {
         this.propertyName = propertyName;
         this.title = title;
     }

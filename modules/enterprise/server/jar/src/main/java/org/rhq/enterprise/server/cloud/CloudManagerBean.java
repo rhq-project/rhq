@@ -296,7 +296,7 @@ public class CloudManagerBean implements CloudManagerLocal {
         partitionEventManager.processRequestedPartitionEvents();
     }
     
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public PageList<Server> findServersByCriteria(Subject subject, ServerCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         CriteriaQueryRunner<Server> runner = new CriteriaQueryRunner<Server>(criteria, generator, entityManager);

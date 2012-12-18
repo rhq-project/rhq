@@ -18,15 +18,14 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.topology;
 
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_AFFINITY_GROUP;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_AFFINITY_GROUP_ID;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_SERVER;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentNodeDatasourceField.FIELD_SERVER_ID;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_AFFINITY_GROUP;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_AFFINITY_GROUP_ID;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_SERVER;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_SERVER_ID;
 
 import java.util.List;
 
 import com.smartgwt.client.types.SortDirection;
-import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
@@ -47,7 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 /**
  * @author Jirka Kremser
  */
-public class AgentTableView extends TableSection<AgentNodeDatasource> implements HasViewName {
+public class AgentTableView extends TableSection<AgentDatasource> implements HasViewName {
 
     public static final ViewName VIEW_ID = new ViewName("Agents(GWT)", MSG.view_adminTopology_agents() + "(GWT)",
         IconEnum.AGENT);
@@ -56,13 +55,16 @@ public class AgentTableView extends TableSection<AgentNodeDatasource> implements
         + AdministrationView.SECTION_TOPOLOGY_VIEW_ID + "/" + VIEW_ID;
 
     private final boolean isAffinityGroupId;
+    
+    private final Integer id;
 
     public AgentTableView(String locatorId, Integer id, boolean isAffinityGroupId) {
         super(locatorId, null);
         this.isAffinityGroupId = isAffinityGroupId;
+        this.id = id;
         setHeight100();
         setWidth100();
-        setDataSource(new AgentNodeDatasource(id, isAffinityGroupId));
+        setDataSource(new AgentDatasource(id, isAffinityGroupId));
     }
 
     @Override
@@ -118,15 +120,18 @@ public class AgentTableView extends TableSection<AgentNodeDatasource> implements
                 });
             }
         }
-
-        if (isAffinityGroupId)
-            addTableAction(extendLocatorId("editGroupAgents"), MSG.view_groupInventoryMembers_button_updateMembership(),
-                new AuthorizedTableAction(this, TableActionEnablement.ALWAYS, Permission.MANAGE_SETTINGS) {
-                    public void executeAction(final ListGridRecord[] selections, Object actionValue) {
-                        SC.say("working..");
-                        // todo: open editor for agent members
-                    }
-                });
+        if (isAffinityGroupId) {
+            showUpdateMembersAction();
+        }
+    }
+    
+    private void showUpdateMembersAction() {
+        addTableAction(extendLocatorId("editGroupAgents"), MSG.view_groupInventoryMembers_button_updateMembership(),
+            new AuthorizedTableAction(this, TableActionEnablement.ALWAYS, Permission.MANAGE_SETTINGS) {
+                public void executeAction(final ListGridRecord[] selections, Object actionValue) {
+                    AffinityGroupAgentsSelector.show(id, AgentTableView.this);
+                }
+            });
     }
 
     @Override

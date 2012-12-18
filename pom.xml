@@ -148,6 +148,7 @@
     <shrinkwrap-resolver.version>2.0.0-alpha-7</shrinkwrap-resolver.version>
     <xercesImpl.version>2.9.1-jbossas-2</xercesImpl.version> <!-- see BZ-820629 and CVE-2009-2625 -->
     <opencsv.version>1.8</opencsv.version>    
+    <commons-httpclient.version>3.0.1</commons-httpclient.version>
     
     <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
     <rhq.db.admin.password>rhqadmin</rhq.db.admin.password>
@@ -690,11 +691,11 @@
            <artifactId>maven-antrun-plugin</artifactId>
            <version>1.7</version>
            <dependencies>
-             <!-- This includes all the "optional" tasks. -->
+             <!-- Standard ANT dist (no more "nodeps" since 1.8.2) -->
              <dependency>
                 <groupId>org.apache.ant</groupId>
-                <artifactId>ant-nodeps</artifactId>
-                <version>1.8.1</version>
+                <artifactId>ant</artifactId>
+                <version>1.8.4</version>
              </dependency>
 
              <!-- This includes the <if> task, and a bunch of other handy tasks. -->

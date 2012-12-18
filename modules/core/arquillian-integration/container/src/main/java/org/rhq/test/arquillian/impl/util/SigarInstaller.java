@@ -21,6 +21,8 @@ package org.rhq.test.arquillian.impl.util;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 import java.util.UUID;
 
 import org.apache.commons.logging.Log;
@@ -28,7 +30,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenResolvedArtifact;
-import org.jboss.shrinkwrap.resolver.api.maven.MavenResolverSystem;
 
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.file.FileUtil;
@@ -42,7 +43,6 @@ public class SigarInstaller {
 
     private static final Log LOG = LogFactory.getLog(SigarInstaller.class);
 
-    private static final String USER_HOME = System.getProperty("user.home");
     private static final String TMP_DIR = System.getProperty("java.io.tmpdir");
 
     private File rootDir;
@@ -54,12 +54,31 @@ public class SigarInstaller {
     }
 
     private void init() {
-        MavenResolverSystem mavenDependencyResolver = Maven.resolver();
 
-        // artifact specifier format is "<groupId>:<artifactId>[:<extension>[:<classifier>]][:<version >]"
-        // TODO (ips, 05/02/12): Figure out how to make this work without hard-coding the version.
-        sigarDistArtifact = mavenDependencyResolver.offline().loadPomFromFile("pom.xml")
-            .resolve("org.hyperic:sigar-dist:zip:1.6.5.132-3").withoutTransitivity().asSingleResolvedArtifact();
+        // Read the properties from the Maven filtered resource file
+        Properties pomProperties = new Properties();
+        InputStream propertyFileInputStream = getClass().getClassLoader().getResourceAsStream(
+            "maven-properties.properties");
+        try {
+            pomProperties.load(propertyFileInputStream);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (propertyFileInputStream != null) {
+                try {
+                    propertyFileInputStream.close();
+                } catch (IOException ignore) {
+                }
+            }
+        }
+
+        String sigarVersion = pomProperties.getProperty("sigar.version");
+        if (sigarVersion == null) {
+            throw new RuntimeException("Could not read Sigar version from the properties file");
+        }
+
+        sigarDistArtifact = Maven.resolver().offline().loadPomFromFile("pom.xml")
+            .resolve("org.hyperic:sigar-dist:zip:" + sigarVersion).withoutTransitivity().asSingleResolvedArtifact();
     }
 
     public boolean isSigarAvailable() {

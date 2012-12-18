@@ -50,34 +50,35 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * Deal with deployments
  * @author Heiko W. Rupp
  */
-public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> implements OperationFacet,  ContentFacet {
+public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> implements OperationFacet, ContentFacet {
 
     private static final String DOMAIN_DATA_CONTENT_SUBDIR = "/data/content";
     private boolean verbose = ASConnection.verbose;
     private File deploymentFile;
 
     @Override
-    public void start(ResourceContext<ResourceComponent<?>> context) throws InvalidPluginConfigurationException, Exception {
+    public void start(ResourceContext<ResourceComponent<?>> context) throws InvalidPluginConfigurationException,
+        Exception {
         super.start(context);
         deploymentFile = determineDeploymentFile();
     }
 
     @Override
     public AvailabilityType getAvailability() {
-        Operation op = new ReadAttribute(getAddress(),"enabled");
+        Operation op = new ReadAttribute(getAddress(), "enabled");
         Result res = getASConnection().execute(op);
         if (!res.isSuccess())
             return AvailabilityType.DOWN;
 
-        if (res.getResult()== null || !(Boolean)(res.getResult()))
+        if (res.getResult() == null || !(Boolean) (res.getResult()))
             return AvailabilityType.DOWN;
 
         return AvailabilityType.UP;
     }
 
     @Override
-    public OperationResult invokeOperation(String name,
-                                           Configuration parameters) throws InterruptedException, Exception {
+    public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
+        Exception {
 
         if (name.equals("enable")) {
             return invokeSimpleOperation("deploy");
@@ -86,7 +87,7 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
         } else if (name.equals("restart")) {
             OperationResult result = invokeSimpleOperation("undeploy");
 
-            if(result.getErrorMessage() == null){
+            if (result.getErrorMessage() == null) {
                 result = invokeSimpleOperation("deploy");
             }
 
@@ -97,7 +98,7 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
     }
 
     private OperationResult invokeSimpleOperation(String action) {
-        Operation op = new Operation(action,getAddress());
+        Operation op = new Operation(action, getAddress());
         Result res = getASConnection().execute(op);
         OperationResult result = new OperationResult();
         if (res.isSuccess()) {
@@ -115,19 +116,17 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
         return result;
     }
 
-
     @Override
     public List<DeployPackageStep> generateInstallationSteps(ResourcePackageDetails packageDetails) {
         return new ArrayList<DeployPackageStep>();
     }
 
     @Override
-    public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> packages,
-                                                 ContentServices contentServices) {
+    public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> packages, ContentServices contentServices) {
         log.debug("Starting deployment..");
         DeployPackagesResponse response = new DeployPackagesResponse();
 
-        if (packages.size()!=1) {
+        if (packages.size() != 1) {
             response.setOverallRequestResult(ContentResponseResult.FAILURE);
             response.setOverallRequestErrorMessage("Can only deploy one package at a time");
             log.warn("deployPackages can only deploy one package at a time");
@@ -135,14 +134,27 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
 
         ResourcePackageDetails detail = packages.iterator().next();
 
-        ASUploadConnection uploadConnection = new ASUploadConnection(getASConnection());
-        OutputStream out = uploadConnection.getOutputStream(detail.getKey().getName());
+        ASUploadConnection uploadConnection = ASUploadConnection.newInstanceForServerPluginConfiguration(
+            getServerComponent().getServerPluginConfiguration(), detail.getKey().getName());
+        OutputStream out = uploadConnection.getOutputStream();
+        if (out == null) {
+            response.setOverallRequestResult(ContentResponseResult.FAILURE);
+            response
+                .setOverallRequestErrorMessage("An error occured while the agent was preparing for content download");
+            return response;
+        }
         ResourceType resourceType = context.getResourceType();
 
-        log.info("Deploying " + resourceType.getName() + " Resource with key [" + detail.getKey() +"]...");
+        log.info("Deploying " + resourceType.getName() + " Resource with key [" + detail.getKey() + "]...");
 
-        contentServices.downloadPackageBits(context.getContentContext(),
-                detail.getKey(), out, true);
+        try {
+            contentServices.downloadPackageBits(context.getContentContext(), detail.getKey(), out, true);
+        } catch (Exception e) {
+            uploadConnection.cancelUpload();
+            response.setOverallRequestResult(ContentResponseResult.FAILURE);
+            response.setOverallRequestErrorMessage("An error occured while the agent was downloading the content");
+            return response;
+        }
 
         JsonNode uploadResult = uploadConnection.finishUpload();
         if (verbose) {
@@ -152,32 +164,29 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
         if (ASUploadConnection.isErrorReply(uploadResult)) {
             response.setOverallRequestResult(ContentResponseResult.FAILURE);
             response.setOverallRequestErrorMessage(ASUploadConnection.getFailureDescription(uploadResult));
-
             return response;
         }
+
         JsonNode resultNode = uploadResult.get("result");
         String hash = resultNode.get("BYTES_VALUE").getTextValue();
 
-
-        CreateResourceReport report1 = new CreateResourceReport("", resourceType, new Configuration(),
-                new Configuration(), detail);
-        //CreateResourceReport report = runDeploymentMagicOnServer(report1,detail.getKey().getName(),hash, hash);
+        new CreateResourceReport("", resourceType, new Configuration(), new Configuration(), detail);
 
         try {
             redeployOnServer(detail.getKey().getName(), hash);
             response.setOverallRequestResult(ContentResponseResult.SUCCESS);
             //we just deployed a different file on the AS7 server, so let's refresh ourselves
             deploymentFile = determineDeploymentFile();
-            DeployIndividualPackageResponse packageResponse = new DeployIndividualPackageResponse(detail.getKey(), ContentResponseResult.SUCCESS);
-                    response.addPackageResponse(packageResponse);
+            DeployIndividualPackageResponse packageResponse = new DeployIndividualPackageResponse(detail.getKey(),
+                ContentResponseResult.SUCCESS);
+            response.addPackageResponse(packageResponse);
 
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             response.setOverallRequestResult(ContentResponseResult.FAILURE);
         }
 
-        log.info("Result of deployment of " + resourceType.getName() + " Resource with key [" + detail.getKey()
-                + "]: " + response);
+        log.info("Result of deployment of " + resourceType.getName() + " Resource with key [" + detail.getKey() + "]: "
+            + response);
 
         return response;
     }
@@ -185,12 +194,12 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
     private void redeployOnServer(String name, String hash) throws Exception {
 
         Operation op = new Operation("full-replace-deployment", new Address());
-        op.addAdditionalProperty("name",name);
+        op.addAdditionalProperty("name", name);
         List<Object> content = new ArrayList<Object>(1);
-        Map<String,Object> contentValues = new HashMap<String,Object>();
-        contentValues.put("hash",new PROPERTY_VALUE("BYTES_VALUE",hash));
+        Map<String, Object> contentValues = new HashMap<String, Object>();
+        contentValues.put("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));
         content.add(contentValues);
-        op.addAdditionalProperty("content",content);
+        op.addAdditionalProperty("content", content);
         Result result = getASConnection().execute(op);
         if (result.isRolledBack())
             throw new Exception(result.getFailureDescription());
@@ -257,12 +266,12 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
             // No content -> check for server group
             if (path.startsWith(("server-group="))) {
                 // Server group has no content of its own - use the domain deployment
-                String name = (String) path.substring(path.lastIndexOf("=")+1);
-                op = new ReadResource(new Address("deployment",name));
+                String name = (String) path.substring(path.lastIndexOf("=") + 1);
+                op = new ReadResource(new Address("deployment", name));
                 result = getASConnection().execute(op);
                 if (result.isSuccess()) {
                     @SuppressWarnings("unchecked")
-                    Map<String,Object> contentMap = (Map<String, Object>) result.getResult();
+                    Map<String, Object> contentMap = (Map<String, Object>) result.getResult();
                     content = (List<Map<String, Object>>) contentMap.get("content");
                     if (content.get(0).containsKey("path")) {
                         String path = (String) content.get(0).get("path");
@@ -270,19 +279,21 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
                         deploymentFile = getDeploymentFileFromPath(relativeTo, path);
                     } else if (content.get(0).containsKey("hash")) {
                         @SuppressWarnings("unchecked")
-                        String base64Hash = ((Map<String, String>)content.get(0).get("hash")).get("BYTES_VALUE");
+                        String base64Hash = ((Map<String, String>) content.get(0).get("hash")).get("BYTES_VALUE");
                         byte[] hash = Base64.decode(base64Hash);
                         ServerGroupComponent sgc = (ServerGroupComponent) context.getParentResourceComponent();
-                        String baseDir = ((HostControllerComponent) sgc.context.getParentResourceComponent()).pluginConfiguration.getSimpleValue("baseDir");
-                        String contentPath = new File(baseDir , "/data/content").getAbsolutePath();
+                        String baseDir = ((HostControllerComponent) sgc.context.getParentResourceComponent()).pluginConfiguration
+                            .getSimpleValue("baseDir");
+                        String contentPath = new File(baseDir, "/data/content").getAbsolutePath();
                         deploymentFile = getDeploymentFileFromHash(hash, contentPath);
                     }
                     return deploymentFile;
                 }
+            } else {
+                log.warn("Could not determine the location of the deployment - the content descriptor wasn't found for deployment"
+                    + getAddress() + ".");
+                return null;
             }
-            else {
-                log.warn("Could not determine the location of the deployment - the content descriptor wasn't found for deployment" + getAddress() + ".");
-                return null;}
         }
 
         Boolean archive = (Boolean) content.get(0).get("archive");
@@ -298,17 +309,16 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
             deploymentFile = getDeploymentFileFromPath(relativeTo, path);
         } else if (content.get(0).containsKey("hash")) {
             @SuppressWarnings("unchecked")
-            String base64Hash = ((Map<String, String>)content.get(0).get("hash")).get("BYTES_VALUE");
+            String base64Hash = ((Map<String, String>) content.get(0).get("hash")).get("BYTES_VALUE");
             byte[] hash = Base64.decode(base64Hash);
             Address contentPathAddress;
             if (context.getParentResourceComponent() instanceof ManagedASComponent) {
                 // -> managed server we need to check for host=x/server=y, but the path brings host=x,server-config=y
                 String p = ((ManagedASComponent) context.getParentResourceComponent()).getPath();
-                p = p.replaceAll("server-config=","server=");
+                p = p.replaceAll("server-config=", "server=");
                 contentPathAddress = new Address(p);
                 contentPathAddress.add("core-service", "server-environment");
-            }
-            else {
+            } else {
                 // standalone
                 contentPathAddress = new Address("core-service", "server-environment");
             }
@@ -321,16 +331,17 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
             } else {
                 // No success above -> check if this is a domain deployment
                 if (this instanceof DomainDeploymentComponent) {
-                    String baseDir = ((HostControllerComponent) context.getParentResourceComponent()).pluginConfiguration.getSimpleValue("baseDir");
-                    contentPath = new File(baseDir , DOMAIN_DATA_CONTENT_SUBDIR).getAbsolutePath();
-                }
-                else {
+                    String baseDir = ((HostControllerComponent) context.getParentResourceComponent()).pluginConfiguration
+                        .getSimpleValue("baseDir");
+                    contentPath = new File(baseDir, DOMAIN_DATA_CONTENT_SUBDIR).getAbsolutePath();
+                } else {
                     contentPath = "-unknown-";
                 }
             }
             deploymentFile = getDeploymentFileFromHash(hash, contentPath);
         } else {
-            log.warn("Failed to determine the deployment file of " + getAddress() + " deployment. Neither path nor hash attributes were available.");
+            log.warn("Failed to determine the deployment file of " + getAddress()
+                + " deployment. Neither path nor hash attributes were available.");
         }
 
         return deploymentFile;

@@ -65,7 +65,27 @@
       <artifactId>jboss-sasl</artifactId>
       <version>${jboss.sasl.version}</version>
     </dependency>
-    
+
+    <!-- For communication with AS7 http management interface -->
+  
+    <dependency>
+      <groupId>commons-httpclient</groupId>
+      <artifactId>commons-httpclient</artifactId>
+      <version>${commons-httpclient.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-codec</groupId>
+          <artifactId>commons-codec</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+  
+    <dependency>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+      <version>${commons-codec.version}</version>
+    </dependency>
+
     <!-- === Test Deps === -->
 
     <dependency>
@@ -118,6 +138,16 @@
                 <artifactItem>
                   <groupId>org.jboss.sasl</groupId>
                   <artifactId>jboss-sasl</artifactId>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>commons-httpclient</groupId>
+                  <artifactId>commons-httpclient</artifactId>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>commons-codec</groupId>
+                  <artifactId>commons-codec</artifactId>
                 </artifactItem>
                 
               </artifactItems>
@@ -298,19 +328,20 @@
                 </goals>
                 <configuration>
                   <target>
-                    <condition property="as7.product" value="eap" else="as">
-                      <matches pattern="^6\." string="${as7.version}"/>
-                    </condition>
-                    <property name="as7.zipfile"
-                              location="${java.io.tmpdir}/jboss-${as7.product}-${as7.version}.zip"/>
-                    <delete file="${as7.zipfile}"/>
-                    <get src="${as7.url}" dest="${as7.zipfile}" usetimestamp="true" verbose="true"/>
-                    <unzip src="${as7.zipfile}" dest="${java.io.tmpdir}"/>
-                    <!-- What was this supposed to do? Right now, it'd delete the AS7 deployment we just unzipped. -->
-                    <!-- <delete dir="${jboss7.home}" verbose="true"/>  -->
-                    <move file="${java.io.tmpdir}/jboss-eap-6.0"
-                          tofile="${jboss7.home}" failonerror="false"/>
-
+                    <!-- Set as7.zipfile name before download -->
+                    <property name="as7.zipfile" location="${java.io.tmpdir}/jboss-as7-${as7.version}.zip"/>
+                    <!-- Defensive clean (jboss7.home is a POM property) -->
+                    <delete dir="${jboss7.home}" quiet="true"/>
+                    <!-- Download as7 dist if not already present -->
+                    <get src="${as7.url}" dest="${as7.zipfile}" usetimestamp="true" verbose="true" />
+                    <!-- Unzip as7 dist to jboss7.home -->
+                    <unzip src="${as7.zipfile}" dest="${jboss7.home}">
+                        <!-- cutdirsmapper available since ANT 1.8.2. See http://ant.apache.org/manual/Types/mapper.html -->
+                        <!-- All as7 dist zip files have a top level directory in their hierarchy -->
+                        <!-- Sometimes this top level directory is not even named like the zip file (e.g. snapshot dists) -->
+                        <!-- So we use the cutdirsmapper to extract as7 files straight to as7.home -->
+                        <cutdirsmapper dirs="1"/>
+                    </unzip>
                     <chmod perm="u+rx">
                       <fileset dir="${jboss7.home}/bin" includes="*.sh"/>
                     </chmod>
@@ -334,7 +365,7 @@
                 </goals>
                 <configuration>
                    <target>
-                      <delete dir="${jboss7.home}" verbose="true"/>
+                      <delete dir="${jboss7.home}" />
                    </target>
                 </configuration>
               </execution>

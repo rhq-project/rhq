@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,6 +32,7 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.StringTokenizer;
 
+import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
@@ -77,6 +78,8 @@ public class ASConnection {
     private String host;
     private int port;
 
+    private UsernamePasswordCredentials credentials;
+
     /**
      * Construct an ASConnection object. The real "physical" connection is done in {@link #executeRaw(Operation)}.
      *
@@ -104,6 +107,10 @@ public class ASConnection {
 
         passwordAuthenticator = new AS7Authenticator(user, password);
         Authenticator.setDefault(passwordAuthenticator);
+
+        // This will hold a reference to user and password
+        // and will be used in the future when switching this class communication layer to httpclient
+        credentials = new UsernamePasswordCredentials(user, password);
 
         // read system property "as7plugin.verbose"
         verbose = Boolean.getBoolean("as7plugin.verbose");
@@ -217,17 +224,18 @@ public class ASConnection {
             if (responseStatus.getResponseCode() >= 400) {
                 if (verbose) {
                     log.debug(operation + " failed with " + responseStatus + " - response body was [" + responseBody
-                            + "].");
+                        + "].");
                 }
 
-                if (responseBody.contains("JBAS014807") || responseBody.contains("JBAS010850") || responseBody.contains("JBAS014793")) {
+                if (responseBody.contains("JBAS014807") || responseBody.contains("JBAS010850")
+                    || responseBody.contains("JBAS014793")) {
                     // management resource not found or not readable or no known child-type
                     if (log.isDebugEnabled()) {
                         log.debug("Requested management resource not found: " + operation.getAddress().getPath());
                     }
                 } else {
-                    log.warn("Received " + responseStatus + " response to " + operation + " - response body was [" +
-                            responseBody + "].");
+                    log.warn("Received " + responseStatus + " response to " + operation + " - response body was ["
+                        + responseBody + "].");
                 }
             }
 
@@ -237,11 +245,12 @@ public class ASConnection {
                     operationResult = mapper.readTree(responseBody);
                 } catch (IOException ioe) {
                     log.error("Failed to deserialize response to " + operation + " to JsonNode - response status was "
-                            + responseStatus + ", and body was [" + responseBody + "]: " + ioe);
+                        + responseStatus + ", and body was [" + responseBody + "]: " + ioe);
                     Result result = new Result();
                     result.setOutcome("failure");
-                    result.setFailureDescription("Failed to deserialize response to " + operation + " to JsonNode - response status was "
-                                                + responseStatus + ", and body was [" + responseBody + "]: " + ioe);
+                    result.setFailureDescription("Failed to deserialize response to " + operation
+                        + " to JsonNode - response status was " + responseStatus + ", and body was [" + responseBody
+                        + "]: " + ioe);
                     result.setRolledBack(responseBody.contains("rolled-back=true"));
                     result.setRhqThrowable(ioe);
                     operationResult = mapper.valueToTree(result);
@@ -304,7 +313,7 @@ public class ASConnection {
     private void handleAuthorizationFailureResponse(Operation operation, ResponseStatus responseStatus) {
         if (log.isDebugEnabled()) {
             log.debug("Response to " + operation + " was " + responseStatus
-                    + " - throwing InvalidPluginConfigurationException...");
+                + " - throwing InvalidPluginConfigurationException...");
         }
         // Throw a InvalidPluginConfigurationException, so the user will get a yellow plugin connection
         // warning message in the GUI.
@@ -315,14 +324,6 @@ public class ASConnection {
             message = "Authorization to AS7 failed - did you install a management user?";
         }
         throw new InvalidPluginConfigurationException(message);
-    }
-
-    private String getResponseMessage(HttpURLConnection conn) throws IOException {
-        String responseMessage = conn.getResponseMessage();
-        if ((responseMessage == null) && (conn.getResponseCode() == HTTP_TEMPORARY_REDIRECT)) {
-            responseMessage = "Temporary Redirect";
-        }
-        return responseMessage;
     }
 
     /** Method parses Operation.getAddress().getPath() for invalid spaces in the path passed in.
@@ -452,6 +453,14 @@ public class ASConnection {
 
     public int getPort() {
         return port;
+    }
+
+    public String getUser() {
+        return credentials.getUserName();
+    }
+
+    public String getPassword() {
+        return credentials.getPassword();
     }
 
     @NotNull

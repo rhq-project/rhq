@@ -36,6 +36,7 @@ import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.cloud.composite.AffinityGroupCountComposite;
 import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
+import org.rhq.core.domain.criteria.AgentCriteria;
 import org.rhq.core.domain.criteria.PartitionEventCriteria;
 import org.rhq.core.domain.criteria.ServerCriteria;
 import org.rhq.core.domain.resource.Agent;
@@ -46,6 +47,7 @@ import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.cloud.AffinityGroupManagerLocal;
 import org.rhq.enterprise.server.cloud.CloudManagerLocal;
 import org.rhq.enterprise.server.cloud.PartitionEventManagerLocal;
+import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -56,6 +58,8 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     private static final long serialVersionUID = 1L;
 
     private CloudManagerLocal cloudManager = LookupUtil.getCloudManager();
+    
+    private AgentManagerLocal agentManager = LookupUtil.getAgentManager();
 
     private PartitionEventManagerLocal partitionEventManager = LookupUtil.getPartitionEventManager();
 
@@ -139,6 +143,17 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
             return SerialUtility.prepare(
                 cloudManager.findServersByCriteria(getSessionSubject(), criteria),
                 "CloudGWTServiceImpl.findServersByCriteria");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
+    @Override
+    public PageList<Agent> findAgentsByCriteria(AgentCriteria criteria) throws RuntimeException {
+        try {
+            return SerialUtility.prepare(
+                agentManager.findAgentsByCriteria(getSessionSubject(), criteria),
+                "CloudGWTServiceImpl.findAgentsByCriteria");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

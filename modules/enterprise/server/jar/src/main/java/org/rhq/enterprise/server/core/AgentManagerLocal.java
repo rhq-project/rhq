@@ -30,6 +30,7 @@ import org.rhq.core.clientapi.server.core.AgentVersion;
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.clientapi.server.core.PingRequest;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.AgentCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -308,4 +309,6 @@ public interface AgentManagerLocal {
      * @return The updated request object.
      */
     public PingRequest handlePingRequest(PingRequest request);
+    
+    PageList<Agent> findAgentsByCriteria(Subject subject, AgentCriteria criteria);
 }

@@ -28,24 +28,18 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Label;
 
-import org.rhq.core.domain.criteria.AvailabilityCriteria;
-import org.rhq.core.domain.measurement.Availability;
-import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricAreaBarGraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceMetricD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -88,105 +82,74 @@ public class D3GroupGraphListView extends LocatableVLayout {
         final long endTime = startEndList.get(1);
 
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(resourceGroup.getResourceType().getId(),
-            EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
-            new ResourceTypeRepository.TypeLoadedCallback() {
-                public void onTypesLoaded(final ResourceType type) {
+                EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
+                new ResourceTypeRepository.TypeLoadedCallback() {
+                    public void onTypesLoaded(final ResourceType type) {
 
-                    final ArrayList<MeasurementDefinition> measurementDefinitions = new ArrayList<MeasurementDefinition>();
+                        final ArrayList<MeasurementDefinition> measurementDefinitions = new ArrayList<MeasurementDefinition>();
 
-                    for (MeasurementDefinition def : type.getMetricDefinitions()) {
-                        if (def.getDataType() == DataType.MEASUREMENT && def.getDisplayType() == DisplayType.SUMMARY) {
-                            measurementDefinitions.add(def);
-                        }
-                    }
-
-                    Collections.sort(measurementDefinitions, new Comparator<MeasurementDefinition>() {
-                        public int compare(MeasurementDefinition o1, MeasurementDefinition o2) {
-                            return new Integer(o1.getDisplayOrder()).compareTo(o2.getDisplayOrder());
-                        }
-                    });
-
-                    int[] measDefIdArray = new int[measurementDefinitions.size()];
-                    for (int i = 0; i < measDefIdArray.length; i++) {
-                        measDefIdArray[i] = measurementDefinitions.get(i).getId();
-                    }
-
-                    GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroup(resourceGroup.getId(), measDefIdArray, startTime, endTime,60,
-                            new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>()
-                            {
-                                @Override
-                                public void onFailure(Throwable caught)
-                                {
-                                    CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_loadFailed(),
-                                            caught);
-                                    loadingLabel.setContents(MSG.view_resource_monitor_graphs_loadFailed());
-                                }
-
-                                @Override
-                                public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> result)
-                                {
-                                    if (result.isEmpty())
-                                    {
-                                        loadingLabel.setContents(MSG.view_resource_monitor_graphs_noneAvailable());
-                                    }
-                                    else
-                                    {
-                                        loadingLabel.hide();
-                                        int i = 0;
-                                        for (List<MeasurementDataNumericHighLowComposite> data : result)
-                                        {
-                                            buildIndividualGraph(measurementDefinitions.get(i++), data);
-                                        }
-                                    }
-                                }
-                            });
-
-                }
-            });
-    }
-
-    private void buildIndividualGraph(final MeasurementDefinition measurementDefinition, final List<MeasurementDataNumericHighLowComposite> data) {
-
-        //@todo: not sure this is working for resource.groupId
-        AvailabilityCriteria c = new AvailabilityCriteria();
-        c.addFilterResourceId(resourceGroup.getId());
-        c.addFilterInitialAvailability(false);
-        c.addSortStartTime(PageOrdering.ASC);
-        GWTServiceLookup.getAvailabilityService().findAvailabilityByCriteria(c,
-                new AsyncCallback<PageList<Availability>>()
-                {
-                    @Override
-                    public void onFailure(Throwable caught)
-                    {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
-                    }
-
-                    @Override
-                    public void onSuccess(PageList<Availability> availList)
-                    {
-                        PageList<Availability> downAvailList = new PageList<Availability>();
-                        for (Availability availability : availList)
-                        {
-                            if(availability.getAvailabilityType().equals(AvailabilityType.DOWN)
-                                    || availability.getAvailabilityType().equals(AvailabilityType.DISABLED)){
-                                downAvailList.add(availability);
+                        for (MeasurementDefinition def : type.getMetricDefinitions()) {
+                            if (def.getDataType() == DataType.MEASUREMENT && def.getDisplayType() == DisplayType.SUMMARY) {
+                                measurementDefinitions.add(def);
                             }
                         }
-                        Log.debug("************** ** Down availList: " + downAvailList.size() + "\n\n");
-                        //MetricLineGraphView graphView = new MetricLineGraphView("areaBarGraph", resource.getId(),resource.getName(), measurementDefinition, data);
-                        MetricAreaBarGraphView graphView = new MetricAreaBarGraphView("groupAreaBarGraph", resourceGroup.getId(), resourceGroup.getName(), measurementDefinition, data);
-                        graphView.setAvailabilityDownList(downAvailList);
 
-                        ResourceMetricD3GraphView graph = new ResourceMetricD3GraphView(
-                                extendLocatorId(measurementDefinition.getName()), resourceGroup.getId(), resourceGroup.getName(), measurementDefinition, data, graphView);
+                        Collections.sort(measurementDefinitions, new Comparator<MeasurementDefinition>() {
+                            public int compare(MeasurementDefinition o1, MeasurementDefinition o2) {
+                                return new Integer(o1.getDisplayOrder()).compareTo(o2.getDisplayOrder());
+                            }
+                        });
 
-                        graph.setWidth("95%");
-                        graph.setHeight(320);
+                        int[] measDefIdArray = new int[measurementDefinitions.size()];
+                        for (int i = 0; i < measDefIdArray.length; i++) {
+                            measDefIdArray[i] = measurementDefinitions.get(i).getId();
+                        }
 
-                        addMember(graph);
+                        GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroup(resourceGroup.getId(), measDefIdArray, startTime, endTime,60,
+                                new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>()
+                                {
+                                    @Override
+                                    public void onFailure(Throwable caught)
+                                    {
+                                        CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_loadFailed(),
+                                                caught);
+                                        loadingLabel.setContents(MSG.view_resource_monitor_graphs_loadFailed());
+                                    }
+
+                                    @Override
+                                    public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> result)
+                                    {
+                                        if (result.isEmpty())
+                                        {
+                                            loadingLabel.setContents(MSG.view_resource_monitor_graphs_noneAvailable());
+                                        }
+                                        else
+                                        {
+                                            loadingLabel.hide();
+                                            int i = 0;
+                                            for (List<MeasurementDataNumericHighLowComposite> data : result)
+                                            {
+                                                buildIndividualGraph(measurementDefinitions.get(i++), data);
+                                            }
+                                        }
+                                    }
+                                });
 
                     }
                 });
+    }
+
+    private void buildIndividualGraph(MeasurementDefinition measurementDefinition, List<MeasurementDataNumericHighLowComposite> data) {
+
+        MetricAreaBarGraphView graphView = new MetricAreaBarGraphView("groupBarAreaGraph",resourceGroup.getId(), resourceGroup.getName(),
+                measurementDefinition, data);
+        ResourceMetricD3GraphView graph = new ResourceMetricD3GraphView(extendLocatorId(measurementDefinition.getName()), resourceGroup.getId(),
+                resourceGroup.getName(), measurementDefinition, data, graphView);
+
+        graph.setWidth("95%");
+        graph.setHeight(120);
+
+        addMember(graph);
     }
 
 }

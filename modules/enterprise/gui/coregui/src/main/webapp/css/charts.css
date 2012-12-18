@@ -27,4 +27,21 @@
     display: none;
 }
 
+.minLabel, .avgLabel, .highLabel  {
+    font-family: "Liberation Sans", Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+
+.minText, .avgText, .highText  {
+    font-family: "Liberation Sans", Arial, Helvetica, sans-serif;
+    font-size: 14px;
+}
+
+.titleName  {
+    font-family: "Liberation Sans", Arial, Helvetica, sans-serif;
+    font-size: 14px;
+}
+
 

@@ -25,7 +25,6 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
-import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -35,9 +34,11 @@ import com.smartgwt.client.widgets.layout.SectionStackSection;
 
 import org.rhq.core.domain.cloud.AffinityGroup;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
@@ -50,7 +51,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class AffinityGroupDetailView extends LocatableVLayout implements BookmarkableView {
 
-    //    private final CloudGWTServiceAsync cloudManager = GWTServiceLookup.getCloudService();
     private final int affinityGroupId;
 
     private static final int SECTION_COUNT = 3;
@@ -79,28 +79,18 @@ public class AffinityGroupDetailView extends LocatableVLayout implements Bookmar
     @Override
     protected void onInit() {
         super.onInit();
-        GWTServiceLookup.getCloudService().getAffinityGroupById(this.affinityGroupId,
-            new AsyncCallback<AffinityGroup>() {
-                public void onSuccess(final AffinityGroup affinityGroup) {
-                    prepareDetailsSection(sectionStack, affinityGroup);
+        GWTServiceLookup.getCloudService().getAffinityGroupById(affinityGroupId, new AsyncCallback<AffinityGroup>() {
+            public void onSuccess(final AffinityGroup affinityGroup) {
+                prepareDetailsSection(sectionStack, affinityGroup);
+            }
 
-                    //                GWTServiceLookup.getCloudService().getAgentsByServerName(server.getName(),
-                    //                    new AsyncCallback<List<Agent>>() {
-                    //                        public void onSuccess(List<Agent> agents) {
-                    //                            prepareAgentSection(sectionStack, server, agents);
-                    //                        };
-                    //
-                    //                        public void onFailure(Throwable caught) {
-                    //                            //TODO: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), caught);
-                    //                        }
-                    //                    });
-                }
-
-                public void onFailure(Throwable caught) {
-                    SC.say("er1:" + caught);
-                    //TODO: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), caught);
-                }
-            });
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(
+                    MSG.view_adminTopology_message_fetchAgroupFail(String.valueOf(affinityGroupId)), caught);
+                initSectionCount = SECTION_COUNT;
+                return;
+            }
+        });
         prepareAgentSection(sectionStack);
         prepareServerSection(sectionStack);
     }
@@ -178,7 +168,7 @@ public class AffinityGroupDetailView extends LocatableVLayout implements Bookmar
 
         final TextItem nameItem = new TextItem(FIELD_NAME.propertyName(), FIELD_NAME.title());
         nameItem.setValue(affinityGroup.getName());
-        
+
         LocatableToolStrip footer = new LocatableToolStrip(extendLocatorId("detailsFooter"));
         footer.setPadding(5);
         footer.setWidth100();
@@ -187,25 +177,27 @@ public class AffinityGroupDetailView extends LocatableVLayout implements Bookmar
         IButton saveButton = new IButton();
         saveButton.setOverflow(Overflow.VISIBLE);
         saveButton.setTitle(MSG.common_button_save());
-//        saveButton.setWidth(70);
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 affinityGroup.setName(nameItem.getValueAsString());
                 GWTServiceLookup.getCloudService().updateAffinityGroup(affinityGroup, new AsyncCallback<Void>() {
                     public void onSuccess(Void result) {
-                        // todo: notify
+                        Message msg = new Message(MSG.view_adminTopology_message_agroupRenamed(
+                            String.valueOf(affinityGroupId), affinityGroup.getName(), nameItem.getValueAsString()),
+                            Message.Severity.Info);
+                        CoreGUI.getMessageCenter().notify(msg);
                     }
 
                     public void onFailure(Throwable caught) {
-                        // todo: handle
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_adminTopology_message_agroupRenamingFail(String.valueOf(affinityGroupId),
+                                affinityGroup.getName()) + " " + caught.getMessage(), caught);
                     }
                 });
             }
         });
         footer.addMember(saveButton);
-
         form.setItems(nameItem);
-
         SectionStackSection section = new SectionStackSection(MSG.common_title_details());
         section.setExpanded(true);
         section.setItems(form, footer);

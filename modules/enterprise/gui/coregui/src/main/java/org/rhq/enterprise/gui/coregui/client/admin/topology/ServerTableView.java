@@ -79,7 +79,7 @@ public class ServerTableView extends
         setHeight100();
         setWidth100();
         if (isAffinityGroupId) {
-            setDataSource(new ServerDatasource(id, true));
+            setDataSource(new ServerDatasource(id));
         } else {
             setDataSource(showActions ? new ServerWithAgentCountDatasource() : new FailoverListItemDatasource(id));
         }
@@ -96,6 +96,7 @@ public class ServerTableView extends
             listGrid.sort(FIELD_NAME, SortDirection.ASCENDING);
             showCommonActions();
         } else if (isAffinityGroupId) {
+            listGrid.sort(FIELD_NAME, SortDirection.ASCENDING);
             // displayed from AffinityGroupDetailView
             showUpdateMembersAction();
         } else {
@@ -141,7 +142,7 @@ public class ServerTableView extends
     }
 
     private void showCommonActions() {
-        addChangeOperationModeAction(OperationMode.NORMAL, MSG.view_adminTopology_server_setMaintenance());
+        addChangeOperationModeAction(OperationMode.NORMAL, MSG.view_adminTopology_server_setNormal());
         addChangeOperationModeAction(OperationMode.MAINTENANCE, MSG.view_adminTopology_server_setMaintenance());
 
         addTableAction(extendLocatorId("removeSelected"), MSG.view_adminTopology_server_removeSelected(), null,

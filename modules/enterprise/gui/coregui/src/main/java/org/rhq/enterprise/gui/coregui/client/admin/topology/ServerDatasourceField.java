@@ -29,9 +29,8 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 public enum ServerDatasourceField {
 
     FIELD_ID("id", CoreGUI.getMessages().common_title_id()),
-    
-    // todo: i18n
-    FIELD_ORDINAL("ordinal", "Order"),
+
+    FIELD_ORDINAL("ordinal", CoreGUI.getMessages().view_adminTopology_message_order()),
 
     FIELD_NAME("name", CoreGUI.getMessages().common_title_name()),
 
@@ -42,13 +41,13 @@ public enum ServerDatasourceField {
     FIELD_PORT("port", CoreGUI.getMessages().view_adminTopology_server_nonSecurePort()),
 
     FIELD_SECURE_PORT("securePort", CoreGUI.getMessages().view_adminTopology_server_securePort()),
-    
+
     FIELD_CTIME("ctime", CoreGUI.getMessages().view_adminTopology_serverDetail_installationDate()),
 
     FIELD_MTIME("mtime", CoreGUI.getMessages().view_adminTopology_server_lastUpdateTime()),
 
     FIELD_AFFINITY_GROUP("affinityGroup", CoreGUI.getMessages().view_adminTopology_server_affinityGroup()),
-    
+
     FIELD_AFFINITY_GROUP_ID("affinityGroupId", "affinityGroupId"),
 
     FIELD_AGENT_COUNT("agentCount", CoreGUI.getMessages().view_adminTopology_server_agentCount());

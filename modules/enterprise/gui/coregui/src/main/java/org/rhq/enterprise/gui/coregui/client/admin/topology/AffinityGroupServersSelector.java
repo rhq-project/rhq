@@ -22,7 +22,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.topology;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_NAME;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +31,6 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
@@ -49,6 +48,7 @@ import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.criteria.ServerCriteria;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
@@ -82,27 +82,24 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, Serve
         this.affinityGroupId = affinityGroupId;
         prepareMembers(this);
     }
-    
+
     @Override
     protected DynamicForm getAvailableFilterForm() {
         if (availableFilterForm == null) {
             availableFilterForm = new LocatableDynamicForm(extendLocatorId("SerSelectAvailFilterForm"));
             availableFilterForm.setNumCols(4);
             availableFilterForm.setWidth("75%");
-            final TextItem search = new TextItem(NAME.propertyName(), MSG.common_title_search());
-            final SelectItem operationModeSelect = new SortedSelectItem(ServerDatasource.FILTER_OPERATION_MODE, MSG.view_adminTopology_serverDetail_operationMode());
+            final TextItem search = new TextItem(FIELD_NAME.propertyName(), MSG.common_title_search());
+            final SelectItem operationModeSelect = new SortedSelectItem(ServerDatasource.FILTER_OPERATION_MODE,
+                MSG.view_adminTopology_serverDetail_operationMode());
             operationModeSelect.setValueMap(buildOperationModeOptions());
             operationModeSelect.setValue("ALL");
-//            
-//            final EnumSelectItem operationModeFilter = new EnumSelectItem(ServerDatasource.FILTER_OPERATION_MODE,
-//                MSG.view_adminTopology_serverDetail_operationMode(), OperationMode.class, null, null);
-
 
             availableFilterForm.setItems(search, operationModeSelect);
         }
         return availableFilterForm;
     }
-    
+
     private String[] buildOperationModeOptions() {
         OperationMode[] modes = OperationMode.values();
         String[] options = new String[modes.length + 1];
@@ -117,27 +114,28 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, Serve
         ServerCriteria criteria = new ServerCriteria();
         criteria.addFilterAffinityGroupId(affinityGroupId);
         GWTServiceLookup.getCloudService().findServersByCriteria(criteria, new AsyncCallback<PageList<Server>>() {
-                public void onSuccess(PageList<Server> result) {
-                    ListGridRecord[] records = getDataSource().buildRecords(result);
-                    originallyAssignedIds = getIdList(records);
-                    setAssigned(records);
-                    modalWindow.addItem(layout);
-                    modalWindow.show();
-                    selector.reset();
-                }
+            public void onSuccess(PageList<Server> result) {
+                ListGridRecord[] records = getDataSource().buildRecords(result);
+                originallyAssignedIds = getIdList(records);
+                setAssigned(records);
+                modalWindow.addItem(layout);
+                modalWindow.show();
+                selector.reset();
+            }
 
-                @Override
-                public void onFailure(Throwable t) {
-                    //todo: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), t);
-                }
-            });
+            @Override
+            public void onFailure(Throwable t) {
+                CoreGUI.getErrorHandler().handleError(
+                    MSG.view_adminTopology_message_fetchServersFail(String.valueOf(affinityGroupId)), t);
+            }
+        });
 
     }
 
     @Override
     protected RPCDataSource<Server, ServerCriteria> getDataSource() {
         if (datasource == null) {
-            datasource = new ServerDatasource(affinityGroupId, false);
+            datasource = new ServerDatasource(null);
         }
         return datasource;
     }
@@ -149,11 +147,11 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, Serve
 
     @Override
     protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
-        String search = (String) availableFilterForm.getValue(NAME.propertyName());
+        String search = (String) availableFilterForm.getValue(FIELD_NAME.propertyName());
         String operationMode = (String) availableFilterForm.getValue(ServerDatasource.FILTER_OPERATION_MODE);
         Criteria criteria = new Criteria();
         if (null != search) {
-            criteria.addCriteria(NAME.propertyName(), search);
+            criteria.addCriteria(FIELD_NAME.propertyName(), search);
         }
         if (operationMode != null && !"ALL".equals(operationMode)) {
             criteria.addCriteria(ServerDatasource.FILTER_OPERATION_MODE, operationMode);
@@ -171,7 +169,7 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, Serve
         return IconEnum.SERVERS.getIcon16x16Path();
     }
 
-    public static void show(Integer affinityGroupId, final TableSection parrent) {
+    public static void show(final Integer affinityGroupId, final TableSection<?> parrent) {
         modalWindow = new Window();
         modalWindow.addCloseClickHandler(new CloseClickHandler() {
             public void onCloseClick(CloseClickEvent event) {
@@ -193,7 +191,7 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, Serve
         layout.setPadding(10);
         layout.setLayoutMargin(10);
 
-        final AffinityGroupServersSelector selector = new AffinityGroupServersSelector("foo", affinityGroupId);
+        final AffinityGroupServersSelector selector = new AffinityGroupServersSelector("assignServers", affinityGroupId);
         layout.addMember(selector);
 
         IButton cancel = new LocatableIButton(selector.extendLocatorId("Cancel"), MSG.common_button_cancel());
@@ -214,14 +212,14 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, Serve
                     shouldBeClosed = false;
                     GWTServiceLookup.getCloudService().removeServersFromGroup(
                         originallySelected.toArray(new Integer[originallySelected.size()]), new AsyncCallback<Void>() {
-
                             public void onSuccess(Void result) {
                                 closeAndRefresh(parrent, true);
                             }
 
-                            public void onFailure(Throwable caught) {
-                                //todo: error handling
-                                SC.say("errX");
+                            public void onFailure(Throwable t) {
+                                CoreGUI.getErrorHandler().handleError(
+                                    MSG.view_adminTopology_message_agroupAssingServersFail(String
+                                        .valueOf(affinityGroupId)), t);
                             }
                         });
                 }
@@ -229,22 +227,20 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, Serve
                     shouldBeClosed = false;
                     GWTServiceLookup.getCloudService().addServersToGroup(selector.getAffinityGroupId(),
                         actuallySelected.toArray(new Integer[actuallySelected.size()]), new AsyncCallback<Void>() {
-
                             public void onSuccess(Void result) {
                                 closeAndRefresh(parrent, true);
                             }
 
-                            public void onFailure(Throwable caught) {
-                                //todo: error handling
-                                SC.say("errX");
+                            public void onFailure(Throwable t) {
+                                CoreGUI.getErrorHandler().handleError(
+                                    MSG.view_adminTopology_message_agroupRemovingServersFail(String
+                                        .valueOf(affinityGroupId)), t);
                             }
                         });
                 }
                 if (shouldBeClosed) {
                     closeAndRefresh(parrent, false);
                 }
-                //                SC.say("To del: " + originallySelected + "\n\nTo add: " + actuallySelected);
-
             }
         });
 
@@ -257,7 +253,7 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, Serve
         layout.addMember(buttons);
     }
 
-    private static void closeAndRefresh(TableSection parrent, boolean fullRefresh) {
+    private static void closeAndRefresh(TableSection<?> parrent, boolean fullRefresh) {
         if (modalWindow != null) {
             modalWindow.destroy();
         }

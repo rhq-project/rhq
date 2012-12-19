@@ -42,9 +42,8 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.AgentCriteria;
 import org.rhq.core.domain.resource.Agent;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -61,7 +60,6 @@ public class AgentDatasource extends RPCDataSource<Agent, AgentCriteria> {
     public static final String FILTER_PORT = FIELD_PORT.propertyName();
     public static final String FILTER_SERVER_ID = "serverId";
     public static final String FILTER_AFFINITY_GROUP_ID = "affinityGroupId";
-    
 
     private final Integer id;
     private final boolean isAffinityGroupId;
@@ -115,31 +113,10 @@ public class AgentDatasource extends RPCDataSource<Agent, AgentCriteria> {
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response, AgentCriteria criteria) {
-//        final PageControl pc = getPageControl(request);
-
-//        AsyncCallback<PageList<Agent>> callback = new AsyncCallback<PageList<Agent>>() {
-//            public void onSuccess(PageList<Agent> result) {
-//                response.setData(buildRecords(result));
-//                response.setTotalRows(result.size());
-//                processResponse(request.getRequestId(), response);
-//            }
-//
-//            @Override
-//            public void onFailure(Throwable t) {
-//                //todo: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), t);
-//                response.setStatus(DSResponse.STATUS_FAILURE);
-//                processResponse(request.getRequestId(), response);
-//            }
-//        };
-//
-//        
         if (isAffinityGroupId) {
-//            GWTServiceLookup.getCloudService().getAgentMembersByAffinityGroupId(id, pc, callback);
             criteria.addFilterAffinityGroupId(id);
-        } else if (id != null) {
-            // if id == null all agent are returned
+        } else {
             criteria.addFilterServerId(id);
-//            GWTServiceLookup.getAgentService().getAgentsByServer(id, pc, callback);
         }
 
         GWTServiceLookup.getCloudService().findAgentsByCriteria(criteria, new AsyncCallback<PageList<Agent>>() {
@@ -151,36 +128,11 @@ public class AgentDatasource extends RPCDataSource<Agent, AgentCriteria> {
 
             @Override
             public void onFailure(Throwable t) {
-                //todo: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), t);
+                CoreGUI.getErrorHandler().handleError(MSG.view_adminTopology_message_fetchAgents2Fail(), t);
                 response.setStatus(DSResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }
         });
-    }
-
-    /**
-     * Returns a prepopulated PageControl based on the provided DSRequest. This will set sort fields,
-     * pagination, but *not* filter fields.
-     *
-     * @param request the request to turn into a page control
-     * @return the page control for passing to criteria and other queries
-     */
-    protected PageControl getPageControl(DSRequest request) {
-        // Initialize paging.         
-        PageControl pageControl = new PageControl(0, getDataPageSize());
-
-        // Initialize sorting.
-        String sortBy = request.getAttribute("sortBy");
-        if (sortBy != null) {
-            String[] sorts = sortBy.split(",");
-            for (String sort : sorts) {
-                PageOrdering ordering = (sort.startsWith("-")) ? PageOrdering.DESC : PageOrdering.ASC;
-                String columnName = (ordering == PageOrdering.DESC) ? sort.substring(1) : sort;
-                pageControl.addDefaultOrderingField(columnName, ordering);
-            }
-        }
-
-        return pageControl;
     }
 
     @Override
@@ -216,7 +168,6 @@ public class AgentDatasource extends RPCDataSource<Agent, AgentCriteria> {
         criteria.addFilterPort(getFilter(request, FILTER_PORT, Integer.class));
         criteria.addFilterServerId(getFilter(request, FILTER_SERVER_ID, Integer.class));
         criteria.addFilterAffinityGroupId(getFilter(request, FILTER_AFFINITY_GROUP_ID, Integer.class));
-        
 
         //@todo: Remove me when finished debugging search expression
         Log.debug(" *** AgentCriteria Search String: " + getFilter(request, "search", String.class));

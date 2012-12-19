@@ -43,6 +43,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.cloud.FailoverListDetails;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
@@ -53,14 +54,14 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 public class FailoverListItemDatasource extends AbstractServerNodeDatasource<FailoverListDetails, Criteria> {
 
     private final int agentId;
-    
+
     // this delegate is there to not repeat the copyValues code
     private final ServerDatasource serverDatasource;
 
     public FailoverListItemDatasource(int agentId) {
         super();
         this.agentId = agentId;
-        this.serverDatasource = new ServerDatasource(null, false);
+        this.serverDatasource = new ServerDatasource(null);
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
     }
@@ -111,13 +112,14 @@ public class FailoverListItemDatasource extends AbstractServerNodeDatasource<Fai
 
                 @Override
                 public void onFailure(Throwable t) {
-                    //todo: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), t);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_adminTopology_message_fetchFailOverLists(), t);
                     response.setStatus(DSResponse.STATUS_FAILURE);
                     processResponse(request.getRequestId(), response);
                 }
             });
     }
 
+    @Override
     protected PageControl getPageControl(DSRequest request) {
         return serverDatasource.getPageControl(request);
     }

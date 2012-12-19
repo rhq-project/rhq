@@ -31,7 +31,6 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
-import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;

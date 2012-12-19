@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.admin.topology;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_ADDRESS;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_AFFINITY_GROUP;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_AFFINITY_GROUP_ID;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_AGENT_COUNT;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_ID;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_MTIME;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_NAME;
@@ -47,6 +46,7 @@ import org.rhq.core.domain.criteria.ServerCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -56,7 +56,7 @@ import org.rhq.enterprise.gui.coregui.client.util.Log;
  *
  */
 public class ServerDatasource extends AbstractServerNodeDatasource<Server, ServerCriteria> {
-    
+
     // filters
     public static final String FILTER_ADDRESS = FIELD_ADDRESS.propertyName();
     public static final String FILTER_PORT = FIELD_PORT.propertyName();
@@ -66,13 +66,10 @@ public class ServerDatasource extends AbstractServerNodeDatasource<Server, Serve
     public static final String FILTER_AFFINITY_GROUP_ID = "affinityGroupId";
 
     private final Integer affinityGroupId;
-    
-    private final boolean fetchMembers;
 
-    public ServerDatasource(Integer affinityGroupId, boolean fetchMembers) {
+    public ServerDatasource(Integer affinityGroupId) {
         super();
         this.affinityGroupId = affinityGroupId;
-        this.fetchMembers = fetchMembers;
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
     }
@@ -107,36 +104,28 @@ public class ServerDatasource extends AbstractServerNodeDatasource<Server, Serve
         ListGridField affinityGroupIdField = FIELD_AFFINITY_GROUP_ID.getListGridField();
         affinityGroupIdField.setHidden(true);
         fields.add(affinityGroupIdField);
-        fields.add(FIELD_AGENT_COUNT.getListGridField("75"));
 
         return fields;
     }
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response, ServerCriteria criteria) {
-        if (affinityGroupId == null) {
-            return;
+        if (affinityGroupId != null) {
+            criteria.addFilterAffinityGroupId(affinityGroupId);
         }
-        final PageControl pc = getPageControl(request);
-        AsyncCallback<PageList<Server>> callback = new AsyncCallback<PageList<Server>>() {
+        GWTServiceLookup.getCloudService().findServersByCriteria(criteria, new AsyncCallback<PageList<Server>>() {
             public void onSuccess(PageList<Server> result) {
                 response.setData(buildRecords(result));
                 response.setTotalRows(result.size());
                 processResponse(request.getRequestId(), response);
             }
 
-            @Override
             public void onFailure(Throwable t) {
-                //todo: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), t);
+                CoreGUI.getErrorHandler().handleError(MSG.view_adminTopology_message_fetchServers2Fail(), t);
                 response.setStatus(DSResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }
-        };
-        
-        if(fetchMembers) {
-            criteria.addFilterAffinityGroupId(affinityGroupId);
-        }
-        GWTServiceLookup.getCloudService().findServersByCriteria(criteria, callback);
+        });
     }
 
     /**
@@ -146,6 +135,7 @@ public class ServerDatasource extends AbstractServerNodeDatasource<Server, Serve
      * @param request the request to turn into a page control
      * @return the page control for passing to criteria and other queries
      */
+    @Override
     protected PageControl getPageControl(DSRequest request) {
         // Initialize paging.         
         PageControl pageControl = new PageControl(0, getDataPageSize());
@@ -167,10 +157,6 @@ public class ServerDatasource extends AbstractServerNodeDatasource<Server, Serve
     @Override
     public Server copyValues(Record from) {
         throw new UnsupportedOperationException("ServerDatasource.copyValues(Record from)");
-//        Server server = new Server();
-//        server.setId(from.getAttributeAsInt(FIELD_ID.propertyName()));
-//        server.setName(from.getAttributeAsString(FIELD_NAME.propertyName()));
-//        return server;
     }
 
     @Override
@@ -193,7 +179,7 @@ public class ServerDatasource extends AbstractServerNodeDatasource<Server, Serve
     @Override
     protected ServerCriteria getFetchCriteria(DSRequest request) {
         ServerCriteria criteria = new ServerCriteria();
-//        printRequestCriteria(request);
+        //        printRequestCriteria(request);
         criteria.addFilterId(getFilter(request, FIELD_ID.propertyName(), Integer.class));
         criteria.addFilterName(getFilter(request, FIELD_NAME.propertyName(), String.class));
         criteria.addFilterAddress(getFilter(request, FILTER_ADDRESS, String.class));
@@ -202,7 +188,7 @@ public class ServerDatasource extends AbstractServerNodeDatasource<Server, Serve
         criteria.addFilterOperationMode(getFilter(request, FILTER_OPERATION_MODE, OperationMode.class));
         criteria.addFilterComputePower(getFilter(request, FILTER_COMPUTE_POWER, Integer.class));
         criteria.addFilterAffinityGroupId(getFilter(request, FILTER_AFFINITY_GROUP_ID, Integer.class));
-        
+
         //@todo: Remove me when finished debugging search expression
         Log.debug(" *** ServerCriteria Search String: " + getFilter(request, "search", String.class));
         criteria.setSearchExpression(getFilter(request, "search", String.class));

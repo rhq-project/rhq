@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.topology;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -63,18 +64,29 @@ public class PartitionEventTableView extends TableSection<PartitionEventDatasour
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_TOPOLOGY_VIEW_ID + "/" + VIEW_ID;
 
-
     private static final Criteria INITIAL_CRITERIA = new Criteria();
 
-    private static SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(PartitionEventCriteria.SORT_FIELD_CTIME,
-        SortDirection.DESCENDING);
+    private static final SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(
+        PartitionEventCriteria.SORT_FIELD_CTIME, SortDirection.DESCENDING);
+
+    private enum TableAction {
+        REMOVE_SELECTED(MSG.view_adminTopology_server_removeSelected(), TableActionEnablement.ANY), PURGE_ALL(MSG
+            .view_adminTopology_partitionEvents_purgeAll(), TableActionEnablement.ALWAYS), FORCE_REPARTITION(MSG
+            .view_adminTopology_partitionEvents_forceRepartition(), TableActionEnablement.ALWAYS);
+
+        private String title;
+        private TableActionEnablement enablement;
+
+        private TableAction(String title, TableActionEnablement enablement) {
+            this.title = title;
+            this.enablement = enablement;
+        }
+    }
 
     public PartitionEventTableView(String locatorId, String tableTitle) {
         super(locatorId, tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
-
         setHeight100();
         setWidth100();
-
         setInitialCriteriaFixed(false);
         setDataSource(new PartitionEventDatasource());
     }
@@ -89,22 +101,6 @@ public class PartitionEventTableView extends TableSection<PartitionEventDatasour
 
         final TextItem detail = new TextItem(PartitionEventDatasource.FILTER_EVENT_DETAIL,
             MSG.view_adminTopology_partitionEvents_detailsFilter());
-        //        detail.setValue("");
-
-        //        startDateFilter = new DateFilterItem(DateFilterItem.START_DATE_FILTER, MSG.filter_from_date());
-        //        endDateFilter = new DateFilterItem(DateFilterItem.END_DATE_FILTER, MSG.filter_to_date());
-
-//        SpacerItem spacerItem = new SpacerItem();
-//        spacerItem.setColSpan(1);
-//        final ButtonItem showAll = new ButtonItem("showAll", "Show All");
-//        showAll.addClickHandler(new ClickHandler() {
-//            public void onClick(ClickEvent event) {
-//                statusFilter.init(ExecutionStatus.class, null, null);
-//                typeFilter.init(PartitionEventType.class, null, null);
-//                detail.setValue("");
-//                refresh();
-//            }
-//        });
 
         if (isShowFilterForm()) {
             setFilterFormItems(statusFilter, detail, typeFilter);
@@ -118,7 +114,7 @@ public class PartitionEventTableView extends TableSection<PartitionEventDatasour
         ListGrid listGrid = getListGrid();
         listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
         showActions();
-        
+
         for (ListGridField field : fields) {
             // adding the cell formatter for name field (clickable link)
             if (field.getName() == PartitionEventDatasourceField.FIELD_EVENT_TYPE.propertyName()) {
@@ -137,140 +133,97 @@ public class PartitionEventTableView extends TableSection<PartitionEventDatasour
         }
     }
 
-    //    @Override
-    //    protected String getDetailsLinkColumnName() {
-    //        return PartitionEventDatasourceField.FIELD_EVENT_TYPE.propertyName();
-    //    }
-    //    
-    //    @Override
-    //    protected CellFormatter getDetailsLinkColumnCellFormatter() {
-    //        return new CellFormatter() {
-    //            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-    //                Integer recordId = getId(record);
-    //                String detailsUrl = "#" + VIEW_PATH + "/" + recordId;
-    //                return SeleniumUtility.getLocatableHref(detailsUrl, detailsUrl, null);
-    //            }
-    //        };
-    //    }
-
     @Override
     public Canvas getDetailsView(Integer id) {
         return new PartitionEventDetailView(extendLocatorId("detailsView"), id);
     }
 
     private void showActions() {
-        addTableAction(extendLocatorId("removeSelected"), MSG.view_adminTopology_server_removeSelected(),
-            MSG.common_msg_areYouSure(), new AuthorizedTableAction(this, TableActionEnablement.ANY,
-                Permission.MANAGE_SETTINGS) {
-                public void executeAction(final ListGridRecord[] selections, Object actionValue) {
-                    String message = "Really? Delete? For all I've done for you? ";
-                    SC.ask(message, new BooleanCallback() {
-                        public void execute(Boolean confirmed) {
-                            if (confirmed) {
-                                int[] selectedIds = getSelectedIds(selections);
-                                SC.say("setting servers to maintenance mode, ids: " + selectedIds);
-                                GWTServiceLookup.getCloudService().deletePartitionEvents(selectedIds,
-                                    new AsyncCallback<Void>() {
-                                        public void onSuccess(Void arg0) {
-                                            // TODO: msg
-                                            Message msg = new Message(MSG
-                                                .view_admin_plugins_disabledServerPlugins("sdf"), Message.Severity.Info);
-                                            CoreGUI.getMessageCenter().notify(msg);
-                                            refresh();
-                                        }
+        addTableAction(TableAction.REMOVE_SELECTED);
+        addTableAction(TableAction.PURGE_ALL);
+        addTableAction(TableAction.FORCE_REPARTITION);
+    }
 
-                                        public void onFailure(Throwable caught) {
-                                            // TODO: msg
-                                            CoreGUI.getErrorHandler().handleError(
-                                                MSG.view_admin_plugins_disabledServerPluginsFailure() + " "
-                                                    + caught.getMessage(), caught);
-                                            refreshTableInfo();
-                                        }
-
-                                    });
-                            } else {
-                                refreshTableInfo();
-                            }
-                        }
-                    });
+    private void addTableAction(final TableAction action) {
+        addTableAction(extendLocatorId(action.toString()), action.title, null, new AuthorizedTableAction(this,
+            action.enablement, Permission.MANAGE_SETTINGS) {
+            public void executeAction(final ListGridRecord[] selections, Object actionValue) {
+                String eventTypes = getSelectedEventTypes(selections).toString();
+                String message = null;
+                switch (action) {
+                case REMOVE_SELECTED:
+                    message = MSG.view_adminTopology_message_removePEventConfirm(eventTypes);
+                    break;
+                case PURGE_ALL:
+                    message = MSG.view_adminTopology_message_removeAllPEventConfirm();
+                    break;
+                case FORCE_REPARTITION:
+                    message = MSG.view_adminTopology_message_forceRepartition();
+                    break;
+                default:
+                    throw new IllegalArgumentException("unknown table action type");
                 }
-            });
+                SC.ask(message, new BooleanCallback() {
+                    public void execute(Boolean confirmed) {
+                        if (confirmed) {
+                            int[] selectedIds = getSelectedIds(selections);
 
-        addTableAction(extendLocatorId("purgeAll"), MSG.view_adminTopology_partitionEvents_purgeAll(),
-            MSG.common_msg_areYouSure(), new AuthorizedTableAction(this, TableActionEnablement.ALWAYS,
-                Permission.MANAGE_SETTINGS) {
-                public void executeAction(final ListGridRecord[] selections, Object actionValue) {
-                    // TODO: msg
-                    //                       String message = MSG.view_admin_plugins_serverDisableConfirm(selectedNames.toString());
-                    String message = "Really? Normal? For all I've done for you? ";
-                    SC.ask(message, new BooleanCallback() {
-                        public void execute(Boolean confirmed) {
-                            if (confirmed) {
-                                int[] selectedIds = getSelectedIds(selections);
-                                SC.say("setting servers to maintenance mode, ids: " + selectedIds);
-                                GWTServiceLookup.getCloudService().purgeAllEvents(new AsyncCallback<Void>() {
-                                    public void onSuccess(Void arg0) {
-                                        // TODO: msg
-                                        Message msg = new Message(MSG.view_admin_plugins_disabledServerPlugins("sdf"),
-                                            Message.Severity.Info);
-                                        CoreGUI.getMessageCenter().notify(msg);
-                                        refresh();
+                            AsyncCallback<Void> callback = new AsyncCallback<Void>() {
+                                public void onSuccess(Void arg0) {
+                                    String msgString = null;
+                                    switch (action) {
+                                    case REMOVE_SELECTED:
+                                        msgString = MSG.view_adminTopology_message_removedPEvent(String
+                                            .valueOf(selections.length));
+                                        break;
+                                    case PURGE_ALL:
+                                        msgString = MSG.view_adminTopology_message_removedAllPEvent();
+                                        break;
+                                    case FORCE_REPARTITION:
+                                        msgString = MSG.view_adminTopology_message_repartitioned();
                                     }
+                                    Message msg = new Message(msgString, Message.Severity.Info);
+                                    CoreGUI.getMessageCenter().notify(msg);
+                                    refresh();
+                                }
 
-                                    public void onFailure(Throwable caught) {
-                                        // TODO: msg
-                                        CoreGUI.getErrorHandler().handleError(
-                                            MSG.view_admin_plugins_disabledServerPluginsFailure() + " "
-                                                + caught.getMessage(), caught);
-                                        refreshTableInfo();
+                                public void onFailure(Throwable caught) {
+                                    String msgString = null;
+                                    switch (action) {
+                                    case REMOVE_SELECTED:
+                                        msgString = MSG.view_adminTopology_message_removePEventFail(String
+                                            .valueOf(selections.length));
+                                        break;
+                                    case PURGE_ALL:
+                                        msgString = MSG.view_adminTopology_message_removedAllPEventFail();
+                                        break;
+                                    case FORCE_REPARTITION:
+                                        msgString = MSG.view_adminTopology_message_forceRepartitionFail();
                                     }
+                                    CoreGUI.getErrorHandler()
+                                        .handleError(msgString + " " + caught.getMessage(), caught);
+                                    refreshTableInfo();
+                                }
 
-                                });
-                            } else {
-                                refreshTableInfo();
+                            };
+                            switch (action) {
+                            case REMOVE_SELECTED:
+                                GWTServiceLookup.getCloudService().deletePartitionEvents(selectedIds, callback);
+                                break;
+                            case PURGE_ALL:
+                                GWTServiceLookup.getCloudService().purgeAllEvents(callback);
+                                break;
+                            case FORCE_REPARTITION:
+                                GWTServiceLookup.getCloudService().cloudPartitionEventRequest(callback);
                             }
+
+                        } else {
+                            refreshTableInfo();
                         }
-                    });
-                }
-            });
-
-        addTableAction(extendLocatorId("forceRepartition"), MSG.view_adminTopology_partitionEvents_forceRepartition(),
-            new AuthorizedTableAction(this, TableActionEnablement.ALWAYS, Permission.MANAGE_SETTINGS) {
-                public void executeAction(final ListGridRecord[] selections, Object actionValue) {
-                    //                    List<String> selectedNames = getSelectedNames(selections);
-                    // TODO: msg
-                    //                String message = MSG.view_admin_plugins_serverDisableConfirm(selectedNames.toString());
-                    String message = "Really? Repartition? For all I've done for you? ";// + selectedNames;
-                    SC.ask(message, new BooleanCallback() {
-                        public void execute(Boolean confirmed) {
-                            if (confirmed) {
-                                SC.say("repartition is now forced");
-                                GWTServiceLookup.getCloudService().cloudPartitionEventRequest(
-                                    new AsyncCallback<Void>() {
-                                        public void onSuccess(Void arg0) {
-                                            // TODO: msg
-                                            Message msg = new Message(MSG
-                                                .view_admin_plugins_disabledServerPlugins("sdf"), Message.Severity.Info);
-                                            CoreGUI.getMessageCenter().notify(msg);
-                                            refresh();
-                                        }
-
-                                        public void onFailure(Throwable caught) {
-                                            // TODO: msg
-                                            CoreGUI.getErrorHandler().handleError(
-                                                MSG.view_admin_plugins_disabledServerPluginsFailure() + " "
-                                                    + caught.getMessage(), caught);
-                                            refreshTableInfo();
-                                        }
-
-                                    });
-                            } else {
-                                refreshTableInfo();
-                            }
-                        }
-                    });
-                }
-            });
+                    }
+                });
+            }
+        });
     }
 
     private int[] getSelectedIds(ListGridRecord[] selections) {
@@ -285,16 +238,16 @@ public class PartitionEventTableView extends TableSection<PartitionEventDatasour
         return ids;
     }
 
-    //    private List<String> getSelectedNames(ListGridRecord[] selections) {
-    //        if (selections == null) {
-    //            return new ArrayList<String>(0);
-    //        }
-    //        List<String> ids = new ArrayList<String>(selections.length);
-    //        for (ListGridRecord selection : selections) {
-    //            ids.add(selection.getAttributeAsString(FIELD_NAME));
-    //        }
-    //        return ids;
-    //    }
+    private List<String> getSelectedEventTypes(ListGridRecord[] selections) {
+        if (selections == null) {
+            return new ArrayList<String>(0);
+        }
+        List<String> ids = new ArrayList<String>(selections.length);
+        for (ListGridRecord selection : selections) {
+            ids.add(selection.getAttributeAsString(PartitionEventDatasourceField.FIELD_EVENT_TYPE.propertyName()));
+        }
+        return ids;
+    }
 
     @Override
     public ViewName getViewName() {

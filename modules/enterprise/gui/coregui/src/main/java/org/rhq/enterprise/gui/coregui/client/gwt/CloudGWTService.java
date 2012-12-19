@@ -41,72 +41,197 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
 /**
+ * API for HAAC console, mostly CRUD operations for entities <code>Server</code>, <code>Agent</code>, 
+ * <code>PartitionEvent</code> and <code>AffinityGroup</code>.
+ *
  * @author Jiri Kremser
  */
 public interface CloudGWTService extends RemoteService {
 
     /**
+     * Returns all the servers with agent count.
      * 
-     * @return a list of all available servers (the servers in MAINTENANCE mode are included as well)
+     * @param pageControl the page control instance
+     * @return a list of all available servers (the servers in <code>MAINTENANCE</code> or <code>DOWN</code> mode are included as well)
      * @throws RuntimeException
      */
-    List<ServerWithAgentCountComposite> getServers(PageControl pc) throws RuntimeException;
+    List<ServerWithAgentCountComposite> getServers(PageControl pageControl) throws RuntimeException;
 
-    Server getServerById(int serverId) throws RuntimeException;
-
-    List<Agent> getAgentsByServerName(String serverName) throws RuntimeException;
-
+    /**
+     * Deletes the servers with provided ids.
+     * 
+     * @param serverIds array of server ids
+     * @throws RuntimeException
+     */
     void deleteServers(int[] serverIds) throws RuntimeException;
 
+    /**
+     * Updates the server mode to particular servers.
+     * 
+     * @param serverIds the array of ids of the servers whose modes are object of update
+     * @param mode the new operation mode
+     * @throws RuntimeException
+     */
     void updateServerMode(int[] serverIds, Server.OperationMode mode) throws RuntimeException;
 
+    /**
+     * Updates the server.
+     * 
+     * @param server instance of Server
+     * @throws RuntimeException
+     */
     void updateServer(Server server) throws RuntimeException;
 
-    List<FailoverListDetails> getFailoverListDetailsByAgentId(int agentId, PageControl pc) throws RuntimeException;;
+    /**
+     * Returns the list of <code>FailoverListDetails</code> for a particular agent.
+     * 
+     * @param agentId the id the agent
+     * @param pageControl the page control instance
+     * @return a list of <code>FailoverListDetails</code> instances
+     * @throws RuntimeException
+     */
+    List<FailoverListDetails> getFailoverListDetailsByAgentId(int agentId, PageControl pageControl) throws RuntimeException;;
 
+    /**
+     * Finder for <code>PartitionEvent</code> instances
+     * 
+     * @param criteria the criteria for finding partition events
+     * @return a list of <code>codePartitionEvent</code> instances
+     * @throws RuntimeException
+     */
     PageList<PartitionEvent> findPartitionEventsByCriteria(PartitionEventCriteria criteria) throws RuntimeException;
 
+    /**
+     * Finder for <code>Server</code> instances
+     * 
+     * @param criteria the criteria for finding servers
+     * @return a list of <code>Server</code> instances
+     * @throws RuntimeException
+     */
     PageList<Server> findServersByCriteria(ServerCriteria criteria) throws RuntimeException;
 
+    /**
+     * Finder for <code>Agent</code> instances
+     * 
+     * @param criteria the criteria for finding agents
+     * @return a list of <code>Agent</code> instances
+     * @throws RuntimeException
+     */
     PageList<Agent> findAgentsByCriteria(AgentCriteria criteria) throws RuntimeException;
 
+    /**
+     * Request forcing the repartition of the cluster. All agents should eventually reconnects to its most preferred server 
+     * (The first one in their failover list.)
+     * 
+     * @throws RuntimeException
+     */
     void cloudPartitionEventRequest() throws RuntimeException;
 
+    /**
+     * Deletes all the partition events.
+     * 
+     * @throws RuntimeException
+     */
     void purgeAllEvents() throws RuntimeException;
 
+    /**
+     * Deletes some partition events.
+     * 
+     * @param eventIds the list of ids of partition events to delete
+     * @throws RuntimeException
+     */
     void deletePartitionEvents(int[] eventIds) throws RuntimeException;
 
+    /**
+     * Returns the list of <code>PartitionEventDetails</code> instances.
+     * 
+     * @param partitionEventId
+     * @param pageControl the page control instance
+     * @return list of <code>PartitionEventDetails</code> instances
+     * @throws RuntimeException
+     */
     PageList<PartitionEventDetails> getPartitionEventDetails(int partitionEventId, PageControl pageControl)
         throws RuntimeException;
 
+    /**
+     * Returns the list with <code>AffinityGroupCountComposite</code> instances, i.e. affinity groups with agent and server 
+     * counts.
+     * 
+     * @param pageControl the page control instance
+     * @return list with <code>AffinityGroupCountComposite</code> instances
+     * @throws RuntimeException
+     */
     PageList<AffinityGroupCountComposite> getAffinityGroupCountComposites(PageControl pageControl)
         throws RuntimeException;
 
+    /**
+     * Deletes some affinity groups.
+     * 
+     * @param affinityGroupIds array of ids of affinity group to delete
+     * @return the number of deleted affinity groups
+     * @throws RuntimeException
+     */
     int deleteAffinityGroups(int[] affinityGroupIds) throws RuntimeException;
 
+    /**
+     * Creates new affinity group.
+     * 
+     * @param affinityGroup instance of <code>AffinityGroup</code> to create
+     * @return the new id of the affinity group
+     * @throws RuntimeException
+     */
     int createAffinityGroup(AffinityGroup affinityGroup) throws RuntimeException;
 
+    /**
+     * Updates existing affinity group.
+     * 
+     * @param affinityGroup  instance of <code>AffinityGroup</code>
+     * @throws RuntimeException
+     */
     void updateAffinityGroup(AffinityGroup affinityGroup) throws RuntimeException;
 
-    PageList<Server> getServerMembersByAffinityGroupId(int affinityGroupId, PageControl pageControl)
-        throws RuntimeException;
-
-    PageList<Server> getServerNonMembersByAffinityGroupId(int affinityGroupId, PageControl pageControl)
-        throws RuntimeException;
-
-    PageList<Agent> getAgentMembersByAffinityGroupId(int affinityGroupId, PageControl pageControl)
-        throws RuntimeException;
-
-    PageList<Agent> getAgentNonMembersByAffinityGroupId(int affinityGroupId, PageControl pageControl)
-        throws RuntimeException;
-
+    /**
+     * Returns the affinity group based on the provided id.
+     * 
+     * @param affinityGroupId the id of an affinity group
+     * @return the instance of <code>AffinityGroup</code>
+     * @throws RuntimeException
+     */
     AffinityGroup getAffinityGroupById(int affinityGroupId) throws RuntimeException;
 
+    /**
+     * Add servers to an existing affinity group.
+     * 
+     * @param affinityGroupId id of the affinity group into which the servers should be added
+     * @param serverIds array of ids of servers to be added
+     * @throws RuntimeException
+     */
     void addServersToGroup(int affinityGroupId, Integer[] serverIds) throws RuntimeException;
 
+    /**
+     * Removes the servers from the affinity group. There is no need to provide the id of affinity group,
+     * because it is part of the server data.
+     * 
+     * @param serverIds array of ids of servers to be removed
+     * @throws RuntimeException
+     */
     void removeServersFromGroup(Integer[] serverIds) throws RuntimeException;
 
+    /**
+     * Add agents to an existing affinity group.
+     * 
+     * @param affinityGroupId id of the affinity group into which the agents should be added
+     * @param agentIds array of ids of agents to be added
+     * @throws RuntimeException
+     */
     void addAgentsToGroup(int affinityGroupId, Integer[] agentIds) throws RuntimeException;
 
+    /**
+     * Removes the agents from the affinity group. There is no need to provide the id of affinity group,
+     * because it is part of the agent data.
+     * 
+     * @param agentIds array of ids of agents to be removed
+     * @throws RuntimeException
+     */
     void removeAgentsFromGroup(Integer[] agentIds) throws RuntimeException;
 }

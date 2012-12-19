@@ -55,7 +55,7 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
         + AdministrationView.SECTION_TOPOLOGY_VIEW_ID + "/" + VIEW_ID;
 
     private final boolean isAffinityGroupId;
-    
+
     private final Integer id;
 
     public AgentTableView(String locatorId, Integer id, boolean isAffinityGroupId) {
@@ -91,7 +91,7 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
                     }
                 });
             } else if (field.getName() == FIELD_SERVER.propertyName()) {
-             // adding the cell formatter for server field (clickable link)
+                // adding the cell formatter for server field (clickable link)
                 field.setCellFormatter(new CellFormatter() {
                     @Override
                     public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
@@ -105,7 +105,7 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
                     }
                 });
             } else if (field.getName() == FIELD_AFFINITY_GROUP.propertyName()) {
-             // adding the cell formatter for affinity group field (clickable link)
+                // adding the cell formatter for affinity group field (clickable link)
                 field.setCellFormatter(new CellFormatter() {
                     @Override
                     public String format(Object value, ListGridRecord record, int rowNum, int colNum) {

@@ -29,7 +29,6 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
-import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.grid.ListGrid;
@@ -44,6 +43,7 @@ import org.rhq.core.domain.criteria.PartitionEventCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.CloudGWTServiceAsync;
@@ -90,32 +90,39 @@ public class PartitionEventDetailView extends LocatableVLayout implements Bookma
         PartitionEventCriteria criteria = new PartitionEventCriteria();
         criteria.addFilterId(partitionEventId);
         final CloudGWTServiceAsync service = GWTServiceLookup.getCloudService();
-        service.findPartitionEventsByCriteria(criteria,
-            new AsyncCallback<PageList<PartitionEvent>>() {
-                public void onSuccess(final PageList<PartitionEvent> events) {
-                    if (events == null || events.size() != 1) {
-                        //TODO: notify user in msg center
-                        return;
-                    }
-                    prepareDetailsSection(sectionStack, events.get(0));
-                    service.getPartitionEventDetails(partitionEventId,
-                        PageControl.getUnlimitedInstance(), new AsyncCallback<PageList<PartitionEventDetails>>() {
-                            public void onSuccess(PageList<PartitionEventDetails> result) {
-                                prepareAssignmentsSection(sectionStack, result);
-                            }
-                            public void onFailure(Throwable caught) {
-                                SC.say("er2:" + caught);
-                                //TODO: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), caught);
-                            }
-                        });
-                    
+        service.findPartitionEventsByCriteria(criteria, new AsyncCallback<PageList<PartitionEvent>>() {
+            public void onSuccess(final PageList<PartitionEvent> events) {
+                if (events == null || events.size() != 1) {
+                    CoreGUI.getErrorHandler().handleError(
+                        MSG.view_adminTopology_message_fetchPEventDetailsFail(String.valueOf(partitionEventId)));
+                    initSectionCount = SECTION_COUNT;
+                    return;
                 }
+                prepareDetailsSection(sectionStack, events.get(0));
+                service.getPartitionEventDetails(partitionEventId, PageControl.getUnlimitedInstance(),
+                    new AsyncCallback<PageList<PartitionEventDetails>>() {
+                        public void onSuccess(PageList<PartitionEventDetails> result) {
+                            prepareAssignmentsSection(sectionStack, result);
+                        }
 
-                public void onFailure(Throwable caught) {
-                    SC.say("er1:" + caught);
-                    //TODO: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), caught);
-                }
-            });
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler()
+                                .handleError(
+                                    MSG.view_adminTopology_message_fetchPEventDetailsFail(String
+                                        .valueOf(partitionEventId)));
+                            initSectionCount = SECTION_COUNT;
+                            return;
+                        }
+                    });
+
+            }
+
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(
+                    MSG.view_adminTopology_message_fetchPEventDetailsFail(String.valueOf(partitionEventId)));
+                initSectionCount = SECTION_COUNT;
+            }
+        });
     }
 
     public boolean isInitialized() {
@@ -165,7 +172,8 @@ public class PartitionEventDetailView extends LocatableVLayout implements Bookma
             // there is no need for datasource, it is a simple table with two columns
             ListGrid assignments = new ListGrid();
             ListGridField agentName = new ListGridField("agentName", MSG.view_adminTopology_agent_agentName());
-            ListGridField serverName = new ListGridField("serverName", MSG.view_admin_systemSettings_serverDetails_serverName());
+            ListGridField serverName = new ListGridField("serverName",
+                MSG.view_admin_systemSettings_serverDetails_serverName());
             assignments.setFields(agentName, serverName);
             ListGridRecord[] records = new ListGridRecord[eventDetails.size()];
             for (int i = 0; i < eventDetails.size(); i++) {

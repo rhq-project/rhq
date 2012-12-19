@@ -55,14 +55,7 @@ public class AffinityGroupWithCountsDatasource extends RPCDataSource<AffinityGro
 
         FIELD_SERVER_COUNT("serverCount", CoreGUI.getMessages().view_adminTopology_affinityGroups_serverCount());
 
-        /**
-         * Corresponds to a property name of Server (e.g. operationMode).
-         */
         private String propertyName;
-
-        /**
-         * The table header for the field or property (e.g. Mode).
-         */
         private String title;
 
         private Fields(String propertyName, String title) {
@@ -131,8 +124,8 @@ public class AffinityGroupWithCountsDatasource extends RPCDataSource<AffinityGro
                     processResponse(request.getRequestId(), response);
                 }
 
-                public void onFailure(Throwable caught) {
-                    //todo: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), t);
+                public void onFailure(Throwable t) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_adminTopology_message_fetchAgroupsFail(), t);
                     response.setStatus(DSResponse.STATUS_FAILURE);
                     processResponse(request.getRequestId(), response);
                 }

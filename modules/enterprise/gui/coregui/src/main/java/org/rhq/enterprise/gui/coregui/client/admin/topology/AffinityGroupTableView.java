@@ -36,6 +36,8 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.KeyUpEvent;
+import com.smartgwt.client.widgets.form.fields.events.KeyUpHandler;
 import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -98,32 +100,29 @@ public class AffinityGroupTableView extends TableSection<AffinityGroupWithCounts
                 }
             });
 
-        addTableAction(extendLocatorId("removeSelected"), MSG.view_adminTopology_server_removeSelected(),
-            MSG.common_msg_areYouSure(), new AuthorizedTableAction(this, TableActionEnablement.ANY,
-                Permission.MANAGE_SETTINGS) {
+        addTableAction(extendLocatorId("removeSelected"), MSG.view_adminTopology_server_removeSelected(), null,
+            new AuthorizedTableAction(this, TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
                 public void executeAction(final ListGridRecord[] selections, Object actionValue) {
-                    List<String> selectedNames = getSelectedNames(selections);
-                    String message = "Really? Delete? For all I've done for you? " + selectedNames;
+                    final List<String> selectedNames = getSelectedNames(selections);
+                    String message = MSG.view_adminTopology_message_removeAGroupsConfirm(selectedNames.toString());
                     SC.ask(message, new BooleanCallback() {
                         public void execute(Boolean confirmed) {
                             if (confirmed) {
                                 int[] selectedIds = getSelectedIds(selections);
-                                SC.say("setting servers to maintenance mode, ids: " + selectedIds);
                                 GWTServiceLookup.getCloudService().deleteAffinityGroups(selectedIds,
                                     new AsyncCallback<Integer>() {
                                         public void onSuccess(Integer count) {
-                                            // TODO: msg with count
                                             Message msg = new Message(MSG
-                                                .view_admin_plugins_disabledServerPlugins("sdf"), Message.Severity.Info);
+                                                .view_adminTopology_message_removedAGroups(String.valueOf(count)),
+                                                Message.Severity.Info);
                                             CoreGUI.getMessageCenter().notify(msg);
                                             refresh();
                                         }
 
                                         public void onFailure(Throwable caught) {
-                                            // TODO: msg
                                             CoreGUI.getErrorHandler().handleError(
-                                                MSG.view_admin_plugins_disabledServerPluginsFailure() + " "
-                                                    + caught.getMessage(), caught);
+                                                MSG.view_adminTopology_message_removeAGroupsFail(selectedNames
+                                                    .toString()) + " " + caught.getMessage(), caught);
                                             refreshTableInfo();
                                         }
 
@@ -190,9 +189,16 @@ public class AffinityGroupTableView extends TableSection<AffinityGroupWithCounts
         nameLengthValidator.setMin(3);
         nameLengthValidator.setMax(100);
         name.setValidators(nameLengthValidator);
+        name.addKeyUpHandler(new KeyUpHandler() {
+            public void onKeyUp(KeyUpEvent event) {
+                if ("Enter".equals(event.getKeyName())) {
+                    createNewGroup(modalWindow, form);
+                }
+            }
+        });
+
         form.setFields(name);
         layout.addMember(form);
-
         VLayout spacer = new VLayout();
         spacer.setHeight(10);
         layout.addMember(spacer);
@@ -203,37 +209,41 @@ public class AffinityGroupTableView extends TableSection<AffinityGroupWithCounts
                 modalWindow.destroy();
             }
         });
-        IButton save = new LocatableIButton(this.extendLocatorId("Create"),
+        final IButton create = new LocatableIButton(this.extendLocatorId("Create"),
             MSG.view_adminTopology_affinityGroups_createNew());
-        save.addClickHandler(new ClickHandler() {
+        create.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                if (form.validate()) {
-                    String name = form.getValueAsString(FIELD_NAME);
-                    AffinityGroup affinityGroup = new AffinityGroup(name);
-                    GWTServiceLookup.getCloudService().createAffinityGroup(affinityGroup, new AsyncCallback<Integer>() {
-                        public void onSuccess(Integer affinityGroupId) {
-                            modalWindow.destroy();
-                            CoreGUI.goToView(VIEW_PATH + "/" + affinityGroupId);
-                        }
-
-                        public void onFailure(Throwable caught) {
-                            Map<String, String> errors = new HashMap<String, String>();
-                            errors.put(FIELD_NAME, caught.getMessage());
-                            form.setErrors(errors, true);
-                        }
-                    });
-                }
+                createNewGroup(modalWindow, form);
             }
         });
 
         HLayout buttons = new HLayout(10);
         buttons.setLayoutAlign(Alignment.CENTER);
-        buttons.addMember(save);
+        buttons.addMember(create);
         buttons.addMember(cancel);
         layout.addMember(buttons);
         modalWindow.addItem(layout);
         modalWindow.show();
         name.focusInItem();
+    }
+
+    private void createNewGroup(final Window modalWindow, final DynamicForm form) {
+        if (form.validate()) {
+            String name = form.getValueAsString(FIELD_NAME);
+            AffinityGroup affinityGroup = new AffinityGroup(name);
+            GWTServiceLookup.getCloudService().createAffinityGroup(affinityGroup, new AsyncCallback<Integer>() {
+                public void onSuccess(Integer affinityGroupId) {
+                    modalWindow.destroy();
+                    CoreGUI.goToView(VIEW_PATH + "/" + affinityGroupId);
+                }
+
+                public void onFailure(Throwable caught) {
+                    Map<String, String> errors = new HashMap<String, String>();
+                    errors.put(FIELD_NAME, caught.getMessage());
+                    form.setErrors(errors, true);
+                }
+            });
+        }
     }
 
     @Override

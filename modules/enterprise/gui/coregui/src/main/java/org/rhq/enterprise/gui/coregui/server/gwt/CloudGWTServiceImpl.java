@@ -22,7 +22,6 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang.ArrayUtils;
@@ -58,7 +57,7 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     private static final long serialVersionUID = 1L;
 
     private CloudManagerLocal cloudManager = LookupUtil.getCloudManager();
-    
+
     private AgentManagerLocal agentManager = LookupUtil.getAgentManager();
 
     private PartitionEventManagerLocal partitionEventManager = LookupUtil.getPartitionEventManager();
@@ -70,26 +69,6 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
         try {
             return SerialUtility.prepare(cloudManager.getServerComposites(getSessionSubject(), pc),
                 "CloudGWTServiceImpl.getServers");
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
-    public Server getServerById(int serverId) throws RuntimeException {
-        try {
-            return SerialUtility.prepare(cloudManager.getServerById(serverId), "CloudGWTServiceImpl.getServerById");
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
-    public List<Agent> getAgentsByServerName(String serverName) throws RuntimeException {
-        try {
-            List<Agent> persistentBag = SerialUtility.prepare(cloudManager.getAgentsByServerName(serverName),
-                "CloudGWTServiceImpl.getAgentsByServerName");
-            return new ArrayList<Agent>(persistentBag);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -135,24 +114,21 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
             throw getExceptionToThrowToClient(t);
         }
     }
-    
+
     @Override
-    public PageList<Server> findServersByCriteria(ServerCriteria criteria)
-        throws RuntimeException {
+    public PageList<Server> findServersByCriteria(ServerCriteria criteria) throws RuntimeException {
         try {
-            return SerialUtility.prepare(
-                cloudManager.findServersByCriteria(getSessionSubject(), criteria),
+            return SerialUtility.prepare(cloudManager.findServersByCriteria(getSessionSubject(), criteria),
                 "CloudGWTServiceImpl.findServersByCriteria");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
     }
-    
+
     @Override
     public PageList<Agent> findAgentsByCriteria(AgentCriteria criteria) throws RuntimeException {
         try {
-            return SerialUtility.prepare(
-                agentManager.findAgentsByCriteria(getSessionSubject(), criteria),
+            return SerialUtility.prepare(agentManager.findAgentsByCriteria(getSessionSubject(), criteria),
                 "CloudGWTServiceImpl.findAgentsByCriteria");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -229,54 +205,6 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     }
 
     @Override
-    public PageList<Server> getServerMembersByAffinityGroupId(int affinityGroupId, PageControl pageControl)
-        throws RuntimeException {
-        try {
-            return SerialUtility.prepare(
-                affinityGroupManager.getServerMembers(getSessionSubject(), affinityGroupId, pageControl),
-                "CloudGWTServiceImpl.getServerMembersByAffinityGroupId");
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
-    public PageList<Server> getServerNonMembersByAffinityGroupId(int affinityGroupId, PageControl pageControl)
-        throws RuntimeException {
-        try {
-            return SerialUtility.prepare(
-                affinityGroupManager.getServerNonMembers(getSessionSubject(), affinityGroupId, pageControl),
-                "CloudGWTServiceImpl.getServerNonMembersByAffinityGroupId");
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
-    public PageList<Agent> getAgentMembersByAffinityGroupId(int affinityGroupId, PageControl pageControl)
-        throws RuntimeException {
-        try {
-            return SerialUtility.prepare(
-                affinityGroupManager.getAgentMembers(getSessionSubject(), affinityGroupId, pageControl),
-                "CloudGWTServiceImpl.getAgentMembersByAffinityGroupId");
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
-    public PageList<Agent> getAgentNonMembersByAffinityGroupId(int affinityGroupId, PageControl pageControl)
-        throws RuntimeException {
-        try {
-            return SerialUtility.prepare(
-                affinityGroupManager.getAgentNonMembers(getSessionSubject(), affinityGroupId, pageControl),
-                "CloudGWTServiceImpl.getAgentNonMembersByAffinityGroupId");
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
     public AffinityGroup getAffinityGroupById(int affinityGroupId) throws RuntimeException {
         try {
             return SerialUtility.prepare(affinityGroupManager.getById(getSessionSubject(), affinityGroupId),
@@ -322,7 +250,6 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
         }
     }
 
-
     @Override
     public void updateServer(Server server) throws RuntimeException {
         try {
@@ -331,7 +258,6 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
             throw getExceptionToThrowToClient(t);
         }
     }
-
 
     @Override
     public void updateAffinityGroup(AffinityGroup affinityGroup) throws RuntimeException {

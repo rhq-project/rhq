@@ -27,25 +27,28 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
 /**
  * @author Jirka Kremser
  *
  */
-public class ServerWithAgentCountDatasource extends AbstractServerNodeDatasource<ServerWithAgentCountComposite, Criteria> {
-    
+public class ServerWithAgentCountDatasource extends
+    AbstractServerNodeDatasource<ServerWithAgentCountComposite, Criteria> {
+
     private final ServerDatasource serverDatasource;
 
     public ServerWithAgentCountDatasource() {
         super();
-        serverDatasource = new ServerDatasource(null, false);
+        serverDatasource = new ServerDatasource(null);
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
     }
@@ -56,7 +59,18 @@ public class ServerWithAgentCountDatasource extends AbstractServerNodeDatasource
     }
 
     public List<ListGridField> getListGridFields() {
-        return serverDatasource.getListGridFields();
+        List<ListGridField> fields = serverDatasource.getListGridFields();
+        ListGridField agentCountField = FIELD_AGENT_COUNT.getListGridField("75");
+        agentCountField.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                return MSG.view_adminTopology_message_agentsCount(FIELD_AGENT_COUNT.propertyName());
+                //                "There are " + record.getAttributeAsInt(FIELD_AGENT_COUNT.propertyName())
+                //                    + " agents registered to this server.";
+            }
+        });
+        agentCountField.setShowHover(true);
+        fields.add(agentCountField);
+        return fields;
     }
 
     @Override
@@ -72,20 +86,14 @@ public class ServerWithAgentCountDatasource extends AbstractServerNodeDatasource
 
             @Override
             public void onFailure(Throwable t) {
-                //todo: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), t);
+                CoreGUI.getErrorHandler().handleError(MSG.view_adminTopology_message_fetchServers2Fail(), t);
                 response.setStatus(DSResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }
         });
     }
 
-    /**
-     * Returns a prepopulated PageControl based on the provided DSRequest. This will set sort fields,
-     * pagination, but *not* filter fields.
-     *
-     * @param request the request to turn into a page control
-     * @return the page control for passing to criteria and other queries
-     */
+    @Override
     protected PageControl getPageControl(DSRequest request) {
         return serverDatasource.getPageControl(request);
     }

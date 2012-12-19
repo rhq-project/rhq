@@ -90,6 +90,13 @@ public interface CloudManagerLocal {
     PageList<FailoverListDetails> getFailoverListDetailsByAgentId(int agentId, PageControl pc);
 
     void markStaleServersDown(Subject subject);
-    
+
+    /**
+     * Fetches the server based on provided criteria.
+     * 
+     * @param subject caller
+     * @param criteria the criteria
+     * @return
+     */
     PageList<Server> findServersByCriteria(Subject subject, ServerCriteria criteria);
 }

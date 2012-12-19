@@ -33,19 +33,20 @@ public enum AgentDatasourceField {
     FIELD_NAME("name", CoreGUI.getMessages().common_title_name()),
 
     FIELD_SERVER("server", CoreGUI.getMessages().view_adminTopology_agent_connectedServer()),
-    
+
     FIELD_SERVER_ID("serverId", "serverId"),
 
     FIELD_ADDRESS("address", CoreGUI.getMessages().view_adminTopology_agent_agentBindAddress()),
 
     FIELD_PORT("port", CoreGUI.getMessages().view_adminTopology_agent_agentBindPort()),
 
-    FIELD_LAST_AVAILABILITY_REPORT("lastAvailabilityReport", CoreGUI.getMessages().view_adminTopology_agent_lastAvailabilityReport()),
+    FIELD_LAST_AVAILABILITY_REPORT("lastAvailabilityReport", CoreGUI.getMessages()
+        .view_adminTopology_agent_lastAvailabilityReport()),
 
     FIELD_AGENT_TOKEN("agentToken", CoreGUI.getMessages().view_adminTopology_agentDetail_token()),
 
     FIELD_AFFINITY_GROUP("affinityGroup", CoreGUI.getMessages().view_adminTopology_server_affinityGroup()),
-    
+
     FIELD_AFFINITY_GROUP_ID("affinityGroupId", "affinityGroupId");
 
     /**

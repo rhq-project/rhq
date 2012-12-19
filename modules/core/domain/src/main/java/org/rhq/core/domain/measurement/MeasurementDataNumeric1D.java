@@ -36,14 +36,19 @@ import javax.persistence.Table;
  * @author Greg Hinkle
  */
 @Entity
-@NamedQueries( { @NamedQuery(name = MeasurementDataNumeric1D.GET_NUM_AGGREGATE, query = "SELECT min(nmd.min), avg(nmd.value), max(nmd.max) "
-    + "FROM MeasurementDataNumeric1D nmd "
-    + "WHERE nmd.id.scheduleId = :schedId AND nmd.id.timestamp BETWEEN :start AND :end") })
+@NamedQueries({
+    @NamedQuery(name = MeasurementDataNumeric1D.GET_NUM_AGGREGATE, query = "SELECT min(nmd.min), avg(nmd.value), max(nmd.max) "
+        + "FROM MeasurementDataNumeric1D nmd "
+        + "WHERE nmd.id.scheduleId = :schedId AND nmd.id.timestamp BETWEEN :start AND :end"),
+    @NamedQuery(name = MeasurementDataNumeric1D.QUERY_FIND_ALL, query = "SELECT m From MeasurementDataNumeric1D m"),
+    @NamedQuery(name = MeasurementDataNumeric1D.QUERY_DELETE_ALL, query = "DELETE FROM MeasurementDataNumeric1D m ") })
 @Table(name = "RHQ_MEASUREMENT_DATA_NUM_1D")
 public class MeasurementDataNumeric1D extends MeasurementData implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String GET_NUM_AGGREGATE = "MeasurementDataNumeric1D.getNumAggregate";
+    public static final String QUERY_FIND_ALL = "MeasurementDataNumeric1D.findAll";
+    public static final String QUERY_DELETE_ALL = "MeasurementDataNumeric1D.deleteAll";
 
     @Column(precision = 24, scale = 3)
     private Double value;

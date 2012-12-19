@@ -36,12 +36,17 @@ import javax.persistence.Table;
  * @author Greg Hinkle
  */
 @Entity
-@NamedQueries( { @NamedQuery(name = MeasurementDataNumeric1H.GET_MAX_TIMESTAMP, query = "SELECT max(nmd.id.timestamp) FROM MeasurementDataNumeric1H nmd") })
+@NamedQueries({
+    @NamedQuery(name = MeasurementDataNumeric1H.GET_MAX_TIMESTAMP, query = "SELECT max(nmd.id.timestamp) FROM MeasurementDataNumeric1H nmd"),
+    @NamedQuery(name = MeasurementDataNumeric1H.QUERY_FIND_ALL, query = "SELECT m From MeasurementDataNumeric1H m"),
+    @NamedQuery(name = MeasurementDataNumeric1H.QUERY_DELETE_ALL, query = "DELETE FROM MeasurementDataNumeric1D m ") })
 @Table(name = "RHQ_MEASUREMENT_DATA_NUM_1H")
 public class MeasurementDataNumeric1H extends MeasurementData implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String GET_MAX_TIMESTAMP = "MeasurementDataNumeric1H.getMaxTimestamp";
+    public static final String QUERY_FIND_ALL = "MeasurementDataNumeric1H.findAll";
+    public static final String QUERY_DELETE_ALL = "MeasurementDataNumeric1H.deleteAll";
 
     @Column(precision = 24, scale = 3)
     private Double value;

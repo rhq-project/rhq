@@ -19,11 +19,13 @@
 
 package org.rhq.jndi.test;
 
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.fail;
+
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Properties;
 
@@ -34,69 +36,87 @@ import javax.script.ScriptException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import org.rhq.bindings.ScriptEngineFactory;
-import org.rhq.bindings.StandardBindings;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.RunAsClient;
+import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.ArchivePaths;
+import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.asset.EmptyAsset;
+import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
+import org.jboss.shrinkwrap.api.spec.JavaArchive;
+import org.jboss.shrinkwrap.resolver.api.DependencyResolvers;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
+
 import org.rhq.bindings.StandardScriptPermissions;
-import org.rhq.bindings.util.PackageFinder;
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.enterprise.client.LocalClient;
 import org.rhq.enterprise.server.AllowRhqServerInternalsAccessPermission;
-import org.rhq.enterprise.server.test.AbstractEJB3Test;
-import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.test.PortScout;
+import org.rhq.enterprise.server.test.StrippedDownStartupBean;
+import org.rhq.enterprise.server.test.StrippedDownStartupBeanPreparation;
+import org.rhq.scripting.javascript.JsEngineProvider;
+import org.rhq.scripting.python.PythonScriptEngineProvider;
 
 /**
- *
- * !!!!!!! THIS TEST CLASS HAS BEEN MOVED TO ENTERPRISE/SERVER/ITESTS-2 !!!!!!
  * 
- * TODO: since this class has been updated and now differs from the version in itests-2 it is left here for
- *       reference. Also, the jndi access strategy needs to be updated for AS7.  When all is settled, this
- *       whole src branch should be deleted. 
- *
  * @author Lukas Krejci
  */
-@Test(enabled = false)
-// TODO JNDI: re-enable after secure JNDI lookups are fixed
-public class JndiAccessTest extends AbstractEJB3Test {
+@Test
+public class JndiAccessTest extends Arquillian {
+
     private static final Log JNP_SERVER_LOG = LogFactory.getLog("Test JNP Server");
-    private static final Log LOG = LogFactory.getLog(JndiAccessTest.class);
-    
+
+    private static final String GROUP_FOR_NORMAL_TESTS = "JndiAccessTest";
+
     private Process testServerProcess;
     private Thread testServerStdErrReader;
     private Thread testServerStdOutReader;
-    
-    int jnpPort;
 
-    @BeforeClass
-    @Parameters({ "test.server.jar.path" })
-    public void startTestJnpServer(String testServerJar) throws Exception {
-        int rmiPort = 0;
-        PortScout scout = new PortScout();
+    @Deployment
+    public static EnterpriseArchive TestEar() {
+        JavaArchive testEjb = ShrinkWrap.create(JavaArchive.class, "test-ejb.jar").addClass(TestEjb.class)
+            .addClass(TestEjbBean.class).addAsManifestResource(EmptyAsset.INSTANCE, ArchivePaths.create("beans.xml"));
 
-        try {
-            jnpPort = scout.getNextFreePort();
-            rmiPort = scout.getNextFreePort();
-        } finally {
-            scout.close();
-        }
+        Collection<JavaArchive> deps = DependencyResolvers.use(MavenDependencyResolver.class)
+            .loadMetadataFromPom("pom.xml")
+            .artifacts("jboss:jnp-client", "org.rhq:rhq-scripting-api", "org.rhq:rhq-scripting-javascript",
+                "org.rhq:rhq-scripting-python").scope("test").resolveAs(JavaArchive.class);
 
-        LOG.info("Starting the remote JNP server on jnpPort=" + jnpPort + ", rmiPort=" + rmiPort);
-        ProcessBuilder bld = new ProcessBuilder("java", "-Djnp.port=" + jnpPort, "-Djnp.rmiPort=" + rmiPort, "-jar", testServerJar);
+        //we need to pull in the naming hack classes from the server jar so that our EAR behaves the same
+        testEjb.addPackages(true, "org.rhq.enterprise.server.naming").addClass(
+            AllowRhqServerInternalsAccessPermission.class);
         
+        //we also need to pull in the special startup beans from the server/itests-2 that will initialize the naming
+        //subsystem
+        testEjb.addClasses(StrippedDownStartupBean.class, StrippedDownStartupBeanPreparation.class);
+        
+        //to work around https://issues.jboss.org/browse/ARQ-659
+        //we need to include this test class in the EAR manually
+
+        //Instead of pulling the whole rhq-script-bindings (which has a lot of deps), we're just picking the
+        //StandardScriptPermissions from there so that it can be used in the tests
+        JavaArchive classes = ShrinkWrap.create(JavaArchive.class, "test-class.jar").addClasses(JndiAccessTest.class, 
+            StandardScriptPermissions.class);
+
+        return ShrinkWrap.create(EnterpriseArchive.class, "test-ear.ear").addAsModule(testEjb).addAsLibraries(deps)
+            .addAsLibrary(classes);
+    }
+
+    @RunAsClient
+    @Parameters({ "test.server.jar.path", "jnp.port", "jnp.rmiPort" })
+    public void startTestJnpServer(String testServerJar, int jnpPort, int rmiPort) throws Exception {
+        ProcessBuilder bld = new ProcessBuilder("java", "-Djnp.port=" + jnpPort, "-Djnp.rmiPort=" + rmiPort, "-jar",
+            testServerJar);
+
         testServerProcess = bld.start();
-        
+
         testServerStdErrReader = new Thread(new Runnable() {
             @Override
             public void run() {
                 BufferedReader rdr = new BufferedReader(new InputStreamReader(testServerProcess.getErrorStream()));
                 try {
                     String line;
-                    while((line = rdr.readLine()) != null) {
+                    while ((line = rdr.readLine()) != null) {
                         JNP_SERVER_LOG.warn(line);
                     }
                 } catch (IOException e) {
@@ -111,14 +131,14 @@ public class JndiAccessTest extends AbstractEJB3Test {
             }
         });
         testServerStdErrReader.start();
-        
+
         testServerStdOutReader = new Thread(new Runnable() {
             @Override
             public void run() {
                 BufferedReader rdr = new BufferedReader(new InputStreamReader(testServerProcess.getInputStream()));
                 try {
                     String line;
-                    while((line = rdr.readLine()) != null) {
+                    while ((line = rdr.readLine()) != null) {
                         JNP_SERVER_LOG.debug(line);
                     }
                 } catch (IOException e) {
@@ -133,73 +153,115 @@ public class JndiAccessTest extends AbstractEJB3Test {
             }
         });
         testServerStdOutReader.start();
-        
+
         //give the JNP server some time to start up
         Thread.sleep(5000);
     }
-    
-    @AfterClass
+
+    @RunAsClient
+    @Test(dependsOnGroups = GROUP_FOR_NORMAL_TESTS, alwaysRun = true)
     public void stopTestJnpServer() throws Exception {
         testServerProcess.destroy();
         testServerStdErrReader.join();
         testServerStdOutReader.join();
     }
-    
-    public void testRemoteConnectionWorkingFromJava() throws Exception {
+
+    @Test(dependsOnMethods = "startTestJnpServer", groups = GROUP_FOR_NORMAL_TESTS)
+    @Parameters("jnp.port")
+    public void testRemoteConnectionWorkingFromJava(int jnpPort) throws Exception {
         Properties env = new Properties();
-        env.put("java.naming.factory.initial", "org.jboss.naming.NamingContextFactory");
+        env.put("java.naming.factory.initial", "org.jnp.interfaces.NamingContextFactory");
+        env.put("java.naming.factory.url.pkgs", "org.jboss.naming:org.jnp.interfaces");
         env.put("java.naming.provider.url", "jnp://localhost:" + jnpPort);
         InitialContext ctx = new InitialContext(env);
         Object kachny = ctx.lookup("kachny");
-        
-        assert kachny != null;
-    }
-    
-    public void testLocalJNDILookupFailsFromScripts() throws Exception {
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();        
-        
-        ScriptEngine engine = getEngine(overlord);
 
+        assertNotNull(kachny);
+    }
+
+    @Test(dependsOnMethods = "startTestJnpServer", groups = GROUP_FOR_NORMAL_TESTS)
+    @Parameters("jnp.port")
+    public void testRemoteConnectionWorkingFromScripts_javascript(int jnpPort) throws Exception {
+        getJavascriptScriptEngine().eval("" //
+            + "var env = new java.util.Properties;" //
+            + "env.put('java.naming.factory.initial', 'org.jnp.interfaces.NamingContextFactory');" //
+            + "env.put('java.naming.factory.url.pkgs', 'org.jboss.naming:org.jnp.interfaces');" //
+            + "env.put('java.naming.provider.url', 'jnp://localhost:" + jnpPort + "');" //
+            + "var ctx = new javax.naming.InitialContext(env);" //
+            + "var kachny = ctx.lookup('kachny');" //
+            + "if (kachny == null) throw 'The object retrieved from the remote server should not be null';");
+    }
+
+    @Test(dependsOnMethods = "startTestJnpServer", groups = GROUP_FOR_NORMAL_TESTS)
+    @Parameters("jnp.port")
+    public void testRemoteConnectionWorkingFromScripts_python(int jnpPort) throws Exception {
+        getPythonScriptEngine()
+            .eval(
+                "" //
+                    + "import java.util as u\n" //
+                    + "import javax.naming as n\n" //
+                    + "env = u.Properties()\n" //
+                    + "env.put('java.naming.factory.initial', 'org.jnp.interfaces.NamingContextFactory')\n" //
+                    + "env.put('java.naming.factory.url.pkgs', 'org.jboss.naming:org.jnp.interfaces')\n" //
+                    + "env.put('java.naming.provider.url', 'jnp://localhost:"
+                    + jnpPort
+                    + "')\n" //
+                    + "ctx = n.InitialContext(env)\n" //
+                    + "kachny = ctx.lookup('kachny')\n" //
+                    + "if (kachny is None):\n raise Exception('The object retrieved from the remote server should not be null')\n");
+    }
+
+    @Test(dependsOnMethods = "startTestJnpServer", groups = GROUP_FOR_NORMAL_TESTS)
+    public void testLocalJNDILookupWorksFromJava() throws Exception {
+        InitialContext ctx = new InitialContext();
+        Object bean = ctx.lookup("java:app/test-ejb/TestEjbBean");
+
+        assertNotNull(bean);
+    }
+
+    @Test(dependsOnMethods = "startTestJnpServer", groups = GROUP_FOR_NORMAL_TESTS)
+    public void testLocalJNDILookupFailsFromScripts_javascript() throws Exception {
         try {
-            engine.eval(""
-                + "var ctx = new javax.naming.InitialContext();\n"
-                + "var entityManagerFactory = ctx.lookup('java:/RHQEntityManagerFactory');\n"
-                + "var entityManager = entityManagerFactory.createEntityManager();\n"
-                + "entityManager.find(java.lang.Class.forName('org.rhq.core.domain.resource.Resource'), java.lang.Integer.valueOf('10001'));");
-            
-            Assert.fail("The script shouldn't have been able to use the EntityManager.");
-        } catch (ScriptException e) {
+            getJavascriptScriptEngine().eval(
+                "var ctx = new javax.naming.InitialContext();\n"
+                    + "var bean = ctx.lookup('java:app/test-ejb/TestEjbBean');\n");
+            fail("Script was able to perform local JNDI lookup.");
+        } catch (Exception e) {
             checkIsDesiredSecurityException(e);
-        }   
+        }
     }
-    
-    public void testRemoteJNDILookupWorksFromScripts() throws Exception {
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();        
-        
-        ScriptEngine engine = getEngine(overlord);
 
+    @Test(dependsOnMethods = "startTestJnpServer", groups = GROUP_FOR_NORMAL_TESTS)
+    public void testLocalJNDILookupFailsFromScripts_python() throws Exception {
         try {
-            engine.eval(""
-                + "var env = new java.util.Hashtable();"
-                + "env.put('java.naming.factory.initial', 'org.jboss.naming.NamingContextFactory');"
-                + "env.put('java.naming.provider.url', 'jnp://localhost:" + jnpPort + "');"
-                + "var ctx = new javax.naming.InitialContext(env);\n"
-                + "var kachny = ctx.lookup('kachny');\n"
-                + "assertNotNull(kachny);\n");
-        } catch (ScriptException e) {            
-            Assert.fail("The script should have been able to access a remote JNDI server.", e);
-        }   
+            getPythonScriptEngine().eval("import javax.naming as n\n" // 
+                + "ctx = n.InitialContext()\n" // 
+                + "bean = ctx.lookup('java:app/test-ejb/TestEjbBean')\n");
+            fail("Script was able to perform local JNDI lookup.");
+        } catch (Exception e) {
+            checkIsDesiredSecurityException(e);
+        }
     }
-        
-    private ScriptEngine getEngine(Subject subject) throws ScriptException, IOException {
-        StandardBindings bindings = new StandardBindings(new PrintWriter(System.out), new LocalClient(subject));
-        return ScriptEngineFactory.getSecuredScriptEngine("javascript", new PackageFinder(Collections.<File>emptyList()), bindings, new StandardScriptPermissions());
+
+    private ScriptEngine getJavascriptScriptEngine() throws ScriptException {
+        return new JsEngineProvider().getInitializer().instantiate(Collections.<String> emptySet(),
+            new StandardScriptPermissions());
     }
-    
-    private static void checkIsDesiredSecurityException(ScriptException e) {
-        String message = e.getMessage();
-        String permissionTrace = null; // TODO JNDI: AllowRhqServerInternalsAccessPermission.class.getName();
-        
-        Assert.assertTrue(message.contains(permissionTrace), "The script exception doesn't seem to be caused by the AllowRhqServerInternalsAccessPermission security exception. " + message);
-    }    
+
+    private ScriptEngine getPythonScriptEngine() throws ScriptException {
+        return new PythonScriptEngineProvider().getInitializer().instantiate(Collections.<String> emptySet(),
+            new StandardScriptPermissions());
+    }
+
+    private void checkIsDesiredSecurityException(Throwable t) {
+        String message = t.getMessage();
+        String permissionTrace = "org.rhq.allow.server.internals.access";
+
+        if (!message.contains(permissionTrace)) {
+            Assert
+                .fail(
+                    "The script exception doesn't seem to be caused by the AllowRhqServerInternalsAccessPermission security exception. ",
+                    t);
+        }
+    }
 }

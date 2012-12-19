@@ -33,6 +33,7 @@ import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -51,6 +52,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import com.arjuna.ats.internal.jdbc.drivers.modifiers.list;
 import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiError;
 import com.wordnik.swagger.annotations.ApiOperation;
@@ -77,6 +79,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
@@ -115,11 +118,10 @@ public class ResourceHandlerBean extends AbstractRestBean {
     private EntityManager entityManager;
 
     @GET
-    @Path("/{id}")
+    @Path("/{id:\\d+}")
     @Cache(isPrivate = true,maxAge = 120)
     @ApiOperation(value = "Retrieve a single resource", responseClass = "ResourceWithType")
     @ApiError(code = 404, reason = NO_RESOURCE_FOR_ID)
-
     public Response getResource(@ApiParam("Id of the resource to retrieve") @PathParam("id") int id,
                 @Context Request request, @Context HttpHeaders headers,
                              @Context UriInfo uriInfo) {
@@ -151,15 +153,27 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
     @GET @GZIP
     @Path("/")
-    @ApiOperation(value = "Search for resources by the given search string", responseClass = "ResourceWithType")
+    @ApiOperation(value = "Search for resources by the given search string, possibly limited by category and paged", responseClass = "ResourceWithType")
     public Response getResourcesByQuery(@ApiParam("String to search in the resource name") @QueryParam("q") String q,
+                                        @ApiParam("Limit to category (PLATFORM, SERVER, SERVICE") @QueryParam("category") String category,
+                                        @ApiParam("Page size for paging") @QueryParam("ps") @DefaultValue("20") int pageSize,
+                                        @ApiParam("Page for paging") @QueryParam("page") Integer page,
                                         @Context HttpHeaders headers,
                                         @Context UriInfo uriInfo) {
         ResourceCriteria criteria = new ResourceCriteria();
-        criteria.addFilterName(q);
-        List<Resource> ret = resMgr.findResourcesByCriteria(caller,criteria);
+        if (q!=null) {
+            criteria.addFilterName(q);
+        }
+        if (category!=null) {
+            criteria.addFilterResourceCategories(ResourceCategory.valueOf(category.toUpperCase()));
+        }
+        if (page!=null) {
+            criteria.setPaging(page,pageSize);
+            criteria.addSortName(PageOrdering.ASC);
+        }
+        PageList<Resource> ret = resMgr.findResourcesByCriteria(caller,criteria);
 
-        Response.ResponseBuilder builder = getResponseBuilderForResourceList(headers,uriInfo,ret);
+        Response.ResponseBuilder builder = getResponseBuilderForResourceList(headers,uriInfo,ret, page, pageSize);
 
         return builder.build();
     }
@@ -173,22 +187,27 @@ public class ResourceHandlerBean extends AbstractRestBean {
                                  @Context UriInfo uriInfo) {
 
         PageControl pc = new PageControl();
-        List<Resource> ret = resMgr.findResourcesByCategory(caller, ResourceCategory.PLATFORM,
+        PageList<Resource> ret = resMgr.findResourcesByCategory(caller, ResourceCategory.PLATFORM,
             InventoryStatus.COMMITTED, pc);
-        Response.ResponseBuilder builder = getResponseBuilderForResourceList(headers, uriInfo, ret);
+        Response.ResponseBuilder builder = getResponseBuilderForResourceList(headers, uriInfo, ret, null, 20);
 
         return builder.build();
     }
 
     /**
      * Translate the passed list of resources into a response according to the acceptable mime types etc.
+     *
+     *
      * @param headers HttpHeaders from the request
      * @param uriInfo Uri from the request
      * @param resources List of resources
+     * @param page Page of pageSize. If null, paging is ignored
+     * @param pageSize numer of elements on a page
      * @return An initialized ResponseBuilder
      */
     private Response.ResponseBuilder getResponseBuilderForResourceList(HttpHeaders headers, UriInfo uriInfo,
-                                                                       List<Resource> resources) {
+                                                                       PageList<Resource> resources, Integer page,
+                                                                       int pageSize) {
         List<ResourceWithType> rwtList = new ArrayList<ResourceWithType>(resources.size());
         for (Resource r : resources) {
             putToCache(r.getId(), Resource.class, r);
@@ -197,14 +216,35 @@ public class ResourceHandlerBean extends AbstractRestBean {
         }
         // What media type does the user request?
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
-        Response.ResponseBuilder builder;
+        Response.ResponseBuilder builder = Response.ok();
+        builder.type(mediaType);
+        UriBuilder uriBuilder;
+        if (page!=null) {
+
+            // TODO look a the page control and check if there is a next page at all
+            if (resources.getTotalSize()> page*pageSize) {
+                int nextPage = page+1;
+                uriBuilder = uriInfo.getRequestUriBuilder(); // adds ?q, ?ps and ?category if needed
+                uriBuilder.replaceQueryParam("page",nextPage);
+
+                builder.header("Link",new Link("next",uriBuilder.build().toString()));
+            }
+
+            if (page>1) {
+                int prevPage = page -1;
+                uriBuilder = uriInfo.getRequestUriBuilder(); // adds ?q, ?ps and ?category if needed
+                uriBuilder.replaceQueryParam("page",prevPage);
+                builder.header("prev",uriBuilder.build().toString());
+            }
+        }
 
         if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
-            builder = Response.ok(renderTemplate("listResourceWithType", rwtList), mediaType);
+            builder.entity(renderTemplate("listResourceWithType", rwtList));
+
         } else {
             GenericEntity<List<ResourceWithType>> list = new GenericEntity<List<ResourceWithType>>(rwtList) {
             };
-            builder = Response.ok(list);
+            builder.entity(list);
         }
         return builder;
     }
@@ -453,7 +493,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
     }
 
     private Resource obtainResource(int resourceId) {
-        Resource resource = getFromCache(resourceId, Resource.class);
+        Resource resource = resMgr.getResource(caller,resourceId);
         if (resource == null) {
             resource = resMgr.getResource(caller, resourceId);
             if (resource != null)
@@ -487,7 +527,6 @@ public class ResourceHandlerBean extends AbstractRestBean {
             "via a normal RHQ agent")
     @POST
     @Path("platform/{name}")
-
     public Response createPlatform(
             @ApiParam(value = "Name of the platform") @PathParam("name") String name,
             @ApiParam(value = "Type of the platform", allowableValues = "Linux,Windows,... TODO") StringValue typeValue,
@@ -510,8 +549,8 @@ public class ResourceHandlerBean extends AbstractRestBean {
             URI uri = uriBuilder.build(r.getId());
 
 
-            javax.ws.rs.core.Response.ResponseBuilder builder = Response.ok(rwt);
-            builder.location(uri);
+            Response.ResponseBuilder builder = Response.created(uri);
+            builder.entity(rwt);
             return builder.build();
 
         }
@@ -541,7 +580,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
             uriBuilder.path("/resource/{id}");
             URI uri = uriBuilder.build(platform.getId());
 
-            javax.ws.rs.core.Response.ResponseBuilder builder = Response.created(uri);
+            Response.ResponseBuilder builder = Response.created(uri);
             builder.entity(rwt);
             return builder.build();
 
@@ -587,20 +626,17 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
         Resource r = resMgr.getResourceByParentAndKey(caller,null,resourceKey,plugin,typeName);
         if (r!=null) {
-            // platform exists - return it
+            // resource exists - return it
             ResourceWithType rwt = fillRWT(r,uriInfo);
 
             UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
             uriBuilder.path("/resource/{id}");
             URI uri = uriBuilder.build(r.getId());
 
-
-            javax.ws.rs.core.Response.ResponseBuilder builder = Response.ok(rwt);
-            builder.location(uri);
+            Response.ResponseBuilder builder = Response.created(uri);
+            builder.entity(rwt);
             return builder.build();
-
         }
-
 
         Resource res = new Resource(resourceKey,name,resType);
         res.setUuid(resourceKey);
@@ -616,15 +652,30 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
             ResourceWithType rwt = fillRWT(res,uriInfo);
 
-            javax.ws.rs.core.Response.ResponseBuilder builder = Response.ok(rwt);
+            UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+            uriBuilder.path("/resource/{id}");
+            URI uri = uriBuilder.build(res.getId());
+
+            Response.ResponseBuilder builder = Response.created(uri);
+            builder.entity(rwt);
             return builder.build();
 
 
         } catch (ResourceAlreadyExistsException e) {
             throw new IllegalArgumentException(e);
         }
-
-
     }
 
+    @DELETE
+    @Path("/{id}")
+    @ApiOperation("Remove a resource from inventory")
+    public Response uninventoryOrDeleteResource(
+            @PathParam("id") int resourceId
+            /*,@DefaultValue("false") @QueryParam("physical") boolean delete*/) {
+
+        resMgr.uninventoryResource(caller,resourceId);
+
+        return Response.status(Response.Status.NO_CONTENT).build();
+
+    }
 }

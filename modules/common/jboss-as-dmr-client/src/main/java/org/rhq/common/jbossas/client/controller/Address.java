@@ -69,7 +69,7 @@ public class Address implements Cloneable {
     }
 
     @Override
-    public Address clone() throws CloneNotSupportedException {
+    public Address clone() {
         Address clone = new Address();
         clone.addressNode = addressNode.clone();
         return clone;

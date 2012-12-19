@@ -41,16 +41,21 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public final class AvailabilityDurationCacheElement extends AbstractEnumCacheElement<AvailabilityType> {
 
+    private int alertDefinitionId;
+
     /**
      * @param operator
      * @param operatorOption the duration, in seconds (as String)
      * @param value
      * @param conditionTriggerId this is actually the alertConditionId, renamed here.
      */
-    public AvailabilityDurationCacheElement(AlertConditionOperator operator, String operatorOption,
+    public AvailabilityDurationCacheElement(int alertDefinitionId, AlertConditionOperator operator,
+        String operatorOption,
         AvailabilityType value, int conditionTriggerId) {
 
         super(operator, operatorOption, value, conditionTriggerId);
+
+        this.alertDefinitionId = alertDefinitionId;
     }
 
     /**
@@ -62,6 +67,7 @@ public final class AvailabilityDurationCacheElement extends AbstractEnumCacheEle
      * @param resource
      * @param providedValue
      */
+    @SuppressWarnings("incomplete-switch")
     public static void checkCacheElements(List<AvailabilityDurationCacheElement> cacheElements, Resource resource,
         AvailabilityType providedValue) {
         if (null == cacheElements) {
@@ -90,6 +96,10 @@ public final class AvailabilityDurationCacheElement extends AbstractEnumCacheEle
         }
     }
 
+    public int getAlertDefinitionId() {
+        return alertDefinitionId;
+    }
+
     /**
      * Each avail duration check is performed by triggering an execution of {@link AlertAvailabilityDurationJob}.
      * Note that each of the scheduled jobs is relevant to only 1 condition evaluation.
@@ -104,7 +114,7 @@ public final class AvailabilityDurationCacheElement extends AbstractEnumCacheEle
         String jobName = AlertAvailabilityDurationJob.class.getName();
         String jobGroupName = AlertAvailabilityDurationJob.class.getName();
         String operator = cacheElement.getAlertConditionOperator().name();
-        String triggerName = operator + "-" + resource.getId();
+        String triggerName = operator + "-" + resource.getId() + cacheElement.getAlertDefinitionId();
         String duration = (String) cacheElement.getAlertConditionOperatorOption();
         // convert from seconds to milliseconds
         Date jobTime = new Date(System.currentTimeMillis() + (Long.valueOf(duration).longValue() * 1000));

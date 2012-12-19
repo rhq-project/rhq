@@ -55,6 +55,9 @@ import org.rhq.common.jbossas.client.controller.JBossASClient;
 import org.rhq.common.jbossas.client.controller.MessagingJBossASClient;
 import org.rhq.common.jbossas.client.controller.SecurityDomainJBossASClient;
 import org.rhq.common.jbossas.client.controller.SocketBindingJBossASClient;
+import org.rhq.common.jbossas.client.controller.WebJBossASClient;
+import org.rhq.common.jbossas.client.controller.WebJBossASClient.ConnectorConfiguration;
+import org.rhq.common.jbossas.client.controller.WebJBossASClient.SSLConfiguration;
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.DbUtil;
@@ -162,9 +165,9 @@ public class ServerInstallUtil {
     public static void setupMailService(ModelControllerClient mcc, HashMap<String, String> serverProperties)
         throws Exception {
 
-        String fromAddressExpr = "${" + ServerProperties.PROP_EMAIL_FROM_ADDRESS + ":rhqadmin@localhost.com}";
-        //String smtpHostExpr = "${" + ServerProperties.PROP_EMAIL_SMTP_HOST + ":localhost}";
-        String smtpPortExpr = "${" + ServerProperties.PROP_EMAIL_SMTP_PORT + ":25}";
+        String fromAddressExpr = buildExpression(ServerProperties.PROP_EMAIL_FROM_ADDRESS, serverProperties, true);
+        String smtpHostExpr = buildExpression(ServerProperties.PROP_EMAIL_SMTP_HOST, serverProperties, false); // enable when AS7-5321 is fixed
+        String smtpPortExpr = buildExpression(ServerProperties.PROP_EMAIL_SMTP_PORT, serverProperties, true);
 
         // Tweek the mail configuration that comes out of box. Setup a batch request to write the proper attributes.
 
@@ -179,16 +182,14 @@ public class ServerInstallUtil {
             "remote-destination-outbound-socket-binding", "mail-smtp");
         ModelNode writeHost = JBossASClient.createRequest(JBossASClient.WRITE_ATTRIBUTE, addr);
         writeHost.get(JBossASClient.NAME).set("host");
-        // TODO: see https://issues.jboss.org/browse/AS7-5321 - that must be fixed before supporting expressions
-        //writeHost.get(JBossASClient.VALUE).setExpression(smtpHostExpr);
-        writeHost.get(JBossASClient.VALUE).set(serverProperties.get(ServerProperties.PROP_EMAIL_SMTP_HOST)); // remove when AS7-5321 is fixed
+        JBossASClient.setPossibleExpression(writeHost, JBossASClient.VALUE, smtpHostExpr);
 
         // now the SMTP port
         addr = Address.root().add("socket-binding-group", "standard-sockets",
             "remote-destination-outbound-socket-binding", "mail-smtp");
         ModelNode writePort = JBossASClient.createRequest(JBossASClient.WRITE_ATTRIBUTE, addr);
         writePort.get(JBossASClient.NAME).set("port");
-        writePort.get(JBossASClient.VALUE).setExpression(smtpPortExpr);
+        JBossASClient.setPossibleExpression(writePort, JBossASClient.VALUE, smtpPortExpr);
 
         ModelNode batch = JBossASClient.createBatchRequest(writeFromAddr, writeHost, writePort);
         JBossASClient client = new JBossASClient(mcc);
@@ -1166,12 +1167,150 @@ public class ServerInstallUtil {
     }
 
     /**
+     * Ensures our web connectors are configured properly.
+     *
+     * @param mcc the AS client
+     * @param serverDetails details of the server being installed
+     * @param configDirStr location of a configuration directory where the keystore is to be stored
+     * @param serverProperties the full set of server properties
+     * @throws Exception
+     */
+    public static void prepareWebConnectors(ModelControllerClient mcc, ServerDetails serverDetails, String configDirStr,
+ HashMap<String, String> serverProperties) throws Exception {
+
+        // first create our keystore
+        File keystoreFile = createKeystore(serverDetails, configDirStr);
+
+        // out of box, we always get a non-secure connector (called "http")...
+        final String connectorName = "http";
+
+        // ...but we want a secure SSL connector, too.
+        // This is the name of the secure connector we want to create.
+        final String sslConnectorName = "https";
+
+        WebJBossASClient client = new WebJBossASClient(mcc);
+
+        if (!client.isConnector(sslConnectorName)) {
+            LOG.info("Creating https connector...");
+
+            SSLConfiguration ssl = new SSLConfiguration();
+
+            // truststore
+            ssl.setCaCertificateFile(getAbsoluteFileLocation("rhq.server.tomcat.security.truststore.file",
+                serverProperties, configDirStr)); // this cannot be an expression - AS7 doesn't support that now
+            ssl.setCaCertificationPassword(buildExpression("rhq.server.tomcat.security.truststore.password",
+                serverProperties, false));
+            ssl.setTruststoreType(buildExpression("rhq.server.tomcat.security.truststore.type", serverProperties, false));
+
+            // keystore
+            ssl.setCertificateKeyFile(getAbsoluteFileLocation("rhq.server.tomcat.security.keystore.file",
+                serverProperties, configDirStr)); // this cannot be an expression - AS7 doesn't support that now
+            ssl.setPassword(buildExpression("rhq.server.tomcat.security.keystore.password", serverProperties, false));
+            ssl.setKeyAlias(buildExpression("rhq.server.tomcat.security.keystore.alias", serverProperties, false));
+            ssl.setKeystoreType(buildExpression("rhq.server.tomcat.security.keystore.type", serverProperties, false));
+
+            // SSL protocol config
+            ssl.setProtocol(buildExpression("rhq.server.tomcat.security.secure-socket-protocol", serverProperties,
+                false));
+            ssl.setVerifyClient(buildExpression("rhq.server.tomcat.security.client-auth-mode", serverProperties,
+                false));
+
+            // note: there doesn't appear to be a way for AS7 to support algorithm, like SunX509 or IbmX509
+            // so I think it just uses the JVM's default. This means "rhq.server.tomcat.security.algorithm" is unused
+
+            ConnectorConfiguration connector = new ConnectorConfiguration();
+            connector.setMaxConnections(buildExpression("rhq.server.startup.web.max-connections", serverProperties,
+                false));
+            connector.setScheme("https");
+            connector.setSocketBinding("https");
+            connector.setSslConfiguration(ssl);
+
+            // create it now
+            client.addConnector("https", connector);
+
+            LOG.info("https connector created.");
+        }
+
+        if (client.isConnector(connectorName)) {
+            client.changeConnector(connectorName, "redirect-port",
+                buildExpression("rhq.server.socket.binding.port.https", serverProperties, false));
+        } else {
+            LOG.warn("There doesn't appear to be a http connector configured already - this is strange.");
+        }
+    }
+
+    /**
+     * For a property whose value might be a file, return that file's absolute path. If the property
+     * has a value whose pathname is already absolute, return it. If the property has a value whose path
+     * is relative, it is considered relative to defaultRootDir and its absolute path based on that root dir
+     * is returned.
+     * 
+     * @param propertyName the property whose value in properties is considered a pathname (which may
+     *                     relative or it may be absolute). 
+     * @param properties where to find the named property
+     * @param defaultRootDir if the property value is a relative file path, this is what it is relative to
+     * @return the absolute path of the file
+     */
+    private static String getAbsoluteFileLocation(String propertyName, HashMap<String, String> properties,
+        String defaultRootDir) {
+
+        if (properties == null || !properties.containsKey(propertyName)) {
+            return null;
+        }
+
+        String propertyValue = properties.get(propertyName);
+        File path = new File(propertyValue);
+        if (path.isAbsolute()) {
+            return path.getAbsolutePath();
+        } else {
+            return new File(defaultRootDir, propertyValue).getAbsolutePath();
+        }
+    }
+
+    /**
+     * You would think this would be simple - just set a value to ${propName:defaultVal} but some
+     * JBossAS attributes don't support expressions when you think they could or should. In this
+     * case, we'll pass in supportsExpression=false until we support AS versions that support
+     * expressions (at which time we'll change to code to pass in true for those attributes).
+     * If supportsExpression is true, the returned string will be ${propName} if defaultProperties is
+     * null or doesn't have that property defined; ${propName:defaultVal} if the default property
+     * is found.
+     * If supportsExpression is false, this will take the actual property value for
+     * propName found in the givem default properties and return that string.
+     * If there is no sysprop of that name, this method returns an empty string.
+     *
+     * @param propName
+     * @param defaultProperties
+     * @param supportsExpression
+     * @return the attribute expression value (or real value if supportsExpression is false).
+     */
+    private static String buildExpression(String propName, HashMap<String, String> defaultProperties,
+        boolean supportsExpression) {
+
+        if (supportsExpression) {
+            if ((defaultProperties != null) && (defaultProperties.containsKey(propName))) {
+                return "${" + propName + ":" + defaultProperties.get(propName) + "}";
+            } else {
+                return "${" + propName + "}";
+            }
+        } else {
+            if ((defaultProperties != null) && (defaultProperties.containsKey(propName))) {
+                return defaultProperties.get(propName);
+            } else {
+                LOG.warn("There is no known value for property [" + propName + "]");
+                return "";
+            }
+        }
+    }
+
+    /**
      * Creates a keystore whose cert has a CN of this server's public endpoint address.
      * 
      * @param serverDetails details of the server being installed
      * @param configDirStr location of a configuration directory where the keystore is to be stored
+     * @return where the keystore file should be created (if an error occurs, this file won't exist)
      */
-    public static void createKeystore(ServerDetails serverDetails, String configDirStr) {
+    private static File createKeystore(ServerDetails serverDetails, String configDirStr) {
         File confDir = new File(configDirStr);
         File keystore = new File(confDir, "rhq.keystore");
         File keystoreBackup = new File(confDir, "rhq.keystore.backup");
@@ -1182,7 +1321,7 @@ public class ServerInstallUtil {
             if (!keystore.renameTo(keystoreBackup)) {
                 LOG.warn("Cannot backup existing keystore - cannot generate a new cert with a proper domain name. ["
                     + keystore + "] will be the keystore used by this server");
-                return;
+                return keystore;
             }
         }
 
@@ -1205,6 +1344,8 @@ public class ServerInstallUtil {
                     + "] to [" + keystore + "]");
             }
         }
+
+        return keystore;
     }
 
     /**

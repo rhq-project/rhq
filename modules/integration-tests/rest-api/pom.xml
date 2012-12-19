@@ -18,6 +18,8 @@
 
     <properties>
         <surefire-plugin.version>2.10</surefire-plugin.version>
+        <jackson.version>1.9.5</jackson.version>
+      <rest-assured.version>1.7.2</rest-assured.version>
     </properties>
 
     <build>
@@ -39,18 +41,32 @@
     </build>
 
     <dependencies>
-        <dependency>
-            <groupId>com.restfuse</groupId>
-            <artifactId>com.eclipsesource.restfuse</artifactId>
-            <version>1.0.0</version>
+      <dependency>
+            <groupId>com.jayway.restassured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <version>${rest-assured.version}</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
+      </dependency>
+      <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.8.2</version>
             <scope>test</scope>
         </dependency>
+      <dependency>
+        <groupId>org.codehaus.jackson</groupId>
+        <artifactId>jackson-core-asl</artifactId>
+        <version>${jackson.version}</version>
+        <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.codehaus.jackson</groupId>
+        <artifactId>jackson-mapper-asl</artifactId>
+        <version>${jackson.version}</version>
+        <scope>test</scope>
+      </dependency>
+
     </dependencies>
 
 </project>

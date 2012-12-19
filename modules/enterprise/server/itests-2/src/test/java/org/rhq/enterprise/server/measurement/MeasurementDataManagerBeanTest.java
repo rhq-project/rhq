@@ -169,9 +169,9 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
             buckets.get(29), Double.NaN, Double.NaN, Double.NaN);
 
         assertPropertiesMatch("The data for bucket 0 does not match the expected values.", expectedBucket0Data,
-            actualData.get(0));
+            actualData.get(0), 0.0001D);
         assertPropertiesMatch("The data for bucket 59 does not match the expected values.", expectedBucket59Data,
-            actualData.get(59));
+            actualData.get(59), 0.0001D);
         assertPropertiesMatch("The data for bucket 29 does not match the expected values.", expectedBucket29Data,
             actualData.get(29));
     }
@@ -206,7 +206,7 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
         MeasurementAggregate expected = new MeasurementAggregate(1.1, divide((1.1 + 2.2 + 3.3 + 4.4 + 5.5 + 6.6), 6),
             6.6);
 
-        AssertUtils.assertPropertiesMatch(expected, actual, "Aggregate does not match");
+        AssertUtils.assertPropertiesMatch("Aggregate does not match", expected, actual, 0.0001D);
     }
 
     @Test(enabled = ENABLED)
@@ -242,9 +242,9 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
             buckets.get(59), divide((5.0 + 5.0 + 3.0), 3), 9.0, 2.0);
 
         assertPropertiesMatch("The data for bucket 0 does not match the expected values.", expectedBucket0Data,
-            actualData.get(0));
+            actualData.get(0), 0.0001D);
         assertPropertiesMatch("The data for bucket 59 does not match the expected values.", expectedBucket59Data,
-            actualData.get(59));
+            actualData.get(59), 0.0001D);
     }
 
     private void createInventory() throws Exception {

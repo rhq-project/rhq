@@ -32,6 +32,9 @@ import org.jboss.arquillian.test.spi.event.enrichment.BeforeEnrichment;
 import org.jboss.arquillian.test.spi.event.suite.AfterSuite;
 
 /**
+ * TODO if we ever decide to use this class, please move it into its standalone module so that it can be used
+ * independently of domain jar.
+ * 
  * @author Jay Shaughnessy
  */
 public class StartStopContainerArquillianExtension implements LoadableExtension {

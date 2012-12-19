@@ -384,9 +384,6 @@ public class InstallerServiceImpl implements InstallerService {
 
         String appServerConfigDir = getAppServerConfigDir();
 
-        // create a keystore whose cert has a CN of this server's public endpoint address
-        ServerInstallUtil.createKeystore(serverDetails, appServerConfigDir);
-
         // create an rhqadmin/rhqadmin management user so when discovered, the AS7 plugin can immediately
         // connect to the RHQ Server.
         ServerInstallUtil.createDefaultManagementUser(serverDetails, appServerConfigDir);
@@ -401,6 +398,9 @@ public class InstallerServiceImpl implements InstallerService {
 
             // Make sure our deployment scanner is configured as we need it
             ServerInstallUtil.configureDeploymentScanner(mcc);
+
+            // create a keystore whose cert has a CN of this server's public endpoint address
+            ServerInstallUtil.prepareWebConnectors(mcc, serverDetails, appServerConfigDir, serverProperties);
         } finally {
             safeClose(mcc);
         }

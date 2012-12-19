@@ -107,7 +107,7 @@ public class JBossASClient {
     public static ModelNode createWriteAttributeRequest(String attributeName, String attributeValue, Address address) {
         final ModelNode op = createRequest(WRITE_ATTRIBUTE, address);
         op.get(NAME).set(attributeName);
-        op.get(VALUE).set(attributeValue);
+        setPossibleExpression(op, VALUE, attributeValue);
         return op;
     }
 
@@ -218,6 +218,29 @@ public class JBossASClient {
             }
         }
         return "Unknown failure";
+    }
+
+    /**
+     * This sets the given node's named attribute to the given value. If the value
+     * appears to be an expression (that is, contains "${" somewhere in it), this will
+     * set the value as an expression on the node.
+     *
+     * @param node the node whose attribute is to be set
+     * @param name the name of the attribute whose value is to be set
+     * @param value the value, possibly an expression
+     *
+     * @return returns the node
+     */
+    public static ModelNode setPossibleExpression(ModelNode node, String name, String value) {
+        if (value != null) {
+            if (value.contains("${")) {
+                return node.get(name).setExpression(value);
+            } else {
+                return node.get(name).set(value);
+            }
+        } else {
+            return node.get(name).clear();
+        }
     }
 
     /////////////////////////////////////////////////////////////////

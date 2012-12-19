@@ -53,7 +53,7 @@ public class RootHandlerBean extends AbstractRestBean  {
             "dynaGroups","group/definitions",
             "alerts","alert",
             "status","status",
-            "favoriteResource","user/favorites/resource",
+            "favoriteResources","user/favorites/resource",
             "operationHistory","operation/history",
             "self",""
     };
@@ -87,6 +87,7 @@ public class RootHandlerBean extends AbstractRestBean  {
             } else if (mediaType.equals(MediaType.APPLICATION_XML_TYPE)) {
                 target += ".xml";
             } else {
+                log.error("Unknown media type " + mediaType);
                 throw new WebApplicationException(Response.Status.NOT_ACCEPTABLE);
             }
             Link link = new Link(rel,target);

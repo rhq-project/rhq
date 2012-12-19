@@ -32,7 +32,6 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
-import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -46,12 +45,16 @@ import com.smartgwt.client.widgets.layout.SectionStackSection;
 import org.rhq.core.domain.cloud.AffinityGroup;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.Server.OperationMode;
+import org.rhq.core.domain.criteria.ServerCriteria;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
@@ -65,9 +68,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  */
 public class ServerDetailView extends LocatableVLayout implements BookmarkableView {
 
-    //    private final CloudGWTServiceAsync cloudManager = GWTServiceLookup.getCloudService();
     private final int serverId;
 
+    private static final int SECTION_COUNT = 2;
     private final LocatableSectionStack sectionStack;
     private SectionStackSection detailsSection = null;
     private SectionStackSection agentSection = null;
@@ -92,31 +95,31 @@ public class ServerDetailView extends LocatableVLayout implements BookmarkableVi
     @Override
     protected void onInit() {
         super.onInit();
-        GWTServiceLookup.getCloudService().getServerById(this.serverId, new AsyncCallback<Server>() {
-            public void onSuccess(final Server server) {
-                prepareDetailsSection(sectionStack, server);
-                prepareAgentSection(sectionStack, server);
-                //                GWTServiceLookup.getCloudService().getAgentsByServerName(server.getName(),
-                //                    new AsyncCallback<List<Agent>>() {
-                //                        public void onSuccess(List<Agent> agents) {
-                //                            prepareAgentSection(sectionStack, server, agents);
-                //                        };
-                //
-                //                        public void onFailure(Throwable caught) {
-                //                            //TODO: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), caught);
-                //                        }
-                //                    });
+        ServerCriteria criteria = new ServerCriteria();
+        criteria.addFilterId(serverId);
+        GWTServiceLookup.getCloudService().findServersByCriteria(criteria, new AsyncCallback<PageList<Server>>() {
+            public void onSuccess(final PageList<Server> servers) {
+                if (servers == null || servers.isEmpty() || servers.size() != 1) {
+                    CoreGUI.getErrorHandler().handleError(
+                        MSG.view_adminTopology_message_fetchServerFail(String.valueOf(serverId)));
+                    initSectionCount = SECTION_COUNT;
+                    return;
+                }
+                prepareDetailsSection(sectionStack, servers.get(0));
+                prepareAgentSection(sectionStack, servers.get(0));
             }
 
             public void onFailure(Throwable caught) {
-                SC.say("er1:" + caught);
-                //TODO: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), caught);
+                CoreGUI.getErrorHandler().handleError(
+                    MSG.view_adminTopology_message_fetchServerFail(String.valueOf(serverId)) + " "
+                        + caught.getMessage(), caught);
+                initSectionCount = SECTION_COUNT;
             }
         });
     }
 
     public boolean isInitialized() {
-        return initSectionCount >= 2;
+        return initSectionCount >= SECTION_COUNT;
     }
 
     @Override
@@ -144,7 +147,7 @@ public class ServerDetailView extends LocatableVLayout implements BookmarkableVi
                     // don't wait forever, give up after 20s and show what we have
                     long elapsedMillis = System.currentTimeMillis() - startTime;
                     if (elapsedMillis > 20000) {
-                        initSectionCount = 2;
+                        initSectionCount = SECTION_COUNT;
                     }
                     schedule(100); // Reschedule the timer.
                 }
@@ -228,20 +231,25 @@ public class ServerDetailView extends LocatableVLayout implements BookmarkableVi
                     server.setOperationMode(OperationMode.valueOf(operationModeItem.getValueAsString()));
                     GWTServiceLookup.getCloudService().updateServer(server, new AsyncCallback<Void>() {
                         public void onSuccess(Void result) {
-                            // todo: notify
+                            Message msg = new Message(MSG.view_adminTopology_message_serverUpdated(server.getName()),
+                                Message.Severity.Info);
+                            CoreGUI.getMessageCenter().notify(msg);
+
                         }
 
                         public void onFailure(Throwable caught) {
-                            // todo: handle
+                            CoreGUI.getErrorHandler().handleError(
+                                MSG.view_adminTopology_message_serverUpdateFail(server.getName()) + " "
+                                    + caught.getMessage(), caught);
                         }
                     });
                 }
             }
         });
-        
+
         form.setItems(nameItem, addressItem, portItem, securePortItem, operationModeItem, affinityGroupItem,
             installationDateItem, lastUpdatetem);
-        
+
         LocatableToolStrip footer = new LocatableToolStrip(extendLocatorId("detailsFooter"));
         footer.setPadding(5);
         footer.setWidth100();

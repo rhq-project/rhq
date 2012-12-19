@@ -124,7 +124,7 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
             showUpdateMembersAction();
         }
     }
-    
+
     private void showUpdateMembersAction() {
         addTableAction(extendLocatorId("editGroupAgents"), MSG.view_groupInventoryMembers_button_updateMembership(),
             new AuthorizedTableAction(this, TableActionEnablement.ALWAYS, Permission.MANAGE_SETTINGS) {

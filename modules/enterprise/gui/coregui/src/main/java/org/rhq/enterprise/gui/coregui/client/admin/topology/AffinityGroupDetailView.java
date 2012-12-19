@@ -53,6 +53,7 @@ public class AffinityGroupDetailView extends LocatableVLayout implements Bookmar
     //    private final CloudGWTServiceAsync cloudManager = GWTServiceLookup.getCloudService();
     private final int affinityGroupId;
 
+    private static final int SECTION_COUNT = 3;
     private final LocatableSectionStack sectionStack;
     private SectionStackSection detailsSection = null;
     private SectionStackSection agentSection = null;
@@ -105,7 +106,7 @@ public class AffinityGroupDetailView extends LocatableVLayout implements Bookmar
     }
 
     public boolean isInitialized() {
-        return initSectionCount >= 3;
+        return initSectionCount >= SECTION_COUNT;
     }
 
     @Override
@@ -136,7 +137,7 @@ public class AffinityGroupDetailView extends LocatableVLayout implements Bookmar
                     // don't wait forever, give up after 20s and show what we have
                     long elapsedMillis = System.currentTimeMillis() - startTime;
                     if (elapsedMillis > 20000) {
-                        initSectionCount = 3;
+                        initSectionCount = SECTION_COUNT;
                     }
                     schedule(100); // Reschedule the timer.
                 }

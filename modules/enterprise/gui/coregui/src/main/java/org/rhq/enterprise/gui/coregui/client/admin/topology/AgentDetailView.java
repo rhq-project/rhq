@@ -37,7 +37,10 @@ import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 
 import org.rhq.core.domain.cloud.AffinityGroup;
+import org.rhq.core.domain.criteria.AgentCriteria;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
@@ -53,9 +56,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  */
 public class AgentDetailView extends LocatableVLayout {
 
-    //    private final CloudGWTServiceAsync cloudManager = GWTServiceLookup.getCloudService();
     private final int agentId;
 
+    private static final int SECTION_COUNT = 2;
     private final LocatableSectionStack sectionStack;
     private SectionStackSection detailsSection = null;
     private SectionStackSection failoverListSection = null;
@@ -80,21 +83,31 @@ public class AgentDetailView extends LocatableVLayout {
     @Override
     protected void onInit() {
         super.onInit();
-        GWTServiceLookup.getAgentService().getAgentByID(this.agentId, new AsyncCallback<Agent>() {
-            public void onSuccess(final Agent agent) {
-                prepareDetailsSection(sectionStack, agent);
-                prepareFailoverListSection(sectionStack, agent);
+        AgentCriteria criteria = new AgentCriteria();
+        criteria.addFilterId(agentId);
+        GWTServiceLookup.getCloudService().findAgentsByCriteria(criteria, new AsyncCallback<PageList<Agent>>() {
+            public void onSuccess(final PageList<Agent> agents) {
+                if (agents == null || agents.isEmpty() || agents.size() != 1) {
+                    CoreGUI.getErrorHandler().handleError(
+                        MSG.view_adminTopology_message_fetchAgentFail(String.valueOf(agentId)));
+                    initSectionCount = SECTION_COUNT;
+                    return;
+                }
+                prepareDetailsSection(sectionStack, agents.get(0));
+                prepareFailoverListSection(sectionStack, agents.get(0));
             }
 
             public void onFailure(Throwable caught) {
-                SC.say("er1:" + caught);
-                //TODO: CoreGUI.getErrorHandler().handleError(MSG.view_admin_plugins_loadFailure(), caught);
+                CoreGUI.getErrorHandler().handleError(
+                    MSG.view_adminTopology_message_fetchAgentFail(String.valueOf(agentId)) + " " + caught.getMessage(),
+                    caught);
+                initSectionCount = SECTION_COUNT;
             }
         });
     }
 
     public boolean isInitialized() {
-        return initSectionCount >= 2;
+        return initSectionCount >= SECTION_COUNT;
     }
 
     @Override
@@ -122,7 +135,7 @@ public class AgentDetailView extends LocatableVLayout {
                     // don't wait forever, give up after 20s and show what we have
                     long elapsedMillis = System.currentTimeMillis() - startTime;
                     if (elapsedMillis > 20000) {
-                        initSectionCount = 2;
+                        initSectionCount = SECTION_COUNT;
                     }
                     schedule(100); // Reschedule the timer.
                 }

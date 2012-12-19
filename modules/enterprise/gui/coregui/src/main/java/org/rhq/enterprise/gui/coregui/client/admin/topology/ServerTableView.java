@@ -37,7 +37,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.criteria.BaseCriteria;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
@@ -56,8 +56,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Jirka Kremser
  * 
  */
-public class ServerTableView extends TableSection<AbstractServerNodeDatasource<? extends Serializable, ? extends BaseCriteria>>
-    implements HasViewName {
+public class ServerTableView extends
+    TableSection<AbstractServerNodeDatasource<? extends Serializable, ? extends BaseCriteria>> implements HasViewName {
 
     public static final ViewName VIEW_ID = new ViewName("Servers(GWT)", MSG.view_adminTopology_servers() + "(GWT)",
         IconEnum.SERVERS);
@@ -141,122 +141,78 @@ public class ServerTableView extends TableSection<AbstractServerNodeDatasource<?
     }
 
     private void showCommonActions() {
-        addTableAction(extendLocatorId("setNormal"), MSG.view_adminTopology_server_setNormal(),
-            MSG.common_msg_areYouSure(), new AuthorizedTableAction(this, TableActionEnablement.ANY,
-                Permission.MANAGE_SETTINGS) {
-                public void executeAction(final ListGridRecord[] selections, Object actionValue) {
-                    List<String> selectedNames = getSelectedNames(selections);
-                    // TODO: msg
-                    //                       String message = MSG.view_admin_plugins_serverDisableConfirm(selectedNames.toString());
-                    String message = "Really? Normal? For all I've done for you? " + selectedNames;
-                    SC.ask(message, new BooleanCallback() {
-                        public void execute(Boolean confirmed) {
-                            if (confirmed) {
-                                int[] selectedIds = getSelectedIds(selections);
-                                SC.say("setting servers to maintenance mode, ids: " + selectedIds);
-                                GWTServiceLookup.getCloudService().updateServerMode(selectedIds,
-                                    Server.OperationMode.NORMAL, new AsyncCallback<Void>() {
-                                        public void onSuccess(Void arg0) {
-                                            // TODO: msg
-                                            Message msg = new Message(MSG
-                                                .view_admin_plugins_disabledServerPlugins("sdf"), Message.Severity.Info);
-                                            CoreGUI.getMessageCenter().notify(msg);
-                                            refresh();
-                                        }
+        addChangeOperationModeAction(OperationMode.NORMAL, MSG.view_adminTopology_server_setMaintenance());
+        addChangeOperationModeAction(OperationMode.MAINTENANCE, MSG.view_adminTopology_server_setMaintenance());
 
-                                        public void onFailure(Throwable caught) {
-                                            // TODO: msg
-                                            CoreGUI.getErrorHandler().handleError(
-                                                MSG.view_admin_plugins_disabledServerPluginsFailure() + " "
-                                                    + caught.getMessage(), caught);
-                                            refreshTableInfo();
-                                        }
-
-                                    });
-                            } else {
-                                refreshTableInfo();
-                            }
-                        }
-                    });
-                }
-            });
-
-        addTableAction(extendLocatorId("setMaintenance"), MSG.view_adminTopology_server_setMaintenance(),
+        addTableAction(extendLocatorId("removeSelected"), MSG.view_adminTopology_server_removeSelected(), null,
             new AuthorizedTableAction(this, TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
                 public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                     List<String> selectedNames = getSelectedNames(selections);
-                    // TODO: msg
-                    //                String message = MSG.view_admin_plugins_serverDisableConfirm(selectedNames.toString());
-                    String message = "Really? Maitenance? For all I've done for you? " + selectedNames;
+                    String message = MSG.view_adminTopology_message_removeServerConfirm(selectedNames.toString());
                     SC.ask(message, new BooleanCallback() {
                         public void execute(Boolean confirmed) {
                             if (confirmed) {
                                 int[] selectedIds = getSelectedIds(selections);
-                                SC.say("setting servers to maintenance mode, ids: " + selectedIds);
-                                GWTServiceLookup.getCloudService().updateServerMode(selectedIds,
-                                    Server.OperationMode.MAINTENANCE, new AsyncCallback<Void>() {
-                                        public void onSuccess(Void arg0) {
-                                            // TODO: msg
-                                            Message msg = new Message(MSG
-                                                .view_admin_plugins_disabledServerPlugins("sdf"), Message.Severity.Info);
-                                            CoreGUI.getMessageCenter().notify(msg);
-                                            refresh();
-                                        }
-
-                                        public void onFailure(Throwable caught) {
-                                            // TODO: msg
-                                            CoreGUI.getErrorHandler().handleError(
-                                                MSG.view_admin_plugins_disabledServerPluginsFailure() + " "
-                                                    + caught.getMessage(), caught);
-                                            refreshTableInfo();
-                                        }
-
-                                    });
-                            } else {
-                                refreshTableInfo();
-                            }
-                        }
-                    });
-                }
-            });
-
-        addTableAction(extendLocatorId("removeSelected"), MSG.view_adminTopology_server_removeSelected(),
-            MSG.common_msg_areYouSure(), new AuthorizedTableAction(this, TableActionEnablement.ANY,
-                Permission.MANAGE_SETTINGS) {
-                public void executeAction(final ListGridRecord[] selections, Object actionValue) {
-                    List<String> selectedNames = getSelectedNames(selections);
-                    String message = "Really? Delete? For all I've done for you? " + selectedNames;
-                    SC.ask(message, new BooleanCallback() {
-                        public void execute(Boolean confirmed) {
-                            if (confirmed) {
-                                int[] selectedIds = getSelectedIds(selections);
-                                SC.say("setting servers to maintenance mode, ids: " + selectedIds);
                                 GWTServiceLookup.getCloudService().deleteServers(selectedIds,
                                     new AsyncCallback<Void>() {
                                         public void onSuccess(Void arg0) {
-                                            // TODO: msg
                                             Message msg = new Message(MSG
-                                                .view_admin_plugins_disabledServerPlugins("sdf"), Message.Severity.Info);
+                                                .view_adminTopology_message_removedServer(String
+                                                    .valueOf(selections.length)), Message.Severity.Info);
                                             CoreGUI.getMessageCenter().notify(msg);
                                             refresh();
                                         }
 
                                         public void onFailure(Throwable caught) {
-                                            // TODO: msg
                                             CoreGUI.getErrorHandler().handleError(
-                                                MSG.view_admin_plugins_disabledServerPluginsFailure() + " "
-                                                    + caught.getMessage(), caught);
+                                                MSG.view_adminTopology_message_removeServerFail(String
+                                                    .valueOf(selections.length)) + " " + caught.getMessage(), caught);
                                             refreshTableInfo();
                                         }
 
                                     });
-                            } else {
-                                refreshTableInfo();
                             }
                         }
                     });
                 }
             });
+    }
+
+    private void addChangeOperationModeAction(final OperationMode mode, String label) {
+        addTableAction(extendLocatorId("set" + mode), label, null, new AuthorizedTableAction(this,
+            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
+            public void executeAction(final ListGridRecord[] selections, Object actionValue) {
+                List<String> selectedNames = getSelectedNames(selections);
+                String message = MSG.view_adminTopology_message_setModeConfirm(selectedNames.toString(), mode.name());
+                SC.ask(message, new BooleanCallback() {
+                    public void execute(Boolean confirmed) {
+                        if (confirmed) {
+                            int[] selectedIds = getSelectedIds(selections);
+                            GWTServiceLookup.getCloudService().updateServerMode(selectedIds, mode,
+                                new AsyncCallback<Void>() {
+                                    public void onSuccess(Void result) {
+                                        Message msg = new Message(MSG.view_adminTopology_message_setMode(
+                                            String.valueOf(selections.length), mode.name()), Message.Severity.Info);
+                                        CoreGUI.getMessageCenter().notify(msg);
+                                        refresh();
+                                    }
+
+                                    public void onFailure(Throwable caught) {
+                                        CoreGUI.getErrorHandler().handleError(
+                                            MSG.view_adminTopology_message_setModeFail(
+                                                String.valueOf(selections.length), mode.name())
+                                                + " " + caught.getMessage(), caught);
+                                        refreshTableInfo();
+                                    }
+
+                                });
+                        } else {
+                            refreshTableInfo();
+                        }
+                    }
+                });
+            }
+        });
     }
 
     private void showUpdateMembersAction() {

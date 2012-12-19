@@ -62,6 +62,7 @@ public class PartitionEventDetailView extends LocatableVLayout implements Bookma
 
     private final int partitionEventId;
 
+    private static final int SECTION_COUNT = 2;
     private final LocatableSectionStack sectionStack;
     private SectionStackSection detailsSection = null;
     private SectionStackSection agentSection = null;
@@ -118,7 +119,7 @@ public class PartitionEventDetailView extends LocatableVLayout implements Bookma
     }
 
     public boolean isInitialized() {
-        return initSectionCount >= 2;
+        return initSectionCount >= SECTION_COUNT;
     }
 
     @Override
@@ -146,7 +147,7 @@ public class PartitionEventDetailView extends LocatableVLayout implements Bookma
                     // don't wait forever, give up after 20s and show what we have
                     long elapsedMillis = System.currentTimeMillis() - startTime;
                     if (elapsedMillis > 20000) {
-                        initSectionCount = 2;
+                        initSectionCount = SECTION_COUNT;
                     }
                     schedule(100); // Reschedule the timer.
                 }

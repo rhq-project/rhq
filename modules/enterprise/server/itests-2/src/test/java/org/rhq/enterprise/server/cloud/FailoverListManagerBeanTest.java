@@ -95,8 +95,9 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
             try {
                 for (Server server : servers) {
                     // must set to down to allow for a delete
-                    cloudManager.updateServerMode(new Integer[] { server.getId() }, Server.OperationMode.DOWN);
-                    cloudManager.deleteServer(server.getId());
+                    cloudManager.updateServerMode(LookupUtil.getSubjectManager().getOverlord(),
+                        new Integer[] { server.getId() }, Server.OperationMode.DOWN);
+                    cloudManager.deleteServer(LookupUtil.getSubjectManager().getOverlord(), server.getId());
                 }
 
                 for (Agent agent : agents) {

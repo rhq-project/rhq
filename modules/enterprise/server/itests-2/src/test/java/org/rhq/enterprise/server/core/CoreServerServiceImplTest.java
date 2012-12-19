@@ -178,8 +178,9 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
     protected void afterMethod() throws Exception {
 
         // cleanup our test server
-        LookupUtil.getCloudManager().updateServerMode(new Integer[] { server.getId() }, OperationMode.DOWN);
-        LookupUtil.getCloudManager().deleteServer(server.getId());
+        LookupUtil.getCloudManager().updateServerMode(LookupUtil.getSubjectManager().getOverlord(),
+            new Integer[] { server.getId() }, OperationMode.DOWN);
+        LookupUtil.getCloudManager().deleteServer(LookupUtil.getSubjectManager().getOverlord(), server.getId());
 
         // shutdown our mock mbean server
         unprepareCustomServerService(CoreServerMBean.OBJECT_NAME);

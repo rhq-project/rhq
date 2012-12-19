@@ -258,7 +258,8 @@ public class StartupBean {
             log.info("Server is configured to start up in MAINTENANCE mode.");
             Server server = serverManager.getServer();
             Integer[] serverId = new Integer[] { server.getId() };
-            cloudManager.updateServerMode(serverId, OperationMode.MAINTENANCE);
+            cloudManager.updateServerMode(LookupUtil.getSubjectManager().getOverlord(), serverId,
+                OperationMode.MAINTENANCE);
         }
 
         // Establish the current server mode for the server. This will move the server to NORMAL

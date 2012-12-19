@@ -49,7 +49,7 @@ public class ListServersUIBean extends PagedDataTableUIBean {
 
         if (ids.length > 0) {
             try {
-                cloudManager.deleteServers(ids);
+                cloudManager.deleteServers(subject, ids);
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Removed [" + ids.length
                     + "] servers from the cloud.");
@@ -70,7 +70,7 @@ public class ListServersUIBean extends PagedDataTableUIBean {
 
         if (ids.length > 0) {
             try {
-                cloudManager.updateServerMode(ids, mode);
+                cloudManager.updateServerMode(EnterpriseFacesContextUtility.getSubject(), ids, mode);
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Set [" + ids.length + "] servers to mode "
                     + mode);

@@ -163,19 +163,19 @@ public class CloudManagerBean implements CloudManagerLocal {
 
     @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
         @RequiredPermission(Permission.MANAGE_INVENTORY) })
-    public void deleteServers(Integer[] serverIds) throws CloudManagerException {
+    public void deleteServers(Subject subject, Integer[] serverIds) throws CloudManagerException {
         if (serverIds == null) {
             return;
         }
 
         for (Integer nextServerId : serverIds) {
-            cloudManager.deleteServer(nextServerId);
+            cloudManager.deleteServer(subject, nextServerId);
         }
     }
 
     @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
         @RequiredPermission(Permission.MANAGE_INVENTORY) })
-    public void deleteServer(Integer serverId) throws CloudManagerException {
+    public void deleteServer(Subject subject, Integer serverId) throws CloudManagerException {
         try {
             Server server = entityManager.find(Server.class, serverId);
 
@@ -214,7 +214,7 @@ public class CloudManagerBean implements CloudManagerLocal {
 
     @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
         @RequiredPermission(Permission.MANAGE_INVENTORY) })
-    public void updateServerMode(Integer[] serverIds, Server.OperationMode mode) {
+    public void updateServerMode(Subject subject, Integer[] serverIds, Server.OperationMode mode) {
         if (serverIds == null) {
             return;
         }
@@ -249,14 +249,15 @@ public class CloudManagerBean implements CloudManagerLocal {
         }
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
     public Server updateServer(Subject subject, Server server) {
         return entityManager.merge(server);
     }
 
     @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
         @RequiredPermission(Permission.MANAGE_INVENTORY) })
-    public PageList<FailoverListDetails> getFailoverListDetailsByAgentId(int agentId, PageControl pc) {
+    public PageList<FailoverListDetails> getFailoverListDetailsByAgentId(Subject subject, int agentId, PageControl pc) {
         pc.initDefaultOrderingField("fld.ordinal");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,

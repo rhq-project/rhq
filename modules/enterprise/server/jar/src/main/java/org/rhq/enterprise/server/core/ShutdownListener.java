@@ -169,7 +169,7 @@ public class ShutdownListener {
             // Set the server operation mode to DOWN unless in MM
             Server server = serverManager.getServer();
             if (Server.OperationMode.MAINTENANCE != server.getOperationMode()) {
-                cloudManager.updateServerMode(new Integer[] { server.getId() }, OperationMode.DOWN);
+                cloudManager.updateServerMode(LookupUtil.getSubjectManager().getOverlord(), new Integer[] { server.getId() }, OperationMode.DOWN);
             }
         } catch (Throwable t) {
             // only show ugly stack traces if the user runs the server in debug mode

@@ -87,9 +87,5 @@ public interface AffinityGroupManagerLocal {
      */
     PageList<Agent> getAgentNonMembers(Subject subject, int affinityGroupId, PageControl pageControl);
 
-    /**
-     * @deprecated portal war was using it (use finders <code>AgentManagerBean.findAgentsByCriteria()</code> and 
-     * <code>CloudManagerBean.findServersByCriteria()</code> instead)
-     */
     PageList<AffinityGroupCountComposite> getComposites(Subject subject, PageControl pageControl);
 }

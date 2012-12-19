@@ -683,7 +683,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
     private void deleteServerIdentity() throws Exception {
         if (server != null) {
             cleanupAgent(); // can't remove the server before we purge the agent
-            LookupUtil.getCloudManager().deleteServer(server.getId());
+            LookupUtil.getCloudManager().deleteServer(LookupUtil.getSubjectManager().getOverlord(), server.getId());
             server = null;
         }
     }

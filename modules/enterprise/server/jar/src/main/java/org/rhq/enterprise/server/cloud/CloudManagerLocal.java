@@ -37,9 +37,9 @@ import org.rhq.core.domain.util.PageList;
 @Local
 public interface CloudManagerLocal {
 
-    void deleteServers(Integer[] serverIds) throws CloudManagerException;
+    void deleteServers(Subject subject, Integer[] serverIds) throws CloudManagerException;
 
-    void deleteServer(Integer serverId) throws CloudManagerException;
+    void deleteServer(Subject subject, Integer serverId) throws CloudManagerException;
 
     List<Agent> getAgentsByServerName(String serverName);
 
@@ -83,11 +83,11 @@ public interface CloudManagerLocal {
      */
     int getNormalServerCount();
 
-    void updateServerMode(Integer[] serverIds, Server.OperationMode mode);
+    void updateServerMode(Subject subject, Integer[] serverIds, Server.OperationMode mode);
 
     Server updateServer(Subject subject, Server server);
 
-    PageList<FailoverListDetails> getFailoverListDetailsByAgentId(int agentId, PageControl pc);
+    PageList<FailoverListDetails> getFailoverListDetailsByAgentId(Subject subject, int agentId, PageControl pc);
 
     void markStaleServersDown(Subject subject);
 

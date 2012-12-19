@@ -77,7 +77,7 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     @Override
     public void deleteServers(int[] serverIds) throws RuntimeException {
         try {
-            cloudManager.deleteServers(ArrayUtils.toObject(serverIds));
+            cloudManager.deleteServers(getSessionSubject(), ArrayUtils.toObject(serverIds));
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -86,7 +86,7 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     @Override
     public void updateServerMode(int[] serverIds, OperationMode mode) throws RuntimeException {
         try {
-            cloudManager.updateServerMode(ArrayUtils.toObject(serverIds), mode);
+            cloudManager.updateServerMode(getSessionSubject(), ArrayUtils.toObject(serverIds), mode);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -96,7 +96,8 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     public List<FailoverListDetails> getFailoverListDetailsByAgentId(int agentId, PageControl pc)
         throws RuntimeException {
         try {
-            return SerialUtility.prepare(cloudManager.getFailoverListDetailsByAgentId(agentId, pc),
+            return SerialUtility.prepare(
+                cloudManager.getFailoverListDetailsByAgentId(getSessionSubject(), agentId, pc),
                 "CloudGWTServiceImpl.getFailoverListDetailsByAgentId");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);

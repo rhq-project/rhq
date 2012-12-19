@@ -64,9 +64,8 @@ public class ServerWithAgentCountDatasource extends
         ListGridField agentCountField = FIELD_AGENT_COUNT.getListGridField("75");
         agentCountField.setHoverCustomizer(new HoverCustomizer() {
             public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-                return MSG.view_adminTopology_message_agentsCount(FIELD_AGENT_COUNT.propertyName());
-                //                "There are " + record.getAttributeAsInt(FIELD_AGENT_COUNT.propertyName())
-                //                    + " agents registered to this server.";
+                return MSG.view_adminTopology_message_agentsCount(record.getAttributeAsString(FIELD_AGENT_COUNT
+                    .propertyName()));
             }
         });
         agentCountField.setShowHover(true);

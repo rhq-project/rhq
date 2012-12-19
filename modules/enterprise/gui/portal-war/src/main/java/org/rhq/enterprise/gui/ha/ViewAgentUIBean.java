@@ -81,7 +81,8 @@ public class ViewAgentUIBean extends PagedDataTableUIBean {
         @Override
         public PageList<FailoverListDetails> fetchPage(PageControl pc) {
             int agentId = getAgent().getId();
-            PageList<FailoverListDetails> pageList = cloudManager.getFailoverListDetailsByAgentId(agentId, pc);
+            PageList<FailoverListDetails> pageList = cloudManager.getFailoverListDetailsByAgentId(
+                EnterpriseFacesContextUtility.getSubject(), agentId, pc);
 
             return pageList;
         }

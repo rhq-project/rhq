@@ -60,9 +60,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 public class AffinityGroupAgentsSelector extends AbstractSelector<Agent, AgentCriteria> {
 
     private final Integer affinityGroupId;
-
     private static RPCDataSource<Agent, AgentCriteria> datasource = null;
-
     private static final int MAX_AVAIL_AGENTS = 3000;
     private static Window modalWindow;
     private static boolean shouldBeClosed;
@@ -104,7 +102,6 @@ public class AffinityGroupAgentsSelector extends AbstractSelector<Agent, AgentCr
                 selector.reset();
             }
 
-            @Override
             public void onFailure(Throwable t) {
                 CoreGUI.getErrorHandler().handleError(
                     MSG.view_adminTopology_message_fetchAgentsFail(String.valueOf(affinityGroupId)), t);
@@ -187,7 +184,6 @@ public class AffinityGroupAgentsSelector extends AbstractSelector<Agent, AgentCr
                     shouldBeClosed = false;
                     GWTServiceLookup.getCloudService().removeAgentsFromGroup(
                         originallySelected.toArray(new Integer[originallySelected.size()]), new AsyncCallback<Void>() {
-
                             public void onSuccess(Void result) {
                                 closeAndRefresh(parrent, true);
                             }
@@ -203,7 +199,6 @@ public class AffinityGroupAgentsSelector extends AbstractSelector<Agent, AgentCr
                     shouldBeClosed = false;
                     GWTServiceLookup.getCloudService().addAgentsToGroup(selector.getAffinityGroupId(),
                         actuallySelected.toArray(new Integer[actuallySelected.size()]), new AsyncCallback<Void>() {
-
                             public void onSuccess(Void result) {
                                 closeAndRefresh(parrent, true);
                             }
@@ -258,5 +253,4 @@ public class AffinityGroupAgentsSelector extends AbstractSelector<Agent, AgentCr
     public Integer getAffinityGroupId() {
         return affinityGroupId;
     }
-
 }

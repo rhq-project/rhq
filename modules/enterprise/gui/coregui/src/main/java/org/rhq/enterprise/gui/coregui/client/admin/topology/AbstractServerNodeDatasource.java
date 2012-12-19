@@ -22,10 +22,14 @@ import java.util.List;
 
 import com.smartgwt.client.widgets.grid.ListGridField;
 
+import org.rhq.core.domain.cloud.FailoverListDetails;
+import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.criteria.BaseCriteria;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
+ * Base class for all Server derivatives like {@link ServerWithAgentCountComposite} and {@link FailoverListDetails}
+ * 
  * @author Jirka Kremser
  */
 public abstract class AbstractServerNodeDatasource<T, C extends BaseCriteria> extends RPCDataSource<T, C> {

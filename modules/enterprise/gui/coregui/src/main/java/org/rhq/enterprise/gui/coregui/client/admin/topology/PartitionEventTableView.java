@@ -58,8 +58,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  */
 public class PartitionEventTableView extends TableSection<PartitionEventDatasource> implements HasViewName {
 
-    public static final ViewName VIEW_ID = new ViewName("PartitionEvents(GWT)",
-        MSG.view_adminTopology_partitionEvents() + "(GWT)", IconEnum.EVENTS);
+    public static final ViewName VIEW_ID = new ViewName("PartitionEvents", MSG.view_adminTopology_partitionEvents(),
+        IconEnum.EVENTS);
 
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_TOPOLOGY_VIEW_ID + "/" + VIEW_ID;

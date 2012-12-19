@@ -65,8 +65,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
  */
 public class AffinityGroupTableView extends TableSection<AffinityGroupWithCountsDatasource> implements HasViewName {
 
-    public static final ViewName VIEW_ID = new ViewName("AffinityGroups(GWT)", MSG.view_adminTopology_affinityGroups()
-        + "(GWT)", IconEnum.ALL_GROUPS);
+    public static final ViewName VIEW_ID = new ViewName("AffinityGroups", MSG.view_adminTopology_affinityGroups(),
+        IconEnum.ALL_GROUPS);
 
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_TOPOLOGY_VIEW_ID + "/" + VIEW_ID;

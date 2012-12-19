@@ -199,7 +199,7 @@ public class AffinityGroupDetailView extends LocatableVLayout implements Bookmar
         footer.addMember(saveButton);
         form.setItems(nameItem);
         SectionStackSection section = new SectionStackSection(MSG.common_title_details());
-        section.setExpanded(true);
+        section.setExpanded(false);
         section.setItems(form, footer);
 
         detailsSection = section;

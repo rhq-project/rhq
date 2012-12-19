@@ -48,14 +48,12 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  */
 public class AgentTableView extends TableSection<AgentDatasource> implements HasViewName {
 
-    public static final ViewName VIEW_ID = new ViewName("Agents(GWT)", MSG.view_adminTopology_agents() + "(GWT)",
-        IconEnum.AGENT);
+    public static final ViewName VIEW_ID = new ViewName("Agents", MSG.view_adminTopology_agents(), IconEnum.AGENT);
 
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_TOPOLOGY_VIEW_ID + "/" + VIEW_ID;
 
     private final boolean isAffinityGroupId;
-
     private final Integer id;
 
     public AgentTableView(String locatorId, Integer id, boolean isAffinityGroupId) {

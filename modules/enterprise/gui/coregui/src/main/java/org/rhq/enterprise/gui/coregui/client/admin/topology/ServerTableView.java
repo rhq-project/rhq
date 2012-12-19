@@ -18,8 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.topology;
 
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_AFFINITY_GROUP;
-import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_AFFINITY_GROUP_ID;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_AFFINITY_GROUP;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_AFFINITY_GROUP_ID;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_ORDINAL;
 
 import java.io.Serializable;
@@ -59,16 +59,13 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 public class ServerTableView extends
     TableSection<AbstractServerNodeDatasource<? extends Serializable, ? extends BaseCriteria>> implements HasViewName {
 
-    public static final ViewName VIEW_ID = new ViewName("Servers(GWT)", MSG.view_adminTopology_servers() + "(GWT)",
-        IconEnum.SERVERS);
+    public static final ViewName VIEW_ID = new ViewName("Servers", MSG.view_adminTopology_servers(), IconEnum.SERVERS);
 
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_TOPOLOGY_VIEW_ID + "/" + VIEW_ID;
 
     private final boolean showActions;
-
     private final boolean isAffinityGroupId;
-
     private final Integer id;
 
     public ServerTableView(String locatorId, Integer id, boolean isAffinityGroupId) {

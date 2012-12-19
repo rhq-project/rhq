@@ -44,6 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 public class ServerWithAgentCountDatasource extends
     AbstractServerNodeDatasource<ServerWithAgentCountComposite, Criteria> {
 
+    // server datasource delegate
     private final ServerDatasource serverDatasource;
 
     public ServerWithAgentCountDatasource() {

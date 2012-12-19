@@ -63,9 +63,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 public class AffinityGroupServersSelector extends AbstractSelector<Server, ServerCriteria> {
 
     private final Integer affinityGroupId;
-
     private static RPCDataSource<Server, ServerCriteria> datasource = null;
-
     private static Window modalWindow;
     private static boolean shouldBeClosed;
     private static VLayout layout;
@@ -93,7 +91,6 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, Serve
                 MSG.view_adminTopology_serverDetail_operationMode());
             operationModeSelect.setValueMap(buildOperationModeOptions());
             operationModeSelect.setValue("ALL");
-
             availableFilterForm.setItems(search, operationModeSelect);
         }
         return availableFilterForm;
@@ -122,7 +119,6 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, Serve
                 selector.reset();
             }
 
-            @Override
             public void onFailure(Throwable t) {
                 CoreGUI.getErrorHandler().handleError(
                     MSG.view_adminTopology_message_fetchServersFail(String.valueOf(affinityGroupId)), t);
@@ -279,5 +275,4 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, Serve
     public Integer getAffinityGroupId() {
         return affinityGroupId;
     }
-
 }

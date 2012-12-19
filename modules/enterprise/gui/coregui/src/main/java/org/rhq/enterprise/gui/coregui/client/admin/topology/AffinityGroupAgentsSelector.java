@@ -29,7 +29,6 @@ import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Window;
@@ -40,8 +39,8 @@ import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.criteria.AgentCriteria;
 import org.rhq.core.domain.resource.Agent;
@@ -165,10 +164,9 @@ public class AffinityGroupAgentsSelector extends AbstractSelector<Agent, AgentCr
         layout = new VLayout();
         layout.setWidth100();
         layout.setHeight100();
-        layout.setPadding(10);
-        layout.setLayoutMargin(10);
 
         final AffinityGroupAgentsSelector selector = new AffinityGroupAgentsSelector("assignAgents", affinityGroupId);
+        selector.setMargin(10);
         layout.addMember(selector);
 
         IButton cancel = new LocatableIButton(selector.extendLocatorId("Cancel"), MSG.common_button_cancel());
@@ -222,14 +220,13 @@ public class AffinityGroupAgentsSelector extends AbstractSelector<Agent, AgentCr
                 }
             }
         });
-
-        HLayout buttons = new HLayout(10);
-        buttons.setHeight(20);
-        buttons.setLayoutAlign(Alignment.CENTER);
-        buttons.setLayoutBottomMargin(0);
-        buttons.addMember(save);
-        buttons.addMember(cancel);
-        layout.addMember(buttons);
+        ToolStrip buttonBar = new ToolStrip();
+        buttonBar.setPadding(5);
+        buttonBar.setWidth100();
+        buttonBar.setMembersMargin(15);
+        buttonBar.addMember(save);
+        buttonBar.addMember(cancel);
+        layout.addMember(buttonBar);
     }
 
     private static void closeAndRefresh(TableSection<?> parrent, boolean fullRefresh) {

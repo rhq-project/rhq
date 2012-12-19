@@ -26,7 +26,6 @@
 package org.rhq.server.metrics;
 
 import static org.rhq.core.domain.util.PageOrdering.DESC;
-import static org.rhq.server.metrics.DateTimeService.TWO_WEEKS;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -42,7 +41,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeComparator;
-import org.joda.time.Days;
 import org.joda.time.Hours;
 import org.joda.time.Minutes;
 
@@ -55,8 +53,6 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 public class MetricsServer {
 
     private static final int DEFAULT_PAGE_SIZE = 200;
-
-    public static int RAW_TTL = Days.days(7).toStandardSeconds().getSeconds();
 
     private final Log log = LogFactory.getLog(MetricsServer.class);
 
@@ -192,7 +188,7 @@ public class MetricsServer {
     }
 
     public void addNumericData(Set<MeasurementDataNumeric> dataSet) {
-        Set<MeasurementDataNumeric> updates = dao.insertRawMetrics(dataSet, RAW_TTL);
+        Set<MeasurementDataNumeric> updates = dao.insertRawMetrics(dataSet, MetricsTable.RAW.getTTL());
         updateMetricsIndex(updates);
     }
 
@@ -227,15 +223,14 @@ public class MetricsServer {
             updateMetricsIndex(MetricsTable.SIX_HOUR, updatedSchedules, Minutes.minutes(60 * 6));
         }
 
-        updatedSchedules = calculateAggregates(MetricsTable.ONE_HOUR, MetricsTable.SIX_HOUR, Minutes.minutes(60 * 6),
-            DateTimeService.ONE_MONTH);
+        updatedSchedules = calculateAggregates(MetricsTable.ONE_HOUR, MetricsTable.SIX_HOUR, Minutes.minutes(60 * 6));
         if (!updatedSchedules.isEmpty()) {
             dao.deleteMetricsIndexEntries(MetricsTable.SIX_HOUR);
             updateMetricsIndex(MetricsTable.TWENTY_FOUR_HOUR, updatedSchedules, Hours.hours(24).toStandardMinutes());
         }
 
-        updatedSchedules = calculateAggregates(MetricsTable.SIX_HOUR, MetricsTable.TWENTY_FOUR_HOUR,
-            Hours.hours(24).toStandardMinutes(), DateTimeService.ONE_YEAR);
+        updatedSchedules = calculateAggregates(MetricsTable.SIX_HOUR, MetricsTable.TWENTY_FOUR_HOUR, Hours.hours(24)
+            .toStandardMinutes());
         if (!updatedSchedules.isEmpty()) {
             dao.deleteMetricsIndexEntries(MetricsTable.TWENTY_FOUR_HOUR);
         }
@@ -264,8 +259,8 @@ public class MetricsServer {
             oneHourMetrics.add(aggregatedRaw);
         }
 
-        List<AggregatedNumericMetric> updatedSchedules = dao.insertAggregates(MetricsTable.ONE_HOUR,
-            oneHourMetrics, TWO_WEEKS);
+        List<AggregatedNumericMetric> updatedSchedules = dao.insertAggregates(MetricsTable.ONE_HOUR, oneHourMetrics,
+            MetricsTable.ONE_HOUR.getTTL());
         return updatedSchedules;
     }
 
@@ -298,7 +293,7 @@ public class MetricsServer {
     }
 
     private List<AggregatedNumericMetric> calculateAggregates(MetricsTable fromColumnFamily,
-        MetricsTable toColumnFamily, Minutes nextInterval, int ttl) {
+        MetricsTable toColumnFamily, Minutes nextInterval) {
 
         List<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(toColumnFamily);
         List<AggregatedNumericMetric> toMetrics = new ArrayList<AggregatedNumericMetric>();
@@ -321,7 +316,8 @@ public class MetricsServer {
             toMetrics.add(aggregatedMetric);
         }
 
-        List<AggregatedNumericMetric> updatedSchedules = dao.insertAggregates(toColumnFamily, toMetrics, ttl);
+        List<AggregatedNumericMetric> updatedSchedules = dao.insertAggregates(toColumnFamily, toMetrics,
+            toColumnFamily.getTTL());
         return updatedSchedules;
     }
 

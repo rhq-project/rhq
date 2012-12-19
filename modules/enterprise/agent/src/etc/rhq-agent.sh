@@ -212,7 +212,9 @@ fi
 debug_msg "RHQ_AGENT_CMDLINE_OPTS: $RHQ_AGENT_CMDLINE_OPTS"
 
 # ----------------------------------------------------------------------
-# Prepare LD_LIBRARY_PATH to include libraries shipped with the agent
+# Prepare LD_LIBRARY_PATH to include libraries shipped with the agent and
+# prepare jna.platform.library.path for JNA to be able to load augeas from our
+# custom location.
 # ----------------------------------------------------------------------
 
 if [ -n "$_LINUX" ]; then
@@ -230,6 +232,13 @@ if [ -n "$_LINUX" ]; then
       fi
    fi
    export LD_LIBRARY_PATH
+
+   # We need to force our custom library path as the "system" look up path to
+   # JNA. Without this, the lookup of .so.x.y versions wouldn't work.
+   # We also need to keep the LD_LIBRARY_PATH in place so that the default
+   # system lookup works for libfa, which libaugeas depends on.
+   _JNA_LIBRARY_PATH="\"-Djna.platform.library.path=${LD_LIBRARY_PATH}\""
+
    debug_msg "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
 fi
 
@@ -265,7 +274,7 @@ if [ -z "$RHQ_AGENT_MAINCLASS" ]; then
 fi
 
 # Build the command line that starts the VM
-CMD="\"${RHQ_AGENT_JAVA_EXE_FILE_PATH}\" ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${RHQ_AGENT_JAVA_OPTS} ${RHQ_AGENT_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp \"${CLASSPATH}\" ${RHQ_AGENT_MAINCLASS} ${RHQ_AGENT_CMDLINE_OPTS}"
+CMD="\"${RHQ_AGENT_JAVA_EXE_FILE_PATH}\" ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${_JNA_LIBRARY_PATH} ${RHQ_AGENT_JAVA_OPTS} ${RHQ_AGENT_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp \"${CLASSPATH}\" ${RHQ_AGENT_MAINCLASS} ${RHQ_AGENT_CMDLINE_OPTS}"
 
 debug_msg "Executing the agent with this command line:"
 debug_msg "$CMD"

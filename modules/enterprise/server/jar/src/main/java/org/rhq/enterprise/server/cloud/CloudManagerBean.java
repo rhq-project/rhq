@@ -44,6 +44,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.authz.RequiredPermissions;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
@@ -123,7 +124,8 @@ public class CloudManagerBean implements CloudManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
     public PageList<ServerWithAgentCountComposite> getServerComposites(Subject subject, PageControl pc) {
         pc.initDefaultOrderingField("s.name");
 
@@ -159,6 +161,8 @@ public class CloudManagerBean implements CloudManagerLocal {
         }
     }
 
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
     public void deleteServers(Integer[] serverIds) throws CloudManagerException {
         if (serverIds == null) {
             return;
@@ -169,6 +173,8 @@ public class CloudManagerBean implements CloudManagerLocal {
         }
     }
 
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
     public void deleteServer(Integer serverId) throws CloudManagerException {
         try {
             Server server = entityManager.find(Server.class, serverId);
@@ -206,6 +212,8 @@ public class CloudManagerBean implements CloudManagerLocal {
         }
     }
 
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
     public void updateServerMode(Integer[] serverIds, Server.OperationMode mode) {
         if (serverIds == null) {
             return;
@@ -246,6 +254,8 @@ public class CloudManagerBean implements CloudManagerLocal {
         return entityManager.merge(server);
     }
 
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
     public PageList<FailoverListDetails> getFailoverListDetailsByAgentId(int agentId, PageControl pc) {
         pc.initDefaultOrderingField("fld.ordinal");
 
@@ -295,7 +305,7 @@ public class CloudManagerBean implements CloudManagerLocal {
         // regardless of the number of pending requests, as the work would be duplicated.
         partitionEventManager.processRequestedPartitionEvents();
     }
-    
+
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public PageList<Server> findServersByCriteria(Subject subject, ServerCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);

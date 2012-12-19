@@ -63,13 +63,33 @@ public interface AffinityGroupManagerLocal {
 
     int getAffinityGroupCount();
 
+    /**
+     * @deprecated portal war was using it (use finders <code>AgentManagerBean.findAgentsByCriteria()</code> and 
+     * <code>CloudManagerBean.findServersByCriteria()</code> instead)
+     */
     PageList<Server> getServerMembers(Subject subject, int affinityGroupId, PageControl pageControl);
 
+    /**
+     * @deprecated portal war was using it (use finders <code>AgentManagerBean.findAgentsByCriteria()</code> and 
+     * <code>CloudManagerBean.findServersByCriteria()</code> instead)
+     */
     PageList<Server> getServerNonMembers(Subject subject, int affinityGroupId, PageControl pageControl);
 
+    /**
+     * @deprecated portal war was using it (use finders <code>AgentManagerBean.findAgentsByCriteria()</code> and 
+     * <code>CloudManagerBean.findServersByCriteria()</code> instead)
+     */
     PageList<Agent> getAgentMembers(Subject subject, int affinityGroupId, PageControl pageControl);
 
+    /**
+     * @deprecated portal war was using it (use finders <code>AgentManagerBean.findAgentsByCriteria()</code> and 
+     * <code>CloudManagerBean.findServersByCriteria()</code> instead)
+     */
     PageList<Agent> getAgentNonMembers(Subject subject, int affinityGroupId, PageControl pageControl);
 
+    /**
+     * @deprecated portal war was using it (use finders <code>AgentManagerBean.findAgentsByCriteria()</code> and 
+     * <code>CloudManagerBean.findServersByCriteria()</code> instead)
+     */
     PageList<AffinityGroupCountComposite> getComposites(Subject subject, PageControl pageControl);
 }

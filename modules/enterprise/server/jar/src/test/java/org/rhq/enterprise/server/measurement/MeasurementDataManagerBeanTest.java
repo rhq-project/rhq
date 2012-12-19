@@ -31,10 +31,14 @@ import static org.rhq.core.domain.measurement.NumericType.DYNAMIC;
 import static org.rhq.core.domain.resource.ResourceCategory.SERVER;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.DecimalFormat;
 import java.util.Collections;
 import java.util.List;
 
@@ -91,7 +95,7 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
 
     private final String RESOURCE_NAME = getClass().getName() + "_NAME";
 
-    private final String RESOURCE_UUID = getClass().getSimpleName() + "_UUID";
+    private final String RESOURCE_UUID = "MeasurementDataManagerBeanTest_UUID ";
 
     private ResourceType resourceType;
 
@@ -114,7 +118,7 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
         insertDummyReport();
     }
 
-    @AfterMethod
+    @AfterMethod(alwaysRun = true)
     public void tearDown() {
         purgeDB();
     }
@@ -146,17 +150,17 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
         assertEquals("Expected to get back 60 data points.", buckets.getNumDataPoints(), actualData.size());
 
         MeasurementDataNumericHighLowComposite expectedBucket0Data = new MeasurementDataNumericHighLowComposite(
-            buckets.get(0), (1.1 + 2.2 + 3.3) / 3, 3.3, 1.1);
+            buckets.get(0), divide(1.1 + 2.2 + 3.3, 3), 3.3, 1.1);
         MeasurementDataNumericHighLowComposite expectedBucket59Data = new MeasurementDataNumericHighLowComposite(
-            buckets.get(59), (4.4 + 5.5 + 6.6) / 3, 6.6, 4.4);
+            buckets.get(59), divide(4.4 + 5.5 + 6.6, 3), 6.6, 4.4);
         MeasurementDataNumericHighLowComposite expectedBucket29Data = new MeasurementDataNumericHighLowComposite(
             buckets.get(29), Double.NaN, Double.NaN, Double.NaN);
 
-        assertPropertiesMatch("The data for bucket 0 does not match the expected values.", expectedBucket0Data,
+        assertMeasurementDataMatches("The data for bucket 0 does not match the expected values.", expectedBucket0Data,
             actualData.get(0));
-        assertPropertiesMatch("The data for bucket 59 does not match the expected values.", expectedBucket59Data,
+        assertMeasurementDataMatches("The data for bucket 59 does not match the expected values.", expectedBucket59Data,
             actualData.get(59));
-        assertPropertiesMatch("The data for bucket 29 does not match the expected values.", expectedBucket29Data,
+        assertMeasurementDataMatches("The data for bucket 29 does not match the expected values.", expectedBucket29Data,
             actualData.get(29));
     }
 
@@ -191,14 +195,36 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
         assertEquals("Expected to get back 60 data points.", buckets.getNumDataPoints(), actualData.size());
 
         MeasurementDataNumericHighLowComposite expectedBucket0Data = new MeasurementDataNumericHighLowComposite(
-            buckets.get(0), (2.0 + 5.0 + 3.0) / 3, 6.0, 1.0);
+            buckets.get(0), divide(2.0 + 5.0 + 3.0, 3), 6.0, 1.0);
         MeasurementDataNumericHighLowComposite expectedBucket59Data = new MeasurementDataNumericHighLowComposite(
-            buckets.get(59), (5.0 + 5.0 + 3.0) / 3, 9.0, 2.0);
+            buckets.get(59), divide(5.0 + 5.0 + 3.0, 3), 9.0, 2.0);
 
-        assertPropertiesMatch("The data for bucket 0 does not match the expected values.", expectedBucket0Data,
+        assertMeasurementDataMatches("The data for bucket 0 does not match the expected values.", expectedBucket0Data,
             actualData.get(0));
         assertPropertiesMatch("The data for bucket 59 does not match the expected values.", expectedBucket59Data,
             actualData.get(59));
+    }
+
+    private void assertMeasurementDataMatches(String msg, MeasurementDataNumericHighLowComposite expected,
+        MeasurementDataNumericHighLowComposite actual) {
+
+        if (Double.isNaN(expected.getValue())) {
+            assertPropertiesMatch(msg, expected, actual);
+        } else {
+            assertPropertiesMatch(msg, expected, actual, "value");
+
+            DecimalFormat df = new DecimalFormat("#########0.0000");
+            MathContext context = new MathContext(16, RoundingMode.CEILING);
+            BigDecimal expectedValue = new BigDecimal(df.format(expected.getValue()), context);
+            BigDecimal actualValue = new BigDecimal(df.format(actual.getValue()), context);
+
+            assertEquals(msg + " - The average value does not match.", expectedValue, actualValue);
+        }
+    }
+
+    private double divide(double dividend, int divisor) {
+        return new BigDecimal(Double.toString(dividend)).divide(new BigDecimal(Integer.toString(divisor)),
+            MathContext.DECIMAL64).doubleValue();
     }
 
     private void createInventory() throws Exception {
@@ -287,7 +313,6 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
             .setParameter("key", RESOURCE_KEY)
             .setParameter("uuid", RESOURCE_UUID)
             .executeUpdate();
-        em.flush();
     }
 
     private void deleteMeasurementSchedules(EntityManager em) {

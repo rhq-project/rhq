@@ -29,11 +29,11 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3Gr
  *
  * @author Mike Thompson
  */
-public class MetricBarChartGraphView extends AbstractMetricD3GraphView implements HasD3JsniChart
+public class MetricBarChartGraph extends AbstractMetricD3GraphView implements HasD3JsniChart
 {
 
-    public MetricBarChartGraphView(String locatorId, int entityId, String entityName, MeasurementDefinition def,
-                                     List<MeasurementDataNumericHighLowComposite> data) {
+    public MetricBarChartGraph(String locatorId, int entityId, String entityName, MeasurementDefinition def,
+                               List<MeasurementDataNumericHighLowComposite> data) {
         super(locatorId,entityId, entityName, def,data);
 
     }

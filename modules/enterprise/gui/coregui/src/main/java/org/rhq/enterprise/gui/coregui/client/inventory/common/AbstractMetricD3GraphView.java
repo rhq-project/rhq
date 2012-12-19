@@ -83,9 +83,6 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
         setWidth100();
     }
 
-//    public abstract AbstractMetricD3GraphView getInstance(String locatorId, int entityId, MeasurementDefinition def,
-//        List<MeasurementDataNumericHighLowComposite> data, HasD3JsniChart jsniChart);
-
     protected abstract void renderGraph();
 
     protected HTMLFlow getEntityTitle(){
@@ -183,11 +180,6 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
 
             addMember(titleHLayout);
 
-            //HTMLFlow title = new HTMLFlow("<b>" + definition.getDisplayName() + "</b> " + definition.getDescription());
-            //title.setWidth100();
-            //addMember(title);
-            //chartHeight = (chartHeight != null) ? chartHeight : "100%";
-            //HTMLFlow graph = new HTMLFlow("<div id=\"rChart-"+getChartId()+"\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:"+ chartHeight +";\"></svg></div>");
             StringBuilder divAndSvgDefs = new StringBuilder();
             divAndSvgDefs.append("<div id=\"rChart-" + getChartId() + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:320px;\">");
             divAndSvgDefs.append(getSvgDefs());
@@ -314,7 +306,6 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
         for (MeasurementDataNumericHighLowComposite measurement : data) {
             sb.append("{ x:"+measurement.getTimestamp()+",");
             if(isTimestampDownOrDisabled(measurement.getTimestamp())){
-                Log.debug(" ** ** DOWN=true  ");
                 sb.append(" down:true, ");
             }
             if(!Double.isNaN(measurement.getValue())){
@@ -345,6 +336,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
     private boolean isTimestampDownOrDisabled(long timestamp){
         Date timestampDate = new Date(timestamp);
         if(null == availabilityDownList){
+            //@todo: take this out this is just to testing purposes
             Log.debug(" ****    Yo! AvailabilityList is null");
         }
         if(null != availabilityDownList){
@@ -352,7 +344,6 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
             {
                 if(timestampDate.after(new Date(availability.getStartTime()))
                         && timestampDate.before(new Date(availability.getEndTime()))){
-                    Log.debug("** found down timestamp: "+timestampDate);
                     return true;
                 }
             }

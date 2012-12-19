@@ -29,4 +29,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
 public interface HasD3JsniChart
 {
     void drawJsniChart();
+    void setEntityId(int entityId) ;
+    void setDefinitionId(int definitionId) ;
+
 }

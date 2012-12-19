@@ -18,14 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table;
 
-import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.HasD3JsniChart;
 
 /**
  * A MultiLine version of the Composite group single metric multiple resource charts.
  *
  * @author Mike Thompson
  */
-public final class CompositeGroupMultiLineGraphListView extends CompositeGroupD3GraphListView implements HasD3JsniChart
+public final class CompositeGroupMultiLineGraphListView extends CompositeGroupD3GraphListView
 {
 
     public CompositeGroupMultiLineGraphListView(String locatorId, int groupId, int defId)

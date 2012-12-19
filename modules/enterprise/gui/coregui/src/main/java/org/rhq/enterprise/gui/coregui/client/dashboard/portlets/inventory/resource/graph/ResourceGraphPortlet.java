@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph;
 
-import java.util.List;
-
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
@@ -39,6 +37,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricAreaBarGraph;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceMetricD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceScheduledMetricDatasource;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -64,6 +63,8 @@ public class ResourceGraphPortlet extends ResourceMetricD3GraphView implements C
         super(locatorId);
         //setChartHeight("100%");
         setOverflow(Overflow.HIDDEN);
+        MetricAreaBarGraph chart = new MetricAreaBarGraph("dashboardAreaBarChart");
+        setJsniChart(chart);
     }
 
     @Override
@@ -83,6 +84,8 @@ public class ResourceGraphPortlet extends ResourceMetricD3GraphView implements C
                 Integer integerValue = propertySimple.getIntegerValue();
                 if (integerValue!=null)
                     setEntityId(integerValue);
+                    getJsniChart().setEntityId(integerValue);
+
             }
             propertySimple = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
             if (propertySimple!=null) {
@@ -90,6 +93,7 @@ public class ResourceGraphPortlet extends ResourceMetricD3GraphView implements C
                 Integer integerValue = propertySimple.getIntegerValue();
                 if (integerValue!=null)
                     setDefinitionId(integerValue);
+                    getJsniChart().setDefinitionId(integerValue);
             }
         }
     }
@@ -190,6 +194,11 @@ public class ResourceGraphPortlet extends ResourceMetricD3GraphView implements C
 
         DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
         PropertySimple simple = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID);
+        setEntityId(simple.getIntegerValue());
+        PropertySimple simpleDefId = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
+        Log.debug(" ** EntityId from portal config: "+simple.getIntegerValue());
+        Log.debug(" ** DefintionId from portal config: "+simpleDefId.getIntegerValue());
+        setDefinitionId(simpleDefId.getIntegerValue());
         if (simple == null || simple.getIntegerValue()==null) {
             addMember(new Label("<i>" + MSG.view_portlet_configure_needed() + "</i>"));
         } else {

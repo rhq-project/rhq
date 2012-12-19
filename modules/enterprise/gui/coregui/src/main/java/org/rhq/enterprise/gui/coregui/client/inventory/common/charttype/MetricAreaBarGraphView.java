@@ -33,6 +33,14 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
 {
 
 
+    /** ctor for dashboard portlet view
+     *
+     * @param locatorId
+     */
+    public MetricAreaBarGraphView(String locatorId){
+        super(locatorId);
+    }
+
     public MetricAreaBarGraphView(String locatorId, int entityId, String entityName, MeasurementDefinition def,
                                   List<MeasurementDataNumericHighLowComposite> data ) {
         super(locatorId, entityId, entityName, def, data);
@@ -99,7 +107,7 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                 } else {
                     return newLow;
                 }
-            };
+           };
             //var lowBound = min - ((peak - min) * 0.1);
             var lowBound = determineLowBound(min,peak);
             var highBound = peak + ((peak - min) * 0.1);

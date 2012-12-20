@@ -82,13 +82,12 @@ public class MetricsServer {
         DateTime begin = new DateTime(beginTime);
 
         if (dateTimeService.isInRawDataRange(begin)) {
-            List<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, begin, new DateTime(endTime));
+            List<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, beginTime, endTime);
             return createRawComposites(metrics, beginTime, endTime);
         }
 
         MetricsTable table = getTable(begin);
-        List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleId, begin,
-            new DateTime(endTime));
+        List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleId, beginTime, endTime);
 
         return createComposites(metrics, beginTime, endTime);
     }
@@ -98,13 +97,12 @@ public class MetricsServer {
         DateTime begin = new DateTime(beginTime);
 
         if (dateTimeService.isInRawDataRange(begin)) {
-            List<RawNumericMetric> metrics = dao.findRawMetrics(scheduleIds, begin, new DateTime(endTime));
+            List<RawNumericMetric> metrics = dao.findRawMetrics(scheduleIds, beginTime, endTime);
             return createRawComposites(metrics, beginTime, endTime);
         }
 
         MetricsTable table = getTable(begin);
-        List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleIds, begin,
-            new DateTime(endTime));
+        List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleIds, beginTime, endTime);
 
         return createComposites(metrics, beginTime, endTime);
     }
@@ -113,13 +111,12 @@ public class MetricsServer {
         DateTime begin = new DateTime(beginTime);
 
         if (dateTimeService.isInRawDataRange(begin)) {
-            List<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, begin, new DateTime(endTime));
+            List<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, beginTime, endTime);
             return createSummaryRawAggregate(metrics, beginTime);
         }
 
         MetricsTable table = getTable(begin);
-        List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleId, begin,
-            new DateTime(endTime));
+        List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleId, beginTime, endTime);
 
         return createSummaryAggregate(metrics, beginTime);
     }
@@ -128,13 +125,12 @@ public class MetricsServer {
         DateTime begin = new DateTime(beginTime);
 
         if (dateTimeService.isInRawDataRange(new DateTime(beginTime))) {
-            List<RawNumericMetric> metrics = dao.findRawMetrics(scheduleIds, begin, new DateTime(endTime));
+            List<RawNumericMetric> metrics = dao.findRawMetrics(scheduleIds, beginTime, endTime);
             return createSummaryRawAggregate(metrics, beginTime);
         }
 
         MetricsTable table = getTable(begin);
-        List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleIds, begin,
-            new DateTime(endTime));
+        List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleIds, beginTime, endTime);
 
         return createSummaryAggregate(metrics, beginTime);
     }
@@ -193,9 +189,10 @@ public class MetricsServer {
     }
 
     void updateMetricsIndex(Set<MeasurementDataNumeric> rawMetrics) {
-        Map<Integer, DateTime> updates = new TreeMap<Integer, DateTime>();
+        Map<Integer, Long> updates = new TreeMap<Integer, Long>();
         for (MeasurementDataNumeric rawMetric : rawMetrics) {
-            updates.put(rawMetric.getScheduleId(), new DateTime(rawMetric.getTimestamp()).hourOfDay().roundFloorCopy());
+            updates.put(rawMetric.getScheduleId(), new DateTime(rawMetric.getTimestamp()).hourOfDay().roundFloorCopy()
+                .getMillis());
         }
         dao.updateMetricsIndex(MetricsTable.ONE_HOUR, updates);
     }
@@ -237,10 +234,10 @@ public class MetricsServer {
     }
 
     private void updateMetricsIndex(MetricsTable bucket, List<AggregatedNumericMetric> metrics, Minutes interval) {
-        Map<Integer, DateTime> updates = new TreeMap<Integer, DateTime>();
+        Map<Integer, Long> updates = new TreeMap<Integer, Long>();
         for (AggregatedNumericMetric metric : metrics) {
-            updates.put(metric.getScheduleId(), dateTimeService.getTimeSlice(new DateTime(metric.getTimestamp()),
-                interval));
+            updates.put(metric.getScheduleId(),
+                dateTimeService.getTimeSlice(new DateTime(metric.getTimestamp()), interval).getMillis());
         }
         dao.updateMetricsIndex(bucket, updates);
     }
@@ -253,7 +250,8 @@ public class MetricsServer {
             DateTime startTime = indexEntry.getTime();
             DateTime endTime = startTime.plusMinutes(60);
 
-            List<RawNumericMetric> rawMetrics = dao.findRawMetrics(indexEntry.getScheduleId(), startTime, endTime);
+            List<RawNumericMetric> rawMetrics = dao.findRawMetrics(indexEntry.getScheduleId(), startTime.getMillis(),
+                endTime.getMillis());
             AggregatedNumericMetric aggregatedRaw = calculateAggregatedRaw(rawMetrics, startTime.getMillis());
             aggregatedRaw.setScheduleId(indexEntry.getScheduleId());
             oneHourMetrics.add(aggregatedRaw);
@@ -310,7 +308,7 @@ public class MetricsServer {
             }
 
             List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(fromColumnFamily,
-                indexEntry.getScheduleId(), startTime, endTime);
+                indexEntry.getScheduleId(), startTime.getMillis(), endTime.getMillis());
             AggregatedNumericMetric aggregatedMetric = calculateAggregate(metrics, startTime.getMillis());
             aggregatedMetric.setScheduleId(indexEntry.getScheduleId());
             toMetrics.add(aggregatedMetric);

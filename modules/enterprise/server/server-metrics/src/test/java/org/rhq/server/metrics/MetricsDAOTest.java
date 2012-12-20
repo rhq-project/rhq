@@ -93,7 +93,8 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
         assertEquals(actualUpdates, data, "The updates do not match expected value.");
 
-        List<RawNumericMetric> actualMetrics = dao.findRawMetrics(scheduleId, currentHour, currentHour.plusHours(1));
+        List<RawNumericMetric> actualMetrics = dao.findRawMetrics(scheduleId, currentHour.getMillis(), currentHour
+            .plusHours(1).getMillis());
         List<RawNumericMetric> expectedMetrics = asList(
             new RawNumericMetric(scheduleId, threeMinutesAgo.getMillis(), 3.2),
             new RawNumericMetric(scheduleId, twoMinutesAgo.getMillis(), 3.9),
@@ -105,8 +106,8 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         // versions of the findRawMetrics method. In production code (so far), we have no
         // need to retrieve meta data when retrieving raw metrics, but we need to verify
         // that the TTL is set.
-        List<RawNumericMetric> actualMetricsWithMetadata = dao.findRawMetrics(scheduleId, currentHour,
-            currentHour.plusHours(1), true) ;
+        List<RawNumericMetric> actualMetricsWithMetadata = dao.findRawMetrics(scheduleId, currentHour.getMillis(),
+            currentHour.plusHours(1).getMillis(), true);
         assertRawTTLSet(actualMetricsWithMetadata);
     }
 
@@ -159,8 +160,8 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         int ttl = Hours.ONE.toStandardSeconds().getSeconds();
         Set<MeasurementDataNumeric> actualUpdates = dao.insertRawMetrics(data, ttl);
 
-        List<RawNumericMetric> actualMetrics = dao.findRawMetrics(asList(scheduleId1, scheduleId2), currentHour,
-            currentHour.plusHours(1));
+        List<RawNumericMetric> actualMetrics = dao.findRawMetrics(asList(scheduleId1, scheduleId2),
+            currentHour.getMillis(), currentHour.plusHours(1).getMillis());
         List<RawNumericMetric> expectedMetrics = asList(
             new RawNumericMetric(scheduleId1, threeMinutesAgo.getMillis(), 1.1),
             new RawNumericMetric(scheduleId1, twoMinutesAgo.getMillis(), 2.1),
@@ -197,7 +198,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
         // verify that the TTL is set
         List<AggregatedNumericMetric> actualMetricsWithMetadata = dao.findAggregateMetricsWithMetadata(
-            MetricsTable.ONE_HOUR, scheduleId, hour0, hour0().plusHours(1).plusSeconds(1));
+            MetricsTable.ONE_HOUR, scheduleId, hour0.getMillis(), hour0().plusHours(1).plusSeconds(1).getMillis());
         assertAggrgateTTLSet(actualMetricsWithMetadata);
     }
 
@@ -218,7 +219,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
         dao.insertAggregates(MetricsTable.ONE_HOUR, metrics, ttl);
         List<AggregatedNumericMetric> actual = dao.findAggregateMetrics(MetricsTable.ONE_HOUR,
-            asList(schedule1, schedule2), hour0().plusHours(1), hour0().plusHours(2));
+            asList(schedule1, schedule2), hour0().plusHours(1).getMillis(), hour0().plusHours(2).getMillis());
         List<AggregatedNumericMetric> expected = asList(
             new AggregatedNumericMetric(schedule1, 2.1, 2.1, 2.1, hour0().plusHours(1).getMillis()),
             new AggregatedNumericMetric(schedule2, 2.2, 2.2, 2.2, hour0().plusHours(1).getMillis())
@@ -249,8 +250,8 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
             new AggregatedNumericMetric(scheduledId, 4.0, 4.0, 4.0, hour0.plusHours(2).getMillis())
         );
 
-        List<AggregatedNumericMetric> actual = dao.findAggregateMetrics(MetricsTable.ONE_HOUR, scheduledId, startTime,
-            endTime);
+        List<AggregatedNumericMetric> actual = dao.findAggregateMetrics(MetricsTable.ONE_HOUR, scheduledId,
+            startTime.getMillis(), endTime.getMillis());
 
         assertEquals(actual, expected, "Failed to find one hour metrics for date range");
     }
@@ -261,9 +262,9 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         int scheduleId1 = 1;
         int scheduleId2 = 2;
 
-        Map<Integer, DateTime> updates = new HashMap<Integer, DateTime>();
-        updates.put(scheduleId1, hour0);
-        updates.put(scheduleId2, hour0);
+        Map<Integer, Long> updates = new HashMap<Integer, Long>();
+        updates.put(scheduleId1, hour0.getMillis());
+        updates.put(scheduleId2, hour0.getMillis());
 
         dao.updateMetricsIndex(MetricsTable.ONE_HOUR, updates);
         List<MetricsIndexEntry> actual = dao.findMetricsIndexEntries(MetricsTable.ONE_HOUR);
@@ -277,11 +278,11 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
     public void purge1HourMetricsIndex() {
         int scheduleId1 = 1;
         int scheduleId2 = 2;
-        Map<Integer, DateTime> updates = new HashMap<Integer, DateTime>();
-        updates.put(scheduleId1, hour0());
-        updates.put(scheduleId2, hour0());
-        updates.put(scheduleId1, hour0().plusHours(1));
-        updates.put(scheduleId2, hour0().plusHours(1));
+        Map<Integer, Long> updates = new HashMap<Integer, Long>();
+        updates.put(scheduleId1, hour0().getMillis());
+        updates.put(scheduleId2, hour0().getMillis());
+        updates.put(scheduleId1, hour0().plusHours(1).getMillis());
+        updates.put(scheduleId2, hour0().plusHours(1).getMillis());
 
         dao.updateMetricsIndex(MetricsTable.ONE_HOUR, updates);
         dao.deleteMetricsIndexEntries(MetricsTable.ONE_HOUR);

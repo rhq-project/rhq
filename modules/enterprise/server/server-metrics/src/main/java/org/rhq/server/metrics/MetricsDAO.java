@@ -45,8 +45,6 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
-import org.joda.time.DateTime;
-
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.util.PageOrdering;
 
@@ -141,12 +139,12 @@ public class MetricsDAO {
         }
     }
 
-    public List<RawNumericMetric> findRawMetrics(int scheduleId, DateTime startTime, DateTime endTime) {
+    public List<RawNumericMetric> findRawMetrics(int scheduleId, long startTime, long endTime) {
         try {
             List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
 
             String cql = "SELECT schedule_id, time, value FROM " + MetricsTable.RAW + " WHERE schedule_id = "
-                + scheduleId + " AND time >= " + startTime.getMillis() + " AND time < " + endTime.getMillis()
+                + scheduleId + " AND time >= " + startTime + " AND time < " + endTime
                 + " ORDER BY time";
 
             ResultSet resultSet = session.execute(cql);
@@ -182,7 +180,7 @@ public class MetricsDAO {
         }
     }
 
-    public List<RawNumericMetric> findRawMetrics(int scheduleId, DateTime startTime, DateTime endTime,
+    public List<RawNumericMetric> findRawMetrics(int scheduleId, long startTime, long endTime,
         boolean includeMetadata) {
 
         if (!includeMetadata) {
@@ -195,8 +193,8 @@ public class MetricsDAO {
                 .from(MetricsTable.RAW.toString())
                 .where(
                     eq("schedule_id", scheduleId),
-                    gte("time", startTime.toDate()),
-                    lt("time", endTime.toDate()))
+                    gte("time", new Date(startTime)),
+                    lt("time", new Date(endTime)))
                .getQueryString()
             );
             List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
@@ -210,7 +208,7 @@ public class MetricsDAO {
         }
     }
 
-    public List<RawNumericMetric> findRawMetrics(List<Integer> scheduleIds, DateTime startTime, DateTime endTime) {
+    public List<RawNumericMetric> findRawMetrics(List<Integer> scheduleIds, long startTime, long endTime) {
         try {
             // TODO investigate possible bug in datastax driver for binding lists as parameters
             // I was not able to get the below query working by directly binding the List
@@ -234,8 +232,7 @@ public class MetricsDAO {
 //                .getQueryString();
 
             String cql = "SELECT schedule_id, time, value FROM " + MetricsTable.RAW + " WHERE schedule_id IN (" +
-                listToString(scheduleIds) + ") AND time >= " + startTime.getMillis() + " AND time <= " +
-                endTime.getMillis();
+                listToString(scheduleIds) + ") AND time >= " + startTime + " AND time <= " + endTime;
             ResultSet resultSet = session.execute(cql);
 
             List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
@@ -270,15 +267,15 @@ public class MetricsDAO {
         }
     }
 
-    public List<AggregatedNumericMetric> findAggregateMetrics(MetricsTable table, int scheduleId, DateTime startTime,
-        DateTime endTime) {
+    public List<AggregatedNumericMetric> findAggregateMetrics(MetricsTable table, int scheduleId, long startTime,
+        long endTime) {
 
         try {
             String cql =
                 "SELECT schedule_id, time, type, value " +
                 "FROM " + table + " " +
-                "WHERE schedule_id = " + scheduleId + " AND time >= " + startTime.getMillis() +
-                    " AND time < " + endTime.getMillis();
+ "WHERE schedule_id = "
+                + scheduleId + " AND time >= " + startTime + " AND time < " + endTime;
             List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
             ResultSetMapper<AggregatedNumericMetric> resultSetMapper = new AggregateMetricMapper();
             ResultSet resultSet = session.execute(cql);
@@ -294,13 +291,13 @@ public class MetricsDAO {
     }
 
     public List<AggregatedNumericMetric> findAggregateMetrics(MetricsTable table, List<Integer> scheduleIds,
-        DateTime startTime, DateTime endTime) {
+        long startTime, long endTime) {
         try {
             String cql =
                 "SELECT schedule_id, time, type, value " +
                     "FROM " + table + " " +
-                    "WHERE schedule_id IN (" + listToString(scheduleIds) + ") AND time >= " + startTime.getMillis() +
-                    " AND time < " + endTime.getMillis();
+ "WHERE schedule_id IN ("
+                + listToString(scheduleIds) + ") AND time >= " + startTime + " AND time < " + endTime;
             List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
             ResultSetMapper<AggregatedNumericMetric> resultSetMapper = new AggregateMetricMapper();
             ResultSet resultSet = session.execute(cql);
@@ -316,15 +313,14 @@ public class MetricsDAO {
     }
 
     List<AggregatedNumericMetric> findAggregateMetricsWithMetadata(MetricsTable table, int scheduleId,
-        DateTime startTime,
-        DateTime endTime) {
+        long startTime, long endTime) {
 
         try {
             String cql =
                 "SELECT schedule_id, time, type, value, ttl(value), writetime(value) " +
                 "FROM " + table + " " +
-                    "WHERE schedule_id = " + scheduleId + " AND time >= " + startTime.getMillis() +
-                    " AND time < " + endTime.getMillis();
+                    "WHERE schedule_id = " + scheduleId + " AND time >= " + startTime +
+                    " AND time < " + endTime;
             List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
             ResultSetMapper<AggregatedNumericMetric> resultSetMapper = new AggregateMetricMapper(true);
             ResultSet resultSet = session.execute(cql);
@@ -358,13 +354,12 @@ public class MetricsDAO {
         }
     }
 
-    public void updateMetricsIndex(MetricsTable table, Map<Integer, DateTime> updates) {
+    public void updateMetricsIndex(MetricsTable table, Map<Integer, Long> updates) {
         try {
             PreparedStatement statement = session.prepare(UPDATE_METRICS_INDEX);
             for (Integer scheduleId : updates.keySet()) {
-                BoundStatement boundStatement = statement.bind(table.toString(), updates.get(scheduleId).toDate(),
-                    scheduleId,
-                    false);
+                BoundStatement boundStatement = statement.bind(table.toString(), new Date(updates.get(scheduleId)),
+                    scheduleId, false);
                 session.execute(boundStatement);
             }
         } catch (NoHostAvailableException e) {

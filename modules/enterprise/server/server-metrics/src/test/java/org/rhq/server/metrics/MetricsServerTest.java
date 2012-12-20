@@ -118,7 +118,8 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         long timestamp = System.currentTimeMillis();
         metricsServer.addNumericData(data);
 
-        List<RawNumericMetric> actual = dao.findRawMetrics(scheduleId, hour0.plusHours(4), hour0.plusHours(5));
+        List<RawNumericMetric> actual = dao.findRawMetrics(scheduleId, hour0.plusHours(4).getMillis(),
+            hour0.plusHours(5).getMillis());
         List<RawNumericMetric> expected = asList(
             new RawNumericMetric(scheduleId, threeMinutesAgo.getMillis(), 3.2),
             new RawNumericMetric(scheduleId, twoMinutesAgo.getMillis(), 3.9),
@@ -246,8 +247,8 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         dao.insertAggregates(MetricsTable.ONE_HOUR, oneHourMetrics, MetricsTable.ONE_HOUR.getTTL());
 
         // update the 6 hour queue
-        Map<Integer, DateTime> indexUpdates = new HashMap<Integer, DateTime>();
-        indexUpdates.put(scheduleId, hour6);
+        Map<Integer, Long> indexUpdates = new HashMap<Integer, Long>();
+        indexUpdates.put(scheduleId, hour6.getMillis());
         dao.updateMetricsIndex(MetricsTable.SIX_HOUR, indexUpdates);
 
         // execute the system under test
@@ -297,8 +298,8 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         dao.insertAggregates(MetricsTable.SIX_HOUR, sixHourMetrics, DateTimeService.ONE_MONTH);
 
         // update the 24 queue
-        Map<Integer, DateTime> indexUpdates = new HashMap<Integer, DateTime>();
-        indexUpdates.put(scheduleId, hour0);
+        Map<Integer, Long> indexUpdates = new HashMap<Integer, Long>();
+        indexUpdates.put(scheduleId, hour0.getMillis());
         dao.updateMetricsIndex(MetricsTable.TWENTY_FOUR_HOUR, indexUpdates);
 
         // execute the system under test
@@ -690,7 +691,8 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
     private void assertColumnMetadataEquals(int scheduleId, DateTime startTime, DateTime endTime, Integer ttl,
         long timestamp) {
-        List<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, startTime, endTime, true);
+        List<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, startTime.getMillis(), endTime.getMillis(),
+            true);
         for (RawNumericMetric metric : metrics) {
             assertEquals(metric.getColumnMetadata().getTtl(), ttl, "The TTL does not match the expected value for " +
                 metric);

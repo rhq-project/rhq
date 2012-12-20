@@ -114,7 +114,6 @@ public class PartitionEventDetailView extends LocatableVLayout implements Bookma
                             return;
                         }
                     });
-
             }
 
             public void onFailure(Throwable caught) {
@@ -167,7 +166,9 @@ public class PartitionEventDetailView extends LocatableVLayout implements Bookma
             MSG.view_adminTopology_partitionEventsDetail_agentAssignments());
         section.setExpanded(true);
         if (eventDetails == null || eventDetails.size() == 0) {
-            section.setItems(new Label(MSG.view_adminTopology_partitionEventsDetail_agentAssignments_nothing()));
+            Label nothing = new Label(MSG.view_adminTopology_partitionEventsDetail_agentAssignments_nothing());
+            nothing.setMargin(10);
+            section.setItems(nothing);
         } else {
             // there is no need for datasource, it is a simple table with two columns
             ListGrid assignments = new ListGrid();

@@ -44,6 +44,8 @@ import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
+ * Shows the table of all agents.
+ * 
  * @author Jirka Kremser
  */
 public class AgentTableView extends TableSection<AgentDatasource> implements HasViewName {
@@ -141,5 +143,9 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
     public ViewName getViewName() {
         return VIEW_ID;
     }
-
+    
+    @Override
+    protected String getBasePath() {
+        return VIEW_PATH;
+    }
 }

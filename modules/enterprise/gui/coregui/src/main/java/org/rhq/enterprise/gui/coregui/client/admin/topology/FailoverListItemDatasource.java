@@ -48,8 +48,9 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellForma
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
 /**
+ * Datasource for @see FailoverListDetails.
+ * 
  * @author Jirka Kremser
- *
  */
 public class FailoverListItemDatasource extends AbstractServerNodeDatasource<FailoverListDetails, Criteria> {
 

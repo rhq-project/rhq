@@ -60,8 +60,9 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 
 /**
+ * Shows the table of all affinity groups.
+ *  
  * @author Jirka Kremser
- * 
  */
 public class AffinityGroupTableView extends TableSection<AffinityGroupWithCountsDatasource> implements HasViewName {
 

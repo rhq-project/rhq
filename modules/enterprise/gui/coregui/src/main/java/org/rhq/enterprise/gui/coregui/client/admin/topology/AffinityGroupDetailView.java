@@ -45,7 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
- * Shows details of a server.
+ * Shows details of a affinity group.
  * 
  * @author Jirka Kremser
  */

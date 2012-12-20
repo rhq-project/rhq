@@ -50,8 +50,9 @@ import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
+ * Datasource for @see FailoverListDetails.
+ * 
  * @author Jirka Kremser
- *
  */
 public class AgentDatasource extends RPCDataSource<Agent, AgentCriteria> {
 

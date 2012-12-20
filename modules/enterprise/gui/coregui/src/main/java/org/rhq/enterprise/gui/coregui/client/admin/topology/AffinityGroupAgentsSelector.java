@@ -55,6 +55,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 
 /**
+ * Component for assigning the agents into affinity group.
+ * 
  * @author Jirka Kremser
  */
 public class AffinityGroupAgentsSelector extends AbstractSelector<Agent, AgentCriteria> {

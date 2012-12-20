@@ -49,8 +49,9 @@ import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
+ * Datasource for @see PartitionEvent.
+ * 
  * @author Jirka Kremser
- *
  */
 public class PartitionEventDatasource extends RPCDataSource<PartitionEvent, PartitionEventCriteria> {
 

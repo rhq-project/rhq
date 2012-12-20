@@ -38,8 +38,9 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
 /**
+ * Datasource for @see ServerWithAgentCountComposite.
+ * 
  * @author Jirka Kremser
- *
  */
 public class ServerWithAgentCountDatasource extends
     AbstractServerNodeDatasource<ServerWithAgentCountComposite, Criteria> {

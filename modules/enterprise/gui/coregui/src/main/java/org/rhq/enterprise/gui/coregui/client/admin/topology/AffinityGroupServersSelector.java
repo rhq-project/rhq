@@ -58,6 +58,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 
 /**
+ * Component for assigning the servers into affinity group.
+ * 
  * @author Jirka Kremser
  */
 public class AffinityGroupServersSelector extends AbstractSelector<Server, ServerCriteria> {

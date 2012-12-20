@@ -52,8 +52,9 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 
 /**
+ * Datasource for @see Server.
+ * 
  * @author Jirka Kremser
- *
  */
 public class ServerDatasource extends AbstractServerNodeDatasource<Server, ServerCriteria> {
 

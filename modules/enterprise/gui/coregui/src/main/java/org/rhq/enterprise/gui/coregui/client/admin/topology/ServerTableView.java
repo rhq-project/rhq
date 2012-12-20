@@ -53,8 +53,9 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
- * @author Jirka Kremser
+ * Shows the table of all servers.
  * 
+ * @author Jirka Kremser
  */
 public class ServerTableView extends
     TableSection<AbstractServerNodeDatasource<? extends Serializable, ? extends BaseCriteria>> implements HasViewName {
@@ -137,6 +138,11 @@ public class ServerTableView extends
     public Canvas getDetailsView(Integer id) {
         return new ServerDetailView(extendLocatorId("detailsView"), id);
     }
+    
+//    @Override
+//    public abstract void showDetails(ID id) {
+//        
+//    }
 
     private void showCommonActions() {
         addChangeOperationModeAction(OperationMode.NORMAL, MSG.view_adminTopology_server_setNormal());
@@ -249,5 +255,9 @@ public class ServerTableView extends
     public ViewName getViewName() {
         return VIEW_ID;
     }
-
+    
+    @Override
+    protected String getBasePath() {
+        return VIEW_PATH;
+    }
 }

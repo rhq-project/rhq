@@ -53,8 +53,9 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
- * @author Jirka Kremser
+ * Shows the table of all partition events.
  * 
+ * @author Jirka Kremser
  */
 public class PartitionEventTableView extends TableSection<PartitionEventDatasource> implements HasViewName {
 

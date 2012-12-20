@@ -49,7 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
- * Shows details of a server.
+ * Shows details of an agent.
  * 
  * @author Jirka Kremser
  */

@@ -489,7 +489,7 @@ rhq.communications.multicast-detector.port=16162
 # for incoming messages from agents over sslservlet transport.
 # Relative filenames are relative to jboss.server.config.dir.
 # [you cannot use ${x} variables in these rhq.server.tomcat settings]
-rhq.server.tomcat.security.client-auth-mode=want
+rhq.server.tomcat.security.client-auth-mode=false
 rhq.server.tomcat.security.secure-socket-protocol=TLS
 rhq.server.tomcat.security.algorithm=SunX509
 rhq.server.tomcat.security.keystore.alias=RHQ

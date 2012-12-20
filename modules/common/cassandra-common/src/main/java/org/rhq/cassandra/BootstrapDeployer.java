@@ -34,11 +34,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransportException;
 
@@ -49,6 +53,8 @@ import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
+import org.rhq.core.util.PropertiesFileUpdate;
+import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
@@ -57,6 +63,8 @@ import org.rhq.core.util.stream.StreamUtil;
  * @author John Sanda
  */
 public class BootstrapDeployer {
+
+    private final Log log = LogFactory.getLog(BootstrapDeployer.class);
 
     private DeploymentOptions deploymentOptions;
 
@@ -130,10 +138,9 @@ public class BootstrapDeployer {
 
                 doLocalDeploy(props, bundleDir);
                 startNode(nodeBasedir);
-//                if (i == 0) {
-//                    waitForNodeToStart(10, address);
-//                    updateSchema(nodeBasedir, address, 9160);
-//                }
+                if (i == 0) {
+                    waitForNodeToStart(10, address);
+                }
             }
             FileUtil.writeFile(new ByteArrayInputStream(new byte[] {0}), installedMarker);
         } catch (IOException e) {
@@ -150,6 +157,7 @@ public class BootstrapDeployer {
     }
 
     public static void main(String[] args) {
+        long start = System.currentTimeMillis();
         BootstrapDeployer deployer = new BootstrapDeployer();
 
         DeploymentOptions deploymentOptions = new DeploymentOptions();
@@ -162,9 +170,41 @@ public class BootstrapDeployer {
         deployer.setDeploymentOptions(deploymentOptions);
         try {
             deployer.deploy();
+            PropertiesFileUpdate serverPropertiesUpdater = getServerProperties();
+
+            String[] hostNames = getHostNames(deployer.getCassandraHosts());
+            serverPropertiesUpdater.update("rhq.cassandra.cluster.seeds", StringUtil.arrayToString(hostNames));
+
+            long end = System.currentTimeMillis();
+            deployer.log.info("Finished installing embedded cluster in " + (end - start) + " ms");
         } catch (CassandraException e) {
             throw new RuntimeException("A deployment error occurred.", e);
+        } catch (IOException e) {
+            throw new RuntimeException("An error occurred while trying to update RHQ server properties", e);
         }
+    }
+
+    private static PropertiesFileUpdate getServerProperties() {
+        String sysprop = System.getProperty("rhq.server.properties-file");
+        if (sysprop == null) {
+            throw new RuntimeException("The required system property [rhq.server.properties] is not defined.");
+        }
+
+        File file = new File(sysprop);
+        if (!(file.exists() && file.isFile())) {
+            throw new RuntimeException("System property [" + sysprop + "] points to in invalid file.");
+        }
+
+        return new PropertiesFileUpdate(file.getAbsolutePath());
+    }
+
+    private static String[] getHostNames(String hosts) {
+        List<String> hostNames = new ArrayList<String>();
+        for (String s : hosts.split(",")) {
+            String[] params = s.split(":");
+            hostNames.add(params[0]);
+        }
+        return hostNames.toArray(new String[hostNames.size()]);
     }
 
     private boolean isClusterInstalled() {

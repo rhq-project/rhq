@@ -29,5 +29,7 @@
     <module name="org.apache.commons.logging"/>
     <module name="org.apache.log4j"/>
     <module name="javax.api"/>
+    <module name="org.jboss.logmanager" services="import"/>
+    <module name="org.jboss.logging"/>
   </dependencies>
 </module>

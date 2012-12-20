@@ -34,14 +34,14 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Listeners;
 
-import org.rhq.cassandra.CassandraClusterManager;
+import org.rhq.cassandra.CCMTestNGListener;
 import org.rhq.cassandra.DeployCluster;
 import org.rhq.cassandra.ShutdownCluster;
 
 /**
  * @author John Sanda
  */
-@Listeners({CassandraClusterManager.class})
+@Listeners({CCMTestNGListener.class})
 public class CassandraIntegrationTest {
 
     protected Session session;

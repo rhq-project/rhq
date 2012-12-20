@@ -28,14 +28,14 @@ package org.rhq.cassandra.common;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
-import org.rhq.cassandra.CassandraClusterManager;
+import org.rhq.cassandra.CCMTestNGListener;
 import org.rhq.cassandra.CassandraException;
 import org.rhq.cassandra.ShutdownCluster;
 
 /**
  * @author John Sanda
  */
-@Listeners({CassandraClusterManager.class})
+@Listeners({CCMTestNGListener.class})
 public class BootstrapDeployerTest {
 
     @Test

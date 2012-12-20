@@ -45,9 +45,9 @@ import org.rhq.core.util.stream.StreamUtil;
 /**
  * @author John Sanda
  */
-public class CassandraClusterManager implements IInvokedMethodListener {
+public class CCMTestNGListener implements IInvokedMethodListener {
 
-    private final Log log = LogFactory.getLog(CassandraClusterManager.class);
+    private final Log log = LogFactory.getLog(CCMTestNGListener.class);
 
     @Override
     public void beforeInvocation(IInvokedMethod invokedMethod, ITestResult testResult) {

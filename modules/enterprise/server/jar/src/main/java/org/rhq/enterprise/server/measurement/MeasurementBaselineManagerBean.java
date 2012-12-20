@@ -30,7 +30,6 @@ import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -46,6 +45,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.cassandra.SessionManagerBean;
 import org.rhq.enterprise.server.cloud.StatusManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -65,9 +65,6 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-    @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
-    private DataSource dataSource;
-
     @EJB
     private StatusManagerLocal agentStatusManager;
     @EJB
@@ -86,6 +83,9 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     private SubjectManagerLocal subjectManager;
     @EJB
     private ResourceManagerLocal resourceManager;
+
+    @EJB
+    private SessionManagerBean sessionManager;
 
     private final Log log = LogFactory.getLog(MeasurementBaselineManagerBean.class);
     private static final int BASELINE_PROCESSING_LIMIT = 50000;
@@ -228,7 +228,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         List<Integer> scheduleIdsWithoutBaselines = query.getResultList();
 
         //2. calculate the baselines based metrics data
-        MetricBaselineCalculator baselineCalculator = new MetricBaselineCalculator();
+        MetricBaselineCalculator baselineCalculator = new MetricBaselineCalculator(this.sessionManager.getSession());
         List<MeasurementBaseline> results = baselineCalculator.calculateBaselines(scheduleIdsWithoutBaselines,
             startTime, endTime);
 

@@ -254,7 +254,8 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
         return new PageList<PartitionEventDetails>(detailsList, (int) count, pageControl);
     }
 
-    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
     public PageList<PartitionEvent> findPartitionEventsByCriteria(Subject subject, PartitionEventCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         CriteriaQueryRunner<PartitionEvent> runner = new CriteriaQueryRunner<PartitionEvent>(criteria, generator,

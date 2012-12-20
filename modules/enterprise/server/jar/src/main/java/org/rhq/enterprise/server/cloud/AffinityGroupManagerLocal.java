@@ -35,28 +35,81 @@ import org.rhq.core.domain.util.PageList;
 public interface AffinityGroupManagerLocal {
     AffinityGroup getById(Subject subject, int affinityGroupId);
 
+    /**
+     * Creates a new affinity group.
+     * 
+     * Subject needs MANAGE_SETTINGS and MANAGE_INVENTORY permissions.
+     * 
+     * @param subject the Subject instance
+     * @param affinityGroup @see AffinityGroup
+     * @return new id of the group
+     * @throws AffinityGroupException
+     */
     int create(Subject subject, AffinityGroup affinityGroup) throws AffinityGroupException;
 
+    /**
+     * Deletes the affinity groups.
+     * 
+     * Subject needs MANAGE_SETTINGS and MANAGE_INVENTORY permissions.
+     * 
+     * @param subject the Subject instance
+     * @param affinityGroupIds
+     * @return
+     */
     int delete(Subject subject, Integer[] affinityGroupIds);
 
+    /**
+     * Updates the affinity group.
+     * 
+     * Subject needs MANAGE_SETTINGS and MANAGE_INVENTORY permissions.
+     * 
+     * @param subject the Subject instance
+     * @param affinityGroup @see AffinityGroup
+     * @return
+     * @throws AffinityGroupException
+     */
     AffinityGroup update(Subject subject, AffinityGroup affinityGroup) throws AffinityGroupException;
 
+    /**
+     * Adds agents to the affinity group.
+     * 
+     * Subject needs MANAGE_SETTINGS and MANAGE_INVENTORY permissions.
+     * 
+     * @param subject the Subject instance
+     * @param affinityGroupId
+     * @param agentIds
+     */
     void addAgentsToGroup(Subject subject, int affinityGroupId, Integer[] agentIds);
 
     /**
      * This should only be called if the agent is currently assigned to an affinity group and that group
-     * is being removed, setting the agent to no affinity. Otherwise, unnecessary partition events can be generated. 
-     * @param subject
+     * is being removed, setting the agent to no affinity. Otherwise, unnecessary partition events can be generated.
+     * 
+     * Subjects needs MANAGE_SETTINGS and MANAGE_INVENTORY permissions.
+     * 
+     * @param subject the Subject instance
      * @param agentIds
      */
     void removeAgentsFromGroup(Subject subject, Integer[] agentIds);
 
+    /**
+     * Adds servers to the affinity group.
+     * 
+     * Subject needs MANAGE_SETTINGS and MANAGE_INVENTORY permissions.
+     * 
+     * @param subject the Subject instance
+     * @param affinityGroupId
+     * @param serverIds
+     */
     void addServersToGroup(Subject subject, int affinityGroupId, Integer[] serverIds);
 
     /**
      * This should only be called if the server is currently assigned to an affinity group and that group
      * is being removed, setting the server to no affinity. Otherwise, unnecessary partition events can be generated.
-     * @param subject
+     * 
+     * Subject needs MANAGE_SETTINGS and MANAGE_INVENTORY permissions.
+     * 
+     * @param subject the Subject instance
      * @param agentIds
      */
     void removeServersFromGroup(Subject subject, Integer[] serverIds);

@@ -102,6 +102,7 @@ public interface AgentManagerLocal {
      * Returns a collection of all agents currently in inventory.
      *
      * @return list of all known agents in inventory
+     * @deprecated Use <code>findAgentsByCriteria()</code> instead
      */
     List<Agent> getAllAgents();
 
@@ -110,6 +111,7 @@ public interface AgentManagerLocal {
      *
      * @param serverId the server to filter the agent list by.  pass null to view unfiltered results. 
      * @return list of all known agents in inventory
+     * @deprecated Use <code>findAgentsByCriteria()</code> instead
      */
     PageList<Agent> getAgentsByServer(Subject subject, Integer serverId, PageControl pageControl);
 
@@ -127,6 +129,7 @@ public interface AgentManagerLocal {
      * @param  agentName
      *
      * @return the agent whose name matches the given name; <code>null</code> if there is no agent with the given name
+     * @deprecated Use <code>findAgentsByCriteria()</code> instead
      */
     Agent getAgentByName(String agentName);
 
@@ -137,6 +140,7 @@ public interface AgentManagerLocal {
      * @param  agentId
      *
      * @return the agent whose id matches the given id; <code>null</code> if there is no agent with the given id
+     * @deprecated Use <code>findAgentsByCriteria()</code> instead
      */
     Agent getAgentByID(int agentId);
 
@@ -148,6 +152,7 @@ public interface AgentManagerLocal {
      *
      * @return the agent whose agent token matches the given token; <code>null</code> if there is no agent with the
      *         given token
+     * @deprecated Use <code>findAgentsByCriteria()</code> instead
      */
     Agent getAgentByAgentToken(String token);
 
@@ -160,6 +165,7 @@ public interface AgentManagerLocal {
      *
      * @return the agent to be known at the given address and port; <code>null</code> if there is no agent with the
      *         given token
+     * @deprecated Use <code>findAgentsByCriteria()</code> instead
      */
     Agent getAgentByAddressAndPort(String address, int port);
 
@@ -310,5 +316,14 @@ public interface AgentManagerLocal {
      */
     public PingRequest handlePingRequest(PingRequest request);
     
+    /**
+     * Fetches the agents based on provided criteria.
+     * 
+     * Subject needs MANAGE_SETTINGS and MANAGE_INVENTORY permissions.
+     * 
+     * @param subject caller
+     * @param criteria the criteria
+     * @return list of agents
+     */
     PageList<Agent> findAgentsByCriteria(Subject subject, AgentCriteria criteria);
 }

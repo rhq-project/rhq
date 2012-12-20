@@ -32,6 +32,7 @@ import org.rhq.core.domain.util.PageOrdering;
 
 /**
  * Criteria object for querying {@link PartitionEvent}s.
+ * Only subject with MANAGE_SETTINGS can fetch these instances.
  *
  * @author Jiri Kremser
  */

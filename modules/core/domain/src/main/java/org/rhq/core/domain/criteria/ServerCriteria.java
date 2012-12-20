@@ -19,6 +19,9 @@
 
 package org.rhq.core.domain.criteria;
 
+import java.util.Arrays;
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
@@ -28,6 +31,7 @@ import org.rhq.core.domain.util.PageOrdering;
 
 /**
  * Criteria object for querying {@link Server}s.
+ * Only subject with MANAGE_SETTINGS can fetch these instances.
  *
  * @author Jiri Kremser
  */
@@ -48,7 +52,7 @@ public class ServerCriteria extends Criteria {
     private String filterAddress;
     private Integer filterPort;
     private Integer filterSecurePort;
-    private OperationMode filterOperationMode; // requires override
+    private List<OperationMode> filterOperationMode; // requires override
     private Integer filterComputePower;
     private Integer filterAffinityGroupId; // requires override
 
@@ -60,8 +64,8 @@ public class ServerCriteria extends Criteria {
     private PageOrdering sortComputePower;
 
     public ServerCriteria() {
-        //        filterOverrides.put("operationMode", "operationMode IN ( ? )");
-                filterOverrides.put("affinityGroupId", "affinityGroup.id = ?");
+        filterOverrides.put("operationMode", "operationMode IN ( ? )");
+        filterOverrides.put("affinityGroupId", "affinityGroup.id = ?");
     }
 
     public Class<?> getPersistentClass() {
@@ -88,8 +92,10 @@ public class ServerCriteria extends Criteria {
         this.filterSecurePort = filterSecurePort;
     }
 
-    public void addFilterOperationMode(OperationMode operationMode) {
-        this.filterOperationMode = operationMode;
+    public void addFilterOperationMode(OperationMode... operationMode) {
+        if (operationMode != null && operationMode.length > 0) {
+            this.filterOperationMode = Arrays.asList(operationMode);
+        }
     }
 
     public void addFilterComputePower(Integer filterComputePower) {

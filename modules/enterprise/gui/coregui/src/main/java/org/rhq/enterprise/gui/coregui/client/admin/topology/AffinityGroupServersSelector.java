@@ -37,7 +37,6 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -49,7 +48,7 @@ import org.rhq.core.domain.criteria.ServerCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
+import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -89,23 +88,11 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, Serve
             availableFilterForm.setNumCols(4);
             availableFilterForm.setWidth("75%");
             final TextItem search = new TextItem(FIELD_NAME.propertyName(), MSG.common_title_search());
-            final SelectItem operationModeSelect = new SortedSelectItem(ServerDatasource.FILTER_OPERATION_MODE,
-                MSG.view_adminTopology_serverDetail_operationMode());
-            operationModeSelect.setValueMap(buildOperationModeOptions());
-            operationModeSelect.setValue("ALL");
+            final EnumSelectItem operationModeSelect = new EnumSelectItem(ServerDatasource.FILTER_OPERATION_MODE,
+                MSG.view_adminTopology_serverDetail_operationMode(), OperationMode.class, null, null);
             availableFilterForm.setItems(search, operationModeSelect);
         }
         return availableFilterForm;
-    }
-
-    private String[] buildOperationModeOptions() {
-        OperationMode[] modes = OperationMode.values();
-        String[] options = new String[modes.length + 1];
-        for (int i = 0; i < modes.length; i++) {
-            options[i] = modes[i].toString();
-        }
-        options[modes.length] = "ALL";
-        return options;
     }
 
     private void prepareMembers(final AffinityGroupServersSelector selector) {
@@ -144,16 +131,7 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, Serve
 
     @Override
     protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
-        String search = (String) availableFilterForm.getValue(FIELD_NAME.propertyName());
-        String operationMode = (String) availableFilterForm.getValue(ServerDatasource.FILTER_OPERATION_MODE);
-        Criteria criteria = new Criteria();
-        if (null != search) {
-            criteria.addCriteria(FIELD_NAME.propertyName(), search);
-        }
-        if (operationMode != null && !"ALL".equals(operationMode)) {
-            criteria.addCriteria(ServerDatasource.FILTER_OPERATION_MODE, operationMode);
-        }
-        return criteria;
+        return availableFilterForm.getValuesAsCriteria();
     }
 
     @Override

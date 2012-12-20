@@ -46,6 +46,7 @@ public class AgentCriteria extends Criteria {
     private String filterName;
     private String filterAddress;
     private Integer filterPort;
+    private String filterAgenttoken;
     private Integer filterServerId; // requires override
     private Integer filterAffinityGroupId; // requires override
 
@@ -56,8 +57,8 @@ public class AgentCriteria extends Criteria {
     private PageOrdering sortName;
 
     public AgentCriteria() {
-                filterOverrides.put("serverId", "server.id = ?");
-                filterOverrides.put("affinityGroupId", "affinityGroup.id = ?");
+        filterOverrides.put("serverId", "server.id = ?");
+        filterOverrides.put("affinityGroupId", "affinityGroup.id = ?");
     }
 
     public Class<?> getPersistentClass() {
@@ -71,7 +72,7 @@ public class AgentCriteria extends Criteria {
     public void addFilterName(String filterName) {
         this.filterName = filterName;
     }
-    
+
     public void addFilterAffinityGroupId(Integer filterAffinityGroupId) {
         this.filterAffinityGroupId = filterAffinityGroupId;
     }
@@ -84,14 +85,18 @@ public class AgentCriteria extends Criteria {
         this.filterPort = filterPort;
     }
 
+    public void addFilterAgenttoken(String filterAgenttoken) {
+        this.filterAgenttoken = filterAgenttoken;
+    }
+
     public void addFilterServerId(Integer filterServerId) {
         this.filterServerId = filterServerId;
     }
-    
+
     public void fetchAffinityGroup(boolean fetchAffinityGroup) {
         this.fetchAffinityGroup = fetchAffinityGroup;
     }
-    
+
     public void fetchServer(boolean fetchServer) {
         this.fetchServer = fetchServer;
     }

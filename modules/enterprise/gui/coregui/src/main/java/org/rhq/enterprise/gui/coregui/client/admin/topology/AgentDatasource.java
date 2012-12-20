@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.admin.topology;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_ADDRESS;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_AFFINITY_GROUP;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_AFFINITY_GROUP_ID;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_AGENTTOKEN;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_ID;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_LAST_AVAILABILITY_REPORT;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_NAME;
@@ -59,6 +60,7 @@ public class AgentDatasource extends RPCDataSource<Agent, AgentCriteria> {
     // filters
     public static final String FILTER_ADDRESS = FIELD_ADDRESS.propertyName();
     public static final String FILTER_PORT = FIELD_PORT.propertyName();
+    public static final String FILTER_AGENTTOKEN = FIELD_AGENTTOKEN.propertyName();
     public static final String FILTER_SERVER_ID = "serverId";
     public static final String FILTER_AFFINITY_GROUP_ID = "affinityGroupId";
 
@@ -167,6 +169,7 @@ public class AgentDatasource extends RPCDataSource<Agent, AgentCriteria> {
         criteria.addFilterName(getFilter(request, FIELD_NAME.propertyName(), String.class));
         criteria.addFilterAddress(getFilter(request, FILTER_ADDRESS, String.class));
         criteria.addFilterPort(getFilter(request, FILTER_PORT, Integer.class));
+        criteria.addFilterAgenttoken(getFilter(request, FILTER_AGENTTOKEN, String.class));
         criteria.addFilterServerId(getFilter(request, FILTER_SERVER_ID, Integer.class));
         criteria.addFilterAffinityGroupId(getFilter(request, FILTER_AFFINITY_GROUP_ID, Integer.class));
 

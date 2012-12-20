@@ -95,6 +95,11 @@ public class PartitionEventDatasource extends RPCDataSource<PartitionEvent, Part
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response, PartitionEventCriteria criteria) {
+        if (criteria == null) {
+            response.setTotalRows(0);
+            processResponse(request.getRequestId(), response);
+            return;
+        }
         GWTServiceLookup.getCloudService().findPartitionEventsByCriteria(criteria,
             new AsyncCallback<PageList<PartitionEvent>>() {
                 public void onSuccess(PageList<PartitionEvent> result) {
@@ -134,12 +139,18 @@ public class PartitionEventDatasource extends RPCDataSource<PartitionEvent, Part
 
     @Override
     protected PartitionEventCriteria getFetchCriteria(DSRequest request) {
+        ExecutionStatus[] statusesFilter = getArrayFilter(request, FILTER_EXECUTION_STATUS, ExecutionStatus.class);
+        PartitionEventType[] typesFilter = getArrayFilter(request, FILTER_EVENT_TYPE, PartitionEventType.class);
+        if (statusesFilter == null || statusesFilter.length == 0 || typesFilter == null || typesFilter.length == 0) {
+            return null; // user didn't select any ex. status or event type - return null to indicate no data should
+                         // be displayed
+        }
         PartitionEventCriteria criteria = new PartitionEventCriteria();
         //        printRequestCriteria(request);
         criteria.addFilterId(getFilter(request, FIELD_ID.propertyName(), Integer.class));
         criteria.addFilterEventDetail(getFilter(request, FIELD_EVENT_DETAIL.propertyName(), String.class));
-        criteria.addFilterExecutionStatus(getArrayFilter(request, FILTER_EXECUTION_STATUS, ExecutionStatus.class));
-        criteria.addFilterEventType(getArrayFilter(request, FILTER_EVENT_TYPE, PartitionEventType.class));
+        criteria.addFilterExecutionStatus(statusesFilter);
+        criteria.addFilterEventType(typesFilter);
 
         //@todo: Remove me when finished debugging search expression
         Log.debug(" *** PartitionEventCriteria Search String: " + getFilter(request, "search", String.class));

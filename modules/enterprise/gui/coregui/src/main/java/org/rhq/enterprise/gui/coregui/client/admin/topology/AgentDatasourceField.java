@@ -39,6 +39,8 @@ public enum AgentDatasourceField {
     FIELD_ADDRESS("address", CoreGUI.getMessages().view_adminTopology_agent_agentBindAddress()),
 
     FIELD_PORT("port", CoreGUI.getMessages().view_adminTopology_agent_agentBindPort()),
+    
+    FIELD_AGENTTOKEN("agenttoken", CoreGUI.getMessages().view_adminTopology_agentDetail_token()),
 
     FIELD_LAST_AVAILABILITY_REPORT("lastAvailabilityReport", CoreGUI.getMessages()
         .view_adminTopology_agent_lastAvailabilityReport()),

@@ -111,6 +111,11 @@ public class ServerDatasource extends AbstractServerNodeDatasource<Server, Serve
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response, ServerCriteria criteria) {
+        if (criteria == null) {
+            response.setTotalRows(0);
+            processResponse(request.getRequestId(), response);
+            return;
+        }
         if (affinityGroupId != null) {
             criteria.addFilterAffinityGroupId(affinityGroupId);
         }
@@ -179,6 +184,10 @@ public class ServerDatasource extends AbstractServerNodeDatasource<Server, Serve
 
     @Override
     protected ServerCriteria getFetchCriteria(DSRequest request) {
+        OperationMode[] modesFilter = getArrayFilter(request, FILTER_OPERATION_MODE, OperationMode.class);
+        if (modesFilter == null || modesFilter.length == 0) {
+            return null; // user didn't select any modes - return null to indicate no data should be displayed
+        }
         ServerCriteria criteria = new ServerCriteria();
         //        printRequestCriteria(request);
         criteria.addFilterId(getFilter(request, FIELD_ID.propertyName(), Integer.class));
@@ -186,7 +195,7 @@ public class ServerDatasource extends AbstractServerNodeDatasource<Server, Serve
         criteria.addFilterAddress(getFilter(request, FILTER_ADDRESS, String.class));
         criteria.addFilterPort(getFilter(request, FILTER_PORT, Integer.class));
         criteria.addFilterSecurePort(getFilter(request, FILTER_SECURE_PORT, Integer.class));
-        criteria.addFilterOperationMode(getFilter(request, FILTER_OPERATION_MODE, OperationMode.class));
+        criteria.addFilterOperationMode(modesFilter);
         criteria.addFilterComputePower(getFilter(request, FILTER_COMPUTE_POWER, Integer.class));
         criteria.addFilterAffinityGroupId(getFilter(request, FILTER_AFFINITY_GROUP_ID, Integer.class));
 

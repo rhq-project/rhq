@@ -126,12 +126,7 @@ public class AffinityGroupAgentsSelector extends AbstractSelector<Agent, AgentCr
 
     @Override
     protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
-        String search = (String) availableFilterForm.getValue(FIELD_NAME.propertyName());
-        Criteria criteria = new Criteria();
-        if (null != search) {
-            criteria.addCriteria(FIELD_NAME.propertyName(), search);
-        }
-        return criteria;
+        return availableFilterForm.getValuesAsCriteria();
     }
 
     @Override

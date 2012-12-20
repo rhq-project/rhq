@@ -51,6 +51,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.cloud.PartitionEvent.ExecutionStatus;
 import org.rhq.core.domain.cloud.PartitionEventType;
+import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.criteria.BaseCriteria;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.event.EventSeverity;
@@ -605,6 +606,8 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
             return (S[]) new ExecutionStatus[size];
         } else if (genericEnumType == PartitionEventType.class) {
             return (S[]) new PartitionEventType[size];
+        } else if (genericEnumType == OperationMode.class) {
+            return (S[]) new OperationMode[size];
         } else {
             throw new IllegalArgumentException(MSG.dataSource_rpc_error_unsupportedEnumType(genericEnumType.getName()));
         }

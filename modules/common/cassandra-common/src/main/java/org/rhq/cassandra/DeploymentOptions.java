@@ -39,6 +39,8 @@ public class DeploymentOptions {
 
     private final Log log = LogFactory.getLog(DeploymentOptions.class);
 
+    private boolean loaded;
+
     private String bundleFileName;
     private String bundleName;
     private String bundleVersion;
@@ -60,6 +62,9 @@ public class DeploymentOptions {
     }
 
     public void load() throws IOException {
+        if (loaded) {
+            return;
+        }
         InputStream stream = null;
         try {
             stream = getClass().getResourceAsStream("/cassandra.properties");
@@ -67,6 +72,7 @@ public class DeploymentOptions {
             props.load(stream);
 
             init(props);
+            loaded = true;
         }  catch (IOException e) {
             log.warn("Unable to load deployment options from cassandra.properties.");
             log.info("The following error occurred while trying to load options.", e);

@@ -49,6 +49,8 @@ public class CCMTestNGListener implements IInvokedMethodListener {
 
     private final Log log = LogFactory.getLog(CCMTestNGListener.class);
 
+    private CassandraClusterManager ccm;
+
     @Override
     public void beforeInvocation(IInvokedMethod invokedMethod, ITestResult testResult) {
         Method method = invokedMethod.getTestMethod().getConstructorOrMethod().getMethod();
@@ -87,19 +89,13 @@ public class CCMTestNGListener implements IInvokedMethodListener {
         deploymentOptions.setNumNodes(numNodes);
         deploymentOptions.setUsername(annotation.username());
         deploymentOptions.setPassword(annotation.password());
-        try {
-            deploymentOptions.load();
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to load deployment options.", e);
-        }
 
-        BootstrapDeployer deployer = new BootstrapDeployer();
-        deployer.setDeploymentOptions(deploymentOptions);
-
-        deployer.deploy();
+        ccm = new CassandraClusterManager(deploymentOptions);
+        List<File> nodeDirs = ccm.installCluster();
+        ccm.startCluster(nodeDirs);
 
         ClusterInitService clusterInitService = new ClusterInitService();
-        List<CassandraNode> cassandraHosts = getCassandraHosts(deployer.getCassandraHosts());
+        List<CassandraNode> cassandraHosts = getCassandraHosts(ccm.getHostNames());
 
         if (annotation.waitForClusterToStart()) {
             clusterInitService.waitForClusterToStart(cassandraHosts);
@@ -116,8 +112,8 @@ public class CCMTestNGListener implements IInvokedMethodListener {
             clusterInitService.waitForSchemaAgreement("rhq", cassandraHosts);
         }
 
-        String[] hostNames = getHostNames(deployer.getCassandraHosts());
-        SchemaManager schemaManager = new SchemaManager(annotation.username(), annotation.password(), hostNames);
+        SchemaManager schemaManager = new SchemaManager(annotation.username(), annotation.password(),
+            ccm.getHostNames().toArray(new String[] {}));
         if (!schemaManager.schemaExists()) {
             schemaManager.createSchema();
         }
@@ -145,23 +141,13 @@ public class CCMTestNGListener implements IInvokedMethodListener {
         return Long.parseLong(writer.getBuffer().toString());
     }
 
-    private List<CassandraNode> getCassandraHosts(String hosts) {
+    private List<CassandraNode> getCassandraHosts(List<String> hostNames) {
         List<CassandraNode> cassandraHosts = new ArrayList<CassandraNode>();
 
-        for (String s : hosts.split(",")) {
-            String[] params = s.split(":");
-            cassandraHosts.add(new CassandraNode(params[0], Integer.parseInt(params[1])));
-
+        for (String hostName : hostNames) {
+            cassandraHosts.add(new CassandraNode(hostName, 9160));
         }
         return cassandraHosts;
     }
 
-    private String[] getHostNames(String hosts) {
-        List<String> hostNames = new ArrayList<String>();
-        for (String s : hosts.split(",")) {
-            String[] params = s.split(":");
-            hostNames.add(params[0]);
-        }
-        return hostNames.toArray(new String[hostNames.size()]);
-    }
 }

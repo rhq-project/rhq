@@ -35,8 +35,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -81,19 +83,20 @@ public class BootstrapDeployer {
         return hosts.toString();
     }
 
-    public void deploy() throws CassandraException {
+    public List<File> deploy() throws CassandraException {
         Set<String> ipAddresses = calculateLocalIPAddresses(deploymentOptions.getNumNodes());
         File clusterDir = new File(deploymentOptions.getClusterDir());
         File installedMarker = new File(clusterDir, ".installed");
 
         if (isClusterInstalled()) {
-            return;
+            return Collections.emptyList();
         }
 
         FileUtil.purge(clusterDir, false);
 
         File bundleZipeFile = null;
         File bundleDir = null;
+        List<File> nodeDirs = new LinkedList<File>();
 
         try {
             deploymentOptions.load();
@@ -105,6 +108,7 @@ public class BootstrapDeployer {
                 int jmxPort = 7200 + i;
                 String address = getLocalIPAddress(i + 1);
                 File nodeBasedir = new File(clusterDir, "node" + i);
+                nodeDirs.add(nodeBasedir);
 
                 Properties props = new Properties();
                 props.put("cluster.name", "rhq");
@@ -137,10 +141,10 @@ public class BootstrapDeployer {
                 props.put("rhq.cassandra.authorizer", deploymentOptions.getAuthorizer());
 
                 doLocalDeploy(props, bundleDir);
-                startNode(nodeBasedir);
-                if (i == 0) {
-                    waitForNodeToStart(10, address);
-                }
+//                startNode(nodeBasedir);
+//                if (i == 0) {
+//                    waitForNodeToStart(10, address);
+//                }
             }
             FileUtil.writeFile(new ByteArrayInputStream(new byte[] {0}), installedMarker);
         } catch (IOException e) {
@@ -154,6 +158,8 @@ public class BootstrapDeployer {
                 FileUtil.purge(bundleDir, true);
             }
         }
+
+        return nodeDirs;
     }
 
     public static void main(String[] args) {

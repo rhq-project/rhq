@@ -191,10 +191,6 @@
                   <groupId>${project.groupId}</groupId>
                   <artifactId>rhq-core-plugin-api</artifactId>
                 </artifactItem>
-                <!--<artifactItem>-->
-                  <!--<groupId>org.apache.cassandra</groupId>-->
-                  <!--<artifactId>cassandra-clientutil</artifactId>-->
-                <!--</artifactItem>-->
                 <artifactItem>
                   <groupId>org.apache.cassandra</groupId>
                   <artifactId>cassandra-thrift</artifactId>

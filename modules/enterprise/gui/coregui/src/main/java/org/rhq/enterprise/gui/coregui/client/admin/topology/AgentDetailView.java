@@ -84,7 +84,7 @@ public class AgentDetailView extends LocatableVLayout {
         super.onInit();
         AgentCriteria criteria = new AgentCriteria();
         criteria.addFilterId(agentId);
-        GWTServiceLookup.getCloudService().findAgentsByCriteria(criteria, new AsyncCallback<PageList<Agent>>() {
+        GWTServiceLookup.getTopologyService().findAgentsByCriteria(criteria, new AsyncCallback<PageList<Agent>>() {
             public void onSuccess(final PageList<Agent> agents) {
                 if (agents == null || agents.isEmpty() || agents.size() != 1) {
                     CoreGUI.getErrorHandler().handleError(

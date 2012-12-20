@@ -122,7 +122,7 @@ public class AgentDatasource extends RPCDataSource<Agent, AgentCriteria> {
             criteria.addFilterServerId(id);
         }
 
-        GWTServiceLookup.getCloudService().findAgentsByCriteria(criteria, new AsyncCallback<PageList<Agent>>() {
+        GWTServiceLookup.getTopologyService().findAgentsByCriteria(criteria, new AsyncCallback<PageList<Agent>>() {
             public void onSuccess(PageList<Agent> result) {
                 response.setData(buildRecords(result));
                 response.setTotalRows(result.size());

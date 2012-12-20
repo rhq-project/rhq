@@ -62,8 +62,8 @@ import org.rhq.enterprise.server.bundle.BundleManagerBean;
 import org.rhq.enterprise.server.bundle.BundleManagerLocal;
 import org.rhq.enterprise.server.cloud.AffinityGroupManagerBean;
 import org.rhq.enterprise.server.cloud.AffinityGroupManagerLocal;
-import org.rhq.enterprise.server.cloud.CloudManagerBean;
-import org.rhq.enterprise.server.cloud.CloudManagerLocal;
+import org.rhq.enterprise.server.cloud.TopologyManagerBean;
+import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.cloud.FailoverListManagerBean;
 import org.rhq.enterprise.server.cloud.FailoverListManagerLocal;
 import org.rhq.enterprise.server.cloud.PartitionEventManagerBean;
@@ -469,8 +469,8 @@ public final class LookupUtil {
         return lookupLocal(AffinityGroupManagerBean.class);
     }
 
-    public static CloudManagerLocal getCloudManager() {
-        return lookupLocal(CloudManagerBean.class);
+    public static TopologyManagerLocal getTopologyManager() {
+        return lookupLocal(TopologyManagerBean.class);
     }
 
     public static ClusterManagerLocal getClusterManager() {

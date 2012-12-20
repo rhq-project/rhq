@@ -98,7 +98,7 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, Serve
     private void prepareMembers(final AffinityGroupServersSelector selector) {
         ServerCriteria criteria = new ServerCriteria();
         criteria.addFilterAffinityGroupId(affinityGroupId);
-        GWTServiceLookup.getCloudService().findServersByCriteria(criteria, new AsyncCallback<PageList<Server>>() {
+        GWTServiceLookup.getTopologyService().findServersByCriteria(criteria, new AsyncCallback<PageList<Server>>() {
             public void onSuccess(PageList<Server> result) {
                 ListGridRecord[] records = getDataSource().buildRecords(result);
                 originallyAssignedIds = getIdList(records);
@@ -184,7 +184,7 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, Serve
                 shouldBeClosed = true;
                 if (!originallySelected.isEmpty()) {
                     shouldBeClosed = false;
-                    GWTServiceLookup.getCloudService().removeServersFromGroup(
+                    GWTServiceLookup.getTopologyService().removeServersFromGroup(
                         originallySelected.toArray(new Integer[originallySelected.size()]), new AsyncCallback<Void>() {
                             public void onSuccess(Void result) {
                                 closeAndRefresh(parrent, true);
@@ -199,7 +199,7 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, Serve
                 }
                 if (!actuallySelected.isEmpty()) {
                     shouldBeClosed = false;
-                    GWTServiceLookup.getCloudService().addServersToGroup(selector.getAffinityGroupId(),
+                    GWTServiceLookup.getTopologyService().addServersToGroup(selector.getAffinityGroupId(),
                         actuallySelected.toArray(new Integer[actuallySelected.size()]), new AsyncCallback<Void>() {
                             public void onSuccess(Void result) {
                                 closeAndRefresh(parrent, true);

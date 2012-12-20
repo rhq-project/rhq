@@ -110,7 +110,7 @@ public class AffinityGroupTableView extends TableSection<AffinityGroupWithCounts
                         public void execute(Boolean confirmed) {
                             if (confirmed) {
                                 int[] selectedIds = getSelectedIds(selections);
-                                GWTServiceLookup.getCloudService().deleteAffinityGroups(selectedIds,
+                                GWTServiceLookup.getTopologyService().deleteAffinityGroups(selectedIds,
                                     new AsyncCallback<Integer>() {
                                         public void onSuccess(Integer count) {
                                             Message msg = new Message(MSG
@@ -232,7 +232,7 @@ public class AffinityGroupTableView extends TableSection<AffinityGroupWithCounts
         if (form.validate()) {
             String name = form.getValueAsString(FIELD_NAME);
             AffinityGroup affinityGroup = new AffinityGroup(name);
-            GWTServiceLookup.getCloudService().createAffinityGroup(affinityGroup, new AsyncCallback<Integer>() {
+            GWTServiceLookup.getTopologyService().createAffinityGroup(affinityGroup, new AsyncCallback<Integer>() {
                 public void onSuccess(Integer affinityGroupId) {
                     modalWindow.destroy();
                     CoreGUI.goToView(VIEW_PATH + "/" + affinityGroupId);

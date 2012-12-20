@@ -63,7 +63,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.cloud.CloudManagerLocal;
+import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.CacheConsistencyManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.SyncEndpointAddressException;
@@ -112,7 +112,7 @@ public class StartupBean {
     private CacheConsistencyManagerLocal cacheConsistencyManager;
 
     @EJB
-    private CloudManagerLocal cloudManager;
+    private TopologyManagerLocal topologyManager;
 
     @EJB
     private ResourceTypeManagerLocal resourceTypeManager;
@@ -258,7 +258,7 @@ public class StartupBean {
             log.info("Server is configured to start up in MAINTENANCE mode.");
             Server server = serverManager.getServer();
             Integer[] serverId = new Integer[] { server.getId() };
-            cloudManager.updateServerMode(LookupUtil.getSubjectManager().getOverlord(), serverId,
+            topologyManager.updateServerMode(LookupUtil.getSubjectManager().getOverlord(), serverId,
                 OperationMode.MAINTENANCE);
         }
 
@@ -284,7 +284,7 @@ public class StartupBean {
      */
     private void createDefaultServerIfNecessary() {
         String identity = serverManager.getIdentity();
-        Server server = cloudManager.getServerByName(identity);
+        Server server = topologyManager.getServerByName(identity);
         if (server == null) {
             server = new Server();
             server.setName(identity);

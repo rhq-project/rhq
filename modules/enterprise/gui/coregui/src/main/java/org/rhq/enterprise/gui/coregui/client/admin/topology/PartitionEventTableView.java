@@ -209,13 +209,13 @@ public class PartitionEventTableView extends TableSection<PartitionEventDatasour
                             };
                             switch (action) {
                             case REMOVE_SELECTED:
-                                GWTServiceLookup.getCloudService().deletePartitionEvents(selectedIds, callback);
+                                GWTServiceLookup.getTopologyService().deletePartitionEvents(selectedIds, callback);
                                 break;
                             case PURGE_ALL:
-                                GWTServiceLookup.getCloudService().purgeAllEvents(callback);
+                                GWTServiceLookup.getTopologyService().purgeAllEvents(callback);
                                 break;
                             case FORCE_REPARTITION:
-                                GWTServiceLookup.getCloudService().cloudPartitionEventRequest(callback);
+                                GWTServiceLookup.getTopologyService().cloudPartitionEventRequest(callback);
                             }
 
                         } else {

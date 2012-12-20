@@ -97,7 +97,7 @@ public class ServerDetailView extends LocatableVLayout implements BookmarkableVi
         super.onInit();
         ServerCriteria criteria = new ServerCriteria();
         criteria.addFilterId(serverId);
-        GWTServiceLookup.getCloudService().findServersByCriteria(criteria, new AsyncCallback<PageList<Server>>() {
+        GWTServiceLookup.getTopologyService().findServersByCriteria(criteria, new AsyncCallback<PageList<Server>>() {
             public void onSuccess(final PageList<Server> servers) {
                 if (servers == null || servers.isEmpty() || servers.size() != 1) {
                     CoreGUI.getErrorHandler().handleError(
@@ -229,7 +229,7 @@ public class ServerDetailView extends LocatableVLayout implements BookmarkableVi
                     server.setPort(Integer.parseInt(portItem.getValueAsString()));
                     server.setSecurePort(Integer.parseInt(securePortItem.getValueAsString()));
                     server.setOperationMode(OperationMode.valueOf(operationModeItem.getValueAsString()));
-                    GWTServiceLookup.getCloudService().updateServer(server, new AsyncCallback<Void>() {
+                    GWTServiceLookup.getTopologyService().updateServer(server, new AsyncCallback<Void>() {
                         public void onSuccess(Void result) {
                             Message msg = new Message(MSG.view_adminTopology_message_serverUpdated(server.getName()),
                                 Message.Severity.Info);

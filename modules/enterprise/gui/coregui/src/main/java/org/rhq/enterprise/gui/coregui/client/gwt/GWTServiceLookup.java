@@ -202,8 +202,8 @@ public class GWTServiceLookup {
         return secure(PlatformUtilizationGWTServiceAsync.Util.getInstance());
     }
     
-    public static CloudGWTServiceAsync getCloudService() {
-        return secure(CloudGWTServiceAsync.Util.getInstance());
+    public static TopologyGWTServiceAsync getTopologyService() {
+        return secure(TopologyGWTServiceAsync.Util.getInstance());
     }
 
     @SuppressWarnings("unchecked")

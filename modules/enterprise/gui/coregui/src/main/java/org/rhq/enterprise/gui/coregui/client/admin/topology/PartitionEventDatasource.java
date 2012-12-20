@@ -100,7 +100,7 @@ public class PartitionEventDatasource extends RPCDataSource<PartitionEvent, Part
             processResponse(request.getRequestId(), response);
             return;
         }
-        GWTServiceLookup.getCloudService().findPartitionEventsByCriteria(criteria,
+        GWTServiceLookup.getTopologyService().findPartitionEventsByCriteria(criteria,
             new AsyncCallback<PageList<PartitionEvent>>() {
                 public void onSuccess(PageList<PartitionEvent> result) {
                     response.setData(buildRecords(result));

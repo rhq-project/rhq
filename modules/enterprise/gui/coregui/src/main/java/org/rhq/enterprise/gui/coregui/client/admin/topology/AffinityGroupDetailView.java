@@ -79,7 +79,7 @@ public class AffinityGroupDetailView extends LocatableVLayout implements Bookmar
     @Override
     protected void onInit() {
         super.onInit();
-        GWTServiceLookup.getCloudService().getAffinityGroupById(affinityGroupId, new AsyncCallback<AffinityGroup>() {
+        GWTServiceLookup.getTopologyService().getAffinityGroupById(affinityGroupId, new AsyncCallback<AffinityGroup>() {
             public void onSuccess(final AffinityGroup affinityGroup) {
                 prepareDetailsSection(sectionStack, affinityGroup);
             }
@@ -180,7 +180,7 @@ public class AffinityGroupDetailView extends LocatableVLayout implements Bookmar
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 affinityGroup.setName(nameItem.getValueAsString());
-                GWTServiceLookup.getCloudService().updateAffinityGroup(affinityGroup, new AsyncCallback<Void>() {
+                GWTServiceLookup.getTopologyService().updateAffinityGroup(affinityGroup, new AsyncCallback<Void>() {
                     public void onSuccess(Void result) {
                         Message msg = new Message(MSG.view_adminTopology_message_agroupRenamed(
                             String.valueOf(affinityGroupId), affinityGroup.getName(), nameItem.getValueAsString()),

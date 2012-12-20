@@ -94,7 +94,7 @@ public class AffinityGroupAgentsSelector extends AbstractSelector<Agent, AgentCr
     private void prepareMembers(final AffinityGroupAgentsSelector selector) {
         AgentCriteria criteria = new AgentCriteria();
         criteria.addFilterAffinityGroupId(affinityGroupId);
-        GWTServiceLookup.getCloudService().findAgentsByCriteria(criteria, new AsyncCallback<PageList<Agent>>() {
+        GWTServiceLookup.getTopologyService().findAgentsByCriteria(criteria, new AsyncCallback<PageList<Agent>>() {
             public void onSuccess(PageList<Agent> result) {
                 ListGridRecord[] records = getDataSource().buildRecords(result);
                 originallyAssignedIds = getIdList(records);
@@ -179,7 +179,7 @@ public class AffinityGroupAgentsSelector extends AbstractSelector<Agent, AgentCr
                 shouldBeClosed = true;
                 if (!originallySelected.isEmpty()) {
                     shouldBeClosed = false;
-                    GWTServiceLookup.getCloudService().removeAgentsFromGroup(
+                    GWTServiceLookup.getTopologyService().removeAgentsFromGroup(
                         originallySelected.toArray(new Integer[originallySelected.size()]), new AsyncCallback<Void>() {
                             public void onSuccess(Void result) {
                                 closeAndRefresh(parrent, true);
@@ -194,7 +194,7 @@ public class AffinityGroupAgentsSelector extends AbstractSelector<Agent, AgentCr
                 }
                 if (!actuallySelected.isEmpty()) {
                     shouldBeClosed = false;
-                    GWTServiceLookup.getCloudService().addAgentsToGroup(selector.getAffinityGroupId(),
+                    GWTServiceLookup.getTopologyService().addAgentsToGroup(selector.getAffinityGroupId(),
                         actuallySelected.toArray(new Integer[actuallySelected.size()]), new AsyncCallback<Void>() {
                             public void onSuccess(Void result) {
                                 closeAndRefresh(parrent, true);

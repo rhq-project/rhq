@@ -46,7 +46,7 @@ import org.rhq.core.domain.util.PageList;
  *
  * @author Jiri Kremser
  */
-public interface CloudGWTService extends RemoteService {
+public interface TopologyGWTService extends RemoteService {
 
     /**
      * Returns all the servers with agent count.

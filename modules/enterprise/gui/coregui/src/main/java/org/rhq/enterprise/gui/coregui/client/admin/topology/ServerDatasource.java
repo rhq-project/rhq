@@ -119,7 +119,7 @@ public class ServerDatasource extends AbstractServerNodeDatasource<Server, Serve
         if (affinityGroupId != null) {
             criteria.addFilterAffinityGroupId(affinityGroupId);
         }
-        GWTServiceLookup.getCloudService().findServersByCriteria(criteria, new AsyncCallback<PageList<Server>>() {
+        GWTServiceLookup.getTopologyService().findServersByCriteria(criteria, new AsyncCallback<PageList<Server>>() {
             public void onSuccess(PageList<Server> result) {
                 response.setData(buildRecords(result));
                 response.setTotalRows(result.size());

@@ -41,22 +41,22 @@ import org.rhq.core.domain.criteria.ServerCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.gwt.CloudGWTService;
+import org.rhq.enterprise.gui.coregui.client.gwt.TopologyGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.cloud.AffinityGroupManagerLocal;
-import org.rhq.enterprise.server.cloud.CloudManagerLocal;
 import org.rhq.enterprise.server.cloud.PartitionEventManagerLocal;
+import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author Jiri Kremser
  */
-public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements CloudGWTService {
+public class TopologyGWTServiceImpl extends AbstractGWTServiceImpl implements TopologyGWTService {
 
     private static final long serialVersionUID = 1L;
 
-    private CloudManagerLocal cloudManager = LookupUtil.getCloudManager();
+    private TopologyManagerLocal topologyManager = LookupUtil.getTopologyManager();
 
     private AgentManagerLocal agentManager = LookupUtil.getAgentManager();
 
@@ -67,8 +67,8 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     @Override
     public PageList<ServerWithAgentCountComposite> getServers(PageControl pc) throws RuntimeException {
         try {
-            return SerialUtility.prepare(cloudManager.getServerComposites(getSessionSubject(), pc),
-                "CloudGWTServiceImpl.getServers");
+            return SerialUtility.prepare(topologyManager.getServerComposites(getSessionSubject(), pc),
+                "TopologyGWTServiceImpl.getServers");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -77,7 +77,7 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     @Override
     public void deleteServers(int[] serverIds) throws RuntimeException {
         try {
-            cloudManager.deleteServers(getSessionSubject(), ArrayUtils.toObject(serverIds));
+            topologyManager.deleteServers(getSessionSubject(), ArrayUtils.toObject(serverIds));
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -86,7 +86,7 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     @Override
     public void updateServerMode(int[] serverIds, OperationMode mode) throws RuntimeException {
         try {
-            cloudManager.updateServerMode(getSessionSubject(), ArrayUtils.toObject(serverIds), mode);
+            topologyManager.updateServerMode(getSessionSubject(), ArrayUtils.toObject(serverIds), mode);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -97,8 +97,8 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
         throws RuntimeException {
         try {
             return SerialUtility.prepare(
-                cloudManager.getFailoverListDetailsByAgentId(getSessionSubject(), agentId, pc),
-                "CloudGWTServiceImpl.getFailoverListDetailsByAgentId");
+                topologyManager.getFailoverListDetailsByAgentId(getSessionSubject(), agentId, pc),
+                "TopologyGWTServiceImpl.getFailoverListDetailsByAgentId");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -110,7 +110,7 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
         try {
             return SerialUtility.prepare(
                 partitionEventManager.findPartitionEventsByCriteria(getSessionSubject(), criteria),
-                "CloudGWTServiceImpl.findPartitionEventsByCriteria");
+                "TopologyGWTServiceImpl.findPartitionEventsByCriteria");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -119,8 +119,8 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     @Override
     public PageList<Server> findServersByCriteria(ServerCriteria criteria) throws RuntimeException {
         try {
-            return SerialUtility.prepare(cloudManager.findServersByCriteria(getSessionSubject(), criteria),
-                "CloudGWTServiceImpl.findServersByCriteria");
+            return SerialUtility.prepare(topologyManager.findServersByCriteria(getSessionSubject(), criteria),
+                "TopologyGWTServiceImpl.findServersByCriteria");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -130,7 +130,7 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     public PageList<Agent> findAgentsByCriteria(AgentCriteria criteria) throws RuntimeException {
         try {
             return SerialUtility.prepare(agentManager.findAgentsByCriteria(getSessionSubject(), criteria),
-                "CloudGWTServiceImpl.findAgentsByCriteria");
+                "TopologyGWTServiceImpl.findAgentsByCriteria");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -170,7 +170,7 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
         try {
             return SerialUtility.prepare(
                 partitionEventManager.getPartitionEventDetails(getSessionSubject(), partitionEventId, pageControl),
-                "CloudGWTServiceImpl.getPartitionEventDetails");
+                "TopologyGWTServiceImpl.getPartitionEventDetails");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -181,7 +181,7 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
         throws RuntimeException {
         try {
             return SerialUtility.prepare(affinityGroupManager.getComposites(getSessionSubject(), pageControl),
-                "CloudGWTServiceImpl.getAffinityGroupCountComposites");
+                "TopologyGWTServiceImpl.getAffinityGroupCountComposites");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -209,7 +209,7 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     public AffinityGroup getAffinityGroupById(int affinityGroupId) throws RuntimeException {
         try {
             return SerialUtility.prepare(affinityGroupManager.getById(getSessionSubject(), affinityGroupId),
-                "CloudGWTServiceImpl.getAffinityGroupById");
+                "TopologyGWTServiceImpl.getAffinityGroupById");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -254,7 +254,7 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     @Override
     public void updateServer(Server server) throws RuntimeException {
         try {
-            cloudManager.updateServer(getSessionSubject(), server);
+            topologyManager.updateServer(getSessionSubject(), server);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

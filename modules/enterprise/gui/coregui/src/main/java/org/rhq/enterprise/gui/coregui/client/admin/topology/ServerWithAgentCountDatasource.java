@@ -78,7 +78,7 @@ public class ServerWithAgentCountDatasource extends
     protected void executeFetch(final DSRequest request, final DSResponse response, Criteria criteria) {
         final PageControl pc = getPageControl(request);
 
-        GWTServiceLookup.getCloudService().getServers(pc, new AsyncCallback<List<ServerWithAgentCountComposite>>() {
+        GWTServiceLookup.getTopologyService().getServers(pc, new AsyncCallback<List<ServerWithAgentCountComposite>>() {
             public void onSuccess(List<ServerWithAgentCountComposite> result) {
                 response.setData(buildRecords(result));
                 response.setTotalRows(result.size());

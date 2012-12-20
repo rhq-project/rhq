@@ -46,7 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.gwt.CloudGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.gwt.TopologyGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -89,7 +89,7 @@ public class PartitionEventDetailView extends LocatableVLayout implements Bookma
         super.onInit();
         PartitionEventCriteria criteria = new PartitionEventCriteria();
         criteria.addFilterId(partitionEventId);
-        final CloudGWTServiceAsync service = GWTServiceLookup.getCloudService();
+        final TopologyGWTServiceAsync service = GWTServiceLookup.getTopologyService();
         service.findPartitionEventsByCriteria(criteria, new AsyncCallback<PageList<PartitionEvent>>() {
             public void onSuccess(final PageList<PartitionEvent> events) {
                 if (events == null || events.size() != 1) {

@@ -157,7 +157,7 @@ public class ServerTableView extends
                         public void execute(Boolean confirmed) {
                             if (confirmed) {
                                 int[] selectedIds = getSelectedIds(selections);
-                                GWTServiceLookup.getCloudService().deleteServers(selectedIds,
+                                GWTServiceLookup.getTopologyService().deleteServers(selectedIds,
                                     new AsyncCallback<Void>() {
                                         public void onSuccess(Void arg0) {
                                             Message msg = new Message(MSG
@@ -192,7 +192,7 @@ public class ServerTableView extends
                     public void execute(Boolean confirmed) {
                         if (confirmed) {
                             int[] selectedIds = getSelectedIds(selections);
-                            GWTServiceLookup.getCloudService().updateServerMode(selectedIds, mode,
+                            GWTServiceLookup.getTopologyService().updateServerMode(selectedIds, mode,
                                 new AsyncCallback<Void>() {
                                     public void onSuccess(Void result) {
                                         Message msg = new Message(MSG.view_adminTopology_message_setMode(

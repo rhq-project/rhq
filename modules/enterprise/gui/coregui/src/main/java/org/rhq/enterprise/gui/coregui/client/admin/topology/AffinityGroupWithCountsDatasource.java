@@ -116,7 +116,7 @@ public class AffinityGroupWithCountsDatasource extends RPCDataSource<AffinityGro
     protected void executeFetch(final DSRequest request, final DSResponse response, Criteria criteria) {
         final PageControl pc = getPageControl(request);
 
-        GWTServiceLookup.getCloudService().getAffinityGroupCountComposites(pc,
+        GWTServiceLookup.getTopologyService().getAffinityGroupCountComposites(pc,
             new AsyncCallback<PageList<AffinityGroupCountComposite>>() {
                 public void onSuccess(PageList<AffinityGroupCountComposite> result) {
                     response.setData(buildRecords(result));

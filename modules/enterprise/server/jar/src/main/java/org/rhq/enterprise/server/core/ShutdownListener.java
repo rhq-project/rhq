@@ -41,7 +41,7 @@ import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.cloud.CloudManagerLocal;
+import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -70,7 +70,7 @@ public class ShutdownListener {
     private ServerManagerLocal serverManager;
 
     @EJB
-    private CloudManagerLocal cloudManager;
+    private TopologyManagerLocal topologyManager;
 
     @Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
     private DataSource dataSource;
@@ -169,7 +169,7 @@ public class ShutdownListener {
             // Set the server operation mode to DOWN unless in MM
             Server server = serverManager.getServer();
             if (Server.OperationMode.MAINTENANCE != server.getOperationMode()) {
-                cloudManager.updateServerMode(LookupUtil.getSubjectManager().getOverlord(), new Integer[] { server.getId() }, OperationMode.DOWN);
+                topologyManager.updateServerMode(LookupUtil.getSubjectManager().getOverlord(), new Integer[] { server.getId() }, OperationMode.DOWN);
             }
         } catch (Throwable t) {
             // only show ugly stack traces if the user runs the server in debug mode

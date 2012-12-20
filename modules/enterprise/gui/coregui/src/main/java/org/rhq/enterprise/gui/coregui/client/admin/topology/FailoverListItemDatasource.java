@@ -103,7 +103,7 @@ public class FailoverListItemDatasource extends AbstractServerNodeDatasource<Fai
         final PageControl pc = getPageControl(request);
 
         // if agentId == null all FailoverListDetails are returned
-        GWTServiceLookup.getCloudService().getFailoverListDetailsByAgentId(agentId, pc,
+        GWTServiceLookup.getTopologyService().getFailoverListDetailsByAgentId(agentId, pc,
             new AsyncCallback<List<FailoverListDetails>>() {
                 public void onSuccess(List<FailoverListDetails> result) {
                     response.setData(buildRecords(result));

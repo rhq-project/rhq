@@ -58,8 +58,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Joseph Marques
  */
 @Stateless
-public class CloudManagerBean implements CloudManagerLocal {
-    private final Log log = LogFactory.getLog(CloudManagerBean.class);
+public class TopologyManagerBean implements TopologyManagerLocal {
+    private final Log log = LogFactory.getLog(TopologyManagerBean.class);
 
     // A time sufficient to determine whether a server is down.  Can be based on the initial delay set for the server instance
     // job updating the server mtimes. See StartupServlet. 
@@ -69,7 +69,7 @@ public class CloudManagerBean implements CloudManagerLocal {
     private EntityManager entityManager;
 
     @EJB
-    private CloudManagerLocal cloudManager;
+    private TopologyManagerLocal topologyManager;
 
     @EJB
     private FailoverListManagerLocal failoverListManager;
@@ -85,7 +85,7 @@ public class CloudManagerBean implements CloudManagerLocal {
     private ServerManagerLocal serverManager;
 
     public List<Agent> getAgentsByServerName(String serverName) {
-        Server server = cloudManager.getServerByName(serverName);
+        Server server = topologyManager.getServerByName(serverName);
         List<Agent> agents = server.getAgents();
         agents.size(); // iterating over this collection out of a transactional boundaries will throw LazyInitExceptions
         return agents;
@@ -163,24 +163,24 @@ public class CloudManagerBean implements CloudManagerLocal {
 
     @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
         @RequiredPermission(Permission.MANAGE_INVENTORY) })
-    public void deleteServers(Subject subject, Integer[] serverIds) throws CloudManagerException {
+    public void deleteServers(Subject subject, Integer[] serverIds) throws TopologyManagerException {
         if (serverIds == null) {
             return;
         }
 
         for (Integer nextServerId : serverIds) {
-            cloudManager.deleteServer(subject, nextServerId);
+            topologyManager.deleteServer(subject, nextServerId);
         }
     }
 
     @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
         @RequiredPermission(Permission.MANAGE_INVENTORY) })
-    public void deleteServer(Subject subject, Integer serverId) throws CloudManagerException {
+    public void deleteServer(Subject subject, Integer serverId) throws TopologyManagerException {
         try {
             Server server = entityManager.find(Server.class, serverId);
 
             if (Server.OperationMode.NORMAL == server.getOperationMode()) {
-                throw new CloudManagerException("Could not delete server " + server.getName()
+                throw new TopologyManagerException("Could not delete server " + server.getName()
                     + ". Server must be down or in maintenance mode. Current operating mode is: "
                     + server.getOperationMode().name());
             }
@@ -208,7 +208,7 @@ public class CloudManagerBean implements CloudManagerLocal {
                 PartitionEventType.SERVER_DELETION, server.getName());
 
         } catch (Exception e) {
-            throw new CloudManagerException("Could not delete server[id=" + serverId + "]: " + e.getMessage(), e);
+            throw new TopologyManagerException("Could not delete server[id=" + serverId + "]: " + e.getMessage(), e);
         }
     }
 

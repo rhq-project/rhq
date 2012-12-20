@@ -35,11 +35,11 @@ import org.rhq.core.domain.util.PageList;
  * @author Joseph Marques
  */
 @Local
-public interface CloudManagerLocal {
+public interface TopologyManagerLocal {
 
-    void deleteServers(Subject subject, Integer[] serverIds) throws CloudManagerException;
+    void deleteServers(Subject subject, Integer[] serverIds) throws TopologyManagerException;
 
-    void deleteServer(Subject subject, Integer serverId) throws CloudManagerException;
+    void deleteServer(Subject subject, Integer serverId) throws TopologyManagerException;
 
     List<Agent> getAgentsByServerName(String serverName);
 

@@ -27,6 +27,7 @@ import java.util.HashMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.installer.InstallerService.AlreadyInstalledException;
 import org.rhq.enterprise.server.installer.InstallerService.AutoInstallDisabledException;
 
@@ -103,7 +104,7 @@ public class Installer {
                     installerService.prepareDatabase(serverProperties, null, null);
                     LOG.info("Database setup is complete.");
                 } catch (Exception e) {
-                    LOG.error(e.getMessage(), e);
+                    LOG.error(ThrowableUtil.getAllMessages(e));
                     System.exit(EXIT_CODE_INSTALLATION_ERROR);
                 }
                 continue;

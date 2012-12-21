@@ -121,6 +121,21 @@ public interface InstallerService {
         String existingSchemaOption) throws Exception;
 
     /**
+     * This will take server properties and reconfigure an already-installed server
+     * with those values if the settings were previously hardcoded to old values (as opposed to being
+     * set to expressions that allow them to be overridden with system property settings).
+     * Note that is function is here only to workaround various bugs in AS7
+     * that force us to not be able to use expressions in certain app server subsystem attribute
+     * settings - see https://issues.jboss.org/browse/AS7-6120. Once this issues are fixed, this
+     * method will go away.
+     *
+     * @param serverProperties the new server properties
+     * @throws Exception
+     */
+    @Deprecated
+    void reconfigure(HashMap<String, String> serverProperties) throws Exception;
+
+    /**
      * Returns a list of all registered servers in the database.
      *
      * @param connectionUrl

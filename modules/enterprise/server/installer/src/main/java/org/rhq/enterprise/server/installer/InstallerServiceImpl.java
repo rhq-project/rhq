@@ -249,7 +249,10 @@ public class InstallerServiceImpl implements InstallerService {
             ServerInstallUtil.configureDeploymentScanner(mcc);
 
             // create a keystore whose cert has a CN of this server's public endpoint address
-            ServerInstallUtil.prepareWebConnectors(mcc, serverDetails, appServerConfigDir, serverProperties);
+            File keystoreFile = ServerInstallUtil.createKeystore(serverDetails, appServerConfigDir);
+
+            // make sure all necessary web connectors are configured
+            ServerInstallUtil.setupWebConnectors(mcc, appServerConfigDir, serverProperties);
         } finally {
             safeClose(mcc);
         }
@@ -527,6 +530,51 @@ public class InstallerServiceImpl implements InstallerService {
             map.put(property.toString(), props.getProperty(property.toString()));
         }
         return map;
+    }
+
+    // This is here only to help users workaround https://issues.jboss.org/browse/AS7-6120.
+    // It will go away once all the issues with expression support in AS7 are fixed.
+    // Notice in this method we only reconfigure some things - only the subsystems/services
+    // that didn't support expressions in their attributes are reconfigured here since it
+    // is those whose values are hardcoded and we must alter to pick up changes to
+    // rhq-server.properties. All other services can pick up the property value changes
+    // make to rhq-server.properties on restart (since rhq-server.properties are system
+    // properties set in the AS7 instance via -P option to AS7).
+    @Override
+    public void reconfigure(HashMap<String, String> serverProperties) throws Exception {
+
+        // make sure we can connect using our configuration
+        testModelControllerClient(serverProperties);
+
+        String appServerConfigDir = getAppServerConfigDir();
+        ModelControllerClient mcc = null;
+
+        try {
+            // first, put the server in admin-only mode so we can start changing things around
+            mcc = getModelControllerClient();
+            CoreJBossASClient coreClient = new CoreJBossASClient(mcc);
+            coreClient.reload(true);
+
+            // not sure if we have to, but see if we need to wait for the reload to finish
+            testModelControllerClient(30);
+
+            mcc = getModelControllerClient(); // get a new controller
+
+            // create the security domain needed by the datasources
+            ServerInstallUtil.createDatasourceSecurityDomain(mcc, serverProperties);
+
+            // setup the email service
+            ServerInstallUtil.setupMailService(mcc, serverProperties);
+
+            // create a keystore whose cert has a CN of this server's public endpoint address
+            ServerInstallUtil.setupWebConnectors(mcc, appServerConfigDir, serverProperties);
+
+            // now reload out of admin mode to pick up the changes
+            coreClient = new CoreJBossASClient(mcc);
+            coreClient.reload(false);
+        } finally {
+            safeClose(mcc);
+        }
     }
 
     /**

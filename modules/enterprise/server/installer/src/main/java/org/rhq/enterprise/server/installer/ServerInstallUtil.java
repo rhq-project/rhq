@@ -64,6 +64,7 @@ import org.rhq.core.db.DbUtil;
 import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.db.setup.DBSetup;
+import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.communications.util.SecurityUtil;
@@ -142,6 +143,7 @@ public class ServerInstallUtil {
     private static final String JMS_DRIFT_FILE_QUEUE = "DriftFileQueue";
     private static final String RHQ_CACHE_CONTAINER = "rhq";
     private static final String RHQ_CACHE = "rhqCache";
+    private static final String RHQ_MGMT_USER = "rhqadmin";
 
     /**
      * Configure the deployment scanner to get ready to deploy the application.
@@ -245,10 +247,12 @@ public class ServerInstallUtil {
         final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
         final String securityDomain = RHQ_DS_SECURITY_DOMAIN;
         if (!client.isSecurityDomain(securityDomain)) {
-            client.createNewSecureIdentitySecurityDomainRequest(securityDomain, dbUsername, obfuscatedPassword);
+            client.createNewSecureIdentitySecurityDomain(securityDomain, dbUsername, obfuscatedPassword);
             LOG.info("Security domain [" + securityDomain + "] created");
         } else {
             LOG.info("Security domain [" + securityDomain + "] already exists, skipping the creation request");
+            client.updateSecureIdentitySecurityDomainCredentials(securityDomain, dbUsername, obfuscatedPassword);
+            LOG.info("Credentials have been updated for security domain [" + securityDomain + "]");
         }
     }
 
@@ -318,6 +322,7 @@ public class ServerInstallUtil {
             LOG.info("JMS Queue [" + queueName + "] already exists, skipping the creation request");
         }
 
+        return;
     }
 
     /**
@@ -333,7 +338,8 @@ public class ServerInstallUtil {
         final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
         final String securityDomain = RHQ_REST_SECURITY_DOMAIN;
         if (!client.isSecurityDomain(securityDomain)) {
-            client.createNewDatabaseServerSecurityDomainRequest(securityDomain, "java:jboss/datasources/RHQDS",
+            String dsJndiName = "java:jboss/datasources/" + RHQ_DATASOURCE_NAME_XA;
+            client.createNewDatabaseServerSecurityDomain(securityDomain, dsJndiName,
                 "SELECT PASSWORD FROM RHQ_PRINCIPAL WHERE principal=?",
                 "SELECT 'all', 'Roles' FROM RHQ_PRINCIPAL WHERE principal=?", null, null);
             LOG.info("Security domain [" + securityDomain + "] created");
@@ -1170,16 +1176,12 @@ public class ServerInstallUtil {
      * Ensures our web connectors are configured properly.
      *
      * @param mcc the AS client
-     * @param serverDetails details of the server being installed
      * @param configDirStr location of a configuration directory where the keystore is to be stored
      * @param serverProperties the full set of server properties
      * @throws Exception
      */
-    public static void prepareWebConnectors(ModelControllerClient mcc, ServerDetails serverDetails, String configDirStr,
- HashMap<String, String> serverProperties) throws Exception {
-
-        // first create our keystore
-        File keystoreFile = createKeystore(serverDetails, configDirStr);
+    public static void setupWebConnectors(ModelControllerClient mcc, String configDirStr,
+        HashMap<String, String> serverProperties) throws Exception {
 
         // out of box, we always get a non-secure connector (called "http")...
         final String connectorName = "http";
@@ -1190,46 +1192,45 @@ public class ServerInstallUtil {
 
         WebJBossASClient client = new WebJBossASClient(mcc);
 
-        if (!client.isConnector(sslConnectorName)) {
-            LOG.info("Creating https connector...");
+        // because some of the connector attributes do not (yet) support expressions, let's remove any existing
+        // connector we may have created before and create it again with our current attribute values.
+        client.removeConnector(sslConnectorName);
 
-            SSLConfiguration ssl = new SSLConfiguration();
+        LOG.info("Creating https connector...");
 
-            // truststore
-            ssl.setCaCertificateFile(getAbsoluteFileLocation("rhq.server.tomcat.security.truststore.file",
-                serverProperties, configDirStr)); // this cannot be an expression - AS7 doesn't support that now
-            ssl.setCaCertificationPassword(buildExpression("rhq.server.tomcat.security.truststore.password",
-                serverProperties, false));
-            ssl.setTruststoreType(buildExpression("rhq.server.tomcat.security.truststore.type", serverProperties, false));
+        SSLConfiguration ssl = new SSLConfiguration();
 
-            // keystore
-            ssl.setCertificateKeyFile(getAbsoluteFileLocation("rhq.server.tomcat.security.keystore.file",
-                serverProperties, configDirStr)); // this cannot be an expression - AS7 doesn't support that now
-            ssl.setPassword(buildExpression("rhq.server.tomcat.security.keystore.password", serverProperties, false));
-            ssl.setKeyAlias(buildExpression("rhq.server.tomcat.security.keystore.alias", serverProperties, false));
-            ssl.setKeystoreType(buildExpression("rhq.server.tomcat.security.keystore.type", serverProperties, false));
+        // truststore
+        ssl.setCaCertificateFile(getAbsoluteFileLocation("rhq.server.tomcat.security.truststore.file",
+            serverProperties, configDirStr)); // this cannot be an expression - AS7 doesn't support that now
+        ssl.setCaCertificationPassword(buildExpression("rhq.server.tomcat.security.truststore.password",
+            serverProperties, false));
+        ssl.setTruststoreType(buildExpression("rhq.server.tomcat.security.truststore.type", serverProperties, false));
 
-            // SSL protocol config
-            ssl.setProtocol(buildExpression("rhq.server.tomcat.security.secure-socket-protocol", serverProperties,
-                false));
-            ssl.setVerifyClient(buildExpression("rhq.server.tomcat.security.client-auth-mode", serverProperties,
-                false));
+        // keystore
+        ssl.setCertificateKeyFile(getAbsoluteFileLocation("rhq.server.tomcat.security.keystore.file", serverProperties,
+            configDirStr)); // this cannot be an expression - AS7 doesn't support that now
+        ssl.setPassword(buildExpression("rhq.server.tomcat.security.keystore.password", serverProperties, false));
+        ssl.setKeyAlias(buildExpression("rhq.server.tomcat.security.keystore.alias", serverProperties, false));
+        ssl.setKeystoreType(buildExpression("rhq.server.tomcat.security.keystore.type", serverProperties, false));
 
-            // note: there doesn't appear to be a way for AS7 to support algorithm, like SunX509 or IbmX509
-            // so I think it just uses the JVM's default. This means "rhq.server.tomcat.security.algorithm" is unused
+        // SSL protocol config
+        ssl.setProtocol(buildExpression("rhq.server.tomcat.security.secure-socket-protocol", serverProperties, false));
+        ssl.setVerifyClient(buildExpression("rhq.server.tomcat.security.client-auth-mode", serverProperties, false));
 
-            ConnectorConfiguration connector = new ConnectorConfiguration();
-            connector.setMaxConnections(buildExpression("rhq.server.startup.web.max-connections", serverProperties,
-                false));
-            connector.setScheme("https");
-            connector.setSocketBinding("https");
-            connector.setSslConfiguration(ssl);
+        // note: there doesn't appear to be a way for AS7 to support algorithm, like SunX509 or IbmX509
+        // so I think it just uses the JVM's default. This means "rhq.server.tomcat.security.algorithm" is unused
 
-            // create it now
-            client.addConnector("https", connector);
+        ConnectorConfiguration connector = new ConnectorConfiguration();
+        connector.setMaxConnections(buildExpression("rhq.server.startup.web.max-connections", serverProperties, false));
+        connector.setScheme("https");
+        connector.setSocketBinding("https");
+        connector.setSslConfiguration(ssl);
 
-            LOG.info("https connector created.");
-        }
+        // create it now
+        client.addConnector("https", connector);
+
+        LOG.info("https connector created.");
 
         if (client.isConnector(connectorName)) {
             client.changeConnector(connectorName, "redirect-port",
@@ -1310,7 +1311,7 @@ public class ServerInstallUtil {
      * @param configDirStr location of a configuration directory where the keystore is to be stored
      * @return where the keystore file should be created (if an error occurs, this file won't exist)
      */
-    private static File createKeystore(ServerDetails serverDetails, String configDirStr) {
+    public static File createKeystore(ServerDetails serverDetails, String configDirStr) {
         File confDir = new File(configDirStr);
         File keystore = new File(confDir, "rhq.keystore");
         File keystoreBackup = new File(confDir, "rhq.keystore.backup");
@@ -1361,20 +1362,31 @@ public class ServerInstallUtil {
 
         // Add the default admin user, or if for some reason this file does not exist, just log the issue
         if (mgmtUsers.exists()) {
+            try {
+                PropertiesFileUpdate mgmtUsersPropFile = new PropertiesFileUpdate(mgmtUsers.getAbsolutePath());
+                Properties existingUsers = mgmtUsersPropFile.loadExistingProperties();
+                if (existingUsers.containsKey(RHQ_MGMT_USER)) {
+                    LOG.info("There is already a mgmt user named [" + RHQ_MGMT_USER + "], will not create another");
+                    return;
+                }
+            } catch (Exception e) {
+                LOG.warn("Cannot determine if mgmt user exists in [" + mgmtUsers + "]; will try to create it anyway", e);
+            }
+
             FileOutputStream fos = null;
 
             try {
                 fos = new FileOutputStream(mgmtUsers, true);
-                fos.write("\nrhqadmin=35c160c1f841a889d4cda53f0bfc94b6\n".getBytes());
+                fos.write(("\n" + RHQ_MGMT_USER + "=35c160c1f841a889d4cda53f0bfc94b6\n").getBytes());
 
             } catch (Exception e) {
-                LOG.warn("Could not create default management user in file: [" + mgmtUsers.getPath() + "] : ", e);
+                LOG.warn("Could not create default management user in file: [" + mgmtUsers + "] : ", e);
 
             } finally {
                 StreamUtil.safeClose(fos);
             }
         } else {
-            LOG.warn("Could not create default management user. Could not find file: [" + mgmtUsers.getPath() + "]");
+            LOG.warn("Could not create default management user. Could not find file: [" + mgmtUsers + "]");
         }
     }
 

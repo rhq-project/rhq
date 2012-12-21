@@ -106,6 +106,53 @@ public class SecurityDomainJBossASClient extends JBossASClient {
     }
 
     /**
+     * Given the name of an existing security domain that uses the SecureIdentity authentication method,
+     * this updates that domain with the new credentials. Use this to change credentials if you don't
+     * want to use expressions as the username or password entry (in some cases you can't, see the JIRA
+     * https://issues.jboss.org/browse/AS7-5177 for more info).
+     *
+     * @param securityDomainName the name of the security domain whose credentials are to change
+     * @param username the new username to be associated with the security domain
+     * @param password the new value of the password to store in the configuration (e.g. the obfuscated password itself)
+     *
+     * @throws Exception if failed to update security domain
+     */
+    public void updateSecureIdentitySecurityDomainCredentials(String securityDomainName, String username,
+        String password) throws Exception {
+
+        Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_SECURITY, SECURITY_DOMAIN, securityDomainName,
+            AUTHENTICATION, CLASSIC);
+
+        ModelNode loginModule = new ModelNode();
+        loginModule.get(CODE).set("SecureIdentity");
+        loginModule.get(FLAG).set("required");
+        ModelNode moduleOptions = loginModule.get(MODULE_OPTIONS);
+        moduleOptions.setEmptyList();
+        // TODO: we really want to use addExpression (e.g. ${rhq.server.database.user-name})
+        // for username and password so rhq-server.properties can be used to set these.
+        // However, AS7.1 doesn't support this yet - see https://issues.jboss.org/browse/AS7-5177
+        moduleOptions.add(USERNAME, username);
+        moduleOptions.add(PASSWORD, password);
+
+        // login modules attribute must be a list - we only have one item in it, the loginModule
+        ModelNode loginModuleList = new ModelNode();
+        loginModuleList.setEmptyList();
+        loginModuleList.add(loginModule);
+
+        final ModelNode op = createRequest(WRITE_ATTRIBUTE, addr);
+        op.get(NAME).set(LOGIN_MODULES);
+        op.get(VALUE).set(loginModuleList);
+
+        ModelNode results = execute(op);
+        if (!isSuccess(results)) {
+            throw new FailureException(results, "Failed to update credentials for security domain ["
+                + securityDomainName + "]");
+        }
+
+        return;
+    }
+
+    /**
      * Create a new security domain using the database server authentication method.
      * This is used when you want to directly authenticate against a db entry.
      *

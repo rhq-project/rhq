@@ -85,6 +85,20 @@ public class WebJBossASClient extends JBossASClient {
     }
 
     /**
+     * Removes the given web connector.
+     *
+     * @param doomedConnectorName the name of the web connector to remove.
+     * @throws Exception
+     */
+    public void removeConnector(String doomedConnectorName) throws Exception {
+        final Address address = Address.root().add(SUBSYSTEM, SUBSYSTEM_WEB, CONNECTOR, doomedConnectorName);
+        if (isConnector(doomedConnectorName)) {
+            remove(address);
+        }
+        return;
+    }
+
+    /**
      * Add a new web connector, which may be a secure SSL connector (HTTPS) or not (HTTP).
      *
      * @param name

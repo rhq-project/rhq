@@ -58,7 +58,6 @@ public class JBossASClient {
     public static final String REMOVE = "remove";
     public static final String SYSTEM_PROPERTY = "system-property";
     public static final String PERSISTENT = "persistent"; // used by some operations to persist their effects
-    public static final String REMOVE = "remove";
 
     private ModelControllerClient client;
 

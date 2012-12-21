@@ -101,6 +101,26 @@ public interface InstallerService {
         throws AutoInstallDisabledException, AlreadyInstalledException, Exception;
 
     /**
+     * Prepares the database. This is either going to do a full clean db setup or a db upgrade
+     * depending on the existingSchemaOption parameter unless autoinstall setting is on, in which case
+     * the autoinstall schema setting in serverProperties parameter will tell this method what to do.
+     * NOTE: if not in auto-install mode, the database password is assumed to be in clear text (i.e. unencoded).
+     * If in auto-install mode, the database password must be encoded already.
+     *
+     * @param serverProperties the server's settings to use. These will be persisted to
+     *                         the server's .properties file.
+     * @param serverDetails details on the server being installed.
+     *                      If in auto-install mode, this value is ignored and can be anything.
+     * @param existingSchemaOption if not in auto-install mode, this tells the installer what to do with any
+     *                             existing schema. Must be one of the names of the
+     *                             {@link ServerInstallUtil.ExistingSchemaOption} enum.
+     *                             If in auto-install mode, this value is ignored and can be anything.
+     * @throws Exception failed to successfully prepare the database
+     */
+    void prepareDatabase(HashMap<String, String> serverProperties, ServerDetails serverDetails,
+        String existingSchemaOption) throws Exception;
+
+    /**
      * Returns a list of all registered servers in the database.
      *
      * @param connectionUrl

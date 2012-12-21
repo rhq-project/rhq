@@ -32,7 +32,6 @@
       <module>jboss-as-dmr-client</module>
       <module>cassandra-auth</module>
       <module>cassandra-schema</module>
-      <module>cassandra-common</module>
-      <module>cassandra-common-itests</module>
+      <module>cassandra-ccm</module>
    </modules>
 </project>

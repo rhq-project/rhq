@@ -46,7 +46,7 @@
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>rhq-cassandra-common</artifactId>
+      <artifactId>rhq-cassandra-ccm-core</artifactId>
       <version>${project.version}</version>
       <exclusions>
         <exclusion>
@@ -58,7 +58,7 @@
 
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>rhq-cassandra-common-itests</artifactId>
+      <artifactId>rhq-cassandra-ccm-testng</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>

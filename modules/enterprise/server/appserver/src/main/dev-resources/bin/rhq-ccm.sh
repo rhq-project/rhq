@@ -237,7 +237,7 @@ debug_msg "_JBOSS_MODULEPATH: $_JBOSS_MODULEPATH"
 echo "Starting RHQ CCM ..."
 
 # start the AS instance with our main installer module
-"$RHQ_SERVER_JAVA_EXE_FILE_PATH" ${RHQ_CCM_JAVA_OPTS} ${RHQ_CCM_ADDITIONAL_JAVA_OPTS} -jar "${RHQ_SERVER_JBOSS_HOME}/jboss-modules.jar" -mp "$_JBOSS_MODULEPATH" org.rhq.rhq-cassandra-common "$@"
+"$RHQ_SERVER_JAVA_EXE_FILE_PATH" ${RHQ_CCM_JAVA_OPTS} ${RHQ_CCM_ADDITIONAL_JAVA_OPTS} -jar "${RHQ_SERVER_JBOSS_HOME}/jboss-modules.jar" -mp "$_JBOSS_MODULEPATH" org.rhq.rhq-cassandra-ccm-cli "$@"
 
 _EXIT_STATUS=$?
 exit $_EXIT_STATUS

@@ -28,8 +28,10 @@ package org.rhq.cassandra;
 import static java.util.Arrays.asList;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,6 +46,7 @@ import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.StringUtil;
+import org.rhq.core.util.stream.StreamUtil;
 
 /**
  * @author John Sanda
@@ -126,7 +129,27 @@ public class CassandraClusterManager {
     }
 
     public void shutdownCluster() {
+        File basedir = new File(deploymentOptions.getClusterDir());
+        for (int i = 0; i < deploymentOptions.getNumNodes(); ++i) {
+            try {
+                killNode(new File(basedir, "node" + i));
+            }  catch (Exception e) {
+                throw new RuntimeException("Faililed to shut down cluster", e);
+            }
+        }
+    }
 
+    private void killNode(File nodeDir) throws Exception {
+        long pid = getPid(nodeDir);
+        CLibrary.kill((int) pid, 9);
+    }
+
+    private long getPid(File nodeDir) throws IOException {
+        File binDir = new File(nodeDir, "bin");
+        StringWriter writer = new StringWriter();
+        StreamUtil.copy(new FileReader(new File(binDir, "cassandra.pid")), writer);
+
+        return Long.parseLong(writer.getBuffer().toString());
     }
 
     public List<String> getHostNames() {

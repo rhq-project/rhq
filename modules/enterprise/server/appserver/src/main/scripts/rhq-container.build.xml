@@ -334,7 +334,7 @@
         <echo>*** Preparing bin dir ***</echo>
 
       <loadproperties>
-        <zipentry zipfile="${settings.localRepository}/org/rhq/rhq-cassandra-common/${project.version}/rhq-cassandra-common-${project.version}.jar"
+        <zipentry zipfile="${settings.localRepository}/org/rhq/rhq-cassandra-ccm-core/${project.version}/rhq-cassandra-ccm-core-${project.version}.jar"
                   name="cassandra.properties"/>
       </loadproperties>
 
@@ -638,7 +638,7 @@ rhq.casandra.native-transport-max-threads=${rhq.casandra.native-transport-max-th
             <fileset dir="src/main/dev-resources" />
         </copy>
       <loadproperties>
-        <zipentry zipfile="${settings.localRepository}/org/rhq/rhq-cassandra-common/${project.version}/rhq-cassandra-common-${project.version}.jar"
+        <zipentry zipfile="${settings.localRepository}/org/rhq/rhq-cassandra-ccm-core/${project.version}/rhq-cassandra-ccm-core-${project.version}.jar"
                   name="cassandra.properties"/>
       </loadproperties>
         <echo>Putting a developer setting in rhq-server.properties to turn on/off strict agent update version checking</echo>
@@ -675,7 +675,7 @@ rhq.cassandra.logging.level=${rhq.cassandra.logging.level}
         </replace>
 
         <echo>Adding cassandra-db module to ${jboss.modules.dir} ...</echo>
-        <unzip src="${settings.localRepository}/org/rhq/rhq-cassandra-common/${project.version}/rhq-cassandra-common-${project.version}.zip"
+        <unzip src="${settings.localRepository}/org/rhq/rhq-cassandra-ccm-cli/${project.version}/rhq-cassandra-ccm-cli-${project.version}.zip"
              dest="${jboss.modules.dir}" />
     </target>
 

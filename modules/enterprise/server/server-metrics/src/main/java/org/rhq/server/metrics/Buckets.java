@@ -38,7 +38,7 @@ public class Buckets {
         // end time is exclusive
         private long endTime;
 
-        private double sum;
+        private ArithmeticMeanCalculator mean;
         private double max;
         private double min;
         private int count;
@@ -46,6 +46,7 @@ public class Buckets {
         public Bucket(long startTime, long endTime) {
             this.startTime = startTime;
             this.endTime = endTime;
+            this.mean = new ArithmeticMeanCalculator();
         }
 
         public long getStartTime() {
@@ -57,7 +58,7 @@ public class Buckets {
         }
 
         public Bucket insert(double value) {
-            sum += value;
+            mean.add(value);
             if (count == 0) {
                 min = value;
                 max = value;
@@ -74,7 +75,7 @@ public class Buckets {
             if (count == 0) {
                 return Double.NaN;
             }
-            return MetricsServer.divide(sum, count);
+            return mean.getArithmeticMean();
         }
 
         public double getMax() {

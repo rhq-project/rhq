@@ -27,12 +27,13 @@ package org.rhq.server.metrics;
 
 import static java.util.Arrays.asList;
 import static org.joda.time.DateTime.now;
-import static org.rhq.server.metrics.MetricsServer.divide;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -757,4 +758,8 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         assertEquals(index.size(), 0, "Expected metrics index for " + table + " to be empty but found " + index);
     }
 
+    static double divide(double dividend, int divisor) {
+        return new BigDecimal(Double.toString(dividend)).divide(new BigDecimal(Integer.toString(divisor)),
+            MathContext.DECIMAL64).doubleValue();
+    }
 }

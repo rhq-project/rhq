@@ -27,8 +27,6 @@ package org.rhq.server.metrics;
 
 import static org.rhq.core.domain.util.PageOrdering.DESC;
 
-import java.math.BigDecimal;
-import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -265,8 +263,8 @@ public class MetricsServer {
     private AggregatedNumericMetric calculateAggregatedRaw(List<RawNumericMetric> rawMetrics, long timestamp) {
         double min = Double.NaN;
         double max = min;
-        double sum = 0;
         int count = 0;
+        ArithmeticMeanCalculator mean = new ArithmeticMeanCalculator();
         double value;
 
         for (RawNumericMetric metric : rawMetrics) {
@@ -280,14 +278,13 @@ public class MetricsServer {
             } else if (value > max) {
                 max = value;
             }
-            sum += value;
+            mean.add(value);
             ++count;
         }
-        double avg = divide(sum, count);
 
         // We let the caller handle setting the schedule id because in some cases we do
         // not care about it.
-        return new AggregatedNumericMetric(0, avg, min, max, timestamp);
+        return new AggregatedNumericMetric(0, mean.getArithmeticMean(), min, max, timestamp);
     }
 
     private List<AggregatedNumericMetric> calculateAggregates(MetricsTable fromColumnFamily,
@@ -322,8 +319,8 @@ public class MetricsServer {
     private AggregatedNumericMetric calculateAggregate(List<AggregatedNumericMetric> metrics, long timestamp) {
         double min = Double.NaN;
         double max = min;
-        double sum = 0;
         int count = 0;
+        ArithmeticMeanCalculator mean = new ArithmeticMeanCalculator();
 
         for (AggregatedNumericMetric metric : metrics) {
             if (count == 0) {
@@ -335,14 +332,13 @@ public class MetricsServer {
             } else if (metric.getMax() > max) {
                 max = metric.getMax();
             }
-            sum += metric.getAvg();
+            mean.add(metric.getAvg());
             ++count;
         }
-        double avg = divide(sum, count);
 
         // We let the caller handle setting the schedule id because in some cases we do
         // not care about it.
-        return new AggregatedNumericMetric(0, avg, min, max, timestamp);
+        return new AggregatedNumericMetric(0, mean.getArithmeticMean(), min, max, timestamp);
     }
 
     private MetricsTable getTable(DateTime begin) {
@@ -385,11 +381,6 @@ public class MetricsServer {
 
 //    public void addCallTimeData(Set<CallTimeData> callTimeDatas) {
 //    }
-
-    static double divide(double dividend, int divisor) {
-        return new BigDecimal(Double.toString(dividend)).divide(new BigDecimal(Integer.toString(divisor)),
-            MathContext.DECIMAL64).doubleValue();
-    }
 
     protected DateTime getCurrentHour() {
         DateTime now = new DateTime();

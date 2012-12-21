@@ -51,6 +51,11 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
     @Override
     public ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForAutoGroup(int parent, int type, int[] schedIds,
         long begin, long end, boolean enabledOnly) throws RuntimeException {
+        Long now = System.currentTimeMillis();
+        if (now < end) {
+            // we can't foretell the future (this may be caused by different timezone on client's)
+            end = now;
+        }
         try {
             ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(chartsManager
                 .getMetricDisplaySummariesForAutoGroup(getSessionSubject(), parent, type, schedIds, begin, end,
@@ -79,6 +84,11 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
     @Override
     public ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(int groupId, int[] defIds,
         long begin, long end, boolean enabledOnly) throws RuntimeException {
+        Long now = System.currentTimeMillis();
+        if (now < end) {
+            // we can't foretell the future (this may be caused by different timezone on client's)
+            end = now;
+        }
         try {
             ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(chartsManager
                 .getMetricDisplaySummariesForCompatibleGroup(getSessionSubject(), groupId, defIds, begin, end,
@@ -107,6 +117,11 @@ public class MeasurementChartsGWTServiceImpl extends AbstractGWTServiceImpl impl
     @Override
     public ArrayList<MetricDisplaySummary> getMetricDisplaySummariesForResource(int resourceId, int[] schedIds,
         long begin, long end) throws RuntimeException {
+        Long now = System.currentTimeMillis();
+        if (now < end) {
+            // we can't foretell the future (this may be caused by different timezone on client's)
+            end = now;
+        }
         try {
             ArrayList<MetricDisplaySummary> list = new ArrayList<MetricDisplaySummary>(chartsManager
                 .getMetricDisplaySummariesForResource(getSessionSubject(), resourceId, schedIds, begin, end));

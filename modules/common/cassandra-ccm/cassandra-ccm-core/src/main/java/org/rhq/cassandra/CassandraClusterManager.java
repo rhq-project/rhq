@@ -33,10 +33,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.OptionBuilder;
-import org.apache.commons.cli.Options;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -130,6 +126,7 @@ public class CassandraClusterManager {
     }
 
     public void shutdownCluster() {
+
     }
 
     public List<String> getHostNames() {
@@ -145,42 +142,6 @@ public class CassandraClusterManager {
     }
 
     public static void main(String[] args) {
-//        CommandLineParser parser = new PosixParser();
-//
-//        Options options = new Options();
-//
-//        OptionGroup optionGroup = new OptionGroup();
-//        Option deploy = OptionBuilder
-//            .withArgName("[options]")
-//            .hasArgs()
-//            .withDescription("Creates an embedded cluster and then starts each node")
-//            .create("deploy");
-//
-//        Option shutdown = OptionBuilder
-//            .withArgName("[options]")
-//            .hasArgs()
-//            .withDescription("Shuts down all of the cluster nodes.")
-//            .create("shutdown");
-//
-//        optionGroup.addOption(deploy);
-//        optionGroup.addOption(shutdown);
-//        optionGroup.setRequired(true);
-//
-//        options.addOptionGroup(optionGroup);
-//
-//        try {
-//            CommandLine cmdLine = parser.parse(options, args, false);
-//            if (cmdLine.hasOption("h") && cmdLine.getArgList().isEmpty()) {
-//                printHelp();
-//                return;
-//            }
-//        } catch (ParseException e) {
-//            printHelp();
-//            return;
-//        }
-
-        ///////////////////////////////////////////////////////////////
-
         CassandraClusterManager ccm = new CassandraClusterManager();
         List<File> nodeDirs = ccm.installCluster();
         ccm.startCluster(nodeDirs);
@@ -192,31 +153,6 @@ public class CassandraClusterManager {
         }  catch (IOException e) {
             throw new RuntimeException("An error occurred while trying to update RHQ server properties", e);
         }
-    }
-
-    private static void printHelp() {
-        HelpFormatter helpFormatter = new HelpFormatter();
-        int width = 80;
-        String syntax = "rhq-ccm.sh <cmd> [options]";
-        String header = "\nwhere <cmd> is one of:";
-
-        Option deploy = OptionBuilder
-            .withArgName("[options]")
-            .hasArgs()
-            .withDescription("Creates an embedded cluster and then starts each node")
-            .create("deploy");
-
-        Option shutdown = OptionBuilder
-            .withArgName("[options]")
-            .hasArgs()
-            .withDescription("Shuts down all of the cluster nodes.")
-            .create("shutdown");
-
-
-        Options options = new Options().addOption(deploy).addOption(shutdown);
-
-        helpFormatter.setOptPrefix("");
-        helpFormatter.printHelp(syntax, header, options, null);
     }
 
     private static PropertiesFileUpdate getServerProperties() {

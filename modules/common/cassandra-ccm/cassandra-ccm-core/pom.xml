@@ -5,18 +5,16 @@
 
   <parent>
     <groupId>org.rhq</groupId>
-    <artifactId>rhq-common-parent</artifactId>
+    <artifactId>rhq-cassandra-ccm</artifactId>
     <version>4.6.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>rhq-cassandra-common</artifactId>
-  <name>RHQ Cassandra Common</name>
+  <artifactId>rhq-cassandra-ccm-core</artifactId>
+  <name>RHQ Cassandra CCM Core</name>
 
   <properties>
     <cassandra.version>1.2.0-rc1</cassandra.version>
     <local.repo>${settings.localRepository}</local.repo>
-    <moduleName>org.rhq.${project.artifactId}</moduleName>
-    <moduleDir>org/rhq/${project.artifactId}</moduleDir>
   </properties>
 
   <dependencies>
@@ -42,13 +40,6 @@
       <groupId>org.apache.cassandra</groupId>
       <artifactId>cassandra-thrift</artifactId>
       <version>${cassandra.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>commons-cli</groupId>
-      <artifactId>commons-cli</artifactId>
-      <version>1.2</version>
-      <scope>provided</scope>
     </dependency>
   </dependencies>
 
@@ -134,124 +125,6 @@
                 <delete file="${cassandra.distro.zip}"/>
               </target>
             </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>copy-deps</id>
-            <phase>prepare-package</phase>
-            <goals>
-              <goal>copy</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.build.directory}/dependencies</outputDirectory>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>rhq-ant-bundle-common</artifactId>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>rhq-core-util</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>jdom</groupId>
-                  <artifactId>jdom</artifactId>
-                  <version>1.0</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>i18nlog</groupId>
-                  <artifactId>i18nlog</artifactId>
-                  <version>1.0.10</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>rhq-core-native-system</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.apache.ant</groupId>
-                  <artifactId>ant</artifactId>
-                  <version>1.8.0</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.apache.ant</groupId>
-                  <artifactId>ant-launcher</artifactId>
-                  <version>1.8.0</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.apache.ant</groupId>
-                  <artifactId>ant-nodeps</artifactId>
-                  <version>1.8.0</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>ant-contrib</groupId>
-                  <artifactId>ant-contrib</artifactId>
-                  <version>1.0b3</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>rhq-core-plugin-api</artifactId>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.apache.cassandra</groupId>
-                  <artifactId>cassandra-thrift</artifactId>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.slf4j</groupId>
-                  <artifactId>slf4j-api</artifactId>
-                  <version>1.7.2</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>rhq-core-domain</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>commons-lang</groupId>
-                  <artifactId>commons-lang</artifactId>
-                  <version>2.4</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.slf4j</groupId>
-                  <artifactId>slf4j-api</artifactId>
-                  <version>1.7.2</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.apache.thrift</groupId>
-                  <artifactId>libthrift</artifactId>
-                  <version>0.7.0</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>commons-codec</groupId>
-                  <artifactId>commons-codec</artifactId>
-                  <version>1.3</version>
-                </artifactItem>
-              </artifactItems>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <configuration>
-          <descriptors>
-            <descriptor>src/main/scripts/module-assembly.xml</descriptor>
-          </descriptors>
-        </configuration>
-        <executions>
-          <execution>
-            <id>module-assembly</id>
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
           </execution>
         </executions>
       </plugin>

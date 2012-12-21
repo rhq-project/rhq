@@ -66,9 +66,8 @@ public class SecurityDomainJBossASClient extends JBossASClient {
     }
 
     /**
-     * Convenience method that builds a request which can create a new security-domain
-     * using the SecureIdentity authentication method. This is used when you want
-     * to obfuscate a database password in the configuration.
+     * Create a new security domain using the SecureIdentity authentication method.
+     * This is used when you want to obfuscate a database password in the configuration.
      *
      * @param securityDomainName the name of the new security domain
      * @param username the username associated with the security domain
@@ -76,7 +75,7 @@ public class SecurityDomainJBossASClient extends JBossASClient {
      *
      * @throws Exception if failed to create security domain
      */
-    public void createNewSecureIdentitySecurityDomainRequest(String securityDomainName, String username, String password)
+    public void createNewSecureIdentitySecurityDomain(String securityDomainName, String username, String password)
         throws Exception {
 
         Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_SECURITY, SECURITY_DOMAIN, securityDomainName);
@@ -107,9 +106,8 @@ public class SecurityDomainJBossASClient extends JBossASClient {
     }
 
     /**
-     * Convenience method that builds a request which can create a new security domain
-     * using the database server authentication method. This is used when you want to directly
-     * authenticate against a db entry.
+     * Create a new security domain using the database server authentication method.
+     * This is used when you want to directly authenticate against a db entry.
      *
      * @param securityDomainName the name of the new security domain
      * @param dsJndiName the jndi name for the datasource to query against
@@ -119,7 +117,7 @@ public class SecurityDomainJBossASClient extends JBossASClient {
      * @param hashEncoding if null defaults to "base64"
      * @throws Exception if failed to create security domain
      */
-    public void createNewDatabaseServerSecurityDomainRequest(String securityDomainName, String dsJndiName,
+    public void createNewDatabaseServerSecurityDomain(String securityDomainName, String dsJndiName,
         String principalsQuery, String rolesQuery, String hashAlgorithm, String hashEncoding) throws Exception {
 
         Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_SECURITY, SECURITY_DOMAIN, securityDomainName);
@@ -156,7 +154,7 @@ public class SecurityDomainJBossASClient extends JBossASClient {
      * @param securityDomainName the name of the new security domain
      * @throws Exception if failed to remove the security domain
      */
-    public void removeSecurityDomainRequest(String securityDomainName) throws Exception {
+    public void removeSecurityDomain(String securityDomainName) throws Exception {
 
         // If not there just return
         if (!isSecurityDomain(securityDomainName)) {
@@ -175,19 +173,19 @@ public class SecurityDomainJBossASClient extends JBossASClient {
     }
 
     /**
-     * Convenience method that builds a request to create a new security domain including one or
-     * more login modules.  The security domain will be replaced if it exists.
+     * Creates a new security domain including one or more login modules.
+     * The security domain will be replaced if it exists.
      *
      * @param securityDomainName the name of the new security domain
      * @param loginModules an array of login modules to place in the security domain. They are ordered top-down in the
      * same index order of the array. 
      * @throws Exception if failed to create security domain
      */
-    public void createNewSecurityDomainRequest(String securityDomainName, LoginModuleRequest... loginModules)
+    public void createNewSecurityDomain(String securityDomainName, LoginModuleRequest... loginModules)
         throws Exception {
 
         if (isSecurityDomain(securityDomainName)) {
-            removeSecurityDomainRequest(securityDomainName);
+            removeSecurityDomain(securityDomainName);
         }
 
         Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_SECURITY, SECURITY_DOMAIN, securityDomainName);

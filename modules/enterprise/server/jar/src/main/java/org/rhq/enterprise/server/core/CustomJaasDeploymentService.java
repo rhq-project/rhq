@@ -167,7 +167,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
                 loginModules.add(ldapLoginModule);
             }
 
-            client.createNewSecurityDomainRequest(RHQ_USER_SECURITY_DOMAIN,
+            client.createNewSecurityDomain(RHQ_USER_SECURITY_DOMAIN,
                 loginModules.toArray(new LoginModuleRequest[loginModules.size()]));
             log.info("Security domain [" + RHQ_USER_SECURITY_DOMAIN + "] created with login modules " + loginModules);
 

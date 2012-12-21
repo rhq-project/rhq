@@ -611,7 +611,7 @@ rhq.sync.endpoint-address=false
         <replace file="${project.build.outputDirectory}/bin/rhq-server.bat">
             <replacefilter>
                 <replacetoken>rem START SERVER</replacetoken>
-                <replacevalue><![CDATA[start /B %RHQ_SERVER_HOME%\bin\rhq-autoinstall.bat]]></replacevalue>
+                <replacevalue><![CDATA[start /B %RHQ_SERVER_HOME%\bin\rhq-autoinstall.bat < nul > nul]]></replacevalue>
             </replacefilter>
         </replace>
     </target>

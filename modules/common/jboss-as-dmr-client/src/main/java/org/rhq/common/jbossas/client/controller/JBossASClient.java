@@ -57,6 +57,7 @@ public class JBossASClient {
     public static final String ADD = "add";
     public static final String SYSTEM_PROPERTY = "system-property";
     public static final String PERSISTENT = "persistent"; // used by some operations to persist their effects
+    public static final String REMOVE = "remove";
 
     private ModelControllerClient client;
 
@@ -280,6 +281,21 @@ public class JBossASClient {
         } else {
             return null;
         }
+    }
+
+    /**
+     * Removes the resource at the given address.
+     *
+     * @param doomedAddr the address of the resource to remove
+     * @throws Exception
+     */
+    public void remove(Address doomedAddr) throws Exception {
+        final ModelNode request = createRequest(REMOVE, doomedAddr);
+        final ModelNode response = execute(request);
+        if (!isSuccess(response)) {
+            throw new FailureException(response, "Failed to remove resource at address [" + doomedAddr + "]");
+        }
+        return;
     }
 
     /**

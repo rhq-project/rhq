@@ -569,9 +569,9 @@ public class InstallerServiceImpl implements InstallerService {
             // create a keystore whose cert has a CN of this server's public endpoint address
             ServerInstallUtil.setupWebConnectors(mcc, appServerConfigDir, serverProperties);
 
-            // now reload out of admin mode to pick up the changes
+            // now restart - don't just reload, some of our stuff won't restart properly if we just reload
             coreClient = new CoreJBossASClient(mcc);
-            coreClient.reload(false);
+            coreClient.restart();
         } finally {
             safeClose(mcc);
         }

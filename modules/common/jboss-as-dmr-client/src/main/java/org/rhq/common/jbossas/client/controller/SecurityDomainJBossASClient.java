@@ -20,6 +20,8 @@ package org.rhq.common.jbossas.client.controller;
 
 import java.util.Map;
 
+import javax.security.auth.login.AppConfigurationEntry;
+
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
 
@@ -148,45 +150,77 @@ public class SecurityDomainJBossASClient extends JBossASClient {
     }
 
     /**
-     * Convenience method that builds a request which can create a new security domain
-     * using the database server authentication method. This is used when you want to directly
-     * authenticate against a db entry.
+     * Convenience method that removes a security domain by name. Useful when changing the characteristics of the
+     * login modules.
      *
      * @param securityDomainName the name of the new security domain
-     * @param loginModuleFQCN fully qualified class name to be set as the login-module "code".
-     * @param moduleOptionProperties map of propName->propValue mappings to to bet as module options
+     * @throws Exception if failed to remove the security domain
+     */
+    public void removeSecurityDomainRequest(String securityDomainName) throws Exception {
+
+        // If not there just return
+        if (!isSecurityDomain(securityDomainName)) {
+            return;
+        }
+
+        final Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_SECURITY, SECURITY_DOMAIN, securityDomainName);
+        ModelNode removeSecurityDomainNode = createRequest(REMOVE, addr);
+
+        final ModelNode results = execute(removeSecurityDomainNode);
+        if (!isSuccess(results)) {
+            throw new FailureException(results, "Failed to remove security domain [" + securityDomainName + "]");
+        }
+
+        return;
+    }
+
+    /**
+     * Convenience method that builds a request to create a new security domain including one or
+     * more login modules.  The security domain will be replaced if it exists.
+     *
+     * @param securityDomainName the name of the new security domain
+     * @param loginModules an array of login modules to place in the security domain. They are ordered top-down in the
+     * same index order of the array. 
      * @throws Exception if failed to create security domain
      */
-    public void createNewCustomSecurityDomainRequest(String securityDomainName, String loginModuleFQCN,
-        Map<String, String> moduleOptionProperties) throws Exception {
+    public void createNewSecurityDomainRequest(String securityDomainName, LoginModuleRequest... loginModules)
+        throws Exception {
+
+        if (isSecurityDomain(securityDomainName)) {
+            removeSecurityDomainRequest(securityDomainName);
+        }
 
         Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_SECURITY, SECURITY_DOMAIN, securityDomainName);
-        ModelNode addTopNode = null;
 
-        // If necessary create the security domain, otherwise just add the loginModule
-        if (!isSecurityDomain(securityDomainName)) {
-            addTopNode = createRequest(ADD, addr);
-            addTopNode.get(CACHE_TYPE).set("default");
-        }
+        ModelNode addTopNode = createRequest(ADD, addr);
+        addTopNode.get(CACHE_TYPE).set("default");
 
         ModelNode addAuthNode = createRequest(ADD, addr.clone().add(AUTHENTICATION, CLASSIC));
         ModelNode loginModulesNode = addAuthNode.get(LOGIN_MODULES);
-        ModelNode loginModule = new ModelNode();
-        loginModule.get(CODE).set(loginModuleFQCN);
-        loginModule.get(FLAG).set("required");
-        ModelNode moduleOptions = loginModule.get(MODULE_OPTIONS);
-        moduleOptions.setEmptyList();
 
-        if (null != moduleOptionProperties) {
-            for (String key : moduleOptionProperties.keySet()) {
-                moduleOptions.add(key, moduleOptionProperties.get(key));
+        ModelNode[] loginModuleNodes = new ModelNode[loginModules.length];
+
+        for (int i = 0, len = loginModules.length; i < len; ++i) {
+            ModelNode loginModule = new ModelNode();
+            loginModule.get(CODE).set(loginModules[i].getLoginModuleFQCN());
+            loginModule.get(FLAG).set(loginModules[i].getFlagString());
+            ModelNode moduleOptions = loginModule.get(MODULE_OPTIONS);
+            moduleOptions.setEmptyList();
+
+            Map<String, String> moduleOptionProperties = loginModules[i].getModuleOptionProperties();
+            if (null != moduleOptionProperties) {
+                for (String key : moduleOptionProperties.keySet()) {
+                    String value = moduleOptionProperties.get(key);
+                    if (null != value) {
+                        moduleOptions.add(key, value);
+                    }
+                }
             }
+
+            loginModulesNode.add(loginModule);
         }
 
-        loginModulesNode.add(loginModule);
-
-        ModelNode batch = (null != addTopNode) ? createBatchRequest(addTopNode, addAuthNode)
-            : createBatchRequest(addAuthNode);
+        ModelNode batch = createBatchRequest(addTopNode, addAuthNode);
         ModelNode results = execute(batch);
         if (!isSuccess(results)) {
             throw new FailureException(results, "Failed to create security domain [" + securityDomainName + "]");
@@ -195,4 +229,41 @@ public class SecurityDomainJBossASClient extends JBossASClient {
         return;
     }
 
+    /** Immutable helper */
+    public static class LoginModuleRequest {
+        private AppConfigurationEntry entry;
+
+        /**
+         * @param loginModuleFQCN fully qualified class name to be set as the login-module "code".
+         * @param flag constant, one of required|requisite|sufficient|optional
+         * @param moduleOptionProperties map of propName->propValue mappings to to bet as module options
+         */
+        public LoginModuleRequest(String loginModuleFQCN, AppConfigurationEntry.LoginModuleControlFlag flag,
+            Map<String, String> moduleOptionProperties) {
+
+            this.entry = new AppConfigurationEntry(loginModuleFQCN, flag, moduleOptionProperties);
+        }
+
+        public String getLoginModuleFQCN() {
+            return entry.getLoginModuleName();
+        }
+
+        public AppConfigurationEntry.LoginModuleControlFlag getFlag() {
+            return entry.getControlFlag();
+        }
+
+        public String getFlagString() {
+            return entry.getControlFlag().toString().split(" ")[1];
+        }
+
+        public Map<String, String> getModuleOptionProperties() {
+            return (Map<String, String>) entry.getOptions();
+        }
+
+        @Override
+        public String toString() {
+            return "LoginModuleRequest [loginModuleFQCN=" + getLoginModuleFQCN() + ", flag=" + getFlag()
+                + ", moduleOptionProperties=" + getModuleOptionProperties() + "]";
+        }
+    }
 }

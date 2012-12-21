@@ -254,7 +254,7 @@ public class InstallerServiceImpl implements InstallerService {
             safeClose(mcc);
         }
 
-        // now create our deployment services and our main EAR
+        // now create our deployment services
         deployServices(serverProperties);
 
         // deploy the main EAR app startup module extension

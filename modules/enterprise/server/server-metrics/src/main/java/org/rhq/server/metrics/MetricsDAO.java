@@ -25,10 +25,6 @@
 
 package org.rhq.server.metrics;
 
-import static com.datastax.driver.core.utils.querybuilder.Clause.eq;
-import static com.datastax.driver.core.utils.querybuilder.Clause.gte;
-import static com.datastax.driver.core.utils.querybuilder.Clause.lt;
-import static com.datastax.driver.core.utils.querybuilder.QueryBuilder.select;
 import static org.rhq.core.util.StringUtil.listToString;
 
 import java.util.ArrayList;
@@ -59,10 +55,20 @@ public class MetricsDAO {
     //
     // jsanda
 
+    private static final String RAW_METRICS_SIMPLE_QUERY =
+        "SELECT schedule_id, time, value " +
+        "FROM " + MetricsTable.RAW + " " +
+        "WHERE schedule_id = ? ORDER by time";
+
     private static final String RAW_METRICS_QUERY =
         "SELECT schedule_id, time, value " +
         "FROM " + MetricsTable.RAW + " " +
-        "WHERE schedule_id = ? AND time >= ? AND time < ?";
+        "WHERE schedule_id = ? AND time >= ? AND time < ? ORDER BY time";
+
+    private static final String RAW_METRICS_SCHEDULE_LIST_QUERY =
+        "SELECT schedule_id, time, value " +
+        "FROM " + MetricsTable.RAW + " " +
+        "WHERE schedule_id IN (?) AND time >= ? AND time < ? ORDER BY time";
 
     private static final String RAW_METRICS_WITH_METADATA_QUERY =
         "SELECT schedule_id, time, value, ttl(value), writetime(value) " +
@@ -88,22 +94,19 @@ public class MetricsDAO {
         this.session = session;
     }
 
-    public void setSession(Session session) {
-        this.session = session;
-    }
-
     public Set<MeasurementDataNumeric> insertRawMetrics(Set<MeasurementDataNumeric> dataSet, int ttl) {
-        Set<MeasurementDataNumeric> insertedMetrics = new HashSet<MeasurementDataNumeric>();
-        String sql = "INSERT INTO raw_metrics (schedule_id, time, value) VALUES (?, ?, ?) " +
-            "USING TTL " + ttl;
         try {
-            PreparedStatement statement = session.prepare(sql);
+            String cql = "INSERT INTO raw_metrics (schedule_id, time, value) VALUES (?, ?, ?) " + "USING TTL " + ttl;
+            PreparedStatement statement = session.prepare(cql);
+
+            Set<MeasurementDataNumeric> insertedMetrics = new HashSet<MeasurementDataNumeric>();
             for (MeasurementDataNumeric data : dataSet) {
                 BoundStatement boundStatement = statement.bind(data.getScheduleId(), new Date(data.getTimestamp()),
                     data.getValue());
                 session.execute(boundStatement);
                 insertedMetrics.add(data);
             }
+
             return insertedMetrics;
         } catch (NoHostAvailableException e) {
             throw new CQLException(e);
@@ -133,6 +136,7 @@ public class MetricsDAO {
 
                 updates.add(metric);
             }
+
             return updates;
         } catch (NoHostAvailableException e) {
             throw new CQLException(e);
@@ -141,17 +145,16 @@ public class MetricsDAO {
 
     public List<RawNumericMetric> findRawMetrics(int scheduleId, long startTime, long endTime) {
         try {
+            PreparedStatement statement = session.prepare(RAW_METRICS_QUERY);
+            BoundStatement boundStatement = statement.bind(scheduleId, new Date(startTime), new Date(endTime));
+            ResultSet resultSet = session.execute(boundStatement);
+
             List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
-
-            String cql = "SELECT schedule_id, time, value FROM " + MetricsTable.RAW + " WHERE schedule_id = "
-                + scheduleId + " AND time >= " + startTime + " AND time < " + endTime
-                + " ORDER BY time";
-
-            ResultSet resultSet = session.execute(cql);
             ResultSetMapper<RawNumericMetric> resultSetMapper = new RawNumericMetricMapper();
             for (Row row : resultSet) {
                 metrics.add(resultSetMapper.map(row));
             }
+
             return metrics;
         } catch (NoHostAvailableException e) {
             throw new CQLException(e);
@@ -160,16 +163,15 @@ public class MetricsDAO {
 
     public List<RawNumericMetric> findRawMetrics(int scheduleId,  PageOrdering ordering, int limit) {
         try {
-            List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
-
-            String cql = "SELECT schedule_id, time, value FROM " + MetricsTable.RAW + " WHERE schedule_id = " +
-                scheduleId + " ORDER BY time " + ordering;
-
+            String cql = RAW_METRICS_SIMPLE_QUERY + " " + ordering;
             if (limit > 0) {
                 cql += " LIMIT " + limit;
             }
+            PreparedStatement statement = session.prepare(cql);
+            BoundStatement boundStatement = statement.bind(scheduleId);
+            ResultSet resultSet = session.execute(boundStatement);
 
-            ResultSet resultSet = session.execute(cql);
+            List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
             ResultSetMapper<RawNumericMetric> resultSetMapper = new RawNumericMetricMapper();
             for (Row row : resultSet) {
                 metrics.add(resultSetMapper.map(row));
@@ -188,15 +190,10 @@ public class MetricsDAO {
         }
 
         try {
-            ResultSet resultSet = session.execute(
-                select("schedule_id", "time", "value", "ttl(value), writetime(value)")
-                .from(MetricsTable.RAW.toString())
-                .where(
-                    eq("schedule_id", scheduleId),
-                    gte("time", new Date(startTime)),
-                    lt("time", new Date(endTime)))
-               .getQueryString()
-            );
+            PreparedStatement statement = session.prepare(RAW_METRICS_WITH_METADATA_QUERY);
+            BoundStatement boundStatement = statement.bind(scheduleId, new Date(startTime), new Date(endTime));
+            ResultSet resultSet = session.execute(boundStatement);
+
             List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
             ResultSetMapper<RawNumericMetric> resultSetMapper = new RawNumericMetricMapper(true);
             for (Row row : resultSet) {
@@ -214,25 +211,14 @@ public class MetricsDAO {
             // I was not able to get the below query working by directly binding the List
             // object. From a quick glance at the driver code, it looks like it might not
             // yet be properly supported in which case we need to report a bug.
-            //
             // jsanda
 
-//            String cql = "SELECT schedule_id, time, value FROM " + RAW_METRICS_TABLE +
-//                " WHERE schedule_id IN (?) AND time >= ? AND time < ? ORDER BY time";
-//            PreparedStatement statement = session.prepare(cql);
-//            BoundStatement boundStatement = statement.bind(scheduleIds, startTime.toDate(), endTime.toDate());
-//            ResultSet resultSet = session.execute(boundStatement);
-//            String cql =
-//                select("schedule_id", "time", "value")
-//                .from(RAW_METRICS_TABLE)
-//                .where(
-//                    in("schedule_id", listToString(scheduleIds)),
-//                    gte("time", startTime.toDate()),
-//                    lt("time", endTime.toDate()))
-//                .getQueryString();
+            //PreparedStatement statement = session.prepare(RAW_METRICS_SCHEDULE_LIST_QUERY);
+            //BoundStatement boundStatement = statement.bind(scheduleIds, startTime, endTime);
+            //ResultSet resultSet = session.execute(boundStatement);
 
-            String cql = "SELECT schedule_id, time, value FROM " + MetricsTable.RAW + " WHERE schedule_id IN (" +
-                listToString(scheduleIds) + ") AND time >= " + startTime + " AND time <= " + endTime;
+            String cql = "SELECT schedule_id, time, value FROM " + MetricsTable.RAW + " WHERE schedule_id IN ("
+                + listToString(scheduleIds) + ") AND time >= " + startTime + " AND time <= " + endTime;
             ResultSet resultSet = session.execute(cql);
 
             List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
@@ -240,6 +226,7 @@ public class MetricsDAO {
             for (Row row : resultSet) {
                 metrics.add(resultSetMapper.map(row));
             }
+
             return metrics;
         } catch (NoHostAvailableException e) {
             throw new CQLException(e);
@@ -251,12 +238,14 @@ public class MetricsDAO {
             String cql =
                 "SELECT schedule_id, time, type, value " +
                 "FROM " + table + " " +
-                "WHERE schedule_id = " + scheduleId + " " +
+                "WHERE schedule_id = ? " +
                 "ORDER BY time, type";
+            PreparedStatement statement = session.prepare(cql);
+            BoundStatement boundStatement = statement.bind(scheduleId);
+            ResultSet resultSet = session.execute(boundStatement);
+
             List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
             ResultSetMapper<AggregatedNumericMetric> resultSetMapper = new AggregateMetricMapper();
-            ResultSet resultSet = session.execute(cql);
-
             while (!resultSet.isExhausted()) {
                 metrics.add(resultSetMapper.map(resultSet.fetchOne(), resultSet.fetchOne(), resultSet.fetchOne()));
             }
@@ -274,14 +263,37 @@ public class MetricsDAO {
             String cql =
                 "SELECT schedule_id, time, type, value " +
                 "FROM " + table + " " +
- "WHERE schedule_id = "
-                + scheduleId + " AND time >= " + startTime + " AND time < " + endTime;
+                "WHERE schedule_id = ? AND time >= ? AND time < ?";
+            PreparedStatement statement = session.prepare(cql);
+            BoundStatement boundStatement = statement.bind(scheduleId, new Date(startTime), new Date(endTime));
+            ResultSet resultSet = session.execute(boundStatement);
+
             List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
             ResultSetMapper<AggregatedNumericMetric> resultSetMapper = new AggregateMetricMapper();
-            ResultSet resultSet = session.execute(cql);
-
             while (!resultSet.isExhausted()) {
                 metrics.add(resultSetMapper.map(resultSet.fetchOne(), resultSet.fetchOne(), resultSet.fetchOne()));
+            }
+
+            return metrics;
+        } catch (NoHostAvailableException e) {
+            throw new CQLException(e);
+        }
+    }
+
+    public List<Double> findAggregateSimpleMetric(MetricsTable table, AggregateType type, int scheduleId,
+        long startTime, long endTime, PageOrdering ordering, int limit) {
+        try {
+            String cql = "SELECT schedule_id, time, type, value " + "FROM " + table + " "
+                + "WHERE schedule_id = ? AND time >= ? AND time < ? AND type = ? "
+                + "ORDER BY value " + ordering + " LIMIT " + limit;
+            PreparedStatement statement = session.prepare(cql);
+            BoundStatement boundStatement = statement.bind(scheduleId, new Date(startTime), new Date(endTime),
+                type.ordinal());
+            ResultSet resultSet = session.execute(boundStatement);
+
+            List<Double> metrics = new ArrayList<Double>();
+            while (!resultSet.isExhausted()) {
+                metrics.add(resultSet.fetchOne().getDouble(3));
             }
 
             return metrics;
@@ -294,14 +306,12 @@ public class MetricsDAO {
         long startTime, long endTime) {
         try {
             String cql =
-                "SELECT schedule_id, time, type, value " +
-                    "FROM " + table + " " +
- "WHERE schedule_id IN ("
-                + listToString(scheduleIds) + ") AND time >= " + startTime + " AND time < " + endTime;
-            List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
-            ResultSetMapper<AggregatedNumericMetric> resultSetMapper = new AggregateMetricMapper();
+                "SELECT schedule_id, time, type, value FROM " + table + " " +
+                    "WHERE schedule_id IN (" + listToString(scheduleIds) + ") AND time >= " + startTime + " AND time < " + endTime;
             ResultSet resultSet = session.execute(cql);
 
+            List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
+            ResultSetMapper<AggregatedNumericMetric> resultSetMapper = new AggregateMetricMapper();
             while (!resultSet.isExhausted()) {
                 metrics.add(resultSetMapper.map(resultSet.fetchOne(), resultSet.fetchOne(), resultSet.fetchOne()));
             }
@@ -312,19 +322,20 @@ public class MetricsDAO {
         }
     }
 
-    List<AggregatedNumericMetric> findAggregateMetricsWithMetadata(MetricsTable table, int scheduleId,
+    public List<AggregatedNumericMetric> findAggregateMetricsWithMetadata(MetricsTable table, int scheduleId,
         long startTime, long endTime) {
 
         try {
             String cql =
                 "SELECT schedule_id, time, type, value, ttl(value), writetime(value) " +
                 "FROM " + table + " " +
-                    "WHERE schedule_id = " + scheduleId + " AND time >= " + startTime +
-                    " AND time < " + endTime;
+                "WHERE schedule_id = ? AND time >= ? AND time < ?";
+            PreparedStatement statement = session.prepare(cql);
+            BoundStatement boundStatement = statement.bind(scheduleId, new Date(startTime), new Date(endTime));
+            ResultSet resultSet = session.execute(boundStatement);
+
             List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
             ResultSetMapper<AggregatedNumericMetric> resultSetMapper = new AggregateMetricMapper(true);
-            ResultSet resultSet = session.execute(cql);
-
             while (!resultSet.isExhausted()) {
                 metrics.add(resultSetMapper.map(resultSet.fetchOne(), resultSet.fetchOne(), resultSet.fetchOne()));
             }
@@ -340,9 +351,9 @@ public class MetricsDAO {
             PreparedStatement statement = session.prepare(METRICS_INDEX_QUERY);
             BoundStatement boundStatement = statement.bind(table.toString());
             ResultSet resultSet = session.execute(boundStatement);
+
             List<MetricsIndexEntry> indexEntries = new ArrayList<MetricsIndexEntry>();
             ResultSetMapper<MetricsIndexEntry> resultSetMapper = new MetricsIndexResultSetMapper(table);
-
             for (Row row : resultSet) {
                 indexEntries.add(resultSetMapper.map(row));
             }

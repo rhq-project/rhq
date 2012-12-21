@@ -30,6 +30,7 @@ import java.util.List;
 import com.datastax.driver.core.Session;
 
 import org.rhq.core.domain.measurement.MeasurementBaseline;
+import org.rhq.core.domain.util.PageOrdering;
 
 /**
  * @author Stefan Negrea
@@ -57,30 +58,33 @@ public class MetricBaselineCalculator {
     }
 
     private MeasurementBaseline calculateBaseline(Integer scheduleId, long startTime, long endTime) {
-
         List<AggregatedNumericMetric> metrics = this.metricsDAO.findAggregateMetrics(MetricsTable.ONE_HOUR, scheduleId, startTime, endTime);
 
         if (metrics.size() != 0) {
-            double min = metrics.get(0).getMin();
-            double max = metrics.get(0).getMax();
-            double average = 0;
+            ArithmeticMeanCalculator mean = new ArithmeticMeanCalculator();
 
             for (AggregatedNumericMetric entry : metrics) {
-                if (entry.getMax() > max) {
-                    max = entry.getMax();
-                } else if (entry.getMin() < min) {
-                    min = entry.getMin();
-                }
-
-                average += entry.getAvg();
+                mean.add(entry.getAvg());
             }
 
-            average = average / (double) metrics.size();
+            double min = Double.MIN_VALUE;
+            List<Double> results = this.metricsDAO.findAggregateSimpleMetric(MetricsTable.ONE_HOUR, AggregateType.MIN,
+                scheduleId, startTime, endTime, PageOrdering.ASC, 1);
+            if(results.size() != 0){
+                min = results.get(0);
+            }
+
+            double max = Double.MAX_VALUE;
+            results = this.metricsDAO.findAggregateSimpleMetric(MetricsTable.ONE_HOUR, AggregateType.MAX, scheduleId,
+                startTime, endTime, PageOrdering.DESC, 1);
+            if (results.size() != 0) {
+                max = results.get(0);
+            }
 
             MeasurementBaseline baseline = new MeasurementBaseline();
             baseline.setMax(max);
             baseline.setMin(min);
-            baseline.setMean(average);
+            baseline.setMean(mean.getArithmeticMean());
             baseline.setScheduleId(scheduleId);
 
             return baseline;

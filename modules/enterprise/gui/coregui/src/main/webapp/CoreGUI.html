@@ -1,4 +1,4 @@
-<html>
+<html xmlns="http://www.w3.org/1999/html">
 <head>
     <!-- this forces us to emulate IE8 "quirks" mode regardless of IE browser version.  It:
          1) Follows the SmartGWT recommendation of not declaring a DOCTYPE and instead using these meta elements.
@@ -20,6 +20,16 @@
             document.write("<meta name='gwt:property' content='locale="+lang +"'>");
         }
     </script>
+    <script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>
+    <script src="js/jquery.sparkline-2.1.min.js"></script>
+    <!-- tipsy tooltip support for d3 charts -->
+    <script type="text/javascript" language="javascript"
+            src="js/jquery.tipsy.js"></script>
+    <script type='text/javascript'>
+        $(function() {
+            $('a[rel=tipsy]').tipsy({fade: true, gravity: 'n'});
+        });
+    </script>
 
     <title>RHQ</title>
     <link rel="icon" type="image/png" href="/images/favicon.png" />
@@ -33,6 +43,7 @@
     <link rel="stylesheet" href="CoreGUI.css">
     <link rel="stylesheet" href="css/nv.d3.css">
     <link rel="stylesheet" href="css/charts.css">
+    <link rel="stylesheet" href="css/tipsy.css">
 
 </head>
 <body>

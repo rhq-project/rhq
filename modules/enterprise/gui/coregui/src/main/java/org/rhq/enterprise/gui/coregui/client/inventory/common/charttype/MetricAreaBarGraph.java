@@ -29,20 +29,19 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3Gr
  *
  * @author Mike Thompson
  */
-public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements HasD3JsniChart
+public final class MetricAreaBarGraph extends AbstractMetricD3GraphView implements HasD3JsniChart
 {
-
-
-    /** ctor for dashboard portlet view
+    /**
+     * ctor for dashboard portlet view as chart definition  and data are deferred to later.
      *
      * @param locatorId
      */
-    public MetricAreaBarGraphView(String locatorId){
+    public MetricAreaBarGraph(String locatorId){
         super(locatorId);
     }
 
-    public MetricAreaBarGraphView(String locatorId, int entityId, String entityName, MeasurementDefinition def,
-                                  List<MeasurementDataNumericHighLowComposite> data ) {
+    public MetricAreaBarGraph(String locatorId, int entityId, String entityName, MeasurementDefinition def,
+                              List<MeasurementDataNumericHighLowComposite> data) {
         super(locatorId, entityId, entityName, def, data);
     }
 
@@ -53,7 +52,7 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
     }
 
     /**
-     * The magic JSNI to draw the charts with d3.js
+     * The magic JSNI to draw the charts with $wnd.d3.js
      */
     @Override
     public native void drawJsniChart() /*-{
@@ -107,8 +106,7 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                 } else {
                     return newLow;
                 }
-           };
-            //var lowBound = min - ((peak - min) * 0.1);
+            };
             var lowBound = determineLowBound(min,peak);
             var highBound = peak + ((peak - min) * 0.1);
 
@@ -176,7 +174,7 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                 var fontSize = 14,
                         yTitle = 37,
                         fgColor = "#FFFFFF",
-                        baseX = 470,
+                        baseX = 490,
                         xInc = 50;
 
 
@@ -216,7 +214,7 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                         .attr("y", yTitle)
                         .attr("font-size", fontSize)
                         .attr("text-anchor", "left")
-                        .text(minValue.toPrecision(3))
+                        .text(minValue.toFixed(2))
                         .attr("fill", fgColor);
 
                 //avg
@@ -236,7 +234,7 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                         .attr("y", yTitle)
                         .attr("font-size", fontSize)
                         .attr("text-anchor", "left")
-                        .text(avgValue.toPrecision(3))
+                        .text(avgValue.toFixed(2))
                         .attr("fill", fgColor);
 
                 // high
@@ -256,10 +254,11 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                         .attr("y", yTitle)
                         .attr("font-size", fontSize)
                         .attr("text-anchor", "left")
-                        .text(highValue.toPrecision(3))
+                        .text(highValue.toFixed(2))
                         .attr("fill", fgColor);
 
             });
+            //@todo: i18n
             createHeader(yAxisTitle, "Min -", min, "Avg -", avg, "High -", peak);
 
 
@@ -415,7 +414,7 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                     });
 
 
-            var dateFormatter = $wnd.d3.time.format("%I:%M:%S %P");
+            var timeFormatter = $wnd.d3.time.format("%I:%M:%S %P");
 
             // the labels for x axis
             svg.selectAll("rect.customXAxisLabel")
@@ -427,6 +426,33 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                     })
                     .attr("y", function (d) {
                         return  yScale(lowBound) + 10;
+                    })
+                    .attr("dy", "1.2em")
+                    .attr("dx", function (d) {
+                        return  (((width / data.length - barOffset) / 2) - 2 );
+                    })
+                    .attr("text-anchor", "left").
+                    text(function (d, i) {
+                        var date = new Date(+d.x);
+                        if (i % 10 == 0) {
+                            return timeFormatter(date);
+                        } else {
+                            return  "";
+                        }
+                    })
+                    .attr("fill", "#50505a");
+
+            var dateFormatter = $wnd.d3.time.format("%x");
+            // the labels for x axis
+            svg.selectAll("rect.customXAxisDateLabel")
+                    .data(data)
+                    .enter().append("text")
+                    .attr("class", "customXAxisDateLabel")
+                    .attr("x", function (d) {
+                        return timeScale(d.x);
+                    })
+                    .attr("y", function (d) {
+                        return  yScale(lowBound) + 25;
                     })
                     .attr("dy", "1.2em")
                     .attr("dx", function (d) {
@@ -453,6 +479,7 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                         return timeScale(d.x);
                     })
                     .attr("y", function (d) {
+                        //return isNaN(d.high) ? yScale(lowBound)  : yScale(d.high);
                         return yScale(d.high);
                     })
                     .attr("height", function (d) {
@@ -511,7 +538,6 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                     .attr("y", -30)
                 //.attr("dy", ".71em")
                     .attr("font-size", "10px")
-                    .attr("font-weight", "normal")
                     .attr("font-family", "'Liberation Sans', Arial, Helvetica, sans-serif")
                     .attr("letter-spacing", "3")
                     .style("text-anchor", "end")
@@ -559,8 +585,27 @@ public class MetricAreaBarGraphView extends AbstractMetricD3GraphView implements
                     .attr("fill", "none")
                     .attr("stroke", "#cccdcf")
                     .attr("stroke-width", "1")
+                //.attr("stroke-dasharray", "3,3")
                 //.attr("stroke-opacity", ".6")
                     .attr("d", xAxisLine);
+
+            $wnd.$('svg rect').tipsy({
+                gravity: 'w',
+                html: true,
+                title: function() {
+                    var d = this.__data__ ;
+                    var date = new Date(d.x);
+                    var timeFormatter = $wnd.d3.time.format("%I:%M:%S %P");
+                    var dateFormatter = $wnd.d3.time.format("%m/%d/%y");
+                    return '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">Time: </span>' +timeFormatter(date)+ '</div>'+
+                            '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">Date: </span>' +dateFormatter(date)+ '</div>'+
+                            '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#ff8a9a";">High: </span>'
+                            + d.high+'</div><div style="text-align: left;"><span style="width:50px;font-weight: bold;color: #b0d9b0";">Avg: </span>'+ d.y+
+                            '</div><div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#8ad6ff";">Low: </span>'+ d.low+ '</div>';
+                }
+            });
+
+
 
             console.log("finished drawing paths");
         }

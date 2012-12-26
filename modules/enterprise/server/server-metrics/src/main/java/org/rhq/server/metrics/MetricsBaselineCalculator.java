@@ -35,11 +35,11 @@ import org.rhq.core.domain.util.PageOrdering;
 /**
  * @author Stefan Negrea
  */
-public class MetricBaselineCalculator {
+public class MetricsBaselineCalculator {
 
     private MetricsDAO metricsDAO;
 
-    public MetricBaselineCalculator(Session session) {
+    public MetricsBaselineCalculator(Session session) {
         this.metricsDAO = new MetricsDAO(session);
     }
 
@@ -67,14 +67,14 @@ public class MetricBaselineCalculator {
                 mean.add(entry.getAvg());
             }
 
-            double min = Double.MIN_VALUE;
+            double min = 0;
             List<Double> results = this.metricsDAO.findAggregateSimpleMetric(MetricsTable.ONE_HOUR, AggregateType.MIN,
                 scheduleId, startTime, endTime, PageOrdering.ASC, 1);
             if(results.size() != 0){
                 min = results.get(0);
             }
 
-            double max = Double.MAX_VALUE;
+            double max = 0;
             results = this.metricsDAO.findAggregateSimpleMetric(MetricsTable.ONE_HOUR, AggregateType.MAX, scheduleId,
                 startTime, endTime, PageOrdering.DESC, 1);
             if (results.size() != 0) {

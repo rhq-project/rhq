@@ -34,6 +34,7 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric1D;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric1H;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric6H;
+import org.rhq.core.domain.measurement.MeasurementDataNumericAggregateInterface;
 
 /**
  * @author Stefan Negrea
@@ -41,76 +42,120 @@ import org.rhq.core.domain.measurement.MeasurementDataNumeric6H;
  */
 public class DataMigrator {
 
-    private final EntityManager entityManager;
+    private static final int MAX_RECORDS_TO_MIGRATE = 1000;
 
-    private Session session;
+    private final EntityManager entityManager;
+    private final Session session;
+
+    private boolean deleteDataImmediatelyAfterMigration;
+    private boolean deleteAllDataAtTheEndOfMigration;
+    private boolean runRawDataMigration;
+    private boolean run1HAggregateDataMigration;
+    private boolean run6HAggregateDataMigration;
+    private boolean run1DAggregateDataMigration;
 
     public DataMigrator(EntityManager entityManager, Session session) {
         this.entityManager = entityManager;
         this.session = session;
+
+        this.deleteDataImmediatelyAfterMigration = true;
+        this.deleteAllDataAtTheEndOfMigration = false;
+        this.runRawDataMigration = true;
+        this.run1HAggregateDataMigration = true;
+        this.run6HAggregateDataMigration = true;
+        this.run1DAggregateDataMigration = true;
+    }
+
+    public void run1HAggregateDataMigration(boolean value) {
+        this.run1HAggregateDataMigration = value;
+    }
+
+    public void run6HAggregateDataMigration(boolean value) {
+        this.run6HAggregateDataMigration = value;
+    }
+
+    public void run1DAggregateDataMigration(boolean value) {
+        this.run1DAggregateDataMigration = value;
+    }
+
+    public void deleteDataImmediatelyAfterMigration(boolean value) {
+        this.deleteDataImmediatelyAfterMigration = value;
+        this.deleteAllDataAtTheEndOfMigration = !value;
+    }
+
+    public void deleteAllDataAtTheEndOfMigration(boolean value) {
+        this.deleteAllDataAtTheEndOfMigration = value;
+        this.deleteDataImmediatelyAfterMigration = !value;
     }
 
     public void migrateData() {
+        if (runRawDataMigration) {
+            migrateRawData();
+        }
 
-        migrateRawData();
-        migrateOneHourData();
-        migrateSixHourData();
-        migrateTwentyFourHourData();
+        if (run1HAggregateDataMigration) {
+            migrateAggregatedMetricsData(MeasurementDataNumeric1H.QUERY_FIND_ALL, MetricsTable.ONE_HOUR);
+        }
 
-        clearAllData();
+        if (run6HAggregateDataMigration) {
+            migrateAggregatedMetricsData(MeasurementDataNumeric6H.QUERY_FIND_ALL, MetricsTable.SIX_HOUR);
+        }
+
+        if (run1DAggregateDataMigration) {
+            migrateAggregatedMetricsData(MeasurementDataNumeric1D.QUERY_FIND_ALL, MetricsTable.TWENTY_FOUR_HOUR);
+        }
+
+        if (deleteAllDataAtTheEndOfMigration) {
+            this.clearAllData();
+        }
     }
 
     private void migrateRawData() {
-
+        //possibly need to add raw SQL code here because data is split among several tables
     }
 
     @SuppressWarnings("unchecked")
-    private void migrateOneHourData() {
-        Query q = this.entityManager.createNamedQuery(MeasurementDataNumeric1H.QUERY_FIND_ALL);
-        List<MeasurementDataNumeric1H> existingData = q.getResultList();
+    private void migrateAggregatedMetricsData(String query, MetricsTable metricsTable) {
+        List<MeasurementDataNumericAggregateInterface> existingData = null;
 
-        try {
-            PreparedStatement statement = createPreparedStatement(MetricsTable.ONE_HOUR);
+        while (true) {
+            Query q = this.entityManager.createNamedQuery(query);
+            q.setMaxResults(MAX_RECORDS_TO_MIGRATE);
+            existingData = (List<MeasurementDataNumericAggregateInterface>) q.getResultList();
 
-            for (MeasurementDataNumeric1H measurement : existingData) {
-                insertData(statement, measurement.getScheduleId(), measurement.getMin(), measurement.getMax(),
-                    Double.parseDouble(measurement.getValue().toString()), measurement.getTimestamp());
+            if (existingData.size() == 0) {
+                break;
             }
-        } catch (NoHostAvailableException e) {
-            throw new CQLException(e);
-        }
-    }
 
-    @SuppressWarnings("unchecked")
-    private void migrateSixHourData() {
-        Query q = this.entityManager.createNamedQuery(MeasurementDataNumeric6H.QUERY_FIND_ALL);
-        List<MeasurementDataNumeric6H> existingData = q.getResultList();
+            try {
+                String cql = "INSERT INTO " + metricsTable
+                    + " (schedule_id, time, type, value) VALUES (?, ?, ?, ?) USING TTL " + metricsTable.getTTL();
+                PreparedStatement statement = session.prepare(cql);
 
-        try {
-            PreparedStatement statement = createPreparedStatement(MetricsTable.SIX_HOUR);
+                for (MeasurementDataNumericAggregateInterface measurement : existingData) {
 
-            for (MeasurementDataNumeric6H measurement : existingData) {
-                insertData(statement, measurement.getScheduleId(), measurement.getMin(), measurement.getMax(),
-                    Double.parseDouble(measurement.getValue().toString()), measurement.getTimestamp());
+                    BoundStatement boundStatement = statement.bind(measurement.getScheduleId(),
+                        new Date(measurement.getTimestamp()), AggregateType.MIN.ordinal(), measurement.getMin());
+                    session.execute(boundStatement);
+
+                    boundStatement = statement.bind(measurement.getScheduleId(), new Date(measurement.getTimestamp()),
+                        AggregateType.MAX.ordinal(),  measurement.getMax());
+                    session.execute(boundStatement);
+
+                    boundStatement = statement.bind(measurement.getScheduleId(), new Date(measurement.getTimestamp()),
+                        AggregateType.AVG.ordinal(), Double.parseDouble(measurement.getValue().toString()));
+                    session.execute(boundStatement);
+                }
+            } catch (NoHostAvailableException e) {
+                throw new CQLException(e);
             }
-        } catch (NoHostAvailableException e) {
-            throw new CQLException(e);
-        }
-    }
 
-    private void migrateTwentyFourHourData() {
-        Query q = this.entityManager.createNamedQuery(MeasurementDataNumeric1D.QUERY_FIND_ALL);
-        List<MeasurementDataNumeric1D> existingData = q.getResultList();
-
-        try {
-            PreparedStatement statement = createPreparedStatement(MetricsTable.TWENTY_FOUR_HOUR);
-
-            for (MeasurementDataNumeric1D measurement : existingData) {
-                insertData(statement, measurement.getScheduleId(), measurement.getMin(), measurement.getMax(),
-                    Double.parseDouble(measurement.getValue().toString()), measurement.getTimestamp());
+            if (this.deleteDataImmediatelyAfterMigration) {
+                for (Object entity : existingData) {
+                    this.entityManager.remove(entity);
+                }
+                this.entityManager.flush();
             }
-        } catch (NoHostAvailableException e) {
-            throw new CQLException(e);
         }
     }
 
@@ -123,26 +168,5 @@ public class DataMigrator {
 
         q = this.entityManager.createNamedQuery(MeasurementDataNumeric1D.QUERY_DELETE_ALL);
         q.executeUpdate();
-    }
-
-    private PreparedStatement createPreparedStatement(MetricsTable metricsTable) throws NoHostAvailableException {
-        String cql = "INSERT INTO " + metricsTable + " (schedule_id, time, type, value) VALUES (?, ?, ?, ?) USING TTL "
-            + metricsTable.getTTL();
-        PreparedStatement statement = session.prepare(cql);
-        return statement;
-    }
-
-    private void insertData(PreparedStatement statement, int scheduleId, double min, double max, double average,
-        long timestamp)
-        throws NoHostAvailableException {
-        BoundStatement boundStatement = statement.bind(scheduleId, new Date(timestamp), AggregateType.MIN.ordinal(),
-            min);
-        session.execute(boundStatement);
-
-        boundStatement = statement.bind(scheduleId, new Date(timestamp), AggregateType.MAX.ordinal(), max);
-        session.execute(boundStatement);
-
-        boundStatement = statement.bind(scheduleId, new Date(timestamp), AggregateType.AVG.ordinal(), average);
-        session.execute(boundStatement);
     }
 }

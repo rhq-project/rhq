@@ -43,7 +43,9 @@ import javax.persistence.Table;
     @NamedQuery(name = MeasurementDataNumeric6H.QUERY_FIND_ALL, query = "SELECT m From MeasurementDataNumeric6H m"),
     @NamedQuery(name = MeasurementDataNumeric6H.QUERY_DELETE_ALL, query = "DELETE FROM MeasurementDataNumeric6H m ") })
 @Table(name = "RHQ_MEASUREMENT_DATA_NUM_6H")
-public class MeasurementDataNumeric6H extends MeasurementData implements Serializable {
+public class MeasurementDataNumeric6H extends MeasurementData implements Serializable,
+    MeasurementDataNumericAggregateInterface {
+
     private static final long serialVersionUID = 1L;
 
     public static final String GET_NUM_AGGREGATE = "MeasurementDataNumeric6H.getNumAggregate";

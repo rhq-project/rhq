@@ -41,7 +41,9 @@ import javax.persistence.Table;
     @NamedQuery(name = MeasurementDataNumeric1H.QUERY_FIND_ALL, query = "SELECT m From MeasurementDataNumeric1H m"),
     @NamedQuery(name = MeasurementDataNumeric1H.QUERY_DELETE_ALL, query = "DELETE FROM MeasurementDataNumeric1D m ") })
 @Table(name = "RHQ_MEASUREMENT_DATA_NUM_1H")
-public class MeasurementDataNumeric1H extends MeasurementData implements Serializable {
+public class MeasurementDataNumeric1H extends MeasurementData implements Serializable,
+    MeasurementDataNumericAggregateInterface {
+
     private static final long serialVersionUID = 1L;
 
     public static final String GET_MAX_TIMESTAMP = "MeasurementDataNumeric1H.getMaxTimestamp";

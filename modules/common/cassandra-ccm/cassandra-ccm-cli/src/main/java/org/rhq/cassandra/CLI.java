@@ -26,6 +26,7 @@
 package org.rhq.cassandra;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -216,32 +217,6 @@ public class CLI {
     }
 
     public static void main(String[] args) {
-//        OptionGroup ccmArgs = new OptionGroup();
-//
-//        Option deploy = OptionBuilder
-//            .withArgName("[options]")
-//            .hasOptionalArgs()
-//            .withDescription("Creates an embedded cluster and then starts each node")
-//            .create("deploy");
-//
-//        Option shutdown = OptionBuilder
-//            .withArgName("[options]")
-//            .hasOptionalArg()
-//            .withDescription("Shuts down all of the cluster nodes.")
-//            .create("shutdown");
-//
-//        ccmArgs.addOption(deploy).addOption(shutdown);
-//        //ccmArgs.setRequired(true);
-//
-//        CommandLineParser parser = new PosixParser();
-//        Options options = new Options();
-//        options.addOptionGroup(ccmArgs);
-//
-//        try {
-//            CommandLine cmdLine = parser.parse(options, args);
-//        }  catch (ParseException e) {
-//            e.printStackTrace();
-//        }
         CLI cli = new CLI();
         cli.exec(args);
     }

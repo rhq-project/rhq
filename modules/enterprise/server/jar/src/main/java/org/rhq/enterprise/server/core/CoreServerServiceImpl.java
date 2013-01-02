@@ -223,6 +223,10 @@ public class CoreServerServiceImpl implements CoreServerService {
                 + agentByName.getAddress() + ":" + agentByName.getPort() + "][" + request.getAgentVersion()
                 + "] - Will " + (request.getRegenerateToken() ? "" : "not") + " regenerate a new token");
 
+            final String oldAddress = agentByName.getAddress();
+            final int oldPort = agentByName.getPort();
+            final String oldRemoteEndpoint = agentByName.getRemoteEndpoint();
+
             agentByName.setServer(registeringServer);
             agentByName.setAddress(request.getAddress());
             agentByName.setPort(request.getPort());
@@ -237,6 +241,21 @@ public class CoreServerServiceImpl implements CoreServerService {
             } catch (Exception e) {
                 log.warn("Could not update the agent in database", e);
                 throw new AgentRegistrationException(new WrappedRemotingException(e));
+            }
+
+            // if agent is re-registering in order to change its remote endpoint, destroy our old client.
+            if (!oldAddress.equals(request.getAddress()) || oldPort != request.getPort()
+                || !oldRemoteEndpoint.equals(request.getRemoteEndpoint())) {
+                try {
+                    final Agent oldAgent = new Agent();
+                    oldAgent.setName(agentByName.getName());
+                    oldAgent.setAddress(oldAddress);
+                    oldAgent.setPort(oldPort);
+                    oldAgent.setRemoteEndpoint(oldRemoteEndpoint);
+                    agentManager.destroyAgentClient(oldAgent);
+                } catch (Exception e) {
+                    log.warn("Could not destroy the agent client - will continue but agent comm may be broken", e);
+                }
             }
         } else {
             log.info("Got agent registration request for new agent: " + request.getName() + "[" + request.getAddress()

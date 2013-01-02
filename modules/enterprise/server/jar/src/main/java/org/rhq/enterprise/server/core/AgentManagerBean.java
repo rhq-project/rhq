@@ -56,6 +56,7 @@ import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.MessageDigestGenerator;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
@@ -128,16 +129,20 @@ public class AgentManagerBean implements AgentManagerLocal {
         agent = entityManager.find(Agent.class, agent.getId());
         failoverListManager.deleteServerListsForAgent(agent);
         entityManager.remove(agent);
+        destroyAgentClient(agent);
+        log.info("Removed agent: " + agent);
+    }
 
+    @ExcludeDefaultInterceptors
+    public void destroyAgentClient(Agent agent) {
         ServerCommunicationsServiceMBean bootstrap = ServerCommunicationsServiceUtil.getService();
         try {
             bootstrap.destroyKnownAgentClient(agent);
+            log.debug("agent client destroyed for agent: " + agent);
         } catch (Exception e) {
             // certain unit tests won't create the agentClient
-            log.warn("Could not find agentClient for doomedAgent: " + agent);
+            log.warn("Could not destroy agent client for agent [" + agent + "]: " + ThrowableUtil.getAllMessages(e));
         }
-
-        log.info("Removed agent: " + agent);
     }
 
     @ExcludeDefaultInterceptors

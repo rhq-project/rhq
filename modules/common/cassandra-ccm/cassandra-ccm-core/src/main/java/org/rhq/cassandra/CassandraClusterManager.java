@@ -56,6 +56,7 @@ public class CassandraClusterManager {
     private final Log log = LogFactory.getLog(CassandraClusterManager.class);
 
     private DeploymentOptions deploymentOptions;
+    private List<File> installedNodeDirs;
 
     public CassandraClusterManager() {
         this(new DeploymentOptions());
@@ -82,12 +83,18 @@ public class CassandraClusterManager {
         BootstrapDeployer deployer = new BootstrapDeployer();
         deployer.setDeploymentOptions(deploymentOptions);
         try {
-            return deployer.deploy();
+            installedNodeDirs = deployer.deploy();
         } catch (CassandraException e) {
             String msg = "Failed to install cluster.";
             log.error(msg, e);
             throw new RuntimeException(msg, e);
         }
+
+        return installedNodeDirs;
+    }
+
+    public void startCluster() {
+        this.startCluster(this.installedNodeDirs);
     }
 
     public void startCluster(List<File> nodeDirs) {

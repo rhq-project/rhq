@@ -25,6 +25,9 @@
 
 package org.rhq.cassandra;
 
+import org.apache.thrift.transport.TSocket;
+import org.apache.thrift.transport.TTransportException;
+
 /**
  * @author John Sanda
  */
@@ -45,6 +48,17 @@ public class CassandraNode {
 
     public int getThriftPort() {
         return thriftPort;
+    }
+
+    public boolean isThrifPortOpen() {
+        TSocket socket = new TSocket(this.hostName, this.thriftPort, 100);
+        try {
+            socket.open();
+            socket.close();
+            return true;
+        } catch (TTransportException e) {
+            return false;
+        }
     }
 
     @Override

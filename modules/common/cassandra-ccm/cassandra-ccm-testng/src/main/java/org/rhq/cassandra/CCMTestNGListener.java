@@ -91,11 +91,18 @@ public class CCMTestNGListener implements IInvokedMethodListener {
         deploymentOptions.setPassword(annotation.password());
 
         ccm = new CassandraClusterManager(deploymentOptions);
-        List<File> nodeDirs = ccm.installCluster();
-        ccm.startCluster(nodeDirs);
+        ccm.installCluster();
+
+        List<CassandraNode> cassandraHosts = getCassandraHosts(ccm.getHostNames());
+        for (CassandraNode cassandraNode : cassandraHosts) {
+            if (cassandraNode.isThrifPortOpen()) {
+                throw new RuntimeException("A cluster is already running on the same ports.");
+            }
+        }
+
+        ccm.startCluster();
 
         ClusterInitService clusterInitService = new ClusterInitService();
-        List<CassandraNode> cassandraHosts = getCassandraHosts(ccm.getHostNames());
 
         if (annotation.waitForClusterToStart()) {
             clusterInitService.waitForClusterToStart(cassandraHosts);

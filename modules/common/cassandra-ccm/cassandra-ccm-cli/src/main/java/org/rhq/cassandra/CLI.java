@@ -25,7 +25,6 @@
 
 package org.rhq.cassandra;
 
-import java.io.File;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -123,8 +122,8 @@ public class CLI {
                 }
 
                 CassandraClusterManager ccm = new CassandraClusterManager(deploymentOptions);
-                List<File> nodeDirs = ccm.installCluster();
-                ccm.startCluster(nodeDirs);
+                ccm.installCluster();
+                ccm.startCluster();
             }
         }  catch (ParseException e) {
             printDeployUsage(options);

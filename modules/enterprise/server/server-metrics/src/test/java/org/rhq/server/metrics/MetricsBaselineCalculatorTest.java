@@ -147,10 +147,10 @@ public class MetricsBaselineCalculatorTest {
         Assert.assertEquals(baselineResult.getMax(), expectedMax, TEST_PRECISION);
         Assert.assertEquals(baselineResult.getMin(), expectedMin, TEST_PRECISION);
         Assert.assertEquals(baselineResult.getScheduleId(), expectedScheduleId);
-        if (baselineResult.getComputeTime().getTime() >= System.currentTimeMillis()) {
+        if (baselineResult.getComputeTime().getTime() > System.currentTimeMillis()) {
             Assert.fail("Back compute time, the computation was forward dated.");
         }
-        if (baselineResult.getComputeTime().getTime() <= beforeComputeTime) {
+        if (baselineResult.getComputeTime().getTime() < beforeComputeTime) {
             Assert.fail("Back compute time, the computation was backdated.");
         }
 

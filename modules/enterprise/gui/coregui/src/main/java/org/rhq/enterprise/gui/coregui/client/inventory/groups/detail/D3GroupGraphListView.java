@@ -37,7 +37,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricAreaBarGraph;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricStackedBarGraph;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceMetricD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -141,7 +141,7 @@ public class D3GroupGraphListView extends LocatableVLayout {
 
     private void buildIndividualGraph(MeasurementDefinition measurementDefinition, List<MeasurementDataNumericHighLowComposite> data) {
 
-        MetricAreaBarGraph graphView = new MetricAreaBarGraph("groupBarAreaGraph",resourceGroup.getId(), resourceGroup.getName(),
+        MetricStackedBarGraph graphView = new MetricStackedBarGraph("groupBarAreaGraph",resourceGroup.getId(), resourceGroup.getName(),
                 measurementDefinition, data);
         ResourceMetricD3GraphView graph = new ResourceMetricD3GraphView(extendLocatorId(measurementDefinition.getName()), resourceGroup.getId(),
                 resourceGroup.getName(), measurementDefinition, data, graphView);

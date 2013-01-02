@@ -37,7 +37,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricAreaBarGraph;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricStackedBarGraph;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceMetricD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceScheduledMetricDatasource;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -63,7 +63,7 @@ public class ResourceGraphPortlet extends ResourceMetricD3GraphView implements C
         super(locatorId);
         //setChartHeight("100%");
         setOverflow(Overflow.HIDDEN);
-        MetricAreaBarGraph chart = new MetricAreaBarGraph("dashboardAreaBarChart");
+        MetricStackedBarGraph chart = new MetricStackedBarGraph("dashboardAreaBarChart");
         setJsniChart(chart);
     }
 
@@ -187,7 +187,7 @@ public class ResourceGraphPortlet extends ResourceMetricD3GraphView implements C
 
     @Override
     public void redraw() {
-        Log.debug(" *** Redraw Portlet");
+        Log.debug(" *** Redraw Portlet and set data");
         super.redraw();
 
         removeMembers(getMembers());

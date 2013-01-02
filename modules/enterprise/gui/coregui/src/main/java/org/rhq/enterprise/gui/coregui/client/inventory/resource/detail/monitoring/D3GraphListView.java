@@ -45,7 +45,7 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricAreaBarGraph;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricStackedBarGraph;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -266,7 +266,7 @@ public class D3GraphListView extends LocatableVLayout {
                         }
                         Log.debug("************** ** Down availList: "+ downAvailList.size()+" for Resource: "+resource.getId()+"\n\n");
                         //MetricLineGraphView graphView = new MetricLineGraphView("areaBarGraph", resource.getId(),resource.getName(), measurementDefinition, data);
-                        MetricAreaBarGraph graphView = new MetricAreaBarGraph("areaBarGraph", resource.getId(), resource.getName(), measurementDefinition, data);
+                        MetricStackedBarGraph graphView = new MetricStackedBarGraph("areaBarGraph", resource.getId(), resource.getName(), measurementDefinition, data);
                         graphView.setAvailabilityDownList(downAvailList);
 
                         ResourceMetricD3GraphView graph = new ResourceMetricD3GraphView(

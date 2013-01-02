@@ -25,23 +25,33 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView;
 
 /**
- * Contains the chart definition for a Area/Bar graph chart.
+ * Contains the javascript chart definition for a d3 d3 d3 Stacked Bar graph chart.
  *
  * @author Mike Thompson
  */
-public final class MetricAreaBarGraph extends AbstractMetricD3GraphView implements HasD3JsniChart
+public final class MetricStackedBarGraph extends AbstractMetricD3GraphView implements HasD3JsniChart
 {
     /**
-     * ctor for dashboard portlet view as chart definition  and data are deferred to later.
+     * Constructor for dashboard portlet view as chart definition and data are deferred to later
+     * in the portlet configuration.
      *
      * @param locatorId
      */
-    public MetricAreaBarGraph(String locatorId){
+    public MetricStackedBarGraph(String locatorId){
         super(locatorId);
     }
 
-    public MetricAreaBarGraph(String locatorId, int entityId, String entityName, MeasurementDefinition def,
-                              List<MeasurementDataNumericHighLowComposite> data) {
+    /**
+     * General constructor for stacked bar graph when you have all the data needed to
+     * produce the graph. (This is true for all cases but the dashboard portlet).
+     * @param locatorId
+     * @param entityId
+     * @param entityName
+     * @param def
+     * @param data
+     */
+    public MetricStackedBarGraph(String locatorId, int entityId, String entityName, MeasurementDefinition def,
+                                 List<MeasurementDataNumericHighLowComposite> data) {
         super(locatorId, entityId, entityName, def, data);
     }
 
@@ -57,7 +67,7 @@ public final class MetricAreaBarGraph extends AbstractMetricD3GraphView implemen
     @Override
     public native void drawJsniChart() /*-{
 
-        console.log("Draw Line jsni chart");
+        console.log("Draw Stacked jsni chart");
         var chartId =  this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getChartId()(),
                 chartHandle = "#rChart-"+chartId,
                 chartSelection = chartHandle + " svg",

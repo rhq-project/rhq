@@ -25,12 +25,32 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView;
 
 /**
- * Contains the chart definition for a Line graph chart.
+ * Contains the javascript chart definition for a d3 Line graph chart.
  *
  * @author Mike Thompson
  */
 public class MetricLineGraph extends AbstractMetricD3GraphView implements HasD3JsniChart
 {
+    /**
+     * Constructor for dashboard portlet view as chart definition and data are deferred to later
+     * in the portlet configuration.
+     *
+     * @param locatorId
+     */
+    public MetricLineGraph(String locatorId) {
+       super(locatorId);
+    }
+
+
+    /**
+     * General constructor for stacked bar graph when you have all the data needed to
+     * produce the graph. (This is true for all cases but the dashboard portlet).
+     * @param locatorId
+     * @param entityId
+     * @param entityName
+     * @param def
+     * @param data
+     */
     public MetricLineGraph(String locatorId, int entityId, String entityName, MeasurementDefinition def,
                            List<MeasurementDataNumericHighLowComposite> data) {
         super(locatorId,entityId, entityName,def,data);

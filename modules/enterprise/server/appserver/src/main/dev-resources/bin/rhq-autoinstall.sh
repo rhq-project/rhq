@@ -13,7 +13,7 @@ sleep 5
 
 echo Installing embedded Cassandra cluster...
 cd bin
-./rhq-ccm.sh
+./rhq-ccm.sh deploy
 
 _TRIES="1 2"
 for _TRY in $_TRIES

@@ -142,6 +142,11 @@
                   <artifactId>commons-codec</artifactId>
                   <version>1.3</version>
                 </artifactItem>
+                <artifactItem>
+                  <groupId>net.java.dev.jna</groupId>
+                  <artifactId>jna</artifactId>
+                  <version>3.2.7</version>
+                </artifactItem>
               </artifactItems>
             </configuration>
           </execution>

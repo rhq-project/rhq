@@ -25,6 +25,7 @@
 
 package org.rhq.cassandra;
 
+import java.io.File;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -39,6 +40,9 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 
+import org.rhq.core.util.PropertiesFileUpdate;
+import org.rhq.core.util.StringUtil;
+
 /**
  * @author John Sanda
  */
@@ -51,6 +55,9 @@ public class CLI {
     private Option shutdownCommand;
 
     private String deployDescription = "Creates an embedded cluster and then starts each node";
+
+    private String shutdownDescription = "Shutdown an embedded cluster. Note that if a cassandra.pid file is not " +
+        "found, no attempt will be made to shutdown the node.";
 
     public CLI() {
         deployCommand = OptionBuilder
@@ -99,6 +106,8 @@ public class CLI {
 
         if (cmd.equals(deployCommand.getOpt())) {
             deploy(getCommandLine(cmd, args));
+        } else if (cmd.equals(shutdownCommand.getOpt())) {
+            shutdown(getCommandLine(cmd, args));
         }
     }
 
@@ -122,8 +131,16 @@ public class CLI {
                 }
 
                 CassandraClusterManager ccm = new CassandraClusterManager(deploymentOptions);
-                ccm.installCluster();
-                ccm.startCluster();
+                List<File> nodeDirs = ccm.installCluster();
+                ccm.startCluster(nodeDirs);
+
+                PropertiesFileUpdate serverPropertiesUpdater = getServerProperties();
+                try {
+                    serverPropertiesUpdater.update("rhq.cassandra.cluster.seeds",
+                        StringUtil.collectionToString(ccm.getHostNames()));
+                }  catch (IOException e) {
+                    throw new RuntimeException("An error occurred while trying to update RHQ server properties", e);
+                }
             }
         }  catch (ParseException e) {
             printDeployUsage(options);
@@ -139,8 +156,51 @@ public class CLI {
         helpFormatter.printHelp(syntax, header, options, null);
     }
 
-    public void shutdown() {
+    private static PropertiesFileUpdate getServerProperties() {
+        String sysprop = System.getProperty("rhq.server.properties-file");
+        if (sysprop == null) {
+            throw new RuntimeException("The required system property [rhq.server.properties] is not defined.");
+        }
 
+        File file = new File(sysprop);
+        if (!(file.exists() && file.isFile())) {
+            throw new RuntimeException("System property [" + sysprop + "] points to in invalid file.");
+        }
+
+        return new PropertiesFileUpdate(file.getAbsolutePath());
+    }
+
+    public void shutdown(String[] args) {
+        Options options = new Options()
+            .addOption("h", "help", false, "Show this message")
+            .addOption("n", "node", true, "A comma-delimited list of node ids that specifies nodes to shut down.");
+
+        try {
+            CommandLineParser parser = new PosixParser();
+            CommandLine cmdLine = parser.parse(options, args);
+
+            if (cmdLine.hasOption("h")) {
+                printShutdownUsage(options);
+            } else {
+                DeploymentOptions deploymentOptions = new DeploymentOptions();
+                if (cmdLine.hasOption("n")) {
+                    // TODO
+                }
+                CassandraClusterManager ccm = new CassandraClusterManager(deploymentOptions);
+                ccm.shutdownCluster();
+            }
+        }  catch (ParseException e) {
+            printShutdownUsage(options);
+        }
+    }
+
+    private void printShutdownUsage(Options options) {
+        HelpFormatter helpFormatter = new HelpFormatter();
+        String syntax = "rhq-ccm.sh shutdown [options]";
+        String header = "\n" + shutdownDescription + "\n\n";
+
+        helpFormatter.setNewLine("\n");
+        helpFormatter.printHelp(syntax, header, options, null);
     }
 
     private String[] getCommandLine(String cmd, String[] args) {

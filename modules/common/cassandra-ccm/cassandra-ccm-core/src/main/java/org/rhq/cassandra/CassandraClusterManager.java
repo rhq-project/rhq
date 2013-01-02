@@ -44,8 +44,6 @@ import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
-import org.rhq.core.util.PropertiesFileUpdate;
-import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.stream.StreamUtil;
 
 /**
@@ -169,34 +167,6 @@ public class CassandraClusterManager {
 
     public InputStream loadBundle() {
         return null;
-    }
-
-    public static void main(String[] args) {
-        CassandraClusterManager ccm = new CassandraClusterManager();
-        List<File> nodeDirs = ccm.installCluster();
-        ccm.startCluster(nodeDirs);
-
-        PropertiesFileUpdate serverPropertiesUpdater = getServerProperties();
-        try {
-            serverPropertiesUpdater.update("rhq.cassandra.cluster.seeds",
-                StringUtil.collectionToString(ccm.getHostNames()));
-        }  catch (IOException e) {
-            throw new RuntimeException("An error occurred while trying to update RHQ server properties", e);
-        }
-    }
-
-    private static PropertiesFileUpdate getServerProperties() {
-        String sysprop = System.getProperty("rhq.server.properties-file");
-        if (sysprop == null) {
-            throw new RuntimeException("The required system property [rhq.server.properties] is not defined.");
-        }
-
-        File file = new File(sysprop);
-        if (!(file.exists() && file.isFile())) {
-            throw new RuntimeException("System property [" + sysprop + "] points to in invalid file.");
-        }
-
-        return new PropertiesFileUpdate(file.getAbsolutePath());
     }
 
 }

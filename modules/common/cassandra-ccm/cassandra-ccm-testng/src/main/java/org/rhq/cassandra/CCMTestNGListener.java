@@ -26,9 +26,6 @@
 package org.rhq.cassandra;
 
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +37,6 @@ import org.testng.IInvokedMethodListener;
 import org.testng.ITestResult;
 
 import org.rhq.cassandra.schema.SchemaManager;
-import org.rhq.core.util.stream.StreamUtil;
 
 /**
  * @author John Sanda
@@ -90,6 +86,11 @@ public class CCMTestNGListener implements IInvokedMethodListener {
         deploymentOptions.setUsername(annotation.username());
         deploymentOptions.setPassword(annotation.password());
 
+        // TODO Figure where/when to initialize ccm
+        // Ideally I would like to support multiple test/configuration methods using
+        // @DeployCluster to facilitate testing different scenarios for around
+        // consistency and failover. If we start doing that at some point, then
+        // we cannot initialize ccm here.
         ccm = new CassandraClusterManager(deploymentOptions);
         ccm.installCluster();
 
@@ -129,23 +130,7 @@ public class CCMTestNGListener implements IInvokedMethodListener {
     }
 
     private void shutdownCluster() throws Exception {
-        File basedir = new File("target");
-        File clusterDir = new File(basedir, "cassandra");
-        killNode(new File(clusterDir, "node0"));
-        killNode(new File(clusterDir, "node1"));
-    }
-
-    private void killNode(File nodeDir) throws Exception {
-        long pid = getPid(nodeDir);
-        CLibrary.kill((int) pid, 9);
-    }
-
-    private long getPid(File nodeDir) throws IOException {
-        File binDir = new File(nodeDir, "bin");
-        StringWriter writer = new StringWriter();
-        StreamUtil.copy(new FileReader(new File(binDir, "cassandra.pid")), writer);
-
-        return Long.parseLong(writer.getBuffer().toString());
+        ccm.shutdownCluster();
     }
 
     private List<CassandraNode> getCassandraHosts(List<String> hostNames) {

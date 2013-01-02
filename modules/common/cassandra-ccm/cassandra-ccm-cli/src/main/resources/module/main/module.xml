@@ -5,6 +5,7 @@
 
   <resources>
     <resource-root path="${project.build.finalName}.jar"/>
+    <resource-root path="rhq-cassandra-ccm-core-${project.version}.jar"/>
     <resource-root path="rhq-ant-bundle-common-${project.version}.jar"/>
     <resource-root path="rhq-core-util-${project.version}.jar"/>
     <resource-root path="jdom-1.0.jar"/>
@@ -21,6 +22,7 @@
     <resource-root path="commons-lang-2.4.jar"/>
     <resource-root path="slf4j-api-1.7.2.jar"/>
     <resource-root path="libthrift-0.7.0.jar"/>
+    <resource-root path="jna-3.2.7.jar"/>
   </resources>
 
   <dependencies>

@@ -31,6 +31,7 @@ import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.enterprise.gui.coregui.client.gwt.SystemGWTService;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.core.RemoteClientManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -47,6 +48,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
 
     private SystemManagerLocal systemManager = LookupUtil.getSystemManager();
     private AgentManagerLocal agentManager = LookupUtil.getAgentManager();
+    private RemoteClientManagerLocal remoteClientManager = LookupUtil.getRemoteClientManager();
 
     @Override
     public ProductInfo getProductInfo() throws RuntimeException {
@@ -171,18 +173,11 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
 
     @Override
     public HashMap<String, String> getClientVersionProperties() throws RuntimeException {
-        File versionFile = new File(getClientDownloadDir(), "rhq-client-version.properties");
         try {
-            Properties p = new Properties();
-            FileInputStream inStream = new FileInputStream(versionFile);
-            try {
-                p.load(inStream);
-            } finally {
-                inStream.close();
-            }
-            return convertFromProperties(p);
+            Properties props = remoteClientManager.getRemoteClientVersionFileContent();
+            return convertFromProperties(props);
         } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t, "Unable to retrieve client version info.");
+            throw getExceptionToThrowToClient(t, "Unable to retrieve CLI version info.");
         }
     }
 
@@ -214,54 +209,45 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
     }
 
     private File getConnectorDownloadsDir() {
-        File serverHomeDir = getServerHomeDir();
-        File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/connectors");
-        if (!downloadDir.exists()) {
+        File homeDir = getDownloadHomeDir();
+        File downloadDir = new File(homeDir, "connectors");
+        if (!downloadDir.isDirectory()) {
             throw new RuntimeException("Server is missing connectors download directory at [" + downloadDir + "]");
         }
         return downloadDir;
     }
 
     private File getCliAlertScriptDownloadsDir() {
-        File serverHomeDir = getServerHomeDir();
-        File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/cli-alert-scripts");
-        if (!downloadDir.exists()) {
+        File homeDir = getDownloadHomeDir();
+        File downloadDir = new File(homeDir, "cli-alert-scripts");
+        if (!downloadDir.isDirectory()) {
             throw new RuntimeException("Server is missing connectors download directory at [" + downloadDir + "]");
         }
         return downloadDir;
     }
 
     private File getScriptModulesDownloadsDir() {
-        File serverHomeDir = getServerHomeDir();
-        File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/script-modules");
-        if (!downloadDir.exists()) {
+        File homeDir = getDownloadHomeDir();
+        File downloadDir = new File(homeDir, "script-modules");
+        if (!downloadDir.isDirectory()) {
             throw new RuntimeException("Server is missing connectors download directory at [" + downloadDir + "]");
         }
         return downloadDir;
     }
 
-    private File getClientDownloadDir() {
-        File serverHomeDir = getServerHomeDir();
-        File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/rhq-client");
-        if (!downloadDir.exists()) {
-            throw new RuntimeException("Server is missing client download directory at [" + downloadDir + "]");
-        }
-        return downloadDir;
-    }
-
     private File getBundleDeployerDownloadDir() {
-        File serverHomeDir = getServerHomeDir();
-        File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/bundle-deployer");
-        if (!downloadDir.exists()) {
+        File homeDir = getDownloadHomeDir();
+        File downloadDir = new File(homeDir, "bundle-deployer");
+        if (!downloadDir.isDirectory()) {
             throw new RuntimeException("Missing bundle deployer download directory at [" + downloadDir + "]");
         }
         return downloadDir;
     }
 
-    private File getServerHomeDir() {
-        ServerDetails details = systemManager.getServerDetails(LookupUtil.getSubjectManager().getOverlord());
-        File serverHomeDir = new File(details.getDetails().get(ServerDetails.Detail.SERVER_HOME_DIR));
-        return serverHomeDir;
+    private File getDownloadHomeDir() {
+        File earDeployDir = LookupUtil.getCoreServer().getEarDeploymentDir();
+        File downloadDir = new File(earDeployDir, "rhq-downloads");
+        return downloadDir;
     }
 
     private static List<File> getFiles(File downloadDir) {

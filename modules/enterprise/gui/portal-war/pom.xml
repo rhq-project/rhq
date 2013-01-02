@@ -117,25 +117,10 @@
          <version>1.1.4</version>
       </dependency>
 
-      <dependency>
-         <groupId>hibernate</groupId>
-         <artifactId>hibernate3</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
       <!-- used by a test JSP -->
       <dependency>
-         <groupId>hibernate-entitymanager</groupId>
+         <groupId>org.hibernate</groupId>
          <artifactId>hibernate-entitymanager</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
-      <!-- needed for referenced domain entities that use Hibernate annotations (due to JDK5 bug) -->
-      <dependency>
-         <groupId>hibernate-annotations</groupId>
-         <artifactId>hibernate-annotations</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
@@ -191,57 +176,10 @@
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
-      <!-- needed for referenced domain entities that use JPA annotations (due to JDK5 bug) -->
-      <dependency>
-         <groupId>javax.persistence</groupId>
-         <artifactId>persistence-api</artifactId>
-         <version>1.0</version>
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
       <dependency>
          <groupId>javax.servlet</groupId>
          <artifactId>jstl</artifactId>
          <version>1.1.2</version>
-      </dependency>
-
-      <!-- needed for EJB3 annotations (e.g. ApplicationException) -->
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-ejb3x</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-j2ee</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
-      <!-- used by org.jboss.on.enterprise.ui.servlet.startupShutdownListener -->
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-system</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
-      <!-- used by org.jboss.on.enterprise.ui.converter.MD5HashConverter -->
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jbosssx</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
-      <!-- Needed due to JDK 1.5 bug. -->
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-annotations-ejb3</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
       <!-- used by DisplayTag_test.jsp -->
@@ -306,25 +244,32 @@
          <groupId>struts</groupId>
          <artifactId>struts-el</artifactId>
          <version>1.2.9</version>
+         <exclusions>
+            <exclusion>
+               <groupId>antlr</groupId>
+               <artifactId>antlr</artifactId>
+               <!-- provided by JBossAS default config -->
+            </exclusion>
+         </exclusions>
       </dependency>
 
       <dependency>
          <groupId>struts-menu</groupId>
          <artifactId>struts-menu</artifactId>
          <version>2.3</version>
+         <exclusions>
+            <exclusion>
+               <groupId>antlr</groupId>
+               <artifactId>antlr</artifactId>
+               <!-- provided by JBossAS default config -->
+            </exclusion>
+         </exclusions>
       </dependency>
 
       <dependency>
          <groupId>taglibs</groupId>
          <artifactId>standard</artifactId>
          <version>1.1.2</version>
-      </dependency>
-
-      <dependency>
-          <groupId>jboss.jbossws</groupId>
-          <artifactId>jboss-jaxws</artifactId>
-          <version>3.0.1-native-2.0.4.GA</version>
-          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
       <dependency>
@@ -343,7 +288,7 @@
 
       <!-- ============ Testing ========================-->
       <dependency>
-          <groupId>javassist</groupId>
+          <groupId>org.javassist</groupId>
           <artifactId>javassist</artifactId>
           <scope>test</scope>
       </dependency>
@@ -447,7 +392,7 @@
             <rhq.rootDir>../../../..</rhq.rootDir>
             <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
             <rhq.deploymentName>${project.build.finalName}.war</rhq.deploymentName>
-            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/${rhq.deploymentName}</rhq.deploymentDir>
+            <rhq.deploymentDir>${rhq.containerDir}/${rhq.earDeployDir}/${rhq.deploymentName}</rhq.deploymentDir>
          </properties>
 
          <build>
@@ -543,93 +488,6 @@
             </plugins>
          </build>
       </profile>
-       <profile>
-      <id>cobertura</id>
-      <activation>
-        <activeByDefault>false</activeByDefault>
-      </activation>
-        <build>
-         <plugins>
-           <plugin>
-             <artifactId>maven-antrun-plugin</artifactId>
-              <dependencies>
-               <dependency>
-                 <groupId>net.sourceforge.cobertura</groupId>
-                 <artifactId>cobertura</artifactId>
-                 <version>${cobertura.version}</version>
-               </dependency>
-             </dependencies>
-             <executions>
-              <execution>
-               <id>cobertura-instrument</id>
-               <phase>process-test-classes</phase>
-                 <configuration>
-                   <target>
-                   <!-- prepare directory structure for cobertura-->
-                   <mkdir dir="target/cobertura" />
-                   <mkdir dir="target/cobertura/backup" />
-                   <!-- backup all classes so that we can instrument the original classes-->
-                   <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
-                      <fileset dir="target/classes">
-                          <include name="org/rhq/enterprise/gui/util/LookupComponent.class" />
-                          <include name="org/rhq/enterprise/gui/common/time/converter/RelativeDurationConverter.class" />
-                      </fileset>
-                   </copy>
-                   <!-- create a properties file and save there location of cobertura data file-->
-                   <touch file="target/classes/cobertura.properties" />
-                   <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
-                   <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
-                   <!-- instrument all classes in target/classes directory -->
-                   <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
-                     <fileset dir="${project.build.directory}/classes">
-                        <include name="org/rhq/enterprise/gui/util/LookupComponent.class" />
-                        <include name="org/rhq/enterprise/gui/common/time/converter/RelativeDurationConverter.class" />
-                      </fileset>
-                    </cobertura-instrument>
-                   </target>
-                 </configuration>
-               <goals>
-                 <goal>run</goal>
-               </goals>
-              </execution>
-              <execution>
-               <id>cobertura-report</id>
-               <phase>prepare-package</phase>
-                 <configuration>
-                   <target>
-                     <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
-                     <!-- prepare directory structure for cobertura-->
-                     <mkdir dir="target/cobertura" />
-                     <mkdir dir="target/site/cobertura" />
-                     <!-- restore classes from backup folder to classes folder -->
-                     <copy toDir="target/classes" verbose="true" overwrite="true">
-                      <fileset dir="target/cobertura/backup">
-                         <include name="org/rhq/enterprise/gui/util/LookupComponent.class" />
-                         <include name="org/rhq/enterprise/gui/common/time/converter/RelativeDurationConverter.class" />
-                      </fileset>
-                     </copy>
-                     <!-- delete backup folder-->
-                     <delete dir="target/cobertura/backup" />
-                     <!-- create a code coverage report -->
-                     <cobertura-report format="html" datafile="${project.build.directory}/cobertura/cobertura.ser" destdir="${project.build.directory}/site/cobertura">
-                      <fileset dir="${basedir}/src/main/java">
-                         <include name="org/rhq/enterprise/gui/util/LookupComponent.java" />
-                        <include name="org/rhq/enterprise/gui/common/time/converter/RelativeDurationConverter.java" />
-                      </fileset>
-                     </cobertura-report>
-                     <!-- delete cobertura.properties file -->
-                     <delete file="target/classes/cobertura.properties" />
-                   </target>
-                 </configuration>
-               <goals>
-                 <goal>run</goal>
-               </goals>
-               </execution>
-            </executions>
-           </plugin>
-          </plugins>
-       </build>
-     </profile>
    </profiles>
 
 </project>

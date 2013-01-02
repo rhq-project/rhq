@@ -88,7 +88,6 @@
       <artifactId>postgresql</artifactId>
       <scope>test</scope>
     </dependency>
-
   </dependencies>
 
 
@@ -307,7 +306,8 @@
                     <delete file="${as7.zipfile}"/>
                     <get src="${as7.url}" dest="${as7.zipfile}" usetimestamp="true" verbose="true"/>
                     <unzip src="${as7.zipfile}" dest="${java.io.tmpdir}"/>
-                    <delete dir="${jboss7.home}" verbose="true"/>
+                    <!-- What was this supposed to do? Right now, it'd delete the AS7 deployment we just unzipped. -->
+                    <!-- <delete dir="${jboss7.home}" verbose="true"/>  -->
                     <move file="${java.io.tmpdir}/jboss-eap-6.0"
                           tofile="${jboss7.home}" failonerror="false"/>
 
@@ -541,7 +541,7 @@
       <properties>
         <rhq.rootDir>../../..</rhq.rootDir>
         <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-        <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-downloads/rhq-plugins</rhq.deploymentDir>
+        <rhq.deploymentDir>${rhq.containerDir}/${rhq.agentPluginDir}</rhq.deploymentDir>
       </properties>
 
       <build>
@@ -612,7 +612,6 @@
       </build>
 
     </profile>
-    
   </profiles>
 
 </project>

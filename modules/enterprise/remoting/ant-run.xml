@@ -92,13 +92,6 @@ ANT Script that provides ways to package the agent.
          <fileset refid="run.classpath.fileset" />
       </copy>
 
-      <!-- only used for the webservices flavor
-      <copy todir="${client.distro.dir}/lib/endorsed"
-            flatten="true">
-         <fileset refid="endorsed.classpath.fileset" />
-      </copy>
-      -->
-
      <mkdir dir="${client.distro.dir}/bin"/>
       <copy todir="${client.distro.dir}/bin">
          <fileset dir="${basedir}/src/etc"

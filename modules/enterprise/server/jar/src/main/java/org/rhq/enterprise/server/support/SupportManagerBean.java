@@ -93,8 +93,8 @@ public class SupportManagerBean implements SupportManagerLocal, SupportManagerRe
     }
 
     private File getDownloadsDir() throws Exception {
-        File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
-        File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/support");
+        File dataDir = LookupUtil.getCoreServer().getJBossServerDataDir();
+        File downloadDir = new File(dataDir, "rhq-downloads/support");
         if (!downloadDir.isDirectory()) {
             downloadDir.mkdirs();
             if (!downloadDir.isDirectory()) {

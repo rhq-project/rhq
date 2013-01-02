@@ -3,6 +3,9 @@ package org.rhq.enterprise.server.rest.domain;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.wordnik.swagger.annotations.ApiClass;
+import com.wordnik.swagger.annotations.ApiProperty;
+
 /**
  * One numerical data point of a schedule.
  * This point does not contain the schedule id, as it is expected
@@ -13,6 +16,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  *
  * @author Heiko W. Rupp
  */
+@ApiClass("One numerical data point of a metric (aka schedule)")
 @XmlRootElement
 public class NumericDataPoint {
 
@@ -36,16 +40,19 @@ public class NumericDataPoint {
         this.value = value;
     }
 
+    @ApiProperty("The timestamp when the metric was taken")
     @XmlAttribute
     public long getTimeStamp() {
         return timeStamp;
     }
 
+    @ApiProperty("The numerical value")
     @XmlAttribute
     public Double getValue() {
         return value;
     }
 
+    @ApiProperty("The id of the metric")
     @XmlAttribute
     public int getScheduleId() {
         return scheduleId;

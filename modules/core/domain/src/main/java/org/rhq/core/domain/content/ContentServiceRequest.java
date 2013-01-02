@@ -66,7 +66,7 @@ import org.rhq.core.domain.resource.Resource;
         + "  FROM ContentServiceRequest AS csr WHERE csr.id = :id"),
 
     @NamedQuery(name = ContentServiceRequest.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM ContentServiceRequest csr WHERE csr.resource.id IN ( :resourceIds ) )") })
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONTENT_REQ_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_CONTENT_REQ_ID_SEQ")
 @Table(name = "RHQ_CONTENT_REQ")
 public class ContentServiceRequest implements Serializable {
 

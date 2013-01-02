@@ -31,13 +31,13 @@ import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.cloud.CloudManagerLocal;
+import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ListServersUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "ListServersUIBean";
 
-    private CloudManagerLocal cloudManager = LookupUtil.getCloudManager();
+    private TopologyManagerLocal topologyManager = LookupUtil.getTopologyManager();
 
     public ListServersUIBean() {
     }
@@ -49,7 +49,7 @@ public class ListServersUIBean extends PagedDataTableUIBean {
 
         if (ids.length > 0) {
             try {
-                cloudManager.deleteServers(ids);
+                topologyManager.deleteServers(subject, ids);
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Removed [" + ids.length
                     + "] servers from the cloud.");
@@ -70,7 +70,7 @@ public class ListServersUIBean extends PagedDataTableUIBean {
 
         if (ids.length > 0) {
             try {
-                cloudManager.updateServerMode(ids, mode);
+                topologyManager.updateServerMode(EnterpriseFacesContextUtility.getSubject(), ids, mode);
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Set [" + ids.length + "] servers to mode "
                     + mode);
@@ -109,7 +109,7 @@ public class ListServersUIBean extends PagedDataTableUIBean {
         public PageList<ServerWithAgentCountComposite> fetchPage(PageControl pc) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
 
-            PageList<ServerWithAgentCountComposite> results = cloudManager.getServerComposites(subject, pc);
+            PageList<ServerWithAgentCountComposite> results = topologyManager.getServerComposites(subject, pc);
             return results;
         }
     }

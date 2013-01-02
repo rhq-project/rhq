@@ -164,8 +164,8 @@ class GlobalConditionCache extends AbstractConditionCache {
 
             try {
                 AvailabilityDurationCacheElement cacheElement = new AvailabilityDurationCacheElement(
-                    alertConditionOperator, alertCondition.getOption(), availabilityComposite.getAvailabilityType(),
-                    alertConditionId);
+                    availabilityComposite.getAlertDefinitionId(), alertConditionOperator, alertCondition.getOption(),
+                    availabilityComposite.getAvailabilityType(), alertConditionId);
                 addTo("availabilityDurationCache", availabilityDurationCache, availabilityComposite.getResourceId(),
                     cacheElement, alertConditionId, stats);
             } catch (InvalidCacheElementException icee) {

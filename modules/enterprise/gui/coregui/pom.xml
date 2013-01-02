@@ -19,7 +19,7 @@
 
   <properties>
         <!-- dependency versions -->
-    <gwt.version>2.4.0</gwt.version>
+    <gwt.version>2.5.0</gwt.version>
     <smartgwt.version>3.0</smartgwt.version>
 
         <!--  If this is too much memory to allocate to your gwt:debug process then override this property in
@@ -38,7 +38,7 @@
          specify the gwt.userAgent property on the mvn command line (e.g. -Dgwt.userAgent=gecko1_8)
          or in your ~/.m2/settings.xml
 
-         As of GWT 2.4.0, the recognized agents (defined in
+         As of GWT 2.5.0, the recognized agents (defined in
          gwt-user.jar:com/google/gwt/user/UserAgent.gwt.xml) are as follows:
 
            ie9: IE9 (although for smartgwt we fallback to IE8)
@@ -81,30 +81,29 @@
 
         <!-- ============= Internal Deps ============= -->
 
+    <!-- by rhq.ear (as ejb-jar) -->
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-domain</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
-            <!-- by rhq.ear (as ejb-jar) -->
     </dependency>
 
+    <!-- by rhq.ear (as ejb-jar) -->
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-enterprise-server</artifactId>
       <version>${project.version}</version>
-      <scope>provided</scope>
-            <!-- by rhq.ear (as ejb-jar) -->
+      <scope>provided</scope>    
     </dependency>
 
+    <!-- by rhq.ear -->
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-util</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
-            <!-- by rhq.ear -->
     </dependency>
-
 
         <!-- =============== 3rd Party Deps =============== -->
 
@@ -166,67 +165,30 @@
       <artifactId>commons-logging</artifactId>
       <version>1.0.4</version>
       <scope>provided</scope>
-            <!-- by JBossAS -->
     </dependency>
 
     <dependency>
       <groupId>org.opensymphony.quartz</groupId>
       <artifactId>quartz</artifactId>
-            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
       <scope>provided</scope>
-            <!-- by JBossAS itself, which the container buildNodes has packaged with 1.6.5 -->
     </dependency>
 
-        <!-- needed for referenced domain entities that use Hibernate annotations (due to JDK5 bug) -->
     <dependency>
-      <groupId>hibernate-annotations</groupId>
+      <groupId>org.hibernate.javax.persistence</groupId>
+      <artifactId>hibernate-jpa-2.0-api</artifactId>
+      <scope>provided</scope>    
+    </dependency>
+
+    <dependency>
+      <groupId>org.hibernate</groupId>
       <artifactId>hibernate-annotations</artifactId>
-            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
       <scope>provided</scope>
-            <!-- by JBossAS -->
-    </dependency>
-
-        <!-- transitive dependency needed for JspC -->
-    <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>servlet-api</artifactId>
-      <version>2.4</version>
-      <scope>provided</scope>
-            <!-- by JBossAS -->
-    </dependency>
-
-        <!-- needed for referenced domain entities that use JPA annotations (due to JDK5 bug) -->
-    <dependency>
-      <groupId>javax.persistence</groupId>
-      <artifactId>persistence-api</artifactId>
-      <version>1.0</version>
-      <scope>provided</scope>
-            <!-- by JBossAS -->
-    </dependency>
-
-        <!-- needed for EJB3 annotations (e.g. ApplicationException) -->
-    <dependency>
-      <groupId>jboss</groupId>
-      <artifactId>jboss-ejb3x</artifactId>
-            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-      <scope>provided</scope>
-            <!-- by JBossAS -->
-    </dependency>
-
-        <!-- Needed due to JDK 1.5 bug. -->
-    <dependency>
-      <groupId>jboss</groupId>
-      <artifactId>jboss-annotations-ejb3</artifactId>
-            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-      <scope>provided</scope>
-            <!-- by JBossAS -->
     </dependency>
 
     <dependency>
-      <groupId>jboss.jbossws</groupId>
-      <artifactId>jboss-jaxws</artifactId>
-      <version>3.0.1-native-2.0.4.GA</version>
-      <scope>provided</scope> <!-- by JBossAS -->
+      <groupId>org.jboss.spec.javax.ejb</groupId>
+      <artifactId>jboss-ejb-api_3.1_spec</artifactId>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
@@ -278,7 +240,8 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>gwt-maven-plugin</artifactId>
-        <version>2.4.0</version>
+        <!-- Cant upgrade to 2.5.0 plugin because gwt dev mode doesnt autorefresh -->
+        <version>2.5.0</version>
         <configuration>
           <noServer>true</noServer>
           <inplace>false</inplace>
@@ -419,9 +382,7 @@
         <rhq.rootDir>../../../..</rhq.rootDir>
         <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
         <rhq.deploymentName>${project.build.finalName}.war</rhq.deploymentName>
-        <rhq.deploymentDir>
-          ${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/${rhq.deploymentName}
-                </rhq.deploymentDir>
+        <rhq.deploymentDir>${rhq.containerDir}/${rhq.earDeployDir}/${rhq.deploymentName}</rhq.deploymentDir>
       </properties>
 
       <build>

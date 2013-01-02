@@ -73,7 +73,7 @@
          <properties>
             <rhq.rootDir>../../..</rhq.rootDir>
             <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-downloads/rhq-plugins</rhq.deploymentDir>
+            <rhq.deploymentDir>${rhq.containerDir}/${rhq.agentPluginDir}</rhq.deploymentDir>
          </properties>
 
          <build>
@@ -152,7 +152,7 @@
                            <skip>${maven.test.skip}</skip>
                            <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
                            <useSystemClassLoader>false</useSystemClassLoader>
-                           <argLine>-Dorg.hyperic.sigar.path=${basedir}/target/testsetup/lib</argLine>                           
+                           <argLine>${jacoco.integration-test.args} -Dorg.hyperic.sigar.path=${basedir}/target/testsetup/lib</argLine>                           
                            <systemProperties>
                               <property>
                                  <name>project.artifactId</name>
@@ -179,7 +179,7 @@
          <properties>
             <rhq.rootDir>../../..</rhq.rootDir>
             <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-downloads/rhq-plugins</rhq.deploymentDir>
+            <rhq.deploymentDir>${rhq.containerDir}/${rhq.agentPluginDir}</rhq.deploymentDir>
          </properties>
 
          <build>

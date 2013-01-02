@@ -44,14 +44,12 @@ import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.sql.DataSource;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
 
-import org.jboss.annotation.IgnoreDependency;
-import org.jboss.annotation.ejb.TransactionTimeout;
+import org.jboss.ejb3.annotation.TransactionTimeout;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
@@ -90,7 +88,6 @@ import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
-import org.rhq.enterprise.server.jaxb.adapter.MeasurementDataNumericHighLowCompositeAdapter;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
@@ -138,7 +135,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
     @EJB
     private AlertManagerLocal alertManager;
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private AgentManagerLocal agentClientManager;
 
     @EJB
@@ -148,7 +145,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
     @EJB
     private MeasurementDataManagerLocal measurementDataManager;
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private MeasurementDefinitionManagerLocal measurementDefinitionManager;
 
     // doing a bulk delete in here, need to be in its own tx
@@ -723,8 +720,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         return result;
     }
 
-    public @XmlJavaTypeAdapter(MeasurementDataNumericHighLowCompositeAdapter.class)
-    List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(Subject subject, int groupId,
+    public List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(Subject subject, int groupId,
         int definitionId, long beginTime, long endTime, int numPoints) {
 
         List<List<MeasurementDataNumericHighLowComposite>> ret = findDataForContext(subject,

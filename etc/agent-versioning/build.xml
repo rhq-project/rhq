@@ -112,7 +112,7 @@ ant -Dserver.home.dir=/my/server/rhq-agent -Dnew.version=0.0.0.GA -Dnew.build=0
    <target name="init-server">
       <property name="env.RHQ_SERVER_HOME" location="dev-container"/>
       <property name="server.home.dir" location="${env.RHQ_SERVER_HOME}"/>
-      <property name="server.download.dir" location="${server.home.dir}/jbossas/server/default/deploy/rhq.ear/rhq-downloads/rhq-agent"/>
+      <property name="server.download.dir" location="${server.home.dir}/modules/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/rhq.ear/rhq-downloads/rhq-agent"/>
       <available property="_server.download.dir.exists" file="${server.download.dir}"/>
       <fail unless="_server.download.dir.exists" message="Cannot find the server download directory at ${server.download.dir}"/>
 

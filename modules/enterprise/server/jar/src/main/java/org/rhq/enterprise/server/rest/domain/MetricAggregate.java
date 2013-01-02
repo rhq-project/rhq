@@ -24,10 +24,14 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.wordnik.swagger.annotations.ApiClass;
+import com.wordnik.swagger.annotations.ApiProperty;
+
 /**
  * Metric data that could be used to draw a chart
  * @author Heiko W. Rupp
  */
+@ApiClass("An aggregate of metrics data for a given schedule")
 @XmlRootElement
 public class MetricAggregate {
 
@@ -55,6 +59,7 @@ public class MetricAggregate {
 
     }
 
+    @ApiProperty("List of indiviudual data points")
     @XmlElement
     public List<DataPoint> getDataPoints() {
         return dataPoints;
@@ -68,16 +73,19 @@ public class MetricAggregate {
         this.dataPoints = dataPoints;
     }
 
+    @ApiProperty("Minimum value for the data")
     @XmlElement
     public Double getMin() {
         return min;
     }
 
+    @ApiProperty("Average value for the data")
     @XmlElement
     public Double getAvg() {
         return avg;
     }
 
+    @ApiProperty("Maximum value for the data")
     @XmlElement
     public Double getMax() {
         return max;
@@ -95,6 +103,7 @@ public class MetricAggregate {
         this.max = max;
     }
 
+    @ApiProperty("Number of data points i.e. size of the dataPoints list")
     public int getNumDataPoints() {
         return numDataPoints;
     }
@@ -103,6 +112,7 @@ public class MetricAggregate {
         this.numDataPoints = numDataPoints;
     }
 
+    @ApiProperty("Id of the metric")
     @XmlElement
     public Integer getScheduleId() {
         return scheduleId;
@@ -112,6 +122,7 @@ public class MetricAggregate {
         this.scheduleId = scheduleId;
     }
 
+    @ApiProperty("Timestamp of the earliest data point in the list")
     public long getMinTimeStamp() {
         return minTimeStamp;
     }
@@ -120,6 +131,7 @@ public class MetricAggregate {
         this.minTimeStamp = minTimeStamp;
     }
 
+    @ApiProperty("Timestamp fo the latest data point in the list")
     public long getMaxTimeStamp() {
         return maxTimeStamp;
     }
@@ -128,6 +140,7 @@ public class MetricAggregate {
         this.maxTimeStamp = maxTimeStamp;
     }
 
+    @ApiProperty("Determines if this is data for a group")
     public boolean isGroup() {
         return isGroup;
     }

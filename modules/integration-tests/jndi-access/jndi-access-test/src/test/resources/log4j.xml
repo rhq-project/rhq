@@ -19,7 +19,7 @@
    <appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">
       <errorHandler class="org.jboss.logging.util.OnlyOnceErrorHandler"/>
       <param name="Target" value="System.out"/>
-      <param name="Threshold" value="WARN"/>
+      <param name="Threshold" value="INFO"/>
 
       <layout class="org.apache.log4j.PatternLayout">
          <!-- The default pattern: Date Priority [Category] Messagen -->
@@ -32,7 +32,7 @@
 
    <appender name="FILE" class="org.apache.log4j.RollingFileAppender">
       <param name="File" value="target/server-jar-test.log"/>
-      <param name="Threshold" value="WARN"/>
+      <param name="Threshold" value="DEBUG"/>
       <param name="Append" value="false"/>
 
       <layout class="org.apache.log4j.PatternLayout">
@@ -48,6 +48,14 @@
       <priority value="DEBUG"/>
    </category>
    
+   <category name="org.jboss">
+      <priority value="WARN"/>
+   </category>
+
+   <category name="org.hibernate">
+      <priority value="WARN"/>
+   </category>
+
    <!-- Hibernate logs WARNINGS frequent from this class, in test envs. -->
    <category name="org.hibernate.hql.ast.QueryTranslatorImpl">
       <priority value="ERROR"/>

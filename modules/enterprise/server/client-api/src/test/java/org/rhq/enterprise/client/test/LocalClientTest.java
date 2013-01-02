@@ -81,13 +81,11 @@ public class LocalClientTest extends JMockTest {
 
                     @Override
                     public Object invoke(Invocation invocation) throws Throwable {
-                        //the JNDI name is "rhq/<BEAN_NAME>/local"
+                        // JNDI name format like: java:global/rhq/rhq-enterprise-server-ejb3/SystemManagerBean!org.rhq.enterprise.server.system.SystemManagerLocal 
                         String jndiName = (String) invocation.getParameter(0);
-
-                        String beanName = jndiName.substring(jndiName.indexOf('/') + 1, jndiName.lastIndexOf('/'));
-
+                        String beanName = jndiName.substring(0,jndiName.indexOf('!'));
+                        beanName = beanName.substring(beanName.lastIndexOf('/') + 1);
                         String managerName = beanName.substring(0, beanName.length() - "Bean".length());
-
                         //we basically need to define a mock implementation of both the local and remote
                         //interface here - as if it were a proper SLSB.
                         RhqManager manager = Enum.valueOf(RhqManager.class, managerName);

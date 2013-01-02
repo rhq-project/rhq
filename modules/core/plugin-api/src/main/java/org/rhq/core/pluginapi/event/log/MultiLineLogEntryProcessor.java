@@ -137,6 +137,9 @@ public abstract class MultiLineLogEntryProcessor implements LogEntryProcessor {
             } catch (java.text.ParseException e) {
                 throw new ParseException("Unable to parse date [" + dateString + "] using date format [" + dateFormat
                     + "].", e);
+            } catch (RuntimeException e) {
+                throw new ParseException("Unable to parse date [" + dateString + "] using date format [" + dateFormat
+                    + "].", e);
             }
             setDateIfNotSet(timestamp);
         }

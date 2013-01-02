@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>(free mem, schedule 10003)</title>
+    <script type="text/javascript" src="js/d3.js"></script>
+    <script type="text/javascript" src="js/d3.layout.js"></script>
+    <script type="text/javascript" src="js/d3.time.js"></script>
+    <script type="text/javascript" src="js/jquery.js"></script>
+    <script type="text/javascript" src="js/rhq.js"></script>
+    <style type="text/css">
+
+svg {
+  width: 800px;
+  height: 600px;
+  border: solid 1px #ccc;
+  font: 10px sans-serif;
+  shape-rendering: crispEdges;
+}
+
+    </style>
+  </head>
+  <body>
+  <h1 id="resId">Resource</h1>
+  <h2 id="header">Schedule</h2>
+
+  <div id="one"></div>
+    <script type="text/javascript">
+
+// Width and height of the chart to print
+var w = 800,
+    h = 600;
+
+// Get the platforms and then the first one
+$.getJSON('/rest/resource/platforms.json', function (json) {
+  var res = json[0];
+  var rid = res.resourceId;
+  $("#resId").text("Resource " + rid + " (" + res.resourceName + ")");
+
+  // Now get the metrical schedules of the platform
+  $.getJSON("/rest/resource/"+rid+"/schedules.json?type=metric", function (json2) {
+
+    // Take the first and render it
+   var schId = json2[0].scheduleId;
+   $("#header").text("Schedule " + schId + " (" + json2[0].scheduleName + ")");
+      rhq.whisker(schId,"one",w,h);
+  })
+})
+
+
+
+    </script>
+  </body>
+</html>

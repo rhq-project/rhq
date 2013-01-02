@@ -41,7 +41,7 @@ import org.rhq.enterprise.server.util.concurrent.AlertSerializer;
  */
 @MessageDriven(activationConfig = {
     @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
-    @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/AlertConditionQueue"),
+    @ActivationConfigProperty(propertyName = "destination", propertyValue = "java:/queue/AlertConditionQueue"),
     @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge"),
     @ActivationConfigProperty(propertyName = "subscriptionDurability", propertyValue = "NonDurable") })
 public class AlertConditionConsumerBean implements MessageListener {

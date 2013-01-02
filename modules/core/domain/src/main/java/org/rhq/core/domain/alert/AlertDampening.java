@@ -30,7 +30,6 @@ import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 
 @Embeddable
@@ -85,12 +84,12 @@ public class AlertDampening implements java.io.Serializable {
     @Enumerated(EnumType.ORDINAL)
     private TimeUnits periodUnits;
 
-    //@OneToMany(cascade = CascadeType.ALL) <-- used to be unidirectional, but that obfuscated AlertDampeningEvent queries
-    @OneToMany(mappedBy = "alertDefinition", cascade = CascadeType.ALL)
+    // This is required for cascade behavior. We want to be able to cascade delete the AlertDampeningEvents when an
+    // AlertDefinition is removed from the db, due to deleting a Resource from inventory.     
+    @OneToMany(mappedBy = "alertDefinition", cascade = { CascadeType.REFRESH, CascadeType.REMOVE })
     @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
-    @JoinColumn(name = "ID")
     private Set<AlertDampeningEvent> alertDampeningEvents = new HashSet<AlertDampeningEvent>();
-
+    
     protected AlertDampening() {
     } // JPA
 

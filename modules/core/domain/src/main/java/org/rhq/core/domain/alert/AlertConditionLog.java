@@ -106,7 +106,7 @@ import javax.persistence.Table;
         + "                       FROM AlertConditionLog iacl" //
         + "                      WHERE iacl.condition.alertDefinition.id = :alertDefinitionId )" // 
         + "     AND acl.alert IS NULL") })
-@SequenceGenerator(name = "RHQ_ALERT_CONDITION_LOG_ID_SEQ", sequenceName = "RHQ_ALERT_CONDITION_LOG_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_ALERT_CONDITION_LOG_ID_SEQ", sequenceName = "RHQ_ALERT_CONDITION_LOG_ID_SEQ")
 @Table(name = "RHQ_ALERT_CONDITION_LOG")
 public class AlertConditionLog implements Serializable {
     public static final String QUERY_FIND_UNMATCHED_LOG_BY_ALERT_CONDITION_ID = "AlertConditinLog.findUnmatchedLogByAlertConditionId";

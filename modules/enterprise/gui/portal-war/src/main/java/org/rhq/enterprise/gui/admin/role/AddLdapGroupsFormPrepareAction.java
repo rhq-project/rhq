@@ -28,7 +28,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 
-import javax.ejb.EJBException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -156,10 +155,10 @@ public class AddLdapGroupsFormPrepareAction extends TilesAction {
             pendingGroups.setTotalSize(pendingSet.size());
             pendingGroups.setPageControl(pcp);
 
-        } catch (EJBException ejx) {
+        } catch (/*porting to AS7... this was EJBException*/java.lang.IllegalStateException ejx) {
             //this is the exception type thrown now that we use SLSB.Local methods
             // mine out other exceptions
-            Exception cause = ejx.getCausedByException();
+            Exception cause = ejx;//ejx.getCausedByException();
             if (cause == null) {
                 ActionMessages actionMessages = new ActionMessages();
                 actionMessages.add(ActionMessages.GLOBAL_MESSAGE, new ActionMessage("errors.cam.general"));

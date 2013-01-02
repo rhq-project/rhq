@@ -32,8 +32,6 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.IgnoreDependency;
-
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
@@ -52,7 +50,6 @@ import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 /**
  * @author Joseph Marques
  */
-
 @Stateless
 public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionManagerLocal {
 
@@ -64,7 +61,7 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
     @EJB
     private AlertDefinitionManagerLocal alertDefinitionManager;
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private ResourceGroupManagerLocal resourceGroupManager;
     @EJB
     private SubjectManagerLocal subjectManager;

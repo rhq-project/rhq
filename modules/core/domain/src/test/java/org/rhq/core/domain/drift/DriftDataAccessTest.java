@@ -24,24 +24,39 @@ import javax.persistence.EntityManager;
 import org.testng.annotations.AfterGroups;
 import org.testng.annotations.BeforeMethod;
 
+import org.rhq.core.domain.shared.TransactionCallback;
 import org.rhq.core.domain.test.AbstractEJB3Test;
-import org.rhq.test.TransactionCallback;
 
 public class DriftDataAccessTest extends AbstractEJB3Test {
 
     @BeforeMethod(groups = "drift.ejb")
     public final void initDB() {
-        executeInTransaction(new TransactionCallback() {
+        if (!inContainer()) {
+            return;
+        }
+
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
-                purgeDB();
+                try {
+                    purgeDB();
+
+                } catch (Exception e) {
+                    System.out.println("BEFORE METHOD FAILURE, TEST DID NOT RUN!!!");
+                    e.printStackTrace();
+                    throw e;
+                }
             }
         });
     }
 
     @AfterGroups(groups = "drift.ejb")
     public void resetDB() {
-        executeInTransaction(new TransactionCallback() {
+        if (!inContainer()) {
+            return;
+        }
+
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 purgeDB();

@@ -35,8 +35,6 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.IgnoreDependency;
-
 import org.rhq.core.domain.cloud.AffinityGroup;
 import org.rhq.core.domain.cloud.FailoverList;
 import org.rhq.core.domain.cloud.FailoverListDetails;
@@ -74,8 +72,8 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
     private EntityManager entityManager;
 
     @EJB
-    @IgnoreDependency
-    CloudManagerLocal cloudManager;
+    //@IgnoreDependency
+    TopologyManagerLocal topologyManager;
 
     @EJB
     AgentManagerLocal agentManager;
@@ -133,7 +131,7 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
     }
 
     private FailoverListComposite generateServerList(PartitionEvent event, Agent agent) {
-        List<Server> servers = cloudManager.getAllCloudServers();
+        List<Server> servers = topologyManager.getAllCloudServers();
         List<Agent> agents = new ArrayList<Agent>(1);
 
         agents.add(agent);
@@ -153,7 +151,7 @@ public class FailoverListManagerBean implements FailoverListManagerLocal {
     }
 
     public Map<Agent, FailoverListComposite> refresh(PartitionEvent event) {
-        List<Server> servers = cloudManager.getAllCloudServers();
+        List<Server> servers = topologyManager.getAllCloudServers();
         List<Agent> agents = agentManager.getAllAgents();
 
         // persist results immediate, which will be the only writes (as opposed to reads) in this transaction

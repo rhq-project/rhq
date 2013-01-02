@@ -32,15 +32,12 @@
         </dependency>
 
         <!-- 3rd Party Deps -->
-
         <dependency>
             <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-            <version>2.4</version>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>3.0.1</version>
             <scope>provided</scope> <!-- by JBossAS -->
         </dependency>
-
-
 
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
@@ -48,40 +45,11 @@
             <version>${resteasy.version}</version>
             <scope>provided</scope>
         </dependency>
-
-        <!-- needed for EJB3 annotations (e.g. ApplicationException) -->
-        <dependency>
-           <groupId>jboss</groupId>
-           <artifactId>jboss-ejb3x</artifactId>
-           <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-           <scope>provided</scope> <!-- by JBossAS -->
-        </dependency>
-
-        <!-- needed for referenced domain entities that use JPA annotations (due to JDK5 bug) -->
-        <dependency>
-           <groupId>javax.persistence</groupId>
-           <artifactId>persistence-api</artifactId>
-           <version>1.0</version>
-           <scope>provided</scope> <!-- by JBossAS -->
-        </dependency>
-
-
-        <!-- needed for referenced domain entities that use Hibernate annotations (due to JDK5 bug) -->
-        <dependency>
-           <groupId>hibernate-annotations</groupId>
-           <artifactId>hibernate-annotations</artifactId>
-           <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-           <scope>provided</scope> <!-- by JBossAS -->
-        </dependency>
-
-        <!-- Needed due to JDK 1.5 bug. -->
-        <dependency>
-           <groupId>jboss</groupId>
-           <artifactId>jboss-annotations-ejb3</artifactId>
-           <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-           <scope>provided</scope> <!-- by JBossAS -->
-        </dependency>
-
+      <dependency>
+        <groupId>org.jboss.spec.javax.ejb</groupId>
+        <artifactId>jboss-ejb-api_3.1_spec</artifactId>
+        <version>1.0.2.Final</version>
+      </dependency>
 
     </dependencies>
     <build>
@@ -125,7 +93,7 @@
              <rhq.rootDir>../../../..</rhq.rootDir>
              <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
              <rhq.deploymentName>${project.build.finalName}.war</rhq.deploymentName>
-             <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/${rhq.deploymentName}</rhq.deploymentDir>
+             <rhq.deploymentDir>${rhq.containerDir}/${rhq.earDeployDir}/${rhq.deploymentName}</rhq.deploymentDir>
           </properties>
 
           <build>
@@ -196,94 +164,6 @@
              </plugins>
           </build>
        </profile>
-
-        <profile>
-       <id>cobertura</id>
-       <activation>
-         <activeByDefault>false</activeByDefault>
-       </activation>
-         <build>
-          <plugins>
-            <plugin>
-              <artifactId>maven-antrun-plugin</artifactId>
-               <dependencies>
-                <dependency>
-                  <groupId>net.sourceforge.cobertura</groupId>
-                  <artifactId>cobertura</artifactId>
-                  <version>${cobertura.version}</version>
-                </dependency>
-              </dependencies>
-              <executions>
-               <execution>
-                <id>cobertura-instrument</id>
-                <phase>process-test-classes</phase>
-                  <configuration>
-                    <target>
-                    <!-- prepare directory structure for cobertura-->
-                    <mkdir dir="target/cobertura" />
-                    <mkdir dir="target/cobertura/backup" />
-                    <!-- backup all classes so that we can instrument the original classes-->
-                    <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
-                       <fileset dir="target/classes">
-                           <include name="org/rhq/enterprise/gui/util/LookupComponent.class" />
-                           <include name="org/rhq/enterprise/gui/common/time/converter/RelativeDurationConverter.class" />
-                       </fileset>
-                    </copy>
-                    <!-- create a properties file and save there location of cobertura data file-->
-                    <touch file="target/classes/cobertura.properties" />
-                    <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
-                    <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
-                    <!-- instrument all classes in target/classes directory -->
-                    <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
-                      <fileset dir="${project.build.directory}/classes">
-                         <include name="org/rhq/enterprise/gui/util/LookupComponent.class" />
-                         <include name="org/rhq/enterprise/gui/common/time/converter/RelativeDurationConverter.class" />
-                       </fileset>
-                     </cobertura-instrument>
-                    </target>
-                  </configuration>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-               </execution>
-               <execution>
-                <id>cobertura-report</id>
-                <phase>prepare-package</phase>
-                  <configuration>
-                    <target>
-                      <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
-                      <!-- prepare directory structure for cobertura-->
-                      <mkdir dir="target/cobertura" />
-                      <mkdir dir="target/site/cobertura" />
-                      <!-- restore classes from backup folder to classes folder -->
-                      <copy toDir="target/classes" verbose="true" overwrite="true">
-                       <fileset dir="target/cobertura/backup">
-                          <include name="org/rhq/enterprise/gui/util/LookupComponent.class" />
-                          <include name="org/rhq/enterprise/gui/common/time/converter/RelativeDurationConverter.class" />
-                       </fileset>
-                      </copy>
-                      <!-- delete backup folder-->
-                      <delete dir="target/cobertura/backup" />
-                      <!-- create a code coverage report -->
-                      <cobertura-report format="html" datafile="${project.build.directory}/cobertura/cobertura.ser" destdir="${project.build.directory}/site/cobertura">
-                       <fileset dir="${basedir}/src/main/java">
-                          <include name="org/rhq/enterprise/gui/util/LookupComponent.java" />
-                         <include name="org/rhq/enterprise/gui/common/time/converter/RelativeDurationConverter.java" />
-                       </fileset>
-                      </cobertura-report>
-                      <!-- delete cobertura.properties file -->
-                      <delete file="target/classes/cobertura.properties" />
-                    </target>
-                  </configuration>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-                </execution>
-             </executions>
-            </plugin>
-           </plugins>
-        </build>
-      </profile>
     </profiles>
 
 </project>

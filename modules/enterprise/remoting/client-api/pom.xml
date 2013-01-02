@@ -13,12 +13,7 @@
 
    <name>RHQ Enterprise Remote Client API</name>
    <description>a set of client APIs used to connect to an RHQ Server and invoke methods on it</description>
-
-   <properties>
-      <persistence-api.version>1.0</persistence-api.version>
-      <hibernate-all.version>1.0.0.Alpha9</hibernate-all.version>
-   </properties>
-
+ 
    <dependencies>
 
       <dependency>
@@ -83,37 +78,13 @@
       </dependency>
 
        <dependency>
-          <groupId>javassist</groupId>
+          <groupId>org.javassist</groupId>
           <artifactId>javassist</artifactId>
        </dependency>
-
-      <dependency>
-         <groupId>javax.persistence</groupId>
-         <artifactId>persistence-api</artifactId>
-         <version>${persistence-api.version}</version>
-         <exclusions>
-            <exclusion>
-              <groupId>hibernate-annotations</groupId>
-              <artifactId>hibernate-annotations</artifactId>
-            </exclusion>
-         </exclusions>
-      </dependency>
-
+ 
       <dependency>
          <groupId>commons-logging</groupId>
          <artifactId>commons-logging</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>hibernate-annotations</groupId>
-         <artifactId>hibernate-annotations</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>jboss.jbossws</groupId>
-         <artifactId>jboss-jaxws</artifactId>
-         <version>3.0.1-native-2.0.4.GA</version>
-         <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
       <dependency>

@@ -34,7 +34,6 @@ import java.util.zip.GZIPOutputStream;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
-import javax.xml.namespace.NamespaceContext;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
@@ -238,19 +237,15 @@ public class ExportingInputStream extends InputStream {
      */
     private void exportPrologue(XMLStreamWriter wrt) throws XMLStreamException {
         wrt.setDefaultNamespace(SynchronizationConstants.EXPORT_NAMESPACE);
-        wrt.setPrefix(SynchronizationConstants.EXPORT_NAMESPACE_PREFIX, SynchronizationConstants.EXPORT_NAMESPACE);
-        wrt.setPrefix(SynchronizationConstants.CONFIGURATION_INSTANCE_NAMESPACE_PREFIX, SynchronizationConstants.CONFIGURATION_INSTANCE_NAMESPACE);
-        wrt.setPrefix(SynchronizationConstants.CONFIGURATION_NAMESPACE_PREFIX, SynchronizationConstants.CONFIGURATION_NAMESPACE);
-        
-        NamespaceContext nsContext = SynchronizationConstants.createConfigurationExportNamespaceContext();
-
-        wrt.setNamespaceContext(nsContext);
         
         wrt.writeStartDocument();
         wrt.writeStartElement(SynchronizationConstants.EXPORT_NAMESPACE, SynchronizationConstants.CONFIGURATION_EXPORT_ELEMENT);
-        wrt.writeNamespace(SynchronizationConstants.CONFIGURATION_INSTANCE_NAMESPACE_PREFIX, ConfigurationInstanceDescriptorUtil.NS_CONFIGURATION_INSTANCE);
-        wrt.writeNamespace(SynchronizationConstants.CONFIGURATION_NAMESPACE_PREFIX, SynchronizationConstants.CONFIGURATION_NAMESPACE);
 
+        wrt.writeNamespace(SynchronizationConstants.CONFIGURATION_INSTANCE_NAMESPACE_PREFIX,
+            ConfigurationInstanceDescriptorUtil.NS_CONFIGURATION_INSTANCE);
+        wrt.writeNamespace(SynchronizationConstants.CONFIGURATION_NAMESPACE_PREFIX,
+            SynchronizationConstants.CONFIGURATION_NAMESPACE);
+        
         writeValidators(wrt);
     }
 

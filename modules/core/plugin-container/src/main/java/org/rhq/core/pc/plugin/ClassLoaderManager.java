@@ -347,6 +347,7 @@ public class ClassLoaderManager {
                             resourceCL = createClassLoader(this.pluginNamesUrls.get(resourcePlugin), additionalJars,
                                 obtainPluginClassLoader(resourcePlugin).getParent());
                         } else {
+                            // TODO: fixme - https://bugzilla.redhat.com/show_bug.cgi?id=863449
                             resourceCL = createClassLoader(this.pluginNamesUrls.get(resourcePlugin), additionalJars,
                                 obtainPluginClassLoader(parentPlugin));
                         }

@@ -27,14 +27,17 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
@@ -43,7 +46,6 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.Cascade;
-import org.hibernate.annotations.CollectionOfElements;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.auth.Subject;
@@ -81,7 +83,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "                         WHERE ss.id = :subjectId )"), //
     @NamedQuery(name = Role.QUERY_DYNAMIC_CONFIG_VALUES, query = "" //
         + "SELECT r.name, r.name FROM Role AS r") })
-@SequenceGenerator(name = "RHQ_ROLE_ID_SEQ", sequenceName = "RHQ_ROLE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_ROLE_ID_SEQ", sequenceName = "RHQ_ROLE_ID_SEQ")
 @Table(name = "RHQ_ROLE")
 public class Role implements Serializable {
     public static final String QUERY_FIND_ALL = "Role.findAll";
@@ -119,10 +121,11 @@ public class Role implements Serializable {
     @ManyToMany(mappedBy = "roles")
     private Set<ResourceGroup> resourceGroups = new HashSet<org.rhq.core.domain.resource.group.ResourceGroup>();
 
-    @Cascade( { org.hibernate.annotations.CascadeType.ALL })
-    @CollectionOfElements(fetch = FetchType.EAGER)
-    @Column(name = "operation")
-    @JoinTable(name = "RHQ_PERMISSION", joinColumns = @JoinColumn(name = "ROLE_ID"))
+    @ElementCollection(targetClass = Permission.class, fetch = FetchType.EAGER)
+    @CollectionTable(name = "RHQ_PERMISSION", joinColumns = { @JoinColumn(name = "ROLE_ID") })
+    @Column(name = "OPERATION", nullable = false)
+    @Enumerated(EnumType.ORDINAL)
+    @Cascade({ org.hibernate.annotations.CascadeType.ALL })
     private Set<Permission> permissions = new HashSet<Permission>();
 
     public Role() {

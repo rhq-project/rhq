@@ -135,10 +135,10 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     @javax.annotation.Resource(mappedName = "java:/JmsXA")
     private ConnectionFactory factory;
 
-    @javax.annotation.Resource(mappedName = "queue/DriftChangesetQueue")
+    @javax.annotation.Resource(mappedName = "java:/queue/DriftChangesetQueue")
     private Queue changesetQueue;
 
-    @javax.annotation.Resource(mappedName = "queue/DriftFileQueue")
+    @javax.annotation.Resource(mappedName = "java:/queue/DriftFileQueue")
     private Queue fileQueue;
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)

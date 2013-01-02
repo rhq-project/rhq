@@ -66,7 +66,7 @@ import org.rhq.core.domain.resource.Agent;
     @NamedQuery(name = Server.QUERY_FIND_BY_NAME, query = "" //
         + "         SELECT s " //
         + "           FROM Server s " //
-        + "LEFT JOIN FETCH s.affinityGroup " //
+        + "LEFT JOIN FETCH s.affinityGroup ag " //
         + "          WHERE s.name = :name"),
     @NamedQuery(name = Server.QUERY_FIND_ALL_CLOUD_MEMBERS, query = "SELECT s FROM Server s WHERE NOT s.operationMode = 'INSTALLED'"),
     @NamedQuery(name = Server.QUERY_FIND_ALL_NORMAL_CLOUD_MEMBERS, query = "SELECT s FROM Server s WHERE s.operationMode = 'NORMAL'"),
@@ -89,8 +89,7 @@ import org.rhq.core.domain.resource.Agent;
     @NamedQuery(name = Server.QUERY_UPDATE_STATUS_BY_NAME, query = "" //
         + " UPDATE Server s " //
         + "    SET s.status = -1 " // negative numbers so that bitmask strat does not conflict with this one
-        + "  WHERE s.status = 0 " // we only need the first guy to set it
-        + "    AND s.name = :identity ") })
+        + "  WHERE s.status = 0 ") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_SERVER_ID_SEQ")
 @Table(name = "RHQ_SERVER")
 public class Server implements Serializable {

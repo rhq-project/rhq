@@ -16,14 +16,6 @@
    <name>RHQ Enterprise Modules</name>
    <description>parent POM for modules comprising the RHQ enterprise edition</description>
 
-   <dependencies>
-      <dependency>
-        <groupId>net.sourceforge.cobertura</groupId>
-        <artifactId>cobertura</artifactId>
-        <version>${cobertura.version}</version>
-     </dependency>
-  </dependencies>
-
    <profiles>
 
       <profile>
@@ -36,7 +28,6 @@
             <module>comm</module>
             <module>agent</module>
             <module>agentupdate</module>
-            <module>server/container-lib</module>
             <module>server/xml-schemas</module>
             <module>server/jar</module>
             <module>server/safe-invoker</module>
@@ -45,10 +36,12 @@
             <module>gui</module>
             <module>server/plugins</module>
             <module>server/ear</module>
+            <module>server/startup-subsystem</module>
+            <module>server/installer</module>
             <module>binding</module>
             <module>scripting</module>
             <module>server/client-api</module>            
-            <module>server/itests</module>
+            <module>server/itests-2</module>
          </modules>
       </profile>
 
@@ -73,10 +66,11 @@
             <module>gui</module>
             <module>server/plugins</module>
             <module>server/ear</module>
-            <module>server/container-lib</module>
-            <module>server/container</module>
+            <module>server/startup-subsystem</module>
+            <module>server/installer</module>
+            <module>server/appserver</module>
             <module>server/client-api</module>
-            <module>server/itests</module>
+            <module>server/itests-2</module>
          </modules>
       </profile>
 

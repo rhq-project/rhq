@@ -34,6 +34,7 @@ public enum JBossProductType {
     EAP("EAP", "JBoss EAP 6", "JBoss Enterprise Application Platform 6", "EAP"),
     JDG("JDG", "JBoss JDG 6", "JBoss Data Grid 6", "Data Grid"),
     EPP("EPP", "JBoss EAP 6", "JBoss Enterprise Portal Platform 6", "EPP"),
+    JPP("JPP", "JBoss EAP 6", "JBoss Portal Platform 6", "JPP"),
 //    EWP("EWP", "JBoss EWP 6", "JBoss Enterprise Web Platform 6", "EWP"),
     SOA("SOA-P", "JBoss SOA-P 6", "JBoss Enterprise SOA Platform (ESB)", "SOAP");
 
@@ -97,8 +98,10 @@ public enum JBossProductType {
                 productType = JBossProductType.EAP;
             } else if (slot.equals("jdg")) {
                 productType = JBossProductType.JDG;
-            } else if (slot.equals("epp")) {
+            } else if (slot.equals("epp")) {//old EPP 
                 productType = JBossProductType.EPP;
+            } else if (slot.equals("jpp")) {//new EPP->JPP plugin
+                productType = JBossProductType.JPP;
             } else if (slot.equals("soa-p")) {
                 productType = JBossProductType.SOA;
             } else {
@@ -122,6 +125,8 @@ public enum JBossProductType {
             productType = JBossProductType.JDG;
         } else if (homeDirName.contains("-epp-")) {
              productType = JBossProductType.EPP;
+        } else if (homeDirName.contains("-jpp-")) {
+            productType = JBossProductType.JPP;
         } else if (homeDirName.contains("soa-p-")) {
              productType = JBossProductType.SOA;
         } else {

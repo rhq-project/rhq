@@ -43,6 +43,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.authz.RequiredPermissions;
 
 /**
  * Manages CRUD operations for {@link AffinityGroup}s
@@ -60,7 +61,8 @@ public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
     @EJB
     private PartitionEventManagerLocal partitionEventManager;
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
     public AffinityGroup getById(Subject subject, int affinityGroupId) {
         AffinityGroup affinityGroup = entityManager.find(AffinityGroup.class, affinityGroupId);
         return affinityGroup;
@@ -132,14 +134,16 @@ public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
         return new PageList<Server>(results, (int) count, pageControl);
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
     public AffinityGroup update(Subject subject, AffinityGroup affinityGroup) throws AffinityGroupException {
         validate(affinityGroup, true);
         return entityManager.merge(affinityGroup);
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
     public PageList<AffinityGroupCountComposite> getComposites(Subject subject, PageControl pageControl) {
         pageControl.initDefaultOrderingField("ag.name");
 
@@ -164,7 +168,8 @@ public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
         }
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
     public int create(Subject subject, AffinityGroup affinityGroup) throws AffinityGroupException {
         validate(affinityGroup, false);
         entityManager.persist(affinityGroup);
@@ -198,7 +203,8 @@ public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
         }
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
     public int delete(Subject subject, Integer[] affinityGroupIds) {
 
         // A deleted affinity group forces a cloud repartitioning. Note, it is ok to request multiple
@@ -229,7 +235,8 @@ public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
         return removedAffinityGroups;
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
     public void addAgentsToGroup(Subject subject, int affinityGroupId, Integer[] agentIds) {
         List<Integer> agentIdsList = Arrays.asList(agentIds);
 
@@ -254,7 +261,8 @@ public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
             .getName());
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
     public void removeAgentsFromGroup(Subject subject, Integer[] agentIds) {
         List<Integer> agentIdsList = Arrays.asList(agentIds);
 
@@ -275,7 +283,8 @@ public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
             PartitionEventType.AGENT_AFFINITY_GROUP_REMOVE.name());
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
     public void addServersToGroup(Subject subject, int affinityGroupId, Integer[] serverIds) {
         List<Integer> serverIdsList = Arrays.asList(serverIds);
 
@@ -300,7 +309,8 @@ public class AffinityGroupManagerBean implements AffinityGroupManagerLocal {
             .getName());
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
     public void removeServersFromGroup(Subject subject, Integer[] serverIds) {
         List<Integer> serverIdsList = Arrays.asList(serverIds);
 

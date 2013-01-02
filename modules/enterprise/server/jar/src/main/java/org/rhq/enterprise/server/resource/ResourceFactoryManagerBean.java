@@ -33,7 +33,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -77,7 +76,6 @@ import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.content.ContentManagerHelper;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
-import org.rhq.enterprise.server.jaxb.adapter.ConfigurationAdapter;
 
 /**
  * Bean to handle interaction with the resource factory subsystem of the plugin container. !! Warning, the factory
@@ -131,9 +129,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
         // There is some inconsistency if we're completing a request that was not in the database
         if (history == null) {
-            log
-                .error("Attempting to complete a request that was not found in the database: "
-                    + response.getRequestId());
+            log.error("Attempting to complete a request that was not found in the database: " + response.getRequestId());
             return;
         }
 
@@ -442,10 +438,11 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         ResourceType newResourceType = entityManager.find(ResourceType.class, newResourceTypeId);
         PackageType newPackageType = contentManager.getResourceCreationPackageType(newResourceTypeId);
 
-        if (!newResourceType.isCreatable() || (newResourceType.getCreationDataType() != ResourceCreationDataType.CONTENT)) {
+        if (!newResourceType.isCreatable()
+            || (newResourceType.getCreationDataType() != ResourceCreationDataType.CONTENT)) {
             throw new RuntimeException("Cannot create " + newResourceType + " child Resource under parent "
-                    + parentResource + ", since the " + newResourceType
-                    + " type does not support content-based Resource creation.");
+                + parentResource + ", since the " + newResourceType
+                + " type does not support content-based Resource creation.");
         }
 
         abortResourceCreationIfExistingSingleton(parentResource, newResourceType);
@@ -494,15 +491,17 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         Agent agent = parentResource.getAgent();
 
         // Check permissions first
-        if (!authorizationManager.hasResourcePermission(user, Permission.CREATE_CHILD_RESOURCES, parentResource.getId())) {
+        if (!authorizationManager
+            .hasResourcePermission(user, Permission.CREATE_CHILD_RESOURCES, parentResource.getId())) {
             throw new PermissionException("User [" + user.getName()
                 + "] does not have permission to create a child resource for resource [" + parentResource + "]");
         }
 
-        if (!resourceType.isCreatable() || (resourceType.getCreationDataType() != ResourceCreationDataType.CONFIGURATION)) {
+        if (!resourceType.isCreatable()
+            || (resourceType.getCreationDataType() != ResourceCreationDataType.CONFIGURATION)) {
             throw new RuntimeException("Cannot create " + resourceType + " child Resource under parent "
-                    + parentResource + ", since the " + resourceType
-                    + " type does not support configuration-based Resource creation.");
+                + parentResource + ", since the " + resourceType
+                + " type does not support configuration-based Resource creation.");
         }
 
         abortResourceCreationIfExistingSingleton(parentResource, resourceType);
@@ -537,24 +536,20 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
     @Override
     public CreateResourceHistory createPackageBackedResource(Subject subject, int parentResourceId,
-        int newResourceTypeId, String newResourceName,//
-        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
-        Configuration pluginConfiguration, String packageName, String packageVersionNumber, Integer architectureId,//
-        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
-        Configuration deploymentTimeConfiguration, byte[] packageBits, Integer timeout) {
+        int newResourceTypeId, String newResourceName, Configuration pluginConfiguration, String packageName,
+        String packageVersionNumber, Integer architectureId, Configuration deploymentTimeConfiguration,
+        byte[] packageBits, Integer timeout) {
 
-        return createResource(subject, parentResourceId, newResourceTypeId, newResourceName,//
-            pluginConfiguration, packageName, packageVersionNumber, architectureId,//
-            deploymentTimeConfiguration, new ByteArrayInputStream(packageBits), (Map<String, String>) null, timeout);
+        return createResource(subject, parentResourceId, newResourceTypeId, newResourceName, pluginConfiguration,
+            packageName, packageVersionNumber, architectureId, deploymentTimeConfiguration, new ByteArrayInputStream(
+                packageBits), (Map<String, String>) null, timeout);
     }
 
     @Override
     public CreateResourceHistory createPackageBackedResource(Subject subject, int parentResourceId,
-        int newResourceTypeId, String newResourceName,//
-        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
-        Configuration pluginConfiguration, String packageName, String packageVersionNumber, Integer architectureId,//
-        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
-        Configuration deploymentTimeConfiguration, byte[] packageBits) {
+        int newResourceTypeId, String newResourceName, Configuration pluginConfiguration, String packageName,
+        String packageVersionNumber, Integer architectureId, Configuration deploymentTimeConfiguration,
+        byte[] packageBits) {
 
         return createResource(subject, parentResourceId, newResourceTypeId, newResourceName, pluginConfiguration,
             packageName, packageVersionNumber, architectureId, deploymentTimeConfiguration, new ByteArrayInputStream(
@@ -563,11 +558,8 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
     @Override
     public CreateResourceHistory createPackageBackedResourceViaPackageVersion(Subject subject, int parentResourceId,
-        int newResourceTypeId, String newResourceName,//
-        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
-        Configuration pluginConfiguration, @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
-        Configuration deploymentTimeConfiguration,//
-        int packageVersionId) {
+        int newResourceTypeId, String newResourceName, Configuration pluginConfiguration,
+        Configuration deploymentTimeConfiguration, int packageVersionId) {
 
         return createPackageBackedResourceViaPackageVersion(subject, parentResourceId, newResourceTypeId,
             newResourceName, pluginConfiguration, deploymentTimeConfiguration, packageVersionId, (Integer) null);
@@ -575,18 +567,14 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
     @Override
     public CreateResourceHistory createPackageBackedResourceViaPackageVersion(Subject subject, int parentResourceId,
-        int newResourceTypeId, String newResourceName,//
-        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
-        Configuration pluginConfiguration,//
-        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
-        Configuration deploymentTimeConfiguration,//
-        int packageVersionId, Integer timeout) {
+        int newResourceTypeId, String newResourceName, Configuration pluginConfiguration,
+        Configuration deploymentTimeConfiguration, int packageVersionId, Integer timeout) {
 
         Resource parentResource = entityManager.find(Resource.class, parentResourceId);
 
         // Check permissions first
-        if (!authorizationManager.hasResourcePermission(subject, Permission.CREATE_CHILD_RESOURCES, parentResource
-            .getId())) {
+        if (!authorizationManager.hasResourcePermission(subject, Permission.CREATE_CHILD_RESOURCES,
+            parentResource.getId())) {
             throw new PermissionException("User [" + subject.getName()
                 + "] does not have permission to create a child resource for resource [" + parentResource + "]");
         }
@@ -594,10 +582,11 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         ResourceType newResourceType = entityManager.find(ResourceType.class, newResourceTypeId);
         PackageVersion packageVersion = entityManager.find(PackageVersion.class, packageVersionId);
 
-        if (!newResourceType.isCreatable() || (newResourceType.getCreationDataType() != ResourceCreationDataType.CONTENT)) {
+        if (!newResourceType.isCreatable()
+            || (newResourceType.getCreationDataType() != ResourceCreationDataType.CONTENT)) {
             throw new RuntimeException("Cannot create " + newResourceType + " child Resource under parent "
-                    + parentResource + ", since the " + newResourceType
-                    + " type does not support content-based Resource creation.");
+                + parentResource + ", since the " + newResourceType
+                + " type does not support content-based Resource creation.");
         }
 
         abortResourceCreationIfExistingSingleton(parentResource, newResourceType);
@@ -620,8 +609,9 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         }
 
         // Persist in separate transaction so it is committed immediately, before the request is sent to the agent
-        CreateResourceHistory persistedHistory = resourceFactoryManager.persistCreateHistory(subject, parentResource
-            .getId(), newResourceType.getId(), newResourceName, packageVersion, deploymentTimeConfiguration);
+        CreateResourceHistory persistedHistory = resourceFactoryManager.persistCreateHistory(subject,
+            parentResource.getId(), newResourceType.getId(), newResourceName, packageVersion,
+            deploymentTimeConfiguration);
 
         // Package into transfer object
         ResourcePackageDetails packageDetails = ContentManagerHelper.packageVersionToDetails(packageVersion);
@@ -639,7 +629,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         } catch (NoResultException nre) {
             return null;
             //eat the exception.  Some of the queries return no results if no package yet exists which is fine.
-        } catch(CannotConnectException e) {
+        } catch (CannotConnectException e) {
             log.error("Error while sending create resource request to agent service", e);
 
             // Submit the error as a failure response
@@ -699,7 +689,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
             resourceFactoryAgentService.deleteResource(request);
 
             return persistedHistory;
-        } catch(CannotConnectException e) {
+        } catch (CannotConnectException e) {
             log.error("Error while sending delete resource request to agent service", e);
 
             // Submit the error as a failure response
@@ -727,14 +717,14 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
             ResourceCriteria resourceCriteria = new ResourceCriteria();
             resourceCriteria.addFilterParentResourceId(parentResource.getId());
             resourceCriteria.addFilterResourceTypeId(resourceType.getId());
-            PageList<Resource> childResourcesOfType = resourceManager.findResourcesByCriteria(subjectManager.getOverlord(),
-                    resourceCriteria);
+            PageList<Resource> childResourcesOfType = resourceManager.findResourcesByCriteria(
+                subjectManager.getOverlord(), resourceCriteria);
             if (childResourcesOfType.size() >= 1) {
                 throw new RuntimeException("Cannot create " + resourceType + " child Resource under parent "
-                        + parentResource + ", since " + resourceType
-                        + " is a singleton type, and there is already a child Resource of that type. "
-                        + "If the existing child Resource corresponds to a managed Resource which no longer exists, "
-                        + "uninventory it and then try again.");
+                    + parentResource + ", since " + resourceType
+                    + " is a singleton type, and there is already a child Resource of that type. "
+                    + "If the existing child Resource corresponds to a managed Resource which no longer exists, "
+                    + "uninventory it and then try again.");
             }
         }
     }

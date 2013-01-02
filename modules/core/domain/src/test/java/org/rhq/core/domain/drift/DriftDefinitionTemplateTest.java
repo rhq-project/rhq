@@ -27,8 +27,7 @@ import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 
 import java.util.List;
 
-import javax.persistence.EntityManager;
-
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -36,7 +35,7 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.shared.ResourceTypeBuilder;
-import org.rhq.test.TransactionCallback;
+import org.rhq.core.domain.shared.TransactionCallback;
 
 public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
 
@@ -44,21 +43,36 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
 
     private ResourceType resourceType;
 
-    @BeforeMethod(groups = {"DriftDefinitionTemplate", "drift.ejb"})
+    @BeforeMethod(groups = { "DriftDefinitionTemplate", "drift.ejb" })
     public void init() {
-        executeInTransaction(new TransactionCallback() {
+        if (!inContainer()) {
+            return;
+        }
+
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
-                purgeDB();
-                createResourceType();
-                getEntityManager().persist(resourceType);
+                try {
+                    purgeDB();
+                    createResourceType();
+                    em.persist(resourceType);
+
+                } catch (Exception e) {
+                    System.out.println("BEFORE METHOD FAILURE, TEST DID NOT RUN!!!");
+                    e.printStackTrace();
+                    throw e;
+                }
             }
         });
     }
 
-    @AfterClass(groups = {"DriftDefinitionTemplate", "drift.ejb"})
+    @AfterClass(groups = { "DriftDefinitionTemplate", "drift.ejb" })
     public void cleanUp() {
-        executeInTransaction(new TransactionCallback() {
+        if (!inContainer()) {
+            return;
+        }
+
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 purgeDB();
@@ -67,11 +81,8 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
     }
 
     private void purgeDB() {
-        EntityManager em = getEntityManager();
-
-        List results =  em.createQuery("select t from ResourceType t where t.name = :name")
-            .setParameter("name", RESOURCE_TYPE_NAME)
-            .getResultList();
+        List<?> results = em.createQuery("select t from ResourceType t where t.name = :name")
+            .setParameter("name", RESOURCE_TYPE_NAME).getResultList();
         if (results.isEmpty()) {
             return;
         }
@@ -83,15 +94,12 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
     }
 
     private void createResourceType() {
-        resourceType = new ResourceTypeBuilder().createResourceType()
-            .withId(0)
-            .withName(DriftDefinitionTemplateTest.class.getName())
-            .withCategory(SERVER)
-            .withPlugin(DriftDefinitionTemplateTest.class.getName().toLowerCase())
-            .build();
+        resourceType = new ResourceTypeBuilder().createResourceType().withId(0)
+            .withName(DriftDefinitionTemplateTest.class.getName()).withCategory(SERVER)
+            .withPlugin(DriftDefinitionTemplateTest.class.getName().toLowerCase()).build();
     }
 
-    @Test(groups = {"DriftDefinitionTemplate", "drift.ejb"})
+    @Test(groups = { "DriftDefinitionTemplate", "drift.ejb" })
     public void saveAndLoadTemplate() {
         final DriftDefinitionTemplate template = new DriftDefinitionTemplate();
         template.setResourceType(resourceType);
@@ -106,24 +114,23 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         driftDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
         template.setTemplateDefinition(driftDef);
 
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
-                EntityManager em = getEntityManager();
                 em.persist(template);
                 em.flush();
                 em.clear();
 
                 DriftDefinitionTemplate savedTemplate = em.find(DriftDefinitionTemplate.class, template.getId());
-                assertNotNull("Failed to persist " + template.toString(false), savedTemplate);
+                Assert.assertNotNull(savedTemplate, "Failed to persist " + template.toString(false));
                 assertDriftTemplateEquals("Failed to persist template", savedTemplate, template);
-                assertPropertiesMatch("Failed to persist " + template.toString(false),
-                    template.getResourceType(), resourceType, "driftDefinitionTemplates");
+                assertPropertiesMatch("Failed to persist " + template.toString(false), template.getResourceType(),
+                    resourceType, "driftDefinitionTemplates");
             }
         });
     }
 
-    @Test(groups = {"DriftDefinitionTemplate", "drift.ejb"})
+    @Test(groups = { "DriftDefinitionTemplate", "drift.ejb" })
     public void deleteTemplate() {
         final DriftDefinitionTemplate template = new DriftDefinitionTemplate();
         template.setResourceType(resourceType);
@@ -138,10 +145,9 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         driftDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
         template.setTemplateDefinition(driftDef);
 
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
-                EntityManager em = getEntityManager();
                 em.persist(template);
                 em.flush();
                 em.clear();
@@ -155,16 +161,16 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
                 assertNull("Failed to delete" + template.toString(false), deletedTemplate);
 
                 Configuration config = em.find(Configuration.class, template.getConfiguration().getId());
-                assertNull("Deleting " + template.toString(false) + " should cascade to its " +
-                    "underlying configuration object", config);
+                assertNull("Deleting " + template.toString(false) + " should cascade to its "
+                    + "underlying configuration object", config);
 
-                assertNotNull("Deleting " + template.toString(false) + " should not cascade to " +
-                    "its parent resource type", em.find(ResourceType.class, resourceType.getId()));
+                assertNotNull("Deleting " + template.toString(false) + " should not cascade to "
+                    + "its parent resource type", em.find(ResourceType.class, resourceType.getId()));
             }
         });
     }
 
-    @Test(groups = {"DriftDefinitionTemplate", "drift.ejb"})
+    @Test(groups = { "DriftDefinitionTemplate", "drift.ejb" })
     public void addTemplateToResourceType() {
         final DriftDefinitionTemplate template = new DriftDefinitionTemplate();
         template.setChangeSetId("1");
@@ -178,18 +184,17 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         driftDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
         template.setTemplateDefinition(driftDef);
 
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
-                EntityManager em = getEntityManager();
                 resourceType.addDriftDefinitionTemplate(template);
                 resourceType = em.merge(resourceType);
                 em.flush();
                 em.clear();
 
                 ResourceType updatedType = em.find(ResourceType.class, resourceType.getId());
-                assertFalse("Failed to persist drift definition template",
-                    updatedType.getDriftDefinitionTemplates().isEmpty());
+                assertFalse("Failed to persist drift definition template", updatedType.getDriftDefinitionTemplates()
+                    .isEmpty());
 
                 DriftDefinitionTemplate savedTemplate = updatedType.getDriftDefinitionTemplates().iterator().next();
                 assertDriftTemplateEquals("Failed to add template to existing resource type", template, savedTemplate);
@@ -197,7 +202,7 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         });
     }
 
-    @Test(groups = {"DriftDefinitionTemplate", "drift.ejb"})
+    @Test(groups = { "DriftDefinitionTemplate", "drift.ejb" })
     public void deleteResourceTypeShouldCascadeToTemplates() {
         final DriftDefinitionTemplate template = new DriftDefinitionTemplate();
         template.setResourceType(resourceType);
@@ -212,10 +217,9 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         driftDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
         template.setTemplateDefinition(driftDef);
 
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
-                EntityManager em = getEntityManager();
 
                 em.persist(template);
                 em.flush();
@@ -232,7 +236,7 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         });
     }
 
-    @Test(groups = {"DriftDefinitionTemplate", "drift.ejb"})
+    @Test(groups = { "DriftDefinitionTemplate", "drift.ejb" })
     public void persistTemplateAndDefinition() {
         final DriftDefinition driftDef = new DriftDefinition(new Configuration());
         driftDef.setName("addDefToTemplate");
@@ -248,10 +252,9 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         template.setChangeSetId("1");
         template.setTemplateDefinition(driftDef);
 
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
-                EntityManager em = getEntityManager();
 
                 template.addDriftDefinition(driftDef);
                 em.persist(template);
@@ -270,7 +273,7 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         });
     }
 
-    @Test(groups = {"DriftDefinitionTemplate", "drift.ejb"})
+    @Test(groups = { "DriftDefinitionTemplate", "drift.ejb" })
     public void deleteTemplateShouldNotCascadeToDefinitions() {
         final DriftDefinition driftDef = new DriftDefinition(new Configuration());
         driftDef.setName("addDefToTemplate");
@@ -286,10 +289,10 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         template.setChangeSetId("1");
         template.setTemplateDefinition(driftDef);
 
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
-                EntityManager em = getEntityManager();
+
                 em.persist(template);
 
                 driftDef.setTemplate(template);
@@ -304,18 +307,17 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
                 em.flush();
                 em.clear();
 
-                assertNotNull("Deleting the template should not delete its definitions",
-                    em.find(DriftDefinition.class, driftDef.getId()));
+                Assert.assertNotNull(em.find(DriftDefinition.class, driftDef.getId()),
+                    "Deleting the template should not delete its definitions");
             }
         });
     }
 
-    private void assertDriftTemplateEquals(String msg, DriftDefinitionTemplate expected,
-        DriftDefinitionTemplate actual) {
-        assertPropertiesMatch(msg + ": basic drift definition template properties do not match", expected,
-                    actual, "id", "resourceType", "ctime", "templateDefinition");
-                assertDriftDefEquals(msg + ": template definitions do not match", expected.getTemplateDefinition(),
-                    actual.getTemplateDefinition());
+    private void assertDriftTemplateEquals(String msg, DriftDefinitionTemplate expected, DriftDefinitionTemplate actual) {
+        assertPropertiesMatch(msg + ": basic drift definition template properties do not match", expected, actual,
+            "id", "resourceType", "ctime", "templateDefinition");
+        assertDriftDefEquals(msg + ": template definitions do not match", expected.getTemplateDefinition(),
+            actual.getTemplateDefinition());
     }
 
     private void assertDriftDefEquals(String msg, DriftDefinition expected, DriftDefinition actual) {

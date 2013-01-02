@@ -49,7 +49,7 @@
                 <configuration>
                     <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
                     <!--
-                        <argLine>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>
+                       <argLine>${jacoco.unit-test.args} -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>
                     -->
                 </configuration>
             </plugin>
@@ -65,7 +65,7 @@
             <properties>
                 <rhq.rootDir>../../../../..</rhq.rootDir>
                 <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-                <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-serverplugins</rhq.deploymentDir>
+                <rhq.deploymentDir>${rhq.containerDir}/${rhq.serverPluginDir}</rhq.deploymentDir>
             </properties>
 
             <build>

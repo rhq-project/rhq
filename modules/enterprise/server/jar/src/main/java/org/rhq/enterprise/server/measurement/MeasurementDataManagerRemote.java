@@ -22,11 +22,6 @@ import java.util.List;
 import java.util.Set;
 
 import javax.ejb.Remote;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
-import javax.jws.soap.SOAPBinding;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
@@ -35,67 +30,25 @@ import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.jaxb.adapter.MeasurementDataNumericHighLowCompositeAdapter;
-import org.rhq.enterprise.server.system.ServerVersion;
 
-@SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface MeasurementDataManagerRemote {
-    @WebMethod
-    MeasurementAggregate getAggregate(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "scheduleId") int scheduleId, //
-        @WebParam(name = "startTime") long startTime, //
-        @WebParam(name = "endTime") long endTime);
 
-    @WebMethod
-    List<MeasurementDataTrait> findTraits(//
-        @WebParam(name = "subject") Subject subject,//
-        @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "definitionId") int definitionId);
+    MeasurementAggregate getAggregate(Subject subject, int scheduleId, long startTime, long endTime);
 
-    @WebMethod
-    List<MeasurementDataTrait> findCurrentTraitsForResource(//
-        @WebParam(name = "subject") Subject subject,//
-        @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "displayType") DisplayType displayType);
+    List<MeasurementDataTrait> findTraits(Subject subject, int resourceId, int definitionId);
 
-    @WebMethod
-    PageList<MeasurementDataTrait> findTraitsByCriteria( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "criteria") MeasurementDataTraitCriteria criteria);
-    
-    @WebMethod
-    Set<MeasurementData> findLiveData(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "definitionIds") int[] definitionIds);
-    
-    @WebMethod
-    Set<MeasurementData> findLiveDataForGroup(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "groupId") int groupId,//
-        @WebParam(name = "resourceId") int[] resourceIds, //
-        @WebParam(name = "definitionIds") int[] definitionIds);
+    List<MeasurementDataTrait> findCurrentTraitsForResource(Subject subject, int resourceId, DisplayType displayType);
 
-    @WebMethod
-    @XmlJavaTypeAdapter(MeasurementDataNumericHighLowCompositeAdapter.class)
-    List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "groupId") int groupId,//
-        @WebParam(name = "definitionId") int definitionId, //
-        @WebParam(name = "beginTime") long beginTime, //
-        @WebParam(name = "endTime") long endTime, //
-        @WebParam(name = "numPoints") int numPoints);
+    PageList<MeasurementDataTrait> findTraitsByCriteria(Subject subject, MeasurementDataTraitCriteria criteria);
 
-    @WebMethod
-    @XmlJavaTypeAdapter(MeasurementDataNumericHighLowCompositeAdapter.class)
-    List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(//
-        @WebParam(name = "subject") Subject subject,//
-        @WebParam(name = "resourceId") int resourceId,//
-        @WebParam(name = "definitionIds") int[] definitionIds,// 
-        @WebParam(name = "beginTime") long beginTime, //
-        @WebParam(name = "endTime") long endTime, //
-        @WebParam(name = "numPoints") int numPoints);
+    Set<MeasurementData> findLiveData(Subject subject, int resourceId, int[] definitionIds);
+
+    Set<MeasurementData> findLiveDataForGroup(Subject subject, int groupId, int[] resourceIds, int[] definitionIds);
+
+    List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(Subject subject, int groupId,
+        int definitionId, long beginTime, long endTime, int numPoints);
+
+    List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(Subject subject, int resourceId,
+        int[] definitionIds, long beginTime, long endTime, int numPoints);
 }

@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.common;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Hashtable;
 
@@ -66,7 +67,7 @@ public class TransactionInterruptInterceptor {
                 InterruptOnTransactionTimeout anno = method.getAnnotation(InterruptOnTransactionTimeout.class);
                 boolean interrupt = (anno != null) ? anno.value() : InterruptOnTransactionTimeout.DEFAULT_VALUE;
                 TransactionInterruptCheckedAction newCheckedAction = new TransactionInterruptCheckedAction(interrupt);
-                previousCheckedAction = currentTx.setCheckedAction(newCheckedAction);
+                previousCheckedAction = setCheckedAction(currentTx, newCheckedAction);
             }
         } catch (Throwable t) {
             LOG.warn("Failure - if the transaction is aborted, its threads cannot be notified. Cause: "
@@ -78,11 +79,34 @@ public class TransactionInterruptInterceptor {
         } finally {
             if (currentTx != null && previousCheckedAction != null) {
                 try {
-                    currentTx.setCheckedAction(previousCheckedAction);
+                    setCheckedAction(currentTx, previousCheckedAction);
                 } catch (Exception e) {
                     // paranoia - this should never happen, but ignore it if it does, keep the request going
                 }
             }
+        }
+    }
+
+    private CheckedAction setCheckedAction(BasicAction currentTx, CheckedAction newCheckedAction) {
+        // In JBossAS 4.2.3, this BasicAction.setCheckedAction was a public method.
+        // Backward compatibility was broken in JBossAS 7 when they limited the scope down to protected
+        // and it no longer returns the old checked action.
+        // We have to do the reflection trick to do what we want now.
+        try {
+            Class<?> clazz = BasicAction.class;
+            Field checkedActionField = clazz.getDeclaredField("_checkedAction");
+            Method setMethod = clazz.getDeclaredMethod("setCheckedAction", CheckedAction.class);
+
+            checkedActionField.setAccessible(true);
+            setMethod.setAccessible(true);
+
+            CheckedAction oldCheckedAction = (CheckedAction) checkedActionField.get(currentTx);
+            setMethod.invoke(currentTx, newCheckedAction);
+
+            return oldCheckedAction;
+        } catch (Exception e) {
+            LOG.warn("failed to set a new CheckedAction on the current tx: " + e);
+            throw new RuntimeException("failed to set a new CheckedAction on the current tx: ", e);
         }
     }
 

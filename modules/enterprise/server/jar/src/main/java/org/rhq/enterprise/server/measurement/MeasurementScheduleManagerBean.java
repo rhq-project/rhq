@@ -51,8 +51,6 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
 
-import org.jboss.annotation.IgnoreDependency;
-
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.H2DatabaseType;
@@ -118,7 +116,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     private DataSource dataSource;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private AgentManagerLocal agentManager;
 
     @EJB
@@ -128,7 +126,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     private ResourceManagerLocal resourceManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private ResourceGroupManagerLocal resourceGroupManager;
 
     @EJB
@@ -1398,7 +1396,6 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     @SuppressWarnings("unchecked")
     public PageList<MeasurementScheduleComposite> getMeasurementScheduleCompositesByContext(Subject subject,
         EntityContext context, PageControl pc) {
-        pc.addDefaultOrderingField("definition.displayName");
 
         // check authorization up front, so that criteria-based queries can run without authz checks
         switch (context.type) {
@@ -1443,7 +1440,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         } else {
             // Do general criteria setup.
             MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
-            //criteria.addFilterDefinitionIds(measurementDefinitionIds);
+
             switch (context.type) {
             case Resource:
                 criteria.addFilterResourceId(context.resourceId);
@@ -1456,12 +1453,36 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 criteria.addFilterAutoGroupResourceTypeId(context.resourceTypeId);
                 break;
             }
+
             criteria.setPageControl(pc); // for primary return list, use passed PageControl
+            pc.addDefaultOrderingField("definition.displayName");
 
             // Get the core definitions.
             CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
 
-            generator.alterProjection(" distinct measurementschedule.definition ");
+            // We previously used the following altered projection for the criteria query: 
+            //
+            //   generator.alterProjection(" distinct orderingField0");
+            //
+            // Hibernate4 no longer allowed for the generated criteria JPQL for this projection:
+            //
+            //    SELECT distinct measurementschedule.definition 
+            //      FROM MeasurementSchedule measurementschedule
+            // LEFT JOIN measurementschedule.definition orderingField0
+            //     WHERE ( measurementschedule.resource.id IN ( :resourceId ) )
+            //  ORDER BY orderingField0.displayName ASC
+            //
+            // It causes:
+            //   SQLGrammarException: ERROR: for SELECT DISTINCT, ORDER BY expressions must appear in select list
+            // 
+            // In essence, using DISTINCT now requires that we use the LEFT JOIN alias in the select
+            // list.  To support this we could probably have made some tricky coding changes to the
+            // generator. But seeing that this would be to support non-default criteria queries (i.e
+            // the altered projection using DISTINCT), of which this is the only one in the code base,
+            // and we are in control of the order by clause, and therefore are predictably working with
+            // the JPQL above, I've chosen to just make a change to the custom altered projection, using
+            // the JPQL to guide me.
+            generator.alterProjection(" distinct orderingField0");
             CriteriaQueryRunner<MeasurementDefinition> queryRunner = new CriteriaQueryRunner(criteria, generator,
                 entityManager);
             definitions = queryRunner.execute();

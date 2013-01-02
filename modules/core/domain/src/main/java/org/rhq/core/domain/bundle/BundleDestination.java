@@ -60,7 +60,7 @@ import org.rhq.core.domain.tagging.Tag;
 @Entity
 @NamedQueries( { @NamedQuery(name = BundleDestination.QUERY_FIND_ALL, query = "SELECT bd FROM BundleDestination bd") //
 })
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_DESTINATION_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_BUNDLE_DESTINATION_ID_SEQ")
 @Table(name = "RHQ_BUNDLE_DESTINATION")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class BundleDestination implements Serializable {

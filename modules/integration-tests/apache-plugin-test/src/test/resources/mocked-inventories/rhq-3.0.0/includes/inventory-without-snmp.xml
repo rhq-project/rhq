@@ -512,7 +512,7 @@
         <propertySimple>
             <id>10876</id>
             <name>snmpAgentPort</name>
-            <stringValue>1610</stringValue>
+            <stringValue>${port1}</stringValue> <!-- intentionally wrong -->
         </propertySimple>
         <propertySimple>
             <id>10877</id>

@@ -22,6 +22,7 @@
    <modules>
       <module>container</module>
       <module>archive</module>
+      <module>suite-extension</module>
    </modules>
 
 </project>

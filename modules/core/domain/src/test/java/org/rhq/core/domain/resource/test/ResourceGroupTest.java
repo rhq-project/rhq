@@ -24,10 +24,6 @@ package org.rhq.core.domain.resource.test;
 
 import java.util.Random;
 
-import javax.persistence.EntityManager;
-
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.Availability;
@@ -41,9 +37,26 @@ public class ResourceGroupTest extends AbstractEJB3Test {
     private Resource newResource;
     private ResourceGroup newGroup;
 
+    @Override
+    protected void beforeMethod() throws Exception {
+        try {
+            newResource = createNewResource();
+            newGroup = newResource.getExplicitGroups().iterator().next();
+        } catch (Throwable t) {
+            // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
+            // and throw a cryptic NPE (see http://jira.codehaus.org/browse/SUREFIRE-157)!
+            t.printStackTrace();
+            throw new RuntimeException(t);
+        }
+    }
+
+    @Override
+    protected void afterMethod() throws Exception {
+        deleteNewResource(newResource);
+    }
+
     @Test(groups = "integration.ejb3")
     public void testCreate() throws Exception {
-        EntityManager em = getEntityManager();
         getTransactionManager().begin();
         try {
             assert newResource != null;
@@ -65,11 +78,8 @@ public class ResourceGroupTest extends AbstractEJB3Test {
 
     private Resource createNewResource() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
-
         Resource resource;
 
-        try {
             try {
                 ResourceType resourceType = new ResourceType("plat" + System.currentTimeMillis(), "test",
                     ResourceCategory.PLATFORM, null);
@@ -82,16 +92,14 @@ public class ResourceGroupTest extends AbstractEJB3Test {
                 ResourceGroup group = new ResourceGroup("testgroupRG" + System.currentTimeMillis(), resourceType);
                 em.persist(group);
                 group.addExplicitResource(resource);
+
+            getTransactionManager().commit();
+
             } catch (Exception e) {
                 System.out.println(e);
                 getTransactionManager().rollback();
                 throw e;
             }
-
-            getTransactionManager().commit();
-        } finally {
-            em.close();
-        }
 
         return resource;
     }
@@ -99,7 +107,7 @@ public class ResourceGroupTest extends AbstractEJB3Test {
     private void deleteNewResource(Resource resource) throws Exception {
         if (resource != null) {
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
+
             try {
                 ResourceType type = em.find(ResourceType.class, resource.getResourceType().getId());
                 Resource res = em.find(Resource.class, resource.getId());
@@ -122,27 +130,8 @@ public class ResourceGroupTest extends AbstractEJB3Test {
                 }
 
                 throw e;
-            } finally {
-                em.close();
             }
         }
     }
 
-    @BeforeMethod
-    public void beforeMethod() throws Exception {
-        try {
-            newResource = createNewResource();
-            newGroup = newResource.getExplicitGroups().iterator().next();
-        } catch (Throwable t) {
-            // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
-            // and throw a cryptic NPE (see http://jira.codehaus.org/browse/SUREFIRE-157)!
-            t.printStackTrace();
-            throw new RuntimeException(t);
-        }
-    }
-
-    @AfterMethod
-    public void afterMethod() throws Exception {
-        deleteNewResource(newResource);
-    }
 }

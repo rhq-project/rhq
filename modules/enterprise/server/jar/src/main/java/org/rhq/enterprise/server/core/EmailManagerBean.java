@@ -87,7 +87,7 @@ public class EmailManagerBean implements EmailManagerLocal {
      */
     private static final String TEMPLATE_TOKEN_ALERT_URL = "@@@ALERT_URL@@@";
 
-    @Resource(mappedName = "java:/Mail")
+    @Resource(mappedName = "java:jboss/mail/Default")
     private Session mailSession;
 
     /**

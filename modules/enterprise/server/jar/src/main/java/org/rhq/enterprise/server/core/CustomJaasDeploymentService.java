@@ -36,11 +36,16 @@ import javax.security.auth.login.AppConfigurationEntry;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.as.controller.client.ModelControllerClient;
+
+import org.rhq.common.jbossas.client.controller.SecurityDomainJBossASClient;
+import org.rhq.common.jbossas.client.controller.SecurityDomainJBossASClient.LoginModuleRequest;
 import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.core.jaas.JDBCLoginModule;
 import org.rhq.enterprise.server.core.jaas.JDBCPrincipalCheckLoginModule;
 import org.rhq.enterprise.server.core.jaas.LdapLoginModule;
+import org.rhq.enterprise.server.core.service.ManagementService;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory;
 
@@ -49,8 +54,6 @@ import org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory;
  * module is only deployed if LDAP is enabled in the RHQ configuration.
  */
 public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceMBean, MBeanRegistration {
-    private static final String AUTH_METHOD = "addAppConfig";
-    private static final String AUTH_OBJECTNAME = "jboss.security:service=XMLLoginConfig";
 
     private Log log = LogFactory.getLog(CustomJaasDeploymentService.class.getName());
     private MBeanServer mbeanServer = null;
@@ -102,40 +105,55 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
     public void postDeregister() {
     }
 
+    /**
+     * Will register the necessary JAAS login Modules.  The RHQ_USER_SECURITY_DOMAIN will be created, or recreated
+     * if it already exists.  This allows us to add/remove ldap support as it is enabled or disabled. 
+     * 
+     * @param systemConfig
+     * @throws Exception
+     */
     private void registerJaasModules(Properties systemConfig) throws Exception {
-        List<AppConfigurationEntry> configEntries = new ArrayList<AppConfigurationEntry>();
-        AppConfigurationEntry ace;
-        Map<String, String> configOptions;
 
+        ModelControllerClient mcc = null;
         try {
-            configOptions = getJdbcOptions(systemConfig);
-            ace = new AppConfigurationEntry(JDBCLoginModule.class.getName(),
-                AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, configOptions);
+            mcc = ManagementService.getClient();
+            final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
 
-            // We always add the JDBC provider to the auth config
-            this.log.info("Enabling RHQ JDBC JAAS Provider...");
-            configEntries.add(ace);
+            if (client.isSecurityDomain(RHQ_USER_SECURITY_DOMAIN)) {
+                log.info("Security domain [" + RHQ_USER_SECURITY_DOMAIN + "] already exists, it will be replaced.");
+            }
 
+            List<LoginModuleRequest> loginModules = new ArrayList<LoginModuleRequest>(3);
+
+            // Always register the RHQ user JDBC login module, this checks the principal against the RHQ DB
+            LoginModuleRequest jdbcLoginModule = new LoginModuleRequest(JDBCLoginModule.class.getName(),
+                AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, getJdbcOptions(systemConfig));
+            loginModules.add(jdbcLoginModule);
+
+            // Optionally register two more login modules for LDAP support. The first ensures
+            // we don't have a DB principal (if we do then the JDBC login module is sufficient.
+            // The second performs the actual LDAP authorization.
             String value = systemConfig.getProperty(SystemSetting.LDAP_BASED_JAAS_PROVIDER.getInternalName());
             boolean isLdapAuthenticationEnabled = (value != null) ? RHQConstants.LDAPJAASProvider.equals(value) : false;
 
             if (isLdapAuthenticationEnabled) {
                 // this is a "gatekeeper" that only allows us to go to LDAP if there is no principal in the DB
-                configOptions = getJdbcOptions(systemConfig);
-                ace = new AppConfigurationEntry(JDBCPrincipalCheckLoginModule.class.getName(),
-                    AppConfigurationEntry.LoginModuleControlFlag.REQUISITE, configOptions);
-                this.log.info("Enabling RHQ JDBC-2 Principal Check JAAS Provider...");
-                configEntries.add(ace);
+                LoginModuleRequest jdbcPrincipalCheckLoginModule = new LoginModuleRequest(
+                    JDBCPrincipalCheckLoginModule.class.getName(),
+                    AppConfigurationEntry.LoginModuleControlFlag.REQUISITE, getJdbcOptions(systemConfig));
+                loginModules.add(jdbcPrincipalCheckLoginModule);
 
-                // this is the LDAP module that checks the LDAP for auth
-                configOptions = getLdapOptions(systemConfig);
+                // this is the LDAP module that checks the LDAP for auth                
+                Map<String, String> ldapModuleOptionProperties = getLdapOptions(systemConfig);
                 try {
-                    validateLdapOptions(configOptions);
+                    validateLdapOptions(ldapModuleOptionProperties);
+
                 } catch (NamingException e) {
                     String descriptiveMessage = null;
                     if (e instanceof AuthenticationException) {
                         descriptiveMessage = "The LDAP integration cannot function because the LDAP Bind credentials"
                             + " for RHQ integration are incorrect. Contact the Administrator:" + e;
+
                     } else {
                         descriptiveMessage = "Problems encountered when communicating with LDAP server."
                             + " Contact the Administrator:" + e;
@@ -143,21 +161,29 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
                     this.log.error(descriptiveMessage, e);
                 }
 
-                //if the ldap properties are set correctly enable the LDAP module anyway
-                ace = new AppConfigurationEntry(LdapLoginModule.class.getName(),
-                    AppConfigurationEntry.LoginModuleControlFlag.REQUISITE, configOptions);
-                this.log.info("Enabling RHQ JDBC-2 LDAP JAAS Provider...");
-                configEntries.add(ace);
-
+                // Enable the login module even if the LDAP properties have issues
+                LoginModuleRequest ldapLoginModule = new LoginModuleRequest(LdapLoginModule.class.getName(),
+                    AppConfigurationEntry.LoginModuleControlFlag.REQUISITE, ldapModuleOptionProperties);
+                loginModules.add(ldapLoginModule);
             }
 
-            AppConfigurationEntry[] config = configEntries.toArray(new AppConfigurationEntry[0]);
+            client.createNewSecurityDomain(RHQ_USER_SECURITY_DOMAIN,
+                loginModules.toArray(new LoginModuleRequest[loginModules.size()]));
+            log.info("Security domain [" + RHQ_USER_SECURITY_DOMAIN + "] created with login modules " + loginModules);
 
-            ObjectName objName = new ObjectName(AUTH_OBJECTNAME);
-            Object obj = mbeanServer.invoke(objName, AUTH_METHOD, new Object[] { SECURITY_DOMAIN_NAME, config },
-                new String[] { "java.lang.String", config.getClass().getName() });
         } catch (Exception e) {
             throw new Exception("Error registering RHQ JAAS modules", e);
+        } finally {
+            safeClose(mcc);
+        }
+    }
+
+    private static void safeClose(final ModelControllerClient mcc) {
+        if (null != mcc) {
+            try {
+                mcc.close();
+            } catch (Exception e) {
+            }
         }
     }
 

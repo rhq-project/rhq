@@ -58,7 +58,7 @@ import javax.persistence.Table;
         + "   AND ( drh.ctime > :startTime OR :startTime IS NULL ) " //
         + "   AND ( drh.mtime < :endTime OR :endTime IS NULL ) "),
     @NamedQuery(name = DeleteResourceHistory.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM DeleteResourceHistory drh WHERE drh.resource.id IN ( :resourceIds ) )") })
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DELETE_RES_HIST_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_DELETE_RES_HIST_ID_SEQ")
 @Table(name = "RHQ_DELETE_RES_HIST")
 public class DeleteResourceHistory implements Serializable {
 

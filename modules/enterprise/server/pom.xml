@@ -25,11 +25,12 @@
       </activation>
       <modules>
         <module>xml-schemas</module>
-        <module>container-lib</module>
         <module>jar</module>
         <module>sars</module>
         <module>plugins</module>
         <module>ear</module>
+        <module>startup-subsystem</module>
+        <module>installer</module>
         <module>safe-invoker</module>
         <module>client-api</module>
         <module>itests</module>
@@ -45,7 +46,6 @@
       </activation>
       <modules>
         <module>xml-schemas</module>
-        <module>container-lib</module>
         <module>jar</module>
         <module>safe-invoker</module>
       </modules>

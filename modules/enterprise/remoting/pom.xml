@@ -18,40 +18,8 @@
    <modules>
       <module>client-api</module>
       <module>client-deps</module>
+      <module>cli</module>      
    </modules>
-
-   <profiles>
-
-      <profile>
-         <id>cli</id>
-
-         <activation>
-            <jdk>1.6</jdk>
-         </activation>
-
-         <modules>
-            <module>cli</module>
-         </modules>
-      </profile>
-
-<!--
-      <profile>
-         <id>enterprise</id>
-
-         <activation>
-            <property>
-               <name>enterprise</name>
-            </property>
-         </activation>
-
-         <modules>
-            <module>webservices</module>
-         </modules>
-      </profile>
--->
-
-
-   </profiles>
 
 </project>
 

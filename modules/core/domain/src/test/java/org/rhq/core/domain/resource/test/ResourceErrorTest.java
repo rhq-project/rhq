@@ -25,11 +25,8 @@ package org.rhq.core.domain.resource.test;
 import java.util.List;
 import java.util.Random;
 
-import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.Availability;
@@ -44,19 +41,18 @@ import org.rhq.core.domain.test.AbstractEJB3Test;
 public class ResourceErrorTest extends AbstractEJB3Test {
     private Resource newResource;
 
-    @BeforeMethod
-    public void beforeMethod() throws Exception {
+    @Override
+    protected void beforeMethod() throws Exception {
         newResource = createNewResource();
     }
 
-    @AfterMethod
-    public void afterMethod() throws Exception {
+    @Override
+    protected void afterMethod() throws Exception {
         deleteNewResource(newResource);
     }
 
     public void testCreateErrors() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
 
         try {
             ResourceError re;
@@ -99,7 +95,6 @@ public class ResourceErrorTest extends AbstractEJB3Test {
             assert q.getResultList().size() == 2;
         } finally {
             getTransactionManager().rollback();
-            em.close();
         }
     }
 
@@ -110,7 +105,6 @@ public class ResourceErrorTest extends AbstractEJB3Test {
         List<ResourceError> errors;
 
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
 
         try {
             q = em.createNamedQuery(ResourceError.QUERY_FIND_BY_RESOURCE_ID);
@@ -143,34 +137,29 @@ public class ResourceErrorTest extends AbstractEJB3Test {
 
         } finally {
             getTransactionManager().rollback();
-            em.close();
         }
     }
 
     private Resource createNewResource() throws Exception {
         getTransactionManager().begin();
-        EntityManager em = getEntityManager();
 
         Resource resource;
 
         try {
-            try {
-                ResourceType resourceType = new ResourceType("plat" + System.currentTimeMillis(), "test",
-                    ResourceCategory.PLATFORM, null);
-                em.persist(resourceType);
-                resource = new Resource("key" + System.currentTimeMillis(), "name", resourceType);
-                resource.setUuid("" + new Random().nextInt());
-                em.persist(resource);
-                System.out.println("Created resource with id " + resource.getId());
-            } catch (Exception e) {
-                System.out.println(e);
-                getTransactionManager().rollback();
-                throw e;
-            }
+            ResourceType resourceType = new ResourceType("plat" + System.currentTimeMillis(), "test",
+                ResourceCategory.PLATFORM, null);
+            em.persist(resourceType);
+            resource = new Resource("key" + System.currentTimeMillis(), "name", resourceType);
+            resource.setUuid("" + new Random().nextInt());
+            em.persist(resource);
+            System.out.println("Created resource with id " + resource.getId());
 
             getTransactionManager().commit();
-        } finally {
-            em.close();
+
+        } catch (Exception e) {
+            System.out.println(e);
+            getTransactionManager().rollback();
+            throw e;
         }
 
         return resource;
@@ -179,7 +168,7 @@ public class ResourceErrorTest extends AbstractEJB3Test {
     private void deleteNewResource(Resource resource) throws Exception {
         if (resource != null) {
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();
+
             try {
                 ResourceType type = em.find(ResourceType.class, resource.getResourceType().getId());
                 Resource res = em.find(Resource.class, resource.getId());
@@ -199,8 +188,6 @@ public class ResourceErrorTest extends AbstractEJB3Test {
                 }
 
                 throw e;
-            } finally {
-                em.close();
             }
         }
     }

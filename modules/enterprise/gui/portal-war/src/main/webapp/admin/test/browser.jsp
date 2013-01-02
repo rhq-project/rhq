@@ -1,6 +1,7 @@
 <%@page contentType="text/html"%>
 <%@page pageEncoding="UTF-8"%>
-<%@ page import="org.hibernate.engine.SessionFactoryImplementor" %>
+<%@ page import="org.hibernate.engine.spi.SessionFactoryImplementor" %>
+<%@ page import="org.hibernate.metadata.ClassMetadata" %>
 <%@ page import="org.rhq.core.domain.server.PersistenceUtility" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.util.SessionUtils" %>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
@@ -46,8 +47,8 @@
     <%
         InitialContext ic = new InitialContext();
 
-        EntityManagerFactory emf = (EntityManagerFactory) ic.lookup("java:/RHQEntityManagerFactory");
-        EntityManager em = ((EntityManagerFactory) ic.lookup("java:/RHQEntityManagerFactory"))
+        EntityManagerFactory emf = (EntityManagerFactory) ic.lookup("java:jboss/RHQEntityManagerFactory");
+        EntityManager em = ((EntityManagerFactory) ic.lookup("java:jboss/RHQEntityManagerFactory"))
                 .createEntityManager();
 
 
@@ -62,7 +63,7 @@
 
         <%
 
-            Map<String, Object> metadata = sfi.getAllClassMetadata();
+            Map<String, ClassMetadata> metadata = sfi.getAllClassMetadata();
             SortedSet<String> classes = new TreeSet<String>(metadata.keySet());
 
         %>

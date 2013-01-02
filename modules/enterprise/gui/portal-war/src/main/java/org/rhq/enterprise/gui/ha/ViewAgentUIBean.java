@@ -32,7 +32,7 @@ import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.cloud.CloudManagerLocal;
+import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -47,7 +47,7 @@ public class ViewAgentUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "ViewAgentUIBean";
 
     private AgentManagerLocal agentManager = LookupUtil.getAgentManager();
-    private CloudManagerLocal cloudManager = LookupUtil.getCloudManager();
+    private TopologyManagerLocal topologyManager = LookupUtil.getTopologyManager();
 
     private Agent agent;
 
@@ -81,7 +81,8 @@ public class ViewAgentUIBean extends PagedDataTableUIBean {
         @Override
         public PageList<FailoverListDetails> fetchPage(PageControl pc) {
             int agentId = getAgent().getId();
-            PageList<FailoverListDetails> pageList = cloudManager.getFailoverListDetailsByAgentId(agentId, pc);
+            PageList<FailoverListDetails> pageList = topologyManager.getFailoverListDetailsByAgentId(
+                EnterpriseFacesContextUtility.getSubject(), agentId, pc);
 
             return pageList;
         }

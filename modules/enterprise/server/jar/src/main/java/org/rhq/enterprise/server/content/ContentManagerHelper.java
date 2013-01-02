@@ -35,7 +35,7 @@ import org.rhq.core.domain.content.PackageVersionFormatDescription;
 import org.rhq.core.domain.content.ValidatablePackageDetailsKey;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
-import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceMBean;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.content.PackageDetailsValidationException;
 import org.rhq.enterprise.server.plugin.pc.content.PackageTypeBehavior;
@@ -71,7 +71,7 @@ public class ContentManagerHelper {
         ContentServerPluginContainer pc = null;
 
         try {
-            ServerPluginServiceManagement mbean = LookupUtil.getServerPluginService();
+            ServerPluginServiceMBean mbean = LookupUtil.getServerPluginService();
             if (!mbean.isMasterPluginContainerStarted()) {
                 throw new IllegalStateException("The master plugin container is not started!");
             }
@@ -95,7 +95,7 @@ public class ContentManagerHelper {
         PackageTypeServerPluginContainer pc = null;
 
         try {
-            ServerPluginServiceManagement mbean = LookupUtil.getServerPluginService();
+            ServerPluginServiceMBean mbean = LookupUtil.getServerPluginService();
             if (!mbean.isMasterPluginContainerStarted()) {
                 throw new IllegalStateException("The master plugin container is not started!");
             }

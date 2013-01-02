@@ -28,6 +28,7 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.Timeout;
 import javax.ejb.Timer;
+import javax.ejb.TimerConfig;
 import javax.ejb.TimerService;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -45,9 +46,9 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.communications.GlobalSuspendCommandListener;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.cloud.CloudManagerLocal;
 import org.rhq.enterprise.server.cloud.PartitionEventManagerLocal;
 import org.rhq.enterprise.server.cloud.StatusManagerLocal;
+import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 
 /**
@@ -78,7 +79,7 @@ public class ServerManagerBean implements ServerManagerLocal {
     private EntityManager entityManager;
 
     @EJB
-    private CloudManagerLocal cloudManager;
+    private TopologyManagerLocal topologyManager;
 
     @EJB
     private StatusManagerLocal agentStatusManager;
@@ -92,9 +93,6 @@ public class ServerManagerBean implements ServerManagerLocal {
     @EJB
     private ServerManagerLocal serverManager;
 
-    private final String TIMER_DATA = "ServerManagerBean.beat";
-
-    @SuppressWarnings("unchecked")
     public void scheduleServerHeartbeat() {
         /* each time the webapp is reloaded, it would create 
          * duplicate events if we don't cancel the existing ones
@@ -109,7 +107,7 @@ public class ServerManagerBean implements ServerManagerLocal {
             }
         }
         // single-action timer that will trigger in 30 seconds
-        timerService.createTimer(30000, TIMER_DATA);
+        timerService.createIntervalTimer(30000L, 30000L, new TimerConfig(null, false));
     }
 
     @Timeout
@@ -118,15 +116,6 @@ public class ServerManagerBean implements ServerManagerLocal {
             serverManager.beat();
         } catch (Throwable t) {
             log.error("Failed to handle cloud heartbeat timer - will try again later. Cause: " + t);
-        } finally {
-            // reschedule ourself to trigger in another 30 seconds        
-            try {
-                timerService.createTimer(30000, TIMER_DATA);
-            } catch (Throwable t) {
-                log
-                    .error("Failed to reschedule cloud heartbeat timer! Server status handling will not work from this point. A server restart may be needed after issue is resolved:"
-                        + t);
-            }
         }
     }
 
@@ -136,16 +125,23 @@ public class ServerManagerBean implements ServerManagerLocal {
     }
 
     public String getIdentity() {
-        String identity = System.getProperty(RHQ_SERVER_NAME_PROPERTY, "");
-        if (identity.equals("")) {
-            return "localhost";
+
+        // The property may return "" so also use "" as the default to ensure we set it to something useful
+        String result = System.getProperty(RHQ_SERVER_NAME_PROPERTY, "");
+
+        if ("".equals(result)) {
+            try {
+                result = InetAddress.getLocalHost().getCanonicalHostName();
+            } catch (UnknownHostException e) {
+                result = "localhost";
+            }
         }
-        return identity;
+        return result;
     }
 
     public List<Agent> getAgents() {
         String identity = getIdentity();
-        List<Agent> results = cloudManager.getAgentsByServerName(identity);
+        List<Agent> results = topologyManager.getAgentsByServerName(identity);
         return results;
     }
 
@@ -156,7 +152,7 @@ public class ServerManagerBean implements ServerManagerLocal {
 
     public boolean getAndClearServerStatus() {
         String identity = getIdentity();
-        Server server = cloudManager.getServerByName(identity);
+        Server server = topologyManager.getServerByName(identity);
         if (server == null) {
             return false; // don't reload caches if we don't know who we are
         }
@@ -167,7 +163,7 @@ public class ServerManagerBean implements ServerManagerLocal {
 
     public Server getServer() throws ServerNotFoundException {
         String identity = getIdentity();
-        Server result = cloudManager.getServerByName(identity);
+        Server result = topologyManager.getServerByName(identity);
         if (result == null) {
             throw new ServerNotFoundException("Could not find server; is the " + RHQ_SERVER_NAME_PROPERTY
                 + " property set in rhq-server.properties?");
@@ -212,16 +208,16 @@ public class ServerManagerBean implements ServerManagerLocal {
                     printWithTrace("establishCurrentServerMode: MAINTENANCE->NORMAL, clearing agent references");
                     clearAgentReferences(server);
 
-                    ServerCommunicationsServiceUtil.getService().safeGetServiceContainer().removeCommandListener(
-                        getMaintenanceModeListener());
+                    ServerCommunicationsServiceUtil.getService().safeGetServiceContainer()
+                        .removeCommandListener(getMaintenanceModeListener());
 
                     log.info("Notified communication layer of server operation mode " + serverMode);
                 }
             } else if (Server.OperationMode.MAINTENANCE == serverMode) {
 
                 // If moving into Maintenance Mode from any other mode then stop processing agent commands
-                ServerCommunicationsServiceUtil.getService().safeGetServiceContainer().addCommandListener(
-                    getMaintenanceModeListener());
+                ServerCommunicationsServiceUtil.getService().safeGetServiceContainer()
+                    .addCommandListener(getMaintenanceModeListener());
 
                 log.info("Notified communication layer of server operation mode " + serverMode);
 

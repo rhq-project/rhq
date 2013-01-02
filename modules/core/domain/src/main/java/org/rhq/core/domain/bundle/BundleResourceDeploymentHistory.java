@@ -53,7 +53,7 @@ import javax.xml.bind.annotation.XmlType;
         + " WHERE brdh.resourceDeployment IN ( SELECT brd FROM BundleResourceDeployment brd WHERE brd.resource.id IN ( :resourceIds ) ) )"),
     @NamedQuery(name = BundleResourceDeploymentHistory.QUERY_FIND_ALL, query = "SELECT brdh FROM BundleResourceDeploymentHistory brdh") //
 })
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_RES_DEP_HIST_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_BUNDLE_RES_DEP_HIST_ID_SEQ")
 @Table(name = "RHQ_BUNDLE_RES_DEP_HIST")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class BundleResourceDeploymentHistory implements Serializable {

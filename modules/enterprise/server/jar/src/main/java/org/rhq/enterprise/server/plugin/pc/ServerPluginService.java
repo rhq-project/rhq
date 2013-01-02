@@ -23,10 +23,6 @@ import java.io.File;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.ejb.Management;
-import org.jboss.annotation.ejb.Service;
-
-import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -36,9 +32,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  * @author John Mazzitelli
  */
-@Management(ServerPluginServiceManagement.class)
-@Service(objectName = ServerPluginServiceManagement.OBJECT_NAME_STR)
-public class ServerPluginService implements ServerPluginServiceManagement {
+public class ServerPluginService implements ServerPluginServiceMBean {
     private static final Log log = LogFactory.getLog(ServerPluginService.class);
 
     private boolean started;
@@ -119,8 +113,8 @@ public class ServerPluginService implements ServerPluginServiceManagement {
     }
 
     public File getServerPluginsDirectory() {
-        File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
-        File pluginDir = new File(serverHomeDir, "deploy/" + RHQConstants.EAR_FILE_NAME + "/rhq-serverplugins");
+        File earDir = LookupUtil.getCoreServer().getEarDeploymentDir();
+        File pluginDir = new File(earDir, "rhq-serverplugins");
         return pluginDir;
     }
 
@@ -138,7 +132,7 @@ public class ServerPluginService implements ServerPluginServiceManagement {
         File pluginDir = getServerPluginsDirectory();
 
         File serverDataDir = LookupUtil.getCoreServer().getJBossServerDataDir();
-        File dataDir = new File(serverDataDir, "server-plugins");
+        File dataDir = new File(serverDataDir, "rhq-masterpc-server-plugins");
         dataDir.mkdirs(); // make sure the data directory exists
 
         File tmpDir = LookupUtil.getCoreServer().getJBossServerTempDir();

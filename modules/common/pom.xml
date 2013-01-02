@@ -14,40 +14,12 @@
    <name>RHQ Common Plugin Libraries</name>
    <description>parent POM for all RHQ common plugin libraries</description>
 
-   <properties>
-      <hibernate-all.version>1.0.0.Alpha9</hibernate-all.version>
-      <persistence-api.version>1.0</persistence-api.version>
-   </properties>
-
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>rhq-core-domain</artifactId>
          <version>${project.version}</version>
          <scope>provided</scope> <!-- by PC -->
-      </dependency>
-
-
-      <!--
-         TODO: This is a fix for the Javac bug requiring annotations to be available when compiling dependent classes.
-         It is fixed in JDK 6.
-      -->
-      <dependency>
-         <groupId>javax.persistence</groupId>
-         <artifactId>persistence-api</artifactId>
-         <version>${persistence-api.version}</version>
-         <scope>provided</scope> <!-- by ON container -->
-      </dependency>
-
-      <!--
-         TODO: This is a fix for the Javac bug requiring annotations to be available when compiling dependent classes;
-         it is fixed in JDK 6.
-      -->
-      <dependency>
-         <groupId>jboss.jboss-embeddable-ejb3</groupId>
-         <artifactId>hibernate-all</artifactId>
-         <version>${hibernate-all.version}</version>
-         <scope>provided</scope> <!-- by ON container -->
       </dependency>
 
    </dependencies>
@@ -57,5 +29,6 @@
       <module>filetemplate-bundle</module>
       <module>ant-bundle</module>
       <module>drift</module>      
+      <module>jboss-as-dmr-client</module>
    </modules>
 </project>

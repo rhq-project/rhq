@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<differences>
+  <difference>
+    <className>**/WebservicesRemote</className>
+    <differenceType>8001</differenceType> <!-- class removed -->
+    <justification>Removed already deprecated web services in this release</justification>
+  </difference>
+  <difference>
+    <className>**/WebServiceTestRemote</className>
+    <differenceType>8001</differenceType> <!-- class removed -->
+    <justification>Removed already deprecated web services in this release</justification>
+  </difference>
+  <difference>
+    <className>**/RemoteWsInvocationHandler</className>
+    <differenceType>8001</differenceType> <!-- class removed -->
+    <justification>Removed already deprecated web services in this release</justification>
+  </difference>
+  <difference>
+    <className>**/ServerVersion</className>
+    <differenceType>8001</differenceType> <!-- class removed -->
+    <justification>Removed already deprecated web services in this release, this file was used for WS client-server
+      compatibility</justification>
+  </difference>
+</differences>

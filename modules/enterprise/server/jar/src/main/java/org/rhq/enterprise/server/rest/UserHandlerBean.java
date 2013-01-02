@@ -27,6 +27,15 @@ import java.util.TreeSet;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.HttpHeaders;
@@ -35,13 +44,24 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiOperation;
+import com.wordnik.swagger.annotations.ApiParam;
+
+import org.jboss.resteasy.annotations.GZIP;
+import org.jboss.resteasy.annotations.cache.Cache;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
+import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
+import org.rhq.enterprise.server.rest.domain.GroupRest;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 import org.rhq.enterprise.server.rest.domain.UserRest;
 
@@ -49,9 +69,12 @@ import org.rhq.enterprise.server.rest.domain.UserRest;
  * Class that deals with user specific stuff
  * @author Heiko W. Rupp
  */
+@Produces({"application/json","application/xml","text/plain","text/html"})
+@Path("/user")
+@Api(value="Api that deals with user related stuff")
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
-public class UserHandlerBean extends AbstractRestBean implements UserHandlerLocal {
+public class UserHandlerBean extends AbstractRestBean {
 
 //    private final Log log = LogFactory.getLog(UserHandlerBean.class);
 
@@ -71,13 +94,17 @@ public class UserHandlerBean extends AbstractRestBean implements UserHandlerLoca
     SubjectManagerLocal subjectManager;
 
     @EJB
-    ResourceHandlerLocal resourceHandler;
-
-    @EJB
     ResourceManagerLocal resourceManager;
 
-    @Override
-    public Response getFavorites(UriInfo uriInfo, HttpHeaders httpHeaders) {
+    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
+    private EntityManager entityManager;
+
+
+    @GZIP
+    @GET
+    @Path("favorites/resource")
+    @ApiOperation(value = "Return a list of favorite resources of the caller", multiValueResponse = true, responseClass = "ResourceWithType")
+    public Response getFavorites(@Context UriInfo uriInfo, @Context HttpHeaders httpHeaders) {
 
         Set<Integer> favIds = getResourceIdsForFavorites();
         List<ResourceWithType> ret = new ArrayList<ResourceWithType>();
@@ -85,10 +112,19 @@ public class UserHandlerBean extends AbstractRestBean implements UserHandlerLoca
         MediaType mediaType = httpHeaders.getAcceptableMediaTypes().get(0);
         for (Integer id : favIds) {
             try {
-                Resource res = resourceManager.getResource(caller,id);
+                /*
+                 * In theory we should not have any bad resource ids in favorites, but ...
+                 * First check if the resource exists, as otherwise resourceManager.getResource()
+                 * throws an exception that seems to kill the transaction and backend connection
+                 * See https://bugzilla.redhat.com/show_bug.cgi?id=886850
+                 */
+                Resource res = entityManager.find(Resource.class,id);
+                if (res!=null) {
+                    res = resourceManager.getResource(caller,id);
 
-                ResourceWithType rwt = fillRWT(res,uriInfo);
-                ret.add(rwt);
+                    ResourceWithType rwt = fillRWT(res,uriInfo);
+                    ret.add(rwt);
+                }
             }
             catch (Exception e) {
                 if (e.getCause()!=null && e.getCause() instanceof ResourceNotFoundException)
@@ -110,27 +146,115 @@ public class UserHandlerBean extends AbstractRestBean implements UserHandlerLoca
 
     }
 
+    @GZIP
+    @GET
+    @Path("favorites/group")
+    @ApiOperation(value = "Return a list of favorite groups of the caller", multiValueResponse = true, responseClass = "GroupRest")
+    public Response getGroupFavorites(@Context UriInfo uriInfo, @Context HttpHeaders httpHeaders) {
 
-    @Override
-    public void addFavoriteResource(int id) {
+        Set<Integer> favIds = getGroupIdsForFavorites();
+        List<GroupRest> ret = new ArrayList<GroupRest>();
+
+        MediaType mediaType = httpHeaders.getAcceptableMediaTypes().get(0);
+        for (Integer id : favIds) {
+            try {
+                 /*
+                 * In theory we should not have any bad group ids in favorites, but ...
+                 * First check if the group exists, as otherwise resourceGroupManager.getResourceGroup()
+                 * throws an exception that seems to kill the transaction and backend connection
+                 * See https://bugzilla.redhat.com/show_bug.cgi?id=886850
+                 */
+                ResourceGroup res = entityManager.find(ResourceGroup.class,id);
+                if (res!=null) {
+                    res = resourceGroupManager.getResourceGroup(caller, id);
+
+                    GroupRest rwt = fillGroup(res, uriInfo);
+                    ret.add(rwt);
+                }
+            }
+            catch (Exception e) {
+                if (e.getCause()!=null && e.getCause() instanceof ResourceGroupNotFoundException)
+                    log.debug("Favorite group with id "+ id + " not found - not returning to the user");
+                else
+                    log.warn("Retrieving group with id " + id + " failed: " + e.getLocalizedMessage());
+            }
+        }
+        Response.ResponseBuilder builder;
+        if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+            builder = Response.ok(renderTemplate("listGroup", ret), mediaType);
+        } else {
+            GenericEntity<List<GroupRest>> list = new GenericEntity<List<GroupRest>>(ret) {
+            };
+            builder = Response.ok(list);
+        }
+
+        return builder.build();
+
+    }
+
+
+    @PUT
+    @Path("favorites/resource/{id}")
+    @ApiOperation(value = "Add a resource as favorite for the caller")
+    public void addFavoriteResource(@ApiParam(name = "id", value = "Id of the resource")
+                @PathParam("id") int resourceId) {
+
+        // Check if the resource exists and throw an error if not
+        fetchResource(resourceId);
+
         Set<Integer> favIds = getResourceIdsForFavorites();
-        if (!favIds.contains(id)) {
-            favIds.add(id);
-            updateFavorites(favIds);
+        if (!favIds.contains(resourceId)) {
+            favIds.add(resourceId);
+            updateResourceFavorites(favIds);
         }
     }
 
-    @Override
-    public void removeResourceFromFavorites(int id) {
+    @PUT
+    @Path("favorites/group/{id}")
+    @ApiOperation(value = "Add a group as favorite for the caller")
+    public void addFavoriteResourceGroup(@ApiParam(name = "id", value = "Id of the group")
+                @PathParam("id") int groupId) {
+
+        // Check if the resource exists and throw an error if not
+        fetchGroup(groupId, false);
+
+        Set<Integer> favIds = getGroupIdsForFavorites();
+        if (!favIds.contains(groupId)) {
+            favIds.add(groupId);
+            updateGroupFavorites(favIds);
+        }
+    }
+
+    @DELETE
+    @Path("favorites/resource/{id}")
+    @ApiOperation(value="Remove a resource from favorites")
+    public void removeResourceFromFavorites(@ApiParam(name="id", value = "Id of the resource")
+                @PathParam("id") int id) {
         Set<Integer> favIds = getResourceIdsForFavorites();
         if (favIds.contains(id)) {
             favIds.remove(id);
-            updateFavorites(favIds);
+            updateResourceFavorites(favIds);
         }
-
     }
 
-    public Response getUserDetails(String loginName, Request request, HttpHeaders headers) {
+    @DELETE
+    @Path("favorites/group/{id}")
+    @ApiOperation(value="Remove a group from favorites")
+    public void removeResourceGroupFromFavorites(@ApiParam(name="id", value = "Id of the group")
+                @PathParam("id") int id) {
+        Set<Integer> favIds = getGroupIdsForFavorites();
+        if (favIds.contains(id)) {
+            favIds.remove(id);
+            updateGroupFavorites(favIds);
+        }
+    }
+
+    @GET
+    @Cache(maxAge = 600)
+    @Path("{id}")
+    @ApiOperation(value = "Get info about a user", responseClass = "UserRest")
+    public Response getUserDetails(@ApiParam(value="Login of the user") @PathParam("id") String loginName,
+                                   @Context Request request, @Context HttpHeaders headers) {
 
         Subject subject = subjectManager.getSubjectByName(loginName);
         if (subject == null)
@@ -154,15 +278,9 @@ public class UserHandlerBean extends AbstractRestBean implements UserHandlerLoca
         return builder.build();
     }
 
-    private void updateFavorites(Set<Integer> favIds) {
+    private void updateResourceFavorites(Set<Integer> favIds) {
         Configuration conf = caller.getUserConfiguration();
-        StringBuilder builder = new StringBuilder();
-        Iterator<Integer> iter = favIds.iterator();
-        while (iter.hasNext()) {
-            builder.append(iter.next());
-            if (iter.hasNext())
-                builder.append('|');
-        }
+        StringBuilder builder = buildFavStringFromSet(favIds);
         PropertySimple prop = conf.getSimple(RESOURCE_HEALTH_RESOURCES);
         if (prop==null) {
             conf.put(new PropertySimple(RESOURCE_HEALTH_RESOURCES,builder.toString()));
@@ -173,9 +291,35 @@ public class UserHandlerBean extends AbstractRestBean implements UserHandlerLoca
         subjectManager.updateSubject(caller,caller);
     }
 
+
+    private void updateGroupFavorites(Set<Integer> favIds) {
+        Configuration conf = caller.getUserConfiguration();
+        StringBuilder builder = buildFavStringFromSet(favIds);
+        PropertySimple prop = conf.getSimple(GROUP_HEALTH_GROUPS);
+        if (prop==null) {
+            conf.put(new PropertySimple(GROUP_HEALTH_GROUPS,builder.toString()));
+        } else {
+            prop.setStringValue(builder.toString());
+        }
+        caller.setUserConfiguration(conf);
+        subjectManager.updateSubject(caller,caller);
+    }
+
     private Set<Integer> getResourceIdsForFavorites() {
         Configuration conf = caller.getUserConfiguration();
         String favsString =  conf.getSimpleValue(RESOURCE_HEALTH_RESOURCES,"");
+        Set<Integer> favIds = getIdsFromFavString(favsString);
+        return favIds;
+    }
+
+    private Set<Integer> getGroupIdsForFavorites() {
+        Configuration conf = caller.getUserConfiguration();
+        String favsString =  conf.getSimpleValue(GROUP_HEALTH_GROUPS,"");
+        Set<Integer> favIds = getIdsFromFavString(favsString);
+        return favIds;
+    }
+
+    private Set<Integer> getIdsFromFavString(String favsString) {
         Set<Integer> favIds = new TreeSet<Integer>();
         if (!favsString.isEmpty()) {
             String[] favStringArray = favsString.split("\\|");
@@ -184,6 +328,17 @@ public class UserHandlerBean extends AbstractRestBean implements UserHandlerLoca
             }
         }
         return favIds;
+    }
+
+    private StringBuilder buildFavStringFromSet(Set<Integer> favIds) {
+        StringBuilder builder = new StringBuilder();
+        Iterator<Integer> iter = favIds.iterator();
+        while (iter.hasNext()) {
+            builder.append(iter.next());
+            if (iter.hasNext())
+                builder.append('|');
+        }
+        return builder;
     }
 
 }

@@ -34,7 +34,7 @@
                 <configuration>
                     <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
                     <!--
-                        <argLine>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>
+                       <argLine>${jacoco.unit-test.args} -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>
                     -->
                 </configuration>
             </plugin>
@@ -50,7 +50,7 @@
             <properties>
                 <rhq.rootDir>../../../../..</rhq.rootDir>
                 <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-                <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-serverplugins</rhq.deploymentDir>
+                <rhq.deploymentDir>${rhq.containerDir}/${rhq.serverPluginDir}</rhq.deploymentDir>
             </properties>
 
             <build>
@@ -118,91 +118,5 @@
                 </plugins>
             </build>
         </profile>
-
-      <profile>
-      <id>cobertura-plugins</id>
-      <activation>
-        <activeByDefault>false</activeByDefault>
-      </activation>
-        <build>
-         <plugins>
-           <plugin>
-             <artifactId>maven-antrun-plugin</artifactId>
-              <dependencies>
-               <dependency>
-                 <groupId>net.sourceforge.cobertura</groupId>
-                 <artifactId>cobertura</artifactId>
-                 <version>${cobertura.version}</version>
-               </dependency>
-             </dependencies>
-             <executions>
-              <execution>
-               <id>cobertura-instrument</id>
-               <phase>pre-integration-test</phase>
-                 <configuration>
-                   <target>
-                   <!-- prepare directory structure for cobertura-->
-                   <mkdir dir="target/cobertura" />
-                   <mkdir dir="target/cobertura/backup" />
-                   <!-- backup all classes so that we can instrument the original classes-->
-                   <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
-                      <fileset dir="target/classes">
-                         <include name="**/*.class" />
-                      </fileset>
-                   </copy>
-                   <!-- create a properties file and save there location of cobertura data file-->
-                   <touch file="target/classes/cobertura.properties" />
-                   <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
-                   <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
-                   <!-- instrument all classes in target/classes directory -->
-                   <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
-                     <fileset dir="${project.build.directory}/classes">
-                        <include name="**/*.class" />
-                      </fileset>
-                    </cobertura-instrument>
-                   </target>
-                 </configuration>
-               <goals>
-                 <goal>run</goal>
-               </goals>
-              </execution>
-              <execution>
-               <id>cobertura-report</id>
-               <phase>post-integration-test</phase>
-                 <configuration>
-                   <target>
-                     <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
-                     <!-- prepare directory structure for cobertura-->
-                     <mkdir dir="target/cobertura" />
-                     <mkdir dir="target/site/cobertura" />
-                     <!-- restore classes from backup folder to classes folder -->
-                     <copy toDir="target/classes" verbose="true" overwrite="true">
-                      <fileset dir="target/cobertura/backup">
-                         <include name="**/*.class" />
-                      </fileset>
-                     </copy>
-                     <!-- delete backup folder-->
-                     <delete dir="target/cobertura/backup" />
-                     <!-- create a code coverage report -->
-                     <cobertura-report format="html" datafile="${project.build.directory}/cobertura/cobertura.ser" destdir="${project.build.directory}/site/cobertura">
-                      <fileset dir="${basedir}/src/main/java">
-                         <include name="**/*.java" />
-                      </fileset>
-                     </cobertura-report>
-                     <!-- delete cobertura.properties file -->
-                     <delete file="target/classes/cobertura.properties" />
-                   </target>
-                 </configuration>
-               <goals>
-                 <goal>run</goal>
-               </goals>
-               </execution>
-            </executions>
-           </plugin>
-          </plugins>
-       </build>
-     </profile>
     </profiles>
-
-
 </project>

@@ -27,7 +27,6 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.ejb.EJBException;
 import javax.faces.application.FacesMessage;
 
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
@@ -178,7 +177,7 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
                     return "nochange";
                 }
             }
-        } catch (EJBException e) {
+        } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Unable to contact the remote agent.", e
                 .getCause());
             return "failure";

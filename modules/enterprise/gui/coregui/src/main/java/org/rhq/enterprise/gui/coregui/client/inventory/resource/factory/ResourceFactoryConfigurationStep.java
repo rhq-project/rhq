@@ -101,7 +101,7 @@ public class ResourceFactoryConfigurationStep extends AbstractWizardStep impleme
                 this.startingConfig = wizard.getNewResourceStartingConfiguration();
 
                 ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
-                configurationService.getOptionValuesForConfigDefinition(def,
+                configurationService.getOptionValuesForConfigDefinition(-1, def,
                     new AsyncCallback<ConfigurationDefinition>() {
                         public void onSuccess(ConfigurationDefinition result) {
                             createAndAddConfigurationEditor(result);
@@ -127,13 +127,13 @@ public class ResourceFactoryConfigurationStep extends AbstractWizardStep impleme
 
     @Override
     public boolean isNextButtonEnabled() {
-        return (editor == null) || ((editor != null) && editor.isValid());
+        return (editor == null) || editor.isValid();
     }
 
     public boolean nextPage() {
         // Finish.
-        if ((editor != null) && editor.isValid()) {
-            wizard.setNewResourceConfiguration(editor.getConfiguration());
+        if ((editor == null) || editor.isValid()) {
+            wizard.setNewResourceConfiguration(editor == null ? new Configuration() : editor.getConfiguration());
             wizard.setNewResourceCreateTimeout(timeoutItem.getValueAsInteger());
             wizard.execute();
             return true;

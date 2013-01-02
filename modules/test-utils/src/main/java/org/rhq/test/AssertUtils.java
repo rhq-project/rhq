@@ -23,13 +23,13 @@
 
 package org.rhq.test;
 
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
 
 public class AssertUtils {
 
@@ -44,7 +44,7 @@ public class AssertUtils {
      * @param <T> The type of the objects to be compared
      */
     public static <T> void assertPropertiesMatch(T expected, T actual, String msg) {
-        assertPropertiesMatch(msg, expected, actual, Collections.<String>emptyList());
+        assertPropertiesMatch(msg, expected, actual, null, Collections.<String> emptyList());
     }
 
     /**
@@ -55,7 +55,20 @@ public class AssertUtils {
      * @param <T> The type of the objects to be compared.
      */
     public static <T> void assertPropertiesMatch(String msg, T expected, T actual, String... ignoredProperties) {
-        assertPropertiesMatch(msg, expected, actual, Arrays.asList(ignoredProperties));
+        assertPropertiesMatch(msg, expected, actual, null, Arrays.asList(ignoredProperties));
+    }
+
+    /**
+     * @param msg An error message
+     * @param expected The expected object to compare against. Should be non-null.
+     * @param actual The actual object to be compared. Should be non-null.
+     * @param ignoredProperties A list of property names to exclude from comparison.
+     * @param maxDifference When matching doubles, the max roundoff difference still considered equal. If null Double.equals() is used. 
+     * @param <T> The type of the objects to be compared.
+     */
+    public static <T> void assertPropertiesMatch(String msg, T expected, T actual, Double maxDifference,
+        String... ignoredProperties) {
+        assertPropertiesMatch(msg, expected, actual, maxDifference, Arrays.asList(ignoredProperties));
     }
 
     /**
@@ -70,12 +83,30 @@ public class AssertUtils {
      * @param <T> The type of the objects to be compared.
      */
     public static <T> void assertPropertiesMatch(String msg, T expected, T actual, List<String> ignoredProperties) {
+        assertPropertiesMatch(msg, expected, actual, null, ignoredProperties);
+    }
+
+    /**
+     * Verifies that all public, accessible properties of the two objects are equal, excluding those specified in the
+     * <code>ignoredProperties</code> argument. This method might be used when you want to compare two objects without
+     * using their <code>equals()</code> methods or when they do not implement <code>equals</code>.
+     *
+     * @param msg An error message
+     * @param expected The expected object to compare against. Should be non-null.
+     * @param actual The actual object to be compared. Should be non-null.
+     * @param maxDifference When matching doubles, the max roundoff difference still considered equal. If null Double.equals() is used.
+     * @param ignoredProperties A list of property names to exclude from comparison.
+     * @param <T> The type of the objects to be compared.
+     */
+    public static <T> void assertPropertiesMatch(String msg, T expected, T actual, Double maxDifference,
+        List<String> ignoredProperties) {
         assertNotNull(expected, "Expected object should not be null");
         assertNotNull(actual, "Actual object should not be null");
 
         PropertyMatcher<T> matcher = new PropertyMatcher<T>();
         matcher.setExpected(expected);
         matcher.setActual(actual);
+        matcher.setMaxDifference(maxDifference);
         matcher.setIgnoredProperties(ignoredProperties);
 
         MatchResult result = matcher.execute();

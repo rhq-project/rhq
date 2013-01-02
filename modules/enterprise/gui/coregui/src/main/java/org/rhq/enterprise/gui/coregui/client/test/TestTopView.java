@@ -33,12 +33,10 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceSelector;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeTreeView;
-import org.rhq.enterprise.gui.coregui.client.test.async.TestAsyncView;
 import org.rhq.enterprise.gui.coregui.client.test.configuration.TestConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.test.configuration.TestGroupConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.test.configuration.TestReadOnlyConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.test.configuration.TestReadOnlyGroupConfigurationView;
-import org.rhq.enterprise.gui.coregui.client.test.i18n.TestPluralizationView;
 import org.rhq.enterprise.gui.coregui.client.test.inventory.TestSearchBarView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -71,6 +69,7 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     private static final ViewName PAGE_SQL = new ViewName("SQL");
     private static final ViewName PAGE_HIBERNATE = new ViewName("Hibernate");
     private static final ViewName PAGE_ENTITY_BROWSER = new ViewName("EntityBrowser");
+    private static final ViewName PAGE_ADMIN_CONTROL = new ViewName("AdminControl");
     private static final ViewName PAGE_EMAIL = new ViewName("EmailTest");
     private static final ViewName PAGE_AGENT = new ViewName("AgentConnectivityTest");
     private static final ViewName PAGE_USER_PREFERENCES = new ViewName("UserPreferences");
@@ -78,10 +77,7 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     // view IDs for Misc section
     private static final ViewName MISC_SECTION_VIEW_ID = new ViewName("Misc");
     private static final ViewName PAGE_MESSAGE_CENTER_TEST = new ViewName("MessageCenterTest");
-    private static final ViewName PAGE_PLURALIZATION_TEST = new ViewName("PluralizationTest");
     private static final ViewName PAGE_NUMBER_FORMAT_TEST = new ViewName("NumberFormatTest");
-    private static final ViewName PAGE_ASYNC = new ViewName("Async");
-    private static final ViewName PAGE_RPC = new ViewName("Rpc");
 
     public TestTopView() {
         // This is a top level view, so our locator id can simply be our view id.
@@ -209,6 +205,12 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
             }
         });
 
+        NavigationItem adminControlItem = new NavigationItem(PAGE_ADMIN_CONTROL, null, new ViewFactory() {
+            public Canvas createView() {
+                return new FullHTMLPane(extendLocatorId(PAGE_ADMIN_CONTROL.getName()), "/admin/test/control.jsp");
+            }
+        });
+
         NavigationItem emailItem = new NavigationItem(PAGE_EMAIL, null, new ViewFactory() {
             public Canvas createView() {
                 return new FullHTMLPane(extendLocatorId(PAGE_EMAIL.getName()), "/admin/test/email.jsp");
@@ -222,7 +224,7 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
         });
 
         return new NavigationSection(SERVERACCESS_SECTION_VIEW_ID, remoteServiceStatisticsItem, sqlItem, hibernateItem,
-            entityBrowserItem, emailItem, agentItem, userPrefsItem);
+            entityBrowserItem, adminControlItem, emailItem, agentItem, userPrefsItem);
     }
 
     private NavigationSection buildMiscSection() {
@@ -238,26 +240,7 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
             }
         });
 
-        NavigationItem pluralizationItem = new NavigationItem(PAGE_PLURALIZATION_TEST, null, new ViewFactory() {
-            public Canvas createView() {
-                return new TestPluralizationView(extendLocatorId(PAGE_PLURALIZATION_TEST.getName()));
-            }
-        });
-
-        NavigationItem asyncItem = new NavigationItem(PAGE_ASYNC, null, new ViewFactory() {
-            public Canvas createView() {
-                return new TestAsyncView(extendLocatorId(PAGE_ASYNC.getName()));
-            }
-        });
-
-        NavigationItem rpcItem = new NavigationItem(PAGE_RPC, null, new ViewFactory() {
-            public Canvas createView() {
-                return new TestRpcView(extendLocatorId(PAGE_RPC.getName()));
-            }
-        });
-
-        return new NavigationSection(MISC_SECTION_VIEW_ID, messageCenterItem, numberFormatItem, pluralizationItem,
-            asyncItem, rpcItem);
+        return new NavigationSection(MISC_SECTION_VIEW_ID, messageCenterItem, numberFormatItem);
     }
 
 }

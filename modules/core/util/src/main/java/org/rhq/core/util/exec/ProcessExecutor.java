@@ -99,7 +99,7 @@ public class ProcessExecutor {
         final Process childProcess = Runtime.getRuntime().exec(cmdline, environment, workingDir);
 
         // redirect the program's streams
-        final RedirectThreads redirect = redirectStreams(process, childProcess);
+        final RedirectThreads redirect = redirectAllStreams(process, childProcess);
         Integer exitCode = null;
 
         // wait if told to - note that the default is not to wait
@@ -173,6 +173,11 @@ public class ProcessExecutor {
 
     }
 
+    @Deprecated
+    protected void redirectStreams(ProcessToStart process, Process childProcess) throws IOException {
+        redirectAllStreams(process, childProcess);
+    }
+
     /**
      * This method redirects the stdout/stderr streams of the child process to the output log file and pipes the
      * contents of the input file (if one was specified) to the stdin stream of the child process.
@@ -187,7 +192,7 @@ public class ProcessExecutor {
      * @throws IOException if failed to pipe data to/from stdin/stdout
      * @return RedirectThreads containing a handle to the threads redirecting output
      */
-    protected RedirectThreads redirectStreams(ProcessToStart process, Process childProcess) throws IOException {
+    protected RedirectThreads redirectAllStreams(ProcessToStart process, Process childProcess) throws IOException {
         // Process.getInputStream is actually the process's stdout output
         // Process.getOutputStream is actually the process's stdin intput
         // Process.getErrorStream is the process's stderr output

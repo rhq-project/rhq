@@ -214,7 +214,7 @@ public class ConfigurationInstanceDescriptorUtil {
 
             setCommonProps(ret, def, true);
 
-            for (PropertyDefinition mem : def.getPropertyDefinitions()) {
+            for (PropertyDefinition mem : def.getOrderedPropertyDefinitions()) {
                 ConfigurationProperty memDef = convertDefinition(mem);
 
                 addToJAXBElementList(ret.getConfigurationProperty(), ConfigurationProperty.class, memDef,
@@ -353,7 +353,7 @@ public class ConfigurationInstanceDescriptorUtil {
             setCommonProps(ret, def, false);
 
             List<JAXBElement<? extends ConfigurationProperty>> elements = ret.getConfigurationProperty();
-            for (PropertyDefinition el : def.getPropertyDefinitions()) {
+            for (PropertyDefinition el : def.getOrderedPropertyDefinitions()) {
                 ConfigurationProperty prop = convertDefinition(el);
                 QName tagName = getTagName(prop);
                 addToJAXBElementList(elements, ConfigurationProperty.class, prop, tagName);

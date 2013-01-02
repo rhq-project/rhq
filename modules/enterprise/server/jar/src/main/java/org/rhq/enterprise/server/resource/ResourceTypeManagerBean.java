@@ -41,8 +41,6 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.IgnoreDependency;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.operation.OperationDefinition;
@@ -81,7 +79,7 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
     private AuthorizationManagerLocal authorizationManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private ResourceManagerLocal resourceManager;
 
     public ResourceType getResourceTypeById(Subject subject, int id) throws ResourceTypeNotFoundException {

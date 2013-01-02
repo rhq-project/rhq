@@ -48,36 +48,11 @@
 
         <!-- 3rd Party Deps -->
 
-        <dependency>
-            <groupId>hibernate</groupId>
-            <artifactId>hibernate3</artifactId>
-            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-            <scope>provided</scope> <!-- by JBossAS -->
-        </dependency>
-
         <!-- used by a test JSP -->
         <dependency>
-            <groupId>hibernate-entitymanager</groupId>
+            <groupId>org.hibernate</groupId>
             <artifactId>hibernate-entitymanager</artifactId>
-            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-            <scope>provided</scope> <!-- by JBossAS -->
-        </dependency>
-
-        <!-- needed for referenced domain entities that use Hibernate annotations (due to JDK5 bug) -->
-        <dependency>
-            <groupId>hibernate-annotations</groupId>
-            <artifactId>hibernate-annotations</artifactId>
-            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-            <scope>provided</scope> <!-- by JBossAS -->
-        </dependency>
-
-
-        <!-- needed for referenced domain entities that use JPA annotations (due to JDK5 bug) -->
-        <dependency>
-            <groupId>javax.persistence</groupId>
-            <artifactId>persistence-api</artifactId>
-            <version>1.0</version>
-            <scope>provided</scope> <!-- by JBossAS -->
+            <scope>provided</scope>
         </dependency>
         
         <!--
@@ -105,21 +80,6 @@
             <version>2.0.1.GA</version>
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
-
-        <!-- needed for EJB3 annotations (e.g. ApplicationException) -->
-        <dependency>
-            <groupId>jboss</groupId>
-            <artifactId>jboss-ejb3x</artifactId>
-            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-            <scope>provided</scope> <!-- by JBossAS -->
-        </dependency>
-
-        <dependency>
-            <groupId>jboss</groupId>
-            <artifactId>jboss-j2ee</artifactId>
-            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-            <scope>provided</scope> <!-- by JBossAS -->
-        </dependency>
 
         <dependency>
             <groupId>commons-codec</groupId>
@@ -206,7 +166,7 @@
                 <rhq.rootDir>../../../..</rhq.rootDir>
                 <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
                 <rhq.deploymentName>${project.build.finalName}.war</rhq.deploymentName>
-                <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/${rhq.deploymentName}</rhq.deploymentDir>
+                <rhq.deploymentDir>${rhq.containerDir}/${rhq.earDeployDir}/${rhq.deploymentName}</rhq.deploymentDir>
             </properties>
 
             <build>

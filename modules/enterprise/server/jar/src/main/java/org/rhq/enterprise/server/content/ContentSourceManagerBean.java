@@ -53,7 +53,7 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.ejb.TransactionTimeout;
+import org.jboss.ejb3.annotation.TransactionTimeout;
 import org.jboss.util.StringPropertyReplacer;
 
 import org.rhq.core.domain.auth.Subject;
@@ -133,7 +133,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 // TODO: all authz checks need to be more fine grained... entitlements need to plug into here somehow?
 @Stateless
-//@WebService(endpointInterface = "org.rhq.enterprise.server.content.ContentSourceManagerRemote")
 public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     /**
      * The location we store the bits and distro files

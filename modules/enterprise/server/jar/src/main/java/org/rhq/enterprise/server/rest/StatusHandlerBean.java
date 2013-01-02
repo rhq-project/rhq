@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,9 +23,18 @@ import java.util.Map;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+
+import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiOperation;
+
+import org.jboss.resteasy.annotations.GZIP;
 
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
@@ -37,9 +46,12 @@ import org.rhq.enterprise.server.system.SystemInfoManagerLocal;
  * Return system status
  * @author Heiko W. Rupp
  */
+@Api(value = "Provide system status information")
+@Path("/status")
+@Produces({"application/json","application/xml","text/html"})
 @Stateless
 @Interceptors(SetCallerInterceptor.class)
-public class StatusHandlerBean extends AbstractRestBean implements StatusHandlerLocal {
+public class StatusHandlerBean extends AbstractRestBean {
 
 
     @EJB
@@ -47,8 +59,13 @@ public class StatusHandlerBean extends AbstractRestBean implements StatusHandler
     @EJB
     ServerManagerLocal serverManager;
 
-    @Override
-    public Response getStatus(HttpHeaders httpHeaders) {
+    @GZIP
+    @ApiOperation(value="Retrieve the current configured state of the server along with some runtime information." +
+            "Caller must have MANAGE_SETTINGS to access this endpoint.",
+    responseClass = "Map 'values' with map of key-value pairs describing the status")
+    @GET
+    @Path("/")
+    public Response getStatus(@Context HttpHeaders httpHeaders) {
 
         Map<String,String> statusMap = infoMgr.getSystemInformation(caller);
         Status status = new Status();
@@ -66,10 +83,11 @@ public class StatusHandlerBean extends AbstractRestBean implements StatusHandler
         return builder.build();
     }
 
-    @Override
+    @GET
+    @Path("/server")
+    @ApiOperation(value = "Get the operation mode of this server")
     public StringValue serverState() {
         Server server = serverManager.getServer();
-        StringValue sv = new StringValue(server.getOperationMode().name());
-        return sv;
+        return new StringValue(server.getOperationMode().name());
     }
 }

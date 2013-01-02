@@ -11,8 +11,6 @@
     <description>Abstraction of different facilities and default configurations for script bindings</description>
 
     <properties>
-        <persistence-api.version>1.0</persistence-api.version>
-        <opencsv.version>1.8</opencsv.version>
         <filtered.location>src/main/java</filtered.location>
     </properties>
 
@@ -23,15 +21,23 @@
            <artifactId>rhq-scripting-api</artifactId>
            <version>${project.version}</version>
         </dependency>
+
+        <dependency>
+           <groupId>${project.groupId}</groupId>
+           <artifactId>rhq-core-util</artifactId>
+           <version>${project.version}</version>
+           <scope>provided</scope> <!-- by PC -->
+        </dependency>
         
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>rhq-core-domain</artifactId>
             <version>${project.version}</version>
+            <!-- I'm not sure this is still necessary due to hibernate now being provided scope in domain (jshaughn -->
             <exclusions>
                 <exclusion>
-                    <groupId>hibernate</groupId>
-                    <artifactId>hibernate3</artifactId>
+                    <groupId>org.hibernate</groupId>
+                    <artifactId>hibernate-entitymanager</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -162,6 +168,10 @@
                     <artifactId>jboss-serialization</artifactId>
                 </exclusion>
                 <exclusion>
+                    <groupId>antlr</groupId>
+                    <artifactId>antlr</artifactId>
+                </exclusion>                
+                <exclusion>
                     <groupId>org.antlr</groupId>
                     <artifactId>antlr</artifactId>
                 </exclusion>
@@ -184,21 +194,6 @@
         </dependency>
 
         <dependency>
-            <groupId>javax.persistence</groupId>
-            <artifactId>persistence-api</artifactId>
-            <version>${persistence-api.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>hibernate-annotations</groupId>
-            <artifactId>hibernate-annotations</artifactId>
-            <!-- NOTE: The version is defined in the root POM's dependencyManagement 
-                section. -->
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>${testng.version}</version>
@@ -208,11 +203,10 @@
         <dependency>
             <groupId>net.sf.opencsv</groupId>
             <artifactId>opencsv</artifactId>
-            <version>${opencsv.version}</version>
         </dependency>
 
         <dependency>
-            <groupId>javassist</groupId>
+            <groupId>org.javassist</groupId>
             <artifactId>javassist</artifactId>
         </dependency>
 
@@ -230,6 +224,12 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+           <groupId>org.hibernate.javax.persistence</groupId>
+           <artifactId>hibernate-jpa-2.0-api</artifactId>
+           <scope>test</scope>    
+      </dependency>
+
     </dependencies>
 
     <build>
@@ -240,9 +240,9 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
-                    <!-- <argLine>-Xdebug -Xnoagent -Djava.compiler=NONE 
+                    <!-- <argLine>${jacoco.unit-test.args} -Xdebug -Xnoagent -Djava.compiler=NONE
                         -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine> -->
-                    <argLine>-Djava.security.manager -Djava.security.policy==${project.build.testOutputDirectory}/allow-all.policy</argLine>    
+                    <argLine>${jacoco.unit-test.args} -Djava.security.manager -Djava.security.policy==${project.build.testOutputDirectory}/allow-all.policy</argLine>
                     <!-- This is important, because some of the tests try to exit the JVM. -->
                     <failIfNoTests>true</failIfNoTests>
                 </configuration>
@@ -259,7 +259,7 @@
             <properties>
                 <rhq.rootDir>../../..</rhq.rootDir>
                 <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-                <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/lib</rhq.deploymentDir>
+                <rhq.deploymentDir>${rhq.containerDir}/${rhq.earLibDir}</rhq.deploymentDir>
             </properties>
 
             <build>
@@ -357,97 +357,6 @@
          </build>
 
       </profile>
-
-        <profile>
-            <id>cobertura-plugins</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <dependencies>
-                            <dependency>
-                                <groupId>net.sourceforge.cobertura</groupId>
-                                <artifactId>cobertura</artifactId>
-                                <version>1.9.4.1</version>
-                            </dependency>
-                        </dependencies>
-                        <executions>
-                            <execution>
-                                <id>cobertura-instrument</id>
-                                <phase>pre-integration-test</phase>
-                                <configuration>
-                                    <target>
-                                        <!-- prepare directory structure 
-                                            for cobertura -->
-                                        <mkdir dir="target/cobertura" />
-                                        <mkdir dir="target/cobertura/backup" />
-                                        <!-- backup all classes so that we 
-                                            can instrument the original classes -->
-                                        <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
-                                            <fileset dir="target/classes">
-                                                <include name="**/*.class" />
-                                            </fileset>
-                                        </copy>
-                                        <!-- create a properties file and 
-                                            save there location of cobertura data file -->
-                                        <touch file="target/classes/cobertura.properties" />
-                                        <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
-                                        <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
-                                        <!-- instrument all classes in target/classes 
-                                            directory -->
-                                        <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
-                                            <fileset dir="${project.build.directory}/classes">
-                                                <include name="**/*.class" />
-                                            </fileset>
-                                        </cobertura-instrument>
-                                    </target>
-                                </configuration>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                            </execution>
-                            <execution>
-                                <id>cobertura-report</id>
-                                <phase>post-integration-test</phase>
-                                <configuration>
-                                    <target>
-                                        <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
-                                        <!-- prepare directory structure 
-                                            for cobertura -->
-                                        <mkdir dir="target/cobertura" />
-                                        <mkdir dir="target/site/cobertura" />
-                                        <!-- restore classes from backup 
-                                            folder to classes folder -->
-                                        <copy toDir="target/classes" verbose="true" overwrite="true">
-                                            <fileset dir="target/cobertura/backup">
-                                                <include name="**/*.class" />
-                                            </fileset>
-                                        </copy>
-                                        <!-- delete backup folder -->
-                                        <delete dir="target/cobertura/backup" />
-                                        <!-- create a code coverage report -->
-                                        <cobertura-report format="html" datafile="${project.build.directory}/cobertura/cobertura.ser" destdir="${project.build.directory}/site/cobertura">
-                                            <fileset dir="${basedir}/src/main/java">
-                                                <include name="**/*.java" />
-                                            </fileset>
-                                        </cobertura-report>
-                                        <!-- delete cobertura.properties 
-                                            file -->
-                                        <delete file="target/classes/cobertura.properties" />
-                                    </target>
-                                </configuration>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
         
       <!-- Profile activated explicitly by command line call, or brew property.  -->
       <profile>

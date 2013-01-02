@@ -15,9 +15,13 @@
    <description>RHQ domain model classes (i.e. POJOs used by both server and agent)</description>
 
    <properties>
-     <!-- dependency versions -->
-     <jboss-embeddable-ejb3.version>1.0.0.Alpha9</jboss-embeddable-ejb3.version>
+     <jboss.zip>${settings.localRepository}/org/jboss/as/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip</jboss.zip>
+     <jboss.unzip.location>${basedir}/target/jboss-as-${jboss.version}</jboss.unzip.location>
      <rhq.internal>false</rhq.internal>
+     <!-- These properties guide which datasources are used for integration tests. Only one should be true.
+          The default is Postgres, specify -Pitest.oracle to use Oracle -->
+     <skip.postgres>false</skip.postgres>
+     <skip.oracle>true</skip.oracle>     
    </properties>
 
 
@@ -30,67 +34,34 @@
          <version>${project.version}</version>
       </dependency>
 
-      <!-- required by PersistenceUtil (provided by AS) -->
-      <!-- required also by hibernate Instrument task. (but use compile scope for this) -->
+      <!-- provided by AS7 -->
       <dependency>
-         <groupId>hibernate</groupId>
-         <artifactId>hibernate3</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>compile</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>hibernate-annotations</groupId>
-         <artifactId>hibernate-annotations</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
-      <!-- required by PersistenceUtil and EJB3 Embedded -->
-      <dependency>
-         <groupId>hibernate-entitymanager</groupId>
+         <groupId>org.hibernate</groupId>
          <artifactId>hibernate-entitymanager</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
+         <scope>provided</scope>
       </dependency>
 
+      <!-- required by PersistenceUtil (provided by AS7) -->
       <dependency>
-         <groupId>javax.persistence</groupId>
-         <artifactId>persistence-api</artifactId>
-         <version>1.0</version>
-         <scope>provided</scope> <!-- by JBossAS -->
+         <groupId>org.hibernate</groupId>
+         <artifactId>hibernate-core</artifactId>
+         <scope>provided</scope>
       </dependency>
 
+      <!-- provided by AS7 -->
       <dependency>
-         <groupId>javax.xml.bind</groupId>
-         <artifactId>jaxb-api</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <groupId>org.hibernate.javax.persistence</groupId>
+         <artifactId>hibernate-jpa-2.0-api</artifactId>
+         <scope>provided</scope>    
       </dependency>
 
-     <dependency>
-       <groupId>jboss</groupId>
-       <artifactId>jboss-ejb3x</artifactId>
-       <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-       <scope>provided</scope> <!-- by JBossAS -->
-     </dependency>
-
-      <!--  needed for hibernate Instrument task
-      <dependency>
-         <groupId>javassist</groupId>
-         <artifactId>javassist</artifactId>
-         <version>${jboss-javassist.version}</version>
-         <scope>runtime</scope>
+      <!-- provided by AS7 -->
+      <dependency>     
+        <groupId>org.jboss.spec.javax.ejb</groupId>
+        <artifactId>jboss-ejb-api_3.1_spec</artifactId>
+        <scope>provided</scope>    
       </dependency>
-      -->
-
-      <!--  needed for hibernate Instrument task
-      <dependency>
-        <groupId>commons-logging</groupId>
-        <artifactId>commons-logging</artifactId>
-        <scope>runtime</scope>
-      </dependency>
-      -->
-
+      
       <!-- needed if you want to use the logging JDBC wrapper
       <dependency>
          <groupId>org.rhq</groupId>
@@ -99,17 +70,14 @@
       </dependency>
       -->
 
-      <!--
-      <!- - so Seam annotations can be used in the entities - ->
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-seam</artifactId>
-         <version>${seam.version}</version>
-         <scope>provided</scope> <!- - by ${rhq.earName} - ->
-      </dependency>
-      -->
-
       <!--================ Test Deps ================-->
+      <dependency>
+          <groupId>org.jboss.as</groupId>
+          <artifactId>jboss-as-dist</artifactId>
+          <type>zip</type>
+          <scope>test</scope>
+      </dependency>
+
       <dependency>
           <groupId>${project.groupId}</groupId>
           <artifactId>test-utils</artifactId>
@@ -118,9 +86,8 @@
       </dependency>
 
       <dependency>
-         <groupId>javassist</groupId>
+         <groupId>org.javassist</groupId>
          <artifactId>javassist</artifactId>
-         <version>${jboss-javassist.version}</version>
          <scope>test</scope>
       </dependency>
 
@@ -132,48 +99,68 @@
       </dependency>
 
       <dependency>
-         <groupId>com.h2database</groupId>
-         <artifactId>h2</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
          <groupId>net.sourceforge.jtds</groupId>
          <artifactId>jtds</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>test</scope>
       </dependency>
 
-      <dependency>
-         <groupId>jboss.jboss-embeddable-ejb3</groupId>
-         <artifactId>jboss-ejb3-all</artifactId>
-         <version>${jboss-embeddable-ejb3.version}</version>
-         <scope>test</scope>
-      </dependency>
+  <dependency>
+    <groupId>org.jboss.spec</groupId>
+    <artifactId>jboss-javaee-6.0</artifactId>
+    <version>${jboss.javaee6.spec.version}</version>
+    <scope>provided</scope>
+    <type>pom</type>
+  </dependency>
+ 
+  <dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-arquillian-container-managed</artifactId>
+    <version>${jboss.version}</version>
+    <scope>test</scope>
+  </dependency>
+         
+  <dependency>
+    <groupId>org.jboss.arquillian.testng</groupId>
+    <artifactId>arquillian-testng-container</artifactId>    
+    <scope>test</scope>
+  </dependency>
 
-<!--
-      <dependency>
-         <groupId>jboss.jboss-embeddable-ejb3</groupId>
-         <artifactId>hibernate-all</artifactId>
-         <version>${jboss-embeddable-ejb3.version}</version>
-         <scope>test</scope>
-      </dependency>
+  <dependency>
+    <groupId>org.jboss.shrinkwrap</groupId>
+    <artifactId>shrinkwrap-impl-base</artifactId>
+    <scope>test</scope>
+  </dependency>
 
-      <dependency>
-         <groupId>jboss.jboss-embeddable-ejb3</groupId>
-         <artifactId>thirdparty-all</artifactId>
-         <version>${jboss-embeddable-ejb3.version}</version>
-         <scope>test</scope>
-      </dependency>
--->
+  <dependency>
+    <groupId>org.jboss.shrinkwrap.resolver</groupId>
+    <artifactId>shrinkwrap-resolver-api</artifactId>
+    <scope>test</scope>
+  </dependency>
+
+  <dependency>
+    <groupId>org.jboss.shrinkwrap.resolver</groupId>
+    <artifactId>shrinkwrap-resolver-api-maven</artifactId>
+    <scope>test</scope>
+  </dependency>
+
+  <dependency>
+    <groupId>org.jboss.shrinkwrap.resolver</groupId>
+    <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
+    <scope>test</scope>
+  </dependency>
+
+  <dependency>
+    <groupId>org.jboss.arquillian.protocol</groupId>
+    <artifactId>arquillian-protocol-servlet</artifactId>
+    <scope>test</scope>
+  </dependency>              
 
       <!-- NOTE: The remaining test deps correspond to the classes contained in hibernate-all.jar and thirdparty-all.jar. -->
 
       <dependency>
          <groupId>antlr</groupId>
          <artifactId>antlr</artifactId>
-         <version>2.7.7</version>
          <scope>test</scope>
       </dependency>
 
@@ -257,6 +244,243 @@
 
       <plugins>
 
+        <plugin>
+          <artifactId>maven-antrun-plugin</artifactId>
+          <executions>
+            <execution>
+              <id>prepare AS container</id>
+              <phase>process-test-resources</phase>
+              <configuration>
+                <target>
+                    <echo>Unzipping JBossAS ${jboss.version} found at ${jboss.zip}</echo>
+                    <unzip src="${jboss.zip}" dest="${jboss.unzip.location}/.." />
+                    <echo>JBossAS ${jboss.version} should now be at: ${jboss.unzip.location}</echo>
+                    <property name="jboss.conf" location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
+                    <echo>Will now add test configuration to JBossAS config file: ${jboss.conf}</echo>
+                    <replace file="${jboss.conf}">
+                      <replacefilter>
+                        <replacetoken>&lt;/drivers></replacetoken>
+                        <replacevalue><![CDATA[
+                    <!-- FOR RHQ TESTING -->
+                    <driver name="postgres" module="org.rhq.postgres">
+                        <xa-datasource-class>org.postgresql.xa.PGXADataSource</xa-datasource-class>
+                    </driver>
+                    <driver name="oracle" module="org.rhq.oracle">
+                        <xa-datasource-class>oracle.jdbc.xa.client.OracleXADataSource</xa-datasource-class>
+                    </driver>
+                </drivers>]]></replacevalue>
+                      </replacefilter>
+                      <replacefilter>
+                        <replacetoken>&lt;/security-domains></replacetoken>
+                        <replacevalue><![CDATA[
+                <!-- FOR RHQ TESTING -->
+                <security-domain name="RHQDSSecurityDomain" cache-type="default">
+                    <authentication>
+                        <login-module code="ConfiguredIdentity" flag="required">
+                            <module-option name="userName" value="${rhq.test.ds.user-name}"/>
+                            <module-option name="principal" value="${rhq.test.ds.user-name}"/>
+                            <module-option name="password" value="${rhq.test.ds.password}"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>
+            </security-domains>]]></replacevalue>
+                      </replacefilter>
+                    </replace>
+
+                    <property name="jboss.modules.dir" location="${jboss.unzip.location}/modules" />
+                    <echo>Adding JDBC modules to ${jboss.modules.dir} ...</echo>
+                    <copy file="${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar"
+                          toDir="${jboss.modules.dir}/org/rhq/oracle/main" failonerror="false" verbose="true" />
+                    <echo file="${jboss.modules.dir}/org/rhq/oracle/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.1" name="org.rhq.oracle">
+    <resources>
+        <resource-root path="ojdbc6-${ojdbc6.version}.jar"/>
+    </resources>
+    <dependencies>
+        <module name="javax.api"/>
+        <module name="javax.transaction.api"/>
+    </dependencies>
+</module>
+]]></echo>
+                    <copy file="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"
+                          toDir="${jboss.modules.dir}/org/rhq/postgres/main" verbose="true" />
+                    <echo file="${jboss.modules.dir}/org/rhq/postgres/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.1" name="org.rhq.postgres">
+    <resources>
+        <resource-root path="postgresql-${postgresql.version}.jar"/>
+    </resources>
+    <dependencies>
+        <module name="javax.api"/>
+        <module name="javax.transaction.api"/>
+    </dependencies>
+</module>
+]]></echo>
+
+                </target>
+              </configuration>
+              <goals>
+                <goal>run</goal>
+              </goals>
+            </execution>
+            
+            <execution>
+              <id>prepare Postgres datasource</id>
+              <phase>process-test-resources</phase>
+              <configuration>
+                <skip>${skip.postgres}</skip>
+                <target>
+                  <property name="jboss.conf" location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
+                  <echo>Will now add test configuration datasource to JBossAS config file: ${jboss.conf}</echo>
+                  <replace file="${jboss.conf}">
+  
+                    <replacefilter>
+                      <replacetoken>&lt;/datasource></replacetoken>
+                      <replacevalue><![CDATA[
+                  </datasource>                    
+                  <!-- FOR RHQ TESTING -->
+                  <datasource jta="false" jndi-name="java:jboss/datasources/NoTxRHQDS" pool-name="NoTxRHQDS" enabled="true" use-java-context="true">
+                      <connection-url>${rhq.test.ds.connection-url}</connection-url>
+                      <connection-property name="char.encoding">UTF-8</connection-property>
+                      <driver>postgres</driver>
+                      <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
+                      <pool>
+                          <min-pool-size>2</min-pool-size>
+                          <max-pool-size>5</max-pool-size>
+                      </pool>
+                      <security>
+                          <security-domain>RHQDSSecurityDomain</security-domain>
+                      </security>
+                      <validation>
+                          <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker"/>
+                          <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter"/>
+                      </validation>
+                      <timeout>
+                          <blocking-timeout-millis>30000</blocking-timeout-millis>
+                          <idle-timeout-minutes>15</idle-timeout-minutes>
+                      </timeout>
+                      <statement>
+                          <prepared-statement-cache-size>75</prepared-statement-cache-size>
+                      </statement>
+                  </datasource>
+                  <xa-datasource jta="true" jndi-name="java:jboss/datasources/RHQDS" pool-name="RHQDS" enabled="true" use-java-context="true">
+                      <xa-datasource-property name="DatabaseName">${rhq.test.ds.db-name}</xa-datasource-property>
+                      <xa-datasource-property name="PortNumber">${rhq.test.ds.port}</xa-datasource-property>
+                      <xa-datasource-property name="ServerName">${rhq.test.ds.server-name}</xa-datasource-property>
+                      <driver>postgres</driver>
+                      <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
+                      <xa-pool>
+                          <min-pool-size>5</min-pool-size>
+                          <max-pool-size>50</max-pool-size>
+                      </xa-pool>
+                      <security>
+                          <security-domain>RHQDSSecurityDomain</security-domain>
+                      </security>
+                      <validation>
+                          <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker"/>
+                          <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter"/>
+                      </validation>
+                      <timeout>
+                          <blocking-timeout-millis>30000</blocking-timeout-millis>
+                          <idle-timeout-minutes>15</idle-timeout-minutes>
+                      </timeout>
+                      <statement>
+                          <prepared-statement-cache-size>75</prepared-statement-cache-size>
+                      </statement> 
+                  </xa-datasource>]]></replacevalue>
+                    </replacefilter>
+  
+                  </replace>
+  
+                </target>
+              </configuration>
+              <goals>
+                <goal>run</goal>
+              </goals>
+            </execution>
+            
+            <execution>
+              <id>prepare Oracle datasource</id>
+              <phase>process-test-resources</phase>
+              <configuration>
+                <skip>${skip.oracle}</skip>
+                <target>
+                  <property name="jboss.conf" location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
+                  <echo>Will now add test configuration datasource to JBossAS config file: ${jboss.conf}</echo>
+                  <replace file="${jboss.conf}">
+  
+                    <replacefilter>
+                      <replacetoken>&lt;/datasource></replacetoken>
+                      <replacevalue><![CDATA[
+                  </datasource>                    
+                  <!-- FOR RHQ TESTING -->
+                  <datasource jta="false" jndi-name="java:jboss/datasources/NoTxRHQDS" pool-name="NoTxRHQDS" enabled="true" use-java-context="true">
+                      <connection-url>${rhq.test.ds.connection-url}</connection-url>
+                      <connection-property name="char.encoding">UTF-8</connection-property>
+                      <driver>oracle</driver>
+                      <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
+                      <pool>
+                          <min-pool-size>2</min-pool-size>
+                          <max-pool-size>5</max-pool-size>
+                      </pool>
+                      <security>
+                          <security-domain>RHQDSSecurityDomain</security-domain>
+                      </security>
+                      <validation>
+                          <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker" />
+                          <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker" />
+                          <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter" />
+                      </validation>
+                      <timeout>
+                          <blocking-timeout-millis>30000</blocking-timeout-millis>
+                          <idle-timeout-minutes>15</idle-timeout-minutes>
+                      </timeout>
+                      <statement>
+                          <prepared-statement-cache-size>75</prepared-statement-cache-size>
+                      </statement>
+                  </datasource>
+                  <xa-datasource jta="true" jndi-name="java:jboss/datasources/RHQDS" pool-name="RHQDS" enabled="true" use-java-context="true">
+                      <xa-datasource-property name="URL">${rhq.test.ds.connection-url}</xa-datasource-property>
+                      <driver>oracle</driver>
+                      <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
+                      <xa-pool>
+                          <min-pool-size>5</min-pool-size>
+                          <max-pool-size>50</max-pool-size>
+                          <!--
+                          Oracle does not like XA connections getting used both inside and outside a JTA transaction.
+                          To workaround the problem you can create separate sub-pools for the different contexts using <no-tx-separate-pools/>
+                          -->                        
+                          <no-tx-separate-pools>true</no-tx-separate-pools>                         
+                      </xa-pool>
+                      <security>
+                          <security-domain>RHQDSSecurityDomain</security-domain>
+                      </security>
+                      <validation>
+                          <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker" />
+                          <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker" />
+                          <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter" />
+                      </validation>
+                      <timeout>
+                          <blocking-timeout-millis>30000</blocking-timeout-millis>
+                          <idle-timeout-minutes>15</idle-timeout-minutes>
+                      </timeout>
+                      <statement>
+                          <prepared-statement-cache-size>75</prepared-statement-cache-size>
+                      </statement>
+                  </xa-datasource>]]></replacevalue>
+                    </replacefilter>
+  
+                  </replace>
+  
+                </target>
+              </configuration>
+              <goals>
+                <goal>run</goal>
+              </goals>
+            </execution>
+            
+          </executions>
+        </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
@@ -275,6 +499,12 @@
           <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
+              <properties>
+                <property>
+                  <name>listener</name>
+                  <value>org.rhq.test.testng.StdoutReporter</value>
+                </property>
+              </properties>            
               <systemProperties>
                 <property>
                   <name>ejbjarDirectory</name>
@@ -285,8 +515,8 @@
                   <value>${rhq.test.ds.hibernate-dialect}</value>
                 </property>
               </systemProperties>
-              <excludes>
-                <exclude>**/ResourceTypeTest.java</exclude>
+              <excludes>                
+                <exclude>**/ResourceTypeTest.java</exclude> <!-- TODO: this should be fixed up and reinstated -->
               </excludes>
               <!-- The below is required for tests to run against Oracle. -->
               <additionalClasspathElements>
@@ -316,7 +546,15 @@
    </build>
 
 
-   <profiles>
+   <profiles>    
+       <!--  If testing against oracle, override the default property settings  -->
+       <profile>
+         <id>itest.oracle</id>
+         <properties>
+           <skip.postgres>true</skip.postgres>
+           <skip.oracle>false</skip.oracle>
+         </properties>
+       </profile>
 
        <profile>
          <id>dev</id>
@@ -325,7 +563,7 @@
             <rhq.rootDir>../../..</rhq.rootDir>
             <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
             <rhq.deploymentName>${project.build.finalName}.jar</rhq.deploymentName>
-            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/${rhq.deploymentName}</rhq.deploymentDir>
+            <rhq.deploymentDir>${rhq.containerDir}/${rhq.earDeployDir}/${rhq.deploymentName}</rhq.deploymentDir>
          </properties>
 
          <build>
@@ -336,6 +574,7 @@
                   <executions>
 
                      <execution>
+                        <id>deploy</id>
                         <phase>process-classes</phase>
                         <configuration>
                            <target>
@@ -345,6 +584,7 @@
                            Using it turned out not t be a current option since the instrumented class carries with
                            it hibernate imports that we can't put in the domain jar since it's used on the Agent and
                            in Remote Java Clients. But this worked, so here ya go...
+                           (update: this may no longer work given the upgrade to H4, also, deps would have changed)                          
                               <taskdef name="instrument" classname="org.hibernate.tool.instrument.javassist.InstrumentTask">
                                  <classpath>
                                     <path refid="maven.runtime.classpath" />
@@ -429,90 +669,19 @@
             </plugins>
          </build>
       </profile>
-
-    <profile>
-      <id>cobertura</id>
-      <activation>
-        <activeByDefault>false</activeByDefault>
-      </activation>
-        <build>
-         <plugins>
-           <plugin>
-             <artifactId>maven-antrun-plugin</artifactId>
-              <dependencies>
-               <dependency>
-                 <groupId>net.sourceforge.cobertura</groupId>
-                 <artifactId>cobertura</artifactId>
-                 <version>${cobertura.version}</version>
-               </dependency>
-             </dependencies>
-             <executions>
-              <execution>
-               <id>cobertura-instrument</id>
-               <phase>process-test-classes</phase>
-                 <configuration>
-                   <target>
-                   <!-- prepare directory structure for cobertura-->
-                   <mkdir dir="target/cobertura" />
-                   <mkdir dir="target/cobertura/backup" />
-                   <!-- backup all classes so that we can instrument the original classes-->
-                   <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
-                      <fileset dir="target/classes">
-                         <include name="**/*.class" />
-                      </fileset>
-                   </copy>
-                   <!-- create a properties file and save there location of cobertura data file-->
-                   <touch file="target/classes/cobertura.properties" />
-                   <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
-                   <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
-                   <!-- instrument all classes in target/classes directory -->
-                   <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
-                     <fileset dir="${project.build.directory}/classes">
-                        <include name="**/*.class" />
-                      </fileset>
-                    </cobertura-instrument>
-                   </target>
-                 </configuration>
-               <goals>
-                 <goal>run</goal>
-               </goals>
-              </execution>
-              <execution>
-               <id>cobertura-report</id>
-               <phase>prepare-package</phase>
-                 <configuration>
-                   <target>
-                     <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
-                     <!-- prepare directory structure for cobertura-->
-                     <mkdir dir="target/cobertura" />
-                     <mkdir dir="target/site/cobertura" />
-                     <!-- restore classes from backup folder to classes folder -->
-                     <copy toDir="target/classes" verbose="true" overwrite="true">
-                      <fileset dir="target/cobertura/backup">
-                         <include name="**/*.class" />
-                      </fileset>
-                     </copy>
-                     <!-- delete backup folder-->
-                     <delete dir="target/cobertura/backup" />
-                     <!-- create a code coverage report -->
-                     <cobertura-report format="html" datafile="${project.build.directory}/cobertura/cobertura.ser" destdir="${project.build.directory}/site/cobertura">
-                      <fileset dir="${basedir}/src/main/java">
-                         <include name="**/*.java" />
-                      </fileset>
-                     </cobertura-report>
-                     <!-- delete cobertura.properties file -->
-                     <delete file="target/classes/cobertura.properties" />
-                   </target>
-                 </configuration>
-               <goals>
-                 <goal>run</goal>
-               </goals>
-               </execution>
-            </executions>
-           </plugin>
-          </plugins>
-       </build>
-     </profile>
+        
+      <profile>
+        <id>itest.debug</id>
+        <activation>
+          <property>
+            <name>itest.debug</name>
+          </property>
+        </activation>
+        <properties>
+          <jboss.vm.args.debug>-Xrunjdwp:transport=dt_socket,address=8798,server=y,suspend=y</jboss.vm.args.debug>
+        </properties>
+      </profile>
+      
    </profiles>
 
 

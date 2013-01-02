@@ -24,7 +24,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
-import java.util.Properties;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -37,8 +36,8 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.crypto.CryptoUtil;
 import org.jboss.security.SimpleGroup;
-import org.jboss.security.Util;
 import org.jboss.security.auth.spi.UsernamePasswordLoginModule;
 
 import org.rhq.enterprise.server.RHQConstants;
@@ -71,16 +70,6 @@ public class JDBCPrincipalCheckLoginModule extends UsernamePasswordLoginModule {
         log.debug("prinipalsQuery=" + principalsQuery);
     }
 
-    private Properties getProperties() {
-        Properties props = new Properties();
-
-        props.put("java.naming.factory.initial", "org.jnp.interfaces.NamingContextFactory");
-        props.put("java.naming.provider.url", "jnp://localhost:1099");
-        props.put("java.naming.factory.url.pkgs", "org.jboss.naming:org.jnp.interfaces");
-
-        return props;
-    }
-
     /**
      * @see org.jboss.security.auth.spi.UsernamePasswordLoginModule#getUsersPassword()
      */
@@ -96,8 +85,7 @@ public class JDBCPrincipalCheckLoginModule extends UsernamePasswordLoginModule {
         ResultSet rs = null;
 
         try {
-            Properties props = getProperties();
-            InitialContext ctx = new InitialContext(props);
+            InitialContext ctx = new InitialContext();
             DataSource ds = (DataSource) ctx.lookup(dsJndiName);
             conn = ds.getConnection();
 
@@ -108,7 +96,7 @@ public class JDBCPrincipalCheckLoginModule extends UsernamePasswordLoginModule {
                 throw new FailedLoginException("username found in principals - do not continue");
             }
 
-            password = Util.createPasswordHash("MD5", "base64", null, null, password); // return back the string entered by the user as a hash
+            password = CryptoUtil.createPasswordHash("MD5", "base64", null, null, password); // return back the string entered by the user as a hash
         } catch (NamingException ex) {
             throw new LoginException(ex.toString(true));
         } catch (SQLException ex) {

@@ -24,11 +24,13 @@ package org.rhq.core.pc.measurement;
 
 import java.lang.management.ManagementFactory;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -81,6 +83,8 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     private static final String COLLECTOR_THREAD_POOL_NAME = "MeasurementManager.collector";
     private static final String SENDER_THREAD_POOL_NAME = "MeasurementManager.sender";
 
+    private static final Random RANDOM = new Random();
+
     static final int FACET_METHOD_TIMEOUT = 30 * 1000; // 30 seconds
 
     static final Log LOG = LogFactory.getLog(MeasurementManager.class);
@@ -119,6 +123,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         super(MeasurementAgentService.class);
     }
 
+    @Override
     public void initialize() {
         LOG.info("Initializing Measurement Manager...");
 
@@ -163,6 +168,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     }
 
     class MeasurementCollectionRequester implements Runnable {
+        @Override
         public void run() {
             try {
                 while (!collectorThreadPool.isShutdown()) {
@@ -284,6 +290,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         }
     }
 
+    @Override
     public void shutdown() {
         PluginContainer pluginContainer = PluginContainer.getInstance();
 
@@ -307,6 +314,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         }
     }
 
+    @Override
     public void setConfiguration(PluginContainerConfiguration configuration) {
         this.configuration = configuration;
     }
@@ -320,16 +328,22 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
      *
      * @param scheduleRequests
      */
+    @Override
     public synchronized void updateCollection(Set<ResourceMeasurementScheduleRequest> scheduleRequests) {
         InventoryManager im = PluginContainer.getInstance().getInventoryManager();
 
         for (ResourceMeasurementScheduleRequest resourceRequest : scheduleRequests) {
             ResourceContainer resourceContainer = im.getResourceContainer(resourceRequest.getResourceId());
             if (resourceContainer != null) {
-                resourceContainer.updateMeasurementSchedule(resourceRequest.getMeasurementSchedules()); // this is where we want to update rather than overwrite, right?
-
-                //                resourceContainer.setMeasurementSchedule(resourceRequest.getMeasurementSchedules());
+                // Update (not overwrite) measurement schedule data ...
+                resourceContainer.updateMeasurementSchedule(resourceRequest.getMeasurementSchedules());
+                // ... and then reschedule collection
                 scheduleCollection(resourceRequest.getResourceId(), resourceRequest.getMeasurementSchedules());
+                if (resourceRequest.getAvailabilitySchedule() != null) {
+                    // Set availability schedule data  if present
+                    // This method also triggers a reschedule of availability check 
+                    resourceContainer.setAvailabilitySchedule(resourceRequest.getAvailabilitySchedule());
+                }
             } else {
                 // This will happen when the server sends down schedules to an agent with a cleaned inventory
                 // Its ok to skip these because the agent will request a reschedule once its been able to synchronize
@@ -355,16 +369,20 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
      *
      * @param scheduleRequests
      */
+    @Override
     public synchronized void scheduleCollection(Set<ResourceMeasurementScheduleRequest> scheduleRequests) {
         InventoryManager im = PluginContainer.getInstance().getInventoryManager();
 
         for (ResourceMeasurementScheduleRequest resourceRequest : scheduleRequests) {
             ResourceContainer resourceContainer = im.getResourceContainer(resourceRequest.getResourceId());
             if (resourceContainer != null) {
-                //                resourceContainer.updateMeasurementSchedule(resourceRequest.getMeasurementSchedules());   // this is where we want to update rather than overwrite, right?
+                // Set measurement schedule data ...
                 resourceContainer.setMeasurementSchedule(resourceRequest.getMeasurementSchedules());
-                resourceContainer.setAvailabilitySchedule(resourceRequest.getAvailabilitySchedule());
+                // ... and then reschedule collection
                 scheduleCollection(resourceRequest.getResourceId(), resourceRequest.getMeasurementSchedules());
+                // Set availability schedule data
+                // This method also triggers a reschedule of availability check 
+                resourceContainer.setAvailabilitySchedule(resourceRequest.getAvailabilitySchedule());
             } else {
                 // This will happen when the server sends down schedules to an agent with a cleaned inventory
                 // It's ok to skip these because the agent will request a reschedule once its been able to synchronize
@@ -411,6 +429,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         }
     }
 
+    @Override
     public synchronized void unscheduleCollection(Set<Integer> resourceIds) {
         Iterator<ScheduledMeasurementInfo> itr = this.scheduledRequests.iterator();
         while (itr.hasNext()) {
@@ -438,6 +457,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     // spinder 12/16/11. BZ 760139. Modified to return empty sets instead of 'null' even for erroneous conditions.
     //         Server side logging or erroneous runtime conditions still occurs, but callers to getRealTimeMeasurementValues 
     //         won't have to additionally check for null values now. This is a safe and better pattern.       
+    @Override
     public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, Set<MeasurementScheduleRequest> requests) {
         if (requests.size() == 0) {
             // There's no need to even call getValues() on the ResourceComponent if the list of metric names is empty.
@@ -494,6 +514,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         return values;
     }
 
+    @Override
     public long getNextExpectedCollectionTime() {
         ScheduledMeasurementInfo nextScheduledMeasurement = this.scheduledRequests.peek();
         if (nextScheduledMeasurement == null) {
@@ -534,23 +555,53 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
      * @param scheduledMeasurementInfos the schedules to reschedule
      */
     public synchronized void reschedule(Set<ScheduledMeasurementInfo> scheduledMeasurementInfos) {
-        reschedule(scheduledMeasurementInfos, 0);
+
+        for (ScheduledMeasurementInfo scheduledMeasurement : scheduledMeasurementInfos) {
+            long interval = scheduledMeasurement.getInterval();
+            scheduledMeasurement.setNextCollection(scheduledMeasurement.getNextCollection() + interval);
+            this.scheduledRequests.offer(scheduledMeasurement);
+        }
     }
 
     /**
-     * Reschedules the given measurement schedules so the next collection occurs in the future.
-     * The next collection will be pushed out by the number of seconds of the schedule's collection
-     * interval plus (or minus) the given adjustment (which is provided in milliseconds).
+     * Reschedules the given [late] measurement schedules so the next collection occurs in the future, and with
+     * some randomization to the nextCollection times. Late collections are those that were not actually
+     * performed due to collection falling behind.  The nextCollection will be set to:
+     * <pre>
+     * Now + 30s + [1..Interval]
+     * 
+     * Where [1..Interval] is some random number of seconds no lower that 1 and no higher than the standard interval
+     * for the measurement.
+     * </pre> 
      *
-     * @param scheduledMeasurementInfos the schedules to reschedule
-     * @param adjustment the number of milliseconds to adjust the next collection time. If 0, the
-     *                   next collection time will be the number of seconds in the future as indicated
-     *                   by the schedule's interval.
+     * @param scheduledMeasurementInfos the late schedules to reschedule  
      */
-    public synchronized void reschedule(Set<ScheduledMeasurementInfo> scheduledMeasurementInfos, long adjustment) {
+    synchronized void rescheduleLateCollections(Set<ScheduledMeasurementInfo> scheduledMeasurementInfos) {
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Rescheduling [" + scheduledMeasurementInfos.size() + "] late collections: "
+                + scheduledMeasurementInfos);
+        }
+
+        long now = System.currentTimeMillis();
         for (ScheduledMeasurementInfo scheduledMeasurement : scheduledMeasurementInfos) {
-            scheduledMeasurement.setNextCollection(scheduledMeasurement.getNextCollection()
-                + scheduledMeasurement.getInterval() + adjustment);
+            // push out 30s from the current time to at least get a minimal 30s interval
+            long nextCollection = now + 30000L;
+
+            // then add a random number of seconds [1..interval].  This will spread out the next collection times to 
+            // hopefully avoid the "hot-spot" that caused us to fall behind.
+            long interval = scheduledMeasurement.getInterval();
+            int maxRandomInterval = (int) (interval / 1000L); // exclusive upper bound
+            long randomInterval = ((RANDOM.nextInt(maxRandomInterval) + 1) * 1000L);
+
+            nextCollection += randomInterval;
+
+            if (LOG.isTraceEnabled()) {
+                LOG.trace("Rescheduling next collection of [" + scheduledMeasurement + "] for "
+                    + new Date(nextCollection));
+            }
+
+            scheduledMeasurement.setNextCollection(nextCollection);
             this.scheduledRequests.offer(scheduledMeasurement);
         }
     }
@@ -595,6 +646,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         return perMinuteValue;
     }
 
+    @Override
     public Map<String, Object> getMeasurementScheduleInfoForResource(int resourceId) {
         Map<String, Object> results = null;
 
@@ -658,10 +710,12 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
 
     // -- MBean monitoring methods
 
+    @Override
     public long getMeasurementsCollected() {
         return this.collectedMeasurements.get();
     }
 
+    @Override
     public long getMeasurementsCollectedPerMinute() {
         long now = System.currentTimeMillis();
 
@@ -684,14 +738,17 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         return ret;
     }
 
+    @Override
     public long getCurrentlyScheduleMeasurements() {
         return this.scheduledRequests.size();
     }
 
+    @Override
     public long getTotalTimeCollectingMeasurements() {
         return this.totalTimeCollecting.get();
     }
 
+    @Override
     public long getLateCollections() {
         return lateCollections.get();
     }
@@ -717,6 +774,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         this.failedCollection.addAndGet(count);
     }
 
+    @Override
     public long getFailedCollections() {
         return failedCollection.get();
     }

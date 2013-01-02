@@ -43,13 +43,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 
-import org.jboss.annotation.IgnoreDependency;
-
 import org.rhq.core.clientapi.server.core.AgentVersion;
 import org.rhq.core.clientapi.server.core.PingRequest;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.composite.SystemSetting;
+import org.rhq.core.domain.criteria.AgentCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.composite.AgentLastAvailabilityPingComposite;
@@ -69,6 +68,8 @@ import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
 
@@ -88,11 +89,11 @@ public class AgentManagerBean implements AgentManagerLocal {
     private EntityManager entityManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private FailoverListManagerLocal failoverListManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private AvailabilityManagerLocal availabilityManager;
 
     @EJB
@@ -102,7 +103,7 @@ public class AgentManagerBean implements AgentManagerLocal {
     private SystemManagerLocal systemManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private SubjectManagerLocal subjectManager;
 
     @EJB
@@ -492,7 +493,7 @@ public class AgentManagerBean implements AgentManagerLocal {
 
     @ExcludeDefaultInterceptors
     public File getAgentUpdateVersionFile() throws Exception {
-        File agentDownloadDir = getAgentDownloadDir();
+        File agentDownloadDir = getAgentDataDownloadDir();
         File versionFile = new File(agentDownloadDir, "rhq-server-agent-versions.properties");
         if (!versionFile.exists()) {
             // we do not have the version properties file yet, let's extract some info and create one
@@ -564,12 +565,38 @@ public class AgentManagerBean implements AgentManagerLocal {
         throw new FileNotFoundException("Missing agent update binary in [" + agentDownloadDir + "]");
     }
 
-    @ExcludeDefaultInterceptors
+    /**
+     * The directory on the server's file system where the agent update binary file is found.
+     *
+     * @return directory where the agent binary downloads are found
+     *
+     * @throws Exception if could not determine the location or it does not exist
+     */
+    // SHOULD BE PRIVATE AND REMOVED FROM LOCAL INTERFACE - NOTHING (OTHER THAN THIS CLASS ITSELF) SHOULD USE THIS
     public File getAgentDownloadDir() throws Exception {
-        File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
-        File agentDownloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/rhq-agent");
+        File earDir = LookupUtil.getCoreServer().getEarDeploymentDir();
+        File agentDownloadDir = new File(earDir, "rhq-downloads/rhq-agent");
         if (!agentDownloadDir.exists()) {
             throw new FileNotFoundException("Missing agent downloads directory at [" + agentDownloadDir + "]");
+        }
+        return agentDownloadDir;
+    }
+
+    /**
+     * The directory on the server's file system where the agent update version file is found.
+     *
+     * @return directory where the agent version file is found
+     *
+     * @throws Exception if could not determine the location or it does not exist
+     */
+    private File getAgentDataDownloadDir() throws Exception {
+        File earDir = LookupUtil.getCoreServer().getJBossServerDataDir();
+        File agentDownloadDir = new File(earDir, "rhq-downloads/rhq-agent");
+        if (!agentDownloadDir.exists()) {
+            agentDownloadDir.mkdirs();
+            if (!agentDownloadDir.exists()) {
+                throw new FileNotFoundException("Missing agent data downloads directory at [" + agentDownloadDir + "]");
+            }
         }
         return agentDownloadDir;
     }
@@ -629,6 +656,13 @@ public class AgentManagerBean implements AgentManagerLocal {
         }
 
         return pingResults;
+    }
+    
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public PageList<Agent> findAgentsByCriteria(Subject subject, AgentCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        CriteriaQueryRunner<Agent> runner = new CriteriaQueryRunner<Agent>(criteria, generator, entityManager);
+        return runner.execute();
     }
 
 }

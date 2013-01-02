@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server xmlns="urn:jboss:service:7.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:jboss:service:7.0 jboss-service_7_0.xsd">
+
+    <mbean code="org.rhq.enterprise.server.core.CustomJaasDeploymentService"
+           name="rhq:service=CustomJaasDeployment" />
+    
+    <mbean code="org.rhq.enterprise.server.core.CoreServer"
+           name="rhq:service=CoreServer" />
+
+    <mbean code="org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor"
+           name="rhq:service=MeasurementMonitor" />
+
+    <mbean code="org.rhq.enterprise.server.alert.engine.mbean.AlertConditionCacheMonitor"
+           name="rhq:service=AlertConditionCacheMonitor" />
+
+    <mbean code="org.rhq.enterprise.server.resource.group.definition.mbean.GroupDefinitionRecalculationThreadMonitor"
+           name="rhq:service=GroupDefinitionRecalculationThreadMonitor" />
+
+    <mbean code="org.rhq.enterprise.server.core.plugin.PluginDeploymentScanner"
+           name="rhq:service=PluginDeploymentScanner">
+        <attribute name="ScanPeriod">${rhq.server.plugin-scan-period-ms:300000}</attribute>
+    </mbean>
+
+    <mbean code="org.rhq.enterprise.server.scheduler.SchedulerService"
+           name="rhq:service=scheduler">
+        <attribute name="QuartzProperties">
+# RHQ custom property that defines the default timeout for all operations.
+# This is specified in seconds.  If any operation takes longer than this, it is assumed to have failed.
+rhq.server.operation-timeout = ${rhq.server.operation-timeout:600}
+
+# scheduler factory config
+org.quartz.scheduler.instanceName = RHQScheduler
+org.quartz.scheduler.instanceId   = AUTO
+
+# thread pool config
+org.quartz.threadPool.class       = org.quartz.simpl.SimpleThreadPool
+org.quartz.threadPool.threadCount = 5
+
+# database config
+# note that the delegate class property should be set at build/installation time
+org.quartz.jobStore.class                      = org.quartz.impl.jdbcjobstore.JobStoreCMT
+org.quartz.jobStore.driverDelegateClass        = ${rhq.server.quartz.driverDelegateClass}
+org.quartz.jobStore.isClustered                = true
+org.quartz.jobStore.clusterCheckinInterval     = 30000
+org.quartz.jobStore.tablePrefix                = RHQ_QRTZ_
+org.quartz.jobStore.useProperties              = true
+org.quartz.jobStore.selectWithLockSQL          = ${rhq.server.quartz.selectWithLockSQL}
+org.quartz.jobStore.dataSource                 = RHQDS
+org.quartz.dataSource.RHQDS.jndiURL            = java:jboss/datasources/RHQDS
+org.quartz.dataSource.RHQDS.maxConnections     = 10
+org.quartz.jobStore.nonManagedTXDataSource     = NoTxRHQDS
+org.quartz.dataSource.NoTxRHQDS.jndiURL        = java:jboss/datasources/NoTxRHQDS
+org.quartz.dataSource.NoTxRHQDS.maxConnections = 10
+org.quartz.jobStore.lockHandler.class          = ${rhq.server.quartz.lockHandlerClass}
+        </attribute>
+    </mbean>
+
+    <mbean code="org.rhq.enterprise.server.core.comm.ServerCommunicationsService"
+           name="rhq:service=ServerCommunications" />
+    
+    <mbean code="org.rhq.enterprise.server.plugin.pc.ServerPluginService"
+           name="rhq:service=ServerPluginService" />
+    
+    <!-- TODO: first, see if we need this and if so we need to refactor this to work inside AS7
+    <mbean code="org.rhq.jndi.mbean.AccessCheckingInitialContextFactoryBuilderInstaller"
+           name="org.rhq:service=AccessCheckingInitialContextFactoryBuilderInstaller" />
+    -->
+</server>

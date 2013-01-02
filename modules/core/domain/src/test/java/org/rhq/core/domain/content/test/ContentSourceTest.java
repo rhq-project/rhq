@@ -24,8 +24,6 @@ package org.rhq.core.domain.content.test;
 
 import java.util.Random;
 
-import javax.persistence.EntityManager;
-
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -46,7 +44,6 @@ public class ContentSourceTest extends AbstractEJB3Test {
     public void testInsert() throws Exception {
         getTransactionManager().begin();
         try {
-            EntityManager em = getEntityManager();
 
             ResourceType rt = new ResourceType("testCSResourceType", "testPlugin", ResourceCategory.PLATFORM, null);
             Resource resource = new Resource("testCSResource", "testCSResource", rt);
@@ -71,8 +68,6 @@ public class ContentSourceTest extends AbstractEJB3Test {
             em.persist(cst);
             em.persist(cs);
             em.flush();
-            em.close();
-            em = getEntityManager();
 
             cs = em.find(ContentSource.class, cs.getId());
             assert cs != null;
@@ -93,8 +88,6 @@ public class ContentSourceTest extends AbstractEJB3Test {
     public void testNullSyncSchedule() throws Exception {
         getTransactionManager().begin();
         try {
-            EntityManager em = getEntityManager();
-
             ResourceType rt = new ResourceType("testCSResourceType", "testPlugin", ResourceCategory.PLATFORM, null);
             Resource resource = new Resource("testCSResource", "testCSResource", rt);
             resource.setUuid("" + new Random().nextInt());
@@ -120,8 +113,6 @@ public class ContentSourceTest extends AbstractEJB3Test {
             em.persist(cst);
             em.persist(cs);
             em.flush();
-            em.close();
-            em = getEntityManager();
 
             cs = em.find(ContentSource.class, cs.getId());
             assert cs != null;
@@ -143,8 +134,6 @@ public class ContentSourceTest extends AbstractEJB3Test {
         // using empty strings to see that Oracle still behaves itself
         getTransactionManager().begin();
         try {
-            EntityManager em = getEntityManager();
-
             ResourceType rt = new ResourceType("testCSResourceType", "testPlugin", ResourceCategory.PLATFORM, null);
             Resource resource = new Resource("testCSResource", "testCSResource", rt);
             resource.setUuid("" + new Random().nextInt());
@@ -170,8 +159,6 @@ public class ContentSourceTest extends AbstractEJB3Test {
             em.persist(cst);
             em.persist(cs);
             em.flush();
-            em.close();
-            em = getEntityManager();
 
             cs = em.find(ContentSource.class, cs.getId());
             assert cs != null;

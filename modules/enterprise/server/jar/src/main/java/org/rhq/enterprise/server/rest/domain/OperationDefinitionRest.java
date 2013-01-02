@@ -1,17 +1,19 @@
 package org.rhq.enterprise.server.rest.domain;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.wordnik.swagger.annotations.ApiClass;
+import com.wordnik.swagger.annotations.ApiProperty;
+
 /**
  * @author Heiko W. Rupp
  */
-@XmlRootElement
+@ApiClass(value = "The template from which operations are created")
+@XmlRootElement(name = "operationDefinition")
 public class OperationDefinitionRest {
 
     public OperationDefinitionRest() {
@@ -22,6 +24,7 @@ public class OperationDefinitionRest {
     List<Link> links = new ArrayList<Link>();
     List<SimplePropDef> params = new ArrayList<SimplePropDef>();
 
+    @ApiProperty("Name of the definition")
     public String getName() {
         return name;
     }
@@ -30,6 +33,7 @@ public class OperationDefinitionRest {
         this.name = name;
     }
 
+    @ApiProperty("Id of the definition")
     public int getId() {
         return id;
     }
@@ -51,6 +55,7 @@ public class OperationDefinitionRest {
         links.add(link);
     }
 
+    @ApiProperty("List of properties for this operation definition")
     public List<SimplePropDef> getParams() {
         return params;
     }

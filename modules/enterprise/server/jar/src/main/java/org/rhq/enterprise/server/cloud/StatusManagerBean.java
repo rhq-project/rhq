@@ -31,8 +31,6 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.IgnoreDependency;
-
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.Server;
@@ -76,15 +74,15 @@ public class StatusManagerBean implements StatusManagerLocal {
     AgentManagerLocal agentManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     ServerManagerLocal serverManager;
 
     @EJB
-    @IgnoreDependency
-    CloudManagerLocal cloudManager;
+    //@IgnoreDependency
+    TopologyManagerLocal topologyManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     AlertDefinitionManagerLocal alertDefinitionManager;
 
     @SuppressWarnings("unchecked")
@@ -188,7 +186,6 @@ public class StatusManagerBean implements StatusManagerLocal {
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void markGlobalCache() {
         Query updateServerQuery = entityManager.createNamedQuery(Server.QUERY_UPDATE_STATUS_BY_NAME);
-        updateServerQuery.setParameter("identity", serverManager.getIdentity());
         int serversUpdated = updateServerQuery.executeUpdate();
 
         /*

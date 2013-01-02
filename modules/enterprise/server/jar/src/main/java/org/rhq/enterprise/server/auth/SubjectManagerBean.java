@@ -40,8 +40,7 @@ import javax.security.auth.login.LoginContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.IgnoreDependency;
-import org.jboss.security.Util;
+import org.jboss.crypto.CryptoUtil;
 import org.jboss.security.auth.callback.UsernamePasswordHandler;
 
 import org.rhq.core.domain.auth.Principal;
@@ -89,26 +88,26 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     private AuthorizationManagerLocal authorizationManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private ResourceGroupManagerLocal resourceGroupManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private LdapGroupManagerLocal ldapManager;
 
     @EJB
     private SystemManagerLocal systemManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private AlertNotificationManagerLocal alertNotificationManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private RoleManagerLocal roleManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private RepoManagerLocal repoManager;
 
     private SessionManager sessionManager = SessionManager.getInstance();
@@ -373,7 +372,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         try {
             UsernamePasswordHandler handler = new UsernamePasswordHandler(username, password.toCharArray());
             LoginContext loginContext;
-            loginContext = new LoginContext(CustomJaasDeploymentServiceMBean.SECURITY_DOMAIN_NAME, handler);
+            loginContext = new LoginContext(CustomJaasDeploymentServiceMBean.RHQ_USER_SECURITY_DOMAIN, handler);
 
             loginContext.login();
             loginContext.getSubject().getPrincipals().iterator().next();
@@ -519,7 +518,8 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public void createPrincipal(Subject whoami, String username, String password) throws SubjectException {
-        Principal principal = new Principal(username, Util.createPasswordHash("MD5", "base64", null, null, password));
+        Principal principal = new Principal(username, CryptoUtil.createPasswordHash("MD5", "base64", null, null,
+            password));
         createPrincipal(whoami, principal);
     }
 
@@ -555,7 +555,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         Query query = entityManager.createNamedQuery(Principal.QUERY_FIND_BY_USERNAME);
         query.setParameter("principal", username);
         Principal principal = (Principal) query.getSingleResult();
-        String passwordHash = Util.createPasswordHash("MD5", Util.BASE64_ENCODING, null, null, password);
+        String passwordHash = CryptoUtil.createPasswordHash("MD5", CryptoUtil.BASE64_ENCODING, null, null, password);
         principal.setPassword(passwordHash);
     }
 

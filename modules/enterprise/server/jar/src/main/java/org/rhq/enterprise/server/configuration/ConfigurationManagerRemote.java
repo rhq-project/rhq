@@ -21,13 +21,6 @@ package org.rhq.enterprise.server.configuration;
 import java.util.Map;
 
 import javax.ejb.Remote;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
-import javax.jws.soap.SOAPBinding;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-
-import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
@@ -38,10 +31,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.enterprise.server.jaxb.WebServiceTypeAdapter;
-import org.rhq.enterprise.server.jaxb.adapter.ConfigurationAdapter;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
-import org.rhq.enterprise.server.system.ServerVersion;
 
 /**
  * The configuration manager which allows you to request resource configuration changes, view current resource
@@ -50,38 +40,25 @@ import org.rhq.enterprise.server.system.ServerVersion;
  * @author John Mazzitelli
  * @author Ian Springer
  */
-@SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface ConfigurationManagerRemote {
 
-    @WebMethod
-    GroupPluginConfigurationUpdate getGroupPluginConfigurationUpdate( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "configurationUpdateId") int configurationUpdateId);
+    GroupPluginConfigurationUpdate getGroupPluginConfigurationUpdate(Subject subject, int configurationUpdateId);
 
-    @WebMethod
-    GroupResourceConfigurationUpdate getGroupResourceConfigurationUpdate( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "configurationUpdateId") int configurationUpdateId);
+    GroupResourceConfigurationUpdate getGroupResourceConfigurationUpdate(Subject subject, int configurationUpdateId);
 
     /**
      * Get the current plugin configuration for the {@link Resource} with the given id, or <code>null</code> if the
      * resource's plugin configuration is not yet initialized.
      *
-     * @param  user             The logged in user's subject.
-     * @param  resourceId       Resource Id
+     * @param  subject     the user who wants to see the information
+     * @param  resourceId a {@link Resource} id
      *
      * @return the current plugin configuration for the {@link Resource} with the given id, or <code>null</code> if the
      *         resource's configuration is not yet initialized
      * @throws FetchException
      */
-    @Nullable
-    @WebMethod
-    @XmlJavaTypeAdapter(ConfigurationAdapter.class)
-    Configuration getPluginConfiguration( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId);
+    Configuration getPluginConfiguration(Subject subject, int resourceId);
 
     /**
      * Get the current Resource configuration.
@@ -91,21 +68,12 @@ public interface ConfigurationManagerRemote {
      * 
      * @throws FetchException In case where there was a problem fetching the resource configuration
      */
-    @WebMethod
-    @XmlJavaTypeAdapter(ConfigurationAdapter.class)
     Configuration getResourceConfiguration(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId);
+        Subject subject, int resourceId);
 
-    @WebMethod
-    PluginConfigurationUpdate getLatestPluginConfigurationUpdate( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId);
+    PluginConfigurationUpdate getLatestPluginConfigurationUpdate(Subject subject, int resourceId);
 
-    @WebMethod
-    ResourceConfigurationUpdate getLatestResourceConfigurationUpdate( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId);
+    ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId);
 
     /**
      * Get whether the the specified resource is in the process of updating its configuration.
@@ -114,25 +82,12 @@ public interface ConfigurationManagerRemote {
      * @return True if in progress, else False.
      * @throws FetchException
      */
-    @WebMethod
-    boolean isResourceConfigurationUpdateInProgress( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId);
+    boolean isResourceConfigurationUpdateInProgress(Subject subject, int resourceId);
 
-    @WebMethod
-    boolean isGroupResourceConfigurationUpdateInProgress( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceGroupId") int resourceGroupId);
+    boolean isGroupResourceConfigurationUpdateInProgress(Subject subject, int resourceGroupId);
 
-    /* this currently doesn't build because jaxws requires a default, no-arg constructor from all objects in the graph
-     * in order to perform serialization correctly, and java.util.Map does not have one (because it's an interface)
-     * */
-    @WebMethod
-    int scheduleGroupResourceConfigurationUpdate(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "compatibleGroupId") int compatibleGroupId, //
-        @XmlJavaTypeAdapter(WebServiceTypeAdapter.class)//
-        @WebParam(name = "newResourceConfigurationMap", targetNamespace = ServerVersion.namespace) Map<Integer, Configuration> newResourceConfigurationMap);
+    int scheduleGroupResourceConfigurationUpdate(Subject subject, int compatibleGroupId,
+        Map<Integer, Configuration> newResourceConfigurationMap);
 
     /**
      * Updates the plugin configuration used to connect and communicate with the resource. The given <code>
@@ -145,12 +100,7 @@ public interface ConfigurationManagerRemote {
      *
      * @return the plugin configuration update item corresponding to this request
      */
-    @WebMethod
-    PluginConfigurationUpdate updatePluginConfiguration( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "newConfiguration")//
-        @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration newConfiguration)
+    PluginConfigurationUpdate updatePluginConfiguration(Subject subject, int resourceId, Configuration newConfiguration)
         throws ResourceNotFoundException;
 
     /**
@@ -167,13 +117,10 @@ public interface ConfigurationManagerRemote {
      *
      * @return the resource configuration update item corresponding to this request
      */
-    @WebMethod
-    ResourceConfigurationUpdate updateResourceConfiguration( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "newConfiguration")//
-        @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration newConfiguration)
-        throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
+
+    ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
+
+    Configuration newConfiguration) throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
 
     /**
      * Get the currently live resource configuration for the {@link Resource} with the given id. This actually asks for
@@ -188,11 +135,7 @@ public interface ConfigurationManagerRemote {
      *
      * @throws Exception if failed to get the configuration from the agent
      */
-    @WebMethod
-    Configuration getLiveResourceConfiguration( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "pingAgentFirst") boolean pingAgentFirst) //
+    Configuration getLiveResourceConfiguration(Subject subject, int resourceId, boolean pingAgentFirst)
         throws Exception;
 
     /**
@@ -205,9 +148,7 @@ public interface ConfigurationManagerRemote {
      * @return the resource configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the
      *         specified id, or <code>null</code> if the ResourceType does not define a resource configuration
      */
-    @WebMethod
-    ConfigurationDefinition getResourceConfigurationDefinitionForResourceType(
-        @WebParam(name = "subject") Subject subject, @WebParam(name = "resourceTypeId") int resourceTypeId);
+    ConfigurationDefinition getResourceConfigurationDefinitionForResourceType(Subject subject, int resourceTypeId);
 
     /**
      * Return the resource configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the
@@ -219,9 +160,8 @@ public interface ConfigurationManagerRemote {
      * @return the resource configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the
      *         specified id, or <code>null</code> if the ResourceType does not define a resource configuration
      */
-    @WebMethod
-    ConfigurationDefinition getResourceConfigurationDefinitionWithTemplatesForResourceType(
-        @WebParam(name = "subject") Subject subject, @WebParam(name = "resourceTypeId") int resourceTypeId);
+    ConfigurationDefinition getResourceConfigurationDefinitionWithTemplatesForResourceType(Subject subject,
+        int resourceTypeId);
 
     /**
      * Return the plugin configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the
@@ -233,9 +173,7 @@ public interface ConfigurationManagerRemote {
      * @return the plugin configuration definition for the {@link org.rhq.core.domain.resource.ResourceType} with the
      *         specified id, or <code>null</code> if the ResourceType does not define a plugin configuration
      */
-    @WebMethod
-    ConfigurationDefinition getPluginConfigurationDefinitionForResourceType(
-        @WebParam(name = "subject") Subject subject, @WebParam(name = "resourceTypeId") int resourceTypeId);
+    ConfigurationDefinition getPluginConfigurationDefinitionForResourceType(Subject subject, int resourceTypeId);
 
     /**
      * Return the deploy configuration definition for the {@link org.rhq.core.domain.content.PackageType} with the
@@ -247,12 +185,8 @@ public interface ConfigurationManagerRemote {
      * @return the  the deploy configuration definition for the {@link org.rhq.core.domain.content.PackageType} with the
      * specified id.
      */
-    @WebMethod
-    ConfigurationDefinition getPackageTypeConfigurationDefinition( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "packageTypeId") int packageTypeId);
+    ConfigurationDefinition getPackageTypeConfigurationDefinition(Subject subject, int packageTypeId);
 
     Configuration translateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
         boolean fromStructured) throws ResourceNotFoundException;
-
 }

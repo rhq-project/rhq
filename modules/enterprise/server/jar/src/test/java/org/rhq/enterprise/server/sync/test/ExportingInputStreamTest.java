@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -36,9 +38,19 @@ import java.util.List;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -56,12 +68,14 @@ import org.rhq.core.domain.sync.ExporterMessages;
 import org.rhq.enterprise.server.sync.ExportReader;
 import org.rhq.enterprise.server.sync.ExportWriter;
 import org.rhq.enterprise.server.sync.ExportingInputStream;
+import org.rhq.enterprise.server.sync.ImportException;
 import org.rhq.enterprise.server.sync.NoSingleEntity;
 import org.rhq.enterprise.server.sync.SynchronizationConstants;
 import org.rhq.enterprise.server.sync.Synchronizer;
 import org.rhq.enterprise.server.sync.exporters.AbstractDelegatingExportingIterator;
 import org.rhq.enterprise.server.sync.exporters.Exporter;
 import org.rhq.enterprise.server.sync.exporters.ExportingIterator;
+import org.rhq.enterprise.server.sync.exporters.JAXBExportingIterator;
 import org.rhq.enterprise.server.sync.importers.ExportedEntityMatcher;
 import org.rhq.enterprise.server.sync.importers.Importer;
 import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
@@ -90,7 +104,9 @@ public class ExportingInputStreamTest extends JMockTest {
             }
             
             public void export(ExportWriter output) throws XMLStreamException {
-                output.writeCData(getCurrent().toString());
+                output.writeStartElement("datum");
+                output.writeCharacters(getCurrent().toString());
+                output.writeEndElement();
             }
             
             public String getNotes() {
@@ -191,6 +207,140 @@ public class ExportingInputStreamTest extends JMockTest {
         }
     }
     
+    public static class Entity {
+        public int value;
+        
+        public Entity(int value) {
+            this.value = value;
+        }
+    } 
+    
+    @XmlRootElement(name = "exported-entity")
+    @XmlAccessorType(XmlAccessType.FIELD)
+    public static class ExportedEntity {
+        
+        @XmlAttribute
+        public int property;
+    }
+    
+    public static class JAXBExporter implements Exporter<Entity, ExportedEntity> {
+
+        private static class JAXBIterator extends JAXBExportingIterator<ExportedEntity, Entity> {
+
+            public JAXBIterator(java.util.Iterator<Entity> sourceIterator) {
+                super(sourceIterator, ExportedEntity.class);
+            }
+            
+            @Override
+            protected ExportedEntity convert(Entity object) {
+                ExportedEntity ret = new ExportedEntity();
+                ret.property = object.value;
+                
+                return ret;
+            }
+
+            @Override
+            public String getNotes() {
+                return null;
+            }
+        }
+        
+        @Override
+        public ExportingIterator<ExportedEntity> getExportingIterator() {
+            List<Entity> data = new ArrayList<Entity>();
+            for(int i = 0; i < 4; ++i) {
+                data.add(new Entity(i));
+            }
+            
+            return new JAXBIterator(data.iterator());
+        }
+
+        @Override
+        public String getNotes() {
+            return null;
+        }
+        
+    }
+    
+    public static class JAXBImporter implements Importer<Entity, ExportedEntity> {
+
+        private Unmarshaller unmarshaller;
+        {
+            try {
+                JAXBContext context = JAXBContext.newInstance(ExportedEntity.class);
+                unmarshaller = context.createUnmarshaller();
+            } catch (JAXBException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+        
+        @Override
+        public ConfigurationDefinition getImportConfigurationDefinition() {
+            return null;
+        }
+
+        @Override
+        public void configure(Configuration importConfiguration) {
+        }
+
+        @Override
+        public ExportedEntityMatcher<Entity, ExportedEntity> getExportedEntityMatcher() {
+            return new ExportedEntityMatcher<Entity, ExportedEntity>() {
+                @Override
+                public Entity findMatch(ExportedEntity object) {
+                    return new Entity(object.property);
+                }
+            };
+        }
+
+        @Override
+        public Set<EntityValidator<ExportedEntity>> getEntityValidators() {
+            return Collections.emptySet();
+        }
+
+        @Override
+        public void update(Entity entity, ExportedEntity exportedEntity) throws Exception {
+            entity.value = exportedEntity.property;
+        }
+
+        @Override
+        public ExportedEntity unmarshallExportedEntity(ExportReader reader) throws XMLStreamException {
+            try {
+                return (ExportedEntity) unmarshaller.unmarshal(reader);
+            } catch (JAXBException e) {
+                throw new XMLStreamException(e);
+            }
+        }
+
+        @Override
+        public String finishImport() throws Exception {
+            return null;
+        }
+        
+    }
+    
+    public static class JAXBSynchronizer implements Synchronizer<Entity, ExportedEntity> {
+
+        @Override
+        public void initialize(Subject subject, EntityManager entityManager) {
+        }
+
+        @Override
+        public Exporter<Entity, ExportedEntity> getExporter() {
+            return new JAXBExporter();
+        }
+
+        @Override
+        public Importer<Entity, ExportedEntity> getImporter() {
+            return new JAXBImporter();
+        }
+
+        @Override
+        public Set<ConsistencyValidator> getRequiredValidators() {
+            return Collections.emptySet();
+        }
+        
+    }
 
     public void testSucessfulExport() throws Exception {
         List<String> list1 = Arrays.asList("a", "b", "c");
@@ -203,11 +353,11 @@ public class ExportingInputStreamTest extends JMockTest {
         
         InputStream export = new ExportingInputStream(exporters, new HashMap<String, ExporterMessages>(), 1024, false);
         
-//        String exportContents = readAll(new InputStreamReader(export, "UTF-8"));
-//        
-//        LOG.info("Export contents:\n" + exportContents);
-//        
-//        export = new ByteArrayInputStream(exportContents.getBytes("UTF-8"));
+        String exportContents = readAll(new InputStreamReader(export, "UTF-8"));
+        
+        LOG.info("Export contents:\n" + exportContents);
+        
+        export = new ByteArrayInputStream(exportContents.getBytes("UTF-8"));
         
         DocumentBuilder bld = DocumentBuilderFactory.newInstance().newDocumentBuilder();
         
@@ -264,14 +414,106 @@ public class ExportingInputStreamTest extends JMockTest {
                 Node data = getDirectChildByTagName(entityElement, SynchronizationConstants.DATA_ELEMENT);
                 assertNotNull(data, "Could not find data element in the entity.");
                 
-                String dataText = ((Element)data).getTextContent();                
+                Node datum = getDirectChildByTagName(data, "datum");
+                assertNotNull(datum, "Could not find the exported datum element containing the actual data.");
+
+                String datumText = ((Element) datum).getTextContent();
                 notesText = ((Element)note).getTextContent();
                  
-                assertEquals(notesText, ListToStringExporter.NOTE_PREFIX + dataText, "Unexpected discrepancy between data and notes in the export.");
+                assertEquals(notesText, ListToStringExporter.NOTE_PREFIX + datumText,
+                    "Unexpected discrepancy between data and notes in the export.");
             }
             
             ++elementIndex;
         }
+    }
+    
+    @Test
+    public void testJAXBHandled() throws Exception {
+        JAXBSynchronizer sync = new JAXBSynchronizer();
+        
+        Set<Synchronizer<?, ?>>syncs = this.<Synchronizer<?, ?>> asSet(sync);
+
+        InputStream export = new ExportingInputStream(syncs, new HashMap<String, ExporterMessages>(), 1024, false);
+
+        String exportContents = readAll(new InputStreamReader(export, "UTF-8"));
+        
+        XMLStreamReader rdr = XMLInputFactory.newInstance().createXMLStreamReader(
+            new ByteArrayInputStream(exportContents.getBytes(Charset.forName("UTF-8"))));
+
+        try {
+            while (rdr.hasNext()) {
+                switch (rdr.next()) {
+                case XMLStreamReader.START_ELEMENT:
+                    String tagName = rdr.getName().getLocalPart();
+                    if (SynchronizationConstants.ENTITIES_EXPORT_ELEMENT.equals(tagName)) {
+                        try {
+                            importSingle(rdr);
+                        } catch (Exception e) {
+                            //fail fast on the import errors... This runs in a single transaction
+                            //so all imports done so far will get rolled-back.
+                            //(Even if we change our minds later and run a transaction per importer
+                            //we should fail fast to prevent further damage due to possible
+                            //constraint violations in the db, etc.)
+                            throw new ImportException("Import failed.", e);
+                        }
+                    }
+                    break;
+                }
+            }
+        } finally {
+            rdr.close();
+        }
+    }
+
+    private <E, X> void importSingle(XMLStreamReader rdr)
+        throws Exception {
+        String synchronizerClassName = rdr.getAttributeValue(null, SynchronizationConstants.ID_ATTRIBUTE);
+
+        @SuppressWarnings("unchecked")
+        Synchronizer<E, X> synchronizer = instantiate(synchronizerClassName, Synchronizer.class,
+            "The synchronizer denoted in the export file ('%s') does not implement the importer interface. This should not happen.");
+
+        Importer<E, X> importer = synchronizer.getImporter();
+
+        ExportedEntityMatcher<E, X> matcher = importer.getExportedEntityMatcher();
+
+        //the passed in configuration has precedence over the default one inlined in 
+        //the config file.
+        while (rdr.hasNext()) {
+            boolean bailout = false;
+            switch (rdr.next()) {
+            case XMLStreamConstants.START_ELEMENT:
+                if (SynchronizationConstants.DATA_ELEMENT.equals(rdr.getName().getLocalPart())) {
+                    
+                    rdr.nextTag();
+                    X exportedEntity = importer.unmarshallExportedEntity(new ExportReader(rdr));
+                    E entity = matcher == null ? null : matcher.findMatch(exportedEntity);
+                    importer.update(entity, exportedEntity);
+                }
+                break;
+            case XMLStreamConstants.END_ELEMENT:
+                if (SynchronizationConstants.ENTITIES_EXPORT_ELEMENT.equals(rdr.getName().getLocalPart())) {
+                    bailout = true;
+                }
+            }
+
+            if (bailout) {
+                break;
+            }
+        }
+    }
+    
+    private <T> T instantiate(String className, Class<T> desiredClass, String notAssignableErrorMessage)
+        throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+        Class<?> cls = Class.forName(className);
+        if (!desiredClass.isAssignableFrom(cls)) {
+            throw new IllegalStateException(String.format(notAssignableErrorMessage, className, desiredClass.getName()));
+        }
+
+        Object instance = cls.newInstance();
+
+        return desiredClass.cast(instance);
     }
     
     @Test(expectedExceptions = IOException.class)
@@ -452,7 +694,7 @@ public class ExportingInputStreamTest extends JMockTest {
                 return n;
             }
         }
-        
+     
         return null;
     }
 }

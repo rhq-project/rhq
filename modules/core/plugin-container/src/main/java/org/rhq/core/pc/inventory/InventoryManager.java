@@ -1087,7 +1087,24 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return true;
     }
 
+    /**
+     * Performs a sync so that resources passed in are reflected in the agent's inventory.
+     * This assumes the resource sync infos passed in represent the full inventory tree.
+     *
+     * @param syncInfo information on all resources in the entire inventory tree
+     */
     private void synchInventory(ResourceSyncInfo syncInfo) {
+        synchInventory(syncInfo, false);
+    }
+
+    /**
+     * Performs a sync so that resources passed in are reflected in the agent's inventory.
+     *
+     * @param syncInfo the resources' sync data
+     * @param partialInventory if true, syncInfo represents only a partial inventory.
+     *                         if false, syncInfo represents the full inventory tree of all resources
+     */
+    private void synchInventory(ResourceSyncInfo syncInfo, boolean partialInventory) {
         log.info("Syncing local inventory with Server inventory...");
         long startTime = System.currentTimeMillis();
         Set<Resource> syncedResources = new LinkedHashSet<Resource>();
@@ -1099,7 +1116,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         // rhq-980 Adding agent-side logging to report any unexpected synch failure.
         try {
-            getAllUuids(syncInfo, allServerSideUuids);
+            // don't bother doing this if we are processing a partial inventory.
+            // allServerSideUuids is only ever used to purge obsolete resources, but we don't
+            // do that for partial inventories, so we don't need to prepare that collection for partials.
+            if (!partialInventory) {
+                getAllUuids(syncInfo, allServerSideUuids);
+            }
 
             log.debug("Processing Server sync info...");
             processSyncInfo(syncInfo, syncedResources, unknownResourceIds, modifiedResourceIds, deletedResourceIds,
@@ -1113,7 +1135,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             mergeUnknownResources(unknownResourceIds);
             mergeModifiedResources(modifiedResourceIds);
-            purgeObsoleteResources(allServerSideUuids);
+            if (!partialInventory) {
+                purgeObsoleteResources(allServerSideUuids);
+            }
             postProcessNewlyCommittedResources(newlyCommittedResources);
             if (log.isDebugEnabled()) {
                 if (!deletedResourceIds.isEmpty()) {
@@ -1614,7 +1638,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
             if (forceReinitialization) {
                 switch (state) {
                 case STARTED:
-                    component.stop();
+                    if (log.isDebugEnabled()) {
+                        log.debug("Forcing re-initialization of an already started resource: " + resource);
+                    }
+                    deactivateResource(resource);
                     break;
                 case STARTING:
                     log.warn("Could not force initialization of component for resource [" + resource.getId()
@@ -2039,7 +2066,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         log.debug("Successfully deactivated resource with id [" + resource.getId() + "].");
                     }
                 } catch (Throwable t) {
-                    log.warn("Plugin Error: Failed to stop component for [" + resource + "].");
+                    log.warn("Plugin Error: Failed to stop component for [" + resource + "].", t);
                 }
 
                 container.setResourceComponentState(ResourceComponentState.STOPPED);
@@ -2187,7 +2214,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             + "] and its descendants...");
 
         // Get the latest resource data rooted at the given id.
-        synchInventory(syncInfo);
+        synchInventory(syncInfo, true); // this method assumes we only get a single resource and its children (BZ 887411)
         performServiceScan(syncInfo.getId()); // NOTE: This will block (the initial scan blocks).
     }
 

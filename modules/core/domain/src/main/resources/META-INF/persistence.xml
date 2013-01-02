@@ -3,11 +3,11 @@
 <persistence xmlns="http://java.sun.com/xml/ns/persistence" version="1.0">
 
    <persistence-unit name="rhqpu">
-      <jta-data-source>java:/RHQDS</jta-data-source>
+      <jta-data-source>java:jboss/datasources/RHQDS</jta-data-source>
 
       <properties>
-         <property name="jboss.entity.manager.jndi.name" value="java:/RHQEntityManager" />
-         <property name="jboss.entity.manager.factory.jndi.name" value="java:/RHQEntityManagerFactory" />
+         <property name="jboss.entity.manager.jndi.name" value="java:jboss/RHQEntityManager" />
+         <property name="jboss.entity.manager.factory.jndi.name" value="java:jboss/RHQEntityManagerFactory" />
 
          <!--
          <property name="hibernate.show_sql" value="true" />

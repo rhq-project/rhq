@@ -116,7 +116,7 @@ public class SmartDiskComponent implements ResourceComponent, MeasurementFacet {
     public static void main(String[] args) throws Exception {
         SmartDiskComponent sdc = new SmartDiskComponent();
         sdc.start(new ResourceContext(new Resource("/dev/sda", "foo", new ResourceType()), null, null, null, null, null,
- null, null, null, null, null, null, null, null, PluginContainerDeployment.AGENT));
+            null, null, null, null, null, null, null, null, PluginContainerDeployment.AGENT));
         sdc.getValues(null, null);
 
     }

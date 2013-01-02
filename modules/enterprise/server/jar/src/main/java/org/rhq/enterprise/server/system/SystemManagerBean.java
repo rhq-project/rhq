@@ -18,9 +18,7 @@
  */
 package org.rhq.enterprise.server.system;
 
-import java.io.File;
 import java.lang.management.ManagementFactory;
-import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -37,22 +35,17 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.Timeout;
 import javax.ejb.Timer;
+import javax.ejb.TimerConfig;
 import javax.ejb.TimerService;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
-import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
-import javax.management.ObjectName;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import org.jboss.annotation.IgnoreDependency;
-import org.jboss.deployment.MainDeployerMBean;
-import org.jboss.mx.util.MBeanServerLocator;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
@@ -66,11 +59,11 @@ import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.server.PersistenceUtility;
-import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.StopWatch;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.core.CoreServerMBean;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
@@ -114,17 +107,18 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     private SystemManagerLocal systemManager;
 
     @EJB
-    @IgnoreDependency
+    private ServerManagerLocal serverManager;
+
+    @EJB
+    //@IgnoreDependency
     private SubjectManagerLocal subjectManager;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private SystemInfoManagerLocal systemInfoManager;
 
     private static SystemSettings cachedSystemSettings = null;
-    private final String TIMER_DATA = "SystemManagerBean.reloadConfigCache";
 
-    @SuppressWarnings("unchecked")
     public void scheduleConfigCacheReloader() {
         // each time the webapp is reloaded, we don't want to create duplicate jobs
         Collection<Timer> timers = timerService.getTimers();
@@ -137,8 +131,8 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
             }
         }
 
-        // single-action timer that will trigger in 60 seconds
-        timerService.createTimer(60000L, TIMER_DATA);
+        // timer that will trigger every 60 seconds
+        timerService.createIntervalTimer(60000L, 60000L, new TimerConfig(null, false));
     }
 
     @Timeout
@@ -154,14 +148,6 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
             systemManager.loadSystemConfigurationCacheInNewTx();
         } catch (Throwable t) {
             log.error("Failed to reload the system config cache - will try again later. Cause: " + t);
-        } finally {
-            // reschedule ourself to trigger in another 60 seconds
-            try {
-                timerService.createTimer(60000L, TIMER_DATA);
-            } catch (Throwable t) {
-                log.error("Failed to reschedule system config cache reload timer! System config cache reload handling will not work from this point. A server restart may be needed after issue is resolved:"
-                    + t);
-            }
         }
     }
 
@@ -307,8 +293,10 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         DriftServerPluginManager pluginMgr = getDriftServerPluginManager();
         Map<String, String> plugins = new HashMap<String, String>();
 
-        for (ServerPluginEnvironment env : pluginMgr.getPluginEnvironments()) {
-            plugins.put(env.getPluginKey().getPluginName(), env.getPluginDescriptor().getDisplayName());
+        if (pluginMgr != null) {
+            for (ServerPluginEnvironment env : pluginMgr.getPluginEnvironments()) {
+                plugins.put(env.getPluginKey().getPluginName(), env.getPluginDescriptor().getDisplayName());
+            }
         }
 
         return plugins;
@@ -494,7 +482,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         try {
             Object mbean;
 
-            mbean = MBeanServerInvocationHandler.newProxyInstance(MBeanServerLocator.locateJBoss(),
+            mbean = MBeanServerInvocationHandler.newProxyInstance(ManagementFactory.getPlatformMBeanServer(),
                 CustomJaasDeploymentServiceMBean.OBJECT_NAME, CustomJaasDeploymentServiceMBean.class, false);
             ((CustomJaasDeploymentServiceMBean) mbean).installJaasModules();
         } catch (Exception e) {
@@ -632,74 +620,21 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
     /**
      * Ensures the installer is no longer deployed.
+     * @deprecated
      */
+    @Deprecated
     public void undeployInstaller() {
-        try {
-            File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
-
-            File deployDirectory = new File(serverHomeDir, "deploy");
-
-            if (deployDirectory.exists()) {
-                File deployedInstallWar = new File(deployDirectory.getAbsolutePath(), "rhq-installer.war");
-                File undeployedInstallWar = new File(deployDirectory.getAbsolutePath(), "rhq-installer.war.rej");
-
-                if (deployedInstallWar.exists()) {
-                    // we need to undeploy it first - on windows the files are locked and can't be renamed until undeployed
-                    ObjectName name = ObjectNameFactory.create("jboss.system:service=MainDeployer");
-                    MBeanServerConnection mbs = MBeanServerLocator.locateJBoss();
-                    MainDeployerMBean mbean = (MainDeployerMBean) MBeanServerInvocationHandler.newProxyInstance(mbs,
-                        name, MainDeployerMBean.class, false);
-                    URL url = deployedInstallWar.toURI().toURL();
-                    String urlString = url.toString().replace("%20", " "); // bug in undeployer doesn't like %20 - it wants a real space
-                    ((MainDeployerMBean) mbean).undeploy(urlString);
-                    if (((MainDeployerMBean) mbean).isDeployed(urlString) == false) {
-                        log.info("Installer war has been hot-undeployed from memory");
-                    } else {
-                        log.warn("Installer hot-undeploy failed - full installer undeploy may not work...");
-                    }
-
-                    if (!deployedInstallWar.renameTo(undeployedInstallWar)) {
-                        throw new RuntimeException("Cannot undeploy the installer war: " + deployedInstallWar);
-                    }
-
-                    // I don't trust it - make sure we removed it
-                    if (deployedInstallWar.exists()) {
-                        throw new RuntimeException("Failed to undeploy the installer war: " + deployedInstallWar);
-                    }
-
-                    // now that the installer is removed, put something in its place to avoid
-                    // getting tomcat errors and to at least point the user back to the GUI
-                    File deployedPostInstallWar = new File(deployDirectory.getAbsolutePath(), "rhq-postinstaller.war");
-                    File undeployedPostInstallWar = new File(deployDirectory.getAbsolutePath(),
-                        "rhq-postinstaller.war.rej");
-                    if (!deployedPostInstallWar.exists()) {
-                        if (undeployedPostInstallWar.exists()) {
-                            if (undeployedPostInstallWar.renameTo(deployedPostInstallWar)) {
-                                log.debug("Post-install notification war has been deployed");
-                            } else {
-                                log.info("Post-install notification war failed to deploy - this can be ignored");
-                            }
-                        } else {
-                            log.info("Post-install notification war not found and not deployed - this can be ignored");
-                        }
-                    } else {
-                        log.info("Post-install notification war already deployed");
-                    }
-                } else if (undeployedInstallWar.exists()) {
-                    log.debug("Installer looks to be undeployed already, this is good: " + undeployedInstallWar);
-                } else {
-                    log.debug("Installer can't be found - assume it has been completely purged: " + deployedInstallWar);
-                }
-            } else {
-                throw new RuntimeException("Your deployment seems corrupted - missing deploy dir: " + deployDirectory);
-            }
-        } catch (Exception e) {
-            log.warn("Please manually remove installer war to secure your deployment: " + e);
-            return;
-        }
-
-        // we only get here if we are SURE we removed it!
-        log.info("Confirmed that the installer has been undeployed");
+        // No need for this anymore - the new RHQ installer in AS7 detects it already installed things and will point the user to login screen
+        // We leave this in here in case we want to re-introduce the ability to uninstall the installer.
+        //        try {
+        //            log.warn("!!!!!!!!TODO: UNDEPLOY THE INSTALLER HERE!!!!!");
+        //        } catch (Exception e) {
+        //            log.warn("Please manually remove installer war to secure your deployment: " + e);
+        //            return;
+        //        }
+        //
+        //        // we only get here if we are SURE we removed it!
+        //        log.info("Confirmed that the installer has been undeployed");
         return;
     }
 
@@ -769,6 +704,8 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         details.put(ServerDetails.Detail.DATABASE_PRODUCT_VERSION, dbInfo.getDatabaseProductVersion());
         details.put(ServerDetails.Detail.CURRENT_MEASUREMENT_TABLE, dbInfo.getCurrentMeasurementTable());
         details.put(ServerDetails.Detail.NEXT_MEASUREMENT_TABLE_ROTATION, dbInfo.getNextMeasurementTableRotation());
+
+        details.put(ServerDetails.Detail.SERVER_IDENTITY, serverManager.getServer().getName());
 
         return serverDetails;
     }

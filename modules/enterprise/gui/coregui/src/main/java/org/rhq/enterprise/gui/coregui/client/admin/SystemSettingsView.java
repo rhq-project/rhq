@@ -568,11 +568,14 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         form.setIsGroup(true);
         form.setGroupTitle(MSG.view_admin_systemSettings_serverDetails());
 
-        final StaticTextItem productName = new StaticTextItem("productname", MSG.common_title_name());
+        final StaticTextItem productName = new StaticTextItem("productname",
+            MSG.view_admin_systemSettings_serverDetails_productName());
         final StaticTextItem productVersion = new StaticTextItem("productversion", MSG.common_title_version());
         final StaticTextItem productBuildNumber = new StaticTextItem("productbuild",
             MSG.view_admin_systemSettings_serverDetails_buildNumber());
 
+        final StaticTextItem serverName = new StaticTextItem("servername",
+            MSG.view_admin_systemSettings_serverDetails_serverName());
         final StaticTextItem serverTimezone = new StaticTextItem("timezone",
             MSG.view_admin_systemSettings_serverDetails_tz());
         final StaticTextItem serverTime = new StaticTextItem("localtime",
@@ -596,6 +599,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         productName.setWrapTitle(false);
         productVersion.setWrapTitle(false);
         productBuildNumber.setWrapTitle(false);
+        serverName.setWrapTitle(false);
         serverTimezone.setWrapTitle(false);
         serverTime.setWrapTitle(false);
         serverInstallDir.setWrapTitle(false);
@@ -607,9 +611,9 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         currentMeasRawTable.setWrapTitle(false);
         nextMeasTableRotation.setWrapTitle(false);
 
-        form.setItems(productName, productVersion, productBuildNumber, serverTimezone, serverTime, serverInstallDir,
-            dbUrl, dbProductName, dbProductVersion, dbDriverName, dbDriverVersion, currentMeasRawTable,
-            nextMeasTableRotation);
+        form.setItems(productName, productVersion, productBuildNumber, serverName, serverTimezone, serverTime,
+            serverInstallDir, dbUrl, dbProductName, dbProductVersion, dbDriverName, dbDriverVersion,
+            currentMeasRawTable, nextMeasTableRotation);
 
         GWTServiceLookup.getSystemService().getServerDetails(new AsyncCallback<ServerDetails>() {
 
@@ -621,6 +625,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 form.setValue(productBuildNumber.getName(), productInfo.getBuildNumber());
 
                 Map<Detail, String> details = result.getDetails();
+                form.setValue(serverName.getName(), details.get(ServerDetails.Detail.SERVER_IDENTITY));
                 form.setValue(serverTimezone.getName(), details.get(ServerDetails.Detail.SERVER_TIMEZONE));
                 form.setValue(serverTime.getName(), details.get(ServerDetails.Detail.SERVER_LOCAL_TIME));
                 form.setValue(serverInstallDir.getName(), details.get(ServerDetails.Detail.SERVER_INSTALL_DIR));

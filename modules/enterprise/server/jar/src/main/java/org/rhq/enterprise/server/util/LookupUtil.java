@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.util;
 
+import java.lang.management.ManagementFactory;
+
 import javax.management.MBeanServer;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -29,7 +31,6 @@ import javax.transaction.TransactionManager;
 import org.jetbrains.annotations.NotNull;
 
 import org.jboss.mx.util.MBeanProxyExt;
-import org.jboss.mx.util.MBeanServerLocator;
 
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertConditionManagerBean;
@@ -51,6 +52,8 @@ import org.rhq.enterprise.server.alert.engine.jms.CachedConditionProducerBean;
 import org.rhq.enterprise.server.alert.engine.jms.CachedConditionProducerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerBean;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.auth.prefs.SubjectPreferencesCacheBean;
+import org.rhq.enterprise.server.auth.prefs.SubjectPreferencesCacheLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerBean;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RoleManagerBean;
@@ -59,8 +62,8 @@ import org.rhq.enterprise.server.bundle.BundleManagerBean;
 import org.rhq.enterprise.server.bundle.BundleManagerLocal;
 import org.rhq.enterprise.server.cloud.AffinityGroupManagerBean;
 import org.rhq.enterprise.server.cloud.AffinityGroupManagerLocal;
-import org.rhq.enterprise.server.cloud.CloudManagerBean;
-import org.rhq.enterprise.server.cloud.CloudManagerLocal;
+import org.rhq.enterprise.server.cloud.TopologyManagerBean;
+import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.cloud.FailoverListManagerBean;
 import org.rhq.enterprise.server.cloud.FailoverListManagerLocal;
 import org.rhq.enterprise.server.cloud.PartitionEventManagerBean;
@@ -98,6 +101,8 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.core.CoreServerMBean;
 import org.rhq.enterprise.server.core.EmailManagerBean;
 import org.rhq.enterprise.server.core.EmailManagerLocal;
+import org.rhq.enterprise.server.core.RemoteClientManagerBean;
+import org.rhq.enterprise.server.core.RemoteClientManagerLocal;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.dashboard.DashboardManagerBean;
 import org.rhq.enterprise.server.dashboard.DashboardManagerLocal;
@@ -109,8 +114,6 @@ import org.rhq.enterprise.server.drift.DriftTemplateManagerBean;
 import org.rhq.enterprise.server.drift.DriftTemplateManagerLocal;
 import org.rhq.enterprise.server.drift.JPADriftServerBean;
 import org.rhq.enterprise.server.drift.JPADriftServerLocal;
-import org.rhq.enterprise.server.entitlement.EntitlementManagerBean;
-import org.rhq.enterprise.server.entitlement.EntitlementManagerLocal;
 import org.rhq.enterprise.server.event.EventManagerBean;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.install.remote.RemoteInstallManagerBean;
@@ -143,7 +146,7 @@ import org.rhq.enterprise.server.operation.OperationManagerBean;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.plugin.ServerPluginsBean;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
-import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceMBean;
 import org.rhq.enterprise.server.report.DataAccessManagerBean;
 import org.rhq.enterprise.server.report.DataAccessManagerLocal;
 import org.rhq.enterprise.server.resource.PlatformUtilizationManagerBean;
@@ -193,20 +196,8 @@ import org.rhq.enterprise.server.system.SystemManagerBean;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.tagging.TagManagerBean;
 import org.rhq.enterprise.server.tagging.TagManagerLocal;
-import org.rhq.enterprise.server.test.AccessBean;
-import org.rhq.enterprise.server.test.AccessLocal;
-import org.rhq.enterprise.server.test.AlertTemplateTestBean;
-import org.rhq.enterprise.server.test.AlertTemplateTestLocal;
-import org.rhq.enterprise.server.test.CoreTestBean;
-import org.rhq.enterprise.server.test.CoreTestLocal;
-import org.rhq.enterprise.server.test.DiscoveryTestBean;
-import org.rhq.enterprise.server.test.DiscoveryTestLocal;
-import org.rhq.enterprise.server.test.MeasurementTestBean;
-import org.rhq.enterprise.server.test.MeasurementTestLocal;
-import org.rhq.enterprise.server.test.ResourceGroupTestBean;
-import org.rhq.enterprise.server.test.ResourceGroupTestBeanLocal;
-import org.rhq.enterprise.server.test.SubjectRoleTestBean;
-import org.rhq.enterprise.server.test.SubjectRoleTestBeanLocal;
+import org.rhq.enterprise.server.test.TestBean;
+import org.rhq.enterprise.server.test.TestLocal;
 
 /**
  * Methods that allow POJO objects to obtain references to EJB/JPA objects. These convenience methods attempt to
@@ -217,11 +208,6 @@ import org.rhq.enterprise.server.test.SubjectRoleTestBeanLocal;
  * @author Ian Springer
  */
 public final class LookupUtil {
-    private static boolean embeddedDeployment;
-
-    static {
-        embeddedDeployment = Boolean.valueOf(System.getProperty("embeddedDeployment", "false"));
-    }
 
     /**
      * Prevent instantiation.
@@ -255,7 +241,8 @@ public final class LookupUtil {
     public static TransactionManager getTransactionManager() {
         try {
             InitialContext context = new InitialContext();
-            TransactionManager tm = (TransactionManager) context.lookup(RHQConstants.TRANSACTION_MANAGER_JNDI_NAME);
+            String jndi = RHQConstants.TRANSACTION_MANAGER_JNDI_NAME;
+            TransactionManager tm = (TransactionManager) context.lookup(jndi);
             context.close();
             return tm;
         } catch (Exception e) {
@@ -287,6 +274,10 @@ public final class LookupUtil {
 
     public static AlertConditionConsumerBean getActiveConditionConsumer() {
         return lookupLocal(AlertConditionConsumerBean.class);
+    }
+
+    public static RemoteClientManagerLocal getRemoteClientManager() {
+        return lookupLocal(RemoteClientManagerBean.class);
     }
 
     public static AgentManagerLocal getAgentManager() {
@@ -323,10 +314,6 @@ public final class LookupUtil {
 
     public static AlertSubsystemManagerLocal getAlertSubsystemManager() {
         return lookupLocal(AlertSubsystemManagerBean.class);
-    }
-
-    public static AlertTemplateTestLocal getAlertTemplateTestBean() {
-        return lookupLocal(AlertTemplateTestBean.class);
     }
 
     public static AuthorizationManagerLocal getAuthorizationManager() {
@@ -373,12 +360,9 @@ public final class LookupUtil {
         return lookupLocal(EmailManagerBean.class);
     }
 
-    public static EntitlementManagerLocal getEntitlementManagerBean() {
-        return lookupLocal(EntitlementManagerBean.class);
-    }
-
     public static EntityManagerFacadeLocal getEntityManagerFacade() {
-        return lookupLocal(EntityManagerFacade.class);
+        Class<EntityManagerFacade> clazz = EntityManagerFacade.class;
+        return (EntityManagerFacadeLocal) lookupByName(clazz.getSimpleName(), clazz.getName() + "Local");
     }
 
     public static EventManagerLocal getEventManager() {
@@ -485,8 +469,8 @@ public final class LookupUtil {
         return lookupLocal(AffinityGroupManagerBean.class);
     }
 
-    public static CloudManagerLocal getCloudManager() {
-        return lookupLocal(CloudManagerBean.class);
+    public static TopologyManagerLocal getTopologyManager() {
+        return lookupLocal(TopologyManagerBean.class);
     }
 
     public static ClusterManagerLocal getClusterManager() {
@@ -497,7 +481,7 @@ public final class LookupUtil {
         return lookupLocal(ServerManagerBean.class);
     }
 
-    public static CacheConsistencyManagerLocal getCacheConsistenyManager() {
+    public static CacheConsistencyManagerLocal getCacheConsistencyManager() {
         return lookupLocal(CacheConsistencyManagerBean.class);
     }
 
@@ -557,10 +541,6 @@ public final class LookupUtil {
         return lookupLocal(SubjectManagerBean.class);
     }
 
-    public static SubjectRoleTestBeanLocal getSubjectRoleTestBean() {
-        return lookupLocal(SubjectRoleTestBean.class);
-    }
-
     public static SystemManagerLocal getSystemManager() {
         return lookupLocal(SystemManagerBean.class);
     }
@@ -604,26 +584,36 @@ public final class LookupUtil {
     public static PlatformUtilizationManagerLocal getPlatformUtilizationManager() {
         return lookupLocal(PlatformUtilizationManagerBean.class);
     }
-    
+
+    public static SubjectPreferencesCacheLocal getSubjectPreferencesCache() {
+        return lookupLocal(SubjectPreferencesCacheBean.class);
+    }
+
     public static CoreServerMBean getCoreServer() {
-        MBeanServer jBossMBeanServer = MBeanServerLocator.locateJBoss();
-        CoreServerMBean jonServer = (CoreServerMBean) MBeanProxyExt.create(CoreServerMBean.class,
-            CoreServerMBean.OBJECT_NAME, jBossMBeanServer);
-        return jonServer;
+        MBeanServer mbs = getJBossMBeanServer();
+        CoreServerMBean rhqServer = (CoreServerMBean) MBeanProxyExt.create(CoreServerMBean.class,
+            CoreServerMBean.OBJECT_NAME, mbs);
+        return rhqServer;
     }
 
     public static PluginDeploymentScannerMBean getPluginDeploymentScanner() {
-        MBeanServer jBossMBeanServer = MBeanServerLocator.locateJBoss();
+        MBeanServer jBossMBeanServer = getJBossMBeanServer();
         PluginDeploymentScannerMBean scanner = (PluginDeploymentScannerMBean) MBeanProxyExt.create(
             PluginDeploymentScannerMBean.class, PluginDeploymentScannerMBean.OBJECT_NAME, jBossMBeanServer);
         return scanner;
     }
 
-    public static ServerPluginServiceManagement getServerPluginService() {
-        MBeanServer jBossMBeanServer = MBeanServerLocator.locateJBoss();
-        ServerPluginServiceManagement service = (ServerPluginServiceManagement) MBeanProxyExt.create(
-            ServerPluginServiceManagement.class, ServerPluginServiceManagement.OBJECT_NAME, jBossMBeanServer);
+    public static ServerPluginServiceMBean getServerPluginService() {
+        MBeanServer jBossMBeanServer = getJBossMBeanServer();
+        ServerPluginServiceMBean service = (ServerPluginServiceMBean) MBeanProxyExt.create(
+            ServerPluginServiceMBean.class, ServerPluginServiceMBean.OBJECT_NAME, jBossMBeanServer);
         return service;
+    }
+
+    private static MBeanServer getJBossMBeanServer() {
+        // The default MBean server for AS7 is the platform MBeanServer
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        return mbs;
     }
 
     /**
@@ -632,46 +622,27 @@ public final class LookupUtil {
      * @param beanName the name of the EJB bean
      * @param interfaceName the full class name of either the remote or local interface
      * 
-     * @return the bean accessed through specified inerface
+     * @return the bean accessed through specified interface
      */
     public static Object getEjb(String beanName, String interfaceName) {
         return lookupByName(beanName, interfaceName);
     }
 
-    //--------------------------------------------
-    // The TEST services
-    //--------------------------------------------
-
-    public static AccessLocal getAccessLocal() {
-        return lookupLocal(AccessBean.class);
-    }
-
-    public static CoreTestLocal getCoreTest() {
-        return lookupLocal(CoreTestBean.class);
-    }
-
-    public static DiscoveryTestLocal getDiscoveryTest() {
-        return lookupLocal(DiscoveryTestBean.class);
-    }
-
-    public static MeasurementTestLocal getMeasurementTest() {
-        return lookupLocal(MeasurementTestBean.class);
-    }
-
-    public static ResourceGroupTestBeanLocal getResourceGroupTestBean() {
-        return lookupLocal(ResourceGroupTestBean.class);
+    /**
+     * This is a test bean used only by test code or by things like control.jsp.
+     */
+    public static TestLocal getTest() {
+        return lookupLocal(TestBean.class);
     }
 
     // Private Methods
 
-    //in this method, we don't actually need the interfaceName yet, but
-    //this will become necessary as soon as we start using AS7 as our container.
-    //So let's be proactive here ;)
     private static String getLocalJNDIName(String beanName, String interfaceName) {
-        return (embeddedDeployment ? "" : (RHQConstants.EAR_NAME + "/")) + beanName + "/local";
+        return "java:global/rhq/rhq-enterprise-server-ejb3/" + beanName + "!" + interfaceName;
     }
 
-    private static <T> String getLocalJNDIName(@NotNull Class<? super T> beanClass) {
+    private static <T> String getLocalJNDIName(@NotNull
+    Class<? super T> beanClass) {
         return getLocalJNDIName(beanClass.getSimpleName(), beanClass.getName().replace("Bean", "Local"));
     }
 
@@ -682,8 +653,10 @@ public final class LookupUtil {
      *
      * @return JNDI name that the remote interface is registered as
      */
-    private static <T> String getRemoteJNDIName(@NotNull Class<? super T> beanClass) {
-        return (embeddedDeployment ? "" : (RHQConstants.EAR_NAME + "/")) + beanClass.getSimpleName() + "/remote";
+    private static <T> String getRemoteJNDIName(@NotNull
+    Class<? super T> beanClass) {
+        return ("java:global/rhq/rhq-enterprise-server-ejb3/" + beanClass.getSimpleName() + "!" + beanClass.getName()
+            .replace("Bean", "Remote"));
     }
 
     @SuppressWarnings("unchecked")

@@ -355,11 +355,11 @@ public class MeasurementDataManagerUtility {
                 unions.append("   UNION ALL \n ");
             }
 
-            unions.append(getTableString(table, valuesClause, conditions));
+            unions.append(getTableString(table, valuesClause, conditions, isRawTimePeriod(beginTime)));
         }
 
         String sql = "SELECT timestamp, max(av), max(peak), max(low) FROM ( \n"
-            + "   (SELECT timestamp, avg(value) as av, max(value) as peak, min(value) as low FROM (\n"
+            + "   (SELECT timestamp, avg(value) as av, max(maxvalue) as peak, min(minvalue) as low FROM (\n"
             + unions.toString()
             + "   ) data GROUP BY timestamp) \n"
             + "   UNION ALL (select ? + (? * i) as timestamp, null as av, null as peak, null as low from RHQ_numbers where i < ?) ) alldata \n"
@@ -419,8 +419,15 @@ public class MeasurementDataManagerUtility {
         return ps;
     }
 
-    public static String getTableString(String table, String valuesClause, String conditions) {
-        return "      (SELECT beginTS as timestamp, value \n" //
+    public static String getTableString(String table, String valuesClause, String conditions, boolean isRaw) {
+        if (isRaw) {
+            return "      (SELECT beginTS as timestamp, value, value as minvalue, value as maxvalue \n" //
+                + "      FROM (select ? + (? * i) as beginTS, i from RHQ_numbers where i < ?) n, \n" //
+                + "         " + table + " d " + " \n" //
+                + "      WHERE time_stamp BETWEEN beginTS AND (beginTS + ?) \n" //
+                + "      " + conditions + "      ) \n";
+        }
+        return "      (SELECT beginTS as timestamp, value, minvalue, maxvalue \n" //
             + "      FROM (select ? + (? * i) as beginTS, i from RHQ_numbers where i < ?) n, \n" //
             + "         " + table + " d " + " \n" //
             + "      WHERE time_stamp BETWEEN beginTS AND (beginTS + ?) \n" //

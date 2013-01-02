@@ -52,6 +52,7 @@
          the version of jquery (1.7.2).
     -->
     <script src="/coregui/js/jquery-1.7.2.min.js"/>
+    <script src="/coregui/js/jquery.tipsy.js"/>
     <script src="/coregui/js/jquery.sparkline-2.1.min.js"/>
     <script src="/coregui/js/d3.v3.js"/>
     <script src="/coregui/js/nv.d3.js"/>
@@ -59,16 +60,13 @@
 
     <!--
          Limit compilation to your preferred browser(s) to speed up compile time.
-         As of GWT 2.4.0 the recognized agents (defined in
+         As of GWT 2.5.0 the recognized agents (defined in
          gwt-user.jar:com/google/gwt/user/UserAgent.gwt.xml) are as follows:
 
            ie8: IE8
            ie9: IE9 (new support for IE9 with GWT 2.3.0+)
            gecko1_8: FF2 and later
            safari: Safari/Chrome
-
-         *NOTE*: Since we specify the meta "X-UA-Compatible: IE=IE8" HTTP header in CoreGUI.html, IE9 and later
-                 will emulate IE8 (although the gwt IE9 js libs will still get loaded).
 
          Multiple agents can be specified as a comma-delimited list.
 

@@ -29,7 +29,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3Gr
  *
  * @author Mike Thompson
  */
-public class MetricNvd3BarChartGraph extends AbstractMetricD3GraphView implements HasD3JsniChart
+public final class MetricNvd3BarChartGraph extends AbstractMetricD3GraphView implements HasD3JsniChart
 {
 
     /**

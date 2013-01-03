@@ -1,10 +1,14 @@
 /**
  * Charting Javascript Functions.
- *
  */
 
 
-// ChartContext Constructor Object
+/**
+ * ChartContext Constructor Object
+ * Contains all of the data required to render a chart.
+ * A ChartContext can be passed to multiple chart renders to display different chart types
+ * of that data.
+ */
 var ChartContext = function(chartId,  metricsData, xAxisLabel, yAxisLabel, yAxisUnits){
     this.chartId = chartId;
     this.chartHandle = "#rChart-"+this.chartId;
@@ -14,7 +18,7 @@ var ChartContext = function(chartId,  metricsData, xAxisLabel, yAxisLabel, yAxis
     this.yAxisLabel = yAxisLabel;
     this.yAxisUnits = yAxisUnits;
     this.validate = function() {
-        return this.chartId != undefined && this.chartHandle != undefined && this.data != undefined;
+        return this.chartId != undefined && this.data != undefined;
     };
 };
 

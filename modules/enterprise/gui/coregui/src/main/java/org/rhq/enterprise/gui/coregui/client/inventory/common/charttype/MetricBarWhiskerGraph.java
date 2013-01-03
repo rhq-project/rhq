@@ -29,7 +29,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3Gr
  *
  * @author Mike Thompson
  */
-public class MetricBarWhiskerGraph extends AbstractMetricD3GraphView implements HasD3JsniChart
+public final class MetricBarWhiskerGraph extends AbstractMetricD3GraphView implements HasD3JsniChart
 {
 
     public MetricBarWhiskerGraph(String locatorId, int entityId, String entityName, MeasurementDefinition def,

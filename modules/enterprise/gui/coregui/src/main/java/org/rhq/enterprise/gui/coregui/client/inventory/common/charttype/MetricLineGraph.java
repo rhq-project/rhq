@@ -29,7 +29,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3Gr
  *
  * @author Mike Thompson
  */
-public class MetricLineGraph extends AbstractMetricD3GraphView implements HasD3JsniChart
+public final class MetricLineGraph extends AbstractMetricD3GraphView implements HasD3JsniChart
 {
     /**
      * Constructor for dashboard portlet view as chart definition and data are deferred to later

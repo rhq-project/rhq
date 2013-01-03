@@ -32,18 +32,19 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3Gr
 public final class MetricStackedBarGraph extends AbstractMetricD3GraphView implements HasD3JsniChart
 {
     /**
-     * Constructor for dashboard portlet view as chart definition and data are deferred to later
-     * in the portlet configuration.
+     * Constructor for dashboard portlet view as chart definition and data are deferred to later in the portlet
+     * configuration.
      *
      * @param locatorId
      */
-    public MetricStackedBarGraph(String locatorId){
+    public MetricStackedBarGraph(String locatorId) {
         super(locatorId);
     }
 
     /**
-     * General constructor for stacked bar graph when you have all the data needed to
-     * produce the graph. (This is true for all cases but the dashboard portlet).
+     * General constructor for stacked bar graph when you have all the data needed to produce the graph. (This is true
+     * for all cases but the dashboard portlet).
+     *
      * @param locatorId
      * @param entityId
      * @param entityName
@@ -67,23 +68,24 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
     @Override
     public native void drawJsniChart() /*-{
 
-        var ChartContext = function(chartId,  metricsData, xAxisLabel, yAxisLabel, yAxisUnits){
+        console.log("Draw Stacked Bar jsni chart");
+        var global = this;
+
+        var ChartContext = function (chartId, metricsData, xAxisLabel, yAxisLabel, yAxisUnits)
+        {
             this.chartId = chartId;
-            this.chartHandle = "#rChart-"+this.chartId;
+            this.chartHandle = "#rChart-" + this.chartId;
             this.chartSelection = this.chartHandle + " svg";
             this.data = eval(metricsData); // make into json
-            //console.log("JSON:"+metricsData);
-            //this.data = $wnd.jQuery.parseJSON(metricsData); // make into json
             this.xAxisLabel = xAxisLabel;
             this.yAxisLabel = yAxisLabel;
             this.yAxisUnits = yAxisUnits;
-            this.validate = function() {
-                return this.chartId != undefined && this.chartHandle != undefined && this.data != undefined;
+            this.validate = function ()
+            {
+                return this.chartId != undefined && this.data != undefined;
             };
         };
 
-        console.log("Draw Stacked Bar jsni chart");
-        var global = this;
 
         // json metrics data for testing purposes
         //var jsonMetrics = [{ x:1352204720548, high:0.016642348035599646, low:0.016642348035599646, y:0.016642348035599646},{ x:1352211680548, high:12.000200003333388, low:0.0, y:3.500050000833347},{ x:1352211920548, high:2.000033333888898, low:1.999966667222213, y:2.000000000277778},{ x:1352212160548, high:5.0, low:1.999966667222213, y:2.750000000277778},{ x:1352212400548, high:4.0, low:2.0, y:2.5000083334722243},{ x:1352212640548, high:2.0, low:1.999966667222213, y:1.9999916668055533},{ x:1352212880548, high:3.0, low:2.0, y:2.2500083334722243},{ x:1352213120548, high:3.000050000833347, low:1.999966667222213, y:2.2500041672916677},{ x:1352213360548, high:4.0, low:1.999966667222213, y:2.7499916668055535},{ x:1352213600548, high:2.000033333888898, low:1.999966667222213, y:2.000008333750002},{ x:1352213840548, high:2.0, low:1.999966667222213, y:1.9999916668055533},{ x:1352214080548, high:3.0, low:1.999966667222213, y:2.250000000277778},{ x:1352214320548, high:4.0, low:2.0, y:2.5},{ x:1352214560548, high:3.0, low:1.999966667222213, y:2.250000000833347},{ x:1352214800548, high:2.000033333888898, low:1.999966667222213, y:2.000000000277778},{ x:1352215040548, high:4.0, low:2.0, y:2.5},{ x:1352215280548, high:3.0, low:2.0, y:2.2500083334722243},{ x:1352215520548, high:2.0, low:1.999966667222213, y:1.9999916668055533},{ x:1352215760548, high:3.0, low:1.999966667222213, y:2.250000000277778},{ x:1352216000548, high:4.0, low:2.0, y:2.5},{ x:1352216240548, high:2.000066668888963, low:1.999966667222213, y:2.000008334027794},{ x:1352216480548, high:3.0, low:1.999966667222213, y:2.2499916668055535}];
@@ -98,40 +100,48 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
         );
 
 
-        var metricStackedBarGraph = function(){
+        // Define the Stacked Bar Graph function using the module pattern
+        var metricStackedBarGraph = function ()
+        {
             // privates
             var margin = {top: 10, right: 5, bottom: 30, left: 40},
                     width = 850 - margin.left - margin.right,
                     height = 250 - margin.top - margin.bottom,
                     titleHeight = 43, titleSpace = 10;
-
-            var avg = $wnd.d3.mean(chartContext.data.map(function (d) {
+            var interpolation = "basis";
+            var avg = $wnd.d3.mean(chartContext.data.map(function (d)
+            {
                 return d.y;
             }));
-            var peak = $wnd.d3.max(chartContext.data.map(function (d) {
+            var peak = $wnd.d3.max(chartContext.data.map(function (d)
+            {
                 return d.high;
             }));
-            var min = $wnd.d3.min(chartContext.data.map(function (d) {
+            var min = $wnd.d3.min(chartContext.data.map(function (d)
+            {
                 return d.low;
             }));
-
-
             var timeScale = $wnd.d3.time.scale()
                     .range([0, width])
-                    .domain($wnd.d3.extent(chartContext.data, function (d) {
+                    .domain($wnd.d3.extent(chartContext.data, function (d)
+                    {
                         return d.x;
                     }));
 
             // adjust the min scale so blue low line is not in axis
-            var determineLowBound = function (min, peak) {
+            var determineLowBound = function (min, peak)
+            {
                 var newLow = min - ((peak - min) * 0.1);
-                if (newLow < 0) {
+                if (newLow < 0)
+                {
                     return 0;
-                } else {
+                }
+                else
+                {
                     return newLow;
                 }
             };
-            var lowBound = determineLowBound(min,peak);
+            var lowBound = determineLowBound(min, peak);
             var highBound = peak + ((peak - min) * 0.1);
 
             var yScale = $wnd.d3.scale.linear()
@@ -156,8 +166,15 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
             // create the actual chart group
             var chart = $wnd.d3.select(chartContext.chartSelection);
 
+            var svg = chart.append("g")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top - titleHeight - titleSpace + margin.bottom)
+                    .attr("transform", "translate(" + margin.left + "," + (+titleHeight + titleSpace + margin.top) + ")");
 
-            function createHeader(resourceName, minLabel, minValue, avgLabel, avgValue, highLabel, highValue) {
+
+
+            function createHeader(resourceName, minLabel, minValue, avgLabel, avgValue, highLabel, highValue)
+            {
                 var fontSize = 14,
                         yTitle = 37,
                         fgColor = "#FFFFFF",
@@ -243,238 +260,272 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
                         .attr("text-anchor", "left")
                         .text(highValue.toPrecision(3))
                         .attr("fill", fgColor);
+                return title;
 
             }
-            return {
-                // Public API
 
-        draw: function(chartContext) {
-            "use strict";
+            function createStackedBars(){
 
-            console.log("chart id: "+chartContext.chartSelection );
-            //console.log("Json Data:\n"+chartContext.data);
+                var barOffset = 2, pixelsOffHeight = 0;
 
-            var interpolation = "basis";
-            var avgLine = $wnd.d3.svg.line()
-                    .interpolate(interpolation)
-                    .x(function (d) {
-                        return timeScale(d.x);
-                    })
-                    .y(function (d) {
-                        return yScale((avg));
-                    });
-            var peakLine = $wnd.d3.svg.line()
-                    .interpolate(interpolation)
-                    .x(function (d) {
-                        return timeScale(d.x);
-                    })
-                    .y(function (d) {
-                        return yScale((peak));
-                    });
-            var minLine = $wnd.d3.svg.line()
-                    .interpolate(interpolation)
-                    .x(function (d) {
-                        return timeScale(d.x);
-                    })
-                    .y(function (d) {
-                        return yScale(min);
-                    });
-
-            // our own x-axis because ours is custom
-            var xAxisLine = $wnd.d3.svg.line()
-                    .interpolate(interpolation)
-                    .x(function (d) {
-                        return timeScale(d.x);
-                    })
-                    .y(function (d) {
-                        return yScale(lowBound);
-                    });
-
-
-            createHeader(chartContext.yAxisLabel, "Min -", min, "Avg -", avg, "High -", peak);
-
-
-            var svg = chart.append("g")
-                    .attr("width", width + margin.left + margin.right)
-                    .attr("height", height + margin.top - titleHeight - titleSpace + margin.bottom)
-                    .attr("transform", "translate(" + margin.left + "," + (+titleHeight + titleSpace + margin.top) + ")");
-
-
-            // create the y axis grid lines
-            svg.append("g").classed("grid y_grid", true)
-                    .call($wnd.d3.svg.axis()
-                            .scale(yScale)
-                            .orient("left")
-                            .ticks(10)
-                            .tickSize(-width, 0, 0)
-                            .tickFormat("")
-                    );
-
-
-            var barOffset = 2, pixelsOffHeight = 0;
-
-            // The gray bars at the bottom leading up
-            svg.selectAll("rect.leaderBar")
-                    .data(chartContext.data)
-                    .enter().append("rect")
-                    .attr("class", "leaderBar")
-                    .attr("x", function (d) {
-                        return timeScale(d.x);
-                    })
-                    .attr("y", function (d) {
-                        if (d.down || d.nodata) {
-                            return yScale(highBound);
-                        } else {
-                            return yScale(d.low);
-                        }
-                    })
-                    .attr("height", function (d) {
-                        if (d.down || d.nodata) {
-                            return height - yScale(highBound) - pixelsOffHeight;
-                        } else {
-                            return height - yScale(d.low) - pixelsOffHeight;
-                        }
-                    })
-                    .attr("width", function (d) {
-                        return  (width / chartContext.data.length - barOffset  );
-                    })
-
-                    .attr("opacity", ".55")
-                    .attr("fill", function (d, i) {
-                        if (d.down) {
-                            return  "url(#redStripes)";
-                        } else if (d.nodata) {
-                            return  "url(#grayStripes)";
-                        } else {
-                            if (i % 10 == 0) {
-                                return  "url(#heavyLeaderBarGrad)";
-                            } else {
-                                return  "url(#leaderBarGrad)";
+                // The gray bars at the bottom leading up
+                svg.selectAll("rect.leaderBar")
+                        .data(chartContext.data)
+                        .enter().append("rect")
+                        .attr("class", "leaderBar")
+                        .attr("x", function (d)
+                        {
+                            return timeScale(d.x);
+                        })
+                        .attr("y", function (d)
+                        {
+                            if (d.down || d.nodata)
+                            {
+                                return yScale(highBound);
                             }
-                        }
-                    });
+                            else
+                            {
+                                return yScale(d.low);
+                            }
+                        })
+                        .attr("height", function (d)
+                        {
+                            if (d.down || d.nodata)
+                            {
+                                return height - yScale(highBound) - pixelsOffHeight;
+                            }
+                            else
+                            {
+                                return height - yScale(d.low) - pixelsOffHeight;
+                            }
+                        })
+                        .attr("width", function (d)
+                        {
+                            return  (width / chartContext.data.length - barOffset  );
+                        })
+
+                        .attr("opacity", ".55")
+                        .attr("fill", function (d, i)
+                        {
+                            if (d.down)
+                            {
+                                return  "url(#redStripes)";
+                            }
+                            else if (d.nodata)
+                            {
+                                return  "url(#grayStripes)";
+                            }
+                            else
+                            {
+                                if (i % 10 == 0)
+                                {
+                                    return  "url(#heavyLeaderBarGrad)";
+                                }
+                                else
+                                {
+                                    return  "url(#leaderBarGrad)";
+                                }
+                            }
+                        });
 
 
-            // upper portion representing avg to high
-            svg.selectAll("rect.high")
-                    .data(chartContext.data)
-                    .enter().append("rect")
-                    .attr("class", "high")
-                    .attr("x", function (d) {
-                        return timeScale(d.x);
-                    })
-                    .attr("y", function (d) {
-                        return isNaN(d.high) ? yScale(lowBound)  : yScale(d.high);
-                    })
-                    .attr("height", function (d) {
-                        if (d.down || d.nodata) {
-                            return height - yScale(lowBound);
-                        } else {
-                            return  yScale(d.y) - yScale(d.high);
-                        }
-                    })
-                    .attr("width", function (d) {
-                        return  (width / chartContext.data.length - barOffset  );
-                    })
-                    .attr("opacity", 0.8)
-                    .attr("fill", "url(#topBarGrad)");
+                // upper portion representing avg to high
+                svg.selectAll("rect.high")
+                        .data(chartContext.data)
+                        .enter().append("rect")
+                        .attr("class", "high")
+                        .attr("x", function (d)
+                        {
+                            return timeScale(d.x);
+                        })
+                        .attr("y", function (d)
+                        {
+                            return isNaN(d.high) ? yScale(lowBound) : yScale(d.high);
+                        })
+                        .attr("height", function (d)
+                        {
+                            if (d.down || d.nodata)
+                            {
+                                return height - yScale(lowBound);
+                            }
+                            else
+                            {
+                                return  yScale(d.y) - yScale(d.high);
+                            }
+                        })
+                        .attr("width", function (d)
+                        {
+                            return  (width / chartContext.data.length - barOffset  );
+                        })
+                        .attr("opacity", 0.8)
+                        .attr("fill", "url(#topBarGrad)");
 
 
-            // lower portion representing avg to low
-            svg.selectAll("rect.low")
-                    .data(chartContext.data)
-                    .enter().append("rect")
-                    .attr("class", "low")
-                    .attr("x", function (d) {
-                        return timeScale(d.x);
-                    })
-                    .attr("y", function (d) {
-                        return isNaN(d.y) ? height : yScale(d.y);
-                    })
-                    .attr("height", function (d) {
-                        if (d.down || d.nodata) {
-                            return height - yScale(lowBound);
-                        } else {
-                            return  yScale(d.low) - yScale(d.y);
-                        }
-                    })
-                    .attr("width", function (d) {
-                        return  (width / chartContext.data.length - barOffset );
-                    })
-                    .attr("opacity", 0.8)
-                    .attr("fill", "url(#bottomBarGrad)");
+                // lower portion representing avg to low
+                svg.selectAll("rect.low")
+                        .data(chartContext.data)
+                        .enter().append("rect")
+                        .attr("class", "low")
+                        .attr("x", function (d)
+                        {
+                            return timeScale(d.x);
+                        })
+                        .attr("y", function (d)
+                        {
+                            return isNaN(d.y) ? height : yScale(d.y);
+                        })
+                        .attr("height", function (d)
+                        {
+                            if (d.down || d.nodata)
+                            {
+                                return height - yScale(lowBound);
+                            }
+                            else
+                            {
+                                return  yScale(d.low) - yScale(d.y);
+                            }
+                        })
+                        .attr("width", function (d)
+                        {
+                            return  (width / chartContext.data.length - barOffset );
+                        })
+                        .attr("opacity", 0.8)
+                        .attr("fill", "url(#bottomBarGrad)");
+            }
 
-            // create x-axis
-            svg.append("g")
-                    .attr("class", "x axis")
-                    .attr("transform", "translate(0," + height + ")")
-                    .call(xAxis);
+            function createYAxisGridLines(){
+                // create the y axis grid lines
+                svg.append("g").classed("grid y_grid", true)
+                        .call($wnd.d3.svg.axis()
+                                .scale(yScale)
+                                .orient("left")
+                                .ticks(10)
+                                .tickSize(-width, 0, 0)
+                                .tickFormat("")
+                        );
+            }
+            function createXandYAxes(){
 
-
-            // create y-axis
-            svg.append("g")
-                    .attr("class", "y axis")
-                    .call(yAxis)
-                    .append("text")
-                    .attr("transform", "rotate(-90),translate( -60,0)")
-                    .attr("y", -30)
-                    .attr("font-size", "10px")
-                    .attr("font-family", "'Liberation Sans', Arial, Helvetica, sans-serif")
-                    .attr("letter-spacing", "3")
-                    .style("text-anchor", "end")
-                    .text(chartContext.yAxisUnits === "NONE" ? "" : chartContext.yAxisUnits);
-
-            console.log("finished axes");
-
-            // peak Line (must be before line.high to look right
-            svg.append("path")
-                    .datum(chartContext.data)
-                    .attr("class", "peakLine")
-                    .attr("fill", "none")
-                    .attr("stroke", "#ff8a9a")
-                    .attr("stroke-width", "1")
-                    .attr("stroke-dasharray", "3,3")
-                    .attr("stroke-opacity", ".4")
-                    .attr("d", peakLine);
-
-            // min Line
-            svg.append("path")
-                    .datum(chartContext.data)
-                    .attr("class", "minLine")
-                    .attr("fill", "none")
-                    .attr("stroke", "#8ad6ff")
-                    .attr("stroke-width", "1")
-                    .attr("stroke-dasharray", "3,3")
-                    .attr("stroke-opacity", ".6")
-                    .attr("d", minLine);
-
-            // avg line
-            svg.append("path")
-                    .datum(chartContext.data)
-                    .attr("class", "avgLine")
-                    .attr("fill", "none")
-                    .attr("stroke", "#b0d9b0")
-                    .attr("stroke-width", "1")
-                    .attr("stroke-dasharray", "3,3")
-                    .attr("stroke-opacity", ".6")
-                    .attr("d", avgLine);
-            // xaxis line
-            svg.append("path")
-                    .datum(chartContext.data)
-                    .attr("class", "xAxisLine")
-                    .attr("fill", "none")
-                    .attr("stroke", "#cccdcf")
-                    .attr("stroke-width", "1")
-                    .attr("d", xAxisLine);
+                // create x-axis
+                svg.append("g")
+                        .attr("class", "x axis")
+                        .attr("transform", "translate(0," + height + ")")
+                        .call(xAxis);
 
 
-            $wnd.jQuery('svg rect').tipsy({
-                gravity: 'w',
-                html: true,
-                title: function() {
-                    return '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">Time: </span></div>';
-                }
-            });
+                // create y-axis
+                svg.append("g")
+                        .attr("class", "y axis")
+                        .call(yAxis)
+                        .append("text")
+                        .attr("transform", "rotate(-90),translate( -60,0)")
+                        .attr("y", -30)
+                        .attr("font-size", "10px")
+                        .attr("font-family", "'Liberation Sans', Arial, Helvetica, sans-serif")
+                        .attr("letter-spacing", "3")
+                        .style("text-anchor", "end")
+                        .text(chartContext.yAxisUnits === "NONE" ? "" : chartContext.yAxisUnits);
+
+            }
+            function createMinAvgPeakLines(){
+
+                var avgLine = $wnd.d3.svg.line()
+                        .interpolate(interpolation)
+                        .x(function (d)
+                        {
+                            return timeScale(d.x);
+                        })
+                        .y(function (d)
+                        {
+                            return yScale((avg));
+                        });
+                var peakLine = $wnd.d3.svg.line()
+                        .interpolate(interpolation)
+                        .x(function (d)
+                        {
+                            return timeScale(d.x);
+                        })
+                        .y(function (d)
+                        {
+                            return yScale((peak));
+                        });
+                var minLine = $wnd.d3.svg.line()
+                        .interpolate(interpolation)
+                        .x(function (d)
+                        {
+                            return timeScale(d.x);
+                        })
+                        .y(function (d)
+                        {
+                            return yScale(min);
+                        });
+
+                // peak Line (must be before line.high to look right
+                svg.append("path")
+                        .datum(chartContext.data)
+                        .attr("class", "peakLine")
+                        .attr("fill", "none")
+                        .attr("stroke", "#ff8a9a")
+                        .attr("stroke-width", "1")
+                        .attr("stroke-dasharray", "3,3")
+                        .attr("stroke-opacity", ".4")
+                        .attr("d", peakLine);
+
+                // min Line
+                svg.append("path")
+                        .datum(chartContext.data)
+                        .attr("class", "minLine")
+                        .attr("fill", "none")
+                        .attr("stroke", "#8ad6ff")
+                        .attr("stroke-width", "1")
+                        .attr("stroke-dasharray", "3,3")
+                        .attr("stroke-opacity", ".6")
+                        .attr("d", minLine);
+
+                // avg line
+                svg.append("path")
+                        .datum(chartContext.data)
+                        .attr("class", "avgLine")
+                        .attr("fill", "none")
+                        .attr("stroke", "#b0d9b0")
+                        .attr("stroke-width", "1")
+                        .attr("stroke-dasharray", "3,3")
+                        .attr("stroke-opacity", ".6")
+                        .attr("d", avgLine);
+            }
+
+            function createXAxisLine(){
+
+                // our own x-axis because ours is custom
+                var xAxisLine = $wnd.d3.svg.line()
+                        .interpolate(interpolation)
+                        .x(function (d)
+                        {
+                            return timeScale(d.x);
+                        })
+                        .y(function (d)
+                        {
+                            return yScale(lowBound);
+                        });
+
+                // xaxis line
+                svg.append("path")
+                        .datum(chartContext.data)
+                        .attr("class", "xAxisLine")
+                        .attr("fill", "none")
+                        .attr("stroke", "#cccdcf")
+                        .attr("stroke-width", "1")
+                        .attr("d", xAxisLine);
+            }
+            function createHovers() {
+                $wnd.jQuery('svg rect').tipsy({
+                    gravity: 'w',
+                    html: true,
+                    title: function ()
+                    {
+                        return '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">Time: </span></div>';
+                    }
+                });
 
 //            $wnd.jQuery('svg rect').tipsy({
 //                gravity: 'w',
@@ -495,11 +546,27 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
 //                            '</div><div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#8ad6ff";">Low:  </span>'+ lowValue + '</div>';
 //                }
 //            });
+            }
 
-            console.log("finished drawing paths");
-        }
-        //draw(chartContext);
-        }; // end public closure
+            return {
+                // Public API
+                draw: function (chartContext)
+                {
+                    "use strict";
+
+                    console.log("chart id: " + chartContext.chartSelection);
+                    //console.log("Json Data:\n"+chartContext.data);
+
+                    createHeader(chartContext.yAxisLabel, "Min -", min, "Avg -", avg, "High -", peak);
+                    createYAxisGridLines();
+                    createStackedBars();
+                    createXandYAxes();
+                    console.log("finished axes");
+                    createMinAvgPeakLines();
+                    createXAxisLine();
+                    console.log("finished drawing paths");
+                }
+            }; // end public closure
         }();
 
         metricStackedBarGraph.draw(chartContext);

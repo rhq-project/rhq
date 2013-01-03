@@ -23,6 +23,9 @@
     stroke: #50505a;
 }
 
+.x.axis path {
+    stroke: #cccdcf;
+}
 .y.axis path {
     display: none;
 }

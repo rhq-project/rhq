@@ -62,7 +62,7 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
     }
 
     /**
-     * The magic JSNI to draw the charts with $wnd.d3.js
+     * The magic JSNI to draw the charts with $wnd.$wnd.d3.js
      */
     @Override
     public native void drawJsniChart() /*-{
@@ -80,8 +80,6 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
         console.log(this.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getJsonMetrics()());
 
         //var jsonData = eval([{ x:1352204720548, high:0.016642348035599646, low:0.016642348035599646, y:0.016642348035599646},{ x:1352211680548, high:12.000200003333388, low:0.0, y:3.500050000833347},{ x:1352211920548, high:2.000033333888898, low:1.999966667222213, y:2.000000000277778},{ x:1352212160548, high:5.0, low:1.999966667222213, y:2.750000000277778},{ x:1352212400548, high:4.0, low:2.0, y:2.5000083334722243},{ x:1352212640548, high:2.0, low:1.999966667222213, y:1.9999916668055533},{ x:1352212880548, high:3.0, low:2.0, y:2.2500083334722243},{ x:1352213120548, high:3.000050000833347, low:1.999966667222213, y:2.2500041672916677},{ x:1352213360548, high:4.0, low:1.999966667222213, y:2.7499916668055535},{ x:1352213600548, high:2.000033333888898, low:1.999966667222213, y:2.000008333750002},{ x:1352213840548, high:2.0, low:1.999966667222213, y:1.9999916668055533},{ x:1352214080548, high:3.0, low:1.999966667222213, y:2.250000000277778},{ x:1352214320548, high:4.0, low:2.0, y:2.5},{ x:1352214560548, high:3.0, low:1.999966667222213, y:2.250000000833347},{ x:1352214800548, high:2.000033333888898, low:1.999966667222213, y:2.000000000277778},{ x:1352215040548, high:4.0, low:2.0, y:2.5},{ x:1352215280548, high:3.0, low:2.0, y:2.2500083334722243},{ x:1352215520548, high:2.0, low:1.999966667222213, y:1.9999916668055533},{ x:1352215760548, high:3.0, low:1.999966667222213, y:2.250000000277778},{ x:1352216000548, high:4.0, low:2.0, y:2.5},{ x:1352216240548, high:2.000066668888963, low:1.999966667222213, y:2.000008334027794},{ x:1352216480548, high:3.0, low:1.999966667222213, y:2.2499916668055535}]);
-
-
 
         function draw(data) {
             "use strict";
@@ -125,11 +123,11 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
                     .rangeRound([height, 0])
                     .domain([lowBound, highBound]);
 
-//    var xAxis = $wnd.d3.svg.axis()
-//            .scale(timeScale)
-//            .ticks(0)
-//            .tickSize(0, 0, 0)
-//            .orient("bottom");
+            var xAxis = $wnd.d3.svg.axis()
+                    .scale(timeScale)
+                    .ticks(10)
+                    .tickSize(0, 0, 0)
+                    .orient("bottom");
 
             var yAxis = $wnd.d3.svg.axis()
                     .scale(yScale)
@@ -224,7 +222,7 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
                         .attr("y", yTitle)
                         .attr("font-size", fontSize)
                         .attr("text-anchor", "left")
-                        .text(minValue.toFixed(2))
+                        .text(minValue.toPrecision(3))
                         .attr("fill", fgColor);
 
                 //avg
@@ -244,7 +242,7 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
                         .attr("y", yTitle)
                         .attr("font-size", fontSize)
                         .attr("text-anchor", "left")
-                        .text(avgValue.toFixed(2))
+                        .text(avgValue.toPrecision(3))
                         .attr("fill", fgColor);
 
                 // high
@@ -264,11 +262,10 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
                         .attr("y", yTitle)
                         .attr("font-size", fontSize)
                         .attr("text-anchor", "left")
-                        .text(highValue.toFixed(2))
+                        .text(highValue.toPrecision(3))
                         .attr("fill", fgColor);
 
             });
-            //@todo: i18n
             createHeader(yAxisTitle, "Min -", min, "Avg -", avg, "High -", peak);
 
 
@@ -332,153 +329,6 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
                         }
                     });
 
-            // custom x-axis
-            svg.selectAll("rect.customXAxis")
-                    .data(data)
-                    .enter().append("rect")
-                    .attr("class", "customXAxis")
-                    .attr("x", function (d) {
-                        return timeScale(d.x);
-                    })
-                    .attr("y", function (d) {
-                        return  yScale(lowBound) + 2;
-                    })
-                    .attr("height", function (d, i) {
-                        if (i % 10 == 0) {
-                            return height - yScale(lowBound) + 3;
-                        } else {
-                            return height - yScale(lowBound) + 3;
-                        }
-                    })
-                    .attr("width", function (d) {
-                        return  (width / data.length - barOffset  );
-                    })
-                    .attr("opacity", 1)
-                    .attr("fill", function (d, i) {
-                        if (i % 10 == 0) {
-                            return  "#a7a7ac";
-                        } else {
-                            return  "#d3d3d6";
-                        }
-                    });
-
-            // Custom knobs on xaxis every 5th one
-            svg.selectAll("rect.customXAxisKnobs")
-                    .data(data)
-                    .enter().append("rect")
-                    .attr("class", "customXAxisKnobs")
-                    .attr("x", function (d) {
-                        return timeScale(d.x) + 4;
-                    })
-                    .attr("y", function (d) {
-                        return  yScale(lowBound) + 3;
-                    })
-                    .attr("height", function (d, i) {
-                        if (i % 10 == 0) {
-                            return (height - yScale(lowBound)) + 4;
-                        } else {
-                            return 0;
-                        }
-                    })
-                    .attr("width", function (d) {
-                        return  (((width / data.length - barOffset) / 2) - 3 );
-                    })
-                    .attr("opacity", 1)
-                    .attr("fill", function (d, i) {
-
-                        if (i % 10 == 0) {
-                            return  "#a7a7ac";
-                        } else {
-                            return  "#d3d3d6";
-                        }
-                    });
-            // Custom knobs on
-            svg.selectAll("rect.customXAxisKnobsSmall")
-                    .data(data)
-                    .enter().append("rect")
-                    .attr("class", "customXAxisKnobsSmall")
-                    .attr("x", function (d) {
-                        return timeScale(d.x) + 5;
-                    })
-                    .attr("y", function (d) {
-                        return  yScale(lowBound) + 5;
-                    })
-                    .attr("height", function (d, i) {
-                        if (i % 10 != 0) {
-                            return (height - yScale(lowBound)) + 2;
-                        } else {
-                            return 0;
-                        }
-                    })
-                    .attr("width", function (d) {
-                        return  (((width / data.length - barOffset) / 2) - 4);
-                    })
-                    .attr("opacity", 1)
-                    .attr("fill", function (d, i) {
-
-                        if (i % 10 == 0) {
-                            return  "#a7a7ac";
-                        } else {
-                            return  "#d3d3d6";
-                        }
-                    });
-
-
-            var timeFormatter = $wnd.d3.time.format("%I:%M:%S %P");
-
-            // the labels for x axis
-            svg.selectAll("rect.customXAxisLabel")
-                    .data(data)
-                    .enter().append("text")
-                    .attr("class", "customXAxisLabel")
-                    .attr("x", function (d) {
-                        return timeScale(d.x);
-                    })
-                    .attr("y", function (d) {
-                        return  yScale(lowBound) + 10;
-                    })
-                    .attr("dy", "1.2em")
-                    .attr("dx", function (d) {
-                        return  (((width / data.length - barOffset) / 2) - 2 );
-                    })
-                    .attr("text-anchor", "left").
-                    text(function (d, i) {
-                        var date = new Date(+d.x);
-                        if (i % 10 == 0) {
-                            return timeFormatter(date);
-                        } else {
-                            return  "";
-                        }
-                    })
-                    .attr("fill", "#50505a");
-
-            var dateFormatter = $wnd.d3.time.format("%x");
-            // the labels for x axis
-            svg.selectAll("rect.customXAxisDateLabel")
-                    .data(data)
-                    .enter().append("text")
-                    .attr("class", "customXAxisDateLabel")
-                    .attr("x", function (d) {
-                        return timeScale(d.x);
-                    })
-                    .attr("y", function (d) {
-                        return  yScale(lowBound) + 25;
-                    })
-                    .attr("dy", "1.2em")
-                    .attr("dx", function (d) {
-                        return  (((width / data.length - barOffset) / 2) - 2 );
-                    })
-                    .attr("text-anchor", "left").
-                    text(function (d, i) {
-                        var date = new Date(+d.x);
-                        if (i % 10 == 0) {
-                            return dateFormatter(date);
-                        } else {
-                            return  "";
-                        }
-                    })
-                    .attr("fill", "#50505a");
-
 
             // upper portion representing avg to high
             svg.selectAll("rect.high")
@@ -489,8 +339,7 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
                         return timeScale(d.x);
                     })
                     .attr("y", function (d) {
-                        //return isNaN(d.high) ? yScale(lowBound)  : yScale(d.high);
-                        return yScale(d.high);
+                        return isNaN(d.high) ? yScale(lowBound)  : yScale(d.high);
                     })
                     .attr("height", function (d) {
                         if (d.down || d.nodata) {
@@ -503,7 +352,6 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
                         return  (width / data.length - barOffset  );
                     })
                     .attr("opacity", 0.8)
-                //.attr("fill", "#084581");
                     .attr("fill", "url(#topBarGrad)");
 
 
@@ -516,7 +364,7 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
                         return timeScale(d.x);
                     })
                     .attr("y", function (d) {
-                        return yScale(d.y);
+                        return isNaN(d.y) ? height : yScale(d.y);
                     })
                     .attr("height", function (d) {
                         if (d.down || d.nodata) {
@@ -529,14 +377,13 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
                         return  (width / data.length - barOffset );
                     })
                     .attr("opacity", 0.8)
-                //.attr("fill", "#42aadf");
                     .attr("fill", "url(#bottomBarGrad)");
 
             // create x-axis
-//    svg.append("g")
-//            .attr("class", "x axis")
-//            .attr("transform", "translate(0," + height + ")")
-//            .call(xAxis);
+            svg.append("g")
+                    .attr("class", "x axis")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(xAxis);
 
 
             // create y-axis
@@ -546,7 +393,6 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
                     .append("text")
                     .attr("transform", "rotate(-90),translate( -60,0)")
                     .attr("y", -30)
-                //.attr("dy", ".71em")
                     .attr("font-size", "10px")
                     .attr("font-family", "'Liberation Sans', Arial, Helvetica, sans-serif")
                     .attr("letter-spacing", "3")
@@ -574,7 +420,6 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
                     .attr("stroke", "#8ad6ff")
                     .attr("stroke-width", "1")
                     .attr("stroke-dasharray", "3,3")
-                //.attr("stroke-dasharray", "20,10,5,5,5,10")
                     .attr("stroke-opacity", ".6")
                     .attr("d", minLine);
 
@@ -595,27 +440,28 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
                     .attr("fill", "none")
                     .attr("stroke", "#cccdcf")
                     .attr("stroke-width", "1")
-                //.attr("stroke-dasharray", "3,3")
-                //.attr("stroke-opacity", ".6")
                     .attr("d", xAxisLine);
 
-            $wnd.$('svg rect').tipsy({
+
+            $wnd.jQuery('svg rect').tipsy({
                 gravity: 'w',
                 html: true,
                 title: function() {
                     var d = this.__data__ ;
-                    var date = new Date(d.x);
+                    var xValue = (d.x == undefined) ? 0 : +d.x;
+                    var date = new Date(+xValue);
                     var timeFormatter = $wnd.d3.time.format("%I:%M:%S %P");
                     var dateFormatter = $wnd.d3.time.format("%m/%d/%y");
+                    var highValue = (d.high == undefined) ? 0 : d.high.toFixed(2);
+                    var lowValue = (d.low == undefined) ? 0 : d.low.toFixed(2);
+                    var avgValue = (d.y == undefined) ? 0 : d.y.toFixed(2);
                     return '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">Time: </span>' +timeFormatter(date)+ '</div>'+
                             '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">Date: </span>' +dateFormatter(date)+ '</div>'+
                             '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#ff8a9a";">High: </span>'
-                            + d.high+'</div><div style="text-align: left;"><span style="width:50px;font-weight: bold;color: #b0d9b0";">Avg: </span>'+ d.y+
-                            '</div><div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#8ad6ff";">Low: </span>'+ d.low+ '</div>';
+                            + highValue +'</div><div style="text-align: left;"><span style="width:50px;font-weight: bold;color: #b0d9b0";">Avg:  </span>'+ avgValue+
+                            '</div><div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#8ad6ff";">Low:  </span>'+ lowValue + '</div>';
                 }
             });
-
-
 
             console.log("finished drawing paths");
         }

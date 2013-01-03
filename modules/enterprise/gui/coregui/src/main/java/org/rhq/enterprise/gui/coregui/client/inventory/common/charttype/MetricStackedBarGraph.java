@@ -25,7 +25,7 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView;
 
 /**
- * Contains the javascript chart definition for a d3 d3 d3 Stacked Bar graph chart.
+ * Contains the javascript chart definition for a d3 Stacked Bar graph chart.
  *
  * @author Mike Thompson
  */
@@ -68,21 +68,20 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
     public native void drawJsniChart() /*-{
 
         console.log("Draw Stacked Bar jsni chart");
-        var global = this,
-            chartId =  global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getChartId()(),
-            chartHandle = "#rChart-"+chartId,
-            chartSelection = chartHandle + " svg",
-            json = eval(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getJsonMetrics()()),
-            yAxisTitle = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisTitle()(),
-            yAxisUnits = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisUnits()(),
-            xAxisLabel = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getXAxisTitle()();
+        var global = this;
 
-        console.log("chart id: "+chartSelection );
-        console.log(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getJsonMetrics()());
+        // json metrics data for testing purposes
+        //var jsonMetrics = [{ x:1352204720548, high:0.016642348035599646, low:0.016642348035599646, y:0.016642348035599646},{ x:1352211680548, high:12.000200003333388, low:0.0, y:3.500050000833347},{ x:1352211920548, high:2.000033333888898, low:1.999966667222213, y:2.000000000277778},{ x:1352212160548, high:5.0, low:1.999966667222213, y:2.750000000277778},{ x:1352212400548, high:4.0, low:2.0, y:2.5000083334722243},{ x:1352212640548, high:2.0, low:1.999966667222213, y:1.9999916668055533},{ x:1352212880548, high:3.0, low:2.0, y:2.2500083334722243},{ x:1352213120548, high:3.000050000833347, low:1.999966667222213, y:2.2500041672916677},{ x:1352213360548, high:4.0, low:1.999966667222213, y:2.7499916668055535},{ x:1352213600548, high:2.000033333888898, low:1.999966667222213, y:2.000008333750002},{ x:1352213840548, high:2.0, low:1.999966667222213, y:1.9999916668055533},{ x:1352214080548, high:3.0, low:1.999966667222213, y:2.250000000277778},{ x:1352214320548, high:4.0, low:2.0, y:2.5},{ x:1352214560548, high:3.0, low:1.999966667222213, y:2.250000000833347},{ x:1352214800548, high:2.000033333888898, low:1.999966667222213, y:2.000000000277778},{ x:1352215040548, high:4.0, low:2.0, y:2.5},{ x:1352215280548, high:3.0, low:2.0, y:2.2500083334722243},{ x:1352215520548, high:2.0, low:1.999966667222213, y:1.9999916668055533},{ x:1352215760548, high:3.0, low:1.999966667222213, y:2.250000000277778},{ x:1352216000548, high:4.0, low:2.0, y:2.5},{ x:1352216240548, high:2.000066668888963, low:1.999966667222213, y:2.000008334027794},{ x:1352216480548, high:3.0, low:1.999966667222213, y:2.2499916668055535}];
 
-        //var jsonData = eval([{ x:1352204720548, high:0.016642348035599646, low:0.016642348035599646, y:0.016642348035599646},{ x:1352211680548, high:12.000200003333388, low:0.0, y:3.500050000833347},{ x:1352211920548, high:2.000033333888898, low:1.999966667222213, y:2.000000000277778},{ x:1352212160548, high:5.0, low:1.999966667222213, y:2.750000000277778},{ x:1352212400548, high:4.0, low:2.0, y:2.5000083334722243},{ x:1352212640548, high:2.0, low:1.999966667222213, y:1.9999916668055533},{ x:1352212880548, high:3.0, low:2.0, y:2.2500083334722243},{ x:1352213120548, high:3.000050000833347, low:1.999966667222213, y:2.2500041672916677},{ x:1352213360548, high:4.0, low:1.999966667222213, y:2.7499916668055535},{ x:1352213600548, high:2.000033333888898, low:1.999966667222213, y:2.000008333750002},{ x:1352213840548, high:2.0, low:1.999966667222213, y:1.9999916668055533},{ x:1352214080548, high:3.0, low:1.999966667222213, y:2.250000000277778},{ x:1352214320548, high:4.0, low:2.0, y:2.5},{ x:1352214560548, high:3.0, low:1.999966667222213, y:2.250000000833347},{ x:1352214800548, high:2.000033333888898, low:1.999966667222213, y:2.000000000277778},{ x:1352215040548, high:4.0, low:2.0, y:2.5},{ x:1352215280548, high:3.0, low:2.0, y:2.2500083334722243},{ x:1352215520548, high:2.0, low:1.999966667222213, y:1.9999916668055533},{ x:1352215760548, high:3.0, low:1.999966667222213, y:2.250000000277778},{ x:1352216000548, high:4.0, low:2.0, y:2.5},{ x:1352216240548, high:2.000066668888963, low:1.999966667222213, y:2.000008334027794},{ x:1352216480548, high:3.0, low:1.999966667222213, y:2.2499916668055535}]);
+        var chartContext = new $wnd.ChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getChartId()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getJsonMetrics()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getXAxisTitle()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisTitle()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisUnits()()
+        );
 
-        function draw(data) {
+
+        function draw(chartContext) {
             "use strict";
 
             var margin = {top: 10, right: 5, bottom: 30, left: 40},
@@ -90,20 +89,23 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
                     height = 250 - margin.top - margin.bottom,
                     titleHeight = 43, titleSpace = 10;
 
-            var avg = $wnd.d3.mean(data.map(function (d) {
+            console.log("chart id: "+chartContext.chartSelection );
+            console.log("Json Data:\n"+chartContext.data);
+
+            var avg = $wnd.d3.mean(chartContext.data.map(function (d) {
                 return d.y;
             }));
-            var peak = $wnd.d3.max(data.map(function (d) {
+            var peak = $wnd.d3.max(chartContext.data.map(function (d) {
                 return d.high;
             }));
-            var min = $wnd.d3.min(data.map(function (d) {
+            var min = $wnd.d3.min(chartContext.data.map(function (d) {
                 return d.low;
             }));
 
 
             var timeScale = $wnd.d3.time.scale()
                     .range([0, width])
-                    .domain($wnd.d3.extent(data, function (d) {
+                    .domain($wnd.d3.extent(chartContext.data, function (d) {
                         return d.x;
                     }));
 
@@ -176,7 +178,7 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
 
 
             // create the actual chart group
-            var chart = $wnd.d3.select(chartSelection);
+            var chart = $wnd.d3.select(chartContext.chartSelection);
 
 
             var createHeader = (function (resourceName, minLabel, minValue, avgLabel, avgValue, highLabel, highValue) {
@@ -267,7 +269,7 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
                         .attr("fill", fgColor);
 
             });
-            createHeader(yAxisTitle, "Min -", min, "Avg -", avg, "High -", peak);
+            createHeader(chartContext.yAxisLabel, "Min -", min, "Avg -", avg, "High -", peak);
 
 
             var svg = chart.append("g")
@@ -291,7 +293,7 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
 
             // The gray bars at the bottom leading up
             svg.selectAll("rect.leaderBar")
-                    .data(data)
+                    .data(chartContext.data)
                     .enter().append("rect")
                     .attr("class", "leaderBar")
                     .attr("x", function (d) {
@@ -312,7 +314,7 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
                         }
                     })
                     .attr("width", function (d) {
-                        return  (width / data.length - barOffset  );
+                        return  (width / chartContext.data.length - barOffset  );
                     })
 
                     .attr("opacity", ".55")
@@ -333,7 +335,7 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
 
             // upper portion representing avg to high
             svg.selectAll("rect.high")
-                    .data(data)
+                    .data(chartContext.data)
                     .enter().append("rect")
                     .attr("class", "high")
                     .attr("x", function (d) {
@@ -350,7 +352,7 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
                         }
                     })
                     .attr("width", function (d) {
-                        return  (width / data.length - barOffset  );
+                        return  (width / chartContext.data.length - barOffset  );
                     })
                     .attr("opacity", 0.8)
                     .attr("fill", "url(#topBarGrad)");
@@ -358,7 +360,7 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
 
             // lower portion representing avg to low
             svg.selectAll("rect.low")
-                    .data(data)
+                    .data(chartContext.data)
                     .enter().append("rect")
                     .attr("class", "low")
                     .attr("x", function (d) {
@@ -375,7 +377,7 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
                         }
                     })
                     .attr("width", function (d) {
-                        return  (width / data.length - barOffset );
+                        return  (width / chartContext.data.length - barOffset );
                     })
                     .attr("opacity", 0.8)
                     .attr("fill", "url(#bottomBarGrad)");
@@ -398,13 +400,13 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
                     .attr("font-family", "'Liberation Sans', Arial, Helvetica, sans-serif")
                     .attr("letter-spacing", "3")
                     .style("text-anchor", "end")
-                    .text(yAxisUnits === "NONE" ? "" : yAxisUnits);
+                    .text(chartContext.yAxisUnits === "NONE" ? "" : chartContext.yAxisUnits);
 
             console.log("finished axes");
 
             // peak Line (must be before line.high to look right
             svg.append("path")
-                    .datum(data)
+                    .datum(chartContext.data)
                     .attr("class", "peakLine")
                     .attr("fill", "none")
                     .attr("stroke", "#ff8a9a")
@@ -415,7 +417,7 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
 
             // min Line
             svg.append("path")
-                    .datum(data)
+                    .datum(chartContext.data)
                     .attr("class", "minLine")
                     .attr("fill", "none")
                     .attr("stroke", "#8ad6ff")
@@ -426,7 +428,7 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
 
             // avg line
             svg.append("path")
-                    .datum(data)
+                    .datum(chartContext.data)
                     .attr("class", "avgLine")
                     .attr("fill", "none")
                     .attr("stroke", "#b0d9b0")
@@ -436,7 +438,7 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
                     .attr("d", avgLine);
             // xaxis line
             svg.append("path")
-                    .datum(data)
+                    .datum(chartContext.data)
                     .attr("class", "xAxisLine")
                     .attr("fill", "none")
                     .attr("stroke", "#cccdcf")
@@ -466,7 +468,7 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
 
             console.log("finished drawing paths");
         }
-        draw(json);
+        draw(chartContext);
 
     }-*/;
 

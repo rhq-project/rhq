@@ -67,13 +67,30 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
     @Override
     public native void drawJsniChart() /*-{
 
+        var ChartContext = function(chartId,  metricsData, xAxisLabel, yAxisLabel, yAxisUnits){
+            this.chartId = chartId;
+            this.chartHandle = "#rChart-"+this.chartId;
+            this.chartSelection = this.chartHandle + " svg";
+            this.data = eval(metricsData); // make into json
+            //console.log("JSON:"+metricsData);
+            //this.data = $wnd.jQuery.parseJSON(metricsData); // make into json
+            this.xAxisLabel = xAxisLabel;
+            this.yAxisLabel = yAxisLabel;
+            this.yAxisUnits = yAxisUnits;
+            this.validate = function() {
+                return this.chartId != undefined && this.chartHandle != undefined && this.data != undefined;
+            };
+        };
+
         console.log("Draw Stacked Bar jsni chart");
         var global = this;
 
         // json metrics data for testing purposes
         //var jsonMetrics = [{ x:1352204720548, high:0.016642348035599646, low:0.016642348035599646, y:0.016642348035599646},{ x:1352211680548, high:12.000200003333388, low:0.0, y:3.500050000833347},{ x:1352211920548, high:2.000033333888898, low:1.999966667222213, y:2.000000000277778},{ x:1352212160548, high:5.0, low:1.999966667222213, y:2.750000000277778},{ x:1352212400548, high:4.0, low:2.0, y:2.5000083334722243},{ x:1352212640548, high:2.0, low:1.999966667222213, y:1.9999916668055533},{ x:1352212880548, high:3.0, low:2.0, y:2.2500083334722243},{ x:1352213120548, high:3.000050000833347, low:1.999966667222213, y:2.2500041672916677},{ x:1352213360548, high:4.0, low:1.999966667222213, y:2.7499916668055535},{ x:1352213600548, high:2.000033333888898, low:1.999966667222213, y:2.000008333750002},{ x:1352213840548, high:2.0, low:1.999966667222213, y:1.9999916668055533},{ x:1352214080548, high:3.0, low:1.999966667222213, y:2.250000000277778},{ x:1352214320548, high:4.0, low:2.0, y:2.5},{ x:1352214560548, high:3.0, low:1.999966667222213, y:2.250000000833347},{ x:1352214800548, high:2.000033333888898, low:1.999966667222213, y:2.000000000277778},{ x:1352215040548, high:4.0, low:2.0, y:2.5},{ x:1352215280548, high:3.0, low:2.0, y:2.2500083334722243},{ x:1352215520548, high:2.0, low:1.999966667222213, y:1.9999916668055533},{ x:1352215760548, high:3.0, low:1.999966667222213, y:2.250000000277778},{ x:1352216000548, high:4.0, low:2.0, y:2.5},{ x:1352216240548, high:2.000066668888963, low:1.999966667222213, y:2.000008334027794},{ x:1352216480548, high:3.0, low:1.999966667222213, y:2.2499916668055535}];
 
-        var chartContext = new $wnd.ChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getChartId()(),
+        // create a chartContext object (from rhq.js) with the data required to render to a chart
+        // this same data could be passed to different chart types
+        var chartContext = new ChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getChartId()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getJsonMetrics()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getXAxisTitle()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisTitle()(),
@@ -81,16 +98,12 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
         );
 
 
-        function draw(chartContext) {
-            "use strict";
-
+        var metricStackedBarGraph = function(){
+            // privates
             var margin = {top: 10, right: 5, bottom: 30, left: 40},
                     width = 850 - margin.left - margin.right,
                     height = 250 - margin.top - margin.bottom,
                     titleHeight = 43, titleSpace = 10;
-
-            console.log("chart id: "+chartContext.chartSelection );
-            console.log("Json Data:\n"+chartContext.data);
 
             var avg = $wnd.d3.mean(chartContext.data.map(function (d) {
                 return d.y;
@@ -140,48 +153,11 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
                     .orient("left");
 
 
-            var interpolation = "basis";
-            var avgLine = $wnd.d3.svg.line()
-                    .interpolate(interpolation)
-                    .x(function (d) {
-                        return timeScale(d.x);
-                    })
-                    .y(function (d) {
-                        return yScale((avg));
-                    });
-            var peakLine = $wnd.d3.svg.line()
-                    .interpolate(interpolation)
-                    .x(function (d) {
-                        return timeScale(d.x);
-                    })
-                    .y(function (d) {
-                        return yScale((peak));
-                    });
-            var minLine = $wnd.d3.svg.line()
-                    .interpolate(interpolation)
-                    .x(function (d) {
-                        return timeScale(d.x);
-                    })
-                    .y(function (d) {
-                        return yScale(min);
-                    });
-
-            // our own x-axis because ours is custom
-            var xAxisLine = $wnd.d3.svg.line()
-                    .interpolate(interpolation)
-                    .x(function (d) {
-                        return timeScale(d.x);
-                    })
-                    .y(function (d) {
-                        return yScale(lowBound);
-                    });
-
-
             // create the actual chart group
             var chart = $wnd.d3.select(chartContext.chartSelection);
 
 
-            var createHeader = (function (resourceName, minLabel, minValue, avgLabel, avgValue, highLabel, highValue) {
+            function createHeader(resourceName, minLabel, minValue, avgLabel, avgValue, highLabel, highValue) {
                 var fontSize = 14,
                         yTitle = 37,
                         fgColor = "#FFFFFF",
@@ -268,7 +244,53 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
                         .text(highValue.toPrecision(3))
                         .attr("fill", fgColor);
 
-            });
+            }
+            return {
+                // Public API
+
+        draw: function(chartContext) {
+            "use strict";
+
+            console.log("chart id: "+chartContext.chartSelection );
+            //console.log("Json Data:\n"+chartContext.data);
+
+            var interpolation = "basis";
+            var avgLine = $wnd.d3.svg.line()
+                    .interpolate(interpolation)
+                    .x(function (d) {
+                        return timeScale(d.x);
+                    })
+                    .y(function (d) {
+                        return yScale((avg));
+                    });
+            var peakLine = $wnd.d3.svg.line()
+                    .interpolate(interpolation)
+                    .x(function (d) {
+                        return timeScale(d.x);
+                    })
+                    .y(function (d) {
+                        return yScale((peak));
+                    });
+            var minLine = $wnd.d3.svg.line()
+                    .interpolate(interpolation)
+                    .x(function (d) {
+                        return timeScale(d.x);
+                    })
+                    .y(function (d) {
+                        return yScale(min);
+                    });
+
+            // our own x-axis because ours is custom
+            var xAxisLine = $wnd.d3.svg.line()
+                    .interpolate(interpolation)
+                    .x(function (d) {
+                        return timeScale(d.x);
+                    })
+                    .y(function (d) {
+                        return yScale(lowBound);
+                    });
+
+
             createHeader(chartContext.yAxisLabel, "Min -", min, "Avg -", avg, "High -", peak);
 
 
@@ -450,25 +472,37 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
                 gravity: 'w',
                 html: true,
                 title: function() {
-                    var d = this.__data__ ;
-                    var xValue = (d.x == undefined) ? 0 : +d.x;
-                    var date = new Date(+xValue);
-                    var timeFormatter = $wnd.d3.time.format("%I:%M:%S %P");
-                    var dateFormatter = $wnd.d3.time.format("%m/%d/%y");
-                    var highValue = (d.high == undefined) ? 0 : d.high.toFixed(2);
-                    var lowValue = (d.low == undefined) ? 0 : d.low.toFixed(2);
-                    var avgValue = (d.y == undefined) ? 0 : d.y.toFixed(2);
-                    return '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">Time: </span>' +timeFormatter(date)+ '</div>'+
-                            '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">Date: </span>' +dateFormatter(date)+ '</div>'+
-                            '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#ff8a9a";">High: </span>'
-                            + highValue +'</div><div style="text-align: left;"><span style="width:50px;font-weight: bold;color: #b0d9b0";">Avg:  </span>'+ avgValue+
-                            '</div><div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#8ad6ff";">Low:  </span>'+ lowValue + '</div>';
+                    return '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">Time: </span></div>';
                 }
             });
 
+//            $wnd.jQuery('svg rect').tipsy({
+//                gravity: 'w',
+//                html: true,
+//                title: function() {
+//                    var d = this.__data__ ;
+//                    var xValue = (d.x == undefined) ? 0 : +d.x;
+//                    var date = new Date(+xValue);
+//                    var timeFormatter = $wnd.d3.time.format("%I:%M:%S %P");
+//                    var dateFormatter = $wnd.d3.time.format("%m/%d/%y");
+//                    var highValue = (d.high == undefined) ? 0 : d.high.toFixed(2);
+//                    var lowValue = (d.low == undefined) ? 0 : d.low.toFixed(2);
+//                    var avgValue = (d.y == undefined) ? 0 : d.y.toFixed(2);
+//                    return '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">Time: </span>' +timeFormatter(date)+ '</div>'+
+//                            '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">Date: </span>' +dateFormatter(date)+ '</div>'+
+//                            '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#ff8a9a";">High: </span>'
+//                            + highValue +'</div><div style="text-align: left;"><span style="width:50px;font-weight: bold;color: #b0d9b0";">Avg:  </span>'+ avgValue+
+//                            '</div><div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#8ad6ff";">Low:  </span>'+ lowValue + '</div>';
+//                }
+//            });
+
             console.log("finished drawing paths");
         }
-        draw(chartContext);
+        //draw(chartContext);
+        }; // end public closure
+        }();
+
+        metricStackedBarGraph.draw(chartContext);
 
     }-*/;
 

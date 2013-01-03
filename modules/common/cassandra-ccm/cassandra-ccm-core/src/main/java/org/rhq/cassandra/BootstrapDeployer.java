@@ -31,11 +31,11 @@ import static org.rhq.core.util.StringUtil.collectionToString;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -89,7 +89,7 @@ public class BootstrapDeployer {
         File installedMarker = new File(clusterDir, ".installed");
 
         if (isClusterInstalled()) {
-            return Collections.emptyList();
+            return getNodeDirs(clusterDir);
         }
 
         FileUtil.purge(clusterDir, false);
@@ -160,6 +160,15 @@ public class BootstrapDeployer {
         }
 
         return nodeDirs;
+    }
+
+    public List<File> getNodeDirs(final File clusterDir) {
+        return asList(clusterDir.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return dir.equals(clusterDir) && name.startsWith("node");
+            }
+        }));
     }
 
     public static void main(String[] args) {

@@ -10,6 +10,7 @@ import org.apache.commons.cli.Options;
 import org.rhq.cassandra.ccm.cli.command.CCMCommand;
 import org.rhq.cassandra.ccm.cli.command.Deploy;
 import org.rhq.cassandra.ccm.cli.command.Shutdown;
+import org.rhq.cassandra.ccm.cli.command.Start;
 
 /**
  * @author John Sanda
@@ -26,6 +27,7 @@ public class Commands {
     public Commands() {
         registerCommand(new Deploy());
         registerCommand(new Shutdown());
+        registerCommand(new Start());
     }
 
     private void registerCommand(CCMCommand command) {

@@ -61,6 +61,14 @@ public class CassandraClusterManager {
     }
 
     public CassandraClusterManager(DeploymentOptions deploymentOptions) {
+        // Disabling native layer because according to
+        // https://docs.jboss.org/author/display/MODULES/Native+Libraries more work than I
+        // prefer is needed in order to properly deploy sigar's native libraries. We do not
+        // need the native layer as we are only using the rhq-core-native-system apis for
+        // starting cassandra nodes.
+        //
+        // jsanda
+        SystemInfoFactory.disableNativeSystemInfo();
         this.deploymentOptions = deploymentOptions;
         try {
             this.deploymentOptions.load();
@@ -92,7 +100,11 @@ public class CassandraClusterManager {
     }
 
     public void startCluster() {
-        this.startCluster(this.installedNodeDirs);
+        if (installedNodeDirs == null) {
+            BootstrapDeployer deployer = new BootstrapDeployer();
+            installedNodeDirs = deployer.getNodeDirs(new File(deploymentOptions.getClusterDir()));
+        }
+        startCluster(installedNodeDirs);
     }
 
     public void startCluster(List<File> nodeDirs) {

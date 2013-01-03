@@ -1,5 +1,8 @@
 package org.rhq.cassandra.ccm.cli.command;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 
@@ -40,11 +43,18 @@ public class Shutdown extends CCMCommand {
             printUsage();
         } else {
             DeploymentOptions deploymentOptions = new DeploymentOptions();
-            if (cmdLine.hasOption("n")) {
-                // TODO
-            }
             CassandraClusterManager ccm = new CassandraClusterManager(deploymentOptions);
-            ccm.shutdownCluster();
+
+            if (cmdLine.hasOption("n")) {
+                String[] nodes = cmdLine.getOptionValue("n").split(",");
+                List<Integer> nodeIds = new ArrayList<Integer>(nodes.length);
+                for (String node : nodes) {
+                    nodeIds.add(Integer.parseInt(node));
+                }
+                ccm.shutdown(nodeIds);
+            } else {
+                ccm.shutdownCluster();
+            }
         }
     }
 }

@@ -44,6 +44,7 @@ import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
+import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.stream.StreamUtil;
 
 /**
@@ -146,12 +147,32 @@ public class CassandraClusterManager {
     }
 
     public void shutdownCluster() {
-        File basedir = new File(deploymentOptions.getClusterDir());
+        List<Integer> nodeIds = new ArrayList<Integer>();
         for (int i = 0; i < deploymentOptions.getNumNodes(); ++i) {
+            nodeIds.add(i);
+        }
+        shutdown(nodeIds);
+    }
+
+    public void shutdown(List<Integer> nodeIds) {
+        if (log.isDebugEnabled()) {
+            log.debug("Preparing to shutdown cluster nodes " + StringUtil.collectionToString(nodeIds));
+        } else {
+            log.info("Preparing to shutdown cluster nodes.");
+        }
+        File basedir = new File(deploymentOptions.getClusterDir());
+
+        for (Integer nodeId : nodeIds) {
+            File nodeDir = new File(basedir, "node" + nodeId);
+            log.debug("Shutting down node at " + nodeDir);
             try {
-                killNode(new File(basedir, "node" + i));
-            }  catch (Exception e) {
-                throw new RuntimeException("Faililed to shut down cluster", e);
+                if (!nodeDir.exists()) {
+                    log.warn("No shutdown to perform. " + nodeDir + " does not exist.");
+                    continue;
+                }
+                killNode(new File(basedir, "node" + 1));
+            } catch (Exception e) {
+                log.warn("An error occurred trying to shutdown node at " + nodeDir);
             }
         }
     }

@@ -2,7 +2,6 @@ package org.rhq.cassandra.ccm.cli.command;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -52,8 +51,8 @@ public class Deploy extends CCMCommand {
             }
 
             CassandraClusterManager ccm = new CassandraClusterManager(deploymentOptions);
-            List<File> nodeDirs = ccm.installCluster();
-            ccm.startCluster(nodeDirs);
+            ccm.installCluster();
+            ccm.startCluster();
 
             PropertiesFileUpdate serverPropertiesUpdater = getServerProperties();
             try {

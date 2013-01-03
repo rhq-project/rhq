@@ -101,20 +101,22 @@ public class CassandraClusterManager {
     }
 
     public void startCluster() {
-        if (installedNodeDirs == null) {
-            BootstrapDeployer deployer = new BootstrapDeployer();
-            installedNodeDirs = deployer.getNodeDirs(new File(deploymentOptions.getClusterDir()));
-        }
-        startCluster(installedNodeDirs);
+        startCluster(getNodeIds());
     }
 
-    public void startCluster(List<File> nodeDirs) {
+    public void startCluster(List<Integer> nodeIds) {
+        if (log.isDebugEnabled()) {
+            log.debug("Starting embedded cluster for nodes " + StringUtil.collectionToString(nodeIds));
+        } else {
+            log.info("Starting embedded cluster");
+        }
         long start = System.currentTimeMillis();
-        log.info("Starting embedded cluster");
-        for (File dir : nodeDirs) {
-            ProcessExecutionResults results = startNode(dir);
+        File basedir = new File(deploymentOptions.getClusterDir());
+        for (Integer nodeId : nodeIds) {
+            File nodeDir = new File(basedir, "node" + nodeId);
+            ProcessExecutionResults results = startNode(nodeDir);
             if (results.getError() != null) {
-                log.warn("An unexpected error occurred while starting the node at " + dir, results.getError());
+                log.warn("An unexpected error occurred while starting the node at " + nodeDir, results.getError());
             }
         }
         long end = System.currentTimeMillis();
@@ -147,11 +149,7 @@ public class CassandraClusterManager {
     }
 
     public void shutdownCluster() {
-        List<Integer> nodeIds = new ArrayList<Integer>();
-        for (int i = 0; i < deploymentOptions.getNumNodes(); ++i) {
-            nodeIds.add(i);
-        }
-        shutdown(nodeIds);
+        shutdown(getNodeIds());
     }
 
     public void shutdown(List<Integer> nodeIds) {
@@ -170,11 +168,19 @@ public class CassandraClusterManager {
                     log.warn("No shutdown to perform. " + nodeDir + " does not exist.");
                     continue;
                 }
-                killNode(new File(basedir, "node" + 1));
+                killNode(nodeDir);
             } catch (Exception e) {
                 log.warn("An error occurred trying to shutdown node at " + nodeDir);
             }
         }
+    }
+
+    private List<Integer> getNodeIds() {
+        List<Integer> nodeIds = new ArrayList<Integer>();
+        for (int i = 0; i < deploymentOptions.getNumNodes(); ++i) {
+            nodeIds.add(i);
+        }
+        return nodeIds;
     }
 
     private void killNode(File nodeDir) throws Exception {

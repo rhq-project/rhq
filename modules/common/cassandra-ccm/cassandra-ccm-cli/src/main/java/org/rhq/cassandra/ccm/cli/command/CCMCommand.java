@@ -1,5 +1,8 @@
 package org.rhq.cassandra.ccm.cli.command;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -45,6 +48,16 @@ public abstract class CCMCommand {
 
         helpFormatter.setNewLine("\n");
         helpFormatter.printHelp(syntax, header, options, null);
+    }
+
+    protected List<Integer> toIntList(String s) {
+        String[] args = s.split(",");
+        List<Integer> list = new ArrayList<Integer>(args.length);
+        for (String arg : args) {
+            list.add(Integer.parseInt(arg));
+        }
+
+        return list;
     }
 
 }

@@ -39,9 +39,13 @@ public class Start extends CCMCommand {
             printUsage();
         } else {
             DeploymentOptions deploymentOptions = new DeploymentOptions();
-            // TODO handle -n option
             CassandraClusterManager ccm = new CassandraClusterManager(deploymentOptions);
-            ccm.startCluster();
+            // TODO handle -n option
+            if (commandLine.hasOption("n")) {
+                ccm.startCluster(toIntList(commandLine.getOptionValue("n")));
+            } else {
+                ccm.startCluster();
+            }
         }
     }
 }

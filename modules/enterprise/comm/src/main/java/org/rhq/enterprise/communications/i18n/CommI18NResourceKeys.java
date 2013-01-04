@@ -956,7 +956,7 @@ public interface CommI18NResourceKeys {
         + "- If you need help for a particular preference, enter \'!?\'.\\n") })
     String SETUP_STANDARD_INTRO = "Setup.standard-intro";
 
-    @I18NMessages( { @I18NMessage("Transport must be one of the following: servlet, sslservlet") })
+    @I18NMessages({ @I18NMessage("Transport must be one of the following: servlet, sslservlet, socket, sslsocket") })
     String NOT_SERVLET_TRANSPORT = "Setup.not-servlet-transport";
 
     @I18NMessage("Command was not serializable [{0}]. Cause: {1}")

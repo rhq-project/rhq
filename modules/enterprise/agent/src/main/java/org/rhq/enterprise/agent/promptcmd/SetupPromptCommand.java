@@ -221,7 +221,7 @@ public class SetupPromptCommand implements AgentPromptCommand {
         instr.addAll(createBasicSetupInstructions());
 
         final String MIN_KEYSTORE_PASSWORD_LENGTH = ".{6,}";
-        final String VALID_SERVER_TRANSPORTS_REGEX = "servlet|sslservlet";
+        final String VALID_SERVER_TRANSPORTS_REGEX = "servlet|sslservlet|socket|sslsocket";
 
         // insert after the other connector setting instructions (requires knowledge of the basic instruction ordering!)
         instr.add(3, new DefaultSetupInstruction(AgentSetupInstructions.SETUP_INSTRUCTION_CONNECTORTRANSPORT_PREF,

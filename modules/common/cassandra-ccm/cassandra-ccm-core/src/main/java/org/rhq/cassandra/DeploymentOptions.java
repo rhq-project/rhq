@@ -59,6 +59,7 @@ public class DeploymentOptions {
     private String authenticator;
     private String authorizer;
     private String dataDir;
+    private String commitLogDir;
 
     public DeploymentOptions() {
     }
@@ -115,7 +116,7 @@ public class DeploymentOptions {
         setPassword(loadProperty("rhq.cassandra.password", properties));
         setAuthenticator(loadProperty("rhq.cassandra.authenticator", properties));
         setAuthorizer(loadProperty("rhq.cassandra.authorizer", properties));
-//        setDataDir(loadProperty(""));
+        setDataDir(loadProperty("rhq.cassandra.data.dir", properties));
     }
 
     private String loadProperty(String key, Properties properties) {
@@ -156,7 +157,7 @@ public class DeploymentOptions {
         }
     }
 
-    //@BundleProperty(name = "cluster.dir")
+    @BundleProperty(name = "cluster.dir")
     public String getClusterDir() {
         return clusterDir;
     }
@@ -297,7 +298,7 @@ public class DeploymentOptions {
         }
     }
 
-    //@BundleProperty(name = "data.dir")
+    @BundleProperty(name = "data.dir")
     public String getDataDir() {
         return dataDir;
     }
@@ -305,6 +306,17 @@ public class DeploymentOptions {
     public void setDataDir(String dir) {
         if (dataDir == null) {
             dataDir = dir;
+        }
+    }
+
+    @BundleProperty(name = "commitlog.dir")
+    public String getCommitLogDir() {
+        return commitLogDir;
+    }
+
+    public void setCommitLogDir(String dir) {
+        if (commitLogDir == null) {
+            commitLogDir = dir;
         }
     }
 

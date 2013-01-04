@@ -20,8 +20,8 @@ package org.rhq.enterprise.server.core.jaas;
 
 import java.security.acl.Group;
 import java.util.Iterator;
-import java.util.Properties;
 import java.util.Map.Entry;
+import java.util.Properties;
 
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
@@ -36,6 +36,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.security.SimpleGroup;
 import org.jboss.security.auth.spi.UsernamePasswordLoginModule;
 
+import org.rhq.core.util.obfuscation.Obfuscator;
 import org.rhq.enterprise.server.resource.group.LdapGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory;
@@ -77,8 +78,7 @@ import org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory;
  *   The BindDN to use if the LDAP server does not support anonymous searches.
  *
  * BindPW
- *   The password to use if the LDAP server does not support anonymous
- *   searches
+ *   The password to use if the LDAP server does not support anonymous searches
  * </pre>
  */
 
@@ -87,7 +87,7 @@ public class LdapLoginModule extends UsernamePasswordLoginModule {
 
     LdapGroupManagerLocal ldapManager = LookupUtil.getLdapGroupManager();
 
-    // The delimimiter to use when specifiying multiple BaseDN's.
+    // The delimiter to use when specifying multiple BaseDN's.
     private static final String BASEDN_DELIMITER = ";";
 
     /**
@@ -151,6 +151,11 @@ public class LdapLoginModule extends UsernamePasswordLoginModule {
         // Load any information we may need to bind
         String bindDN = (String) options.get("BindDN");
         String bindPW = (String) options.get("BindPW");
+        try {
+            bindPW = Obfuscator.decode(bindPW);
+        } catch (Exception e) {
+            log.debug("Failed to decode bindPW, validating using undecoded value [" + bindPW + "]", e);
+        }
         if (bindDN != null) {
             env.setProperty(Context.SECURITY_PRINCIPAL, bindDN);
             env.setProperty(Context.SECURITY_CREDENTIALS, bindPW);

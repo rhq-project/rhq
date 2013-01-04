@@ -494,6 +494,17 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
     }
 
     public void setProperties(Collection<Property> properties) {
+        //propertiesProxy is a mere view of the properties map.
+        //thus, if one obtained an instance of propertiesProxy from the #getProperties() method and then tried to
+        //pass that instance to this method, the result would be that the set of properties would be effectively
+        //cleared (due to the assignment of the new map to the properties field, of which the propertiesProxy is a
+        //view). We can short-circuit that behavior though, because if we determine that the propertiesProxy is being
+        //assigned as the "new" set of properties, we can return immediately. Logically, the passed in properties are
+        //identical to the ones already present in the properties map in that case.
+        if (propertiesProxy == properties) {
+            return;
+        }
+
         this.properties = new HashMap<String, Property>();
         for (Property p : properties) {
             this.properties.put(p.getName(), p);

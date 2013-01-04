@@ -60,6 +60,7 @@ public class DeploymentOptions {
     private String authorizer;
     private String dataDir;
     private String commitLogDir;
+    private String savedCachesDir;
 
     public DeploymentOptions() {
     }
@@ -317,6 +318,17 @@ public class DeploymentOptions {
     public void setCommitLogDir(String dir) {
         if (commitLogDir == null) {
             commitLogDir = dir;
+        }
+    }
+
+    @BundleProperty(name = "saved.caches.dir")
+    public String getSavedCachesDir() {
+        return savedCachesDir;
+    }
+
+    public void setSavedCachesDir(String dir) {
+        if (savedCachesDir == null) {
+            savedCachesDir = dir;
         }
     }
 

@@ -117,7 +117,7 @@ public class BootstrapDeployer {
                 props.put("data.dir", new File(nodeBasedir, "data").getAbsolutePath());
                 props.put("commitlog.dir", new File(nodeBasedir, "commit_log").getAbsolutePath());
                 props.put("log.dir", "logs");
-                props.put("saved.caches.dir", "saved_caches");
+                props.put("saved.caches.dir", new File(nodeBasedir, "saved_caches").getAbsolutePath());
                 props.put("hostname", address);
                 props.put("seeds", collectionToString(ipAddresses));
                 props.put("jmx.port", Integer.toString(jmxPort));

@@ -1047,7 +1047,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
      * @throws Exception
      */
     protected void writeObjects(String filename, Object... objects) throws Exception {
-        File file = new File(getTempDir(), "-" + filename);
+        File file = new File(getTempDir(), filename);
         file.delete();
         ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file));
         for (Object o : objects) {
@@ -1060,8 +1060,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
      * A utility for reading in objects written with {@link #writeObjects(String, Object...). They are
      * placed in the result List in the same order they were written.
      * 
-     * @param filename The same filename used in the write. Do not include the directory. 
-     * The value will be prepended with the class name.
+     * @param filename The same filename used in the write. Do not include the directory.
      * @param numObjects the number of objects to read out. Can be less than total written, not greater. 
      * @throws Exception
      */
@@ -1070,7 +1069,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
         ObjectInputStream ois = null;
 
         try {
-            File file = new File(getTempDir(), "-" + filename);
+            File file = new File(getTempDir(), filename);
             ois = new ObjectInputStream(new FileInputStream(file));
             for (int i = 0; i < numObjects; ++i) {
                 result.add(ois.readObject());
@@ -1089,7 +1088,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
      * @return true if deleted, false otherwise. 
      */
     protected boolean deleteObjects(String filename) {
-        File file = new File(getTempDir(), "-" + filename);
+        File file = new File(getTempDir(), filename);
         return file.delete();
     }
 

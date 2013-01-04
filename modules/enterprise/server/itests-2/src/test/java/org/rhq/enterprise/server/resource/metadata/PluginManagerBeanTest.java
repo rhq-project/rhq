@@ -63,6 +63,8 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         FileUtil.purge(new File(getPluginScannerService().getAgentPluginDir()), true);
 
         unpreparePluginScannerService();
+
+        super.afterMethod();
     }
 
     public void registerPlugins() throws Exception {
@@ -81,14 +83,31 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
             new PurgePluginsJob().execute(null);
         }
         
-        //createPluginJarFile("child1-plugin.jar", "child1_plugin_v1.xml"));
-
         createPluginJarFile("test-plugin1.jar", "plugin_1.xml");
         createPluginJarFile("test-plugin2.jar", "plugin_2.xml");
         createPluginJarFile("test-plugin3.jar", "plugin_3.xml");
         createPluginJarFile("test-plugin3.1.jar", "plugin_3.1.xml");
 
         getPluginScannerService().scanAndRegister();
+    }
+
+    @Test(dependsOnMethods = { "registerPlugins" })
+    public void scanAndRegisterTest() throws Exception {
+        Plugin plugin = getPlugin("PluginManagerBeanTestPlugin1");
+        assertNotNull(plugin);
+        pluginDeployed("PluginManagerBeanTestPlugin1");
+
+        plugin = getPlugin("PluginManagerBeanTestPlugin2");
+        assertNotNull(plugin);
+        pluginDeployed("PluginManagerBeanTestPlugin2");
+
+        plugin = getPlugin("PluginManagerBeanTestPlugin3");
+        assertNotNull(plugin);
+        pluginDeployed("PluginManagerBeanTestPlugin3");
+
+        plugin = getPlugin("PluginManagerBeanTestPlugin3.1");
+        assertNotNull(plugin);
+        pluginDeployed("PluginManagerBeanTestPlugin3.1");
     }
 
     @Test(dependsOnMethods = { "registerPlugins" })

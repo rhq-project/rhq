@@ -114,7 +114,7 @@ public class BootstrapDeployer {
                 props.put("cluster.name", "rhq");
                 props.put("cluster.dir", clusterDir.getAbsolutePath());
                 props.put("auto.bootstrap", deploymentOptions.isAutoDeploy());
-                props.put("data.dir", "data");
+                props.put("data.dir", new File(nodeBasedir, "data").getAbsolutePath());
                 props.put("commitlog.dir", "commit_log");
                 props.put("log.dir", "logs");
                 props.put("saved.caches.dir", "saved_caches");
@@ -139,6 +139,7 @@ public class BootstrapDeployer {
                 props.put("rhq.cassandra.node.num_tokens", deploymentOptions.getNumTokens());
                 props.put("rhq.cassandra.authenticator", deploymentOptions.getAuthenticator());
                 props.put("rhq.cassandra.authorizer", deploymentOptions.getAuthorizer());
+                props.put("rhq.cassandra.rpc_port", deploymentOptions.getRpcPort());
 
                 doLocalDeploy(props, bundleDir);
 //                startNode(nodeBasedir);

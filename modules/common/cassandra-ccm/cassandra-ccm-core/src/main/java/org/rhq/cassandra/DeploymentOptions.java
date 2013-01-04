@@ -58,6 +58,7 @@ public class DeploymentOptions {
     private String password;
     private String authenticator;
     private String authorizer;
+    private String dataDir;
 
     public DeploymentOptions() {
     }
@@ -114,6 +115,7 @@ public class DeploymentOptions {
         setPassword(loadProperty("rhq.cassandra.password", properties));
         setAuthenticator(loadProperty("rhq.cassandra.authenticator", properties));
         setAuthorizer(loadProperty("rhq.cassandra.authorizer", properties));
+//        setDataDir(loadProperty(""));
     }
 
     private String loadProperty(String key, Properties properties) {
@@ -154,6 +156,7 @@ public class DeploymentOptions {
         }
     }
 
+    //@BundleProperty(name = "cluster.dir")
     public String getClusterDir() {
         return clusterDir;
     }
@@ -291,6 +294,17 @@ public class DeploymentOptions {
     public void setAuthorizer(String authorizer) {
         if (this.authorizer == null) {
             this.authorizer = authorizer;
+        }
+    }
+
+    //@BundleProperty(name = "data.dir")
+    public String getDataDir() {
+        return dataDir;
+    }
+
+    public void setDataDir(String dir) {
+        if (dataDir == null) {
+            dataDir = dir;
         }
     }
 

@@ -18,10 +18,15 @@
  */
 package org.rhq.enterprise.server.resource;
 
+import javax.ejb.ApplicationException;
+
 /**
  * Indicates a query for a single JON resource did not return any results. Note, we intentionally do not provide
- * constructors that take a cause, since the three screen long Hibernate stack trace doesn't add any value here.
+ * constructors that take a cause, since the three screen long Hibernate stack trace doesn't add any value here.<br/>
+ * Declare this an {@link ApplicationException} because we don't want these to be wrapped or to rollback an ongoing
+ * transaction.
  */
+@ApplicationException(rollback = false, inherited = true)
 public class ResourceNotFoundException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 

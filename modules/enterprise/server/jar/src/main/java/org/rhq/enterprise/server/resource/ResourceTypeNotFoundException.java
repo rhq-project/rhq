@@ -18,12 +18,15 @@
  */
 package org.rhq.enterprise.server.resource;
 
+import javax.ejb.ApplicationException;
+
 /**
- * Indicates a query for a single JON resource type did not return any results. TODO: Make this a runtime exception
- * (ips, 05/17/07).
+ * Indicates a query for a single JON resource type did not return any results.
  */
-public class ResourceTypeNotFoundException extends Exception {
-    private static final long serialVersionUID = -2258189843514401027L;
+@ApplicationException(rollback = false, inherited = true)
+public class ResourceTypeNotFoundException extends RuntimeException {
+
+    private static final long serialVersionUID = 2L;
 
     public ResourceTypeNotFoundException() {
     }

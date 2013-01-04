@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.server.operation;
 
-import javax.ejb.EJBException;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.quartz.JobDataMap;
@@ -133,11 +131,9 @@ public class ResourceOperationJob extends OperationJob {
         try {
             Resource resource = resourceMgr.getResource(getOverlord(), resourceId);
             return isResourceUncommitted(resource);
-        } catch (EJBException e) {
-            if (e.getCausedByException() instanceof ResourceNotFoundException) {
-                return true;
-            }
-            throw e;
+
+        } catch (ResourceNotFoundException e) {
+            return true;
         }
     }
 

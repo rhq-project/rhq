@@ -21,11 +21,11 @@ package org.rhq.enterprise.server.measurement;
 import javax.ejb.ApplicationException;
 
 /**
- * Excetions from the MetricSubsystem
+ * Exceptions from the MetricSubsystem
  *
  * @author <a href="mailto:heiko.rupp@redhat.com">Heiko W. Rupp</a>
  */
-@ApplicationException
+@ApplicationException(rollback = false, inherited = true)
 public class MeasurementException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 

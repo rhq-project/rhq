@@ -546,6 +546,11 @@ public class InstallerServiceImpl implements InstallerService {
         // make sure we can connect using our configuration
         testModelControllerClient(serverProperties);
 
+        if (null == getInstallationResults()) {
+            log("Run the installer on this server.");
+            return;
+        }
+
         String appServerConfigDir = getAppServerConfigDir();
         ModelControllerClient mcc = null;
 

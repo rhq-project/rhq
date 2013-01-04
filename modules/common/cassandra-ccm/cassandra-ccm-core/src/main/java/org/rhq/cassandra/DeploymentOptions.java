@@ -46,7 +46,6 @@ public class DeploymentOptions {
     private String bundleVersion;
     private String clusterDir;
     private Integer numNodes;
-    private Boolean autoDeploy;
     private Boolean embedded;
     private String loggingLevel;
     private Long ringDelay;
@@ -63,6 +62,10 @@ public class DeploymentOptions {
     private String savedCachesDir;
     private String logDir;
     private String listenAddress;
+    private String rpcAddress;
+    private String passwordPropertiesFile;
+    private String accessPropertiesFile;
+    private Integer jmxPort;
 
     public DeploymentOptions() {
     }
@@ -101,7 +104,6 @@ public class DeploymentOptions {
         setBundleVersion(properties.getProperty("rhq.cassandra.bundle.version"));
         setClusterDir(loadProperty("rhq.cassandra.cluster.dir", properties));
         setNumNodes(Integer.parseInt(loadProperty("rhq.cassandra.cluster.num-nodes", properties)));
-        setAutoDeploy(Boolean.valueOf(loadProperty("rhq.cassandra.cluster.auto-deploy", properties)));
         setEmbedded(Boolean.valueOf(loadProperty("rhq.cassandra.cluster.is-embedded", properties)));
         setLoggingLevel(loadProperty("rhq.cassandra.logging.level", properties));
 
@@ -124,6 +126,10 @@ public class DeploymentOptions {
         setSavedCachesDir(loadProperty("rhq.cassandra.saved.caches.dir", properties));
         setLogDir(loadProperty("rhq.cassandra.log.dir", properties));
         setListenAddress(loadProperty("rhq.cassandra.listen.address", properties));
+        setRpcAddress(loadProperty("rhq.cassandra.rpc.address", properties));
+        setPasswordPropertiesFile(loadProperty("rhq.cassandra.password.properties.file", properties));
+        setAccessPropertiesFile(loadProperty("rhq.cassandra.access.properties.file", properties));
+        setJmxPort(Integer.valueOf(loadProperty("rhq.cassandra.jmx.port", properties)));
     }
 
     private String loadProperty(String key, Properties properties) {
@@ -185,16 +191,6 @@ public class DeploymentOptions {
         }
     }
 
-    public boolean isAutoDeploy() {
-        return autoDeploy;
-    }
-
-    public void setAutoDeploy(boolean autoDeploy) {
-        if (this.autoDeploy == null) {
-            this.autoDeploy = autoDeploy;
-        }
-    }
-
     public boolean isEmbedded() {
         return embedded;
     }
@@ -236,6 +232,7 @@ public class DeploymentOptions {
         }
     }
 
+    @BundleProperty(name = "rhq.cassandra.native_transport_port")
     public Integer getNativeTransportPort() {
         return nativeTransportPort;
     }
@@ -246,6 +243,7 @@ public class DeploymentOptions {
         }
     }
 
+    @BundleProperty(name = "rhq.cassandra.rpc_port")
     public Integer getRpcPort() {
         return rpcPort;
     }
@@ -256,6 +254,7 @@ public class DeploymentOptions {
         }
     }
 
+    @BundleProperty(name = "rhq.casandra.native_transport_max_threads")
     public Integer getNativeTransportMaxThreads() {
         return nativeTransportMaxThreads;
     }
@@ -266,6 +265,7 @@ public class DeploymentOptions {
         }
     }
 
+    @BundleProperty(name = "rhq.cassandra.username")
     public String getUsername() {
         return username;
     }
@@ -276,6 +276,7 @@ public class DeploymentOptions {
         }
     }
 
+    @BundleProperty(name = "rhq.cassandra.password")
     public String getPassword() {
         return password;
     }
@@ -286,6 +287,7 @@ public class DeploymentOptions {
         }
     }
 
+    @BundleProperty(name = "rhq.cassandra.authenticator")
     public String getAuthenticator() {
         return authenticator;
     }
@@ -296,6 +298,7 @@ public class DeploymentOptions {
         }
     }
 
+    @BundleProperty(name = "rhq.cassandra.authorizer")
     public String getAuthorizer() {
         return authorizer;
     }
@@ -358,6 +361,50 @@ public class DeploymentOptions {
     public void setListenAddress(String address) {
         if (listenAddress == null) {
             listenAddress = address;
+        }
+    }
+
+    @BundleProperty(name = "rpc.address")
+    public String getRpcAddress() {
+        return rpcAddress;
+    }
+
+    public void setRpcAddress(String address) {
+        if (rpcAddress == null) {
+            rpcAddress = address;
+        }
+    }
+
+    @BundleProperty(name = "rhq.cassandra.password.properties.file")
+    public String getPasswordPropertiesFile() {
+        return passwordPropertiesFile;
+    }
+
+    public void setPasswordPropertiesFile(String file) {
+        if (passwordPropertiesFile == null) {
+            passwordPropertiesFile = file;
+        }
+    }
+
+    @BundleProperty(name = "rhq.cassandra.access.properties.file")
+    public String getAccessPropertiesFile() {
+        return accessPropertiesFile;
+    }
+
+    public void setAccessPropertiesFile(String file) {
+        if (accessPropertiesFile == null) {
+            accessPropertiesFile = file;
+        }
+    }
+
+    @BundleProperty(name = "jmx.port")
+    private Integer getJmxPort() {
+        return jmxPort;
+    }
+
+    public void setJmxPort(Integer port) {
+        if (jmxPort == null) {
+            jmxPort = port;
         }
     }
 

@@ -113,12 +113,10 @@ public class BootstrapDeployer {
                 Properties props = new Properties();
                 props.put("cluster.name", "rhq");
                 props.put("cluster.dir", clusterDir.getAbsolutePath());
-                props.put("auto.bootstrap", deploymentOptions.isAutoDeploy());
                 props.put("data.dir", new File(nodeBasedir, "data").getAbsolutePath());
                 props.put("commitlog.dir", new File(nodeBasedir, "commit_log").getAbsolutePath());
                 props.put("log.dir", new File(nodeBasedir, "logs").getAbsolutePath());
                 props.put("saved.caches.dir", new File(nodeBasedir, "saved_caches").getAbsolutePath());
-                props.put("hostname", address);
                 props.put("seeds", collectionToString(ipAddresses));
                 props.put("jmx.port", Integer.toString(jmxPort));
                 props.put("initial.token", generateToken(i, deploymentOptions.getNumNodes()));

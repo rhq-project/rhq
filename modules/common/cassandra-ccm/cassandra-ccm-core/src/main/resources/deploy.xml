@@ -55,12 +55,6 @@
                         defaultValue="DEBUG"
                         type="string"/>
 
-    <rhq:input-property name="hostname"
-                        description="The host name of the node. This normally does not need to be set as Cassandra will resolve the host name/IP address. It needs to be set though for a local, development cluster running on a single machine."
-                        required="true"
-                        defaultValue="127.0.0.1"
-                        type="string"/>
-
     <rhq:input-property name="seeds"
                         description="A comma-delimited list of IP addresses/host names that are deemed contact points. Cassandra nodes use this list of hosts to find each other and learn the topology of the ring. If you are running a local development cluster, be sure to have aliases set up for localhost."
                         required="false"
@@ -206,27 +200,6 @@
     <chmod file="${bin.dir}/cqlsh" perm="+x"/>
     <chmod file="${bin.dir}/cassandra-cli" perm="+x"/>
     <chmod file="${bin.dir}/nodetool" perm="+x"/>
-
-<!--
-    <exec dir="${bin.dir}" executable="cassandra" spawn="true" resolveexecutable="true"/>
-
-    <script manager="javax" language="javascript"><![CDATA[
-      if (project.getProperty("install.schema") == "true") {
-        java.lang.Thread.sleep(1000 * 10);
-
-        exec = project.createTask("exec");
-        args = exec.createArg();
-        args.setLine("-f ../scripts/dbsetup.script");
-        exec.setDir(java.io.File(project.getProperty("bin.dir")));
-        exec.setExecutable("cassandra-cli");
-        exec.setResolveExecutable(true);
-        exec.setError(java.io.File("/home/jsanda/cassandra.log"));
-        exec.setOutput(java.io.File("/home/jsanda/cassandra.log"));
-
-        exec.execute();
-      }
-    ]]></script>
--->
   </target>
 
 </project>

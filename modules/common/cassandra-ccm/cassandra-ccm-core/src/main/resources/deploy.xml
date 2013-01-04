@@ -26,26 +26,26 @@
                         type="string"/>
 
     <rhq:input-property name="data.dir"
-                        description="The directory where Cassandra should store data files. This should be a path relative to the base deployment directory."
+                        description="The directory where Cassandra should store data files."
                         required="true"
                         defaultValue="data"
                         type="string"/>
   
     <rhq:input-property name="commitlog.dir"
-                        description="The directory where Cassandra stores its commit logs. This should be a path relative to the base deployment directory."
+                        description="The directory where Cassandra stores its commit logs."
                         required="true"
                         defaultValue="commit_log"
                         type="string"/>
 
     <rhq:input-property name="saved.caches.dir"
-                        description="The directory where Cassandra stores saved caches. This should be a path relative to the base deployment directory."
+                        description="The directory where Cassandra stores saved caches."
                         required="true"
                         defaultValue="saved_caches"
                         type="string"/>
 
     <rhq:input-property name="log.dir"
-                        description="The directory where Cassandra stores log files. This should be a path relative to the base deployment directory."
-                        required="false"
+                        description="The directory where Cassandra stores log files."
+                        required="true"
                         defaultValue="logs"
                         type="string"/>
 

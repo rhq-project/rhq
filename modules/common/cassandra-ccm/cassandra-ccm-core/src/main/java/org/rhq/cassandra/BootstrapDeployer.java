@@ -116,7 +116,7 @@ public class BootstrapDeployer {
                 props.put("auto.bootstrap", deploymentOptions.isAutoDeploy());
                 props.put("data.dir", new File(nodeBasedir, "data").getAbsolutePath());
                 props.put("commitlog.dir", new File(nodeBasedir, "commit_log").getAbsolutePath());
-                props.put("log.dir", "logs");
+                props.put("log.dir", new File(nodeBasedir, "logs").getAbsolutePath());
                 props.put("saved.caches.dir", new File(nodeBasedir, "saved_caches").getAbsolutePath());
                 props.put("hostname", address);
                 props.put("seeds", collectionToString(ipAddresses));

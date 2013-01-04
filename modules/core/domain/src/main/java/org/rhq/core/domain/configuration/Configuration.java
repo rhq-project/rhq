@@ -607,7 +607,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
      *
      * @see    #deepCopy()
      */
-    @Override
+    //@Override //GWT trips over this, WTH!
     public Configuration clone() {
         return deepCopy();
     }

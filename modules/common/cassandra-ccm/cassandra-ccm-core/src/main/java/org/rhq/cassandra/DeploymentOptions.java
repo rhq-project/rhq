@@ -33,6 +33,19 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 /**
+ * <p>
+ * A container for deployment options and Cassandra configuration settings. A
+ * DeploymentOptions object represents the merger of properties defined in
+ * cassandra.properties or defined as system properties. System properties take precedence
+ * over corresponding properties in cassandra.properties.
+ * </p>
+ * <p>
+ * Properties are "sticky". Like Ant properties, once set a property's value cannot be
+ * changed. This means that if you set a property by calling its setter method prior to
+ * invoking {@link #load()}, that value will be retained even if that property is also
+ * defined as a system property and in cassandra.properties.
+ * </p>
+ *
  * @author John Sanda
  */
 public class DeploymentOptions {
@@ -40,6 +53,12 @@ public class DeploymentOptions {
     private final Log log = LogFactory.getLog(DeploymentOptions.class);
 
     private boolean loaded;
+
+    // If you add a new field make sure that it is exposed as a "sticky" property. In
+    // other words, once set the property's value does not change again. See
+    // setClusterDir below for an example. If the property corresponds to an input-property
+    // in deploy.xml, then annotate the property's getter method with @BundleProperty and
+    // set the name attribute to the name of the corresponding input-property in deploy.xml.
 
     private String bundleFileName;
     private String bundleName;
@@ -72,6 +91,14 @@ public class DeploymentOptions {
     public DeploymentOptions() {
     }
 
+    /**
+     * Initializes any properties that are not already set. Values are assigned from
+     * system properties and from the cassandra.properties file that is expected to
+     * be on the classpath. System properties are given precedence over corresponding
+     * properties in cassandra.properties.
+     *
+     * @throws IOException If an error occurs loading cassandra.properties
+     */
     public void load() throws IOException {
         if (loaded) {
             return;
@@ -133,6 +160,7 @@ public class DeploymentOptions {
         setAccessPropertiesFile(loadProperty("rhq.cassandra.access.properties.file", properties));
         setJmxPort(Integer.valueOf(loadProperty("rhq.cassandra.jmx.port", properties)));
         setSeeds(loadProperty("rhq.cassandra.seeds", properties));
+        setBasedir(loadProperty("rhq.cassandra.basedir", properties));
     }
 
     private String loadProperty(String key, Properties properties) {
@@ -170,6 +198,7 @@ public class DeploymentOptions {
         setRpcPort(other.rpcPort);
         setJmxPort(other.jmxPort);
         setSeeds(other.seeds);
+        setBasedir(other.basedir);
     }
 
     public String getBundleFileName() {

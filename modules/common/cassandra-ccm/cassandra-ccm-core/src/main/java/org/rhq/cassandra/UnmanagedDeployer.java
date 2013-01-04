@@ -88,21 +88,8 @@ public class UnmanagedDeployer {
     }
 
     public void deploy(DeploymentOptions options, int deploymentId) throws CassandraException {
-//        File bundleZipeFile = null;
-//        File bundleDir = null;
-//        try {
-            // TODO probably don't need to unpack the bundle for each deployment
-//            bundleZipeFile = unpackBundleZipFile();
-//            bundleDir = unpackBundle(bundleZipeFile);
-            Properties bundleProperties = createBundleProperties(options, deploymentId);
-            runAnt(bundleProperties, bundleDir);
-//        } catch (IOException e) {
-//            throw new CassandraException("Deployment failed", e);
-//        } finally {
-//            if (bundleDir != null && bundleDir.exists()) {
-//                FileUtil.purge(bundleDir, true);
-//            }
-//        }
+        Properties bundleProperties = createBundleProperties(options, deploymentId);
+        runAnt(bundleProperties, bundleDir);
     }
 
     private Properties createBundleProperties(DeploymentOptions options, int deploymentId) throws CassandraException {

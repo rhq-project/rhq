@@ -328,7 +328,7 @@ start_rpc: true
 # (i.e. it will be based on the configured hostname of the node).
 rpc_address: @@rpc.address@@
 # port for Thrift to listen for clients on
-rpc_port: 9160
+rpc_port: @@rpc.port@@
 
 # enable or disable keepalive on rpc connections
 rpc_keepalive: true

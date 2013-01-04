@@ -52,6 +52,7 @@ public class DeploymentOptions {
     private Long ringDelay;
     private Integer numTokens;
     private Integer nativeTransportPort;
+    private Integer rpcPort;
     private Integer nativeTransportMaxThreads;
     private String username;
     private String password;
@@ -106,6 +107,7 @@ public class DeploymentOptions {
 
         setNumTokens(Integer.valueOf(loadProperty("rhq.cassandra.num-tokens", properties)));
         setNativeTransportPort(Integer.valueOf(loadProperty("rhq.cassandra.native-transport-port", properties)));
+        setRpcPort(Integer.valueOf(loadProperty("rhq.cassandra.rpc-port", properties)));
         setNativeTransportMaxThreads(Integer.valueOf(loadProperty("rhq.casandra.native-transport-max-threads",
             properties)));
         setUsername(loadProperty("rhq.cassandra.username", properties));
@@ -229,6 +231,16 @@ public class DeploymentOptions {
     public void setNativeTransportPort(Integer port) {
         if (nativeTransportPort == null) {
             nativeTransportPort = port;
+        }
+    }
+
+    public Integer getRpcPort() {
+        return rpcPort;
+    }
+
+    public void setRpcPort(Integer port) {
+        if (rpcPort == null) {
+            rpcPort = port;
         }
     }
 

@@ -120,6 +120,12 @@
                         defaultValue="9042"
                         type="integer"/>
 
+    <rhq:input-property name="rhq.cassandra.rpc_port"
+                        description="The port to listen for Thrift clients on."
+                        required="false"
+                        defaultValue="9160"
+                        type="integer"/>
+
     <rhq:input-property name="rhq.cassandra.authenticator"
                         description="A class that performs authentication. The value should be a fully qualified class name and implement IAuthenticator."
                         required="false"

@@ -67,12 +67,6 @@
                         defaultValue="256"
                         type="string"/>
 
-    <rhq:input-property name="initial.token"
-                        description="Each Cassandra node is assigned a unique token that determines what keys it is the first replica for. If you sort all nodes' token, the range of keys each is responsible for is (PreviousToken, MyToken], that is, from the previous token (exclusive) to the node's token (inclusive). The machine with the lowest Token gets both all keys less than that token, and all keys greater than the largest token; this is called a wrapping range."
-                        required="false"
-                        defaultValue=""
-                        type="string"/>
-
     <rhq:input-property name="jmx.port"
                         description="The port over which Cassandra listens for JMX connections. Each node should be assigned a unique port."
                         required="false"

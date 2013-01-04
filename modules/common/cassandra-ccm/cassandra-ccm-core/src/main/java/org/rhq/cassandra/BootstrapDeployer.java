@@ -34,7 +34,6 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -49,12 +48,6 @@ import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransportException;
 
 import org.rhq.bundle.ant.AntLauncher;
-import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
-import org.rhq.core.system.OperatingSystemType;
-import org.rhq.core.system.ProcessExecution;
-import org.rhq.core.system.ProcessExecutionResults;
-import org.rhq.core.system.SystemInfo;
-import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.ZipUtil;
@@ -104,7 +97,6 @@ public class BootstrapDeployer {
             bundleDir = unpackBundle(bundleZipeFile);
 
             for (int i = 0; i < deploymentOptions.getNumNodes(); ++i) {
-                Set<String> seeds = getSeeds(ipAddresses, i + 1);
                 int jmxPort = 7200 + i;
                 String address = getLocalIPAddress(i + 1);
                 File nodeBasedir = new File(clusterDir, "node" + i);
@@ -119,7 +111,6 @@ public class BootstrapDeployer {
                 props.put("saved.caches.dir", new File(nodeBasedir, "saved_caches").getAbsolutePath());
                 props.put("seeds", collectionToString(ipAddresses));
                 props.put("jmx.port", Integer.toString(jmxPort));
-                props.put("initial.token", generateToken(i, deploymentOptions.getNumNodes()));
                 props.put("rhq.deploy.dir", nodeBasedir.getAbsolutePath());
                 props.put("rhq.deploy.id", i);
                 props.put("rhq.deploy.phase", "install");
@@ -243,23 +234,6 @@ public class BootstrapDeployer {
         }
     }
 
-    private void startNode(File basedir) {
-        File binDir = new File(basedir, "bin");
-        File startScript;
-        SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
-
-        if (systemInfo.getOperatingSystemType() == OperatingSystemType.WINDOWS) {
-            startScript = new File(binDir, "cassandra.bat");
-        } else {
-            startScript = new File(binDir, "cassandra");
-        }
-
-        ProcessExecution startScriptExe = ProcessExecutionUtility.createProcessExecution(startScript);
-        startScriptExe.setArguments(asList("-p", "cassandra.pid"));
-
-        ProcessExecutionResults results = systemInfo.executeProcess(startScriptExe);
-    }
-
     private void waitForNodeToStart(int maxRetries, String host) throws CassandraException {
         int port = 9160;
         int timeout = 50;
@@ -306,26 +280,6 @@ public class BootstrapDeployer {
 
     private String getLocalIPAddress(int i) {
         return "127.0.0." + i;
-    }
-
-    private String generateToken(int i, int numNodes) {
-        BigInteger num = new BigInteger("2").pow(127).divide(new BigInteger(Integer.toString(numNodes)));
-        return num.multiply(new BigInteger(Integer.toString(i))).toString();
-    }
-
-    private Set<String> getSeeds(Set<String> addresses, int i) {
-        Set<String> seeds = new HashSet<String>();
-        String address = getLocalIPAddress(i);
-
-        for (String nodeAddress : addresses) {
-            if (nodeAddress.equals(address)) {
-                continue;
-            } else {
-                seeds.add(nodeAddress);
-            }
-        }
-
-        return seeds;
     }
 
 }

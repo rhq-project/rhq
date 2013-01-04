@@ -44,13 +44,19 @@ import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 
 /**
+ * Performs unmanaged deployments of Cassandra nodes. The deployment is unmanaged in that
+ * it happens outside of the agent. Although it is unmanaged, the same Ant-based bundle API
+ * is used to execute the deployment.
+ *
  * @author John Sanda
  */
-public class BootstrapDeployer {
+public class UnmanagedDeployer {
 
-    private final Log log = LogFactory.getLog(BootstrapDeployer.class);
+    private final Log log = LogFactory.getLog(UnmanagedDeployer.class);
 
     private DeploymentOptions deploymentOptions;
+
+    private File bundleDir;
 
     public void setDeploymentOptions(DeploymentOptions deploymentOptions) {
         this.deploymentOptions = deploymentOptions;
@@ -65,22 +71,38 @@ public class BootstrapDeployer {
         return hosts.toString();
     }
 
-    public void deploy(DeploymentOptions options, int deploymentId) throws CassandraException {
-        File bundleZipeFile = null;
-        File bundleDir = null;
+    public void unpackBundle() throws CassandraException {
         try {
+            File bundleZipFile = unpackBundleZipFile();
+            bundleDir = unpackBundle(bundleZipFile);
+        } catch (IOException e) {
+            log.error("An error occurred while unpacking the bundle", e);
+            throw new CassandraException("An error occurred while unpacking the bundle", e);
+        }
+    }
+
+    public void cleanUpBundle() {
+        if (bundleDir != null && bundleDir.exists()) {
+            FileUtil.purge(bundleDir, true);
+        }
+    }
+
+    public void deploy(DeploymentOptions options, int deploymentId) throws CassandraException {
+//        File bundleZipeFile = null;
+//        File bundleDir = null;
+//        try {
             // TODO probably don't need to unpack the bundle for each deployment
-            bundleZipeFile = unpackBundleZipFile();
-            bundleDir = unpackBundle(bundleZipeFile);
+//            bundleZipeFile = unpackBundleZipFile();
+//            bundleDir = unpackBundle(bundleZipeFile);
             Properties bundleProperties = createBundleProperties(options, deploymentId);
             runAnt(bundleProperties, bundleDir);
-        } catch (IOException e) {
-            throw new CassandraException("Deployment failed", e);
-        } finally {
-            if (bundleDir != null && bundleDir.exists()) {
-                FileUtil.purge(bundleDir, true);
-            }
-        }
+//        } catch (IOException e) {
+//            throw new CassandraException("Deployment failed", e);
+//        } finally {
+//            if (bundleDir != null && bundleDir.exists()) {
+//                FileUtil.purge(bundleDir, true);
+//            }
+//        }
     }
 
     private Properties createBundleProperties(DeploymentOptions options, int deploymentId) throws CassandraException {

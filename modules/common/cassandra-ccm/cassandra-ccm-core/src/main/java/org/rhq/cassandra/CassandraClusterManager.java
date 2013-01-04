@@ -98,35 +98,45 @@ public class CassandraClusterManager {
             log.info("Skipping cluster creation.");
             return;
         }
-
         FileUtil.purge(clusterDir, false);
 
-        String seeds = collectionToString(calculateLocalIPAddresses(deploymentOptions.getNumNodes()));
-        BootstrapDeployer deployer = new BootstrapDeployer();
-
-        for (int i = 0; i < deploymentOptions.getNumNodes(); ++i) {
-            File basedir = new File(deploymentOptions.getClusterDir(), "node" + i);
-            String address = getLocalIPAddress(i + 1);
-
-            DeploymentOptions nodeOptions = new DeploymentOptions();
-            nodeOptions.setSeeds(seeds);
-            nodeOptions.setJmxPort(deploymentOptions.getJmxPort() + i);
-            nodeOptions.setBasedir(basedir.getAbsolutePath());
-            nodeOptions.setListenAddress(address);
-            nodeOptions.setRpcAddress(address);
-            nodeOptions.setCommitLogDir(new File(basedir, "commit_log").getAbsolutePath());
-            nodeOptions.setDataDir(new File(basedir, "data").getAbsolutePath());
-            nodeOptions.setSavedCachesDir(new File(basedir, "saved_caches").getAbsolutePath());
-            nodeOptions.setLogDir(new File(basedir, "logs").getAbsolutePath());
-
-            nodeOptions.merge(deploymentOptions);
+        UnmanagedDeployer deployer = new UnmanagedDeployer();
+        try {
             try {
-                deployer.deploy(nodeOptions, i);
-                installedNodeDirs.add(basedir);
-            }  catch (CassandraException e) {
-                log.error("Failed to install node at " + basedir);
-                throw new RuntimeException("Failed to install node at " + basedir, e);
+                deployer.unpackBundle();
+            } catch (CassandraException e) {
+                log.error("Aborting cluster creation. Unable to unpack Cassandra bunlde.");
+                throw new RuntimeException("Aborting cluster creation. Unable to unpack Cassandra bunlde", e);
             }
+
+            String seeds = collectionToString(calculateLocalIPAddresses(deploymentOptions.getNumNodes()));
+
+            for (int i = 0; i < deploymentOptions.getNumNodes(); ++i) {
+                File basedir = new File(deploymentOptions.getClusterDir(), "node" + i);
+                String address = getLocalIPAddress(i + 1);
+
+                DeploymentOptions nodeOptions = new DeploymentOptions();
+                nodeOptions.setSeeds(seeds);
+                nodeOptions.setJmxPort(deploymentOptions.getJmxPort() + i);
+                nodeOptions.setBasedir(basedir.getAbsolutePath());
+                nodeOptions.setListenAddress(address);
+                nodeOptions.setRpcAddress(address);
+                nodeOptions.setCommitLogDir(new File(basedir, "commit_log").getAbsolutePath());
+                nodeOptions.setDataDir(new File(basedir, "data").getAbsolutePath());
+                nodeOptions.setSavedCachesDir(new File(basedir, "saved_caches").getAbsolutePath());
+                nodeOptions.setLogDir(new File(basedir, "logs").getAbsolutePath());
+
+                nodeOptions.merge(deploymentOptions);
+                try {
+                    deployer.deploy(nodeOptions, i);
+                    installedNodeDirs.add(basedir);
+                }  catch (CassandraException e) {
+                    log.error("Failed to install node at " + basedir);
+                    throw new RuntimeException("Failed to install node at " + basedir, e);
+                }
+            }
+        } finally {
+            deployer.cleanUpBundle();
         }
     }
 

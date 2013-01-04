@@ -47,7 +47,7 @@ import org.apache.commons.logging.LogFactory;
 import org.quartz.JobDataMap;
 import org.quartz.SchedulerException;
 
-import org.rhq.cassandra.BootstrapDeployer;
+import org.rhq.cassandra.UnmanagedDeployer;
 import org.rhq.cassandra.CassandraException;
 import org.rhq.cassandra.DeploymentOptions;
 import org.rhq.core.domain.auth.Subject;
@@ -132,7 +132,7 @@ public class CassandraClusterManagerBean implements CassandraClusterManagerLocal
 
         String seeds;
         if (deploymentOptions.isEmbedded()) {
-            BootstrapDeployer deployer = new BootstrapDeployer();
+            UnmanagedDeployer deployer = new UnmanagedDeployer();
             deployer.setDeploymentOptions(deploymentOptions);
             seeds = deployer.getCassandraHosts();
 

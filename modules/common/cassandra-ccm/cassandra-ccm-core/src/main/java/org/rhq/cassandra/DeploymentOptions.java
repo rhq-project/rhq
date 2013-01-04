@@ -62,6 +62,7 @@ public class DeploymentOptions {
     private String commitLogDir;
     private String savedCachesDir;
     private String logDir;
+    private String listenAddress;
 
     public DeploymentOptions() {
     }
@@ -119,6 +120,10 @@ public class DeploymentOptions {
         setAuthenticator(loadProperty("rhq.cassandra.authenticator", properties));
         setAuthorizer(loadProperty("rhq.cassandra.authorizer", properties));
         setDataDir(loadProperty("rhq.cassandra.data.dir", properties));
+        setCommitLogDir(loadProperty("rhq.cassandra.commitlog.dir", properties));
+        setSavedCachesDir(loadProperty("rhq.cassandra.saved.caches.dir", properties));
+        setLogDir(loadProperty("rhq.cassandra.log.dir", properties));
+        setListenAddress(loadProperty("rhq.cassandra.listen.address", properties));
     }
 
     private String loadProperty(String key, Properties properties) {
@@ -200,6 +205,7 @@ public class DeploymentOptions {
         }
     }
 
+    @BundleProperty(name = "logging.level")
     public String getLoggingLevel() {
         return loggingLevel;
     }
@@ -341,6 +347,17 @@ public class DeploymentOptions {
     public void setLogDir(String dir) {
         if (logDir == null) {
             logDir = dir;
+        }
+    }
+
+    @BundleProperty(name = "listen.address")
+    public String getListenAddress() {
+        return listenAddress;
+    }
+
+    public void setListenAddress(String address) {
+        if (listenAddress == null) {
+            listenAddress = address;
         }
     }
 

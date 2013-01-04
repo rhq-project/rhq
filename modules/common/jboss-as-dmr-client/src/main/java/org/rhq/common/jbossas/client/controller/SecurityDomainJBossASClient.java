@@ -18,6 +18,7 @@
  */
 package org.rhq.common.jbossas.client.controller;
 
+import java.util.List;
 import java.util.Map;
 
 import javax.security.auth.login.AppConfigurationEntry;
@@ -150,6 +151,32 @@ public class SecurityDomainJBossASClient extends JBossASClient {
         }
 
         return;
+    }
+
+    /**
+     * Given the name of an existing security domain that uses the SecureIdentity authentication method,
+     * this returns the module options for that security domain authentication method. This includes
+     * the username and password of the domain.
+     *
+     * @param securityDomainName the name of the security domain whose module options are to be returned
+     * @return the module options or null if the security domain doesn't exist
+     * @throws Exception if the security domain could not be looked up
+     */
+    public ModelNode getSecureIdentitySecurityDomainModuleOptions(String securityDomainName) throws Exception {
+
+        Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_SECURITY, SECURITY_DOMAIN, securityDomainName,
+            AUTHENTICATION, CLASSIC);
+
+        ModelNode authResource = readResource(addr);
+        List<ModelNode> loginModules = authResource.get(LOGIN_MODULES).asList();
+        for (ModelNode loginModule : loginModules) {
+            if ("SecureIdentity".equals(loginModule.get(CODE).asString())) {
+                ModelNode moduleOptions = loginModule.get(MODULE_OPTIONS);
+                return moduleOptions;
+            }
+        }
+
+        return null;
     }
 
     /**

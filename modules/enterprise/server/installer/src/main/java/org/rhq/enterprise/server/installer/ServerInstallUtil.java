@@ -1197,6 +1197,20 @@ public class ServerInstallUtil {
         client.removeConnector(sslConnectorName);
 
         LOG.info("Creating https connector...");
+        ConnectorConfiguration connector = buildSecureConnectorConfiguration(configDirStr, serverProperties);
+        client.addConnector("https", connector);
+        LOG.info("https connector created.");
+
+        if (client.isConnector(connectorName)) {
+            client.changeConnector(connectorName, "redirect-port",
+                buildExpression("rhq.server.socket.binding.port.https", serverProperties, false));
+        } else {
+            LOG.warn("There doesn't appear to be a http connector configured already - this is strange.");
+        }
+    }
+
+    private static ConnectorConfiguration buildSecureConnectorConfiguration(String configDirStr,
+        HashMap<String, String> serverProperties) {
 
         SSLConfiguration ssl = new SSLConfiguration();
 
@@ -1226,18 +1240,7 @@ public class ServerInstallUtil {
         connector.setScheme("https");
         connector.setSocketBinding("https");
         connector.setSslConfiguration(ssl);
-
-        // create it now
-        client.addConnector("https", connector);
-
-        LOG.info("https connector created.");
-
-        if (client.isConnector(connectorName)) {
-            client.changeConnector(connectorName, "redirect-port",
-                buildExpression("rhq.server.socket.binding.port.https", serverProperties, false));
-        } else {
-            LOG.warn("There doesn't appear to be a http connector configured already - this is strange.");
-        }
+        return connector;
     }
 
     /**
@@ -1277,7 +1280,7 @@ public class ServerInstallUtil {
      * null or doesn't have that property defined; ${propName:defaultVal} if the default property
      * is found.
      * If supportsExpression is false, this will take the actual property value for
-     * propName found in the givem default properties and return that string.
+     * propName found in the given default properties and return that string.
      * If there is no sysprop of that name, this method returns an empty string.
      *
      * @param propName
@@ -1409,4 +1412,135 @@ public class ServerInstallUtil {
         }
     }
 
+    /**
+     * This checks to see if the mail service already exists
+     * and has the same settings as those found in the given properties.
+     *
+     * THIS IS ONLY HERE TO SUPPORT INSTALLER --reconfig OPTION WHICH SHOULD
+     * GO AWAY ONCE AS7 SUPPORTS EXPRESSIONS WHERE WE NEED THEM - JIRA AS7-5321.
+     * ONCE AS7 DOES THIS, THIS METHOD CAN GO AWAY.
+     *
+     * @param mcc the JBossAS management client
+     * @param serverProperties contains the mail service settings
+     * @return true if the mail service exists with the same settings
+     * @throws Exception
+     */
+    public static boolean isSameMailServiceExisting(ModelControllerClient mcc, HashMap<String, String> serverProperties)
+        throws Exception {
+        // we know the only problem attribute we care about is the smtp host - that's the only
+        // one we use that doesn't support expressions. So we only need to check this one
+        Address addr = Address.root().add("socket-binding-group", "standard-sockets",
+            "remote-destination-outbound-socket-binding", "mail-smtp");
+        JBossASClient client = new JBossASClient(mcc);
+        String currentHost = client.getStringAttribute("host", addr);
+        String host = serverProperties.get(ServerProperties.PROP_EMAIL_SMTP_HOST);
+        return !isEmpty(currentHost) && currentHost.equals(host);
+    }
+
+    /**
+     * This checks to see if the security domain for the datasources already exists
+     * and has the same username/password as those found in the given properties
+     *
+     * THIS IS ONLY HERE TO SUPPORT INSTALLER --reconfig OPTION WHICH SHOULD
+     * GO AWAY ONCE AS7 SUPPORTS EXPRESSIONS WHERE WE NEED THEM - JIRA AS7-5321.
+     * ONCE AS7 DOES THIS, THIS METHOD CAN GO AWAY.
+     *
+     * @param mcc the JBossAS management client
+     * @param serverProperties contains the obfuscated password and username to compare
+     * @return true if the domain exists with the same username and password
+     * @throws Exception
+     */
+    public static boolean isSameDatasourceSecurityDomainExisting(ModelControllerClient mcc,
+        HashMap<String, String> serverProperties) throws Exception {
+
+        final String dbUsername = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
+        final String obfuscatedPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
+        final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
+        final String securityDomain = RHQ_DS_SECURITY_DOMAIN;
+        boolean sameUsernamePassword = false;
+        if (client.isSecurityDomain(securityDomain)) {
+            boolean sameUsername = false;
+            boolean samePassword = false;
+            ModelNode opts;
+            opts = client.getSecureIdentitySecurityDomainModuleOptions(securityDomain);
+            if (opts != null) {
+                List<ModelNode> optsList = opts.asList();
+                for (ModelNode opt : optsList) {
+                    if (opt.has(SecurityDomainJBossASClient.USERNAME)) {
+                        sameUsername = dbUsername.equals(opt.get(SecurityDomainJBossASClient.USERNAME).asString());
+                    }
+                    if (opt.has(SecurityDomainJBossASClient.PASSWORD)) {
+                        samePassword = obfuscatedPassword.equals(opt.get(SecurityDomainJBossASClient.PASSWORD)
+                            .asString());
+                    }
+                }
+            }
+            sameUsernamePassword = sameUsername & samePassword;
+        }
+        return sameUsernamePassword;
+    }
+
+    /**
+     * This checks to see if the web connectors already exist
+     * and have the same settings as those found in the given properties
+     *
+     * THIS IS ONLY HERE TO SUPPORT INSTALLER --reconfig OPTION WHICH SHOULD
+     * GO AWAY ONCE AS7 SUPPORTS EXPRESSIONS WHERE WE NEED THEM - JIRA AS7-5321.
+     * ONCE AS7 DOES THIS, THIS METHOD CAN GO AWAY.
+     *
+     * @param mcc the JBossAS management client
+     * @param configDirStr location of a configuration directory where the keystore is to be stored
+     * @param serverProperties contains the obfuscated password and username to compare
+     * @return true if the domain exists with the same username and password
+     * @throws Exception
+     */
+    public static boolean isSameWebConnectorsExisting(ModelControllerClient mcc, String appServerConfigDir,
+        HashMap<String, String> serverProperties) throws Exception {
+
+        HashMap<String, String> settingsToCheck = new HashMap<String, String>();
+        WebJBossASClient client = new WebJBossASClient(mcc);
+
+        // FIRST check the https connector
+        ModelNode httpsNode = client.getConnector("https");
+
+        ConnectorConfiguration connectorConfig = buildSecureConnectorConfiguration(appServerConfigDir, serverProperties);
+        SSLConfiguration sslConfig = connectorConfig.getSslConfiguration();
+
+        // check the https connector's main config
+        settingsToCheck.clear();
+        settingsToCheck.put("max-connections", connectorConfig.getMaxConnections());
+        for (Map.Entry<String, String> propToCheck : settingsToCheck.entrySet()) {
+            if (!httpsNode.get(propToCheck.getKey()).asString().equals(propToCheck.getValue())) {
+                return false; // something is different, no need to check further, return false to say we are different
+            }
+        }
+
+        // now check the https connector's ssl config
+        ModelNode sslNode = httpsNode.get("ssl").get("configuration");
+        settingsToCheck.clear();
+        settingsToCheck.put("ca-certificate-file", sslConfig.getCaCertificateFile());
+        settingsToCheck.put("ca-certificate-password", sslConfig.getCaCertificatePassword());
+        settingsToCheck.put("certificate-key-file", sslConfig.getCertificateKeyFile());
+        settingsToCheck.put("key-alias", sslConfig.getKeyAlias());
+        settingsToCheck.put("keystore-type", sslConfig.getKeystoreType());
+        settingsToCheck.put("password", sslConfig.getPassword());
+        settingsToCheck.put("protocol", sslConfig.getProtocol());
+        settingsToCheck.put("truststore-type", sslConfig.getTruststoreType());
+        settingsToCheck.put("verify-client", sslConfig.getVerifyClient());
+        for (Map.Entry<String, String> propToCheck : settingsToCheck.entrySet()) {
+            if (!sslNode.get(propToCheck.getKey()).asString().equals(propToCheck.getValue())) {
+                return false; // something is different, no need to check further, return false to say we are different
+            }
+        }
+
+        // SECOND check the http connector
+        ModelNode httpNode = client.getConnector("http");
+        String nodeString = httpNode.get("redirect-port").asString();
+        String propString = serverProperties.get("rhq.server.socket.binding.port.https");
+        if (!nodeString.equals(propString)) {
+            return false; // something is different, no need to check further, return false to say we are different
+        }
+
+        return true;
+    }
 }

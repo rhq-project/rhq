@@ -68,6 +68,17 @@ public class WebJBossASClient extends JBossASClient {
     }
 
     /**
+     * Returns the connector node with all its attributes. Will be null if it doesn't exist.
+     *
+     * @param name the name of the connector whose node is to be returned
+     * @return the node if there is a connector with the given name already in existence, null otherwise
+     */
+    public ModelNode getConnector(String name) throws Exception {
+        final Address address = Address.root().add(SUBSYSTEM, SUBSYSTEM_WEB, CONNECTOR, name);
+        return readResource(address, true);
+    }
+
+    /**
      * Use this to modify an attribute for an existing connector.
      * @param connectorName the existing connector whose attribute is to be changed
      * @param attribName the attribute to get a new value

@@ -550,8 +550,26 @@ public class InstallerServiceImpl implements InstallerService {
         ModelControllerClient mcc = null;
 
         try {
-            // first, put the server in admin-only mode so we can start changing things around
             mcc = getModelControllerClient();
+
+            // Before we do anything, let's first make sure we really do need to reconfigure something.
+            // Check to see if everything that didn't use expressions is still the same. If so,
+            // just skip everything else and return immediate since there is nothing to do. We don't
+            // even need to reload/restart the server in this case.
+            try {
+                if (ServerInstallUtil.isSameDatasourceSecurityDomainExisting(mcc, serverProperties)) {
+                    if (ServerInstallUtil.isSameMailServiceExisting(mcc, serverProperties)) {
+                        if (ServerInstallUtil.isSameWebConnectorsExisting(mcc, appServerConfigDir, serverProperties)) {
+                            log("Nothing in the configuration changed that requires a reconfig - everything looks OK");
+                            return; // nothing to do, return immediately
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log("Cannot determine if the config is the same, will reconfigure just in case", e);
+            }
+
+            // first, put the server in admin-only mode so we can start changing things around
             CoreJBossASClient coreClient = new CoreJBossASClient(mcc);
             coreClient.reload(true);
 
@@ -566,7 +584,7 @@ public class InstallerServiceImpl implements InstallerService {
             // setup the email service
             ServerInstallUtil.setupMailService(mcc, serverProperties);
 
-            // create a keystore whose cert has a CN of this server's public endpoint address
+            // setup the secure Tomcat web connectors
             ServerInstallUtil.setupWebConnectors(mcc, appServerConfigDir, serverProperties);
 
             // now restart - don't just reload, some of our stuff won't restart properly if we just reload

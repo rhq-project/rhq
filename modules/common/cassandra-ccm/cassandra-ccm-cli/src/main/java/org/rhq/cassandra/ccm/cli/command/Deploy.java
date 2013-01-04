@@ -51,7 +51,7 @@ public class Deploy extends CCMCommand {
             }
 
             CassandraClusterManager ccm = new CassandraClusterManager(deploymentOptions);
-            ccm.installCluster();
+            ccm.createCluster();
             ccm.startCluster();
 
             PropertiesFileUpdate serverPropertiesUpdater = getServerProperties();

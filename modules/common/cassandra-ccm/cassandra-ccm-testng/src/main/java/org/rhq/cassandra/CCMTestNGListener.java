@@ -92,7 +92,7 @@ public class CCMTestNGListener implements IInvokedMethodListener {
         // consistency and failover. If we start doing that at some point, then
         // we cannot initialize ccm here.
         ccm = new CassandraClusterManager(deploymentOptions);
-        ccm.installCluster();
+        ccm.createCluster();
 
         List<CassandraNode> cassandraHosts = getCassandraHosts(ccm.getHostNames());
         for (CassandraNode cassandraNode : cassandraHosts) {

@@ -26,6 +26,7 @@
 package org.rhq.cassandra;
 
 import static java.util.Arrays.asList;
+import static org.rhq.core.util.StringUtil.collectionToString;
 
 import java.io.File;
 import java.io.FileReader;
@@ -33,7 +34,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -44,7 +47,7 @@ import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
-import org.rhq.core.util.StringUtil;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 
 /**
@@ -55,7 +58,7 @@ public class CassandraClusterManager {
     private final Log log = LogFactory.getLog(CassandraClusterManager.class);
 
     private DeploymentOptions deploymentOptions;
-    private List<File> installedNodeDirs;
+    private List<File> installedNodeDirs = new ArrayList<File>();
 
     public CassandraClusterManager() {
         this(new DeploymentOptions());
@@ -79,7 +82,7 @@ public class CassandraClusterManager {
         }
     }
 
-    public List<File> installCluster() {
+    public void createCluster() {
         if (log.isDebugEnabled()) {
             log.debug("Installing embedded " + deploymentOptions.getNumNodes() + " node cluster to " +
                 deploymentOptions.getClusterDir());
@@ -87,17 +90,56 @@ public class CassandraClusterManager {
             log.info("Installing embedded cluster");
         }
 
-        BootstrapDeployer deployer = new BootstrapDeployer();
-        deployer.setDeploymentOptions(deploymentOptions);
-        try {
-            installedNodeDirs = deployer.deploy();
-        } catch (CassandraException e) {
-            String msg = "Failed to install cluster.";
-            log.error(msg, e);
-            throw new RuntimeException(msg, e);
+        File clusterDir = new File(deploymentOptions.getClusterDir());
+        File installedMarker = new File(clusterDir, ".installed");
+
+        if (installedMarker.exists()) {
+            log.info("It appears that the cluster already exists in " + clusterDir);
+            log.info("Skipping cluster creation.");
+            return;
         }
 
-        return installedNodeDirs;
+        FileUtil.purge(clusterDir, false);
+
+        String seeds = collectionToString(calculateLocalIPAddresses(deploymentOptions.getNumNodes()));
+        BootstrapDeployer deployer = new BootstrapDeployer();
+
+        for (int i = 0; i < deploymentOptions.getNumNodes(); ++i) {
+            File basedir = new File(deploymentOptions.getClusterDir(), "node" + i);
+            String address = getLocalIPAddress(i + 1);
+
+            DeploymentOptions nodeOptions = new DeploymentOptions();
+            nodeOptions.setSeeds(seeds);
+            nodeOptions.setJmxPort(deploymentOptions.getJmxPort() + i);
+            nodeOptions.setBasedir(basedir.getAbsolutePath());
+            nodeOptions.setListenAddress(address);
+            nodeOptions.setRpcAddress(address);
+            nodeOptions.setCommitLogDir(new File(basedir, "commit_log").getAbsolutePath());
+            nodeOptions.setDataDir(new File(basedir, "data").getAbsolutePath());
+            nodeOptions.setSavedCachesDir(new File(basedir, "saved_caches").getAbsolutePath());
+            nodeOptions.setLogDir(new File(basedir, "logs").getAbsolutePath());
+
+            nodeOptions.merge(deploymentOptions);
+            try {
+                deployer.deploy(nodeOptions, i);
+                installedNodeDirs.add(basedir);
+            }  catch (CassandraException e) {
+                log.error("Failed to install node at " + basedir);
+                throw new RuntimeException("Failed to install node at " + basedir, e);
+            }
+        }
+    }
+
+    private Set<String> calculateLocalIPAddresses(int numNodes) {
+        Set<String> addresses = new HashSet<String>();
+        for (int i = 1; i <= numNodes; ++i) {
+            addresses.add(getLocalIPAddress(i));
+        }
+        return addresses;
+    }
+
+    private String getLocalIPAddress(int i) {
+        return "127.0.0." + i;
     }
 
     public void startCluster() {
@@ -106,7 +148,7 @@ public class CassandraClusterManager {
 
     public void startCluster(List<Integer> nodeIds) {
         if (log.isDebugEnabled()) {
-            log.debug("Starting embedded cluster for nodes " + StringUtil.collectionToString(nodeIds));
+            log.debug("Starting embedded cluster for nodes " + collectionToString(nodeIds));
         } else {
             log.info("Starting embedded cluster");
         }
@@ -154,7 +196,7 @@ public class CassandraClusterManager {
 
     public void shutdown(List<Integer> nodeIds) {
         if (log.isDebugEnabled()) {
-            log.debug("Preparing to shutdown cluster nodes " + StringUtil.collectionToString(nodeIds));
+            log.debug("Preparing to shutdown cluster nodes " + collectionToString(nodeIds));
         } else {
             log.info("Preparing to shutdown cluster nodes.");
         }

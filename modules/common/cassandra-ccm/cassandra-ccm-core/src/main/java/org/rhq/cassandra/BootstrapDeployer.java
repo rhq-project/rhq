@@ -25,31 +25,20 @@
 
 package org.rhq.cassandra;
 
-import static java.util.Arrays.asList;
-import static org.rhq.core.util.StringUtil.collectionToString;
-
-import java.io.ByteArrayInputStream;
+import java.beans.BeanInfo;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
+import java.lang.reflect.Method;
 import java.util.Properties;
-import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TTransportException;
 
 import org.rhq.bundle.ant.AntLauncher;
-import org.rhq.core.util.PropertiesFileUpdate;
-import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
@@ -76,153 +65,50 @@ public class BootstrapDeployer {
         return hosts.toString();
     }
 
-    public List<File> deploy() throws CassandraException {
-        Set<String> ipAddresses = calculateLocalIPAddresses(deploymentOptions.getNumNodes());
-        File clusterDir = new File(deploymentOptions.getClusterDir());
-        File installedMarker = new File(clusterDir, ".installed");
-
-        if (isClusterInstalled()) {
-            return getNodeDirs(clusterDir);
-        }
-
-        FileUtil.purge(clusterDir, false);
-
+    public void deploy(DeploymentOptions options, int deploymentId) throws CassandraException {
         File bundleZipeFile = null;
         File bundleDir = null;
-        List<File> nodeDirs = new LinkedList<File>();
-
         try {
-            deploymentOptions.load();
+            // TODO probably don't need to unpack the bundle for each deployment
             bundleZipeFile = unpackBundleZipFile();
             bundleDir = unpackBundle(bundleZipeFile);
-
-            for (int i = 0; i < deploymentOptions.getNumNodes(); ++i) {
-                int jmxPort = 7200 + i;
-                String address = getLocalIPAddress(i + 1);
-                File nodeBasedir = new File(clusterDir, "node" + i);
-                nodeDirs.add(nodeBasedir);
-
-                Properties props = new Properties();
-                props.put("cluster.name", "rhq");
-                props.put("cluster.dir", clusterDir.getAbsolutePath());
-                props.put("data.dir", new File(nodeBasedir, "data").getAbsolutePath());
-                props.put("commitlog.dir", new File(nodeBasedir, "commit_log").getAbsolutePath());
-                props.put("log.dir", new File(nodeBasedir, "logs").getAbsolutePath());
-                props.put("saved.caches.dir", new File(nodeBasedir, "saved_caches").getAbsolutePath());
-                props.put("seeds", collectionToString(ipAddresses));
-                props.put("jmx.port", Integer.toString(jmxPort));
-                props.put("rhq.deploy.dir", nodeBasedir.getAbsolutePath());
-                props.put("rhq.deploy.id", i);
-                props.put("rhq.deploy.phase", "install");
-                props.put("listen.address", address);
-                props.put("rpc.address", address);
-                props.put("logging.level", deploymentOptions.getLoggingLevel());
-                props.put("rhq.cassandra.username", deploymentOptions.getUsername());
-                props.put("rhq.cassandra.password", deploymentOptions.getPassword());
-
-                if (deploymentOptions.getRingDelay() != null) {
-                    props.put("cassandra.ring.delay.property", "-Dcassandra.ring_delay_ms=");
-                    props.put("cassandra.ring.delay", deploymentOptions.getRingDelay());
-                }
-
-                props.put("rhq.cassandra.node.num_tokens", deploymentOptions.getNumTokens());
-                props.put("rhq.cassandra.authenticator", deploymentOptions.getAuthenticator());
-                props.put("rhq.cassandra.authorizer", deploymentOptions.getAuthorizer());
-                props.put("rhq.cassandra.rpc_port", deploymentOptions.getRpcPort());
-
-                doLocalDeploy(props, bundleDir);
-//                startNode(nodeBasedir);
-//                if (i == 0) {
-//                    waitForNodeToStart(10, address);
-//                }
-            }
-            FileUtil.writeFile(new ByteArrayInputStream(new byte[] {0}), installedMarker);
+            Properties bundleProperties = createBundleProperties(options, deploymentId);
+            runAnt(bundleProperties, bundleDir);
         } catch (IOException e) {
-            throw new CassandraException("Failed to deploy embedded cluster", e);
+            throw new CassandraException("Deployment failed", e);
         } finally {
-            if (bundleZipeFile != null) {
-                bundleZipeFile.delete();
-            }
-
-            if (bundleDir != null) {
+            if (bundleDir != null && bundleDir.exists()) {
                 FileUtil.purge(bundleDir, true);
             }
         }
-
-        return nodeDirs;
     }
 
-    public List<File> getNodeDirs(final File clusterDir) {
-        return asList(clusterDir.listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                return dir.equals(clusterDir) && name.startsWith("node");
+    private Properties createBundleProperties(DeploymentOptions options, int deploymentId) throws CassandraException {
+        try {
+            Properties properties = new Properties();
+            properties.put("cluster.name", "rhq");
+            properties.put("rhq.deploy.id", deploymentId);
+            properties.put("rhq.deploy.phase", "install");
+
+            BeanInfo beanInfo = Introspector.getBeanInfo(DeploymentOptions.class);
+
+            for (PropertyDescriptor pd : beanInfo.getPropertyDescriptors()) {
+                if (pd.getReadMethod() == null) {
+                    continue;
+                }
+                Method method = pd.getReadMethod();
+                BundleProperty bundleProperty = method.getAnnotation(BundleProperty.class);
+                if (bundleProperty != null) {
+                    properties.put(bundleProperty.name(), method.invoke(options, null));
+                }
             }
-        }));
-    }
-
-    public static void main(String[] args) {
-        long start = System.currentTimeMillis();
-        BootstrapDeployer deployer = new BootstrapDeployer();
-
-        DeploymentOptions deploymentOptions = new DeploymentOptions();
-        try {
-            deploymentOptions.setNumNodes(2);
-            deploymentOptions.load();
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load deployment options.", e);
-        }
-        deployer.setDeploymentOptions(deploymentOptions);
-        try {
-            deployer.deploy();
-            PropertiesFileUpdate serverPropertiesUpdater = getServerProperties();
-
-            String[] hostNames = getHostNames(deployer.getCassandraHosts());
-            serverPropertiesUpdater.update("rhq.cassandra.cluster.seeds", StringUtil.arrayToString(hostNames));
-
-            long end = System.currentTimeMillis();
-            deployer.log.info("Finished installing embedded cluster in " + (end - start) + " ms");
-        } catch (CassandraException e) {
-            throw new RuntimeException("A deployment error occurred.", e);
-        } catch (IOException e) {
-            throw new RuntimeException("An error occurred while trying to update RHQ server properties", e);
+            return properties;
+        } catch (Exception e) {
+            throw new CassandraException("Failed to create bundle deployment properties", e);
         }
     }
 
-    private static PropertiesFileUpdate getServerProperties() {
-        String sysprop = System.getProperty("rhq.server.properties-file");
-        if (sysprop == null) {
-            throw new RuntimeException("The required system property [rhq.server.properties] is not defined.");
-        }
-
-        File file = new File(sysprop);
-        if (!(file.exists() && file.isFile())) {
-            throw new RuntimeException("System property [" + sysprop + "] points to in invalid file.");
-        }
-
-        return new PropertiesFileUpdate(file.getAbsolutePath());
-    }
-
-    private static String[] getHostNames(String hosts) {
-        List<String> hostNames = new ArrayList<String>();
-        for (String s : hosts.split(",")) {
-            String[] params = s.split(":");
-            hostNames.add(params[0]);
-        }
-        return hostNames.toArray(new String[hostNames.size()]);
-    }
-
-    private boolean isClusterInstalled() {
-        File clusterDir = new File(deploymentOptions.getClusterDir());
-        File installedMarker = new File(clusterDir, ".installed");
-
-        if (installedMarker.exists()) {
-            return true;
-        }
-        return false;
-    }
-
-    private void doLocalDeploy(Properties deployProps, File bundleDir) throws CassandraException {
+    private void runAnt(Properties deployProps, File bundleDir) throws CassandraException {
         AntLauncher launcher = new AntLauncher();
         try {
             File recipeFile = new File(bundleDir, "deploy.xml");
@@ -232,26 +118,6 @@ public class BootstrapDeployer {
             //logException(msg, e);
             throw new CassandraException(msg, e);
         }
-    }
-
-    private void waitForNodeToStart(int maxRetries, String host) throws CassandraException {
-        int port = 9160;
-        int timeout = 50;
-        for (int i = 0; i < maxRetries; ++i) {
-            TSocket socket = new TSocket(host, port, timeout);
-            try {
-                socket.open();
-                return;
-            } catch (TTransportException e) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e1) {
-                }
-            }
-        }
-        Date timestamp = new Date();
-        throw new CassandraException("[" + timestamp + "] Could not connect to " + host + " after " + maxRetries +
-            " tries");
     }
 
     private File unpackBundleZipFile() throws IOException {
@@ -268,14 +134,6 @@ public class BootstrapDeployer {
         ZipUtil.unzipFile(bundleZipFile, bundleDir);
 
         return bundleDir;
-    }
-
-    private Set<String> calculateLocalIPAddresses(int numNodes) {
-        Set<String> addresses = new HashSet<String>();
-        for (int i = 1; i <= numNodes; ++i) {
-            addresses.add(getLocalIPAddress(i));
-        }
-        return addresses;
     }
 
     private String getLocalIPAddress(int i) {

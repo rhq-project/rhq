@@ -45,6 +45,7 @@ public class DeploymentOptions {
     private String bundleName;
     private String bundleVersion;
     private String clusterDir;
+    private String basedir;
     private Integer numNodes;
     private Boolean embedded;
     private String loggingLevel;
@@ -66,6 +67,7 @@ public class DeploymentOptions {
     private String passwordPropertiesFile;
     private String accessPropertiesFile;
     private Integer jmxPort;
+    private String seeds;
 
     public DeploymentOptions() {
     }
@@ -130,6 +132,7 @@ public class DeploymentOptions {
         setPasswordPropertiesFile(loadProperty("rhq.cassandra.password.properties.file", properties));
         setAccessPropertiesFile(loadProperty("rhq.cassandra.access.properties.file", properties));
         setJmxPort(Integer.valueOf(loadProperty("rhq.cassandra.jmx.port", properties)));
+        setSeeds(loadProperty("rhq.cassandra.seeds", properties));
     }
 
     private String loadProperty(String key, Properties properties) {
@@ -138,6 +141,35 @@ public class DeploymentOptions {
             return properties.getProperty(key);
         }
         return value;
+    }
+
+    public void merge(DeploymentOptions other) {
+        setBundleFileName(other.bundleFileName);
+        setBundleName(other.bundleName);
+        setBundleVersion(other.bundleVersion);
+        setClusterDir(other.clusterDir);
+        setNumNodes(other.numNodes);
+        setEmbedded(other.embedded);
+        setLoggingLevel(other.loggingLevel);
+        setRingDelay(other.ringDelay);
+        setNumTokens(other.numTokens);
+        setNativeTransportPort(other.nativeTransportPort);
+        setNativeTransportMaxThreads(other.nativeTransportMaxThreads);
+        setUsername(other.username);
+        setPassword(other.password);
+        setAuthenticator(other.authenticator);
+        setAuthorizer(other.authorizer);
+        setPasswordPropertiesFile(other.passwordPropertiesFile);
+        setAccessPropertiesFile(other.accessPropertiesFile);
+        setDataDir(other.dataDir);
+        setCommitLogDir(other.commitLogDir);
+        setSavedCachesDir(other.savedCachesDir);
+        setLogDir(other.logDir);
+        setListenAddress(other.listenAddress);
+        setRpcAddress(other.rpcAddress);
+        setRpcPort(other.rpcPort);
+        setJmxPort(other.jmxPort);
+        setSeeds(other.seeds);
     }
 
     public String getBundleFileName() {
@@ -178,6 +210,17 @@ public class DeploymentOptions {
     public void setClusterDir(String dir) {
         if (clusterDir == null) {
             clusterDir = dir;
+        }
+    }
+
+    @BundleProperty(name = "rhq.deploy.dir")
+    public String getBasedir() {
+        return basedir;
+    }
+
+    public void setBasedir(String dir) {
+        if (basedir == null) {
+            basedir = dir;
         }
     }
 
@@ -222,6 +265,7 @@ public class DeploymentOptions {
         }
     }
 
+    @BundleProperty(name = "rhq.cassandra.num_tokens")
     public Integer getNumTokens() {
         return numTokens;
     }
@@ -398,13 +442,24 @@ public class DeploymentOptions {
     }
 
     @BundleProperty(name = "jmx.port")
-    private Integer getJmxPort() {
+    public Integer getJmxPort() {
         return jmxPort;
     }
 
     public void setJmxPort(Integer port) {
         if (jmxPort == null) {
             jmxPort = port;
+        }
+    }
+
+    @BundleProperty(name = "seeds")
+    public String getSeeds() {
+        return seeds;
+    }
+
+    public void setSeeds(String seeds) {
+        if (this.seeds == null) {
+            this.seeds = seeds;
         }
     }
 

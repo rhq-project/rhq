@@ -479,7 +479,7 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
     private void setLdapCtxFactory(final String name) throws Exception {
         //this is a readonly system property that we are trying to override, so we
         //need to be a little bit more persuasive...
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 Query q = getEntityManager().createNamedQuery(SystemConfiguration.FIND_PROPERTY_BY_KEY);

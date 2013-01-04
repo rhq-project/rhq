@@ -27,7 +27,9 @@ import java.util.Set;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ContentsType;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -66,6 +68,8 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigura
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupMultiLineGraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -340,7 +344,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                                     //iterate over the retrieved charting data
                                                     for (int index = 0; index < displayOrder.length; index++) {
                                                         //retrieve the correct measurement definition
-                                                        MeasurementDefinition md = measurementDefMap
+                                                        final MeasurementDefinition md = measurementDefMap
                                                             .get(displayOrder[index]);
 
                                                         //load the data results for the given metric definition
@@ -389,34 +393,32 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                                         graphContainer.setWidth(60);
                                                         graphContainer.setCanvas(graph);
 
-                                                        //Link/title element
                                                         final String title = md.getDisplayName();
-                                                        //                            String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricSingleResource&id="
-                                                        //                                + resourceId + "&m=" + md.getId();
-                                                        final String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricMultiResource&groupId="
-                                                            + groupId + "&m=" + md.getId();
-                                                        LinkItem link = AbstractActivityView.newLinkItem(title,
-                                                            destination);
+                                                        LinkItem link = AbstractActivityView.newLinkItem(title,null);
+                                                        link.setTooltip(title);
+                                                        link.setTitleVAlign(VerticalAlignment.TOP);
+                                                        link.setAlign(Alignment.LEFT);
+                                                        link.setClipValue(true);
+                                                        link.setWrap(true);
+                                                        link.setHeight(26);
+                                                        link.setWidth("100%");
                                                         link.addClickHandler(new ClickHandler() {
                                                             @Override
                                                             public void onClick(ClickEvent event) {
                                                                 ChartViewWindow window = new ChartViewWindow(
-                                                                    recentMeasurementsContent
-                                                                        .extendLocatorId("ChartWindow"), title);
-                                                                //generate and include iframed content
-                                                                FullHTMLPane iframe = new FullHTMLPane(
-                                                                    recentMeasurementsContent
-                                                                        .extendLocatorId("View"), destination);
-                                                                //                                                                            .extendLocatorId("View"),
-                                                                //                                                                        AbstractActivityView.iframeLink(destination));
-                                                                window.addItem(iframe);
-                                                                window.show();
-                                                            }
-                                                        });
+                                                                        recentMeasurementsContent
+                                                                                .extendLocatorId("ChartWindow"), title);
+                                                                        CompositeGroupD3GraphListView graph = new CompositeGroupMultiLineGraphListView("CompositeD3GraphView",
+                                                                                groupId, md.getId());
+                                                                        window.addItem(graph);
+                                                                        graph.populateData();
+                                                                        window.show();
+                                                                    }
+                                                                });
+
 
                                                         //Value
-                                                        String convertedValue = lastValue + " " + md.getUnits();
-                                                        convertedValue = AbstractActivityView
+                                                        String convertedValue  = AbstractActivityView
                                                             .convertLastValueForDisplay(lastValue, md);
                                                         StaticTextItem value = AbstractActivityView
                                                             .newTextItem(convertedValue);

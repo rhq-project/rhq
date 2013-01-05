@@ -31,7 +31,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.core.util.jdbc.JDBCUtil;
-import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 
 /**
  * Returns information about the database.
@@ -53,8 +52,6 @@ public final class SystemDatabaseInformation {
         DATABASE_PRODUCT_VERSION, //
         DATABASE_DRIVER_NAME, //
         DATABASE_DRIVER_VERSION, //
-        CURRENT_MEASUREMENT_TABLE, //
-        NEXT_MEASUREMENT_TABLE_ROTATION;
     }
 
     private SystemDatabaseInformation() {
@@ -77,9 +74,6 @@ public final class SystemDatabaseInformation {
             values.put(Property.DATABASE_PRODUCT_VERSION, productVersion);
             values.put(Property.DATABASE_DRIVER_NAME, driverName);
             values.put(Property.DATABASE_DRIVER_VERSION, driverVersion);
-
-            values.put(Property.CURRENT_MEASUREMENT_TABLE, MeasurementDataManagerUtility.getCurrentRawTable());
-            values.put(Property.NEXT_MEASUREMENT_TABLE_ROTATION, MeasurementDataManagerUtility.getNextRotationTime());
 
             properties = Collections.unmodifiableMap(values);
 
@@ -125,11 +119,4 @@ public final class SystemDatabaseInformation {
         return properties.get(Property.DATABASE_DRIVER_VERSION);
     }
 
-    public String getCurrentMeasurementTable() {
-        return properties.get(Property.CURRENT_MEASUREMENT_TABLE);
-    }
-
-    public String getNextMeasurementTableRotation() {
-        return properties.get(Property.NEXT_MEASUREMENT_TABLE_ROTATION);
-    }
 }

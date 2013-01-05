@@ -591,10 +591,6 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
             MSG.view_admin_systemSettings_serverDetails_dbDriverName());
         final StaticTextItem dbDriverVersion = new StaticTextItem("dbDriverVersion",
             MSG.view_admin_systemSettings_serverDetails_dbDriverVersion());
-        final StaticTextItem currentMeasRawTable = new StaticTextItem("currentMeasRawTable",
-            MSG.view_admin_systemSettings_serverDetails_currentTable());
-        final StaticTextItem nextMeasTableRotation = new StaticTextItem("nextMeasTableRotation",
-            MSG.view_admin_systemSettings_serverDetails_nextRotation());
 
         productName.setWrapTitle(false);
         productVersion.setWrapTitle(false);
@@ -608,12 +604,9 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         dbProductVersion.setWrapTitle(false);
         dbDriverName.setWrapTitle(false);
         dbDriverVersion.setWrapTitle(false);
-        currentMeasRawTable.setWrapTitle(false);
-        nextMeasTableRotation.setWrapTitle(false);
 
         form.setItems(productName, productVersion, productBuildNumber, serverName, serverTimezone, serverTime,
-            serverInstallDir, dbUrl, dbProductName, dbProductVersion, dbDriverName, dbDriverVersion,
-            currentMeasRawTable, nextMeasTableRotation);
+            serverInstallDir, dbUrl, dbProductName, dbProductVersion, dbDriverName, dbDriverVersion);
 
         GWTServiceLookup.getSystemService().getServerDetails(new AsyncCallback<ServerDetails>() {
 
@@ -634,10 +627,6 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 form.setValue(dbProductVersion.getName(), details.get(ServerDetails.Detail.DATABASE_PRODUCT_VERSION));
                 form.setValue(dbDriverName.getName(), details.get(ServerDetails.Detail.DATABASE_DRIVER_NAME));
                 form.setValue(dbDriverVersion.getName(), details.get(ServerDetails.Detail.DATABASE_DRIVER_VERSION));
-                form.setValue(currentMeasRawTable.getName(),
-                    details.get(ServerDetails.Detail.CURRENT_MEASUREMENT_TABLE));
-                form.setValue(nextMeasTableRotation.getName(),
-                    details.get(ServerDetails.Detail.NEXT_MEASUREMENT_TABLE_ROTATION));
             }
 
             @Override

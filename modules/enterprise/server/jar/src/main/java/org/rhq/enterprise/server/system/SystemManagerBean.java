@@ -702,8 +702,6 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         details.put(ServerDetails.Detail.DATABASE_DRIVER_VERSION, dbInfo.getDatabaseDriverVersion());
         details.put(ServerDetails.Detail.DATABASE_PRODUCT_NAME, dbInfo.getDatabaseProductName());
         details.put(ServerDetails.Detail.DATABASE_PRODUCT_VERSION, dbInfo.getDatabaseProductVersion());
-        details.put(ServerDetails.Detail.CURRENT_MEASUREMENT_TABLE, dbInfo.getCurrentMeasurementTable());
-        details.put(ServerDetails.Detail.NEXT_MEASUREMENT_TABLE_ROTATION, dbInfo.getNextMeasurementTableRotation());
 
         details.put(ServerDetails.Detail.SERVER_IDENTITY, serverManager.getServer().getName());
 

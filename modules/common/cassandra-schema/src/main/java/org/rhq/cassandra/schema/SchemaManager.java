@@ -25,6 +25,9 @@
 
 package org.rhq.cassandra.schema;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
@@ -33,6 +36,8 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.rhq.cassandra.CassandraNode;
 
 import liquibase.Liquibase;
 import liquibase.database.Database;
@@ -53,19 +58,24 @@ public class SchemaManager {
 
     private String password;
 
-    private String[] hosts;
+    private List<CassandraNode> nodes = new ArrayList<CassandraNode>();
 
-    public SchemaManager(String username, String password, String... hosts) {
+    public SchemaManager(String username, String password, String... nodes) {
         try {
             this.username = username;
             this.password = password;
-            this.hosts = hosts;
+            String[] hostNames = new String[nodes.length];
+            for (String node : nodes) {
+                CassandraNode cassandraNode = CassandraNode.parseNode(node);
+                this.nodes.add(cassandraNode);
+                hostNames[this.nodes.size() - 1] = cassandraNode.getHostName();
+            }
 
             SimpleAuthInfoProvider authInfoProvider = new SimpleAuthInfoProvider();
             authInfoProvider.add("username", "cassandra").add("password", "cassandra");
 
             Cluster cluster = Cluster.builder()
-                .addContactPoints("127.0.0.1", "127.0.0.2")
+                .addContactPoints(hostNames)
                 .withAuthInfoProvider(authInfoProvider)
                 .build();
             session = cluster.connect("system");
@@ -104,7 +114,7 @@ public class SchemaManager {
 
     public void updateSchema() {
         try {
-            Database database = createDatabase(hosts[0]);
+            Database database = createDatabase(nodes.get(0));
             runLiquibase(database);
         } catch (DatabaseException e) {
             throw new RuntimeException(e);
@@ -126,8 +136,8 @@ public class SchemaManager {
         }
     }
 
-    private Database createDatabase(String host) throws DatabaseException {
-        String url = "jdbc:cassandra://" + host + ":9160/system?version=3.0.0";
+    private Database createDatabase(CassandraNode node) throws DatabaseException {
+        String url = "jdbc:cassandra://" + node.getHostName() + ":" + node.getThriftPort() + "/system?version=3.0.0";
         String driver = "org.apache.cassandra.cql.jdbc.CassandraDriver";
         String databaseClass = "liquibase.database.ext.CassandraDatabase";
         String defaultCatalog = null;

@@ -47,7 +47,6 @@ import org.apache.commons.logging.LogFactory;
 import org.quartz.JobDataMap;
 import org.quartz.SchedulerException;
 
-import org.rhq.cassandra.UnmanagedDeployer;
 import org.rhq.cassandra.CassandraException;
 import org.rhq.cassandra.DeploymentOptions;
 import org.rhq.core.domain.auth.Subject;
@@ -64,16 +63,13 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.bundle.BundleManagerLocal;
-import org.rhq.enterprise.server.core.CoreServerMBean;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author John Sanda
@@ -130,36 +126,36 @@ public class CassandraClusterManagerBean implements CassandraClusterManagerLocal
             throw new CassandraException(msg, e);
         }
 
-        String seeds;
-        if (deploymentOptions.isEmbedded()) {
-            UnmanagedDeployer deployer = new UnmanagedDeployer();
-            deployer.setDeploymentOptions(deploymentOptions);
-            seeds = deployer.getCassandraHosts();
-
-            // need to save the seeds list back to rhq-server.properties.
-            CoreServerMBean coreServer = LookupUtil.getCoreServer();
-            File installDir = coreServer.getInstallDir();
-            File binDir = new File(installDir, "bin");
-            File serverProperties = new File(binDir, "rhq-server.properties");
-            PropertiesFileUpdate propsFile = new PropertiesFileUpdate(serverProperties.getAbsolutePath());
-
-            try {
-                propsFile.update("rhq.cassandra.cluster.seeds", seeds);
-            } catch (IOException e) {
-                log.warn("Failed to update rhq.cassandra.cluster.seeds property in " + serverProperties, e);
-            }
-
-            // Commenting out the call to deploy as this was here only to support dev
-            // environments. Now that the new AS 7 installer is in place, the embedded
-            // cluster will be deployed during the auto installation that happens with the
-            // dev-container and a separate script will be made available for managing the
-            // embedded cluster.
-            //
-            //deployer.deploy();
-
-        } else {
-            seeds = System.getProperty("rhq.cassandra.cluster.seeds");
-        }
+        String seeds = System.getProperty("rhq.cassandra.seeds");
+//        if (deploymentOptions.isEmbedded()) {
+//            UnmanagedDeployer deployer = new UnmanagedDeployer();
+//            deployer.setDeploymentOptions(deploymentOptions);
+//            seeds = deployer.getCassandraHosts();
+//
+//            // need to save the seeds list back to rhq-server.properties.
+//            CoreServerMBean coreServer = LookupUtil.getCoreServer();
+//            File installDir = coreServer.getInstallDir();
+//            File binDir = new File(installDir, "bin");
+//            File serverProperties = new File(binDir, "rhq-server.properties");
+//            PropertiesFileUpdate propsFile = new PropertiesFileUpdate(serverProperties.getAbsolutePath());
+//
+//            try {
+//                propsFile.update("rhq.cassandra.cluster.seeds", seeds);
+//            } catch (IOException e) {
+//                log.warn("Failed to update rhq.cassandra.cluster.seeds property in " + serverProperties, e);
+//            }
+//
+//            // Commenting out the call to deploy as this was here only to support dev
+//            // environments. Now that the new AS 7 installer is in place, the embedded
+//            // cluster will be deployed during the auto installation that happens with the
+//            // dev-container and a separate script will be made available for managing the
+//            // embedded cluster.
+//            //
+//            //deployer.deploy();
+//
+//        } else {
+//            seeds = System.getProperty("rhq.cassandra.seeds");
+//        }
 
         String jobTrigger = "CassandraClusterHeartBeatTrigger - " + UUID.randomUUID().toString();
         String jobGroup = CassandraClusterHeartBeatJob.JOB_NAME + "Group";

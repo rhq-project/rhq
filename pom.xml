@@ -1326,8 +1326,6 @@
   <modules>
     <module>modules</module>
     <module>code-coverage</module>
-    <module>cassandra-ccm-cli</module>
-    <module>cassandra-ccm-testng</module>
   </modules>
 
 

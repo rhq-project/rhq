@@ -37,9 +37,12 @@ public class CassandraNode {
 
     private int thriftPort;
 
-    public CassandraNode(String hostName, int thriftPort) {
+    private int nativeTransportPort;
+
+    public CassandraNode(String hostName, int thriftPort, int nativeTransportPort) {
         this.hostName = hostName;
         this.thriftPort = thriftPort;
+        this.nativeTransportPort = nativeTransportPort;
     }
 
     public String getHostName() {
@@ -48,6 +51,10 @@ public class CassandraNode {
 
     public int getThriftPort() {
         return thriftPort;
+    }
+
+    public int getNativeTransportPort() {
+        return nativeTransportPort;
     }
 
     public boolean isThrifPortOpen() {
@@ -69,6 +76,7 @@ public class CassandraNode {
         CassandraNode that = (CassandraNode) o;
 
         if (thriftPort != that.thriftPort) return false;
+        if (nativeTransportPort != that.nativeTransportPort) return false;
         if (!hostName.equals(that.hostName)) return false;
 
         return true;
@@ -77,12 +85,21 @@ public class CassandraNode {
     @Override
     public int hashCode() {
         int result = hostName.hashCode();
-        result = 41 * result + thriftPort;
+        result = 41 * result + thriftPort + nativeTransportPort;
         return result;
     }
 
     @Override
     public String toString() {
-        return "CassandraNode[hostName: " + hostName + ", thriftPort: " + thriftPort + "]";
+        return "CassandraNode[hostName: " + hostName + ", thriftPort: " + thriftPort + ", nativeTransportPort: " +
+            nativeTransportPort + "]";
+    }
+
+    public static CassandraNode parseNode(String s) {
+        String[] params = s.split("\\|");
+        if (params.length != 3) {
+            throw new IllegalArgumentException("Expected string of the form, hostname|thriftPort|nativeTransportPort");
+        }
+        return new CassandraNode(params[0], Integer.parseInt(params[1]), Integer.parseInt(params[2]));
     }
 }

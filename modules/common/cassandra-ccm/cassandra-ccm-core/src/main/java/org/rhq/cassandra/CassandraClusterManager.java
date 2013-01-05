@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -82,7 +83,7 @@ public class CassandraClusterManager {
         }
     }
 
-    public void createCluster() {
+    public List<CassandraNode> createCluster() {
         if (log.isDebugEnabled()) {
             log.debug("Installing embedded " + deploymentOptions.getNumNodes() + " node cluster to " +
                 deploymentOptions.getClusterDir());
@@ -96,10 +97,11 @@ public class CassandraClusterManager {
         if (installedMarker.exists()) {
             log.info("It appears that the cluster already exists in " + clusterDir);
             log.info("Skipping cluster creation.");
-            return;
+            return Collections.emptyList();
         }
         FileUtil.purge(clusterDir, false);
 
+        List<CassandraNode> nodes = new ArrayList<CassandraNode>(deploymentOptions.getNumNodes());
         UnmanagedDeployer deployer = new UnmanagedDeployer();
         try {
             try {
@@ -129,12 +131,16 @@ public class CassandraClusterManager {
                 nodeOptions.merge(deploymentOptions);
                 try {
                     deployer.deploy(nodeOptions, i);
+                    nodes.add(new CassandraNode(address, nodeOptions.getRpcPort(),
+                        nodeOptions.getNativeTransportPort()));
                     installedNodeDirs.add(basedir);
                 }  catch (CassandraException e) {
                     log.error("Failed to install node at " + basedir);
                     throw new RuntimeException("Failed to install node at " + basedir, e);
                 }
             }
+
+            return nodes;
         } finally {
             deployer.cleanUpBundle();
         }

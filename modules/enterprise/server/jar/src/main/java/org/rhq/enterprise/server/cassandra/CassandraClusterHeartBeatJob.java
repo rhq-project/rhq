@@ -67,8 +67,7 @@ public class CassandraClusterHeartBeatJob implements Job {
         List<CassandraNode> cassandraHosts = new ArrayList<CassandraNode>();
 
         for (String s : hosts.split(",")) {
-            String[] params = s.split(":");
-            cassandraHosts.add(new CassandraNode(params[0], Integer.parseInt(params[1])));
+            cassandraHosts.add(CassandraNode.parseNode(s));
 
         }
         if (clusterInitService.ping(cassandraHosts, 1)) {

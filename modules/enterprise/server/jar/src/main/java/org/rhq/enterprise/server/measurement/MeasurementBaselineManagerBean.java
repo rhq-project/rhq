@@ -50,7 +50,7 @@ import org.rhq.enterprise.server.cloud.StatusManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
-import org.rhq.server.metrics.MetricBaselineCalculator;
+import org.rhq.server.metrics.MetricsBaselineCalculator;
 
 /**
  * A manager for {@link MeasurementBaseline}s.
@@ -228,7 +228,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         List<Integer> scheduleIdsWithoutBaselines = query.getResultList();
 
         //2. calculate the baselines based metrics data
-        MetricBaselineCalculator baselineCalculator = new MetricBaselineCalculator(this.sessionManager.getSession());
+        MetricsBaselineCalculator baselineCalculator = new MetricsBaselineCalculator(this.sessionManager.getSession());
         List<MeasurementBaseline> results = baselineCalculator.calculateBaselines(scheduleIdsWithoutBaselines,
             startTime, endTime);
 

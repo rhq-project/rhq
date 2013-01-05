@@ -2,11 +2,14 @@ package org.rhq.cassandra.ccm.cli.command;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 
 import org.rhq.cassandra.CassandraClusterManager;
+import org.rhq.cassandra.CassandraNode;
 import org.rhq.cassandra.DeploymentOptions;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.StringUtil;
@@ -51,20 +54,28 @@ public class Deploy extends CCMCommand {
             }
 
             CassandraClusterManager ccm = new CassandraClusterManager(deploymentOptions);
-            ccm.createCluster();
+            List<CassandraNode> nodes = ccm.createCluster();
             ccm.startCluster();
 
             PropertiesFileUpdate serverPropertiesUpdater = getServerProperties();
             try {
-                serverPropertiesUpdater.update("rhq.cassandra.cluster.seeds",
-                    StringUtil.collectionToString(ccm.getHostNames()));
+                serverPropertiesUpdater.update("rhq.cassandra.seeds", StringUtil.collectionToString(
+                    toDelimitedString(nodes)));
             }  catch (IOException e) {
                 throw new RuntimeException("An error occurred while trying to update RHQ server properties", e);
             }
         }
     }
 
-    private static PropertiesFileUpdate getServerProperties() {
+    private List<String> toDelimitedString(List<CassandraNode> nodes) {
+        List<String> list = new ArrayList<String>(nodes.size());
+        for (CassandraNode node : nodes) {
+            list.add(node.getHostName() + "|" + node.getThriftPort() + "|" + node.getNativeTransportPort());
+        }
+        return list;
+    }
+
+    private PropertiesFileUpdate getServerProperties() {
         String sysprop = System.getProperty("rhq.server.properties-file");
         if (sysprop == null) {
             throw new RuntimeException("The required system property [rhq.server.properties] is not defined.");
@@ -77,4 +88,5 @@ public class Deploy extends CCMCommand {
 
         return new PropertiesFileUpdate(file.getAbsolutePath());
     }
+
 }

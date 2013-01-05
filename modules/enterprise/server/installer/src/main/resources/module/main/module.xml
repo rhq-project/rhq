@@ -13,6 +13,7 @@
         <resource-root path="ant-${ant.version}.jar"/>
         <resource-root path="ant-launcher-${ant.version}.jar"/>
         <resource-root path="i18nlog-${i18nlog.version}.jar"/>
+        <resource-root path="rhq-cassandra-ccm-core-${project.version}.jar"/>
         <resource-root path="rhq-cassandra-schema-${project.version}.jar"/>
         <!-- begin rhq-cassandra-schema dependencies -->
         <!--

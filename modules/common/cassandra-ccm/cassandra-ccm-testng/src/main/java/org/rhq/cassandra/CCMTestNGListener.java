@@ -27,7 +27,6 @@ package org.rhq.cassandra;
 
 import java.io.File;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -92,21 +91,19 @@ public class CCMTestNGListener implements IInvokedMethodListener {
         // consistency and failover. If we start doing that at some point, then
         // we cannot initialize ccm here.
         ccm = new CassandraClusterManager(deploymentOptions);
-        ccm.createCluster();
+        List<CassandraNode> nodes = ccm.createCluster();
 
-        List<CassandraNode> cassandraHosts = getCassandraHosts(ccm.getHostNames());
-        for (CassandraNode cassandraNode : cassandraHosts) {
-            if (cassandraNode.isThrifPortOpen()) {
+        for (CassandraNode node : nodes) {
+            if (node.isThrifPortOpen()) {
                 throw new RuntimeException("A cluster is already running on the same ports.");
             }
         }
-
         ccm.startCluster();
 
         ClusterInitService clusterInitService = new ClusterInitService();
 
         if (annotation.waitForClusterToStart()) {
-            clusterInitService.waitForClusterToStart(cassandraHosts);
+            clusterInitService.waitForClusterToStart(nodes);
         }
 
         if (annotation.waitForSchemaAgreement()) {
@@ -117,7 +114,7 @@ public class CCMTestNGListener implements IInvokedMethodListener {
             // is no cluster name argument.
             //
             // jsanda
-            clusterInitService.waitForSchemaAgreement("rhq", cassandraHosts);
+            clusterInitService.waitForSchemaAgreement("rhq", nodes);
         }
 
         SchemaManager schemaManager = new SchemaManager(annotation.username(), annotation.password(),
@@ -131,15 +128,6 @@ public class CCMTestNGListener implements IInvokedMethodListener {
 
     private void shutdownCluster() throws Exception {
         ccm.shutdownCluster();
-    }
-
-    private List<CassandraNode> getCassandraHosts(List<String> hostNames) {
-        List<CassandraNode> cassandraHosts = new ArrayList<CassandraNode>();
-
-        for (String hostName : hostNames) {
-            cassandraHosts.add(new CassandraNode(hostName, 9160));
-        }
-        return cassandraHosts;
     }
 
 }

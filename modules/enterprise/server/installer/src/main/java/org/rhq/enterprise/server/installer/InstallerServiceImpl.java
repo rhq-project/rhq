@@ -402,7 +402,9 @@ public class InstallerServiceImpl implements InstallerService {
                 log("Ignoring Cassandra schema - installer will assume it exists and is already up-to-date.");
             }
         } catch (Exception e) {
-            throw new Exception("Could not complete Cassandra schema installation.", e);
+            String msg = "Could not complete Cassandra schema installation: " + ThrowableUtil.getRootMessage(e);
+            log.error(msg, e);
+            throw new Exception(msg, e);
         } finally {
             cassandraSchemaManager.shutdown();
         }
@@ -1016,7 +1018,7 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     private SchemaManager createCassandraSchemaManager(HashMap<String, String> serverProps) {
-        String[] hosts = serverProps.get("rhq.cassandra.cluster.seeds").split(",");
+        String[] hosts = serverProps.get("rhq.cassandra.seeds").split(",");
         String username = serverProps.get("rhq.cassandra.username");
         String password = serverProps.get("rhq.cassandra.password");
 

@@ -28,6 +28,7 @@ package org.rhq.cassandra;
 import static java.util.Arrays.asList;
 import static org.rhq.core.util.StringUtil.collectionToString;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -139,7 +140,11 @@ public class CassandraClusterManager {
                     throw new RuntimeException("Failed to install node at " + basedir, e);
                 }
             }
-
+            try {
+                FileUtil.writeFile(new ByteArrayInputStream(new byte[] {0}), installedMarker);
+            }  catch (IOException e) {
+                log.warn("Failed to write installed file marker to " + installedMarker, e);
+            }
             return nodes;
         } finally {
             deployer.cleanUpBundle();

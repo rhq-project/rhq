@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # =============================================================================
-# RHQ Server UNIX Install Script
+# RHQ Cassandra Cluster Manager Script
 #
 # This file is used to complete the installation of the RHQ Server on a
 # UNIX platform.
@@ -214,7 +214,7 @@ else
 fi
 
 # debugging the logging level now for development/testing
-RHQ_CCM_JAVA_OPTS="${RHQ_CCM_JAVA_OPTS} -Djava.awt.headless=true -Drhq.server.properties-file=${RHQ_SERVER_HOME}/bin/rhq-server.properties -Drhq.ccm.logdir=${RHQ_SERVER_HOME}/logs -Drhq.ccm.loglevel=DEBUG"
+RHQ_CCM_JAVA_OPTS="${RHQ_CCM_JAVA_OPTS} -Djava.awt.headless=true -Drhq.server.properties-file=${RHQ_SERVER_HOME}/bin/rhq-server.properties -Drhq.ccm.logdir=${RHQ_SERVER_HOME}/logs -Drhq.ccm.loglevel=${_RHQ_LOGLEVEL}"
 
 # Sample JPDA settings for remote socket debugging
 #RHQ_CCM_JAVA_OPTS="${RHQ_CCM_JAVA_OPTS} -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y"

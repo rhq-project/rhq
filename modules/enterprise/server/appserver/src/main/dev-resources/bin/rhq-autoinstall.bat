@@ -14,6 +14,11 @@ set RHQ_SERVER_HOME=%CD%
 cd %RHQ_SERVER_HOME%\bin
 
 set _INSTALLER_SCRIPT=%RHQ_SERVER_HOME%\bin\rhq-installer.bat
+set RHQ_CCM_SCRIPT=%RHQ_SERVER_HOME%\bin\rhq-ccm.bat
+
+echo Installing embedded Cassandra cluster...
+CALL "%RHQ_CCM_SCRIPT% deploy"
+
 
 rem we are normally executed just before the server starts, so give it time to initialize
 rem yes, this is a sleep of 5s, backwards compatible to XP

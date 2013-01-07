@@ -541,14 +541,14 @@ public class InstallerServiceImpl implements InstallerService {
     // make to rhq-server.properties on restart (since rhq-server.properties are system
     // properties set in the AS7 instance via -P option to AS7).
     @Override
-    public void reconfigure(HashMap<String, String> serverProperties) throws Exception {
+    public boolean reconfigure(HashMap<String, String> serverProperties) throws Exception {
 
         // make sure we can connect using our configuration
         testModelControllerClient(serverProperties, 30);
 
         if (null == getInstallationResults()) {
             log("Run the installer on this server.");
-            return;
+            return false;
         }
 
         String appServerConfigDir = getAppServerConfigDir();
@@ -566,7 +566,7 @@ public class InstallerServiceImpl implements InstallerService {
                     if (ServerInstallUtil.isSameMailServiceExisting(mcc, serverProperties)) {
                         if (ServerInstallUtil.isSameWebConnectorsExisting(mcc, appServerConfigDir, serverProperties)) {
                             log("Nothing in the configuration changed that requires a reconfig - everything looks OK");
-                            return; // nothing to do, return immediately
+                            return true; // nothing to do, return immediately
                         }
                     }
                 }
@@ -598,6 +598,8 @@ public class InstallerServiceImpl implements InstallerService {
         } finally {
             safeClose(mcc);
         }
+
+        return true;
     }
 
     /**
@@ -912,7 +914,15 @@ public class InstallerServiceImpl implements InstallerService {
 
         while (System.currentTimeMillis() < end) {
             try {
-                return testModelControllerClient(fallbackProps);
+                String retVal = testModelControllerClient(fallbackProps);
+
+                // Not only do we want to make sure we can connect, but we also want to wait for the subsystems to initialize.
+                // Let's wait for one of the subsystems to exist; once we know this is up, the rest are probably ready too.
+                if (!(new WebJBossASClient(getModelControllerClient()).isWebSubsystem())) {
+                    throw new IllegalStateException("The server does not appear to be fully started yet");
+                }
+
+                return retVal;
             } catch (Exception e) {
                 error = e;
                 try {

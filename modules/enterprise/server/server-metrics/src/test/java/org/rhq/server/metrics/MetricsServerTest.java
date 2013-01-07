@@ -57,6 +57,8 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
     private static final boolean ENABLED = false;
 
+    private static final double TEST_PRECISION = Math.pow(10, -9);
+
     private final Log log = LogFactory.getLog(MetricsServerTest.class);
 
     private final long SECOND = 1000;
@@ -406,7 +408,8 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         AggregatedNumericMetric expected = new AggregatedNumericMetric(0, avg, 1.1, 6.6,
             beginTime.getMillis());
 
-        assertEquals(actual, expected, "Failed to get resource summary aggregate for raw data.");
+        assertPropertiesMatch("Failed to get resource summary aggregate for raw data.", expected, actual,
+            TEST_PRECISION);
     }
 
     @Test
@@ -434,7 +437,8 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         double avg = divide(2.0 + 5.0 + 3.0 + 5.0 + 5.0 + 3.0, 6);
         AggregatedNumericMetric expected = new AggregatedNumericMetric(0, avg, 1.0, 9.0, beginTime.getMillis());
 
-        assertEquals(actual, expected, "Failed to get resource summary aggregate for one hour data");
+        assertPropertiesMatch("Failed to get resource summary aggregate for one hour data", expected, actual,
+            TEST_PRECISION);
     }
 
     @Test
@@ -463,7 +467,9 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         double avg = divide(1.1 + 1.2 + 5.1 + 5.2, 4);
         AggregatedNumericMetric expected = new AggregatedNumericMetric(0, avg, 1.1, 5.2, beginTime.getMillis());
 
-        assertEquals(actual, expected, "Failed to get group summary aggregate for one hour data");
+//        assertEquals(actual, expected, "Failed to get group summary aggregate for one hour data");
+        assertPropertiesMatch("Failed to get group summary aggregate for one hour data", expected, actual,
+            TEST_PRECISION);
     }
 
     @Test
@@ -509,7 +515,9 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         double avg = divide(1.1 + 1.2 + 2.1 + 2.2 + 3.1 + 3.2 + 4.1 + 4.2 + 5.1 + 5.2 + 6.1 + 6.2, 12);
         AggregatedNumericMetric expected = new AggregatedNumericMetric(0, avg, 1.1, 6.2, beginTime.getMillis());
 
-        assertEquals(actual, expected, "Failed to get group summary aggregate for raw data.");
+//        assertEquals(actual, expected, "Failed to get group summary aggregate for raw data.");
+        assertPropertiesMatch("Failed to get group summary aggregate for raw data.", expected, actual,
+            TEST_PRECISION);
     }
 
     @Test
@@ -602,11 +610,11 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             buckets.get(29).getStartTime(), Double.NaN, Double.NaN, Double.NaN);
 
         assertPropertiesMatch("The data for bucket 0 does not match the expected values.", expectedBucket0Data,
-            actualData.get(0));
+            actualData.get(0), TEST_PRECISION);
         assertPropertiesMatch("The data for bucket 59 does not match the expected values.", expectedBucket59Data,
-            actualData.get(59));
+            actualData.get(59), TEST_PRECISION);
         assertPropertiesMatch("The data for bucket 29 does not match the expected values.", expectedBucket29Data,
-            actualData.get(29));
+            actualData.get(29), TEST_PRECISION);
     }
 
     @Test
@@ -683,11 +691,11 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             buckets.get(29).getStartTime(), Double.NaN, Double.NaN, Double.NaN);
 
         assertPropertiesMatch("The data for bucket 0 does not match the expected values.", expectedBucket0Data,
-            actualData.get(0));
+            actualData.get(0), TEST_PRECISION);
         assertPropertiesMatch("The data for bucket 59 does not match the expected values.", expectedBucket59Data,
-            actualData.get(59));
+            actualData.get(59), TEST_PRECISION);
         assertPropertiesMatch("The data for bucket 29 does not match the expected values.", expectedBucket29Data,
-            actualData.get(29));
+            actualData.get(29), TEST_PRECISION);
     }
 
     private void assertColumnMetadataEquals(int scheduleId, DateTime startTime, DateTime endTime, Integer ttl,
@@ -723,8 +731,8 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     private void assertMetricDataEquals(MetricsTable columnFamily, int scheduleId,
         List<AggregatedNumericMetric> expected) {
         List<AggregatedNumericMetric> actual = dao.findAggregateMetrics(columnFamily, scheduleId);
-        assertCollectionMatchesNoOrder(expected, actual, "Metric data for schedule id " + scheduleId +
-            " in table " + columnFamily + " does not match expected values");
+        assertCollectionMatchesNoOrder("Metric data for schedule id " + scheduleId + " in table " + columnFamily +
+            " does not match expected values", expected, actual, TEST_PRECISION);
     }
 
     private void assert6HourDataEmpty(int scheduleId) {

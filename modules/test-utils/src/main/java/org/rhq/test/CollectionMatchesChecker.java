@@ -1,12 +1,12 @@
 package org.rhq.test;
 
+import static java.util.Arrays.asList;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static java.util.Arrays.asList;
 
 public class CollectionMatchesChecker<T> {
 
@@ -16,12 +16,18 @@ public class CollectionMatchesChecker<T> {
 
     private Set<String> ignoredProperties = new HashSet<String>();
 
+    private Double tolerance;
+
     public void setExpected(Collection<T> expected) {
         this.expected = expected;
     }
 
     public void setActual(Collection<T> actual) {
         this.actual = actual;
+    }
+
+    public void setTolerance(Double tolerance) {
+        this.tolerance = tolerance;
     }
 
     public void setIgnoredProperties(String... ignoredProperties) {
@@ -73,6 +79,7 @@ public class CollectionMatchesChecker<T> {
             PropertyMatcher<T> matcher = new PropertyMatcher<T>();
             matcher.setExpected(elementToSearchFor);
             matcher.setActual(actual);
+            matcher.setMaxDifference(tolerance);
             matcher.setIgnoredProperties(ignoredProperties);
             MatchResult result = matcher.execute();
 

@@ -79,7 +79,7 @@ public class StatusManagerBean implements StatusManagerLocal {
 
     @EJB
     //@IgnoreDependency
-    CloudManagerLocal cloudManager;
+    TopologyManagerLocal topologyManager;
 
     @EJB
     //@IgnoreDependency

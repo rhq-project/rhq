@@ -29,6 +29,8 @@ import static org.testng.Assert.assertNotSame;
 import static org.testng.Assert.assertSame;
 import static org.testng.Assert.assertTrue;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Random;
 import java.util.Set;
 
@@ -403,6 +405,44 @@ public class ConfigurationTest {
         c2.addRawConfiguration(createRawConfiguration("/tmp/bar"));
 
         assertFalse(c1.equals(c2), "equals() should be false when raw configs are not equal.");
+    }
+
+    @Test
+    public void configurationCanBeUpdatedUsingTheCollectionObtainedFromGetProperties() {
+        Configuration configuration = new Configuration();
+        Collection<Property> props = configuration.getProperties();
+
+        PropertySimple prop = new PropertySimple("a", "a");
+
+        props.add(prop);
+
+        assertEquals(configuration.getAllProperties().size(), 1, "The configuration's properties should have been updated using the proxy.");
+        assertEquals(configuration.get("a"), prop, "Proxy should transparently update the property map.");
+    }
+
+    @Test
+    public void setPropertiesCanAcceptPropertiesProxyObtainedFromGetProperties() {
+        Configuration configuration = new Configuration();
+        Collection<Property> props = new ArrayList<Property>();
+
+        PropertySimple prop = new PropertySimple("a", "a");
+
+        props.add(prop);
+
+        //set the properties using a "normal" collection
+        configuration.setProperties(props);
+
+        assertEquals(configuration.getAllProperties().size(), 1, "The configuration's properties should have been updated.");
+        assertEquals(configuration.get("a"), prop, "Setting the properties using a collection should transparently update the property map.");
+
+        //now get the proxy object from the configuration
+        props = configuration.getProperties();
+
+        //and try to assign it back... as simple as it seems, special care must be taken, which we are testing for here
+        configuration.setProperties(props);
+
+        assertEquals(configuration.getAllProperties().size(), 1, "Setting the proxy as the set of properties should not modify the properties");
+        assertEquals(configuration.get("a"), prop, "The property map should be untouched when setting the properties using the previously obtained proxy");
     }
 
     private Configuration createConfiguration() {

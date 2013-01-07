@@ -43,6 +43,7 @@ import javax.script.ScriptContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mozilla.javascript.Function;
+import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.ScriptableObject;
 
 import org.rhq.scripting.CodeCompletion;
@@ -184,7 +185,7 @@ public class JavascriptCompletor implements CodeCompletion {
             if (!matches.isEmpty()) {
                 // BZ 871407 NPE on auto completion for javascript object
                 List<Object> nextList = matches.get(next);
-                if (nextList == null || nextList.isEmpty()) { 
+                if (nextList == null || nextList.isEmpty()) {
                     return -1;
                 }
                 Object rootObject = nextList.get(0);
@@ -393,7 +394,7 @@ public class JavascriptCompletor implements CodeCompletion {
                 }
             }
         }
-        
+
         //this was originally part of the code completor that lived in the CLI
         //I don't think we need it, because the services are present under the
         //same names in the context. This code can never add any new matches.
@@ -406,7 +407,7 @@ public class JavascriptCompletor implements CodeCompletion {
             }
         }
         */
-        
+
         return found;
     }
 
@@ -474,7 +475,17 @@ public class JavascriptCompletor implements CodeCompletion {
     }
 
     private Map<String, List<Object>> findJavascriptContextMatches(ScriptableObject object, String start) {
+        // don't attempt ID completion on arrays.. While this would return the available indices in the array which
+        // is a very useful completion hint, we currently only support code completion on dots. I.e. if "a" was an
+        // array, code completion on "a." would return the indices of the array. The user could then be tempted to
+        // to use such completed constructs even though they're not a valid javascript ("a.0" is not a valid
+        // javascript expression).
+        if (object instanceof NativeArray) {
+            return Collections.emptyMap();
+        }
+
         HashMap<String, List<Object>> ret = new HashMap<String, List<Object>>();
+
         for (Object o : object.getIds()) {
             String key = o.toString();
 

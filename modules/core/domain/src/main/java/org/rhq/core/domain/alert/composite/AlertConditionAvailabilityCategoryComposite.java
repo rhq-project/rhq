@@ -33,17 +33,24 @@ import org.rhq.core.domain.measurement.AvailabilityType;
  */
 public class AlertConditionAvailabilityCategoryComposite extends AbstractAlertConditionCategoryComposite {
 
+    private final Integer alertDefinitionId;
     private final Integer resourceId;
     private final AvailabilityType availabilityType;
 
-    public AlertConditionAvailabilityCategoryComposite(AlertCondition condition, Integer resourceId,
+    public AlertConditionAvailabilityCategoryComposite(AlertCondition condition, Integer alertDefinitionId,
+        Integer resourceId,
         AvailabilityType availabilityType) {
 
         super(condition);
 
+        this.alertDefinitionId = alertDefinitionId;
         this.resourceId = resourceId;
         // For a resource with no Availability records we initialize to UNKNOWN
         this.availabilityType = (null != availabilityType) ? availabilityType : AvailabilityType.UNKNOWN;
+    }
+
+    public Integer getAlertDefinitionId() {
+        return alertDefinitionId;
     }
 
     public Integer getResourceId() {

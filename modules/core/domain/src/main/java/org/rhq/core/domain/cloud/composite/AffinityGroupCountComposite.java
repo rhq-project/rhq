@@ -22,15 +22,23 @@
  */
 package org.rhq.core.domain.cloud.composite;
 
+import java.io.Serializable;
+
 import org.rhq.core.domain.cloud.AffinityGroup;
 
 /**
  * @author Joseph Marques
  */
-public class AffinityGroupCountComposite {
-    private final AffinityGroup affinityGroup;
-    private final int agentCount;
-    private final int serverCount;
+public class AffinityGroupCountComposite implements Serializable {
+    private static final long serialVersionUID = 282382551474550639L;
+
+    private AffinityGroup affinityGroup;
+    private int agentCount;
+    private int serverCount;
+
+    public AffinityGroupCountComposite() {
+        // GWT needs it
+    }
 
     public AffinityGroupCountComposite(AffinityGroup affinityGroup, Number agentCount, Number serverCount) {
         super();

@@ -24,10 +24,11 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.PartitionEvent;
+import org.rhq.core.domain.cloud.PartitionEvent.ExecutionStatus;
 import org.rhq.core.domain.cloud.PartitionEventDetails;
 import org.rhq.core.domain.cloud.PartitionEventType;
-import org.rhq.core.domain.cloud.PartitionEvent.ExecutionStatus;
 import org.rhq.core.domain.cloud.composite.FailoverListComposite;
+import org.rhq.core.domain.criteria.PartitionEventCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -55,8 +56,11 @@ public interface PartitionEventManagerLocal {
         String eventDetail);
 
     /**
-     * This call requests full repartitioning of the agent population by the recurring cluster manager job.  
-     * @param subject
+     * This call requests full repartitioning of the agent population by the recurring cluster manager job.
+     * 
+     * the subject needs to have MANAGE_INVENTORY and MANAGE_SETTINGS permissions.
+     * 
+     * @param subject the caller
      * @param eventType
      * @param eventDetail Any useful information regarding the event generation. Should be suitable for display.
      *        Typically a relevant server name.   
@@ -81,10 +85,22 @@ public interface PartitionEventManagerLocal {
 
     /**
      * This is primarily a test entry point.
-     * @param event
+     * 
+     * the subject needs to have MANAGE_INVENTORY and MANAGE_SETTINGS permissions.
+     * 
+     * @param subject
+     * @param partitionEventIds
      */
     void deletePartitionEvents(Subject subject, Integer[] partitionEventIds);
 
+    /**
+     * Deletes all the partition events.
+     * 
+     * the subject needs to have MANAGE_INVENTORY and MANAGE_SETTINGS permissions.
+     * 
+     * @param subject
+     * @return count of deleted events
+     */
     int purgeAllEvents(Subject subject);
 
     PartitionEvent getPartitionEvent(Subject subject, int partitionEventId);
@@ -92,6 +108,27 @@ public interface PartitionEventManagerLocal {
     PageList<PartitionEvent> getPartitionEvents(Subject subject, PartitionEventType type, ExecutionStatus status,
         String details, PageControl pageControl);
 
+    /**
+     * Returns the partition event details.
+     * 
+     * the subject needs to have MANAGE_INVENTORY and MANAGE_SETTINGS permissions.
+     * 
+     * @param subject the caller
+     * @param partitionEventId
+     * @param pageControl
+     * @return list with partition event details
+     */
     PageList<PartitionEventDetails> getPartitionEventDetails(Subject subject, int partitionEventId,
         PageControl pageControl);
+    
+    /**
+     * Fetches the partition events based on provided criteria.
+     * 
+     * the subject needs to have MANAGE_INVENTORY and MANAGE_SETTINGS permissions.
+     * 
+     * @param subject the caller
+     * @param criteria the criteria
+     * @return list with partition events
+     */
+    PageList<PartitionEvent> findPartitionEventsByCriteria(Subject subject, PartitionEventCriteria criteria);
 }

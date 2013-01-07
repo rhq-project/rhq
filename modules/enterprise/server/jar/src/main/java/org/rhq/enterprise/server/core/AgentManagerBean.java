@@ -48,6 +48,7 @@ import org.rhq.core.clientapi.server.core.PingRequest;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.composite.SystemSetting;
+import org.rhq.core.domain.criteria.AgentCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.composite.AgentLastAvailabilityPingComposite;
@@ -55,6 +56,7 @@ import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.MessageDigestGenerator;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
@@ -67,6 +69,8 @@ import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
 
@@ -125,16 +129,20 @@ public class AgentManagerBean implements AgentManagerLocal {
         agent = entityManager.find(Agent.class, agent.getId());
         failoverListManager.deleteServerListsForAgent(agent);
         entityManager.remove(agent);
+        destroyAgentClient(agent);
+        log.info("Removed agent: " + agent);
+    }
 
+    @ExcludeDefaultInterceptors
+    public void destroyAgentClient(Agent agent) {
         ServerCommunicationsServiceMBean bootstrap = ServerCommunicationsServiceUtil.getService();
         try {
             bootstrap.destroyKnownAgentClient(agent);
+            log.debug("agent client destroyed for agent: " + agent);
         } catch (Exception e) {
             // certain unit tests won't create the agentClient
-            log.warn("Could not find agentClient for doomedAgent: " + agent);
+            log.warn("Could not destroy agent client for agent [" + agent + "]: " + ThrowableUtil.getAllMessages(e));
         }
-
-        log.info("Removed agent: " + agent);
     }
 
     @ExcludeDefaultInterceptors
@@ -653,6 +661,13 @@ public class AgentManagerBean implements AgentManagerLocal {
         }
 
         return pingResults;
+    }
+    
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public PageList<Agent> findAgentsByCriteria(Subject subject, AgentCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        CriteriaQueryRunner<Agent> runner = new CriteriaQueryRunner<Agent>(criteria, generator, entityManager);
+        return runner.execute();
     }
 
 }

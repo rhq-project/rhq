@@ -13,5 +13,4 @@
     <extension qualifier="jacoco">
         <property name="includes">org.rhq.*</property>
     </extension>
- 
 </arquillian>

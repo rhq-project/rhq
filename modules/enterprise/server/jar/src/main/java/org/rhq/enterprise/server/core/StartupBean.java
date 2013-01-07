@@ -63,7 +63,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.cloud.CloudManagerLocal;
+import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.CacheConsistencyManagerLocal;
 import org.rhq.enterprise.server.cassandra.CassandraClusterManagerLocal;
 import org.rhq.cassandra.CassandraException;
@@ -114,7 +114,7 @@ public class StartupBean {
     private CacheConsistencyManagerLocal cacheConsistencyManager;
 
     @EJB
-    private CloudManagerLocal cloudManager;
+    private TopologyManagerLocal topologyManager;
 
     @EJB
     private ResourceTypeManagerLocal resourceTypeManager;
@@ -198,8 +198,8 @@ public class StartupBean {
         startServerCommunicationServices();
         startScheduler();
         scheduleJobs();
-        startAgentClients();
-        //startEmbeddedAgent();
+        //startAgentClients(); // this could be expensive if we have large number of agents so skip it and we'll create them lazily
+        //startEmbeddedAgent(); // this is obsolete - we no longer have an embedded agent
         registerShutdownListener();
         installCassandraBundle();
         registerPluginDeploymentScannerJob();
@@ -261,7 +261,8 @@ public class StartupBean {
             log.info("Server is configured to start up in MAINTENANCE mode.");
             Server server = serverManager.getServer();
             Integer[] serverId = new Integer[] { server.getId() };
-            cloudManager.updateServerMode(serverId, OperationMode.MAINTENANCE);
+            topologyManager.updateServerMode(LookupUtil.getSubjectManager().getOverlord(), serverId,
+                OperationMode.MAINTENANCE);
         }
 
         // Establish the current server mode for the server. This will move the server to NORMAL
@@ -286,7 +287,7 @@ public class StartupBean {
      */
     private void createDefaultServerIfNecessary() {
         String identity = serverManager.getIdentity();
-        Server server = cloudManager.getServerByName(identity);
+        Server server = topologyManager.getServerByName(identity);
         if (server == null) {
             server = new Server();
             server.setName(identity);
@@ -645,6 +646,13 @@ public class StartupBean {
      * immediately begin to send any persisted guaranteed messages that might already exist. This method must be called
      * at a time when the server is ready to accept messages from agents because any guaranteed messages that are
      * delivered might trigger the agents to send messages back to the server.
+     * 
+     * NOTE: we don't need to do this - so far, none of the messages the server sends to the agent are marked
+     * with "guaranteed delivery" (this is on purpose and a good thing) so we don't need to start all the agent clients
+     * in case they have persisted messages. Since the number of agents could be large this cache could be huge and
+     * take some time to initialize. If we don't call this, it speeds up start up, and doesn't bloat memory with
+     * clients we might not ever need (since agents might have affinity to other servers). Agent clients
+     * can be created lazily at runtime when the server needs it.
      */
     private void startAgentClients() {
         log.info("Starting agent clients - any persisted messages with guaranteed delivery will be sent...");

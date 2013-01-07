@@ -295,6 +295,8 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
         availableSection.setItems(this.availableGrid);
         availableSectionStack.addSection(availableSection);
 
+        this.datasource = getDataSource();
+        this.datasource.setDataPageSize(getMaxAvailableRecords());
         // Load data.
         if (this.availableFilterForm != null) {
             // this grabs any initial criteria prior to the first data fetch
@@ -319,8 +321,6 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
                 }
             });
         }
-        this.datasource = getDataSource();
-        this.datasource.setDataPageSize(getMaxAvailableRecords());
         populateAvailableGrid((null == latestCriteria) ? new Criteria() : latestCriteria);
 
         // Add event handlers.

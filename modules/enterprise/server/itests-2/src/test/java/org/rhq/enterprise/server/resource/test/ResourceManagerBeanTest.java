@@ -34,8 +34,15 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.server.auth.SessionManager;
+import org.rhq.enterprise.server.auth.SessionNotFoundException;
 import org.rhq.enterprise.server.discovery.DiscoveryServerServiceImpl;
+import org.rhq.enterprise.server.operation.OperationDefinitionNotFoundException;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceNotFoundException;
+import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
+import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
+import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionNotFoundException;
 import org.rhq.enterprise.server.resource.metadata.test.UpdatePluginMetadataTestBase;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -45,7 +52,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Test
 public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
-    private Subject superuser;
+    private Subject overlord;
     private Resource newResource;
 
     TestServerCommunicationsService agentServiceContainer;
@@ -54,7 +61,7 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
     protected void beforeMethod() throws Exception {
         super.beforeMethod();
 
-        superuser = LookupUtil.getSubjectManager().getOverlord();
+        overlord = LookupUtil.getSubjectManager().getOverlord();
         newResource = createNewResourceWithNewType();
     }
 
@@ -70,7 +77,7 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
         List<ResourceError> errors;
         DiscoveryServerServiceImpl serverService = new DiscoveryServerServiceImpl();
 
-        errors = resourceManager.findResourceErrors(superuser, newResource.getId(),
+        errors = resourceManager.findResourceErrors(overlord, newResource.getId(),
             ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
         assert errors.size() == 0;
 
@@ -80,7 +87,7 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
         // simulate the agent notifying the server about an error
         // this will exercise the addResourceError in the SLSB
         serverService.setResourceError(error);
-        errors = resourceManager.findResourceErrors(superuser, newResource.getId(),
+        errors = resourceManager.findResourceErrors(overlord, newResource.getId(),
             ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
         assert errors.size() == 1;
         error = errors.get(0);
@@ -98,7 +105,7 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
         error.setSummary("another summary");
         error.setDetail("another detail");
         serverService.setResourceError(error);
-        errors = resourceManager.findResourceErrors(superuser, newResource.getId(),
+        errors = resourceManager.findResourceErrors(overlord, newResource.getId(),
             ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
         assert errors.size() == 1;
         error = errors.get(0);
@@ -108,8 +115,8 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
         assert error.getErrorType() == ResourceErrorType.INVALID_PLUGIN_CONFIGURATION;
         assert error.getTimeOccurred() == 567890;
 
-        resourceManager.deleteResourceError(superuser, error.getId());
-        errors = resourceManager.findResourceErrors(superuser, newResource.getId(),
+        resourceManager.deleteResourceError(overlord, error.getId());
+        errors = resourceManager.findResourceErrors(overlord, newResource.getId(),
             ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
         assert errors.size() == 0;
     }
@@ -136,6 +143,58 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
         // cleanup the DB
         for (int i = resourceLineage.size() - 1; i >= 0; i--) {
             deleteNewResourceAgentResourceType(resourceLineage.get(i));
+        }
+    }
+
+    // Make sure our application exceptions are not wrapped
+    public void bz886850Test() {
+        try {
+            resourceManager.getResourceById(overlord, 2637426);
+            fail("Should have thrown a ResourceNotFoundException");
+        } catch (Throwable t) {
+            if (!(t instanceof ResourceNotFoundException)) {
+                fail("Should have thrown a ResourceNotFoundException but got: " + t);
+            }
+        }
+        try {
+            LookupUtil.getGroupDefinitionManager().getById(3456347);
+            fail("Should have thrown a GroupDefinitionNotFoundException");
+        } catch (Throwable t) {
+            if (!(t instanceof GroupDefinitionNotFoundException)) {
+                fail("Should have thrown a GroupDefinitionNotFoundException but got: " + t);
+            }
+        }
+        try {
+            LookupUtil.getOperationManager().getOperationDefinition(overlord, 3456347);
+            fail("Should have thrown a OperationDefinitionNotFoundException");
+        } catch (Throwable t) {
+            if (!(t instanceof OperationDefinitionNotFoundException)) {
+                fail("Should have thrown a OperationDefinitionNotFoundException but got: " + t);
+            }
+        }
+        try {
+            LookupUtil.getResourceTypeManager().getResourceTypeById(overlord, 3456347);
+            fail("Should have thrown a ResourceTypeNotFoundException");
+        } catch (Throwable t) {
+            if (!(t instanceof ResourceTypeNotFoundException)) {
+                fail("Should have thrown a ResourceTypeNotFoundException but got: " + t);
+            }
+        }
+        try {
+            LookupUtil.getResourceGroupManager().getResourceGroup(overlord, 3456347);
+            fail("Should have thrown a ResourceGroupNotFoundException");
+        } catch (Throwable t) {
+            if (!(t instanceof ResourceGroupNotFoundException)) {
+                fail("Should have thrown a ResourceGroupNotFoundException but got: " + t);
+            }
+        }
+        try {
+            SessionManager.getInstance().getSubject(3456347);
+            fail("Should have thrown a SessionNotFoundException");
+        } catch (Throwable t) {
+            if (!(t instanceof SessionNotFoundException)) {
+                fail("Should have thrown a SessionNotFoundException but got: " + t);
+            }
         }
     }
 
@@ -232,9 +291,9 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
             try {
                 Resource res = em.find(Resource.class, resource.getId());
                 System.out.println("Removing " + res + "...");
-                List<Integer> deletedIds = resourceManager.uninventoryResource(superuser, res.getId());
+                List<Integer> deletedIds = resourceManager.uninventoryResource(overlord, res.getId());
                 for (Integer deletedResourceId : deletedIds) {
-                    resourceManager.uninventoryResourceAsyncWork(superuser, deletedResourceId);
+                    resourceManager.uninventoryResourceAsyncWork(overlord, deletedResourceId);
                 }
                 em.flush();
 

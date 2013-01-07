@@ -36,6 +36,7 @@ import org.rhq.core.domain.cloud.FailoverListDetails;
 import org.rhq.core.domain.cloud.PartitionEventType;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
+import org.rhq.core.domain.criteria.ServerCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.domain.util.PageControl;
@@ -43,7 +44,10 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.authz.RequiredPermissions;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -54,8 +58,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Joseph Marques
  */
 @Stateless
-public class CloudManagerBean implements CloudManagerLocal {
-    private final Log log = LogFactory.getLog(CloudManagerBean.class);
+public class TopologyManagerBean implements TopologyManagerLocal {
+    private final Log log = LogFactory.getLog(TopologyManagerBean.class);
 
     // A time sufficient to determine whether a server is down.  Can be based on the initial delay set for the server instance
     // job updating the server mtimes. See StartupServlet. 
@@ -65,7 +69,7 @@ public class CloudManagerBean implements CloudManagerLocal {
     private EntityManager entityManager;
 
     @EJB
-    private CloudManagerLocal cloudManager;
+    private TopologyManagerLocal topologyManager;
 
     @EJB
     private FailoverListManagerLocal failoverListManager;
@@ -81,7 +85,7 @@ public class CloudManagerBean implements CloudManagerLocal {
     private ServerManagerLocal serverManager;
 
     public List<Agent> getAgentsByServerName(String serverName) {
-        Server server = cloudManager.getServerByName(serverName);
+        Server server = topologyManager.getServerByName(serverName);
         List<Agent> agents = server.getAgents();
         agents.size(); // iterating over this collection out of a transactional boundaries will throw LazyInitExceptions
         return agents;
@@ -120,7 +124,8 @@ public class CloudManagerBean implements CloudManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
     public PageList<ServerWithAgentCountComposite> getServerComposites(Subject subject, PageControl pc) {
         pc.initDefaultOrderingField("s.name");
 
@@ -156,22 +161,26 @@ public class CloudManagerBean implements CloudManagerLocal {
         }
     }
 
-    public void deleteServers(Integer[] serverIds) throws CloudManagerException {
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
+    public void deleteServers(Subject subject, Integer[] serverIds) throws TopologyManagerException {
         if (serverIds == null) {
             return;
         }
 
         for (Integer nextServerId : serverIds) {
-            cloudManager.deleteServer(nextServerId);
+            topologyManager.deleteServer(subject, nextServerId);
         }
     }
 
-    public void deleteServer(Integer serverId) throws CloudManagerException {
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
+    public void deleteServer(Subject subject, Integer serverId) throws TopologyManagerException {
         try {
             Server server = entityManager.find(Server.class, serverId);
 
             if (Server.OperationMode.NORMAL == server.getOperationMode()) {
-                throw new CloudManagerException("Could not delete server " + server.getName()
+                throw new TopologyManagerException("Could not delete server " + server.getName()
                     + ". Server must be down or in maintenance mode. Current operating mode is: "
                     + server.getOperationMode().name());
             }
@@ -199,11 +208,13 @@ public class CloudManagerBean implements CloudManagerLocal {
                 PartitionEventType.SERVER_DELETION, server.getName());
 
         } catch (Exception e) {
-            throw new CloudManagerException("Could not delete server[id=" + serverId + "]: " + e.getMessage(), e);
+            throw new TopologyManagerException("Could not delete server[id=" + serverId + "]: " + e.getMessage(), e);
         }
     }
 
-    public void updateServerMode(Integer[] serverIds, Server.OperationMode mode) {
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
+    public void updateServerMode(Subject subject, Integer[] serverIds, Server.OperationMode mode) {
         if (serverIds == null) {
             return;
         }
@@ -238,12 +249,15 @@ public class CloudManagerBean implements CloudManagerLocal {
         }
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
     public Server updateServer(Subject subject, Server server) {
         return entityManager.merge(server);
     }
 
-    public PageList<FailoverListDetails> getFailoverListDetailsByAgentId(int agentId, PageControl pc) {
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
+    public PageList<FailoverListDetails> getFailoverListDetailsByAgentId(Subject subject, int agentId, PageControl pc) {
         pc.initDefaultOrderingField("fld.ordinal");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -291,5 +305,12 @@ public class CloudManagerBean implements CloudManagerLocal {
         // Perform requested partition events. Note that we only need to execute one cloud partition
         // regardless of the number of pending requests, as the work would be duplicated.
         partitionEventManager.processRequestedPartitionEvents();
+    }
+
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public PageList<Server> findServersByCriteria(Subject subject, ServerCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        CriteriaQueryRunner<Server> runner = new CriteriaQueryRunner<Server>(criteria, generator, entityManager);
+        return runner.execute();
     }
 }

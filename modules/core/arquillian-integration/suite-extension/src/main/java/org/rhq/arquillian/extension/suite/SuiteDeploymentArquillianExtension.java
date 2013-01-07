@@ -18,7 +18,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.core.domain.shared;
+package org.rhq.arquillian.extension.suite;
 
 import java.util.concurrent.Callable;
 

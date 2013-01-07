@@ -17,5 +17,14 @@
         <justification>
             A few sort specifiers that were actually in error and if used would have produced a downstream error.
         </justification>
-    </difference>            
+    </difference>          
+    <difference>
+        <className>org/rhq/core/domain/alert/composite/AlertConditionAvailabilityCategoryComposite</className>
+        <differenceType>7004</differenceType><!-- num argments changed -->
+        <method>AlertConditionAvailabilityCategoryComposite(*)</method>
+        <justification>
+            This composite is not exposed remotely. The previous constructor signature was missing an argument
+            required for correct behavior. See BZ 888927.
+        </justification>
+    </difference>      
 </differences>

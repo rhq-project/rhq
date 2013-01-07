@@ -46,9 +46,9 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.communications.GlobalSuspendCommandListener;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.cloud.CloudManagerLocal;
 import org.rhq.enterprise.server.cloud.PartitionEventManagerLocal;
 import org.rhq.enterprise.server.cloud.StatusManagerLocal;
+import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 
 /**
@@ -79,7 +79,7 @@ public class ServerManagerBean implements ServerManagerLocal {
     private EntityManager entityManager;
 
     @EJB
-    private CloudManagerLocal cloudManager;
+    private TopologyManagerLocal topologyManager;
 
     @EJB
     private StatusManagerLocal agentStatusManager;
@@ -141,7 +141,7 @@ public class ServerManagerBean implements ServerManagerLocal {
 
     public List<Agent> getAgents() {
         String identity = getIdentity();
-        List<Agent> results = cloudManager.getAgentsByServerName(identity);
+        List<Agent> results = topologyManager.getAgentsByServerName(identity);
         return results;
     }
 
@@ -152,7 +152,7 @@ public class ServerManagerBean implements ServerManagerLocal {
 
     public boolean getAndClearServerStatus() {
         String identity = getIdentity();
-        Server server = cloudManager.getServerByName(identity);
+        Server server = topologyManager.getServerByName(identity);
         if (server == null) {
             return false; // don't reload caches if we don't know who we are
         }
@@ -163,7 +163,7 @@ public class ServerManagerBean implements ServerManagerLocal {
 
     public Server getServer() throws ServerNotFoundException {
         String identity = getIdentity();
-        Server result = cloudManager.getServerByName(identity);
+        Server result = topologyManager.getServerByName(identity);
         if (result == null) {
             throw new ServerNotFoundException("Could not find server; is the " + RHQ_SERVER_NAME_PROPERTY
                 + " property set in rhq-server.properties?");

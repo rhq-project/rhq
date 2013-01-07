@@ -238,11 +238,7 @@ public class DatasourceJBossASClient extends JBossASClient {
             final ModelNode requestN = new ModelNode();
             requestN.get(OPERATION).set(ADD);
             requestN.get(ADDRESS).set(addr.getAddressNode());
-            if (entry.getValue().indexOf("${") > -1) {
-                requestN.get(VALUE).setExpression(entry.getValue());
-            } else {
-                requestN.get(VALUE).set(entry.getValue());
-            }
+            setPossibleExpression(requestN, VALUE, entry.getValue());
             batch[n++] = requestN;
         }
 
@@ -374,11 +370,7 @@ public class DatasourceJBossASClient extends JBossASClient {
             final ModelNode requestN = new ModelNode();
             requestN.get(OPERATION).set(ADD);
             requestN.get(ADDRESS).set(addr.getAddressNode());
-            if (entry.getValue().indexOf("${") > -1) {
-                requestN.get(VALUE).setExpression(entry.getValue());
-            } else {
-                requestN.get(VALUE).set(entry.getValue());
-            }
+            setPossibleExpression(requestN, VALUE, entry.getValue());
             batch[n++] = requestN;
         }
 

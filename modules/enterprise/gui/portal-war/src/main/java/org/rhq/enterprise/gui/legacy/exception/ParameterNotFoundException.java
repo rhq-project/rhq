@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.legacy.exception;
 
 /**
  * Implementation of <strong>Exception</strong> for parameter parsing
+ * @deprecated REMOVE AFTER PORTAL WAR IS GONE.
  */
 public class ParameterNotFoundException extends RuntimeException {
     /**

@@ -55,12 +55,16 @@ import org.rhq.common.jbossas.client.controller.JBossASClient;
 import org.rhq.common.jbossas.client.controller.MessagingJBossASClient;
 import org.rhq.common.jbossas.client.controller.SecurityDomainJBossASClient;
 import org.rhq.common.jbossas.client.controller.SocketBindingJBossASClient;
+import org.rhq.common.jbossas.client.controller.WebJBossASClient;
+import org.rhq.common.jbossas.client.controller.WebJBossASClient.ConnectorConfiguration;
+import org.rhq.common.jbossas.client.controller.WebJBossASClient.SSLConfiguration;
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.DbUtil;
 import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.db.setup.DBSetup;
+import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.communications.util.SecurityUtil;
@@ -139,6 +143,7 @@ public class ServerInstallUtil {
     private static final String JMS_DRIFT_FILE_QUEUE = "DriftFileQueue";
     private static final String RHQ_CACHE_CONTAINER = "rhq";
     private static final String RHQ_CACHE = "rhqCache";
+    private static final String RHQ_MGMT_USER = "rhqadmin";
 
     /**
      * Configure the deployment scanner to get ready to deploy the application.
@@ -162,9 +167,9 @@ public class ServerInstallUtil {
     public static void setupMailService(ModelControllerClient mcc, HashMap<String, String> serverProperties)
         throws Exception {
 
-        String fromAddressExpr = "${" + ServerProperties.PROP_EMAIL_FROM_ADDRESS + ":rhqadmin@localhost.com}";
-        //String smtpHostExpr = "${" + ServerProperties.PROP_EMAIL_SMTP_HOST + ":localhost}";
-        String smtpPortExpr = "${" + ServerProperties.PROP_EMAIL_SMTP_PORT + ":25}";
+        String fromAddressExpr = buildExpression(ServerProperties.PROP_EMAIL_FROM_ADDRESS, serverProperties, true);
+        String smtpHostExpr = buildExpression(ServerProperties.PROP_EMAIL_SMTP_HOST, serverProperties, false); // enable when AS7-5321 is fixed
+        String smtpPortExpr = buildExpression(ServerProperties.PROP_EMAIL_SMTP_PORT, serverProperties, true);
 
         // Tweek the mail configuration that comes out of box. Setup a batch request to write the proper attributes.
 
@@ -179,16 +184,14 @@ public class ServerInstallUtil {
             "remote-destination-outbound-socket-binding", "mail-smtp");
         ModelNode writeHost = JBossASClient.createRequest(JBossASClient.WRITE_ATTRIBUTE, addr);
         writeHost.get(JBossASClient.NAME).set("host");
-        // TODO: see https://issues.jboss.org/browse/AS7-5321 - that must be fixed before supporting expressions
-        //writeHost.get(JBossASClient.VALUE).setExpression(smtpHostExpr);
-        writeHost.get(JBossASClient.VALUE).set(serverProperties.get(ServerProperties.PROP_EMAIL_SMTP_HOST)); // remove when AS7-5321 is fixed
+        JBossASClient.setPossibleExpression(writeHost, JBossASClient.VALUE, smtpHostExpr);
 
         // now the SMTP port
         addr = Address.root().add("socket-binding-group", "standard-sockets",
             "remote-destination-outbound-socket-binding", "mail-smtp");
         ModelNode writePort = JBossASClient.createRequest(JBossASClient.WRITE_ATTRIBUTE, addr);
         writePort.get(JBossASClient.NAME).set("port");
-        writePort.get(JBossASClient.VALUE).setExpression(smtpPortExpr);
+        JBossASClient.setPossibleExpression(writePort, JBossASClient.VALUE, smtpPortExpr);
 
         ModelNode batch = JBossASClient.createBatchRequest(writeFromAddr, writeHost, writePort);
         JBossASClient client = new JBossASClient(mcc);
@@ -244,10 +247,12 @@ public class ServerInstallUtil {
         final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
         final String securityDomain = RHQ_DS_SECURITY_DOMAIN;
         if (!client.isSecurityDomain(securityDomain)) {
-            client.createNewSecureIdentitySecurityDomainRequest(securityDomain, dbUsername, obfuscatedPassword);
+            client.createNewSecureIdentitySecurityDomain(securityDomain, dbUsername, obfuscatedPassword);
             LOG.info("Security domain [" + securityDomain + "] created");
         } else {
             LOG.info("Security domain [" + securityDomain + "] already exists, skipping the creation request");
+            client.updateSecureIdentitySecurityDomainCredentials(securityDomain, dbUsername, obfuscatedPassword);
+            LOG.info("Credentials have been updated for security domain [" + securityDomain + "]");
         }
     }
 
@@ -317,6 +322,7 @@ public class ServerInstallUtil {
             LOG.info("JMS Queue [" + queueName + "] already exists, skipping the creation request");
         }
 
+        return;
     }
 
     /**
@@ -332,7 +338,8 @@ public class ServerInstallUtil {
         final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
         final String securityDomain = RHQ_REST_SECURITY_DOMAIN;
         if (!client.isSecurityDomain(securityDomain)) {
-            client.createNewDatabaseServerSecurityDomainRequest(securityDomain, "java:jboss/datasources/RHQDS",
+            String dsJndiName = "java:jboss/datasources/" + RHQ_DATASOURCE_NAME_XA;
+            client.createNewDatabaseServerSecurityDomain(securityDomain, dsJndiName,
                 "SELECT PASSWORD FROM RHQ_PRINCIPAL WHERE principal=?",
                 "SELECT 'all', 'Roles' FROM RHQ_PRINCIPAL WHERE principal=?", null, null);
             LOG.info("Security domain [" + securityDomain + "] created");
@@ -1164,12 +1171,148 @@ public class ServerInstallUtil {
     }
 
     /**
+     * Ensures our web connectors are configured properly.
+     *
+     * @param mcc the AS client
+     * @param configDirStr location of a configuration directory where the keystore is to be stored
+     * @param serverProperties the full set of server properties
+     * @throws Exception
+     */
+    public static void setupWebConnectors(ModelControllerClient mcc, String configDirStr,
+        HashMap<String, String> serverProperties) throws Exception {
+
+        // out of box, we always get a non-secure connector (called "http")...
+        final String connectorName = "http";
+
+        // ...but we want a secure SSL connector, too.
+        // This is the name of the secure connector we want to create.
+        final String sslConnectorName = "https";
+
+        WebJBossASClient client = new WebJBossASClient(mcc);
+
+        // because some of the connector attributes do not (yet) support expressions, let's remove any existing
+        // connector we may have created before and create it again with our current attribute values.
+        client.removeConnector(sslConnectorName);
+
+        LOG.info("Creating https connector...");
+        ConnectorConfiguration connector = buildSecureConnectorConfiguration(configDirStr, serverProperties);
+        client.addConnector("https", connector);
+        LOG.info("https connector created.");
+
+        if (client.isConnector(connectorName)) {
+            client.changeConnector(connectorName, "redirect-port",
+                buildExpression("rhq.server.socket.binding.port.https", serverProperties, false));
+        } else {
+            LOG.warn("There doesn't appear to be a http connector configured already - this is strange.");
+        }
+    }
+
+    private static ConnectorConfiguration buildSecureConnectorConfiguration(String configDirStr,
+        HashMap<String, String> serverProperties) {
+
+        SSLConfiguration ssl = new SSLConfiguration();
+
+        // truststore
+        ssl.setCaCertificateFile(getAbsoluteFileLocation("rhq.server.tomcat.security.truststore.file",
+            serverProperties, configDirStr)); // this cannot be an expression - AS7 doesn't support that now
+        ssl.setCaCertificationPassword(buildExpression("rhq.server.tomcat.security.truststore.password",
+            serverProperties, false));
+        ssl.setTruststoreType(buildExpression("rhq.server.tomcat.security.truststore.type", serverProperties, false));
+
+        // keystore
+        ssl.setCertificateKeyFile(getAbsoluteFileLocation("rhq.server.tomcat.security.keystore.file", serverProperties,
+            configDirStr)); // this cannot be an expression - AS7 doesn't support that now
+        ssl.setPassword(buildExpression("rhq.server.tomcat.security.keystore.password", serverProperties, false));
+        ssl.setKeyAlias(buildExpression("rhq.server.tomcat.security.keystore.alias", serverProperties, false));
+        ssl.setKeystoreType(buildExpression("rhq.server.tomcat.security.keystore.type", serverProperties, false));
+
+        // SSL protocol config
+        ssl.setProtocol(buildExpression("rhq.server.tomcat.security.secure-socket-protocol", serverProperties, false));
+        ssl.setVerifyClient(buildExpression("rhq.server.tomcat.security.client-auth-mode", serverProperties, false));
+
+        // note: there doesn't appear to be a way for AS7 to support algorithm, like SunX509 or IbmX509
+        // so I think it just uses the JVM's default. This means "rhq.server.tomcat.security.algorithm" is unused
+
+        ConnectorConfiguration connector = new ConnectorConfiguration();
+        connector.setMaxConnections(buildExpression("rhq.server.startup.web.max-connections", serverProperties, false));
+        connector.setScheme("https");
+        connector.setSocketBinding("https");
+        connector.setSslConfiguration(ssl);
+        return connector;
+    }
+
+    /**
+     * For a property whose value might be a file, return that file's absolute path. If the property
+     * has a value whose pathname is already absolute, return it. If the property has a value whose path
+     * is relative, it is considered relative to defaultRootDir and its absolute path based on that root dir
+     * is returned.
+     * 
+     * @param propertyName the property whose value in properties is considered a pathname (which may
+     *                     relative or it may be absolute). 
+     * @param properties where to find the named property
+     * @param defaultRootDir if the property value is a relative file path, this is what it is relative to
+     * @return the absolute path of the file
+     */
+    private static String getAbsoluteFileLocation(String propertyName, HashMap<String, String> properties,
+        String defaultRootDir) {
+
+        if (properties == null || !properties.containsKey(propertyName)) {
+            return null;
+        }
+
+        String propertyValue = properties.get(propertyName);
+        File path = new File(propertyValue);
+        if (path.isAbsolute()) {
+            return path.getAbsolutePath();
+        } else {
+            return new File(defaultRootDir, propertyValue).getAbsolutePath();
+        }
+    }
+
+    /**
+     * You would think this would be simple - just set a value to ${propName:defaultVal} but some
+     * JBossAS attributes don't support expressions when you think they could or should. In this
+     * case, we'll pass in supportsExpression=false until we support AS versions that support
+     * expressions (at which time we'll change to code to pass in true for those attributes).
+     * If supportsExpression is true, the returned string will be ${propName} if defaultProperties is
+     * null or doesn't have that property defined; ${propName:defaultVal} if the default property
+     * is found.
+     * If supportsExpression is false, this will take the actual property value for
+     * propName found in the given default properties and return that string.
+     * If there is no sysprop of that name, this method returns an empty string.
+     *
+     * @param propName
+     * @param defaultProperties
+     * @param supportsExpression
+     * @return the attribute expression value (or real value if supportsExpression is false).
+     */
+    private static String buildExpression(String propName, HashMap<String, String> defaultProperties,
+        boolean supportsExpression) {
+
+        if (supportsExpression) {
+            if ((defaultProperties != null) && (defaultProperties.containsKey(propName))) {
+                return "${" + propName + ":" + defaultProperties.get(propName) + "}";
+            } else {
+                return "${" + propName + "}";
+            }
+        } else {
+            if ((defaultProperties != null) && (defaultProperties.containsKey(propName))) {
+                return defaultProperties.get(propName);
+            } else {
+                LOG.warn("There is no known value for property [" + propName + "]");
+                return "";
+            }
+        }
+    }
+
+    /**
      * Creates a keystore whose cert has a CN of this server's public endpoint address.
      * 
      * @param serverDetails details of the server being installed
      * @param configDirStr location of a configuration directory where the keystore is to be stored
+     * @return where the keystore file should be created (if an error occurs, this file won't exist)
      */
-    public static void createKeystore(ServerDetails serverDetails, String configDirStr) {
+    public static File createKeystore(ServerDetails serverDetails, String configDirStr) {
         File confDir = new File(configDirStr);
         File keystore = new File(confDir, "rhq.keystore");
         File keystoreBackup = new File(confDir, "rhq.keystore.backup");
@@ -1180,7 +1323,7 @@ public class ServerInstallUtil {
             if (!keystore.renameTo(keystoreBackup)) {
                 LOG.warn("Cannot backup existing keystore - cannot generate a new cert with a proper domain name. ["
                     + keystore + "] will be the keystore used by this server");
-                return;
+                return keystore;
             }
         }
 
@@ -1203,6 +1346,8 @@ public class ServerInstallUtil {
                     + "] to [" + keystore + "]");
             }
         }
+
+        return keystore;
     }
 
     /**
@@ -1218,20 +1363,31 @@ public class ServerInstallUtil {
 
         // Add the default admin user, or if for some reason this file does not exist, just log the issue
         if (mgmtUsers.exists()) {
+            try {
+                PropertiesFileUpdate mgmtUsersPropFile = new PropertiesFileUpdate(mgmtUsers.getAbsolutePath());
+                Properties existingUsers = mgmtUsersPropFile.loadExistingProperties();
+                if (existingUsers.containsKey(RHQ_MGMT_USER)) {
+                    LOG.info("There is already a mgmt user named [" + RHQ_MGMT_USER + "], will not create another");
+                    return;
+                }
+            } catch (Exception e) {
+                LOG.warn("Cannot determine if mgmt user exists in [" + mgmtUsers + "]; will try to create it anyway", e);
+            }
+
             FileOutputStream fos = null;
 
             try {
                 fos = new FileOutputStream(mgmtUsers, true);
-                fos.write("\nrhqadmin=35c160c1f841a889d4cda53f0bfc94b6\n".getBytes());
+                fos.write(("\n" + RHQ_MGMT_USER + "=35c160c1f841a889d4cda53f0bfc94b6\n").getBytes());
 
             } catch (Exception e) {
-                LOG.warn("Could not create default management user in file: [" + mgmtUsers.getPath() + "] : ", e);
+                LOG.warn("Could not create default management user in file: [" + mgmtUsers + "] : ", e);
 
             } finally {
                 StreamUtil.safeClose(fos);
             }
         } else {
-            LOG.warn("Could not create default management user. Could not find file: [" + mgmtUsers.getPath() + "]");
+            LOG.warn("Could not create default management user. Could not find file: [" + mgmtUsers + "]");
         }
     }
 
@@ -1254,4 +1410,135 @@ public class ServerInstallUtil {
         }
     }
 
+    /**
+     * This checks to see if the mail service already exists
+     * and has the same settings as those found in the given properties.
+     *
+     * THIS IS ONLY HERE TO SUPPORT INSTALLER --reconfig OPTION WHICH SHOULD
+     * GO AWAY ONCE AS7 SUPPORTS EXPRESSIONS WHERE WE NEED THEM - JIRA AS7-5321.
+     * ONCE AS7 DOES THIS, THIS METHOD CAN GO AWAY.
+     *
+     * @param mcc the JBossAS management client
+     * @param serverProperties contains the mail service settings
+     * @return true if the mail service exists with the same settings
+     * @throws Exception
+     */
+    public static boolean isSameMailServiceExisting(ModelControllerClient mcc, HashMap<String, String> serverProperties)
+        throws Exception {
+        // we know the only problem attribute we care about is the smtp host - that's the only
+        // one we use that doesn't support expressions. So we only need to check this one
+        Address addr = Address.root().add("socket-binding-group", "standard-sockets",
+            "remote-destination-outbound-socket-binding", "mail-smtp");
+        JBossASClient client = new JBossASClient(mcc);
+        String currentHost = client.getStringAttribute("host", addr);
+        String host = serverProperties.get(ServerProperties.PROP_EMAIL_SMTP_HOST);
+        return !isEmpty(currentHost) && currentHost.equals(host);
+    }
+
+    /**
+     * This checks to see if the security domain for the datasources already exists
+     * and has the same username/password as those found in the given properties
+     *
+     * THIS IS ONLY HERE TO SUPPORT INSTALLER --reconfig OPTION WHICH SHOULD
+     * GO AWAY ONCE AS7 SUPPORTS EXPRESSIONS WHERE WE NEED THEM - JIRA AS7-5321.
+     * ONCE AS7 DOES THIS, THIS METHOD CAN GO AWAY.
+     *
+     * @param mcc the JBossAS management client
+     * @param serverProperties contains the obfuscated password and username to compare
+     * @return true if the domain exists with the same username and password
+     * @throws Exception
+     */
+    public static boolean isSameDatasourceSecurityDomainExisting(ModelControllerClient mcc,
+        HashMap<String, String> serverProperties) throws Exception {
+
+        final String dbUsername = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
+        final String obfuscatedPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
+        final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
+        final String securityDomain = RHQ_DS_SECURITY_DOMAIN;
+        boolean sameUsernamePassword = false;
+        if (client.isSecurityDomain(securityDomain)) {
+            boolean sameUsername = false;
+            boolean samePassword = false;
+            ModelNode opts;
+            opts = client.getSecureIdentitySecurityDomainModuleOptions(securityDomain);
+            if (opts != null) {
+                List<ModelNode> optsList = opts.asList();
+                for (ModelNode opt : optsList) {
+                    if (opt.has(SecurityDomainJBossASClient.USERNAME)) {
+                        sameUsername = dbUsername.equals(opt.get(SecurityDomainJBossASClient.USERNAME).asString());
+                    }
+                    if (opt.has(SecurityDomainJBossASClient.PASSWORD)) {
+                        samePassword = obfuscatedPassword.equals(opt.get(SecurityDomainJBossASClient.PASSWORD)
+                            .asString());
+                    }
+                }
+            }
+            sameUsernamePassword = sameUsername & samePassword;
+        }
+        return sameUsernamePassword;
+    }
+
+    /**
+     * This checks to see if the web connectors already exist
+     * and have the same settings as those found in the given properties
+     *
+     * THIS IS ONLY HERE TO SUPPORT INSTALLER --reconfig OPTION WHICH SHOULD
+     * GO AWAY ONCE AS7 SUPPORTS EXPRESSIONS WHERE WE NEED THEM - JIRA AS7-5321.
+     * ONCE AS7 DOES THIS, THIS METHOD CAN GO AWAY.
+     *
+     * @param mcc the JBossAS management client
+     * @param configDirStr location of a configuration directory where the keystore is to be stored
+     * @param serverProperties contains the obfuscated password and username to compare
+     * @return true if the domain exists with the same username and password
+     * @throws Exception
+     */
+    public static boolean isSameWebConnectorsExisting(ModelControllerClient mcc, String appServerConfigDir,
+        HashMap<String, String> serverProperties) throws Exception {
+
+        HashMap<String, String> settingsToCheck = new HashMap<String, String>();
+        WebJBossASClient client = new WebJBossASClient(mcc);
+
+        // FIRST check the https connector
+        ModelNode httpsNode = client.getConnector("https");
+
+        ConnectorConfiguration connectorConfig = buildSecureConnectorConfiguration(appServerConfigDir, serverProperties);
+        SSLConfiguration sslConfig = connectorConfig.getSslConfiguration();
+
+        // check the https connector's main config
+        settingsToCheck.clear();
+        settingsToCheck.put("max-connections", connectorConfig.getMaxConnections());
+        for (Map.Entry<String, String> propToCheck : settingsToCheck.entrySet()) {
+            if (!httpsNode.get(propToCheck.getKey()).asString().equals(propToCheck.getValue())) {
+                return false; // something is different, no need to check further, return false to say we are different
+            }
+        }
+
+        // now check the https connector's ssl config
+        ModelNode sslNode = httpsNode.get("ssl").get("configuration");
+        settingsToCheck.clear();
+        settingsToCheck.put("ca-certificate-file", sslConfig.getCaCertificateFile());
+        settingsToCheck.put("ca-certificate-password", sslConfig.getCaCertificatePassword());
+        settingsToCheck.put("certificate-key-file", sslConfig.getCertificateKeyFile());
+        settingsToCheck.put("key-alias", sslConfig.getKeyAlias());
+        settingsToCheck.put("keystore-type", sslConfig.getKeystoreType());
+        settingsToCheck.put("password", sslConfig.getPassword());
+        settingsToCheck.put("protocol", sslConfig.getProtocol());
+        settingsToCheck.put("truststore-type", sslConfig.getTruststoreType());
+        settingsToCheck.put("verify-client", sslConfig.getVerifyClient());
+        for (Map.Entry<String, String> propToCheck : settingsToCheck.entrySet()) {
+            if (!sslNode.get(propToCheck.getKey()).asString().equals(propToCheck.getValue())) {
+                return false; // something is different, no need to check further, return false to say we are different
+            }
+        }
+
+        // SECOND check the http connector
+        ModelNode httpNode = client.getConnector("http");
+        String nodeString = httpNode.get("redirect-port").asString();
+        String propString = serverProperties.get("rhq.server.socket.binding.port.https");
+        if (!nodeString.equals(propString)) {
+            return false; // something is different, no need to check further, return false to say we are different
+        }
+
+        return true;
+    }
 }

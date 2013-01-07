@@ -285,12 +285,14 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
         scheduler.scheduleTriggeredJob(AlertAvailabilityDurationJob.class, false, null);
 
-        // create our resource with alert definition
+        // create our resource with two alert definitions (we use 2 to test BZ888927)
         @SuppressWarnings("unused")
         MeasurementDefinition metricDef = createResourceWithMetricSchedule();
         // use a 10s duration, this is not allowed in general, the gui forces 1 minute minimum
-        createAlertDefinitionWithAvailDurationCondition(resource.getId(), AlertConditionOperator.AVAIL_DURATION_DOWN,
-            10);
+        createAlertDefinitionWithAvailDurationCondition(resource.getId(), "testAvailDurationAlertDef_1",
+            AlertConditionOperator.AVAIL_DURATION_DOWN, 10);
+        createAlertDefinitionWithAvailDurationCondition(resource.getId(), "testAvailDurationAlertDef_2",
+            AlertConditionOperator.AVAIL_DURATION_DOWN, 10);
 
         // resource has initial UNKNOWN ResourceAvailability and no Availability records. simulate an avail report
         // coming from the agent and setting the initial avail to UP.
@@ -321,7 +323,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         Thread.sleep(6000);
 
         alerts = getAlerts(resource.getId());
-        assert alerts.size() == 1 : "One alert should have fired on the avail duration: " + alerts;
+        assert alerts.size() == 2 : "Two alerts should have fired on the avail duration: " + alerts;
 
         // purge the resource fully, which should remove all alert defs and alert conditions and condition logs
         int resourceId = resource.getId();
@@ -546,7 +548,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         return alertDefinition;
     }
 
-    private AlertDefinition createAlertDefinitionWithAvailDurationCondition(int resourceId,
+    private AlertDefinition createAlertDefinitionWithAvailDurationCondition(int resourceId, String alertDefName,
         AlertConditionOperator condition, int duration) {
         HashSet<AlertCondition> conditions = new HashSet<AlertCondition>(1);
         AlertCondition cond1 = new AlertCondition();
@@ -559,7 +561,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         conditions.add(cond1);
 
         AlertDefinition alertDefinition = new AlertDefinition();
-        alertDefinition.setName("avail duration: " + condition.name());
+        alertDefinition.setName(alertDefName);
         alertDefinition.setEnabled(true);
         alertDefinition.setPriority(AlertPriority.HIGH);
         alertDefinition.setAlertDampening(new AlertDampening(Category.NONE));
@@ -683,7 +685,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
     private void deleteServerIdentity() throws Exception {
         if (server != null) {
             cleanupAgent(); // can't remove the server before we purge the agent
-            LookupUtil.getCloudManager().deleteServer(server.getId());
+            LookupUtil.getTopologyManager().deleteServer(LookupUtil.getSubjectManager().getOverlord(), server.getId());
             server = null;
         }
     }

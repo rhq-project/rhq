@@ -47,7 +47,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public class MetadataBeanTest extends AbstractEJB3Test {
 
-    private List<Integer> pluginIds = new ArrayList<Integer>();
+    private final String objectFileName = "pluginIds.obj";
+    private Set<Integer> pluginIds;
 
     /** 
      * <pre>IMPORTANT NOTE FOR SUBCLASS IMPLEMENTORS
@@ -63,10 +64,13 @@ public class MetadataBeanTest extends AbstractEJB3Test {
     protected void afterClassWork() throws Exception {
         PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-        pluginMgr.deletePlugins(overlord, pluginIds);
-        pluginMgr.markPluginsForPurge(overlord, pluginIds);
-        new PurgePluginsJob().executeJobCode(null);
+        pluginMgr.deletePlugins(overlord, new ArrayList(pluginIds));
+        pluginMgr.markPluginsForPurge(overlord, new ArrayList(pluginIds));
         new PurgeResourceTypesJob().executeJobCode(null);
+        new PurgePluginsJob().executeJobCode(null);
+
+        pluginIds.clear();
+        deleteObjects(objectFileName);
     }
 
     @Override
@@ -79,6 +83,13 @@ public class MetadataBeanTest extends AbstractEJB3Test {
         bundleService.startMasterPluginContainerWithoutSchedulingJobs();
         prepareScheduler();
         preparePluginScannerService();
+
+        try {
+            List<Object> objects = readObjects(objectFileName, 1);
+            pluginIds = (Set<Integer>) objects.get(0);
+        } catch (Throwable t) {
+            pluginIds = new HashSet<Integer>();
+        }
     }
 
     /**
@@ -88,6 +99,10 @@ public class MetadataBeanTest extends AbstractEJB3Test {
      */
     @Override
     protected void afterMethod() throws Exception {
+
+        if (!pluginIds.isEmpty()) {
+            writeObjects(objectFileName, pluginIds);
+        }
 
         unpreparePluginScannerService();
         unprepareServerPluginService();

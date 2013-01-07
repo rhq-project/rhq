@@ -42,7 +42,8 @@ import org.quartz.JobExecutionException;
 import org.rhq.cassandra.CassandraNode;
 import org.rhq.cassandra.ClusterInitService;
 import org.rhq.core.domain.cloud.Server;
-import org.rhq.enterprise.server.cloud.CloudManagerLocal;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -96,8 +97,9 @@ public class CassandraClusterHeartBeatJob implements Job {
         if (log.isInfoEnabled()) {
             log.info("Moving " + rhqServer + " from " + rhqServer.getOperationMode() + " to " + mode);
         }
-        CloudManagerLocal rhqClusterManager = LookupUtil.getCloudManager();
-        rhqClusterManager.updateServerMode(new Integer[] {rhqServer.getId()}, mode);
+        TopologyManagerLocal rhqClusterManager = LookupUtil.getTopologyManager();
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+        rhqClusterManager.updateServerMode(subjectManager.getOverlord(), new Integer[] {rhqServer.getId()}, mode);
     }
 
     private void logException(String msg, Exception e) {

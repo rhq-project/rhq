@@ -101,6 +101,41 @@ public interface InstallerService {
         throws AutoInstallDisabledException, AlreadyInstalledException, Exception;
 
     /**
+     * Prepares the database. This is either going to do a full clean db setup or a db upgrade
+     * depending on the existingSchemaOption parameter unless autoinstall setting is on, in which case
+     * the autoinstall schema setting in serverProperties parameter will tell this method what to do.
+     * NOTE: if not in auto-install mode, the database password is assumed to be in clear text (i.e. unencoded).
+     * If in auto-install mode, the database password must be encoded already.
+     *
+     * @param serverProperties the server's settings to use. These will be persisted to
+     *                         the server's .properties file.
+     * @param serverDetails details on the server being installed.
+     *                      If in auto-install mode, this value is ignored and can be anything.
+     * @param existingSchemaOption if not in auto-install mode, this tells the installer what to do with any
+     *                             existing schema. Must be one of the names of the
+     *                             {@link ServerInstallUtil.ExistingSchemaOption} enum.
+     *                             If in auto-install mode, this value is ignored and can be anything.
+     * @throws Exception failed to successfully prepare the database
+     */
+    void prepareDatabase(HashMap<String, String> serverProperties, ServerDetails serverDetails,
+        String existingSchemaOption) throws Exception;
+
+    /**
+     * This will take server properties and reconfigure an already-installed server
+     * with those values if the settings were previously hardcoded to old values (as opposed to being
+     * set to expressions that allow them to be overridden with system property settings).
+     * Note that is function is here only to workaround various bugs in AS7
+     * that force us to not be able to use expressions in certain app server subsystem attribute
+     * settings - see https://issues.jboss.org/browse/AS7-6120. Once this issues are fixed, this
+     * method will go away.
+     *
+     * @param serverProperties the new server properties
+     * @throws Exception
+     */
+    @Deprecated
+    void reconfigure(HashMap<String, String> serverProperties) throws Exception;
+
+    /**
      * Returns a list of all registered servers in the database.
      *
      * @param connectionUrl

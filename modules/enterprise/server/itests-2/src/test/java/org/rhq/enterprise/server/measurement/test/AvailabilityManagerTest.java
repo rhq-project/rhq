@@ -24,7 +24,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
-import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.transaction.Status;
 
@@ -37,6 +36,7 @@ import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -117,7 +117,6 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
             if (additionalResources != null) {
                 getTransactionManager().begin();
-                EntityManager em = getEntityManager();
 
                 for (Resource res : additionalResources) {
                     Resource res2 = em.find(Resource.class, res.getId());
@@ -130,7 +129,6 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
             if (theResourceType != null) {
                 getTransactionManager().begin();
-                EntityManager em = getEntityManager();
 
                 em.remove(em.find(ResourceType.class, theResourceType.getId()));
                 theResourceType = null;
@@ -159,7 +157,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         beginTx();
 
         try {
-            setupResource(em);
+            setupResource();
             commitAndClose();
 
             Availability aThen = new Availability(theResource, then, UP);
@@ -211,7 +209,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         beginTx();
 
         try {
-            setupResource(em);
+            setupResource();
             commitAndClose();
 
             Availability aThen = new Availability(theResource, then, UP);
@@ -278,7 +276,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             List<AvailabilityPoint> availPoints;
             Availability avail;
 
-            setupResource(em);
+            setupResource();
             // platform: UNKNOWN(0) -->             
             commitAndClose();
 
@@ -430,7 +428,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         beginTx();
 
         try {
-            setupResource(em);
+            setupResource();
             commitAndClose();
 
 
@@ -460,7 +458,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         beginTx();
 
         try {
-            setupResource(em);
+            setupResource();
             commitAndClose();
 
 
@@ -490,7 +488,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         try {
             prepareForTestAgents();
 
-            setupResource(em);
+            setupResource();
             commitAndClose();
 
 
@@ -561,13 +559,13 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         try {
             prepareForTestAgents();
 
-            setupResource(em); // setup theResource
+            setupResource(); // setup theResource
 
             allResources.add(theResource);
 
             // now create a bunch more resources
             for (int i = 0; i < 99; i++) {
-                allResources.add(setupAnotherResource(em, i, theResource));
+                allResources.add(setupAnotherResource(i, theResource));
             }
             em.flush();
 
@@ -736,7 +734,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         beginTx();
 
         try {
-            setupResource(em); // inserts initial UNKNOWN Availability at epoch
+            setupResource(); // inserts initial UNKNOWN Availability at epoch
             commitAndClose();
 
 
@@ -823,7 +821,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         beginTx();
 
         try {
-            setupResource(em);
+            setupResource();
             commitAndClose();
 
 
@@ -884,7 +882,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         try {
             Availability avail;
 
-            setupResource(em);
+            setupResource();
             commitAndClose();
 
 
@@ -972,11 +970,11 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             Availability avail;
             AvailabilityReport report;
 
-            setupResource(em);
+            setupResource();
             commitAndClose();
 
 
-            long allAvailCount = setUpAvailabilities(em);
+            long allAvailCount = setUpAvailabilities();
 
             // we now have 1:00 UP, 1:20 DOWN, 1:40 UP
             Subject overlord = LookupUtil.getSubjectManager().getOverlord();
@@ -1050,11 +1048,10 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             Availability avail;
             AvailabilityReport report;
 
-            setupResource(em);
+            setupResource();
             commitAndClose();
 
-
-            long allAvailCount = setUpAvailabilities(em);
+            long allAvailCount = setUpAvailabilities();
 
             // we now have 1:00 UP, 1:20 DOWN, 1:40 UP
             Subject overlord = LookupUtil.getSubjectManager().getOverlord();
@@ -1121,19 +1118,174 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         }
     }
 
+    /**
+     * This was an attempt to get the behavior of this bug but it didn't. This inserts duplicate avail records, which
+     * should be discarded. 
+     */
+    @Test(enabled = ENABLE_TESTS)
+    public void testBZ884338_1() throws Exception {
+        beginTx();
+
+        try {
+            Availability avail;
+            AvailabilityReport report;
+
+            setupResource();
+            commitAndClose();
+
+            long allAvailCount = setUpAvailabilities();
+            assertTrue("should have >= 3 avail records", 3 <= allAvailCount);
+            List<Availability> avails = getResourceAvailabilities(theResource);
+            // there is always the UNKNOWN period starting at epoch, plus the three created in setup
+            assertEquals(avails.toString(), 4, avails.size());
+
+            // we now have 1:00 UP, 1:20 DOWN, 1:40 UP
+            avail = availabilityManager.getCurrentAvailabilityForResource(overlord, theResource.getId());
+            assert avail.getAvailabilityType() == UP;
+
+            // insert a duplicate current 1:40 UP and an out-of-order 1:20 DOWN, these should be ignored
+            Long currentStartTime = avail.getStartTime();
+            long newStartTime = currentStartTime;
+            avail = new Availability(theResource, newStartTime, UP);
+            report = new AvailabilityReport(false, theAgent.getName());
+            report.addAvailability(avail);
+
+            newStartTime = (currentStartTime - (20 * 60 * 1000L));
+            avail = new Availability(theResource, newStartTime, DOWN);
+            report = new AvailabilityReport(false, theAgent.getName());
+            report.addAvailability(avail);
+
+            Thread.sleep(1000);
+            availabilityManager.mergeAvailabilityReport(report);
+
+            // the agent should have been updated, but no new rows in availability were added
+            Agent agent = LookupUtil.getAgentManager().getAgentByName(theAgent.getName());
+            Date lastReport = new Date(agent.getLastAvailabilityReport());
+            assert lastReport != null;
+            assertEquals(allAvailCount, countAvailabilitiesInDB().longValue());
+            avails = getResourceAvailabilities(theResource);
+            assertEquals(avails.toString(), 4, avails.size());
+
+            // avail start times should be unchanged 0, 1:00 (UP), 1:20(DOWN), 1:40(UP)
+            avail = avails.get(0); // 0..1:00
+            assertTrue(avail.toString(), Math.abs(avail.getStartTime() - 0L) < 1000L);
+            assertEquals(avail.toString(), AvailabilityType.UNKNOWN, avail.getAvailabilityType());
+            assertTrue(avail.toString(), Math.abs(avail.getEndTime() - avails.get(1).getStartTime()) < 1000L);            
+            avail = avails.get(1); // 1:00..1:20
+            assertTrue(avail.toString(), Math.abs(currentStartTime - (avail.getStartTime() + (40 * 60 * 1000))) < 1000L);
+            assertEquals(avail.toString(), AvailabilityType.UP, avail.getAvailabilityType());
+            assertTrue(avail.toString(), Math.abs(avail.getEndTime() - avails.get(2).getStartTime()) < 1000L);
+            avail = avails.get(2); // 1:20..1:40
+            assertTrue(avail.toString(), Math.abs(currentStartTime - (avail.getStartTime() + (20 * 60 * 1000))) < 1000L);
+            assertEquals(avail.toString(), AvailabilityType.DOWN, avail.getAvailabilityType());
+            assertTrue(avail.toString(), Math.abs(avail.getEndTime() - avails.get(3).getStartTime()) < 1000L);
+            avail = avails.get(3); // 1:40
+            assertTrue(avail.toString(), Math.abs(currentStartTime - avail.getStartTime()) < 1000L);
+            assertEquals(avail.toString(), AvailabilityType.UP, avail.getAvailabilityType());
+            assertEquals(avail.toString(), avail.getEndTime(), null);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        } finally {
+            if (Status.STATUS_ACTIVE == getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+        }
+    }
+
+    /**
+     * Still can't reproduce the bug but this test tries to validate the repair code we have in case we detect
+     * the problem.  
+     */
+    @Test(enabled = ENABLE_TESTS)
+    public void testBZ884338_2() throws Exception {
+        beginTx();
+
+        try {
+            Availability avail;
+            AvailabilityReport report;
+
+            setupResource();
+
+            commitAndClose();
+
+            long allAvailCount = setUpAvailabilities();
+            assertTrue("should have >= 3 avail records", 3 <= allAvailCount);
+            List<Availability> avails = getResourceAvailabilities(theResource);
+            // there is always the UNKNOWN period starting at epoch, plus the three created in setup
+            assertEquals(avails.toString(), 4, avails.size());
+
+            // we now have 1:00 UP, 1:20 DOWN, 1:40 UP
+            avail = availabilityManager.getCurrentAvailabilityForResource(overlord, theResource.getId());
+
+            beginTx();
+
+            avail = em.find(Availability.class, avail.getId());
+            assert avail.getAvailabilityType() == UP;
+
+            // mess things up by assigning an end time to the latest avail record.
+            Long currentStartTime = avail.getStartTime();
+
+            Long nonNullEndTime = currentStartTime + 1000L;
+            avail.setEndTime(nonNullEndTime);
+            avail = em.merge(avail);
+
+            commitAndClose();
+
+            // try to insert new avail, this should trigger the repair code
+            long newStartTime = (currentStartTime + (5 * 60 * 1000L));
+            avail = new Availability(theResource, newStartTime, DOWN);
+            report = new AvailabilityReport(false, theAgent.getName());
+            report.addAvailability(avail);
+
+            Thread.sleep(1000);
+            availabilityManager.mergeAvailabilityReport(report);
+
+            avails = getResourceAvailabilities(theResource);
+            assertEquals(avails.toString(), 4, avails.size());
+
+            // avail start times should now be 0, 1:00 (UP), 1:10(DOWN), 1:40(UP)
+            avail = avails.get(0); // 0..1:00
+            assertTrue(avail.toString(), Math.abs(avail.getStartTime() - 0L) < 1000L);
+            assertEquals(avail.toString(), AvailabilityType.UNKNOWN, avail.getAvailabilityType());
+            assertTrue(avail.toString(), Math.abs(avail.getEndTime() - avails.get(1).getStartTime()) < 1000L);
+            avail = avails.get(1); // 1:00..1:20
+            assertTrue(avail.toString(), Math.abs(currentStartTime - (avail.getStartTime() + (40 * 60 * 1000))) < 1000L);
+            assertEquals(avail.toString(), AvailabilityType.UP, avail.getAvailabilityType());
+            assertTrue(avail.toString(), Math.abs(avail.getEndTime() - avails.get(2).getStartTime()) < 1000L);
+            avail = avails.get(2); // 1:20..1:40
+            assertTrue(avail.toString(), Math.abs(currentStartTime - (avail.getStartTime() + (20 * 60 * 1000))) < 1000L);
+            assertEquals(avail.toString(), AvailabilityType.DOWN, avail.getAvailabilityType());
+            assertTrue(avail.toString(), Math.abs(avail.getEndTime() - avails.get(3).getStartTime()) < 1000L);
+            avail = avails.get(3); // 1:40
+            assertTrue(avail.toString(), Math.abs(currentStartTime - avail.getStartTime()) < 1000L);
+            assertEquals(avail.toString(), AvailabilityType.UP, avail.getAvailabilityType());
+            assertEquals(avail.toString(), null, avail.getEndTime()); // THIS IS THE CHANGE
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        } finally {
+            if (Status.STATUS_ACTIVE == getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+        }
+    }
+
     @Test(enabled = ENABLE_TESTS)
     public void testMergeReportPerformance() throws Exception {
         beginTx();
         List<Resource> allResources = new ArrayList<Resource>();
 
         try {
-            setupResource(em); // setup theResource
+            setupResource(); // setup theResource
 
             allResources.add(theResource);
 
             // now create a bunch more resources
             for (int i = 0; i < 100; i++) {
-                allResources.add(setupAnotherResource(em, i, theResource));
+                allResources.add(setupAnotherResource(i, theResource));
             }
             em.flush();
 
@@ -1260,8 +1412,6 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
     /**
      * See how many rows we have in the availability table
      *
-     * @param  em EntityManager to use
-     *
      * @return the rowcount
      *
      * @throws Exception
@@ -1277,22 +1427,36 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
     }
 
     /**
-     * Just set up a resource where we can attach the availabilities to
+     * See how many rows we have in the availability table
      *
-     * @param  em The EntityManager to use
+     * @return the rowcount
+     *
+     * @throws Exception
+     */
+    private List<Availability> getResourceAvailabilities(Resource r) throws Exception {
+        AvailabilityCriteria c = new AvailabilityCriteria();
+        c.addFilterResourceId(r.getId());
+        c.addSortStartTime(PageOrdering.ASC);
+        return availabilityManager.findAvailabilityByCriteria(overlord, c);
+    }
+
+    /**
+     * Just set up a resource where we can attach the availabilities to
      *
      * @return A Resource ready to use
      */
-    private Resource setupResource(EntityManager em) {
-        theAgent = new Agent("testagent", "localhost", 1234, "", "randomToken");
+    private Resource setupResource() {
+        String prefix = this.getClass().getSimpleName() + "_";
+        theAgent = new Agent(prefix + "agent", "localhost", 1234, "", "randomToken");
         em.persist(theAgent);
 
-        theResourceType = new ResourceType("test-plat", "test-plugin", ResourceCategory.PLATFORM, null);
+        theResourceType = new ResourceType(prefix + "type", prefix + "plugin", ResourceCategory.PLATFORM, null);
         em.persist(theResourceType);
 
-        theResource = new Resource("test-platform-key", "test-platform-name", theResourceType);
+        theResource = new Resource(prefix + "resourceKey", prefix + "resourceName", theResourceType);
         theResource.setUuid("" + new Random().nextInt());
         theResource.setAgent(theAgent);
+        theResource.setInventoryStatus(InventoryStatus.COMMITTED);
         em.persist(theResource);
 
         em.flush();
@@ -1303,12 +1467,11 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
      * Set up another unique resource that will be related to <code>theAgent</code>. The resource will be of type <code>
      * theResourceType</code>.
      *
-     * @param  em           The EntityManager to use
      * @param  uniqueNumber used to define a unique key for the resource
      *
      * @return A Resource ready to use
      */
-    private Resource setupAnotherResource(EntityManager em, int uniqueNumber, Resource parentResource) {
+    private Resource setupAnotherResource(int uniqueNumber, Resource parentResource) {
         Resource newResource;
 
         newResource = new Resource("test-platform-key-" + uniqueNumber, "test-platform-name-" + uniqueNumber,
@@ -1326,13 +1489,11 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
      * Set up an availability scenario where we set up availability for one hour, split it in the middle and have 20min
      * up, 20min down, 20min up starting at 1:00am.
      *
-     * @param  em An EntityManager to use
-     *
      * @return total number of availability records in the DB after we've added ours
      *
      * @throws Exception
      */
-    private long setUpAvailabilities(EntityManager em) throws Exception {
+    private long setUpAvailabilities() throws Exception {
         Calendar cal = Calendar.getInstance();
         cal.setTime(new Date());
         cal.set(Calendar.HOUR, 1);

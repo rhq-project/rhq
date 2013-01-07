@@ -25,3 +25,6 @@ modules/enterprise/gui/content_http-war/build/classes/
 .*.jsfdia
 .wtpmodules
 *~
+
+#these are created by the python script engine during the tests
+cachedir/

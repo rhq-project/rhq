@@ -230,6 +230,57 @@ public class InstallerServiceImpl implements InstallerService {
                 "It looks like the installation has already been completed - there is nothing for the installer to do.");
         }
 
+        prepareDatabase(serverProperties, serverDetails, existingSchemaOption);
+
+        String appServerConfigDir = getAppServerConfigDir();
+
+        // create an rhqadmin/rhqadmin management user so when discovered, the AS7 plugin can immediately
+        // connect to the RHQ Server.
+        ServerInstallUtil.createDefaultManagementUser(serverDetails, appServerConfigDir);
+
+        // perform stuff that has to get done via the JBossAS management client
+        ModelControllerClient mcc = null;
+        try {
+            mcc = getModelControllerClient();
+
+            // ensure the server info is up to date and stored in the DB
+            ServerInstallUtil.setSocketBindings(mcc, serverProperties);
+
+            // Make sure our deployment scanner is configured as we need it
+            ServerInstallUtil.configureDeploymentScanner(mcc);
+
+            // create a keystore whose cert has a CN of this server's public endpoint address
+            File keystoreFile = ServerInstallUtil.createKeystore(serverDetails, appServerConfigDir);
+
+            // make sure all necessary web connectors are configured
+            ServerInstallUtil.setupWebConnectors(mcc, appServerConfigDir, serverProperties);
+        } finally {
+            safeClose(mcc);
+        }
+
+        // now create our deployment services
+        deployServices(serverProperties);
+
+        // deploy the main EAR app startup module extension
+        deployAppExtension();
+
+        // some of the changes we made require the app server container to reload before we can deploy the app
+        reloadConfiguration();
+
+        // we need to wait for the reload to finish - wait until we can connect again
+        testModelControllerClient(60);
+
+        // deploy the main EAR app subsystem - this is the thing that contains and actually deploys the EAR
+        deployAppSubsystem();
+
+        return;
+    }
+
+    @Override
+    public void prepareDatabase(HashMap<String, String> serverProperties, ServerDetails serverDetails,
+        String existingSchemaOption) throws Exception {
+
+        // since we are going to write out the properties file, we need to make sure the properties are valid
         verifyDataFormats(serverProperties);
 
         // if we are in auto-install mode, ignore the server details passed in and build our own using the given server properties
@@ -238,6 +289,9 @@ public class InstallerServiceImpl implements InstallerService {
         if (autoInstallMode) {
             serverDetails = getServerDetailsFromPropertiesOnly(serverProperties);
         } else {
+            if (serverDetails == null) {
+                throw new Exception("Auto-installation is disabled and cannot determine server details");
+            }
             if (ServerInstallUtil.isEmpty(serverDetails.getName())) {
                 throw new Exception("Please enter a server name");
             }
@@ -340,7 +394,7 @@ public class InstallerServiceImpl implements InstallerService {
             throw new Exception("Cannot connect to the database: " + testConnectionErrorMessage);
         }
 
-        // write the new properties to the rhq-server.properties file
+        // write the new properties to the rhq-server.properties file (this ensures the encoded password is written out)
         saveServerProperties(serverProperties);
 
         // Prepare the db schema.
@@ -358,20 +412,21 @@ public class InstallerServiceImpl implements InstallerService {
 
         try {
             if (ExistingSchemaOption.SKIP != existingSchemaOptionEnum) {
+                String dbSetupLogDir = getDatabaseSetupLogDir();
                 if (isDatabaseSchemaExist(dbUrl, dbUsername, clearTextDbPassword)) {
                     if (ExistingSchemaOption.OVERWRITE == existingSchemaOptionEnum) {
                         log("Database schema exists but installer was told to overwrite it - a new schema will be created now.");
                         ServerInstallUtil.createNewDatabaseSchema(serverProperties, serverDetails, clearTextDbPassword,
-                            getLogDir());
+                            dbSetupLogDir);
                     } else {
                         log("Database schema exists - it will now be updated.");
                         ServerInstallUtil.upgradeExistingDatabaseSchema(serverProperties, serverDetails,
-                            clearTextDbPassword, getLogDir());
+                            clearTextDbPassword, dbSetupLogDir);
                     }
                 } else {
                     log("Database schema does not yet exist - it will now be created.");
                     ServerInstallUtil.createNewDatabaseSchema(serverProperties, serverDetails, clearTextDbPassword,
-                        getLogDir());
+                        dbSetupLogDir);
                 }
             } else {
                 log("Ignoring database schema - installer will assume it exists and is already up-to-date.");
@@ -411,46 +466,6 @@ public class InstallerServiceImpl implements InstallerService {
 
         // ensure the server info is up to date and stored in the DB
         ServerInstallUtil.storeServerDetails(serverProperties, clearTextDbPassword, serverDetails);
-
-        String appServerConfigDir = getAppServerConfigDir();
-
-        // create a keystore whose cert has a CN of this server's public endpoint address
-        ServerInstallUtil.createKeystore(serverDetails, appServerConfigDir);
-
-        // create an rhqadmin/rhqadmin management user so when discovered, the AS7 plugin can immediately
-        // connect to the RHQ Server.
-        ServerInstallUtil.createDefaultManagementUser(serverDetails, appServerConfigDir);
-
-        // perform stuff that has to get done via the JBossAS management client
-        ModelControllerClient mcc = null;
-        try {
-            mcc = getModelControllerClient();
-
-            // ensure the server info is up to date and stored in the DB
-            ServerInstallUtil.setSocketBindings(mcc, serverProperties);
-
-            // Make sure our deployment scanner is configured as we need it
-            ServerInstallUtil.configureDeploymentScanner(mcc);
-        } finally {
-            safeClose(mcc);
-        }
-
-        // now create our deployment services and our main EAR
-        deployServices(serverProperties);
-
-        // deploy the main EAR app startup module extension
-        deployAppExtension();
-
-        // some of the changes we made require the app server container to reload before we can deploy the app
-        reloadConfiguration();
-
-        // we need to wait for the reload to finish - wait until we can connect again
-        testModelControllerClient(60);
-
-        // deploy the main EAR app subsystem - this is the thing that contains and actually deploys the EAR
-        deployAppSubsystem();
-
-        return;
     }
 
     @Override
@@ -545,6 +560,74 @@ public class InstallerServiceImpl implements InstallerService {
             map.put(property.toString(), props.getProperty(property.toString()));
         }
         return map;
+    }
+
+    // This is here only to help users workaround https://issues.jboss.org/browse/AS7-6120.
+    // It will go away once all the issues with expression support in AS7 are fixed.
+    // Notice in this method we only reconfigure some things - only the subsystems/services
+    // that didn't support expressions in their attributes are reconfigured here since it
+    // is those whose values are hardcoded and we must alter to pick up changes to
+    // rhq-server.properties. All other services can pick up the property value changes
+    // make to rhq-server.properties on restart (since rhq-server.properties are system
+    // properties set in the AS7 instance via -P option to AS7).
+    @Override
+    public void reconfigure(HashMap<String, String> serverProperties) throws Exception {
+
+        // make sure we can connect using our configuration
+        testModelControllerClient(serverProperties);
+
+        if (null == getInstallationResults()) {
+            log("Run the installer on this server.");
+            return;
+        }
+
+        String appServerConfigDir = getAppServerConfigDir();
+        ModelControllerClient mcc = null;
+
+        try {
+            mcc = getModelControllerClient();
+
+            // Before we do anything, let's first make sure we really do need to reconfigure something.
+            // Check to see if everything that didn't use expressions is still the same. If so,
+            // just skip everything else and return immediate since there is nothing to do. We don't
+            // even need to reload/restart the server in this case.
+            try {
+                if (ServerInstallUtil.isSameDatasourceSecurityDomainExisting(mcc, serverProperties)) {
+                    if (ServerInstallUtil.isSameMailServiceExisting(mcc, serverProperties)) {
+                        if (ServerInstallUtil.isSameWebConnectorsExisting(mcc, appServerConfigDir, serverProperties)) {
+                            log("Nothing in the configuration changed that requires a reconfig - everything looks OK");
+                            return; // nothing to do, return immediately
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log("Cannot determine if the config is the same, will reconfigure just in case", e);
+            }
+
+            // first, put the server in admin-only mode so we can start changing things around
+            CoreJBossASClient coreClient = new CoreJBossASClient(mcc);
+            coreClient.reload(true);
+
+            // not sure if we have to, but see if we need to wait for the reload to finish
+            testModelControllerClient(30);
+
+            mcc = getModelControllerClient(); // get a new controller
+
+            // create the security domain needed by the datasources
+            ServerInstallUtil.createDatasourceSecurityDomain(mcc, serverProperties);
+
+            // setup the email service
+            ServerInstallUtil.setupMailService(mcc, serverProperties);
+
+            // setup the secure Tomcat web connectors
+            ServerInstallUtil.setupWebConnectors(mcc, appServerConfigDir, serverProperties);
+
+            // now restart - don't just reload, some of our stuff won't restart properly if we just reload
+            coreClient = new CoreJBossASClient(mcc);
+            coreClient.restart();
+        } finally {
+            safeClose(mcc);
+        }
     }
 
     /**
@@ -685,16 +768,37 @@ public class InstallerServiceImpl implements InstallerService {
         }
     }
 
-    private String getLogDir() throws Exception {
-        ModelControllerClient mcc = null;
-        try {
-            mcc = getModelControllerClient();
-            final CoreJBossASClient client = new CoreJBossASClient(mcc);
-            final String dir = client.getAppServerLogDir();
-            return dir;
-        } finally {
-            safeClose(mcc);
+    private String getDatabaseSetupLogDir() throws Exception {
+
+        File logDir;
+
+        // Our installer normally sets this sysprop - so use it for our log dir.
+        // If we don't have a log dir sysprop (don't know why we wouldn't), just create a tmp location.
+        final String installerLogDirStr = System.getProperty("rhq.server.installer.logdir");
+        if (installerLogDirStr != null) {
+            logDir = new File(installerLogDirStr);
+            logDir.mkdirs();
+            if (!logDir.isDirectory()) {
+                throw new Exception("Cannot create installer log directory: " + logDir);
+            }
+        } else {
+            final File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+            if (!tmpDir.isDirectory()) {
+                log("Missing tmp dir [" + tmpDir + "]; will use current directory to store logs");
+                logDir = new File(".");
+            } else {
+                logDir = new File(tmpDir, "rhq-installer-db");
+                logDir.mkdir();
+                if (!logDir.isDirectory()) {
+                    log("Cannot create database setup log directory [" + logDir + "]; will use current directory");
+                    logDir = new File(".");
+                }
+            }
         }
+
+        final String logDirPath = logDir.getAbsolutePath();
+        log("Database setup log file directory: " + logDirPath);
+        return logDirPath;
     }
 
     private File getServerPropertiesFile() throws Exception {

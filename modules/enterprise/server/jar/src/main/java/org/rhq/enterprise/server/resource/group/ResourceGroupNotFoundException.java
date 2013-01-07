@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.server.resource.group;
 
+import javax.ejb.ApplicationException;
+
+@ApplicationException(rollback = false, inherited = true)
 public class ResourceGroupNotFoundException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 

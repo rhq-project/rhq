@@ -32,7 +32,6 @@ import java.util.EnumMap;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Hashtable;
-import java.util.List;
 import java.util.Set;
 
 import javax.naming.Context;
@@ -174,9 +173,7 @@ public class AccessCheckingInitialContextFactoryBuilder implements InitialContex
 
             @Override
             public InitialContextFactory wrap(InitialContextFactory factory) {
-                List<DecoratorPicker<Context, ContextDecorator>> pickers = Collections.emptyList();
-
-                return new DecoratingInitialContextFactory(factory, pickers);
+                return factory;
             }
         };
 

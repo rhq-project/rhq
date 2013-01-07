@@ -27,6 +27,8 @@ import java.util.TreeSet;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -53,9 +55,13 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
+import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
+import org.rhq.enterprise.server.rest.domain.GroupRest;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 import org.rhq.enterprise.server.rest.domain.UserRest;
 
@@ -63,14 +69,14 @@ import org.rhq.enterprise.server.rest.domain.UserRest;
  * Class that deals with user specific stuff
  * @author Heiko W. Rupp
  */
-@Produces({"application/json","application/xml","text/plain","text/html"})
+@Produces({ "application/json", "application/xml", "text/plain", "text/html" })
 @Path("/user")
-@Api(value="Api that deals with user related stuff")
+@Api(value = "Api that deals with user related stuff")
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
 public class UserHandlerBean extends AbstractRestBean {
 
-//    private final Log log = LogFactory.getLog(UserHandlerBean.class);
+    //    private final Log log = LogFactory.getLog(UserHandlerBean.class);
 
     /**
      * List of favorite {@link org.rhq.core.domain.resource.Resource} id's, delimited by '|' characters. Default is "".
@@ -83,18 +89,22 @@ public class UserHandlerBean extends AbstractRestBean {
      */
     public static final String GROUP_HEALTH_GROUPS = ".dashContent.grouphealth.groups";
 
-
     @EJB
     SubjectManagerLocal subjectManager;
 
     @EJB
     ResourceManagerLocal resourceManager;
 
+    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
+    private EntityManager entityManager;
+
     @GZIP
     @GET
     @Path("favorites/resource")
     @ApiOperation(value = "Return a list of favorite resources of the caller", multiValueResponse = true, responseClass = "ResourceWithType")
-    public Response getFavorites(@Context UriInfo uriInfo, @Context HttpHeaders httpHeaders) {
+    public Response getFavorites(@Context
+    UriInfo uriInfo, @Context
+    HttpHeaders httpHeaders) {
 
         Set<Integer> favIds = getResourceIdsForFavorites();
         List<ResourceWithType> ret = new ArrayList<ResourceWithType>();
@@ -102,14 +112,13 @@ public class UserHandlerBean extends AbstractRestBean {
         MediaType mediaType = httpHeaders.getAcceptableMediaTypes().get(0);
         for (Integer id : favIds) {
             try {
-                Resource res = resourceManager.getResource(caller,id);
+                Resource res = resourceManager.getResource(caller, id);
 
-                ResourceWithType rwt = fillRWT(res,uriInfo);
+                ResourceWithType rwt = fillRWT(res, uriInfo);
                 ret.add(rwt);
-            }
-            catch (Exception e) {
-                if (e.getCause()!=null && e.getCause() instanceof ResourceNotFoundException)
-                    log.debug("Favorite resource with id "+ id + " not found - not returning to the user");
+            } catch (Exception e) {
+                if (e.getCause() != null && e.getCause() instanceof ResourceNotFoundException)
+                    log.debug("Favorite resource with id " + id + " not found - not returning to the user");
                 else
                     log.warn("Retrieving resource with id " + id + " failed: " + e.getLocalizedMessage());
             }
@@ -127,38 +136,122 @@ public class UserHandlerBean extends AbstractRestBean {
 
     }
 
+    @GZIP
+    @GET
+    @Path("favorites/group")
+    @ApiOperation(value = "Return a list of favorite groups of the caller", multiValueResponse = true, responseClass = "GroupRest")
+    public Response getGroupFavorites(@Context
+    UriInfo uriInfo, @Context
+    HttpHeaders httpHeaders) {
+
+        Set<Integer> favIds = getGroupIdsForFavorites();
+        List<GroupRest> ret = new ArrayList<GroupRest>();
+
+        MediaType mediaType = httpHeaders.getAcceptableMediaTypes().get(0);
+        for (Integer id : favIds) {
+            try {
+                /*
+                * In theory we should not have any bad group ids in favorites, but ...
+                * First check if the group exists, as otherwise resourceGroupManager.getResourceGroup()
+                * throws an exception that seems to kill the transaction and backend connection
+                * See https://bugzilla.redhat.com/show_bug.cgi?id=886850
+                */
+                ResourceGroup res = entityManager.find(ResourceGroup.class, id);
+                if (res != null) {
+                    res = resourceGroupManager.getResourceGroup(caller, id);
+
+                    GroupRest rwt = fillGroup(res, uriInfo);
+                    ret.add(rwt);
+                }
+            } catch (Exception e) {
+                if (e.getCause() != null && e.getCause() instanceof ResourceGroupNotFoundException)
+                    log.debug("Favorite group with id " + id + " not found - not returning to the user");
+                else
+                    log.warn("Retrieving group with id " + id + " failed: " + e.getLocalizedMessage());
+            }
+        }
+        Response.ResponseBuilder builder;
+        if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+            builder = Response.ok(renderTemplate("listGroup", ret), mediaType);
+        } else {
+            GenericEntity<List<GroupRest>> list = new GenericEntity<List<GroupRest>>(ret) {
+            };
+            builder = Response.ok(list);
+        }
+
+        return builder.build();
+
+    }
 
     @PUT
     @Path("favorites/resource/{id}")
     @ApiOperation(value = "Add a resource as favorite for the caller")
     public void addFavoriteResource(@ApiParam(name = "id", value = "Id of the resource")
-                @PathParam("id") int id) {
+    @PathParam("id")
+    int resourceId) {
+
+        // Check if the resource exists and throw an error if not
+        fetchResource(resourceId);
+
         Set<Integer> favIds = getResourceIdsForFavorites();
-        if (!favIds.contains(id)) {
-            favIds.add(id);
-            updateFavorites(favIds);
+        if (!favIds.contains(resourceId)) {
+            favIds.add(resourceId);
+            updateResourceFavorites(favIds);
+        }
+    }
+
+    @PUT
+    @Path("favorites/group/{id}")
+    @ApiOperation(value = "Add a group as favorite for the caller")
+    public void addFavoriteResourceGroup(@ApiParam(name = "id", value = "Id of the group")
+    @PathParam("id")
+    int groupId) {
+
+        // Check if the resource exists and throw an error if not
+        fetchGroup(groupId, false);
+
+        Set<Integer> favIds = getGroupIdsForFavorites();
+        if (!favIds.contains(groupId)) {
+            favIds.add(groupId);
+            updateGroupFavorites(favIds);
         }
     }
 
     @DELETE
     @Path("favorites/resource/{id}")
-    @ApiOperation(value="Remove a resource from favorites")
-    public void removeResourceFromFavorites(@ApiParam(name="id", value = "Id of the resource")
-                @PathParam("id") int id) {
+    @ApiOperation(value = "Remove a resource from favorites")
+    public void removeResourceFromFavorites(@ApiParam(name = "id", value = "Id of the resource")
+    @PathParam("id")
+    int id) {
         Set<Integer> favIds = getResourceIdsForFavorites();
         if (favIds.contains(id)) {
             favIds.remove(id);
-            updateFavorites(favIds);
+            updateResourceFavorites(favIds);
         }
+    }
 
+    @DELETE
+    @Path("favorites/group/{id}")
+    @ApiOperation(value = "Remove a group from favorites")
+    public void removeResourceGroupFromFavorites(@ApiParam(name = "id", value = "Id of the group")
+    @PathParam("id")
+    int id) {
+        Set<Integer> favIds = getGroupIdsForFavorites();
+        if (favIds.contains(id)) {
+            favIds.remove(id);
+            updateGroupFavorites(favIds);
+        }
     }
 
     @GET
     @Cache(maxAge = 600)
     @Path("{id}")
     @ApiOperation(value = "Get info about a user", responseClass = "UserRest")
-    public Response getUserDetails(@ApiParam(value="Login of the user") @PathParam("id") String loginName,
-                                   @Context Request request, @Context HttpHeaders headers) {
+    public Response getUserDetails(@ApiParam(value = "Login of the user")
+    @PathParam("id")
+    String loginName, @Context
+    Request request, @Context
+    HttpHeaders headers) {
 
         Subject subject = subjectManager.getSubjectByName(loginName);
         if (subject == null)
@@ -182,28 +275,47 @@ public class UserHandlerBean extends AbstractRestBean {
         return builder.build();
     }
 
-    private void updateFavorites(Set<Integer> favIds) {
+    private void updateResourceFavorites(Set<Integer> favIds) {
         Configuration conf = caller.getUserConfiguration();
-        StringBuilder builder = new StringBuilder();
-        Iterator<Integer> iter = favIds.iterator();
-        while (iter.hasNext()) {
-            builder.append(iter.next());
-            if (iter.hasNext())
-                builder.append('|');
-        }
+        StringBuilder builder = buildFavStringFromSet(favIds);
         PropertySimple prop = conf.getSimple(RESOURCE_HEALTH_RESOURCES);
-        if (prop==null) {
-            conf.put(new PropertySimple(RESOURCE_HEALTH_RESOURCES,builder.toString()));
+        if (prop == null) {
+            conf.put(new PropertySimple(RESOURCE_HEALTH_RESOURCES, builder.toString()));
         } else {
             prop.setStringValue(builder.toString());
         }
         caller.setUserConfiguration(conf);
-        subjectManager.updateSubject(caller,caller);
+        subjectManager.updateSubject(caller, caller);
+    }
+
+    private void updateGroupFavorites(Set<Integer> favIds) {
+        Configuration conf = caller.getUserConfiguration();
+        StringBuilder builder = buildFavStringFromSet(favIds);
+        PropertySimple prop = conf.getSimple(GROUP_HEALTH_GROUPS);
+        if (prop == null) {
+            conf.put(new PropertySimple(GROUP_HEALTH_GROUPS, builder.toString()));
+        } else {
+            prop.setStringValue(builder.toString());
+        }
+        caller.setUserConfiguration(conf);
+        subjectManager.updateSubject(caller, caller);
     }
 
     private Set<Integer> getResourceIdsForFavorites() {
         Configuration conf = caller.getUserConfiguration();
-        String favsString =  conf.getSimpleValue(RESOURCE_HEALTH_RESOURCES,"");
+        String favsString = conf.getSimpleValue(RESOURCE_HEALTH_RESOURCES, "");
+        Set<Integer> favIds = getIdsFromFavString(favsString);
+        return favIds;
+    }
+
+    private Set<Integer> getGroupIdsForFavorites() {
+        Configuration conf = caller.getUserConfiguration();
+        String favsString = conf.getSimpleValue(GROUP_HEALTH_GROUPS, "");
+        Set<Integer> favIds = getIdsFromFavString(favsString);
+        return favIds;
+    }
+
+    private Set<Integer> getIdsFromFavString(String favsString) {
         Set<Integer> favIds = new TreeSet<Integer>();
         if (!favsString.isEmpty()) {
             String[] favStringArray = favsString.split("\\|");
@@ -212,6 +324,17 @@ public class UserHandlerBean extends AbstractRestBean {
             }
         }
         return favIds;
+    }
+
+    private StringBuilder buildFavStringFromSet(Set<Integer> favIds) {
+        StringBuilder builder = new StringBuilder();
+        Iterator<Integer> iter = favIds.iterator();
+        while (iter.hasNext()) {
+            builder.append(iter.next());
+            if (iter.hasNext())
+                builder.append('|');
+        }
+        return builder;
     }
 
 }

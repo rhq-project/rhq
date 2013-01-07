@@ -93,7 +93,7 @@ public class AlertHandlerBean extends AbstractRestBean {
     @Path("/")
     @ApiOperation(value = "List all alerts", multiValueResponse = true, responseClass = "List<AlertRest>")
     public Response listAlerts(
-            @ApiParam(value = "Page number", defaultValue = "0") @QueryParam("page") int page,
+            @ApiParam(value = "Page number", defaultValue = "1") @QueryParam("page") int page,
             @ApiParam(value = "Limit to priority", allowableValues = "High, Medium, Low, All") @DefaultValue("All") @QueryParam("prio") String prio,
             @ApiParam(value = "Should full resources and definitions be sent") @QueryParam("slim") @DefaultValue(
                     "false") boolean slim,

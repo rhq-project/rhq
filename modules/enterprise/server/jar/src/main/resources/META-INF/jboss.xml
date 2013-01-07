@@ -102,7 +102,7 @@
 
 
     <!-- 
-         The CacheConsistencyManagerBean, CloudManagerBean, ServerManagerBean, StatusManagerBean, and SystemManagerBean
+         The CacheConsistencyManagerBean, TopologyManagerBean, ServerManagerBean, StatusManagerBean, and SystemManagerBean
          SLSB's are all invoked, either directly or indirectly, by EJB timers. Since EJB timer invocations are always
          done in new threads, using the default SLSB pool impl (ThreadlocalPool) would cause a new instance of this
          SLSB to be created every time it was invoked by an EJB timer. This would be bad if only because an existing
@@ -128,7 +128,7 @@
     </session>
 
     <session>
-      <ejb-name>CloudManagerBean</ejb-name>
+      <ejb-name>TopologyManagerBean</ejb-name>
       <pool-config>
         <pool-class>org.jboss.ejb3.StrictMaxPool</pool-class>
         <pool-max-size>30</pool-max-size>

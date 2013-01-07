@@ -21,22 +21,22 @@ package org.rhq.enterprise.server.cloud;
 /**
  * @author Joseph Marques
  */
-public class CloudManagerException extends AffinityGroupException {
+public class TopologyManagerException extends AffinityGroupException {
 
     private static final long serialVersionUID = 1L;
 
-    public CloudManagerException() {
+    public TopologyManagerException() {
     }
 
-    public CloudManagerException(String message) {
+    public TopologyManagerException(String message) {
         super(message);
     }
 
-    public CloudManagerException(Throwable cause) {
+    public TopologyManagerException(Throwable cause) {
         super(cause);
     }
 
-    public CloudManagerException(String message, Throwable cause) {
+    public TopologyManagerException(String message, Throwable cause) {
         super(message, cause);
     }
 

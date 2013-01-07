@@ -18,17 +18,22 @@
  */
 package org.rhq.enterprise.server.rest;
 
+import javax.ejb.ApplicationException;
+
 /**
  * Exception if stuff is not found
  * @author Heiko W. Rupp
  */
+@ApplicationException(rollback = false, inherited = true)
 public class StuffNotFoundException extends RuntimeException {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * Construct a new instance of this Exception.
      * @param message Denotes what can't be found
      */
     public StuffNotFoundException(String message) {
-        super(message +  " not found");
+        super(message + " not found");
     }
 }

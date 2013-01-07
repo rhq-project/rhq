@@ -265,8 +265,7 @@ public class D3GraphListView extends LocatableVLayout {
                             }
                         }
                         Log.debug("************** ** Down availList: "+ downAvailList.size()+" for Resource: "+resource.getId()+"\n\n");
-                        //MetricLineGraphView graphView = new MetricLineGraphView("areaBarGraph", resource.getId(),resource.getName(), measurementDefinition, data);
-                        MetricStackedBarGraph graphView = new MetricStackedBarGraph("areaBarGraph", resource.getId(), resource.getName(), measurementDefinition, data);
+                        MetricStackedBarGraph graphView = new MetricStackedBarGraph("stackedBarGraph", resource.getId(), resource.getName(), measurementDefinition, data);
                         graphView.setAvailabilityDownList(downAvailList);
 
                         ResourceMetricD3GraphView graph = new ResourceMetricD3GraphView(

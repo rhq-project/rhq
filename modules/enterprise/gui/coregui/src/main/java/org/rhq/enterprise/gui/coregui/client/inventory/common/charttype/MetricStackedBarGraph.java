@@ -71,7 +71,7 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
         console.log("Draw Stacked Bar jsni chart");
         var global = this;
 
-        var ChartContext = function (chartId, metricsData, xAxisLabel, yAxisLabel, yAxisUnits)
+        var ChartContext = function (chartId, metricsData, xAxisLabel, yAxisLabel, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle)
         {
             this.chartId = chartId;
             this.chartHandle = "#rChart-" + this.chartId;
@@ -80,6 +80,9 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
             this.xAxisLabel = xAxisLabel;
             this.yAxisLabel = yAxisLabel;
             this.yAxisUnits = yAxisUnits;
+            this.minChartTitle = minChartTitle;
+            this.avgChartTitle = avgChartTitle;
+            this.peakChartTitle = peakChartTitle;
             this.validate = function ()
             {
                 return this.chartId != undefined && this.data != undefined;
@@ -96,13 +99,17 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getJsonMetrics()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getXAxisTitle()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisTitle()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisUnits()()
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisUnits()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getChartTitleMinLabel()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getChartTitleAvgLabel()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getChartTitlePeakLabel()()
         );
 
 
         // Define the Stacked Bar Graph function using the module pattern
         var metricStackedBarGraph = function ()
         {
+            "use strict";
             // privates
             var margin = {top: 10, right: 5, bottom: 30, left: 40},
                     width = 850 - margin.left - margin.right,
@@ -553,11 +560,10 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
                 draw: function (chartContext)
                 {
                     "use strict";
-
                     console.log("chart id: " + chartContext.chartSelection);
                     //console.log("Json Data:\n"+chartContext.data);
 
-                    createHeader(chartContext.yAxisLabel, "Min -", min, "Avg -", avg, "High -", peak);
+                    createHeader(chartContext.yAxisLabel, chartContext.minChartTitle, min, chartContext.avgChartTitle, avg, chartContext.peakChartTitle, peak);
                     createYAxisGridLines();
                     createStackedBars();
                     createXandYAxes();

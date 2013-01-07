@@ -63,6 +63,10 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
     private List<MeasurementDataNumericHighLowComposite> data;
     private PageList<Availability> availabilityDownList;
 
+    private String chartTitleMinLabel = MSG.chart_title_min_label();
+    private String chartTitleAvgLabel = MSG.chart_title_avg_label();
+    private String chartTitlePeakLabel = MSG.chart_title_peak_label();
+
     //private String chartHeight;
 
     public AbstractMetricD3GraphView(String locatorId) {
@@ -337,7 +341,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
         Date timestampDate = new Date(timestamp);
         if(null == availabilityDownList){
             //@todo: take this out this is just to testing purposes
-            Log.debug(" ****    Yo! AvailabilityList is null");
+            Log.debug("AvailabilityList is null");
         }
         if(null != availabilityDownList){
             for (Availability availability : availabilityDownList)
@@ -366,6 +370,20 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
         return returnValue;
     }
 
+    public String getChartTitleMinLabel()
+    {
+        return chartTitleMinLabel;
+    }
+
+    public String getChartTitleAvgLabel()
+    {
+        return chartTitleAvgLabel;
+    }
+
+    public String getChartTitlePeakLabel()
+    {
+        return chartTitlePeakLabel;
+    }
 
     /**
      * If there is more than 2 days time window then return true so we can show day of week

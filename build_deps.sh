@@ -20,7 +20,7 @@ build_datastax_driver()
 {
     echo "Building DataStax Java driver..."
     #clone_repo "git://github.com/datastax/java-driver.git"
-    clone_repo "git@github.com:jsanda/java-driver.git"
+    clone_repo git://github.com/jsanda/java-driver.git
     pushd java-driver
     git checkout -b master-1.2.0-rc1 origin/master-1.2.0-rc1
     run_mvn install -DskipTests
@@ -31,7 +31,7 @@ build_cassandra_jdbc()
 {
     echo "Building cassandra-jdbc..."
     #clone_repo "https://code.google.com/a/apache-extras.org/p/cassandra-jdbc/"
-    clone_repo "git@github.com:jsanda/cassandra-jdbc.git"
+    clone_repo git://github.com/jsanda/cassandra-jdbc.git
     pushd cassandra-jdbc
     git fetch origin
     #git checkout -b trunk origin/trunk
@@ -43,7 +43,7 @@ build_cassandra_jdbc()
 build_liquibase()
 {
     echo "Building Liquibase..."
-    clone_repo git@github.com:jsanda/liquibase.git
+    clone_repo git://github.com/jsanda/liquibase.git
     pushd liquibase
     git remote add upstream git://github.com/liquibase/liquibase.git
     git fetch origin
@@ -58,7 +58,7 @@ build_liquibase()
 build_cassandra_liquibase_ext()
 {
     echo "Building cassandra-liquibase-ext..."
-    git clone git@github.com:jsanda/cassandra-liquibase-ext.git
+    git clone git://github.com/jsanda/cassandra-liquibase-ext.git
     pushd cassandra-liquibase-ext
     mvn install -DskipTests
     popd

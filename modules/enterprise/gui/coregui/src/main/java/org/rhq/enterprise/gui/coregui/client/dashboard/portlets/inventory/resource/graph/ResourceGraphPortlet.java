@@ -63,7 +63,7 @@ public class ResourceGraphPortlet extends ResourceMetricD3GraphView implements C
         super(locatorId);
         //setChartHeight("100%");
         setOverflow(Overflow.HIDDEN);
-        MetricStackedBarGraph chart = new MetricStackedBarGraph("dashboardAreaBarChart");
+        MetricStackedBarGraph chart = new MetricStackedBarGraph("dashboardStackedBarChart");
         setJsniChart(chart);
     }
 
@@ -196,8 +196,8 @@ public class ResourceGraphPortlet extends ResourceMetricD3GraphView implements C
         PropertySimple simple = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID);
         setEntityId(simple.getIntegerValue());
         PropertySimple simpleDefId = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
-        Log.debug(" ** EntityId from portal config: "+simple.getIntegerValue());
-        Log.debug(" ** DefintionId from portal config: "+simpleDefId.getIntegerValue());
+        Log.debug("EntityId from portal config: "+simple.getIntegerValue());
+        Log.debug("DefintionId from portal config: "+simpleDefId.getIntegerValue());
         setDefinitionId(simpleDefId.getIntegerValue());
         if (simple == null || simple.getIntegerValue()==null) {
             addMember(new Label("<i>" + MSG.view_portlet_configure_needed() + "</i>"));

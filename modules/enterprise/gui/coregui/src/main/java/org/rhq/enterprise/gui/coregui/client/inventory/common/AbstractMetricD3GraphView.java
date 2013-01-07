@@ -63,9 +63,9 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
     private List<MeasurementDataNumericHighLowComposite> data;
     private PageList<Availability> availabilityDownList;
 
-    private String chartTitleMinLabel = MSG.chart_title_min_label();
-    private String chartTitleAvgLabel = MSG.chart_title_avg_label();
-    private String chartTitlePeakLabel = MSG.chart_title_peak_label();
+    private final String chartTitleMinLabel = MSG.chart_title_min_label();
+    private final String chartTitleAvgLabel = MSG.chart_title_avg_label();
+    private final String chartTitlePeakLabel = MSG.chart_title_peak_label();
 
     //private String chartHeight;
 

@@ -42,6 +42,15 @@
       <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
       <type>zip</type>
     </dependency>
+  
+    <!-- test deps -->
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>1.9.0</version>
+      <scope>test</scope>
+    </dependency>
+    
   </dependencies>
 
   <build>

@@ -1,20 +1,20 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
- * All rights reserved.
+ *  Copyright (C) 2005-2013 Red Hat, Inc.
+ *  All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation version 2 of the License.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation version 2 of the License.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.rest;
 
@@ -117,7 +117,7 @@ public class UserHandlerBean extends AbstractRestBean {
                 ResourceWithType rwt = fillRWT(res, uriInfo);
                 ret.add(rwt);
             } catch (Exception e) {
-                if (e.getCause() != null && e.getCause() instanceof ResourceNotFoundException)
+                if (e instanceof ResourceNotFoundException)
                     log.debug("Favorite resource with id " + id + " not found - not returning to the user");
                 else
                     log.warn("Retrieving resource with id " + id + " failed: " + e.getLocalizedMessage());
@@ -152,19 +152,12 @@ public class UserHandlerBean extends AbstractRestBean {
             try {
                 /*
                 * In theory we should not have any bad group ids in favorites, but ...
-                * First check if the group exists, as otherwise resourceGroupManager.getResourceGroup()
-                * throws an exception that seems to kill the transaction and backend connection
-                * See https://bugzilla.redhat.com/show_bug.cgi?id=886850
                 */
-                ResourceGroup res = entityManager.find(ResourceGroup.class, id);
-                if (res != null) {
-                    res = resourceGroupManager.getResourceGroup(caller, id);
-
-                    GroupRest rwt = fillGroup(res, uriInfo);
-                    ret.add(rwt);
-                }
+                ResourceGroup res = resourceGroupManager.getResourceGroup(caller, id);
+                GroupRest rwt = fillGroup(res, uriInfo);
+                ret.add(rwt);
             } catch (Exception e) {
-                if (e.getCause() != null && e.getCause() instanceof ResourceGroupNotFoundException)
+                if (e instanceof ResourceGroupNotFoundException)
                     log.debug("Favorite group with id " + id + " not found - not returning to the user");
                 else
                     log.warn("Retrieving group with id " + id + " failed: " + e.getLocalizedMessage());

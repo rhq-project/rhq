@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.rest;
 
@@ -148,7 +148,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
             @Context HttpHeaders headers) {
 
         if (dataPoints<=0)
-            throw new IllegalArgumentException("dataPoints must be >0 ");
+            throw new BadArgumentException("dataPoints","must be >0");
 
         if (startTime==0) {
             endTime = System.currentTimeMillis();
@@ -212,7 +212,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         }
 
         if (dataPoints<1)
-            throw new IllegalArgumentException("datapoints must be >=0");
+            throw new BadArgumentException("dataPoints","must be >=0");
 
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
         boolean isHtml = mediaType.equals(MediaType.TEXT_HTML_TYPE);
@@ -279,7 +279,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         }
 
         if (schedule.getDefinition().getDataType()!= type)
-            throw new IllegalArgumentException("Schedule [" + scheduleId + "] is not a ("+ type + ") metric");
+            throw new BadArgumentException("Schedule [" + scheduleId + "]","it is not a ("+ type + ") metric");
         return schedule;
     }
     private MetricAggregate fill(MetricAggregate res, List<MeasurementDataNumericHighLowComposite> list, int scheduleId,
@@ -357,7 +357,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
                 scheduleIds[i] = Integer.parseInt(tmp[i]);
         }
         catch (NumberFormatException nfe) {
-            throw new IllegalArgumentException("Bad input: " + nfe.getMessage());
+            throw new BadArgumentException("Sid" , nfe.getMessage());
         }
 
         List<MetricAggregate> resList = new ArrayList<MetricAggregate>(scheduleIds.length);
@@ -621,7 +621,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
             startTime = endTime - duration*1000L; // duration is in seconds
 
         if (startTime < now -7L*86400*1000)
-            throw new IllegalArgumentException("Start time is older than 7 days");
+            throw new IllegalArgumentException("(Computed) start time is older than 7 days");
 
         // Check if the schedule exists
         obtainSchedule(scheduleId, false, DataType.MEASUREMENT);

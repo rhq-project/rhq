@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.security.auth.login.AppConfigurationEntry;
+import javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag;
 
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
@@ -255,8 +256,7 @@ public class SecurityDomainJBossASClient extends JBossASClient {
      * same index order of the array. 
      * @throws Exception if failed to create security domain
      */
-    public void createNewSecurityDomain(String securityDomainName, LoginModuleRequest... loginModules)
-        throws Exception {
+    public void createNewSecurityDomain(String securityDomainName, LoginModuleRequest... loginModules) throws Exception {
 
         if (isSecurityDomain(securityDomainName)) {
             removeSecurityDomain(securityDomainName);
@@ -324,8 +324,21 @@ public class SecurityDomainJBossASClient extends JBossASClient {
             return entry.getControlFlag();
         }
 
+        // deal with the fact that this dumb LoginModuleControlFlag class gives you no way of getting the
+        // necessary string value.  Don't try to pick it out of the toString() value which seems sensitive to locale       
         public String getFlagString() {
-            return entry.getControlFlag().toString().split(" ")[1];
+            if (LoginModuleControlFlag.SUFFICIENT.equals(entry.getControlFlag())) {
+                return "sufficient";
+            }
+            if (LoginModuleControlFlag.REQUISITE.equals(entry.getControlFlag())) {
+                return "requisite";
+            }
+            if (LoginModuleControlFlag.REQUIRED.equals(entry.getControlFlag())) {
+                return "required";
+            }
+
+            // return the last possibility
+            return "optional";
         }
 
         public Map<String, String> getModuleOptionProperties() {

@@ -64,24 +64,44 @@ public class SchemaManager {
         try {
             this.username = username;
             this.password = password;
-            String[] hostNames = new String[nodes.length];
+
             for (String node : nodes) {
                 CassandraNode cassandraNode = CassandraNode.parseNode(node);
                 this.nodes.add(cassandraNode);
-                hostNames[this.nodes.size() - 1] = cassandraNode.getHostName();
             }
 
-            SimpleAuthInfoProvider authInfoProvider = new SimpleAuthInfoProvider();
-            authInfoProvider.add("username", "cassandra").add("password", "cassandra");
-
-            Cluster cluster = Cluster.builder()
-                .addContactPoints(hostNames)
-                .withAuthInfoProvider(authInfoProvider)
-                .build();
-            session = cluster.connect("system");
+            initCluster();
         } catch (NoHostAvailableException e) {
             throw new RuntimeException("Unable create session.", e);
         }
+    }
+
+    public SchemaManager(String username, String password, List<CassandraNode> nodes) {
+        try {
+            this.username = username;
+            this.password = password;
+            this.nodes = nodes;
+
+            initCluster();
+        } catch (NoHostAvailableException e) {
+            throw new RuntimeException("Unable create session.", e);
+        }
+    }
+
+    private void initCluster() throws NoHostAvailableException {
+        String[] hostNames = new String[nodes.size()];
+        for (int i = 0; i < hostNames.length; ++i) {
+            hostNames[i] = nodes.get(i).getHostName();
+        }
+
+        SimpleAuthInfoProvider authInfoProvider = new SimpleAuthInfoProvider();
+        authInfoProvider.add("username", "cassandra").add("password", "cassandra");
+
+        Cluster cluster = Cluster.builder()
+            .addContactPoints(hostNames)
+            .withAuthInfoProvider(authInfoProvider)
+            .build();
+        session = cluster.connect("system");
     }
 
     public void createSchema() {

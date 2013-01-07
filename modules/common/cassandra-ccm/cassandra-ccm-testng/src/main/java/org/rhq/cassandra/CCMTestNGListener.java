@@ -93,9 +93,11 @@ public class CCMTestNGListener implements IInvokedMethodListener {
         ccm = new CassandraClusterManager(deploymentOptions);
         List<CassandraNode> nodes = ccm.createCluster();
 
-        for (CassandraNode node : nodes) {
-            if (node.isThrifPortOpen()) {
-                throw new RuntimeException("A cluster is already running on the same ports.");
+        if (System.getProperty("rhq.cassandra.cluster.skip-shutdown") == null) {
+            for (CassandraNode node : nodes) {
+                if (node.isThrifPortOpen()) {
+                    throw new RuntimeException("A cluster is already running on the same ports.");
+                }
             }
         }
         ccm.startCluster();
@@ -117,8 +119,7 @@ public class CCMTestNGListener implements IInvokedMethodListener {
             clusterInitService.waitForSchemaAgreement("rhq", nodes);
         }
 
-        SchemaManager schemaManager = new SchemaManager(annotation.username(), annotation.password(),
-            ccm.getHostNames().toArray(new String[] {}));
+        SchemaManager schemaManager = new SchemaManager(annotation.username(), annotation.password(), nodes);
         if (!schemaManager.schemaExists()) {
             schemaManager.createSchema();
         }

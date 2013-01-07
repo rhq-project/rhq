@@ -544,7 +544,7 @@ public class InstallerServiceImpl implements InstallerService {
     public void reconfigure(HashMap<String, String> serverProperties) throws Exception {
 
         // make sure we can connect using our configuration
-        testModelControllerClient(serverProperties);
+        testModelControllerClient(serverProperties, 30);
 
         if (null == getInstallationResults()) {
             log("Run the installer on this server.");
@@ -892,22 +892,27 @@ public class InstallerServiceImpl implements InstallerService {
 
     /**
      * This will attempt to determine if we can get a client using our current installer configuration.
-     * If we can't (i.e. the connection attempt throws an exception), this method retries periodically
-     * until the given number of seconds expires. If it still fails, an exception is thrown.
-     * 
+     * If we can't (i.e. the connection attempt throws an exception), this method looks at the fallback
+     * props for the management host and port values and will re-try using those values. If the retry
+     * succeeds, the host/port it used to successfully connect will be stored in the {@link #installerConfiguration}
+     * object. If it still fails, this method retries periodically until the given number of seconds expires.
+     * If it still fails, an exception is thrown.
+     *
+     * @param fallbackProps contains jboss.bind.address.management and/or jboss.native.management.port to use
+     *                      if the initial connection attempt fails. If null, will be ignored.
      * @param secsToWait the number of seconds to wait before aborting the test
      * @return the app server version that we are connected to
-     * 
+     *
      * @throws Exception if the connection attempts fail
      */
-    private String testModelControllerClient(int secsToWait) throws Exception {
+    private String testModelControllerClient(HashMap<String, String> fallbackProps, int secsToWait) throws Exception {
         final long start = System.currentTimeMillis();
         final long end = start + (secsToWait * 1000L);
         Exception error = null;
 
         while (System.currentTimeMillis() < end) {
             try {
-                return testModelControllerClient(null);
+                return testModelControllerClient(fallbackProps);
             } catch (Exception e) {
                 error = e;
                 try {
@@ -918,6 +923,20 @@ public class InstallerServiceImpl implements InstallerService {
         }
 
         throw new RuntimeException("Timed out before being able to successfully connect to the server", error);
+    }
+
+    /**
+     * This will attempt to determine if we can get a client using our current installer configuration.
+     * If we can't (i.e. the connection attempt throws an exception), this method retries periodically
+     * until the given number of seconds expires. If it still fails, an exception is thrown.
+     *
+     * @param secsToWait the number of seconds to wait before aborting the test
+     * @return the app server version that we are connected to
+     *
+     * @throws Exception if the connection attempts fail
+     */
+    private String testModelControllerClient(int secsToWait) throws Exception {
+        return testModelControllerClient(null, secsToWait);
     }
 
     /**

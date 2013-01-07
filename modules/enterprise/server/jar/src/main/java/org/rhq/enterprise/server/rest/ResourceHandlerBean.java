@@ -366,6 +366,12 @@ public class ResourceHandlerBean extends AbstractRestBean {
         AvailabilityType at;
         at = AvailabilityType.valueOf(avail.getType());
 
+        // According to jshaughn, plaforms must not be set to DISABLED, so catch this case here.
+        if (resource.getResourceType().getCategory()==ResourceCategory.PLATFORM && at==AvailabilityType.DISABLED) {
+            throw new BadArgumentException("Availabilty","Platforms must not be set to DISABLED");
+        }
+
+
         AvailabilityReport report = new AvailabilityReport(true, resource.getAgent().getName());
         Availability availability = new Availability(resource, avail.getSince(), at);
         report.addAvailability(availability);

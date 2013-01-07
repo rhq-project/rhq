@@ -683,7 +683,7 @@ rhq.cassandra.logging.level=${rhq.cassandra.logging.level}
             </replacefilter>
         </replace>
 
-        <echo>Adding cassandra-db module to ${jboss.modules.dir} ...</echo>
+        <echo>Adding RHQ Cassandra CCM CLI module to ${jboss.modules.dir} ...</echo>
         <unzip src="${settings.localRepository}/org/rhq/rhq-cassandra-ccm-cli/${project.version}/rhq-cassandra-ccm-cli-${project.version}.zip"
              dest="${jboss.modules.dir}" />
     </target>

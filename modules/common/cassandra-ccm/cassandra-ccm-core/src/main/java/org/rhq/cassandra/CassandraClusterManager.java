@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -98,7 +97,7 @@ public class CassandraClusterManager {
         if (installedMarker.exists()) {
             log.info("It appears that the cluster already exists in " + clusterDir);
             log.info("Skipping cluster creation.");
-            return Collections.emptyList();
+            return calculateNodes();
         }
         FileUtil.purge(clusterDir, false);
 
@@ -161,6 +160,15 @@ public class CassandraClusterManager {
 
     private String getLocalIPAddress(int i) {
         return "127.0.0." + i;
+    }
+
+    private List<CassandraNode> calculateNodes() {
+        List<CassandraNode> nodes = new ArrayList<CassandraNode>(deploymentOptions.getNumNodes());
+        for (int i = 0; i < deploymentOptions.getNumNodes(); ++i) {
+            nodes.add(new CassandraNode(getLocalIPAddress(i + 1), deploymentOptions.getRpcPort(),
+                deploymentOptions.getNativeTransportPort()));
+        }
+        return nodes;
     }
 
     public void startCluster() {

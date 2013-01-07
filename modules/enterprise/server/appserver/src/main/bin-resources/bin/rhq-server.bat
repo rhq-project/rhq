@@ -181,6 +181,7 @@ if /i "%1"=="install" (
 )
 
 if /i "%1"=="start" (
+   rem START SERVER
    "%RHQ_SERVER_WRAPPER_EXE_FILE_PATH%" -t "%RHQ_SERVER_WRAPPER_CONF_FILE_PATH%"
    goto done
 )

@@ -280,20 +280,18 @@ public class MetricsDAO {
         }
     }
 
-    public List<Double> findAggregateSimpleMetric(MetricsTable table, AggregateType type, int scheduleId,
-        long startTime, long endTime, PageOrdering ordering, int limit) {
+    public List<AggregatedSimpleNumericMetric> findAggregateSimpleMetrics(MetricsTable table, int scheduleId,
+        long startTime, long endTime) {
         try {
-            String cql = "SELECT schedule_id, time, type, value " + "FROM " + table + " "
-                + "WHERE schedule_id = ? AND time >= ? AND time < ? AND type = ? "
-                + "ORDER BY value " + ordering + " LIMIT " + limit;
+            String cql = "SELECT type, value " + "FROM " + table + " WHERE schedule_id = ? AND time >= ? AND time < ?";
             PreparedStatement statement = session.prepare(cql);
-            BoundStatement boundStatement = statement.bind(scheduleId, new Date(startTime), new Date(endTime),
-                type.ordinal());
+            BoundStatement boundStatement = statement.bind(scheduleId, new Date(startTime), new Date(endTime));
             ResultSet resultSet = session.execute(boundStatement);
 
-            List<Double> metrics = new ArrayList<Double>();
+            List<AggregatedSimpleNumericMetric> metrics = new ArrayList<AggregatedSimpleNumericMetric>();
             while (!resultSet.isExhausted()) {
-                metrics.add(resultSet.fetchOne().getDouble(3));
+                Row row = resultSet.fetchOne();
+                metrics.add(new AggregatedSimpleNumericMetric(row.getDouble(1), AggregateType.valueOf(row.getInt(0))));
             }
 
             return metrics;

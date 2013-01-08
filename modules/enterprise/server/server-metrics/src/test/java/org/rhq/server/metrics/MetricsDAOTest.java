@@ -31,10 +31,12 @@ import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import org.joda.time.DateTime;
@@ -55,6 +57,8 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
     private final long SECOND = 1000;
 
     private final long MINUTE = 60 * SECOND;
+
+    private final long HOUR = 60 * MINUTE;
 
     private MetricsDAO dao;
 
@@ -159,6 +163,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
         int ttl = Hours.ONE.toStandardSeconds().getSeconds();
         Set<MeasurementDataNumeric> actualUpdates = dao.insertRawMetrics(data, ttl);
+        assertEquals(actualUpdates, data);
 
         List<RawNumericMetric> actualMetrics = dao.findRawMetrics(asList(scheduleId1, scheduleId2),
             currentHour.getMillis(), currentHour.plusHours(1).getMillis());
@@ -199,7 +204,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         // verify that the TTL is set
         List<AggregatedNumericMetric> actualMetricsWithMetadata = dao.findAggregateMetricsWithMetadata(
             MetricsTable.ONE_HOUR, scheduleId, hour0.getMillis(), hour0().plusHours(1).plusSeconds(1).getMillis());
-        assertAggrgateTTLSet(actualMetricsWithMetadata);
+        assertAggregateTTLSet(actualMetricsWithMetadata);
     }
 
     @Test(enabled = ENABLED)
@@ -215,7 +220,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
             new AggregatedNumericMetric(schedule2, 2.2, 2.2, 2.2, hour0().plusHours(1).getMillis()),
             new AggregatedNumericMetric(schedule3, 3.2, 3.2, 3.2, hour0().plusHours(1).getMillis())
         );
-        int ttl = Hours.ONE.getHours();
+        int ttl = Hours.ONE.toStandardSeconds().getSeconds();
 
         dao.insertAggregates(MetricsTable.ONE_HOUR, metrics, ttl);
         List<AggregatedNumericMetric> actual = dao.findAggregateMetrics(MetricsTable.ONE_HOUR,
@@ -233,7 +238,8 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         int scheduledId = 1;
         int nextScheduleId = 2;
         DateTime hour0 = hour0();
-        int ttl = Hours.ONE.getHours();
+        int ttl = Hours.ONE.toStandardSeconds().getSeconds();
+
         List<AggregatedNumericMetric> metrics = asList(
             new AggregatedNumericMetric(scheduledId, 2.0, 2.0, 2.0, hour0.getMillis()),
             new AggregatedNumericMetric(scheduledId, 3.0, 3.0, 3.0, hour0.plusHours(1).getMillis()),
@@ -292,6 +298,198 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
             index);
     }
 
+    @Test(enabled = ENABLED)
+    public void findAggregatedSimpleMetrics() throws InterruptedException {
+        List<AggregatedNumericMetric> metrics;
+
+        long startTime = System.currentTimeMillis();
+        long endTime = startTime + HOUR;
+
+        int scheduleId = 123;
+        int numberOfAggregatedMetrics = 250;
+        int ttl = Hours.TWO.toStandardSeconds().getSeconds();
+
+
+        metrics = this.generateRandomAggregatedMetrics(scheduleId, numberOfAggregatedMetrics, startTime);
+        dao.insertAggregates(MetricsTable.ONE_HOUR, metrics, ttl);
+        double expectedMinSum = 0;
+        double expectedMaxSum = 0;
+        double expectedAverageSum = 0;
+
+        for (AggregatedNumericMetric aggregatedMetric : metrics) {
+            expectedAverageSum += aggregatedMetric.getAvg();
+            expectedMaxSum += aggregatedMetric.getMax();
+            expectedMinSum += aggregatedMetric.getMin();
+        }
+
+        int alternateScheduleId = 321;
+        int alternateNumberOfAggregatedMetrics = 75;
+        metrics = this.generateRandomAggregatedMetrics(alternateScheduleId, alternateNumberOfAggregatedMetrics,
+            startTime);
+        dao.insertAggregates(MetricsTable.ONE_HOUR, metrics, ttl);
+
+
+        List<AggregatedSimpleNumericMetric> retrievedItems = dao.findAggregateSimpleMetrics(MetricsTable.ONE_HOUR,
+            scheduleId, startTime, endTime);
+        assertEquals(numberOfAggregatedMetrics * 3, retrievedItems.size());
+        double actualAverageSum = 0;
+        double actualMinSum = 0;
+        double actualMaxSum = 0;
+        for (AggregatedSimpleNumericMetric metric : retrievedItems) {
+            if (AggregateType.AVG.equals(metric.getType())) {
+                actualAverageSum += metric.getValue();
+            } else if (AggregateType.MAX.equals(metric.getType())) {
+                actualMaxSum += metric.getValue();
+            } else if (AggregateType.MIN.equals(metric.getType())) {
+                actualMinSum += metric.getValue();
+            }
+        }
+
+        assertEquals(expectedAverageSum, actualAverageSum);
+        assertEquals(expectedMaxSum, actualMaxSum);
+        assertEquals(expectedMinSum, actualMinSum);
+    }
+
+    @Test(enabled = ENABLED)
+    public void randomizedInsertAndFindMetrics() {
+
+        long startTime = System.currentTimeMillis();
+        long endTime = startTime + 2 * HOUR;
+
+        int scheduleId = 1;
+        int alternateScheduleId = 2;
+        int ttl = Hours.TWO.toStandardSeconds().getSeconds();
+
+        //insert data
+        List<AggregatedNumericMetric> firstHourMetrics = this.generateRandomAggregatedMetrics(scheduleId, 234,
+            startTime);
+        List<AggregatedNumericMetric> actualUpdates = dao
+            .insertAggregates(MetricsTable.ONE_HOUR, firstHourMetrics, ttl);
+        assertEquals(actualUpdates, firstHourMetrics, "The updates do not match the expected values");
+
+        List<AggregatedNumericMetric> secondHourMetrics = this.generateRandomAggregatedMetrics(scheduleId, 234,
+            startTime + HOUR);
+        actualUpdates = dao.insertAggregates(MetricsTable.ONE_HOUR, secondHourMetrics, ttl);
+        assertEquals(actualUpdates, secondHourMetrics, "The updates do not match the expected values");
+
+        List<AggregatedNumericMetric> alternateScheduleIdMetrics = this.generateRandomAggregatedMetrics(
+            alternateScheduleId, 159, startTime);
+        actualUpdates = dao.insertAggregates(MetricsTable.ONE_HOUR, alternateScheduleIdMetrics, ttl);
+        assertEquals(actualUpdates, alternateScheduleIdMetrics, "The updates do not match the expected values");
+
+        //verify data can be retrieved
+        List<AggregatedNumericMetric> combinedList = new ArrayList<AggregatedNumericMetric>();
+        combinedList.addAll(firstHourMetrics);
+        combinedList.addAll(secondHourMetrics);
+
+        List<AggregatedNumericMetric> actualCombined = dao.findAggregateMetrics(MetricsTable.ONE_HOUR, scheduleId);
+        assertEquals(actualCombined, combinedList, "Failed to find one hour metrics");
+
+        List<AggregatedNumericMetric> actualFirstHour = dao.findAggregateMetrics(MetricsTable.ONE_HOUR, scheduleId,
+            startTime, startTime + HOUR - 1);
+        assertEquals(actualFirstHour, firstHourMetrics, "Failed to find one hour metrics");
+
+        List<AggregatedNumericMetric> actualSecondHour = dao.findAggregateMetrics(MetricsTable.ONE_HOUR, scheduleId,
+            startTime + HOUR, endTime);
+        assertEquals(actualSecondHour, secondHourMetrics, "Failed to find one hour metrics");
+
+        List<AggregatedNumericMetric> actualAlternateScheduleIdMetrics = dao.findAggregateMetrics(
+            MetricsTable.ONE_HOUR,
+            alternateScheduleId);
+        assertEquals(actualAlternateScheduleIdMetrics, alternateScheduleIdMetrics, "Failed to find one hour metrics");
+
+        // verify that the TTL is set
+        List<AggregatedNumericMetric> actualMetricsWithMetadata = dao.findAggregateMetricsWithMetadata(
+            MetricsTable.ONE_HOUR, scheduleId, startTime, endTime);
+        assertAggregateTTLSet(actualMetricsWithMetadata);
+
+        actualMetricsWithMetadata = dao.findAggregateMetricsWithMetadata(MetricsTable.ONE_HOUR, alternateScheduleId,
+            startTime, endTime);
+        assertAggregateTTLSet(actualMetricsWithMetadata);
+    }
+
+    @Test(enabled = ENABLED)
+    public void randomizedSimpleInsertAndFindMetrics() {
+
+        long startTime = System.currentTimeMillis();
+        long endTime = startTime + 2 * HOUR;
+
+        int scheduleId = 1;
+        int alternateScheduleId = 2;
+        int ttl = Hours.TWO.toStandardSeconds().getSeconds();
+
+        MetricsTable[] tablesToTest = new MetricsTable[] { MetricsTable.ONE_HOUR, MetricsTable.SIX_HOUR,
+            MetricsTable.TWENTY_FOUR_HOUR };
+
+        for (MetricsTable table : tablesToTest) {
+            //insert data
+            List<AggregatedNumericMetric> metrics = this.generateRandomAggregatedMetrics(scheduleId, 2, startTime);
+            dao.insertAggregates(table, metrics, ttl);
+
+            List<AggregatedNumericMetric> alternateMetrics = this.generateRandomAggregatedMetrics(alternateScheduleId,
+                3, startTime);
+            dao.insertAggregates(table, alternateMetrics, ttl);
+
+            //verify data can be retrieve
+            List<AggregatedNumericMetric> actualMetrics = dao.findAggregateMetrics(table, scheduleId);
+            assertEquals(actualMetrics, metrics, "Failed to find metrics in " + table + " table.");
+
+            List<AggregatedNumericMetric> actualAlternateMetrics = dao.findAggregateMetrics(table, alternateScheduleId);
+            assertEquals(actualAlternateMetrics, alternateMetrics, "Failed to find metrics in " + table + " table.");
+
+            // verify that the TTL is set
+            List<AggregatedNumericMetric> actualMetricsWithMetadata = dao.findAggregateMetricsWithMetadata(table,
+                scheduleId, startTime, endTime);
+            assertAggregateTTLSet(actualMetricsWithMetadata);
+        }
+    }
+
+    /**
+     * Generates a set of aggregated metrics with randomized data. Using the schedule id provided the
+     * aggregated metrics are 1 millisecond apart beginning with start time and min<average<max.
+     *
+     * @param scheduleId
+     * @param numberOfAggregatedMetrics
+     * @param startTime
+     * @return
+     */
+    private List<AggregatedNumericMetric> generateRandomAggregatedMetrics(int scheduleId,
+        int numberOfAggregatedMetrics, long startTime) {
+        double max;
+        double min;
+        double average;
+        double temp;
+
+        Random random = new Random();
+        List<AggregatedNumericMetric> generatedMetrics = new ArrayList<AggregatedNumericMetric>();
+
+        for (int i = 0; i < numberOfAggregatedMetrics; i++) {
+            max = random.nextDouble() * 1000;
+            average = random.nextDouble() * 1000;
+            if (average > max) {
+                temp = max;
+                max = average;
+                average = temp;
+            }
+
+            min = random.nextDouble() * 1000;
+            if (min > max) {
+                temp = min;
+                min = average;
+                average = max;
+                max = temp;
+            } else if (min > average) {
+                temp = average;
+                average = min;
+                min = temp;
+            }
+
+            generatedMetrics.add(new AggregatedNumericMetric(scheduleId, average, min, max, startTime + i));
+        }
+
+        return generatedMetrics;
+    }
+
     private void assertRawTTLSet(List<RawNumericMetric> metrics) {
         for (RawNumericMetric metric : metrics) {
             assertNotNull(metric.getColumnMetadata(), metric + " does not contain column meta data. The meta data " +
@@ -300,7 +498,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         }
     }
 
-    private void assertAggrgateTTLSet(List<AggregatedNumericMetric> metrics) {
+    private void assertAggregateTTLSet(List<AggregatedNumericMetric> metrics) {
         for (AggregatedNumericMetric metric : metrics) {
             assertNotNull(metric.getAvgColumnMetadata(), metric + " does not contain column meta data for its " +
                 " average value. The meta data must be loaded in order to verify that the TTL is set correctly.");

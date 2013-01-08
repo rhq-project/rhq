@@ -44,7 +44,6 @@ import org.testng.annotations.ObjectFactory;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.MeasurementBaseline;
-import org.rhq.core.domain.util.PageOrdering;
 
 /**
  * @author Stefan Negrea
@@ -70,8 +69,8 @@ public class MetricsBaselineCalculatorTest {
         PowerMockito.whenNew(MetricsDAO.class).withParameterTypes(Session.class).withArguments(eq(mockSession))
             .thenReturn(mockMetricsDAO);
 
-        when(mockMetricsDAO.findAggregateMetrics(eq(MetricsTable.ONE_HOUR), eq(1), eq(0), eq(1))).thenReturn(
-            new ArrayList<AggregatedNumericMetric>());
+        when(mockMetricsDAO.findAggregateSimpleMetrics(eq(MetricsTable.ONE_HOUR), eq(1), eq(0),
+                eq(1))).thenReturn(new ArrayList<AggregatedSimpleNumericMetric>());
 
         //create object to test and inject required dependencies
         MetricsBaselineCalculator objectUnderTest = new MetricsBaselineCalculator(mockSession);
@@ -81,7 +80,7 @@ public class MetricsBaselineCalculatorTest {
 
         //verify the results (Assert and mock verification)
         Assert.assertEquals(result.size(), 0);
-        verify(mockMetricsDAO, times(1)).findAggregateMetrics(eq(MetricsTable.ONE_HOUR), any(Integer.class),
+        verify(mockMetricsDAO, times(1)).findAggregateSimpleMetrics(eq(MetricsTable.ONE_HOUR), any(Integer.class),
             any(Integer.class), any(Integer.class));
         verifyNoMoreInteractions(mockMetricsDAO);
     }
@@ -90,22 +89,36 @@ public class MetricsBaselineCalculatorTest {
     public void randomDataTest() throws Exception {
         //generate random data
         Random random = new Random();
-        List<AggregatedNumericMetric> randomData = new ArrayList<AggregatedNumericMetric>();
+        List<AggregatedSimpleNumericMetric> randomData = new ArrayList<AggregatedSimpleNumericMetric>();
 
         for (int i = 0; i < 123; i++) {
-            AggregatedNumericMetric randomMetric = new AggregatedNumericMetric();
-            randomMetric.setAvg(random.nextDouble() * 1000);
-            randomData.add(randomMetric);
+            randomData.add(new AggregatedSimpleNumericMetric(random.nextDouble() * 1000, AggregateType.AVG));
+            randomData.add(new AggregatedSimpleNumericMetric(random.nextDouble() * 1000, AggregateType.MAX));
+            randomData.add(new AggregatedSimpleNumericMetric(random.nextDouble() * 1000, AggregateType.MIN));
         }
 
         double average = 0;
-        for (AggregatedNumericMetric metric : randomData) {
-            average += metric.getAvg();
+        for (AggregatedSimpleNumericMetric metric : randomData) {
+            if (AggregateType.AVG.equals(metric.getType())) {
+                average += metric.getValue();
+            }
         }
         average = average / 123;
 
-        double expectedMax = 99999;
-        double expectedMin = 1.1111;
+        double expectedMax = Double.MIN_VALUE;
+        for (AggregatedSimpleNumericMetric metric : randomData) {
+            if (AggregateType.MAX.equals(metric.getType()) && expectedMax < metric.getValue()) {
+                expectedMax = metric.getValue();
+            }
+        }
+
+        double expectedMin = Double.MAX_VALUE;
+        for (AggregatedSimpleNumericMetric metric : randomData) {
+            if (AggregateType.MIN.equals(metric.getType()) && expectedMin > metric.getValue()) {
+                expectedMin = metric.getValue();
+            }
+        }
+
         int expectedScheduleId= 567;
         long expectedStartTime = 135;
         long expectedEndTime = 246;
@@ -119,18 +132,8 @@ public class MetricsBaselineCalculatorTest {
             .thenReturn(mockMetricsDAO);
 
         when(
-            mockMetricsDAO.findAggregateMetrics(eq(MetricsTable.ONE_HOUR), eq(expectedScheduleId),
-                eq(expectedStartTime), eq(expectedEndTime))).thenReturn(randomData);
-
-        when(
-            mockMetricsDAO.findAggregateSimpleMetric(eq(MetricsTable.ONE_HOUR), eq(AggregateType.MIN),
-                eq(expectedScheduleId), eq(expectedStartTime), eq(expectedEndTime), eq(PageOrdering.ASC), eq(1)))
-            .thenReturn(Arrays.asList(expectedMin));
-
-        when(
-            mockMetricsDAO.findAggregateSimpleMetric(eq(MetricsTable.ONE_HOUR), eq(AggregateType.MAX),
-                eq(expectedScheduleId), eq(expectedStartTime), eq(expectedEndTime), eq(PageOrdering.DESC), eq(1)))
-            .thenReturn(Arrays.asList(expectedMax));
+            mockMetricsDAO.findAggregateSimpleMetrics(eq(MetricsTable.ONE_HOUR),
+                eq(expectedScheduleId), eq(expectedStartTime), eq(expectedEndTime))).thenReturn(randomData);
 
         //create object to test and inject required dependencies
         MetricsBaselineCalculator objectUnderTest = new MetricsBaselineCalculator(mockSession);
@@ -154,12 +157,8 @@ public class MetricsBaselineCalculatorTest {
             Assert.fail("Back compute time, the computation was backdated.");
         }
 
-        verify(mockMetricsDAO, times(1)).findAggregateMetrics(eq(MetricsTable.ONE_HOUR), eq(expectedScheduleId),
-            eq(expectedStartTime), eq(expectedEndTime));
-        verify(mockMetricsDAO, times(1)).findAggregateSimpleMetric(eq(MetricsTable.ONE_HOUR), eq(AggregateType.MIN),
-            eq(expectedScheduleId), eq(expectedStartTime), eq(expectedEndTime), eq(PageOrdering.ASC), eq(1));
-        verify(mockMetricsDAO, times(1)).findAggregateSimpleMetric(eq(MetricsTable.ONE_HOUR), eq(AggregateType.MAX),
-            eq(expectedScheduleId), eq(expectedStartTime), eq(expectedEndTime), eq(PageOrdering.DESC), eq(1));
+        verify(mockMetricsDAO, times(1)).findAggregateSimpleMetrics(eq(MetricsTable.ONE_HOUR),
+            eq(expectedScheduleId), eq(expectedStartTime), eq(expectedEndTime));
 
         verifyNoMoreInteractions(mockMetricsDAO);
     }
@@ -168,21 +167,19 @@ public class MetricsBaselineCalculatorTest {
     public void noMinMaxDataTest() throws Exception {
         //generate random data
         Random random = new Random();
-        List<AggregatedNumericMetric> randomData = new ArrayList<AggregatedNumericMetric>();
+        List<AggregatedSimpleNumericMetric> randomData = new ArrayList<AggregatedSimpleNumericMetric>();
 
         for (int i = 0; i < 123; i++) {
-            AggregatedNumericMetric randomMetric = new AggregatedNumericMetric();
-            randomMetric.setAvg(random.nextDouble() * 1000);
-            randomData.add(randomMetric);
+            randomData.add(new AggregatedSimpleNumericMetric(random.nextDouble() * 1000, AggregateType.AVG));
         }
 
         double average = 0;
-        for (AggregatedNumericMetric metric : randomData) {
-            average += metric.getAvg();
+        for (AggregatedSimpleNumericMetric metric : randomData) {
+            average += metric.getValue();
         }
         average = average / 123;
 
-        double expectedMinMax = 0;
+        double expectedMinMax = Double.NaN;
         int expectedScheduleId = 567;
         long expectedStartTime = 135;
         long expectedEndTime = 246;
@@ -195,8 +192,9 @@ public class MetricsBaselineCalculatorTest {
             .thenReturn(mockMetricsDAO);
 
         when(
-            mockMetricsDAO.findAggregateMetrics(eq(MetricsTable.ONE_HOUR), eq(expectedScheduleId),
-                eq(expectedStartTime), eq(expectedEndTime))).thenReturn(randomData);
+            mockMetricsDAO.findAggregateSimpleMetrics(eq(MetricsTable.ONE_HOUR),
+                eq(expectedScheduleId), eq(expectedStartTime), eq(expectedEndTime))).thenReturn(
+            randomData);
 
 
         //create object to test and inject required dependencies
@@ -211,16 +209,12 @@ public class MetricsBaselineCalculatorTest {
 
         MeasurementBaseline baselineResult = result.get(0);
         Assert.assertEquals(baselineResult.getMean(), average, TEST_PRECISION);
-        Assert.assertEquals(baselineResult.getMax(), expectedMinMax, TEST_PRECISION);
-        Assert.assertEquals(baselineResult.getMin(), expectedMinMax, TEST_PRECISION);
+        Assert.assertEquals(baselineResult.getMax(), expectedMinMax);
+        Assert.assertEquals(baselineResult.getMin(), expectedMinMax);
         Assert.assertEquals(baselineResult.getScheduleId(), expectedScheduleId);
 
-        verify(mockMetricsDAO, times(1)).findAggregateMetrics(eq(MetricsTable.ONE_HOUR), eq(expectedScheduleId),
-            eq(expectedStartTime), eq(expectedEndTime));
-        verify(mockMetricsDAO, times(1)).findAggregateSimpleMetric(eq(MetricsTable.ONE_HOUR), eq(AggregateType.MIN),
-            eq(expectedScheduleId), eq(expectedStartTime), eq(expectedEndTime), eq(PageOrdering.ASC), eq(1));
-        verify(mockMetricsDAO, times(1)).findAggregateSimpleMetric(eq(MetricsTable.ONE_HOUR), eq(AggregateType.MAX),
-            eq(expectedScheduleId), eq(expectedStartTime), eq(expectedEndTime), eq(PageOrdering.DESC), eq(1));
+        verify(mockMetricsDAO, times(1)).findAggregateSimpleMetrics(eq(MetricsTable.ONE_HOUR),
+            eq(expectedScheduleId), eq(expectedStartTime), eq(expectedEndTime));
 
         verifyNoMoreInteractions(mockMetricsDAO);
     }

@@ -30,7 +30,6 @@ import java.util.List;
 import com.datastax.driver.core.Session;
 
 import org.rhq.core.domain.measurement.MeasurementBaseline;
-import org.rhq.core.domain.util.PageOrdering;
 
 /**
  * @author Stefan Negrea
@@ -58,27 +57,40 @@ public class MetricsBaselineCalculator {
     }
 
     private MeasurementBaseline calculateBaseline(Integer scheduleId, long startTime, long endTime) {
-        List<AggregatedNumericMetric> metrics = this.metricsDAO.findAggregateMetrics(MetricsTable.ONE_HOUR, scheduleId, startTime, endTime);
+        List<AggregatedSimpleNumericMetric> metrics = this.metricsDAO.findAggregateSimpleMetrics(MetricsTable.ONE_HOUR,
+            scheduleId, startTime, endTime);
 
         if (metrics.size() != 0) {
             ArithmeticMeanCalculator mean = new ArithmeticMeanCalculator();
 
-            for (AggregatedNumericMetric entry : metrics) {
-                mean.add(entry.getAvg());
+            double max = Double.NaN;
+            for (AggregatedSimpleNumericMetric entry : metrics) {
+                if (AggregateType.MAX.equals(entry.getType())) {
+                    max = entry.getValue();
+                    break;
+                }
             }
 
-            double min = 0;
-            List<Double> results = this.metricsDAO.findAggregateSimpleMetric(MetricsTable.ONE_HOUR, AggregateType.MIN,
-                scheduleId, startTime, endTime, PageOrdering.ASC, 1);
-            if(results.size() != 0){
-                min = results.get(0);
+            double min = Double.NaN;
+            for (AggregatedSimpleNumericMetric entry : metrics) {
+                if (AggregateType.MIN.equals(entry.getType())) {
+                    min = entry.getValue();
+                    break;
+                }
             }
 
-            double max = 0;
-            results = this.metricsDAO.findAggregateSimpleMetric(MetricsTable.ONE_HOUR, AggregateType.MAX, scheduleId,
-                startTime, endTime, PageOrdering.DESC, 1);
-            if (results.size() != 0) {
-                max = results.get(0);
+            for (AggregatedSimpleNumericMetric entry : metrics) {
+                if (AggregateType.AVG.equals(entry.getType())) {
+                    mean.add(entry.getValue());
+                } else if (AggregateType.MAX.equals(entry.getType())) {
+                    if (max < entry.getValue()) {
+                        max = entry.getValue();
+                    }
+                } else if (AggregateType.MIN.equals(entry.getType())) {
+                    if (min > entry.getValue()) {
+                        min = entry.getValue();
+                    }
+                }
             }
 
             MeasurementBaseline baseline = new MeasurementBaseline();

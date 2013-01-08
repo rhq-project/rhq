@@ -40,21 +40,6 @@ public class BrowserUtility {
      $wnd.jQuery('.dynamicsparkline').sparkline();
     }-*/;
 
-    /**
-     * Initialize the tipsy tooltip hovers for HTML hovers over d3 svg Charts.
-     * This must called sometime after the library is loaded it is loaded by
-     * CoreGUI.gwt.xml but we dont know when it is done loading so we create this
-     * manual JSNI invocation that we can run after login to make sure everything
-     * is loaded.
-     */
-  public static native void initializeTipsy()
-    /*-{
-        $wnd.jQuery(function() {
-                $wnd.jQuery('a[rel=tipsy]').tipsy({fade: true, gravity: 'n'});
-        });
-    }-*/;
-
-
     public static native boolean isBrowserIE8()
         /*-{
             var myUserAgent = $wnd.navigator.userAgent;

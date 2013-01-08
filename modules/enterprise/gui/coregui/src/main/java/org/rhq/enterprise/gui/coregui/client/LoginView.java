@@ -554,8 +554,6 @@ public class LoginView extends LocatableCanvas {
                         window.destroy();
                         loginShowing = false;
                         UserSessionManager.login(username, password);
-
-                        BrowserUtility.initializeTipsy();
                     } else {
                         handleError(statusCode);
                     }

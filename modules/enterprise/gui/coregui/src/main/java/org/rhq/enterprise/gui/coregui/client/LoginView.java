@@ -66,6 +66,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
@@ -553,6 +554,8 @@ public class LoginView extends LocatableCanvas {
                         window.destroy();
                         loginShowing = false;
                         UserSessionManager.login(username, password);
+
+                        BrowserUtility.initializeTipsy();
                     } else {
                         handleError(statusCode);
                     }

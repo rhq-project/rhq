@@ -21,7 +21,7 @@
       <jsf-facelets.version>1.1.15.B1</jsf-facelets.version>
 
       <!-- plugin versions -->
-      <jetty-jspc-maven-plugin.version>7.0.1.v20091125</jetty-jspc-maven-plugin.version>
+      <jetty-jspc-maven-plugin.version>8.1.5.v20120716</jetty-jspc-maven-plugin.version>
 
       <!-- Note: The product info properties now live in the RHQ root pom. -->
    </properties>
@@ -470,7 +470,6 @@
          <build>
             <plugins>
 
-<!--
                <plugin>
                   <groupId>org.mortbay.jetty</groupId>
                   <artifactId>jetty-jspc-maven-plugin</artifactId>
@@ -484,7 +483,6 @@
                      <execution><goals><goal>jspc</goal></goals></execution>
                   </executions>
                </plugin>
--->
 
             </plugins>
          </build>

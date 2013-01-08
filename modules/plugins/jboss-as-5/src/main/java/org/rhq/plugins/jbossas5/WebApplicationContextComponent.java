@@ -142,16 +142,24 @@ public class WebApplicationContextComponent extends ManagedComponentComponent {
                         report.addData(trait);
                     }
                 } else {
-                    String metricNameToUse = metricName;
-                    if (clustered && !"runState".equals(metricName)) {
-                        metricNameToUse = toUpperCaseFirstLetter(metricName);
+                    String value = null;
+
+                    /*
+                     * Bug 737996 - Working around the property names inconsistency in the clustered web app contexts.
+                     * If clustered we need to capitalize the first letter of the metric name to workaround JBPAPP-7172.
+                     * If null is returned then we can assume that JBPAPP-7172 does not apply here and use the expected 
+                     * metric name.
+                     */
+                    if (clustered == null) {
+                        retrieveClusteredProperty();
                     }
 
-                    String value = getMeasurement(component, metricNameToUse);
+                    if (clustered != null && clustered && !"runState".equals(metricName)) {
+                        value = getMeasurement(component, toUpperCaseFirstLetter(metricName));
+                    }
 
-                    if (clustered && !"runState".equals(metricName) && value == null) {
-                        //hmm... so it looks like https://issues.jboss.org/browse/JBPAPP-7172 has been fixed
-                        //and we're getting the metric names in lower case even for clustered contexts
+                    // value should be null unless app is clustered and JBPAPP-7172 applies
+                    if (value == null) {
                         value = getMeasurement(component, metricName);
                     }
 

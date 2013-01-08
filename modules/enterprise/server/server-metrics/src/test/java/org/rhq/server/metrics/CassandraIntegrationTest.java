@@ -30,8 +30,8 @@ import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleAuthInfoProvider;
 
 import org.joda.time.DateTime;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Listeners;
 
 import org.rhq.cassandra.CCMTestNGListener;
@@ -44,11 +44,11 @@ import org.rhq.cassandra.ShutdownCluster;
 @Listeners({CCMTestNGListener.class})
 public class CassandraIntegrationTest {
 
-    protected Session session;
+    protected static Session session;
 
-    private DateTimeService dateTimeService;
+    private static DateTimeService dateTimeService;
 
-    @BeforeClass
+    @BeforeSuite
     @DeployCluster(numNodes = 2)
     public void deployCluster() throws Exception {
         dateTimeService = new DateTimeService();
@@ -63,7 +63,7 @@ public class CassandraIntegrationTest {
         session = cluster.connect("rhq");
     }
 
-    @AfterClass
+    @AfterSuite
     @ShutdownCluster
     public void shutdownCluster() throws Exception {
     }

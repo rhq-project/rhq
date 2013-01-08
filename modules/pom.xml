@@ -113,6 +113,7 @@
          </modules>
        </profile>
 
+<!--
      <profile>
        <id>metrics</id>
        <activation>
@@ -129,6 +130,7 @@
          <module>enterprise/server/jar</module>
        </modules>
      </profile>
+-->
 
       <profile>
          <id>plugins</id>

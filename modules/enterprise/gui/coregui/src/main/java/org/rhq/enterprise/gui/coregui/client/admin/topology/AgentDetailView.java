@@ -25,6 +25,7 @@ import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasour
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_LAST_AVAILABILITY_REPORT;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_NAME;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_PORT;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_REMOTE_ENDPOINT;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_SERVER;
 
 import com.google.gwt.user.client.Timer;
@@ -166,11 +167,14 @@ public class AgentDetailView extends LocatableVLayout {
 
         StaticTextItem addressItem = new StaticTextItem(FIELD_ADDRESS.propertyName(), FIELD_ADDRESS.title());
         addressItem.setValue(agent.getAddress());
+        
+        StaticTextItem remoteEndpointItem = new StaticTextItem(FIELD_REMOTE_ENDPOINT.propertyName(), FIELD_REMOTE_ENDPOINT.title());
+        remoteEndpointItem.setValue(agent.getRemoteEndpoint());
 
         StaticTextItem portItem = new StaticTextItem(FIELD_PORT.propertyName(), FIELD_PORT.title());
         portItem.setValue(agent.getPort());
 
-        StaticTextItem tokenItem = new StaticTextItem(FIELD_AGENT_TOKEN.propertyName(), FIELD_AGENT_TOKEN.title());
+        final StaticTextItem tokenItem = new StaticTextItem(FIELD_AGENT_TOKEN.propertyName(), FIELD_AGENT_TOKEN.title());
         tokenItem.setValue(agent.getAgentToken());
 
         StaticTextItem lastAvailabilityItem = new StaticTextItem(FIELD_LAST_AVAILABILITY_REPORT.propertyName(),
@@ -202,8 +206,8 @@ public class AgentDetailView extends LocatableVLayout {
         }
         currentServerItem.setValue(serverValue);
 
-        form.setItems(nameItem, addressItem, portItem, tokenItem, lastAvailabilityItem, affinityGroupItem,
-            currentServerItem);
+        form.setItems(nameItem, addressItem, remoteEndpointItem, portItem, tokenItem, lastAvailabilityItem,
+            affinityGroupItem, currentServerItem);
 
         SectionStackSection section = new SectionStackSection(MSG.common_title_details());
         section.setExpanded(true);

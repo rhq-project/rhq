@@ -63,6 +63,14 @@ public interface AgentManagerLocal {
     void createAgent(Agent agent);
 
     /**
+     * Throws away any known agent client that has been cached.
+     * Call this when you know the agent may have changed anything about its endpoint.
+     *
+     * @param agent the agent whose client is to be destroyed.
+     */
+    void destroyAgentClient(Agent agent);
+
+    /**
      * Updates an existing agent.
      *
      * @param  agent the agent to be updated, with the new data in it

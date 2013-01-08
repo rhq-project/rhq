@@ -52,6 +52,8 @@ public class ComparableVersionTest {
         JON_VERSIONS.add("4.4.0.JON310CR1");
         JON_VERSIONS.add("4.4.0.JON310GA");
         JON_VERSIONS.add("4.4.0.JON311GA");
+        JON_VERSIONS.add("4.4.0.JON312CR1");
+        JON_VERSIONS.add("4.4.0.JON312GA");
     }
 
     public void testRHQVersions() {

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,27 +13,30 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.rest;
 
 import javax.ejb.ApplicationException;
 
 /**
- * Exception if stuff is not found
+ * Exception if arguments are bad.
+ * Don't use java.lang.IllegalArgumentException, as this is no
+ * Application Exception and gets wrapped
  * @author Heiko W. Rupp
  */
 @ApplicationException(rollback = false, inherited = true)
-public class StuffNotFoundException extends RuntimeException {
+public class BadArgumentException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
     /**
      * Construct a new instance of this Exception.
-     * @param message Denotes what can't be found
+     * @param parameterName Denotes which parameter is bad
+     * @param cause Denotes why it is bad
      */
-    public StuffNotFoundException(String message) {
-        super(message + " not found");
+    public BadArgumentException(String parameterName, String cause) {
+        super("Parameter " + parameterName + " is bad: " + cause);
     }
 }

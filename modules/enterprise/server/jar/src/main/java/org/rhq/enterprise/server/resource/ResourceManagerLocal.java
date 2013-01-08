@@ -127,6 +127,12 @@ public interface ResourceManagerLocal {
      */
     Resource setResourceStatus(Subject user, Resource resource, InventoryStatus newStatus, boolean setDescendants);
 
+    /**
+     * @param user
+     * @param resourceId
+     * @return the resource
+     * @throws ResourceNotFoundException if not found. Note, this is an ApplicationException.
+     */
     @NotNull
     Resource getResourceById(Subject user, int resourceId);
 

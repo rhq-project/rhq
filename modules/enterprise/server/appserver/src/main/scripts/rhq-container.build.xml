@@ -616,6 +616,27 @@ rhq.sync.endpoint-address=false
         </replace>
     </target>
 
+    <!-- This is so we can work around all the issues due to https://issues.jboss.org/browse/AS7-6120
+         so once that is fixed, we don't have to run the installer "reconfig" automatically on startup of the server.
+         Note that if we predeploy (i.e. are doing a dev build), rather than jump through more hoops for this,
+         just assume the developer knows that if they change rhq-server.properties, they have to reconfig the server.
+         We don't do anything in this target if we are building a dev build. -->
+    <target name="add-auto-reconfig" unless="predeploy">
+        <echo>Add auto-reconfig to rhq-server scripts so users don't have to when changing rhq-server.properties</echo>
+        <replace file="${project.build.outputDirectory}/bin/rhq-server.sh">
+            <replacefilter>
+                <replacetoken># START SERVER</replacetoken>
+                <replacevalue><![CDATA[export RHQ_SERVER_HOME; ${RHQ_SERVER_HOME}/bin/rhq-installer.sh --reconfig &]]></replacevalue>
+            </replacefilter>
+        </replace>
+        <replace file="${project.build.outputDirectory}/bin/rhq-server.bat">
+            <replacefilter>
+                <replacetoken>rem START SERVER</replacetoken>
+                <replacevalue><![CDATA[start /B %RHQ_SERVER_HOME%\bin\rhq-installer.bat --reconfig < nul > nul]]></replacevalue>
+            </replacefilter>
+        </replace>
+    </target>
+
     <!-- The prepare-release target must be run AFTER the resources:resources goal has executed. -->
     <!-- (i.e. after rhq-server.sh, etc. have been copied over by the resources plugin) -->
 
@@ -624,6 +645,7 @@ rhq.sync.endpoint-address=false
             depends="initialize,
                      developer-release-message,
                      copy-dev-resources,
+                     add-auto-reconfig,
                      fix-perms,
                      deploy-postgres-ds,
                      deploy-oracle-ds">

@@ -41,6 +41,7 @@ import org.jboss.as.controller.client.ModelControllerClient;
 import org.rhq.common.jbossas.client.controller.SecurityDomainJBossASClient;
 import org.rhq.common.jbossas.client.controller.SecurityDomainJBossASClient.LoginModuleRequest;
 import org.rhq.core.domain.common.composite.SystemSetting;
+import org.rhq.core.util.obfuscation.Obfuscator;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.core.jaas.JDBCLoginModule;
 import org.rhq.enterprise.server.core.jaas.JDBCPrincipalCheckLoginModule;
@@ -197,7 +198,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
         return configOptions;
     }
 
-    private Map<String, String> getLdapOptions(Properties conf) {
+    private Map<String, String> getLdapOptions(Properties conf) throws Exception {
         Map<String, String> configOptions = new HashMap<String, String>();
 
         configOptions.put(Context.INITIAL_CONTEXT_FACTORY, conf.getProperty(RHQConstants.LDAPFactory));
@@ -211,7 +212,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
         configOptions.put("GroupMemberFilter", conf.getProperty(RHQConstants.LDAPGroupMember));
         configOptions.put("BaseDN", conf.getProperty(RHQConstants.LDAPBaseDN));
         configOptions.put("BindDN", conf.getProperty(RHQConstants.LDAPBindDN));
-        configOptions.put("BindPW", conf.getProperty(RHQConstants.LDAPBindPW));
+        configOptions.put("BindPW", Obfuscator.encode(conf.getProperty(RHQConstants.LDAPBindPW)));
 
         return configOptions;
     }
@@ -244,6 +245,11 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
         // Load any information we may need to bind
         String bindDN = options.get("BindDN");
         String bindPW = options.get("BindPW");
+        try {
+            bindPW = Obfuscator.decode(bindPW);
+        } catch (Exception e) {
+            log.debug("Failed to decode bindPW, binding using undecoded value [" + bindPW + "]", e);
+        }
         if ((bindDN != null) && (bindDN.length() != 0) && (bindPW != null) && (bindPW.length() != 0)) {
             env.setProperty(Context.SECURITY_PRINCIPAL, bindDN);
             env.setProperty(Context.SECURITY_CREDENTIALS, bindPW);

@@ -273,7 +273,23 @@ public class JBossASClient {
      * @throws Exception if some error prevented the lookup from even happening
      */
     public ModelNode readResource(Address addr) throws Exception {
+        return readResource(addr, false);
+    }
+
+    /**
+     * This returns information on the resource at the given address, recursively
+     * returning child nodes with the result if recursive argument is set to <code>true</code>.
+     * This will not return an exception if the address points to a non-existent resource, rather,
+     * it will just return null. You can use this as a test for resource existence.
+     *
+     * @param addr
+     * @param recursive if true, return all child data within the resource node
+     * @return the found item or null if not found
+     * @throws Exception if some error prevented the lookup from even happening
+     */
+    public ModelNode readResource(Address addr, boolean recursive) throws Exception {
         final ModelNode request = createRequest(READ_RESOURCE, addr);
+        request.get("recursive").set(recursive);
         final ModelNode results = getModelControllerClient().execute(request, OperationMessageHandler.logging);
         if (isSuccess(results)) {
             final ModelNode resource = getResults(results);

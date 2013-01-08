@@ -1877,7 +1877,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         OperationDefinition operationDefinition = entityManager.find(OperationDefinition.class, operationId);
 
         if (operationDefinition == null) {
-            throw new RuntimeException("Cannot get operation definition - it does not exist: " + operationId);
+            throw new OperationDefinitionNotFoundException("Cannot get operation definition - it does not exist: "
+                + operationId);
         }
 
         return operationDefinition;

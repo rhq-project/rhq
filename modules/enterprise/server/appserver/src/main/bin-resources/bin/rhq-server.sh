@@ -444,7 +444,7 @@ case "$1" in
         echo "$$" > "$_JVM_PIDFILE"
 
         # START SERVER
-        # first, making sure working directory is the JBossAS bin directory
+        # first, make sure its working directory is the JBossAS bin directory
         cd "${RHQ_SERVER_JBOSS_HOME}/bin"
         "$_JBOSS_RUN_SCRIPT" $_CMDLINE_OPTS
 
@@ -468,7 +468,8 @@ case "$1" in
         export LAUNCH_JBOSS_IN_BACKGROUND
         export JBOSS_PIDFILE
 
-        # start the server, making sure its working directory is the JBossAS bin directory
+        # START SERVER
+        # first, make sure its working directory is the JBossAS bin directory
         cd "${RHQ_SERVER_JBOSS_HOME}/bin"
         if [ -n "$RHQ_SERVER_DEBUG" ] && [ "$RHQ_SERVER_DEBUG" != "false" ]; then
            "$_JBOSS_RUN_SCRIPT" $_CMDLINE_OPTS &

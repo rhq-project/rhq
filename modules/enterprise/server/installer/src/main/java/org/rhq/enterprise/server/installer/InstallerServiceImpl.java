@@ -541,17 +541,40 @@ public class InstallerServiceImpl implements InstallerService {
     // make to rhq-server.properties on restart (since rhq-server.properties are system
     // properties set in the AS7 instance via -P option to AS7).
     @Override
-    public void reconfigure(HashMap<String, String> serverProperties) throws Exception {
+    public boolean reconfigure(HashMap<String, String> serverProperties) throws Exception {
 
         // make sure we can connect using our configuration
-        testModelControllerClient(serverProperties);
+        testModelControllerClient(serverProperties, 30);
+
+        if (null == getInstallationResults()) {
+            log("Run the installer on this server.");
+            return false;
+        }
 
         String appServerConfigDir = getAppServerConfigDir();
         ModelControllerClient mcc = null;
 
         try {
-            // first, put the server in admin-only mode so we can start changing things around
             mcc = getModelControllerClient();
+
+            // Before we do anything, let's first make sure we really do need to reconfigure something.
+            // Check to see if everything that didn't use expressions is still the same. If so,
+            // just skip everything else and return immediate since there is nothing to do. We don't
+            // even need to reload/restart the server in this case.
+            try {
+                if (ServerInstallUtil.isSameDatasourceSecurityDomainExisting(mcc, serverProperties)) {
+                    if (ServerInstallUtil.isSameMailServiceExisting(mcc, serverProperties)) {
+                        if (ServerInstallUtil.isSameWebConnectorsExisting(mcc, appServerConfigDir, serverProperties)) {
+                            log("Nothing in the configuration changed that requires a reconfig - everything looks OK");
+                            return true; // nothing to do, return immediately
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log("Cannot determine if the config is the same, will reconfigure just in case", e);
+            }
+
+            // first, put the server in admin-only mode so we can start changing things around
             CoreJBossASClient coreClient = new CoreJBossASClient(mcc);
             coreClient.reload(true);
 
@@ -566,7 +589,7 @@ public class InstallerServiceImpl implements InstallerService {
             // setup the email service
             ServerInstallUtil.setupMailService(mcc, serverProperties);
 
-            // create a keystore whose cert has a CN of this server's public endpoint address
+            // setup the secure Tomcat web connectors
             ServerInstallUtil.setupWebConnectors(mcc, appServerConfigDir, serverProperties);
 
             // now restart - don't just reload, some of our stuff won't restart properly if we just reload
@@ -575,6 +598,8 @@ public class InstallerServiceImpl implements InstallerService {
         } finally {
             safeClose(mcc);
         }
+
+        return true;
     }
 
     /**
@@ -869,22 +894,35 @@ public class InstallerServiceImpl implements InstallerService {
 
     /**
      * This will attempt to determine if we can get a client using our current installer configuration.
-     * If we can't (i.e. the connection attempt throws an exception), this method retries periodically
-     * until the given number of seconds expires. If it still fails, an exception is thrown.
-     * 
+     * If we can't (i.e. the connection attempt throws an exception), this method looks at the fallback
+     * props for the management host and port values and will re-try using those values. If the retry
+     * succeeds, the host/port it used to successfully connect will be stored in the {@link #installerConfiguration}
+     * object. If it still fails, this method retries periodically until the given number of seconds expires.
+     * If it still fails, an exception is thrown.
+     *
+     * @param fallbackProps contains jboss.bind.address.management and/or jboss.native.management.port to use
+     *                      if the initial connection attempt fails. If null, will be ignored.
      * @param secsToWait the number of seconds to wait before aborting the test
      * @return the app server version that we are connected to
-     * 
+     *
      * @throws Exception if the connection attempts fail
      */
-    private String testModelControllerClient(int secsToWait) throws Exception {
+    private String testModelControllerClient(HashMap<String, String> fallbackProps, int secsToWait) throws Exception {
         final long start = System.currentTimeMillis();
         final long end = start + (secsToWait * 1000L);
         Exception error = null;
 
         while (System.currentTimeMillis() < end) {
             try {
-                return testModelControllerClient(null);
+                String retVal = testModelControllerClient(fallbackProps);
+
+                // Not only do we want to make sure we can connect, but we also want to wait for the subsystems to initialize.
+                // Let's wait for one of the subsystems to exist; once we know this is up, the rest are probably ready too.
+                if (!(new WebJBossASClient(getModelControllerClient()).isWebSubsystem())) {
+                    throw new IllegalStateException("The server does not appear to be fully started yet");
+                }
+
+                return retVal;
             } catch (Exception e) {
                 error = e;
                 try {
@@ -895,6 +933,20 @@ public class InstallerServiceImpl implements InstallerService {
         }
 
         throw new RuntimeException("Timed out before being able to successfully connect to the server", error);
+    }
+
+    /**
+     * This will attempt to determine if we can get a client using our current installer configuration.
+     * If we can't (i.e. the connection attempt throws an exception), this method retries periodically
+     * until the given number of seconds expires. If it still fails, an exception is thrown.
+     *
+     * @param secsToWait the number of seconds to wait before aborting the test
+     * @return the app server version that we are connected to
+     *
+     * @throws Exception if the connection attempts fail
+     */
+    private String testModelControllerClient(int secsToWait) throws Exception {
+        return testModelControllerClient(null, secsToWait);
     }
 
     /**

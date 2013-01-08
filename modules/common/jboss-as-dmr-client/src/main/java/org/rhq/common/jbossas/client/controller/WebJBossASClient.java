@@ -39,6 +39,17 @@ public class WebJBossASClient extends JBossASClient {
     }
 
     /**
+     * Checks to see if the web subsystem exists. This should always exist unless
+     * the server is just starting up and its web subsystem has not even initialized yet.
+     *
+     * @return true if the web subsystem is ready
+     */
+    public boolean isWebSubsystem() throws Exception {
+        Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_WEB);
+        return null != readResource(addr);
+    }
+
+    /**
      * The enable-welcome-root setting controls whether or not to deploy JBoss' welcome-content application at root context.
      * If you want to deploy your own app at the root context, you need to disable the enable-welcome-root setting
      * on the default host virtual server. If you want to show the JBoss' welcome screen, you need to enable this setting.
@@ -65,6 +76,17 @@ public class WebJBossASClient extends JBossASClient {
     public boolean isConnector(String name) throws Exception {
         final Address address = Address.root().add(SUBSYSTEM, SUBSYSTEM_WEB, CONNECTOR, name);
         return null != readResource(address);
+    }
+
+    /**
+     * Returns the connector node with all its attributes. Will be null if it doesn't exist.
+     *
+     * @param name the name of the connector whose node is to be returned
+     * @return the node if there is a connector with the given name already in existence, null otherwise
+     */
+    public ModelNode getConnector(String name) throws Exception {
+        final Address address = Address.root().add(SUBSYSTEM, SUBSYSTEM_WEB, CONNECTOR, name);
+        return readResource(address, true);
     }
 
     /**

@@ -130,10 +130,12 @@ public interface InstallerService {
      * method will go away.
      *
      * @param serverProperties the new server properties
+     * @return true if the reconfigure was at least attempted; false if the server isn't ready to be reconfigured
+     *         such as when it hasn't been fully installed yet
      * @throws Exception
      */
     @Deprecated
-    void reconfigure(HashMap<String, String> serverProperties) throws Exception;
+    boolean reconfigure(HashMap<String, String> serverProperties) throws Exception;
 
     /**
      * Returns a list of all registered servers in the database.

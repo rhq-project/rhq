@@ -18,9 +18,11 @@
  */
 package org.rhq.common.jbossas.client.controller;
 
+import java.util.List;
 import java.util.Map;
 
 import javax.security.auth.login.AppConfigurationEntry;
+import javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag;
 
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
@@ -153,6 +155,32 @@ public class SecurityDomainJBossASClient extends JBossASClient {
     }
 
     /**
+     * Given the name of an existing security domain that uses the SecureIdentity authentication method,
+     * this returns the module options for that security domain authentication method. This includes
+     * the username and password of the domain.
+     *
+     * @param securityDomainName the name of the security domain whose module options are to be returned
+     * @return the module options or null if the security domain doesn't exist
+     * @throws Exception if the security domain could not be looked up
+     */
+    public ModelNode getSecureIdentitySecurityDomainModuleOptions(String securityDomainName) throws Exception {
+
+        Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_SECURITY, SECURITY_DOMAIN, securityDomainName,
+            AUTHENTICATION, CLASSIC);
+
+        ModelNode authResource = readResource(addr);
+        List<ModelNode> loginModules = authResource.get(LOGIN_MODULES).asList();
+        for (ModelNode loginModule : loginModules) {
+            if ("SecureIdentity".equals(loginModule.get(CODE).asString())) {
+                ModelNode moduleOptions = loginModule.get(MODULE_OPTIONS);
+                return moduleOptions;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Create a new security domain using the database server authentication method.
      * This is used when you want to directly authenticate against a db entry.
      *
@@ -228,8 +256,7 @@ public class SecurityDomainJBossASClient extends JBossASClient {
      * same index order of the array. 
      * @throws Exception if failed to create security domain
      */
-    public void createNewSecurityDomain(String securityDomainName, LoginModuleRequest... loginModules)
-        throws Exception {
+    public void createNewSecurityDomain(String securityDomainName, LoginModuleRequest... loginModules) throws Exception {
 
         if (isSecurityDomain(securityDomainName)) {
             removeSecurityDomain(securityDomainName);
@@ -297,8 +324,21 @@ public class SecurityDomainJBossASClient extends JBossASClient {
             return entry.getControlFlag();
         }
 
+        // deal with the fact that this dumb LoginModuleControlFlag class gives you no way of getting the
+        // necessary string value.  Don't try to pick it out of the toString() value which seems sensitive to locale       
         public String getFlagString() {
-            return entry.getControlFlag().toString().split(" ")[1];
+            if (LoginModuleControlFlag.SUFFICIENT.equals(entry.getControlFlag())) {
+                return "sufficient";
+            }
+            if (LoginModuleControlFlag.REQUISITE.equals(entry.getControlFlag())) {
+                return "requisite";
+            }
+            if (LoginModuleControlFlag.REQUIRED.equals(entry.getControlFlag())) {
+                return "required";
+            }
+
+            // return the last possibility
+            return "optional";
         }
 
         public Map<String, String> getModuleOptionProperties() {

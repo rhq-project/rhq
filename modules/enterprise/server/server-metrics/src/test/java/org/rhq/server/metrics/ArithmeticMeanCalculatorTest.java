@@ -44,7 +44,7 @@ public class ArithmeticMeanCalculatorTest {
         objectUnderTest.add(5);
         objectUnderTest.add(6);
 
-        Assert.assertEquals(objectUnderTest.getArithmeticMean(), 3.5);
+        Assert.assertEquals(objectUnderTest.getArithmeticMean(), 3.5, TEST_PRECISION);
     }
 
     @Test

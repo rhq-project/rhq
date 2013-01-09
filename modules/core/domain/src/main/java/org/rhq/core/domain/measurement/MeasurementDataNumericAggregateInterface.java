@@ -29,7 +29,6 @@ package org.rhq.core.domain.measurement;
  *
  * @author Stefan Negrea
  */
-@Deprecated
 public interface MeasurementDataNumericAggregateInterface {
 
     public int getScheduleId();

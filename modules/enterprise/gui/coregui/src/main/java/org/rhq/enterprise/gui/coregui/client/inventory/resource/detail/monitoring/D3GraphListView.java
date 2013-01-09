@@ -94,13 +94,13 @@ public class D3GraphListView extends LocatableVLayout {
         useSummaryData = true;
     }
 
-    private void commonConstructorSettings(){
+    private void commonConstructorSettings() {
         measurementRangeEditor = new UserPreferencesMeasurementRangeEditor(this.getLocatorId());
         setOverflow(Overflow.AUTO);
     }
 
     public void addSetButtonClickHandler(ClickHandler clickHandler) {
-        Log.debug("measurementRangeEditor "+measurementRangeEditor);
+        Log.debug("measurementRangeEditor " + measurementRangeEditor);
         measurementRangeEditor.getSetButton().addClickHandler(clickHandler);
     }
 
@@ -118,15 +118,16 @@ public class D3GraphListView extends LocatableVLayout {
         }
     }
 
-
-    public void redrawGraphs(){
-       this.onDraw();
+    public void redrawGraphs() {
+        this.onDraw();
     }
 
     /**
-     * Build whatever graph metrics (MeasurementDefinitions) are defined for the resource.
+     * Build whatever graph (summary or not) by grabbing the MeasurementDefinitions
+     * that are defined for the resource and then querying the metric and availability data.
      */
     public void buildGraphs() {
+        final long startTimer = System.currentTimeMillis();
         List<Long> startEndList = measurementRangeEditor.getBeginEndTimes();
         final long startTime = startEndList.get(0);
         final long endTime = startEndList.get(1);
@@ -176,12 +177,13 @@ public class D3GraphListView extends LocatableVLayout {
 
                             @Override
                             public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> result) {
+                                Log.debug("Metric graph data queried in: "+ (System.currentTimeMillis() - startTimer +" ms."));
                                 if (result.isEmpty()) {
                                     loadingLabel.setContents(MSG.view_resource_monitor_graphs_noneAvailable());
                                 } else {
                                     loadingLabel.hide();
                                     if (useSummaryData) {
-                                        buildSummaryGraph(result, summaryMeasurementDefinitions, measurementDefinitions);
+                                        buildSummaryGraphs(result, summaryMeasurementDefinitions, measurementDefinitions);
                                     } else {
                                         determineGraphsToBuild(result, measurementDefinitions, definitionIds);
                                     }
@@ -191,18 +193,24 @@ public class D3GraphListView extends LocatableVLayout {
 
                 }
 
-                private void buildSummaryGraph(List<List<MeasurementDataNumericHighLowComposite>> measurementData,
-                    List<MeasurementDefinition> summaryMeasurementDefinitions, List<MeasurementDefinition> measurementDefinitions) {
+                /**
+                 * Spin through the measurement definitions (in order) checking to see if they are in the
+                 * summary measurement definition set and if so build a graph.
+                 * @param measurementData
+                 * @param summaryMeasurementDefinitions
+                 * @param measurementDefinitions
+                 */
+                private void buildSummaryGraphs(List<List<MeasurementDataNumericHighLowComposite>> measurementData,
+                    List<MeasurementDefinition> summaryMeasurementDefinitions,
+                    List<MeasurementDefinition> measurementDefinitions) {
                     Set<Integer> summaryIds = new TreeSet<Integer>();
-                    for (MeasurementDefinition summaryMeasurementDefinition : summaryMeasurementDefinitions)
-                    {
+                    for (MeasurementDefinition summaryMeasurementDefinition : summaryMeasurementDefinitions) {
                         summaryIds.add(summaryMeasurementDefinition.getId());
                     }
 
                     int i = 0;
-                    for (MeasurementDefinition measurementDefinition : measurementDefinitions)
-                    {
-                        if(summaryIds.contains(measurementDefinition.getId())){
+                    for (MeasurementDefinition measurementDefinition : measurementDefinitions) {
+                        if (summaryIds.contains(measurementDefinition.getId())) {
                             buildIndividualGraph(measurementDefinition, measurementData.get(i), 130);
                         }
                         i++;
@@ -238,6 +246,7 @@ public class D3GraphListView extends LocatableVLayout {
 
     private void buildIndividualGraph(final MeasurementDefinition measurementDefinition,
         final List<MeasurementDataNumericHighLowComposite> data, final int height) {
+        final long startTime = System.currentTimeMillis();
 
         // augment our data with availability data
         AvailabilityCriteria c = new AvailabilityCriteria();
@@ -245,40 +254,37 @@ public class D3GraphListView extends LocatableVLayout {
         c.addFilterInitialAvailability(false);
         c.addSortStartTime(PageOrdering.ASC);
         GWTServiceLookup.getAvailabilityService().findAvailabilityByCriteria(c,
-                new AsyncCallback<PageList<Availability>>()
-                {
-                    @Override
-                    public void onFailure(Throwable caught)
-                    {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
-                    }
+            new AsyncCallback<PageList<Availability>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
+                }
 
-                    @Override
-                    public void onSuccess(PageList<Availability> availList)
-                    {
-                        PageList<Availability> downAvailList = new PageList<Availability>();
-                        for (Availability availability : availList)
-                        {
-                            if(availability.getAvailabilityType().equals(AvailabilityType.DOWN)
-                                    || availability.getAvailabilityType().equals(AvailabilityType.DISABLED)){
-                                downAvailList.add(availability);
-                            }
+                @Override
+                public void onSuccess(PageList<Availability> availList) {
+                    PageList<Availability> downAvailList = new PageList<Availability>();
+                    for (Availability availability : availList) {
+                        if (availability.getAvailabilityType().equals(AvailabilityType.DOWN)
+                            || availability.getAvailabilityType().equals(AvailabilityType.DISABLED)) {
+                            downAvailList.add(availability);
                         }
-                        Log.debug("************** ** Down availList: "+ downAvailList.size()+" for Resource: "+resource.getId()+"\n\n");
-                        MetricStackedBarGraph graphView = new MetricStackedBarGraph("stackedBarGraph", resource.getId(), resource.getName(), measurementDefinition, data);
-                        graphView.setAvailabilityDownList(downAvailList);
-
-                        ResourceMetricD3GraphView graph = new ResourceMetricD3GraphView(
-                                extendLocatorId(measurementDefinition.getName()), resource.getId(), resource.getName(), measurementDefinition, data, graphView);
-
-                        graph.setWidth("95%");
-                        graph.setHeight(height);
-
-                        addMember(graph);
-
                     }
-                });
+                    Log.debug("Down availList: " + downAvailList.size() + " for Resource: " + resource.getId() +" in: "+(System.currentTimeMillis() - startTime)+ " ms.\n\n");
+                    MetricStackedBarGraph graph = new MetricStackedBarGraph("stackedBarGraph", resource.getId(),
+                        resource.getName(), measurementDefinition, data);
+                    graph.setAvailabilityDownList(downAvailList);
 
+                    ResourceMetricD3GraphView graphView = new ResourceMetricD3GraphView(
+                        extendLocatorId(measurementDefinition.getName()), resource,
+                        measurementDefinition, data, graph);
+
+                    graphView.setWidth("95%");
+                    graphView.setHeight(height);
+
+                    addMember(graphView);
+
+                }
+            });
 
     }
 

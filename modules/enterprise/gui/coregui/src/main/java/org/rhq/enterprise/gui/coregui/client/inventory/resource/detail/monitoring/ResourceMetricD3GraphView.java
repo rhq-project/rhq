@@ -34,6 +34,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -57,16 +58,36 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView
      */
     private HasD3JsniChart jsniChart;
 
+    /**
+     * This constructor is for the use case in the Dashboard where we dont actually
+     * have a entity or measurement yet.
+     * @param locatorId
+     */
     public ResourceMetricD3GraphView(String locatorId){
         super(locatorId);
         //setChartHeight("150px");
     }
 
 
-    public ResourceMetricD3GraphView(String locatorId, int entityId, String entityName, MeasurementDefinition def,
+    /**
+     * @param locatorId
+     * @param resource
+     * @param def
+     * @param data
+     * @param jsniChart
+     */
+    public ResourceMetricD3GraphView(String locatorId, Resource resource, MeasurementDefinition def,
                                      List<MeasurementDataNumericHighLowComposite> data, HasD3JsniChart jsniChart ) {
 
-        super(locatorId, entityId, entityName, def, data);
+        super(locatorId, resource.getId(), resource.getName(), def, data);
+        this.jsniChart = jsniChart;
+        //setChartHeight("150px");
+    }
+
+    public ResourceMetricD3GraphView(String locatorId, ResourceGroup resourceGroup, MeasurementDefinition def,
+                                     List<MeasurementDataNumericHighLowComposite> data, HasD3JsniChart jsniChart ) {
+
+        super(locatorId, resourceGroup.getId(), resourceGroup.getName(), def, data);
         this.jsniChart = jsniChart;
         //setChartHeight("150px");
     }
@@ -74,62 +95,70 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView
 
 
     @Override
+    /**
+     * Render the graph by determining if we need to load definition for
+     * the dashboard graph (which will be empty, all other graph types
+     * will have the definition already defined and we can just render the graph).
+     */
     protected void renderGraph() {
-
-        Log.debug(" ***  RenderGraph.getDefinition: "+getDefinition());
-        if (null == getDefinition()) {
-            Log.debug(" ***  RenderGraph  Single Graph path *** ");
-
-           final long startTime = System.currentTimeMillis();
-
-            ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
-
-            ResourceCriteria resourceCriteria = new ResourceCriteria();
-            resourceCriteria.addFilterId(getEntityId());
-            resourceService.findResourcesByCriteria(resourceCriteria, new AsyncCallback<PageList<Resource>>() {
-                @Override
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_lookupFailed(), caught);
-                }
-
-                @Override
-                public void onSuccess(PageList<Resource> result) {
-                    if (result.isEmpty()) {
-                        return;
-                    }
-                    // only concerned with first resource since this is a query by id
-                    final Resource firstResource = result.get(0);
-
-                    // setting up a deferred Command to execute after all resource queries have completed (successfully or unsuccessfully)
-                    // we know there are exactly 2 resources that
-                    final CountDownLatch countDownLatch = CountDownLatch.create(2,
-                            new Command() {
-                                @Override
-                                /**
-                                 * Satisfied only after ALL of the metric queries AND availability have completed
-                                 */
-                                public void execute() {
-                                    Log.debug(" ** Time for async query: "+(System.currentTimeMillis() - startTime));
-                                    drawGraph();
-                                    //redraw();
-                                }
-                            });
-
-                    availabilityQuery(firstResource,countDownLatch);
-                    measureDataQuery(firstResource,countDownLatch);
-                    // now the countDown latch will run sometime asynchronously after BOTH the previous 2 queries have executed
-                }
-            });
-
+        Log.debug("RenderGraph.getDefinition: "+getDefinition());
+        boolean isDashboardGraph = (null == getDefinition());
+        if (isDashboardGraph) {
+            queryMetricsDataForDashboardGraphs();
         } else {
-            // path for monitoring d3 Graphs multiple charts
-            Log.debug("Chart path for: multiple charts");
+            Log.debug("Chart path for: loaded metrics");
             drawGraph();
         }
     }
 
+    private void queryMetricsDataForDashboardGraphs(){
+        Log.debug(" ** RenderGraph  Dashboard Portlet path");
 
-    private void availabilityQuery(final Resource resource, final CountDownLatch countDownLatch){
+        final long startTime = System.currentTimeMillis();
+
+        ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
+
+        ResourceCriteria resourceCriteria = new ResourceCriteria();
+        resourceCriteria.addFilterId(getEntityId());
+        resourceService.findResourcesByCriteria(resourceCriteria, new AsyncCallback<PageList<Resource>>() {
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_lookupFailed(), caught);
+            }
+
+            @Override
+            public void onSuccess(PageList<Resource> result) {
+                if (result.isEmpty()) {
+                    return;
+                }
+                // only concerned with first resource since this is a query by id
+                final Resource firstResource = result.get(0);
+
+                // setting up a deferred Command to execute after all resource queries have completed (successfully or unsuccessfully)
+                // we know there are exactly 2 resources that
+                final CountDownLatch countDownLatch = CountDownLatch.create(2,
+                        new Command() {
+                            @Override
+                            /**
+                             * Satisfied only after ALL of the metric queries AND availability have completed
+                             */
+                            public void execute() {
+                                Log.debug("Time for async query: "+(System.currentTimeMillis() - startTime));
+                                drawGraph();
+                                //redraw();
+                            }
+                        });
+
+                queryAvailability(firstResource, countDownLatch);
+                queryMeasurementsAndMetricData(firstResource, countDownLatch);
+                // now the countDown latch will run sometime asynchronously after BOTH the previous 2 queries have executed
+            }
+        });
+    }
+
+    private void queryAvailability(final Resource resource, final CountDownLatch countDownLatch){
+
+        final long startTime = System.currentTimeMillis();
 
         // now return the availability
         AvailabilityCriteria c = new AvailabilityCriteria();
@@ -146,7 +175,7 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView
 
                     @Override
                     public void onSuccess(PageList<Availability> availList) {
-                        Log.debug(" ** Successful availability Query");
+                        Log.debug("\nSuccessfully queried availability in: "+ (System.currentTimeMillis() - startTime) + " ms.");
                         PageList<Availability> downAvailList = new PageList<Availability>();
                         for (Availability availability : availList)
                         {
@@ -163,7 +192,8 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView
     }
 
 
-    private void measureDataQuery(final Resource resource, final CountDownLatch countDownLatch){
+    private void queryMeasurementsAndMetricData(final Resource resource, final CountDownLatch countDownLatch){
+        final long startTime = System.currentTimeMillis();
         HashSet<Integer> typesSet = new HashSet<Integer>();
         typesSet.add(resource.getResourceType().getId());
         HashSet<String> ancestries = new HashSet<String>();
@@ -196,11 +226,9 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView
                                             @Override
                                             public void onSuccess(final
                                                                   List<List<MeasurementDataNumericHighLowComposite>> measurementData) {
-                                                // return the data
-                                                Log.debug(" Assigning the metric data");
+                                                Log.debug("\nSuccessfully queried Metric data in: "+ (System.currentTimeMillis() - startTime)+ " ms." );
                                                 setData(measurementData.get(0));
                                                 countDownLatch.countDown();
-                                                //drawGraph();
                                             }
                                         });
                             }

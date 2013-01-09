@@ -76,6 +76,7 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
 
         // create a chartContext object (from rhq.js) with the data required to render to a chart
         // this same data could be passed to different chart types
+        // This way, we are decoupled from the dependency on globals and JSNI.
         var chartContext = new $wnd.ChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getChartId()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getJsonMetrics()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getXAxisTitle()(),

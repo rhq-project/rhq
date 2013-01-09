@@ -194,14 +194,15 @@ public class ResourceGraphPortlet extends ResourceMetricD3GraphView implements C
 
         DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
         PropertySimple simple = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID);
-        setEntityId(simple.getIntegerValue());
-        PropertySimple simpleDefId = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
-        Log.debug("EntityId from portal config: "+simple.getIntegerValue());
-        Log.debug("DefintionId from portal config: "+simpleDefId.getIntegerValue());
-        setDefinitionId(simpleDefId.getIntegerValue());
+
         if (simple == null || simple.getIntegerValue()==null) {
             addMember(new Label("<i>" + MSG.view_portlet_configure_needed() + "</i>"));
         } else {
+            setEntityId(simple.getIntegerValue());
+            PropertySimple simpleDefId = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
+            Log.debug("EntityId from portal config: "+simple.getIntegerValue());
+            Log.debug("DefintionId from portal config: "+simpleDefId.getIntegerValue());
+            setDefinitionId(simpleDefId.getIntegerValue());
             renderGraph();
         }
     }

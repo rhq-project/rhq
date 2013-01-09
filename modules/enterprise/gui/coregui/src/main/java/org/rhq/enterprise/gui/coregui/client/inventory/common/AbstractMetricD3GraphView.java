@@ -163,7 +163,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
      *
      */
     protected void drawGraph() {
-        Log.debug("drawGraph in AbstractMetricD3GraphView for: "+ definition + ","+definitionId);
+        Log.debug("drawGraph marker in AbstractMetricD3GraphView for: "+ definition + ","+definitionId);
 
         HLayout titleHLayout = new LocatableHLayout(extendLocatorId("HTitle"));
 
@@ -331,8 +331,8 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
         }
         sb.setLength(sb.length()-1); // delete the last ','
         sb.append("]");
-        Log.debug("Json data has "+data.size()+" entries.");
-        Log.debug(sb.toString());
+        //Log.debug("Json data has "+data.size()+" entries.");
+        //Log.debug(sb.toString());
         return sb.toString();
     }
 

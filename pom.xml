@@ -144,7 +144,7 @@
     <ant.contrib.version>1.0b3</ant.contrib.version>
     <freemarker.version>2.3.18</freemarker.version>
     <powermock.version>1.4.12</powermock.version>
-    <arquillian.version>1.0.2.Final</arquillian.version>
+    <arquillian.version>1.0.3.Final</arquillian.version>
     <xercesImpl.version>2.9.1-jbossas-2</xercesImpl.version> <!-- see BZ-820629 and CVE-2009-2625 -->
     <opencsv.version>1.8</opencsv.version>    
     

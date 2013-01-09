@@ -44,6 +44,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3Gr
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.enterprise.gui.coregui.client.util.async.Command;
+import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
 
@@ -78,6 +80,8 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView
         if (null == getDefinition()) {
             Log.debug(" ***  RenderGraph  Single Graph path *** ");
 
+           final long startTime = System.currentTimeMillis();
+
             ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
             ResourceCriteria resourceCriteria = new ResourceCriteria();
@@ -93,82 +97,27 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView
                     if (result.isEmpty()) {
                         return;
                     }
+                    // only concerned with first resource since this is a query by id
                     final Resource firstResource = result.get(0);
 
-                    // now return the availability
-                    AvailabilityCriteria c = new AvailabilityCriteria();
-                    c.addFilterResourceId(firstResource.getId());
-                    c.addFilterInitialAvailability(false);
-                    c.addSortStartTime(PageOrdering.ASC);
-                    GWTServiceLookup.getAvailabilityService().findAvailabilityByCriteria(c,
-                            new AsyncCallback<PageList<Availability>>() {
+                    // setting up a deferred Command to execute after all resource queries have completed (successfully or unsuccessfully)
+                    // we know there are exactly 2 resources that
+                    final CountDownLatch countDownLatch = CountDownLatch.create(2,
+                            new Command() {
                                 @Override
-                                public void onFailure(Throwable caught) {
-                                    CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
-                                }
-
-                                @Override
-                                public void onSuccess(PageList<Availability> availList) {
-                                    PageList<Availability> downAvailList = new PageList<Availability>();
-                                    for (Availability availability : availList)
-                                    {
-                                        if(availability.getAvailabilityType().equals(AvailabilityType.DOWN)
-                                                || availability.getAvailabilityType().equals(AvailabilityType.DISABLED)){
-                                           downAvailList.add(availability);
-                                        }
-
-                                    }
-                                    setAvailabilityDownList(downAvailList);
-
-                                    HashSet<Integer> typesSet = new HashSet<Integer>();
-                                    typesSet.add(firstResource.getResourceType().getId());
-                                    HashSet<String> ancestries = new HashSet<String>();
-                                    ancestries.add(firstResource.getAncestry());
-                                    // In addition to the types of the result resources, get the types of their ancestry
-                                    typesSet.addAll(AncestryUtil.getAncestryTypeIds(ancestries));
-
-                                    ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-                                            typesSet.toArray(new Integer[typesSet.size()]),
-                                            EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
-                                            new ResourceTypeRepository.TypesLoadedCallback() {
-
-                                                @Override
-                                                public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                                                    ResourceType type = types.get(firstResource.getResourceType().getId());
-                                                    for (MeasurementDefinition def : type.getMetricDefinitions()) {
-                                                        Log.debug("** DefinitionId: "+getDefinitionId());
-                                                        if (def.getId() == getDefinitionId()) {
-                                                            setDefinition(def);
-
-                                                             GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(firstResource.getId(),
-                                                                    new int[] { getDefinitionId() }, 8, MeasurementUtils.UNIT_HOURS, 60,
-                                                                    new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
-                                                                        @Override
-                                                                        public void onFailure(Throwable caught) {
-                                                                            CoreGUI.getErrorHandler().handleError(
-                                                                                    MSG.view_resource_monitor_graphs_loadFailed(), caught);
-                                                                        }
-
-                                                                        @Override
-                                                                        public void onSuccess(final
-                                                                                              List<List<MeasurementDataNumericHighLowComposite>> measurementData) {
-                                                                            // return the data
-                                                                            Log.debug(" Assigning the metric data");
-                                                                            setData(measurementData.get(0));
-
-                                                                            drawGraph();
-                                                                        }
-                                                                    });
-                                                        }
-                                                    }
-                                                }
-                                            });
-
+                                /**
+                                 * Satisfied only after ALL of the metric queries AND availability have completed
+                                 */
+                                public void execute() {
+                                    Log.debug(" ** Time for async query: "+(System.currentTimeMillis() - startTime));
+                                    drawGraph();
+                                    //redraw();
                                 }
                             });
 
-
-
+                    availabilityQuery(firstResource,countDownLatch);
+                    measureDataQuery(firstResource,countDownLatch);
+                    // now the countDown latch will run sometime asynchronously after BOTH the previous 2 queries have executed
                 }
             });
 
@@ -178,6 +127,88 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView
             drawGraph();
         }
     }
+
+
+    private void availabilityQuery(final Resource resource, final CountDownLatch countDownLatch){
+
+        // now return the availability
+        AvailabilityCriteria c = new AvailabilityCriteria();
+        c.addFilterResourceId(resource.getId());
+        c.addFilterInitialAvailability(false);
+        c.addSortStartTime(PageOrdering.ASC);
+        GWTServiceLookup.getAvailabilityService().findAvailabilityByCriteria(c,
+                new AsyncCallback<PageList<Availability>>() {
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
+                        countDownLatch.countDown();
+                    }
+
+                    @Override
+                    public void onSuccess(PageList<Availability> availList) {
+                        Log.debug(" ** Successful availability Query");
+                        PageList<Availability> downAvailList = new PageList<Availability>();
+                        for (Availability availability : availList)
+                        {
+                            if(availability.getAvailabilityType().equals(AvailabilityType.DOWN)
+                                    || availability.getAvailabilityType().equals(AvailabilityType.DISABLED)){
+                                downAvailList.add(availability);
+                            }
+
+                        }
+                        setAvailabilityDownList(downAvailList);
+                        countDownLatch.countDown();
+                    }
+                });
+    }
+
+
+    private void measureDataQuery(final Resource resource, final CountDownLatch countDownLatch){
+        HashSet<Integer> typesSet = new HashSet<Integer>();
+        typesSet.add(resource.getResourceType().getId());
+        HashSet<String> ancestries = new HashSet<String>();
+        ancestries.add(resource.getAncestry());
+        // In addition to the types of the result resources, get the types of their ancestry
+        typesSet.addAll(AncestryUtil.getAncestryTypeIds(ancestries));
+
+        ResourceTypeRepository.Cache.getInstance().getResourceTypes(
+                typesSet.toArray(new Integer[typesSet.size()]),
+                EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
+                new ResourceTypeRepository.TypesLoadedCallback() {
+
+                    @Override
+                    public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                        ResourceType type = types.get(resource.getResourceType().getId());
+                        for (MeasurementDefinition def : type.getMetricDefinitions()) {
+                            if (def.getId() == getDefinitionId()) {
+                                setDefinition(def);
+
+                                GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(resource.getId(),
+                                        new int[] { getDefinitionId() }, 8, MeasurementUtils.UNIT_HOURS, 60,
+                                        new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
+                                            @Override
+                                            public void onFailure(Throwable caught) {
+                                                CoreGUI.getErrorHandler().handleError(
+                                                        MSG.view_resource_monitor_graphs_loadFailed(), caught);
+                                                countDownLatch.countDown();
+                                            }
+
+                                            @Override
+                                            public void onSuccess(final
+                                                                  List<List<MeasurementDataNumericHighLowComposite>> measurementData) {
+                                                // return the data
+                                                Log.debug(" Assigning the metric data");
+                                                setData(measurementData.get(0));
+                                                countDownLatch.countDown();
+                                                //drawGraph();
+                                            }
+                                        });
+                            }
+                        }
+                    }
+                });
+    }
+
     @Override
     protected boolean supportsLiveGraphViewDialog() {
         return true;
@@ -209,10 +240,4 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView
     protected void displayLiveGraphViewDialog() {
         LiveGraphD3View.displayAsDialog(getLocatorId(), getEntityId(), getDefinition());
     }
-
-//    public AbstractMetricD3GraphView getInstance(String locatorId, int entityId, String entityName, MeasurementDefinition def,
-//        List<MeasurementDataNumericHighLowComposite> data, HasD3JsniChart jsniChart) {
-//
-//        return new ResourceMetricD3GraphView(locatorId, entityId, entityName, def, data, jsniChart);
-//    }
 }

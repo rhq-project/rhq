@@ -342,6 +342,12 @@ public abstract class AbstractEJB3Test extends Arquillian {
         // If we're running oracle we need to include the OJDBC driver because dbunit needs it. Note that we need
         // add it explicitly even though it is a provided module used by the datasource.
         if (!Boolean.valueOf(System.getProperty("rhq.skip.oracle"))) {
+            // in proxy situations (like Jenkins) shrinkwrap won't be able to find repositories defined in
+            // settings.xml profiles.  We know at this point the driver is in the local repo, try going offline
+            // at this point to force local repo resolution since the oracle driver is not in public repos.
+            // see http://stackoverflow.com/questions/6291146/arquillian-shrinkwrap-mavendependencyresolver-behind-proxy
+            // Last verified this problem using: Arquillian 1.0.3 bom
+            resolver.goOffline();
             dependencies.addAll(resolver.artifact("com.oracle:ojdbc6:jar:" + System.getProperty("rhq.ojdbc.version"))
                 .resolveAs(JavaArchive.class));
         }

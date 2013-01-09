@@ -43,12 +43,13 @@ import org.rhq.core.domain.measurement.MeasurementDataNumericAggregateInterface;
 public class DataMigrator {
 
     private static final int MAX_RECORDS_TO_MIGRATE = 1000;
+    private static final int MAX_NUMBER_OF_FAILURES = 5;
 
     private final EntityManager entityManager;
     private final Session session;
 
     private boolean deleteDataImmediatelyAfterMigration;
-    private boolean deleteAllDataAtTheEndOfMigration;
+    private boolean deleteAllDataAtEndOfMigration;
     private boolean runRawDataMigration;
     private boolean run1HAggregateDataMigration;
     private boolean run6HAggregateDataMigration;
@@ -59,7 +60,7 @@ public class DataMigrator {
         this.session = session;
 
         this.deleteDataImmediatelyAfterMigration = true;
-        this.deleteAllDataAtTheEndOfMigration = false;
+        this.deleteAllDataAtEndOfMigration = false;
         this.runRawDataMigration = true;
         this.run1HAggregateDataMigration = true;
         this.run6HAggregateDataMigration = true;
@@ -80,93 +81,205 @@ public class DataMigrator {
 
     public void deleteDataImmediatelyAfterMigration(boolean value) {
         this.deleteDataImmediatelyAfterMigration = value;
-        this.deleteAllDataAtTheEndOfMigration = !value;
+        this.deleteAllDataAtEndOfMigration = !value;
     }
 
-    public void deleteAllDataAtTheEndOfMigration(boolean value) {
-        this.deleteAllDataAtTheEndOfMigration = value;
+    public void deleteAllDataAtEndOfMigration(boolean value) {
+        this.deleteAllDataAtEndOfMigration = value;
         this.deleteDataImmediatelyAfterMigration = !value;
     }
 
-    public void migrateData() {
+    public void migrateData() throws Exception {
         if (runRawDataMigration) {
-            migrateRawData();
+            retryOnFailure(new RawDataMigrator());
         }
 
         if (run1HAggregateDataMigration) {
-            migrateAggregatedMetricsData(MeasurementDataNumeric1H.QUERY_FIND_ALL, MetricsTable.ONE_HOUR);
+            retryOnFailure(new AggregateDataMigrator(MeasurementDataNumeric1H.QUERY_FIND_ALL, MetricsTable.ONE_HOUR));
         }
 
         if (run6HAggregateDataMigration) {
-            migrateAggregatedMetricsData(MeasurementDataNumeric6H.QUERY_FIND_ALL, MetricsTable.SIX_HOUR);
+            retryOnFailure(new AggregateDataMigrator(MeasurementDataNumeric6H.QUERY_FIND_ALL, MetricsTable.SIX_HOUR));
         }
 
         if (run1DAggregateDataMigration) {
-            migrateAggregatedMetricsData(MeasurementDataNumeric1D.QUERY_FIND_ALL, MetricsTable.TWENTY_FOUR_HOUR);
+            retryOnFailure(new AggregateDataMigrator(MeasurementDataNumeric1D.QUERY_FIND_ALL,
+                MetricsTable.TWENTY_FOUR_HOUR));
         }
 
-        if (deleteAllDataAtTheEndOfMigration) {
-            this.clearAllData();
+        if (deleteAllDataAtEndOfMigration) {
+            retryOnFailure(new DeleteAllData());
         }
     }
 
-    private void migrateRawData() {
-        //possibly need to add raw SQL code here because data is split among several tables
-    }
+    /**
+     * Retries the migration {@link #MAX_NUMBER_OF_FAILURES} times before
+     * failing the migration operation.
+     *
+     * @param migrator
+     * @throws Exception
+     */
+    private void retryOnFailure(CallableMigrationWorker migrator) throws Exception {
+        int numberOfFailures = 0;
+        Exception caughtException = null;
 
-    @SuppressWarnings("unchecked")
-    private void migrateAggregatedMetricsData(String query, MetricsTable metricsTable) {
-        List<MeasurementDataNumericAggregateInterface> existingData = null;
-
-        while (true) {
-            Query q = this.entityManager.createNamedQuery(query);
-            q.setMaxResults(MAX_RECORDS_TO_MIGRATE);
-            existingData = (List<MeasurementDataNumericAggregateInterface>) q.getResultList();
-
-            if (existingData.size() == 0) {
-                break;
-            }
-
+        while (numberOfFailures < MAX_NUMBER_OF_FAILURES) {
             try {
-                String cql = "INSERT INTO " + metricsTable
-                    + " (schedule_id, time, type, value) VALUES (?, ?, ?, ?) USING TTL " + metricsTable.getTTL();
-                PreparedStatement statement = session.prepare(cql);
+                migrator.work();
+                return;
+            } catch (Exception e) {
+                caughtException = e;
+                numberOfFailures++;
+            }
+        }
+
+        throw caughtException;
+    }
+
+    /**
+     * Returns a list of all the raw SQL metric tables.
+     * There is no equivalent in Cassandra, all raw data is stored in a single column family.
+     *
+     * @return SQL raw metric tables
+     */
+    private String[] getRawDataTables() {
+        int tableCount = 15;
+        String tablePrefix = "RHQ_MEAS_DATA_NUM_R";
+
+        String[] tables = new String[tableCount];
+        for (int i = 0; i < tableCount; i++) {
+            if (i < 10) {
+                tables[i] = tablePrefix + "0" + i;
+            } else {
+                tables[i] = tablePrefix + i;
+            }
+        }
+
+        return tables;
+    }
+
+    private interface CallableMigrationWorker {
+        void work() throws Exception;
+    }
+
+
+    private class AggregateDataMigrator implements CallableMigrationWorker {
+
+        private final String query;
+        private final MetricsTable metricsTable;
+
+        /**
+         * @param query
+         * @param metricsTable
+         */
+        public AggregateDataMigrator(String query, MetricsTable metricsTable) {
+            this.query = query;
+            this.metricsTable = metricsTable;
+        }
+
+        @SuppressWarnings("unchecked")
+        public void work() throws NoHostAvailableException {
+            List<MeasurementDataNumericAggregateInterface> existingData;
+
+            String cql = "INSERT INTO " + metricsTable
+                + " (schedule_id, time, type, value) VALUES (?, ?, ?, ?) USING TTL " + metricsTable.getTTL();
+            PreparedStatement statement = session.prepare(cql);
+
+            while (true) {
+                Query q = entityManager.createNamedQuery(query);
+                q.setMaxResults(MAX_RECORDS_TO_MIGRATE);
+                existingData = (List<MeasurementDataNumericAggregateInterface>) q.getResultList();
+
+                if (existingData.size() == 0) {
+                    break;
+                }
 
                 for (MeasurementDataNumericAggregateInterface measurement : existingData) {
-
                     BoundStatement boundStatement = statement.bind(measurement.getScheduleId(),
                         new Date(measurement.getTimestamp()), AggregateType.MIN.ordinal(), measurement.getMin());
                     session.execute(boundStatement);
 
                     boundStatement = statement.bind(measurement.getScheduleId(), new Date(measurement.getTimestamp()),
-                        AggregateType.MAX.ordinal(),  measurement.getMax());
+                        AggregateType.MAX.ordinal(), measurement.getMax());
                     session.execute(boundStatement);
 
                     boundStatement = statement.bind(measurement.getScheduleId(), new Date(measurement.getTimestamp()),
                         AggregateType.AVG.ordinal(), Double.parseDouble(measurement.getValue().toString()));
                     session.execute(boundStatement);
                 }
-            } catch (NoHostAvailableException e) {
-                throw new CQLException(e);
-            }
 
-            if (this.deleteDataImmediatelyAfterMigration) {
-                for (Object entity : existingData) {
-                    this.entityManager.remove(entity);
+                if (deleteDataImmediatelyAfterMigration) {
+                    for (Object entity : existingData) {
+                        entityManager.remove(entity);
+                    }
+                    entityManager.flush();
                 }
-                this.entityManager.flush();
             }
         }
     }
 
-    private void clearAllData() {
-        Query q = this.entityManager.createNamedQuery(MeasurementDataNumeric1H.QUERY_DELETE_ALL);
-        q.executeUpdate();
 
-        q = this.entityManager.createNamedQuery(MeasurementDataNumeric6H.QUERY_DELETE_ALL);
-        q.executeUpdate();
+    private class RawDataMigrator implements CallableMigrationWorker {
 
-        q = this.entityManager.createNamedQuery(MeasurementDataNumeric1D.QUERY_DELETE_ALL);
-        q.executeUpdate();
+        @SuppressWarnings("unchecked")
+        public void work() throws NoHostAvailableException {
+            List<Object[]> existingData = null;
+
+            String cql = "INSERT INTO " + MetricsTable.RAW + " (schedule_id, time, value) VALUES (?, ?, ?) USING TTL "
+                + MetricsTable.RAW.getTTL();
+            PreparedStatement statement = session.prepare(cql);
+
+            for (String table : getRawDataTables()) {
+                String selectQuery = "SELECT schedule_id, value, time_stamp FROM " + table;
+                String deleteQuery = "DELETE FROM " + table + " WHERE schedule_id = ?";
+
+                while (true) {
+                    Query query = entityManager.createNativeQuery(selectQuery);
+                    query.setMaxResults(MAX_RECORDS_TO_MIGRATE);
+                    existingData = query.getResultList();
+
+                    if (existingData.size() == 0) {
+                        break;
+                    }
+
+                    for (Object[] rawDataPoint : existingData) {
+                        BoundStatement boundStatement = statement.bind(Integer.parseInt(rawDataPoint[0].toString()),
+                            new Date(Long.parseLong(rawDataPoint[1].toString())),
+                            Double.parseDouble(rawDataPoint[2].toString()));
+                        session.execute(boundStatement);
+                    }
+
+                    if (deleteDataImmediatelyAfterMigration) {
+                        query = entityManager.createNativeQuery(deleteQuery);
+
+                        for (Object[] rawDataPoint : existingData) {
+                            query.setParameter(0, Integer.parseInt(rawDataPoint[0].toString()));
+                            query.executeUpdate();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+    private class DeleteAllData implements CallableMigrationWorker {
+
+        public void work() {
+            Query q = entityManager.createNamedQuery(MeasurementDataNumeric1H.QUERY_DELETE_ALL);
+            q.executeUpdate();
+
+            q = entityManager.createNamedQuery(MeasurementDataNumeric6H.QUERY_DELETE_ALL);
+            q.executeUpdate();
+
+            q = entityManager.createNamedQuery(MeasurementDataNumeric1D.QUERY_DELETE_ALL);
+            q.executeUpdate();
+
+            for (String table : getRawDataTables()) {
+                String deleteAllData = "DELETE FROM " + table;
+                q = entityManager.createNativeQuery(deleteAllData);
+                q.executeUpdate();
+            }
+        }
     }
 }

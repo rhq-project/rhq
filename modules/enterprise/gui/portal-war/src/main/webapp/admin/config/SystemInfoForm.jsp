@@ -57,14 +57,6 @@
     <td nowrap="nowrap" class="BlockContent"><%= info.getDetails().get(ServerDetails.Detail.DATABASE_DRIVER_VERSION) %></td>
   </tr>
   <tr>
-    <td nowrap="nowrap" class="BlockLabel"><fmt:message key="admin.settings.System.RawTable"/></td>
-    <td nowrap="nowrap" class="BlockContent"><%= info.getDetails().get(ServerDetails.Detail.CURRENT_MEASUREMENT_TABLE) %></td>
-  </tr>
-  <tr>
-    <td nowrap="nowrap" class="BlockLabel"><fmt:message key="admin.settings.System.RotationTime"/></td>
-    <td nowrap="nowrap" class="BlockContent"><%= info.getDetails().get(ServerDetails.Detail.NEXT_MEASUREMENT_TABLE_ROTATION) %></td>
-  </tr>
-  <tr>
     <td colspan="2" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
   </tr>
 </table>

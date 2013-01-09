@@ -18,49 +18,31 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
 
-import java.util.List;
-
-import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView;
-
 /**
  * Contains the javascript chart definition for a d3 Stacked Bar graph chart.
  *
  * @author Mike Thompson
  */
-public final class MetricStackedBarGraph extends AbstractMetricD3GraphView implements HasD3JsniChart
+public final class MetricStackedBarGraph extends MetricGraphData implements HasD3JsniChart
 {
     /**
      * Constructor for dashboard portlet view as chart definition and data are deferred to later in the portlet
      * configuration.
      *
-     * @param locatorId
      */
-    public MetricStackedBarGraph(String locatorId) {
-        super(locatorId);
+    public MetricStackedBarGraph() {
+        //super(locatorId);
     }
 
     /**
      * General constructor for stacked bar graph when you have all the data needed to produce the graph. (This is true
      * for all cases but the dashboard portlet).
      *
-     * @param locatorId
-     * @param entityId
-     * @param entityName
-     * @param def
-     * @param data
      */
-    public MetricStackedBarGraph(String locatorId, int entityId, String entityName, MeasurementDefinition def,
-                                 List<MeasurementDataNumericHighLowComposite> data) {
-        super(locatorId, entityId, entityName, def, data);
+    public MetricStackedBarGraph( MetricGraphData metricGraphData){
+        super( metricGraphData.getEntityId(), metricGraphData.getEntityName(), metricGraphData.getDefinition(), metricGraphData.getMetricData());
     }
 
-    @Override
-    protected void renderGraph()
-    {
-        drawJsniChart();
-    }
 
     /**
      * The magic JSNI to draw the charts with $wnd.d3.js
@@ -77,14 +59,14 @@ public final class MetricStackedBarGraph extends AbstractMetricD3GraphView imple
         // create a chartContext object (from rhq.js) with the data required to render to a chart
         // this same data could be passed to different chart types
         // This way, we are decoupled from the dependency on globals and JSNI.
-        var chartContext = new $wnd.ChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getChartId()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getJsonMetrics()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getXAxisTitle()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisTitle()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisUnits()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getChartTitleMinLabel()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getChartTitleAvgLabel()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getChartTitlePeakLabel()()
+        var chartContext = new $wnd.ChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartId()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getJsonMetrics()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getXAxisTitle()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getYAxisTitle()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getYAxisUnits()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartTitleMinLabel()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartTitleAvgLabel()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartTitlePeakLabel()()
         );
 
 

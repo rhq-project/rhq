@@ -34,7 +34,6 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -42,6 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.HasD3Jsn
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -69,29 +69,13 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView
     }
 
 
-    /**
-     * @param locatorId
-     * @param resource
-     * @param def
-     * @param data
-     * @param jsniChart
-     */
-    public ResourceMetricD3GraphView(String locatorId, Resource resource, MeasurementDefinition def,
-                                     List<MeasurementDataNumericHighLowComposite> data, HasD3JsniChart jsniChart ) {
 
-        super(locatorId, resource.getId(), resource.getName(), def, data);
+    public ResourceMetricD3GraphView(String locatorId, MetricGraphData metricGraphData, HasD3JsniChart jsniChart ) {
+
+        super(locatorId, metricGraphData);
         this.jsniChart = jsniChart;
         //setChartHeight("150px");
     }
-
-    public ResourceMetricD3GraphView(String locatorId, ResourceGroup resourceGroup, MeasurementDefinition def,
-                                     List<MeasurementDataNumericHighLowComposite> data, HasD3JsniChart jsniChart ) {
-
-        super(locatorId, resourceGroup.getId(), resourceGroup.getName(), def, data);
-        this.jsniChart = jsniChart;
-        //setChartHeight("150px");
-    }
-
 
 
     @Override
@@ -101,8 +85,8 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView
      * will have the definition already defined and we can just render the graph).
      */
     protected void renderGraph() {
-        Log.debug("RenderGraph.getDefinition: "+getDefinition());
-        boolean isDashboardGraph = (null == getDefinition());
+        Log.debug("RenderGraph.getDefinition: "+metricGraphData.getDefinition());
+        boolean isDashboardGraph = (null == metricGraphData.getDefinition());
         if (isDashboardGraph) {
             queryMetricsDataForDashboardGraphs();
         } else {
@@ -119,7 +103,7 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView
         ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
         ResourceCriteria resourceCriteria = new ResourceCriteria();
-        resourceCriteria.addFilterId(getEntityId());
+        resourceCriteria.addFilterId(metricGraphData.getEntityId());
         resourceService.findResourcesByCriteria(resourceCriteria, new AsyncCallback<PageList<Resource>>() {
             @Override
             public void onFailure(Throwable caught) {
@@ -183,9 +167,8 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView
                                     || availability.getAvailabilityType().equals(AvailabilityType.DISABLED)){
                                 downAvailList.add(availability);
                             }
-
                         }
-                        setAvailabilityDownList(downAvailList);
+                        metricGraphData.setAvailabilityDownList(downAvailList);
                         countDownLatch.countDown();
                     }
                 });
@@ -210,11 +193,11 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView
                     public void onTypesLoaded(Map<Integer, ResourceType> types) {
                         ResourceType type = types.get(resource.getResourceType().getId());
                         for (MeasurementDefinition def : type.getMetricDefinitions()) {
-                            if (def.getId() == getDefinitionId()) {
-                                setDefinition(def);
+                            if (def.getId() == metricGraphData.getDefinitionId()) {
+                                metricGraphData.setDefinition(def);
 
                                 GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(resource.getId(),
-                                        new int[] { getDefinitionId() }, 8, MeasurementUtils.UNIT_HOURS, 60,
+                                        new int[] { metricGraphData.getDefinitionId() }, 8, MeasurementUtils.UNIT_HOURS, 60,
                                         new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                                             @Override
                                             public void onFailure(Throwable caught) {
@@ -227,7 +210,7 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView
                                             public void onSuccess(final
                                                                   List<List<MeasurementDataNumericHighLowComposite>> measurementData) {
                                                 Log.debug("\nSuccessfully queried Metric data in: "+ (System.currentTimeMillis() - startTime)+ " ms." );
-                                                setData(measurementData.get(0));
+                                                metricGraphData.setMetricData(measurementData.get(0));
                                                 countDownLatch.countDown();
                                             }
                                         });
@@ -266,6 +249,6 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView
 
     @Override
     protected void displayLiveGraphViewDialog() {
-        LiveGraphD3View.displayAsDialog(getLocatorId(), getEntityId(), getDefinition());
+        LiveGraphD3View.displayAsDialog(getLocatorId(), metricGraphData.getEntityId(), metricGraphData.getDefinition());
     }
 }

@@ -18,18 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
 
-import java.util.List;
-
-import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView;
-
 /**
  * Contains the chart definition for a Bar Chart Graph.
  *
  * @author Mike Thompson
  */
-public final class MetricNvd3BarChartGraph extends AbstractMetricD3GraphView implements HasD3JsniChart
+public final class MetricNvd3BarChartGraph extends MetricGraphData implements HasD3JsniChart
 {
 
     /**
@@ -38,29 +32,18 @@ public final class MetricNvd3BarChartGraph extends AbstractMetricD3GraphView imp
      * @param locatorId
      */
     public MetricNvd3BarChartGraph(String locatorId) {
-       super(locatorId);
+       //super(locatorId);
     }
 
     /**
      * General constructor for stacked bar graph when you have all the data needed to
      * produce the graph. (This is true for all cases but the dashboard portlet).
-     * @param locatorId
-     * @param entityId
-     * @param entityName
-     * @param def
-     * @param data
      */
-    public MetricNvd3BarChartGraph(String locatorId, int entityId, String entityName, MeasurementDefinition def,
-                                   List<MeasurementDataNumericHighLowComposite> data) {
-        super(locatorId,entityId, entityName, def,data);
+    public MetricNvd3BarChartGraph(MetricGraphData metricGraphData){
+        super(metricGraphData.getEntityId(), metricGraphData.getEntityName(), metricGraphData.getDefinition(),metricGraphData.getMetricData());
 
     }
 
-    @Override
-    protected void renderGraph()
-    {
-        drawJsniChart();
-    }
 
     /**
      * The magic JSNI to draw the charts with d3.
@@ -68,14 +51,14 @@ public final class MetricNvd3BarChartGraph extends AbstractMetricD3GraphView imp
     public native void drawJsniChart() /*-{
         console.log("Draw NVD3 Bar jsni chart");
         var global = this,
-            chartId =  global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getChartId()(),
+            chartId =  global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartId()(),
             chartHandle = "#rChart-"+chartId,
             chartSelection = chartHandle + " svg",
-            json = eval(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getJsonMetrics()()),
-            yAxisLabel = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisTitle()(),
-            yAxisUnits = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisUnits()(),
-            xAxisLabel = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getXAxisTitle()(),
-            displayDayOfWeek = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::shouldDisplayDayOfWeekInXAxisLabel()(),
+            json = eval(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getJsonMetrics()()),
+            yAxisLabel = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getYAxisTitle()(),
+            yAxisUnits = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getYAxisUnits()(),
+            xAxisLabel = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getXAxisTitle()(),
+            displayDayOfWeek = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::shouldDisplayDayOfWeekInXAxisLabel()(),
             xAxisTimeFormat = (displayDayOfWeek) ? "%a %I %p" : "%I %p";
 
         // nvd3 defines their json models a standard way (same model for other graphs)

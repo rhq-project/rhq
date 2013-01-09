@@ -18,9 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
-import java.util.Date;
-import java.util.List;
-
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
@@ -28,16 +25,9 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 
-import org.rhq.core.domain.measurement.Availability;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.measurement.MeasurementUnits;
-import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.JsonMetricProducer;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -50,22 +40,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Jay Shaughnessy
  * @author Mike Thompson
  */
-public abstract class AbstractMetricD3GraphView extends LocatableVLayout implements JsonMetricProducer{
+public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
 
     protected HTMLFlow resourceTitle;
-
-    private int entityId;
-    private String entityName;
-    private int definitionId;
-
-    private MeasurementUnits adjustedMeasurementUnits;
-    private MeasurementDefinition definition;
-    private List<MeasurementDataNumericHighLowComposite> data;
-    private PageList<Availability> availabilityDownList;
-
-    private final String chartTitleMinLabel = MSG.chart_title_min_label();
-    private final String chartTitleAvgLabel = MSG.chart_title_avg_label();
-    private final String chartTitlePeakLabel = MSG.chart_title_peak_label();
+    protected MetricGraphData metricGraphData;
 
     //private String chartHeight;
 
@@ -74,15 +52,9 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
     }
 
 
-    public AbstractMetricD3GraphView(String locatorId, int entityId, String entityName, MeasurementDefinition def,
-                                     List<MeasurementDataNumericHighLowComposite> data ) {
+    public AbstractMetricD3GraphView(String locatorId, MetricGraphData metricGraphData){
         this(locatorId);
-
-        this.entityName = entityName;
-        setEntityId(entityId);
-        setDefinitionId(def.getId());
-        this.definition = def;
-        this.data = data;
+        this.metricGraphData = metricGraphData;
         setHeight100();
         setWidth100();
     }
@@ -93,53 +65,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
         return resourceTitle;
     }
 
-    public int getEntityId() {
-        return this.entityId;
-    }
 
-
-    public void setEntityId(int entityId) {
-        this.entityId = entityId;
-        this.definition = null;
-    }
-    public int getDefinitionId() {
-        return definitionId;
-    }
-
-    public void setDefinitionId(int definitionId) {
-        this.definitionId = definitionId;
-        this.definition = null;
-    }
-
-
-    public MeasurementDefinition getDefinition() {
-        return definition;
-    }
-
-    public void setDefinition(MeasurementDefinition definition) {
-        this.definition = definition;
-    }
-
-    public String getChartId(){
-        return entityId + "-" + definition.getId();
-    }
-    public List<MeasurementDataNumericHighLowComposite> getData() {
-        return data;
-    }
-
-    public void setData(List<MeasurementDataNumericHighLowComposite> data) {
-        this.data = data;
-    }
-
-    public PageList<Availability> getAvailabilityDownList()
-    {
-        return availabilityDownList;
-    }
-
-    public void setAvailabilityDownList(PageList<Availability> availabilityDownList)
-    {
-        this.availabilityDownList = availabilityDownList;
-    }
 
     @Override
     protected void onDraw() {
@@ -163,11 +89,11 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
      *
      */
     protected void drawGraph() {
-        Log.debug("drawGraph marker in AbstractMetricD3GraphView for: "+ definition + ","+definitionId);
+        Log.debug("drawGraph marker in AbstractMetricD3GraphView for: " + metricGraphData.getChartId());
 
         HLayout titleHLayout = new LocatableHLayout(extendLocatorId("HTitle"));
 
-        if (definition != null) {
+        //if (definition != null) {
             titleHLayout.setAutoHeight();
             titleHLayout.setWidth100();
 
@@ -185,7 +111,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
             addMember(titleHLayout);
 
             StringBuilder divAndSvgDefs = new StringBuilder();
-            divAndSvgDefs.append("<div id=\"rChart-" + getChartId() + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:320px;\">");
+            divAndSvgDefs.append("<div id=\"rChart-" + metricGraphData.getChartId() + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:320px;\">");
             divAndSvgDefs.append(getSvgDefs());
             divAndSvgDefs.append("</svg></div>");
             HTMLFlow graph = new HTMLFlow(divAndSvgDefs.toString());
@@ -200,7 +126,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
                     drawJsniChart();
                 }
             }.schedule(100);
-        }
+        //}
     }
 
     /**
@@ -277,124 +203,4 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout impleme
         super.hide();
     }
 
-    public String getYAxisTitle(){
-        if(null != definition.getDisplayName() && definition.getDisplayName().length() > 55){
-            return entityName+" - " +definition.getDisplayName().substring(0,55)+"..."  ;
-        }else {
-            return entityName+" - " +definition.getDisplayName()  ;
-        }
-    }
-
-    /**
-     * Returns the y-axis units normalized to highest scale (Bytes -> Gb).
-     * NOTE: this requires a dependency such that getJsonMetrics is called
-     * before this method as the adjustedMeasurementUnits are calculated in that method.
-     * @return yAxisUnits -- normalized to highest UOM.
-     */
-    public String getYAxisUnits(){
-        if(adjustedMeasurementUnits == null){
-           Log.error("AbstractMetricD3GraphView.adjustedMeasurementUnits is populated by getJsonMetrics. Make sure it is called first.");
-        }
-       return adjustedMeasurementUnits.toString();
-    }
-
-    public String getXAxisTitle(){
-       return MSG.view_charts_time_axis_label();
-    }
-
-    @Override
-    public String getJsonMetrics(){
-        StringBuilder sb = new StringBuilder("[");
-        boolean gotAdjustedMeasurementUnits = false;
-        //Log.debug(" avail records loaded: "+getAvailabilityDownList().size());
-        for (MeasurementDataNumericHighLowComposite measurement : data) {
-            sb.append("{ x:"+measurement.getTimestamp()+",");
-            if(isTimestampDownOrDisabled(measurement.getTimestamp())){
-                sb.append(" down:true, ");
-            }
-            if(!Double.isNaN(measurement.getValue())){
-
-                MeasurementNumericValueAndUnits newHigh = normalizeUnitsAndValues(measurement.getHighValue(), definition.getUnits());
-                MeasurementNumericValueAndUnits newLow = normalizeUnitsAndValues(measurement.getLowValue(), definition.getUnits());
-                MeasurementNumericValueAndUnits newValue = normalizeUnitsAndValues(measurement.getValue(), definition.getUnits());
-                if(!gotAdjustedMeasurementUnits){
-                    adjustedMeasurementUnits = newValue.getUnits();
-                   gotAdjustedMeasurementUnits = true;
-                }
-                sb.append(" high:"+newHigh.getValue()+",");
-                sb.append(" low:"+newLow.getValue()+",");
-                sb.append(" y:"+newValue.getValue()+"},");
-            }else {
-                // NaN measure no measurement was collected
-                sb.append(" nodata:true },");
-            }
-        }
-        sb.setLength(sb.length()-1); // delete the last ','
-        sb.append("]");
-        //Log.debug("Json data has "+data.size()+" entries.");
-        //Log.debug(sb.toString());
-        return sb.toString();
-    }
-
-
-    private boolean isTimestampDownOrDisabled(long timestamp){
-        Date timestampDate = new Date(timestamp);
-        if(null == availabilityDownList){
-            //@todo: take this out this is just to testing purposes
-            Log.debug("AvailabilityList is null");
-        }
-        if(null != availabilityDownList){
-            for (Availability availability : availabilityDownList)
-            {
-                if(timestampDate.after(new Date(availability.getStartTime()))
-                        && timestampDate.before(new Date(availability.getEndTime()))){
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-
-    private  MeasurementNumericValueAndUnits normalizeUnitsAndValues(double value, MeasurementUnits measurementUnits){
-        MeasurementNumericValueAndUnits newValue = MeasurementConverterClient.fit(value, measurementUnits);
-        MeasurementNumericValueAndUnits returnValue = null;
-
-        // adjust for percentage numbers
-        if(measurementUnits.equals(MeasurementUnits.PERCENTAGE)) {
-            returnValue = new MeasurementNumericValueAndUnits(newValue.getValue() * 100,newValue.getUnits());
-        }  else {
-            returnValue = new MeasurementNumericValueAndUnits(newValue.getValue() ,newValue.getUnits());
-        }
-
-        return returnValue;
-    }
-
-    public String getChartTitleMinLabel()
-    {
-        return chartTitleMinLabel;
-    }
-
-    public String getChartTitleAvgLabel()
-    {
-        return chartTitleAvgLabel;
-    }
-
-    public String getChartTitlePeakLabel()
-    {
-        return chartTitlePeakLabel;
-    }
-
-    /**
-     * If there is more than 2 days time window then return true so we can show day of week
-     * in axis labels. Function to switch the timescale to whichever is more appropriate hours
-     * or hours with days of week.
-     * @return true if difference between startTime and endTime is >= x days
-     */
-   public boolean shouldDisplayDayOfWeekInXAxisLabel(){
-       Long startTime = data.get(0).getTimestamp();
-       Long endTime = data.get(data.size() -1).getTimestamp();
-       long timeThreshold = 24 * 60 * 60 * 1000; // 1 days
-       return  startTime + timeThreshold < endTime;
-   }
 }

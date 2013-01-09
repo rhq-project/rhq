@@ -45,6 +45,7 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricStackedBarGraph;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -269,14 +270,15 @@ public class D3GraphListView extends LocatableVLayout {
                             downAvailList.add(availability);
                         }
                     }
-                    Log.debug("Down availList: " + downAvailList.size() + " for Resource: " + resource.getId() +" in: "+(System.currentTimeMillis() - startTime)+ " ms.\n\n");
-                    MetricStackedBarGraph graph = new MetricStackedBarGraph("stackedBarGraph", resource.getId(),
-                        resource.getName(), measurementDefinition, data);
+                    Log.debug("Down availList: " + downAvailList.size() + " for Resource: " +
+                            resource.getId() +" in: "+(System.currentTimeMillis() - startTime)+ " ms.\n\n");
+                    MetricGraphData metricGraphData = new MetricGraphData(resource.getId(),resource.getName(),measurementDefinition,data);
+                    MetricStackedBarGraph graph = new MetricStackedBarGraph(metricGraphData);
                     graph.setAvailabilityDownList(downAvailList);
 
+
                     ResourceMetricD3GraphView graphView = new ResourceMetricD3GraphView(
-                        extendLocatorId(measurementDefinition.getName()), resource,
-                        measurementDefinition, data, graph);
+                        extendLocatorId(measurementDefinition.getName()), metricGraphData, graph);
 
                     graphView.setWidth("95%");
                     graphView.setHeight(height);

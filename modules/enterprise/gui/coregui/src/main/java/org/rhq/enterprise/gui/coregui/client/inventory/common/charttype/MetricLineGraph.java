@@ -18,18 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
 
-import java.util.List;
-
-import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView;
-
 /**
  * Contains the javascript chart definition for a d3 Line graph chart.
  *
  * @author Mike Thompson
  */
-public final class MetricLineGraph extends AbstractMetricD3GraphView implements HasD3JsniChart
+public final class MetricLineGraph extends MetricGraphData implements HasD3JsniChart
 {
     /**
      * Constructor for dashboard portlet view as chart definition and data are deferred to later
@@ -38,29 +32,18 @@ public final class MetricLineGraph extends AbstractMetricD3GraphView implements 
      * @param locatorId
      */
     public MetricLineGraph(String locatorId) {
-       super(locatorId);
+       //super(locatorId);
     }
 
 
     /**
      * General constructor for stacked bar graph when you have all the data needed to
      * produce the graph. (This is true for all cases but the dashboard portlet).
-     * @param locatorId
-     * @param entityId
-     * @param entityName
-     * @param def
-     * @param data
      */
-    public MetricLineGraph(String locatorId, int entityId, String entityName, MeasurementDefinition def,
-                           List<MeasurementDataNumericHighLowComposite> data) {
-        super(locatorId,entityId, entityName,def,data);
+    public MetricLineGraph(MetricGraphData metricGraphData){
+        super(metricGraphData.getEntityId(), metricGraphData.getEntityName(),metricGraphData.getDefinition(),metricGraphData.getMetricData());
     }
 
-    @Override
-    protected void renderGraph()
-    {
-        drawJsniChart();
-    }
 
     /**
      * The magic JSNI to draw the charts with d3.
@@ -68,16 +51,16 @@ public final class MetricLineGraph extends AbstractMetricD3GraphView implements 
     public native void drawJsniChart() /*-{
         console.log("Draw Metric Line jsni chart");
         var global = this,
-            chartId =  global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getChartId()(),
+            chartId =  global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartId()(),
             chartHandle = "#rChart-"+chartId,
             chartSelection = chartHandle + " svg",
-            json = eval(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getJsonMetrics()()),
-            yAxisLabel = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisTitle()(),
-            yAxisUnits = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getYAxisUnits()(),
-            xAxisLabel = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getXAxisTitle()();
+            json = eval(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getJsonMetrics()()),
+            yAxisLabel = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getYAxisTitle()(),
+            yAxisUnits = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getYAxisUnits()(),
+            xAxisLabel = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getXAxisTitle()();
 
         console.log("chart id: "+chartSelection );
-        console.log(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView::getJsonMetrics()());
+        console.log(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getJsonMetrics()());
 
         //var jsonData = eval([{ x:1352204720548, high:0.016642348035599646, low:0.016642348035599646, y:0.016642348035599646},{ x:1352211680548, high:12.000200003333388, low:0.0, y:3.500050000833347},{ x:1352211920548, high:2.000033333888898, low:1.999966667222213, y:2.000000000277778},{ x:1352212160548, high:5.0, low:1.999966667222213, y:2.750000000277778},{ x:1352212400548, high:4.0, low:2.0, y:2.5000083334722243},{ x:1352212640548, high:2.0, low:1.999966667222213, y:1.9999916668055533},{ x:1352212880548, high:3.0, low:2.0, y:2.2500083334722243},{ x:1352213120548, high:3.000050000833347, low:1.999966667222213, y:2.2500041672916677},{ x:1352213360548, high:4.0, low:1.999966667222213, y:2.7499916668055535},{ x:1352213600548, high:2.000033333888898, low:1.999966667222213, y:2.000008333750002},{ x:1352213840548, high:2.0, low:1.999966667222213, y:1.9999916668055533},{ x:1352214080548, high:3.0, low:1.999966667222213, y:2.250000000277778},{ x:1352214320548, high:4.0, low:2.0, y:2.5},{ x:1352214560548, high:3.0, low:1.999966667222213, y:2.250000000833347},{ x:1352214800548, high:2.000033333888898, low:1.999966667222213, y:2.000000000277778},{ x:1352215040548, high:4.0, low:2.0, y:2.5},{ x:1352215280548, high:3.0, low:2.0, y:2.2500083334722243},{ x:1352215520548, high:2.0, low:1.999966667222213, y:1.9999916668055533},{ x:1352215760548, high:3.0, low:1.999966667222213, y:2.250000000277778},{ x:1352216000548, high:4.0, low:2.0, y:2.5},{ x:1352216240548, high:2.000066668888963, low:1.999966667222213, y:2.000008334027794},{ x:1352216480548, high:3.0, low:1.999966667222213, y:2.2499916668055535}]);
 

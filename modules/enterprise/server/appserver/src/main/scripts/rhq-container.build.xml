@@ -629,13 +629,13 @@ rhq.sync.endpoint-address=false
                 <replacevalue><![CDATA[export RHQ_SERVER_HOME; ${RHQ_SERVER_HOME}/bin/rhq-installer.sh --reconfig &]]></replacevalue>
             </replacefilter>
         </replace>
-        <!-- we can't do this to the windows script because for some reason JavaServiceWrapper won't restart
-             when an exit code 10 is seen, even though we have it configured to do so -->
+        <replace file="${project.build.outputDirectory}/bin/rhq-server.bat">
+            <replacefilter>
+    	        <replacetoken>rem START SERVER</replacetoken>
+                <replacevalue><![CDATA[start /B %RHQ_SERVER_HOME%\bin\rhq-installer.bat --reconfig < nul > nul]]></replacevalue>
+            </replacefilter>
+        </replace>
     </target>
-
-    <!-- The prepare-release target must be run AFTER the resources:resources goal has executed. -->
-    <!-- (i.e. after rhq-server.sh, etc. have been copied over by the resources plugin) -->
-
     <target name="prepare-release"
             description="If this is a release build, make sure it is properly prepared."
             depends="initialize,

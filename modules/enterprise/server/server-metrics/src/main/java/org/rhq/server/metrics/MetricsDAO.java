@@ -121,6 +121,11 @@ public class MetricsDAO {
     public List<AggregatedNumericMetric> insertAggregates(MetricsTable table, List<AggregatedNumericMetric> metrics,
         int ttl) {
         List<AggregatedNumericMetric> updates = new ArrayList<AggregatedNumericMetric>();
+
+        if (metrics.isEmpty()) {
+            return updates;
+        }
+
         try {
             Statement[] statements = new Statement[metrics.size() * 3];
             int i = 0;

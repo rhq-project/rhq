@@ -25,6 +25,8 @@
 
 package org.rhq.server.metrics;
 
+import static com.datastax.driver.core.utils.querybuilder.QueryBuilder.batch;
+import static com.datastax.driver.core.utils.querybuilder.QueryBuilder.insert;
 import static java.util.Arrays.asList;
 import static org.rhq.core.domain.util.PageOrdering.DESC;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
@@ -38,6 +40,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.utils.querybuilder.Batch;
 
 import org.joda.time.DateTime;
 import org.joda.time.Hours;
@@ -188,7 +193,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
             new AggregatedNumericMetric(scheduleId, 4.0, 2.0, 10.0, hour0.plusHours(1).getMillis()),
             new AggregatedNumericMetric(456, 2.0, 2.0, 2.0, hour0.getMillis())
         );
-        int ttl = Hours.ONE.getHours();
+        int ttl = Hours.ONE.toStandardSeconds().getSeconds();
         List<AggregatedNumericMetric> actualUpdates = dao.insertAggregates(MetricsTable.ONE_HOUR, metrics, ttl);
         List<AggregatedNumericMetric> expectedUpdates = metrics;
 
@@ -198,6 +203,10 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
             new AggregatedNumericMetric(scheduleId, 3.0, 1.0, 8.0, hour0.getMillis()),
             new AggregatedNumericMetric(scheduleId, 4.0, 2.0, 10.0, hour0.plusHours(1).getMillis())
         );
+        try {
+            Thread.sleep(400);
+        } catch (InterruptedException e) {
+        }
         List<AggregatedNumericMetric> actual = dao.findAggregateMetrics(MetricsTable.ONE_HOUR, scheduleId);
         assertEquals(actual, expected, "Failed to find one hour metrics");
 
@@ -513,6 +522,27 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
             assertNotNull(metric.getMaxColumnMetadata().getTtl(), "The TTL for maximum column of " + metric +
                 " is not set.");
         }
+    }
+
+    //@Test
+    public void batchTest() throws Exception {
+        long timestamp = System.currentTimeMillis();
+
+        Batch batch = batch(
+            insert("schedule_id", "time", "value").into("raw_metrics").values(1, timestamp, 1.001),
+            insert("schedule_id", "time", "value").into("raw_metrics").values(2, timestamp, 2.002),
+            insert("schedule_id", "time", "value").into("raw_metrics").values(3, timestamp, 3.003),
+            insert("schedule_id", "time", "value").into("raw_metrics").values(4, timestamp, 3.003),
+            insert("schedule_id", "time", "value").into("raw_metrics").values(5, timestamp, 3.003),
+            insert("schedule_id", "time", "value").into("raw_metrics").values(6, timestamp, 3.003),
+            insert("schedule_id", "time", "value").into("raw_metrics").values(7, timestamp, 3.003),
+            insert("schedule_id", "time", "value").into("raw_metrics").values(8, timestamp, 3.003),
+            insert("schedule_id", "time", "value").into("raw_metrics").values(9, timestamp, 3.003),
+            insert("schedule_id", "time", "value").into("raw_metrics").values(10, timestamp, 3.003)
+        );
+
+        ResultSet resultsSet = session.execute(batch);
+        assertEquals(resultsSet.fetchAll().size(), 2);
     }
 
 }

@@ -25,6 +25,8 @@
 
 package org.rhq.server.metrics;
 
+import static com.datastax.driver.core.utils.querybuilder.QueryBuilder.batch;
+import static com.datastax.driver.core.utils.querybuilder.QueryBuilder.insert;
 import static org.rhq.core.util.StringUtil.listToString;
 
 import java.util.ArrayList;
@@ -39,7 +41,9 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.utils.querybuilder.Using;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.util.PageOrdering;
@@ -95,6 +99,7 @@ public class MetricsDAO {
     }
 
     public Set<MeasurementDataNumeric> insertRawMetrics(Set<MeasurementDataNumeric> dataSet, int ttl) {
+        // TODO Determine if batch inserts will be faster that prepared statements for raw data
         try {
             String cql = "INSERT INTO raw_metrics (schedule_id, time, value) VALUES (?, ?, ?) " + "USING TTL " + ttl;
             PreparedStatement statement = session.prepare(cql);
@@ -117,25 +122,25 @@ public class MetricsDAO {
         int ttl) {
         List<AggregatedNumericMetric> updates = new ArrayList<AggregatedNumericMetric>();
         try {
-            String cql = "INSERT INTO " + table + " (schedule_id, time, type, value) VALUES (?, ?, ?, ?) USING TTL " +
-                ttl;
-            PreparedStatement statement = session.prepare(cql);
+            Statement[] statements = new Statement[metrics.size() * 3];
+            int i = 0;
 
             for (AggregatedNumericMetric metric : metrics) {
-                BoundStatement boundStatement = statement.bind(metric.getScheduleId(), new Date(metric.getTimestamp()),
-                    AggregateType.MIN.ordinal(), metric.getMin());
-                session.execute(boundStatement);
+                statements[i++] = insert("schedule_id", "time", "type", "value").into(table.getTableName()).values(
+                    metric.getScheduleId(), new Date(metric.getTimestamp()), AggregateType.MIN.ordinal(),
+                    metric.getMin()).using(Using.ttl(ttl));
 
-                boundStatement = statement.bind(metric.getScheduleId(), new Date(metric.getTimestamp()),
-                    AggregateType.MAX.ordinal(), metric.getMax());
-                session.execute(boundStatement);
+                statements[i++] = insert("schedule_id", "time", "type", "value").into(table.getTableName()).values(
+                    metric.getScheduleId(), new Date(metric.getTimestamp()), AggregateType.MAX.ordinal(),
+                    metric.getMax()).using(Using.ttl(ttl));
 
-                boundStatement = statement.bind(metric.getScheduleId(), new Date(metric.getTimestamp()),
-                    AggregateType.AVG.ordinal(), metric.getAvg());
-                session.execute(boundStatement);
+                statements[i++] = insert("schedule_id", "time", "type", "value").into(table.getTableName()).values(
+                    metric.getScheduleId(), new Date(metric.getTimestamp()), AggregateType.AVG.ordinal(),
+                    metric.getAvg()).using(Using.ttl(ttl));
 
                 updates.add(metric);
             }
+            session.execute(batch(statements));
 
             return updates;
         } catch (NoHostAvailableException e) {
@@ -365,12 +370,15 @@ public class MetricsDAO {
 
     public void updateMetricsIndex(MetricsTable table, Map<Integer, Long> updates) {
         try {
-            PreparedStatement statement = session.prepare(UPDATE_METRICS_INDEX);
+            Statement[] statements = new Statement[updates.size()];
+            int i = 0;
             for (Integer scheduleId : updates.keySet()) {
-                BoundStatement boundStatement = statement.bind(table.toString(), new Date(updates.get(scheduleId)),
-                    scheduleId, false);
-                session.execute(boundStatement);
+                statements[i++] =
+                    insert("bucket", "time", "schedule_id", "null_col")
+                    .into(MetricsTable.INDEX.getTableName())
+                     .values(table.toString(), new Date(updates.get(scheduleId)), scheduleId, false);
             }
+            session.execute(batch(statements));
         } catch (NoHostAvailableException e) {
             throw new CQLException(e);
         }

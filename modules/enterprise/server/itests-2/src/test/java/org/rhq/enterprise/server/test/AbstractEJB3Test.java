@@ -292,6 +292,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
         // create test ear by starting with rhq.ear and thinning it
         MavenDependencyResolver earResolver = DependencyResolvers.use(MavenDependencyResolver.class);
         // this must be named rhq.ear because the "rhq" portion is used in the jndi names
+        earResolver.goOffline();
         EnterpriseArchive testEar = ShrinkWrap.create(EnterpriseArchive.class, "rhq.ear");
         EnterpriseArchive rhqEar = earResolver.artifact("org.rhq:rhq-enterprise-server-ear:ear:4.6.0-SNAPSHOT")
             .resolveAs(EnterpriseArchive.class).iterator().next();

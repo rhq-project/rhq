@@ -9,7 +9,7 @@
  * A ChartContext can be passed to multiple chart renders to display different chart types
  * of that data.
  */
-var ChartContext = function (chartId, metricsData, xAxisLabel, yAxisLabel, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle)
+var ChartContext = function (chartId, metricsData, xAxisLabel, yAxisLabel, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel)
 {
     this.chartId = chartId;
     this.chartHandle = "#rChart-" + this.chartId;
@@ -21,6 +21,14 @@ var ChartContext = function (chartId, metricsData, xAxisLabel, yAxisLabel, yAxis
     this.minChartTitle = minChartTitle;
     this.avgChartTitle = avgChartTitle;
     this.peakChartTitle = peakChartTitle;
+    this.dateLabel = dateLabel;
+    this.timeLabel = timeLabel;
+    this.downLabel = downLabel;
+    this.unknownLabel = unknownLabel;
+    /**
+     * Can be called to validate the charting arguments.
+     * @return {boolean}
+     */
     this.validate = function ()
     {
         return this.chartId != undefined && this.data != undefined;

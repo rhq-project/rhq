@@ -40,7 +40,15 @@ import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
  */
 public class MetricGraphData implements JsonMetricProducer {
 
+    // i18n
     final protected Messages MSG = CoreGUI.getMessages();
+    private final String chartTitleMinLabel = MSG.chart_title_min_label();
+    private final String chartTitleAvgLabel = MSG.chart_title_avg_label();
+    private final String chartTitlePeakLabel = MSG.chart_title_peak_label();
+    private final String chartDateLabel = MSG.chart_date_label();
+    private final String chartTimeLabel = MSG.chart_time_label();
+    private final String chartDownLabel = MSG.chart_down_label();
+    private final String chartUnknownLabel = MSG.chart_unknown_label();
 
     private int entityId;
     private String entityName;
@@ -51,16 +59,12 @@ public class MetricGraphData implements JsonMetricProducer {
     private List<MeasurementDataNumericHighLowComposite> metricData;
     private PageList<Availability> availabilityDownList;
 
-    private final String chartTitleMinLabel = MSG.chart_title_min_label();
-    private final String chartTitleAvgLabel = MSG.chart_title_avg_label();
-    private final String chartTitlePeakLabel = MSG.chart_title_peak_label();
-
-    public MetricGraphData(){
+    public MetricGraphData() {
 
     }
 
     public MetricGraphData(int entityId, String entityName, MeasurementDefinition def,
-                           List<MeasurementDataNumericHighLowComposite> metricData) {
+        List<MeasurementDataNumericHighLowComposite> metricData) {
         this.entityName = entityName;
         setEntityId(entityId);
         setDefinitionId(def.getId());
@@ -77,8 +81,7 @@ public class MetricGraphData implements JsonMetricProducer {
         this.definition = null;
     }
 
-    public String getEntityName()
-    {
+    public String getEntityName() {
         return entityName;
     }
 
@@ -129,6 +132,22 @@ public class MetricGraphData implements JsonMetricProducer {
 
     public String getChartTitlePeakLabel() {
         return chartTitlePeakLabel;
+    }
+
+    public String getChartDateLabel() {
+        return chartDateLabel;
+    }
+
+    public String getChartDownLabel() {
+        return chartDownLabel;
+    }
+
+    public String getChartTimeLabel() {
+        return chartTimeLabel;
+    }
+
+    public String getChartUnknownLabel() {
+        return chartUnknownLabel;
     }
 
     public String getYAxisTitle() {

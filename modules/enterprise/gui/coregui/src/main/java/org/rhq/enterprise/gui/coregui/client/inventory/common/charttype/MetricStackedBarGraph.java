@@ -23,12 +23,10 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
  *
  * @author Mike Thompson
  */
-public final class MetricStackedBarGraph extends MetricGraphData implements HasD3JsniChart
-{
+public final class MetricStackedBarGraph extends MetricGraphData implements HasD3JsniChart {
     /**
      * Constructor for dashboard portlet view as chart definition and data are deferred to later in the portlet
      * configuration.
-     *
      */
     public MetricStackedBarGraph() {
         //super(locatorId);
@@ -37,10 +35,9 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
     /**
      * General constructor for stacked bar graph when you have all the data needed to produce the graph. (This is true
      * for all cases but the dashboard portlet).
-     *
      */
-    public MetricStackedBarGraph( MetricGraphData metricGraphData){
-        super( metricGraphData.getEntityId(), metricGraphData.getEntityName(), metricGraphData.getDefinition(), metricGraphData.getMetricData());
+    public MetricStackedBarGraph(MetricGraphData metricGraphData) {
+        super(metricGraphData.getEntityId(), metricGraphData.getEntityName(), metricGraphData.getDefinition(), metricGraphData.getMetricData());
     }
 
 
@@ -66,86 +63,80 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getYAxisUnits()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartTitleMinLabel()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartTitleAvgLabel()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartTitlePeakLabel()()
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartTitlePeakLabel()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartDateLabel()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartTimeLabel()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartDownLabel()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartUnknownLabel()()
         );
 
 
         // Define the Stacked Bar Graph function using the module pattern
-        var metricStackedBarGraph = function ()
-        {
+        var metricStackedBarGraph = function () {
             "use strict";
             // privates
             var margin = {top: 10, right: 5, bottom: 30, left: 40},
                     width = 850 - margin.left - margin.right,
                     height = 250 - margin.top - margin.bottom,
-                    titleHeight = 43, titleSpace = 10;
-            var interpolation = "basis";
-            var avg = $wnd.d3.mean(chartContext.data.map(function (d)
-            {
-                return d.y;
-            }));
-            var peak = $wnd.d3.max(chartContext.data.map(function (d)
-            {
-                return d.high;
-            }));
-            var min = $wnd.d3.min(chartContext.data.map(function (d)
-            {
-                return d.low;
-            }));
-            var timeScale = $wnd.d3.time.scale()
-                    .range([0, width])
-                    .domain($wnd.d3.extent(chartContext.data, function (d)
-                    {
-                        return d.x;
-                    }));
+                    titleHeight = 43, titleSpace = 10,
+                    interpolation = "basis";
+            var avg = $wnd.d3.mean(chartContext.data.map(function (d) {
+                        return d.y;
+                    })),
+                    peak = $wnd.d3.max(chartContext.data.map(function (d) {
+                        return d.high;
+                    })),
+                    min = $wnd.d3.min(chartContext.data.map(function (d) {
+                        return d.low;
+                    })),
+                    timeScale = $wnd.d3.time.scale()
+                            .range([0, width])
+                            .domain($wnd.d3.extent(chartContext.data, function (d) {
+                                return d.x;
+                            })),
 
             // adjust the min scale so blue low line is not in axis
-            var determineLowBound = function (min, peak)
-            {
-                var newLow = min - ((peak - min) * 0.1);
-                if (newLow < 0)
-                {
-                    return 0;
-                }
-                else
-                {
-                    return newLow;
-                }
-            };
-            var lowBound = determineLowBound(min, peak);
-            var highBound = peak + ((peak - min) * 0.1);
+                    determineLowBound = function (min, peak) {
+                        var newLow = min - ((peak - min) * 0.1);
+                        if (newLow < 0) {
+                            return 0;
+                        }
+                        else {
+                            return newLow;
+                        }
+                    },
+                    lowBound = determineLowBound(min, peak),
+                    highBound = peak + ((peak - min) * 0.1),
 
-            var yScale = $wnd.d3.scale.linear()
-                    .clamp(true)
-                    .rangeRound([height, 0])
-                    .domain([lowBound, highBound]);
+                    yScale = $wnd.d3.scale.linear()
+                            .clamp(true)
+                            .rangeRound([height, 0])
+                            .domain([lowBound, highBound]),
 
-            var xAxis = $wnd.d3.svg.axis()
-                    .scale(timeScale)
-                    .ticks(10)
-                    .tickSize(0, 0, 0)
-                    .orient("bottom");
+                    xAxis = $wnd.d3.svg.axis()
+                            .scale(timeScale)
+                            .ticks(10)
+                            .tickSize(0, 0, 0)
+                            .orient("bottom"),
 
-            var yAxis = $wnd.d3.svg.axis()
-                    .scale(yScale)
-                    .tickSubdivide(2)
-                    .ticks(10)
-                    .tickSize(4, 4, 0)
-                    .orient("left");
+                    yAxis = $wnd.d3.svg.axis()
+                            .scale(yScale)
+                            .tickSubdivide(2)
+                            .ticks(10)
+                            .tickSize(4, 4, 0)
+                            .orient("left"),
 
 
             // create the actual chart group
-            var chart = $wnd.d3.select(chartContext.chartSelection);
+                    chart = $wnd.d3.select(chartContext.chartSelection),
 
-            var svg = chart.append("g")
-                    .attr("width", width + margin.left + margin.right)
-                    .attr("height", height + margin.top - titleHeight - titleSpace + margin.bottom)
-                    .attr("transform", "translate(" + margin.left + "," + (+titleHeight + titleSpace + margin.top) + ")");
+                    svg = chart.append("g")
+                            .attr("width", width + margin.left + margin.right)
+                            .attr("height", height + margin.top - titleHeight - titleSpace + margin.bottom)
+                            .attr("transform", "translate(" + margin.left + "," + (+titleHeight + titleSpace + margin.top) + ")");
 
 
-
-            function createHeader(resourceName, minLabel, minValue, avgLabel, avgValue, highLabel, highValue)
-            {
+            function createHeader(resourceName, minLabel, minValue, avgLabel, avgValue, highLabel, highValue) {
                 var fontSize = 14,
                         yTitle = 37,
                         fgColor = "#FFFFFF",
@@ -180,7 +171,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         .attr("font-size", fontSize)
                         .attr("font-weight", "bold")
                         .attr("text-anchor", "left")
-                        .text(minLabel)
+                        .text(minLabel + " - ")
                         .attr("fill", fgColor);
 
                 chart.append("text")
@@ -200,7 +191,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         .attr("font-size", fontSize)
                         .attr("font-weight", "bold")
                         .attr("text-anchor", "left")
-                        .text(avgLabel)
+                        .text(avgLabel + " - ")
                         .attr("fill", fgColor);
 
                 chart.append("text")
@@ -220,7 +211,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         .attr("font-size", fontSize)
                         .attr("font-weight", "bold")
                         .attr("text-anchor", "left")
-                        .text(highLabel)
+                        .text(highLabel + " - ")
                         .attr("fill", fgColor);
 
                 chart.append("text")
@@ -235,7 +226,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
 
             }
 
-            function createStackedBars(){
+            function createStackedBars() {
 
                 var barOffset = 2, pixelsOffHeight = 0;
 
@@ -244,50 +235,38 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         .data(chartContext.data)
                         .enter().append("rect")
                         .attr("class", "leaderBar")
-                        .attr("x", function (d)
-                        {
+                        .attr("x", function (d) {
                             return timeScale(d.x);
                         })
-                        .attr("y", function (d)
-                        {
-                            if (d.down || d.nodata)
-                            {
+                        .attr("y", function (d) {
+                            if (d.down || d.nodata) {
                                 return yScale(highBound);
                             }
-                            else
-                            {
+                            else {
                                 return yScale(d.low);
                             }
                         })
-                        .attr("height", function (d)
-                        {
-                            if (d.down || d.nodata)
-                            {
+                        .attr("height", function (d) {
+                            if (d.down || d.nodata) {
                                 return height - yScale(highBound) - pixelsOffHeight;
                             }
-                            else
-                            {
+                            else {
                                 return height - yScale(d.low) - pixelsOffHeight;
                             }
                         })
-                        .attr("width", function (d)
-                        {
+                        .attr("width", function (d) {
                             return  (width / chartContext.data.length - barOffset  );
                         })
 
                         .attr("opacity", ".55")
-                        .attr("fill", function (d, i)
-                        {
-                            if (d.down)
-                            {
+                        .attr("fill", function (d, i) {
+                            if (d.down) {
                                 return  "url(#redStripes)";
                             }
-                            else if (d.nodata)
-                            {
+                            else if (d.nodata) {
                                 return  "url(#grayStripes)";
                             }
-                            else
-                            {
+                            else {
                                 return  "url(#leaderBarGrad)";
                             }
                         });
@@ -298,27 +277,21 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         .data(chartContext.data)
                         .enter().append("rect")
                         .attr("class", "high")
-                        .attr("x", function (d)
-                        {
+                        .attr("x", function (d) {
                             return timeScale(d.x);
                         })
-                        .attr("y", function (d)
-                        {
+                        .attr("y", function (d) {
                             return isNaN(d.high) ? yScale(lowBound) : yScale(d.high);
                         })
-                        .attr("height", function (d)
-                        {
-                            if (d.down || d.nodata)
-                            {
+                        .attr("height", function (d) {
+                            if (d.down || d.nodata) {
                                 return height - yScale(lowBound);
                             }
-                            else
-                            {
+                            else {
                                 return  yScale(d.y) - yScale(d.high);
                             }
                         })
-                        .attr("width", function (d)
-                        {
+                        .attr("width", function (d) {
                             return  (width / chartContext.data.length - barOffset  );
                         })
                         .attr("opacity", 0.8)
@@ -330,34 +303,28 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         .data(chartContext.data)
                         .enter().append("rect")
                         .attr("class", "low")
-                        .attr("x", function (d)
-                        {
+                        .attr("x", function (d) {
                             return timeScale(d.x);
                         })
-                        .attr("y", function (d)
-                        {
+                        .attr("y", function (d) {
                             return isNaN(d.y) ? height : yScale(d.y);
                         })
-                        .attr("height", function (d)
-                        {
-                            if (d.down || d.nodata)
-                            {
+                        .attr("height", function (d) {
+                            if (d.down || d.nodata) {
                                 return height - yScale(lowBound);
                             }
-                            else
-                            {
+                            else {
                                 return  yScale(d.low) - yScale(d.y);
                             }
                         })
-                        .attr("width", function (d)
-                        {
+                        .attr("width", function (d) {
                             return  (width / chartContext.data.length - barOffset );
                         })
                         .attr("opacity", 0.8)
                         .attr("fill", "url(#bottomBarGrad)");
             }
 
-            function createYAxisGridLines(){
+            function createYAxisGridLines() {
                 // create the y axis grid lines
                 svg.append("g").classed("grid y_grid", true)
                         .call($wnd.d3.svg.axis()
@@ -368,7 +335,8 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                                 .tickFormat("")
                         );
             }
-            function createXandYAxes(){
+
+            function createXandYAxes() {
 
                 // create x-axis
                 svg.append("g")
@@ -391,36 +359,31 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         .text(chartContext.yAxisUnits === "NONE" ? "" : chartContext.yAxisUnits);
 
             }
-            function createMinAvgPeakLines(){
+
+            function createMinAvgPeakLines() {
 
                 var avgLine = $wnd.d3.svg.line()
                         .interpolate(interpolation)
-                        .x(function (d)
-                        {
+                        .x(function (d) {
                             return timeScale(d.x);
                         })
-                        .y(function (d)
-                        {
+                        .y(function (d) {
                             return yScale((avg));
-                        });
-                var peakLine = $wnd.d3.svg.line()
+                        }),
+                peakLine = $wnd.d3.svg.line()
                         .interpolate(interpolation)
-                        .x(function (d)
-                        {
+                        .x(function (d) {
                             return timeScale(d.x);
                         })
-                        .y(function (d)
-                        {
+                        .y(function (d) {
                             return yScale((peak));
-                        });
-                var minLine = $wnd.d3.svg.line()
+                        }),
+                minLine = $wnd.d3.svg.line()
                         .interpolate(interpolation)
-                        .x(function (d)
-                        {
+                        .x(function (d) {
                             return timeScale(d.x);
                         })
-                        .y(function (d)
-                        {
+                        .y(function (d) {
                             return yScale(min);
                         });
 
@@ -458,58 +421,61 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         .attr("d", avgLine);
             }
 
-            function createXAxisLine(){
+            function formatHovers(chartContext, d) {
+                var hoverString,
+                        xValue = (d.x == undefined) ? 0 : +d.x,
+                        date = new Date(+xValue),
+                        timeFormatter = $wnd.d3.time.format("%I:%M:%S %P"),
+                        dateFormatter = $wnd.d3.time.format("%m/%d/%y"),
+                        highValue = (d.high == undefined) ? 0 : d.high.toFixed(2),
+                        lowValue = (d.low == undefined) ? 0 : d.low.toFixed(2),
+                        avgValue = (d.y == undefined) ? 0 : d.y.toFixed(2);
 
-                // our own x-axis because ours is custom
-                var xAxisLine = $wnd.d3.svg.line()
-                        .interpolate(interpolation)
-                        .x(function (d)
-                        {
-                            return timeScale(d.x);
-                        })
-                        .y(function (d)
-                        {
-                            return yScale(lowBound);
-                        });
-
-                // xaxis line
-                svg.append("path")
-                        .datum(chartContext.data)
-                        .attr("class", "xAxisLine")
-                        .attr("fill", "none")
-                        .attr("stroke", "#cccdcf")
-                        .attr("stroke-width", "1")
-                        .attr("d", xAxisLine);
-            }
-            function createHovers() {
-                console.log("Create Hovers");
-            $wnd.jQuery('svg rect.leaderBar, svg rect.high, svg rect.low').tipsy({
-                gravity: 'w',
-                html: true,
-                trigger: 'hover',
-                title: function() {
-                    var d = this.__data__ ;
-                    //console.log("y: "+ d.y);
-                    var xValue = (d.x == undefined) ? 0 : +d.x,
-                    date = new Date(+xValue),
-                    timeFormatter = $wnd.d3.time.format("%I:%M:%S %P"),
-                    dateFormatter = $wnd.d3.time.format("%m/%d/%y"),
-                    highValue = (d.high == undefined) ? 0 : d.high.toFixed(2),
-                    lowValue = (d.low == undefined) ? 0 : d.low.toFixed(2),
-                    avgValue = (d.y == undefined) ? 0 : d.y.toFixed(2);
-                    return (d.y == undefined) ? '' : '<div style="text-align:left;z-index:401000;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">Time: </span>' +timeFormatter(date)+ '</div>'+
-                            '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">Date: </span>' +dateFormatter(date)+ '</div>'+
-                            '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#ff8a9a";">High: </span>'
-                            + highValue +'</div><div style="text-align: left;"><span style="width:50px;font-weight: bold;color: #b0d9b0";">Avg:  </span>'+ avgValue+
-                            '</div><div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#8ad6ff";">Low:  </span>'+ lowValue + '</div>';
+                if (d.y == undefined) {
+                    hoverString =
+                            '<div style="text-align:left;z-index:401000;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">' + chartContext.timeLabel + ': </span>' + timeFormatter(date) + '</div>' +
+                                    '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
+                                    '<div style="text-align: left;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.unknownLabel+'</span></div>' +
+                                    '</div>'
                 }
-            });
+                else if (d.down) {
+                    hoverString =
+                            '<div style="text-align:left;z-index:401000;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">' + chartContext.timeLabel + ': </span>' + timeFormatter(date) + '</div>' +
+                                    '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
+                                    '<div style="text-align: left;"><span style="width:100%;font-weight: bold;color:#ff8a9a"";">Down</span></div>' +
+                                    '</div>'
+
+                }
+                else {
+                    hoverString =
+                            '<div style="text-align:left;z-index:401000;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">' + chartContext.timeLabel + ':  </span><span style="width:50px;">' + timeFormatter(date) + '</span></div>' +
+                                    '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">' + chartContext.dateLabel + ':  </span><span style="width:50px;">' + dateFormatter(date) + '</span></div>' +
+                                    '<div style="width:80%;text-align: center;border: #d3d3d3 solid medium;"></div>' +
+                                    '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#ff8a9a";">' + chartContext.peakChartTitle + ': </span><span style="width:50px;">' + highValue + '</span></div>' +
+                                    '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color: #b0d9b0";">' + chartContext.avgChartTitle + ':  </span style="width:50px;">' + avgValue + '</span></div>' +
+                                    '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#8ad6ff";">' + chartContext.minChartTitle + ': </span><span style="width:50px;">' + lowValue + '</span></div>';
+                }
+                return hoverString;
+
+            }
+
+            function createHovers(chartContext) {
+                //console.log("Create Hovers");
+                $wnd.jQuery('svg rect.leaderBar, svg rect.high, svg rect.low').tipsy({
+                    gravity: 'w',
+                    html: true,
+                    trigger: 'hover',
+                    title: function () {
+                        var d = this.__data__;
+                        console.log("y: " + d.y);
+                        return formatHovers(chartContext, d);
+                    }
+                });
             }
 
             return {
                 // Public API
-                draw: function (chartContext)
-                {
+                draw: function (chartContext) {
                     "use strict";
                     console.log("chart id: " + chartContext.chartSelection);
                     //console.log("Json Data:\n"+chartContext.data);
@@ -519,8 +485,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                     createStackedBars();
                     createXandYAxes();
                     createMinAvgPeakLines();
-                    createXAxisLine();
-                    createHovers();
+                    createHovers(chartContext);
                     console.log("finished drawing paths");
                 }
             }; // end public closure

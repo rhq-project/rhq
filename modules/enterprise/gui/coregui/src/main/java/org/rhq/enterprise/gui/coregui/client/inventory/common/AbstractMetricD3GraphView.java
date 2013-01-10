@@ -33,11 +33,11 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
- * Provide common functionality for drawing JSNI graphs and manipulating metric
- * data so that it can be graphed.
+ * Provide common functionality for graph views. Such as setting up the divs with
+ * specific ids that the jsni svn graphs can bind to and place their svg definitions
+ * of the charts directly under this chart div. Essentially, it creates the placeholder
+ * for the graphs to later render themselves.
  *
- * @author Greg Hinkle
- * @author Jay Shaughnessy
  * @author Mike Thompson
  */
 public abstract class AbstractMetricD3GraphView extends LocatableVLayout {

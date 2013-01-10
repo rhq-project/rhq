@@ -288,14 +288,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                             }
                             else
                             {
-                                if (i % 10 == 0)
-                                {
-                                    return  "url(#heavyLeaderBarGrad)";
-                                }
-                                else
-                                {
-                                    return  "url(#leaderBarGrad)";
-                                }
+                                return  "url(#leaderBarGrad)";
                             }
                         });
 
@@ -490,27 +483,27 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
             }
             function createHovers() {
                 console.log("Create Hovers");
-//            $wnd.jQuery('svg rect.leaderBar, svg rect.high, svg rect.low').tipsy({
-//                gravity: 'w',
-//                html: true,
-//                trigger: 'hover',
-//                title: function() {
-//                    var d = this.__data__ ;
-//                    //console.log("y: "+ d.y);
-//                    var xValue = (d.x == undefined) ? 0 : +d.x,
-//                    date = new Date(+xValue),
-//                    timeFormatter = $wnd.d3.time.format("%I:%M:%S %P"),
-//                    dateFormatter = $wnd.d3.time.format("%m/%d/%y"),
-//                    highValue = (d.high == undefined) ? 0 : d.high.toFixed(2),
-//                    lowValue = (d.low == undefined) ? 0 : d.low.toFixed(2),
-//                    avgValue = (d.y == undefined) ? 0 : d.y.toFixed(2);
-//                    return (d.y == undefined) ? '' : '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">Time: </span>' +timeFormatter(date)+ '</div>'+
-//                            '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">Date: </span>' +dateFormatter(date)+ '</div>'+
-//                            '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#ff8a9a";">High: </span>'
-//                            + highValue +'</div><div style="text-align: left;"><span style="width:50px;font-weight: bold;color: #b0d9b0";">Avg:  </span>'+ avgValue+
-//                            '</div><div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#8ad6ff";">Low:  </span>'+ lowValue + '</div>';
-//                }
-//            });
+            $wnd.jQuery('svg rect.leaderBar, svg rect.high, svg rect.low').tipsy({
+                gravity: 'w',
+                html: true,
+                trigger: 'hover',
+                title: function() {
+                    var d = this.__data__ ;
+                    //console.log("y: "+ d.y);
+                    var xValue = (d.x == undefined) ? 0 : +d.x,
+                    date = new Date(+xValue),
+                    timeFormatter = $wnd.d3.time.format("%I:%M:%S %P"),
+                    dateFormatter = $wnd.d3.time.format("%m/%d/%y"),
+                    highValue = (d.high == undefined) ? 0 : d.high.toFixed(2),
+                    lowValue = (d.low == undefined) ? 0 : d.low.toFixed(2),
+                    avgValue = (d.y == undefined) ? 0 : d.y.toFixed(2);
+                    return (d.y == undefined) ? '' : '<div style="text-align:left;z-index:401000;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">Time: </span>' +timeFormatter(date)+ '</div>'+
+                            '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">Date: </span>' +dateFormatter(date)+ '</div>'+
+                            '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#ff8a9a";">High: </span>'
+                            + highValue +'</div><div style="text-align: left;"><span style="width:50px;font-weight: bold;color: #b0d9b0";">Avg:  </span>'+ avgValue+
+                            '</div><div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#8ad6ff";">Low:  </span>'+ lowValue + '</div>';
+                }
+            });
             }
 
             return {
@@ -527,7 +520,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                     createXandYAxes();
                     createMinAvgPeakLines();
                     createXAxisLine();
-                    //createHovers();
+                    createHovers();
                     console.log("finished drawing paths");
                 }
             }; // end public closure

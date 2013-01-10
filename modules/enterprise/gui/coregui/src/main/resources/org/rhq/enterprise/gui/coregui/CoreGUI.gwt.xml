@@ -55,6 +55,7 @@
     <script src="/coregui/js/jquery.sparkline-2.1.min.js"/>
     <script src="/coregui/js/d3.v3.js"/>
     <script src="/coregui/js/nv.d3.js"/>
+    <script src="/coregui/js/jquery.tipsy.js"/>
     <script src="/coregui/js/rhq.js"/>
 
 

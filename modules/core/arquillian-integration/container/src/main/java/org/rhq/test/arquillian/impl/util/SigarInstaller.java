@@ -21,7 +21,6 @@ package org.rhq.test.arquillian.impl.util;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.UUID;
 
 import org.apache.commons.logging.Log;
@@ -30,8 +29,8 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
-import org.jboss.shrinkwrap.resolver.api.DependencyResolvers;
-import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
+import org.jboss.shrinkwrap.resolver.api.maven.Maven;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenResolverSystem;
 
 import org.rhq.core.util.file.FileUtil;
 
@@ -56,21 +55,12 @@ public class SigarInstaller {
     }
 
     private void init() {
-        MavenDependencyResolver mavenDependencyResolver = DependencyResolvers.use(MavenDependencyResolver.class);
+        MavenResolverSystem mavenDependencyResolver = Maven.resolver();
 
         // artifact specifier format is "<groupId>:<artifactId>[:<extension>[:<classifier>]][:<version >]"
-        Collection<JavaArchive> sigars = mavenDependencyResolver
-                .loadMetadataFromPom("pom.xml")
-                .goOffline()
-                // TODO (ips, 05/02/12): Figure out how to make this work without hard-coding the version.
-                .artifact("org.hyperic:sigar-dist:zip:1.6.5.132-3")
-                .resolveAs(JavaArchive.class);
-
-        if (sigars.size() > 1) {
-            LOG.warn("More than 1 org.hyperic:sigar-dist artifact found in the current POM: " + sigars);
-        }
-
-        sigarDistArtifact = sigars.iterator().next();
+        // TODO (ips, 05/02/12): Figure out how to make this work without hard-coding the version.
+        sigarDistArtifact = mavenDependencyResolver.offline().loadPomFromFile("pom.xml")
+            .resolve("org.hyperic:sigar-dist:zip:1.6.5.132-3").withoutTransitivity().asSingle(JavaArchive.class);
     }
 
     public boolean isSigarAvailable() {

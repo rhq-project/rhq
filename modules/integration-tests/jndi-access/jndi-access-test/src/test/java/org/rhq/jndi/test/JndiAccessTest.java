@@ -25,6 +25,8 @@ import static org.testng.Assert.fail;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Properties;
@@ -47,8 +49,7 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
-import org.jboss.shrinkwrap.resolver.api.DependencyResolvers;
-import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
+import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 
 import org.rhq.bindings.StandardScriptPermissions;
 import org.rhq.enterprise.server.AllowRhqServerInternalsAccessPermission;
@@ -77,25 +78,29 @@ public class JndiAccessTest extends Arquillian {
         JavaArchive testEjb = ShrinkWrap.create(JavaArchive.class, "test-ejb.jar").addClass(TestEjb.class)
             .addClass(TestEjbBean.class).addAsManifestResource(EmptyAsset.INSTANCE, ArchivePaths.create("beans.xml"));
 
-        Collection<JavaArchive> deps = DependencyResolvers.use(MavenDependencyResolver.class)
-            .loadMetadataFromPom("pom.xml")
-            .artifacts("jboss:jnp-client", "org.rhq:rhq-scripting-api", "org.rhq:rhq-scripting-javascript",
-                "org.rhq:rhq-scripting-python").scope("test").resolveAs(JavaArchive.class);
+        Collection thirdPartyDeps = new ArrayList();
+        thirdPartyDeps.add("jboss:jnp-client");
+        thirdPartyDeps.add("org.rhq:rhq-scripting-api");
+        thirdPartyDeps.add("org.rhq:rhq-scripting-javascript");
+        thirdPartyDeps.add("org.rhq:rhq-scripting-python");
+
+        Collection<JavaArchive> deps = Arrays.asList(Maven.resolver().loadPomFromFile("pom.xml")
+            .resolve(thirdPartyDeps).withTransitivity().as(JavaArchive.class));
 
         //we need to pull in the naming hack classes from the server jar so that our EAR behaves the same
         testEjb.addPackages(true, "org.rhq.enterprise.server.naming").addClass(
             AllowRhqServerInternalsAccessPermission.class);
-        
+
         //we also need to pull in the special startup beans from the server/itests-2 that will initialize the naming
         //subsystem
         testEjb.addClasses(StrippedDownStartupBean.class, StrippedDownStartupBeanPreparation.class);
-        
+
         //to work around https://issues.jboss.org/browse/ARQ-659
         //we need to include this test class in the EAR manually
 
         //Instead of pulling the whole rhq-script-bindings (which has a lot of deps), we're just picking the
         //StandardScriptPermissions from there so that it can be used in the tests
-        JavaArchive classes = ShrinkWrap.create(JavaArchive.class, "test-class.jar").addClasses(JndiAccessTest.class, 
+        JavaArchive classes = ShrinkWrap.create(JavaArchive.class, "test-class.jar").addClasses(JndiAccessTest.class,
             StandardScriptPermissions.class);
 
         return ShrinkWrap.create(EnterpriseArchive.class, "test-ear.ear").addAsModule(testEjb).addAsLibraries(deps)

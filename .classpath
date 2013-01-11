@@ -311,17 +311,17 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/shrinkwrap/shrinkwrap-api/1.0.1/shrinkwrap-api-1.0.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/shrinkwrap/shrinkwrap-spi/1.0.1/shrinkwrap-spi-1.0.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/shrinkwrap/descriptors/shrinkwrap-descriptors-api-base/2.0.0-alpha-3/shrinkwrap-descriptors-api-base-2.0.0-alpha-3.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/shrinkwrap/resolver/shrinkwrap-resolver-api/1.0.0-beta-7/shrinkwrap-resolver-api-1.0.0-beta-7.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/shrinkwrap/resolver/shrinkwrap-resolver-api-maven/1.0.0-beta-7/shrinkwrap-resolver-api-maven-1.0.0-beta-7.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/test/arquillian-test-spi/1.0.2.Final/arquillian-test-spi-1.0.2.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/test/arquillian-test-api/1.0.2.Final/arquillian-test-api-1.0.2.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/core/arquillian-core-spi/1.0.2.Final/arquillian-core-spi-1.0.2.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/core/arquillian-core-api/1.0.2.Final/arquillian-core-api-1.0.2.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/container/arquillian-container-spi/1.0.2.Final/arquillian-container-spi-1.0.2.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/container/arquillian-container-test-api/1.0.2.Final/arquillian-container-test-api-1.0.2.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/config/arquillian-config-api/1.0.2.Final/arquillian-config-api-1.0.2.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/container/arquillian-container-test-impl-base/1.0.2.Final/arquillian-container-test-impl-base-1.0.2.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/testng/arquillian-testng-core/1.0.2.Final/arquillian-testng-core-1.0.2.Final.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/shrinkwrap/resolver/shrinkwrap-resolver-api/2.0.0-alpha-6/shrinkwrap-resolver-api-2.0.0-alpha-6.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/shrinkwrap/resolver/shrinkwrap-resolver-api-maven/2.0.0-alpha-6/shrinkwrap-resolver-api-maven-2.0.0-alpha-6.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/test/arquillian-test-spi/1.0.3.Final/arquillian-test-spi-1.0.3.Final.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/test/arquillian-test-api/1.0.3.Final/arquillian-test-api-1.0.3.Final.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/core/arquillian-core-spi/1.0.3.Final/arquillian-core-spi-1.0.3.Final.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/core/arquillian-core-api/1.0.3.Final/arquillian-core-api-1.0.3.Final.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/container/arquillian-container-spi/1.0.3.Final/arquillian-container-spi-1.0.3.Final.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/container/arquillian-container-test-api/1.0.3.Final/arquillian-container-test-api-1.0.3.Final.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/config/arquillian-config-api/1.0.3.Final/arquillian-config-api-1.0.3.Final.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/container/arquillian-container-test-impl-base/1.0.3.Final/arquillian-container-test-impl-base-1.0.3.Final.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/testng/arquillian-testng-core/1.0.3.Final/arquillian-testng-core-1.0.3.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman/1.2.1/byteman-1.2.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/ejb3/jboss-ejb3-ext-api/2.0.0/jboss-ejb3-ext-api-2.0.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/spec/javax/ejb/jboss-ejb-api_3.1_spec/1.0.2.Final/jboss-ejb-api_3.1_spec-1.0.2.Final.jar"/>

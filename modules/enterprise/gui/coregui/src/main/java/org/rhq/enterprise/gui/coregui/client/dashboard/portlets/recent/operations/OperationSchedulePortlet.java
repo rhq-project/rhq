@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operatio
  */
 
 import com.google.gwt.user.client.Timer;
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -41,6 +42,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
@@ -126,9 +128,15 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
                 if (value != null) {
                     String timestamp = super.format(value, record, rowNum, colNum);
-                    Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
+                    Integer id = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
+                    String url = null;
                     Integer opScheduleId = record.getAttributeAsInt("id");
-                    String url = LinkManager.getSubsystemResourceOperationScheduleLink(resourceId, opScheduleId);
+                    if (id == null) {
+                        id = record.getAttributeAsInt(ScheduledOperationsDataSource.Field.GROUP_ID.propertyName());
+                        url = LinkManager.getSubsystemGroupOperationScheduleLink(id, opScheduleId);
+                    } else {
+                        url = LinkManager.getSubsystemResourceOperationScheduleLink(id, opScheduleId);
+                    }
                     return SeleniumUtility.getLocatableHref(url, timestamp, null);
                 } else {
                     return "<i>" + MSG.common_label_none() + "</i>";
@@ -142,23 +150,54 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
         ListGridField operationNext = new ListGridField(ScheduledOperationsDataSource.Field.OPERATION.propertyName(),
             ScheduledOperationsDataSource.Field.OPERATION.title());
 
-        ListGridField resourceNext = new ListGridField(ScheduledOperationsDataSource.Field.RESOURCE.propertyName(),
-            ScheduledOperationsDataSource.Field.RESOURCE.title());
+        ListGridField resourceNext = new ListGridField(ScheduledOperationsDataSource.Field.RESOURCE_OR_GROUP.propertyName(),
+            ScheduledOperationsDataSource.Field.RESOURCE_OR_GROUP.title());
         resourceNext.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                Integer id = listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
+                String url = null;
+                if (id == null) {
+                    id = listGridRecord.getAttributeAsInt(ScheduledOperationsDataSource.Field.GROUP_ID.propertyName());
+                    url = LinkManager.getResourceGroupLink(id);
+                } else {
+                    url = LinkManager.getResourceLink(id);
+                }
                 return SeleniumUtility.getLocatableHref(url, o.toString(), null);
             }
         });
         resourceNext.setShowHover(true);
         resourceNext.setHoverCustomizer(new HoverCustomizer() {
             public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
-                return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
+                Integer id = listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
+                if (id != null) {
+                    return MSG.common_title_resource() + ": " + AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
+                } else {
+                    String type = listGridRecord.getAttributeAsString(ScheduledOperationsDataSource.Field.GROUP_TYPE
+                        .propertyName());
+                    String name = listGridRecord
+                        .getAttributeAsString(ScheduledOperationsDataSource.Field.RESOURCE_OR_GROUP.propertyName());
+                    return "<p>" + MSG.common_title_group() + " (" + type + "):<br/><br/>" + name + "</p>";
+                }
             }
         });
 
-        ListGridField ancestryNext = AncestryUtil.setupAncestryListGridField();
-
+        
+        ListGridField ancestryNext = new ListGridField(AncestryUtil.RESOURCE_ANCESTRY, CoreGUI.getMessages().common_title_ancestry());
+        ancestryNext.setAlign(Alignment.LEFT);
+        ancestryNext.setCellAlign(Alignment.LEFT);
+        AncestryUtil.setupAncestryListGridFieldCellFormatter(ancestryNext);
+        ancestryNext.setShowHover(true);
+        ancestryNext.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                Integer id = listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
+                if (id != null) {
+                    return AncestryUtil.getAncestryHoverHTML(listGridRecord, 0);
+                } else {
+                    return MSG.common_title_group();
+                }
+            }
+        });
+        
         scheduledOperationsGrid.setFields(timeNext, operationNext, resourceNext, ancestryNext);
     }
 

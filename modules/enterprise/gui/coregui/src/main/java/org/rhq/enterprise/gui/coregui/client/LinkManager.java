@@ -245,6 +245,11 @@ public class LinkManager {
         }
         return link;
     }
+    
+    
+    public static String getSubsystemGroupOperationScheduleLink(int groupId, int opScheduleId) {
+        return "#ResourceGroup/" + groupId + "/Operations/Schedules/" + opScheduleId;
+    }
 
     public static String getAlertDetailLink(EntityContext entityContext, int alertId) {
         String link;

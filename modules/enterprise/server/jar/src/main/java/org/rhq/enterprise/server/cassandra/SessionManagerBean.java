@@ -33,6 +33,7 @@ import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleAuthInfoProvider;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
+import org.rhq.cassandra.CassandraNode;
 import org.rhq.server.metrics.CQLException;
 
 /**
@@ -56,8 +57,19 @@ public class SessionManagerBean {
                 throw new CQLException("The rhq.cassandra.password property is null. Cannot create session.");
             }
 
+            String seedProp = System.getProperty("rhq.cassandra.seeds");
+            if (seedProp == null) {
+                throw new CQLException("The rhq.cassandra.seeds property is null. Cannot create session.");
+            }
+            String[] seeds = seedProp.split(",");
+            String[] hostNames = new String[seeds.length];
+            for (int i = 0; i < seeds.length; ++i) {
+                CassandraNode node = CassandraNode.parseNode(seeds[i]);
+                hostNames[i] = node.getHostName();
+            }
+
             Cluster cluster = Cluster.builder()
-                .addContactPoints("127.0.0.1", "127.0.0.2")
+                .addContactPoints(hostNames)
                 .withAuthInfoProvider(new SimpleAuthInfoProvider().add("username", username).add("password", password))
                 .build();
             session = cluster.connect("rhq");

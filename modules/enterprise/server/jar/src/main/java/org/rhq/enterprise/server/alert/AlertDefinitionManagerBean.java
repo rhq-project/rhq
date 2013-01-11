@@ -201,7 +201,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public int createDependentAlertDefinition(Subject subject, AlertDefinition alertDefinition, int resourceId)
         throws InvalidAlertDefinitionException {
-        
+
         return createAlertDefinitionInternal(subject, alertDefinition, resourceId, false, false);
     }
 
@@ -209,7 +209,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public int createAlertDefinition(Subject subject, AlertDefinition alertDefinition, Integer resourceId, boolean validateNotificationConfiguration)
         throws InvalidAlertDefinitionException {
-        
+
         return createAlertDefinitionInternal(subject, alertDefinition, resourceId, true, validateNotificationConfiguration);
     }
 
@@ -280,7 +280,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
 
         return alertDefinition.getId();
     }
-    
+
     private void fixRecoveryId(AlertDefinition definition) {
         try {
             if (definition.getParentId() != 0 && definition.getRecoveryId() != 0) {
@@ -471,20 +471,22 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         AlertDefinitionUpdateException {
         return updateAlertDefinitionInternal(subject, alertDefinitionId, alertDefinition, resetMatching, true, true);
     }
-    
+
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public AlertDefinition updateDependentAlertDefinition(Subject subject, int alertDefinitionId, AlertDefinition alertDefinition, boolean resetMatching) throws InvalidAlertDefinitionException, AlertDefinitionUpdateException {
         return updateAlertDefinitionInternal(subject, alertDefinitionId, alertDefinition, resetMatching, false, false);
     }
-    
-    private AlertDefinition updateAlertDefinitionInternal(Subject subject, int alertDefinitionId,
-        AlertDefinition alertDefinition, boolean resetMatching, boolean checkPerms, boolean finalizeNotifications) throws InvalidAlertDefinitionException,
+
+    @Override
+    public AlertDefinition updateAlertDefinitionInternal(Subject subject, int alertDefinitionId,
+                                                         AlertDefinition alertDefinition, boolean resetMatching,
+                                                         boolean checkPerms, boolean finalizeNotifications) throws InvalidAlertDefinitionException,
         AlertDefinitionUpdateException {
         if (resetMatching) {
             alertDefinitionManager.purgeInternals(alertDefinitionId);
         }
-        
+
         /*
          * Method for catching ENABLE / DISABLE changes will use switch logic off of the delta instead of calling out to
          * the enable/disable functions
@@ -512,7 +514,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
          * is not currently deleted
          */
         boolean isResourceLevel = (oldAlertDefinition.getResource() != null);
-        
+
         checkAlertDefinition(subject, oldAlertDefinition, alertDefinition, isResourceLevel ? oldAlertDefinition.getResource().getId()
             : null, finalizeNotifications);
 
@@ -609,7 +611,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         //return an object with the same... let's force lazy load before we leave the persistence context
         new ArrayList<AlertCondition>(newAlertDefinition.getConditions());
         new ArrayList<AlertNotification>(newAlertDefinition.getAlertNotifications());
-        
+
         return newAlertDefinition;
     }
 
@@ -662,21 +664,21 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
 
         if (finalizeNotifications) {
             List<AlertNotification> notifications = new ArrayList<AlertNotification>(alertDefinition.getAlertNotifications());
-            
+
             //now remove the notifications that have not changed
             if (persistedAlertDefinition != null) {
                 List<AlertNotification> persistedNotifications =  persistedAlertDefinition.getAlertNotifications() == null ? Collections.<AlertNotification>emptyList() : persistedAlertDefinition.getAlertNotifications();
-                
+
                 if (persistedNotifications.size() > 0) {
                     Iterator<AlertNotification> it = notifications.iterator();
                     while (it.hasNext()) {
                         AlertNotification newNotification = it.next();
-                        
+
                         if (newNotification.getId() == 0) {
                             //this is a fresh, not persisted notif. These guys have to be always finalized.
                             continue;
                         }
-                        
+
                         for(AlertNotification persistedNotification : persistedNotifications) {
                             //ignore the ids on the notifications as they may vary if we are comparing parent alert def with its children
                             //it's enough for us they they are semantically the same.
@@ -688,7 +690,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
                     }
                 }
             }
-            
+
             if (!alertNotificationManager.finalizeNotifications(subject, notifications)) {
                 throw new InvalidAlertDefinitionException("Some of the notifications failed to validate.");
             }

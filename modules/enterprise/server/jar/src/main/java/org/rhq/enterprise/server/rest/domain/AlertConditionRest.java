@@ -38,6 +38,8 @@ public class AlertConditionRest {
     private Double threshold;
     private String option;
     private Integer triggerId;
+    private String comparator;
+    private int measurementDefinition;
 
     public AlertConditionRest() {
     }
@@ -90,4 +92,19 @@ public class AlertConditionRest {
         this.triggerId = triggerId;
     }
 
+    public String getComparator() {
+        return comparator;
+    }
+
+    public void setComparator(String comparator) {
+        this.comparator = comparator;
+    }
+
+    public int getMeasurementDefinition() {
+        return measurementDefinition;
+    }
+
+    public void setMeasurementDefinition(int measurementDefinition) {
+        this.measurementDefinition = measurementDefinition;
+    }
 }

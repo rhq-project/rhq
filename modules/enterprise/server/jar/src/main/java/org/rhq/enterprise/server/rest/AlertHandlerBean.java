@@ -21,17 +21,17 @@ package org.rhq.enterprise.server.rest;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.interceptor.Interceptors;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -74,11 +74,13 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.Criteria;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
@@ -108,6 +110,9 @@ public class AlertHandlerBean extends AbstractRestBean {
 
     @EJB
     AlertNotificationManagerLocal notificationMgr;
+
+    @EJB
+    AlertConditionManagerLocal conditionMgr;
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -217,7 +222,7 @@ public class AlertHandlerBean extends AbstractRestBean {
     @GET
     @Path("/{id}/conditions")
     @Cache(maxAge = 300)
-    @ApiOperation(value = "Return the notification logs for the given alert")
+    @ApiOperation(value = "Return the condition logs for the given alert")
     public Response getConditionLogs(@ApiParam("Id of the alert to retrieve") @PathParam("id") int id,
                                   @Context Request request, @Context UriInfo uriInfo, @Context HttpHeaders headers) {
 
@@ -400,15 +405,7 @@ public class AlertHandlerBean extends AbstractRestBean {
 
         List<AlertNotification> notifications = new ArrayList<AlertNotification>(adr.getNotifications().size());
         for (AlertNotificationRest anr : adr.getNotifications()) {
-            AlertNotification notification = new AlertNotification(anr.getSenderName());
-            // TODO validate sender
-            notification.setAlertDefinition(alertDefinition);
-            Configuration configuration = new Configuration();
-            for (Map.Entry<String,Object> entry: anr.getConfig().entrySet()) {
-                configuration.put(new PropertySimple(entry.getKey(),entry.getValue()));
-            }
-            notification.setConfiguration(configuration);
-            // TODO extra configuration (?)
+            AlertNotification notification = notificationRestToNotification(alertDefinition, anr);
 
             notifications.add(notification);
         }
@@ -437,6 +434,20 @@ public class AlertHandlerBean extends AbstractRestBean {
         Response.ResponseBuilder builder = Response.created(uri);
         builder.entity(uadr);
         return builder.build();
+    }
+
+    private AlertNotification notificationRestToNotification(AlertDefinition alertDefinition,
+                                                             AlertNotificationRest anr) {
+        AlertNotification notification = new AlertNotification(anr.getSenderName());
+        // TODO validate sender
+        notification.setAlertDefinition(alertDefinition);
+        Configuration configuration = new Configuration();
+        for (Map.Entry<String,Object> entry: anr.getConfig().entrySet()) {
+            configuration.put(new PropertySimple(entry.getKey(),entry.getValue()));
+        }
+        notification.setConfiguration(configuration);
+        // TODO extra configuration (?)
+        return notification;
     }
 
     @PUT
@@ -489,21 +500,178 @@ public class AlertHandlerBean extends AbstractRestBean {
 
         alertDefinitionManager.updateAlertDefinition(caller,definitionId,definition,false);
 
+        Response.ResponseBuilder builder = getResponseBuilderForCondition(definitionId, uriInfo, condition, true);
+
+        return builder.build();
+    }
+
+    private Response.ResponseBuilder getResponseBuilderForCondition(int definitionId, UriInfo uriInfo,
+                                                                    AlertCondition originalCondition, boolean isCreate) {
         AlertDefinition updatedDefinition = alertDefinitionManager.getAlertDefinition(caller,definitionId);
         Set<AlertCondition> conditions = updatedDefinition.getConditions();
         int conditionId=-1;
+        AlertCondition createdCondition = null;
         for (AlertCondition cond :conditions) {
-            if (cond.getName().equals(condition.getName()))
+            if (cond.getName().equals(originalCondition.getName())) {
                 conditionId = cond.getId();
+                createdCondition = cond;
+            }
         }
 
         UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
-        uriBuilder.path("/alert/definition/{id}/condition/{cid}");
-        URI uri = uriBuilder.build(definitionId,conditionId);
+        uriBuilder.path("/alert/condition/{cid}");
+        URI uri = uriBuilder.build(conditionId);
 
-        Response.ResponseBuilder builder = Response.created(uri);
+        AlertConditionRest result = conditionToConditionRest(createdCondition);
 
+        Response.ResponseBuilder builder;
+        if (isCreate)
+            builder = Response.created(uri);
+        else  {
+            builder = Response.ok();
+            builder.location(uri);
+        }
+        builder.entity(result);
+        return builder;
+    }
+
+    @GET
+    @Path("notification/{nid}")
+    public Response getNotification(@PathParam("nid") int notificationId) {
+
+        AlertNotification notification = notificationMgr.getAlertNotification(caller,notificationId);
+        AlertNotificationRest anr = notificationToNotificationRest(notification);
+
+        return Response.ok(anr).build();
+    }
+
+    @DELETE
+    @Path("notification/{nid}")
+    public Response deleteNotification(@PathParam("nid") int notificationId) {
+
+        AlertNotification notification = notificationMgr.getAlertNotification(caller,notificationId);
+        AlertDefinition definition = alertDefinitionManager.getAlertDefinition(caller,notification.getAlertDefinition().getId());
+
+        definition.getAlertNotifications().remove(notification);
+
+        alertDefinitionManager.updateAlertDefinitionInternal(caller,definition.getId(),definition,true,true,true);
+//        alertDefinitionManager.updateAlertDefinition(caller, definition.getId(), copiedDef, true);
+
+        entityManager.flush();
+
+        return Response.noContent().build();
+    }
+
+    @PUT
+    @Path("notification/{nid}")
+    public Response updateNotification(@PathParam("nid") int notificationId, AlertNotificationRest notificationRest) {
+
+        AlertNotification notification = notificationMgr.getAlertNotification(caller,notificationId);
+        AlertDefinition definition = alertDefinitionManager.getAlertDefinition(caller,notification.getAlertDefinition().getId());
+
+        AlertNotification newNotif = notificationRestToNotification(definition,notificationRest);
+        notification.setConfiguration(newNotif.getConfiguration());
+        notification.setExtraConfiguration(newNotif.getExtraConfiguration());
+        // id and sender need to stay the same
+
+        alertDefinitionManager.updateAlertDefinitionInternal(caller,definition.getId(),definition,true,true,true);
+        entityManager.flush();
+
+        List<AlertNotification> notifications = definition.getAlertNotifications();
+        int newNotifId = 0;
+        for (AlertNotification n : notifications) {
+            if (n.getSenderName().equals(notification.getSenderName()))
+                newNotifId = n.getId();
+        }
+
+        AlertNotification result = notificationMgr.getAlertNotification(caller,newNotifId);
+        AlertNotificationRest resultRest = notificationToNotificationRest(result);
+
+        return Response.ok(resultRest).build(); // TODO
+    }
+
+
+    @DELETE
+    @Path("condition/{cid}")
+    public Response deleteCondition(@PathParam("cid") int conditionId) {
+        Integer definitionId = findDefinitionIdForConditionId(conditionId);
+
+        AlertDefinition definition2 = entityManager.find(AlertDefinition.class,definitionId);
+        AlertCondition condition=null;
+        for (AlertCondition c: definition2.getConditions()) {
+            if (c.getId() == conditionId)
+                condition=c;
+        }
+
+        definition2.getConditions().remove(condition);
+
+        alertDefinitionManager.updateAlertDefinition(caller,definitionId,definition2,true);
+
+        return Response.noContent().build();
+    }
+
+    private Integer findDefinitionIdForConditionId(int conditionId) {
+    /*
+            // this returns a proxy object, which is not fully initialized
+            // and all the further work will fail
+            AlertCondition condition = conditionMgr.getAlertConditionById(conditionId);
+            AlertDefinition def = condition.getAlertDefinition()
+
+            // So we need to "manually" pull that information in
+    */
+
+        Query q = entityManager.createQuery("SELECT condition.alertDefinition.id FROM AlertCondition condition WHERE condition.id = :id ");
+        q.setParameter("id",conditionId);
+        Object o = q.getSingleResult();
+        return (Integer)o;
+    }
+
+    @PUT
+    @Path("condition/{cid}")
+    public Response updateCondition(@PathParam("cid") int conditionId, AlertConditionRest conditionRest, @Context UriInfo uriInfo) {
+
+        Integer definitionId = findDefinitionIdForConditionId(conditionId);
+
+        AlertDefinition definition = entityManager.find(AlertDefinition.class,definitionId);
+        AlertCondition condition=null;
+
+        for (Iterator<AlertCondition> iterator = definition.getConditions().iterator(); iterator.hasNext(); ) {
+            AlertCondition oldCondition = iterator.next();
+            if (oldCondition.getId() == conditionId) {
+                condition = new AlertCondition(oldCondition);
+                oldCondition.setAlertDefinition(null);
+                iterator.remove();
+                entityManager.remove(oldCondition);
+            }
+        }
+
+
+        AlertCondition restCondition = conditionRestToCondition(conditionRest);
+
+        condition.setOption(conditionRest.getOption());
+        condition.setComparator(conditionRest.getComparator());
+        condition.setMeasurementDefinition(restCondition.getMeasurementDefinition());
+        condition.setThreshold(conditionRest.getThreshold());
+        condition.setTriggerId(conditionRest.getTriggerId());
+        definition.getConditions().add(condition);
+
+        alertDefinitionManager.updateAlertDefinitionInternal(caller, definitionId, definition, true, true, true);
+
+        entityManager.flush();
+
+        Response.ResponseBuilder builder = getResponseBuilderForCondition(definitionId,uriInfo,condition,false);
         return builder.build();
+
+    }
+
+    @GET
+    @Path("condition/{cid}")
+    public Response getCondition(@PathParam("cid") int conditionId) {
+
+        AlertCondition condition = conditionMgr.getAlertConditionById(conditionId);
+        AlertConditionRest acr = conditionToConditionRest(condition);
+
+        return Response.ok(acr).build();
 
     }
 
@@ -511,6 +679,13 @@ public class AlertHandlerBean extends AbstractRestBean {
         AlertCondition condition = new AlertCondition();
         condition.setName(conditionRest.getName().name());
         condition.setCategory(AlertConditionCategory.valueOf(conditionRest.getCategory().getName()));
+        condition.setOption(conditionRest.getOption());
+        condition.setComparator(conditionRest.getComparator());
+        MeasurementDefinition md = entityManager.find(MeasurementDefinition.class,conditionRest.getMeasurementDefinition());
+        condition.setMeasurementDefinition(md);
+        condition.setThreshold(conditionRest.getThreshold());
+        condition.setTriggerId(conditionRest.getTriggerId());
+
         return condition;
     }
 
@@ -545,10 +720,14 @@ public class AlertHandlerBean extends AbstractRestBean {
         // TODO extra configuration (?)
 
 
-        alertDefinitionManager.updateAlertDefinition(caller, definitionId, definition, false);
+        alertDefinitionManager.updateAlertDefinitionInternal(caller, definitionId, definition, false, true, true);
 
 
-        AlertDefinition updatedDefinition = alertDefinitionManager.getAlertDefinition(caller,definitionId);
+        alertDefinitionManager.getAlertDefinition(caller,definitionId);
+
+        entityManager.flush();
+
+        AlertDefinition updatedDefinition = alertDefinitionManager.getAlertDefinitionById(caller,definitionId);
 
         List<AlertNotification> notifs = updatedDefinition.getAlertNotifications();
 
@@ -560,8 +739,8 @@ public class AlertHandlerBean extends AbstractRestBean {
         int notificationId = updatedNotification.getId();
 
         UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
-        uriBuilder.path("/alert/definition/{id}/notification/{nid}");
-        URI uri = uriBuilder.build(definitionId, notificationId );
+        uriBuilder.path("/alert/notification/{nid}");
+        URI uri = uriBuilder.build(notificationId );
 
         Response.ResponseBuilder builder = Response.created(uri);
         builder.entity(updatedNotificationRest);
@@ -659,7 +838,8 @@ public class AlertHandlerBean extends AbstractRestBean {
         acr.setName(AlertConditionOperator.valueOf(condition.getName()));
         acr.setCategory(condition.getCategory());
         acr.setOption(condition.getOption());
-        // TODO measurement definition
+        acr.setComparator(condition.getComparator());
+        acr.setMeasurementDefinition(condition.getMeasurementDefinition()==null?0:condition.getMeasurementDefinition().getId());
         acr.setThreshold(condition.getThreshold());
         acr.setTriggerId(condition.getTriggerId()); // TODO what's that?
 

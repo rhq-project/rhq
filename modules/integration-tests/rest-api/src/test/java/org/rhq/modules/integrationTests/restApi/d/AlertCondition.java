@@ -7,11 +7,13 @@ package org.rhq.modules.integrationTests.restApi.d;
 public class AlertCondition {
 
     int id;
-    String name;
+    String name; // = AlertConditionOperator.class
     String category;
     private Double threshold;
     private String option;
     private Integer triggerId;
+    private String comparator;
+    private int measurementDefinition;
 
     public AlertCondition(String name, String category) {
         this.name = name;
@@ -73,4 +75,19 @@ public class AlertCondition {
         this.triggerId = triggerId;
     }
 
+    public String getComparator() {
+        return comparator;
+    }
+
+    public void setComparator(String comparator) {
+        this.comparator = comparator;
+    }
+
+    public void setMeasurementDefinition(int measurementDefinition) {
+        this.measurementDefinition = measurementDefinition;
+    }
+
+    public int getMeasurementDefinition() {
+        return measurementDefinition;
+    }
 }

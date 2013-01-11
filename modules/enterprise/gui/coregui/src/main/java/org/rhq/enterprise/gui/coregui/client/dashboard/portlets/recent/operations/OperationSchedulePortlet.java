@@ -97,7 +97,7 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
 
     //default no-args constructor for serialization.
     private OperationSchedulePortlet() {
-        super("(unitialized)");
+        super("(uninitialized)");
     }
 
     public OperationSchedulePortlet(String locatorId) {

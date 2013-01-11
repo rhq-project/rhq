@@ -40,7 +40,7 @@ public abstract class OperationScheduleComposite implements Serializable {
     protected OperationScheduleComposite() {
         this.operationNextFireTime = -1;
         this.id = 0;
-        this.operationName = "(unitialized)";
+        this.operationName = "(uninitialized)";
     }
 
     public OperationScheduleComposite(int id, String jobName, String jobGroup, String operationName, long operationNextFireTime) {

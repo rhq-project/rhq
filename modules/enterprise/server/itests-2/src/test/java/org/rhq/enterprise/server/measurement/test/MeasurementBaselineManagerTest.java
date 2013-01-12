@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Random;
 
 import javax.inject.Inject;
+import javax.persistence.Query;
 
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
@@ -35,12 +36,15 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementOOB;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.NumericType;
+import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.cassandra.SessionManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
@@ -98,69 +102,69 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
      *
      * @throws Throwable
      */
-//    public void testAutoBaselineCalculationsWithLargeInventory() throws Throwable {
-//        long startingTime;
-//
-//        begin();
-//
-//        try {
-//            setupManyResources(20, 10);
-//
-//            long now = System.currentTimeMillis();
-//            long eldest = now - 180000;
-//            long elder = now - 120000;
-//            long young = now - 60000;
-//            long youngest = now;
-//
-//            int dataCount = allScheds.size();
-//            for (MeasurementSchedule sched : allScheds) {
-//                insertMeasurementDataNumeric1H(eldest, sched, 30.0, 20.0, 40.0);
-//                insertMeasurementDataNumeric1H(elder, sched, 5.0, 2.0, 8.0);
-//                insertMeasurementDataNumeric1H(young, sched, 6.0, 3.0, 9.0);
-//                insertMeasurementDataNumeric1H(youngest, sched, 40.0, 30.0, 50.0);
-//                if ((--dataCount % 500) == 0) {
-//                    System.out.println(String.valueOf(dataCount) + " more test measurement data left to insert");
-//                    commitAndBegin();
-//                }
-//            }
-//
-//            commit();
-//
-//            startingTime = System.currentTimeMillis();
-//
-//            long computeTime = baselineManager.calculateAutoBaselines(90000, System.currentTimeMillis());
-//            assert computeTime > 0;
-//
-//            System.out.println(">>>>>>> a) [" + allScheds.size() + "] baselines calculated in ["
-//                + (System.currentTimeMillis() - startingTime) + "] ms");
-//
-//            // calculate them again, the delete query will be triggered this time
-//            startingTime = System.currentTimeMillis();
-//            computeTime = baselineManager.calculateAutoBaselines(90000, System.currentTimeMillis());
-//            assert computeTime > 0;
-//
-//            System.out.println(">>>>>>> b) [" + allScheds.size() + "] baselines calculated in ["
-//                + (System.currentTimeMillis() - startingTime) + "] ms");
-//
-//            deleteManyResources();
-//        } catch (Throwable t) {
-//            System.out.println("TEST FAILURE STACK TRACE FOLLOWS:");
-//            t.printStackTrace();
-//            throw t;
-//        } finally {
-//            try {
-//                getTransactionManager().rollback();
-//            } catch (Exception e) {
-//            }
-//
-//            allScheds.clear();
-//            allDefs.clear();
-//            allResources.clear();
-//            allScheds = null;
-//            allDefs = null;
-//            allResources = null;
-//        }
-//    }
+    public void testAutoBaselineCalculationsWithLargeInventory() throws Throwable {
+        long startingTime;
+
+        begin();
+
+        try {
+            setupManyResources(20, 10);
+
+            long now = System.currentTimeMillis();
+            long eldest = now - 180000;
+            long elder = now - 120000;
+            long young = now - 60000;
+            long youngest = now;
+
+            int dataCount = allScheds.size();
+            for (MeasurementSchedule sched : allScheds) {
+                insertMeasurementDataNumeric1H(eldest, sched, 30.0, 20.0, 40.0);
+                insertMeasurementDataNumeric1H(elder, sched, 5.0, 2.0, 8.0);
+                insertMeasurementDataNumeric1H(young, sched, 6.0, 3.0, 9.0);
+                insertMeasurementDataNumeric1H(youngest, sched, 40.0, 30.0, 50.0);
+                if ((--dataCount % 500) == 0) {
+                    System.out.println(String.valueOf(dataCount) + " more test measurement data left to insert");
+                    commitAndBegin();
+                }
+            }
+
+            commit();
+
+            startingTime = System.currentTimeMillis();
+
+            long computeTime = baselineManager.calculateAutoBaselines(90000, System.currentTimeMillis());
+            assert computeTime > 0;
+
+            System.out.println(">>>>>>> a) [" + allScheds.size() + "] baselines calculated in ["
+                + (System.currentTimeMillis() - startingTime) + "] ms");
+
+            // calculate them again, the delete query will be triggered this time
+            startingTime = System.currentTimeMillis();
+            computeTime = baselineManager.calculateAutoBaselines(90000, System.currentTimeMillis());
+            assert computeTime > 0;
+
+            System.out.println(">>>>>>> b) [" + allScheds.size() + "] baselines calculated in ["
+                + (System.currentTimeMillis() - startingTime) + "] ms");
+
+            deleteManyResources();
+        } catch (Throwable t) {
+            System.out.println("TEST FAILURE STACK TRACE FOLLOWS:");
+            t.printStackTrace();
+            throw t;
+        } finally {
+            try {
+                getTransactionManager().rollback();
+            } catch (Exception e) {
+            }
+
+            allScheds.clear();
+            allDefs.clear();
+            allResources.clear();
+            allScheds = null;
+            allDefs = null;
+            allResources = null;
+        }
+    }
 
     /**
      * This is a very important test - it tests native queries that are hardcoded. We need this test because just
@@ -315,97 +319,97 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
      * @throws Throwable If anything goes wrong.
      */
     @SuppressWarnings("unchecked")
-//    public void testCalculateOOB() throws Throwable {
-//
-//        begin();
-//
-//        try {
-//            setupResources();
-//            assert em.find(Resource.class, platform.getId()) != null : "Did not setup platform - cannot test";
-//
-//            long now = System.currentTimeMillis();
-//            long eldest = now - 180000;
-//            long elder = now - 120000;
-//            long young = now - 60000;
-//            long youngest = now;
-//
-//            insertMeasurementDataNumeric1H(0, measSched, 0.0, 0.0, 0.0);
-//            insertMeasurementDataNumeric1H(eldest, measSched, 30.0, 20.0, 40.0);
-//            insertMeasurementDataNumeric1H(elder, measSched, 5.0, 2.0, 8.0);
-//            insertMeasurementDataNumeric1H(young, measSched, 6.0, 3.0, 9.0);
-//            insertMeasurementDataNumeric1H(youngest, measSched, 40.0, 30.0, 50.0);
-//
-//            insertMeasurementDataNumeric1H(0, measSched2, 0.0, 0.0, 0.0);
-//            insertMeasurementDataNumeric1H(eldest, measSched2, 5000.0, 3500.0, 6500.0);
-//            insertMeasurementDataNumeric1H(elder, measSched2, 5000.0, 3000.0, 7000.0);
-//            insertMeasurementDataNumeric1H(young, measSched2, 2000.0, 1000.0, 3000.0);
-//            insertMeasurementDataNumeric1H(youngest, measSched2, 1500.0, 500.0, 2500.0);
-//
-//            commit();
-//
-//            long computeTime = baselineManager.calculateAutoBaselines(30000, System.currentTimeMillis());
-//            assert computeTime > 0;
-//
-//            begin();
-//            // check the 2 values at 5000 against their bands computed between [500 and 1000]
-//            oobManager.computeOOBsFromHourBeginingAt(overlord, eldest);
-//
-//            // check results
-//            Query q = em.createQuery("SELECT oo FROM MeasurementOOB oo");
-//            List<MeasurementOOB> oobs = q.getResultList();
-//            System.out.println("OOBs calculated: \n" + oobs);
-//            for (MeasurementOOB oob : oobs) {
-//                if (oob.getScheduleId() == measSched.getId()) {
-//                    assert oob.getOobFactor() == 50 : "Expected: 50, was " + oob.getOobFactor();
-//                } else {
-//                    assert oob.getOobFactor() == 200 : "Expected: 200, was " + oob.getOobFactor();
-//                }
-//            }
-//
-//            PageControl pc = PageControl.getUnlimitedInstance();
-//
-//            List<MeasurementOOBComposite> comps = oobManager.getSchedulesWithOOBs(overlord, null, null, null, pc);
-//            //         System.out.println("Composites: " + comps);
-//            assert comps.size() == 2 : "Expected 2 composites, but got " + comps.size();
-//
-//            comps = oobManager.getHighestNOOBsForResource(overlord, platform.getId(), 2);
-//            assert comps.size() == 1 : "Expected 1 composite, but got " + comps.size();
-//
-//            // Compute some more OOBs
-//            oobManager.computeOOBsFromHourBeginingAt(overlord, elder);
-//            q = em.createQuery("SELECT oo FROM MeasurementOOB oo");
-//            oobs = q.getResultList();
-//            //    System.out.println("OOBs calculated: \n" + oobs);
-//
-//            comps = oobManager.getSchedulesWithOOBs(overlord, null, null, null, pc);
-//            //     System.out.println("Composites: " + comps);
-//            assert comps.size() == 2 : "Expected 2, but was " + comps.size();
-//
-//            commit();
-//
-//            // Clean up
-//
-//            begin();
-//
-//            q = em.createQuery("DELETE FROM MeasurementOOB oo WHERE  oo.id = :sched1 OR oo.id = :sched2");
-//            q.setParameter("sched1", measSched.getId());
-//            q.setParameter("sched2", measSched2.getId());
-//            q.executeUpdate();
-//            commit();
-//
-//            deleteResources();
-//        } catch (Throwable t) {
-//            System.out.println("TEST FAILURE STACK TRACE FOLLOWS:");
-//            t.printStackTrace();
-//            throw t;
-//        } finally {
-//            try {
-//                getTransactionManager().rollback();
-//            } catch (Exception e) {
-//            }
-//        }
-//
-//    }
+    public void testCalculateOOB() throws Throwable {
+
+        begin();
+
+        try {
+            setupResources();
+            assert em.find(Resource.class, platform.getId()) != null : "Did not setup platform - cannot test";
+
+            long now = System.currentTimeMillis();
+            long eldest = now - 180000;
+            long elder = now - 120000;
+            long young = now - 60000;
+            long youngest = now;
+
+            insertMeasurementDataNumeric1H(0, measSched, 0.0, 0.0, 0.0);
+            insertMeasurementDataNumeric1H(eldest, measSched, 30.0, 20.0, 40.0);
+            insertMeasurementDataNumeric1H(elder, measSched, 5.0, 2.0, 8.0);
+            insertMeasurementDataNumeric1H(young, measSched, 6.0, 3.0, 9.0);
+            insertMeasurementDataNumeric1H(youngest, measSched, 40.0, 30.0, 50.0);
+
+            insertMeasurementDataNumeric1H(0, measSched2, 0.0, 0.0, 0.0);
+            insertMeasurementDataNumeric1H(eldest, measSched2, 5000.0, 3500.0, 6500.0);
+            insertMeasurementDataNumeric1H(elder, measSched2, 5000.0, 3000.0, 7000.0);
+            insertMeasurementDataNumeric1H(young, measSched2, 2000.0, 1000.0, 3000.0);
+            insertMeasurementDataNumeric1H(youngest, measSched2, 1500.0, 500.0, 2500.0);
+
+            commit();
+
+            long computeTime = baselineManager.calculateAutoBaselines(30000, System.currentTimeMillis());
+            assert computeTime > 0;
+
+            begin();
+            // check the 2 values at 5000 against their bands computed between [500 and 1000]
+            oobManager.computeOOBsFromHourBeginingAt(overlord, eldest);
+
+            // check results
+            Query q = em.createQuery("SELECT oo FROM MeasurementOOB oo");
+            List<MeasurementOOB> oobs = q.getResultList();
+            System.out.println("OOBs calculated: \n" + oobs);
+            for (MeasurementOOB oob : oobs) {
+                if (oob.getScheduleId() == measSched.getId()) {
+                    assert oob.getOobFactor() == 50 : "Expected: 50, was " + oob.getOobFactor();
+                } else {
+                    assert oob.getOobFactor() == 200 : "Expected: 200, was " + oob.getOobFactor();
+                }
+            }
+
+            PageControl pc = PageControl.getUnlimitedInstance();
+
+            List<MeasurementOOBComposite> comps = oobManager.getSchedulesWithOOBs(overlord, null, null, null, pc);
+            //         System.out.println("Composites: " + comps);
+            assert comps.size() == 2 : "Expected 2 composites, but got " + comps.size();
+
+            comps = oobManager.getHighestNOOBsForResource(overlord, platform.getId(), 2);
+            assert comps.size() == 1 : "Expected 1 composite, but got " + comps.size();
+
+            // Compute some more OOBs
+            oobManager.computeOOBsFromHourBeginingAt(overlord, elder);
+            q = em.createQuery("SELECT oo FROM MeasurementOOB oo");
+            oobs = q.getResultList();
+            //    System.out.println("OOBs calculated: \n" + oobs);
+
+            comps = oobManager.getSchedulesWithOOBs(overlord, null, null, null, pc);
+            //     System.out.println("Composites: " + comps);
+            assert comps.size() == 2 : "Expected 2, but was " + comps.size();
+
+            commit();
+
+            // Clean up
+
+            begin();
+
+            q = em.createQuery("DELETE FROM MeasurementOOB oo WHERE  oo.id = :sched1 OR oo.id = :sched2");
+            q.setParameter("sched1", measSched.getId());
+            q.setParameter("sched2", measSched2.getId());
+            q.executeUpdate();
+            commit();
+
+            deleteResources();
+        } catch (Throwable t) {
+            System.out.println("TEST FAILURE STACK TRACE FOLLOWS:");
+            t.printStackTrace();
+            throw t;
+        } finally {
+            try {
+                getTransactionManager().rollback();
+            } catch (Exception e) {
+            }
+        }
+
+    }
 
     private void setupResources() {
         agent = new Agent("test-agent", "localhost", 1234, "", "randomToken");

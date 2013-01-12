@@ -118,6 +118,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testClassesJar.addAsResource("test-assist-color-number.txt");
         testClassesJar.addAsResource("test-ldap.properties");
         testClassesJar.addAsResource("test-scheduler.properties");
+        testClassesJar.addAsResource("cassandra-test.properties");
         testClassesJar
             .addAsResource("org/rhq/enterprise/server/configuration/metadata/configuration_metadata_manager_bean_test_v1.xml");
         testClassesJar

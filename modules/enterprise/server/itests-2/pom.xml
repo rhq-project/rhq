@@ -30,6 +30,11 @@
       Postgres, specify -Pitest.oracle to use Oracle -->
     <skip.postgres>false</skip.postgres>
     <skip.oracle>true</skip.oracle>
+
+    <!-- cassandra connection properties -->
+    <rhq.cassandra.username>rhqadmin</rhq.cassandra.username>
+    <rhq.cassandra.password>rhqadmin</rhq.cassandra.password>
+    <rhq.cassandra.seeds>127.0.0.1|9160|9042,127.0.0.2|9160|9042</rhq.cassandra.seeds>
   </properties>
 
   <dependencies>

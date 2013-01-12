@@ -39,7 +39,6 @@
   <name>RHQ Server Metrics</name>
 
   <properties>
-    <cassandra.version>1.2.0-beta3</cassandra.version>
     <skipClusterShutdown>false</skipClusterShutdown>
   </properties>
 
@@ -102,6 +101,10 @@
         <exclusion>
           <groupId>org.slf4j</groupId>
           <artifactId>slf4j-log4j12</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
         </exclusion>
         <exclusion>
           <groupId>log4j</groupId>

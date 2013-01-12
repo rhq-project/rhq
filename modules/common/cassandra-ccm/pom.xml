@@ -17,5 +17,6 @@
     <module>cassandra-ccm-core</module>
     <module>cassandra-ccm-cli</module>
     <module>cassandra-ccm-testng</module>
+    <module>cassandra-ccm-maven-plugin</module>
   </modules>
 </project>

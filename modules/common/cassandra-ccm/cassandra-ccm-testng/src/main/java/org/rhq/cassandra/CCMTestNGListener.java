@@ -75,12 +75,15 @@ public class CCMTestNGListener implements IInvokedMethodListener {
     }
 
     private void deployCluster(DeployCluster annotation) throws CassandraException {
-        File basedir = new File("target");
-        File clusterDir = new File(basedir, "cassandra");
+        String clusterDir = System.getProperty("rhq.cassandra.cluster.dir");
+        if (clusterDir == null) {
+            File basedir = new File("target");
+            clusterDir = new File(basedir, "cassandra").getAbsolutePath();
+        }
 
         int numNodes = annotation.numNodes();
         DeploymentOptions deploymentOptions = new DeploymentOptions();
-        deploymentOptions.setClusterDir(clusterDir.getAbsolutePath());
+        deploymentOptions.setClusterDir(clusterDir);
         deploymentOptions.setNumNodes(numNodes);
         deploymentOptions.setUsername(annotation.username());
         deploymentOptions.setPassword(annotation.password());

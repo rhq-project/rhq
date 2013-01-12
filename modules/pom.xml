@@ -211,6 +211,23 @@
              <module>integration-tests</module>
           </modules>
        </profile>         
+
+       <profile>
+         <id>ccm-maven</id>
+         <activation>
+           <property>
+             <name>ccm-maven</name>
+           </property>
+         </activation>
+         <modules>
+           <!-- TODO only build the required core modules -->
+           <module>core</module>
+           <module>common/ant-bundle</module>
+           <module>common/cassandra-ccm/cassandra-ccm-core</module>
+           <module>common/cassandra-ccm/cassandra-ccm-maven-plugin</module>
+           <module>common/cassandra-schema</module>
+         </modules>
+       </profile>
    </profiles>
 
 </project>

@@ -312,7 +312,7 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
 
         for (MeasurementDataNumericHighLowComposite d : data) {
             if (!Double.isNaN(d.getValue())) {
-                handler.add(new DataPoint(d.getTimestamp(), d.getValue()));
+                handler.add(new DataPoint(d.getTimestamp(), (int) d.getValue()));
             }
         }
 

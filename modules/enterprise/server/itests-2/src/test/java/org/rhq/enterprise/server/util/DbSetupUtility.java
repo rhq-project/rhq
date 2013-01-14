@@ -29,16 +29,18 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.tools.ant.Project;
+import org.apache.tools.ant.helper.ProjectHelper2;
+
+import org.rhq.core.db.setup.DBSetup;
+import org.rhq.enterprise.server.test.AbstractEJB3Test;
+
 import liquibase.Liquibase;
 import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
 import liquibase.exception.LiquibaseException;
 import liquibase.integration.commandline.CommandLineUtils;
 import liquibase.resource.ClassLoaderResourceAccessor;
-import org.apache.tools.ant.Project;
-import org.apache.tools.ant.helper.ProjectHelper2;
-import org.rhq.core.db.setup.DBSetup;
-import org.rhq.enterprise.server.test.AbstractEJB3Test;
 
 /**
  * Provides utility methods for doing dbresets, dbsetups, and dbupgrades.
@@ -77,7 +79,7 @@ public class DbSetupUtility {
         //       objects in the DB, which has no such requirement.
         String dbDriver = DatabaseFactory.getInstance().findDefaultDriver(testDs.connectionUrl);
         Database database = CommandLineUtils.createDatabaseObject(DbSetupUtility.class.getClassLoader(),
-            testDs.connectionUrl, testDs.userName, testDs.password, dbDriver, null, null, null);
+            testDs.connectionUrl, testDs.userName, testDs.password, dbDriver, null, null, null, null);
         //Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(
         //    new JdbcConnection(AbstractEJB3Test.getConnection()));
         Liquibase liquibase = new Liquibase(null, new ClassLoaderResourceAccessor(), database);

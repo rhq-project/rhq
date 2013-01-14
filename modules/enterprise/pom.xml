@@ -28,6 +28,7 @@
             <module>comm</module>
             <module>agent</module>
             <module>agentupdate</module>
+            <module>server/server-metrics</module>
             <module>server/xml-schemas</module>
             <module>server/jar</module>
             <module>server/safe-invoker</module>

@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.measurement;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -87,7 +86,6 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
-import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
@@ -218,81 +216,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         }
 
         metricsManager.addNumericData(data);
-//        int expectedCount = data.size();
-//
-//        Connection conn = null;
-//        DatabaseType dbType = null;
-//
-//        Map<String, PreparedStatement> statements = new HashMap<String, PreparedStatement>();
-//
-//        try {
-//            conn = rhqDs.getConnection();
-//            dbType = DatabaseTypeFactory.getDatabaseType(conn);
-//
-//            if (dbType instanceof Postgresql83DatabaseType) {
-//                Statement st = null;
-//                try {
-//                    // Take advantage of async commit here
-//                    st = conn.createStatement();
-//                    st.execute("SET synchronous_commit = off");
-//                } finally {
-//                    JDBCUtil.safeClose(st);
-//                }
-//            }
-//
-//            for (MeasurementDataNumeric aData : data) {
-//                Double value = aData.getValue();
-//                if ((value == null) || Double.isNaN(value) || Double.isInfinite(value)) {
-//                    expectedCount--;
-//                    continue;
-//                }
-//
-//                String table = MeasurementDataManagerUtility.getTable(aData.getTimestamp());
-//
-//                PreparedStatement ps = statements.get(table);
-//
-//                if (ps == null) {
-//                    String insertSql = "INSERT  /*+ APPEND */ INTO " + table
-//                        + "(schedule_id,time_stamp,value) VALUES(?,?,?)";
-//                    ps = conn.prepareStatement(insertSql);
-//                    statements.put(table, ps);
-//                }
-//
-//                ps.setInt(1, aData.getScheduleId());
-//                ps.setLong(2, aData.getTimestamp());
-//                ps.setDouble(3, value);
-//                ps.addBatch();
-//            }
-//
-//            int count = 0;
-//            for (PreparedStatement ps : statements.values()) {
-//                int[] res = ps.executeBatch();
-//                for (int updates : res) {
-//                    if ((updates != 1) && (updates != -2)) // oracle returns -2 on success
-//                    {
-//                        throw new MeasurementStorageException("Unexpected batch update size [" + updates + "]");
-//                    }
-//
-//                    count++;
-//                }
-//            }
-//
-//            if (count != expectedCount) {
-//                throw new MeasurementStorageException("Failure to store measurement data.");
-//            }
-//
-//            notifyAlertConditionCacheManager("mergeMeasurementReport", data.toArray(new MeasurementData[data.size()]));
-//        } catch (SQLException e) {
-//            log.warn("Failure saving measurement numeric data:\n" + ThrowableUtil.getAllMessages(e));
-//        } catch (Exception e) {
-//            log.error("Error persisting numeric data", e);
-//        } finally {
-//            for (PreparedStatement ps : statements.values()) {
-//                JDBCUtil.safeClose(ps);
-//            }
-//
-//            JDBCUtil.safeClose(conn);
-//        }
+        notifyAlertConditionCacheManager("mergeMeasurementReport", data.toArray(new MeasurementData[data.size()]));
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)

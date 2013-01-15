@@ -45,10 +45,10 @@ import org.rhq.cassandra.schema.SchemaManager;
 @Mojo(name= "deploy")
 public class DeployMojo extends AbstractMojo {
 
-    @Parameter(property = "cluster.dir", defaultValue = "${project.build.directory}/cassandra")
+    @Parameter(property = "clusterDir", defaultValue = "${project.build.directory}/cassandra")
     private File clusterDir;
 
-    @Parameter(property = "num-nodes", defaultValue = "2")
+    @Parameter(property = "numNodes", defaultValue = "2")
     private Integer numNodes;
 
     @Override
@@ -69,7 +69,9 @@ public class DeployMojo extends AbstractMojo {
         getLog().info("Installing RHQ schema");
         SchemaManager schemaManager = new SchemaManager(deploymentOptions.getUsername(),
             deploymentOptions.getPassword(), nodes);
-        schemaManager.createSchema();
+        if (!schemaManager.schemaExists()) {
+            schemaManager.createSchema();
+        }
         schemaManager.updateSchema();
 
         long end = System.currentTimeMillis();

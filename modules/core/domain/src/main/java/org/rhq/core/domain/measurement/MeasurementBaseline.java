@@ -42,7 +42,7 @@ import javax.persistence.Table;
 
 @Entity
 @NamedQueries( {
-    @NamedQuery(name = MeasurementBaseline.QUERY_FIND_MEASUREMENT_SCHEDULES_WITHOUT_AUTOBASELINES, query = "SELECT schedule.id FROM MeasurementSchedule schedule "
+    @NamedQuery(name = MeasurementBaseline.QUERY_FIND_MEASUREMENT_SCHEDULES_WITHOUT_AUTOBASELINES, query = "SELECT schedule FROM MeasurementSchedule schedule "
         + "WHERE schedule.definition.numericType = 0 AND "
         + "schedule.id NOT IN (SELECT scheduleId FROM MeasurementBaseline)"),
     @NamedQuery(name = MeasurementBaseline.QUERY_FIND_BY_RESOURCE, query = "SELECT mb FROM MeasurementBaseline mb WHERE mb.schedule.resource.id = :resourceId"),
@@ -99,9 +99,6 @@ public class MeasurementBaseline implements Serializable {
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     private MeasurementSchedule schedule;
 
-    // we need this to support autobaseline insertion queries
-    @Column(name = "SCHEDULE_ID", nullable = false, insertable = false, updatable = false)
-    private int scheduleId;
 
     public MeasurementBaseline() {
         computeTime = System.currentTimeMillis();
@@ -123,21 +120,6 @@ public class MeasurementBaseline implements Serializable {
     public void setSchedule(MeasurementSchedule schedule) {
         this.schedule = schedule;
         this.schedule.setBaseline(this);
-        this.scheduleId = schedule.getId();
-    }
-
-    /**
-     * @return the schedule id
-     */
-    public int getScheduleId() {
-        return scheduleId;
-    }
-
-    /**
-     * @param scheduleId the schedule id
-     */
-    public void setScheduleId(int scheduleId) {
-        this.scheduleId = scheduleId;
     }
 
     /**
@@ -222,7 +204,13 @@ public class MeasurementBaseline implements Serializable {
         sb.append(", baselineMax=").append(baselineMax);
         sb.append(", baselineMean=").append(baselineMean);
         sb.append(", computeTime=").append(computeTime);
-        sb.append(", scheduleId=").append(scheduleId);
+
+        if (schedule != null) {
+            sb.append(", scheduleId=").append(schedule.getId());
+        } else {
+            sb.append(", scheduleId=null");
+        }
+
         sb.append('}');
         return sb.toString();
     }

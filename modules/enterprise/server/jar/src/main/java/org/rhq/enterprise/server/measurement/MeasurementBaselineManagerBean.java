@@ -225,7 +225,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         Query query = this.entityManager
             .createNamedQuery(MeasurementBaseline.QUERY_FIND_MEASUREMENT_SCHEDULES_WITHOUT_AUTOBASELINES);
         query.setMaxResults(BASELINE_PROCESSING_LIMIT);
-        List<Integer> scheduleIdsWithoutBaselines = query.getResultList();
+        List<MeasurementSchedule> scheduleIdsWithoutBaselines = query.getResultList();
 
         //2. calculate the baselines based metrics data
         MetricsBaselineCalculator baselineCalculator = new MetricsBaselineCalculator(this.sessionManager.getSession());

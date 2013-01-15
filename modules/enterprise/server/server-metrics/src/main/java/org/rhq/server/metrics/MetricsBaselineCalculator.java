@@ -30,6 +30,7 @@ import java.util.List;
 import com.datastax.driver.core.Session;
 
 import org.rhq.core.domain.measurement.MeasurementBaseline;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
 
 /**
  * @author Stefan Negrea
@@ -42,12 +43,13 @@ public class MetricsBaselineCalculator {
         this.metricsDAO = new MetricsDAO(session);
     }
 
-    public List<MeasurementBaseline> calculateBaselines(List<Integer> scheduleIds, long startTime, long endTime) {
+    public List<MeasurementBaseline> calculateBaselines(List<MeasurementSchedule> schedules, long startTime,
+        long endTime) {
         List<MeasurementBaseline> calculatedBaselines = new ArrayList<MeasurementBaseline>();
 
         MeasurementBaseline measurementBaseline;
-        for (Integer scheduleId : scheduleIds) {
-            measurementBaseline = this.calculateBaseline(scheduleId, startTime, endTime);
+        for (MeasurementSchedule schedule : schedules) {
+            measurementBaseline = this.calculateBaseline(schedule, startTime, endTime);
             if (measurementBaseline != null) {
                 calculatedBaselines.add(measurementBaseline);
             }
@@ -56,9 +58,9 @@ public class MetricsBaselineCalculator {
         return calculatedBaselines;
     }
 
-    private MeasurementBaseline calculateBaseline(Integer scheduleId, long startTime, long endTime) {
+    private MeasurementBaseline calculateBaseline(MeasurementSchedule schedule, long startTime, long endTime) {
         List<AggregatedSimpleNumericMetric> metrics = this.metricsDAO.findAggregateSimpleMetrics(MetricsTable.ONE_HOUR,
-            scheduleId, startTime, endTime);
+            schedule.getId(), startTime, endTime);
 
         if (metrics.size() != 0) {
             ArithmeticMeanCalculator mean = new ArithmeticMeanCalculator();
@@ -97,7 +99,7 @@ public class MetricsBaselineCalculator {
             baseline.setMax(max);
             baseline.setMin(min);
             baseline.setMean(mean.getArithmeticMean());
-            baseline.setScheduleId(scheduleId);
+            baseline.setSchedule(schedule);
 
             return baseline;
         }

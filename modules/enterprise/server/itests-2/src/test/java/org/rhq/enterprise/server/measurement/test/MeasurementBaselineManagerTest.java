@@ -145,14 +145,13 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
             System.out.println(">>>>>>> b) [" + allScheds.size() + "] baselines calculated in ["
                 + (System.currentTimeMillis() - startingTime) + "] ms");
-
-            deleteManyResources();
         } catch (Throwable t) {
             System.out.println("TEST FAILURE STACK TRACE FOLLOWS:");
             t.printStackTrace();
             throw t;
         } finally {
             try {
+                deleteManyResources();
                 getTransactionManager().rollback();
             } catch (Exception e) {
             }
@@ -300,14 +299,13 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             assert bl2.getComputeTime().after(bl2ComputeTime);
 
             commit();
-
-            deleteResources();
         } catch (Throwable t) {
             System.out.println("TEST FAILURE STACK TRACE FOLLOWS:");
             t.printStackTrace();
             throw t;
         } finally {
             try {
+                deleteResources();
                 getTransactionManager().rollback();
             } catch (Exception e) {
             }
@@ -396,14 +394,13 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             q.setParameter("sched2", measSched2.getId());
             q.executeUpdate();
             commit();
-
-            deleteResources();
         } catch (Throwable t) {
             System.out.println("TEST FAILURE STACK TRACE FOLLOWS:");
             t.printStackTrace();
             throw t;
         } finally {
             try {
+                deleteResources();
                 getTransactionManager().rollback();
             } catch (Exception e) {
             }

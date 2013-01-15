@@ -330,6 +330,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
 
         // add additional 3rd party dependent jars needed to support test classes
         MavenDependencyResolver resolver = DependencyResolvers.use(MavenDependencyResolver.class);
+        resolver.goOffline();
         resolver.loadMetadataFromPom("pom.xml");
         Collection<JavaArchive> dependencies = new HashSet<JavaArchive>();
         dependencies.addAll(resolver.artifact("org.powermock:powermock-api-mockito").resolveAs(JavaArchive.class));

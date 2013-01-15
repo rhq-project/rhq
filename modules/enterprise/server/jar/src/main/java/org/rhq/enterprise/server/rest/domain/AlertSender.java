@@ -19,14 +19,26 @@
 
 package org.rhq.enterprise.server.rest.domain;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.xml.bind.annotation.XmlRootElement;
+
+import com.wordnik.swagger.annotations.ApiClass;
+import com.wordnik.swagger.annotations.ApiProperty;
+
 /**
  * An Alert notification sender
  * @author Heiko W. Rupp
  */
+@ApiClass
+@XmlRootElement
 public class AlertSender {
 
     String senderName;
     String description;
+    Link link;
+    private Map<String, String> configDefinition = new HashMap<String, String>();
 
     public AlertSender() {
     }
@@ -35,6 +47,7 @@ public class AlertSender {
         this.senderName = senderName;
     }
 
+    @ApiProperty("Name of the alert sender - this is also its unique identifier")
     public String getSenderName() {
         return senderName;
     }
@@ -43,11 +56,29 @@ public class AlertSender {
         this.senderName = senderName;
     }
 
+    @ApiProperty("A description of this sender")
     public String getDescription() {
         return description;
     }
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Link getLink() {
+        return link;
+    }
+
+    public void setLink(Link link) {
+        this.link = link;
+    }
+
+    @ApiProperty("The configuration definition of the sender")
+    public Map<String, String> getConfigDefinition() {
+        return configDefinition;
+    }
+
+    public void setConfigDefinition(Map<String, String> configDefinition) {
+        this.configDefinition = configDefinition;
     }
 }

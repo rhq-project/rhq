@@ -31,6 +31,10 @@ public class BadArgumentException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
+    public BadArgumentException(String message) {
+        super("Bad parameter given: " + message);
+    }
+
     /**
      * Construct a new instance of this Exception.
      * @param parameterName Denotes which parameter is bad

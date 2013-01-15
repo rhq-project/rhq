@@ -32,7 +32,7 @@ import com.wordnik.swagger.annotations.ApiProperty;
  * @author Heiko W. Rupp
  */
 @ApiClass("Represents an alert notification")
-@XmlRootElement
+@XmlRootElement(name = "notification")
 public class AlertNotificationRest {
 
     private int id;

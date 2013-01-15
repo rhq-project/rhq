@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- *  Copyright (C) 2005-2012 Red Hat, Inc.
+ *  Copyright (C) 2005-2013 Red Hat, Inc.
  *  All rights reserved.
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -22,10 +22,13 @@ package org.rhq.modules.integrationTests.restApi.d;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
 /**
  * An AlertDefinition for testing purposes
  * @author Heiko W. Rupp
  */
+@XmlRootElement(name = "definition")
 public class AlertDefinition {
 
     int id;
@@ -36,6 +39,10 @@ public class AlertDefinition {
     String conditionMode = "ANY";
     List<AlertCondition> conditions = new ArrayList<AlertCondition>();
     List<AlertNotification> notifications = new ArrayList<AlertNotification>();
+    String dampeningCategory = "NONE";
+    String dampeningCount;
+    String dampeningPeriod;
+
 
     public AlertDefinition() {
     }
@@ -102,5 +109,29 @@ public class AlertDefinition {
 
     public void setNotifications(List<AlertNotification> notifications) {
         this.notifications = notifications;
+    }
+
+    public String getDampeningCategory() {
+        return dampeningCategory;
+    }
+
+    public void setDampeningCategory(String dampeningCategory) {
+        this.dampeningCategory = dampeningCategory;
+    }
+
+    public String getDampeningCount() {
+        return dampeningCount;
+    }
+
+    public void setDampeningCount(String dampeningCount) {
+        this.dampeningCount = dampeningCount;
+    }
+
+    public String getDampeningPeriod() {
+        return dampeningPeriod;
+    }
+
+    public void setDampeningPeriod(String dampeningPeriod) {
+        this.dampeningPeriod = dampeningPeriod;
     }
 }

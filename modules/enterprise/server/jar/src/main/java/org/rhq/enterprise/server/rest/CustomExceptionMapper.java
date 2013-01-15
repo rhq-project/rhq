@@ -31,6 +31,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
+import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.rest.domain.RHQErrorWrapper;
 
@@ -57,6 +58,8 @@ public class CustomExceptionMapper implements ExceptionMapper<Exception> {
         else if (e instanceof ResourceNotFoundException)
             status = Response.Status.NOT_FOUND;
         else if (e instanceof ResourceGroupNotFoundException)
+            status = Response.Status.NOT_FOUND;
+        else if (e instanceof ResourceTypeNotFoundException)
             status = Response.Status.NOT_FOUND;
         else if (e instanceof ParameterMissingException)
             status = Response.Status.NOT_ACCEPTABLE;

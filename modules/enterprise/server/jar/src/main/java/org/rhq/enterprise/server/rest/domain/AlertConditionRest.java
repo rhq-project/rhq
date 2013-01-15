@@ -29,7 +29,7 @@ import org.rhq.core.domain.alert.AlertConditionOperator;
  * An alert definition can have any number of definitions
  * @author Heiko W. Rupp
  */
-@XmlRootElement
+@XmlRootElement(name = "condition")
 public class AlertConditionRest {
 
     private AlertConditionOperator name;

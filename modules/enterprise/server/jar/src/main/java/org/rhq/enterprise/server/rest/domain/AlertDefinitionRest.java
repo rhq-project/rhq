@@ -26,12 +26,14 @@ import javax.xml.bind.annotation.XmlRootElement;
 import com.wordnik.swagger.annotations.ApiClass;
 import com.wordnik.swagger.annotations.ApiProperty;
 
+import org.rhq.core.domain.alert.AlertDampening;
+
 /**
  * Alert Definition
  * @author Heiko W. Rupp
  */
 @ApiClass("Representation of an AlertDefinition")
-@XmlRootElement
+@XmlRootElement(name = "definition")
 public class AlertDefinitionRest {
 
     int id;
@@ -42,7 +44,9 @@ public class AlertDefinitionRest {
     String conditionMode = "ANY"; // ANY, ALL
     List<AlertConditionRest> conditions = new ArrayList<AlertConditionRest>();
     List<AlertNotificationRest> notifications = new ArrayList<AlertNotificationRest>();
-
+    String dampeningCategory;
+    String dampeningCount;
+    String dampeningPeriod;
 
     public AlertDefinitionRest() {
     }
@@ -122,5 +126,29 @@ public class AlertDefinitionRest {
 
     public void setNotifications(List<AlertNotificationRest> notifications) {
         this.notifications = notifications;
+    }
+
+    public String getDampeningCategory() {
+        return dampeningCategory;
+    }
+
+    public void setDampeningCategory(String dampeningCategory) {
+        this.dampeningCategory = dampeningCategory;
+    }
+
+    public String getDampeningCount() {
+        return dampeningCount;
+    }
+
+    public void setDampeningCount(String dampeningCount) {
+        this.dampeningCount = dampeningCount;
+    }
+
+    public String getDampeningPeriod() {
+        return dampeningPeriod;
+    }
+
+    public void setDampeningPeriod(String dampeningPeriod) {
+        this.dampeningPeriod = dampeningPeriod;
     }
 }

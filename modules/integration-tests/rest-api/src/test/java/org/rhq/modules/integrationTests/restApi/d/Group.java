@@ -22,10 +22,13 @@
  */
 package org.rhq.modules.integrationTests.restApi.d;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
 /**
  * A group for testing
  * @author Heiko W. Rupp
  */
+@XmlRootElement(name = "groupRest")
 public class Group {
 
     String name;

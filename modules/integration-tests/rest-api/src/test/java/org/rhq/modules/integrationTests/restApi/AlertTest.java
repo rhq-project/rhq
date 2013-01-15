@@ -26,7 +26,9 @@ import org.junit.Test;
 import org.rhq.modules.integrationTests.restApi.d.AlertCondition;
 import org.rhq.modules.integrationTests.restApi.d.AlertDefinition;
 import org.rhq.modules.integrationTests.restApi.d.AlertNotification;
+import org.rhq.modules.integrationTests.restApi.d.Group;
 
+import static com.jayway.restassured.RestAssured.delete;
 import static com.jayway.restassured.RestAssured.expect;
 import static com.jayway.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.is;
@@ -91,9 +93,32 @@ public class AlertTest extends AbstractBase {
     }
 
     @Test
+    public void testGetAlertSendersXML() throws Exception {
+        given()
+            .header(acceptXml)
+        .expect()
+            .statusCode(200)
+            .log().everything()
+        .when()
+            .get("/alert/senders");
+    }
+
+    @Test
     public void testGetSenderByName() throws Exception {
         given()
             .header(acceptJson)
+            .pathParam("name", "Direct Emails")
+        .expect()
+            .statusCode(200)
+            .log().everything()
+        .when()
+            .get("/alert/sender/{name}");
+    }
+
+    @Test
+    public void testGetSenderByNameXML() throws Exception {
+        given()
+            .header(acceptXml)
             .pathParam("name", "Direct Emails")
         .expect()
             .statusCode(200)
@@ -120,6 +145,131 @@ public class AlertTest extends AbstractBase {
         int definitionId = createEmptyAlertDefinition();
 
         cleanupDefinition(definitionId);
+    }
+
+    @Test
+    public void testCreateDeleteBasicAlertDefinitionNoneDampening() throws Exception {
+
+        int definitionId=0;
+        try {
+            AlertDefinition alertDefinition = new AlertDefinition();
+            alertDefinition.setName("-x-test-definition");
+            alertDefinition.setEnabled(false);
+            alertDefinition.setPriority("LOW");
+            alertDefinition.setDampeningCategory("NONE");
+
+            AlertDefinition result =
+            given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(alertDefinition)
+                .queryParam("resourceId",10001)
+            .expect()
+                .statusCode(201)
+                .body("dampeningCategory",is("NONE"))
+                .body("dampeningCount",is("0"))
+                .body("dampeningPeriod",is("0"))
+            .when()
+                .post("/alert/definitions")
+            .as(AlertDefinition.class);
+
+            definitionId = result.getId();
+
+        } finally {
+            cleanupDefinition(definitionId);
+        }
+    }
+
+    @Test
+    public void testCreateDeleteBasicAlertDefinitionBadDampeningCategory() throws Exception {
+
+        AlertDefinition alertDefinition = new AlertDefinition();
+        alertDefinition.setName("-x-test-definition");
+        alertDefinition.setEnabled(false);
+        alertDefinition.setPriority("LOW");
+        alertDefinition.setDampeningCategory("Hulla");
+
+        given()
+            .header(acceptJson)
+            .contentType(ContentType.JSON)
+            .body(alertDefinition)
+            .queryParam("resourceId",10001)
+        .expect()
+            .statusCode(406)
+            .log().everything()
+        .when()
+            .post("/alert/definitions");
+
+    }
+
+    @Test
+    public void testCreateDeleteBasicAlertDefinition3of5Dampening() throws Exception {
+
+        int definitionId=0;
+        try {
+            AlertDefinition alertDefinition = new AlertDefinition();
+            alertDefinition.setName("-x-test-definition");
+            alertDefinition.setEnabled(false);
+            alertDefinition.setPriority("LOW");
+            alertDefinition.setDampeningCategory("PARTIAL_COUNT");
+            alertDefinition.setDampeningCount("3");
+            alertDefinition.setDampeningPeriod("5");
+
+            AlertDefinition result =
+            given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(alertDefinition)
+                .queryParam("resourceId",10001)
+            .expect()
+                .statusCode(201)
+                .body("dampeningCategory",is("PARTIAL_COUNT"))
+                .body("dampeningCount",is("3"))
+                .body("dampeningPeriod",is("5"))
+            .when()
+                .post("/alert/definitions")
+            .as(AlertDefinition.class);
+
+            definitionId = result.getId();
+
+        } finally {
+            cleanupDefinition(definitionId);
+        }
+    }
+
+    @Test
+    public void testCreateDeleteBasicAlertDefinitionOncein3MinDampening() throws Exception {
+
+        int definitionId=0;
+        try {
+            AlertDefinition alertDefinition = new AlertDefinition();
+            alertDefinition.setName("-x-test-definition");
+            alertDefinition.setEnabled(false);
+            alertDefinition.setPriority("LOW");
+            alertDefinition.setDampeningCategory("DURATION_COUNT");
+            alertDefinition.setDampeningCount("1");
+            alertDefinition.setDampeningPeriod("3 minutes");
+
+            AlertDefinition result =
+            given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(alertDefinition)
+                .queryParam("resourceId", 10001)
+            .expect()
+                .statusCode(201)
+                .body("dampeningCategory",is("DURATION_COUNT"))
+                .body("dampeningCount", is("1"))
+                .body("dampeningPeriod", is("3 MINUTES"))
+            .when()
+                .post("/alert/definitions")
+            .as(AlertDefinition.class);
+
+            definitionId = result.getId();
+
+        } finally {
+            cleanupDefinition(definitionId);
+        }
     }
 
     @Test
@@ -387,12 +537,12 @@ public class AlertTest extends AbstractBase {
                 .header(acceptJson)
                 .contentType(ContentType.JSON)
                 .body(condition)
-                .pathParam("cid",cid)
+                .pathParam("cid", cid)
             .expect()
                 .statusCode(200)
                 .log().ifError()
-                .body("option",is("23456"))
-                .body("comparator",is(">"))
+                .body("option", is("23456"))
+                .body("comparator", is(">"))
             .when()
                 .put("/alert/condition/{cid}");
 
@@ -626,7 +776,7 @@ public class AlertTest extends AbstractBase {
                 .body("priority", is("HIGH"))
                 .body("conditions", iterableWithSize(1))
                 .body("notifications", iterableWithSize(1))
-                .body("name",is("-x-test-full-definition2"))
+                .body("name", is("-x-test-full-definition2"))
                 .log().everything()
             .when()
                 .post("/alert/definitions")
@@ -705,6 +855,137 @@ public class AlertTest extends AbstractBase {
         }
     }
 
+    @Test
+    public void testUpdateDefinition() throws Exception {
+
+        int definitionId = createEmptyAlertDefinition();
+        try {
+            AlertDefinition definition =
+            given()
+                .header(acceptXml)
+                .pathParam("did",definitionId)
+            .expect()
+                .statusCode(200)
+            .when()
+                .get("/alert/definition/{did}")
+            .as(AlertDefinition.class);
+
+            definition.setEnabled(true);
+            definition.setDampeningCategory("ONCE");
+
+            given()
+                .contentType(ContentType.XML)
+                .header(acceptJson)
+                .body(definition)
+                .pathParam("did",definitionId)
+            .expect()
+                .statusCode(200)
+                .log().ifError()
+                .body("enabled", is(true))
+                .body("dampeningCategory",is("ONCE"))
+            .when()
+                .put("/alert/definition/{did}");
+
+        }
+        finally {
+            cleanupDefinition(definitionId);
+        }
+    }
+
+    @Test
+    public void testCreateDefinitionForResourceAndGroup() throws Exception {
+
+        // This is supposed to fail, as we specify both a resource and a group
+        // to work on
+
+        AlertDefinition alertDefinition = new AlertDefinition();
+        alertDefinition.setName("-x-test-definition");
+
+        given()
+            .header(acceptJson)
+            .contentType(ContentType.JSON)
+            .body(alertDefinition)
+            .queryParam("resourceId",10001)
+            .queryParam("groupId",10001)
+        .expect()
+            .statusCode(406)
+            .log().ifError()
+        .when()
+            .post("/alert/definitions");
+    }
+
+    @Test
+    public void testCreateDefinitionForGroup() throws Exception {
+
+        // Create a group
+        Group group = new Group("test-group-" + System.currentTimeMillis()/1000);
+        group.setCategory("COMPATIBLE");
+        group.setResourceTypeId(10001);
+
+        String groupUri =
+        given()
+            .header(acceptJson)
+            .contentType(ContentType.JSON)
+            .body(group)
+        .expect()
+            .statusCode(201)
+            .log().ifError()
+        .when()
+            .post("/group/")
+        .header("Location");
+
+        int groupId = Integer.parseInt(groupUri.substring(groupUri.lastIndexOf("/")+1));
+
+        int definitionId = 0;
+        try {
+            AlertDefinition alertDefinition = new AlertDefinition();
+            alertDefinition.setName("-x-test-definition");
+
+            alertDefinition =
+            given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(alertDefinition)
+                .queryParam("groupId", groupId)
+            .expect()
+                .statusCode(201)
+                .log().ifError()
+            .when()
+                .post("/alert/definitions")
+            .as(AlertDefinition.class);
+
+            definitionId = alertDefinition.getId();
+        } finally {
+            cleanupDefinition(definitionId);
+            delete(groupUri);
+        }
+    }
+
+    @Test
+    public void testCreateDefinitionForResourceType() throws Exception {
+
+        // This is supposed to fail, as we specify both a resource and a group
+        // to work on
+
+        AlertDefinition alertDefinition = new AlertDefinition();
+        alertDefinition.setName("-x-test-definition");
+
+        AlertDefinition result =
+        given()
+            .header(acceptJson)
+            .contentType(ContentType.JSON)
+            .body(alertDefinition)
+            .queryParam("resourceTypeId",10001)
+        .expect()
+            .statusCode(201)
+            .log().ifError()
+        .when()
+            .post("/alert/definitions")
+        .as(AlertDefinition.class);
+
+        cleanupDefinition(result.getId());
+    }
+
     private void cleanupDefinition(int definitionId) {
 
         if (definitionId==0)
@@ -723,6 +1004,7 @@ public class AlertTest extends AbstractBase {
         alertDefinition.setName("-x-test-definition");
         alertDefinition.setEnabled(false);
         alertDefinition.setPriority("LOW");
+        alertDefinition.setDampeningCategory("NONE");
 
         AlertDefinition result =
         given()

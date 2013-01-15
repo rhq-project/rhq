@@ -143,11 +143,11 @@
              to provide jquery explcitly for jquery.sparkline support. See CoreGUI.gwt.xml for the jquery.sparkline
              declaration and coregui/webapp/js for the lib inclusion.) -->
         <dependency>
-            <groupId>com.googlecode.gflot</groupId>
+            <groupId>ca.nanometrics</groupId>
             <artifactId>gflot</artifactId>
-            <version>2.4.2</version>
-            <scope>provided</scope>
+            <version>1.0.0</version>
         </dependency>
+
 
         <!-- for file uploads -->
         <dependency>

@@ -603,9 +603,9 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         assertEquals(actualData.size(), buckets.getNumDataPoints(), "Expected to get back 60 data points.");
 
         MeasurementDataNumericHighLowComposite expectedBucket0Data = new MeasurementDataNumericHighLowComposite(
-            buckets.get(0).getStartTime(), divide(2.0 + 5.0 + 3.0, 3), 5.0, 2.0);
+            buckets.get(0).getStartTime(), divide(2.0 + 5.0 + 3.0, 3), 6.0, 1.0);
         MeasurementDataNumericHighLowComposite expectedBucket59Data = new MeasurementDataNumericHighLowComposite(
-            buckets.get(59).getStartTime(), divide(5.0 + 5.0 + 3.0, 3), 5.0, 3.0);
+            buckets.get(59).getStartTime(), divide(5.0 + 5.0 + 3.0, 3), 9.0, 2.0);
         MeasurementDataNumericHighLowComposite expectedBucket29Data = new MeasurementDataNumericHighLowComposite(
             buckets.get(29).getStartTime(), Double.NaN, Double.NaN, Double.NaN);
 
@@ -684,9 +684,9 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         assertEquals(actualData.size(), buckets.getNumDataPoints(), "Expected to get back 60 data points.");
 
         MeasurementDataNumericHighLowComposite expectedBucket0Data = new MeasurementDataNumericHighLowComposite(
-            buckets.get(0).getStartTime(), divide(2.0 + 5.0 + 3.0, 3), 5.0, 2.0);
+            buckets.get(0).getStartTime(), divide(2.0 + 5.0 + 3.0, 3), 6.0, 1.0);
         MeasurementDataNumericHighLowComposite expectedBucket59Data = new MeasurementDataNumericHighLowComposite(
-            buckets.get(59).getStartTime(), divide(5.0 + 5.0 + 3.0, 3), 5.0, 3.0);
+            buckets.get(59).getStartTime(), divide(5.0 + 5.0 + 3.0, 3), 9.0, 2.0);
         MeasurementDataNumericHighLowComposite expectedBucket29Data = new MeasurementDataNumericHighLowComposite(
             buckets.get(29).getStartTime(), Double.NaN, Double.NaN, Double.NaN);
 

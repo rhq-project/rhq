@@ -137,7 +137,7 @@ public class MetricsServer {
         long beginTime, long endTime) {
         Buckets buckets = new Buckets(beginTime, endTime);
         for (RawNumericMetric metric : metrics) {
-            buckets.insert(metric.getTimestamp(), metric.getValue());
+            buckets.insert(metric.getTimestamp(), metric.getValue(), metric.getValue(), metric.getValue());
         }
 
         List<MeasurementDataNumericHighLowComposite> data = new ArrayList<MeasurementDataNumericHighLowComposite>();
@@ -169,7 +169,7 @@ public class MetricsServer {
         long beginTime, long endTime) {
         Buckets buckets = new Buckets(beginTime, endTime);
         for (AggregatedNumericMetric metric : metrics) {
-            buckets.insert(metric.getTimestamp(), metric.getAvg());
+            buckets.insert(metric.getTimestamp(), metric.getAvg(), metric.getMin(), metric.getMax());
         }
 
         List<MeasurementDataNumericHighLowComposite> data = new ArrayList<MeasurementDataNumericHighLowComposite>();

@@ -57,15 +57,15 @@ public class Buckets {
             return endTime;
         }
 
-        public Bucket insert(double value) {
+        public Bucket insert(double value, double min, double max) {
             mean.add(value);
             if (count == 0) {
-                min = value;
-                max = value;
-            } else if (value < min) {
-                min = value;
-            } else if (value > max) {
-                max = value;
+                this.min = min;
+                this.max = max;
+            } else if (min < this.min) {
+                this.min = min;
+            } else if (max > this.max) {
+                this.max = max;
             }
             count++;
             return this;
@@ -122,10 +122,10 @@ public class Buckets {
         return buckets[index];
     }
 
-    public void insert(long timestamp, double value) {
+    public void insert(long timestamp, double value, double min, double max) {
         for (Bucket bucket : buckets) {
             if (timestamp >= bucket.getStartTime() && timestamp < bucket.getEndTime()) {
-                bucket.insert(value);
+                bucket.insert(value, min, max);
                 return;
             }
         }

@@ -191,6 +191,10 @@ public class LinkManager {
         return getEntityTabLink(group, "Monitoring", "Graphs");
     }
 
+    public static String getAllResourcesLink() {
+        return "#Inventory/Resources/AllResources";
+    }
+
     public static String getGroupDefinitionLink(int groupDefinitionId) {
         if (GWT) {
             return "#Inventory/Groups/DynagroupDefinitions/" + groupDefinitionId;
@@ -276,7 +280,7 @@ public class LinkManager {
 
     public static String getAutodiscoveryQueueLink() {
         if (GWT) {
-            return "#Administration/Security/Auto%20Discovery%20Queue";
+            return "#Inventory/Resources/AutodiscoveryQueue";
         } else {
             return "/rhq/discovery/queue.xhtml";
         }
@@ -556,4 +560,9 @@ public class LinkManager {
 
         return result + "/Snapshot";
     }
+
+    public static String getHelpLink() {
+        return "#Help";
+    }
+
 }

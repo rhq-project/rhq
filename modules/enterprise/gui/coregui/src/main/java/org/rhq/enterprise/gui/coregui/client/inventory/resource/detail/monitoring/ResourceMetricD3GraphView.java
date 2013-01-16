@@ -85,9 +85,9 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView
      * will have the definition already defined and we can just render the graph).
      */
     protected void renderGraph() {
-        Log.debug("RenderGraph.getDefinition: "+metricGraphData.getDefinition());
         boolean isDashboardGraph = (null == metricGraphData.getDefinition());
         if (isDashboardGraph) {
+            Log.debug("Chart path for: dashboard metrics");
             queryMetricsDataForDashboardGraphs();
         } else {
             Log.debug("Chart path for: loaded metrics");
@@ -97,7 +97,6 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView
 
     private void queryMetricsDataForDashboardGraphs(){
         Log.debug(" ** RenderGraph  Dashboard Portlet path");
-
         final long startTime = System.currentTimeMillis();
 
         ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
@@ -119,7 +118,7 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView
                 final Resource firstResource = result.get(0);
 
                 // setting up a deferred Command to execute after all resource queries have completed (successfully or unsuccessfully)
-                // we know there are exactly 2 resources that
+                // we know there are exactly 2 resources
                 final CountDownLatch countDownLatch = CountDownLatch.create(2,
                         new Command() {
                             @Override

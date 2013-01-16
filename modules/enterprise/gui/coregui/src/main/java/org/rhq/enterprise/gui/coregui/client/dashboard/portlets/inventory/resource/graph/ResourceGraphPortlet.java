@@ -37,6 +37,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricStackedBarGraph;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceMetricD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceScheduledMetricDatasource;
@@ -79,21 +80,24 @@ public class ResourceGraphPortlet extends ResourceMetricD3GraphView implements C
         }
 
         if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID) != null) {
-            PropertySimple propertySimple = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID);
-            if (propertySimple!=null) {
-                Integer integerValue = propertySimple.getIntegerValue();
-                if (integerValue!=null)
-                    metricGraphData.setEntityId(integerValue);
-                    getJsniChart().setEntityId(integerValue);
+            PropertySimple resourceIdProperty = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID);
+            if (resourceIdProperty!=null) {
+                Integer entityId = resourceIdProperty.getIntegerValue();
+                if (entityId != null)
+                    if(metricGraphData == null){
+                        this.metricGraphData = new MetricGraphData();
+                    }
+                    metricGraphData.setEntityId(entityId);
+                    getJsniChart().setEntityId(entityId);
 
             }
-            propertySimple = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
-            if (propertySimple!=null) {
+            PropertySimple measurementDefIdProperty = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
+            if (measurementDefIdProperty!=null) {
 
-                Integer integerValue = propertySimple.getIntegerValue();
-                if (integerValue!=null)
-                    metricGraphData.setDefinitionId(integerValue);
-                    getJsniChart().setDefinitionId(integerValue);
+                Integer measurementDefId = measurementDefIdProperty.getIntegerValue();
+                if (measurementDefId!=null)
+                    metricGraphData.setDefinitionId(measurementDefId);
+                    getJsniChart().setDefinitionId(measurementDefId);
             }
         }
     }

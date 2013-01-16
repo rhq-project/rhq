@@ -36,6 +36,8 @@ import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 /**
  * The data portion of the graphs making these methods accessible via JSNI to
  * classes extending this and implementing graphs.
+ * Provide i18n labels and format the json data for the graph taking things into
+ * consideration such as
  * @author Mike Thompson
  */
 public class MetricGraphData implements JsonMetricProducer {
@@ -61,6 +63,16 @@ public class MetricGraphData implements JsonMetricProducer {
 
     public MetricGraphData() {
 
+    }
+
+    /**
+     * Constructor for the dashboard case when it as a saved configuration.
+     * @param entityId
+     * @param measurementDefId
+     */
+    public MetricGraphData(int entityId, int measurementDefId){
+        setEntityId(entityId);
+        setDefinitionId(measurementDefId);
     }
 
     public MetricGraphData(int entityId, String entityName, MeasurementDefinition def,
@@ -103,7 +115,9 @@ public class MetricGraphData implements JsonMetricProducer {
     }
 
     public String getChartId() {
-        return entityId + "-" + definition.getId();
+        Log.debug("DefId: "+ definitionId);
+        Log.debug("EntityId: "+entityId );
+        return entityId + "-" + definitionId;
     }
 
     public List<MeasurementDataNumericHighLowComposite> getMetricData() {
@@ -180,32 +194,34 @@ public class MetricGraphData implements JsonMetricProducer {
         StringBuilder sb = new StringBuilder("[");
         boolean gotAdjustedMeasurementUnits = false;
         //Log.debug(" avail records loaded: "+getAvailabilityDownList().size());
-        for (MeasurementDataNumericHighLowComposite measurement : metricData) {
-            sb.append("{ x:" + measurement.getTimestamp() + ",");
-            if (isTimestampDownOrDisabled(measurement.getTimestamp())) {
-                sb.append(" down:true, ");
-            }
-            if (!Double.isNaN(measurement.getValue())) {
-
-                MeasurementNumericValueAndUnits newHigh = normalizeUnitsAndValues(measurement.getHighValue(),
-                    definition.getUnits());
-                MeasurementNumericValueAndUnits newLow = normalizeUnitsAndValues(measurement.getLowValue(),
-                    definition.getUnits());
-                MeasurementNumericValueAndUnits newValue = normalizeUnitsAndValues(measurement.getValue(),
-                    definition.getUnits());
-                if (!gotAdjustedMeasurementUnits) {
-                    adjustedMeasurementUnits = newValue.getUnits();
-                    gotAdjustedMeasurementUnits = true;
+        if(null !=  metricData){
+            for (MeasurementDataNumericHighLowComposite measurement : metricData) {
+                sb.append("{ x:" + measurement.getTimestamp() + ",");
+                if (isTimestampDownOrDisabled(measurement.getTimestamp())) {
+                    sb.append(" down:true, ");
                 }
-                sb.append(" high:" + newHigh.getValue() + ",");
-                sb.append(" low:" + newLow.getValue() + ",");
-                sb.append(" y:" + newValue.getValue() + "},");
-            } else {
-                // NaN measure no measurement was collected
-                sb.append(" nodata:true },");
+                if (!Double.isNaN(measurement.getValue())) {
+
+                    MeasurementNumericValueAndUnits newHigh = normalizeUnitsAndValues(measurement.getHighValue(),
+                        definition.getUnits());
+                    MeasurementNumericValueAndUnits newLow = normalizeUnitsAndValues(measurement.getLowValue(),
+                        definition.getUnits());
+                    MeasurementNumericValueAndUnits newValue = normalizeUnitsAndValues(measurement.getValue(),
+                        definition.getUnits());
+                    if (!gotAdjustedMeasurementUnits) {
+                        adjustedMeasurementUnits = newValue.getUnits();
+                        gotAdjustedMeasurementUnits = true;
+                    }
+                    sb.append(" high:" + newHigh.getValue() + ",");
+                    sb.append(" low:" + newLow.getValue() + ",");
+                    sb.append(" y:" + newValue.getValue() + "},");
+                } else {
+                    // NaN measure no measurement was collected
+                    sb.append(" nodata:true },");
+                }
             }
+            sb.setLength(sb.length() - 1); // delete the last ','
         }
-        sb.setLength(sb.length() - 1); // delete the last ','
         sb.append("]");
         //Log.debug("Json data has "+data.size()+" entries.");
         //Log.debug(sb.toString());

@@ -185,6 +185,16 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
 //        this.chartHeight = height;
 //    }
 
+
+    /**
+     * This is only necessary to set this for the ResourceGraphPortlet case where
+     * configuration is deferred.
+     * @param metricGraphData
+     */
+    public void setMetricGraphData(MetricGraphData metricGraphData) {
+        this.metricGraphData = metricGraphData;
+    }
+
     protected boolean supportsLiveGraphViewDialog() {
         return false;
     }

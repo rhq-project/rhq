@@ -295,7 +295,8 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                             return  (width / chartContext.data.length - barOffset  );
                         })
                         .attr("opacity", 0.8)
-                        .attr("fill", "url(#topBarGrad)");
+                        .attr("fill", "#1794bc");
+                        //.attr("fill", "url(#topBarGrad)");
 
 
                 // lower portion representing avg to low
@@ -321,7 +322,8 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                             return  (width / chartContext.data.length - barOffset );
                         })
                         .attr("opacity", 0.8)
-                        .attr("fill", "url(#bottomBarGrad)");
+                        .attr("fill", "#70c4e2");
+                        //.attr("fill", "url(#bottomBarGrad)");
             }
 
             function createYAxisGridLines() {

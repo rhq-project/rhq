@@ -33,14 +33,14 @@ import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import javax.ejb.EJB;
+
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.joda.time.DateTime;
 import org.joda.time.Hours;
@@ -58,14 +58,16 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.cassandra.SessionManagerBean;
 import org.rhq.enterprise.server.drift.DriftServerPluginService;
-import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
+import org.rhq.server.metrics.AggregatedNumericMetric;
+import org.rhq.server.metrics.MetricsDAO;
+import org.rhq.server.metrics.MetricsTable;
 import org.rhq.test.AssertUtils;
 
 /**
@@ -116,9 +118,16 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
     @EJB
     private ResourceManagerLocal resourceManager;
 
+    @EJB
+    private SessionManagerBean cassandraSessionManager;
+
+    private MetricsDAO metricsDAO;
+
     @Override
     protected void beforeMethod() throws Exception {
         overlord = subjectManager.getOverlord();
+
+        metricsDAO = new MetricsDAO(cassandraSessionManager.getSession());
 
         // MeasurementDataManagerUtility looks up config settings from SystemManagerBean.
         // SystemManagerBean.getDriftServerPluginManager method requires drift server plugin. 
@@ -282,10 +291,7 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
     }
 
     private void purgeDB() {
-        purgeRawData();
-        purge1HourData();
-        purge6HourData();
-        purge24HourData();
+        purgeMetricsTables();
 
         executeInTransaction(false, new TransactionCallback() {
             @Override
@@ -348,87 +354,27 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
         dataManager.mergeMeasurementReport(dummyReport);
     }
 
-    public void purgeRawData() {
-        purgeTables(MeasurementDataManagerUtility.getAllRawTables());
-    }
-
-    public void purge1HourData() {
-        purgeTables("rhq_measurement_data_num_1h");
-    }
-
-    public void purge6HourData() {
-        purgeTables("rhq_measurement_data_num_6h");
-    }
-
-    public void purge24HourData() {
-        purgeTables("rhq_measurement_data_num_1d");
-    }
-
-    private void purgeTables(String... tables) {
-        // This method was previous implemented using EntityManager.createNativeQuery
-        // and called from within a TransactionCallback. It was causing a
-        // TransactionRequiredException, and I am not clear why. I suspect it is a
-        // configuration issue in our testing environment, but I haven't figured it out
-        // yet. For now,  raw tables are purges in their own separate JDBC transaction.
-        //
-        // jsanda
-        Connection connection = null;
-
+    private void purgeMetricsTables() {
         try {
-            connection = getConnection();
-            connection.setAutoCommit(false);
-            for (String table : tables) {
-                Statement statement = connection.createStatement();
-                try {
-                    statement.execute("delete from " + table);
-                } finally {
-                    JDBCUtil.safeClose(statement);
-                }
-            }
-            connection.commit();
-        } catch (SQLException e) {
-            try {
-                connection.rollback();
-            } catch (SQLException e1) {
-                throw new RuntimeException("Failed to rollback transaction", e1);
-            }
-            throw new RuntimeException("Failed to purge data from " + tables, e);
-        } finally {
-            JDBCUtil.safeClose(connection);
+            Session session = cassandraSessionManager.getSession();
+
+            session.execute("TRUNCATE " + MetricsTable.RAW);
+            session.execute("TRUNCATE " + MetricsTable.ONE_HOUR);
+            session.execute("TRUNCATE " + MetricsTable.SIX_HOUR);
+            session.execute("TRUNCATE " + MetricsTable.TWENTY_FOUR_HOUR);
+            session.execute("TRUNCATE " + MetricsTable.INDEX);
+        } catch (NoHostAvailableException e) {
+            throw new RuntimeException("An error occurred while purging metrics tables", e);
         }
     }
 
     private void insert1HourData(List<AggregateTestData> data) {
-        Connection connection = null;
-
-        try {
-            connection = getConnection();
-            connection.setAutoCommit(false);
-            String sql = "insert into rhq_measurement_data_num_1h(time_stamp, schedule_id, value, minvalue, maxvalue) values(?, ?, ?, ?, ?)";
-            PreparedStatement statement = connection.prepareStatement(sql);
-
-            for (AggregateTestData datum : data) {
-                statement.setLong(1, datum.getTimestamp());
-                statement.setInt(2, datum.getScheduleId());
-                statement.setDouble(3, datum.getAvg());
-                statement.setDouble(4, datum.getMin());
-                statement.setDouble(5, datum.getMax());
-
-                statement.addBatch();
-            }
-
-            statement.executeBatch();
-            connection.commit();
-        } catch (SQLException e) {
-            try {
-                connection.rollback();
-            } catch (SQLException e1) {
-                throw new RuntimeException("Failed to rollback transaction", e1);
-            }
-            throw new RuntimeException("Failed to insert 1 hour data", e);
-        } finally {
-            JDBCUtil.safeClose(connection);
+        List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>(data.size());
+        for (AggregateTestData datum : data) {
+            metrics.add(new AggregatedNumericMetric(datum.getScheduleId(), datum.getAvg(), datum.getMin(),
+                datum.getMax(), datum.getTimestamp()));
         }
+        metricsDAO.insertAggregates(MetricsTable.ONE_HOUR, metrics, MetricsTable.ONE_HOUR.getTTL());
     }
 
     private List<MeasurementDataNumericHighLowComposite> findDataForContext(Subject subject, EntityContext context,

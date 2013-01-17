@@ -118,8 +118,30 @@ public class MetricsDAO {
         }
     }
 
-    public List<AggregatedNumericMetric> insertAggregates(MetricsTable table, List<AggregatedNumericMetric> metrics,
+    public List<MetricResultFuture<MeasurementDataNumeric>> insertRawMetricsAsync(Set<MeasurementDataNumeric> dataSet,
         int ttl) {
+        try {
+            List<MetricResultFuture<MeasurementDataNumeric>> resultFutures = new ArrayList<MetricResultFuture<MeasurementDataNumeric>>();
+
+            String cql = "INSERT INTO raw_metrics (schedule_id, time, value) VALUES (?, ?, ?) " + "USING TTL " + ttl;
+            PreparedStatement statement = session.prepare(cql);
+
+            for (MeasurementDataNumeric data : dataSet) {
+                BoundStatement boundStatement = statement.bind(data.getScheduleId(), new Date(data.getTimestamp()),
+                    data.getValue());
+
+                resultFutures.add(new MetricResultFuture<MeasurementDataNumeric>(session.executeAsync(boundStatement),
+                    data));
+            }
+
+            return resultFutures;
+        } catch (NoHostAvailableException e) {
+            throw new CQLException(e);
+        }
+    }
+
+    public List<AggregatedNumericMetric> insertAggregates(MetricsTable table,
+        List<AggregatedNumericMetric> metrics, int ttl) {
         List<AggregatedNumericMetric> updates = new ArrayList<AggregatedNumericMetric>();
 
         if (metrics.isEmpty()) {
@@ -131,17 +153,20 @@ public class MetricsDAO {
             int i = 0;
 
             for (AggregatedNumericMetric metric : metrics) {
-                statements[i++] = insert("schedule_id", "time", "type", "value").into(table.getTableName()).values(
-                    metric.getScheduleId(), new Date(metric.getTimestamp()), AggregateType.MIN.ordinal(),
-                    metric.getMin()).using(Using.ttl(ttl));
+                statements[i++] = insert("schedule_id", "time", "type", "value")
+                    .into(table.getTableName())
+                    .values(metric.getScheduleId(), new Date(metric.getTimestamp()), AggregateType.MIN.ordinal(),
+                        metric.getMin()).using(Using.ttl(ttl));
 
-                statements[i++] = insert("schedule_id", "time", "type", "value").into(table.getTableName()).values(
-                    metric.getScheduleId(), new Date(metric.getTimestamp()), AggregateType.MAX.ordinal(),
-                    metric.getMax()).using(Using.ttl(ttl));
+                statements[i++] = insert("schedule_id", "time", "type", "value")
+                    .into(table.getTableName())
+                    .values(metric.getScheduleId(), new Date(metric.getTimestamp()), AggregateType.MAX.ordinal(),
+                        metric.getMax()).using(Using.ttl(ttl));
 
-                statements[i++] = insert("schedule_id", "time", "type", "value").into(table.getTableName()).values(
-                    metric.getScheduleId(), new Date(metric.getTimestamp()), AggregateType.AVG.ordinal(),
-                    metric.getAvg()).using(Using.ttl(ttl));
+                statements[i++] = insert("schedule_id", "time", "type", "value")
+                    .into(table.getTableName())
+                    .values(metric.getScheduleId(), new Date(metric.getTimestamp()), AggregateType.AVG.ordinal(),
+                        metric.getAvg()).using(Using.ttl(ttl));
 
                 updates.add(metric);
             }
@@ -149,6 +174,43 @@ public class MetricsDAO {
 
             return updates;
         } catch (NoHostAvailableException e) {
+            throw new CQLException(e);
+        }
+    }
+
+    public List<MetricResultFuture<AggregatedNumericMetric>> insertAggregatesAsync(MetricsTable table,
+        List<AggregatedNumericMetric> metrics, int ttl) {
+        List<MetricResultFuture<AggregatedNumericMetric>> updates = new ArrayList<MetricResultFuture<AggregatedNumericMetric>>();
+
+        if (metrics.isEmpty()) {
+            return updates;
+        }
+
+        try {
+            Statement statement = null;
+
+            for (AggregatedNumericMetric metric : metrics) {
+                statement = insert("schedule_id", "time", "type", "value")
+                    .into(table.getTableName())
+                    .values(metric.getScheduleId(), new Date(metric.getTimestamp()), AggregateType.MIN.ordinal(),
+                        metric.getMin()).using(Using.ttl(ttl));
+                updates.add(new MetricResultFuture<AggregatedNumericMetric>(session.executeAsync(statement), metric));
+
+                statement = insert("schedule_id", "time", "type", "value")
+                    .into(table.getTableName())
+                    .values(metric.getScheduleId(), new Date(metric.getTimestamp()), AggregateType.MAX.ordinal(),
+                        metric.getMax()).using(Using.ttl(ttl));
+                updates.add(new MetricResultFuture<AggregatedNumericMetric>(session.executeAsync(statement), metric));
+
+                statement = insert("schedule_id", "time", "type", "value")
+                    .into(table.getTableName())
+                    .values(metric.getScheduleId(), new Date(metric.getTimestamp()), AggregateType.AVG.ordinal(),
+                        metric.getAvg()).using(Using.ttl(ttl));
+                updates.add(new MetricResultFuture<AggregatedNumericMetric>(session.executeAsync(statement), metric));
+            }
+
+            return updates;
+        } catch (Exception e) {
             throw new CQLException(e);
         }
     }

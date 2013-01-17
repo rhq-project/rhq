@@ -20,6 +20,7 @@
 
 package org.rhq.server.metrics;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -28,8 +29,8 @@ import javax.persistence.Query;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Session;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric1D;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric1H;
@@ -95,16 +96,15 @@ public class DataMigrator {
         }
 
         if (run1HAggregateDataMigration) {
-            retryOnFailure(new AggregateDataMigrator(MeasurementDataNumeric1H.QUERY_FIND_ALL, MetricsTable.ONE_HOUR));
+            retryOnFailure(new AggregateDataMigrator(MetricsTable.ONE_HOUR));
         }
 
         if (run6HAggregateDataMigration) {
-            retryOnFailure(new AggregateDataMigrator(MeasurementDataNumeric6H.QUERY_FIND_ALL, MetricsTable.SIX_HOUR));
+            retryOnFailure(new AggregateDataMigrator(MetricsTable.SIX_HOUR));
         }
 
         if (run1DAggregateDataMigration) {
-            retryOnFailure(new AggregateDataMigrator(MeasurementDataNumeric1D.QUERY_FIND_ALL,
-                MetricsTable.TWENTY_FOUR_HOUR));
+            retryOnFailure(new AggregateDataMigrator(MetricsTable.TWENTY_FOUR_HOUR));
         }
 
         if (deleteAllDataAtEndOfMigration) {
@@ -172,18 +172,31 @@ public class DataMigrator {
          * @param query
          * @param metricsTable
          */
-        public AggregateDataMigrator(String query, MetricsTable metricsTable) {
-            this.query = query;
+        public AggregateDataMigrator(MetricsTable metricsTable) {
             this.metricsTable = metricsTable;
+
+            if (MetricsTable.ONE_HOUR.equals(this.metricsTable)) {
+                this.query = MeasurementDataNumeric1H.QUERY_FIND_ALL;
+            } else if (MetricsTable.ONE_HOUR.equals(this.metricsTable)) {
+                this.query = MeasurementDataNumeric6H.QUERY_FIND_ALL;
+            } else if (MetricsTable.TWENTY_FOUR_HOUR.equals(this.metricsTable)) {
+                this.query = MeasurementDataNumeric1D.QUERY_FIND_ALL;
+            } else {
+                this.query = null;
+            }
+        }
+
+        public void work() throws Exception {
+            if (deleteDataImmediatelyAfterMigration) {
+                performedBatchedMigration();
+            } else {
+                performFullMigration();
+            }
         }
 
         @SuppressWarnings("unchecked")
-        public void work() throws NoHostAvailableException {
+        private void performedBatchedMigration() throws Exception {
             List<MeasurementDataNumericAggregateInterface> existingData;
-
-            String cql = "INSERT INTO " + metricsTable
-                + " (schedule_id, time, type, value) VALUES (?, ?, ?, ?) USING TTL " + metricsTable.getTTL();
-            PreparedStatement statement = session.prepare(cql);
 
             while (true) {
                 Query q = entityManager.createNamedQuery(query);
@@ -194,26 +207,48 @@ public class DataMigrator {
                     break;
                 }
 
-                for (MeasurementDataNumericAggregateInterface measurement : existingData) {
-                    BoundStatement boundStatement = statement.bind(measurement.getScheduleId(),
-                        new Date(measurement.getTimestamp()), AggregateType.MIN.ordinal(), measurement.getMin());
-                    session.execute(boundStatement);
+                insertDataToCassandra(existingData);
 
-                    boundStatement = statement.bind(measurement.getScheduleId(), new Date(measurement.getTimestamp()),
-                        AggregateType.MAX.ordinal(), measurement.getMax());
-                    session.execute(boundStatement);
-
-                    boundStatement = statement.bind(measurement.getScheduleId(), new Date(measurement.getTimestamp()),
-                        AggregateType.AVG.ordinal(), Double.parseDouble(measurement.getValue().toString()));
-                    session.execute(boundStatement);
+                for (Object entity : existingData) {
+                    entityManager.remove(entity);
                 }
+                entityManager.flush();
+            }
+        }
 
-                if (deleteDataImmediatelyAfterMigration) {
-                    for (Object entity : existingData) {
-                        entityManager.remove(entity);
-                    }
-                    entityManager.flush();
-                }
+        @SuppressWarnings("unchecked")
+        private void performFullMigration() throws Exception {
+            Query q = entityManager.createNamedQuery(query);
+            List<MeasurementDataNumericAggregateInterface> existingData = (List<MeasurementDataNumericAggregateInterface>) q
+                .getResultList();
+
+            insertDataToCassandra(existingData);
+        }
+
+        private void insertDataToCassandra(List<MeasurementDataNumericAggregateInterface> existingData)
+            throws Exception {
+            String cql = "INSERT INTO " + metricsTable
+                + " (schedule_id, time, type, value) VALUES (?, ?, ?, ?) USING TTL " + metricsTable.getTTL();
+            PreparedStatement statement = session.prepare(cql);
+
+            List<ResultSetFuture> resultSetFutures = new ArrayList<ResultSetFuture>();
+
+            for (MeasurementDataNumericAggregateInterface measurement : existingData) {
+                BoundStatement boundStatement = statement.bind(measurement.getScheduleId(),
+                    new Date(measurement.getTimestamp()), AggregateType.MIN.ordinal(), measurement.getMin());
+                resultSetFutures.add(session.executeAsync(boundStatement));
+
+                boundStatement = statement.bind(measurement.getScheduleId(), new Date(measurement.getTimestamp()),
+                    AggregateType.MAX.ordinal(), measurement.getMax());
+                resultSetFutures.add(session.executeAsync(boundStatement));
+
+                boundStatement = statement.bind(measurement.getScheduleId(), new Date(measurement.getTimestamp()),
+                    AggregateType.AVG.ordinal(), Double.parseDouble(measurement.getValue().toString()));
+                resultSetFutures.add(session.executeAsync(boundStatement));
+            }
+
+            for (ResultSetFuture future : resultSetFutures) {
+                future.get();
             }
         }
     }
@@ -221,13 +256,17 @@ public class DataMigrator {
 
     private class RawDataMigrator implements CallableMigrationWorker {
 
-        @SuppressWarnings("unchecked")
-        public void work() throws NoHostAvailableException {
-            List<Object[]> existingData = null;
+        public void work() throws Exception {
+            if (deleteDataImmediatelyAfterMigration) {
+                performBatchedMigration();
+            } else {
+                performFullMigration();
+            }
+        }
 
-            String cql = "INSERT INTO " + MetricsTable.RAW + " (schedule_id, time, value) VALUES (?, ?, ?) USING TTL "
-                + MetricsTable.RAW.getTTL();
-            PreparedStatement statement = session.prepare(cql);
+        @SuppressWarnings("unchecked")
+        private void performBatchedMigration() throws Exception {
+            List<Object[]> existingData = null;
 
             for (String table : getRawDataTables()) {
                 String selectQuery = "SELECT schedule_id, value, time_stamp FROM " + table;
@@ -242,22 +281,46 @@ public class DataMigrator {
                         break;
                     }
 
+                    insertDataToCassandra(existingData);
+
+                    query = entityManager.createNativeQuery(deleteQuery);
+
                     for (Object[] rawDataPoint : existingData) {
-                        BoundStatement boundStatement = statement.bind(Integer.parseInt(rawDataPoint[0].toString()),
-                            new Date(Long.parseLong(rawDataPoint[1].toString())),
-                            Double.parseDouble(rawDataPoint[2].toString()));
-                        session.execute(boundStatement);
-                    }
-
-                    if (deleteDataImmediatelyAfterMigration) {
-                        query = entityManager.createNativeQuery(deleteQuery);
-
-                        for (Object[] rawDataPoint : existingData) {
-                            query.setParameter(0, Integer.parseInt(rawDataPoint[0].toString()));
-                            query.executeUpdate();
-                        }
+                        query.setParameter(0, Integer.parseInt(rawDataPoint[0].toString()));
+                        query.executeUpdate();
                     }
                 }
+            }
+        }
+
+        @SuppressWarnings("unchecked")
+        private void performFullMigration() throws Exception {
+            List<Object[]> existingData = null;
+
+            for (String table : getRawDataTables()) {
+                String selectQuery = "SELECT schedule_id, value, time_stamp FROM " + table;
+                Query query = entityManager.createNativeQuery(selectQuery);
+                existingData = query.getResultList();
+                insertDataToCassandra(existingData);
+            }
+        }
+
+        private void insertDataToCassandra(List<Object[]> existingData) throws Exception {
+            String cql = "INSERT INTO " + MetricsTable.RAW + " (schedule_id, time, value) VALUES (?, ?, ?) USING TTL "
+                + MetricsTable.RAW.getTTL();
+            PreparedStatement statement = session.prepare(cql);
+
+            List<ResultSetFuture> resultSetFutures = new ArrayList<ResultSetFuture>();
+
+            for (Object[] rawDataPoint : existingData) {
+                BoundStatement boundStatement = statement.bind(Integer.parseInt(rawDataPoint[0].toString()),
+                    new Date(Long.parseLong(rawDataPoint[1].toString())),
+                    Double.parseDouble(rawDataPoint[2].toString()));
+                resultSetFutures.add(session.executeAsync(boundStatement));
+            }
+
+            for (ResultSetFuture future : resultSetFutures) {
+                future.get();
             }
         }
     }

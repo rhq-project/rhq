@@ -26,12 +26,11 @@ import java.util.UUID;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.shrinkwrap.api.Archive;
-import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
-import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenResolvedArtifact;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenResolverSystem;
 
+import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.file.FileUtil;
 
 /**
@@ -47,7 +46,7 @@ public class SigarInstaller {
     private static final String TMP_DIR = System.getProperty("java.io.tmpdir");
 
     private File rootDir;
-    private Archive<?> sigarDistArtifact;
+    private MavenResolvedArtifact sigarDistArtifact;
 
     public SigarInstaller(File rootDir) {
         this.rootDir = rootDir;
@@ -60,7 +59,7 @@ public class SigarInstaller {
         // artifact specifier format is "<groupId>:<artifactId>[:<extension>[:<classifier>]][:<version >]"
         // TODO (ips, 05/02/12): Figure out how to make this work without hard-coding the version.
         sigarDistArtifact = mavenDependencyResolver.offline().loadPomFromFile("pom.xml")
-            .resolve("org.hyperic:sigar-dist:zip:1.6.5.132-3").withoutTransitivity().asSingle(JavaArchive.class);
+            .resolve("org.hyperic:sigar-dist:zip:1.6.5.132-3").withoutTransitivity().asSingleResolvedArtifact();
     }
 
     public boolean isSigarAvailable() {
@@ -74,12 +73,14 @@ public class SigarInstaller {
         if (!tempDir.exists()) {
             tempDir.mkdirs();
         }
-        String explodedDirName = "sigar-dist";
-        LOG.debug("Unzipping " + sigarDistArtifact + " to " + tempDir + "...");
-        sigarDistArtifact.as(ExplodedExporter.class).exportExploded(tempDir, explodedDirName);
+
         File sigarLibDir = null;
         try {
-            sigarLibDir = findSigarLibDir(new File(tempDir, explodedDirName));
+            File explodedDir = new File(tempDir, "sigar-dist");
+            LOG.debug("Unzipping " + sigarDistArtifact + " to " + tempDir + "...");
+            ZipUtil.unzipFile(sigarDistArtifact.asFile(), explodedDir);
+
+            sigarLibDir = findSigarLibDir(explodedDir);
             // Make sure the target dir does not exist, since FileUtil.copyDirectory() requires that to be the case.
             FileUtil.purge(rootDir, true);
 

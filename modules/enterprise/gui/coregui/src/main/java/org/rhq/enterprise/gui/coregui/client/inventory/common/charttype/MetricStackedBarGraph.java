@@ -327,6 +327,41 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         .attr("opacity", 0.9)
                         .attr("fill", "#70c4e2");
                         //.attr("fill", "url(#bottomBarGrad)");
+
+                // if high == low put a "cap" on the bar to show non-aggregated bar
+                svg.selectAll("rect.singleValue")
+                        .data(chartContext.data)
+                        .enter().append("rect")
+                        .attr("class", "singleValue")
+                        .attr("x", function (d) {
+                            return timeScale(d.x);
+                        })
+                        .attr("y", function (d) {
+                            return isNaN(d.y) ? height : yScale(d.y)-2;
+                        })
+                        .attr("height", function (d) {
+                            if (d.down || d.nodata) {
+                                return height - yScale(lowBound);
+                            }
+                            else {
+                                if(d.low === d.high  ){
+                                    return  yScale(d.low) - yScale(d.y) +2;
+                                }else {
+                                    return  yScale(d.low) - yScale(d.y);
+                                }
+                            }
+                        })
+                        .attr("width", function (d) {
+                            return  (width / chartContext.data.length - barOffset );
+                        })
+                        .attr("opacity", 0.9)
+                        .attr("fill", function (d) {
+                                if(d.low === d.high  ){
+                                    return  "#50505a";
+                                }else {
+                                    return  "#70c4e2";
+                                }
+                        });
             }
 
             function createYAxisGridLines() {

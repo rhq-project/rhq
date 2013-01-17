@@ -360,12 +360,10 @@ public abstract class AbstractEJB3Test extends Arquillian {
                 .as(JavaArchive.class)));
         }
 
-        // Transitive deps required by the above and for some reason not sucked in. Note that
-        // these require an explicit version. TODO (jshaughn): Can we make these transitive or
-        // avoid the explicit version?
-        // dep required byt rhq-core-client-api test-jar
-        //dependencies.addAll(Arrays.asList(resolver.resolve("commons-jxpath:commons-jxpath:1.3").withTransitivity()
-        //    .as(JavaArchive.class)));
+        // Transitive test dep required by rhq-core-client-api above and for some reason not sucked in.
+        // TODO: pass in version from pom property
+        dependencies.addAll(Arrays.asList(resolver.resolve("commons-jxpath:commons-jxpath:1.3").withTransitivity()
+            .as(JavaArchive.class)));
 
         // exclude any transitive deps we don't want
         String[] excludeFilters = { "testng.*jdk", "rhq-core-domain.*jar" };

@@ -124,6 +124,7 @@ import org.rhq.enterprise.server.discovery.DiscoveryServerServiceImpl;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.disambiguation.DisambiguationUpdateStrategy;
 import org.rhq.enterprise.server.resource.disambiguation.Disambiguator;
+import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
@@ -466,6 +467,11 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     private boolean uninventoryResourcesBulkDelete(Subject overlord, List<Integer> resourceIds) {
+        // obtain group ids of affected groups 
+        Query nativeQuery = entityManager.createNativeQuery(ResourceGroup.QUERY_GET_GROUP_IDS_BY_RESOURCE_IDS);
+        nativeQuery.setParameter("resourceIds", resourceIds);
+        List<Integer> groupIds = nativeQuery.getResultList();
+
         String[] nativeQueriesToExecute = new String[] { //
         ResourceGroup.QUERY_DELETE_EXPLICIT_BY_RESOURCE_IDS, // unmap from explicit groups
             ResourceGroup.QUERY_DELETE_IMPLICIT_BY_RESOURCE_IDS // unmap from implicit groups
@@ -476,6 +482,15 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             // execute all in new transactions, continuing on error, but recording whether errors occurred
             hasErrors |= resourceManager.bulkNativeQueryDeleteInNewTransaction(overlord, nativeQueryToExecute,
                 resourceIds);
+        }
+        
+        // update the resource type on affected groups
+        for (int groupId : groupIds) {
+            try {
+                resourceGroupManager.setResourceType(groupId);
+            } catch (ResourceGroupDeleteException rgde) {
+                log.warn("Unable to change resource type for group with id [" + groupId + "]", rgde);
+            }
         }
 
         return hasErrors;

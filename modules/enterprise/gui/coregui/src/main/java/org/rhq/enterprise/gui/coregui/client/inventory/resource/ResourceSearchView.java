@@ -380,6 +380,7 @@ public class ResourceSearchView extends Table {
 
     protected void onUninventorySuccess() {
         refresh(true);
+        CoreGUI.refresh();
     }
 
     protected List<ListGridField> createFields() {

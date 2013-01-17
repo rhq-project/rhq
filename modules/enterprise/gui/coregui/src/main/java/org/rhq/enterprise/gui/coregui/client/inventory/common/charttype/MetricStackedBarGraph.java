@@ -79,7 +79,9 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                     width = 850 - margin.left - margin.right,
                     height = 250 - margin.top - margin.bottom,
                     titleHeight = 43, titleSpace = 10,
+                    barOffset = 2,
                     interpolation = "basis";
+
             var avg = $wnd.d3.mean(chartContext.data.map(function (d) {
                         return d.y;
                     })),
@@ -116,7 +118,8 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                     xAxis = $wnd.d3.svg.axis()
                             .scale(timeScale)
                             .ticks(10)
-                            .tickSize(0, 0, 0)
+                            .tickSubdivide(5)
+                            .tickSize(4, 4, 0)
                             .orient("bottom"),
 
                     yAxis = $wnd.d3.svg.axis()
@@ -228,7 +231,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
 
             function createStackedBars() {
 
-                var barOffset = 2, pixelsOffHeight = 0;
+                var pixelsOffHeight = 0;
 
                 // The gray bars at the bottom leading up
                 svg.selectAll("rect.leaderBar")
@@ -258,7 +261,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                             return  (width / chartContext.data.length - barOffset  );
                         })
 
-                        .attr("opacity", ".55")
+                        .attr("opacity", ".9")
                         .attr("fill", function (d, i) {
                             if (d.down) {
                                 return  "url(#redStripes)";
@@ -294,7 +297,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         .attr("width", function (d) {
                             return  (width / chartContext.data.length - barOffset  );
                         })
-                        .attr("opacity", 0.8)
+                        .attr("opacity", 0.9)
                         .attr("fill", "#1794bc");
                         //.attr("fill", "url(#topBarGrad)");
 
@@ -321,7 +324,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         .attr("width", function (d) {
                             return  (width / chartContext.data.length - barOffset );
                         })
-                        .attr("opacity", 0.8)
+                        .attr("opacity", 0.9)
                         .attr("fill", "#70c4e2");
                         //.attr("fill", "url(#bottomBarGrad)");
             }
@@ -387,7 +390,19 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         })
                         .y(function (d) {
                             return yScale(min);
-                        });
+                        }),
+                barAvgLine = $wnd.d3.svg.line()
+                                .interpolate("linear")
+                                .x(function (d) {
+                                    return timeScale(d.x)+ ((width / chartContext.data.length - barOffset)/ 2);
+                                })
+                                .y(function (d) {
+                                    if(d.y == undefined){
+                                        return yScale(0);
+                                    }else {
+                                        return yScale(+d.y);
+                                    }
+                                });
 
                 // peak Line (must be before line.high to look right
                 svg.append("path")
@@ -421,6 +436,17 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         .attr("stroke-dasharray", "3,3")
                         .attr("stroke-opacity", ".6")
                         .attr("d", avgLine);
+
+                // avg line
+                svg.append("path")
+                        .datum(chartContext.data)
+                        .attr("class", "barAvgLine")
+                        .attr("fill", "none")
+                        .attr("stroke", "#2e376a")
+                        .attr("stroke-width", "1.5")
+                        //.attr("stroke-dasharray", "3,3")
+                        .attr("stroke-opacity", ".7")
+                        .attr("d", barAvgLine);
             }
 
             function formatHovers(chartContext, d) {
@@ -437,14 +463,16 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                     hoverString =
                             '<div style="text-align:left;z-index:401000;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">' + chartContext.timeLabel + ': </span>' + timeFormatter(date) + '</div>' +
                                     '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
-                                    '<div style="text-align: left;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.unknownLabel+'</span></div>' +
+                                    '<hr style="width:100%;text-align: center;border: #d3d3d3 solid thin;"></div>' +
+                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.unknownLabel+'</span></div>' +
                                     '</div>'
                 }
                 else if (d.down) {
                     hoverString =
                             '<div style="text-align:left;z-index:401000;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">' + chartContext.timeLabel + ': </span>' + timeFormatter(date) + '</div>' +
                                     '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
-                                    '<div style="text-align: left;"><span style="width:100%;font-weight: bold;color:#ff8a9a"";">Down</span></div>' +
+                                    '<hr style="width:100%;text-align: center;border: #d3d3d3 solid thin;"></div>' +
+                                    '<div style="text-align: right;"><span style="width:100%;font-weight: bold;color:#ff8a9a"";">Down</span></div>' +
                                     '</div>'
 
                 }
@@ -452,10 +480,10 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                     hoverString =
                             '<div style="text-align:left;z-index:401000;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">' + chartContext.timeLabel + ':  </span><span style="width:50px;">' + timeFormatter(date) + '</span></div>' +
                                     '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">' + chartContext.dateLabel + ':  </span><span style="width:50px;">' + dateFormatter(date) + '</span></div>' +
-                                    '<div style="width:80%;text-align: center;border: #d3d3d3 solid medium;"></div>' +
-                                    '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#ff8a9a";">' + chartContext.peakChartTitle + ': </span><span style="width:50px;">' + highValue + '</span></div>' +
-                                    '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color: #b0d9b0";">' + chartContext.avgChartTitle + ':  </span style="width:50px;">' + avgValue + '</span></div>' +
-                                    '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#8ad6ff";">' + chartContext.minChartTitle + ': </span><span style="width:50px;">' + lowValue + '</span></div>';
+                                    '<hr style="width:100%;text-align: center;border: #d3d3d3 solid thin;"></div>' +
+                                    '<div style="text-align: right;"><span style="width:50px;font-weight:bold;color:#ff8a9a;";">' + chartContext.peakChartTitle + ': </span><span style="width:50px;">' + highValue + '</span></div>' +
+                                    '<div style="text-align: right;"><span style="text-align:right;width:50px;font-weight:bold;color: #b0d9b0;"">' + chartContext.avgChartTitle + ':  </span style="width:50px;">' + avgValue + '</span></div>' +
+                                    '<div style="text-align: right;"><span style="width:50px;font-weight:bold;color:#8ad6ff"">' + chartContext.minChartTitle + ': </span><span style="width:50px;">' + lowValue + '</span></div>';
                 }
                 return hoverString;
 
@@ -469,7 +497,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                     trigger: 'hover',
                     title: function () {
                         var d = this.__data__;
-                        console.log("y: " + d.y);
+                        //console.log("y: " + d.y);
                         return formatHovers(chartContext, d);
                     }
                 });

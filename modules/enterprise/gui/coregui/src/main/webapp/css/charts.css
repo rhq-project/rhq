@@ -14,8 +14,12 @@
 .y.axis  .tick.minor {
     stroke: #a7a7ac;
 }
+.x.axis  .tick.minor {
+    stroke: #a7a7ac;
+}
 
-.y.axis  text {
+
+.y.axis  text, .x.axis text {
     font-family: "Liberation Sans", Arial, Helvetica, sans-serif;
     font-size: 10px;
     font-weight: normal;
@@ -24,11 +28,12 @@
 
 }
 
-.x.axis path {
-    stroke: #cccdcf;
+.x.axis path  {
+    stroke: #50505a;
 }
+
 .y.axis path {
-    display: none;
+    stroke: #50505a;
 }
 
 .minLabel, .avgLabel, .highLabel  {

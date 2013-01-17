@@ -145,7 +145,7 @@
     <freemarker.version>2.3.18</freemarker.version>
     <powermock.version>1.4.12</powermock.version>
     <arquillian.version>1.0.3.Final</arquillian.version>
-    <shrinkwrap-resolver.version>2.0.0-alpha-6</shrinkwrap-resolver.version>
+    <shrinkwrap-resolver.version>2.0.0-alpha-7</shrinkwrap-resolver.version>
     <xercesImpl.version>2.9.1-jbossas-2</xercesImpl.version> <!-- see BZ-820629 and CVE-2009-2625 -->
     <opencsv.version>1.8</opencsv.version>    
     

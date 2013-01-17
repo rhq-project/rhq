@@ -34,30 +34,6 @@
     <liquibase.version>2.0.3</liquibase.version>
   </properties>
 
-  <!-- In Shrinkwrap 2.0.0-alpha-6 it's necessary to provide a depMgmt entry in order for the resolver to determine the version. 
-    So, do that for the 3rd party libs we need to add to the deployment jar. -->
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>joda-time</groupId>
-        <artifactId>joda-time</artifactId>
-        <version>2.1</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.liquibase</groupId>
-        <artifactId>liquibase-core</artifactId>
-        <version>${liquibase.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.powermock</groupId>
-        <artifactId>powermock-api-mockito</artifactId>
-        <version>${powermock.version}</version>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
-
   <dependencies>
     <!--================ Test Deps ================ -->
 
@@ -198,6 +174,7 @@
     <dependency>
       <groupId>org.powermock</groupId>
       <artifactId>powermock-api-mockito</artifactId>
+      <version>${powermock.version}</version>      
       <scope>test</scope>
     </dependency>
 
@@ -210,12 +187,14 @@
     <dependency>
       <groupId>org.liquibase</groupId>
       <artifactId>liquibase-core</artifactId>
+      <version>${liquibase.version}</version>      
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>joda-time</groupId>
       <artifactId>joda-time</artifactId>
+      <version>2.1</version>      
       <scope>test</scope>
     </dependency>
   </dependencies>

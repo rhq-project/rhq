@@ -337,7 +337,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
         thirdPartyDeps.add("org.liquibase:liquibase-core");
         thirdPartyDeps.add("org.powermock:powermock-api-mockito");
         thirdPartyDeps.add("org.rhq.helpers:perftest-support:" + projectVersion);
-        //thirdPartyDeps.add("org.rhq:rhq-core-client-api:jar:tests:" + projectVersion);
+        thirdPartyDeps.add("org.rhq:rhq-core-client-api:jar:tests:" + projectVersion);
         thirdPartyDeps.add("org.rhq:test-utils:" + projectVersion);
 
         MavenResolverSystem resolver = Maven.resolver();
@@ -345,12 +345,6 @@ public abstract class AbstractEJB3Test extends Arquillian {
         Collection<JavaArchive> dependencies = new HashSet<JavaArchive>();
         dependencies.addAll(Arrays.asList(resolver.loadPomFromFile("pom.xml").resolve(thirdPartyDeps)
             .withTransitivity().as(JavaArchive.class)));
-
-        System.out.println("******* "
-            + Arrays.asList(resolver.loadPomFromFile("pom.xml")
-                .resolve("org.rhq:rhq-core-client-api:jar:tests:" + projectVersion).withTransitivity()
-                .as(JavaArchive.class)));
-        System.out.println("******* ");
 
         // If we're running oracle we need to include the OJDBC driver because dbunit needs it. Note that we need
         // add it explicitly even though it is a provided module used by the datasource.
@@ -383,7 +377,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
         //System.out.println("** The Deployment EAR: " + testEar.toString(true) + "\n");
 
         // Save the test EAR to a zip file for inspection (set file explicitly)
-        exportZip(testEar, new File("c:/temp/test-ear.ear"));
+        //exportZip(testEar, new File("c:/temp/test-ear.ear"));
 
         return testEar;
     }

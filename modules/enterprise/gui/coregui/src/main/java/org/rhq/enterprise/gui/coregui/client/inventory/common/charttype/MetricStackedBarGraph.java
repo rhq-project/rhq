@@ -67,7 +67,10 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartDateLabel()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartTimeLabel()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartDownLabel()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartUnknownLabel()()
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartUnknownLabel()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartHoverStartLabel()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartHoverEndLabel()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartHoverPeriodLabel()()
         );
 
 
@@ -117,7 +120,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
 
                     xAxis = $wnd.d3.svg.axis()
                             .scale(timeScale)
-                            .ticks(10)
+                            .ticks(12)
                             .tickSubdivide(5)
                             .tickSize(4, 4, 0)
                             .orient("bottom"),
@@ -299,7 +302,6 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         })
                         .attr("opacity", 0.9)
                         .attr("fill", "#1794bc");
-                        //.attr("fill", "url(#topBarGrad)");
 
 
                 // lower portion representing avg to low
@@ -326,7 +328,6 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         })
                         .attr("opacity", 0.9)
                         .attr("fill", "#70c4e2");
-                        //.attr("fill", "url(#bottomBarGrad)");
 
                 // if high == low put a "cap" on the bar to show non-aggregated bar
                 svg.selectAll("rect.singleValue")
@@ -382,6 +383,10 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                 svg.append("g")
                         .attr("class", "x axis")
                         .attr("transform", "translate(0," + height + ")")
+                        .attr("font-size", "10px")
+                        .attr("font-family", "'Liberation Sans', Arial, Helvetica, sans-serif")
+                        .attr("letter-spacing", "3")
+                        .style("text-anchor", "end")
                         .call(xAxis);
 
 
@@ -488,37 +493,46 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                 var hoverString,
                         xValue = (d.x == undefined) ? 0 : +d.x,
                         date = new Date(+xValue),
+                        availStartDate = new Date(+d.availStart),
+                        availEndDate = new Date(+d.availEnd),
+                        unknownStartDate = new Date(+d.unknownStart),
+                        unknownEndDate = new Date(+d.unknownEnd),
                         timeFormatter = $wnd.d3.time.format("%I:%M:%S %P"),
                         dateFormatter = $wnd.d3.time.format("%m/%d/%y"),
                         highValue = (d.high == undefined) ? 0 : d.high.toFixed(2),
                         lowValue = (d.low == undefined) ? 0 : d.low.toFixed(2),
                         avgValue = (d.y == undefined) ? 0 : d.y.toFixed(2);
 
-                if (d.y == undefined) {
+                if (d.down) {
                     hoverString =
                             '<div style="text-align:left;z-index:401000;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">' + chartContext.timeLabel + ': </span>' + timeFormatter(date) + '</div>' +
                                     '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
-                                    '<hr style="width:100%;text-align: center;border: #d3d3d3 solid thin;"></div>' +
-                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.unknownLabel+'</span></div>' +
-                                    '</div>'
+                                    '<hr style="width:100%;text-align: center;border: #d3d3d3 solid thin;"></hr>' +
+                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverStartLabel+": "+ timeFormatter(availStartDate)+ '</span></div>' +
+                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverStartLabel+": "+ timeFormatter(availEndDate) + '</span></div>' +
+                                    '<div style="text-align: right;"><span style="width:100%;font-weight: bold;color:#ff8a9a"";">'+chartContext.downLabel +'</span></div>' +
+                                    '</div>';
                 }
-                else if (d.down) {
+                else if (d.y == undefined) {
                     hoverString =
                             '<div style="text-align:left;z-index:401000;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">' + chartContext.timeLabel + ': </span>' + timeFormatter(date) + '</div>' +
                                     '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
-                                    '<hr style="width:100%;text-align: center;border: #d3d3d3 solid thin;"></div>' +
-                                    '<div style="text-align: right;"><span style="width:100%;font-weight: bold;color:#ff8a9a"";">Down</span></div>' +
-                                    '</div>'
+                                    '<hr style="width:100%;text-align: center;border: #d3d3d3 solid thin;"></hr>' +
+                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverStartLabel+": "+ timeFormatter(unknownStartDate)+ '</span></div>' +
+                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverEndLabel+": "+ timeFormatter(unknownEndDate) + '</span></div>' +
+                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.unknownLabel+'</span></div>' +
+                                    '</div>';
 
                 }
                 else {
                     hoverString =
                             '<div style="text-align:left;z-index:401000;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">' + chartContext.timeLabel + ':  </span><span style="width:50px;">' + timeFormatter(date) + '</span></div>' +
                                     '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">' + chartContext.dateLabel + ':  </span><span style="width:50px;">' + dateFormatter(date) + '</span></div>' +
-                                    '<hr style="width:100%;text-align: center;border: #d3d3d3 solid thin;"></div>' +
+                                    '<hr style="width:100%;text-align: center;border: #d3d3d3 solid thin;"></hr>' +
                                     '<div style="text-align: right;"><span style="width:50px;font-weight:bold;color:#ff8a9a;";">' + chartContext.peakChartTitle + ': </span><span style="width:50px;">' + highValue + '</span></div>' +
                                     '<div style="text-align: right;"><span style="text-align:right;width:50px;font-weight:bold;color: #b0d9b0;"">' + chartContext.avgChartTitle + ':  </span style="width:50px;">' + avgValue + '</span></div>' +
-                                    '<div style="text-align: right;"><span style="width:50px;font-weight:bold;color:#8ad6ff"">' + chartContext.minChartTitle + ': </span><span style="width:50px;">' + lowValue + '</span></div>';
+                                    '<div style="text-align: right;"><span style="width:50px;font-weight:bold;color:#8ad6ff"">' + chartContext.minChartTitle + ': </span><span style="width:50px;">' + lowValue + '</span></div>' +
+                                    '</div>';
                 }
                 return hoverString;
 
@@ -532,7 +546,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                     trigger: 'hover',
                     title: function () {
                         var d = this.__data__;
-                        //console.log("y: " + d.y);
+                        console.log("y: " + d.y);
                         return formatHovers(chartContext, d);
                     }
                 });

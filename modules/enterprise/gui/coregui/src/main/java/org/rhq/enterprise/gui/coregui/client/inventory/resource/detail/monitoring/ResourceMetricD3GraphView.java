@@ -90,7 +90,7 @@ public class ResourceMetricD3GraphView extends AbstractMetricD3GraphView
             Log.debug("Chart path for: dashboard metrics");
             queryMetricsDataForDashboardGraphs();
         } else {
-            Log.debug("Chart path for: loaded metrics");
+            Log.debug("Chart path for: non-dashboard metrics");
             drawGraph();
         }
     }

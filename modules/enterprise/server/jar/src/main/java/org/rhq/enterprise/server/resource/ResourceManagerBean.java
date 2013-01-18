@@ -467,7 +467,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     private boolean uninventoryResourcesBulkDelete(Subject overlord, List<Integer> resourceIds) {
-        // obtain group ids of affected groups 
+        // Obtain group ids of affected groups, i.e. groups where resources act as the explicit resources.
+        // The RHQ_RESOURCE_GROUP_RES_EXP_MAP table is used, because the resource type of a group is set to a
+        // non null value iff the number of unique resource types of the member _EXPLICIT_ resources is equal to 1.
+        // In other words, the implicit resources of a group have no impact on the group type (compatible/mixed).
         Query nativeQuery = entityManager.createNativeQuery(ResourceGroup.QUERY_GET_GROUP_IDS_BY_RESOURCE_IDS);
         nativeQuery.setParameter("resourceIds", resourceIds);
         List<Integer> groupIds = nativeQuery.getResultList();
@@ -484,7 +487,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 resourceIds);
         }
         
-        // update the resource type on affected groups
+        // update the resource type of affected groups by calling setResouceType()
         for (int groupId : groupIds) {
             try {
                 resourceGroupManager.setResourceType(groupId);

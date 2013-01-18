@@ -380,6 +380,7 @@ public class ResourceSearchView extends Table {
 
     protected void onUninventorySuccess() {
         refresh(true);
+	// the group type may have changed
         CoreGUI.refresh();
     }
 

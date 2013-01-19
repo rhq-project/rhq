@@ -135,8 +135,9 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         // Pull in any required plugins from our pom's dependencies.
 
         Collection<RhqAgentPluginArchive> requiredPlugins = Arrays.asList(mavenDependencyResolver
-            .loadPomFromFile("pom.xml").importRuntimeDependencies(new AcceptScopesStrategy(ScopeType.PROVIDED))
+            .loadPomFromFile("pom.xml").importRuntimeAndTestDependencies(new AcceptScopesStrategy(ScopeType.PROVIDED))
             .as(RhqAgentPluginArchive.class));
+
         return ShrinkWrap.create(ZipImporter.class, pluginJarFile.getName()).importFrom(pluginJarFile)
             .as(RhqAgentPluginArchive.class).withRequiredPluginsFrom(requiredPlugins);
     }

@@ -248,6 +248,9 @@ public class InstallerServiceImpl implements InstallerService {
             // Make sure our deployment scanner is configured as we need it
             ServerInstallUtil.configureDeploymentScanner(mcc);
 
+            // Set up the transaction manager.
+            ServerInstallUtil.configureTransactionManager(mcc);
+
             // create a keystore whose cert has a CN of this server's public endpoint address
             File keystoreFile = ServerInstallUtil.createKeystore(serverDetails, appServerConfigDir);
 

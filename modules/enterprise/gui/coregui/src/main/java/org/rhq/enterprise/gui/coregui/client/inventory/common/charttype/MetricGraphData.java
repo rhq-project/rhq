@@ -215,6 +215,11 @@ public class MetricGraphData implements JsonMetricProducer {
         boolean gotAdjustedMeasurementUnits = false;
         //Log.debug(" avail records loaded: "+getAvailabilityDownList().size());
         if (null != metricData) {
+            long firstBarTime = metricData.get(0).getTimestamp();
+            long secondBarTime = metricData.get(1).getTimestamp();
+            long barDuration = secondBarTime - firstBarTime;
+            String barDurationString = MeasurementConverterClient.format((double) barDuration, MeasurementUnits.MILLISECONDS, true);
+
             calculateUnknownIntervals();
             dumpUnknownIntervals();
 
@@ -250,6 +255,7 @@ public class MetricGraphData implements JsonMetricProducer {
                         adjustedMeasurementUnits = newValue.getUnits();
                         gotAdjustedMeasurementUnits = true;
                     }
+                    sb.append(" barDuration: \"" + barDurationString + "\", ");
                     sb.append(" high:" + newHigh.getValue() + ",");
                     sb.append(" low:" + newLow.getValue() + ",");
                     sb.append(" y:" + newValue.getValue() + "},");

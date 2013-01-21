@@ -37,8 +37,8 @@ import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 /**
  * The data portion of the graphs making these methods accessible via JSNI to
  * classes extending this and implementing graphs.
- * Provide i18n labels and format the json data for the graph taking things into
- * consideration such as
+ * Provide i18n labels and format the json data for the graph.
+ *
  * @author Mike Thompson
  */
 public class MetricGraphData implements JsonMetricProducer {

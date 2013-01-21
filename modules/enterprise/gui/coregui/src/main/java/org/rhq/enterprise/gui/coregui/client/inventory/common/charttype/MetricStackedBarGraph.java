@@ -495,6 +495,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         date = new Date(+xValue),
                         availStartDate = new Date(+d.availStart),
                         availEndDate = new Date(+d.availEnd),
+                        availDuration = d.availDuration,
                         unknownStartDate = new Date(+d.unknownStart),
                         unknownEndDate = new Date(+d.unknownEnd),
                         timeFormatter = $wnd.d3.time.format("%I:%M:%S %P"),
@@ -509,7 +510,8 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                                     '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
                                     '<hr style="width:100%;text-align: center;border: #d3d3d3 solid thin;"></hr>' +
                                     '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverStartLabel+": "+ timeFormatter(availStartDate)+ '</span></div>' +
-                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverStartLabel+": "+ timeFormatter(availEndDate) + '</span></div>' +
+                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverEndLabel+": "+ timeFormatter(availEndDate) + '</span></div>' +
+                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverPeriodLabel+": "+ availDuration + '</span></div>' +
                                     '<div style="text-align: right;"><span style="width:100%;font-weight: bold;color:#ff8a9a"";">'+chartContext.downLabel +'</span></div>' +
                                     '</div>';
                 }
@@ -528,6 +530,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                     hoverString =
                             '<div style="text-align:left;z-index:401000;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">' + chartContext.timeLabel + ':  </span><span style="width:50px;">' + timeFormatter(date) + '</span></div>' +
                                     '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">' + chartContext.dateLabel + ':  </span><span style="width:50px;">' + dateFormatter(date) + '</span></div>' +
+                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverPeriodLabel+": "+ + '</span></div>' +
                                     '<hr style="width:100%;text-align: center;border: #d3d3d3 solid thin;"></hr>' +
                                     '<div style="text-align: right;"><span style="width:50px;font-weight:bold;color:#ff8a9a;";">' + chartContext.peakChartTitle + ': </span><span style="width:50px;">' + highValue + '</span></div>' +
                                     '<div style="text-align: right;"><span style="text-align:right;width:50px;font-weight:bold;color: #b0d9b0;"">' + chartContext.avgChartTitle + ':  </span style="width:50px;">' + avgValue + '</span></div>' +

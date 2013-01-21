@@ -228,6 +228,9 @@ public class MetricGraphData implements JsonMetricProducer {
                     if (measurement.getTimestamp() >= availability.getStartTime() && measurement.getTimestamp() <= availability.getEndTime()) {
                         sb.append(" availStart:" + availability.getStartTime() + ", ");
                         sb.append(" availEnd:" + availability.getEndTime() + ", ");
+                        long availDuration = availability.getEndTime() - availability.getStartTime();
+                        String availDurationString = MeasurementConverterClient.format((double) availDuration, MeasurementUnits.MILLISECONDS, true);
+                        sb.append(" availDuration: \"" + availDurationString + "\", ");
                         break;
                     }
                 }

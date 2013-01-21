@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Label;
@@ -39,6 +38,7 @@ import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
@@ -63,12 +63,15 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class D3GraphListView extends LocatableVLayout {
 
+    private static int NUM_ASYNC_CALLS = 3; // wait for X async calls in Latch
+
     private Resource resource;
     private Set<Integer> definitionIds = null;
     private Label loadingLabel = new Label(MSG.common_msg_loading());
     private UserPreferencesMeasurementRangeEditor measurementRangeEditor;
     private boolean useSummaryData = false;
     private PageList<Availability> downAvailList;
+    private PageList<MeasurementOOBComposite> measurementOOBCompositeList;
     private List<List<MeasurementDataNumericHighLowComposite>> metricsDataList;
 
     public static D3GraphListView createMultipleGraphs(String locatorId, Resource resource, Set<Integer> definitionIds) {
@@ -171,13 +174,14 @@ public class D3GraphListView extends LocatableVLayout {
 
                     // setting up a deferred Command to execute after all resource queries have completed (successfully or unsuccessfully)
                     // we know there are exactly 2 resources
-                    final CountDownLatch countDownLatch = CountDownLatch.create(2, new Command() {
+                    final CountDownLatch countDownLatch = CountDownLatch.create(NUM_ASYNC_CALLS, new Command() {
                         @Override
                         /**
                          * Satisfied only after ALL of the metric queries AND availability have completed
                          */
                         public void execute() {
-                            Log.debug("Total Time for async metrics/avail query: " + (System.currentTimeMillis() - startTimer));
+                            Log.debug("Total Time for async metrics/avail query: "
+                                + (System.currentTimeMillis() - startTimer));
                             if (metricsDataList.isEmpty()) {
                                 loadingLabel.setContents(MSG.view_resource_monitor_graphs_noneAvailable());
                             } else {
@@ -192,8 +196,9 @@ public class D3GraphListView extends LocatableVLayout {
                         }
                     });
 
-                    queryMetricData(measDefIdArray,countDownLatch);
+                    queryMetricData(measDefIdArray, countDownLatch);
                     queryAvailability(resource, countDownLatch);
+                    queryOOBMetrics(resource, countDownLatch);
                     // now the countDown latch will run sometime asynchronously
 
                 }
@@ -213,7 +218,8 @@ public class D3GraphListView extends LocatableVLayout {
                             @Override
                             public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> metrics) {
                                 metricsDataList = metrics;
-                                Log.debug("Metric graph data queried in: " + (System.currentTimeMillis() - startTimer + " ms."));
+                                Log.debug("Metric graph data queried in: "
+                                    + (System.currentTimeMillis() - startTimer + " ms."));
                                 countDownLatch.countDown();
 
                             }
@@ -249,10 +255,43 @@ public class D3GraphListView extends LocatableVLayout {
                                         downAvailList.add(availability);
                                     }
                                 }
-                                Log.debug("Down avail list: "+downAvailList.size());
+                                Log.debug("Down avail list: " + downAvailList.size());
                                 countDownLatch.countDown();
                             }
                         });
+                }
+
+                private void queryOOBMetrics(final Resource resource, final CountDownLatch countDownLatch) {
+
+                    final long startTime = System.currentTimeMillis();
+
+                    // now return the availability
+                    GWTServiceLookup.getMeasurementDataService().getHighestNOOBsForResource(resource.getId(), 60,
+
+                    new AsyncCallback<PageList<MeasurementOOBComposite>>() {
+                        @Override
+                        public void onSuccess(PageList<MeasurementOOBComposite> measurementOOBComposites) {
+
+                            measurementOOBCompositeList = measurementOOBComposites;
+                            Log.debug("\nSuccessfully queried OOB data in: "
+                                    + (System.currentTimeMillis() - startTime) + " ms.");
+                            Log.debug("OOB Data size: "+measurementOOBCompositeList.size());
+                            if(null != measurementOOBCompositeList){
+                                for (MeasurementOOBComposite measurementOOBComposite : measurementOOBComposites) {
+                                    System.out.println("measurementOOBComposite = " + measurementOOBComposite);
+                                }
+                            }
+                            countDownLatch.countDown();
+                        }
+
+                        @Override
+                        public void onFailure(Throwable caught) {
+                            Log.debug("Error retrieving out of bound metrics for resource [" + resource.getId() + "]:"
+                                + caught.getMessage());
+                            countDownLatch.countDown();
+                        }
+                    });
+
                 }
 
                 /**
@@ -273,7 +312,8 @@ public class D3GraphListView extends LocatableVLayout {
                     int i = 0;
                     for (MeasurementDefinition measurementDefinition : measurementDefinitions) {
                         if (summaryIds.contains(measurementDefinition.getId())) {
-                            buildSingleGraph(downAvailList, measurementDefinition, measurementData.get(i), 130);
+                            buildSingleGraph(downAvailList, measurementOOBCompositeList, measurementDefinition,
+                                measurementData.get(i), 130);
                         }
                         i++;
                     }
@@ -292,11 +332,13 @@ public class D3GraphListView extends LocatableVLayout {
                             if (null != selectedDefinitionId) {
                                 // single graph case
                                 if (measurementId == selectedDefinitionId) {
-                                    buildSingleGraph(downAvailList, measurementDefinition, measurement, 360);
+                                    buildSingleGraph(downAvailList, measurementOOBCompositeList, measurementDefinition,
+                                        measurement, 360);
                                 }
                             } else {
                                 // multiple graph case
-                                buildSingleGraph(downAvailList, measurementDefinition, measurement, 330);
+                                buildSingleGraph(downAvailList, measurementOOBCompositeList, measurementDefinition,
+                                    measurement, 330);
                             }
                         }
                         i++;
@@ -306,13 +348,14 @@ public class D3GraphListView extends LocatableVLayout {
 
     }
 
-
-    private void buildSingleGraph(PageList<Availability> downAvailList, MeasurementDefinition measurementDefinition,
+    private void buildSingleGraph(PageList<Availability> downAvailList,
+        PageList<MeasurementOOBComposite> measurementOOBCompositeList, MeasurementDefinition measurementDefinition,
         List<MeasurementDataNumericHighLowComposite> data, int height) {
         MetricGraphData metricGraphData = new MetricGraphData(resource.getId(), resource.getName(),
             measurementDefinition, data);
         MetricStackedBarGraph graph = new MetricStackedBarGraph(metricGraphData);
         graph.setAvailabilityDownList(downAvailList);
+        graph.setMeasurementOOBCompositeList(measurementOOBCompositeList);
 
         ResourceMetricD3GraphView graphView = new ResourceMetricD3GraphView(
             extendLocatorId(measurementDefinition.getName()), metricGraphData, graph);

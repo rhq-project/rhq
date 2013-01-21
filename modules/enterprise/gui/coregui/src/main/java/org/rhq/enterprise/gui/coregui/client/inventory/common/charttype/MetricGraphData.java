@@ -27,6 +27,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
+import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.JsonMetricProducer;
@@ -65,6 +66,7 @@ public class MetricGraphData implements JsonMetricProducer {
     private List<MeasurementDataNumericHighLowComposite> metricData;
     private List<DatePair> unknownIntervalList;
     private PageList<Availability> availabilityDownList;
+    private PageList<MeasurementOOBComposite> measurementOOBCompositeList;
 
     public MetricGraphData() {
 
@@ -139,6 +141,14 @@ public class MetricGraphData implements JsonMetricProducer {
 
     public void setAvailabilityDownList(PageList<Availability> availabilityDownList) {
         this.availabilityDownList = availabilityDownList;
+    }
+
+    public PageList<MeasurementOOBComposite> getMeasurementOOBCompositeList() {
+        return measurementOOBCompositeList;
+    }
+
+    public void setMeasurementOOBCompositeList(PageList<MeasurementOOBComposite> measurementOOBCompositeList) {
+        this.measurementOOBCompositeList = measurementOOBCompositeList;
     }
 
     public String getChartTitleMinLabel() {
@@ -218,7 +228,8 @@ public class MetricGraphData implements JsonMetricProducer {
             long firstBarTime = metricData.get(0).getTimestamp();
             long secondBarTime = metricData.get(1).getTimestamp();
             long barDuration = secondBarTime - firstBarTime;
-            String barDurationString = MeasurementConverterClient.format((double) barDuration, MeasurementUnits.MILLISECONDS, true);
+            String barDurationString = MeasurementConverterClient.format((double) barDuration,
+                MeasurementUnits.MILLISECONDS, true);
 
             calculateUnknownIntervals();
             dumpUnknownIntervals();
@@ -226,17 +237,21 @@ public class MetricGraphData implements JsonMetricProducer {
             for (MeasurementDataNumericHighLowComposite measurement : metricData) {
                 sb.append("{ x:" + measurement.getTimestamp() + ",");
 
-                // loop through the avail down intervals
-                for (Availability availability : availabilityDownList) {
-                    // we know we are in an interval
-                    //if (barDateTime.after(datePair.startDateTime) && barDateTime.before(datePair.getEndDateTime())) {
-                    if (measurement.getTimestamp() >= availability.getStartTime() && measurement.getTimestamp() <= availability.getEndTime()) {
-                        sb.append(" availStart:" + availability.getStartTime() + ", ");
-                        sb.append(" availEnd:" + availability.getEndTime() + ", ");
-                        long availDuration = availability.getEndTime() - availability.getStartTime();
-                        String availDurationString = MeasurementConverterClient.format((double) availDuration, MeasurementUnits.MILLISECONDS, true);
-                        sb.append(" availDuration: \"" + availDurationString + "\", ");
-                        break;
+                if (null != availabilityDownList) {
+                    // loop through the avail down intervals
+                    for (Availability availability : availabilityDownList) {
+                        // we know we are in an interval
+                        //if (barDateTime.after(datePair.startDateTime) && barDateTime.before(datePair.getEndDateTime())) {
+                        if (measurement.getTimestamp() >= availability.getStartTime()
+                            && measurement.getTimestamp() <= availability.getEndTime()) {
+                            sb.append(" availStart:" + availability.getStartTime() + ", ");
+                            sb.append(" availEnd:" + availability.getEndTime() + ", ");
+                            long availDuration = availability.getEndTime() - availability.getStartTime();
+                            String availDurationString = MeasurementConverterClient.format((double) availDuration,
+                                MeasurementUnits.MILLISECONDS, true);
+                            sb.append(" availDuration: \"" + availDurationString + "\", ");
+                            break;
+                        }
                     }
                 }
 
@@ -260,20 +275,20 @@ public class MetricGraphData implements JsonMetricProducer {
                     sb.append(" low:" + newLow.getValue() + ",");
                     sb.append(" y:" + newValue.getValue() + "},");
                 } else {
-                    if(!isTimestampDownOrDisabled(measurement.getTimestamp())){
+                    if (!isTimestampDownOrDisabled(measurement.getTimestamp())) {
                         // NaN measure no measurement was collected
                         // loop through the unknown intervals
                         for (DatePair datePair : unknownIntervalList) {
                             // we know we are in an interval
-                            if (measurement.getTimestamp() >= datePair.getStartDateTime().getTime() &&
-                                    measurement.getTimestamp() <= datePair.getEndDateTime().getTime()) {
+                            if (measurement.getTimestamp() >= datePair.getStartDateTime().getTime()
+                                && measurement.getTimestamp() <= datePair.getEndDateTime().getTime()) {
                                 sb.append(" unknownStart:" + datePair.getStartDateTime().getTime() + ", ");
                                 sb.append(" unknownEnd:" + datePair.getEndDateTime().getTime() + ", ");
                                 break;
                             }
                         }
                         sb.append(" nodata:true },");
-                    }else {
+                    } else {
                         sb.append(" },");
                     }
                 }
@@ -286,9 +301,9 @@ public class MetricGraphData implements JsonMetricProducer {
         return sb.toString();
     }
 
-    private void dumpUnknownIntervals(){
+    private void dumpUnknownIntervals() {
         for (DatePair datePair : unknownIntervalList) {
-            Log.debug("Interval: "+  datePair.getStartDateTime()+ " - "+ datePair.getEndDateTime());
+            Log.debug("Interval: " + datePair.getStartDateTime() + " - " + datePair.getEndDateTime());
         }
     }
 
@@ -299,11 +314,11 @@ public class MetricGraphData implements JsonMetricProducer {
         //find all possible starting interval points
         int i = 0;
         for (MeasurementDataNumericHighLowComposite measurement : metricData) {
-            boolean  notAtStart = i > 1;
-            boolean  currentBarUndefined = Double.isNaN(measurement.getValue());
-            boolean  previousBarDefined = (notAtStart) ? !Double.isNaN(metricData.get(i -1).getValue()) : false;
-            if(currentBarUndefined && previousBarDefined && notAtStart){
-                Log.debug("Adding Down or Disabled start Point: "+i);
+            boolean notAtStart = i > 1;
+            boolean currentBarUndefined = Double.isNaN(measurement.getValue());
+            boolean previousBarDefined = (notAtStart) ? !Double.isNaN(metricData.get(i - 1).getValue()) : false;
+            if (currentBarUndefined && previousBarDefined && notAtStart) {
+                Log.debug("Adding Down or Disabled start Point: " + i);
                 startPoints.add(i);
             }
             i++;
@@ -312,22 +327,21 @@ public class MetricGraphData implements JsonMetricProducer {
         // from the starting interval points find the interval end point
         for (Integer startPoint : startPoints) {
             Log.debug("StartPoint: " + new Date(metricData.get(startPoint).getTimestamp()));
-            for (int j = 0; j < metricData.size() -1 ; j++) {
-                boolean  notAtEnd = i < metricData.size();
-                boolean  currentBarUndefined = Double.isNaN(metricData.get(j).getValue());
-                boolean  nextBarDefined = (notAtEnd) ? !Double.isNaN(metricData.get(j +1).getValue()) : false;
-                if(currentBarUndefined && nextBarDefined && notAtEnd){
+            for (int j = 0; j < metricData.size() - 1; j++) {
+                boolean notAtEnd = i < metricData.size();
+                boolean currentBarUndefined = Double.isNaN(metricData.get(j).getValue());
+                boolean nextBarDefined = (notAtEnd) ? !Double.isNaN(metricData.get(j + 1).getValue()) : false;
+                if (currentBarUndefined && nextBarDefined && notAtEnd) {
                     Date startDate = new Date(metricData.get(startPoint).getTimestamp());
                     Date endDate = new Date(metricData.get(j - 1).getTimestamp());
                     Log.debug("\n\nStartDate: " + startDate);
                     Log.debug("EndDate: " + endDate);
                     DatePair datePair = new DatePair(startDate, endDate);
-                    //Log.debug(" metricDataIntervalSet " + unknownIntervalList);
                     unknownIntervalList.add(datePair);
                 }
             }
         }
-        Log.debug("intervalDatePairList.size():"+ unknownIntervalList.size());
+        Log.debug("intervalDatePairList.size():" + unknownIntervalList.size());
     }
 
     private boolean isTimestampDownOrDisabled(long timestamp) {

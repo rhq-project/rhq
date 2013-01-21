@@ -255,7 +255,7 @@ public class MetricGraphData implements JsonMetricProducer {
                     }
                 }
 
-                if (isTimestampDownOrDisabled(measurement.getTimestamp())) {
+                if (isAvailabilityDownOrDisabledForBar(measurement.getTimestamp())) {
                     sb.append(" down:true, ");
                 }
                 if (!Double.isNaN(measurement.getValue())) {
@@ -275,7 +275,7 @@ public class MetricGraphData implements JsonMetricProducer {
                     sb.append(" low:" + newLow.getValue() + ",");
                     sb.append(" y:" + newValue.getValue() + "},");
                 } else {
-                    if (!isTimestampDownOrDisabled(measurement.getTimestamp())) {
+                    if (!isAvailabilityDownOrDisabledForBar(measurement.getTimestamp())) {
                         // NaN measure no measurement was collected
                         // loop through the unknown intervals
                         for (DatePair datePair : unknownIntervalList) {
@@ -344,7 +344,7 @@ public class MetricGraphData implements JsonMetricProducer {
         Log.debug("intervalDatePairList.size():" + unknownIntervalList.size());
     }
 
-    private boolean isTimestampDownOrDisabled(long timestamp) {
+    private boolean isAvailabilityDownOrDisabledForBar(long timestamp) {
         Date timestampDate = new Date(timestamp);
         if (null != availabilityDownList) {
             for (Availability availability : availabilityDownList) {

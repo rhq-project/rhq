@@ -55,6 +55,7 @@ import org.rhq.common.jbossas.client.controller.JBossASClient;
 import org.rhq.common.jbossas.client.controller.MessagingJBossASClient;
 import org.rhq.common.jbossas.client.controller.SecurityDomainJBossASClient;
 import org.rhq.common.jbossas.client.controller.SocketBindingJBossASClient;
+import org.rhq.common.jbossas.client.controller.TransactionsJBossASClient;
 import org.rhq.common.jbossas.client.controller.WebJBossASClient;
 import org.rhq.common.jbossas.client.controller.WebJBossASClient.ConnectorConfiguration;
 import org.rhq.common.jbossas.client.controller.WebJBossASClient.SSLConfiguration;
@@ -146,7 +147,19 @@ public class ServerInstallUtil {
     private static final String RHQ_MGMT_USER = "rhqadmin";
 
     /**
-     * Configure the deployment scanner to get ready to deploy the application.
+     * Configure the transaction manager.
+     * @param mcc JBossAS management client
+     * @throws Exception
+     */
+    public static void configureTransactionManager(ModelControllerClient mcc) throws Exception {
+        TransactionsJBossASClient client = new TransactionsJBossASClient(mcc);
+
+        // we want to bump up the transaction timeout
+        client.setDefaultTransactionTimeout(600);
+    }
+
+    /**
+     * Configure the deployment scanner.
      * @param mcc JBossAS management client
      * @throws Exception
      */

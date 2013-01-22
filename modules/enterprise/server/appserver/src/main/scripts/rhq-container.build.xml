@@ -466,6 +466,9 @@ rhq.autoinstall.public-endpoint-address=
 # and should only be changed if you know what you are doing.
 #############################################################################
 
+# Enable debug messages from RHQ code
+rhq.server.log-level=INFO
+
 # Set this to true to have the server reject agent requests upon startup.
 rhq.server.maintenance-mode-at-startup=false
 

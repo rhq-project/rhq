@@ -59,12 +59,37 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
      *
      * @throws InvalidInventoryReportException if the inventory report is invalid
      */
-    ResourceSyncInfo mergeInventoryReport(InventoryReport report)
+    ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException;
+
+    /**
+     * <p>Exists for transactional boundary reasons only.</p>
+     * 
+     * @param updatedResource
+     * @param existingResource
+     * @throws InvalidInventoryReportException
+     */
+    void updateExistingResourceInNewTransaction(Resource updatedResource, Resource existingResource)
         throws InvalidInventoryReportException;
 
     /**
+     * <p>Exists for transactional boundary reasons only.</p>
+     * 
+     * Persist the resource and optionally create a child relationship with the existing parent.
+     *  
+     * @param Pojo, resource
+     * @param Detached entity, parentResource
+     */
+    void persistResourceInNewTransaction(Resource resource, Resource parentResource);
+
+    /**
+     * @param resourceId
+     * @return null if not found
+     */
+    ResourceSyncInfo getResourceSyncInfo(int resourceId);
+
+    /**
      * Returns a map of platforms (the keys) and their servers (the values) that are in the auto-discovery queue but not
-     * yet imported into inventory. Note that only servers whose direct parent is the plaform will appear in the
+     * yet imported into inventory. Note that only servers whose direct parent is the platform will appear in the
      * returned data. Embedded servers (i.e. servers that are children of other servers) will be automatically imported
      * when you import their parent server.
      *

@@ -972,9 +972,9 @@ public class Resource implements Comparable<Resource>, Serializable {
     @Summary(index = 4)
     private ResourceType resourceType;
 
-    // do not cascade remove; it would take forever to delete a full platform hierarchy,
-    // so we will manually delete the children ourselves
-    @OneToMany(mappedBy = "parentResource", fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST })
+    // Do not cascade remove; it would take forever to delete a full platform hierarchy, we delete the children
+    // Do not cascade persist; large child sets can take prohibitively long, we manually persist the children
+    @OneToMany(mappedBy = "parentResource", fetch = FetchType.LAZY)
     @OrderBy
     // primary key
     private Set<Resource> childResources;

@@ -52,6 +52,7 @@ import org.rhq.common.jbossas.client.controller.DatasourceJBossASClient;
 import org.rhq.common.jbossas.client.controller.FailureException;
 import org.rhq.common.jbossas.client.controller.InfinispanJBossASClient;
 import org.rhq.common.jbossas.client.controller.JBossASClient;
+import org.rhq.common.jbossas.client.controller.LoggingJBossASClient;
 import org.rhq.common.jbossas.client.controller.MessagingJBossASClient;
 import org.rhq.common.jbossas.client.controller.SecurityDomainJBossASClient;
 import org.rhq.common.jbossas.client.controller.SocketBindingJBossASClient;
@@ -147,6 +148,22 @@ public class ServerInstallUtil {
     private static final String RHQ_MGMT_USER = "rhqadmin";
 
     /**
+     * Configure the logging subsystem.
+     * @param mcc JBossAS management client
+     * @param serverProperties the server properties, which includes the default log level to use
+     * @throws Exception
+     */
+    public static void configureLogging(ModelControllerClient mcc, HashMap<String, String> serverProperties)
+        throws Exception {
+        LoggingJBossASClient client = new LoggingJBossASClient(mcc);
+
+        // we want to create our own category
+        String val = buildExpression(ServerProperties.PROP_LOG_LEVEL, serverProperties, false); // enable when AS7-5321 is fixed
+        client.setLoggerLevel("org.rhq", val);
+        LOG.info("Logging category org.rhq set to [" + val + "]");
+    }
+
+    /**
      * Configure the transaction manager.
      * @param mcc JBossAS management client
      * @throws Exception
@@ -156,6 +173,7 @@ public class ServerInstallUtil {
 
         // we want to bump up the transaction timeout
         client.setDefaultTransactionTimeout(600);
+        LOG.info("Default transaction timeout set to 600 seconds.");
     }
 
     /**
@@ -168,6 +186,7 @@ public class ServerInstallUtil {
 
         // we do not want our RHQ Server to support hot deployments via the scanner
         client.setAppServerDefaultDeploymentScanEnabled(false);
+        LOG.info("Deployment scanner turned off.");
     }
 
     /**
@@ -1422,6 +1441,29 @@ public class ServerInstallUtil {
             }
             LOG.info(String.format("Setting socket binding [%s] to [${%s:%d}]", binding.name, binding.sysprop, newPort));
             client.setStandardSocketBindingPortExpression(binding.name, binding.sysprop, newPort);
+        }
+    }
+
+    /**
+     * This checks to see if the logging settings have the same values as those found in the given properties.
+     *
+     * THIS IS ONLY HERE TO SUPPORT INSTALLER --reconfig OPTION WHICH SHOULD
+     * GO AWAY ONCE AS7 SUPPORTS EXPRESSIONS WHERE WE NEED THEM - JIRA AS7-5321.
+     * ONCE AS7 DOES THIS, THIS METHOD CAN GO AWAY.
+     *
+     * @param mcc the JBossAS management client
+     * @param serverProperties contains the logging settings
+     * @return true if the logging settings have the same values
+     * @throws Exception
+     */
+    public static boolean isSameLoggingExisting(ModelControllerClient mcc, HashMap<String, String> serverProperties) {
+        try {
+            LoggingJBossASClient client = new LoggingJBossASClient(mcc);
+            String currentLevel = client.getLoggerLevel("org.rhq");
+            String newLevel = serverProperties.get(ServerProperties.PROP_LOG_LEVEL);
+            return !isEmpty(currentLevel) && currentLevel.equalsIgnoreCase(newLevel);
+        } catch (Exception e) {
+            return false; // assume they aren't the same - this may be due to the category org.rhq just missing
         }
     }
 

@@ -251,6 +251,9 @@ public class InstallerServiceImpl implements InstallerService {
             // Set up the transaction manager.
             ServerInstallUtil.configureTransactionManager(mcc);
 
+            // Set up the logging subsystem
+            ServerInstallUtil.configureLogging(mcc, serverProperties);
+
             // create a keystore whose cert has a CN of this server's public endpoint address
             File keystoreFile = ServerInstallUtil.createKeystore(serverDetails, appServerConfigDir);
 
@@ -568,8 +571,10 @@ public class InstallerServiceImpl implements InstallerService {
                 if (ServerInstallUtil.isSameDatasourceSecurityDomainExisting(mcc, serverProperties)) {
                     if (ServerInstallUtil.isSameMailServiceExisting(mcc, serverProperties)) {
                         if (ServerInstallUtil.isSameWebConnectorsExisting(mcc, appServerConfigDir, serverProperties)) {
-                            log("Nothing in the configuration changed that requires a reconfig - everything looks OK");
-                            return true; // nothing to do, return immediately
+                            if (ServerInstallUtil.isSameLoggingExisting(mcc, serverProperties)) {
+                                log("Nothing in the configuration changed that requires a reconfig - everything looks OK");
+                                return true; // nothing to do, return immediately
+                            }
                         }
                     }
                 }
@@ -594,6 +599,9 @@ public class InstallerServiceImpl implements InstallerService {
 
             // setup the secure Tomcat web connectors
             ServerInstallUtil.setupWebConnectors(mcc, appServerConfigDir, serverProperties);
+
+            // setup the logging level
+            ServerInstallUtil.configureLogging(mcc, serverProperties);
 
             // now restart - don't just reload, some of our stuff won't restart properly if we just reload
             coreClient = new CoreJBossASClient(mcc);

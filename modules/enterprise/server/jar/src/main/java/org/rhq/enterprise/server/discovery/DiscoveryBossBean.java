@@ -797,6 +797,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
             ResourceCriteria criteria = new ResourceCriteria();
             criteria.addFilterId(resource.getId());
+            criteria.addFilterInventoryStatus(null); // Don't filter on COMMITTED, disable the default filter
             criteria.fetchParentResource(fetchParent); // OK because we are calling as overlord
             criteria.fetchChildResources(fetchChildren); // OK because we are calling as overlord
             List<Resource> result = resourceManager.findResourcesByCriteria(overlord, criteria);
@@ -837,6 +838,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 if (null != parent) {
                     ResourceCriteria criteria = new ResourceCriteria();
                     criteria.addFilterId(parent.getId());
+                    criteria.addFilterInventoryStatus(null); // Don't filter on COMMITTED, disable the default filter
                     List<Resource> result = resourceManager.findResourcesByCriteria(overlord, criteria);
                     if (result.isEmpty()) {
                         //well, this parent is not known to the server, so there's no point in trying to find a child of it...
@@ -862,6 +864,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 if (fetchParent || fetchChildren) {
                     ResourceCriteria criteria = new ResourceCriteria();
                     criteria.addFilterId(existingResource.getId());
+                    criteria.addFilterInventoryStatus(null); // Don't filter on COMMITTED, disable the default filter
                     criteria.fetchParentResource(fetchParent); // OK because we are calling as overlord
                     criteria.fetchChildResources(fetchChildren); // OK because we are calling as overlord
                     List<Resource> result = resourceManager.findResourcesByCriteria(overlord, criteria);
@@ -1009,11 +1012,11 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         if (null == resourceType) {
             try {
-                ResourceTypeCriteria c = new ResourceTypeCriteria();
-                c.addFilterPluginName(plugin);
-                c.addFilterName(name);
+                ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+                criteria.addFilterPluginName(plugin);
+                criteria.addFilterName(name);
                 List<ResourceType> result = resourceTypeManager.findResourceTypesByCriteria(
-                    subjectManager.getOverlord(), c);
+                    subjectManager.getOverlord(), criteria);
 
                 if (!result.isEmpty()) {
                     resourceType = result.get(0);

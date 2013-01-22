@@ -68,7 +68,7 @@ public class ResourceTypeRepository {
      */
     public enum MetadataType {
         children, operations, measurements, content, events, pluginConfigurationDefinition, resourceConfigurationDefinition, subCategory, parentTypes, processScans, productVersions, driftDefinitionTemplates(
-            true);
+            true), bundleConfiguration;
 
         private boolean isFetchAlways;
 
@@ -293,6 +293,10 @@ public class ResourceTypeRepository {
             case driftDefinitionTemplates:
                 criteria.fetchDriftDefinitionTemplates(true);
                 break;
+            case bundleConfiguration:
+                criteria.fetchBundleConfiguration(true);
+                break;
+                
             default:
                 Log.error("Metadata type [" + metadataType.name() + "] not incorporated into ResourceType criteria.");
             }
@@ -410,6 +414,9 @@ public class ResourceTypeRepository {
                                     break;
                                 case driftDefinitionTemplates:
                                     cachedType.setDriftDefinitionTemplates(type.getDriftDefinitionTemplates());
+                                    break;
+                                case bundleConfiguration:
+                                    cachedType.setResourceTypeBundleConfiguration(type.getResourceTypeBundleConfiguration());
                                     break;
                                 default:
                                     Log.error("ERROR: metadataType " + metadataType.name()

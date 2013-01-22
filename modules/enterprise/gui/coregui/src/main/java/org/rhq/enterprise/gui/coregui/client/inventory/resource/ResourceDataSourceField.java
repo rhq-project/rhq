@@ -37,6 +37,8 @@ public enum ResourceDataSourceField {
     KEY("resourceKey", CoreGUI.getMessages().dataSource_resources_field_key()),
 
     TYPE("resourceType.name", CoreGUI.getMessages().common_title_type()),
+    
+    TYPE_ID("resourceType.id", CoreGUI.getMessages().common_title_type() + CoreGUI.getMessages().common_title_id()),
 
     PLUGIN("pluginName", CoreGUI.getMessages().common_title_plugin()),
 

@@ -363,6 +363,29 @@
       </service>
    </server>
 
+   <server name="server-deep1" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Test Server Deep1">
+      <service name="service-deep2" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Test Service Deep2">
+         <metric property="metric000" defaultOn="true" displayType="summary"/>
+         <metric property="metric001" defaultOn="true" displayType="summary"/>
+         <service name="service-deep3" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Test Service Deep3">
+            <metric property="metric000" defaultOn="true" displayType="summary"/>
+            <metric property="metric001" defaultOn="true" displayType="summary"/>
+            <service name="service-deep4" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Test Service Deep4">
+               <metric property="metric000" defaultOn="true" displayType="summary"/>
+               <metric property="metric001" defaultOn="true" displayType="summary"/>
+               <service name="service-deep5" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Test Service Deep5">
+                  <metric property="metric000" defaultOn="true" displayType="summary"/>
+                  <metric property="metric001" defaultOn="true" displayType="summary"/>
+                  <service name="service-deep6" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Test Service Deep6">
+                     <metric property="metric000" defaultOn="true" displayType="summary"/>
+                     <metric property="metric001" defaultOn="true" displayType="summary"/>
+                  </service>
+               </service>
+            </service>
+         </service>
+      </service>
+   </server>
+
    <server name="server-rogue"
            class="PerfTestRogueComponent"
            discovery="PerfTestRogueDiscoveryComponent"

@@ -26,6 +26,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,7 +44,6 @@ import javax.security.auth.login.LoginException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.Scheduler;
@@ -107,6 +107,19 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Stateless
 public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemote {
+
+    static private final int MERGE_BATCH_SIZE;
+
+    static {
+
+        int mergeBatchSize = 200;
+        try {
+            mergeBatchSize = Integer.parseInt(System.getProperty("rhq.server.discovery.merge.batch.size", "200"));
+        } catch (Throwable t) {
+            //
+        }
+        MERGE_BATCH_SIZE = mergeBatchSize;
+    }
 
     private final Log log = LogFactory.getLog(DiscoveryBossBean.class.getName());
 
@@ -185,16 +198,12 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 continue;
             }
 
-            if ((root.getParentResource() != Resource.ROOT) && (root.getParentResource().getId() != Resource.ROOT_ID)) {
-                // This is a new resource that has a parent that already exists.
-                Resource parent = findExistingResource(root.getParentResource(), true, true);
-                assert parent != null;
-                mergeResource(root, parent, knownAgent);
-
-            } else {
-                // This is a root resource.
-                mergeResource(root, Resource.ROOT, knownAgent);
+            if (Resource.ROOT != root.getParentResource() && Resource.ROOT_ID == root.getParentResource().getId()) {
+                // This is a root resource. Just set it that way
+                root.setParentResource(Resource.ROOT);
             }
+
+            mergeResource(root, knownAgent);
 
             if (log.isDebugEnabled()) {
                 log.debug("Root merged: resource/millis=" + root.getName() + '/'
@@ -203,14 +212,12 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         }
 
         // Prepare the ResourceSyncInfo tree which contains all the info the PC needs to sync itself up with us.
-        Resource platform = resourceManager.getPlatform(knownAgent);
-
-        // the platform can be null in only one scenario.. a brand new agent has connected to the server
+        // The platform can be null in only one scenario.. a brand new agent has connected to the server
         // and that agent is currently trying to upgrade its resources. For that it asks us to send down
         // the current inventory on the server side. But at this point there isn't any since that very
         // agent just registered and is starting up for the very first time and therefore hasn't had
         // a chance yet to send us its full inventory report.
-        ResourceSyncInfo syncInfo = platform != null ? discoveryBoss.getResourceSyncInfo(platform.getId()) : null;
+        ResourceSyncInfo syncInfo = discoveryBoss.getResourceSyncInfo(knownAgent);
 
         if (log.isDebugEnabled()) {
             log.debug("Inventory merge completed in (" + (System.currentTimeMillis() - start) + ")ms");
@@ -220,8 +227,13 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     }
 
     @Override
-    public ResourceSyncInfo getResourceSyncInfo(int resourceId) {
-        ResourceSyncInfo result = entityManager.find(ResourceSyncInfo.class, resourceId);
+    public ResourceSyncInfo getResourceSyncInfo(Agent knownAgent) {
+        Resource platform = resourceManager.getPlatform(knownAgent);
+        if (null == platform) {
+            return null;
+        }
+
+        ResourceSyncInfo result = entityManager.find(ResourceSyncInfo.class, platform.getId());
         return result;
     }
 
@@ -498,7 +510,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 + resource.getResourceType());
         }
 
-        Resource existingResource = findExistingResource(resource, false, false);
+        Resource existingResource = findExistingResource(resource);
         if (existingResource != null) {
             mergeResourceResponse = new MergeResourceResponse(existingResource.getId(), true);
         } else {
@@ -706,17 +718,16 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     }
 
     /**
-     * <p>Not In Transaction</p>
+     * <p>Should Not Be Called With Existing Transaction !!!</p>
      *  
-     * <p>Merges the specified resource and its children into inventory If the resource already exists in inventory,
+     * <p>Merges the specified resource and its children into inventory. If the resource already exists in inventory,
      * it is updated; if it does not already exist in inventory, it is added and its parent is set to the specified, already inventoried,
      * parent resource.</p>
      * 
      * <p>Does not require an existing transaction.  The resource and each child will be merged in an isolated
      * transaction</p>
      *
-     * @param  resource       pojo, the resource to be merged
-     * @param  parentResource detached entity, parent of resource to be merged
+     * @param  resource       pojo, the resource to be merged, should have parent and children pojos set
      * @param  agent          detached entity, the agent that should be set on the resource being merged
      *
      * @throws InvalidInventoryReportException if a critical field in the resource is missing or invalid
@@ -724,8 +735,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     private void mergeResource( //
         @NotNull
         Resource resource, //
-        @Nullable
-        Resource parentResource, //
         @NotNull
         Agent agent) throws InvalidInventoryReportException {
 
@@ -735,28 +744,87 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             log.debug("Merging [" + resource + "]...");
         }
 
-        // Even though we may end up fetching an existing resource more than once (detached here, attached later,
-        // it's a necessary evil, as this call is not just a straightforward id fetch. 
-        Resource existingResource = findExistingResource(resource, false, false);
+        // We don't merge the entire resource tree. Instead we batch them in order to reduce transaction overhead
+        // while ensuring no transaction is too big (and thus risks timeout). To do this we need to flatten the
+        // tree and chunk through it.  Parents must be merged before children, so use a breadth first approach.
+        List<Resource> resourceList = treeToBreadthFirstList(resource);
 
-        if (null != existingResource) {
-            updatePreviouslyInventoriedResource(resource, existingResource);
+        // TODO: if (log.isDebugEnabled()) {        
+        log.info("Preparing to merge [" + resourceList.size() + "Resources with a batch size of [" + MERGE_BATCH_SIZE
+            + "]");
+        //}
 
-        } else {
-            presetAgent(resource, agent);
-            addResourceToInventory(resource, parentResource);
+        for (int i = 0, size = resourceList.size(); i < size;) {
+            int end = i + MERGE_BATCH_SIZE;
+            if (end > size) {
+                end = size;
+            }
+
+            List<Resource> resourceBatch = resourceList.subList(i, end);
+            discoveryBoss.mergeResourceInNewTransaction(resourceBatch, agent);
+            i = end;
         }
 
-        if (log.isDebugEnabled()) {
-            log.debug("Resource merged: resource/millis=" + resource.getName() + '/'
-                + (System.currentTimeMillis() - start));
-        }
+        // TODO: if (log.isDebugEnabled()) {
+        log.info("Resource and children merged: resource/millis=" + resource.getName() + '/'
+            + (System.currentTimeMillis() - start));
+        //}
+
         return;
     }
 
+    private List<Resource> treeToBreadthFirstList(Resource resource) {
+        List<Resource> result = new ArrayList<Resource>(MERGE_BATCH_SIZE);
+
+        LinkedList<Resource> queue = new LinkedList<Resource>();
+        queue.add(resource);
+        while (!queue.isEmpty()) {
+            Resource node = queue.remove();
+            result.add(node);
+            for (Resource child : node.getChildResources()) {
+                queue.add(child);
+            }
+        }
+
+        return result;
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void mergeResourceInNewTransaction(List<Resource> resourceBatch, Agent agent)
+        throws InvalidInventoryReportException {
+
+        long batchStart = System.currentTimeMillis();
+
+        for (Resource resource : resourceBatch) {
+            Resource existingResource = null;
+            long start = System.currentTimeMillis();
+
+            existingResource = findExistingResource(resource);
+
+            // Does this resource already exist in inventory? If so, update, otherwise add
+            if (null != existingResource) {
+                updateExistingResourceInNewTransaction(resource, existingResource);
+
+            } else {
+                presetAgent(resource, agent);
+                persistResourceInNewTransaction(resource);
+            }
+
+            //TODO: if (log.isDebugEnabled()) {
+            log.info("Single Resource merged: resource/millis=" + resource.getName() + '/'
+                + (System.currentTimeMillis() - start));
+            //}
+        }
+
+        //TODO: if (log.isDebugEnabled()) {
+        long delta = (System.currentTimeMillis() - batchStart);
+        log.info("Resource Batch merged: size/average/millis=" + resourceBatch.size() + "/" + delta
+            / resourceBatch.size() + "/" + delta);
+        //}        
+    }
+
     /**
-     * <p>Not In Transaction</p>
-     *  
      * Recursively set the agent on the resource tree.
      *  
      * @param resource pojo, the parent
@@ -775,13 +843,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
      * cannot be found either via ID or resource key then SIDE EFFECT: the given resource's ID will be reset to 0 and null
      * will be returned.
      *
-     * @param  resource Pojo containing resource id, key, parent (if it exists)
-     * @param  fetchParent
-     * @parent fetchChildren
-     * @return the (detached) Resource entity found in the database and matching the given resource. Parent and Child
-     * resources will be set on the resource.
+     * @param  resource Pojo containing resourceId, key, and parentResoure (if applicable)
+     * @return the Resource entity found in the database and matching the given resource.
      */
-    private Resource findExistingResource(Resource resource, boolean fetchParent, boolean fetchChildren) {
+    private Resource findExistingResource(Resource resource) {
 
         if (log.isDebugEnabled()) {
             log.debug("getExistingResource processing for [" + resource + "]");
@@ -798,8 +863,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             ResourceCriteria criteria = new ResourceCriteria();
             criteria.addFilterId(resource.getId());
             criteria.addFilterInventoryStatus(null); // Don't filter on COMMITTED, disable the default filter
-            criteria.fetchParentResource(fetchParent); // OK because we are calling as overlord
-            criteria.fetchChildResources(fetchChildren); // OK because we are calling as overlord
             List<Resource> result = resourceManager.findResourcesByCriteria(overlord, criteria);
             if (!result.isEmpty()) {
                 if (log.isDebugEnabled()) {
@@ -826,7 +889,9 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                     + ", key=" + resource.getResourceKey());
             }
 
-            // not sure I understand this while-loop bit (jshaughn), please comment if you know what is happening here
+            // (jshaughn) I'm not 100% sure I understand the need for this while loop, but I believe it has to
+            // do with handling the case in which a resource type has moved (see f74b22044) and trying to
+            // relocate the parent.  Anyway, I'm not going to touch it even though it slows things down.
             ResourceType resourceType = resource.getResourceType();
             Resource parent = resource;
 
@@ -860,17 +925,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                     log.debug("Found resource already in inventory with specified business key, Id=" + resource.getId());
                 }
 
-                // fetch the children, they are not yet fetched
-                if (fetchParent || fetchChildren) {
-                    ResourceCriteria criteria = new ResourceCriteria();
-                    criteria.addFilterId(existingResource.getId());
-                    criteria.addFilterInventoryStatus(null); // Don't filter on COMMITTED, disable the default filter
-                    criteria.fetchParentResource(fetchParent); // OK because we are calling as overlord
-                    criteria.fetchChildResources(fetchChildren); // OK because we are calling as overlord
-                    List<Resource> result = resourceManager.findResourcesByCriteria(overlord, criteria);
-                    existingResource = result.get(0);
-                }
-
             } else {
                 log.debug("Unable to find the agent-reported resource by id or business key.");
 
@@ -891,21 +945,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         return existingResource;
     }
 
-    private void updatePreviouslyInventoriedResource(Resource updatedResource, Resource existingResource)
-        throws InvalidInventoryReportException {
-
-        discoveryBoss.updateExistingResourceInNewTransaction(updatedResource, existingResource);
-
-        for (Resource childResource : updatedResource.getChildResources()) {
-            mergeResource(childResource, existingResource, existingResource.getAgent());
-        }
-
-        return;
-    }
-
-    @Override
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void updateExistingResourceInNewTransaction(Resource updatedResource, Resource existingResource)
+    private void updateExistingResourceInNewTransaction(Resource updatedResource, Resource existingResource)
         throws InvalidInventoryReportException {
         /*
          * there exists a small window of time after the synchronous part of the uninventory and before the async
@@ -1048,42 +1088,16 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         return true;
     }
 
-    /**
-     * <p>Not In Transaction</p>
-     * 
-     * Add the resource to the existing parent and recursively do the same for all children.  Each resource
-     * will be persisted in a separate transaction to ensure one overly long transaction does nottake place for
-     * a large resource tree. 
-     *  
-     * @param Pojo, resource
-     * @param Detached entity, parentResource
-     */
-    private void addResourceToInventory(Resource resource, Resource parentResource) {
-        if (log.isDebugEnabled()) {
-            log.debug("New resource [" + resource + "] reported - adding to inventory with status 'NEW'...");
-        }
+    private void persistResourceInNewTransaction(Resource resource) {
 
-        initAutoDiscoveredResource(resource, parentResource);
-
-        persistResourceToInventory(resource, parentResource);
-    }
-
-    private void persistResourceToInventory(Resource resource, Resource parentResource) {
-
-        discoveryBoss.persistResourceInNewTransaction(resource, parentResource);
-
-        for (Resource child : resource.getChildResources()) {
-            persistResourceToInventory(child, resource);
-        }
-    }
-
-    @Override
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void persistResourceInNewTransaction(Resource resource, Resource parentResource) {
+        Resource parentResource = resource.getParentResource();
 
         if (null != parentResource) {
-            parentResource = entityManager.find(Resource.class, parentResource.getId());
-            parentResource.addChildResource(resource);
+            // Find the parent resource entity and create the parent-child relationship
+            parentResource = findExistingResource(parentResource);
+            if (null != parentResource) {
+                parentResource.addChildResource(resource);
+            }
         }
 
         entityManager.persist(resource);
@@ -1095,36 +1109,28 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             resource.setProductVersion(productVersion);
         }
 
-        // Extend implicit (recursive) group membership of the parent to the new child  
-        if (null != parentResource) {
-            groupManager.updateImplicitGroupMembership(subjectManager.getOverlord(), resource);
-        }
-    }
+        // Ensure the new resource has an owner and modifier of superUser.
+        Subject overlord = subjectManager.getOverlord();
 
-    /**
-     * <p>Not In Transaction</p>
-     * 
-     * Before adding a new auto-discovered resource to inventory, ensure that it, and all its descendants, has
-     * the proper inventory status and an owner and modifier of superUser.
-     * 
-     * @param resource Pojo
-     * @param parent Pojo
-     */
-    private void initAutoDiscoveredResource(Resource resource, Resource parent) {
-        if ((resource.getParentResource() != null)
-            && (resource.getParentResource().getInventoryStatus() == InventoryStatus.COMMITTED)
-            && ((resource.getResourceType().getCategory() == ResourceCategory.SERVICE) || (resource.getParentResource()
+        resource.setItime(System.currentTimeMillis());
+        resource.setModifiedBy(overlord.getName());
+
+        // Ensure the new resource has the proper inventory status
+        if ((null != parentResource)
+            && (parentResource.getInventoryStatus() == InventoryStatus.COMMITTED)
+            && ((resource.getResourceType().getCategory() == ResourceCategory.SERVICE) || (parentResource
                 .getResourceType().getCategory() == ResourceCategory.SERVER))) {
+
             // Auto-commit services whose parent resources have already been imported by the user
             resource.setInventoryStatus(InventoryStatus.COMMITTED);
+
         } else {
             resource.setInventoryStatus(InventoryStatus.NEW);
         }
 
-        resource.setItime(System.currentTimeMillis());
-        resource.setModifiedBy(subjectManager.getOverlord().getName());
-        for (Resource childResource : resource.getChildResources()) {
-            initAutoDiscoveredResource(childResource, resource);
+        // Extend implicit (recursive) group membership of the parent to the new child
+        if (null != parentResource) {
+            groupManager.updateImplicitGroupMembership(overlord, resource);
         }
     }
 

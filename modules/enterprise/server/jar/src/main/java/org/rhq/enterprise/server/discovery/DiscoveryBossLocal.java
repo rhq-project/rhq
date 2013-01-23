@@ -37,6 +37,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
+import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
@@ -63,29 +64,21 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
 
     /**
      * <p>Exists for transactional boundary reasons only.</p>
+     *
+     * Merge In the provided batch of resources.  The list of resources must provide a parent before its child.
      * 
-     * @param updatedResource
-     * @param existingResource
+     * @param resourceBatch
+     * @param agent
      * @throws InvalidInventoryReportException
      */
-    void updateExistingResourceInNewTransaction(Resource updatedResource, Resource existingResource)
+    void mergeResourceInNewTransaction(List<Resource> resourceBatch, Agent agent)
         throws InvalidInventoryReportException;
 
     /**
-     * <p>Exists for transactional boundary reasons only.</p>
-     * 
-     * Persist the resource and optionally create a child relationship with the existing parent.
-     *  
-     * @param Pojo, resource
-     * @param Detached entity, parentResource
+     * @param knownAgent the agent for the platform we want to sync with
+     * @return null if platform not found
      */
-    void persistResourceInNewTransaction(Resource resource, Resource parentResource);
-
-    /**
-     * @param resourceId
-     * @return null if not found
-     */
-    ResourceSyncInfo getResourceSyncInfo(int resourceId);
+    ResourceSyncInfo getResourceSyncInfo(Agent knownAgent);
 
     /**
      * Returns a map of platforms (the keys) and their servers (the values) that are in the auto-discovery queue but not

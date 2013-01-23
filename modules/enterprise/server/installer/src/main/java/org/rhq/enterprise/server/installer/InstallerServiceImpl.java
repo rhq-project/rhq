@@ -983,6 +983,10 @@ public class InstallerServiceImpl implements InstallerService {
         try {
             mcc = ModelControllerClient.Factory.create(host, port);
             client = new CoreJBossASClient(mcc);
+            Properties sysprops = client.getSystemProperties();
+            if (!sysprops.containsKey("rhq.server.database.connection-url")) {
+                throw new Exception("Not an RHQ Server");
+            }
             asVersion = client.getAppServerVersion();
             return asVersion;
         } catch (Exception e) {
@@ -994,7 +998,7 @@ public class InstallerServiceImpl implements InstallerService {
 
             // if the caller didn't give us any fallback props, just immediately fail
             if (fallbackProps == null) {
-                throw new Exception("Cannot obtain client connection to the app server", e);
+                throw new Exception("Cannot obtain client connection to the RHQ app server", e);
             }
 
             try {
@@ -1013,18 +1017,22 @@ public class InstallerServiceImpl implements InstallerService {
                     differentValues = true;
                 }
                 if (!differentValues) {
-                    throw new Exception("Cannot obtain client connection to the app server", e);
+                    throw new Exception("Cannot obtain client connection to the RHQ app server!", e);
                 }
 
                 mcc = ModelControllerClient.Factory.create(host, port);
                 client = new CoreJBossASClient(mcc);
+                Properties sysprops = client.getSystemProperties();
+                if (!sysprops.containsKey("rhq.server.database.connection-url")) {
+                    throw new Exception("Not an RHQ Server");
+                }
                 asVersion = client.getAppServerVersion();
                 this.installerConfiguration.setManagementHost(host);
                 this.installerConfiguration.setManagementPort(port);
                 return asVersion;
             } catch (Exception e2) {
                 // make the cause the very first exception in case it was something other than bad host/port as the problem
-                throw new Exception("Cannot obtain client connection to the app server!", e);
+                throw new Exception("Cannot obtain client connection to the RHQ app server!!", e);
             } finally {
                 safeClose(mcc);
             }

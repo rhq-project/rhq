@@ -452,7 +452,7 @@ public class AbstractRestBean {
         return gr;
     }
 
-    private static class CacheKey {
+    protected static class CacheKey {
         private String namespace;
         private int id;
 

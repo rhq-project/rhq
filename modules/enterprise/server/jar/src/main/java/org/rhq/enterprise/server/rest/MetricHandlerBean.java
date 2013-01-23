@@ -29,8 +29,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.EJB;
@@ -78,6 +80,8 @@ import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -89,6 +93,7 @@ import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.rest.domain.Baseline;
+import org.rhq.enterprise.server.rest.domain.Datapoint;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.MetricAggregate;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
@@ -721,6 +726,55 @@ public class MetricHandlerBean  extends AbstractRestBean  {
 
         return Response.noContent().type(mediaType).build();
 
+    }
+
+    @POST
+    @Path("data/raw/{resourceId}")
+    @Consumes({MediaType.APPLICATION_JSON})
+    @ApiOperation(value="Submit a series of (numerical) metric values for a single resource to the server",responseClass = "No response")
+    public Response postMetricValues2(@PathParam("resourceId") int resourceId,
+        Collection<Datapoint> points, @Context HttpHeaders headers) {
+
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>(points.size());
+        for (Datapoint point : points) {
+
+            int scheduleId = findScheduleId(resourceId, point.getMetric() );
+            if (scheduleId>0) {
+                data.add(new MeasurementDataNumeric(point.getTimestamp(), scheduleId,point.getValue()));
+            }
+            // TODO signal bad items to the caller?
+        }
+
+        dataManager.addNumericData(data);
+
+        return Response.noContent().type(mediaType).build();
+    }
+
+    private int findScheduleId(int resourceId, String metric) {
+        CacheKey key = new CacheKey("schedulesForResource",resourceId);
+        Map<String,Integer> schedulesForResource = (Map<String, Integer>) cache.get(key);
+        if (schedulesForResource!=null && schedulesForResource.containsKey(metric)) {
+            return schedulesForResource.get(metric);
+        }
+        else {
+            Resource res = fetchResource(resourceId);
+            ResourceType resourceType = res.getResourceType();
+            int[] definitionIds = new int[resourceType.getMetricDefinitions().size()];
+            int i = 0;
+            for (MeasurementDefinition def : resourceType.getMetricDefinitions()) {
+                definitionIds[i]=def.getId();
+                i++;
+            }
+            List<MeasurementSchedule> schedules = scheduleManager.findSchedulesByResourceIdAndDefinitionIds(caller,resourceId,definitionIds);
+
+            schedulesForResource = new HashMap<String, Integer>(schedules.size());
+            for (MeasurementSchedule schedule : schedules) {
+                schedulesForResource.put(schedule.getDefinition().getName(),schedule.getId());
+            }
+            cache.put(key,schedulesForResource);
+            return schedulesForResource.get(metric);
+        }
     }
 
     @GET

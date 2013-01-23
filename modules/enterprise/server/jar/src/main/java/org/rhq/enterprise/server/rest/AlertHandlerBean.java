@@ -63,7 +63,6 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.rest.domain.*;
 
@@ -89,15 +88,12 @@ public class AlertHandlerBean extends AbstractRestBean {
     @Path("/")
     @ApiOperation(value = "List all alerts", multiValueResponse = true, responseClass = "List<AlertRest>")
     public Response listAlerts(
-            @ApiParam(value = "Page number", defaultValue = "1") @QueryParam("page") int page,
-            @ApiParam(value = "Limit to priority", allowableValues = "High, Medium, Low, All") @DefaultValue("All") @QueryParam("prio") String prio,
-            @ApiParam(value = "Should full resources and definitions be sent") @QueryParam("slim") @DefaultValue(
-                    "false") boolean slim,
-            @ApiParam(
-                    value = "If non-null only send alerts that have fired after this time, time is millisecond since epoch")
-            @QueryParam("since") Long since,
-            @ApiParam(value = "Id of a resource to limit search for") @QueryParam("resourceId") Integer resourceId,
-            @Context Request request, @Context UriInfo uriInfo, @Context HttpHeaders headers) {
+        @ApiParam(value = "Page number", defaultValue = "1") @QueryParam("page") int page,
+        @ApiParam(value = "Limit to priority", allowableValues = "High, Medium, Low, All") @DefaultValue("All") @QueryParam("prio") String prio,
+        @ApiParam(value = "Should full resources and definitions be sent") @QueryParam("slim") @DefaultValue("false") boolean slim,
+        @ApiParam( value = "If non-null only send alerts that have fired after this time, time is millisecond since epoch") @QueryParam("since") Long since,
+        @ApiParam(value = "Id of a resource to limit search for") @QueryParam("resourceId") Integer resourceId,
+        @Context UriInfo uriInfo, @Context HttpHeaders headers) {
 
 
         AlertCriteria criteria = new AlertCriteria();
@@ -141,6 +137,7 @@ public class AlertHandlerBean extends AbstractRestBean {
     @ApiOperation("Return a count of alerts in the system depending on criteria")
     public int countAlerts(@ApiParam(value = "If non-null only send alerts that have fired after this time, time is millisecond since epoch")
                         @QueryParam("since") Long since) {
+
         AlertCriteria criteria = new AlertCriteria();
         criteria.setPageControl(PageControl.getUnlimitedInstance());
         criteria.fetchAlertDefinition(false);

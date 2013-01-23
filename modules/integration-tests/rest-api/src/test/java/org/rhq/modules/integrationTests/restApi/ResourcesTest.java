@@ -219,6 +219,55 @@ public class ResourcesTest extends AbstractBase {
     }
 
     @Test
+    public void testDoubleChildCreate() throws Exception {
+        // a resource can be created again and again
+
+
+        Response response =
+            with().body("{\"value\":\"Linux\"}")
+                .header("Content-Type","application/json")
+                .header("Accept","application/json")
+            .expect()
+                .statusCode(201)
+            .when()
+                .post("/resource/platform/api-test-dummy");
+
+        String platformId = response.jsonPath().getString("resourceId");
+
+        try {
+            Response child =
+                with().body("{\"value\":\"CPU\"}") // Type of new resource
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .pathParam("name", "test")
+                    .queryParam("plugin", "Platforms")
+                    .queryParam("parentId", platformId)
+                .expect()
+                        .statusCode(201)
+                        .log().ifError()
+                .when().post("/resource/{name}").andReturn();
+
+            child =
+                with().body("{\"value\":\"CPU\"}") // Type of new resource
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .pathParam("name", "test")
+                    .queryParam("plugin", "Platforms")
+                    .queryParam("parentId", platformId)
+                .expect()
+                        .statusCode(201)
+                        .log().ifError()
+                .when().post("/resource/{name}").andReturn();
+        }
+        finally {
+            given().pathParam("id",platformId)
+                .expect().statusCode(HttpStatus.SC_NO_CONTENT)
+                .when().delete("/resource/{id}");
+        }
+
+    }
+
+    @Test
     public void testAlertsForResource() throws Exception {
         given()
                 .header("Accept","application/json")
@@ -251,7 +300,7 @@ public class ResourcesTest extends AbstractBase {
     }
 
     @Test
-    public void testUpdateAvailablity() throws Exception {
+    public void testUpdateAvailability() throws Exception {
 
         Response response = given()
             .header("Accept", "application/json")

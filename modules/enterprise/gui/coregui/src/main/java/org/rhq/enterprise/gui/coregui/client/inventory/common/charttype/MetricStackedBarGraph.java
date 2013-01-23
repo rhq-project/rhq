@@ -431,6 +431,22 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         .y(function (d) {
                             return yScale(min);
                         }),
+                minBaselineLine = $wnd.d3.svg.line()
+                        .interpolate(interpolation)
+                        .x(function (d) {
+                            return timeScale(d.x);
+                        })
+                        .y(function (d) {
+                            return yScale(d.baselineMin);
+                        }),
+                maxBaselineLine = $wnd.d3.svg.line()
+                                .interpolate(interpolation)
+                                .x(function (d) {
+                                    return timeScale(d.x);
+                                })
+                                .y(function (d) {
+                                    return yScale(d.baselineMax);
+                                }),
                 barAvgLine = $wnd.d3.svg.line()
                                 .interpolate("linear")
                                 .x(function (d) {
@@ -452,8 +468,11 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         .attr("stroke", "#ff8a9a")
                         .attr("stroke-width", "1")
                         .attr("stroke-dasharray", "3,3")
-                        .attr("stroke-opacity", ".4")
-                        .attr("d", peakLine);
+                        .attr("stroke-opacity", ".7")
+                        .attr("d", peakLine)
+                        .text("Peak")
+                        .append("title")
+                        .text(function(d ) { return "Peak"; });
 
                 // min Line
                 svg.append("path")
@@ -461,9 +480,9 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         .attr("class", "minLine")
                         .attr("fill", "none")
                         .attr("stroke", "#8ad6ff")
-                        .attr("stroke-width", "1")
+                        .attr("stroke-width", "1.5")
                         .attr("stroke-dasharray", "3,3")
-                        .attr("stroke-opacity", ".6")
+                        .attr("stroke-opacity", ".9")
                         .attr("d", minLine);
 
                 // avg line
@@ -472,19 +491,41 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         .attr("class", "avgLine")
                         .attr("fill", "none")
                         .attr("stroke", "#b0d9b0")
-                        .attr("stroke-width", "1")
+                        .attr("stroke-width", "1.5")
                         .attr("stroke-dasharray", "3,3")
-                        .attr("stroke-opacity", ".6")
+                        .text("Avg")
+                        //.attr("stroke-opacity", ".9")
                         .attr("d", avgLine);
 
-                // avg line
+                // min baseline Line
+                svg.append("path")
+                        .datum(chartContext.data)
+                        .attr("class", "minBaselineLine")
+                        .attr("fill", "none")
+                        .attr("stroke", "purple")
+                        .attr("stroke-width", "1")
+                        .attr("stroke-dasharray", "20,10,5,5,5,10")
+                        .attr("stroke-opacity", ".9")
+                        .attr("d", minBaselineLine);
+
+                // max baseline Line
+                svg.append("path")
+                        .datum(chartContext.data)
+                        .attr("class", "maxBaselineLine")
+                        .attr("fill", "none")
+                        .attr("stroke", "orange")
+                        .attr("stroke-width", "1")
+                        .attr("stroke-dasharray", "20,10,5,5,5,10")
+                        .attr("stroke-opacity", ".7")
+                        .attr("d", maxBaselineLine);
+
+                // Bar avg line
                 svg.append("path")
                         .datum(chartContext.data)
                         .attr("class", "barAvgLine")
                         .attr("fill", "none")
                         .attr("stroke", "#2e376a")
                         .attr("stroke-width", "1.5")
-                        //.attr("stroke-dasharray", "3,3")
                         .attr("stroke-opacity", ".7")
                         .attr("d", barAvgLine);
             }

@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -67,6 +68,7 @@ public class MetricGraphData implements JsonMetricProducer {
     private List<DatePair> unknownIntervalList;
     private PageList<Availability> availabilityDownList;
     private PageList<MeasurementOOBComposite> measurementOOBCompositeList;
+    private MeasurementOOBComposite lastOOB;
 
     public MetricGraphData() {
 
@@ -219,6 +221,7 @@ public class MetricGraphData implements JsonMetricProducer {
     @Override
     /**
      * Format the json for the front JSNI(javascript) UI to consume.
+     * @todo: future: this should really use GSON or some Json marshaller
      */
     public String getJsonMetrics() {
         StringBuilder sb = new StringBuilder("[");
@@ -231,6 +234,7 @@ public class MetricGraphData implements JsonMetricProducer {
             String barDurationString = MeasurementConverterClient.format((double) barDuration,
                 MeasurementUnits.MILLISECONDS, true);
 
+            calculateOOB();
             calculateUnknownIntervals();
             dumpUnknownIntervals();
 
@@ -253,6 +257,10 @@ public class MetricGraphData implements JsonMetricProducer {
                             break;
                         }
                     }
+                }
+                if (null != lastOOB ) {
+                    sb.append(" baselineMin:" + lastOOB.getBlMin()+ ", ");
+                    sb.append(" baselineMax:" + lastOOB.getBlMax() + ", ");
                 }
 
                 if (isAvailabilityDownOrDisabledForBar(measurement.getTimestamp())) {
@@ -299,6 +307,23 @@ public class MetricGraphData implements JsonMetricProducer {
         sb.append("]");
         Log.debug(sb.toString());
         return sb.toString();
+    }
+
+    private void calculateOOB() {
+        if (measurementOOBCompositeList != null && !measurementOOBCompositeList.isEmpty()) {
+            Log.debug("OOB List size: "+measurementOOBCompositeList.size());
+            List<MeasurementOOBComposite> selectedOOBs = new ArrayList<MeasurementOOBComposite>();
+            for (MeasurementOOBComposite measurementOOBComposite : measurementOOBCompositeList) {
+                Log.debug("measurementOOBComposite = " + measurementOOBComposite);
+                if(measurementOOBComposite.getDefinitionId() == definitionId){
+                    selectedOOBs.add(measurementOOBComposite);
+                }
+            }
+            // take the last one (most current) matching the defId
+            lastOOB = selectedOOBs.isEmpty() ? null : selectedOOBs.get(selectedOOBs.size()-1);
+        }else {
+            lastOOB = null;
+        }
     }
 
     private void dumpUnknownIntervals() {
@@ -348,7 +373,7 @@ public class MetricGraphData implements JsonMetricProducer {
         Date timestampDate = new Date(timestamp);
         if (null != availabilityDownList) {
             for (Availability availability : availabilityDownList) {
-                if (null != timestampDate && timestampDate.after(new Date(availability.getStartTime()))
+                if (timestampDate.after(new Date(availability.getStartTime()))
                     && timestampDate.before(new Date(availability.getEndTime()))) {
                     return true;
                 }

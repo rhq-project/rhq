@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<scenario xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns="urn:xmlns:jboss.org:rhq-perftest">
+
+   <!--
+        This scenario will create a deep hierarchy.
+        The following should be passed to the agent:
+
+        -Drhq.perftest.scenario=configurable-deep
+        -Drhq.perftest.server-deep1-count=1
+        -Drhq.perftest.sevice-deep2-count=10
+        -Drhq.perftest.sevice-deep3-count=10
+        -Drhq.perftest.sevice-deep4-count=10
+        -Drhq.perftest.sevice-deep5-count=10
+        -Drhq.perftest.sevice-deep6-count=4
+   -->
+
+   <resource type="server-deep1">
+      <simpleResourceGenerator property="rhq.perftest.server-deep1-count"/>
+      <simpleNumericMeasurementGenerator/>
+   </resource>
+
+   <resource type="service-deep2">
+      <simpleResourceGenerator property="rhq.perftest.service-deep2-count"/>
+      <simpleNumericMeasurementGenerator/>
+   </resource>
+
+   <resource type="service-deep3">
+      <simpleResourceGenerator property="rhq.perftest.service-deep3-count"/>
+      <simpleNumericMeasurementGenerator/>
+   </resource>
+
+   <resource type="service-deep4">
+      <simpleResourceGenerator property="rhq.perftest.service-deep4-count"/>
+      <simpleNumericMeasurementGenerator/>
+   </resource>
+
+   <resource type="service-deep5">
+      <simpleResourceGenerator property="rhq.perftest.service-deep5-count"/>
+      <simpleNumericMeasurementGenerator/>
+   </resource>
+
+   <resource type="service-deep6">
+      <simpleResourceGenerator property="rhq.perftest.service-deep6-count"/>
+      <simpleNumericMeasurementGenerator/>
+   </resource>
+
+</scenario>

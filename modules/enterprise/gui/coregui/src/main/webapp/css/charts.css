@@ -20,7 +20,7 @@
 
 
 .y.axis  text, .x.axis text {
-    font-family: "Liberation Sans", Arial, Helvetica, sans-serif;
+    font-family: Arial,Verdana,sans-serif;
     font-size: 10px;
     font-weight: normal;
     font-style: normal;
@@ -37,20 +37,21 @@
 }
 
 .minLabel, .avgLabel, .highLabel  {
-    font-family: "Liberation Sans", Arial, Helvetica, sans-serif;
-    font-size: 14px;
+    font-family: Arial,Verdana,sans-serif;
+    font-size: 12px;
     font-weight: bold;
 }
 
 
 .minText, .avgText, .highText  {
-    font-family: "Liberation Sans", Arial, Helvetica, sans-serif;
-    font-size: 14px;
+    font-family: Arial,Verdana,sans-serif;
+    font-size: 12px;
 }
 
 .titleName  {
-    font-family: "Liberation Sans", Arial, Helvetica, sans-serif;
-    font-size: 14px;
+    font-family: Arial,Verdana,sans-serif;
+    font-size: 12px;
+    font-weight: bold;
 }
 
 

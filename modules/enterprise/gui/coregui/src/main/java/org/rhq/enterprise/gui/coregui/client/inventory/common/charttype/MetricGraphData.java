@@ -124,8 +124,6 @@ public class MetricGraphData implements JsonMetricProducer {
     }
 
     public String getChartId() {
-        Log.debug("DefId: " + definitionId);
-        Log.debug("EntityId: " + entityId);
         return entityId + "-" + definitionId;
     }
 
@@ -195,9 +193,9 @@ public class MetricGraphData implements JsonMetricProducer {
 
     public String getYAxisTitle() {
         if (null != definition.getDisplayName() && definition.getDisplayName().length() > 55) {
-            return entityName + " - " + definition.getDisplayName().substring(0, 55) + "...";
+            return  definition.getDisplayName().substring(0, 55) + "...";
         } else {
-            return entityName + " - " + definition.getDisplayName();
+            return  definition.getDisplayName();
         }
     }
 

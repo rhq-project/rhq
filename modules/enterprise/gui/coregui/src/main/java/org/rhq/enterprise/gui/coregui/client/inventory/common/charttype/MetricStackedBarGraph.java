@@ -78,10 +78,10 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
         var metricStackedBarGraph = function () {
             "use strict";
             // privates
-            var margin = {top: 10, right: 5, bottom: 30, left: 40},
-                    width = 850 - margin.left - margin.right,
-                    height = 250 - margin.top - margin.bottom,
-                    titleHeight = 43, titleSpace = 10,
+            var margin = {top: 10, right: 5, bottom: 20, left: 40},
+                    width = 750 - margin.left - margin.right,
+                    height = 200 - margin.top - margin.bottom,
+                    titleHeight = 30, titleSpace = 10,
                     barOffset = 2,
                     interpolation = "basis";
 
@@ -142,12 +142,12 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                             .attr("transform", "translate(" + margin.left + "," + (+titleHeight + titleSpace + margin.top) + ")");
 
 
-            function createHeader(resourceName, minLabel, minValue, avgLabel, avgValue, highLabel, highValue) {
-                var fontSize = 14,
-                        yTitle = 37,
-                        fgColor = "#FFFFFF",
-                        baseX = 490,
-                        xInc = 50;
+            function createHeader(titleName, minLabel, minValue, avgLabel, avgValue, highLabel, highValue, uom) {
+                var fontSize = 12,
+                        yTitle = 27,
+                        fgColor = "#003168",
+                        baseX = 420,
+                        xInc = 55;
 
 
                 // title/header
@@ -157,7 +157,10 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         .attr("y", margin.top)
                         .attr("height", titleHeight)
                         .attr("width", width + 30 + margin.left)
+                        .attr("stroke", "#878B94")
+                        .attr("stroke-width", "0.25" )
                         .attr("fill", "url(#headerGrad)");
+                        //.attr("fill", "#E6E6E6");
 
                 chart.append("text")
                         .attr("class", "titleName")
@@ -166,7 +169,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         .attr("font-size", fontSize)
                         .attr("font-weight", "bold")
                         .attr("text-anchor", "left")
-                        .text(resourceName)
+                        .text(titleName)
                         .attr("fill", fgColor);
 
 
@@ -186,7 +189,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         .attr("y", yTitle)
                         .attr("font-size", fontSize)
                         .attr("text-anchor", "left")
-                        .text(minValue.toPrecision(3))
+                        .text(minValue.toPrecision(3)+ " "+uom)
                         .attr("fill", fgColor);
 
                 //avg
@@ -206,7 +209,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         .attr("y", yTitle)
                         .attr("font-size", fontSize)
                         .attr("text-anchor", "left")
-                        .text(avgValue.toPrecision(3))
+                        .text(avgValue.toPrecision(3) + " "+uom)
                         .attr("fill", fgColor);
 
                 // high
@@ -226,7 +229,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         .attr("y", yTitle)
                         .attr("font-size", fontSize)
                         .attr("text-anchor", "left")
-                        .text(highValue.toPrecision(3))
+                        .text(highValue.toPrecision(3) + " "+ uom)
                         .attr("fill", fgColor);
                 return title;
 
@@ -273,7 +276,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                                 return  "url(#grayStripes)";
                             }
                             else {
-                                return  "url(#leaderBarGrad)";
+                                return  "#d3d3d6";
                             }
                         });
 
@@ -384,7 +387,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         .attr("class", "x axis")
                         .attr("transform", "translate(0," + height + ")")
                         .attr("font-size", "10px")
-                        .attr("font-family", "'Liberation Sans', Arial, Helvetica, sans-serif")
+                        .attr("font-family", "Arial, Verdana, sans-serif")
                         .attr("letter-spacing", "3")
                         .style("text-anchor", "end")
                         .call(xAxis);
@@ -398,7 +401,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         .attr("transform", "rotate(-90),translate( -60,0)")
                         .attr("y", -30)
                         .attr("font-size", "10px")
-                        .attr("font-family", "'Liberation Sans', Arial, Helvetica, sans-serif")
+                        .attr("font-family", "Arial, Verdana, sans-serif")
                         .attr("letter-spacing", "3")
                         .style("text-anchor", "end")
                         .text(chartContext.yAxisUnits === "NONE" ? "" : chartContext.yAxisUnits);
@@ -591,7 +594,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                     trigger: 'hover',
                     title: function () {
                         var d = this.__data__;
-                        console.log("y: " + d.y);
+                        //console.log("y: " + d.y);
                         return formatHovers(chartContext, d);
                     }
                 });
@@ -604,7 +607,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                     console.log("chart id: " + chartContext.chartSelection);
                     //console.log("Json Data:\n"+chartContext.data);
 
-                    createHeader(chartContext.yAxisLabel, chartContext.minChartTitle, min, chartContext.avgChartTitle, avg, chartContext.peakChartTitle, peak);
+                    createHeader(chartContext.yAxisLabel, chartContext.minChartTitle, min, chartContext.avgChartTitle, avg, chartContext.peakChartTitle, peak, chartContext.yAxisUnits);
                     createYAxisGridLines();
                     createStackedBars();
                     createXandYAxes();

@@ -323,7 +323,7 @@ public class D3GraphListView extends LocatableVLayout {
                 private void determineGraphsToBuild(List<List<MeasurementDataNumericHighLowComposite>> measurementData,
                     List<MeasurementDefinition> measurementDefinitions, Set<Integer> definitionIds) {
                     int i = 0;
-                    for (List<MeasurementDataNumericHighLowComposite> measurement : measurementData) {
+                    for (List<MeasurementDataNumericHighLowComposite> metric : measurementData) {
 
                         for (Integer selectedDefinitionId : definitionIds) {
                             final MeasurementDefinition measurementDefinition = measurementDefinitions.get(i);
@@ -333,12 +333,12 @@ public class D3GraphListView extends LocatableVLayout {
                                 // single graph case
                                 if (measurementId == selectedDefinitionId) {
                                     buildSingleGraph(downAvailList, measurementOOBCompositeList, measurementDefinition,
-                                        measurement, 360);
+                                        metric, 250);
                                 }
                             } else {
                                 // multiple graph case
                                 buildSingleGraph(downAvailList, measurementOOBCompositeList, measurementDefinition,
-                                    measurement, 330);
+                                    metric, 250);
                             }
                         }
                         i++;

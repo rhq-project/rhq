@@ -111,7 +111,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
             addMember(titleHLayout);
 
             StringBuilder divAndSvgDefs = new StringBuilder();
-            divAndSvgDefs.append("<div id=\"rChart-" + metricGraphData.getChartId() + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:320px;\">");
+            divAndSvgDefs.append("<div id=\"rChart-" + metricGraphData.getChartId() + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:250px;\">");
             divAndSvgDefs.append(getSvgDefs());
             divAndSvgDefs.append("</svg></div>");
             HTMLFlow graph = new HTMLFlow(divAndSvgDefs.toString());
@@ -136,24 +136,8 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
     private static String getSvgDefs(){
       return " <defs>" +
               "               <linearGradient id=\"headerGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\">" +
-              "                   <stop offset=\"0%\" style=\"stop-color:#707883;stop-opacity:1\"/>" +
-              "                   <stop offset=\"100%\" style=\"stop-color:#425b64;stop-opacity:1\"/>" +
-              "               </linearGradient>" +
-              "               <linearGradient id=\"leaderBarGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\">" +
-              "                   <stop offset=\"0%\" style=\"stop-color:#d3d3d6;stop-opacity:1\"/>" +
-              "                   <stop offset=\"100%\" style=\"stop-color:#d3d3d6;stop-opacity:1\"/>" +
-              "               </linearGradient>" +
-              "               <linearGradient id=\"heavyLeaderBarGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\">" +
-              "                   <stop offset=\"0%\" style=\"stop-color:#a7a7ac;stop-opacity:1\"/>" +
-              "                   <stop offset=\"100%\" style=\"stop-color:#a7a7ac;stop-opacity:1\"/>" +
-              "               </linearGradient>" +
-              "               <linearGradient id=\"topBarGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\">" +
-              "                   <stop offset=\"0%\" style=\"stop-color:#067aba;stop-opacity:1\"/>" +
-              "                   <stop offset=\"100%\" style=\"stop-color:#1278a8;stop-opacity:1\"/>" +
-              "               </linearGradient>" +
-              "               <linearGradient id=\"bottomBarGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\">" +
-              "                   <stop offset=\"0%\" style=\"stop-color:#6bc0e6;stop-opacity:1\"/>" +
-              "                   <stop offset=\"100%\" style=\"stop-color:#388bb0;stop-opacity:1\"/>" +
+              "                   <stop offset=\"0%\" style=\"stop-color:#E6E6E6;stop-opacity:1\"/>" +
+              "                   <stop offset=\"100%\" style=\"stop-color:#F0F0F0;stop-opacity:1\"/>" +
               "               </linearGradient>" +
               "               <pattern id=\"grayStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\"" +
               "                        width=\"6\" height=\"3\">" +

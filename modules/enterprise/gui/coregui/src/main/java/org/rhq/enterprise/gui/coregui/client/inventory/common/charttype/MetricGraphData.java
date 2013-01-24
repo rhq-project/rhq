@@ -57,6 +57,7 @@ public class MetricGraphData implements JsonMetricProducer {
     private final String chartHoverStartLabel = MSG.chart_hover_start_label();
     private final String chartHoverEndLabel = MSG.chart_hover_end_label();
     private final String chartHoverPeriodLabel = MSG.chart_hover_period_label();
+    private final String chartHoverBarLabel = MSG.chart_hover_bar_label();
 
     private int entityId;
     private String entityName;
@@ -189,6 +190,10 @@ public class MetricGraphData implements JsonMetricProducer {
 
     public String getChartHoverPeriodLabel() {
         return chartHoverPeriodLabel;
+    }
+
+    public String getChartHoverBarLabel() {
+        return chartHoverBarLabel;
     }
 
     public String getYAxisTitle() {

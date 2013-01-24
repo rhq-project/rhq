@@ -70,7 +70,8 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartUnknownLabel()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartHoverStartLabel()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartHoverEndLabel()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartHoverPeriodLabel()()
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartHoverPeriodLabel()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartHoverBarLabel()()
         );
 
 
@@ -575,7 +576,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                     hoverString =
                             '<div style="text-align:left;z-index:401000;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">' + chartContext.timeLabel + ':  </span><span style="width:50px;">' + timeFormatter(date) + '</span></div>' +
                                     '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">' + chartContext.dateLabel + ':  </span><span style="width:50px;">' + dateFormatter(date) + '</span></div>' +
-                                    '<div style="text-align: left;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+"Bar"+": "+ barDuration + '</span></div>' +
+                                    '<div style="text-align: left;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverBarLabel+": "+ barDuration + '</span></div>' +
                                     '<hr style="width:100%;text-align: center;border: #d3d3d3 solid thin;"></hr>' +
                                     '<div style="text-align: right;"><span style="width:50px;font-weight:bold;color:#ff8a9a;";">' + chartContext.peakChartTitle + ': </span><span style="width:50px;">' + highValue + '</span></div>' +
                                     '<div style="text-align: right;"><span style="text-align:right;width:50px;font-weight:bold;color: #b0d9b0;"">' + chartContext.avgChartTitle + ':  </span><span style="width:50px;">' + avgValue + '</span></div>' +
@@ -607,7 +608,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                     console.log("chart id: " + chartContext.chartSelection);
                     //console.log("Json Data:\n"+chartContext.data);
 
-                    createHeader(chartContext.yAxisLabel, chartContext.minChartTitle, min, chartContext.avgChartTitle, avg, chartContext.peakChartTitle, peak, chartContext.yAxisUnits);
+                    createHeader(chartContext.yAxisLabel, chartContext.minChartTitle, min, chartContext.avgChartTitle, avg, chartContext.peakChartTitle, peak, chartContext.yAxisUnits, chartContext.hoverBarLabel);
                     createYAxisGridLines();
                     createStackedBars();
                     createXandYAxes();

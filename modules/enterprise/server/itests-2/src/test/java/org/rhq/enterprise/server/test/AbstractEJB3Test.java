@@ -40,6 +40,7 @@ import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ArchivePaths;
 import org.jboss.shrinkwrap.api.Filters;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.asset.ByteArrayAsset;
 import org.jboss.shrinkwrap.api.asset.ClassAsset;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
@@ -121,7 +122,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testClassesJar.addAsResource("test-ldap.properties");
         testClassesJar.addAsResource("test-scheduler.properties");
         testClassesJar
-            .addAsResource("org/rhq/enterprise/server/configuration/metadata/configuration_metadata_manager_bean_test_v1.xml");
+            .addAsResource(
+                "org/rhq/enterprise/server/configuration/metadata/configuration_metadata_manager_bean_test_v1.xml");
         testClassesJar
             .addAsResource("org/rhq/enterprise/server/configuration/metadata/configuration_metadata_manager_bean_test_v2.xml");
         testClassesJar.addAsResource("org/rhq/enterprise/server/discovery/DiscoveryBossBeanTest.xml");
@@ -319,6 +321,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testEar.add(new ClassAsset(StrippedDownStartupBeanPreparation.class), ArchivePaths
             .create("/rhq-enterprise-server-ejb3.jar/org/rhq/enterprise/server/test/"
                 + "StrippedDownStartupBeanPreparation.class"));
+        testEar.addAsManifestResource(new ByteArrayAsset("<beans/>".getBytes()),
+            ArchivePaths.create("beans.xml"));
 
         // add the test classes to the deployment
         testEar.addAsLibrary(testClassesJar);

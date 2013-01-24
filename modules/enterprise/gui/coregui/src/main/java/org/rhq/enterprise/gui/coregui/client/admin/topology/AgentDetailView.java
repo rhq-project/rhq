@@ -22,6 +22,7 @@ package org.rhq.enterprise.gui.coregui.client.admin.topology;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_ADDRESS;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_AFFINITY_GROUP;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_AGENT_TOKEN;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_LAST_AVAILABILITY_PING;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_LAST_AVAILABILITY_REPORT;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_NAME;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_PORT;
@@ -177,11 +178,17 @@ public class AgentDetailView extends LocatableVLayout {
         final StaticTextItem tokenItem = new StaticTextItem(FIELD_AGENT_TOKEN.propertyName(), FIELD_AGENT_TOKEN.title());
         tokenItem.setValue(agent.getAgentToken());
 
-        StaticTextItem lastAvailabilityItem = new StaticTextItem(FIELD_LAST_AVAILABILITY_REPORT.propertyName(),
+        StaticTextItem lastAvailabilityReportItem = new StaticTextItem(FIELD_LAST_AVAILABILITY_REPORT.propertyName(),
             FIELD_LAST_AVAILABILITY_REPORT.title());
         String lastReport = agent.getLastAvailabilityReport() == null ? "unknown" : TimestampCellFormatter.format(
             Long.valueOf(agent.getLastAvailabilityReport()), TimestampCellFormatter.DATE_TIME_FORMAT_LONG);
-        lastAvailabilityItem.setValue(lastReport);
+        lastAvailabilityReportItem.setValue(lastReport);
+        
+        StaticTextItem lastAvailabilityPingItem = new StaticTextItem(FIELD_LAST_AVAILABILITY_PING.propertyName(),
+            FIELD_LAST_AVAILABILITY_PING.title());
+        String lastPing = agent.getLastAvailabilityPing() == null ? "unknown" : TimestampCellFormatter.format(
+            Long.valueOf(agent.getLastAvailabilityPing()), TimestampCellFormatter.DATE_TIME_FORMAT_LONG);
+        lastAvailabilityPingItem.setValue(lastPing);
 
         // make clickable link for affinity group
         StaticTextItem affinityGroupItem = new StaticTextItem(FIELD_AFFINITY_GROUP.propertyName(),
@@ -206,8 +213,8 @@ public class AgentDetailView extends LocatableVLayout {
         }
         currentServerItem.setValue(serverValue);
 
-        form.setItems(nameItem, addressItem, remoteEndpointItem, portItem, tokenItem, lastAvailabilityItem,
-            affinityGroupItem, currentServerItem);
+        form.setItems(nameItem, addressItem, remoteEndpointItem, portItem, tokenItem, lastAvailabilityReportItem,
+            lastAvailabilityPingItem, affinityGroupItem, currentServerItem);
 
         SectionStackSection section = new SectionStackSection(MSG.common_title_details());
         section.setExpanded(true);

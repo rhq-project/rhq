@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.ejb.EJB;
+import javax.inject.Inject;
 import javax.persistence.EntityManager;
 
 import org.joda.time.DateTime;
@@ -55,13 +56,13 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.util.jdbc.JDBCUtil;
-import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.drift.DriftServerPluginService;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.test.TransactionCallbackReturnable;
+import org.rhq.enterprise.server.util.Overlord;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
 
 /**
@@ -93,10 +94,8 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
 
     private List<MeasurementSchedule> schedules;
 
+    @Inject @Overlord
     private Subject overlord;
-
-    @EJB
-    private SubjectManagerLocal subjectManager;
 
     @EJB
     private ResourceManagerLocal resourceManager;
@@ -115,7 +114,6 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
         prepareCustomServerPluginService(driftServerPluginService);
         driftServerPluginService.masterConfig.getPluginDirectory().mkdirs();
 
-        overlord = subjectManager.getOverlord();
         measurementDefs = new ArrayList<MeasurementDefinition>();
         schedules = new ArrayList<MeasurementSchedule>();
         createInventory();
@@ -237,9 +235,6 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
                 .setParameter("defs", measurementDefs)
                 .executeUpdate();
         }
-//
-//        em.createQuery("delete from MeasurementDefinition " + "where dataType = :dataType and " + "name = :name")
-//            .setParameter("dataType", MEASUREMENT).setParameter("name", DYNAMIC_DEF_NAME).executeUpdate();
     }
 
     private void deleteAgent() {
@@ -365,17 +360,6 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
                 }
             }
         });
-    }
-
-    private DateTime hour0() {
-        DateTime rightNow = now();
-        return rightNow.hourOfDay().roundFloorCopy().minusHours(
-            rightNow.hourOfDay().roundFloorCopy().hourOfDay().get());
-    }
-
-    private MeasurementBaseline getBaseline() {
-        List<MeasurementBaseline> baselines = baselineManager.findBaselinesForResource(overlord, resource.getId());
-        return baselines.get(0);
     }
 
     private MeasurementBaseline baseline(MeasurementSchedule schedule, double mean, double max, double min) {

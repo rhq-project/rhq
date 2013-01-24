@@ -74,28 +74,9 @@
        </dependency>
 
        <dependency>
-           <groupId>org.jboss.shrinkwrap</groupId>
-           <artifactId>shrinkwrap-api</artifactId>
-       </dependency>
-
-       <dependency>
-           <groupId>org.jboss.shrinkwrap</groupId>
-           <artifactId>shrinkwrap-impl-base</artifactId>
-       </dependency>
-
-       <dependency>
            <groupId>org.jboss.shrinkwrap.resolver</groupId>
-           <artifactId>shrinkwrap-resolver-api</artifactId>
-       </dependency>
-
-       <dependency>
-           <groupId>org.jboss.shrinkwrap.resolver</groupId>
-           <artifactId>shrinkwrap-resolver-api-maven</artifactId>
-       </dependency>
-
-       <dependency>
-           <groupId>org.jboss.shrinkwrap.resolver</groupId>
-           <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
+           <artifactId>shrinkwrap-resolver-depchain</artifactId>
+           <type>pom</type>
        </dependency>
 
    </dependencies>

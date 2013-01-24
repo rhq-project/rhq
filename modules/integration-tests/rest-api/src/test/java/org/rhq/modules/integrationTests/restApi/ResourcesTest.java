@@ -219,6 +219,55 @@ public class ResourcesTest extends AbstractBase {
     }
 
     @Test
+    public void testDoubleChildCreate() throws Exception {
+        // a resource can be created again and again
+
+
+        Response response =
+            with().body("{\"value\":\"Linux\"}")
+                .header("Content-Type","application/json")
+                .header("Accept","application/json")
+            .expect()
+                .statusCode(201)
+            .when()
+                .post("/resource/platform/api-test-dummy");
+
+        String platformId = response.jsonPath().getString("resourceId");
+
+        try {
+            Response child =
+                with().body("{\"value\":\"CPU\"}") // Type of new resource
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .pathParam("name", "test")
+                    .queryParam("plugin", "Platforms")
+                    .queryParam("parentId", platformId)
+                .expect()
+                        .statusCode(201)
+                        .log().ifError()
+                .when().post("/resource/{name}").andReturn();
+
+            child =
+                with().body("{\"value\":\"CPU\"}") // Type of new resource
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .pathParam("name", "test")
+                    .queryParam("plugin", "Platforms")
+                    .queryParam("parentId", platformId)
+                .expect()
+                        .statusCode(201)
+                        .log().ifError()
+                .when().post("/resource/{name}").andReturn();
+        }
+        finally {
+            given().pathParam("id",platformId)
+                .expect().statusCode(HttpStatus.SC_NO_CONTENT)
+                .when().delete("/resource/{id}");
+        }
+
+    }
+
+    @Test
     public void testAlertsForResource() throws Exception {
         given()
                 .header("Accept","application/json")
@@ -251,24 +300,63 @@ public class ResourcesTest extends AbstractBase {
     }
 
     @Test
-    public void testUpdateAvailablity() throws Exception {
-        long now = System.currentTimeMillis()-100;
-        given().body("{\"since\":" + now + ",\"type\":\"DISABLED\",\"resourceId\":10001}")
-                .header("Content-Type","application/json")
-                .header("Accept","application/json")
-                .pathParam("id",10001)
-        .expect()
-                .statusCode(HttpStatus.SC_NO_CONTENT)
-                .log().ifError()
-        .when().put("/resource/{id}/availability");
+    public void testUpdateAvailability() throws Exception {
 
         Response response = given()
             .header("Accept", "application/json")
             .expect().statusCode(200)
             .when().get("/resource/10001/availability");
 
-        String currentType = response.jsonPath().get("type");
-        assert currentType.equals("DISABLED"); // TODO small window where an agent may have sent an update
+        String oldType = response.jsonPath().get("type");
+
+        try {
+            long now = System.currentTimeMillis()-100;
+            given().body("{\"since\":" + now + ",\"type\":\"DOWN\",\"resourceId\":10001}")
+                    .header("Content-Type","application/json")
+                    .header("Accept","application/json")
+                    .pathParam("id",10001)
+            .expect()
+                    .statusCode(HttpStatus.SC_NO_CONTENT)
+                    .log().ifError()
+            .when().put("/resource/{id}/availability");
+
+            response = given()
+                .header("Accept", "application/json")
+                .expect().statusCode(200)
+                .when().get("/resource/10001/availability");
+
+            String currentType = response.jsonPath().get("type");
+            assert currentType.equals("DOWN"); // TODO small window where an agent may have sent an update
+        } finally {
+
+            // Set back to original value
+            long now = System.currentTimeMillis()-100;
+            given().body("{\"since\":" + now + ",\"type\":\""+oldType+"\",\"resourceId\":10001}")
+                    .header("Content-Type","application/json")
+                    .header("Accept","application/json")
+                    .pathParam("id",10001)
+            .expect()
+                    .statusCode(HttpStatus.SC_NO_CONTENT)
+                    .log().ifError()
+            .when().put("/resource/{id}/availability");
+
+        }
+    }
+
+    @Test
+    public void testNoDisabledForPlatforms() throws Exception {
+
+        // Platforms should not be set to DISABLED according ot JSHAUGHN
+
+        long now = System.currentTimeMillis()-100;
+        given().body("{\"since\":" + now + ",\"type\":\"DISABLED\",\"resourceId\":10001}")
+              .header("Content-Type","application/json")
+              .header("Accept","application/json")
+              .pathParam("id",10001)
+        .expect()
+              .statusCode(HttpStatus.SC_NOT_ACCEPTABLE)
+              .log().ifError()
+        .when().put("/resource/{id}/availability");
 
     }
 }

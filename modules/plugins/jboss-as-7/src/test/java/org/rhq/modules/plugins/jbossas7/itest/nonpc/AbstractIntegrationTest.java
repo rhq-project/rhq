@@ -59,7 +59,7 @@ import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
  *
  * @author Heiko W. Rupp
  */
-@Test(groups = {"integration", "nonpc"}, dependsOnGroups = "discovery")
+@Test(groups = { "integration", "nonpc" }, dependsOnGroups = "discovery")
 public abstract class AbstractIntegrationTest {
 
     protected static final String PLUGIN_NAME = "JBossAS7";
@@ -71,19 +71,19 @@ public abstract class AbstractIntegrationTest {
     protected static final String MAVEN_REPO_LOCAL = System.getProperty("settings.localRepository");
 
     String uploadToAs(String deploymentPath) throws IOException {
-        ASUploadConnection conn = new ASUploadConnection(DC_HOST, DC_HTTP_PORT, DC_USER, DC_PASS);
         String fileName = new File(deploymentPath).getName();
-        OutputStream os = conn.getOutputStream(fileName);
+        ASUploadConnection conn = new ASUploadConnection(DC_HOST, DC_HTTP_PORT, DC_USER, DC_PASS, fileName);
+        OutputStream os = conn.getOutputStream();
 
-//        URL url = getClass().getClassLoader().getResource(".");
-//        System.out.println(url);
+        //        URL url = getClass().getClassLoader().getResource(".");
+        //        System.out.println(url);
 
         InputStream fis = getClass().getClassLoader().getResourceAsStream(deploymentPath);
         if (fis == null) {
             File inputFile = new File(deploymentPath);
             if (!inputFile.canRead()) {
                 throw new FileNotFoundException("Input stream for path [" + deploymentPath
-                        + "] could not be opened - does the file exist either in the test classpath or on the filesystem?");
+                    + "] could not be opened - does the file exist either in the test classpath or on the filesystem?");
             }
             fis = new FileInputStream(inputFile);
         }
@@ -96,7 +96,7 @@ public abstract class AbstractIntegrationTest {
         }
 
         JsonNode node = conn.finishUpload();
-//        System.out.println(node);
+        //        System.out.println(node);
         assert node != null : "No result from upload - node was null";
         assert node.has("outcome") : "No outcome from upload";
         String outcome = node.get("outcome").getTextValue();
@@ -111,13 +111,12 @@ public abstract class AbstractIntegrationTest {
         return connection;
     }
 
-    Operation addDeployment(String deploymentName, String bytes_value)
-    {
+    Operation addDeployment(String deploymentName, String bytes_value) {
         Address deploymentsAddress = new Address("deployment", deploymentName);
         Operation op = new Operation("add", deploymentsAddress);
         List<Object> content = new ArrayList<Object>(1);
-        Map<String,Object> contentValues = new HashMap<String,Object>();
-        contentValues.put("hash",new PROPERTY_VALUE("BYTES_VALUE", bytes_value));
+        Map<String, Object> contentValues = new HashMap<String, Object>();
+        contentValues.put("hash", new PROPERTY_VALUE("BYTES_VALUE", bytes_value));
         content.add(contentValues);
         op.addAdditionalProperty("content", content);
         op.addAdditionalProperty("name", deploymentName); // this needs to be unique per upload
@@ -156,7 +155,8 @@ public abstract class AbstractIntegrationTest {
         List<ServerDescriptor> servers = pluginDescriptor.getServers();
 
         ServerDescriptor serverDescriptor = findServer(serverName, servers);
-        assert serverDescriptor != null : "Server descriptor for server [" + serverName + "] not found in test plugin descriptor";
+        assert serverDescriptor != null : "Server descriptor for server [" + serverName
+            + "] not found in test plugin descriptor";
 
         return ConfigurationMetadataParser.parse("null", serverDescriptor.getResourceConfiguration());
     }
@@ -165,7 +165,8 @@ public abstract class AbstractIntegrationTest {
         List<ServiceDescriptor> services = pluginDescriptor.getServices();
 
         ServiceDescriptor serviceDescriptor = findService(serviceName, services);
-        assert serviceDescriptor != null : "Service descriptor for service [" + serviceName + "] not found in plugin descriptor";
+        assert serviceDescriptor != null : "Service descriptor for service [" + serviceName
+            + "] not found in plugin descriptor";
 
         return ConfigurationMetadataParser.parse("null", serviceDescriptor.getResourceConfiguration());
     }

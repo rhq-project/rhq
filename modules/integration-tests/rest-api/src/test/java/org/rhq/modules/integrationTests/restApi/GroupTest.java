@@ -466,4 +466,36 @@ public class GroupTest extends AbstractBase {
                 .delete("/group/definition/" + defintionId);
         }
     }
+
+    @Test
+    public void testCreatingBadGroup1() throws Exception {
+
+        given()
+            .contentType(ContentType.XML)
+            .header(acceptJson)
+        .expect()
+            .statusCode(406)
+        .when()
+            .post("/group/");
+
+    }
+
+    @Test
+    public void testCreatingBadGroup2() throws Exception {
+
+        Group group = new Group();
+        group.setCategory("COMPATIBLE");
+        group.setResourceTypeId(10001);
+
+        given()
+            .contentType(ContentType.XML)
+            .header(acceptJson)
+            .body(group)
+        .expect()
+            .statusCode(406)
+            .log().everything()
+        .when()
+            .post("/group/");
+
+    }
 }

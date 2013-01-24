@@ -21,18 +21,17 @@ package org.rhq.test.arquillian.impl.util;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.Collection;
+import java.io.InputStream;
+import java.util.Properties;
 import java.util.UUID;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.shrinkwrap.api.Archive;
-import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
-import org.jboss.shrinkwrap.api.spec.JavaArchive;
-import org.jboss.shrinkwrap.resolver.api.DependencyResolvers;
-import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
+import org.jboss.shrinkwrap.resolver.api.maven.Maven;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenResolvedArtifact;
 
+import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.file.FileUtil;
 
 /**
@@ -44,11 +43,10 @@ public class SigarInstaller {
 
     private static final Log LOG = LogFactory.getLog(SigarInstaller.class);
 
-    private static final String USER_HOME = System.getProperty("user.home");
     private static final String TMP_DIR = System.getProperty("java.io.tmpdir");
 
     private File rootDir;
-    private Archive<?> sigarDistArtifact;
+    private MavenResolvedArtifact sigarDistArtifact;
 
     public SigarInstaller(File rootDir) {
         this.rootDir = rootDir;
@@ -56,21 +54,31 @@ public class SigarInstaller {
     }
 
     private void init() {
-        MavenDependencyResolver mavenDependencyResolver = DependencyResolvers.use(MavenDependencyResolver.class);
 
-        // artifact specifier format is "<groupId>:<artifactId>[:<extension>[:<classifier>]][:<version >]"
-        Collection<JavaArchive> sigars = mavenDependencyResolver
-                .loadMetadataFromPom("pom.xml")
-                .goOffline()
-                // TODO (ips, 05/02/12): Figure out how to make this work without hard-coding the version.
-                .artifact("org.hyperic:sigar-dist:zip:1.6.5.132-3")
-                .resolveAs(JavaArchive.class);
-
-        if (sigars.size() > 1) {
-            LOG.warn("More than 1 org.hyperic:sigar-dist artifact found in the current POM: " + sigars);
+        // Read the properties from the Maven filtered resource file
+        Properties pomProperties = new Properties();
+        InputStream propertyFileInputStream = getClass().getClassLoader().getResourceAsStream(
+            "maven-properties.properties");
+        try {
+            pomProperties.load(propertyFileInputStream);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (propertyFileInputStream != null) {
+                try {
+                    propertyFileInputStream.close();
+                } catch (IOException ignore) {
+                }
+            }
         }
 
-        sigarDistArtifact = sigars.iterator().next();
+        String sigarVersion = pomProperties.getProperty("sigar.version");
+        if (sigarVersion == null) {
+            throw new RuntimeException("Could not read Sigar version from the properties file");
+        }
+
+        sigarDistArtifact = Maven.resolver().offline().loadPomFromFile("pom.xml")
+            .resolve("org.hyperic:sigar-dist:zip:" + sigarVersion).withoutTransitivity().asSingleResolvedArtifact();
     }
 
     public boolean isSigarAvailable() {
@@ -84,12 +92,14 @@ public class SigarInstaller {
         if (!tempDir.exists()) {
             tempDir.mkdirs();
         }
-        String explodedDirName = "sigar-dist";
-        LOG.debug("Unzipping " + sigarDistArtifact + " to " + tempDir + "...");
-        sigarDistArtifact.as(ExplodedExporter.class).exportExploded(tempDir, explodedDirName);
+
         File sigarLibDir = null;
         try {
-            sigarLibDir = findSigarLibDir(new File(tempDir, explodedDirName));
+            File explodedDir = new File(tempDir, "sigar-dist");
+            LOG.debug("Unzipping " + sigarDistArtifact + " to " + tempDir + "...");
+            ZipUtil.unzipFile(sigarDistArtifact.asFile(), explodedDir);
+
+            sigarLibDir = findSigarLibDir(explodedDir);
             // Make sure the target dir does not exist, since FileUtil.copyDirectory() requires that to be the case.
             FileUtil.purge(rootDir, true);
 

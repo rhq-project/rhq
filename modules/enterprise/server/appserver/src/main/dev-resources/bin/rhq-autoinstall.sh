@@ -22,6 +22,8 @@ do
    eval ${_INSTALLER_SCRIPT}
    if [ "$?" -eq "0" ]; then
       echo Installer finished
+      # most times, the installation was already done, but see if changes to rhq-server.properties requires a reconfiguration
+      eval ${_INSTALLER_SCRIPT} --reconfig
       break;
    elif [ "$?" -eq "1" ]; then
       echo The installer has been disabled - please fix rhq-server.properties

@@ -112,6 +112,7 @@ public class ServerProperties {
     public static final String PROP_HIGH_AVAILABILITY_NAME = "rhq.server.high-availability.name";
     public static final String PROP_MM_AT_START = "rhq.server.maintenance-mode-at-startup";
     public static final String PROP_OPERATION_TIMEOUT = "rhq.server.operation-timeout";
+    public static final String PROP_LOG_LEVEL = "rhq.server.log-level";
 
     // this list contains all the properties that are to have boolean values (true | false)
     public static final Set<String> BOOLEAN_PROPERTIES;

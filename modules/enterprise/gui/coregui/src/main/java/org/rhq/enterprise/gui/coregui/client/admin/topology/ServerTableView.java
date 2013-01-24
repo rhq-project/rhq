@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
@@ -78,6 +79,14 @@ public class ServerTableView extends
         setWidth100();
         if (isAffinityGroupId) {
             setDataSource(new ServerDatasource(id));
+            Criteria criteria = new Criteria();
+            String[] modes = new String[OperationMode.values().length];
+            int i = 0;
+            for (OperationMode value : OperationMode.values()) {
+                modes[i++] = value.name();
+            }
+            criteria.addCriteria(ServerDatasource.FILTER_OPERATION_MODE, modes);
+            setInitialCriteria(criteria);
         } else {
             setDataSource(showActions ? new ServerWithAgentCountDatasource() : new FailoverListItemDatasource(id));
         }

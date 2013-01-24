@@ -33,6 +33,7 @@ import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
+import org.rhq.core.domain.operation.composite.GroupOperationScheduleComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite;
 import org.rhq.core.domain.resource.Resource;
@@ -197,17 +198,28 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
         }
     }
 
-    /** Find scheduled operations, disambiguate them and return that list.
-     * 
-     */
-    public PageList<ResourceOperationScheduleComposite> findScheduledOperations(int pageSize) throws RuntimeException {
+    public PageList<ResourceOperationScheduleComposite> findCurrentlyScheduledResourceOperations(int pageSize)
+        throws RuntimeException {
         try {
             PageControl pageControl = new PageControl(0, pageSize);
             pageControl.initDefaultOrderingField("ro.nextFireTime", PageOrdering.ASC);
             PageList<ResourceOperationScheduleComposite> scheduledResourceOps = operationManager
                 .findCurrentlyScheduledResourceOperations(getSessionSubject(), pageControl);
+            return SerialUtility.prepare(scheduledResourceOps,
+                "OperationService.findCurrentlyScheduledResourceOperations");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
 
-            return SerialUtility.prepare(scheduledResourceOps, "OperationService.findScheduledOperations");
+    public PageList<GroupOperationScheduleComposite> findCurrentlyScheduledGroupOperations(int pageSize)
+        throws RuntimeException {
+        try {
+            PageControl pageControl = new PageControl(0, pageSize);
+            pageControl.initDefaultOrderingField("go.nextFireTime", PageOrdering.ASC);
+            PageList<GroupOperationScheduleComposite> scheduledGroupOps = operationManager
+                .findCurrentlyScheduledGroupOperations(getSessionSubject(), pageControl);
+            return SerialUtility.prepare(scheduledGroupOps, "OperationService.findCurrentlyScheduledGroupOperations");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

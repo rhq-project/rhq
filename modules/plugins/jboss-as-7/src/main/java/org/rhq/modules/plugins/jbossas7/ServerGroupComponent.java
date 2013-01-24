@@ -44,7 +44,6 @@ import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -58,24 +57,23 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  */
 @SuppressWarnings("unused")
 public class ServerGroupComponent extends BaseComponent implements ContentFacet, CreateChildResourceFacet,
-        OperationFacet {
+    OperationFacet {
 
     private static final String SUCCESS = "success";
     private static final String OUTCOME = "outcome";
 
     @Override
-    public OperationResult invokeOperation(String name,
-                                           Configuration parameters) throws InterruptedException, Exception {
+    public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
+        Exception {
 
-        Operation op = new Operation(name,getAddress());
+        Operation op = new Operation(name, getAddress());
         Result res = getASConnection().execute(op);
 
         OperationResult result = new OperationResult();
 
         if (res.isSuccess()) {
             result.setSimpleResult(SUCCESS);
-        }
-        else {
+        } else {
             result.setErrorMessage(res.getFailureDescription());
         }
         return result;
@@ -84,13 +82,12 @@ public class ServerGroupComponent extends BaseComponent implements ContentFacet,
 
     @Override
     public List<DeployPackageStep> generateInstallationSteps(ResourcePackageDetails packageDetails) {
-        return null;  // TODO: Customise this generated block
+        return null; // TODO: Customise this generated block
     }
 
     // TODO I think this package code is not used.
     @Override
-    public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> packages,
-                                                 ContentServices contentServices) {
+    public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> packages, ContentServices contentServices) {
 
         ContentContext cctx = context.getContentContext();
 
@@ -98,13 +95,28 @@ public class ServerGroupComponent extends BaseComponent implements ContentFacet,
 
         for (ResourcePackageDetails details : packages) {
 
-            ServerPluginConfiguration serverPluginConfig = getServerComponent().getServerPluginConfiguration();
-            ASUploadConnection uploadConnection = new ASUploadConnection(serverPluginConfig.getHostname(),
-                    serverPluginConfig.getPort(), serverPluginConfig.getUser(), serverPluginConfig.getPassword());
             String packageName = details.getName();
-            OutputStream out = uploadConnection.getOutputStream(packageName);
-            contentServices.downloadPackageBits(cctx, details.getKey(), out, false);
+
+            ASUploadConnection uploadConnection = ASUploadConnection.newInstanceForServerPluginConfiguration(
+                getServerComponent().getServerPluginConfiguration(), packageName);
+            OutputStream out = uploadConnection.getOutputStream();
+            if (out == null) {
+                response.addPackageResponse(new DeployIndividualPackageResponse(details.getKey(),
+                    ContentResponseResult.FAILURE));
+                continue;
+            }
+
+            try {
+                contentServices.downloadPackageBits(cctx, details.getKey(), out, false);
+            } catch (Exception e) {
+                uploadConnection.cancelUpload();
+                response.addPackageResponse(new DeployIndividualPackageResponse(details.getKey(),
+                    ContentResponseResult.FAILURE));
+                continue;
+            }
+
             JsonNode uploadResult = uploadConnection.finishUpload();
+
             if (uploadResult.has(OUTCOME)) {
                 String outcome = uploadResult.get(OUTCOME).getTextValue();
                 if (outcome.equals(SUCCESS)) { // Upload was successful, so now add the file to the server group
@@ -114,20 +126,20 @@ public class ServerGroupComponent extends BaseComponent implements ContentFacet,
 
                     Address deploymentsAddress = new Address();
                     deploymentsAddress.add("deployment", packageName);
-                    Operation step1 = new Operation("add",deploymentsAddress);
-//                    step1.addAdditionalProperty("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));
+                    Operation step1 = new Operation("add", deploymentsAddress);
+                    //                    step1.addAdditionalProperty("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));
                     List<Object> content = new ArrayList<Object>(1);
-                    Map<String,Object> contentValues = new HashMap<String,Object>();
-                    contentValues.put("hash",new PROPERTY_VALUE("BYTES_VALUE",hash));
+                    Map<String, Object> contentValues = new HashMap<String, Object>();
+                    contentValues.put("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));
                     content.add(contentValues);
-                    step1.addAdditionalProperty("content",content);
+                    step1.addAdditionalProperty("content", content);
 
                     step1.addAdditionalProperty("name", packageName);
 
                     Address serverGroupAddress = new Address(context.getResourceKey());
                     serverGroupAddress.add("deployment", packageName);
-                    Operation step2 = new Operation("add",serverGroupAddress);
-                    Operation step3 = new Operation("deploy",serverGroupAddress);
+                    Operation step2 = new Operation("add", serverGroupAddress);
+                    Operation step3 = new Operation("deploy", serverGroupAddress);
 
                     CompositeOperation cop = new CompositeOperation();
                     cop.addStep(step1);
@@ -136,36 +148,35 @@ public class ServerGroupComponent extends BaseComponent implements ContentFacet,
 
                     Result result = connection.execute(cop);
                     if (!result.isSuccess()) // TODO get failure message into response
-                        response.addPackageResponse(new DeployIndividualPackageResponse(details.getKey(),ContentResponseResult.FAILURE));
+                        response.addPackageResponse(new DeployIndividualPackageResponse(details.getKey(),
+                            ContentResponseResult.FAILURE));
                     else {
                         DeployIndividualPackageResponse individualPackageResponse = new DeployIndividualPackageResponse(
-                                details.getKey(), ContentResponseResult.SUCCESS);
+                            details.getKey(), ContentResponseResult.SUCCESS);
                         response.addPackageResponse(individualPackageResponse);
                         response.setOverallRequestResult(ContentResponseResult.SUCCESS);
                     }
-                }
-                else
-                    response.addPackageResponse(new DeployIndividualPackageResponse(details.getKey(),ContentResponseResult.FAILURE));
-            }
-            else {
-                response.addPackageResponse(
-                        new DeployIndividualPackageResponse(details.getKey(), ContentResponseResult.FAILURE));
+                } else
+                    response.addPackageResponse(new DeployIndividualPackageResponse(details.getKey(),
+                        ContentResponseResult.FAILURE));
+            } else {
+                response.addPackageResponse(new DeployIndividualPackageResponse(details.getKey(),
+                    ContentResponseResult.FAILURE));
             }
         }
-
 
         return response;
     }
 
     @Override
     public RemovePackagesResponse removePackages(Set<ResourcePackageDetails> packages) {
-        return null;  // TODO: Customise this generated block
+        return null; // TODO: Customise this generated block
     }
 
     @Override
     public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
 
-        Operation op = new ReadChildrenNames(address,"deployment"); // TODO read full packages not only names
+        Operation op = new ReadChildrenNames(address, "deployment"); // TODO read full packages not only names
         Result node = getASConnection().execute(op);
         if (!node.isSuccess())
             return null;
@@ -175,11 +186,11 @@ public class ServerGroupComponent extends BaseComponent implements ContentFacet,
         for (String file : resultList) {
             String t;
             if (file.contains("."))
-                t = file.substring(file.lastIndexOf(".")+1);
+                t = file.substring(file.lastIndexOf(".") + 1);
             else
                 t = "-none-";
 
-            ResourcePackageDetails detail = new ResourcePackageDetails(new PackageDetailsKey(file,"1.0",t,"all"));
+            ResourcePackageDetails detail = new ResourcePackageDetails(new PackageDetailsKey(file, "1.0", t, "all"));
             details.add(detail);
         }
         return details;
@@ -188,11 +199,11 @@ public class ServerGroupComponent extends BaseComponent implements ContentFacet,
 
     @Override
     public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
-        return null;  // TODO: Customise this generated block
+        return null; // TODO: Customise this generated block
     }
 
     private String serverGroupFromKey() {
         String key1 = context.getResourceKey();
-        return key1.substring(key1.lastIndexOf("/")+1);
+        return key1.substring(key1.lastIndexOf("/") + 1);
     }
 }

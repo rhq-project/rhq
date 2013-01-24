@@ -64,8 +64,9 @@ public class MetadataBeanTest extends AbstractEJB3Test {
     protected void afterClassWork() throws Exception {
         PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-        pluginMgr.deletePlugins(overlord, new ArrayList(pluginIds));
-        pluginMgr.markPluginsForPurge(overlord, new ArrayList(pluginIds));
+        List<Integer> doomedPlugins = new ArrayList<Integer>(pluginIds);
+        pluginMgr.deletePlugins(overlord, doomedPlugins);
+        pluginMgr.markPluginsForPurge(overlord, new ArrayList(doomedPlugins));
         new PurgeResourceTypesJob().executeJobCode(null);
         new PurgePluginsJob().executeJobCode(null);
 

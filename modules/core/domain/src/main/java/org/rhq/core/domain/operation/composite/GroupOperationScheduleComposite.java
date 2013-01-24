@@ -30,11 +30,15 @@ package org.rhq.core.domain.operation.composite;
 public class GroupOperationScheduleComposite extends OperationScheduleComposite {
 
     private static final long serialVersionUID = 2L;
+    
+    private int groupId;
+    private String groupName;
+    private String groupResourceTypeName;
 
-    private final int groupId;
-    private final String groupName;
-    private final String groupResourceTypeName;
-
+    //private no args constructor for serialization. Not to be used.
+    private GroupOperationScheduleComposite() {
+    }
+    
     public GroupOperationScheduleComposite(int id, String jobName, String jobGroup, String operationName,
         long operationNextFireTime, int groupId, String groupName, String groupResourceTypeName) {
         super(id, jobName, jobGroup, operationName, operationNextFireTime);

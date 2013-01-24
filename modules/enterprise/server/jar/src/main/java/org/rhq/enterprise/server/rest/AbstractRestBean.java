@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -412,7 +412,7 @@ public class AbstractRestBean {
      * @param requireCompatible Does the group have to be a compatible group?
      * @return the group object if found
      * @throws org.rhq.enterprise.server.rest.StuffNotFoundException if the group is not found (or not accessible by the caller)
-     * @throws IllegalArgumentException if a compatible group is required, but the found one is not a compatible one
+     * @throws BadArgumentException if a compatible group is required, but the found one is not a compatible one
      */
     protected ResourceGroup fetchGroup(int groupId, boolean requireCompatible) {
         ResourceGroup resourceGroup;
@@ -421,7 +421,7 @@ public class AbstractRestBean {
             throw new StuffNotFoundException("Group with id " + groupId);
         if (requireCompatible) {
             if (resourceGroup.getGroupCategory() != GroupCategory.COMPATIBLE) {
-                throw new IllegalArgumentException("Group with id " + groupId + " is no compatible group");
+                throw new BadArgumentException("Group with id " + groupId,"it is no compatible group");
             }
         }
         return resourceGroup;
@@ -452,7 +452,7 @@ public class AbstractRestBean {
         return gr;
     }
 
-    private static class CacheKey {
+    protected static class CacheKey {
         private String namespace;
         private int id;
 

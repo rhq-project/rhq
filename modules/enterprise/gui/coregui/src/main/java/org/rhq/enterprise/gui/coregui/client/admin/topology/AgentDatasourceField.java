@@ -37,6 +37,8 @@ public enum AgentDatasourceField {
     FIELD_SERVER_ID("serverId", "serverId"),
 
     FIELD_ADDRESS("address", CoreGUI.getMessages().view_adminTopology_agent_agentBindAddress()),
+    
+    FIELD_REMOTE_ENDPOINT("remoteEndpoint", CoreGUI.getMessages().view_adminTopology_agentDetail_remoteEndpoint()),
 
     FIELD_PORT("port", CoreGUI.getMessages().view_adminTopology_agent_agentBindPort()),
     

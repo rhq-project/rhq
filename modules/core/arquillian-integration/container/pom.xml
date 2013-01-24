@@ -20,6 +20,28 @@
     <name>RHQ Arquillian Plugin Container</name>
     <description>RHQ Embedded Agent Plugin Container integration for Arquillian</description>
 
+    <build>
+      <resources>
+        <resource>
+          <directory>src/main/resources</directory>
+          <filtering>true</filtering>
+          <includes>
+            <include>maven-properties.properties</include>
+          </includes>
+        </resource>
+        <resource>
+          <directory>src/main/resources</directory>
+          <filtering>false</filtering>
+          <includes>
+            <include>**/*</include>
+          </includes>
+          <excludes>
+            <exclude>maven-properties.properties</exclude>
+          </excludes>
+        </resource>
+      </resources>
+    </build>
+
     <!-- Dependencies -->
     <dependencies>
 
@@ -53,18 +75,15 @@
 
         <dependency>
             <groupId>org.jboss.shrinkwrap.resolver</groupId>
-            <artifactId>shrinkwrap-resolver-api</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.shrinkwrap.resolver</groupId>
-            <artifactId>shrinkwrap-resolver-api-maven</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.shrinkwrap.resolver</groupId>
             <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
             <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.shrinkwrap.resolver</groupId>
+            <artifactId>shrinkwrap-resolver-depchain</artifactId>
+            <type>pom</type>
+            <scope>test</scope>
         </dependency>
 
         <!-- org.rhq -->

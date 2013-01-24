@@ -68,7 +68,7 @@
              should each have two corresponding message bundle properties files under
              src/main/resources/org/rhq/enterprise/gui/coregui/client/. For example, the "ja" locale has
              Messages_ja.properties and MessageConstants_ja.properties. -->
-    <gwt.locale>en,de,ja,pt,zh,ru,cs</gwt.locale>
+    <gwt.locale>en,de,ja,pt,zh,ru,cs,ko</gwt.locale>
 
         <!-- The locale that GWT should fallback to if the user specified an unsupported locale via the 'locale' query
              string parameter. -->

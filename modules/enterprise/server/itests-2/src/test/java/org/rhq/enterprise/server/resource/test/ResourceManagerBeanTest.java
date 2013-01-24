@@ -28,12 +28,17 @@ import javax.transaction.SystemException;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.GroupCategory;
+import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.SessionNotFoundException;
 import org.rhq.enterprise.server.discovery.DiscoveryServerServiceImpl;
@@ -41,6 +46,7 @@ import org.rhq.enterprise.server.operation.OperationDefinitionNotFoundException;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
+import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionNotFoundException;
 import org.rhq.enterprise.server.resource.metadata.test.UpdatePluginMetadataTestBase;
@@ -54,6 +60,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
     private Subject overlord;
     private Resource newResource;
+    private ResourceGroup newGroup;
+    private ResourceGroupManagerLocal groupManager;
 
     TestServerCommunicationsService agentServiceContainer;
 
@@ -63,10 +71,15 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
 
         overlord = LookupUtil.getSubjectManager().getOverlord();
         newResource = createNewResourceWithNewType();
+        groupManager = LookupUtil.getResourceGroupManager();
+        newGroup = createNewGroup();
     }
 
     @Override
     protected void afterMethod() throws Exception {
+        if (newGroup != null) {
+            groupManager.deleteResourceGroup(overlord, newGroup.getId());
+        }
         deleteNewResourceAgentResourceType(newResource);
 
         super.afterMethod();
@@ -198,6 +211,67 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
         }
     }
 
+    public void testAddResorceToGroup() {
+        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+        criteria.addFilterId(newGroup.getId());
+        criteria.fetchExplicitResources(true);
+        PageList<ResourceGroup> persistedGroups = groupManager.findResourceGroupsByCriteria(overlord, criteria);
+        assertEquals("There should be just one group with id " + newGroup.getId(), 1,
+            persistedGroups.size());
+        
+        // equals is based on the name of a group
+        assertEquals("Persisted group should be the same as the group created in before method.", newGroup,
+            persistedGroups.get(0));
+        assertEquals("There should be no explicit members in the newly created group.", 0, persistedGroups.get(0)
+            .getExplicitResources().size());
+
+        // add resource to group
+        groupManager.addResourcesToGroup(overlord, newGroup.getId(), new int[] { newResource.getId() });
+        persistedGroups = groupManager.findResourceGroupsByCriteria(overlord, criteria);
+        assertEquals("There should be one member in the newly created group.", 1, persistedGroups.get(0).getExplicitResources()
+            .size());
+    }
+
+    public void testResourceUninventorization() {
+        // partly a regression test for BZ 878117
+        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+        criteria.addFilterId(newGroup.getId());
+        criteria.fetchExplicitResources(true);
+        PageList<ResourceGroup> persistedGroups = groupManager.findResourceGroupsByCriteria(overlord, criteria);
+        assertEquals("There should be just one group with id " + newGroup.getId(), 1,
+            persistedGroups.size());
+        assertEquals("An empty group is considered as MIXED.", GroupCategory.MIXED, persistedGroups.get(0)
+            .getGroupCategory());
+
+        // add resource to group
+        groupManager.addResourcesToGroup(overlord, persistedGroups.get(0).getId(), new int[] { newResource.getId() });
+        persistedGroups = groupManager.findResourceGroupsByCriteria(overlord, criteria);
+        assertEquals("A group with just one explicit member is considered as COMPATIBLE.", GroupCategory.COMPATIBLE,
+            persistedGroups.get(0).getGroupCategory());
+
+        // now uninventorize the only resource
+        resourceManager.uninventoryResource(overlord, newResource.getId());
+        persistedGroups = groupManager.findResourceGroupsByCriteria(overlord, criteria);
+        assertEquals("An empty group is considered as MIXED.", GroupCategory.MIXED, persistedGroups.get(0)
+            .getGroupCategory());
+    }
+
+    public void testResourceRemovalFromGroup() {
+        ResourceGroup persistedGroup = groupManager.getResourceGroup(overlord, newGroup.getId());
+        assertEquals("An empty group is considered as MIXED.", GroupCategory.MIXED, persistedGroup.getGroupCategory());
+        
+        // add resource to group
+        groupManager.addResourcesToGroup(overlord, persistedGroup.getId(), new int[] { newResource.getId() });
+        persistedGroup = groupManager.getResourceGroup(overlord, newGroup.getId());
+        assertEquals("A group with just one explicit member is considered as COMPATIBLE.", GroupCategory.COMPATIBLE,
+            persistedGroup.getGroupCategory());
+        
+        // now remove the only resource from the group
+        groupManager.removeResourcesFromGroup(overlord, persistedGroup.getId(), new int[] { newResource.getId() });
+        persistedGroup = groupManager.getResourceGroup(overlord, newGroup.getId());
+        assertEquals("An empty group is considered as MIXED.", GroupCategory.MIXED, persistedGroup.getGroupCategory());     
+    }
+
     private int givenASampleResourceHierarchy() throws NotSupportedException, SystemException {
         getTransactionManager().begin();
 
@@ -272,6 +346,7 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
             resource = new Resource("reskey" + System.currentTimeMillis(), "resname", resourceType);
             resource.setUuid("" + new Random().nextInt());
             resource.setAgent(agent);
+            resource.setInventoryStatus(InventoryStatus.COMMITTED);
             em.persist(resource);
         } catch (Exception e) {
             System.out.println("CANNOT PREPARE TEST: " + e);
@@ -282,6 +357,12 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
         getTransactionManager().commit();
 
         return resource;
+    }
+
+    private ResourceGroup createNewGroup() {
+        ResourceGroup group = new ResourceGroup("testGroup");
+        groupManager.createResourceGroup(overlord, group);
+        return group;
     }
 
     private void deleteNewResourceAgentResourceType(Resource resource) throws Exception {

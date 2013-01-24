@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,11 +13,12 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.rest;
 
+import javax.ejb.EJBException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -30,6 +31,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
+import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.rest.domain.RHQErrorWrapper;
 
@@ -48,41 +50,31 @@ public class CustomExceptionMapper implements ExceptionMapper<Exception> {
     @Override
     public Response toResponse(Exception e) {
 
-
-
-        Throwable cause = e.getCause();
         Response.ResponseBuilder builder;
-        if (cause !=null) {
-            Response.Status status;
-            if (cause instanceof StuffNotFoundException)
-                status =Response.Status.NOT_FOUND;
-            else if (cause instanceof ResourceNotFoundException)
-                status = Response.Status.NOT_FOUND;
-            else if (cause instanceof ResourceGroupNotFoundException)
-                status = Response.Status.NOT_FOUND;
-            else if (cause instanceof ParameterMissingException)
-                status = Response.Status.NOT_ACCEPTABLE;
-            else if (cause instanceof IllegalArgumentException)
-                status = Response.Status.NOT_ACCEPTABLE;
-            else if (cause instanceof PermissionException)
-                status = Response.Status.FORBIDDEN;
-            else
-                status = Response.Status.SERVICE_UNAVAILABLE;
+        Response.Status status;
 
-            builder = Response.status(status);
-            String message = cause.getMessage();
-            wrapMessage(builder, message);
-        }
-        else {
-            if (e instanceof PermissionException) {
-                builder = Response.status(Response.Status.FORBIDDEN);
-            } else {
-                builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR);
-            }
-            if (e.getMessage()!=null) {
-                wrapMessage(builder,e.getMessage());
-            }
-        }
+        if (e instanceof StuffNotFoundException)
+            status =Response.Status.NOT_FOUND;
+        else if (e instanceof ResourceNotFoundException)
+            status = Response.Status.NOT_FOUND;
+        else if (e instanceof ResourceGroupNotFoundException)
+            status = Response.Status.NOT_FOUND;
+        else if (e instanceof ResourceTypeNotFoundException)
+            status = Response.Status.NOT_FOUND;
+        else if (e instanceof ParameterMissingException)
+            status = Response.Status.NOT_ACCEPTABLE;
+        else if (e instanceof BadArgumentException)
+            status = Response.Status.NOT_ACCEPTABLE;
+        else if (e instanceof PermissionException)
+            status = Response.Status.FORBIDDEN;
+        else if (e instanceof EJBException && e.getCause()!=null && e.getCause() instanceof IllegalArgumentException)
+            status = Response.Status.NOT_ACCEPTABLE;
+        else
+            status = Response.Status.SERVICE_UNAVAILABLE;
+
+        builder = Response.status(status);
+        String message = e.getMessage();
+        wrapMessage(builder, message);
         return builder.build();
     }
 

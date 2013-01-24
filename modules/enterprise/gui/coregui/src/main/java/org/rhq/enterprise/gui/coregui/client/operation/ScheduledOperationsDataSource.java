@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.operation;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -33,8 +36,11 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.Criteria;
+import org.rhq.core.domain.operation.composite.GroupOperationScheduleComposite;
+import org.rhq.core.domain.operation.composite.OperationScheduleComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
@@ -56,15 +62,20 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  * @author Simeon Pinder
  * @author Jay Shaughnessy
  */
-public class ScheduledOperationsDataSource extends RPCDataSource<ResourceOperationScheduleComposite, Criteria> {
+public class ScheduledOperationsDataSource extends RPCDataSource<OperationScheduleComposite, Criteria> {
 
     public enum Field {
 
         OPERATION("operationName", MSG.dataSource_operationSchedule_field_operationName()),
 
-        RESOURCE("resource", MSG.common_title_resource()),
+        // the key has to remain 'resource' for AncestryUtil.getResourceHoverHTML()
+        RESOURCE_OR_GROUP("resource", MSG.common_title_resource() + " / " + MSG.common_title_group()),
 
-        TIME("operationNextFireTime", MSG.dataSource_operationSchedule_field_nextFireTime());
+        TIME("operationNextFireTime", MSG.dataSource_operationSchedule_field_nextFireTime()),
+        
+        GROUP_ID("groupId", "groupId"),
+        
+        GROUP_TYPE("groupType", MSG.common_title_resource_name());
 
         /**
          * Corresponds to a property name of Resource (e.g. resourceType.name).
@@ -117,11 +128,11 @@ public class ScheduledOperationsDataSource extends RPCDataSource<ResourceOperati
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceTextField resourceField = new DataSourceTextField(Field.RESOURCE.propertyName, Field.RESOURCE.title);
+        DataSourceTextField resourceField = new DataSourceTextField(Field.RESOURCE_OR_GROUP.propertyName, Field.RESOURCE_OR_GROUP.title);
         fields.add(resourceField);
 
-        DataSourceTextField operationField = new DataSourceTextField(Field.OPERATION.propertyName(), Field.OPERATION
-            .title());
+        DataSourceTextField operationField = new DataSourceTextField(Field.OPERATION.propertyName(),
+            Field.OPERATION.title());
         fields.add(operationField);
 
         DataSourceTextField timeField = new DataSourceTextField(Field.TIME.propertyName(), Field.TIME.title());
@@ -160,8 +171,9 @@ public class ScheduledOperationsDataSource extends RPCDataSource<ResourceOperati
                 }
             }
         }
+        final int pageSizeConst = pageSize;
 
-        GWTServiceLookup.getOperationService().findScheduledOperations(pageSize,
+        GWTServiceLookup.getOperationService().findCurrentlyScheduledResourceOperations(pageSizeConst,
             new AsyncCallback<PageList<ResourceOperationScheduleComposite>>() {
 
                 public void onFailure(Throwable throwable) {
@@ -169,8 +181,34 @@ public class ScheduledOperationsDataSource extends RPCDataSource<ResourceOperati
                         throwable);
                 }
 
-                public void onSuccess(PageList<ResourceOperationScheduleComposite> result) {
-                    dataRetrieved(result, response, request);
+                public void onSuccess(final PageList<ResourceOperationScheduleComposite> resources) {
+                    GWTServiceLookup.getOperationService().findCurrentlyScheduledGroupOperations(pageSizeConst,
+                        new AsyncCallback<PageList<GroupOperationScheduleComposite>>() {
+
+                            public void onFailure(Throwable throwable) {
+                                CoreGUI.getErrorHandler().handleError(
+                                    MSG.dataSource_scheduledOperations_error_fetchFailure(), throwable);
+                            }
+
+                            public void onSuccess(PageList<GroupOperationScheduleComposite> groups) {
+                                List<OperationScheduleComposite> result = new ArrayList<OperationScheduleComposite>();
+                                if (resources != null) {
+                                    result.addAll(resources);
+                                    result.addAll(groups);
+                                }
+                                Collections.sort(result, new Comparator<OperationScheduleComposite>() {
+                                    public int compare(OperationScheduleComposite thisOp,
+                                        OperationScheduleComposite thatOp) {
+                                        return thisOp.getOperationNextFireTime() - thatOp.getOperationNextFireTime() < 0 ? -1
+                                            : 1;
+                                    }
+                                });
+                                PageControl pc = new PageControl(0, pageSizeConst);
+                                PageList<OperationScheduleComposite> pageList = new PageList<OperationScheduleComposite>(
+                                    result, pc);
+                                dataRetrieved(pageList, response, request);
+                            }
+                        });
                 }
             });
     }
@@ -181,13 +219,16 @@ public class ScheduledOperationsDataSource extends RPCDataSource<ResourceOperati
         return null;
     }
 
-    protected void dataRetrieved(final PageList<ResourceOperationScheduleComposite> result, final DSResponse response,
+    protected void dataRetrieved(final PageList<OperationScheduleComposite> result, final DSResponse response,
         final DSRequest request) {
         HashSet<Integer> typesSet = new HashSet<Integer>();
         HashSet<String> ancestries = new HashSet<String>();
-        for (ResourceOperationScheduleComposite composite : result) {
-            typesSet.add(composite.getResourceTypeId());
-            ancestries.add(composite.getAncestry());
+        for (OperationScheduleComposite composite : result) {
+            if (composite instanceof ResourceOperationScheduleComposite) {
+                ResourceOperationScheduleComposite resourceComposite = (ResourceOperationScheduleComposite) composite;
+                typesSet.add(resourceComposite.getResourceTypeId());
+                ancestries.add(resourceComposite.getAncestry());
+            }
         }
 
         // In addition to the types of the result resources, get the types of their ancestry
@@ -230,18 +271,26 @@ public class ScheduledOperationsDataSource extends RPCDataSource<ResourceOperati
     }
 
     @Override
-    public ListGridRecord copyValues(ResourceOperationScheduleComposite from) {
+    public ListGridRecord copyValues(OperationScheduleComposite from) {
         ListGridRecord record = new ListGridRecord();
+        if (from instanceof ResourceOperationScheduleComposite) {
+            ResourceOperationScheduleComposite resource = (ResourceOperationScheduleComposite) from;
+            record.setAttribute(Field.RESOURCE_OR_GROUP.propertyName, resource.getResourceName());
+            
+            // for ancestry handling
+            record.setAttribute(AncestryUtil.RESOURCE_ID, resource.getResourceId());
+            record.setAttribute(AncestryUtil.RESOURCE_NAME, resource.getResourceName());
+            record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, resource.getAncestry());
+            record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceTypeId());
+        } else { // group
+            GroupOperationScheduleComposite resource = (GroupOperationScheduleComposite) from;
+            record.setAttribute(Field.RESOURCE_OR_GROUP.propertyName, resource.getGroupName());
+            record.setAttribute(Field.GROUP_ID.propertyName, resource.getGroupId());
+            record.setAttribute(Field.GROUP_TYPE.propertyName, resource.getGroupResourceTypeName());
+        }
         record.setAttribute("id", from.getId());
         record.setAttribute(Field.OPERATION.propertyName, from.getOperationName());
-        record.setAttribute(Field.RESOURCE.propertyName, from.getResourceName());
         record.setAttribute(Field.TIME.propertyName, new Date(from.getOperationNextFireTime()));
-
-        // for ancestry handling       
-        record.setAttribute(AncestryUtil.RESOURCE_ID, from.getResourceId());
-        record.setAttribute(AncestryUtil.RESOURCE_NAME, from.getResourceName());
-        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, from.getAncestry());
-        record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, from.getResourceTypeId());
 
         record.setAttribute("entity", from);
         return record;

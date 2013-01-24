@@ -113,8 +113,10 @@ public class Installer {
                 try {
                     final InstallerService installerService = new InstallerServiceImpl(installerConfig);
                     final HashMap<String, String> serverProperties = installerService.getServerProperties();
-                    installerService.reconfigure(serverProperties);
-                    LOG.info("Reconfiguration is complete.");
+                    final boolean reconfigured = installerService.reconfigure(serverProperties);
+                    if (reconfigured) {
+                        LOG.info("Reconfiguration is complete.");
+                    }
                 } catch (Exception e) {
                     LOG.error(ThrowableUtil.getAllMessages(e));
                     System.exit(EXIT_CODE_INSTALLATION_ERROR);

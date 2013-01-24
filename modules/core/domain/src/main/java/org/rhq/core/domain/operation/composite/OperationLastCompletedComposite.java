@@ -39,7 +39,7 @@ public abstract class OperationLastCompletedComposite implements Serializable {
     //default no args constructor for java bean/serialization. Not to be used.
     protected OperationLastCompletedComposite() {
         this.operationHistoryId = 0;
-        this.operationName = "(unitialized)";
+        this.operationName = "(uninitialized)";
         this.operationStartTime = -1;
         this.operationStatus = OperationRequestStatus.FAILURE;
     }

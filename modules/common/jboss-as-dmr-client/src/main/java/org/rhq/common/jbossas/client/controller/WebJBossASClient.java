@@ -39,6 +39,17 @@ public class WebJBossASClient extends JBossASClient {
     }
 
     /**
+     * Checks to see if the web subsystem exists. This should always exist unless
+     * the server is just starting up and its web subsystem has not even initialized yet.
+     *
+     * @return true if the web subsystem is ready
+     */
+    public boolean isWebSubsystem() throws Exception {
+        Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_WEB);
+        return null != readResource(addr);
+    }
+
+    /**
      * The enable-welcome-root setting controls whether or not to deploy JBoss' welcome-content application at root context.
      * If you want to deploy your own app at the root context, you need to disable the enable-welcome-root setting
      * on the default host virtual server. If you want to show the JBoss' welcome screen, you need to enable this setting.

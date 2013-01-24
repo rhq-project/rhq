@@ -170,6 +170,11 @@ public class GroupHandlerBean extends AbstractRestBean  {
             @ApiParam(value = "A GroupRest object containing at least a name for the group") GroupRest group,
             @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
+        if (group==null)
+            throw new BadArgumentException("A group must be provided");
+        if (group.getName()==null)
+            throw new BadArgumentException("A group name is required");
+
         ResourceGroup newGroup = new ResourceGroup(group.getName());
         if (group.getResourceTypeId()!=null) {
 
@@ -182,6 +187,7 @@ public class GroupHandlerBean extends AbstractRestBean  {
             }
         }
 
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
         Response.ResponseBuilder builder;
         try {
             newGroup = resourceGroupManager.createResourceGroup(caller, newGroup);
@@ -190,10 +196,12 @@ public class GroupHandlerBean extends AbstractRestBean  {
             URI uri = uriBuilder.build(newGroup.getId());
 
             builder=Response.created(uri);
+            builder.type(mediaType);
             putToCache(newGroup.getId(),ResourceGroup.class,newGroup);
         } catch (Exception e) {
-            e.printStackTrace();  // TODO: Customise this generated block
             builder=Response.status(Response.Status.NOT_ACCEPTABLE);
+            builder.type(mediaType);
+            builder.entity(e.getCause());
         }
         return builder.build();
     }

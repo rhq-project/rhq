@@ -26,6 +26,7 @@ import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasour
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_LAST_AVAILABILITY_REPORT;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_NAME;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_PORT;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_REMOTE_ENDPOINT;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_SERVER;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_SERVER_ID;
 
@@ -149,6 +150,7 @@ public class AgentDatasource extends RPCDataSource<Agent, AgentCriteria> {
         record.setAttribute(FIELD_ID.propertyName(), from.getId());
         record.setAttribute(FIELD_NAME.propertyName(), from.getName());
         record.setAttribute(FIELD_ADDRESS.propertyName(), from.getAddress());
+        record.setAttribute(FIELD_REMOTE_ENDPOINT.propertyName(), from.getRemoteEndpoint());
         record.setAttribute(FIELD_PORT.propertyName(), from.getPort());
         record.setAttribute(FIELD_SERVER.propertyName(), from.getServer() == null ? "" : from.getServer().getName());
         record.setAttribute(FIELD_SERVER_ID.propertyName(), from.getServer() == null ? "" : from.getServer().getId());

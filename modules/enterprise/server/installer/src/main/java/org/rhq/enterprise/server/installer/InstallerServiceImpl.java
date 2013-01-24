@@ -249,6 +249,12 @@ public class InstallerServiceImpl implements InstallerService {
             // Make sure our deployment scanner is configured as we need it
             ServerInstallUtil.configureDeploymentScanner(mcc);
 
+            // Set up the transaction manager.
+            ServerInstallUtil.configureTransactionManager(mcc);
+
+            // Set up the logging subsystem
+            ServerInstallUtil.configureLogging(mcc, serverProperties);
+
             // create a keystore whose cert has a CN of this server's public endpoint address
             File keystoreFile = ServerInstallUtil.createKeystore(serverDetails, appServerConfigDir);
 
@@ -571,14 +577,14 @@ public class InstallerServiceImpl implements InstallerService {
     // make to rhq-server.properties on restart (since rhq-server.properties are system
     // properties set in the AS7 instance via -P option to AS7).
     @Override
-    public void reconfigure(HashMap<String, String> serverProperties) throws Exception {
+    public boolean reconfigure(HashMap<String, String> serverProperties) throws Exception {
 
         // make sure we can connect using our configuration
-        testModelControllerClient(serverProperties);
+        testModelControllerClient(serverProperties, 30);
 
         if (null == getInstallationResults()) {
             log("Run the installer on this server.");
-            return;
+            return false;
         }
 
         String appServerConfigDir = getAppServerConfigDir();
@@ -595,8 +601,10 @@ public class InstallerServiceImpl implements InstallerService {
                 if (ServerInstallUtil.isSameDatasourceSecurityDomainExisting(mcc, serverProperties)) {
                     if (ServerInstallUtil.isSameMailServiceExisting(mcc, serverProperties)) {
                         if (ServerInstallUtil.isSameWebConnectorsExisting(mcc, appServerConfigDir, serverProperties)) {
-                            log("Nothing in the configuration changed that requires a reconfig - everything looks OK");
-                            return; // nothing to do, return immediately
+                            if (ServerInstallUtil.isSameLoggingExisting(mcc, serverProperties)) {
+                                log("Nothing in the configuration changed that requires a reconfig - everything looks OK");
+                                return true; // nothing to do, return immediately
+                            }
                         }
                     }
                 }
@@ -622,12 +630,17 @@ public class InstallerServiceImpl implements InstallerService {
             // setup the secure Tomcat web connectors
             ServerInstallUtil.setupWebConnectors(mcc, appServerConfigDir, serverProperties);
 
+            // setup the logging level
+            ServerInstallUtil.configureLogging(mcc, serverProperties);
+
             // now restart - don't just reload, some of our stuff won't restart properly if we just reload
             coreClient = new CoreJBossASClient(mcc);
             coreClient.restart();
         } finally {
             safeClose(mcc);
         }
+
+        return true;
     }
 
     /**
@@ -922,22 +935,35 @@ public class InstallerServiceImpl implements InstallerService {
 
     /**
      * This will attempt to determine if we can get a client using our current installer configuration.
-     * If we can't (i.e. the connection attempt throws an exception), this method retries periodically
-     * until the given number of seconds expires. If it still fails, an exception is thrown.
-     * 
+     * If we can't (i.e. the connection attempt throws an exception), this method looks at the fallback
+     * props for the management host and port values and will re-try using those values. If the retry
+     * succeeds, the host/port it used to successfully connect will be stored in the {@link #installerConfiguration}
+     * object. If it still fails, this method retries periodically until the given number of seconds expires.
+     * If it still fails, an exception is thrown.
+     *
+     * @param fallbackProps contains jboss.bind.address.management and/or jboss.native.management.port to use
+     *                      if the initial connection attempt fails. If null, will be ignored.
      * @param secsToWait the number of seconds to wait before aborting the test
      * @return the app server version that we are connected to
-     * 
+     *
      * @throws Exception if the connection attempts fail
      */
-    private String testModelControllerClient(int secsToWait) throws Exception {
+    private String testModelControllerClient(HashMap<String, String> fallbackProps, int secsToWait) throws Exception {
         final long start = System.currentTimeMillis();
         final long end = start + (secsToWait * 1000L);
         Exception error = null;
 
         while (System.currentTimeMillis() < end) {
             try {
-                return testModelControllerClient(null);
+                String retVal = testModelControllerClient(fallbackProps);
+
+                // Not only do we want to make sure we can connect, but we also want to wait for the subsystems to initialize.
+                // Let's wait for one of the subsystems to exist; once we know this is up, the rest are probably ready too.
+                if (!(new WebJBossASClient(getModelControllerClient()).isWebSubsystem())) {
+                    throw new IllegalStateException("The server does not appear to be fully started yet");
+                }
+
+                return retVal;
             } catch (Exception e) {
                 error = e;
                 try {
@@ -948,6 +974,20 @@ public class InstallerServiceImpl implements InstallerService {
         }
 
         throw new RuntimeException("Timed out before being able to successfully connect to the server", error);
+    }
+
+    /**
+     * This will attempt to determine if we can get a client using our current installer configuration.
+     * If we can't (i.e. the connection attempt throws an exception), this method retries periodically
+     * until the given number of seconds expires. If it still fails, an exception is thrown.
+     *
+     * @param secsToWait the number of seconds to wait before aborting the test
+     * @return the app server version that we are connected to
+     *
+     * @throws Exception if the connection attempts fail
+     */
+    private String testModelControllerClient(int secsToWait) throws Exception {
+        return testModelControllerClient(null, secsToWait);
     }
 
     /**
@@ -973,6 +1013,10 @@ public class InstallerServiceImpl implements InstallerService {
         try {
             mcc = ModelControllerClient.Factory.create(host, port);
             client = new CoreJBossASClient(mcc);
+            Properties sysprops = client.getSystemProperties();
+            if (!sysprops.containsKey("rhq.server.database.connection-url")) {
+                throw new Exception("Not an RHQ Server");
+            }
             asVersion = client.getAppServerVersion();
             return asVersion;
         } catch (Exception e) {
@@ -984,7 +1028,7 @@ public class InstallerServiceImpl implements InstallerService {
 
             // if the caller didn't give us any fallback props, just immediately fail
             if (fallbackProps == null) {
-                throw new Exception("Cannot obtain client connection to the app server", e);
+                throw new Exception("Cannot obtain client connection to the RHQ app server", e);
             }
 
             try {
@@ -1003,18 +1047,22 @@ public class InstallerServiceImpl implements InstallerService {
                     differentValues = true;
                 }
                 if (!differentValues) {
-                    throw new Exception("Cannot obtain client connection to the app server", e);
+                    throw new Exception("Cannot obtain client connection to the RHQ app server!", e);
                 }
 
                 mcc = ModelControllerClient.Factory.create(host, port);
                 client = new CoreJBossASClient(mcc);
+                Properties sysprops = client.getSystemProperties();
+                if (!sysprops.containsKey("rhq.server.database.connection-url")) {
+                    throw new Exception("Not an RHQ Server");
+                }
                 asVersion = client.getAppServerVersion();
                 this.installerConfiguration.setManagementHost(host);
                 this.installerConfiguration.setManagementPort(port);
                 return asVersion;
             } catch (Exception e2) {
                 // make the cause the very first exception in case it was something other than bad host/port as the problem
-                throw new Exception("Cannot obtain client connection to the app server!", e);
+                throw new Exception("Cannot obtain client connection to the RHQ app server!!", e);
             } finally {
                 safeClose(mcc);
             }

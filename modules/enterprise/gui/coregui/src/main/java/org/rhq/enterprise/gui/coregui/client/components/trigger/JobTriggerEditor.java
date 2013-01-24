@@ -24,7 +24,6 @@ import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.TreeSet;
 
-import com.smartgwt.client.types.Visibility;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.events.ClickEvent;
@@ -515,8 +514,16 @@ public class JobTriggerEditor extends LocatableVLayout {
             repeatIntervalItem.setTitle(MSG.widget_jobTriggerEditor_field_repeatInterval_later());
             repeatIntervalItem.redraw();
         }
-        laterForm.setVisibility(this.isStartLater ? Visibility.VISIBLE : Visibility.HIDDEN);
-        repeatForm.setVisibility(this.isRecurring ? Visibility.VISIBLE : Visibility.HIDDEN);
+        if (isStartLater)  {
+            laterForm.show();
+        } else {
+            laterForm.hide();
+        }
+        if (isRecurring)  {
+            repeatForm.show();
+        } else {
+            repeatForm.hide();
+        }
     }
 
     private void changeMode(String mode) {

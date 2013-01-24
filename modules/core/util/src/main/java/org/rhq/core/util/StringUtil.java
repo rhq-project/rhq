@@ -284,7 +284,7 @@ public class StringUtil {
 
         for (int i = 0; i < (size - 1); i++) {
             buf.append(objs.get(i).toString());
-            buf.append( delim);
+            buf.append(delim);
         }
 
         if (size != 0) {
@@ -553,4 +553,17 @@ public class StringUtil {
     public static boolean isEmpty(String s) {
         return s == null || s.length() == 0;
     }
+
+    public static boolean isNotEmpty(String s) {
+        return !isEmpty(s);
+    }
+
+    public static boolean isBlank(String s) {
+        return s == null || s.trim().length() == 0;
+    }
+
+    public static boolean isNotBlank(String s) {
+        return !isBlank(s);
+    }
+
 }

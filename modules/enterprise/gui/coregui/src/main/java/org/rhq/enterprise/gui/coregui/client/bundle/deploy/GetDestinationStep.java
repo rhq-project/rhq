@@ -18,11 +18,15 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.deploy;
 
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
@@ -43,13 +47,18 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.bundle.deploy.selection.SingleCompatibleResourceGroupSelector;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.wizard.AbstractGroupCreateWizard;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.MetadataType;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
@@ -316,6 +325,31 @@ public class GetDestinationStep extends AbstractWizardStep {
             this.groupSelector = theSelector;
         }
 
+        @Override
+        public boolean createGroup() {
+            Integer[] ids = memberStep.getSelecterResourceTypeIds();
+            if (ids == null || ids.length == 0) {
+                SC.warn(MSG.view_bundle_deployWizard_createGroup_error_1());
+                return false;
+            }
+            ResourceTypeRepository typeRepository = ResourceTypeRepository.Cache.getInstance();
+            typeRepository.getResourceTypes(ids, EnumSet.of(MetadataType.bundleConfiguration),
+                new TypesLoadedCallback() {
+                    public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                        Set<ResourceType> typeSet = new HashSet<ResourceType>(types.values());
+                        if (typeSet.size() != 1) {
+                            SC.warn(MSG.view_bundle_deployWizard_createGroup_error_2());
+                        } else if (typeSet.iterator().next().getResourceTypeBundleConfiguration() == null) {
+                            SC.warn(MSG.view_bundle_deployWizard_createGroup_error_3());
+                        } else {
+                            QuickGroupCreateWizard.super.createGroup();
+                        }
+                    }
+                });
+            return true;
+        }
+        
+        @Override
         public void groupCreateCallback(final ResourceGroup group) {
             // note: "group" is essentially a flyweight - it doesn't have much other than ID
             this.groupSelector.setValue(group.getId());

@@ -33,7 +33,6 @@ import static org.rhq.core.domain.resource.ResourceCategory.SERVER;
 import static org.rhq.test.AssertUtils.assertCollectionEqualsNoOrder;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -42,6 +41,9 @@ import java.util.List;
 import javax.ejb.EJB;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.joda.time.DateTime;
 import org.testng.annotations.Test;
@@ -56,14 +58,17 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.util.jdbc.JDBCUtil;
+import org.rhq.enterprise.server.cassandra.SessionManagerBean;
 import org.rhq.enterprise.server.drift.DriftServerPluginService;
-import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.test.TransactionCallbackReturnable;
 import org.rhq.enterprise.server.util.Overlord;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
+import org.rhq.server.metrics.AggregatedNumericMetric;
+import org.rhq.server.metrics.MetricsDAO;
+import org.rhq.server.metrics.MetricsTable;
 
 /**
  * @author John Sanda
@@ -106,6 +111,11 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
     @EJB
     private MeasurementBaselineManagerLocal baselineManager;
 
+    @EJB
+    SessionManagerBean cassandraSessionManager;
+
+    private MetricsDAO metricsDAO;
+
     @Override
     protected void beforeMethod() throws Exception {
         // MeasurementDataManagerUtility looks up config settings from SystemManagerBean.
@@ -116,6 +126,7 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
 
         measurementDefs = new ArrayList<MeasurementDefinition>();
         schedules = new ArrayList<MeasurementSchedule>();
+        metricsDAO = new MetricsDAO(cassandraSessionManager.getSession());
         createInventory();
     }
 
@@ -198,10 +209,7 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
     }
 
     private void purgeDB() {
-        purgeRawData();
-        purge1HourData();
-        purge6HourData();
-        purge24HourData();
+        purgeMetricsTables();
         purgeBaselines();
         purgeOOBs();
 
@@ -259,20 +267,18 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
         em.flush();
     }
 
-    public void purgeRawData() {
-        purgeTables(MeasurementDataManagerUtility.getAllRawTables());
-    }
+    private void purgeMetricsTables() {
+        try {
+            Session session = cassandraSessionManager.getSession();
 
-    public void purge1HourData() {
-        purgeTables("rhq_measurement_data_num_1h");
-    }
-
-    public void purge6HourData() {
-        purgeTables("rhq_measurement_data_num_6h");
-    }
-
-    public void purge24HourData() {
-        purgeTables("rhq_measurement_data_num_1d");
+            session.execute("TRUNCATE " + MetricsTable.RAW);
+            session.execute("TRUNCATE " + MetricsTable.ONE_HOUR);
+            session.execute("TRUNCATE " + MetricsTable.SIX_HOUR);
+            session.execute("TRUNCATE " + MetricsTable.TWENTY_FOUR_HOUR);
+            session.execute("TRUNCATE " + MetricsTable.INDEX);
+        } catch (NoHostAvailableException e) {
+            throw new RuntimeException("An error occurred while purging metrics tables", e);
+        }
     }
 
     public void purgeBaselines() {
@@ -318,36 +324,12 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
     }
 
     private void insert1HourData(List<AggregateTestData> data) {
-        Connection connection = null;
-
-        try {
-            connection = getConnection();
-            connection.setAutoCommit(false);
-            String sql = "insert into rhq_measurement_data_num_1h(time_stamp, schedule_id, value, minvalue, maxvalue) values(?, ?, ?, ?, ?)";
-            PreparedStatement statement = connection.prepareStatement(sql);
-
-            for (AggregateTestData datum : data) {
-                statement.setLong(1, datum.getTimestamp());
-                statement.setInt(2, datum.getScheduleId());
-                statement.setDouble(3, datum.getAvg());
-                statement.setDouble(4, datum.getMin());
-                statement.setDouble(5, datum.getMax());
-
-                statement.addBatch();
-            }
-
-            statement.executeBatch();
-            connection.commit();
-        } catch (SQLException e) {
-            try {
-                connection.rollback();
-            } catch (SQLException e1) {
-                throw new RuntimeException("Failed to rollback transaction", e1);
-            }
-            throw new RuntimeException("Failed to insert 1 hour data", e);
-        } finally {
-            JDBCUtil.safeClose(connection);
+        List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
+        for (AggregateTestData datum : data) {
+            metrics.add(new AggregatedNumericMetric(datum.getScheduleId(), datum.getAvg(), datum.getMin(),
+                datum.getMax(), datum.getTimestamp()));
         }
+        metricsDAO.insertAggregates(MetricsTable.ONE_HOUR, metrics, MetricsTable.ONE_HOUR.getTTL());
     }
 
     private void insertBaselines(final List<MeasurementBaseline> baselines) {

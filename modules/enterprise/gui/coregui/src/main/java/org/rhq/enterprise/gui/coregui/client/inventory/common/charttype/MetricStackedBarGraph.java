@@ -458,9 +458,19 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                                 })
                                 .y(function (d,i) {
                                     if(d.y == undefined){
-                                        //console.log( "** i: "+i +"y-1:"+this.__data__[i -1 ].y)
+                                        if(i >= 1){
+                                            // count backward until there is a defined value
+                                            for(var j=i; j>=1;j--){
+                                               if(this.__data__[j].y != undefined){
+                                                   //console.log( "using: "+j +" for :"+i+", value"+this.__data__[j].y);
+                                                   return yScale(this.__data__[j].y);
+                                               }
+                                            }
+                                            return yScale(0);
+                                        }else {
+                                            return yScale(0);
+                                        }
 
-                                        return yScale(0);
                                     }else {
                                         return yScale(+d.y);
                                     }

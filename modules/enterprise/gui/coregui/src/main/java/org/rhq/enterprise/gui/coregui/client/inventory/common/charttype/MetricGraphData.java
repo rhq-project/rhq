@@ -198,9 +198,9 @@ public class MetricGraphData implements JsonMetricProducer {
 
     public String getYAxisTitle() {
         if (null != definition.getDisplayName() && definition.getDisplayName().length() > 55) {
-            return  definition.getDisplayName().substring(0, 55) + "...";
+            return definition.getDisplayName().substring(0, 55) + "...";
         } else {
-            return  definition.getDisplayName();
+            return definition.getDisplayName();
         }
     }
 
@@ -248,6 +248,7 @@ public class MetricGraphData implements JsonMetricProducer {
                     // loop through the avail down intervals
                     for (Availability availability : availabilityDownList) {
                         // we know we are in an interval
+                        Log.debug(" *** Avail: " + availability);
                         //if (barDateTime.after(datePair.startDateTime) && barDateTime.before(datePair.getEndDateTime())) {
                         if (measurement.getTimestamp() >= availability.getStartTime()
                             && measurement.getTimestamp() <= availability.getEndTime()) {
@@ -261,47 +262,51 @@ public class MetricGraphData implements JsonMetricProducer {
                         }
                     }
                 }
-                if (null != lastOOB ) {
-                    sb.append(" baselineMin:" + lastOOB.getBlMin()+ ", ");
+                if (null != lastOOB) {
+                    sb.append(" baselineMin:" + lastOOB.getBlMin() + ", ");
                     sb.append(" baselineMax:" + lastOOB.getBlMax() + ", ");
                 }
 
                 if (isAvailabilityDownOrDisabledForBar(measurement.getTimestamp())) {
                     sb.append(" down:true, ");
-                }
-                if (!Double.isNaN(measurement.getValue())) {
-
-                    MeasurementNumericValueAndUnits newHigh = normalizeUnitsAndValues(measurement.getHighValue(),
-                        definition.getUnits());
-                    MeasurementNumericValueAndUnits newLow = normalizeUnitsAndValues(measurement.getLowValue(),
-                        definition.getUnits());
-                    MeasurementNumericValueAndUnits newValue = normalizeUnitsAndValues(measurement.getValue(),
-                        definition.getUnits());
-                    if (!gotAdjustedMeasurementUnits) {
-                        adjustedMeasurementUnits = newValue.getUnits();
-                        gotAdjustedMeasurementUnits = true;
-                    }
-                    sb.append(" barDuration: \"" + barDurationString + "\", ");
-                    sb.append(" high:" + newHigh.getValue() + ",");
-                    sb.append(" low:" + newLow.getValue() + ",");
-                    sb.append(" y:" + newValue.getValue() + "},");
                 } else {
-                    if (!isAvailabilityDownOrDisabledForBar(measurement.getTimestamp())) {
-                        // NaN measure no measurement was collected
-                        // loop through the unknown intervals
-                        for (DatePair datePair : unknownIntervalList) {
-                            // we know we are in an interval
-                            if (measurement.getTimestamp() >= datePair.getStartDateTime().getTime()
-                                && measurement.getTimestamp() <= datePair.getEndDateTime().getTime()) {
-                                sb.append(" unknownStart:" + datePair.getStartDateTime().getTime() + ", ");
-                                sb.append(" unknownEnd:" + datePair.getEndDateTime().getTime() + ", ");
-                                break;
-                            }
+                    if (!Double.isNaN(measurement.getValue())) {
+
+                        MeasurementNumericValueAndUnits newHigh = normalizeUnitsAndValues(measurement.getHighValue(),
+                            definition.getUnits());
+                        MeasurementNumericValueAndUnits newLow = normalizeUnitsAndValues(measurement.getLowValue(),
+                            definition.getUnits());
+                        MeasurementNumericValueAndUnits newValue = normalizeUnitsAndValues(measurement.getValue(),
+                            definition.getUnits());
+                        if (!gotAdjustedMeasurementUnits) {
+                            adjustedMeasurementUnits = newValue.getUnits();
+                            gotAdjustedMeasurementUnits = true;
                         }
-                        sb.append(" nodata:true },");
+                        sb.append(" barDuration: \"" + barDurationString + "\", ");
+                        sb.append(" high:" + newHigh.getValue() + ",");
+                        sb.append(" low:" + newLow.getValue() + ",");
+                        sb.append(" y:" + newValue.getValue() + "},");
                     } else {
-                        sb.append(" },");
+                        if (!isAvailabilityDownOrDisabledForBar(measurement.getTimestamp())) {
+                            // NaN measure no measurement was collected
+                            // loop through the unknown intervals
+                            for (DatePair datePair : unknownIntervalList) {
+                                // we know we are in an interval
+                                if (measurement.getTimestamp() >= datePair.getStartDateTime().getTime()
+                                    && measurement.getTimestamp() <= datePair.getEndDateTime().getTime()) {
+                                    sb.append(" unknownStart:" + datePair.getStartDateTime().getTime() + ", ");
+                                    sb.append(" unknownEnd:" + datePair.getEndDateTime().getTime() + ", ");
+                                    break;
+                                }
+                            }
+                            sb.append(" nodata:true },");
+                        } else {
+                            sb.append(" },");
+                        }
                     }
+                }
+                if(!sb.toString().endsWith("},")){
+                    sb.append(" },");
                 }
             }
             //}
@@ -314,17 +319,17 @@ public class MetricGraphData implements JsonMetricProducer {
 
     private void calculateOOB() {
         if (measurementOOBCompositeList != null && !measurementOOBCompositeList.isEmpty()) {
-            Log.debug("OOB List size: "+measurementOOBCompositeList.size());
+            Log.debug("OOB List size: " + measurementOOBCompositeList.size());
             List<MeasurementOOBComposite> selectedOOBs = new ArrayList<MeasurementOOBComposite>();
             for (MeasurementOOBComposite measurementOOBComposite : measurementOOBCompositeList) {
                 Log.debug("measurementOOBComposite = " + measurementOOBComposite);
-                if(measurementOOBComposite.getDefinitionId() == definitionId){
+                if (measurementOOBComposite.getDefinitionId() == definitionId) {
                     selectedOOBs.add(measurementOOBComposite);
                 }
             }
             // take the last one (most current) matching the defId
-            lastOOB = selectedOOBs.isEmpty() ? null : selectedOOBs.get(selectedOOBs.size()-1);
-        }else {
+            lastOOB = selectedOOBs.isEmpty() ? null : selectedOOBs.get(selectedOOBs.size() - 1);
+        } else {
             lastOOB = null;
         }
     }

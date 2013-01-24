@@ -456,8 +456,10 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                                 .x(function (d) {
                                     return timeScale(d.x)+ ((width / chartContext.data.length - barOffset)/ 2);
                                 })
-                                .y(function (d) {
+                                .y(function (d,i) {
                                     if(d.y == undefined){
+                                        //console.log( "** i: "+i +"y-1:"+this.__data__[i -1 ].y)
+
                                         return yScale(0);
                                     }else {
                                         return yScale(+d.y);

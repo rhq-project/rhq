@@ -34,9 +34,12 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
+import org.rhq.enterprise.gui.coregui.client.admin.topology.AgentTableView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * The content pane for the Resource Inventory>Agent subtab.
@@ -52,7 +55,9 @@ public class ResourceResourceAgentView extends LocatableVLayout implements Refre
     private StaticTextItem portValue;
     private FormItemIcon agentStatusIcon;
     private StaticTextItem lastAvailReportValue;
+    private StaticTextItem lastAvailPingValue;
     private StaticTextItem endpointValue;
+    private StaticTextItem topologyViewItem;
 
     private boolean loading = false; // will be true if loadData is currently waiting for responses
 
@@ -116,11 +121,21 @@ public class ResourceResourceAgentView extends LocatableVLayout implements Refre
         lastAvailReportValue = new StaticTextItem(lastAvailReport, MSG.view_inventory_summary_agent_last_title());
         lastAvailReportValue.setWrapTitle(false);
         formItems.add(lastAvailReportValue);
+        
+        // Last Received Avail ping
+        lastAvailPingValue = new StaticTextItem("last-avail-ping", MSG.view_adminTopology_agent_lastAvailabilityPing());
+        lastAvailPingValue.setWrapTitle(false);
+        formItems.add(lastAvailPingValue);
 
         // Full Endpoint
         String fullEndpoint = "full-endpoint";
         endpointValue = new StaticTextItem(fullEndpoint, MSG.view_inventory_summary_agent_fullEnpoint());
         formItems.add(endpointValue);
+        
+        // link to agent topology view
+        String topologyView = "topology-view";
+        topologyViewItem = new StaticTextItem("topology-view", MSG.view_admin_topology());
+        formItems.add(topologyViewItem);
 
         return formItems;
     }
@@ -170,20 +185,28 @@ public class ResourceResourceAgentView extends LocatableVLayout implements Refre
                         form.markForRedraw();
                     }
                 });
-
                 nameValue.setValue(agent.getName());
                 addressValue.setValue(agent.getAddress());
                 portValue.setValue(agent.getPort());
-                Long lastAvail = agent.getLastAvailabilityReport();
-                lastAvailReportValue.setValue((null != lastAvail) ? new Date(lastAvail) : MSG.common_val_none());
+                Long lastAvailReport = agent.getLastAvailabilityReport();
+                lastAvailReportValue.setValue((null != lastAvailReport) ? new Date(lastAvailReport) : MSG.common_val_none());
+                Long lastAvailPing = agent.getLastAvailabilityPing();
+                lastAvailPingValue.setValue((null != lastAvailPing) ? new Date(lastAvailPing) : MSG.common_val_none());
                 String remoteEndpoint = agent.getRemoteEndpoint();
                 if (remoteEndpoint != null) {
                     // some browsers (firefox in particular) won't wrap unless you put breaks in the string
+                    // (EDIT: in FF 16 the wrapping works even without a space, so this could be possibly ommited)
                     remoteEndpoint = remoteEndpoint.replaceAll("&", " &");
                 } else {
                     remoteEndpoint = MSG.view_inventory_summary_agent_fullEnpoint_err1();
                 }
                 endpointValue.setValue(remoteEndpoint);
+                
+                // make clickable link for agent topology view
+                String detailsUrl = "#" + AgentTableView.VIEW_PATH + "/" + agent.getId();
+                String formattedValue = StringUtility.escapeHtml(MSG.common_label_link());
+                String topologyViewItemText = SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
+                topologyViewItem.setValue(topologyViewItemText);
 
                 form.markForRedraw();
             }

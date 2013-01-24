@@ -46,7 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  *
  * @author Simeon Pinder
  */
-public class ResourceResourceAgentView extends LocatableVLayout implements RefreshableView {
+public class ResourceAgentView extends LocatableVLayout implements RefreshableView {
 
     private int resourceId;
     private LocatableDynamicForm form;
@@ -61,7 +61,7 @@ public class ResourceResourceAgentView extends LocatableVLayout implements Refre
 
     private boolean loading = false; // will be true if loadData is currently waiting for responses
 
-    public ResourceResourceAgentView(String locatorId, int resourceId) {
+    public ResourceAgentView(String locatorId, int resourceId) {
         super(locatorId);
 
         this.resourceId = resourceId;

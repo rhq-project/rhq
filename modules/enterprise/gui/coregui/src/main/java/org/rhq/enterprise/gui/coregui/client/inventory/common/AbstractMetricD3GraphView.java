@@ -91,24 +91,24 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
     protected void drawGraph() {
         Log.debug("drawGraph marker in AbstractMetricD3GraphView for: " + metricGraphData.getChartId());
 
-        HLayout titleHLayout = new LocatableHLayout(extendLocatorId("HTitle"));
+//        HLayout titleHLayout = new LocatableHLayout(extendLocatorId("HTitle"));
+//
+//        //if (definition != null) {
+//            titleHLayout.setAutoHeight();
+//            titleHLayout.setWidth100();
 
-        //if (definition != null) {
-            titleHLayout.setAutoHeight();
-            titleHLayout.setWidth100();
+//            HTMLFlow entityTitle = getEntityTitle();
+//            if (null != entityTitle) {
+//                entityTitle.setWidth("*");
+//                titleHLayout.addMember(entityTitle);
+//            }
+//
+//            if (supportsLiveGraphViewDialog()) {
+//                Img liveGraph = createLiveGraphImage();
+//                titleHLayout.addMember(liveGraph);
+//            }
 
-            HTMLFlow entityTitle = getEntityTitle();
-            if (null != entityTitle) {
-                entityTitle.setWidth("*");
-                titleHLayout.addMember(entityTitle);
-            }
-
-            if (supportsLiveGraphViewDialog()) {
-                Img liveGraph = createLiveGraphImage();
-                titleHLayout.addMember(liveGraph);
-            }
-
-            addMember(titleHLayout);
+//            addMember(titleHLayout);
 
             StringBuilder divAndSvgDefs = new StringBuilder();
             divAndSvgDefs.append("<div id=\"rChart-" + metricGraphData.getChartId() + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:250px;\">");
@@ -141,7 +141,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
               "               </linearGradient>" +
               "               <pattern id=\"grayStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\"" +
               "                        width=\"6\" height=\"3\">" +
-              "                   <path d=\"M 0 0 6 0\" style=\"stroke:#dfdfdf; fill:none;\"/>" +
+              "                   <path d=\"M 0 0 6 0\" style=\"stroke:#CCCCCC; fill:none;\"/>" +
               "               </pattern>" +
               "               <pattern id=\"redStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\"" +
               "                        width=\"6\" height=\"3\">" +

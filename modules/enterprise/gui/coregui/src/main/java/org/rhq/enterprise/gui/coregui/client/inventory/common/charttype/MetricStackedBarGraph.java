@@ -134,7 +134,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                             .orient("left"),
 
 
-            // create the actual chart group
+                    // create the actual chart group
                     chart = $wnd.d3.select(chartContext.chartSelection),
 
                     svg = chart.append("g")
@@ -457,6 +457,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                                     return timeScale(d.x)+ ((width / chartContext.data.length - barOffset)/ 2);
                                 })
                                 .y(function (d,i) {
+                                    // on a bar avg line if the value is undefined then use the last defined value
                                     if(d.y == undefined){
                                         if(i >= 1){
                                             // count backward until there is a defined value

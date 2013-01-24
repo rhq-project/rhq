@@ -754,15 +754,15 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             + "]");
         //}
 
-        for (int i = 0, size = resourceList.size(); i < size;) {
-            int end = i + MERGE_BATCH_SIZE;
-            if (end > size) {
-                end = size;
-            }
+        while (!resourceList.isEmpty()) {
+            int size = resourceList.size();
+            int end = (MERGE_BATCH_SIZE < size) ? MERGE_BATCH_SIZE : size;
 
-            List<Resource> resourceBatch = resourceList.subList(i, end);
+            List<Resource> resourceBatch = resourceList.subList(0, end);
             discoveryBoss.mergeResourceInNewTransaction(resourceBatch, agent);
-            i = end;
+
+            // Advance our progress and possibly help GC. This will remove the processed resources from the backing list
+            resourceBatch.clear();
         }
 
         // TODO: if (log.isDebugEnabled()) {

@@ -750,7 +750,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         List<Resource> resourceList = treeToBreadthFirstList(resource);
 
         // TODO: if (log.isDebugEnabled()) {        
-        log.info("Preparing to merge [" + resourceList.size() + "Resources with a batch size of [" + MERGE_BATCH_SIZE
+        log.info("Preparing to merge [" + resourceList.size() + "] Resources with a batch size of [" + MERGE_BATCH_SIZE
             + "]");
         //}
 

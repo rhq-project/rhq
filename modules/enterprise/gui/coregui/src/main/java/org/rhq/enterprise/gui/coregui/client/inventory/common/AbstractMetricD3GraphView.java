@@ -42,10 +42,11 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
 
+
     protected HTMLFlow resourceTitle;
     protected MetricGraphData metricGraphData;
+    private Integer chartHeight;
 
-    //private String chartHeight;
 
     public AbstractMetricD3GraphView(String locatorId) {
         super(locatorId);
@@ -111,7 +112,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
 //            addMember(titleHLayout);
 
             StringBuilder divAndSvgDefs = new StringBuilder();
-            divAndSvgDefs.append("<div id=\"rChart-" + metricGraphData.getChartId() + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:250px;\">");
+            divAndSvgDefs.append("<div id=\"rChart-" + metricGraphData.getChartId() + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:"+getChartHeight()+"px;\">");
             divAndSvgDefs.append(getSvgDefs());
             divAndSvgDefs.append("</svg></div>");
             HTMLFlow graph = new HTMLFlow(divAndSvgDefs.toString());
@@ -165,10 +166,13 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
         return liveGraph;
     }
 
-//    public void setChartHeight(String height) {
-//        this.chartHeight = height;
-//    }
+    public void setChartHeight(Integer height) {
+        metricGraphData.setChartHeight(height);
+    }
 
+    public Integer getChartHeight() {
+        return metricGraphData.getChartHeight();
+    }
 
     /**
      * This is only necessary to set this for the ResourceGraphPortlet case where

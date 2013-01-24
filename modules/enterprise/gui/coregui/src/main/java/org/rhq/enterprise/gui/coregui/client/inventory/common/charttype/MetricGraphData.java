@@ -47,6 +47,7 @@ public class MetricGraphData implements JsonMetricProducer {
 
     // i18n
     final protected Messages MSG = CoreGUI.getMessages();
+    private static final Integer DEFAULT_CHART_HEIGHT = 250;
     private final String chartTitleMinLabel = MSG.chart_title_min_label();
     private final String chartTitleAvgLabel = MSG.chart_title_avg_label();
     private final String chartTitlePeakLabel = MSG.chart_title_peak_label();
@@ -70,6 +71,8 @@ public class MetricGraphData implements JsonMetricProducer {
     private PageList<Availability> availabilityDownList;
     private PageList<MeasurementOOBComposite> measurementOOBCompositeList;
     private MeasurementOOBComposite lastOOB;
+
+    private Integer chartHeight;
 
     public MetricGraphData() {
 
@@ -194,6 +197,19 @@ public class MetricGraphData implements JsonMetricProducer {
 
     public String getChartHoverBarLabel() {
         return chartHoverBarLabel;
+    }
+
+    public Integer getChartHeight() {
+        if(null != chartHeight){
+            return chartHeight;
+        }else {
+
+            return DEFAULT_CHART_HEIGHT;
+        }
+    }
+
+    public void setChartHeight(Integer chartHeight) {
+        this.chartHeight = chartHeight;
     }
 
     public String getYAxisTitle() {

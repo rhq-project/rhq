@@ -57,6 +57,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
         // this same data could be passed to different chart types
         // This way, we are decoupled from the dependency on globals and JSNI.
         var chartContext = new $wnd.ChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartId()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartHeight()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getJsonMetrics()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getXAxisTitle()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getYAxisTitle()(),
@@ -79,9 +80,11 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
         var metricStackedBarGraph = function () {
             "use strict";
             // privates
+
             var margin = {top: 10, right: 5, bottom: 20, left: 40},
                     width = 750 - margin.left - margin.right,
-                    height = 200 - margin.top - margin.bottom,
+                    adjustedChartHeight = chartContext.chartHeight - 40,
+                    height = adjustedChartHeight - margin.top - margin.bottom,
                     titleHeight = 30, titleSpace = 10,
                     barOffset = 2,
                     interpolation = "basis";

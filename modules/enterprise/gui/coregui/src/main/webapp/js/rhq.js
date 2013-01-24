@@ -9,12 +9,13 @@
  * A ChartContext can be passed to multiple chart renders to display different chart types
  * of that data.
  */
-var ChartContext = function (chartId, metricsData, xAxisLabel, yAxisLabel, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, hoverStartLabel,hoverEndLabel, hoverPeriodLabel, hoverBarLabel)
+var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, yAxisLabel, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, hoverStartLabel,hoverEndLabel, hoverPeriodLabel, hoverBarLabel)
 {
     "use strict";
     this.chartId = chartId;
     this.chartHandle = "#rChart-" + this.chartId;
     this.chartSelection = this.chartHandle + " svg";
+    this.chartHeight = chartHeight;
     this.data = eval(metricsData); // make into json
     this.xAxisLabel = xAxisLabel;
     this.yAxisLabel = yAxisLabel;

@@ -148,7 +148,7 @@ public class D3GroupGraphListView extends LocatableVLayout {
         ResourceMetricD3GraphView graphView = new ResourceMetricD3GraphView(extendLocatorId(measurementDefinition.getName()),metricGraphData, graph);
 
         graphView.setWidth("95%");
-        graphView.setHeight(320);
+        graphView.setHeight(250);
 
         addMember(graphView);
     }

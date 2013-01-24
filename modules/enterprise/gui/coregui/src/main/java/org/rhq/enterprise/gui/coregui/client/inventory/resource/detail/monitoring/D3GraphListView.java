@@ -278,7 +278,7 @@ public class D3GraphListView extends LocatableVLayout {
                             Log.debug("OOB Data size: "+measurementOOBCompositeList.size());
                             if(null != measurementOOBCompositeList){
                                 for (MeasurementOOBComposite measurementOOBComposite : measurementOOBComposites) {
-                                    System.out.println("measurementOOBComposite = " + measurementOOBComposite);
+                                    Log.debug("measurementOOBComposite = " + measurementOOBComposite);
                                 }
                             }
                             countDownLatch.countDown();
@@ -313,7 +313,7 @@ public class D3GraphListView extends LocatableVLayout {
                     for (MeasurementDefinition measurementDefinition : measurementDefinitions) {
                         if (summaryIds.contains(measurementDefinition.getId())) {
                             buildSingleGraph(downAvailList, measurementOOBCompositeList, measurementDefinition,
-                                measurementData.get(i), 130);
+                                measurementData.get(i), 250);
                         }
                         i++;
                     }
@@ -333,7 +333,7 @@ public class D3GraphListView extends LocatableVLayout {
                                 // single graph case
                                 if (measurementId == selectedDefinitionId) {
                                     buildSingleGraph(downAvailList, measurementOOBCompositeList, measurementDefinition,
-                                        metric, 250);
+                                        metric, 450);
                                 }
                             } else {
                                 // multiple graph case

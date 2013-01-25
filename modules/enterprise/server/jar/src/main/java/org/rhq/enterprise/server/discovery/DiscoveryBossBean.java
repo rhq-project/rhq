@@ -37,13 +37,13 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.security.auth.login.LoginException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jetbrains.annotations.NotNull;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.Scheduler;
@@ -463,7 +463,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         return result;
     }
 
-    @NotNull
     public MergeResourceResponse manuallyAddResource(Subject user, ResourceType resourceType, int parentResourceId,
         Configuration pluginConfiguration) throws InvalidPluginConfigurationClientException, PluginContainerException {
         if (!this.authorizationManager.hasResourcePermission(user, Permission.CREATE_CHILD_RESOURCES, parentResourceId)) {
@@ -625,13 +624,13 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     }
 
     /**
-     * @param resource
+     * @param resource NotNull 
      * @param upgradeRequest
      * @param allowGenericPropertiesUpgrade name and description are only upgraded if this is true
      * @return response to the upgrade request detailing what has been accepted on the server side
      */
-    private ResourceUpgradeResponse upgradeResource(@NotNull
-    Resource resource, ResourceUpgradeRequest upgradeRequest, boolean allowGenericPropertiesUpgrade) {
+    private ResourceUpgradeResponse upgradeResource(Resource resource, ResourceUpgradeRequest upgradeRequest,
+        boolean allowGenericPropertiesUpgrade) {
         if (upgradeRequest.getUpgradeErrorMessage() != null) {
             ResourceError error = new ResourceError(resource, ResourceErrorType.UPGRADE,
                 upgradeRequest.getUpgradeErrorMessage(), upgradeRequest.getUpgradeErrorStackTrace(),
@@ -727,16 +726,12 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
      * <p>Does not require an existing transaction.  The resource and each child will be merged in an isolated
      * transaction</p>
      *
-     * @param  resource       pojo, the resource to be merged, should have parent and children pojos set
-     * @param  agent          detached entity, the agent that should be set on the resource being merged
+     * @param  resource       NotNull pojo, the resource to be merged, should have parent and children pojos set
+     * @param  agent          NotNull detached entity, the agent that should be set on the resource being merged
      *
      * @throws InvalidInventoryReportException if a critical field in the resource is missing or invalid
      */
-    private void mergeResource( //
-        @NotNull
-        Resource resource, //
-        @NotNull
-        Agent agent) throws InvalidInventoryReportException {
+    private void mergeResource(Resource resource, Agent agent) throws InvalidInventoryReportException {
 
         long start = System.currentTimeMillis();
 
@@ -852,6 +847,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             log.debug("getExistingResource processing for [" + resource + "]");
         }
 
+        // We perform this query a lot during a large inventory merge, so minimize overhead by using it directly
+        Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_BY_ID);
         Resource existingResource = null;
         Subject overlord = subjectManager.getOverlord();
 
@@ -860,17 +857,15 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 log.debug("Agent claims resource is already in inventory. Id=" + resource.getId());
             }
 
-            ResourceCriteria criteria = new ResourceCriteria();
-            criteria.addFilterId(resource.getId());
-            criteria.addFilterInventoryStatus(null); // Don't filter on COMMITTED, disable the default filter
-            List<Resource> result = resourceManager.findResourcesByCriteria(overlord, criteria);
-            if (!result.isEmpty()) {
+            try {
+                query.setParameter("resourceId", resource.getId());
+                existingResource = (Resource) query.getSingleResult();
                 if (log.isDebugEnabled()) {
                     log.debug("Found resource already in inventory. Id=" + resource.getId());
                 }
-                existingResource = result.get(0);
+            } catch (NoResultException e) {
+                existingResource = null;
 
-            } else {
                 // agent lied - agent's copy of JON server inventory must be stale.
                 if (log.isDebugEnabled()) {
                     log.debug("However, no resource exists with the specified id. Id=" + resource.getId());
@@ -898,22 +893,26 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             while (null != parent && null == existingResource) {
                 parent = parent.getParentResource();
 
-                //check if the parent is in inventory. This might not be the case during initial sync-up for resource upgrade.
+                // check if the parent is in inventory. This might not be the case during initial sync-up for resource upgrade. 
                 Resource existingParent = null;
                 if (null != parent) {
-                    ResourceCriteria criteria = new ResourceCriteria();
-                    criteria.addFilterId(parent.getId());
-                    criteria.addFilterInventoryStatus(null); // Don't filter on COMMITTED, disable the default filter
-                    List<Resource> result = resourceManager.findResourcesByCriteria(overlord, criteria);
-                    if (result.isEmpty()) {
-                        //well, this parent is not known to the server, so there's no point in trying to find a child of it...
-                        continue;
+                    if (parent.getId() <= 0) {
+                        log.warn("Expected potential parent resource to have a valid ID. Parent=" + parent + ", Child="
+                            + resource);
+                    }
 
-                    } else {
-                        existingParent = result.get(0);
+                    try {
+                        query.setParameter("resourceId", parent.getId());
+                        existingParent = (Resource) query.getSingleResult();
+
+                    } catch (NoResultException e) {
+                        // this parent is not known to the server, so there's no point in trying to find a child of it...
+                        continue;
                     }
                 }
 
+                // We found the parent in inventory, so now see if we can find this resource in inventory by using
+                // the parent, the resource key (unique among siblings), the plugin and the type.
                 existingResource = resourceManager.getResourceByParentAndKey(overlord, existingParent,
                     resource.getResourceKey(), resourceType.getPlugin(), resourceType.getName());
             }

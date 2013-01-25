@@ -326,7 +326,7 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
         DashboardPortlet news = new DashboardPortlet(MashupPortlet.NAME, MashupPortlet.KEY, 300);
         if (isRHQ) {
             news.getConfiguration()
-                .put(new PropertySimple("address", "https://docs.jboss.org/author/display/RHQ/Home"));
+                .put(new PropertySimple("address", "https://docs.jboss.org/author/display/RHQ/User+Documentation"));
         } else {
             news.getConfiguration().put(
                 new PropertySimple("address",

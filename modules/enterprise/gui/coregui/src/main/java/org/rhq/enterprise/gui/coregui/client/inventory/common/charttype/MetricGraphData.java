@@ -367,8 +367,8 @@ public class MetricGraphData implements JsonMetricProducer {
             boolean currentBarUndefined = Double.isNaN(measurement.getValue());
             boolean previousBarDefined = (notAtStart) ? !Double.isNaN(metricData.get(i - 1).getValue()) : false;
             if (currentBarUndefined && previousBarDefined && notAtStart) {
-                Log.debug("Adding Down or Disabled start Point: " + i);
-                startPoints.add(i);
+                //Log.debug("Adding Down or Disabled start Point: " + i);
+                startPoints.add(i+1);
             }
             i++;
         }
@@ -377,20 +377,20 @@ public class MetricGraphData implements JsonMetricProducer {
         for (Integer startPoint : startPoints) {
             Log.debug("StartPoint: " + new Date(metricData.get(startPoint).getTimestamp()));
             for (int j = 0; j < metricData.size() - 1; j++) {
-                boolean notAtEnd = i < metricData.size();
+                boolean notAtEnd = j < metricData.size();
                 boolean currentBarUndefined = Double.isNaN(metricData.get(j).getValue());
                 boolean nextBarDefined = (notAtEnd) ? !Double.isNaN(metricData.get(j + 1).getValue()) : false;
                 if (currentBarUndefined && nextBarDefined && notAtEnd) {
                     Date startDate = new Date(metricData.get(startPoint).getTimestamp());
-                    Date endDate = new Date(metricData.get(j - 1).getTimestamp());
-                    Log.debug("\n\nStartDate: " + startDate);
-                    Log.debug("EndDate: " + endDate);
+                    Date endDate = new Date(metricData.get(j).getTimestamp());
+                    //Log.debug("\n\nStartDate: " + startDate);
+                    //Log.debug("EndDate: " + endDate);
                     DatePair datePair = new DatePair(startDate, endDate);
                     unknownIntervalList.add(datePair);
                 }
             }
         }
-        Log.debug("intervalDatePairList.size():" + unknownIntervalList.size());
+        //Log.debug("intervalDatePairList.size():" + unknownIntervalList.size());
     }
 
     private boolean isAvailabilityDownOrDisabledForBar(long timestamp) {

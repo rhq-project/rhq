@@ -195,7 +195,7 @@ public class MetricsServer {
         dao.updateMetricsIndex(MetricsTable.ONE_HOUR, updates);
     }
 
-    public void calculateAggregates() {
+    public List<AggregatedNumericMetric> calculateAggregates() {
         // We first query the metrics index table to determine which schedules have data to
         // be aggregated. Then we retrieve the metric data and aggregate or compress the
         // data, writing the compressed values into the next wider (i.e., longer life span
@@ -212,7 +212,10 @@ public class MetricsServer {
         // schedule id in that column has in fact been aggregated. It might be better for
         // deleteMetricsIndexEntries to take a list of schedule ids to purge.
 
+        List<AggregatedNumericMetric> newOneHourAggregates = null;
+
         List<AggregatedNumericMetric> updatedSchedules = aggregateRawData();
+        newOneHourAggregates = updatedSchedules;
         if (!updatedSchedules.isEmpty()) {
             dao.deleteMetricsIndexEntries(MetricsTable.ONE_HOUR);
             updateMetricsIndex(MetricsTable.SIX_HOUR, updatedSchedules, Minutes.minutes(60 * 6));
@@ -229,6 +232,8 @@ public class MetricsServer {
         if (!updatedSchedules.isEmpty()) {
             dao.deleteMetricsIndexEntries(MetricsTable.TWENTY_FOUR_HOUR);
         }
+
+        return newOneHourAggregates;
     }
 
     private void updateMetricsIndex(MetricsTable bucket, List<AggregatedNumericMetric> metrics, Minutes interval) {

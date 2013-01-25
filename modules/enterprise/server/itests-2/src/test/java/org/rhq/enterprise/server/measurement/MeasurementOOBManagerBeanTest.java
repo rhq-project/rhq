@@ -42,9 +42,6 @@ import javax.ejb.EJB;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
-
 import org.joda.time.DateTime;
 import org.testng.annotations.Test;
 
@@ -68,7 +65,6 @@ import org.rhq.enterprise.server.util.Overlord;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
 import org.rhq.server.metrics.AggregatedNumericMetric;
 import org.rhq.server.metrics.MetricsDAO;
-import org.rhq.server.metrics.MetricsTable;
 
 /**
  * @author John Sanda
@@ -155,16 +151,13 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
             baseline(schedule3, 3.2, 3.6, 2.95)
         ));
 
-        insert1HourData(asList(
-            // schedule1 should be out of bounds on the lower bound
-            new AggregateTestData(lastHour.getMillis(), schedule1.getId(), 3.8, 4.6, 2.11),
-            // schedule2 should be out of bounds on the upper bound
-            new AggregateTestData(lastHour.getMillis(), schedule2.getId(), 9.492, 9.53, 9.481),
-            // schedule3 should be in bounds
-            new AggregateTestData(lastHour.getMillis(), schedule3.getId(), 3.15, 3.59, 2.96)
-        ));
+        List<AggregatedNumericMetric>  metrics = asList(
+            new AggregatedNumericMetric(schedule1.getId(), 3.8, 2.11, 4.6, lastHour.getMillis()),
+            new AggregatedNumericMetric(schedule2.getId(), 9.492, 9.481, 9.53, lastHour.getMillis()),
+            new AggregatedNumericMetric(schedule3.getId(), 3.15, 2.96, 3.59, lastHour.getMillis())
+        );
 
-        oobManager.computeOOBsFromLastHour(overlord);
+        oobManager.computeOOBsForLastHour(overlord, metrics);
 
         executeInTransaction(new TransactionCallback() {
             @Override
@@ -209,7 +202,6 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
     }
 
     private void purgeDB() {
-        purgeMetricsTables();
         purgeBaselines();
         purgeOOBs();
 
@@ -267,20 +259,6 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
         em.flush();
     }
 
-    private void purgeMetricsTables() {
-        try {
-            Session session = cassandraSessionManager.getSession();
-
-            session.execute("TRUNCATE " + MetricsTable.RAW);
-            session.execute("TRUNCATE " + MetricsTable.ONE_HOUR);
-            session.execute("TRUNCATE " + MetricsTable.SIX_HOUR);
-            session.execute("TRUNCATE " + MetricsTable.TWENTY_FOUR_HOUR);
-            session.execute("TRUNCATE " + MetricsTable.INDEX);
-        } catch (NoHostAvailableException e) {
-            throw new RuntimeException("An error occurred while purging metrics tables", e);
-        }
-    }
-
     public void purgeBaselines() {
         purgeTables("rhq_measurement_bline");
     }
@@ -321,15 +299,6 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
         } finally {
             JDBCUtil.safeClose(connection);
         }
-    }
-
-    private void insert1HourData(List<AggregateTestData> data) {
-        List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
-        for (AggregateTestData datum : data) {
-            metrics.add(new AggregatedNumericMetric(datum.getScheduleId(), datum.getAvg(), datum.getMin(),
-                datum.getMax(), datum.getTimestamp()));
-        }
-        metricsDAO.insertAggregates(MetricsTable.ONE_HOUR, metrics, MetricsTable.ONE_HOUR.getTTL());
     }
 
     private void insertBaselines(final List<MeasurementBaseline> baselines) {

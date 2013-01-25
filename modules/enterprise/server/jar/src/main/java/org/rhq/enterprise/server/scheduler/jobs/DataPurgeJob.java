@@ -19,7 +19,9 @@
 package org.rhq.enterprise.server.scheduler.jobs;
 
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Properties;
 
 import org.apache.commons.logging.Log;
@@ -48,6 +50,7 @@ import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.TimingVoodoo;
+import org.rhq.server.metrics.AggregatedNumericMetric;
 
 /**
  * This implements {@link StatefulJob} (as opposed to {@link Job}) because we do not need nor want this job triggered
@@ -86,12 +89,10 @@ public class DataPurgeJob extends AbstractStatefulJob {
         try {
             Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration(
                 LookupUtil.getSubjectManager().getOverlord());
-//            compressMeasurementData(LookupUtil.getMeasurementCompressionManager());
-            compressMeasurementData(LookupUtil.getMetricsManager());
+            List<AggregatedNumericMetric> oneHourAggregates = compressMeasurementData(LookupUtil.getMetricsManager());
             purgeEverything(systemConfig);
             performDatabaseMaintenance(LookupUtil.getSystemManager(), systemConfig);
             calculateAutoBaselines(LookupUtil.getMeasurementBaselineManager());
-            calculateOOBs();
         } catch (Exception e) {
             LOG.error("Data Purge Job FAILED TO COMPLETE. Cause: " + e);
         } finally {
@@ -100,14 +101,15 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
-    private void compressMeasurementData(MetricsManagerLocal metricsManager) {
+    private List<AggregatedNumericMetric> compressMeasurementData(MetricsManagerLocal metricsManager) {
         long timeStart = System.currentTimeMillis();
         LOG.info("Measurement data compression starting at " + new Date(timeStart));
 
         try {
-            metricsManager.calculateAggregates();
+            return metricsManager.calculateAggregates();
         } catch (Exception e) {
             LOG.error("Failed to compress measurement data. Cause: " + e, e);
+            return Collections.emptyList();
         } finally {
             long duration = System.currentTimeMillis() - timeStart;
             LOG.info("Measurement data compression completed in [" + duration + "]ms");
@@ -357,7 +359,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
      * Calculate the OOB values for the last hour.
      * This also removes outdated ones due to recalculated baselines.
      */
-    public void calculateOOBs() {
+    public void calculateOOBs(List<AggregatedNumericMetric> oneHourAggregates) {
 
         long timeStart = System.currentTimeMillis();
         LOG.info("Auto-calculation of OOBs starting");
@@ -373,7 +375,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         LookupUtil.getSystemManager().vacuum(overlord, new String[] { "RHQ_MEASUREMENT_OOB" });
 
         // Now caclulate the fresh OOBs
-        manager.computeOOBsFromLastHour(overlord);
+        manager.computeOOBsForLastHour(overlord, oneHourAggregates);
 
         long duration = System.currentTimeMillis() - timeStart;
         LOG.info("Auto-calculation of OOBs completed in [" + duration + "]ms");

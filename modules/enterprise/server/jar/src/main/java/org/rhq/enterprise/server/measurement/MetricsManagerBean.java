@@ -58,9 +58,9 @@ public class MetricsManagerBean implements MetricsManagerLocal {
 
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public void calculateAggregates() {
+    public List<AggregatedNumericMetric> calculateAggregates() {
         MetricsServer metricsServer = getMetricsServer();
-        metricsServer.calculateAggregates();
+        return metricsServer.calculateAggregates();
     }
 
     @Override

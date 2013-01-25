@@ -32,6 +32,7 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.server.metrics.AggregatedNumericMetric;
 
 /**
  * This SLSB is (hopefully) just a temporary wrapper over {@link org.rhq.server.metrics.MetricsServer MetricsServer}.
@@ -46,7 +47,7 @@ public interface MetricsManagerLocal {
 
     void addNumericData(Set<MeasurementDataNumeric> data);
 
-    void calculateAggregates();
+    List<AggregatedNumericMetric> calculateAggregates();
 
     MeasurementDataNumeric findLatestValueForResource(int scheduleId);
 

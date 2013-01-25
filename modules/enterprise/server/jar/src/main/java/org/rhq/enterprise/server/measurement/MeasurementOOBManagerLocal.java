@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.measurement;
 
+import java.util.Collection;
+
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
@@ -25,6 +27,7 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.server.metrics.AggregatedNumericMetric;
 
 /**
  * Interface for the OOB Manager
@@ -43,6 +46,8 @@ public interface MeasurementOOBManagerLocal {
      * @param begin Start time of the 1h entries to look at
      */
     void computeOOBsFromHourBeginingAt(Subject subject, long begin);
+
+    void computeOOBsForLastHour(Subject subject, Collection<AggregatedNumericMetric> metrics);
 
     /**
      * Return OOB Composites that contain all information about the OOBs in a given time as aggregates.

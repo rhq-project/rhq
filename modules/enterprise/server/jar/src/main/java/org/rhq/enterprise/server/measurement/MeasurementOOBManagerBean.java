@@ -22,6 +22,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -46,6 +47,7 @@ import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric1H;
 import org.rhq.core.domain.measurement.MeasurementDataPK;
 import org.rhq.core.domain.measurement.MeasurementOOB;
@@ -59,6 +61,7 @@ import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.util.QueryUtility;
+import org.rhq.server.metrics.AggregatedNumericMetric;
 
 /**
  * Manager bean for Out-of-Bound measurements.
@@ -186,6 +189,67 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         } finally {
             JDBCUtil.safeClose(conn, stmt, null);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    public void computeOOBsForLastHour(Subject subject, Collection<AggregatedNumericMetric> metrics) {
+        for (AggregatedNumericMetric metric : metrics) {
+            List<MeasurementBaseline> baselines = entityManager.createQuery(
+                "select baseline from MeasurementBaseline baseline where baseline.schedule.id = :scheduleId")
+                .setParameter("scheduleId", metric.getScheduleId())
+                .getResultList();
+            if (baselines.isEmpty()) {
+                continue;
+            }
+            MeasurementBaseline baseline = baselines.get(0);
+            Long upperDelta = null;
+            Long lowerDelta = null;
+
+            if (isPastUpperBound(baseline, metric)) {
+                upperDelta =
+                    Math.round(((metric.getMax() - baseline.getMax()) / (baseline.getMax() - baseline.getMin())) * 100);
+            }
+
+            if (isPastLowerBound(baseline, metric)) {
+                lowerDelta =
+                    Math.round(((baseline.getMin() - metric.getMin()) / (baseline.getMax() - baseline.getMin())) * 100);
+            }
+
+            Integer oobFactor;
+            if (upperDelta != null && lowerDelta == null) {
+                oobFactor = upperDelta.intValue();
+            } else if (upperDelta == null && lowerDelta != null) {
+                oobFactor = lowerDelta.intValue();
+            } else if (upperDelta != null && lowerDelta != null) {
+                if (upperDelta > lowerDelta) {
+                    oobFactor = upperDelta.intValue();
+                } else {
+                    oobFactor = lowerDelta.intValue();
+                }
+            } else { // both are null
+                oobFactor = null;
+            }
+
+            if (oobFactor != null) {
+                MeasurementOOB oob = new MeasurementOOB();
+                oob.setScheduleId(metric.getScheduleId());
+                oob.setTimestamp(metric.getTimestamp());
+                oob.setOobFactor(oobFactor);
+                entityManager.persist(oob);
+            }
+        }
+    }
+
+    private boolean isPastUpperBound(MeasurementBaseline baseline, AggregatedNumericMetric metric) {
+        return metric.getAvg() > baseline.getMax() &&
+            (baseline.getMax() - baseline.getMin() > 0.1) &&
+            (metric.getMax() - baseline.getMax() > 0);
+    }
+
+    private boolean isPastLowerBound(MeasurementBaseline baseline, AggregatedNumericMetric metric) {
+        return metric.getAvg() < baseline.getMax() &&
+            (baseline.getMax() - baseline.getMin() > 0.1) &&
+            (baseline.getMin() - metric.getMin()) > 0;
     }
 
     /**

@@ -484,9 +484,9 @@
                               also work and be faster but this way ensures we get the
                               correct bits.
                             -->
-                            <delete file="${as5.zipfile}"/>
+                            <delete file="${as5.zipfile}" failonerror="false"/>
                             <delete dir="${java.io.tmpdir}/jboss-eap-${as5.version}" failonerror="false"/>
-                            <delete dir="${jboss5.home}"/>
+                            <delete dir="${jboss5.home}" failonerror="false"/>
 
                             <get src="${as5.url}" dest="${as5.zipfile}"
                                  usetimestamp="true" verbose="true"/>

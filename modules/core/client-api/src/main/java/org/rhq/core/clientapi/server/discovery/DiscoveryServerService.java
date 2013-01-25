@@ -61,7 +61,8 @@ public interface DiscoveryServerService {
      * @throws InvalidInventoryReportException if the inventory report contains invalid data
      */
     @LimitedConcurrency(CONCURRENCY_LIMIT_INVENTORY_REPORT)
-    @Timeout(1000L * 60 * 30)
+    @Timeout(0L)
+    // should be something like 1000L * 60 * 30 but until we can be assured we never take longer, disable timeout
     ResourceSyncInfo mergeInventoryReport(InventoryReport inventoryReport)
         throws InvalidInventoryReportException, StaleTypeException;
 

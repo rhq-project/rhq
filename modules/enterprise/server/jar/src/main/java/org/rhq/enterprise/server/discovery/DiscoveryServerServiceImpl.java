@@ -52,6 +52,7 @@ import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
+import org.rhq.enterprise.server.util.concurrent.InventoryReportSerializer;
 
 /**
  * This is the service that receives inventory data from agents. As agents discover resources, they report back to the
@@ -68,45 +69,51 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
     @Override
     public ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException,
         StaleTypeException {
-        long start = System.currentTimeMillis();
-        DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
-        ResourceSyncInfo syncInfo;
+
+        InventoryReportSerializer.getSingleton().lock(report.getAgent().getName());
         try {
-            syncInfo = discoveryBoss.mergeInventoryReport(report);
-        } catch (StaleTypeException e) {
-            // There is no need to log this exception as it is part of a normal work flow
-            // that occurs as a result of a user deleting a plugin. DiscoveryBossBean
-            // already logs a message about the stale types that can be useful for
-            // debugging; so, we just need to propagate the exception to the agent.
-            throw e;
-        } catch (InvalidInventoryReportException e) {
-            Agent agent = report.getAgent();
-            if (log.isDebugEnabled()) {
-                log.error("Received invalid inventory report from agent [" + agent + "]", e);
+            long start = System.currentTimeMillis();
+            DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
+            ResourceSyncInfo syncInfo;
+            try {
+                syncInfo = discoveryBoss.mergeInventoryReport(report);
+            } catch (StaleTypeException e) {
+                // There is no need to log this exception as it is part of a normal work flow
+                // that occurs as a result of a user deleting a plugin. DiscoveryBossBean
+                // already logs a message about the stale types that can be useful for
+                // debugging; so, we just need to propagate the exception to the agent.
+                throw e;
+            } catch (InvalidInventoryReportException e) {
+                Agent agent = report.getAgent();
+                if (log.isDebugEnabled()) {
+                    log.error("Received invalid inventory report from agent [" + agent + "]", e);
+                } else {
+                    /* 
+                     * this is expected when the platform is uninventoried, because the agent often has in-flight reports
+                     * going to the server at the time the platform's agent is being deleted from the database
+                     */
+                    log.error("Received invalid inventory report from agent [" + agent + "]: " + e.getMessage());
+                }
+                throw e;
+            } catch (RuntimeException e) {
+                log.error("Fatal error occurred during merging of inventory report from agent [" + report.getAgent()
+                    + "].", e);
+                throw e;
+            }
+
+            long elapsed = (System.currentTimeMillis() - start);
+            if (elapsed > 30000L) {
+                log.warn("Performance: inventory merge (" + elapsed + ")ms");
             } else {
-                /* 
-                 * this is expected when the platform is uninventoried, because the agent often has in-flight reports
-                 * going to the server at the time the platform's agent is being deleted from the database
-                 */
-                log.error("Received invalid inventory report from agent [" + agent + "]: " + e.getMessage());
+                if (log.isDebugEnabled()) {
+                    log.debug("Performance: inventory merge (" + elapsed + ")ms");
+                }
             }
-            throw e;
-        } catch (RuntimeException e) {
-            log.error(
-                "Fatal error occurred during merging of inventory report from agent [" + report.getAgent() + "].", e);
-            throw e;
-        }
 
-        long elapsed = (System.currentTimeMillis() - start);
-        if (elapsed > 30000L) {
-            log.warn("Performance: inventory merge (" + elapsed + ")ms");
-        } else {
-            if (log.isDebugEnabled()) {
-                log.debug("Performance: inventory merge (" + elapsed + ")ms");
-            }
+            return syncInfo;
+        } finally {
+            InventoryReportSerializer.getSingleton().unlock(report.getAgent().getName());
         }
-
-        return syncInfo;
     }
 
     @Override

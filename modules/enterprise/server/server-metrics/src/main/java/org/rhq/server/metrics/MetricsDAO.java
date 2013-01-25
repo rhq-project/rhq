@@ -221,13 +221,22 @@ public class MetricsDAO {
             BoundStatement boundStatement = statement.bind(scheduleId, new Date(startTime), new Date(endTime));
             ResultSet resultSet = session.execute(boundStatement);
 
-            List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
             ResultSetMapper<RawNumericMetric> resultSetMapper = new RawNumericMetricMapper();
-            for (Row row : resultSet) {
-                metrics.add(resultSetMapper.map(row));
-            }
+            return resultSetMapper.mapAll(resultSet);
+        } catch (NoHostAvailableException e) {
+            throw new CQLException(e);
+        }
+    }
 
-            return metrics;
+    public PagedResultSet<RawNumericMetric> findRawMetricsPaged(int scheduleId, long startTime, long endTime) {
+        try {
+            PreparedStatement statement = session.prepare(RAW_METRICS_QUERY);
+            BoundStatement boundStatement = statement.bind(scheduleId, new Date(startTime), new Date(endTime));
+            ResultSet resultSet = session.execute(boundStatement);
+
+            PagedResultSet<RawNumericMetric> pagedResultSet = new PagedResultSet<RawNumericMetric>(resultSet,
+                new RawNumericMetricMapper());
+            return pagedResultSet;
         } catch (NoHostAvailableException e) {
             throw new CQLException(e);
         }
@@ -243,12 +252,8 @@ public class MetricsDAO {
             BoundStatement boundStatement = statement.bind(scheduleId);
             ResultSet resultSet = session.execute(boundStatement);
 
-            List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
             ResultSetMapper<RawNumericMetric> resultSetMapper = new RawNumericMetricMapper();
-            for (Row row : resultSet) {
-                metrics.add(resultSetMapper.map(row));
-            }
-            return metrics;
+            return resultSetMapper.mapAll(resultSet);
         } catch (NoHostAvailableException e) {
             throw new CQLException(e);
         }
@@ -266,12 +271,8 @@ public class MetricsDAO {
             BoundStatement boundStatement = statement.bind(scheduleId, new Date(startTime), new Date(endTime));
             ResultSet resultSet = session.execute(boundStatement);
 
-            List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
             ResultSetMapper<RawNumericMetric> resultSetMapper = new RawNumericMetricMapper(true);
-            for (Row row : resultSet) {
-                metrics.add(resultSetMapper.map(row));
-            }
-            return metrics;
+            return resultSetMapper.mapAll(resultSet);
         } catch (NoHostAvailableException e) {
             throw new CQLException(e);
         }
@@ -288,18 +289,12 @@ public class MetricsDAO {
             //PreparedStatement statement = session.prepare(RAW_METRICS_SCHEDULE_LIST_QUERY);
             //BoundStatement boundStatement = statement.bind(scheduleIds, startTime, endTime);
             //ResultSet resultSet = session.execute(boundStatement);
-
             String cql = "SELECT schedule_id, time, value FROM " + MetricsTable.RAW + " WHERE schedule_id IN ("
                 + listToString(scheduleIds) + ") AND time >= " + startTime + " AND time <= " + endTime;
             ResultSet resultSet = session.execute(cql);
 
-            List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
             ResultSetMapper<RawNumericMetric> resultSetMapper = new RawNumericMetricMapper(false);
-            for (Row row : resultSet) {
-                metrics.add(resultSetMapper.map(row));
-            }
-
-            return metrics;
+            return resultSetMapper.mapAll(resultSet);
         } catch (NoHostAvailableException e) {
             throw new CQLException(e);
         }
@@ -316,13 +311,8 @@ public class MetricsDAO {
             BoundStatement boundStatement = statement.bind(scheduleId);
             ResultSet resultSet = session.execute(boundStatement);
 
-            List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
             ResultSetMapper<AggregatedNumericMetric> resultSetMapper = new AggregateMetricMapper();
-            while (!resultSet.isExhausted()) {
-                metrics.add(resultSetMapper.map(resultSet.fetchOne(), resultSet.fetchOne(), resultSet.fetchOne()));
-            }
-
-            return metrics;
+            return resultSetMapper.mapAll(resultSet);
         } catch (NoHostAvailableException e) {
             throw new CQLException(e);
         }
@@ -340,13 +330,8 @@ public class MetricsDAO {
             BoundStatement boundStatement = statement.bind(scheduleId, new Date(startTime), new Date(endTime));
             ResultSet resultSet = session.execute(boundStatement);
 
-            List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
             ResultSetMapper<AggregatedNumericMetric> resultSetMapper = new AggregateMetricMapper();
-            while (!resultSet.isExhausted()) {
-                metrics.add(resultSetMapper.map(resultSet.fetchOne(), resultSet.fetchOne(), resultSet.fetchOne()));
-            }
-
-            return metrics;
+            return resultSetMapper.mapAll(resultSet);
         } catch (NoHostAvailableException e) {
             throw new CQLException(e);
         }
@@ -380,13 +365,8 @@ public class MetricsDAO {
                     "WHERE schedule_id IN (" + listToString(scheduleIds) + ") AND time >= " + startTime + " AND time < " + endTime;
             ResultSet resultSet = session.execute(cql);
 
-            List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
             ResultSetMapper<AggregatedNumericMetric> resultSetMapper = new AggregateMetricMapper();
-            while (!resultSet.isExhausted()) {
-                metrics.add(resultSetMapper.map(resultSet.fetchOne(), resultSet.fetchOne(), resultSet.fetchOne()));
-            }
-
-            return metrics;
+            return resultSetMapper.mapAll(resultSet);
         } catch (NoHostAvailableException e) {
             throw new CQLException(e);
         }
@@ -404,13 +384,8 @@ public class MetricsDAO {
             BoundStatement boundStatement = statement.bind(scheduleId, new Date(startTime), new Date(endTime));
             ResultSet resultSet = session.execute(boundStatement);
 
-            List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
             ResultSetMapper<AggregatedNumericMetric> resultSetMapper = new AggregateMetricMapper(true);
-            while (!resultSet.isExhausted()) {
-                metrics.add(resultSetMapper.map(resultSet.fetchOne(), resultSet.fetchOne(), resultSet.fetchOne()));
-            }
-
-            return metrics;
+            return resultSetMapper.mapAll(resultSet);
         } catch (NoHostAvailableException e) {
             throw new CQLException(e);
         }
@@ -422,14 +397,8 @@ public class MetricsDAO {
             BoundStatement boundStatement = statement.bind(table.toString());
             ResultSet resultSet = session.execute(boundStatement);
 
-            List<MetricsIndexEntry> indexEntries = new ArrayList<MetricsIndexEntry>();
             ResultSetMapper<MetricsIndexEntry> resultSetMapper = new MetricsIndexResultSetMapper(table);
-            for (Row row : resultSet) {
-                indexEntries.add(resultSetMapper.map(row));
-            }
-
-            return indexEntries;
-
+            return resultSetMapper.mapAll(resultSet);
         } catch (NoHostAvailableException e) {
             throw new CQLException(e);
         }

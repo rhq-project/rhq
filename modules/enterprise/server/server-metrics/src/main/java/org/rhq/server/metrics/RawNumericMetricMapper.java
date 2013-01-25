@@ -25,9 +25,10 @@
 
 package org.rhq.server.metrics;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
+import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 
 /**
@@ -43,60 +44,101 @@ public class RawNumericMetricMapper implements ResultSetMapper<RawNumericMetric>
 
     public RawNumericMetricMapper(boolean metaDataIncluded) {
         if (metaDataIncluded) {
-//            mapper = new ResultSetMapper<RawNumericMetric>() {
-//                @Override
-//                public RawNumericMetric map(ResultSet resultSet) throws SQLException {
-//                    RawNumericMetric rawMetric = new RawNumericMetric(resultSet.getInt(1),
-//                        resultSet.getDate(2).getTime(), resultSet.getDouble(3));
-//                    ColumnMetadata metadata = new ColumnMetadata(resultSet.getInt(4), resultSet.getLong(5));
-//                    rawMetric.setColumnMetadata(metadata);
-//                    return rawMetric;
-//                }
-//            };
             mapper = new ResultSetMapper<RawNumericMetric>() {
                 @Override
-                public RawNumericMetric map(ResultSet resultSet) throws SQLException {
-                    return null;
+                public List<RawNumericMetric> mapAll(ResultSet resultSet) {
+                    List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
+                    for (Row row : resultSet) {
+                        metrics.add(map(row));
+                    }
+
+                    return metrics;
                 }
 
                 @Override
-                public RawNumericMetric map(Row... row) {
-                    RawNumericMetric metric = new RawNumericMetric(row[0].getInt(0), row[0].getDate(1).getTime(),
-                        row[0].getDouble(2));
-                    ColumnMetadata metadata = new ColumnMetadata(row[0].getInt(3), row[0].getLong(4));
+                public RawNumericMetric mapOne(ResultSet resultSet) {
+                    return mapper.map(resultSet.fetchOne());
+                }
+
+                @Override
+                public List<RawNumericMetric> map(Row... row) {
+                    List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
+
+                    for (Row singleRow : row) {
+                        RawNumericMetric metric = new RawNumericMetric(singleRow.getInt(0), singleRow.getDate(1)
+                            .getTime(), singleRow.getDouble(2));
+                        ColumnMetadata metadata = new ColumnMetadata(singleRow.getInt(3), singleRow.getLong(4));
+                        metric.setColumnMetadata(metadata);
+
+                        metrics.add(metric);
+                    }
+
+                    return metrics;
+                }
+
+                @Override
+                public RawNumericMetric map(Row row) {
+                    RawNumericMetric metric = new RawNumericMetric(row.getInt(0), row.getDate(1).getTime(),
+                        row.getDouble(2));
+                    ColumnMetadata metadata = new ColumnMetadata(row.getInt(3), row.getLong(4));
                     metric.setColumnMetadata(metadata);
+
                     return metric;
                 }
             };
         } else {
-//            mapper = new ResultSetMapper<RawNumericMetric>() {
-//                @Override
-//                public RawNumericMetric map(ResultSet resultSet) throws SQLException {
-//                    return new RawNumericMetric(resultSet.getInt(1), resultSet.getDate(2).getTime(),
-//                        resultSet.getDouble(3));
-//                }
-//            };
             mapper = new ResultSetMapper<RawNumericMetric>() {
                 @Override
-                public RawNumericMetric map(ResultSet resultSet) throws SQLException {
-                    return null;
+                public List<RawNumericMetric> mapAll(ResultSet resultSet) {
+                    List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
+                    for (Row row : resultSet) {
+                        metrics.add(map(row));
+                    }
+
+                    return metrics;
                 }
 
                 @Override
-                public RawNumericMetric map(Row... row) {
-                    return new RawNumericMetric(row[0].getInt(0), row[0].getDate(1).getTime(), row[0].getDouble(2));
+                public RawNumericMetric mapOne(ResultSet resultSet) {
+                    return map(resultSet.fetchOne());
+                }
+
+                @Override
+                public List<RawNumericMetric> map(Row... row) {
+                    List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
+                    for (Row singleRow : row) {
+                        metrics.add(new RawNumericMetric(singleRow.getInt(0), singleRow.getDate(1).getTime(), singleRow
+                            .getDouble(2)));
+                    }
+
+                    return metrics;
+                }
+
+                @Override
+                public RawNumericMetric map(Row row) {
+                    return new RawNumericMetric(row.getInt(0), row.getDate(1).getTime(), row.getDouble(2));
                 }
             };
         }
     }
 
     @Override
-    public RawNumericMetric map(ResultSet resultSet) throws SQLException {
-        return mapper.map(resultSet);
+    public List<RawNumericMetric> mapAll(ResultSet resultSet) {
+        return mapper.mapAll(resultSet);
     }
 
     @Override
-    public RawNumericMetric map(Row... row) {
+    public RawNumericMetric mapOne(ResultSet resultSet) {
+        return mapper.mapOne(resultSet);
+    }
+
+    @Override
+    public List<RawNumericMetric> map(Row... row) {
+        return mapper.map(row);
+    }
+
+    @Override
+    public RawNumericMetric map(Row row) {
         return mapper.map(row);
     }
 }

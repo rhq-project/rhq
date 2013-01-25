@@ -54,8 +54,8 @@ public class Query<T>  {
         try {
             resultSet = statement.executeQuery();
             while (resultSet.next()) {
-                T row = resultSetMapper.map(resultSet);
-                callback.invoke(row);
+                //T row = resultSetMapper.map(resultSet);
+                //callback.invoke(row);
             }
         } catch(SQLException e) {
             throw new CQLException(e);

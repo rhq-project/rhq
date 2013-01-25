@@ -25,9 +25,10 @@
 
 package org.rhq.server.metrics;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
+import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 
 
@@ -43,12 +44,32 @@ public class MetricsIndexResultSetMapper implements ResultSetMapper<MetricsIndex
     }
 
     @Override
-    public MetricsIndexEntry map(ResultSet resultSet)  throws SQLException {
-        return new MetricsIndexEntry(bucket, resultSet.getDate(1), resultSet.getInt(2));
+    public List<MetricsIndexEntry> mapAll(ResultSet resultSet) {
+        List<MetricsIndexEntry> result = new ArrayList<MetricsIndexEntry>();
+        for (Row singleRow : resultSet) {
+            result.add(map(singleRow));
+        }
+
+        return result;
     }
 
     @Override
-    public MetricsIndexEntry map(Row... row) {
-        return new MetricsIndexEntry(bucket, row[0].getDate(0), row[0].getInt(1));
+    public MetricsIndexEntry mapOne(ResultSet resultSet) {
+        return map(resultSet.fetchOne());
+    }
+
+    @Override
+    public List<MetricsIndexEntry> map(Row... row) {
+        List<MetricsIndexEntry> result = new ArrayList<MetricsIndexEntry>();
+        for (Row singleRow : row) {
+            result.add(new MetricsIndexEntry(bucket, singleRow.getDate(0), singleRow.getInt(1)));
+        }
+
+        return result;
+    }
+
+    @Override
+    public MetricsIndexEntry map(Row row) {
+        return new MetricsIndexEntry(bucket, row.getDate(0), row.getInt(1));
     }
 }

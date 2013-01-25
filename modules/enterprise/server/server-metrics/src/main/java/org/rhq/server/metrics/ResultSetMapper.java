@@ -25,9 +25,9 @@
 
 package org.rhq.server.metrics;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.util.List;
 
+import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 
 /**
@@ -35,8 +35,37 @@ import com.datastax.driver.core.Row;
  */
 public interface ResultSetMapper<T> {
 
-    T map(ResultSet resultSet) throws SQLException;
+    /**
+     * Maps the entire result set to a list.
+     *
+     * @param resultSet result set to map
+     * @return a list of mapped rows
+     */
+    List<T> mapAll(ResultSet resultSet);
 
-    T map(Row... row);
+    /**
+     * Return only one mapped domain object. One mapped object could
+     * require multiple rows from the result set.
+     *
+     * @param resultSet result set to map
+     * @return
+     */
+    T mapOne(ResultSet resultSet);
 
+    /**
+     * Map all the rows passed to domain objects. More than one row could
+     * be required for mapping a single object.
+     *
+     * @param row
+     * @return
+     */
+    List<T> map(Row... row);
+
+    /**
+     * Map a sigle row to a domain object.
+     *
+     * @param row
+     * @return
+     */
+    T map(Row row);
 }

@@ -25,9 +25,10 @@
 
 package org.rhq.server.metrics;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
+import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 
 /**
@@ -45,70 +46,113 @@ public class AggregateMetricMapper implements ResultSetMapper<AggregatedNumericM
         if (includeMetadata) {
             resultSetMapper = new ResultSetMapper<AggregatedNumericMetric>() {
                 @Override
-                public AggregatedNumericMetric map(ResultSet resultSet) throws SQLException {
-                    return null;
+                public List<AggregatedNumericMetric> mapAll(ResultSet resultSet) {
+                    List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
+                    while (!resultSet.isExhausted()) {
+                        metrics.add(mapOne(resultSet));
+                    }
+
+                    return metrics;
                 }
 
                 @Override
-                public AggregatedNumericMetric map(Row... row) {
-                    AggregatedNumericMetric metric = new AggregatedNumericMetric();
-                    metric.setScheduleId(row[0].getInt(0));
-                    metric.setTimestamp(row[0].getDate(1).getTime());
-                    metric.setMax(row[0].getDouble(3));
-                    metric.setMin(row[1].getDouble(3));
-                    metric.setAvg(row[2].getDouble(3));
+                public AggregatedNumericMetric mapOne(ResultSet resultSet) {
+                    return map(resultSet.fetchOne(), resultSet.fetchOne(), resultSet.fetchOne()).get(0);
+                }
 
-                    ColumnMetadata maxMetadata = new ColumnMetadata(row[0].getInt(4), row[0].getLong(5));
-                    ColumnMetadata minMetadata = new ColumnMetadata(row[1].getInt(4), row[1].getLong(5));
-                    ColumnMetadata avgMetadata = new ColumnMetadata(row[2].getInt(4), row[2].getLong(5));
+                @Override
+                public List<AggregatedNumericMetric> map(Row... row) {
+                    List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
 
-                    metric.setAvgColumnMetadata(avgMetadata);
-                    metric.setMaxColumnMetadata(maxMetadata);
-                    metric.setMinColumnMetadata(minMetadata);
+                    for (int i = 0; i < row.length; i += 3) {
+                        AggregatedNumericMetric metric = new AggregatedNumericMetric();
+                        metric.setScheduleId(row[i].getInt(0));
+                        metric.setTimestamp(row[i].getDate(1).getTime());
+                        metric.setMax(row[i].getDouble(3));
+                        metric.setMin(row[i + 1].getDouble(3));
+                        metric.setAvg(row[i + 2].getDouble(3));
 
-                    return metric;
+                        ColumnMetadata maxMetadata = new ColumnMetadata(row[i].getInt(4), row[i].getLong(5));
+                        ColumnMetadata minMetadata = new ColumnMetadata(row[i + 1].getInt(4), row[i + 1].getLong(5));
+                        ColumnMetadata avgMetadata = new ColumnMetadata(row[i + 2].getInt(4), row[i + 2].getLong(5));
+
+                        metric.setAvgColumnMetadata(avgMetadata);
+                        metric.setMaxColumnMetadata(maxMetadata);
+                        metric.setMinColumnMetadata(minMetadata);
+
+                        metrics.add(metric);
+                    }
+
+                    return metrics;
+                }
+
+                @Override
+                public AggregatedNumericMetric map(Row row) {
+                    throw new UnsupportedOperationException(
+                        "Method is not supported. Only triples are accepted for mapping.");
                 }
             };
         } else {
             resultSetMapper = new ResultSetMapper<AggregatedNumericMetric>() {
                 @Override
-                public AggregatedNumericMetric map(ResultSet resultSet) throws SQLException {
-                    return null;
+                public List<AggregatedNumericMetric> mapAll(ResultSet resultSet) {
+                    List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
+                    while (!resultSet.isExhausted()) {
+                        metrics.add(mapOne(resultSet));
+                    }
+
+                    return metrics;
                 }
 
                 @Override
-                public AggregatedNumericMetric map(Row... row) {
-                    AggregatedNumericMetric metric = new AggregatedNumericMetric();
-                    metric.setScheduleId(row[0].getInt(0));
-                    metric.setTimestamp(row[0].getDate(1).getTime());
-                    metric.setMax(row[0].getDouble(3));
-                    metric.setMin(row[1].getDouble(3));
-                    metric.setAvg(row[2].getDouble(3));
+                public AggregatedNumericMetric mapOne(ResultSet resultSet) {
+                    return map(resultSet.fetchOne(), resultSet.fetchOne(), resultSet.fetchOne()).get(0);
+                }
 
-                    return metric;
+                @Override
+                public List<AggregatedNumericMetric> map(Row... row) {
+                    List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
+
+                    for (int i = 0; i < row.length; i += 3) {
+                        AggregatedNumericMetric metric = new AggregatedNumericMetric();
+                        metric.setScheduleId(row[i].getInt(0));
+                        metric.setTimestamp(row[i].getDate(1).getTime());
+                        metric.setMax(row[i].getDouble(3));
+                        metric.setMin(row[i + 1].getDouble(3));
+                        metric.setAvg(row[i + 2].getDouble(3));
+
+                        metrics.add(metric);
+                    }
+
+                    return metrics;
+                }
+
+                @Override
+                public AggregatedNumericMetric map(Row row) {
+                    throw new UnsupportedOperationException(
+                        "Method is not supported. Only triples are accepted for mapping.");
                 }
             };
         }
     }
 
     @Override
-    public AggregatedNumericMetric map(ResultSet resultSet) throws SQLException {
-        AggregatedNumericMetric metric = new AggregatedNumericMetric();
-        metric.setScheduleId(resultSet.getInt(1));
-        metric.setTimestamp(resultSet.getDate(2).getTime());
-        metric.setMax(resultSet.getDouble(4));
-
-        resultSet.next();
-        metric.setMin(resultSet.getDouble(4));
-
-        resultSet.next();
-        metric.setAvg(resultSet.getDouble(4));
-
-        return metric;
+    public List<AggregatedNumericMetric> mapAll(ResultSet resultSet) {
+        return resultSetMapper.mapAll(resultSet);
     }
 
     @Override
-    public AggregatedNumericMetric map(Row... rows) {
+    public AggregatedNumericMetric mapOne(ResultSet resultSet) {
+        return resultSetMapper.mapOne(resultSet);
+    }
+
+    @Override
+    public List<AggregatedNumericMetric> map(Row... rows) {
         return resultSetMapper.map(rows);
+    }
+
+    @Override
+    public AggregatedNumericMetric map(Row row) {
+        return resultSetMapper.map(row);
     }
 }

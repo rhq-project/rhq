@@ -46,6 +46,9 @@ public enum AgentDatasourceField {
 
     FIELD_LAST_AVAILABILITY_REPORT("lastAvailabilityReport", CoreGUI.getMessages()
         .view_adminTopology_agent_lastAvailabilityReport()),
+        
+    FIELD_LAST_AVAILABILITY_PING("lastAvailabilityPing", CoreGUI.getMessages()
+            .view_adminTopology_agent_lastAvailabilityPing()),
 
     FIELD_AGENT_TOKEN("agentToken", CoreGUI.getMessages().view_adminTopology_agentDetail_token()),
 

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -42,6 +42,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.system.AggregateProcessInfo;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.core.system.ProcessInfo.ProcessInfoSnapshot;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.util.exception.ThrowableUtil;
 
@@ -97,28 +98,20 @@ public class ProcessComponent implements ResourceComponent, MeasurementFacet {
     @Override
     public AvailabilityType getAvailability() {
         try {
-            return getProcess().isRunning() ? AvailabilityType.UP : AvailabilityType.DOWN;
+            // Get a fresh snapshot of the process
+            ProcessInfoSnapshot processInfoSnapshot = (this.process == null) ? null : this.process.freshSnapshot();
+            if (processInfoSnapshot == null || !processInfoSnapshot.isRunning()) {
+                this.process = getProcessForConfiguration();
+                // Safe to get prior snapshot here, we've just recreated the process info instance
+                processInfoSnapshot = (this.process == null) ? null : this.process.priorSnaphot();
+            }
+            return processInfoSnapshot.isRunning() ? AvailabilityType.UP : AvailabilityType.DOWN;
         } catch (Exception e) {
             if (log.isDebugEnabled()) {
                 log.debug("failed to get process info: " + ThrowableUtil.getAllMessages(e));
             }
             return AvailabilityType.DOWN;
         }
-    }
-
-    private ProcessInfo getProcess() throws Exception {
-        if (this.process != null && this.process.isRunning()) {
-            // Refresh existing ProcessInfo when underlying process is apparently running.
-            // ProcessInfo may hold stale data.
-            // SIGAR objects do not get updated when a process goes down.
-            this.process.refresh();
-        }
-        if (this.process == null || !this.process.isRunning()) {
-            // Create ProcessInfo for the first time or when the underlying process is no longer running.
-            // When a process is no longer running we need to make a new PIQL or pid file discovery.
-            this.process = getProcessForConfiguration();
-        }
-        return this.process;
     }
 
     private ProcessInfo getProcessForConfiguration() throws Exception {

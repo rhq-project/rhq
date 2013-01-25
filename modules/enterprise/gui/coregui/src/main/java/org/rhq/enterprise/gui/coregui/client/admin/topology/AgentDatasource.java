@@ -23,6 +23,7 @@ import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasour
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_AFFINITY_GROUP_ID;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_AGENTTOKEN;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_ID;
+import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_LAST_AVAILABILITY_PING;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_LAST_AVAILABILITY_REPORT;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_NAME;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_PORT;
@@ -101,9 +102,12 @@ public class AgentDatasource extends RPCDataSource<Agent, AgentCriteria> {
         fields.add(serverIdField);
 
         fields.add(FIELD_PORT.getListGridField("90"));
-        ListGridField lastAvailabilityReportField = FIELD_LAST_AVAILABILITY_REPORT.getListGridField("120");
+        ListGridField lastAvailabilityReportField = FIELD_LAST_AVAILABILITY_REPORT.getListGridField("125");
         TimestampCellFormatter.prepareDateField(lastAvailabilityReportField);
         fields.add(lastAvailabilityReportField);
+        ListGridField lastAvailabilityPingField = FIELD_LAST_AVAILABILITY_PING.getListGridField("125");
+        TimestampCellFormatter.prepareDateField(lastAvailabilityPingField);
+        fields.add(lastAvailabilityPingField);
 
         if (!isAffinityGroupId) {
             fields.add(FIELD_AFFINITY_GROUP.getListGridField("100"));
@@ -155,6 +159,7 @@ public class AgentDatasource extends RPCDataSource<Agent, AgentCriteria> {
         record.setAttribute(FIELD_SERVER.propertyName(), from.getServer() == null ? "" : from.getServer().getName());
         record.setAttribute(FIELD_SERVER_ID.propertyName(), from.getServer() == null ? "" : from.getServer().getId());
         record.setAttribute(FIELD_LAST_AVAILABILITY_REPORT.propertyName(), from.getLastAvailabilityReport());
+        record.setAttribute(FIELD_LAST_AVAILABILITY_PING.propertyName(), from.getLastAvailabilityPing());
         record.setAttribute(FIELD_AFFINITY_GROUP.propertyName(), from.getAffinityGroup() == null ? "" : from
             .getAffinityGroup().getName());
         record.setAttribute(FIELD_AFFINITY_GROUP_ID.propertyName(), from.getAffinityGroup() == null ? "" : from

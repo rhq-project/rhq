@@ -313,10 +313,12 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
     }
 
     /**
-     * Calculate Out of Bound values. Those need to use baselines, so they are tested here
-     * @throws Throwable If anything goes wrong.
+     * This test is disabled as the implementation of MeasurementOOBManagerBean is
+     * getting refactored. MeasurementOOBManagerBeanTest has been added to exercise the new
+     * implementation.
      */
     @SuppressWarnings("unchecked")
+    @Test(enabled = false)
     public void testCalculateOOB() throws Throwable {
 
         begin();
@@ -343,6 +345,20 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             insertMeasurementDataNumeric1H(young, measSched2, 2000.0, 1000.0, 3000.0);
             insertMeasurementDataNumeric1H(youngest, measSched2, 1500.0, 500.0, 2500.0);
 
+            List<AggregatedNumericMetric> aggregates = asList(
+                new AggregatedNumericMetric(measSched.getId(), 0.0, 0.0, 0.0, 0),
+                new AggregatedNumericMetric(measSched.getId(), 30.0, 20.0, 40.0, eldest),
+                new AggregatedNumericMetric(measSched.getId(), 5.0, 2.0, 8.0, elder),
+                new AggregatedNumericMetric(measSched.getId(), 6.0, 3.0, 9.0, young),
+                new AggregatedNumericMetric(measSched.getId(), 40.0, 30.0, 50.0, youngest),
+
+                new AggregatedNumericMetric(measSched2.getId(), 40.0, 0.0, 0.0, 0),
+                new AggregatedNumericMetric(measSched2.getId(), 5000.0, 3500.0, 6500.0, eldest),
+                new AggregatedNumericMetric(measSched2.getId(), 5000.0, 3000.0, 7000.0, elder),
+                new AggregatedNumericMetric(measSched2.getId(), 2000.0, 1000.0, 3000.0, young),
+                new AggregatedNumericMetric(measSched2.getId(), 1500.0, 500.0, 2500.0, youngest)
+            );
+
             commit();
 
             long computeTime = baselineManager.calculateAutoBaselines(30000, System.currentTimeMillis());
@@ -350,7 +366,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
             begin();
             // check the 2 values at 5000 against their bands computed between [500 and 1000]
-            oobManager.computeOOBsFromHourBeginingAt(overlord, eldest);
+            oobManager.computeOOBsForLastHour(overlord, aggregates);
 
             // check results
             Query q = em.createQuery("SELECT oo FROM MeasurementOOB oo");

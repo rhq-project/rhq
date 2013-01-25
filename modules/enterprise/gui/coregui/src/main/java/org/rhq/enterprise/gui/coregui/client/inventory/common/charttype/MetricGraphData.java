@@ -255,7 +255,6 @@ public class MetricGraphData implements JsonMetricProducer {
 
             calculateOOB();
             calculateUnknownIntervals();
-            dumpUnknownIntervals();
 
             for (MeasurementDataNumericHighLowComposite measurement : metricData) {
                 sb.append("{ x:" + measurement.getTimestamp() + ",");
@@ -264,8 +263,9 @@ public class MetricGraphData implements JsonMetricProducer {
                     // loop through the avail down intervals
                     for (Availability availability : availabilityDownList) {
                         // we know we are in an interval
-                        Log.debug(" *** Avail: " + availability);
-                        //if (barDateTime.after(datePair.startDateTime) && barDateTime.before(datePair.getEndDateTime())) {
+                        //Log.debug("Availability: " + availability);
+                        //Log.debug("Measurement: " + measurement);
+                        // @todo: when resource is down measurement is null NPE
                         if (measurement.getTimestamp() >= availability.getStartTime()
                             && measurement.getTimestamp() <= availability.getEndTime()) {
                             sb.append(" availStart:" + availability.getStartTime() + ", ");
@@ -312,6 +312,10 @@ public class MetricGraphData implements JsonMetricProducer {
                                     && measurement.getTimestamp() <= datePair.getEndDateTime().getTime()) {
                                     sb.append(" unknownStart:" + datePair.getStartDateTime().getTime() + ", ");
                                     sb.append(" unknownEnd:" + datePair.getEndDateTime().getTime() + ", ");
+                                    long unknownDuration = datePair.getEndDateTime().getTime() - datePair.getStartDateTime().getTime();
+                                    String unknownDurationString = MeasurementConverterClient.format((double) unknownDuration,
+                                            MeasurementUnits.MILLISECONDS, true);
+                                    sb.append(" unknownDuration: \"" + unknownDurationString + "\", ");
                                     break;
                                 }
                             }
@@ -350,11 +354,7 @@ public class MetricGraphData implements JsonMetricProducer {
         }
     }
 
-    private void dumpUnknownIntervals() {
-        for (DatePair datePair : unknownIntervalList) {
-            Log.debug("Interval: " + datePair.getStartDateTime() + " - " + datePair.getEndDateTime());
-        }
-    }
+
 
     private void calculateUnknownIntervals() {
 
@@ -366,7 +366,7 @@ public class MetricGraphData implements JsonMetricProducer {
             boolean notAtStart = i > 1;
             boolean currentBarUndefined = Double.isNaN(measurement.getValue());
             boolean previousBarDefined = (notAtStart) ? !Double.isNaN(metricData.get(i - 1).getValue()) : false;
-            if (currentBarUndefined && previousBarDefined && notAtStart) {
+            if (currentBarUndefined && previousBarDefined && notAtStart && i < metricData.size()-1) {
                 //Log.debug("Adding Down or Disabled start Point: " + i);
                 startPoints.add(i+1);
             }
@@ -374,21 +374,23 @@ public class MetricGraphData implements JsonMetricProducer {
         }
         // iterate over the start points to the end of the consecutive bars or end of metricData
         // from the starting interval points find the interval end point
+        if(null != startPoints){
         for (Integer startPoint : startPoints) {
-            Log.debug("StartPoint: " + new Date(metricData.get(startPoint).getTimestamp()));
-            for (int j = 0; j < metricData.size() - 1; j++) {
+            Log.debug("StartPoint: "+ startPoint + " --> "+ new Date(metricData.get(startPoint).getTimestamp()));
+            for (int j = 0; j < metricData.size() - 2; j++) {
                 boolean notAtEnd = j < metricData.size();
                 boolean currentBarUndefined = Double.isNaN(metricData.get(j).getValue());
                 boolean nextBarDefined = (notAtEnd) ? !Double.isNaN(metricData.get(j + 1).getValue()) : false;
                 if (currentBarUndefined && nextBarDefined && notAtEnd) {
                     Date startDate = new Date(metricData.get(startPoint).getTimestamp());
-                    Date endDate = new Date(metricData.get(j).getTimestamp());
+                    Date endDate = new Date(metricData.get(j+1).getTimestamp());
                     //Log.debug("\n\nStartDate: " + startDate);
                     //Log.debug("EndDate: " + endDate);
                     DatePair datePair = new DatePair(startDate, endDate);
                     unknownIntervalList.add(datePair);
                 }
             }
+        }
         }
         //Log.debug("intervalDatePairList.size():" + unknownIntervalList.size());
     }

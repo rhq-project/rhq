@@ -81,6 +81,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
             "use strict";
             // privates
 
+            console.log("Chart Height: "+chartContext.height);
             var margin = {top: 10, right: 5, bottom: 20, left: 40},
                     width = 750 - margin.left - margin.right,
                     adjustedChartHeight = chartContext.chartHeight - 40,
@@ -560,6 +561,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                         barDuration = d.barDuration,
                         unknownStartDate = new Date(+d.unknownStart),
                         unknownEndDate = new Date(+d.unknownEnd),
+                        unknownDuration = d.unknownDuration,
                         timeFormatter = $wnd.d3.time.format("%I:%M:%S %p"),
                         dateFormatter = $wnd.d3.time.format("%m/%d/%y"),
                         highValue = (d.high == undefined) ? 0 : d.high.toFixed(2),
@@ -584,6 +586,7 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                                     '<hr style="width:100%;text-align: center;border: #d3d3d3 solid thin;"></hr>' +
                                     '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverStartLabel+": "+ timeFormatter(unknownStartDate)+ '</span></div>' +
                                     '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverEndLabel+": "+ timeFormatter(unknownEndDate) + '</span></div>' +
+                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverPeriodLabel+": "+ unknownDuration + '</span></div>' +
                                     '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.unknownLabel+'</span></div>' +
                                     '</div>';
 

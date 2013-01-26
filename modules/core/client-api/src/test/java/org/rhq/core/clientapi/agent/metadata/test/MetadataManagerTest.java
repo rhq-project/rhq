@@ -94,7 +94,7 @@ public class MetadataManagerTest {
 
     @Test(dependsOnMethods = "loadPluginDescriptorTest1")
     public void testDefinitionParsing1() {
-        ResourceType serverAType = this.metadataManager.getType("Server A", ResourceCategory.SERVER);
+        ResourceType serverAType = this.metadataManager.getType("Server A", "Test1");
         assert serverAType.getName().equals("Server A");
         assert serverAType.getPlugin().equals("Test1");
         assertServerTypeIsOK(serverAType);
@@ -122,7 +122,7 @@ public class MetadataManagerTest {
 
     @Test(dependsOnMethods = "loadPluginDescriptorTest2")
     public void testDefinitionParsing2() {
-        ResourceType serverBType = this.metadataManager.getType("Extension Server B", ResourceCategory.SERVER);
+        ResourceType serverBType = this.metadataManager.getType("Extension Server B", "Test2");
         assert serverBType.getName().equals("Extension Server B");
         assert serverBType.getPlugin().equals("Test2");
         assertServerTypeIsOK(serverBType);

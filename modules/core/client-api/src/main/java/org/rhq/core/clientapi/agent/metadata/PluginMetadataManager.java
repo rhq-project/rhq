@@ -177,7 +177,6 @@ public class PluginMetadataManager {
                     for (ResourceType oldType : oldParser.getAllTypes()) {
                         this.typesByCategory.get(oldType.getCategory()).remove(oldType);
                         this.types.remove(oldType);
-                        this.disabledResourceTypes.remove(oldType);
                     }
                 }
             }

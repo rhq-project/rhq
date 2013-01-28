@@ -37,8 +37,8 @@ public class ResourceOperationScheduleComposite extends OperationScheduleComposi
 
         this.resourceId = 0;
         this.resourceTypeId = 0;
-        this.resourceName = "(unitialized)";
-        this.ancestry = "(unitialized)";
+        this.resourceName = "(uninitialized)";
+        this.ancestry = "(uninitialized)";
     }
 
     public ResourceOperationScheduleComposite(int id, String jobName, String jobGroup, String operationName,

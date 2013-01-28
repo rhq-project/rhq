@@ -228,6 +228,7 @@ public class ResourceGroup extends Group {
 
     public static final String QUERY_DELETE_EXPLICIT_BY_RESOURCE_IDS = "DELETE FROM RHQ_RESOURCE_GROUP_RES_EXP_MAP WHERE RESOURCE_ID IN ( :resourceIds )";
     public static final String QUERY_DELETE_IMPLICIT_BY_RESOURCE_IDS = "DELETE FROM RHQ_RESOURCE_GROUP_RES_IMP_MAP WHERE RESOURCE_ID IN ( :resourceIds )";
+    public static final String QUERY_GET_GROUP_IDS_BY_RESOURCE_IDS = "SELECT DISTINCT RESOURCE_GROUP_ID FROM RHQ_RESOURCE_GROUP_RES_EXP_MAP WHERE RESOURCE_ID IN ( :resourceIds )";
     public static final String QUERY_FIND_ALL_FILTERED_COUNT = "ResourceGroup.findAllFiltered_Count";
     public static final String QUERY_FIND_ALL_FILTERED_COUNT_ADMIN = "ResourceGroup.findAllFiltered_Count_Admin";
 

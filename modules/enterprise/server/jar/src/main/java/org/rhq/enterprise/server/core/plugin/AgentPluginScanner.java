@@ -228,6 +228,18 @@ public class AgentPluginScanner {
         for (File pluginJar : pluginJars) {
             String md5 = null;
 
+            if (pluginJar.getName().endsWith("-rhq-plugin.xml")) {
+                try {
+                    createPluginJarFromDescriptorFile(pluginJar.getAbsolutePath());
+                    continue;
+                } catch (Exception e) {
+                    log.warn("Converting jar-less plugin failed: " + e.getMessage());
+                    if (e.getCause()!=null) {
+                        log.warn("   caused by " + e.getCause().getMessage());
+                    }
+                }
+            }
+
             Plugin plugin = this.agentPluginsOnFilesystem.get(pluginJar);
             try {
                 if (plugin != null) {
@@ -248,6 +260,9 @@ public class AgentPluginScanner {
                 }
             } catch (Exception e) {
                 log.warn("Failed to scan agent plugin [" + pluginJar + "] found on filesystem. Skipping. Cause: " + e);
+                if (e.getCause()!=null) {
+                    log.warn("   caused by " + e.getCause().getMessage());
+                }
                 this.agentPluginsOnFilesystem.remove(pluginJar); // act like we never saw it
                 updated.remove(pluginJar);
             }

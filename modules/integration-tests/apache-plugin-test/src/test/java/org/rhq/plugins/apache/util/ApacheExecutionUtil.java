@@ -185,8 +185,7 @@ public class ApacheExecutionUtil {
             OperationResult res = serverComponent.invokeOperation(operation, new Configuration());
 
             LOG.debug("Invoked operation '" + operation + "' on " + resourceContext.getResourceKey() + " (waiting for "
-                + desiredState + "), attempt " + i + ": "
-                + res.getComplexResults().getMap().toString());
+                + desiredState + "), attempt " + i + ": " + res.getComplexResults().getMap().toString());
 
             //wait for max 30s for the operation to "express" itself
             int w = 0;
@@ -212,7 +211,11 @@ public class ApacheExecutionUtil {
 
             ++i;
 
-            LOG.warn("Could not detect the httpd process after invoking the start operation but the operation didn't throw any exception. I will retry at most ten times and then fail loudly. This has been attempt no. "
+            LOG.warn("httpd process is in an unexpected state after invoking the '"
+                + operation
+                + "' operation on "
+                + resourceContext.getResourceKey()
+                + " but the operation didn't throw any exception. I will retry at most ten times and then fail loudly. This has been attempt no. "
                 + i);
         }
 

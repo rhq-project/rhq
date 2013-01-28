@@ -58,13 +58,11 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.criteria.AlertCriteria;
-import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.rest.domain.*;
 
@@ -74,7 +72,7 @@ import org.rhq.enterprise.server.rest.domain.*;
  */
 @Produces({"application/json","application/xml","text/plain"})
 @Path("/alert")
-@Api(value = "Deal with Alerts",description = "This api deals with alerts that have fired. It does not offer to create/update AlertDefinitions (yet)")
+@Api(value = "Deal with Alerts",description = "This api deals with alerts that have fired.")
 @Stateless
 @Interceptors(SetCallerInterceptor.class)
 public class AlertHandlerBean extends AbstractRestBean {
@@ -84,24 +82,18 @@ public class AlertHandlerBean extends AbstractRestBean {
     @EJB
     AlertManagerLocal alertManager;
 
-    @EJB
-    AlertDefinitionManagerLocal alertDefinitionManager;
-
 
     @GZIP
     @GET
     @Path("/")
     @ApiOperation(value = "List all alerts", multiValueResponse = true, responseClass = "List<AlertRest>")
     public Response listAlerts(
-            @ApiParam(value = "Page number", defaultValue = "1") @QueryParam("page") int page,
-            @ApiParam(value = "Limit to priority", allowableValues = "High, Medium, Low, All") @DefaultValue("All") @QueryParam("prio") String prio,
-            @ApiParam(value = "Should full resources and definitions be sent") @QueryParam("slim") @DefaultValue(
-                    "false") boolean slim,
-            @ApiParam(
-                    value = "If non-null only send alerts that have fired after this time, time is millisecond since epoch")
-            @QueryParam("since") Long since,
-            @ApiParam(value = "Id of a resource to limit search for") @QueryParam("resourceId") Integer resourceId,
-            @Context Request request, @Context UriInfo uriInfo, @Context HttpHeaders headers) {
+        @ApiParam(value = "Page number", defaultValue = "1") @QueryParam("page") int page,
+        @ApiParam(value = "Limit to priority", allowableValues = "High, Medium, Low, All") @DefaultValue("All") @QueryParam("prio") String prio,
+        @ApiParam(value = "Should full resources and definitions be sent") @QueryParam("slim") @DefaultValue("false") boolean slim,
+        @ApiParam( value = "If non-null only send alerts that have fired after this time, time is millisecond since epoch") @QueryParam("since") Long since,
+        @ApiParam(value = "Id of a resource to limit search for") @QueryParam("resourceId") Integer resourceId,
+        @Context UriInfo uriInfo, @Context HttpHeaders headers) {
 
 
         AlertCriteria criteria = new AlertCriteria();
@@ -145,6 +137,7 @@ public class AlertHandlerBean extends AbstractRestBean {
     @ApiOperation("Return a count of alerts in the system depending on criteria")
     public int countAlerts(@ApiParam(value = "If non-null only send alerts that have fired after this time, time is millisecond since epoch")
                         @QueryParam("since") Long since) {
+
         AlertCriteria criteria = new AlertCriteria();
         criteria.setPageControl(PageControl.getUnlimitedInstance());
         criteria.fetchAlertDefinition(false);
@@ -191,7 +184,7 @@ public class AlertHandlerBean extends AbstractRestBean {
     @GET
     @Path("/{id}/conditions")
     @Cache(maxAge = 300)
-    @ApiOperation(value = "Return the notification logs for the given alert")
+    @ApiOperation(value = "Return the condition logs for the given alert")
     public Response getConditionLogs(@ApiParam("Id of the alert to retrieve") @PathParam("id") int id,
                                   @Context Request request, @Context UriInfo uriInfo, @Context HttpHeaders headers) {
 
@@ -274,7 +267,7 @@ public class AlertHandlerBean extends AbstractRestBean {
     @ApiOperation(value = "Mark the alert as acknowledged (by the caller)", notes = "Returns a slim version of the alert")
     public AlertRest ackAlert(@ApiParam(value = "Id of the alert to acknowledge") @PathParam("id") int id, @Context UriInfo uriInfo) {
         findAlertWithId(id); // Ensure the alert exists
-        int count = alertManager.acknowledgeAlerts(caller,new int[]{id});
+        int count = alertManager.acknowledgeAlerts(caller, new int[]{id});
 
         // TODO this is not reliable due to Tx constraints ( the above may only run after this ackAlert() method has finished )
 
@@ -298,83 +291,11 @@ public class AlertHandlerBean extends AbstractRestBean {
     public AlertDefinitionRest getDefinitionForAlert(@ApiParam("Id of the alert to show the definition") @PathParam("id") int alertId) {
         Alert al = findAlertWithId(alertId);
         AlertDefinition def = al.getAlertDefinition();
-        AlertDefinitionRest ret = definitionToDomain(def);
+        AlertDefinitionHandlerBean adhb = new AlertDefinitionHandlerBean();
+        AlertDefinitionRest ret = adhb.definitionToDomain(def, false); // TODO allow 'full' parameter?
         return ret;
     }
 
-    @GZIP
-    @GET
-    @Path("/definition")
-    @ApiOperation("List all Alert Definition")
-    public List<AlertDefinitionRest> listAlertDefinitions(
-            @ApiParam(value = "Page number", defaultValue = "0") @QueryParam("page") int page,
-            @ApiParam(value = "Limit to status, UNUSED AT THE MOMENT ") @QueryParam("status") String status) {
-
-        AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
-        criteria.setPaging(page,20); // TODO add link to next page
-        List<AlertDefinition> defs = alertDefinitionManager.findAlertDefinitionsByCriteria(caller, criteria);
-        List<AlertDefinitionRest> ret = new ArrayList<AlertDefinitionRest>(defs.size());
-        for (AlertDefinition def : defs) {
-            AlertDefinitionRest adr = definitionToDomain(def);
-            ret.add(adr);
-        }
-        return ret;
-    }
-
-    @GET
-    @Path("/definition/{id}")
-    @ApiOperation(value = "Get one AlertDefinition by id", responseClass = "AlertDefinitionRest")
-    public Response getAlertDefinition(@ApiParam("Id of the alert definition to retrieve") @PathParam("id") int definitionId,
-            @Context Request request) {
-
-        AlertDefinition def = alertDefinitionManager.getAlertDefinition(caller,definitionId);
-        if (def==null)
-            throw new StuffNotFoundException("AlertDefinition with id " + definitionId );
-
-        EntityTag eTag = new EntityTag(Integer.toHexString(def.hashCode()));
-        Response.ResponseBuilder builder = request.evaluatePreconditions(eTag);
-        if (builder==null) {
-            AlertDefinitionRest adr = definitionToDomain(def);
-            builder = Response.ok(adr);
-        }
-        builder.tag(eTag);
-
-        return builder.build();
-    }
-
-    @PUT
-    @Path("/definition/{id}")
-    @ApiOperation(value = "Update the alert definition (priority, enablement)", notes = "Priority must be HIGH,LOW,MEDIUM")
-    public Response updateDefinition(
-            @ApiParam("Id of the alert definition to update") @PathParam("id") int definitionId,
-            AlertDefinitionRest definitionRest) {
-        AlertDefinition def = alertDefinitionManager.getAlertDefinition(caller,definitionId);
-        if (def==null)
-            throw new StuffNotFoundException("AlertDefinition with id " + definitionId);
-
-        def.setEnabled(definitionRest.isEnabled());
-        def.setPriority(AlertPriority.valueOf(definitionRest.getPriority()));
-
-        def = alertDefinitionManager.updateAlertDefinition(caller,def.getId(),def,false);
-
-        EntityTag eTag = new EntityTag(Integer.toHexString(def.hashCode()));
-        AlertDefinitionRest adr = definitionToDomain(def);
-
-        Response.ResponseBuilder builder = Response.ok(adr);
-        builder.tag(eTag);
-
-        return builder.build();
-
-    }
-
-    private AlertDefinitionRest definitionToDomain(AlertDefinition def) {
-        AlertDefinitionRest adr = new AlertDefinitionRest(def.getId());
-        adr.setName(def.getName());
-        adr.setEnabled(def.getEnabled());
-        adr.setPriority(def.getPriority().getName());
-
-        return adr;
-    }
 
     /**
      * Retrieve the alert with id id.
@@ -401,7 +322,8 @@ public class AlertHandlerBean extends AbstractRestBean {
         if (slim) {
             alertDefinitionRest = new AlertDefinitionRest(alertDefinition.getId());
         } else {
-            alertDefinitionRest = definitionToDomain(alertDefinition);
+            AlertDefinitionHandlerBean adhb = new AlertDefinitionHandlerBean();
+            alertDefinitionRest = adhb.definitionToDomain(alertDefinition, false);
         }
         ret.setAlertDefinition(alertDefinitionRest);
         ret.setDefinitionEnabled(alertDefinition.getEnabled());

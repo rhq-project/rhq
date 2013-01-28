@@ -19,9 +19,12 @@
 package org.rhq.common.jbossas.client.controller;
 
 import java.io.File;
+import java.util.List;
+import java.util.Properties;
 
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
+import org.jboss.dmr.Property;
 
 /**
  * Provides information to some core services.
@@ -40,6 +43,36 @@ public class CoreJBossASClient extends JBossASClient {
 
     public CoreJBossASClient(ModelControllerClient client) {
         super(client);
+    }
+
+    /**
+     * This returns the system properties that are set in the AS JVM. This is not the system properties
+     * in the JVM of this client object - it is actually the system properties in the remote
+     * JVM of the AS instance that the client is talking to.
+     * 
+     * @return the AS JVM's system properties
+     * @throws Exception
+     */
+    public Properties getSystemProperties() throws Exception {
+        final String[] address = { CORE_SERVICE, PLATFORM_MBEAN, "type", "runtime" };
+        final ModelNode op = createReadAttributeRequest(true, "system-properties", Address.root().add(address));
+        final ModelNode results = execute(op);
+        if (isSuccess(results)) {
+            // extract the DMR representation into a java Properties object
+            final Properties sysprops = new Properties();
+            final ModelNode node = getResults(results);
+            final List<Property> propertyList = node.asPropertyList();
+            for (Property property : propertyList) {
+                final String name = property.getName();
+                final ModelNode value = property.getValue();
+                if (name != null) {
+                    sysprops.put(name, value != null ? value.asString() : "");
+                }
+            }
+            return sysprops;
+        } else {
+            throw new FailureException(results, "Failed to get system properties");
+        }
     }
 
     public String getOperatingSystem() throws Exception {

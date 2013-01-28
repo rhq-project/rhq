@@ -1263,13 +1263,15 @@ public class ConfigurationEditor extends LocatableVLayout {
                                 popup.destroy();
                             }
                         });
-
-                        HLayout buttons = new HLayout();
-                        buttons.setAlign(Alignment.CENTER);
-                        buttons.setTop(10);
-                        buttons.setMembersMargin(10);
-                        buttons.setMembers(okButton, cancelButton);
-                        vLayout.addMember(buttons);
+                        
+                        ToolStrip buttonBar = new ToolStrip();
+                        buttonBar.setPadding(5);
+                        buttonBar.setWidth100();
+                        buttonBar.setMembersMargin(15);
+                        buttonBar.setAlign(Alignment.CENTER);
+                        buttonBar.setMembers(okButton, cancelButton);
+                        
+                        vLayout.addMember(buttonBar);
 
                         popup.addItem(vLayout);
                         popup.show();
@@ -1711,11 +1713,13 @@ public class ConfigurationEditor extends LocatableVLayout {
         childForm.setHeight100();
         layout.addMember(childForm);
 
-        LocatableHLayout buttonBar = new LocatableHLayout(layout.extendLocatorId("ButtonBar"));
+        ToolStrip buttonBar = new ToolStrip();
+        buttonBar.setPadding(5);
+        buttonBar.setWidth100();
+        buttonBar.setMembersMargin(15);
         buttonBar.setAlign(Alignment.CENTER);
-        buttonBar.setMembersMargin(10);
-
-        final IButton okButton = new LocatableIButton(buttonBar.extendLocatorId("OK"), MSG.common_button_ok());
+                
+        final IButton okButton = new IButton(MSG.common_button_ok());
         if (!mapReadOnly) {
             okButton.disable();
         }
@@ -1762,8 +1766,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         buttonBar.addMember(okButton);
 
         if (!mapReadOnly) {
-            final IButton cancelButton = new LocatableIButton(buttonBar.extendLocatorId("Cancel"),
-                MSG.common_button_cancel());
+            final IButton cancelButton = new IButton(MSG.common_button_cancel());
             cancelButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     layout.destroy();
@@ -1789,7 +1792,6 @@ public class ConfigurationEditor extends LocatableVLayout {
         popup.setHeight(height);
         popup.setIsModal(true);
         popup.setShowModalMask(true);
-        popup.setShowCloseButton(false);
         popup.centerInPage();
         return popup;
     }

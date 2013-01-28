@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.agentupdate;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -58,7 +59,7 @@ public class AgentUpdateServlet extends HttpServlet {
     // the error code that will be returned if the server has too many agents downloading the agent update binary
     private static final int ERROR_CODE_TOO_MANY_DOWNLOADS = HttpServletResponse.SC_SERVICE_UNAVAILABLE;
 
-    private static int numActiveDownloads = 0;
+    private AtomicInteger numActiveDownloads = null;
 
     private Log log = LogFactory.getLog(this.getClass());
 
@@ -69,6 +70,7 @@ public class AgentUpdateServlet extends HttpServlet {
     @Override
     public void init() throws ServletException {
         log.info("Starting the RHQ agent update servlet");
+        numActiveDownloads = new AtomicInteger(0);
     }
 
     private synchronized void loadAgentUpdateBinaryInfo() throws ServletException {
@@ -115,10 +117,10 @@ public class AgentUpdateServlet extends HttpServlet {
                     getVersion(req, resp);
                 } else if (servletPath.endsWith("download")) {
                     try {
-                        numActiveDownloads++;
+                        numActiveDownloads.incrementAndGet();
                         getDownload(req, resp);
                     } finally {
-                        numActiveDownloads--;
+                        numActiveDownloads.decrementAndGet();
                     }
                 } else {
                     resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid servlet path [" + servletPath
@@ -139,7 +141,7 @@ public class AgentUpdateServlet extends HttpServlet {
         if (limit <= 0) {
             sendErrorAgentUpdateDisabled(resp);
             return;
-        } else if (limit < numActiveDownloads) {
+        } else if (limit < numActiveDownloads.get()) {
             sendErrorTooManyDownloads(resp);
             return;
         }

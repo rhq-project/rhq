@@ -63,7 +63,6 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.StartScriptConfiguration;
-import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -80,7 +79,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * @param <T> the type of the component's parent resource component
  */
 public class BaseComponent<T extends ResourceComponent<?>> implements AS7Component<T>, MeasurementFacet,
-    ConfigurationFacet, DeleteResourceFacet, CreateChildResourceFacet, OperationFacet  {
+    ConfigurationFacet, DeleteResourceFacet, CreateChildResourceFacet, OperationFacet {
 
     private static final String INTERNAL = "_internal:";
     private static final int INTERNAL_SIZE = INTERNAL.length();
@@ -105,6 +104,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
      * Start the resource connection
      * @see org.rhq.core.pluginapi.inventory.ResourceComponent#start(org.rhq.core.pluginapi.inventory.ResourceContext)
      */
+    @Override
     public void start(ResourceContext<T> context) throws InvalidPluginConfigurationException, Exception {
         this.context = context;
         pluginConfiguration = context.getPluginConfiguration();
@@ -132,6 +132,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
      * Return availability of this resource
      *  @see org.rhq.core.pluginapi.inventory.ResourceComponent#getAvailability()
      */
+    @Override
     public AvailabilityType getAvailability() {
         ReadResource op = new ReadResource(address);
         Result res = getASConnection().execute(op);
@@ -147,7 +148,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         while ((component != null) && !(component instanceof BaseServerComponent)) {
             component = (BaseComponent<?>) component.context.getParentResourceComponent();
         }
-        return (BaseServerComponent)component;
+        return (BaseServerComponent) component;
     }
 
     public BaseServerComponent getServerComponent() {
@@ -158,6 +159,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
      * Gather measurement data
      * @see org.rhq.core.pluginapi.measurement.MeasurementFacet#getValues(org.rhq.core.domain.measurement.MeasurementReport, java.util.Set)
      */
+    @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
 
         for (MeasurementScheduleRequest req : metrics) {
@@ -262,19 +264,22 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         report.addData(data);
     }
 
+    @Override
     public ASConnection getASConnection() {
         return (this.testConnection != null) ? this.testConnection : getServerComponent().getASConnection();
     }
 
+    @Override
     public String getPath() {
         return path;
     }
 
+    @Override
     public Configuration loadResourceConfiguration() throws Exception {
 
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
         ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(configDef, getASConnection(), address,
-                includeRuntime);
+            includeRuntime);
         Configuration configuration = delegate.loadResourceConfiguration();
 
         // Read server state
@@ -289,7 +294,8 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         }
 
         if (res.isReloadRequired()) {
-            PropertySimple oobMessage = new PropertySimple("__OOB","The server needs a reload for the latest changes to come effective.");
+            PropertySimple oobMessage = new PropertySimple("__OOB",
+                "The server needs a reload for the latest changes to come effective.");
             configuration.put(oobMessage);
         }
         if (res.isRestartRequired()) {
@@ -300,6 +306,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         return configuration;
     }
 
+    @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
 
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
@@ -354,18 +361,19 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                 // check if there is already a child with th desired type is present
                 Configuration pluginConfig = report.getPluginConfiguration();
                 PropertySimple pathProperty = pluginConfig.getSimple("path");
-                if (path==null || path.isEmpty()) {
+                if (path == null || path.isEmpty()) {
                     report.setErrorMessage("No path property found in plugin configuration");
                     report.setStatus(CreateResourceStatus.INVALID_CONFIGURATION);
                     return report;
                 }
 
-                ReadChildrenNames op = new ReadChildrenNames(address,pathProperty.getStringValue());
+                ReadChildrenNames op = new ReadChildrenNames(address, pathProperty.getStringValue());
                 Result res = connection.execute(op);
                 if (res.isSuccess()) {
                     List<String> entries = (List<String>) res.getResult();
                     if (!entries.isEmpty()) {
-                        report.setErrorMessage("Resource is a singleton, but there are already children " + entries + " please remove them and retry");
+                        report.setErrorMessage("Resource is a singleton, but there are already children " + entries
+                            + " please remove them and retry");
                         report.setStatus(CreateResourceStatus.FAILURE);
                         return report;
                     }
@@ -395,11 +403,23 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         ContentServices contentServices = cctx.getContentServices();
         String resourceTypeName = report.getResourceType().getName();
 
-        ServerPluginConfiguration serverPluginConfig = getServerComponent().getServerPluginConfiguration();
-        ASUploadConnection uploadConnection = new ASUploadConnection(serverPluginConfig.getHostname(),
-                serverPluginConfig.getPort(), serverPluginConfig.getUser(), serverPluginConfig.getPassword());
-        OutputStream out = uploadConnection.getOutputStream(details.getKey().getName());
-        contentServices.downloadPackageBitsForChildResource(cctx, resourceTypeName, details.getKey(), out);
+        ASUploadConnection uploadConnection = ASUploadConnection.newInstanceForServerPluginConfiguration(
+            getServerComponent().getServerPluginConfiguration(), details.getKey().getName());
+
+        OutputStream out = uploadConnection.getOutputStream();
+        if (out == null) {
+            report.setStatus(CreateResourceStatus.FAILURE);
+            report.setErrorMessage("An error occured while the agent was preparing for content download");
+            return report;
+        }
+        try {
+            contentServices.downloadPackageBitsForChildResource(cctx, resourceTypeName, details.getKey(), out);
+        } catch (Exception e) {
+            uploadConnection.cancelUpload();
+            report.setStatus(CreateResourceStatus.FAILURE);
+            report.setErrorMessage("An error occured while the agent was downloading the content");
+            return report;
+        }
 
         JsonNode uploadResult = uploadConnection.finishUpload();
         if (verbose) {
@@ -409,12 +429,11 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         if (ASUploadConnection.isErrorReply(uploadResult)) {
             report.setStatus(CreateResourceStatus.FAILURE);
             report.setErrorMessage(ASUploadConnection.getFailureDescription(uploadResult));
-
             return report;
         }
 
         // Key is available from UI and CLI
-        String fileName =  details.getKey().getName();
+        String fileName = details.getKey().getName();
 
         String runtimeName = report.getPackageDetails().getDeploymentTimeConfiguration().getSimpleValue("runtimeName");
         if (runtimeName == null || runtimeName.isEmpty()) {
@@ -523,13 +542,11 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
             int colonPos = name.indexOf(':');
             what = name.substring(0, colonPos);
             op = name.substring(colonPos + 1);
-        }
-        else {
-            what=""; // dummy value
+        } else {
+            what = ""; // dummy value
             op = name;
         }
         Operation operation = null;
-
 
         Address theAddress = new Address();
 
@@ -583,11 +600,10 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                 if (prop instanceof PropertySimple) {
                     PropertySimple ps = (PropertySimple) prop;
                     if (ps.getStringValue() != null) {
-                        Object val = getObjectForProperty(ps,op);
-                        operation.addAdditionalProperty(ps.getName(),val);
+                        Object val = getObjectForProperty(ps, op);
+                        operation.addAdditionalProperty(ps.getName(), val);
                     }
-                }
-                else if (prop instanceof PropertyList) {
+                } else if (prop instanceof PropertyList) {
                     PropertyList pl = (PropertyList) prop;
                     List<Object> items = new ArrayList<Object>(pl.getList().size());
                     // Loop over the inner elements of the list
@@ -595,14 +611,13 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                         if (p2 instanceof PropertySimple) {
                             PropertySimple ps = (PropertySimple) p2;
                             if (ps.getStringValue() != null) {
-                                Object val = getObjectForPropertyList(ps,pl,op);
+                                Object val = getObjectForPropertyList(ps, pl, op);
                                 items.add(val);
                             }
                         }
                     }
-                    operation.addAdditionalProperty(pl.getName(),items);
-                }
-                else {
+                    operation.addAdditionalProperty(pl.getName(), items);
+                } else {
                     log.error("PropertyMap for " + prop.getName() + " not yet supported");
                 }
             }
@@ -637,7 +652,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
      */
     Object getObjectForProperty(PropertySimple prop, String operationName) {
         ConfigurationDefinition parameterDefinitions = getParameterDefinitionsForOperation(operationName);
-        if (parameterDefinitions==null)
+        if (parameterDefinitions == null)
             return null;
 
         PropertyDefinition pd = parameterDefinitions.get(prop.getName());
@@ -660,14 +675,14 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
      */
     Object getObjectForPropertyList(PropertySimple prop, PropertyList propertyList, String operationName) {
         ConfigurationDefinition parameterDefinitions = getParameterDefinitionsForOperation(operationName);
-        if (parameterDefinitions==null)
+        if (parameterDefinitions == null)
             return null;
 
         PropertyDefinition def = parameterDefinitions.get(propertyList.getName());
-        if (def instanceof  PropertyDefinitionList) {
+        if (def instanceof PropertyDefinitionList) {
             PropertyDefinitionList definitionList = (PropertyDefinitionList) def;
             PropertyDefinition tmp = definitionList.getMemberDefinition();
-            if (tmp instanceof  PropertyDefinitionSimple) {
+            if (tmp instanceof PropertyDefinitionSimple) {
                 return getObjectForProperty(prop, (PropertyDefinitionSimple) tmp);
             }
         }
@@ -755,7 +770,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         Result res = getASConnection().execute(op);
         if (!res.isSuccess()) {
             throw new Exception("Failed to read attribute [" + name + "] of address [" + getAddress().getPath()
-                    + "] - response: " + res);
+                + "] - response: " + res);
         }
         return (T) res.getResult();
     }
@@ -797,11 +812,13 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                         int endIndex = expressionValue.indexOf('}', beginIndex);
                         if (endIndex >= 0) {
                             String expression = expressionValue.substring(beginIndex + 2, endIndex);
-                            StartScriptConfiguration startScriptConfig = getServerComponent().getStartScriptConfiguration();
+                            StartScriptConfiguration startScriptConfig = getServerComponent()
+                                .getStartScriptConfiguration();
                             List<String> startScriptArgs = startScriptConfig.getStartScriptArgs();
                             for (String startScriptArg : startScriptArgs) {
                                 if (startScriptArg.startsWith("-Djboss.default.multicast.address=")) {
-                                    multicastHost = startScriptArg.substring("-Djboss.default.multicast.address=".length());
+                                    multicastHost = startScriptArg.substring("-Djboss.default.multicast.address="
+                                        .length());
                                     break;
                                 }
                             }
@@ -812,7 +829,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                                     multicastHost = defaultValue;
                                 } else {
                                     log.error("Failed to resolve expression value [" + expressionValue
-                                            + "] of 'multicast-address' attribute.");
+                                        + "] of 'multicast-address' attribute.");
                                 }
                             }
                         }
@@ -822,7 +839,8 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                 }
                 multicastPort = readAttribute(jgroupsSocketBindingAddress, "multicast-port", Integer.class);
             } catch (Exception e) {
-                throw new RuntimeException("Failed to lookup multicast address for socket binding [" + socketBinding + "].");
+                throw new RuntimeException("Failed to lookup multicast address for socket binding [" + socketBinding
+                    + "].");
             }
 
             if (multicastHost != null && multicastPort != null) {

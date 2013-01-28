@@ -2,6 +2,8 @@ package org.rhq.core.domain.test;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -29,8 +31,8 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
-import org.jboss.shrinkwrap.resolver.api.DependencyResolvers;
-import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
+import org.jboss.shrinkwrap.resolver.api.maven.Maven;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenResolverSystem;
 
 import org.rhq.core.domain.shared.TransactionCallback;
 import org.rhq.core.util.MessageDigestGenerator;
@@ -105,16 +107,20 @@ public abstract class AbstractEJB3Test extends Arquillian {
         // we still end up having to do some exclusion filtering.  Since Shrinkwrap has weak and buggy         
         // filtering, we have some homegrown filtering methods below. 
         // TODO: Is there any way to not have to specify the versions for the transitive deps? This is brittle as is.
+        //       Can pass the version in as a system prop if necessary...
 
         //load 3rd party deps explicitly
-        MavenDependencyResolver resolver = DependencyResolvers.use(MavenDependencyResolver.class);
-        resolver.loadMetadataFromPom("pom.xml");
+        Collection thirdPartyDeps = new ArrayList();
+        thirdPartyDeps.add("commons-beanutils:commons-beanutils:1.8.2");
+        thirdPartyDeps.add("commons-codec:commons-codec");
+        thirdPartyDeps.add("commons-io:commons-io");
+        thirdPartyDeps.add("org.unitils:unitils-testng:3.1");
+
+        MavenResolverSystem resolver = Maven.resolver();
+
         Collection<JavaArchive> dependencies = new HashSet<JavaArchive>();
-        dependencies
-            .addAll(resolver.artifact("commons-beanutils:commons-beanutils:1.8.2").resolveAs(JavaArchive.class));
-        dependencies.addAll(resolver.artifact("commons-codec:commons-codec").resolveAs(JavaArchive.class));
-        dependencies.addAll(resolver.artifact("commons-io:commons-io").resolveAs(JavaArchive.class));
-        dependencies.addAll(resolver.artifact("org.unitils:unitils-testng:3.1").resolveAs(JavaArchive.class));
+        dependencies.addAll(Arrays.asList(resolver.loadPomFromFile("pom.xml").resolve(thirdPartyDeps)
+            .withTransitivity().as(JavaArchive.class)));
 
         String[] excludeFilters = { "testng.*jdk" };
 

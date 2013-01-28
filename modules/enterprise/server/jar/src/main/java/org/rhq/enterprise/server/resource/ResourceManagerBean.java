@@ -124,6 +124,7 @@ import org.rhq.enterprise.server.discovery.DiscoveryServerServiceImpl;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.disambiguation.DisambiguationUpdateStrategy;
 import org.rhq.enterprise.server.resource.disambiguation.Disambiguator;
+import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
@@ -466,6 +467,14 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     private boolean uninventoryResourcesBulkDelete(Subject overlord, List<Integer> resourceIds) {
+        // Obtain group ids of affected groups, i.e. groups where resources act as the explicit resources.
+        // The RHQ_RESOURCE_GROUP_RES_EXP_MAP table is used, because the resource type of a group is set to a
+        // non null value iff the number of unique resource types of the member _EXPLICIT_ resources is equal to 1.
+        // In other words, the implicit resources of a group have no impact on the group type (compatible/mixed).
+        Query nativeQuery = entityManager.createNativeQuery(ResourceGroup.QUERY_GET_GROUP_IDS_BY_RESOURCE_IDS);
+        nativeQuery.setParameter("resourceIds", resourceIds);
+        List<Integer> groupIds = nativeQuery.getResultList();
+
         String[] nativeQueriesToExecute = new String[] { //
         ResourceGroup.QUERY_DELETE_EXPLICIT_BY_RESOURCE_IDS, // unmap from explicit groups
             ResourceGroup.QUERY_DELETE_IMPLICIT_BY_RESOURCE_IDS // unmap from implicit groups
@@ -476,6 +485,15 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             // execute all in new transactions, continuing on error, but recording whether errors occurred
             hasErrors |= resourceManager.bulkNativeQueryDeleteInNewTransaction(overlord, nativeQueryToExecute,
                 resourceIds);
+        }
+        
+        // update the resource type of affected groups by calling setResouceType()
+        for (int groupId : groupIds) {
+            try {
+                resourceGroupManager.setResourceType(groupId);
+            } catch (ResourceGroupDeleteException rgde) {
+                log.warn("Unable to change resource type for group with id [" + groupId + "]", rgde);
+            }
         }
 
         return hasErrors;

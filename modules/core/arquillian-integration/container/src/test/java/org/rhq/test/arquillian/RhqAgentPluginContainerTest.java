@@ -12,9 +12,9 @@ import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
-import org.jboss.shrinkwrap.resolver.api.DependencyResolvers;
-import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
-import org.jboss.shrinkwrap.resolver.api.maven.filter.ScopeFilter;
+import org.jboss.shrinkwrap.resolver.api.maven.Maven;
+import org.jboss.shrinkwrap.resolver.api.maven.ScopeType;
+import org.jboss.shrinkwrap.resolver.api.maven.strategy.AcceptScopesStrategy;
 
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -43,9 +43,8 @@ public class RhqAgentPluginContainerTest extends Arquillian {
             .addClasses(TestDiscoveryComponent.class, TestResourceComponent.class)
             .setPluginDescriptor("test-dependent-rhq-plugin.xml")
             .withRequiredPluginsFrom(
-                DependencyResolvers.use(MavenDependencyResolver.class)
-                        .includeDependenciesFromPom("pom.xml")
-                        .resolveAs(JavaArchive.class, new ScopeFilter("test")));
+                Maven.resolver().loadPomFromFile("pom.xml")
+                    .importRuntimeAndTestDependencies(new AcceptScopesStrategy(ScopeType.TEST)).as(JavaArchive.class));
     }
 
     @Deployment(name = "manuallyDeployed", managed = false)
@@ -66,13 +65,13 @@ public class RhqAgentPluginContainerTest extends Arquillian {
 
     @ResourceComponentInstances(plugin = "testDependentPlugin", resourceType = "TestServer")
     private Set<TestResourceComponent> dependentComponents;
-    
+
     @ResourceContainers(plugin = "testDependentPlugin", resourceType = "TestServer")
     private Set<ResourceContainer> dependentResourceContainers;
-    
+
     @ArquillianResource
     private ContainerController pcController;
-    
+
     @ArquillianResource
     private Deployer pluginDeployer;
 
@@ -106,15 +105,15 @@ public class RhqAgentPluginContainerTest extends Arquillian {
     public void testResourceContainersAssigned() {
         Assert.assertEquals(dependentResourceContainers.size(), 1, "There should be one resource container available");
     }
-    
+
     @Test
     public void manualDeployment() {
         pluginDeployer.deploy("manuallyDeployed");
 
         pluginContainer.getInventoryManager().executeServerScanImmediately();
 
-        ResourceType expectedResourceType =
-            new ResourceType("TestServer", "testManualPlugin", ResourceCategory.SERVER, null);
+        ResourceType expectedResourceType = new ResourceType("TestServer", "testManualPlugin", ResourceCategory.SERVER,
+            null);
 
         Set<Resource> resources = pluginContainer.getInventoryManager().getResourcesWithType(expectedResourceType);
 

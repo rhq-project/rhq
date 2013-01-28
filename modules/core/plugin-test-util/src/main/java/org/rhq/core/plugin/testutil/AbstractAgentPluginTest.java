@@ -50,8 +50,10 @@ import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.importer.ZipImporter;
-import org.jboss.shrinkwrap.resolver.api.DependencyResolvers;
-import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
+import org.jboss.shrinkwrap.resolver.api.maven.Maven;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenResolverSystem;
+import org.jboss.shrinkwrap.resolver.api.maven.ScopeType;
+import org.jboss.shrinkwrap.resolver.api.maven.strategy.AcceptScopesStrategy;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
@@ -116,14 +118,10 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
 
     @Deployment(name = "platform", order = 1)
     public static RhqAgentPluginArchive getPlatformPlugin() throws Exception {
-        MavenDependencyResolver mavenDependencyResolver = DependencyResolvers.use(MavenDependencyResolver.class);
+        MavenResolverSystem mavenDependencyResolver = Maven.resolver();
         String platformPluginArtifact = "org.rhq:rhq-platform-plugin:jar:" + getRhqVersion();
-        Collection<RhqAgentPluginArchive> plugins = mavenDependencyResolver
-                .loadMetadataFromPom("pom.xml")
-                .goOffline()
-                .artifact(platformPluginArtifact)
-                .resolveAs(RhqAgentPluginArchive.class);
-        return plugins.iterator().next();
+        return mavenDependencyResolver.offline().loadPomFromFile("pom.xml").resolve(platformPluginArtifact)
+            .withoutTransitivity().asSingle(RhqAgentPluginArchive.class);
     }
 
     @Deployment(name = "pluginUnderTest", order = 2)
@@ -133,14 +131,13 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         // jar, freshly assembled from the classes being tested.
         File pluginJarFile = getPluginJarFile();
         System.out.println("Using plugin jar [" + pluginJarFile + "]...");
-        MavenDependencyResolver mavenDependencyResolver = DependencyResolvers.use(MavenDependencyResolver.class);
+        MavenResolverSystem mavenDependencyResolver = Maven.resolver();
         // Pull in any required plugins from our pom's dependencies.
-        Collection<RhqAgentPluginArchive> requiredPlugins = mavenDependencyResolver
-                .loadMetadataFromPom("pom.xml")
-                //.goOffline()
-                .includeDependenciesFromPom("pom.xml")
-                .scope("provided")
-                .resolveAs(RhqAgentPluginArchive.class);
+
+        Collection<RhqAgentPluginArchive> requiredPlugins = Arrays.asList(mavenDependencyResolver
+            .loadPomFromFile("pom.xml").importRuntimeAndTestDependencies(new AcceptScopesStrategy(ScopeType.PROVIDED))
+            .as(RhqAgentPluginArchive.class));
+
         return ShrinkWrap.create(ZipImporter.class, pluginJarFile.getName()).importFrom(pluginJarFile)
             .as(RhqAgentPluginArchive.class).withRequiredPluginsFrom(requiredPlugins);
     }
@@ -171,8 +168,10 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
 
         try {
             this.serverServices.resetMocks();
-            Mockito.when(this.serverServices.getDiscoveryServerService().mergeInventoryReport(Mockito.any(InventoryReport.class))).then(
-                    serverInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
+            Mockito.when(
+                this.serverServices.getDiscoveryServerService()
+                    .mergeInventoryReport(Mockito.any(InventoryReport.class))).then(
+                serverInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -201,12 +200,11 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
      * @return the report containing the collected data
      */
     @NotNull
-    protected AvailabilityType getAvailability(Resource resource)
-            throws PluginContainerException {
+    protected AvailabilityType getAvailability(Resource resource) throws PluginContainerException {
         ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
         long timeoutMillis = 5000;
         AvailabilityFacet availFacet = resourceContainer.createResourceComponentProxy(AvailabilityFacet.class,
-                FacetLockType.READ, timeoutMillis, false, false);
+            FacetLockType.READ, timeoutMillis, false, false);
         AvailabilityType avail;
         try {
             avail = availFacet.getAvailability();
@@ -227,31 +225,31 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
      * @return the result of the operation
      */
     @NotNull
-    protected OperationResult invokeOperation(Resource resource, String operationName, @Nullable Configuration params)
-            throws PluginContainerException {
+    protected OperationResult invokeOperation(Resource resource, String operationName, @Nullable
+    Configuration params) throws PluginContainerException {
         ResourceType resourceType = resource.getResourceType();
         OperationDefinition operationDefinition = ResourceTypeUtility.getOperationDefinition(resourceType,
-                operationName);
-        assertNotNull(operationDefinition, "No operation named [" + operationName
-                + "] is defined for ResourceType {" + resourceType.getPlugin() + "}" + resourceType.getName() + ".");
+            operationName);
+        assertNotNull(operationDefinition, "No operation named [" + operationName + "] is defined for ResourceType {"
+            + resourceType.getPlugin() + "}" + resourceType.getName() + ".");
 
         long timeout = getDefaultTimeout(resource.getResourceType(), operationName);
         System.out.println("=== Invoking operation [" + operationName + "] with parameters ["
-                + ((params != null) ? params.toString(true) : params) + "] on " + resource + "...");
+            + ((params != null) ? params.toString(true) : params) + "] on " + resource + "...");
         ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
         long timeoutMillis = timeout * 1000;
         OperationFacet operationFacet = resourceContainer.createResourceComponentProxy(OperationFacet.class,
-                FacetLockType.WRITE, timeoutMillis, false, false);
+            FacetLockType.WRITE, timeoutMillis, false, false);
         OperationResult operationResult;
         try {
             operationResult = operationFacet.invokeOperation(operationName, params);
         } catch (Exception e) {
             String paramsString = (params != null) ? params.toString(true) : String.valueOf(params);
             System.out.println("====== Error occurred during invocation of operation [" + operationName
-                                + "] with parameters [" + paramsString + "] on " + resource + ": " + e);
+                + "] with parameters [" + paramsString + "] on " + resource + ": " + e);
             e.printStackTrace(System.out);
             throw new RuntimeException("Error occurred during invocation of operation [" + operationName
-                    + "] with parameters [" + paramsString + "] on " + resource + ".", e);
+                + "] with parameters [" + paramsString + "] on " + resource + ".", e);
         }
         return operationResult;
     }
@@ -264,21 +262,22 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         System.out.println("=== Loading Resource config for " + resource + "...");
         ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
         long timeoutMillis = 5000;
-        ConfigurationFacet configurationFacet = resourceContainer.createResourceComponentProxy(ConfigurationFacet.class,
-                FacetLockType.READ, timeoutMillis, false, false);
+        ConfigurationFacet configurationFacet = resourceContainer.createResourceComponentProxy(
+            ConfigurationFacet.class, FacetLockType.READ, timeoutMillis, false, false);
         return configurationFacet.loadResourceConfiguration();
     }
 
     @NotNull
-    protected ConfigurationUpdateReport updateResourceConfiguration(Resource resource, Configuration resourceConfig) throws Exception {
+    protected ConfigurationUpdateReport updateResourceConfiguration(Resource resource, Configuration resourceConfig)
+        throws Exception {
         ResourceType resourceType = resource.getResourceType();
         ConfigurationDefinition resourceConfigDef = resourceType.getResourceConfigurationDefinition();
         assertNotNull(resourceConfigDef, "No resource config is defined for ResourceType " + resourceType + ".");
         System.out.println("=== Updating Resource config for " + resource + "...");
         ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
         long timeoutMillis = 5000;
-        ConfigurationFacet configurationFacet = resourceContainer.createResourceComponentProxy(ConfigurationFacet.class,
-                FacetLockType.WRITE, timeoutMillis, false, false);
+        ConfigurationFacet configurationFacet = resourceContainer.createResourceComponentProxy(
+            ConfigurationFacet.class, FacetLockType.WRITE, timeoutMillis, false, false);
         ConfigurationUpdateReport report = new ConfigurationUpdateReport(resourceConfig);
         configurationFacet.updateResourceConfiguration(report);
         return report;
@@ -286,25 +285,23 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
 
     protected void assertAllResourceComponentsStarted() throws Exception {
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
-        Map<ResourceType, ResourceContainer> nonStartedResourceContainersByType =
-                new LinkedHashMap<ResourceType, ResourceContainer>();
+        Map<ResourceType, ResourceContainer> nonStartedResourceContainersByType = new LinkedHashMap<ResourceType, ResourceContainer>();
         findNonStartedResourceComponentsRecursively(platform, nonStartedResourceContainersByType);
         assertTrue(nonStartedResourceContainersByType.isEmpty(),
-                "Resource containers with non-started Resource components by type: "
-                        + nonStartedResourceContainersByType);
+            "Resource containers with non-started Resource components by type: " + nonStartedResourceContainersByType);
     }
 
     private void findNonStartedResourceComponentsRecursively(Resource resource,
-                                                             Map<ResourceType, ResourceContainer> nonStartedResourceContainersByType)
-            throws Exception {
+        Map<ResourceType, ResourceContainer> nonStartedResourceContainersByType) throws Exception {
         ResourceType resourceType = resource.getResourceType();
         if (!nonStartedResourceContainersByType.containsKey(resourceType)) {
-            ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
+            ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(
+                resource);
             if (resourceContainer.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED) {
                 nonStartedResourceContainersByType.put(resourceType, resourceContainer);
             } else if (resourceContainer.getResourceComponent() == null) {
                 System.err.println("****** Resource container " + resourceContainer
-                        + " says its Resource component is started, but the component is null. ******");
+                    + " says its Resource component is started, but the component is null. ******");
                 nonStartedResourceContainersByType.put(resourceType, resourceContainer);
             }
         }
@@ -319,19 +316,19 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
         Map<ResourceType, Exception> resourceConfigLoadExceptionsByType = new LinkedHashMap<ResourceType, Exception>();
         findResourceConfigsThatFailToLoadRecursively(platform, resourceConfigLoadExceptionsByType);
-        assertTrue(resourceConfigLoadExceptionsByType.isEmpty(), "Resource configs that failed to load by type: " +
-                resourceConfigLoadExceptionsByType);
+        assertTrue(resourceConfigLoadExceptionsByType.isEmpty(), "Resource configs that failed to load by type: "
+            + resourceConfigLoadExceptionsByType);
     }
 
     private void findResourceConfigsThatFailToLoadRecursively(Resource resource,
-                                                              Map<ResourceType, Exception> resourceConfigLoadExceptionsByType)
-            throws Exception {
+        Map<ResourceType, Exception> resourceConfigLoadExceptionsByType) throws Exception {
         ResourceType resourceType = resource.getResourceType();
         // Only check resource configs on types of Resources from the plugin under test.
-        if (resourceType.getPlugin().equals(getPluginName()) &&
-                (resourceType.getResourceConfigurationDefinition() != null) &&
-                !resourceConfigLoadExceptionsByType.containsKey(resourceType)) {
-            ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
+        if (resourceType.getPlugin().equals(getPluginName())
+            && (resourceType.getResourceConfigurationDefinition() != null)
+            && !resourceConfigLoadExceptionsByType.containsKey(resourceType)) {
+            ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(
+                resource);
             if (resourceContainer.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED) {
                 return;
             }
@@ -339,9 +336,8 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
             Exception exception = null;
             try {
                 Configuration resourceConfig = loadResourceConfiguration(resource);
-                List<String> validationErrors =
-                        ConfigurationUtility.validateConfiguration(resourceConfig,
-                                resourceType.getResourceConfigurationDefinition());
+                List<String> validationErrors = ConfigurationUtility.validateConfiguration(resourceConfig,
+                    resourceType.getResourceConfigurationDefinition());
                 if (!validationErrors.isEmpty()) {
                     exception = new Exception("Resource config is not valid: " + validationErrors.toString());
                 }
@@ -360,17 +356,19 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
     }
 
     protected void assertAllNumericMetricsAndTraitsHaveNonNullValues(
-            Map<ResourceType, String[]> excludedMetricNamesByType) throws Exception {
+        Map<ResourceType, String[]> excludedMetricNamesByType) throws Exception {
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
         LinkedHashMap<ResourceType, Set<String>> metricsWithNullValuesByType = new LinkedHashMap<ResourceType, Set<String>>();
         findNumericMetricsAndTraitsWithNullValuesRecursively(platform, metricsWithNullValuesByType);
         removeExcludedMetricNames(metricsWithNullValuesByType, excludedMetricNamesByType);
-        assertTrue(metricsWithNullValuesByType.isEmpty(), "Metrics with null values by type: " +
-                metricsWithNullValuesByType);
+        assertTrue(metricsWithNullValuesByType.isEmpty(), "Metrics with null values by type: "
+            + metricsWithNullValuesByType);
     }
 
-    private void removeExcludedMetricNames(LinkedHashMap<ResourceType, Set<String>> metricsWithNullValuesByType, Map<ResourceType, String[]> excludedMetricNamesByType) {
-        for (Iterator<ResourceType> mapIterator = metricsWithNullValuesByType.keySet().iterator(); mapIterator.hasNext(); ) {
+    private void removeExcludedMetricNames(LinkedHashMap<ResourceType, Set<String>> metricsWithNullValuesByType,
+        Map<ResourceType, String[]> excludedMetricNamesByType) {
+        for (Iterator<ResourceType> mapIterator = metricsWithNullValuesByType.keySet().iterator(); mapIterator
+            .hasNext();) {
             ResourceType resourceType = mapIterator.next();
             if (excludedMetricNamesByType.get(resourceType) == null) {
                 continue;
@@ -378,7 +376,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
 
             Set<String> namesOfMetricsWithNullValues = metricsWithNullValuesByType.get(resourceType);
             List<String> excludedMetricNames = Arrays.asList(excludedMetricNamesByType.get(resourceType));
-            for (Iterator<String> setIterator = namesOfMetricsWithNullValues.iterator(); setIterator.hasNext(); ) {
+            for (Iterator<String> setIterator = namesOfMetricsWithNullValues.iterator(); setIterator.hasNext();) {
                 String nameOfMetricWithNullValue = setIterator.next();
                 if (excludedMetricNames.contains(nameOfMetricWithNullValue)) {
                     setIterator.remove();
@@ -391,12 +389,12 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
     }
 
     private void findNumericMetricsAndTraitsWithNullValuesRecursively(Resource resource,
-                                                                      Map<ResourceType, Set<String>> metricsWithNullValuesByType)
-            throws Exception {
+        Map<ResourceType, Set<String>> metricsWithNullValuesByType) throws Exception {
         ResourceType resourceType = resource.getResourceType();
         // Only check metrics on types of Resources from the plugin under test.
         if (resourceType.getPlugin().equals(getPluginName())) {
-            ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
+            ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(
+                resource);
             if (resourceContainer.getResourceComponentState() != ResourceContainer.ResourceComponentState.STARTED) {
                 return;
             }
@@ -420,21 +418,20 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
 
     protected Set<String> getNumericMetricsAndTraitsWithNullValues(Resource resource) throws Exception {
         ResourceType type = resource.getResourceType();
-        Set<MeasurementDefinition> numericMetricAndTraitDefs =
-                ResourceTypeUtility.getMeasurementDefinitions(type,
-                        new MeasurementDefinitionFilter() {
-            private final Set<DataType> acceptableDataTypes = EnumSet.of(DataType.MEASUREMENT, DataType.TRAIT);
+        Set<MeasurementDefinition> numericMetricAndTraitDefs = ResourceTypeUtility.getMeasurementDefinitions(type,
+            new MeasurementDefinitionFilter() {
+                private final Set<DataType> acceptableDataTypes = EnumSet.of(DataType.MEASUREMENT, DataType.TRAIT);
 
-            public boolean accept(MeasurementDefinition metricDef) {
-                return acceptableDataTypes.contains(metricDef.getDataType());
-            }
-        });
+                public boolean accept(MeasurementDefinition metricDef) {
+                    return acceptableDataTypes.contains(metricDef.getDataType());
+                }
+            });
         Set<String> metricsWithNullValues = getMetricsWithNullValues(resource, numericMetricAndTraitDefs);
         return metricsWithNullValues;
     }
 
     protected Set<String> getMetricsWithNullValues(Resource resource, Set<MeasurementDefinition> metricDefs)
-            throws Exception {
+        throws Exception {
         Set<String> metricsWithNullValues = new TreeSet<String>();
         for (MeasurementDefinition metricDef : metricDefs) {
             if (!metricDef.getResourceType().equals(resource.getResourceType())) {
@@ -442,12 +439,14 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
             }
             Object value;
             switch (metricDef.getDataType()) {
-                case MEASUREMENT:
-                    value = collectNumericMetric(resource, metricDef.getName()); break;
-                case TRAIT:
-                    value = collectTrait(resource, metricDef.getName()); break;
-                default:
-                    throw new IllegalArgumentException("Unsupported metric type: " + metricDef.getDataType());
+            case MEASUREMENT:
+                value = collectNumericMetric(resource, metricDef.getName());
+                break;
+            case TRAIT:
+                value = collectTrait(resource, metricDef.getName());
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported metric type: " + metricDef.getDataType());
             }
             if (value == null) {
                 metricsWithNullValues.add(metricDef.getName());
@@ -463,28 +462,29 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
 
         Double value;
         if (report.getNumericData().isEmpty()) {
-            assertEquals(report.getTraitData().size(), 0,
-                    "Metric [" + metricName + "] for Resource type " + resource.getResourceType()
-                        + " is defined as a numeric metric, but the plugin returned one or more traits!: "
-                        + report.getTraitData());
+            assertEquals(
+                report.getTraitData().size(),
+                0,
+                "Metric [" + metricName + "] for Resource type " + resource.getResourceType()
+                    + " is defined as a numeric metric, but the plugin returned one or more traits!: "
+                    + report.getTraitData());
             assertEquals(report.getCallTimeData().size(), 0,
-                    "Metric [" + metricName + "] for Resource type " + resource.getResourceType()
-                        + " is defined as a numeric metric, but the plugin returned one or more call-time metrics!: "
-                        + report.getCallTimeData());
+                "Metric [" + metricName + "] for Resource type " + resource.getResourceType()
+                    + " is defined as a numeric metric, but the plugin returned one or more call-time metrics!: "
+                    + report.getCallTimeData());
             value = null;
         } else {
             assertEquals(report.getNumericData().size(), 1,
-                    "Requested a single metric, but plugin returned more than one datum: " + report.getNumericData());
+                "Requested a single metric, but plugin returned more than one datum: " + report.getNumericData());
             MeasurementDataNumeric datum = report.getNumericData().iterator().next();
-            assertEquals(datum.getName(), metricName,
-                    "Numeric metric [" + metricName + "] for Resource type " + resource.getResourceType()
-                        + " was requested, but the plugin returned a numeric metric with name ["
-                        + datum.getName() + "] and value [" + datum.getValue() + "]!");
+            assertEquals(datum.getName(), metricName, "Numeric metric [" + metricName + "] for Resource type "
+                + resource.getResourceType() + " was requested, but the plugin returned a numeric metric with name ["
+                + datum.getName() + "] and value [" + datum.getValue() + "]!");
             // Normalize NaN or infinite to null, as the PC does.
             value = (datum.getValue().isNaN() || datum.getValue().isInfinite()) ? null : datum.getValue();
         }
         System.out.println("====== Collected numeric metric [" + metricName + "] with value of [" + value + "] for "
-                + resource + ".");
+            + resource + ".");
 
         return value;
     }
@@ -496,27 +496,31 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
 
         String value;
         if (report.getTraitData().isEmpty()) {
-            assertEquals(report.getNumericData().size(), 0,
-                    "Metric [" + traitName + "] for Resource type " + resource.getResourceType()
-                        + " is defined as a trait, but the plugin returned one or more numeric metrics!: "
-                        + report.getNumericData());
-            assertEquals(report.getCallTimeData().size(), 0,
-                    "Metric [" + traitName + "] for Resource type " + resource.getResourceType()
-                        + " is defined as a trait, but the plugin returned one or more call-time metrics!: "
-                        + report.getCallTimeData());
+            assertEquals(
+                report.getNumericData().size(),
+                0,
+                "Metric [" + traitName + "] for Resource type " + resource.getResourceType()
+                    + " is defined as a trait, but the plugin returned one or more numeric metrics!: "
+                    + report.getNumericData());
+            assertEquals(
+                report.getCallTimeData().size(),
+                0,
+                "Metric [" + traitName + "] for Resource type " + resource.getResourceType()
+                    + " is defined as a trait, but the plugin returned one or more call-time metrics!: "
+                    + report.getCallTimeData());
             value = null;
         } else {
             assertEquals(report.getTraitData().size(), 1,
-                    "Requested a single trait, but plugin returned more than one datum: " + report.getTraitData());
+                "Requested a single trait, but plugin returned more than one datum: " + report.getTraitData());
             MeasurementDataTrait datum = report.getTraitData().iterator().next();
             assertEquals(datum.getName(), traitName,
-                    "Trait [" + traitName + "] for Resource type " + resource.getResourceType()
-                        + " was requested, but the plugin returned a trait with name ["
-                        + datum.getName() + "] and value [" + datum.getValue() + "]!");
+                "Trait [" + traitName + "] for Resource type " + resource.getResourceType()
+                    + " was requested, but the plugin returned a trait with name [" + datum.getName() + "] and value ["
+                    + datum.getValue() + "]!");
             value = datum.getValue();
         }
-        System.out.println("====== Collected trait [" + traitName + "] with value of [" + value + "] for "
-                + resource + ".");
+        System.out.println("====== Collected trait [" + traitName + "] with value of [" + value + "] for " + resource
+            + ".");
 
         return value;
     }
@@ -530,13 +534,12 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
      * @return the report containing the collected data
      */
     @NotNull
-    private MeasurementReport collectMetric(Resource resource, String metricName)
-            throws Exception {
+    private MeasurementReport collectMetric(Resource resource, String metricName) throws Exception {
         ResourceType resourceType = resource.getResourceType();
         MeasurementDefinition measurementDefinition = ResourceTypeUtility.getMeasurementDefinition(resourceType,
-                metricName);
-        assertNotNull(measurementDefinition, "No metric named [" + metricName
-                + "] is defined for ResourceType {" + resourceType.getPlugin() + "}" + resourceType.getName() + ".");
+            metricName);
+        assertNotNull(measurementDefinition, "No metric named [" + metricName + "] is defined for ResourceType {"
+            + resourceType.getPlugin() + "}" + resourceType.getName() + ".");
 
         ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
         long timeoutMillis = 5000;
@@ -544,26 +547,25 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
             throw new IllegalStateException("Resource component for " + resource + " has not yet been started.");
         }
         MeasurementFacet measurementFacet = resourceContainer.createResourceComponentProxy(MeasurementFacet.class,
-                FacetLockType.READ, timeoutMillis, false, false);
+            FacetLockType.READ, timeoutMillis, false, false);
         MeasurementReport report = new MeasurementReport();
         MeasurementScheduleRequest request = new MeasurementScheduleRequest(-1, metricName, -1, true,
-                measurementDefinition.getDataType(), measurementDefinition.getRawNumericType());
+            measurementDefinition.getDataType(), measurementDefinition.getRawNumericType());
         Set<MeasurementScheduleRequest> requests = new HashSet<MeasurementScheduleRequest>();
         requests.add(request);
         try {
             measurementFacet.getValues(report, requests);
         } catch (Exception e) {
-            System.out.println("====== Error occurred during collection of metric [" + metricName
-                                + "] on " + resource + ": " + e);
-            throw new RuntimeException("Error occurred during collection of metric [" + metricName
-                    + "] on " + resource + ": " + e);
+            System.out.println("====== Error occurred during collection of metric [" + metricName + "] on " + resource
+                + ": " + e);
+            throw new RuntimeException("Error occurred during collection of metric [" + metricName + "] on " + resource
+                + ": " + e);
         }
         return report;
     }
 
-    protected OperationResult invokeOperationAndAssertSuccess(Resource resource, String operationName,
-                                                              @Nullable Configuration params)
-            throws PluginContainerException {
+    protected OperationResult invokeOperationAndAssertSuccess(Resource resource, String operationName, @Nullable
+    Configuration params) throws PluginContainerException {
         OperationResult result = invokeOperation(resource, operationName, params);
         assertOperationSucceeded(operationName, params, result);
         return result;
@@ -571,10 +573,10 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
 
     private long getDefaultTimeout(ResourceType resourceType, String operationName) {
         OperationDefinition operationDefinition = ResourceTypeUtility.getOperationDefinition(resourceType,
-                operationName);
+            operationName);
         // Note: The PC's default timeout is 10 minutes.
-        return (operationDefinition.getTimeout() != null) ? operationDefinition.getTimeout() :
-                        this.pluginContainerConfiguration.getOperationInvocationTimeout();
+        return (operationDefinition.getTimeout() != null) ? operationDefinition.getTimeout()
+            : this.pluginContainerConfiguration.getOperationInvocationTimeout();
     }
 
     private static String getRhqVersion() {
@@ -589,8 +591,8 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
 
     protected void assertOperationSucceeded(String operationName, Configuration params, OperationResult result) {
         String paramsString = (params != null) ? params.toString(true) : String.valueOf(params);
-        assertNull(result.getErrorMessage(), "Operation [" + operationName + "] with parameters "
-                + paramsString + " returned an error: " + result.getErrorMessage());
+        assertNull(result.getErrorMessage(), "Operation [" + operationName + "] with parameters " + paramsString
+            + " returned an error: " + result.getErrorMessage());
     }
 
     protected abstract String getPluginName();
@@ -708,7 +710,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         List<String> ignoredResources) {
         for (Resource childResource : rootResource.getChildResources()) {
             if (childResource.getInventoryStatus().equals(InventoryStatus.COMMITTED)) {
-                if( !ignoredResources.contains(childResource.getResourceType().getName())) {
+                if (!ignoredResources.contains(childResource.getResourceType().getName())) {
                     accumulatorCollection.add(childResource);
                 }
             } else {

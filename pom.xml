@@ -144,9 +144,11 @@
     <ant.contrib.version>1.0b3</ant.contrib.version>
     <freemarker.version>2.3.18</freemarker.version>
     <powermock.version>1.4.12</powermock.version>
-    <arquillian.version>1.0.2.Final</arquillian.version>
+    <arquillian.version>1.0.3.Final</arquillian.version>
+    <shrinkwrap-resolver.version>2.0.0-alpha-7</shrinkwrap-resolver.version>
     <xercesImpl.version>2.9.1-jbossas-2</xercesImpl.version> <!-- see BZ-820629 and CVE-2009-2625 -->
     <opencsv.version>1.8</opencsv.version>    
+    <commons-httpclient.version>3.0.1</commons-httpclient.version>
     
     <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
     <rhq.db.admin.password>rhqadmin</rhq.db.admin.password>
@@ -610,7 +612,17 @@
          <scope>import</scope>
       </dependency>
 
-      <!-- This will pull in the compatible versions of the shrinkwrap and shrinkwrap-resolver deps too. -->
+      <!-- We want the shrinkwrap dependency resolver to be newer than that included in the Arquillian BOM.
+           This must go *BEFORE* the Arquillian BOM. -->
+      <dependency>
+          <groupId>org.jboss.shrinkwrap.resolver</groupId>
+          <artifactId>shrinkwrap-resolver-bom</artifactId>
+          <version>${shrinkwrap-resolver.version}</version>
+          <scope>import</scope>
+          <type>pom</type>
+      </dependency>            
+      <!-- This will pull in the compatible versions of shrinkwrap deps too. Note that we want to use an explicit
+           version for the shrinkwrap resolver, which revs more often and has bugfixes. -->
       <dependency>
          <groupId>org.jboss.arquillian</groupId>
          <artifactId>arquillian-bom</artifactId>
@@ -618,7 +630,7 @@
          <type>pom</type>
          <scope>import</scope>
       </dependency>
-
+      
       <dependency>
          <groupId>org.jboss.arquillian.extension</groupId>
          <artifactId>arquillian-jacoco</artifactId>
@@ -679,11 +691,11 @@
            <artifactId>maven-antrun-plugin</artifactId>
            <version>1.7</version>
            <dependencies>
-             <!-- This includes all the "optional" tasks. -->
+             <!-- Standard ANT dist (no more "nodeps" since 1.8.2) -->
              <dependency>
                 <groupId>org.apache.ant</groupId>
-                <artifactId>ant-nodeps</artifactId>
-                <version>1.8.1</version>
+                <artifactId>ant</artifactId>
+                <version>1.8.4</version>
              </dependency>
 
              <!-- This includes the <if> task, and a bunch of other handy tasks. -->

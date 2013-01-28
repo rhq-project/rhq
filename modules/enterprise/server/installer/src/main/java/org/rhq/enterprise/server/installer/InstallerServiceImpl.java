@@ -248,6 +248,12 @@ public class InstallerServiceImpl implements InstallerService {
             // Make sure our deployment scanner is configured as we need it
             ServerInstallUtil.configureDeploymentScanner(mcc);
 
+            // Set up the transaction manager.
+            ServerInstallUtil.configureTransactionManager(mcc);
+
+            // Set up the logging subsystem
+            ServerInstallUtil.configureLogging(mcc, serverProperties);
+
             // create a keystore whose cert has a CN of this server's public endpoint address
             File keystoreFile = ServerInstallUtil.createKeystore(serverDetails, appServerConfigDir);
 
@@ -565,8 +571,10 @@ public class InstallerServiceImpl implements InstallerService {
                 if (ServerInstallUtil.isSameDatasourceSecurityDomainExisting(mcc, serverProperties)) {
                     if (ServerInstallUtil.isSameMailServiceExisting(mcc, serverProperties)) {
                         if (ServerInstallUtil.isSameWebConnectorsExisting(mcc, appServerConfigDir, serverProperties)) {
-                            log("Nothing in the configuration changed that requires a reconfig - everything looks OK");
-                            return true; // nothing to do, return immediately
+                            if (ServerInstallUtil.isSameLoggingExisting(mcc, serverProperties)) {
+                                log("Nothing in the configuration changed that requires a reconfig - everything looks OK");
+                                return true; // nothing to do, return immediately
+                            }
                         }
                     }
                 }
@@ -591,6 +599,9 @@ public class InstallerServiceImpl implements InstallerService {
 
             // setup the secure Tomcat web connectors
             ServerInstallUtil.setupWebConnectors(mcc, appServerConfigDir, serverProperties);
+
+            // setup the logging level
+            ServerInstallUtil.configureLogging(mcc, serverProperties);
 
             // now restart - don't just reload, some of our stuff won't restart properly if we just reload
             coreClient = new CoreJBossASClient(mcc);
@@ -972,6 +983,10 @@ public class InstallerServiceImpl implements InstallerService {
         try {
             mcc = ModelControllerClient.Factory.create(host, port);
             client = new CoreJBossASClient(mcc);
+            Properties sysprops = client.getSystemProperties();
+            if (!sysprops.containsKey("rhq.server.database.connection-url")) {
+                throw new Exception("Not an RHQ Server");
+            }
             asVersion = client.getAppServerVersion();
             return asVersion;
         } catch (Exception e) {
@@ -983,7 +998,7 @@ public class InstallerServiceImpl implements InstallerService {
 
             // if the caller didn't give us any fallback props, just immediately fail
             if (fallbackProps == null) {
-                throw new Exception("Cannot obtain client connection to the app server", e);
+                throw new Exception("Cannot obtain client connection to the RHQ app server", e);
             }
 
             try {
@@ -1002,18 +1017,22 @@ public class InstallerServiceImpl implements InstallerService {
                     differentValues = true;
                 }
                 if (!differentValues) {
-                    throw new Exception("Cannot obtain client connection to the app server", e);
+                    throw new Exception("Cannot obtain client connection to the RHQ app server!", e);
                 }
 
                 mcc = ModelControllerClient.Factory.create(host, port);
                 client = new CoreJBossASClient(mcc);
+                Properties sysprops = client.getSystemProperties();
+                if (!sysprops.containsKey("rhq.server.database.connection-url")) {
+                    throw new Exception("Not an RHQ Server");
+                }
                 asVersion = client.getAppServerVersion();
                 this.installerConfiguration.setManagementHost(host);
                 this.installerConfiguration.setManagementPort(port);
                 return asVersion;
             } catch (Exception e2) {
                 // make the cause the very first exception in case it was something other than bad host/port as the problem
-                throw new Exception("Cannot obtain client connection to the app server!", e);
+                throw new Exception("Cannot obtain client connection to the RHQ app server!!", e);
             } finally {
                 safeClose(mcc);
             }

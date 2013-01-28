@@ -29,6 +29,7 @@ import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
+import org.rhq.core.domain.operation.composite.GroupOperationScheduleComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -50,8 +51,25 @@ public interface OperationGWTService extends RemoteService {
     PageList<ResourceOperationLastCompletedComposite> findRecentCompletedOperations(int resourceId,
         PageControl pageControl) throws RuntimeException;
 
-    PageList<ResourceOperationScheduleComposite> findScheduledOperations(int pageSize) throws RuntimeException;
-
+    /** 
+     * Find currently scheduled resource operations
+     * @param pageSize page size
+     * 
+     * @return list of ResourceOperationScheduleComposites
+     */
+    public PageList<ResourceOperationScheduleComposite> findCurrentlyScheduledResourceOperations(int pageSize)
+        throws RuntimeException;
+    
+    /** 
+     * Find currently scheduled group operations
+     * 
+     * @param pageSize page size
+     * @return list of GroupOperationScheduleComposite
+     */
+    public PageList<GroupOperationScheduleComposite> findCurrentlyScheduledGroupOperations(int pageSize)
+        throws RuntimeException;
+    
+    
     void invokeResourceOperation(int resourceId, String operationName, Configuration parameters, String description,
         int timeout) throws RuntimeException;
 

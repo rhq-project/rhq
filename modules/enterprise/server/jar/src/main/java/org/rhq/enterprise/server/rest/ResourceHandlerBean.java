@@ -52,7 +52,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
-import com.arjuna.ats.internal.jdbc.drivers.modifiers.list;
 import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiError;
 import com.wordnik.swagger.annotations.ApiOperation;
@@ -366,6 +365,12 @@ public class ResourceHandlerBean extends AbstractRestBean {
         AvailabilityType at;
         at = AvailabilityType.valueOf(avail.getType());
 
+        // According to jshaughn, plaforms must not be set to DISABLED, so catch this case here.
+        if (resource.getResourceType().getCategory()==ResourceCategory.PLATFORM && at==AvailabilityType.DISABLED) {
+            throw new BadArgumentException("Availabilty","Platforms must not be set to DISABLED");
+        }
+
+
         AvailabilityReport report = new AvailabilityReport(true, resource.getAgent().getName());
         Availability availability = new Availability(resource, avail.getSince(), at);
         report.addAvailability(availability);
@@ -522,7 +527,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
         return links;
     }
 
-    @ApiOperation(value = "Creata a new platform in the Server. If the platform already exists, this is a no-op." +
+    @ApiOperation(value = "Create a new platform in the Server. If the platform already exists, this is a no-op." +
             "The platform internally has a special name so that it will not clash with one that was generated" +
             "via a normal RHQ agent")
     @POST
@@ -609,7 +614,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
     @Path("{name}")
     public Response createResource(
             @ApiParam("Name of the new resource") @PathParam("name") String name,
-            @ApiParam("Name of the Resource tpye") StringValue typeValue,
+            @ApiParam("Name of the Resource type") StringValue typeValue,
             @ApiParam("Name of the plugin providing the type") @QueryParam("plugin") String plugin,
             @ApiParam("Id of the future parent to attach this to") @QueryParam("parentId") int parentId,
             @Context UriInfo uriInfo) {
@@ -624,7 +629,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
         String resourceKey = "res:" + name + ":" + parentId;
 
 
-        Resource r = resMgr.getResourceByParentAndKey(caller,null,resourceKey,plugin,typeName);
+        Resource r = resMgr.getResourceByParentAndKey(caller,parent,resourceKey,plugin,typeName);
         if (r!=null) {
             // resource exists - return it
             ResourceWithType rwt = fillRWT(r,uriInfo);

@@ -19,6 +19,13 @@
     <property name="includes">org.rhq.*</property>
   </extension>
 
+  <!--
+    Uncomment this if you want to inspect the deployed archive. Useful for debugging.
+  -->
+  <!--<engine>-->
+    <!--<property name="deploymentExportPath">target/</property>-->
+  <!--</engine>-->
+
   <container
     qualifier="RHQAS7"
     default="true">

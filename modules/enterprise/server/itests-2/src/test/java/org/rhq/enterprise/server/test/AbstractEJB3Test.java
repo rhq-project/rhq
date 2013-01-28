@@ -10,6 +10,7 @@ import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -39,14 +40,16 @@ import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ArchivePaths;
 import org.jboss.shrinkwrap.api.Filters;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.asset.ByteArrayAsset;
 import org.jboss.shrinkwrap.api.asset.ClassAsset;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.impl.base.exporter.zip.ZipExporterImpl;
-import org.jboss.shrinkwrap.resolver.api.DependencyResolvers;
-import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
+import org.jboss.shrinkwrap.resolver.api.Resolvers;
+import org.jboss.shrinkwrap.resolver.api.maven.Maven;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenResolverSystem;
 
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.auth.Subject;
@@ -119,7 +122,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testClassesJar.addAsResource("test-ldap.properties");
         testClassesJar.addAsResource("test-scheduler.properties");
         testClassesJar
-            .addAsResource("org/rhq/enterprise/server/configuration/metadata/configuration_metadata_manager_bean_test_v1.xml");
+            .addAsResource(
+                "org/rhq/enterprise/server/configuration/metadata/configuration_metadata_manager_bean_test_v1.xml");
         testClassesJar
             .addAsResource("org/rhq/enterprise/server/configuration/metadata/configuration_metadata_manager_bean_test_v2.xml");
         testClassesJar.addAsResource("org/rhq/enterprise/server/discovery/DiscoveryBossBeanTest.xml");
@@ -290,14 +294,15 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testClassesJar.addAsResource("test/metadata/resource-type/updateResourceTypeBundleTarget-v2.xml");
 
         // create test ear by starting with rhq.ear and thinning it
-        MavenDependencyResolver earResolver = DependencyResolvers.use(MavenDependencyResolver.class);
+        MavenResolverSystem earResolver = Resolvers.use(MavenResolverSystem.class);
+        earResolver.offline();
         // this must be named rhq.ear because the "rhq" portion is used in the jndi names
         EnterpriseArchive testEar = ShrinkWrap.create(EnterpriseArchive.class, "rhq.ear");
-        EnterpriseArchive rhqEar = earResolver.artifact("org.rhq:rhq-enterprise-server-ear:ear:4.6.0-SNAPSHOT")
-            .resolveAs(EnterpriseArchive.class).iterator().next();
+        EnterpriseArchive rhqEar = earResolver.resolve("org.rhq:rhq-enterprise-server-ear:ear:4.6.0-SNAPSHOT")
+            .withoutTransitivity().asSingle(EnterpriseArchive.class);
         // merge rhq.ear into testEar but include only the EJB jars and the supporting libraries. Note that we
         // don't include the services sar because tests are responsible for prepare/unprepare of all required services,
-        // we don't want the production services performig any unexpected work. 
+        // we don't want the production services performing any unexpected work. 
         testEar = testEar.merge(rhqEar, Filters.include("/lib.*|/rhq.*ejb3\\.jar.*"));
         // remove startup beans and shutdown listeners, we don't want this to be a full server deployment. The tests
         // start/stop what they need, typically with test services or mocks.
@@ -316,6 +321,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testEar.add(new ClassAsset(StrippedDownStartupBeanPreparation.class), ArchivePaths
             .create("/rhq-enterprise-server-ejb3.jar/org/rhq/enterprise/server/test/"
                 + "StrippedDownStartupBeanPreparation.class"));
+        testEar.addAsManifestResource(new ByteArrayAsset("<beans/>".getBytes()),
+            ArchivePaths.create("beans.xml"));
 
         // add the test classes to the deployment
         testEar.addAsLibrary(testClassesJar);
@@ -326,18 +333,22 @@ public abstract class AbstractEJB3Test extends Arquillian {
         // add the application xml declaring the ejb jars
         testEar.setApplicationXML("application.xml");
 
-        // add additional 3rd party dependent jars needed to support test classes
-        MavenDependencyResolver resolver = DependencyResolvers.use(MavenDependencyResolver.class);
-        resolver.loadMetadataFromPom("pom.xml");
+        // add additional 3rd party dependent jars needed to support test classes        
+        Collection thirdPartyDeps = new ArrayList();
+        String projectVersion = System.getProperty("project.version");
+        thirdPartyDeps.add("joda-time:joda-time");
+        thirdPartyDeps.add("org.jboss.shrinkwrap:shrinkwrap-impl-base");
+        thirdPartyDeps.add("org.liquibase:liquibase-core");
+        thirdPartyDeps.add("org.powermock:powermock-api-mockito");
+        thirdPartyDeps.add("org.rhq.helpers:perftest-support:" + projectVersion);
+        thirdPartyDeps.add("org.rhq:rhq-core-client-api:jar:tests:" + projectVersion);
+        thirdPartyDeps.add("org.rhq:test-utils:" + projectVersion);
+
+        MavenResolverSystem resolver = Maven.resolver();
+
         Collection<JavaArchive> dependencies = new HashSet<JavaArchive>();
-        dependencies.addAll(resolver.artifact("org.powermock:powermock-api-mockito").resolveAs(JavaArchive.class));
-        dependencies.addAll(resolver.artifact("org.liquibase:liquibase-core").resolveAs(JavaArchive.class));
-        dependencies.addAll(resolver.artifact("joda-time:joda-time").resolveAs(JavaArchive.class));
-        dependencies
-            .addAll(resolver.artifact("org.jboss.shrinkwrap:shrinkwrap-impl-base").resolveAs(JavaArchive.class));
-        dependencies.addAll(resolver.artifact("org.rhq:rhq-core-client-api:jar:tests").resolveAs(JavaArchive.class));
-        dependencies.addAll(resolver.artifact("org.rhq:test-utils").resolveAs(JavaArchive.class));
-        dependencies.addAll(resolver.artifact("org.rhq.helpers:perftest-support").resolveAs(JavaArchive.class));
+        dependencies.addAll(Arrays.asList(resolver.loadPomFromFile("pom.xml").resolve(thirdPartyDeps)
+            .withTransitivity().as(JavaArchive.class)));
 
         // If we're running oracle we need to include the OJDBC driver because dbunit needs it. Note that we need
         // add it explicitly even though it is a provided module used by the datasource.
@@ -346,16 +357,17 @@ public abstract class AbstractEJB3Test extends Arquillian {
             // settings.xml profiles.  We know at this point the driver is in the local repo, try going offline
             // at this point to force local repo resolution since the oracle driver is not in public repos.
             // see http://stackoverflow.com/questions/6291146/arquillian-shrinkwrap-mavendependencyresolver-behind-proxy
-            resolver.goOffline();
-            dependencies.addAll(resolver.artifact("com.oracle:ojdbc6:jar:" + System.getProperty("rhq.ojdbc.version"))
-                .resolveAs(JavaArchive.class));
+            // Last verified this problem using: Arquillian 1.0.3 bom
+            resolver.offline();
+            dependencies.addAll(Arrays.asList(resolver
+                .resolve("com.oracle:ojdbc6:jar:" + System.getProperty("rhq.ojdbc.version")).withTransitivity()
+                .as(JavaArchive.class)));
         }
 
-        // Transitive deps required by the above and for some reason not sucked in. Note that
-        // these require an explicit version. TODO (jshaughn): Can we make these transitive or
-        // avoid the explicit version?
-        // dep required byt rhq-core-client-api test-jar
-        dependencies.addAll(resolver.artifact("commons-jxpath:commons-jxpath:1.3").resolveAs(JavaArchive.class));
+        // Transitive test dep required by rhq-core-client-api above and for some reason not sucked in.
+        // TODO: pass in version from pom property
+        dependencies.addAll(Arrays.asList(resolver.resolve("commons-jxpath:commons-jxpath:1.3").withTransitivity()
+            .as(JavaArchive.class)));
 
         // exclude any transitive deps we don't want
         String[] excludeFilters = { "testng.*jdk", "rhq-core-domain.*jar" };
@@ -367,7 +379,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
         //System.out.println("** The Deployment EAR: " + testEar.toString(true) + "\n");
 
         // Save the test EAR to a zip file for inspection (set file explicitly)
-        //exportZip(testEar, new File("/home/jshaughn/temp/test-ear.ear"));
+        //exportZip(testEar, new File("c:/temp/test-ear.ear"));
 
         return testEar;
     }

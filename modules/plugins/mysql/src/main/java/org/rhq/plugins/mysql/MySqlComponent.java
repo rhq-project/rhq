@@ -178,7 +178,7 @@ public class MySqlComponent implements DatabaseComponent<ResourceComponent<?>>,
     private AggregateProcessInfo findProcessInfo() {
         AggregateProcessInfo result = null;
         // is still running reuse
-        if (aggregateProcessInfo != null && aggregateProcessInfo.isRunning()) {
+        if (aggregateProcessInfo != null && aggregateProcessInfo.freshSnapshot().isRunning()) {
             result = aggregateProcessInfo;
         } else {
             long pid = findPID();

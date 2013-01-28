@@ -18,6 +18,9 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
+import java.io.File;
+import java.util.Arrays;
+
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.system.ProcessInfo;
@@ -98,9 +101,22 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
 
     private boolean isRhqServer(ProcessInfo process) {
 
-        String javaOpts = process.getEnvironmentVariable("JAVA_OPTS");
+        // LINUX
+        if (File.separatorChar == '/') {
+            String prop = process.getEnvironmentVariable("JAVA_OPTS");
+            return (null != prop && prop.contains("-Dapp.name=rhq-server"));
+        }
 
-        return (null != javaOpts && javaOpts.contains("-Dapp.name=rhq-server"));
+        // Windows
+        ProcessInfo parentProcess = process.getParentProcess();
+        if (null != parentProcess) {
+            String commandLine = Arrays.toString(parentProcess.getCommandLine());
+            if (null != commandLine && commandLine.contains("rhq-server-wrapper.conf")) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 }

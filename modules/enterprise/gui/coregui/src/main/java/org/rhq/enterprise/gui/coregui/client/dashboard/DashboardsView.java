@@ -52,6 +52,7 @@ import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardCategory;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.InitializableView;
@@ -120,6 +121,7 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
         super.onInit();
 
         DashboardCriteria criteria = new DashboardCriteria();
+        criteria.addSortName(PageOrdering.ASC);
         dashboardService.findDashboardsByCriteria(criteria, new AsyncCallback<PageList<Dashboard>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_dashboardsManager_error1(), caught);
@@ -324,7 +326,7 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
         DashboardPortlet news = new DashboardPortlet(MashupPortlet.NAME, MashupPortlet.KEY, 300);
         if (isRHQ) {
             news.getConfiguration()
-                .put(new PropertySimple("address", "https://docs.jboss.org/author/display/RHQ/Home"));
+                .put(new PropertySimple("address", "https://docs.jboss.org/author/display/RHQ/User+Documentation"));
         } else {
             news.getConfiguration().put(
                 new PropertySimple("address",

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,29 +13,40 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.rest.domain;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
 import com.wordnik.swagger.annotations.ApiClass;
 import com.wordnik.swagger.annotations.ApiProperty;
 
+import org.rhq.core.domain.alert.AlertDampening;
+
 /**
  * Alert Definition
  * @author Heiko W. Rupp
  */
 @ApiClass("Representation of an AlertDefinition")
-@XmlRootElement
+@XmlRootElement(name = "definition")
 public class AlertDefinitionRest {
 
     int id;
     String name;
     boolean enabled;
-    String priority;
-
+    String priority = "LOW";
+    int recoveryId;
+    String conditionMode = "ANY"; // ANY, ALL
+    List<AlertConditionRest> conditions = new ArrayList<AlertConditionRest>();
+    List<AlertNotificationRest> notifications = new ArrayList<AlertNotificationRest>();
+    String dampeningCategory;
+    String dampeningCount;
+    String dampeningPeriod;
 
     public AlertDefinitionRest() {
     }
@@ -79,5 +90,65 @@ public class AlertDefinitionRest {
 
     public void setPriority(String priority) {
         this.priority = priority;
+    }
+
+    public int getRecoveryId() {
+        return recoveryId;
+    }
+
+    public void setRecoveryId(int recoveryId) {
+        this.recoveryId = recoveryId;
+    }
+
+    @ApiProperty(value = "Expression to use for condition logic",
+        allowableValues = "ALL, ANY")
+    public String getConditionMode() {
+        return conditionMode;
+    }
+
+    public void setConditionMode(String conditionMode) {
+        this.conditionMode = conditionMode;
+    }
+
+    @ApiProperty(value = "List of Conditions. Only sent if explicitly requested.")
+    public List<AlertConditionRest> getConditions() {
+        return conditions;
+    }
+
+    public void setConditions(List<AlertConditionRest> conditions) {
+        this.conditions = conditions;
+    }
+
+    @ApiProperty(value = "List of notifications. Only sent if explicitly requested.")
+    public List<AlertNotificationRest> getNotifications() {
+        return notifications;
+    }
+
+    public void setNotifications(List<AlertNotificationRest> notifications) {
+        this.notifications = notifications;
+    }
+
+    public String getDampeningCategory() {
+        return dampeningCategory;
+    }
+
+    public void setDampeningCategory(String dampeningCategory) {
+        this.dampeningCategory = dampeningCategory;
+    }
+
+    public String getDampeningCount() {
+        return dampeningCount;
+    }
+
+    public void setDampeningCount(String dampeningCount) {
+        this.dampeningCount = dampeningCount;
+    }
+
+    public String getDampeningPeriod() {
+        return dampeningPeriod;
+    }
+
+    public void setDampeningPeriod(String dampeningPeriod) {
+        this.dampeningPeriod = dampeningPeriod;
     }
 }

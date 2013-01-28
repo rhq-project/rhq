@@ -340,7 +340,7 @@ public class SnmpTrapSender implements PDUFactory {
         // TODO: Make transport configurable (ips, 09/12/07).
 
         String host = properties.getSimpleValue("host",null);
-        String portS = properties.getSimpleValue("port","161");
+        String portS = properties.getSimpleValue("port","162");
         Integer port = Integer.valueOf(portS);
 
         final String transport = UDP_TRANSPORT;

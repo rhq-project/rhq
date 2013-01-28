@@ -114,8 +114,16 @@ public class LocalClientTest extends JMockTest {
     public void testAllManagersInstantiable() throws Exception {
         setupFakeJndiLookup();
 
+        //the list of enabled rhq managers is set at compile time
+        //so far only the TagManager can be disabled for the purposes of this test
+        //take this into account when building the expected array for the assertion
+        HashSet<RhqManager> expected = new HashSet<RhqManager>(Arrays.asList(RhqManager.values()));
+        if (!RhqManager.TagManager.enabled()) {
+            expected.remove(RhqManager.TagManager);
+        }
+
         LocalClient lc = new LocalClient(null);
-        assertEquals(lc.getScriptingAPI().keySet(), new HashSet<RhqManager>(Arrays.asList(RhqManager.values())),
+        assertEquals(lc.getScriptingAPI().keySet(), expected,
             "Scripting API contains different managers than expected.");
     }
 

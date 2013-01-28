@@ -40,8 +40,8 @@ public class ResourceOperationLastCompletedComposite extends OperationLastComple
 
         this.resourceId = 0;
         this.resourceTypeId = 0;
-        this.resourceName = "(unitialized)";
-        this.ancestry = "(unitialized)";
+        this.resourceName = "(uninitialized)";
+        this.ancestry = "(uninitialized)";
     }
 
     public ResourceOperationLastCompletedComposite(int operationId, String operationName, long operationStartTime,

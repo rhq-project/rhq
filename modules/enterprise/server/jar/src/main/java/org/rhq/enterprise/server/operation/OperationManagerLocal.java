@@ -72,6 +72,45 @@ public interface OperationManagerLocal {
      *         scheduled operation
      */
     int scheduleResourceOperation(Subject subject, ResourceOperationSchedule schedule);
+    
+    
+    /**
+     * Schedules a Resource operation for execution using the cron expression.
+     *
+     * @param  subject        the user who is asking to schedule the job
+     * @param  resourceId     the resource that is the target of the operation
+     * @param  operationName  the actual operation to invoke
+     * @param  cronExpression the cron expression specifying the repetition.
+     *                        For example:
+     * <pre>
+     *   0 0 12 * * ?              Fire at 12pm (noon) every day
+     *   0 15 10 ? * *             Fire at 10:15am every day
+     *   0 15 10 * * ?             Fire at 10:15am every day
+     *   0 15 10 * * ? *           Fire at 10:15am every day
+     *   0 15 10 * * ? 2005        Fire at 10:15am every day during the year 2005
+     *   0 * 14 * * ?              every minute starting at 2pm and ending at 2:59pm, every day
+     *   0 0/5 14 * * ?            every 5 minutes starting at 2pm and ending at 2:55pm, ev. d.
+     *   0 0-5 14 * * ?            Fire every minute starting at 2pm and ending at 2:05pm, every day
+     *   0 10,44 14 ? 3 WED        Fire at 2:10pm and at 2:44pm every Wednesday in the month of March.
+     *   0 15 10 ? * MON-FRI       Fire at 10:15am every Monday, Tuesday, Wednesday, Thursday and Friday
+     *   0 15 10 15 * ?            Fire at 10:15am on the 15th day of every month
+     *   0 15 10 L * ?             Fire at 10:15am on the last day of every month
+     *   0 15 10 ? * 6L            Fire at 10:15am on the last Friday of every month
+     *   0 15 10 ? * 6L            Fire at 10:15am on the last Friday of every month
+     *   0 15 10 ? * 6L 2002-2005  at 10:15am on every last friday of every month during the years
+     *   0 15 10 ? * 6#3           Fire at 10:15am on the third Friday of every month
+     *   0 11 11 11 11 ?           Fire every November 11th at 11:11am.
+     * </pre>
+     * @param  timeout        the number of seconds before this operation will fail due to timeout. 0 for no timeout.
+     * @param  parameters     the names parameters for the operation. 
+     * @param  description    user-entered description of the job to be scheduled
+     *
+     * @return the information on the new schedule
+     *
+     * @throws SchedulerException if failed to schedule the operation
+     */
+    ResourceOperationSchedule scheduleResourceOperationUsingCron(Subject subject, int resourceId, String operationName,
+        String cronExpression, int timeout, Configuration parameters, String description) throws ScheduleException;
 
     /**
      * Schedules a Resource group operation for execution.
@@ -632,11 +671,59 @@ public interface OperationManagerLocal {
      * @param  description    user-entered description of the job to be scheduled
      *
      * @return the information on the new schedule
-     * @throws ScheduleException TODO
+     * @throws ScheduleException if failed to schedule the operation
      */
     ResourceOperationSchedule scheduleResourceOperation(Subject subject, int resourceId, String operationName,
         long delay, long repeatInterval, int repeatCount, int timeout, Configuration parameters, String description)
         throws ScheduleException;
+  
+    /**
+     * Schedules an operation for execution on members of the given group using the cron expression.
+     *
+     * @param  subject                   the user who is asking to schedule the job
+     * @param  groupId                   the compatible group whose member resources are the target of the operation
+     * @param  executionOrderResourceIds optional order of exection - if not<code>null</code>, these are group members
+     *                                   resource IDs in the order in which the operations are invoked
+     * @param  haltOnFailure             if <code>true</code>, the group operation will halt whenever one individual
+     *                                   resource fails to execute. When executing in order, this means once a failure
+     *                                   occurs, the resources next in line to execute will abort and not attempt to
+     *                                   execute. If not executing in any particular order, you are not guaranteed which
+     *                                   will stop and which will continue since all are executed as fast as possible,
+     *                                   but the group operation will attempt to stop as best it can.
+     * @param  operationName             the actual operation to invoke
+     * @param  parameters                optional parameters to pass into the operation
+     * @param  cronExpression the cron expression specifying the repetition.
+     *                        For example:
+     * <pre>
+     *   0 0 12 * * ?              Fire at 12pm (noon) every day
+     *   0 15 10 ? * *             Fire at 10:15am every day
+     *   0 15 10 * * ?             Fire at 10:15am every day
+     *   0 15 10 * * ? *           Fire at 10:15am every day
+     *   0 15 10 * * ? 2005        Fire at 10:15am every day during the year 2005
+     *   0 * 14 * * ?              every minute starting at 2pm and ending at 2:59pm, every day
+     *   0 0/5 14 * * ?            every 5 minutes starting at 2pm and ending at 2:55pm, ev. d.
+     *   0 0-5 14 * * ?            Fire every minute starting at 2pm and ending at 2:05pm, every day
+     *   0 10,44 14 ? 3 WED        Fire at 2:10pm and at 2:44pm every Wednesday in the month of March.
+     *   0 15 10 ? * MON-FRI       Fire at 10:15am every Monday, Tuesday, Wednesday, Thursday and Friday
+     *   0 15 10 15 * ?            Fire at 10:15am on the 15th day of every month
+     *   0 15 10 L * ?             Fire at 10:15am on the last day of every month
+     *   0 15 10 ? * 6L            Fire at 10:15am on the last Friday of every month
+     *   0 15 10 ? * 6L            Fire at 10:15am on the last Friday of every month
+     *   0 15 10 ? * 6L 2002-2005  at 10:15am on every last friday of every month during the years
+     *   0 15 10 ? * 6#3           Fire at 10:15am on the third Friday of every month
+     *   0 11 11 11 11 ?           Fire every November 11th at 11:11am.
+     * </pre>
+     * @param  timeout          the number of seconds before this operation will fail due to timeout. 0 for no timeout.
+     *                          are ignored and reset by this method)
+     * @param  description      user-entered description of the job to be scheduled
+     *
+     * @return the information  on the new schedule
+     *
+     * @throws SchedulerException if failed to schedule the operation
+     */
+    GroupOperationSchedule scheduleGroupOperationUsingCron(Subject subject, int groupId,
+        int[] executionOrderResourceIds, boolean haltOnFailure, String operationName, Configuration parameters,
+        String cronExpression, int timeout, String description) throws ScheduleException;
 
     /**
      * Unschedules the resource operation identified with the given job ID.
@@ -644,7 +731,7 @@ public interface OperationManagerLocal {
      * @param  subject    the user who is asking to unschedule the operation
      * @param  jobId      identifies the operation to unschedule
      * @param  resourceId the ID of the resource whose operation is getting unscheduled
-     * @throws UnscheduleException TODO
+     * @throws UnscheduleException if failed to schedule the operation
      */
     void unscheduleResourceOperation(Subject subject, String jobId, int resourceId) throws UnscheduleException;
 

@@ -165,7 +165,7 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
      * @param  parentResourceId    the id of the resource that will be the parent of the manually discovered resource
      * @param  pluginConfiguration the properties that should be used to connect to the underlying managed resource
      *
-     * @return the newly discovered resource with any associated {@link ResourceError} that might have occurred during
+     * @return NotNull the newly discovered resource with any associated {@link ResourceError} that might have occurred during
      *         the activation of the resource
      *
      * @throws InvalidPluginConfigurationClientException if connecting to the underlying managed resource failed due to

@@ -76,7 +76,7 @@ public class CCMTestNGListener implements IInvokedMethodListener {
 
     private void deployCluster(DeployCluster annotation) throws CassandraException {
         String clusterDir = System.getProperty("rhq.cassandra.cluster.dir");
-        if (clusterDir == null) {
+        if (clusterDir == null || clusterDir.isEmpty()) {
             File basedir = new File("target");
             clusterDir = new File(basedir, "cassandra").getAbsolutePath();
         }

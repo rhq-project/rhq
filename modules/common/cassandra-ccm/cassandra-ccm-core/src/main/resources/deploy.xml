@@ -180,15 +180,11 @@
 
   <target name="pre-install">
     <mkdir dir="${cluster.dir}"/>
+
   </target>
 
   <target name="post-install">
     <property name="bin.dir" value="${rhq.deploy.dir}/bin"/>
-
-    <mkdir dir="${rhq.deploy.dir}/${data.dir}"/>
-    <mkdir dir="${rhq.deploy.dir}/${commitlog.dir}"/>
-    <mkdir dir="${rhq.deploy.dir}/${saved.caches.dir}"/>
-    <mkdir dir="${rhq.deploy.dir}/${log.dir}"/>
 
     <chmod file="${bin.dir}/cassandra" perm="+x"/>
     <chmod file="${bin.dir}/cqlsh" perm="+x"/>

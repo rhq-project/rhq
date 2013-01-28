@@ -30,7 +30,6 @@ import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
-import org.rhq.core.clientapi.server.discovery.StaleTypeException;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.AvailabilityReport;
@@ -52,6 +51,7 @@ import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
+import org.rhq.enterprise.server.util.concurrent.InventoryReportSerializer;
 
 /**
  * This is the service that receives inventory data from agents. As agents discover resources, they report back to the
@@ -66,22 +66,34 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
      * @see DiscoveryServerService#mergeInventoryReport(InventoryReport)
      */
     @Override
-    public ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException,
-        StaleTypeException {
+    public ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException {
 
         InventoryReportSerializer.getSingleton().lock(report.getAgent().getName());
         try {
-            syncInfo = discoveryBoss.mergeInventoryReport(report);
-        } catch (InvalidInventoryReportException e) {
-            Agent agent = report.getAgent();
-            if (log.isDebugEnabled()) {
-                log.error("Received invalid inventory report from agent [" + agent + "]", e);
-            } else {
-                /* 
-                 * this is expected when the platform is uninventoried, because the agent often has in-flight reports
-                 * going to the server at the time the platform's agent is being deleted from the database
-                 */
-                log.error("Received invalid inventory report from agent [" + agent + "]: " + e.getMessage());
+            long start = System.currentTimeMillis();
+            DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
+            ResourceSyncInfo syncInfo;
+
+            try {
+                syncInfo = discoveryBoss.mergeInventoryReport(report);
+
+            } catch (InvalidInventoryReportException e) {
+                Agent agent = report.getAgent();
+                if (log.isDebugEnabled()) {
+                    log.error("Received invalid inventory report from agent [" + agent + "]", e);
+                } else {
+                    /* 
+                     * this is expected when the platform is uninventoried, because the agent often has in-flight reports
+                     * going to the server at the time the platform's agent is being deleted from the database
+                     */
+                    log.error("Received invalid inventory report from agent [" + agent + "]: " + e.getMessage());
+                }
+                throw e;
+
+            } catch (RuntimeException e) {
+                log.error("Fatal error occurred during merging of inventory report from agent [" + report.getAgent()
+                    + "].", e);
+                throw e;
             }
 
             long elapsed = (System.currentTimeMillis() - start);
@@ -94,6 +106,7 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
             }
 
             return syncInfo;
+
         } finally {
             InventoryReportSerializer.getSingleton().unlock(report.getAgent().getName());
         }
@@ -113,10 +126,12 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
 
             long elapsed = (System.currentTimeMillis() - start);
             if (elapsed > 20000L) {
-                log.warn("Performance: processed " + reportToString + " - needFull=[" + !ok + "] in (" + elapsed + ")ms");
+                log.warn("Performance: processed " + reportToString + " - needFull=[" + !ok + "] in (" + elapsed
+                    + ")ms");
             } else {
                 if (log.isDebugEnabled()) {
-                    log.debug("Performance: processed " + reportToString + " - needFull=[" + !ok + "] in (" + elapsed + ")ms");
+                    log.debug("Performance: processed " + reportToString + " - needFull=[" + !ok + "] in (" + elapsed
+                        + ")ms");
                 }
             }
 
@@ -227,8 +242,8 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
     }
 
     private static boolean isVisibleInInventory(Resource resource) {
-        return resource.getInventoryStatus() != InventoryStatus.DELETED &&
-            resource.getInventoryStatus() != InventoryStatus.UNINVENTORIED;
+        return resource.getInventoryStatus() != InventoryStatus.DELETED
+            && resource.getInventoryStatus() != InventoryStatus.UNINVENTORIED;
     }
 
     @Override

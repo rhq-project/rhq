@@ -68,9 +68,8 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
     @Override
     public ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException,
         StaleTypeException {
-        long start = System.currentTimeMillis();
-        DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
-        ResourceSyncInfo syncInfo;
+
+        InventoryReportSerializer.getSingleton().lock(report.getAgent().getName());
         try {
             syncInfo = discoveryBoss.mergeInventoryReport(report);
         } catch (InvalidInventoryReportException e) {
@@ -84,23 +83,20 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
                  */
                 log.error("Received invalid inventory report from agent [" + agent + "]: " + e.getMessage());
             }
-            throw e;
-        } catch (RuntimeException e) {
-            log.error(
-                "Fatal error occurred during merging of inventory report from agent [" + report.getAgent() + "].", e);
-            throw e;
-        }
 
-        long elapsed = (System.currentTimeMillis() - start);
-        if (elapsed > 30000L) {
-            log.warn("Performance: inventory merge (" + elapsed + ")ms");
-        } else {
-            if (log.isDebugEnabled()) {
-                log.debug("Performance: inventory merge (" + elapsed + ")ms");
+            long elapsed = (System.currentTimeMillis() - start);
+            if (elapsed > 30000L) {
+                log.warn("Performance: inventory merge (" + elapsed + ")ms");
+            } else {
+                if (log.isDebugEnabled()) {
+                    log.debug("Performance: inventory merge (" + elapsed + ")ms");
+                }
             }
-        }
 
-        return syncInfo;
+            return syncInfo;
+        } finally {
+            InventoryReportSerializer.getSingleton().unlock(report.getAgent().getName());
+        }
     }
 
     @Override

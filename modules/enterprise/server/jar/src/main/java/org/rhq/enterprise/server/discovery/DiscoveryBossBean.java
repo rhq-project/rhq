@@ -744,10 +744,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         // tree and chunk through it.  Parents must be merged before children, so use a breadth first approach.
         List<Resource> resourceList = treeToBreadthFirstList(resource);
 
-        // TODO: if (log.isDebugEnabled()) {        
-        log.info("Preparing to merge [" + resourceList.size() + "] Resources with a batch size of [" + MERGE_BATCH_SIZE
-            + "]");
-        //}
+        if (log.isDebugEnabled()) {
+            log.debug("Preparing to merge [" + resourceList.size() + "] Resources with a batch size of ["
+                + MERGE_BATCH_SIZE + "]");
+        }
 
         while (!resourceList.isEmpty()) {
             int size = resourceList.size();
@@ -760,10 +760,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             resourceBatch.clear();
         }
 
-        // TODO: if (log.isDebugEnabled()) {
-        log.info("Resource and children merged: resource/millis=" + resource.getName() + '/'
-            + (System.currentTimeMillis() - start));
-        //}
+        if (log.isDebugEnabled()) {
+            log.debug("Resource and children merged: resource/millis=" + resource.getName() + '/'
+                + (System.currentTimeMillis() - start));
+        }
 
         return;
     }
@@ -790,6 +790,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         throws InvalidInventoryReportException {
 
         long batchStart = System.currentTimeMillis();
+        boolean isDebugEnabled = log.isDebugEnabled();
 
         for (Resource resource : resourceBatch) {
             Resource existingResource = null;
@@ -806,17 +807,17 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 persistResourceInNewTransaction(resource);
             }
 
-            //TODO: if (log.isDebugEnabled()) {
-            log.info("Single Resource merged: resource/millis=" + resource.getName() + '/'
-                + (System.currentTimeMillis() - start));
-            //}
+            if (isDebugEnabled) {
+                log.debug("Single Resource merged: resource/millis=" + resource.getName() + '/'
+                    + (System.currentTimeMillis() - start));
+            }
         }
 
-        //TODO: if (log.isDebugEnabled()) {
-        long delta = (System.currentTimeMillis() - batchStart);
-        log.info("Resource Batch merged: size/average/millis=" + resourceBatch.size() + "/" + delta
-            / resourceBatch.size() + "/" + delta);
-        //}        
+        if (isDebugEnabled) {
+            long delta = (System.currentTimeMillis() - batchStart);
+            log.debug("Resource Batch merged: size/average/millis=" + resourceBatch.size() + "/" + delta
+                / resourceBatch.size() + "/" + delta);
+        }
     }
 
     /**
@@ -843,7 +844,9 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
      */
     private Resource findExistingResource(Resource resource) {
 
-        if (log.isDebugEnabled()) {
+        boolean isDebugEnabled = log.isDebugEnabled();
+
+        if (isDebugEnabled) {
             log.debug("getExistingResource processing for [" + resource + "]");
         }
 
@@ -853,21 +856,21 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         Subject overlord = subjectManager.getOverlord();
 
         if (resource.getId() != 0) {
-            if (log.isDebugEnabled()) {
+            if (isDebugEnabled) {
                 log.debug("Agent claims resource is already in inventory. Id=" + resource.getId());
             }
 
             try {
                 query.setParameter("resourceId", resource.getId());
                 existingResource = (Resource) query.getSingleResult();
-                if (log.isDebugEnabled()) {
+                if (isDebugEnabled) {
                     log.debug("Found resource already in inventory. Id=" + resource.getId());
                 }
             } catch (NoResultException e) {
                 existingResource = null;
 
                 // agent lied - agent's copy of JON server inventory must be stale.
-                if (log.isDebugEnabled()) {
+                if (isDebugEnabled) {
                     log.debug("However, no resource exists with the specified id. Id=" + resource.getId());
                 }
             }
@@ -879,7 +882,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         // this will happen if the agent found the resource (non-zero id) but the DB didn't know about it,
         // or if the agent didn't know about it to begin with (id was 0).
         if (existingResource == null) {
-            if (log.isDebugEnabled()) {
+            if (isDebugEnabled) {
                 log.debug("Checking if a resource exists with the specified business key. Id=" + resource.getId()
                     + ", key=" + resource.getResourceKey());
             }
@@ -920,7 +923,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             if (null != existingResource) {
                 // We found it - reset the id to what it should be.
                 resource.setId(existingResource.getId());
-                if (log.isDebugEnabled()) {
+                if (isDebugEnabled) {
                     log.debug("Found resource already in inventory with specified business key, Id=" + resource.getId());
                 }
 
@@ -934,9 +937,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                     // TODO: Is there anything else we should do here to inform the agent it has an out-of-sync resource?
 
                 } else {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Resource's id was already zero, nothing to do for the merge.");
-                    }
+                    log.debug("Resource's id was already zero, nothing to do for the merge.");
                 }
             }
         }

@@ -2,7 +2,7 @@
     font-size: 10px;
     position: absolute;
     padding: 5px;
-    z-index: 400000;
+    z-index: 990000;
 }
 
 .tipsy-inner {
@@ -11,6 +11,7 @@
     max-width: 200px;
     padding: 5px 8px 4px 8px;
     text-align: center;
+    z-index: 990000;
 }
 
 /* Rounded corners */
@@ -18,6 +19,7 @@
     border-radius: 3px;
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
+    z-index: 990000;
 }
 
 /* Uncomment for shadow */
@@ -29,23 +31,28 @@
     height: 0;
     line-height: 0;
     border: 5px dashed #000;
+    z-index: 990000;
 }
 
 /* Rules to colour arrows */
 .tipsy-arrow-n {
     border-bottom-color: #000;
+    z-index: 990000;
 }
 
 .tipsy-arrow-s {
     border-top-color: #000;
+    z-index: 990000;
 }
 
 .tipsy-arrow-e {
     border-left-color: #000;
+    z-index: 990000;
 }
 
 .tipsy-arrow-w {
     border-right-color: #000;
+    z-index: 990000;
 }
 
 .tipsy-n .tipsy-arrow {
@@ -56,6 +63,7 @@
     border-top: none;
     border-left-color: transparent;
     border-right-color: transparent;
+    z-index: 990000;
 }
 
 .tipsy-nw .tipsy-arrow {
@@ -65,6 +73,7 @@
     border-top: none;
     border-left-color: transparent;
     border-right-color: transparent;
+    z-index: 990000;
 }
 
 .tipsy-ne .tipsy-arrow {
@@ -74,6 +83,7 @@
     border-top: none;
     border-left-color: transparent;
     border-right-color: transparent;
+    z-index: 990000;
 }
 
 .tipsy-s .tipsy-arrow {
@@ -84,6 +94,7 @@
     border-bottom: none;
     border-left-color: transparent;
     border-right-color: transparent;
+    z-index: 990000;
 }
 
 .tipsy-sw .tipsy-arrow {
@@ -93,6 +104,7 @@
     border-bottom: none;
     border-left-color: transparent;
     border-right-color: transparent;
+    z-index: 990000;
 }
 
 .tipsy-se .tipsy-arrow {
@@ -102,6 +114,7 @@
     border-bottom: none;
     border-left-color: transparent;
     border-right-color: transparent;
+    z-index: 990000;
 }
 
 .tipsy-e .tipsy-arrow {
@@ -112,6 +125,7 @@
     border-right: none;
     border-top-color: transparent;
     border-bottom-color: transparent;
+    z-index: 990000;
 }
 
 .tipsy-w .tipsy-arrow {
@@ -122,4 +136,5 @@
     border-left: none;
     border-top-color: transparent;
     border-bottom-color: transparent;
+    z-index: 990000;
 }

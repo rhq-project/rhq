@@ -14,7 +14,7 @@
 
     <!-- @todo: take out GFlot once we have d3 graphing in place -->
     <inherits name='ca.nanometrics.gflot.GFlot'/>
-
+    <set-property name="gflot.load.jquery" value="EXTERNAL" />
 
     <!-- ============================ gwt logging ============================= -->
     <set-property name="gwt.logging.enabled" value="TRUE"/>

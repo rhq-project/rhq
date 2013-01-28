@@ -5,4 +5,13 @@
     <server name="ServerD">
         <service name="ServerD.GrandChild1"/>
     </server>
+    
+    <server name="ServerE">
+        <service name="ServiceE1">
+            <service name="ServiceE2">
+                <service name="ServiceE3" />
+            </service>
+        </service>
+    </server>
+    
 </plugin>

@@ -34,6 +34,8 @@
                 <c:simple-property name="ServerC.Content.version"/>
             </configuration>
         </content>
+        
+        <service name="ServiceC1" />
     </server>
 
     <server name="ServerD">
@@ -51,4 +53,15 @@
             </service>
         </service>
     </server>
+    
+    <server name="ServerF">
+        <service name="ServiceF1">
+            <service name="ServiceF2">
+                <service name="ServiceF3">
+                    <service name="serviceF4"/>
+                </service>
+            </service>
+        </service>
+    </server>
+    
 </plugin>

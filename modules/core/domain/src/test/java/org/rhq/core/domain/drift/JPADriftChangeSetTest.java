@@ -29,6 +29,7 @@ import java.util.List;
 
 import javax.persistence.EntityManager;
 
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -87,8 +88,29 @@ public class JPADriftChangeSetTest extends DriftDataAccessTest {
         });
     }
 
+    @AfterMethod(alwaysRun = true, groups = {"JPADriftChangeSet", "drift.ejb"})
+    public void tearDown() {
+        if (!inContainer()) {
+            return;
+        }
+
+        executeInTransaction(false, new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                purgeDB();
+            }
+        });
+    }
+
     private void purgeDB() {
         EntityManager em = getEntityManager();
+
+        em.createQuery("delete from JPADrift ").executeUpdate();
+        em.createQuery("delete from JPADriftChangeSet").executeUpdate();
+        em.createQuery("delete from JPADriftSet").executeUpdate();
+        em.createQuery("delete from JPADriftFile").executeUpdate();
+        em.createQuery("delete from DriftDefinition").executeUpdate();
+        em.createQuery("delete from DriftDefinitionTemplate").executeUpdate();
 
         List<Availability> avails = (List<Availability>) em.createQuery("SELECT a FROM Availability a").getResultList();
         for (Availability a : avails) {

@@ -47,6 +47,7 @@ public class PluginContainerConfiguration {
     private static final String DATA_DIRECTORY_PROP = PROP_PREFIX + "data-directory";
     private static final String TEMP_DIRECTORY_PROP = PROP_PREFIX + "temp-directory";
     private static final String DISABLED_PLUGINS = PROP_PREFIX + "disabled-plugins";
+    private static final String DISABLED_RESOURCE_TYPES = PROP_PREFIX + "disabled-resource-types";
     private static final String ROOT_PLUGIN_CLASSLOADER_REGEX_PROP = PROP_PREFIX + "root-plugin-classloader-regex";
     private static final String CREATE_RESOURCE_CLASSLOADERS = PROP_PREFIX + "create-resource-classloaders";
     private static final String START_MANAGEMENT_BEAN_PROP = PROP_PREFIX + "start-management-bean";
@@ -234,6 +235,42 @@ public class PluginContainerConfiguration {
             configuration.put(DISABLED_PLUGINS, disabledPlugins);
         } else {
             configuration.remove(DISABLED_PLUGINS);
+        }
+    }
+
+    /**
+     * If any resource types are to be disabled, the resource types names will be returned
+     * in a list.
+     * Each type is listed as "plugin name>parent type>child type".
+     * If no types are to be disabled an empty list is returned.
+     * The returned list is a copy, not the actual list used internally.
+     * Note that the plugin name is the name found in the plugin .xml descriptor in the plugin root element.
+     *
+     * @return list of resource type names identifying types to be disabled
+     */
+    @SuppressWarnings("unchecked")
+    public List<String> getDisabledResourceTypes() {
+        List<String> list = (List<String>) configuration.get(DISABLED_RESOURCE_TYPES);
+        if (list == null) {
+            return new ArrayList<String>(0);
+        } else {
+            return new ArrayList<String>(list);
+        }
+    }
+
+    /**
+     * If one or more resource types are not to be loaded by the plugin container, the given
+     * list should be the names of the types to be disabled.
+     * Each type is listed as "plugin name>parent type>child type".
+     * Note that the plugin name is the name found in the plugin .xml descriptor in the plugin root element.
+     *
+     * @param disabledResourceTypes
+     */
+    public void setDisabledResourceTypes(List<String> disabledResourceTypes) {
+        if (disabledResourceTypes != null) {
+            configuration.put(DISABLED_RESOURCE_TYPES, disabledResourceTypes);
+        } else {
+            configuration.remove(DISABLED_RESOURCE_TYPES);
         }
     }
 

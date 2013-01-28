@@ -22,6 +22,7 @@
  */
 package org.rhq.core.clientapi.agent.metadata;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -72,6 +73,11 @@ public class PluginMetadataManager {
     private Map<String, PluginMetadataParser> parsersByPlugin = new HashMap<String, PluginMetadataParser>();
 
     private Map<String, PluginDescriptor> descriptorsByPlugin = new HashMap<String, PluginDescriptor>();
+
+    private List<String> disabledResourceTypesAsStrings = null;
+    private Map<ResourceType, String> disabledResourceTypes = null;
+    private String disabledDiscoveryComponentClassName = null;
+    private String disabledResourceComponentClassName = null;
 
     public PluginMetadataManager() {
     }
@@ -138,11 +144,17 @@ public class PluginMetadataManager {
     }
 
     public String getDiscoveryClass(ResourceType resourceType) {
+        if (isDisabledResourceType(resourceType)) {
+            return this.disabledDiscoveryComponentClassName;
+        }
         PluginMetadataParser parser = this.parsersByPlugin.get(resourceType.getPlugin());
         return (parser != null) ? parser.getDiscoveryComponentClass(resourceType) : null;
     }
 
     public String getComponentClass(ResourceType resourceType) {
+        if (isDisabledResourceType(resourceType)) {
+            return this.disabledResourceComponentClassName;
+        }
         PluginMetadataParser parser = this.parsersByPlugin.get(resourceType.getPlugin());
         return (parser != null) ? parser.getComponentClass(resourceType) : null;
     }
@@ -165,6 +177,7 @@ public class PluginMetadataManager {
                     for (ResourceType oldType : oldParser.getAllTypes()) {
                         this.typesByCategory.get(oldType.getCategory()).remove(oldType);
                         this.types.remove(oldType);
+                        this.disabledResourceTypes.remove(oldType);
                     }
                 }
             }
@@ -182,23 +195,14 @@ public class PluginMetadataManager {
                 }
             }
 
-            return parser.getRootResourceTypes();
+            findDisabledResourceTypesInAllPlugins();
+
+            Set<ResourceType> rootTypes = parser.getRootResourceTypes();
+            return rootTypes;
+
         } catch (InvalidPluginDescriptorException e) {
             // TODO Should we throw back or log partial failures or store them against the definitions?
             log.error("Error transforming plugin descriptor [" + pluginDescriptor.getName() + "].", e);
-        }
-
-        return null;
-    }
-
-    // TODO Is this really appropriate? It's inconvenient to look up including the parent but
-    // that is currently the accurate limiter... need to consider type keys
-    // Otherwise we could use the business key which is the "plugin" name and the type name.
-    public ResourceType getType(String typeName, ResourceCategory category) {
-        for (ResourceType type : getTypesForCategory(category)) {
-            if (type.getName().equals(typeName)) {
-                return type;
-            }
         }
 
         return null;
@@ -359,5 +363,86 @@ public class PluginMetadataManager {
             }
         }
         return false;
+    }
+
+    /**
+     * This will define resource types that will be disabled - and by that it means
+     * the discovery and resource components will not do anything (it is assumed
+     * the classnames for the component classes will not do anything).
+     *
+     * Owners of this metadata manager need to set this during initialization prior to
+     * loading any plugins.
+     *
+     * @param disabledTypesAsStrings list of types, in the form "pluginName>parentType>childType"
+     * @param disabledDiscoveryComponentClassName the name of the discovery component class of all disable types
+     * @param disabledResourceComponentClassName the name of the resource component class of all disable types
+     */
+    public void setDisabledResourceTypes(List<String> disabledTypesAsStrings,
+        String disabledDiscoveryComponentClassName, String disabledResourceComponentClassName) {
+
+        if (disabledTypesAsStrings != null && !disabledTypesAsStrings.isEmpty()) {
+            this.disabledDiscoveryComponentClassName = disabledDiscoveryComponentClassName;
+            this.disabledResourceComponentClassName = disabledResourceComponentClassName;
+            this.disabledResourceTypesAsStrings = new ArrayList<String>(disabledTypesAsStrings);
+            log.info("Will disable the following resource types: " + this.disabledResourceTypesAsStrings);
+        } else {
+            this.disabledDiscoveryComponentClassName = null;
+            this.disabledResourceComponentClassName = null;
+            this.disabledResourceTypesAsStrings = null;
+        }
+        return;
+    }
+
+    private boolean isDisabledResourceType(ResourceType resourceType) {
+        if (this.disabledResourceTypes == null) {
+            return false;
+        }
+        return this.disabledResourceTypes.containsKey(resourceType);
+    }
+
+    // finds if type or its children are disabled and if so adds them to the map with their string representation
+    private void findDisabledResourceTypes(String parentHierarchy, ResourceType type,
+        HashMap<ResourceType, String> disabledTypes) {
+        // this is the current level we are at in the type hierarchy, as written in string form ("plugin>type>type...")
+        String typeHierarchy = parentHierarchy + '>' + type.getName();
+
+        // see if the given type is to be disabled - if so, add it to the map
+        if (this.disabledResourceTypesAsStrings.contains(typeHierarchy)) {
+            log.debug("Disabling resource type: " + type);
+            disabledTypes.put(type, typeHierarchy);
+        }
+
+        // recursively call ourselves to see if any child types are to be disabled
+        Set<ResourceType> childTypes = type.getChildResourceTypes();
+        if (childTypes != null) {
+            for (ResourceType childType : childTypes) {
+                findDisabledResourceTypes(typeHierarchy, childType, disabledTypes);
+            }
+        }
+
+        return;
+    }
+
+    private void findDisabledResourceTypesInAllPlugins() {
+        if (this.disabledResourceTypesAsStrings != null) {
+            int totalToBeDisabled = this.disabledResourceTypesAsStrings.size();
+            // we have to do it all over again over all plugins because we need to support the injection extension model
+            // that is, <runs-inside> - new plugins coming online might have injected types in previously loaded plugins
+            HashMap<ResourceType, String> disabledTypes = new HashMap<ResourceType, String>();
+            for (Map.Entry<String, PluginMetadataParser> entry : parsersByPlugin.entrySet()) {
+                PluginMetadataParser parser = entry.getValue();
+                PluginDescriptor pluginDescriptor = parser.getDescriptor();
+                Set<ResourceType> rootTypes = parser.getRootResourceTypes();
+                String hierarchyStart = pluginDescriptor.getName();
+                for (ResourceType rootType : rootTypes) {
+                    findDisabledResourceTypes(hierarchyStart, rootType, disabledTypes);
+                }
+                if (disabledTypes.size() == totalToBeDisabled) {
+                    break; // we found them all, no need to look at any more plugins
+                }
+            }
+            this.disabledResourceTypes = (!disabledTypes.isEmpty()) ? disabledTypes : null;
+        }
+        return;
     }
 }

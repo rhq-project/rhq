@@ -65,7 +65,8 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 @Local
 public interface ResourceManagerLocal {
     /**
-     * Create a new Resource.
+     * Create a new Resource. This method creates only the supplied Resource, it will *NOT* create
+     * the parent or any childResources.
      *
      * @param user the user creating the resource
      * @param resource the resource to be created

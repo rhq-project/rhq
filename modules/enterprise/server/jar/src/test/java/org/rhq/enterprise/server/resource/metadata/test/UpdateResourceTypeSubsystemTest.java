@@ -216,16 +216,21 @@ public class UpdateResourceTypeSubsystemTest extends UpdatePluginMetadataTestBas
         try {
             registerPlugin("update2-v1_0.xml");
 
+            Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+
             ResourceType platform1 = getResourceType("myPlatform");
             Resource platformResource = createResource("foo-myPlatform", "foo-myPlatform", platform1);
+            resourceManager.createResource(overlord, platformResource, -1);
+
             ResourceType service1 = getResourceType("service1");
             Resource service1Resource = createResource("foo-service1", "foo-service1", service1);
             platformResource.addChildResource(service1Resource);
+            resourceManager.createResource(overlord, service1Resource, -1);
+
             ResourceType nestedOne = getResourceType("nestedOne");
             Resource nestedOneResource = createResource("foo-nestedOne", "foo-nestedOne", nestedOne);
             service1Resource.addChildResource(nestedOneResource);
-            Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-            resourceManager.createResource(overlord, platformResource, -1);
+            resourceManager.createResource(overlord, nestedOneResource, -1);
 
             getTransactionManager().begin();
             EntityManager em = getEntityManager();

@@ -849,7 +849,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             log.debug("getExistingResource processing for [" + resource + "]");
         }
 
-        // We perform this query a lot during a large inventory merge, so minimize overhead by using it directly        
         Resource existingResource = null;
 
         if (resource.getId() != 0) {
@@ -857,7 +856,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 log.debug("Agent claims resource is already in inventory. Id=" + resource.getId());
             }
 
-            existingResource = entityManager.getReference(Resource.class, resource.getId());
+            // This maybe could be more efficient using a named query that pulls some lazy data, but this should be fine
+            existingResource = entityManager.find(Resource.class, resource.getId());
             if (isDebugEnabled) {
                 if (null != existingResource) {
                     log.debug("Found resource already in inventory. Id=" + resource.getId());
@@ -879,9 +879,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                     + ", key=" + resource.getResourceKey());
             }
 
-            // (jshaughn) I'm not 100% sure I understand the need for this while loop, but I believe it has to
-            // do with handling the case in which a resource type has moved (see f74b22044) and trying to
-            // relocate the parent.  Anyway, I'm not going to touch it even though it slows things down.
+            // (jshaughn) I'm not 100% sure but I believe this loop has to do with either or both of:
+            // - protecting against the agent merging a resource it thinks is new but actually exists
+            // - handling the case in which a resource type has moved (see f74b22044) and trying to  relocate the parent.
+            // Anyway, I'm not going to touch it even though it slows things down.
             ResourceType resourceType = resource.getResourceType();
             Resource parent = resource;
 
@@ -904,6 +905,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                     }
 
                     if (null == existingParent) {
+                        // I think getReference may be slightly faster here but it's likely negligible
                         existingParent = entityManager.getReference(Resource.class, parentId);
                         if (null != existingParent) {
                             if (null != parentMap) {

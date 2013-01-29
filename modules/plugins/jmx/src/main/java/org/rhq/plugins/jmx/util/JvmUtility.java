@@ -104,7 +104,8 @@ public class JvmUtility {
         List<VirtualMachineDescriptor> vmDescriptors = VirtualMachine.list();
         for (VirtualMachineDescriptor vmDescriptor : vmDescriptors) {
             if (Long.valueOf(vmDescriptor.id()) == process.getPid()) {
-                String vmUserName = process.getCredentialsName().getUser();
+//                String vmUserName = process.getCredentialsName().getUser();
+                String vmUserName = process.freshSnapshot().getCredentialsName().getUser();
                 String agentUserName = System.getProperty("user.name");
                 if (vmUserName.equals(agentUserName)) {
                     LOG.debug("Attaching to JVM for java process with PID [" + process.getPid() + "]...");

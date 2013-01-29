@@ -56,6 +56,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
@@ -268,6 +269,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         ResourceCriteria c = new ResourceCriteria();
         c.addFilterResourceTypeId(existingType.getId());
         c.addFilterInventoryStatus(null);
+        c.setPageControl(PageControl.getUnlimitedInstance());
         List<Resource> resources = resourceManager.findResourcesByCriteria(subject, c);
         if (resources != null) {
             Iterator<Resource> resIter = resources.iterator();

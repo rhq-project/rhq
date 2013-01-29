@@ -385,7 +385,7 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
             resourcesServiceE1.get(0));
         List<Resource> resourcesServiceE3 = createResources(2, "RemoveTypesPlugin", "ServiceE3",
             resourcesServiceE2.get(0));
-        List<Resource> resourcesServiceE4 = createResources(2, "RemoveTypesPlugin", "ServiceE4",
+        List<Resource> resourcesServiceE4 = createResources(205, "RemoveTypesPlugin", "ServiceE4",
             resourcesServiceE3.get(0));
 
         ResourceGroup rgRecursive = createResourceGroup("ServerE Group", "ServerE", "RemoveTypesPlugin", true);

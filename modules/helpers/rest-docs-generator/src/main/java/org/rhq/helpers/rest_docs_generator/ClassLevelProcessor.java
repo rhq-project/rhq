@@ -58,7 +58,7 @@ import org.jboss.resteasy.annotations.GZIP;
  */
 
 @SupportedOptions({ClassLevelProcessor.TARGET_DIRECTORY,ClassLevelProcessor.VERBOSE,ClassLevelProcessor.MODEL_PACKAGE_KEY})
-@SupportedSourceVersion(SourceVersion.RELEASE_6)
+@SupportedSourceVersion(SourceVersion.RELEASE_7)
 @SupportedAnnotationTypes(value = {"com.wordnik.swagger.annotations.*","javax.ws.rs.*","javax.xml.bind.annotation.XmlRootElement"})
 public class ClassLevelProcessor extends AbstractProcessor {
 
@@ -318,8 +318,21 @@ public class ClassLevelProcessor extends AbstractProcessor {
             if (defaultValue!=null)
                 element.setAttribute("defaultValue",defaultValue);
 
-
-            element.setAttribute("type", t.toString());
+            String typeString = t.toString();
+            String typeId = typeString;
+            if (typeString.contains("java.lang.")) {
+                typeString = typeString.replaceAll("java\\.lang\\.","");
+            }
+            else if (typeString.contains("java.util.")) {
+                typeString = typeString.replaceAll("java\\.util\\.","");
+            }
+            if (typeString.contains(modelPackage)) {
+                String mps = modelPackage.endsWith(".") ? modelPackage : modelPackage + ".";
+                typeString = typeString.replace(mps,"");
+                typeId  = "..." + typeString; // TODO in case of Collection<TypeString> only take the part from the modelPackage
+            }
+            element.setAttribute("type",  typeString);
+            element.setAttribute("typeId", typeId);
         }
     }
 
@@ -368,6 +381,7 @@ public class ClassLevelProcessor extends AbstractProcessor {
         Element elem = doc.createElement("data");
         xmlRoot.appendChild(elem);
         elem.setAttribute("name",classElementIn.getSimpleName().toString());
+        elem.setAttribute("nameId","..." + classElementIn.getSimpleName().toString());
         ApiClass api = classElementIn.getAnnotation(ApiClass.class);
         if (api!=null) {
             elem.setAttribute("abstract",api.value());

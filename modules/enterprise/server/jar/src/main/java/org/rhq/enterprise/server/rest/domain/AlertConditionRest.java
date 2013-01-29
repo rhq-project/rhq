@@ -21,6 +21,9 @@ package org.rhq.enterprise.server.rest.domain;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.wordnik.swagger.annotations.ApiClass;
+import com.wordnik.swagger.annotations.ApiProperty;
+
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertConditionOperator;
 
@@ -29,6 +32,7 @@ import org.rhq.core.domain.alert.AlertConditionOperator;
  * An alert definition can have any number of definitions
  * @author Heiko W. Rupp
  */
+@ApiClass(value = "One condition for an alert definition")
 @XmlRootElement(name = "condition")
 public class AlertConditionRest {
 
@@ -44,6 +48,7 @@ public class AlertConditionRest {
     public AlertConditionRest() {
     }
 
+    @ApiProperty("Comparator to use with this definition")
     public AlertConditionOperator getName() {
         return name;
     }
@@ -52,6 +57,7 @@ public class AlertConditionRest {
         this.name = name;
     }
 
+    @ApiProperty("The category")
     public AlertConditionCategory getCategory() {
         return category;
     }
@@ -64,10 +70,12 @@ public class AlertConditionRest {
         this.id = id;
     }
 
+    @ApiProperty("Id of the condition.Note that this is not stable - when you update the condition, its id will change")
     public int getId() {
         return id;
     }
 
+    @ApiProperty("THe threshold to compare against")
     public Double getThreshold() {
         return threshold;
     }
@@ -76,6 +84,7 @@ public class AlertConditionRest {
         this.threshold = threshold;
     }
 
+    @ApiProperty("Options to this condition. Depends on the category used")
     public String getOption() {
         return option;
     }
@@ -100,6 +109,7 @@ public class AlertConditionRest {
         this.comparator = comparator;
     }
 
+    @ApiProperty("The id of the measurement definition, this comparator should apply to. A metric schedule can be identified by a resource id and a definition id.")
     public int getMeasurementDefinition() {
         return measurementDefinition;
     }

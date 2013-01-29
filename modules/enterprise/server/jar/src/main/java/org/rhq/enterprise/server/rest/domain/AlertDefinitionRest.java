@@ -26,8 +26,6 @@ import javax.xml.bind.annotation.XmlRootElement;
 import com.wordnik.swagger.annotations.ApiClass;
 import com.wordnik.swagger.annotations.ApiProperty;
 
-import org.rhq.core.domain.alert.AlertDampening;
-
 /**
  * Alert Definition
  * @author Heiko W. Rupp
@@ -48,6 +46,7 @@ public class AlertDefinitionRest {
     String dampeningCount;
     String dampeningPeriod;
 
+    @SuppressWarnings("unused")
     public AlertDefinitionRest() {
     }
 
@@ -92,6 +91,7 @@ public class AlertDefinitionRest {
         this.priority = priority;
     }
 
+    @ApiProperty(value = "Id of an alert definition to recover")
     public int getRecoveryId() {
         return recoveryId;
     }
@@ -128,6 +128,7 @@ public class AlertDefinitionRest {
         this.notifications = notifications;
     }
 
+    @ApiProperty(value = "Category for dampening. ONCE means 'disable definition after firing'", allowableValues = "NONE, CONSECUTIVE_COUNT, PARTIAL_COUNT, INVERSE_COUNT, DURATION_COUNT, NO_DUPLICATES, ONCE")
     public String getDampeningCategory() {
         return dampeningCategory;
     }
@@ -136,6 +137,7 @@ public class AlertDefinitionRest {
         this.dampeningCategory = dampeningCategory;
     }
 
+    @ApiProperty(value = "Number of occurrences of an alert (in a given period)")
     public String getDampeningCount() {
         return dampeningCount;
     }
@@ -144,6 +146,7 @@ public class AlertDefinitionRest {
         this.dampeningCount = dampeningCount;
     }
 
+    @ApiProperty( value = "Period to check events. Only applicable for PARTIAL_COUNT, DURATION_COUNT, INVERSE_COUNT")
     public String getDampeningPeriod() {
         return dampeningPeriod;
     }

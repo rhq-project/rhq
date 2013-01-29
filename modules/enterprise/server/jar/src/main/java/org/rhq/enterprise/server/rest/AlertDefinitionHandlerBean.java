@@ -126,6 +126,7 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
 
 
+    // Redirect from /definition to /definitions for GET requests
     @GET
     @Path("/definition")
     public Response redirectDefinitionToDefinitions(@Context UriInfo uriInfo) {
@@ -178,11 +179,11 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
     @POST
     @Path("/definitions")
-    @ApiOperation("Create an AlertDefinition for the resource/group/resource type passed as query param. Only one of the three params may be given at any time.")
-    public Response createAlertDefinition(@QueryParam("resourceId") Integer resourceId,
-                                          @QueryParam("groupId") Integer groupId,
-                                          @QueryParam("resourceTypeId") Integer resourceTypeId,
-                                          AlertDefinitionRest adr,
+    @ApiOperation("Create an AlertDefinition for the resource/group/resource type passed as query param. One and only one of the three params must be given at any time.")
+    public Response createAlertDefinition(@ApiParam("The id of the resource to attach the definition to") @QueryParam("resourceId") Integer resourceId,
+                                          @ApiParam("The id of the group to attach the definition to") @QueryParam("groupId") Integer groupId,
+                                          @ApiParam("The id of the resource type to attach the definition to") @QueryParam("resourceTypeId") Integer resourceTypeId,
+                                          @ApiParam("The data for the new definition") AlertDefinitionRest adr,
         @Context UriInfo uriInfo) {
 
         int i = 0;
@@ -266,7 +267,7 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @ApiOperation(value = "Update the alert definition (priority, enablement, dampening, recovery)", notes = "Priority must be HIGH,LOW,MEDIUM")
     public Response updateDefinition(
             @ApiParam("Id of the alert definition to update") @PathParam("id") int definitionId,
-            AlertDefinitionRest definitionRest) {
+            @ApiParam("Data for the update") AlertDefinitionRest definitionRest) {
 
         AlertDefinition definition = alertDefinitionManager.getAlertDefinition(caller,definitionId);
         if (definition==null)
@@ -303,14 +304,18 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @DELETE
     @Path("definition/{id}")
     @ApiOperation("Delete an alert definition")
-    public Response deleteDefinition(@PathParam("id") int definitionId) {
+    public Response deleteDefinition(@ApiParam("Id of the definition to delete") @PathParam("id") int definitionId) {
 
-        int count = alertDefinitionManager.removeAlertDefinitions(caller, new int[]{definitionId});
+        alertDefinitionManager.removeAlertDefinitions(caller, new int[]{definitionId});
 
         return Response.noContent().build();
     }
 
-
+    /**
+     * Create a dampening object for the passed definition from the alert definition rest that is passed in.
+     * @param alertDefinition The alert definition to modify
+     * @param adr The incoming AlertDefinitonRest object
+     */
     private void setDampeningFromRest(AlertDefinition alertDefinition, AlertDefinitionRest adr) {
         AlertDampening.Category dampeningCategory;
         try {
@@ -373,7 +378,10 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
     @POST
     @Path("definition/{id}/conditions")
-    public Response addConditionToDefinition(@PathParam("id") int definitionId, AlertConditionRest conditionRest, @Context UriInfo uriInfo) {
+    @ApiOperation("Add a new alert condition to an existing alert definition")
+    public Response addConditionToDefinition(
+        @ApiParam("The id of the alert definition") @PathParam("id") int definitionId,
+        @ApiParam("The condition to add") AlertConditionRest conditionRest, @Context UriInfo uriInfo) {
 
         AlertDefinition definition = alertDefinitionManager.getAlertDefinition(caller,definitionId);
         if (definition==null)
@@ -392,7 +400,9 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
     @DELETE
     @Path("condition/{cid}")
-    public Response deleteCondition(@PathParam("cid") int conditionId) {
+    @ApiOperation("Remove an alert condition")
+    public Response deleteCondition(
+        @ApiParam("The id of the condition to remove")@PathParam("cid") int conditionId) {
         Integer definitionId = findDefinitionIdForConditionId(conditionId);
 
         AlertDefinition definition2 = entityManager.find(AlertDefinition.class,definitionId);
@@ -427,7 +437,10 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
     @PUT
     @Path("condition/{cid}")
-    public Response updateCondition(@PathParam("cid") int conditionId, AlertConditionRest conditionRest, @Context UriInfo uriInfo) {
+    @ApiOperation("Update an existing condition of an alert definition.Note that the update will change the id of the condition")
+    public Response updateCondition(
+        @ApiParam("The id of the condition to update") @PathParam("cid") int conditionId,
+        @ApiParam("The updated condition") AlertConditionRest conditionRest, @Context UriInfo uriInfo) {
 
         Integer definitionId = findDefinitionIdForConditionId(conditionId);
 
@@ -465,7 +478,9 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
     @GET
     @Path("condition/{cid}")
-    public Response getCondition(@PathParam("cid") int conditionId) {
+    @ApiOperation("Retrieve a condition of an alert definition by its condition id")
+    public Response getCondition(
+        @ApiParam("The id of the condition to retrieve") @PathParam("cid") int conditionId) {
 
         AlertCondition condition = conditionMgr.getAlertConditionById(conditionId);
         AlertConditionRest acr = conditionToConditionRest(condition);
@@ -521,7 +536,9 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
     @GET
     @Path("notification/{nid}")
-    public Response getNotification(@PathParam("nid") int notificationId) {
+    @ApiOperation("Return a notification definition by its id")
+    public Response getNotification(
+        @ApiParam("The id of the notification definition to retrieve") @PathParam("nid") int notificationId) {
 
         AlertNotification notification = notificationMgr.getAlertNotification(caller,notificationId);
         AlertNotificationRest anr = notificationToNotificationRest(notification);
@@ -531,7 +548,9 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
     @DELETE
     @Path("notification/{nid}")
-    public Response deleteNotification(@PathParam("nid") int notificationId) {
+    @ApiOperation("Remove a notification definition")
+    public Response deleteNotification(
+        @ApiParam("The id of the notification definition to remove") @PathParam("nid") int notificationId) {
 
         AlertNotification notification = notificationMgr.getAlertNotification(caller,notificationId);
         AlertDefinition definition = alertDefinitionManager.getAlertDefinition(caller,notification.getAlertDefinition().getId());
@@ -548,7 +567,10 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
     @PUT
     @Path("notification/{nid}")
-    public Response updateNotification(@PathParam("nid") int notificationId, AlertNotificationRest notificationRest) {
+    @ApiOperation("Update a notification definition")
+    public Response updateNotification(
+        @ApiParam("The id of the notification definition to update") @PathParam("nid") int notificationId,
+        @ApiParam("The updated notification definition to use") AlertNotificationRest notificationRest) {
 
         AlertNotification notification = notificationMgr.getAlertNotification(caller,notificationId);
         AlertDefinition definition = alertDefinitionManager.getAlertDefinition(caller,notification.getAlertDefinition().getId());
@@ -578,7 +600,10 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
     @POST
     @Path("definition/{id}/notifications")
-    public Response addNotificationToDefinition(@PathParam("id") int definitionId, AlertNotificationRest notificationRest, @Context UriInfo uriInfo) {
+    @ApiOperation("Add a new notification definition to an alert definition")
+    public Response addNotificationToDefinition(
+        @ApiParam("Id of the alert definition that should get the notification definition") @PathParam("id") int definitionId,
+        @ApiParam("The notification definition to add") AlertNotificationRest notificationRest, @Context UriInfo uriInfo) {
 
         AlertNotification notification = new AlertNotification(notificationRest.getSenderName());
 
@@ -670,7 +695,8 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @ApiOperation("Return an alert notification sender by name. This includes information about the configuration it expects")
     @GET @GZIP
     @Path("sender/{name}")
-    public Response getAlertSenderByName(@PathParam("name")String senderName, @Context UriInfo uriInfo) {
+    public Response getAlertSenderByName(
+        @ApiParam("Name of the sender to retrieve") @PathParam("name")String senderName, @Context UriInfo uriInfo) {
 
         AlertSenderInfo info = notificationMgr.getAlertInfoForSender(senderName);
         if (info==null) {

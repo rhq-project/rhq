@@ -37,7 +37,6 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.security.auth.login.LoginException;
@@ -499,7 +498,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 + resource.getResourceType());
         }
 
-        Resource existingResource = findExistingResource(resource);
+        Resource existingResource = findExistingResource(resource, null);
         if (existingResource != null) {
             mergeResourceResponse = new MergeResourceResponse(existingResource.getId(), true);
         } else {
@@ -781,20 +780,22 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         long batchStart = System.currentTimeMillis();
         boolean isDebugEnabled = log.isDebugEnabled();
+        // Cache parent resources we've already fetched from the DB, many resources will have the same parent
+        Map<Integer, Resource> parentMap = new HashMap<Integer, Resource>();
 
         for (Resource resource : resourceBatch) {
             Resource existingResource = null;
             long start = System.currentTimeMillis();
 
-            existingResource = findExistingResource(resource);
+            existingResource = findExistingResource(resource, parentMap);
 
             // Does this resource already exist in inventory? If so, update, otherwise add
             if (null != existingResource) {
-                updateExistingResourceInNewTransaction(resource, existingResource);
+                updateExistingResource(resource, existingResource);
 
             } else {
                 presetAgent(resource, agent);
-                persistResourceInNewTransaction(resource);
+                persistResource(resource, parentMap);
             }
 
             if (isDebugEnabled) {
@@ -802,6 +803,9 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                     + (System.currentTimeMillis() - start));
             }
         }
+
+        // Help out the GC
+        parentMap.clear();
 
         if (isDebugEnabled) {
             long delta = (System.currentTimeMillis() - batchStart);
@@ -824,15 +828,19 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     }
 
     /**
+     * <p>Requires A Transaction</p>
+     * 
      * Given a resource, will attempt to find it in the server's inventory (that is, finds it in the database). If the
      * given resource's ID does not exist in the database, it will be looked up by its resource key. If the resource
      * cannot be found either via ID or resource key then SIDE EFFECT: the given resource's ID will be reset to 0 and null
      * will be returned.
      *
-     * @param  resource Pojo containing resourceId, key, and parentResoure (if applicable)
+     * @param resource Pojo containing resourceId, key, and parentResoure (if applicable)
+     * @param parentMap, if supplied, holds previously fetched parent pojos. useful when the calling code does many
+     * finds for a few parents.  If not found in the map the db will be searched, the map will be updated if possible.
      * @return the Resource entity found in the database and matching the given resource.
      */
-    private Resource findExistingResource(Resource resource) {
+    private Resource findExistingResource(Resource resource, Map<Integer, Resource> parentMap) {
 
         boolean isDebugEnabled = log.isDebugEnabled();
 
@@ -840,27 +848,20 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             log.debug("getExistingResource processing for [" + resource + "]");
         }
 
-        // We perform this query a lot during a large inventory merge, so minimize overhead by using it directly
-        Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_BY_ID);
+        // We perform this query a lot during a large inventory merge, so minimize overhead by using it directly        
         Resource existingResource = null;
-        Subject overlord = subjectManager.getOverlord();
 
         if (resource.getId() != 0) {
             if (isDebugEnabled) {
                 log.debug("Agent claims resource is already in inventory. Id=" + resource.getId());
             }
 
-            try {
-                query.setParameter("resourceId", resource.getId());
-                existingResource = (Resource) query.getSingleResult();
-                if (isDebugEnabled) {
+            existingResource = entityManager.find(Resource.class, resource.getId());
+            if (isDebugEnabled) {
+                if (null != existingResource) {
                     log.debug("Found resource already in inventory. Id=" + resource.getId());
-                }
-            } catch (NoResultException e) {
-                existingResource = null;
-
-                // agent lied - agent's copy of JON server inventory must be stale.
-                if (isDebugEnabled) {
+                } else {
+                    // agent lied - agent's copy of JON server inventory must be stale.
                     log.debug("However, no resource exists with the specified id. Id=" + resource.getId());
                 }
             }
@@ -882,6 +883,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             // relocate the parent.  Anyway, I'm not going to touch it even though it slows things down.
             ResourceType resourceType = resource.getResourceType();
             Resource parent = resource;
+            Subject overlord = subjectManager.getOverlord();
 
             while (null != parent && null == existingResource) {
                 parent = parent.getParentResource();
@@ -889,18 +891,28 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 // check if the parent is in inventory. This might not be the case during initial sync-up for resource upgrade. 
                 Resource existingParent = null;
                 if (null != parent) {
-                    if (parent.getId() <= 0) {
+                    int parentId = parent.getId();
+
+                    if (parentId <= 0) {
                         log.warn("Expected potential parent resource to have a valid ID. Parent=" + parent + ", Child="
                             + resource);
                     }
 
-                    try {
-                        query.setParameter("resourceId", parent.getId());
-                        existingParent = (Resource) query.getSingleResult();
+                    // See if we already fetched this parent and it's in our cache map, if so, use it.
+                    if (null != parentMap) {
+                        existingParent = parentMap.get(parentId);
+                    }
 
-                    } catch (NoResultException e) {
-                        // this parent is not known to the server, so there's no point in trying to find a child of it...
-                        continue;
+                    if (null == existingParent) {
+                        existingParent = entityManager.find(Resource.class, parentId);
+                        if (null != existingParent) {
+                            if (null != parentMap) {
+                                parentMap.put(parentId, existingParent);
+                            }
+                        } else {
+                            // this parent is not known to the server, so there's no point in trying to find a child of it...
+                            continue;
+                        }
                     }
                 }
 
@@ -935,7 +947,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         return existingResource;
     }
 
-    private void updateExistingResourceInNewTransaction(Resource updatedResource, Resource existingResource)
+    private void updateExistingResource(Resource updatedResource, Resource existingResource)
         throws InvalidInventoryReportException {
         /*
          * there exists a small window of time after the synchronous part of the uninventory and before the async
@@ -1078,13 +1090,25 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         return true;
     }
 
-    private void persistResourceInNewTransaction(Resource resource) {
+    private void persistResource(Resource resource, Map<Integer, Resource> parentMap) {
 
-        Resource parentResource = resource.getParentResource();
+        // Id of detached parent resource
+        Integer parentId = (null != resource.getParentResource()) ? resource.getParentResource().getId() : null;
 
-        if (null != parentResource) {
-            // Find the parent resource entity and create the parent-child relationship
-            parentResource = findExistingResource(parentResource);
+        // attached parentResource
+        Resource parentResource = null;
+
+        if (null != parentId) {
+            // look in our map cache first 
+            if (null != parentMap) {
+                parentResource = parentMap.get(parentId);
+            }
+            // if not in cache, try the DB
+            if (null == parentResource) {
+                // Find the parent resource entity
+                parentResource = entityManager.find(Resource.class, parentId);
+            }
+            // if the parent exists, create the parent-child relationship
             if (null != parentResource) {
                 parentResource.addChildResource(resource);
             }

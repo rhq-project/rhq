@@ -37,6 +37,7 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.security.auth.login.LoginException;
@@ -856,7 +857,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 log.debug("Agent claims resource is already in inventory. Id=" + resource.getId());
             }
 
-            existingResource = entityManager.find(Resource.class, resource.getId());
+            existingResource = entityManager.getReference(Resource.class, resource.getId());
             if (isDebugEnabled) {
                 if (null != existingResource) {
                     log.debug("Found resource already in inventory. Id=" + resource.getId());
@@ -883,7 +884,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             // relocate the parent.  Anyway, I'm not going to touch it even though it slows things down.
             ResourceType resourceType = resource.getResourceType();
             Resource parent = resource;
-            Subject overlord = subjectManager.getOverlord();
 
             while (null != parent && null == existingResource) {
                 parent = parent.getParentResource();
@@ -904,7 +904,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                     }
 
                     if (null == existingParent) {
-                        existingParent = entityManager.find(Resource.class, parentId);
+                        existingParent = entityManager.getReference(Resource.class, parentId);
                         if (null != existingParent) {
                             if (null != parentMap) {
                                 parentMap.put(parentId, existingParent);
@@ -918,8 +918,16 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
                 // We found the parent in inventory, so now see if we can find this resource in inventory by using
                 // the parent, the resource key (unique among siblings), the plugin and the type.
-                existingResource = resourceManager.getResourceByParentAndKey(overlord, existingParent,
-                    resource.getResourceKey(), resourceType.getPlugin(), resourceType.getName());
+                Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_BY_PARENT_AND_KEY);
+                query.setParameter("parent", existingParent);
+                query.setParameter("key", resource.getResourceKey());
+                query.setParameter("plugin", resourceType.getPlugin());
+                query.setParameter("typeName", resourceType.getName());
+                try {
+                    existingResource = (Resource) query.getSingleResult();
+                } catch (NoResultException e) {
+                    existingResource = null;
+                }
             }
 
             if (null != existingResource) {
@@ -947,6 +955,12 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         return existingResource;
     }
 
+    /**
+     * <p>Requires A Transaction.</p>
+     * @param updatedResource pojo
+     * @param existingResource attached entity
+     * @throws InvalidInventoryReportException
+     */
     private void updateExistingResource(Resource updatedResource, Resource existingResource)
         throws InvalidInventoryReportException {
         /*
@@ -963,9 +977,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         if (existingResource.getInventoryStatus() == InventoryStatus.UNINVENTORIED) {
             return;
         }
-
-        // get an attached entity to update
-        existingResource = entityManager.find(Resource.class, existingResource.getId());
 
         Resource existingParent = existingResource.getParentResource();
         Resource updatedParent = updatedResource.getParentResource();

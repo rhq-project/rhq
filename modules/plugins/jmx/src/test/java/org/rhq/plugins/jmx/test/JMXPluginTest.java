@@ -131,6 +131,7 @@ public class JMXPluginTest {
 
         List<String> args = new ArrayList<String>();
         args.add(javaCmd);
+        args.add("-version");
         args.add("-cp");
         args.add("target/test-classes");
         args.addAll(Arrays.asList(jvmArgs));

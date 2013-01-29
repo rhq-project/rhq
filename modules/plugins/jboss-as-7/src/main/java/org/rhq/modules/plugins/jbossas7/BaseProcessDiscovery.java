@@ -98,7 +98,9 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             "JBOSS_MODULEPATH", //
             "JBOSS_BASE_DIR", //
             "JBOSS_LOG_DIR", //
-            "JBOSS_CONFIG_DIR" //
+            "JBOSS_CONFIG_DIR", //
+            "JBOSS_PIDFILE", //
+            "LAUNCH_JBOSS_IN_BACKGROUND" //
         ));
 
         // If OS is Windows, add env vars that are only used by the batch files.

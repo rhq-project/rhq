@@ -328,8 +328,11 @@ public class ClassLevelProcessor extends AbstractProcessor {
             }
             if (typeString.contains(modelPackage)) {
                 String mps = modelPackage.endsWith(".") ? modelPackage : modelPackage + ".";
+                // For a generic collection we need to find the "inner type" and link to it
+                int offset = typeString.contains("<") ? typeString.indexOf('<') +1 : 0;
+                String restType = typeString.substring(offset + modelPackage.length()+1);
                 typeString = typeString.replace(mps,"");
-                typeId  = "..." + typeString; // TODO in case of Collection<TypeString> only take the part from the modelPackage
+                typeId  = "..." + restType;
             }
             element.setAttribute("type",  typeString);
             element.setAttribute("typeId", typeId);
@@ -380,7 +383,7 @@ public class ClassLevelProcessor extends AbstractProcessor {
 
         Element elem = doc.createElement("data");
         xmlRoot.appendChild(elem);
-        elem.setAttribute("name",classElementIn.getSimpleName().toString());
+        elem.setAttribute("name", classElementIn.getSimpleName().toString());
         elem.setAttribute("nameId","..." + classElementIn.getSimpleName().toString());
         ApiClass api = classElementIn.getAnnotation(ApiClass.class);
         if (api!=null) {
@@ -427,13 +430,15 @@ public class ClassLevelProcessor extends AbstractProcessor {
                 TypeMirror returnTypeMirror = m.getReturnType();
                 //  for types in the modelPackage or java.lang, remove the fqdn
                 String typeName = returnTypeMirror.toString();
-                if (typeName.startsWith(modelPackage)) {
-                    typeName = typeName.substring(modelPackage.length()+1);
+                if (typeName.contains(modelPackage)) {
+                    typeName = typeName.replace(modelPackage+".","");
                 }
-                else if (typeName.startsWith("java.lang")) {
-                    typeName = typeName.substring("java.lang".length()+1);
+                if (typeName.contains("java.lang.")) {
+                    typeName = typeName.replaceAll("java\\.lang\\.", "");
                 }
-                // TODO for collection<type> remove the collection expression and set some collection attribute
+                if (typeName.contains("java.util.")) {
+                    typeName = typeName.replaceAll("java\\.util\\.","");
+                }
                 mElem.setAttribute("type", typeName);
             }
         }

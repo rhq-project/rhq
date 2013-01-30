@@ -23,21 +23,14 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
  *
  * @author Mike Thompson
  */
-public final class MetricStackedBarGraph extends MetricGraphData implements HasD3JsniChart {
-    /**
-     * Constructor for dashboard portlet view as chart definition and data are deferred to later in the portlet
-     * configuration.
-     */
-    public MetricStackedBarGraph() {
-        //super(locatorId);
-    }
+public final class MetricStackedBarGraph extends AbstractGraph {
 
     /**
      * General constructor for stacked bar graph when you have all the data needed to produce the graph. (This is true
      * for all cases but the dashboard portlet).
      */
     public MetricStackedBarGraph(MetricGraphData metricGraphData) {
-        super(metricGraphData.getEntityId(), metricGraphData.getEntityName(), metricGraphData.getDefinition(), metricGraphData.getMetricData());
+        setMetricGraphData(metricGraphData);
     }
 
 
@@ -50,29 +43,26 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
         console.log("Draw Stacked Bar jsni chart");
         var global = this;
 
-        // json metrics data for testing purposes
-        //var jsonMetrics = [{ x:1352204720548, high:0.016642348035599646, low:0.016642348035599646, y:0.016642348035599646},{ x:1352211680548, high:12.000200003333388, low:0.0, y:3.500050000833347},{ x:1352211920548, high:2.000033333888898, low:1.999966667222213, y:2.000000000277778},{ x:1352212160548, high:5.0, low:1.999966667222213, y:2.750000000277778},{ x:1352212400548, high:4.0, low:2.0, y:2.5000083334722243},{ x:1352212640548, high:2.0, low:1.999966667222213, y:1.9999916668055533},{ x:1352212880548, high:3.0, low:2.0, y:2.2500083334722243},{ x:1352213120548, high:3.000050000833347, low:1.999966667222213, y:2.2500041672916677},{ x:1352213360548, high:4.0, low:1.999966667222213, y:2.7499916668055535},{ x:1352213600548, high:2.000033333888898, low:1.999966667222213, y:2.000008333750002},{ x:1352213840548, high:2.0, low:1.999966667222213, y:1.9999916668055533},{ x:1352214080548, high:3.0, low:1.999966667222213, y:2.250000000277778},{ x:1352214320548, high:4.0, low:2.0, y:2.5},{ x:1352214560548, high:3.0, low:1.999966667222213, y:2.250000000833347},{ x:1352214800548, high:2.000033333888898, low:1.999966667222213, y:2.000000000277778},{ x:1352215040548, high:4.0, low:2.0, y:2.5},{ x:1352215280548, high:3.0, low:2.0, y:2.2500083334722243},{ x:1352215520548, high:2.0, low:1.999966667222213, y:1.9999916668055533},{ x:1352215760548, high:3.0, low:1.999966667222213, y:2.250000000277778},{ x:1352216000548, high:4.0, low:2.0, y:2.5},{ x:1352216240548, high:2.000066668888963, low:1.999966667222213, y:2.000008334027794},{ x:1352216480548, high:3.0, low:1.999966667222213, y:2.2499916668055535}];
-
         // create a chartContext object (from rhq.js) with the data required to render to a chart
         // this same data could be passed to different chart types
-        // This way, we are decoupled from the dependency on globals and JSNI.
-        var chartContext = new $wnd.ChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartId()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartHeight()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getJsonMetrics()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getXAxisTitle()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getYAxisTitle()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getYAxisUnits()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartTitleMinLabel()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartTitleAvgLabel()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartTitlePeakLabel()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartDateLabel()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartTimeLabel()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartDownLabel()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartUnknownLabel()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartHoverStartLabel()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartHoverEndLabel()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartHoverPeriodLabel()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartHoverBarLabel()()
+        // This way, we are decoupled from the dependency on globals and JSNI and kept all the java interaction right here.
+        var chartContext = new $wnd.ChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartId()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartHeight()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getJsonMetrics()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getXAxisTitle()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getYAxisTitle()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getYAxisUnits()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartTitleMinLabel()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartTitleAvgLabel()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartTitlePeakLabel()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartDateLabel()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartTimeLabel()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartDownLabel()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartUnknownLabel()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartHoverStartLabel()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartHoverEndLabel()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartHoverPeriodLabel()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartHoverBarLabel()()
         );
 
 
@@ -465,9 +455,9 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                                     var minuteBarThreshold = 4,
                                         firstDate = this.__data__[0].x,
                                         secondDate = this.__data__[1].x,
-                                        barDateDiffInMinutues = (secondDate - firstDate)/ (60000);
+                                        barDateDiffInMinutes = (secondDate - firstDate)/ (60000);
 
-                                    if(barDateDiffInMinutues > minuteBarThreshold){
+                                    if(barDateDiffInMinutes > minuteBarThreshold){
                                     // on a bar avg line if the value is undefined then use the last defined value
                                         if(d.y == undefined){
                                             if(i >= 1){

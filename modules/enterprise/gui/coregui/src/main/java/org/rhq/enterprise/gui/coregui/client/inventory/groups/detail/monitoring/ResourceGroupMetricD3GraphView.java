@@ -33,6 +33,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.HasD3JsniChart;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -51,32 +52,30 @@ public class ResourceGroupMetricD3GraphView extends AbstractMetricD3GraphView {
      * Defines the jsniChart type like area, line, etc...
      *
      */
-    private HasD3JsniChart jsniChart;
+    //private HasD3JsniChart jsniChart;
 
 
-    public ResourceGroupMetricD3GraphView(String locatorId){
-        super(locatorId);
-        //setChartHeight("150px");
-    }
+//    public ResourceGroupMetricD3GraphView(String locatorId){
+//        super(locatorId);
+//        //setChartHeight("150px");
+//    }
 
 
-    public ResourceGroupMetricD3GraphView(String locatorId, MetricGraphData metricGraphData, HasD3JsniChart jsniChart) {
+    public ResourceGroupMetricD3GraphView(String locatorId, AbstractGraph graph) {
 
         //super(locatorId, entityId, entityName, def, data);
-        super(locatorId,metricGraphData);
-        this.jsniChart = jsniChart;
+        super(locatorId,graph);
         //setChartHeight("150px");
     }
 
 
-    @Override
     protected void renderGraph() {
-        if (null == metricGraphData.getDefinition()) {
+        if (null == graph.getMetricGraphData().getDefinition()) {
 
             ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
             ResourceCriteria resourceCriteria = new ResourceCriteria();
-            resourceCriteria.addFilterId(metricGraphData.getEntityId());
+            resourceCriteria.addFilterId(graph.getMetricGraphData().getEntityId());
             resourceService.findResourcesByCriteria(resourceCriteria, new AsyncCallback<PageList<Resource>>() {
                 @Override
                 public void onFailure(Throwable caught) {
@@ -112,11 +111,11 @@ public class ResourceGroupMetricD3GraphView extends AbstractMetricD3GraphView {
 
                                     ResourceType type = types.get(resource.getResourceType().getId());
                                     for (MeasurementDefinition def : type.getMetricDefinitions()) {
-                                        if (def.getId() == metricGraphData.getDefinitionId()) {
-                                            metricGraphData.setDefinition(def);
+                                        if (def.getId() == graph.getMetricGraphData().getDefinitionId()) {
+                                            graph.getMetricGraphData().setDefinition(def);
 
-                                            GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(metricGraphData.getEntityId(),
-                                                    new int[] { metricGraphData.getDefinitionId() }, 8, MeasurementUtils.UNIT_HOURS, 60,
+                                            GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(graph.getMetricGraphData().getEntityId(),
+                                                    new int[] { graph.getMetricGraphData().getDefinitionId() }, 8, MeasurementUtils.UNIT_HOURS, 60,
                                                     new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                                                         @Override
                                                         public void onFailure(Throwable caught) {
@@ -127,7 +126,7 @@ public class ResourceGroupMetricD3GraphView extends AbstractMetricD3GraphView {
                                                         @Override
                                                         public void onSuccess(
                                                                 List<List<MeasurementDataNumericHighLowComposite>> result) {
-                                                            metricGraphData.setMetricData(result.get(0));
+                                                            graph.getMetricGraphData().setMetricData(result.get(0));
 
                                                             drawGraph();
                                                         }
@@ -152,7 +151,7 @@ public class ResourceGroupMetricD3GraphView extends AbstractMetricD3GraphView {
      */
     public void drawJsniChart()
     {
-        jsniChart.drawJsniChart();
+        graph.drawJsniChart();
     }
 
 

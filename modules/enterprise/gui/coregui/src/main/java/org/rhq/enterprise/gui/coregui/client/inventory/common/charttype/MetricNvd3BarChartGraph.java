@@ -23,25 +23,14 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
  *
  * @author Mike Thompson
  */
-public final class MetricNvd3BarChartGraph extends MetricGraphData implements HasD3JsniChart
+public final class MetricNvd3BarChartGraph extends AbstractGraph
 {
-
-    /**
-     * Constructor for dashboard portlet view as chart definition and data are deferred to later
-     * in the portlet configuration.
-     * @param locatorId
-     */
-    public MetricNvd3BarChartGraph(String locatorId) {
-       //super(locatorId);
-    }
-
     /**
      * General constructor for stacked bar graph when you have all the data needed to
      * produce the graph. (This is true for all cases but the dashboard portlet).
      */
     public MetricNvd3BarChartGraph(MetricGraphData metricGraphData){
-        super(metricGraphData.getEntityId(), metricGraphData.getEntityName(), metricGraphData.getDefinition(),metricGraphData.getMetricData());
-
+        setMetricGraphData(metricGraphData);
     }
 
 

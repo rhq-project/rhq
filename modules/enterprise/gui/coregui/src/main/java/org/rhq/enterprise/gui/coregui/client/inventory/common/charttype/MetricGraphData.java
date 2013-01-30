@@ -79,15 +79,12 @@ public class MetricGraphData implements JsonMetricProducer {
     }
 
     /**
-     * Constructor for the dashboard case when it as a saved configuration.
+     *
      * @param entityId
-     * @param measurementDefId
+     * @param entityName
+     * @param def
+     * @param metricData
      */
-    public MetricGraphData(int entityId, int measurementDefId) {
-        setEntityId(entityId);
-        setDefinitionId(measurementDefId);
-    }
-
     public MetricGraphData(int entityId, String entityName, MeasurementDefinition def,
         List<MeasurementDataNumericHighLowComposite> metricData) {
         this.entityName = entityName;
@@ -97,13 +94,23 @@ public class MetricGraphData implements JsonMetricProducer {
         this.metricData = metricData;
     }
 
+    public MetricGraphData(int entityId, String entityName, MeasurementDefinition measurementDef, List<MeasurementDataNumericHighLowComposite> metrics, PageList<Availability> downAvailList, PageList<MeasurementOOBComposite> measurementOOBCompositeList) {
+        this.entityName = entityName;
+        setEntityId(entityId);
+        setDefinitionId(measurementDef.getId());
+        this.definition = measurementDef;
+        this.metricData = metrics;
+        this.availabilityDownList = downAvailList;
+        this.measurementOOBCompositeList = measurementOOBCompositeList;
+    }
+
     public int getEntityId() {
         return this.entityId;
     }
 
     public void setEntityId(int entityId) {
         this.entityId = entityId;
-        this.definition = null;
+        //this.definition = null;
     }
 
     public String getEntityName() {
@@ -116,7 +123,7 @@ public class MetricGraphData implements JsonMetricProducer {
 
     public void setDefinitionId(int definitionId) {
         this.definitionId = definitionId;
-        this.definition = null;
+        //this.definition = null;
     }
 
     public MeasurementDefinition getDefinition() {
@@ -139,17 +146,14 @@ public class MetricGraphData implements JsonMetricProducer {
         this.metricData = metricData;
     }
 
-    public PageList<Availability> getAvailabilityDownList() {
-        return availabilityDownList;
-    }
 
     public void setAvailabilityDownList(PageList<Availability> availabilityDownList) {
         this.availabilityDownList = availabilityDownList;
     }
 
-    public PageList<MeasurementOOBComposite> getMeasurementOOBCompositeList() {
-        return measurementOOBCompositeList;
-    }
+//    public PageList<MeasurementOOBComposite> getMeasurementOOBCompositeList() {
+//        return measurementOOBCompositeList;
+//    }
 
     public void setMeasurementOOBCompositeList(PageList<MeasurementOOBComposite> measurementOOBCompositeList) {
         this.measurementOOBCompositeList = measurementOOBCompositeList;
@@ -213,6 +217,7 @@ public class MetricGraphData implements JsonMetricProducer {
     }
 
     public String getYAxisTitle() {
+
         if (null != definition.getDisplayName() && definition.getDisplayName().length() > 55) {
             return definition.getDisplayName().substring(0, 55) + "...";
         } else {

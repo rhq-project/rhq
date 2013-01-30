@@ -26,6 +26,7 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
@@ -42,9 +43,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
 
-
     protected HTMLFlow resourceTitle;
-    protected MetricGraphData metricGraphData;
+    protected AbstractGraph graph;
     private Integer chartHeight;
 
 
@@ -53,14 +53,13 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
     }
 
 
-    public AbstractMetricD3GraphView(String locatorId, MetricGraphData metricGraphData){
+    public AbstractMetricD3GraphView(String locatorId, AbstractGraph graph){
         this(locatorId);
-        this.metricGraphData = metricGraphData;
+        this.graph = graph;
         setHeight100();
         setWidth100();
     }
 
-    protected abstract void renderGraph();
 
     protected HTMLFlow getEntityTitle(){
         return resourceTitle;
@@ -72,14 +71,14 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
     protected void onDraw() {
         super.onDraw();
         removeMembers(getMembers());
-        renderGraph();
+        drawGraph();
     }
 
     @Override
     public void parentResized() {
         super.parentResized();
         removeMembers(getMembers());
-        renderGraph();
+        drawGraph();
     }
 
     /**
@@ -90,7 +89,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
      *
      */
     protected void drawGraph() {
-        Log.debug("drawGraph marker in AbstractMetricD3GraphView for: " + metricGraphData.getChartId());
+        Log.debug("drawGraph marker in AbstractMetricD3GraphView for: " + graph.getMetricGraphData().getChartId());
 
 //        HLayout titleHLayout = new LocatableHLayout(extendLocatorId("HTitle"));
 //
@@ -112,7 +111,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
 //            addMember(titleHLayout);
 
             StringBuilder divAndSvgDefs = new StringBuilder();
-            divAndSvgDefs.append("<div id=\"rChart-" + metricGraphData.getChartId() + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:"+getChartHeight()+"px;\">");
+            divAndSvgDefs.append("<div id=\"rChart-" + graph.getMetricGraphData().getChartId() + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:"+getChartHeight()+"px;\">");
             divAndSvgDefs.append(getSvgDefs());
             divAndSvgDefs.append("</svg></div>");
             HTMLFlow graph = new HTMLFlow(divAndSvgDefs.toString());
@@ -151,6 +150,14 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
               "</defs>";
     }
 
+    public AbstractGraph getGraph() {
+        return graph;
+    }
+
+    public void setGraph(AbstractGraph graph) {
+        this.graph = graph;
+    }
+
     public abstract  void drawJsniChart();
 
     private Img createLiveGraphImage() {
@@ -167,11 +174,11 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
     }
 
     public void setChartHeight(Integer height) {
-        metricGraphData.setChartHeight(height);
+        graph.getMetricGraphData().setChartHeight(height);
     }
 
     public Integer getChartHeight() {
-        return metricGraphData.getChartHeight();
+        return graph.getMetricGraphData().getChartHeight();
     }
 
     /**
@@ -180,7 +187,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
      * @param metricGraphData
      */
     public void setMetricGraphData(MetricGraphData metricGraphData) {
-        this.metricGraphData = metricGraphData;
+        graph.setMetricGraphData(metricGraphData);
     }
 
     protected boolean supportsLiveGraphViewDialog() {

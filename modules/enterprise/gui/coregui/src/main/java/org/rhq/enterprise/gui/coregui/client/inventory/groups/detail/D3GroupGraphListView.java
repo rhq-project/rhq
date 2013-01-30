@@ -39,7 +39,7 @@ import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferen
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricStackedBarGraph;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceMetricD3GraphView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceMetricD3Graph;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -145,7 +145,7 @@ public class D3GroupGraphListView extends LocatableVLayout {
         MetricGraphData metricGraphData = new MetricGraphData(resourceGroup.getId(), resourceGroup.getName(),
                 measurementDefinition, data);
         MetricStackedBarGraph graph = new MetricStackedBarGraph(metricGraphData);
-        ResourceMetricD3GraphView graphView = new ResourceMetricD3GraphView(extendLocatorId(measurementDefinition.getName()),metricGraphData, graph);
+        ResourceMetricD3Graph graphView = new ResourceMetricD3Graph(extendLocatorId(measurementDefinition.getName()), graph);
 
         graphView.setWidth("95%");
         graphView.setHeight(250);

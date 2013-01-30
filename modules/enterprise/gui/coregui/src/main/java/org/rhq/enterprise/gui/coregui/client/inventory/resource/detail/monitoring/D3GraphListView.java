@@ -133,7 +133,7 @@ public class D3GraphListView extends LocatableVLayout {
      * Build whatever graph (summary or not) by grabbing the MeasurementDefinitions
      * that are defined for the resource and then querying the metric and availability data.
      */
-    public void buildGraphs() {
+    private void buildGraphs() {
         final long startTimer = System.currentTimeMillis();
         List<Long> startEndList = measurementRangeEditor.getBeginEndTimes();
         final long startTime = startEndList.get(0);
@@ -218,7 +218,7 @@ public class D3GraphListView extends LocatableVLayout {
                             @Override
                             public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> metrics) {
                                 metricsDataList = metrics;
-                                Log.debug("Metric graph data queried in: "
+                                Log.debug("Regular Metric graph data queried in: "
                                     + (System.currentTimeMillis() - startTimer + " ms."));
                                 countDownLatch.countDown();
 
@@ -351,14 +351,13 @@ public class D3GraphListView extends LocatableVLayout {
     private void buildSingleGraph(PageList<Availability> downAvailList,
         PageList<MeasurementOOBComposite> measurementOOBCompositeList, MeasurementDefinition measurementDefinition,
         List<MeasurementDataNumericHighLowComposite> data, int height) {
-        MetricGraphData metricGraphData = new MetricGraphData(resource.getId(), resource.getName(),
-            measurementDefinition, data);
-        MetricStackedBarGraph graph = new MetricStackedBarGraph(metricGraphData);
-        graph.setAvailabilityDownList(downAvailList);
-        graph.setMeasurementOOBCompositeList(measurementOOBCompositeList);
 
-        ResourceMetricD3GraphView graphView = new ResourceMetricD3GraphView(
-            extendLocatorId(measurementDefinition.getName()), metricGraphData, graph);
+        MetricGraphData metricGraphData = new MetricGraphData(resource.getId(), resource.getName(),
+            measurementDefinition, data, downAvailList, measurementOOBCompositeList);
+        MetricStackedBarGraph graph = new MetricStackedBarGraph(metricGraphData);
+
+        ResourceMetricD3Graph graphView = new ResourceMetricD3Graph(
+            extendLocatorId(measurementDefinition.getName()), graph);
 
         graphView.setWidth("95%");
         graphView.setHeight(height);

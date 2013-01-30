@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
 
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+
 /**
  * Defines GWT JSNI charting capability. Indicator of a class producing
  * d3 (javascript) charts. Allows us to quickly find, in a standard
@@ -31,5 +33,6 @@ public interface HasD3JsniChart
     void drawJsniChart();
     void setEntityId(int entityId) ;
     void setDefinitionId(int definitionId) ;
+    void setDefinition(MeasurementDefinition measurementDefinition) ;
 
 }

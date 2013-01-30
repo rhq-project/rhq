@@ -55,10 +55,9 @@ public class TestGenericServerPluginService extends ServerPluginService implemen
     public TestGenericServerPluginContainer genericPC;
     public MasterServerPluginContainerConfiguration masterConfig;
 
-    public TestGenericServerPluginService() {
+    public TestGenericServerPluginService(File tmpdir) {
         // build the config at constructor time so tests have it even before the PC is initialized
-        File dir = new File(System.getProperty("java.io.tmpdir" + "/rhq"), this.getClass().getSimpleName());
-        this.masterConfig = new MasterServerPluginContainerConfiguration(dir, dir, dir, null);
+        this.masterConfig = new MasterServerPluginContainerConfiguration(tmpdir, tmpdir, tmpdir, null);
     }
 
     @Override
@@ -197,11 +196,11 @@ public class TestGenericServerPluginService extends ServerPluginService implemen
 
                 File pluginFile = new File(env.getPluginUrl().toURI());
                 ServerPlugin plugin = new ServerPlugin(0, env.getPluginKey().getPluginName(), pluginFile.getName(),
-                    pluginDescriptor.getDisplayName(), true, PluginStatusType.INSTALLED, pluginDescriptor
-                        .getDescription(), "", MessageDigestGenerator.getDigestString(pluginFile), pluginDescriptor
-                        .getVersion(), pluginDescriptor.getVersion(), pluginConfig, scheduledJobsConfig,
-                    new ServerPluginType(pluginDescriptor).stringify(), System.currentTimeMillis(), System
-                        .currentTimeMillis());
+                    pluginDescriptor.getDisplayName(), true, PluginStatusType.INSTALLED,
+                    pluginDescriptor.getDescription(), "", MessageDigestGenerator.getDigestString(pluginFile),
+                    pluginDescriptor.getVersion(), pluginDescriptor.getVersion(), pluginConfig, scheduledJobsConfig,
+                    new ServerPluginType(pluginDescriptor).stringify(), System.currentTimeMillis(),
+                    System.currentTimeMillis());
                 return plugin;
             } catch (Exception e) {
                 throw new RuntimeException(e);

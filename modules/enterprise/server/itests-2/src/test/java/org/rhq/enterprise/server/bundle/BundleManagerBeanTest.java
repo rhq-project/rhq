@@ -116,7 +116,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         agentServiceContainer = prepareForTestAgents();
         agentServiceContainer.bundleService = new TestAgentClient(null, agentServiceContainer);
 
-        this.ps = new TestBundleServerPluginService();
+        this.ps = new TestBundleServerPluginService(getTempDir());
         prepareCustomServerPluginService(this.ps);
         bundleManager = LookupUtil.getBundleManager();
         resourceManager = LookupUtil.getResourceManager();

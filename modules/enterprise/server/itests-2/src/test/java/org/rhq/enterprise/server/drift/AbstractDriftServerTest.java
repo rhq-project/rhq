@@ -82,7 +82,7 @@ public abstract class AbstractDriftServerTest extends AbstractEJB3Test {
     }
 
     private void initDriftServer() throws Exception {
-        driftServerPluginService = new DriftServerPluginService();
+        driftServerPluginService = new DriftServerPluginService(getTempDir());
         prepareCustomServerPluginService(driftServerPluginService);
         driftServerPluginService.masterConfig.getPluginDirectory().mkdirs();
 

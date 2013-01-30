@@ -299,7 +299,7 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
         }
 
         //we need this because the drift plugins are referenced from the system settings that we use in our tests
-        testData.testServerPluginService = new TestServerPluginService();
+        testData.testServerPluginService = new TestServerPluginService(getTempDir());
         prepareCustomServerPluginService(testData.testServerPluginService);
         testData.testServerPluginService.startMasterPluginContainer();
 

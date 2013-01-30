@@ -94,7 +94,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
         prepareScheduler();
 
-        DriftServerPluginService driftServerPluginService = new DriftServerPluginService();
+        DriftServerPluginService driftServerPluginService = new DriftServerPluginService(getTempDir());
         prepareCustomServerPluginService(driftServerPluginService);
         driftServerPluginService.masterConfig.getPluginDirectory().mkdirs();
 

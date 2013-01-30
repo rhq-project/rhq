@@ -19,6 +19,7 @@
 
 package org.rhq.enterprise.server.alert;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
@@ -37,6 +38,10 @@ import org.rhq.enterprise.server.plugin.pc.alert.AlertServerPluginContainer;
  * @author Lukas Krejci
  */
 public class TestAlertSenderPluginService extends TestServerPluginService {
+
+    protected TestAlertSenderPluginService(File tmpdir) {
+        super(tmpdir);
+    }
 
     @Override
     protected List<AbstractTypeServerPluginContainer> createPluginContainers(MasterServerPluginContainer master) {

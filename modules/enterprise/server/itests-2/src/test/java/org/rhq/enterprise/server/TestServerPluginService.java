@@ -51,10 +51,8 @@ public abstract class TestServerPluginService extends ServerPluginService implem
     public TestMasterServerPluginContainer master;
     public MasterServerPluginContainerConfiguration masterConfig;
 
-    protected TestServerPluginService() {
-        // build the config at constructor time so tests have it even before the PC is initialized
-        File dir = new File(System.getProperty("java.io.tmpdir") + "/rhq", this.getClass().getSimpleName());
-        this.masterConfig = new MasterServerPluginContainerConfiguration(dir, dir, dir, null);
+    protected TestServerPluginService(File tmpdir) {
+        this.masterConfig = new MasterServerPluginContainerConfiguration(tmpdir, tmpdir, tmpdir, null);
     }
 
     @Override

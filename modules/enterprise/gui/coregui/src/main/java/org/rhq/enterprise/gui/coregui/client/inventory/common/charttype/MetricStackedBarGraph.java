@@ -461,23 +461,33 @@ public final class MetricStackedBarGraph extends MetricGraphData implements HasD
                                     return timeScale(d.x)+ ((width / chartContext.data.length - barOffset)/ 2);
                                 })
                                 .y(function (d,i) {
-                                    // on a bar avg line if the value is undefined then use the last defined value
-                                    if(d.y == undefined){
-                                        if(i >= 1){
-                                            // count backward until there is a defined value
-                                            for(var j=i; j>=1;j--){
-                                               if(this.__data__[j].y != undefined){
-                                                   //console.log( "using: "+j +" for :"+i+", value"+this.__data__[j].y);
-                                                   return yScale(this.__data__[j].y);
-                                               }
-                                            }
-                                            return yScale(0);
-                                        }else {
-                                            return yScale(0);
-                                        }
 
+                                    var minuteBarThreshold = 4,
+                                        firstDate = this.__data__[0].x,
+                                        secondDate = this.__data__[1].x,
+                                        barDateDiffInMinutues = (secondDate - firstDate)/ (60000);
+
+                                    if(barDateDiffInMinutues > minuteBarThreshold){
+                                    // on a bar avg line if the value is undefined then use the last defined value
+                                        if(d.y == undefined){
+                                            if(i >= 1){
+                                                // count backward until there is a defined value
+                                                for(var j=i; j>=1;j--){
+                                                   if(this.__data__[j].y != undefined){
+                                                       //console.log( "using: "+j +" for :"+i+", value"+this.__data__[j].y);
+                                                       return yScale(this.__data__[j].y);
+                                                   }
+                                                }
+                                                return yScale(0);
+                                            }else {
+                                                return yScale(0);
+                                            }
+
+                                        }else {
+                                            return yScale(+d.y);
+                                        }
                                     }else {
-                                        return yScale(+d.y);
+                                        return yScale(0);
                                     }
                                 });
 

@@ -385,6 +385,7 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
             resourcesServiceE1.get(0));
         List<Resource> resourcesServiceE3 = createResources(2, "RemoveTypesPlugin", "ServiceE3",
             resourcesServiceE2.get(0));
+        // Intentionally greater than 200 to test an issue with Criteria fetch defaults 
         List<Resource> resourcesServiceE4 = createResources(205, "RemoveTypesPlugin", "ServiceE4",
             resourcesServiceE3.get(0));
 
@@ -426,6 +427,7 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
     @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.resource.metadata.test",
         "RemoveTypes" })
     public void deleteParent() throws Exception {
+
         SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
         ResourceTypeManagerLocal resourceTypeMgr = LookupUtil.getResourceTypeManager();
 
@@ -459,12 +461,16 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
 
     @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.resource.metadata.test",
         "RemoveTypes" })
-    public void deleteTypeAndAllItsDescedantTypes() throws Exception {
+    public void deleteTypeAndAllItsDescendantTypes() throws Exception {
+
         List<?> typesNotRemoved = getEntityManager()
             .createQuery("from ResourceType t where t.plugin = :plugin and t.name in (:resourceTypes)")
             .setParameter("plugin", "RemoveTypesPlugin")
-            .setParameter("resourceTypes", asList("ServerE", "ServerE1", "ServerE2", "ServerE3", "ServerE4"))
-            .getResultList();
+            // the types that should have been removed, if any show up we have a problem
+            .setParameter(
+                "resourceTypes",
+                asList("ServerC", "ServiceC1", "ServiceE4", "ServerF", "ServiceF1", "ServiceF2", "ServiceF3",
+                    "ServiceF4")).getResultList();
 
         assertEquals("Failed to delete resource type or one or more of its descendant types", 0, typesNotRemoved.size());
     }

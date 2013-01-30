@@ -69,7 +69,7 @@ import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
 @Stateless
-public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
+public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal, GroupDefinitionManagerRemote {
     private final Log log = LogFactory.getLog(GroupDefinitionManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -415,15 +415,14 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
 
     public PageList<GroupDefinition> findGroupDefinitionsByCriteria(Subject subject,
         ResourceGroupDefinitionCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
         if (authorizationManager.isInventoryManager(subject) == false) {
             if (criteria.isInventoryManagerRequired()) {
                 throw new PermissionException("Subject [" + subject.getName()
                     + "] requires InventoryManager permission for requested query criteria.");
             }
         }
-
+        
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         CriteriaQueryRunner<GroupDefinition> queryRunner = new CriteriaQueryRunner<GroupDefinition>(criteria,
             generator, entityManager);
 

@@ -44,15 +44,6 @@ import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefini
 public interface GroupDefinitionManagerRemote {
 
     /**
-     * Finds the group definition by id
-     * 
-     * @param groupDefinitionId the id
-     * @return instance of <code>GroupDefinition</code>
-     * @throws GroupDefinitionNotFoundException in case the group definition has not been found
-     */
-    GroupDefinition getById(int groupDefinitionId) throws GroupDefinitionNotFoundException;
-
-    /**
      * Creates a new group definiton.
      * The subject needs to have MANAGE_INVENTORY and MANAGE_SETTINGS permissions.
      * 

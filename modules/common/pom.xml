@@ -33,5 +33,6 @@
       <module>cassandra-auth</module>
       <module>cassandra-schema</module>
       <module>cassandra-ccm</module>
+      <module>cassandra-installer</module>
    </modules>
 </project>

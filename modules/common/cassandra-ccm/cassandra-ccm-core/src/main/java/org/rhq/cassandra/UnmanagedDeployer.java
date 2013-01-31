@@ -58,19 +58,6 @@ public class UnmanagedDeployer {
 
     private File bundleDir;
 
-    public void setDeploymentOptions(DeploymentOptions deploymentOptions) {
-        this.deploymentOptions = deploymentOptions;
-    }
-
-    public String getCassandraHosts() {
-        StringBuilder hosts = new StringBuilder();
-        for (int i = 0; i < deploymentOptions.getNumNodes(); ++i) {
-            hosts.append(getLocalIPAddress(i + 1)).append(":9160,");
-        }
-        hosts.deleteCharAt(hosts.length() - 1);
-        return hosts.toString();
-    }
-
     public void unpackBundle() throws CassandraException {
         try {
             File bundleZipFile = unpackBundleZipFile();
@@ -143,10 +130,6 @@ public class UnmanagedDeployer {
         ZipUtil.unzipFile(bundleZipFile, bundleDir);
 
         return bundleDir;
-    }
-
-    private String getLocalIPAddress(int i) {
-        return "127.0.0." + i;
     }
 
 }

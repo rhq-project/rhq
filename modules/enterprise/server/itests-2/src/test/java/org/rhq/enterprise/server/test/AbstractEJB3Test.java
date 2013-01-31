@@ -298,11 +298,12 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testClassesJar.addAsResource("test/metadata/resource-type/updateResourceTypeBundleTarget-v2.xml");
 
         // create test ear by starting with rhq.ear and thinning it
+        String projectVersion = System.getProperty("project.version");
         MavenResolverSystem earResolver = Resolvers.use(MavenResolverSystem.class);
         earResolver.offline();
         // this must be named rhq.ear because the "rhq" portion is used in the jndi names
         EnterpriseArchive testEar = ShrinkWrap.create(EnterpriseArchive.class, "rhq.ear");
-        EnterpriseArchive rhqEar = earResolver.resolve("org.rhq:rhq-enterprise-server-ear:ear:4.6.0-SNAPSHOT")
+        EnterpriseArchive rhqEar = earResolver.resolve("org.rhq:rhq-enterprise-server-ear:ear:" + projectVersion)
             .withoutTransitivity().asSingle(EnterpriseArchive.class);
         // merge rhq.ear into testEar but include only the EJB jars and the supporting libraries. Note that we
         // don't include the services sar because tests are responsible for prepare/unprepare of all required services,
@@ -338,7 +339,6 @@ public abstract class AbstractEJB3Test extends Arquillian {
 
         // add additional 3rd party dependent jars needed to support test classes        
         Collection thirdPartyDeps = new ArrayList();
-        String projectVersion = System.getProperty("project.version");
         thirdPartyDeps.add("joda-time:joda-time");
         thirdPartyDeps.add("org.jboss.shrinkwrap:shrinkwrap-impl-base");
         thirdPartyDeps.add("org.liquibase:liquibase-core");

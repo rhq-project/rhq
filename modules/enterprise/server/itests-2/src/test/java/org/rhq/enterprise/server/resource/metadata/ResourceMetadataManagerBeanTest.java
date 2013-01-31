@@ -396,6 +396,24 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         addResourcesToGroup(rgFlat, resourcesServiceE4);
 
         createPlugin("remove-types-plugin", "2.0", "remove_types_v2.xml");
+
+        //Removal of this resource type exceeds default criteria page size.
+        ResourceTypeManagerLocal resourceTypeMgr = LookupUtil.getResourceTypeManager();
+        SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
+        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+        criteria.addFilterName("ServiceE4");
+        criteria.addFilterPluginName("RemoveTypesPlugin");
+        List<ResourceType> resourceTypes = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(),
+            criteria);
+        if ((resourceTypes != null) && (resourceTypes.size() > 0)) {
+            //spinder 1-31-13: sleep for 30s to see if type removal has then completed
+            //it's possible this could fail on smaller boxes. Not sure how to test this otherwise as
+            //after fix to break resource deletion into chunks[BZ 905632] this should work.  
+            Thread.sleep(1000 * 30);
+            resourceTypes = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(), criteria);
+            assertEquals("Resource type '" + resourceTypes.get(0).getName() + "' not fully removed", 0,
+                resourceTypes.size());
+        }
     }
 
     @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.resource.metadata.test",

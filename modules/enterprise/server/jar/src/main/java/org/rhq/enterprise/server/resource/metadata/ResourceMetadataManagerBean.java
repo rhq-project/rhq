@@ -56,7 +56,6 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
@@ -265,13 +264,14 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     private void removeResourceType(Subject subject, ResourceType existingType) {
         log.info("Removing ResourceType [" + toConciseString(existingType) + "]...");
 
-        // Remove all Resources that are of the type (regardless of invenentory status).
+        // Remove all Resources that are of the type (regardless of inventory status).
         ResourceCriteria c = new ResourceCriteria();
         c.addFilterResourceTypeId(existingType.getId());
         c.addFilterInventoryStatus(null);
-        c.setPageControl(PageControl.getUnlimitedInstance());
         List<Resource> resources = resourceManager.findResourcesByCriteria(subject, c);
-        if (resources != null) {
+        //Chunk through the results in 200(default) page element batches to avoid excessive 
+        //memory usage for large deployments
+        while ((resources != null) && (!resources.isEmpty())) {
             Iterator<Resource> resIter = resources.iterator();
             while (resIter.hasNext()) {
                 Resource res = resIter.next();
@@ -283,7 +283,12 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                     resourceManager.uninventoryResourceAsyncWork(subject, deletedResourceId);
                 }
                 resIter.remove();
-            }
+                }
+            //process next batch if available with new criteria instance
+            c = new ResourceCriteria();
+            c.addFilterResourceTypeId(existingType.getId());
+            c.addFilterInventoryStatus(null);
+            resources = resourceManager.findResourcesByCriteria(subject, c);
         }
 
         resourceMetadataManager.completeRemoveResourceType(subject, existingType);

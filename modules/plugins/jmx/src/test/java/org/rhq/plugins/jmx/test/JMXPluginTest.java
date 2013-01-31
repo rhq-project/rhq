@@ -217,7 +217,7 @@ public class JMXPluginTest {
      *  is called. Looks like the NPE is coming from the call to getUser() at the end and
      *  it might be due to this Sigar bug, https://jira.hyperic.com/browse/SIGAR-231.
      */
-    @Test(dependsOnMethods = "testServerDiscovery", enabled = false)
+    @Test(dependsOnMethods = "testServerDiscovery", enabled = true)
     public void testServiceDiscovery() throws Exception {
         InventoryReport report = PluginContainer.getInstance().getInventoryManager().executeServiceScanImmediately();
         assert report != null;

@@ -107,6 +107,7 @@ public class CassandraInstaller {
             UnmanagedDeployer deployer = new UnmanagedDeployer();
             deployer.unpackBundle();
             deployer.deploy(options, 1);
+            System.out.println(getInstallationSummary(options));
             deployer.cleanUpBundle();
         }
     }
@@ -123,6 +124,17 @@ public class CassandraInstaller {
 
     public Options getOptions() {
         return options;
+    }
+
+    public String getInstallationSummary(DeploymentOptions options) {
+        return "\n" +
+            "Installation Summary:\n" +
+            "Finished installing Cassandra in " + options.getBasedir() + "\n\n" +
+            "IMPORTANT - remember to update the rhq.cassandra.seeds property in rhq-server.properties with the " +
+            "following:\n" +
+            "\thostname: " + options.getListenAddress() + "\n" +
+            "\tthrift port: " + options.getRpcPort() + "\n" +
+            "\tcql port: " + options.getNativeTransportPort();
     }
 
     public static void main(String[] args) throws Exception {

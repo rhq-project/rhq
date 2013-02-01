@@ -1,46 +1,48 @@
 <?xml version="1.0"?>
 <jboss-deployment-structure xmlns="urn:jboss:deployment-structure:1.1">
 
-    <!-- Explicitly indicate that we do not want sub deployments isolated; subdeployments need to see each other's classes -->
-    <ear-subdeployments-isolated>false</ear-subdeployments-isolated>
+  <!-- Explicitly indicate that we do not want sub deployments isolated; subdeployments need to see each other's classes -->
+  <ear-subdeployments-isolated>false</ear-subdeployments-isolated>
 
-    <!-- This corresponds to the top level deployment - which in this case in the EAR module -->
-    <deployment>
-        <dependencies>
-            <module name="org.jboss.common-core" export="true" /> <!-- needed to fix https://issues.jboss.org/browse/AS7-5336 -->
-            <module name="org.jboss.jts" export="true" /> <!-- needed for Arjuna CheckedAction related classes and our custom tx interceptor -->
-            <module name="org.apache.commons.logging" export="true" /> <!-- needed as per https://docs.jboss.org/author/display/AS71/How+do+I+migrate+my+application+from+AS5+or+AS6+to+AS7 -->
-            <module name="org.hibernate" export="true" /> <!-- because we need hibernate specific APIs, e.g. for the HibernateDetachUtility -->
-            <module name="org.infinispan" export="true" /> <!-- because we use an Infinispan cache for REST services -->
-            <module name="org.antlr" export="true" /> <!-- rhq ejb jar module wants this - i think for dynagroup syntax? -->
-            <module name="org.dom4j" export="true" /> <!-- rhq ejb jar module declares this with runtime/provided scope -->
-            <module name="javax.mail.api" export="true" /> <!-- for sending email notifications -->
-            <module name="org.picketbox" export="true" /> <!-- for obfuscating passwords -->
-            <module name="org.jboss.as.naming" export="true" />
-        </dependencies>
-    </deployment>
+  <!-- This corresponds to the top level deployment - which in this case in the EAR module -->
+  <deployment>
+    <dependencies>
+      <module name="org.jboss.common-core" export="true" /> <!-- needed to fix https://issues.jboss.org/browse/AS7-5336 -->
+      <module name="org.jboss.jts" export="true" /> <!-- needed for Arjuna CheckedAction related classes and our custom tx interceptor -->
+      <module name="org.apache.commons.logging" export="true" /> <!-- needed as per https://docs.jboss.org/author/display/AS71/How+do+I+migrate+my+application+from+AS5+or+AS6+to+AS7 -->
+      <module name="org.hibernate" export="true" /> <!-- because we need hibernate specific APIs, e.g. for the HibernateDetachUtility -->
+      <module name="org.infinispan" export="true" /> <!-- because we use an Infinispan cache for REST services -->
+      <module name="org.antlr" export="true" /> <!-- rhq ejb jar module wants this - i think for dynagroup syntax? -->
+      <module name="org.dom4j" export="true" /> <!-- rhq ejb jar module declares this with runtime/provided scope -->
+      <module name="javax.mail.api" export="true" /> <!-- for sending email notifications -->
+      <module name="org.picketbox" export="true" /> <!-- for obfuscating passwords -->
+      <module name="org.jboss.as.naming" export="true" />
+    </dependencies>
+  </deployment>
 
-    <!-- This corresponds to the Portal WAR - it requires the older JSF version packaged with AS 4.2.3, not the AS7 default -->
-    <sub-deployment name="rhq-portal.war">
-        <exclusions>
-            <module name="javax.faces.api" slot="main" />
-            <module name="com.sun.jsf-impl" slot="main" />
-        </exclusions>
-        <dependencies>
-            <module name="javax.faces.api" slot="1.2" />
-            <module name="com.sun.jsf-impl" slot="1.2" />
-        </dependencies>
-    </sub-deployment>
+  <!-- This corresponds to the Portal WAR - it requires the older JSF version packaged with AS 4.2.3, not the AS7 default -->
+  <sub-deployment name="rhq-portal.war">
+    <exclusions>
+      <module name="javax.faces.api" slot="main" />
+      <module name="com.sun.jsf-impl" slot="main" />
+    </exclusions>
+    <dependencies>
+      <module name="javax.faces.api" slot="1.2" />
+      <module name="com.sun.jsf-impl" slot="1.2" />
+    </dependencies>
+  </sub-deployment>
 
-    <!-- This corresponds to the Server EJB3 JAR -->
-    <sub-deployment name="rhq-enterprise-server-ejb3.jar">
-        <dependencies>
-            <module name="org.jboss.msc" export="true" />
-            <module name="org.jboss.as.controller" export="true" />
-            <module name="org.jboss.as.server" export="true" />
-            <module name="org.jboss.modules" export="true" />
-            <module name="org.jboss.as.naming" export="true" />
-        </dependencies>
-    </sub-deployment>
+  <!-- This corresponds to the Server EJB3 JAR -->
+  <sub-deployment name="rhq-enterprise-server-ejb3.jar">
+    <dependencies>
+      <module name="org.jboss.msc" export="true" />
+      <module name="org.jboss.as.controller" export="true" />
+      <module name="org.jboss.as.server" export="true" />
+      <module name="org.jboss.modules" export="true" />
+      <module name="org.jboss.as.naming" export="true" />
+      <!-- Currently Quartz actually does some direct manipulation with Oracle classes -->
+      <module name="org.rhq.oracle" export="true" optional="true" />
+    </dependencies>
+  </sub-deployment>
 
 </jboss-deployment-structure>

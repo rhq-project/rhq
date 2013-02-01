@@ -51,8 +51,8 @@ public class CassandraInstaller {
             "requests. If not specified, defaults to the value returned by InetAddress.getLocalHost().getHostName().");
          hostname.setArgName("HOSTNAME");
 
-        Option dir =  new Option("d", "dir", true, "The directory in which to install Cassandra. Defaults to the " +
-            "current working directory");
+        Option dir =  new Option("d", "dir", true, "The directory in which to install Cassandra. Defaults to " +
+            "./rhq-metrics-node and will be created if it does not already exist.");
         dir.setArgName("INSTALL_DIR");
 
         Option seeds = new Option("s", "seeds", true, "A comma-delimited list of hostnames or IP addresses that " +
@@ -60,11 +60,16 @@ public class CassandraInstaller {
             "It does not need to specify all nodes in the cluster. Defaults to this nodes hostname.");
         seeds.setArgName("SEEDS");
 
+        Option jmxPort = new Option("j", "jmx-port", true, "The port on which to listen for JMX connections. " +
+            "Defaults to 7200");
+        jmxPort.setArgName("JMX_PORT");
+
         options = new Options()
             .addOption(new Option("h", "help", false, "Show this message."))
             .addOption(hostname)
             .addOption(dir)
-            .addOption(seeds);
+            .addOption(seeds)
+            .addOption(jmxPort);
     }
 
     public void run(CommandLine cmdLine) throws Exception {
@@ -77,7 +82,8 @@ public class CassandraInstaller {
             if (cmdLine.hasOption("d")) {
                 basedir = new File(cmdLine.getOptionValue("d"));
             } else {
-                basedir = new File(System.getProperty("user.dir"));
+                File currentDir = new File(System.getProperty("user.dir"));
+                basedir = new File(currentDir, "rhq-metrics-node");
             }
             options.setBasedir(basedir.getAbsolutePath());
 
@@ -97,6 +103,14 @@ public class CassandraInstaller {
                 seeds = hostname;
             }
             options.setSeeds(seeds);
+
+            Integer jmxPort;
+            if (cmdLine.hasOption("j")) {
+                jmxPort = Integer.parseInt(cmdLine.getOptionValue("j"));
+            } else {
+                jmxPort = 7200;
+            }
+            options.setJmxPort(jmxPort);
 
             options.setCommitLogDir(new File(basedir, "commit_log").getAbsolutePath());
             options.setSavedCachesDir(new File(basedir, "saved_caches").getAbsolutePath());

@@ -446,6 +446,7 @@ public class InstallerServiceImpl implements InstallerService {
             cassandraSchemaManager = createCassandraSchemaManager(serverProperties);
             if (ExistingSchemaOption.SKIP != existingSchemaOptionEnum) {
                 if (cassandraSchemaManager.schemaExists()) {
+                    log("Cassandra schema exists.");
                     if (ExistingSchemaOption.OVERWRITE == existingSchemaOptionEnum) {
                         log("Cassandra schema exists but installer was told to overwrite it - a new schema will be " +
                             "created now.");
@@ -456,7 +457,9 @@ public class InstallerServiceImpl implements InstallerService {
                     log("Updating Cassandra schema.");
                     cassandraSchemaManager.updateSchema();
                 } else {
+                    log("Cassandra schema does not exist. It will be created now.");
                     cassandraSchemaManager.createSchema();
+                    log("Applying schema updates to Cassandra.");
                     cassandraSchemaManager.updateSchema();
                 }
             } else {

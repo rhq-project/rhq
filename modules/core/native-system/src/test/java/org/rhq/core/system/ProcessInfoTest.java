@@ -80,6 +80,8 @@ public class ProcessInfoTest {
         procExe = Mockito.mock(ProcExe.class);
         when(sigarProxy.getProcExe(PID)).thenReturn(procExe);
         procState = Mockito.mock(ProcState.class);
+        // Calls to refresh won't succeed if the process is reported down
+        when(procState.getState()).thenReturn(ProcState.RUN);
         when(sigarProxy.getProcState(PID)).thenReturn(procState);
         procTime = Mockito.mock(ProcTime.class);
         when(sigarProxy.getProcTime(PID)).thenReturn(procTime);

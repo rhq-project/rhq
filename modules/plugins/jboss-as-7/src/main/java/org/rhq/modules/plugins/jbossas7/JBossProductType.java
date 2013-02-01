@@ -33,8 +33,8 @@ public enum JBossProductType {
     AS("AS", "JBoss AS 7", "JBoss Application Server 7", "AS"),
     EAP("EAP", "JBoss EAP 6", "JBoss Enterprise Application Platform 6", "EAP"),
     JDG("JDG", "JBoss JDG 6", "JBoss Data Grid 6", "Data Grid"),
-    EPP("EPP", "JBoss EAP 6", "JBoss Enterprise Portal Platform 6", "EPP"),
-    JPP("JPP", "JBoss EAP 6", "JBoss Portal Platform 6", "JPP"),
+    EPP("EPP", "JBoss EAP 6", "JBoss Enterprise Portal Platform 6", "Portal Platform"),
+    JPP("JPP", "JBoss EAP 6", "JBoss Portal Platform 6", "Portal Platform"),
 //    EWP("EWP", "JBoss EWP 6", "JBoss Enterprise Web Platform 6", "EWP"),
     SOA("SOA-P", "JBoss SOA-P 6", "JBoss Enterprise SOA Platform (ESB)", "SOAP");
 

@@ -72,7 +72,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
             // privates
 
             console.log("Chart Height: "+chartContext.height);
-            var margin = {top: 10, right: 5, bottom: 20, left: 40},
+            var margin = {top: 10, right: 5, bottom: 5, left: 40},
                     width = 750 - margin.left - margin.right,
                     adjustedChartHeight = chartContext.chartHeight - 40,
                     height = adjustedChartHeight - margin.top - margin.bottom,
@@ -123,7 +123,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                     yAxis = $wnd.d3.svg.axis()
                             .scale(yScale)
                             .tickSubdivide(2)
-                            .ticks(10)
+                            .ticks(5)
                             .tickSize(4, 4, 0)
                             .orient("left"),
 

@@ -29,6 +29,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ContentsType;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -401,7 +402,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                                         link.setClipValue(true);
                                                         link.setWrap(true);
                                                         link.setHeight(26);
-                                                        link.setWidth("100%");
+                                                        link.setWidth("150px");
                                                         link.addClickHandler(new ClickHandler() {
                                                             @Override
                                                             public void onClick(ClickEvent event) {

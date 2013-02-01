@@ -47,7 +47,7 @@ public class MetricGraphData implements JsonMetricProducer {
 
     // i18n
     final protected Messages MSG = CoreGUI.getMessages();
-    private static final Integer DEFAULT_CHART_HEIGHT = 250;
+    private static final Integer DEFAULT_CHART_HEIGHT = 200;
     private final String chartTitleMinLabel = MSG.chart_title_min_label();
     private final String chartTitleAvgLabel = MSG.chart_title_avg_label();
     private final String chartTitlePeakLabel = MSG.chart_title_peak_label();
@@ -151,9 +151,6 @@ public class MetricGraphData implements JsonMetricProducer {
         this.availabilityDownList = availabilityDownList;
     }
 
-//    public PageList<MeasurementOOBComposite> getMeasurementOOBCompositeList() {
-//        return measurementOOBCompositeList;
-//    }
 
     public void setMeasurementOOBCompositeList(PageList<MeasurementOOBComposite> measurementOOBCompositeList) {
         this.measurementOOBCompositeList = measurementOOBCompositeList;
@@ -221,7 +218,11 @@ public class MetricGraphData implements JsonMetricProducer {
         if (null != definition.getDisplayName() && definition.getDisplayName().length() > 55) {
             return definition.getDisplayName().substring(0, 55) + "...";
         } else {
-            return definition.getDisplayName();
+            if(definition == null ){
+               return "";
+            }else {
+                return definition.getDisplayName();
+            }
         }
     }
 
@@ -234,8 +235,10 @@ public class MetricGraphData implements JsonMetricProducer {
     public String getYAxisUnits() {
         if (adjustedMeasurementUnits == null) {
             Log.error("AbstractMetricD3GraphView.adjustedMeasurementUnits is populated by getJsonMetrics. Make sure it is called first.");
+            return "";
+        }else {
+            return adjustedMeasurementUnits.toString();
         }
-        return adjustedMeasurementUnits.toString();
     }
 
     public String getXAxisTitle() {
@@ -368,11 +371,19 @@ public class MetricGraphData implements JsonMetricProducer {
         //find all possible starting interval points
         int i = 0;
         for (MeasurementDataNumericHighLowComposite measurement : metricData) {
-            boolean notAtStart = i > 1;
+            boolean notAtStart = i >= 1;
             boolean currentBarUndefined = Double.isNaN(measurement.getValue());
             boolean previousBarDefined = (notAtStart) ? !Double.isNaN(metricData.get(i - 1).getValue()) : false;
+            //Log.debug("Bar: "+i);
+            //Log.debug("Current BarUndefined: "+currentBarUndefined);
+            //Log.debug("Prev Bar Undefined: "+previousBarDefined);
+            // for first bar
+            if(i == 0 && currentBarUndefined){
+                //Log.debug("**Adding Unknown Start interval period for Bar 0");
+                startPoints.add(i);
+            }
             if (currentBarUndefined && previousBarDefined && notAtStart && i < metricData.size()-1) {
-                //Log.debug("Adding Down or Disabled start Point: " + i);
+                //Log.debug("** Adding Down or Disabled start Point: " + i);
                 startPoints.add(i+1);
             }
             i++;
@@ -386,7 +397,8 @@ public class MetricGraphData implements JsonMetricProducer {
                 boolean notAtEnd = j < metricData.size();
                 boolean currentBarUndefined = Double.isNaN(metricData.get(j).getValue());
                 boolean nextBarDefined = (notAtEnd) ? !Double.isNaN(metricData.get(j + 1).getValue()) : false;
-                if (currentBarUndefined && nextBarDefined && notAtEnd) {
+                boolean nextBarNotInAnyAvailPeriod = !isAvailabilityDownOrDisabledForBar(metricData.get(j+1).getTimestamp());
+                if (currentBarUndefined && nextBarDefined && notAtEnd && nextBarNotInAnyAvailPeriod) {
                     Date startDate = new Date(metricData.get(startPoint).getTimestamp());
                     Date endDate = new Date(metricData.get(j+1).getTimestamp());
                     //Log.debug("\n\nStartDate: " + startDate);
@@ -397,7 +409,10 @@ public class MetricGraphData implements JsonMetricProducer {
             }
         }
         }
-        //Log.debug("intervalDatePairList.size():" + unknownIntervalList.size());
+//        Log.debug("intervalDatePairList.size():" + unknownIntervalList.size());
+//        for (DatePair datePair : unknownIntervalList) {
+//            Log.debug("Unknown Interval: "+ datePair);
+//        }
     }
 
     private boolean isAvailabilityDownOrDisabledForBar(long timestamp) {
@@ -463,5 +478,12 @@ public class MetricGraphData implements JsonMetricProducer {
             return endDateTime;
         }
 
+        @Override
+        public String toString() {
+            return "DatePair{" +
+                    "startDateTime=" + startDateTime +
+                    ", endDateTime=" + endDateTime +
+                    '}';
+        }
     }
 }

@@ -106,6 +106,14 @@ public class ResourceCriteria extends TaggedCriteria {
     private PageOrdering sortCurrentAvailability; // needs overrides
     private PageOrdering sortResourceAncestry; // needs overrides
 
+    /**
+     * Note: This constructor sets by default:
+     * <pre>filterInventoryStatus = InventoryStatus.COMMITTED</pre>
+     * 
+     * <p>For other implicit defaults see {@link Criteria#Criteria()}</p>
+     * 
+     * @see Criteria#Criteria()
+     */
     public ResourceCriteria() {
         filterOverrides.put("resourceTypeId", "resourceType.id = ?");
         filterOverrides.put("resourceTypeName", "resourceType.name like ?");

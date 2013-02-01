@@ -609,6 +609,57 @@ public class AlertTest extends AbstractBase {
     }
 
     @Test
+    public void testCreateDeleteAlertDefinitionWithNoPriority() throws Exception {
+
+        AlertDefinition alertDefinition = new AlertDefinition();
+        alertDefinition.setName("-x-test-definition");
+        alertDefinition.setEnabled(false);
+        alertDefinition.setPriority("LOW");
+        alertDefinition.setDampeningCategory("NONE");
+
+        AlertDefinition result =
+        given()
+            .header(acceptJson)
+            .contentType(ContentType.JSON)
+            .body(alertDefinition)
+            .queryParam("resourceId",10001)
+        .expect()
+            .statusCode(201)
+            .log().ifError()
+        .when()
+            .post("/alert/definitions")
+        .as(AlertDefinition.class);
+
+        int definitionId = result.getId();
+
+        // Now update with no priority
+        try {
+            alertDefinition.setId(definitionId);
+            alertDefinition.setPriority(null);
+
+            alertDefinition =
+            given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(alertDefinition)
+                .pathParam("defId",definitionId)
+            .expect()
+                .statusCode(200)
+                .log().ifError()
+            .when()
+                .put("/alert/definition/{defId}")
+            .as(AlertDefinition.class);
+
+            assert alertDefinition.getPriority().equals("LOW");
+        }
+
+        finally {
+            // delete the definition again
+            cleanupDefinition(definitionId);
+        }
+    }
+
+    @Test
     public void testCreateDeleteAlertDefinitionWith2Notifications() throws Exception {
 
         int definitionId = createEmptyAlertDefinition();

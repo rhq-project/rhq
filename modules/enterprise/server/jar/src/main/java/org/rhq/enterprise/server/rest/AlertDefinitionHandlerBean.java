@@ -264,7 +264,7 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
     @PUT
     @Path("/definition/{id}")
-    @ApiOperation(value = "Update the alert definition (priority, enablement, dampening, recovery)", notes = "Priority must be HIGH,LOW,MEDIUM")
+    @ApiOperation(value = "Update the alert definition (priority, enablement, dampening, recovery)", notes = "Priority must be HIGH,LOW,MEDIUM. If not provided, LOW is assumed.")
     public Response updateDefinition(
             @ApiParam("Id of the alert definition to update") @PathParam("id") int definitionId,
             @ApiParam("Data for the update") AlertDefinitionRest definitionRest) {
@@ -276,7 +276,12 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
         definition = new AlertDefinition(definition); // detach
 
         definition.setEnabled(definitionRest.isEnabled());
-        definition.setPriority(AlertPriority.valueOf(definitionRest.getPriority()));
+        if (definitionRest.getPriority()!=null) {
+            definition.setPriority(AlertPriority.valueOf(definitionRest.getPriority()));
+        }
+        else {
+            definition.setPriority(AlertPriority.LOW);
+        }
         setDampeningFromRest(definition, definitionRest);
 
         // Set the recovery id if such a definition exists at all

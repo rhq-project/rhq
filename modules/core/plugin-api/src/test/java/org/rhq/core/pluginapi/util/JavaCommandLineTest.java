@@ -39,12 +39,12 @@ public class JavaCommandLineTest {
 
     @Test(expectedExceptions = {IllegalArgumentException.class})
     public void testNullArrayParam() throws Exception {
-        JavaCommandLine javaCommandLine = new JavaCommandLine(null);
+        new JavaCommandLine((String[])null);
     }
 
     @Test(expectedExceptions = {IllegalArgumentException.class})
     public void testEmptyArrayParam() throws Exception {
-        JavaCommandLine javaCommandLine = new JavaCommandLine(new String[0]);
+        new JavaCommandLine(new String[0]);
     }
 
     public void testClass() throws Exception {

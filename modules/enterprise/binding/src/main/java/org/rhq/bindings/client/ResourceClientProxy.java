@@ -235,6 +235,7 @@ public class ResourceClientProxy {
     private void initChildren() {
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterParentResourceId(resourceId);
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
         PageList<Resource> childResources = remoteClient.getProxy(ResourceManagerRemote.class).findResourcesByCriteria(
             remoteClient.getSubject(), criteria);
 

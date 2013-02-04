@@ -90,6 +90,7 @@ public class RepoScriptSourceProvider extends BaseRhqSchemeScriptSourceProvider 
 
             RepoCriteria repoCrit = new RepoCriteria();
             repoCrit.addFilterName(repoName);
+            repoCrit.clearPaging();//disable paging as the code assumes all the results will be returned.
             List<Repo> repos = repoManager.findReposByCriteria(rhqFacade.getSubject(), repoCrit);
 
             if (repos.isEmpty()) {

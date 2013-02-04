@@ -41,6 +41,7 @@ import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.DriftSnapshotRequest;
 import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
@@ -125,6 +126,7 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
         DriftDefinitionTemplateCriteria templateCriteria = new DriftDefinitionTemplateCriteria();
         templateCriteria.addFilterId(templateId);
         templateCriteria.fetchDriftDefinitions(true);
+        templateCriteria.setPageControl(PageControl.getSingleRowInstance());
 
         PageList<DriftDefinitionTemplate> templates = templateMgr.findTemplatesByCriteria(subject, templateCriteria);
         DriftDefinitionTemplate template = templates.get(0);
@@ -133,6 +135,7 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
         criteria.addFilterTemplateId(templateId);
         criteria.fetchConfiguration(true);
         criteria.fetchResource(true);
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
         PageList<DriftDefinition> definitions = driftMgr.findDriftDefinitionsByCriteria(subject, criteria);
         for (DriftDefinition def : definitions) {

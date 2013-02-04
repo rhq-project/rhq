@@ -31,6 +31,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.rhq.core.util.jdbc.JDBCUtil;
+import org.rhq.server.metrics.domain.ResultSetMapper;
 
 /**
  * @author John Sanda

@@ -1,7 +1,7 @@
 /*
  *
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,27 +23,21 @@
  *
  */
 
-package org.rhq.server.metrics;
+package org.rhq.server.metrics.domain;
 
 /**
- * @author Stefan Negrea
- *
+ * @author John Sanda
  */
-public class ArithmeticMeanCalculator {
-    private int iterations = 0;
-    private double arithmeticMean = 0;
+public enum AggregateType {
+    MAX, MIN, AVG;
 
-    public void add(double value) {
-        iterations++;
-        arithmeticMean = arithmeticMean + (value - arithmeticMean) / iterations;
-    }
-
-    public double getArithmeticMean() {
-        return arithmeticMean;
-    }
-
-    public void reset() {
-        iterations = 0;
-        arithmeticMean = 0;
+    public static AggregateType valueOf(int type) {
+        switch (type) {
+        case 0 : return MAX;
+        case 1 : return MIN;
+        case 2 : return AVG;
+        default: throw new IllegalArgumentException(type + " is not a supported " +
+            AggregateType.class.getSimpleName());
+        }
     }
 }

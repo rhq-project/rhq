@@ -23,7 +23,7 @@
  *
  */
 
-package org.rhq.server.metrics;
+package org.rhq.server.metrics.domain;
 
 /**
  * @author John Sanda

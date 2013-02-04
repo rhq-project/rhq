@@ -95,8 +95,8 @@ import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.NumericDataPoint;
 import org.rhq.enterprise.server.rest.domain.StringValue;
 import org.rhq.server.metrics.MetricsDAO;
-import org.rhq.server.metrics.PagedResultSet;
-import org.rhq.server.metrics.RawNumericMetric;
+import org.rhq.server.metrics.domain.PagedResultSet;
+import org.rhq.server.metrics.domain.RawNumericMetric;
 
 /**
  * Deal with metrics

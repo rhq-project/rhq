@@ -1217,6 +1217,15 @@ public class AgentConfiguration {
             disabled_plugins = new ArrayList<String>(Arrays.asList(array));
         }
 
+        // determine what, if any, resource types are to be disabled
+        String disabled_types_pref = m_preferences.get(AgentConfigurationConstants.PLUGINS_DISABLED_RESOURCE_TYPES,
+            null);
+        List<String> disabled_types = null;
+        if (disabled_types_pref != null) {
+            String[] array = disabled_types_pref.split("\\|");
+            disabled_types = new ArrayList<String>(Arrays.asList(array));
+        }
+
         // Define what plugin container/agent classes are to be hidden from our plugins.
         String clRegex = m_preferences.get(AgentConfigurationConstants.PLUGINS_ROOT_PLUGIN_CLASSLOADER_REGEX, null);
         if (clRegex == null) {
@@ -1232,6 +1241,7 @@ public class AgentConfiguration {
         config.setDataDirectory(data_directory);
         config.setTemporaryDirectory(tmp_directory);
         config.setDisabledPlugins(disabled_plugins);
+        config.setDisabledResourceTypes(disabled_types);
         config.setRootPluginClassLoaderRegex(clRegex);
         config.setServerDiscoveryInitialDelay(server_discovery_initial_delay);
         config.setServerDiscoveryPeriod(server_discovery_period);

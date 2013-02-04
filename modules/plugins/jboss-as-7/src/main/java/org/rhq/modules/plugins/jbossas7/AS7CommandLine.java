@@ -58,7 +58,7 @@ public class AS7CommandLine extends JavaCommandLine {
             "--" + PROPERTIES_OPTION.getLongName()
     };
 
-    private final Log log = LogFactory.getLog(AS7CommandLine.class);
+    private static final Log LOG = LogFactory.getLog(AS7CommandLine.class);
 
     private String appServerModuleName;
     private List<String> appServerArgs;
@@ -72,8 +72,30 @@ public class AS7CommandLine extends JavaCommandLine {
 
     public AS7CommandLine(ProcessInfo process) {
         this(process.getCommandLine());
-
         this.process = process;
+    }
+
+    @NotNull
+    public String getAppServerModuleName() {
+        if (!isArgumentsParsed()) {
+            parseCommandLine();
+        }
+
+        return this.appServerModuleName;
+    }
+
+    @NotNull
+    public List<String> getAppServerArguments() {
+        if (!isArgumentsParsed()) {
+            parseCommandLine();
+        }
+
+        return this.appServerArgs;
+    }
+
+    @Override
+    protected void parseCommandLine() {
+        super.parseCommandLine();
 
         // In the case of AS7, the class arguments are actually the arguments to the jboss-modules.jar main class. We
         // want to split out the arguments to the app server module (i.e. "org.jboss.as.standalone" or
@@ -101,16 +123,6 @@ public class AS7CommandLine extends JavaCommandLine {
         }
     }
 
-    @NotNull
-    public String getAppServerModuleName() {
-        return this.appServerModuleName;
-    }
-
-    @NotNull
-    public List<String> getAppServerArguments() {
-        return this.appServerArgs;
-    }
-
     @Override
     protected void processClassArgument(String classArg, String nextArg) {
         super.processClassArgument(classArg, nextArg);
@@ -133,8 +145,8 @@ public class AS7CommandLine extends JavaCommandLine {
             if (propertiesURL != null) {
                 Properties props = loadProperties(propertiesURL);
                 if (props != null) {
-                    for (Map.Entry entry : props.entrySet()) {
-                        Map<String, String> sysProps = getSystemProperties();
+                    Map<String, String> sysProps = getSystemProperties();
+                    for (Map.Entry<?, ?> entry : props.entrySet()) {
                         sysProps.put((String) entry.getKey(), (String) entry.getValue());
                     }
                 }
@@ -163,7 +175,7 @@ public class AS7CommandLine extends JavaCommandLine {
                 propertiesURL = absoluteFile.toURI().toURL();
             } catch (MalformedURLException murle2) {
                 propertiesURL = null;
-                log.error("Value of class option " + PROPERTIES_OPTION + " (" + value + ") is not a valid URL.");
+                LOG.error("Value of class option " + PROPERTIES_OPTION + " (" + value + ") is not a valid URL.");
             }
         }
 
@@ -182,7 +194,7 @@ public class AS7CommandLine extends JavaCommandLine {
                     File binDir = new File(homeDir, "bin");
                     absoluteFile = new File(binDir, file.getPath());
                 } else {
-                    log.error("Failed to resolve relative properties file path [" + file + "].");
+                    LOG.error("Failed to resolve relative properties file path [" + file + "].");
                     return null;
                 }
             }
@@ -198,18 +210,18 @@ public class AS7CommandLine extends JavaCommandLine {
         try {
             urlConnection = propertiesURL.openConnection();
         } catch (IOException e) {
-            log.error("Failed to connect to URL [" + propertiesURL + "].", e);
+            LOG.error("Failed to connect to URL [" + propertiesURL + "].", e);
             return null;
         }
         InputStream inputStream;
         try {
             inputStream = urlConnection.getInputStream();
             if (inputStream == null) {
-                log.error("Failed to read from URL [" + propertiesURL + "].");
+                LOG.error("Failed to read from URL [" + propertiesURL + "].");
                 return null;
             }
         } catch (IOException e) {
-            log.error("Failed to read from URL [" + propertiesURL + "].", e);
+            LOG.error("Failed to read from URL [" + propertiesURL + "].", e);
             return null;
         }
 
@@ -217,7 +229,7 @@ public class AS7CommandLine extends JavaCommandLine {
         try {
             props.load(inputStream);
         } catch (IOException e) {
-            log.error("Failed to parse properties from URL [" + propertiesURL + "].", e);
+            LOG.error("Failed to parse properties from URL [" + propertiesURL + "].", e);
             return null;
         }
         return props;

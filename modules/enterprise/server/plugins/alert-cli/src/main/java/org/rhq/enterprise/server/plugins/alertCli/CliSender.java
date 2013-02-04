@@ -397,6 +397,7 @@ public class CliSender extends AlertSender<CliComponent> {
 
             RepoCriteria criteria = new RepoCriteria();
             criteria.addFilterId(config.repoId);
+            criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
             List<Repo> repos = rm.findReposByCriteria(overlord, criteria);
 

@@ -304,6 +304,7 @@ public class CliComponent implements ServerPluginComponent, ControlFacet {
             String packageId = cliNotification.getConfiguration().getSimpleValue(CliSender.PROP_PACKAGE_ID, null);
             if (packageId != null) {
                 crit.addFilterPackageId(Integer.valueOf(packageId));
+                crit.clearPaging();//disable paging as the code assumes all the results will be returned.
                 
                 PageList<PackageVersion> res = contentManager.findPackageVersionsByCriteria(overlord, crit);
                 count = res.getTotalSize();

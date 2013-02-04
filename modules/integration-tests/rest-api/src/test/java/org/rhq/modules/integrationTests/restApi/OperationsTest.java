@@ -232,6 +232,30 @@ public class OperationsTest extends AbstractBase {
 
         } finally {
 
+            // Wait until the operation has finished and then delete
+            boolean done = false;
+            int count = 0;
+            while (!done) {
+                String status =
+                given()
+                    .pathParam("hid",historyId)
+                .expect()
+                    .statusCode(200)
+                    .log().everything()
+                .when()
+                    .get("/operation/history/{hid}")
+                .jsonPath().getString("status");
+
+                if (status.equals("Success") || status.equals("Failed")) {
+                    done = true;
+                } else {
+                    Thread.sleep(2000);
+                }
+                assert count < 10 :"Waited for 20sec -- something is wrong";
+            }
+
+
+
             // Delete the history item
             given()
                 .pathParam("hid",historyId)

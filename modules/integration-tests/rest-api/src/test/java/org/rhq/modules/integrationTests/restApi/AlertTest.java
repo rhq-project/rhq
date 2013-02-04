@@ -20,6 +20,7 @@
 package org.rhq.modules.integrationTests.restApi;
 
 import com.jayway.restassured.http.ContentType;
+import com.jayway.restassured.path.xml.XmlPath;
 
 import org.junit.Test;
 
@@ -31,6 +32,7 @@ import org.rhq.modules.integrationTests.restApi.d.Group;
 import static com.jayway.restassured.RestAssured.delete;
 import static com.jayway.restassured.RestAssured.expect;
 import static com.jayway.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.iterableWithSize;
 
@@ -51,13 +53,32 @@ public class AlertTest extends AbstractBase {
     }
 
     @Test
-    public void testGetAlertCount() throws Exception {
+    public void testGetAlertCountJson() throws Exception {
 
-        expect()
+        given()
+            .header(acceptJson)
+        .expect()
             .statusCode(200)
+            .log().ifError()
+            .body("value", instanceOf(Number.class))
         .when()
             .get("/alert/count");
+    }
 
+    @Test
+    public void testGetAlertCountXml() throws Exception {
+
+        XmlPath xmlPath =
+        given()
+            .header(acceptXml)
+        .expect()
+            .statusCode(200)
+            .log().everything()
+        .when()
+            .get("/alert/count")
+        .xmlPath();
+
+        int count = xmlPath.getInt("value.@value");
     }
 
     @Test

@@ -253,23 +253,14 @@ public class ResourceClientProxy {
             .findMeasurementDefinitionsByCriteria(remoteClient.getSubject(), criteria);
 
         this.measurementMap = new HashMap<String, Measurement>();
-        //Chunk through the results in 200(default) page element batches to avoid excessive 
-        //memory usage for large deployments
-        while (!measurementDefinitions.isEmpty()) {
-            for (MeasurementDefinition def : measurementDefinitions) {
-                Measurement m = new Measurement(def);
+        for (MeasurementDefinition def : measurementDefinitions) {
+            Measurement m = new Measurement(def);
 
-                String name = def.getDisplayName().replaceAll("\\W", "");
-                name = decapitalize(name);
+            String name = def.getDisplayName().replaceAll("\\W", "");
+            name = decapitalize(name);
 
-                this.measurementMap.put(name, m);
-                this.allProperties.put(name, m);
-            }
-            //process next batch if available with new criteria instance
-            criteria = new MeasurementDefinitionCriteria();
-            criteria.addFilterResourceTypeId(resource.getResourceType().getId());
-            this.measurementDefinitions = remoteClient.getProxy(MeasurementDefinitionManagerRemote.class)
-                .findMeasurementDefinitionsByCriteria(remoteClient.getSubject(), criteria);
+            this.measurementMap.put(name, m);
+            this.allProperties.put(name, m);
         }
     }
 

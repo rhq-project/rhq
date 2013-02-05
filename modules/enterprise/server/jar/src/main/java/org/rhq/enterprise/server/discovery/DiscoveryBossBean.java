@@ -1080,6 +1080,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 ResourceTypeCriteria criteria = new ResourceTypeCriteria();
                 criteria.addFilterPluginName(plugin);
                 criteria.addFilterName(name);
+                criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
                 List<ResourceType> result = resourceTypeManager.findResourceTypesByCriteria(
                     subjectManager.getOverlord(), criteria);
 
@@ -1266,6 +1268,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             ResourceCriteria resourceCriteria = new ResourceCriteria();
             resourceCriteria.addFilterParentResourceId(parentResource.getId());
             resourceCriteria.addFilterResourceTypeId(resourceType.getId());
+            resourceCriteria.clearPaging();//Doc: disable paging as the code assumes all the results will be returned.
+
             PageList<Resource> childResourcesOfType = resourceManager.findResourcesByCriteria(
                 subjectManager.getOverlord(), resourceCriteria);
             if (childResourcesOfType.size() >= 1) {

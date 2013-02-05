@@ -1,10 +1,6 @@
 package org.rhq.enterprise.server.inventory;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -14,9 +10,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
-import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -78,6 +72,7 @@ public class InventoryManagerBean implements InventoryManagerLocal {
     public List<ResourceType> getDeletedTypes() {
         ResourceTypeCriteria criteria = new ResourceTypeCriteria();
         criteria.addFilterDeleted(true);
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
         return resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(), criteria);
     }

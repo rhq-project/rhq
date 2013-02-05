@@ -606,6 +606,7 @@ public class SearchAssistManager {
 
         criteria.setCaseSensitive(false);
         criteria.addSortName(PageOrdering.ASC);
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
         List<SavedSearch> savedSearchResults = savedSearchManager.findSavedSearchesByCriteria(subject, criteria);
 
@@ -636,6 +637,7 @@ public class SearchAssistManager {
 
         criteria.setCaseSensitive(false);
         criteria.addSortName(PageOrdering.ASC);
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
         List<SavedSearch> savedSearchResults = savedSearchManager.findSavedSearchesByCriteria(subject, criteria);
 

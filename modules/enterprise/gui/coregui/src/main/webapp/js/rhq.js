@@ -9,7 +9,7 @@
  * A ChartContext can be passed to multiple chart renders to display different chart types
  * of that data.
  */
-var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, yAxisLabel, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, hoverStartLabel,hoverEndLabel, hoverPeriodLabel, hoverBarLabel)
+var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, yAxisLabel, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, noDataLabel, hoverStartLabel,hoverEndLabel, hoverPeriodLabel, hoverBarLabel)
 {
     "use strict";
     this.chartId = chartId;
@@ -27,6 +27,7 @@ var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, yAxi
     this.timeLabel = timeLabel;
     this.downLabel = downLabel;
     this.unknownLabel = unknownLabel;
+    this.noDataLabel = noDataLabel;
     this.hoverStartLabel = hoverStartLabel;
     this.hoverEndLabel = hoverEndLabel;
     this.hoverPeriodLabel = hoverPeriodLabel;

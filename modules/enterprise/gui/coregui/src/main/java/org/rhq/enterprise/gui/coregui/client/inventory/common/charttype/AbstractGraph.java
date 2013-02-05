@@ -87,8 +87,8 @@ public abstract class AbstractGraph implements HasD3JsniChart {
         metricGraphData.setMetricData(metricData);
     }
 
-    public void setAvailabilityDownList(PageList<Availability> availabilityDownList) {
-        metricGraphData.setAvailabilityDownList(availabilityDownList);
+    public void setAvailabilityList(PageList<Availability> availabilityDownList) {
+        metricGraphData.setAvailabilityList(availabilityDownList);
     }
 
     public void setMeasurementOOBCompositeList(PageList<MeasurementOOBComposite> measurementOOBCompositeList) {
@@ -121,6 +121,10 @@ public abstract class AbstractGraph implements HasD3JsniChart {
 
     public String getChartUnknownLabel() {
         return metricGraphData.getChartUnknownLabel();
+    }
+
+    public String getChartNoDataLabel() {
+        return metricGraphData.getChartNoDataLabel();
     }
 
     public String getChartHoverStartLabel() {

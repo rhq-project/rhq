@@ -70,7 +70,7 @@ public class D3GraphListView extends LocatableVLayout {
     private Label loadingLabel = new Label(MSG.common_msg_loading());
     private UserPreferencesMeasurementRangeEditor measurementRangeEditor;
     private boolean useSummaryData = false;
-    private PageList<Availability> downAvailList;
+    private PageList<Availability> availabilityList;
     private PageList<MeasurementOOBComposite> measurementOOBCompositeList;
     private List<List<MeasurementDataNumericHighLowComposite>> metricsDataList;
 
@@ -248,14 +248,13 @@ public class D3GraphListView extends LocatableVLayout {
                             public void onSuccess(PageList<Availability> availList) {
                                 Log.debug("\nSuccessfully queried availability in: "
                                     + (System.currentTimeMillis() - startTime) + " ms.");
-                                downAvailList = new PageList<Availability>();
+                                availabilityList = new PageList<Availability>();
                                 for (Availability availability : availList) {
-                                    if (availability.getAvailabilityType().equals(AvailabilityType.DOWN)
-                                        || availability.getAvailabilityType().equals(AvailabilityType.DISABLED)) {
-                                        downAvailList.add(availability);
+                                    if (!availability.getAvailabilityType().equals(AvailabilityType.UP)){
+                                        availabilityList.add(availability);
                                     }
                                 }
-                                Log.debug("Down avail list: " + downAvailList.size());
+                                Log.debug("avail list size: " + availabilityList.size());
                                 countDownLatch.countDown();
                             }
                         });
@@ -312,7 +311,7 @@ public class D3GraphListView extends LocatableVLayout {
                     int i = 0;
                     for (MeasurementDefinition measurementDefinition : measurementDefinitions) {
                         if (summaryIds.contains(measurementDefinition.getId())) {
-                            buildSingleGraph(downAvailList, measurementOOBCompositeList, measurementDefinition,
+                            buildSingleGraph(availabilityList, measurementOOBCompositeList, measurementDefinition,
                                 measurementData.get(i), 250);
                         }
                         i++;
@@ -332,12 +331,12 @@ public class D3GraphListView extends LocatableVLayout {
                             if (null != selectedDefinitionId) {
                                 // single graph case
                                 if (measurementId == selectedDefinitionId) {
-                                    buildSingleGraph(downAvailList, measurementOOBCompositeList, measurementDefinition,
+                                    buildSingleGraph(availabilityList, measurementOOBCompositeList, measurementDefinition,
                                         metric, 300);
                                 }
                             } else {
                                 // multiple graph case
-                                buildSingleGraph(downAvailList, measurementOOBCompositeList, measurementDefinition,
+                                buildSingleGraph(availabilityList, measurementOOBCompositeList, measurementDefinition,
                                     metric, 300);
                             }
                         }

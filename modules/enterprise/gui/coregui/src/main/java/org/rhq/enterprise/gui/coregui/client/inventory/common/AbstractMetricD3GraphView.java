@@ -143,6 +143,10 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
               "                        width=\"6\" height=\"3\">" +
               "                   <path d=\"M 0 0 6 0\" style=\"stroke:#CCCCCC; fill:none;\"/>" +
               "               </pattern>" +
+              "               <pattern id=\"blueStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\"" +
+              "                        width=\"6\" height=\"3\">" +
+              "                   <path d=\"M 0 0 6 0\" style=\"stroke:#69BFDE; fill:none;\"/>" +
+              "               </pattern>" +
               "               <pattern id=\"redStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\"" +
               "                        width=\"6\" height=\"3\">" +
               "                   <path d=\"M 0 0 6 0\" style=\"stroke:#ff8a9a; fill:none;\"/>" +

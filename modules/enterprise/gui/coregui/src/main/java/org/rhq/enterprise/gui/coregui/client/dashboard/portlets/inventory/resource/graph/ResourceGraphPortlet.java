@@ -216,14 +216,13 @@ public class ResourceGraphPortlet extends ResourceMetricD3Graph implements Custo
                 public void onSuccess(PageList<Availability> availList) {
                     Log.debug("\nSuccessfully queried Dashboard availability in: "
                         + (System.currentTimeMillis() - startTime) + " ms.");
-                    PageList<Availability> downAvailList = new PageList<Availability>();
+                    PageList<Availability> availabilityList = new PageList<Availability>();
                     for (Availability availability : availList) {
-                        if (availability.getAvailabilityType().equals(AvailabilityType.DOWN)
-                            || availability.getAvailabilityType().equals(AvailabilityType.DISABLED)) {
-                            downAvailList.add(availability);
+                        if (!availability.getAvailabilityType().equals(AvailabilityType.UP)){
+                            availabilityList.add(availability);
                         }
                     }
-                    graph.getMetricGraphData().setAvailabilityDownList(downAvailList);
+                    graph.getMetricGraphData().setAvailabilityList(availabilityList);
                     countDownLatch.countDown();
                 }
             });

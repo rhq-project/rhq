@@ -59,6 +59,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartTimeLabel()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartDownLabel()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartUnknownLabel()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartNoDataLabel()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartHoverStartLabel()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartHoverEndLabel()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartHoverPeriodLabel()(),
@@ -243,7 +244,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                             return timeScale(d.x);
                         })
                         .attr("y", function (d) {
-                            if (d.down || d.nodata) {
+                            if (d.down || d.unknown || d.nodata) {
                                 return yScale(highBound);
                             }
                             else {
@@ -251,7 +252,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                             }
                         })
                         .attr("height", function (d) {
-                            if (d.down || d.nodata) {
+                            if (d.down || d.unknown || d.nodata) {
                                 return height - yScale(highBound) - pixelsOffHeight;
                             }
                             else {
@@ -263,11 +264,12 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         })
 
                         .attr("opacity", ".9")
-                        .attr("fill", function (d, i) {
+                        .attr("fill", function (d) {
                             if (d.down) {
                                 return  "url(#redStripes)";
-                            }
-                            else if (d.nodata) {
+                            } else if (d.unknown) {
+                                return  "url(#blueStripes)";
+                            }else if (d.nodata) {
                                 return  "url(#grayStripes)";
                             }
                             else {
@@ -314,7 +316,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                             return isNaN(d.y) ? height : yScale(d.y);
                         })
                         .attr("height", function (d) {
-                            if (d.down || d.nodata) {
+                            if (d.down || d.unknown || d.nodata) {
                                 return height - yScale(lowBound);
                             }
                             else {
@@ -339,7 +341,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                             return isNaN(d.y) ? height : yScale(d.y)-2;
                         })
                         .attr("height", function (d) {
-                            if (d.down || d.nodata) {
+                            if (d.down || d.unknown || d.nodata) {
                                 return height - yScale(lowBound);
                             }
                             else {
@@ -569,6 +571,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         avgValue = (d.y == undefined) ? 0 : d.y.toFixed(2);
 
                 if (d.down) {
+                    // down availability
                     hoverString =
                             '<div style="text-align:left;z-index:990000;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">' + chartContext.timeLabel + ': </span>' + timeFormatter(date) + '</div>' +
                                     '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
@@ -578,17 +581,32 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                                     '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverPeriodLabel+": "+ availDuration + '</span></div>' +
                                     '<div style="text-align: right;"><span style="width:100%;font-weight: bold;color:#ff8a9a"";">'+chartContext.downLabel +'</span></div>' +
                                     '</div>';
-                }
-                else if (d.y == undefined) {
+                } else  if (d.unknown) {
+                    // unknown availability
                     hoverString =
                             '<div style="text-align:left;z-index:990000;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">' + chartContext.timeLabel + ': </span>' + timeFormatter(date) + '</div>' +
                                     '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
                                     '<hr style="width:100%;text-align: center;border: #d3d3d3 solid thin;"></hr>' +
+                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverStartLabel+": "+ timeFormatter(unknownStartDate)+ '</span></div>' +
+                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverEndLabel+": "+ timeFormatter(unknownEndDate) + '</span></div>' +
+                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverPeriodLabel+": "+ unknownDuration + '</span></div>' +
                                     '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.unknownLabel+'</span></div>' +
                                     '</div>';
+                }
+
+                else if (d.y == undefined) {
+                    // no data
+                    hoverString =
+                            '<div style="text-align:left;z-index:990000;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">' + chartContext.timeLabel + ': </span>' + timeFormatter(date) + '</div>' +
+                                    '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
+                                    '<hr style="width:100%;text-align: center;border: #d3d3d3 solid thin;"></hr>' +
+                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.noDataLabel+'</span></div>' +
+                                    '</div>';
+
 
                 }
                 else {
+                    // regular bar hover
                     hoverString =
                             '<div style="text-align:left;z-index:990000;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">' + chartContext.timeLabel + ':  </span><span style="width:50px;">' + timeFormatter(date) + '</span></div>' +
                                     '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">' + chartContext.dateLabel + ':  </span><span style="width:50px;">' + dateFormatter(date) + '</span></div>' +

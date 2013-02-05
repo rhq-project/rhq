@@ -117,6 +117,8 @@ public class ContentProviderSyncJob implements StatefulJob {
         RepoCriteria repoCriteria = new RepoCriteria();
         repoCriteria.addFilterContentSourceIds(contentSource.getId());
         repoCriteria.addFilterCandidate(false);
+        repoCriteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
         RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
         PageList<Repo> repos = repoManager.findReposByCriteria(overlord, repoCriteria);
         Integer[] repoIds = new Integer[repos.size()];

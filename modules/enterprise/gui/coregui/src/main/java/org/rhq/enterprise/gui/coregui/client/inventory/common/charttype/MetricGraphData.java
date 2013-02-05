@@ -69,7 +69,7 @@ public class MetricGraphData implements JsonMetricProducer {
     private MeasurementUnits adjustedMeasurementUnits;
     private MeasurementDefinition definition;
     private List<MeasurementDataNumericHighLowComposite> metricData;
-    private List<DatePair> unknownIntervalList;
+    //private List<DatePair> unknownIntervalList;
     private PageList<Availability> availabilityDownList;
     private PageList<MeasurementOOBComposite> measurementOOBCompositeList;
     private MeasurementOOBComposite lastOOB;
@@ -267,7 +267,7 @@ public class MetricGraphData implements JsonMetricProducer {
             calculateOOB();
 
             for (MeasurementDataNumericHighLowComposite measurement : metricData) {
-                sb.append("{ x:" + measurement.getTimestamp() + ",");
+                sb.append("{ \"x\":" + measurement.getTimestamp() + ",");
 
                 if (null != availabilityDownList) {
                     // loop through the avail down intervals
@@ -279,23 +279,23 @@ public class MetricGraphData implements JsonMetricProducer {
                         // @todo: when resource is down measurement is null NPE
                         if (measurement.getTimestamp() >= availability.getStartTime()
                             && measurement.getTimestamp() <= availability.getEndTime()) {
-                            sb.append(" availStart:" + availability.getStartTime() + ", ");
-                            sb.append(" availEnd:" + availability.getEndTime() + ", ");
+                            sb.append(" \"availStart\":" + availability.getStartTime() + ", ");
+                            sb.append(" \"availEnd\":" + availability.getEndTime() + ", ");
                             long availDuration = availability.getEndTime() - availability.getStartTime();
                             String availDurationString = MeasurementConverterClient.format((double) availDuration,
                                 MeasurementUnits.MILLISECONDS, true);
-                            sb.append(" availDuration: \"" + availDurationString + "\", ");
+                            sb.append(" \"availDuration\": \"" + availDurationString + "\", ");
                             break;
                         }
                     }
                 }
                 if (null != lastOOB) {
-                    sb.append(" baselineMin:" + lastOOB.getBlMin() + ", ");
-                    sb.append(" baselineMax:" + lastOOB.getBlMax() + ", ");
+                    sb.append(" \"baselineMin\":" + lastOOB.getBlMin() + ", ");
+                    sb.append(" \"baselineMax\":" + lastOOB.getBlMax() + ", ");
                 }
 
                 if (isAvailabilityDownOrDisabledForBar(measurement.getTimestamp())) {
-                    sb.append(" down:true, ");
+                    sb.append(" \"down\":true, ");
                 } else {
                     if (!Double.isNaN(measurement.getValue())) {
 
@@ -309,28 +309,14 @@ public class MetricGraphData implements JsonMetricProducer {
                             adjustedMeasurementUnits = newValue.getUnits();
                             gotAdjustedMeasurementUnits = true;
                         }
-                        sb.append(" barDuration: \"" + barDurationString + "\", ");
-                        sb.append(" high:" + newHigh.getValue() + ",");
-                        sb.append(" low:" + newLow.getValue() + ",");
-                        sb.append(" y:" + newValue.getValue() + "},");
+                        sb.append(" \"barDuration\": \"" + barDurationString + "\", ");
+                        sb.append(" \"high\":" + newHigh.getValue() + ",");
+                        sb.append(" \"low\":" + newLow.getValue() + ",");
+                        sb.append(" \"y\":" + newValue.getValue() + "},");
                     } else {
                         if (!isAvailabilityDownOrDisabledForBar(measurement.getTimestamp())) {
                             // NaN measure no measurement was collected
-                            // loop through the unknown intervals
-                            for (DatePair datePair : unknownIntervalList) {
-                                // we know we are in an interval
-                                if (measurement.getTimestamp() >= datePair.getStartDateTime().getTime()
-                                    && measurement.getTimestamp() <= datePair.getEndDateTime().getTime()) {
-                                    sb.append(" unknownStart:" + datePair.getStartDateTime().getTime() + ", ");
-                                    sb.append(" unknownEnd:" + datePair.getEndDateTime().getTime() + ", ");
-                                    long unknownDuration = datePair.getEndDateTime().getTime() - datePair.getStartDateTime().getTime();
-                                    String unknownDurationString = MeasurementConverterClient.format((double) unknownDuration,
-                                            MeasurementUnits.MILLISECONDS, true);
-                                    sb.append(" unknownDuration: \"" + unknownDurationString + "\", ");
-                                    break;
-                                }
-                            }
-                            sb.append(" nodata:true },");
+                            sb.append(" \"nodata\":true },");
                         } else {
                             sb.append(" },");
                         }
@@ -427,30 +413,30 @@ public class MetricGraphData implements JsonMetricProducer {
      * Used in measuring downtime and unknown intervals.
      * Intervals are inclusive of the startDateTime and endDateTime.
      */
-    private final class DatePair {
-
-        private Date startDateTime;
-        private Date endDateTime;
-
-        public DatePair(Date startDateTime, Date endDateTime) {
-            this.startDateTime = startDateTime;
-            this.endDateTime = endDateTime;
-        }
-
-        public Date getStartDateTime() {
-            return startDateTime;
-        }
-
-        public Date getEndDateTime() {
-            return endDateTime;
-        }
-
-        @Override
-        public String toString() {
-            return "DatePair{" +
-                    "startDateTime=" + startDateTime +
-                    ", endDateTime=" + endDateTime +
-                    '}';
-        }
-    }
+//    private final class DatePair {
+//
+//        private Date startDateTime;
+//        private Date endDateTime;
+//
+//        public DatePair(Date startDateTime, Date endDateTime) {
+//            this.startDateTime = startDateTime;
+//            this.endDateTime = endDateTime;
+//        }
+//
+//        public Date getStartDateTime() {
+//            return startDateTime;
+//        }
+//
+//        public Date getEndDateTime() {
+//            return endDateTime;
+//        }
+//
+//        @Override
+//        public String toString() {
+//            return "DatePair{" +
+//                    "startDateTime=" + startDateTime +
+//                    ", endDateTime=" + endDateTime +
+//                    '}';
+//        }
+//    }
 }

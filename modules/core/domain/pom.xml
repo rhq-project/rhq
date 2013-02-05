@@ -112,11 +112,10 @@
     <scope>provided</scope>
     <type>pom</type>
   </dependency>
- 
+
   <dependency>
     <groupId>org.jboss.as</groupId>
     <artifactId>jboss-as-arquillian-container-managed</artifactId>
-    <version>${jboss.version}</version>
     <scope>test</scope>
   </dependency>
          

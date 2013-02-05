@@ -54,7 +54,6 @@ import com.wordnik.swagger.annotations.ApiParam;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.resteasy.annotations.Form;
 import org.jboss.resteasy.annotations.GZIP;
 import org.jboss.resteasy.annotations.cache.Cache;
 
@@ -115,6 +114,8 @@ public class GroupHandlerBean extends AbstractRestBean  {
         if (q!=null) {
             criteria.addFilterName(q);
         }
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
         List<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(caller, criteria);
 
         List<GroupRest> list = new ArrayList<GroupRest>(groups.size());
@@ -372,6 +373,8 @@ public class GroupHandlerBean extends AbstractRestBean  {
         if (q!=null) {
             criteria.addFilterName(q);
         }
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
         PageList<GroupDefinition> gdlist =  definitionManager.findGroupDefinitionsByCriteria(caller, criteria);
         List<GroupDefinitionRest> list = new ArrayList<GroupDefinitionRest>(gdlist.getTotalSize());
         for (GroupDefinition def: gdlist) {

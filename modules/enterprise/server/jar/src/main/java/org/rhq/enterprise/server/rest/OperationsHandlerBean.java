@@ -343,6 +343,7 @@ public class OperationsHandlerBean extends AbstractRestBean  {
         ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
         JobId jobId = new JobId(jobName);
         criteria.addFilterJobId(jobId);
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
         ResourceOperationHistory history ;//= opsManager.getOperationHistoryByJobId(caller,jobName);
         List<ResourceOperationHistory> list = opsManager.findResourceOperationHistoriesByCriteria(caller,criteria);
@@ -386,6 +387,7 @@ public class OperationsHandlerBean extends AbstractRestBean  {
             criteria.addFilterResourceIds(resourceId);
 
         criteria.addSortEndTime(PageOrdering.DESC);
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
         List<ResourceOperationHistory> list = opsManager.findResourceOperationHistoriesByCriteria(caller,criteria);
 
@@ -413,6 +415,8 @@ public class OperationsHandlerBean extends AbstractRestBean  {
 
         ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
         criteria.addFilterJobId(new JobId(jobName));
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
         List<ResourceOperationHistory> list = opsManager.findResourceOperationHistoriesByCriteria(caller,criteria);
         if ((list != null && !list.isEmpty())) {
 

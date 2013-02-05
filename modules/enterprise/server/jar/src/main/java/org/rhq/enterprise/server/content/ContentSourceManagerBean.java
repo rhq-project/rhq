@@ -749,6 +749,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             RepoCriteria reposForContentSource = new RepoCriteria();
             reposForContentSource.addFilterContentSourceIds(contentSourceId);
             reposForContentSource.addFilterCandidate(false); // Don't sync distributions for candidates
+            reposForContentSource.clearPaging();//disable paging as the code assumes all the results will be returned.
+
             Subject overlord = LookupUtil.getSubjectManager().getOverlord();
             List<Repo> repos = repoManager.findReposByCriteria(overlord, reposForContentSource);
             log.debug("downloadDistributionBits found " + repos.size() + " repos associated with this contentSourceId "

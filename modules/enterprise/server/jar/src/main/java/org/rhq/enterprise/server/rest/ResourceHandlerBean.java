@@ -88,7 +88,12 @@ import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceAlreadyExistsException;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
-import org.rhq.enterprise.server.rest.domain.*;
+import org.rhq.enterprise.server.rest.domain.AvailabilityRest;
+import org.rhq.enterprise.server.rest.domain.Link;
+import org.rhq.enterprise.server.rest.domain.MetricSchedule;
+import org.rhq.enterprise.server.rest.domain.ResourceWithChildren;
+import org.rhq.enterprise.server.rest.domain.ResourceWithType;
+import org.rhq.enterprise.server.rest.domain.StringValue;
 
 /**
  * Class that deals with getting data about resources
@@ -324,6 +329,8 @@ public class ResourceHandlerBean extends AbstractRestBean {
         criteria.addFilterInterval(start,end);
         criteria.addFilterResourceId(resourceId);
         criteria.addSortStartTime(PageOrdering.DESC);
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
         List<Availability> points = availMgr.findAvailabilityByCriteria(caller,criteria);
         List<AvailabilityRest> ret = new ArrayList<AvailabilityRest>(points.size());
         for (Availability avail : points) {
@@ -517,6 +524,8 @@ public class ResourceHandlerBean extends AbstractRestBean {
     public List<Link> getAlertsForResource(@ApiParam("Id of the resource to query") @PathParam("id") int resourceId) {
         AlertCriteria criteria = new AlertCriteria();
         criteria.addFilterResourceIds(resourceId);
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
         List<Alert> alerts = alertManager.findAlertsByCriteria(caller, criteria);
         List<Link> links = new ArrayList<Link>(alerts.size());
         for (Alert al : alerts) {
@@ -638,9 +647,9 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
     @POST
     @Path("/")
-    @ApiOperation("Create a new resource as a child of an existing resource¡")
+    @ApiOperation("Create a new resource as a child of an existing resource<A1>")
     public Response createResource(
-        @ApiParam("THe info about the resource. You need to supply resource name, resource type name, plugin name, id of the parent") ResourceWithType resource,
+        @ApiParam("The info about the resource. You need to supply resource name, resource type name, plugin name, id of the parent") ResourceWithType resource,
         @Context UriInfo uriInfo)
     {
         return createResourceInternal(resource.getResourceName(),resource.getPluginName(),resource.getParentId(),resource.getTypeName(),uriInfo);

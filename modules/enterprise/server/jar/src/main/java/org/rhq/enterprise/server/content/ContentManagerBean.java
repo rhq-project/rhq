@@ -1593,7 +1593,9 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             throw new IllegalArgumentException("The criteria query has to have a filter for a specific repo.");
         }
         
-        criteria.fetchVersions(true);        
+        criteria.fetchVersions(true);
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
         PageList<Package> packages = findPackagesByCriteria(subject, criteria);
         
         PageList<PackageAndLatestVersionComposite> ret = new PageList<PackageAndLatestVersionComposite>(packages.getTotalSize(), packages.getPageControl());

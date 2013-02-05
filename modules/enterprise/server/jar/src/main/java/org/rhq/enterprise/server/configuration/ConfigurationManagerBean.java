@@ -89,7 +89,6 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -2576,6 +2575,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             if (tt == PropertyOptionsSource.TargetType.RESOURCE || tt == PropertyOptionsSource.TargetType.CONFIGURATION) {
                 List<Resource> resources = null;
                 ResourceCriteria criteria = new ResourceCriteria();
+                criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
                 if (tt == PropertyOptionsSource.TargetType.CONFIGURATION) {
                     // split out expression part for target=configuration
@@ -2631,6 +2631,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 // for groups we need to talk to the group manager
                 ResourceGroupCriteria criteria = new ResourceGroupCriteria();
                 criteria.setSearchExpression(expression);
+                criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
                 resourceGroupManager.findResourceGroupCompositesByCriteria(subject, criteria);
             }

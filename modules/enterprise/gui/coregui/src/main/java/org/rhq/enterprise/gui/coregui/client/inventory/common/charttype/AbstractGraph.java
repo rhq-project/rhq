@@ -148,7 +148,7 @@ public abstract class AbstractGraph implements HasD3JsniChart {
     }
 
     public String getYAxisTitle() {
-        return metricGraphData.getYAxisTitle();
+        return metricGraphData != null ? metricGraphData.getYAxisTitle() : "";
     }
 
     public String getYAxisUnits() {

@@ -584,9 +584,6 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                             '<div style="text-align:left;z-index:990000;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">' + chartContext.timeLabel + ': </span>' + timeFormatter(date) + '</div>' +
                                     '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
                                     '<hr style="width:100%;text-align: center;border: #d3d3d3 solid thin;"></hr>' +
-                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverStartLabel+": "+ timeFormatter(unknownStartDate)+ '</span></div>' +
-                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverEndLabel+": "+ timeFormatter(unknownEndDate) + '</span></div>' +
-                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverPeriodLabel+": "+ unknownDuration + '</span></div>' +
                                     '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.unknownLabel+'</span></div>' +
                                     '</div>';
 

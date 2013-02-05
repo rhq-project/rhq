@@ -24,6 +24,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.rhq.core.domain.measurement.Availability;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
@@ -55,6 +56,7 @@ public class MetricGraphData implements JsonMetricProducer {
     private final String chartTimeLabel = MSG.chart_time_label();
     private final String chartDownLabel = MSG.chart_down_label();
     private final String chartUnknownLabel = MSG.chart_unknown_label();
+    //private final String chartNoDataLabel = MSG.chart_no_data_label();
     private final String chartHoverStartLabel = MSG.chart_hover_start_label();
     private final String chartHoverEndLabel = MSG.chart_hover_end_label();
     private final String chartHoverPeriodLabel = MSG.chart_hover_period_label();
@@ -215,6 +217,7 @@ public class MetricGraphData implements JsonMetricProducer {
 
     public String getYAxisTitle() {
 
+        Log.debug("** Definition: "+definition+ ", id: "+ definitionId);
         if (null != definition.getDisplayName() && definition.getDisplayName().length() > 55) {
             return definition.getDisplayName().substring(0, 55) + "...";
         } else {
@@ -262,7 +265,6 @@ public class MetricGraphData implements JsonMetricProducer {
                 MeasurementUnits.MILLISECONDS, true);
 
             calculateOOB();
-            calculateUnknownIntervals();
 
             for (MeasurementDataNumericHighLowComposite measurement : metricData) {
                 sb.append("{ x:" + measurement.getTimestamp() + ",");
@@ -270,6 +272,7 @@ public class MetricGraphData implements JsonMetricProducer {
                 if (null != availabilityDownList) {
                     // loop through the avail down intervals
                     for (Availability availability : availabilityDownList) {
+
                         // we know we are in an interval
                         //Log.debug("Availability: " + availability);
                         //Log.debug("Measurement: " + measurement);
@@ -362,65 +365,29 @@ public class MetricGraphData implements JsonMetricProducer {
         }
     }
 
-
-
-    private void calculateUnknownIntervals() {
-
-        unknownIntervalList = new LinkedList<DatePair>();
-        List<Integer> startPoints = new LinkedList<Integer>();
-        //find all possible starting interval points
-        int i = 0;
-        for (MeasurementDataNumericHighLowComposite measurement : metricData) {
-            boolean notAtStart = i >= 1;
-            boolean currentBarUndefined = Double.isNaN(measurement.getValue());
-            boolean previousBarDefined = (notAtStart) ? !Double.isNaN(metricData.get(i - 1).getValue()) : false;
-            //Log.debug("Bar: "+i);
-            //Log.debug("Current BarUndefined: "+currentBarUndefined);
-            //Log.debug("Prev Bar Undefined: "+previousBarDefined);
-            // for first bar
-            if(i == 0 && currentBarUndefined){
-                //Log.debug("**Adding Unknown Start interval period for Bar 0");
-                startPoints.add(i);
-            }
-            if (currentBarUndefined && previousBarDefined && notAtStart && i < metricData.size()-1) {
-                //Log.debug("** Adding Down or Disabled start Point: " + i);
-                startPoints.add(i+1);
-            }
-            i++;
-        }
-        // iterate over the start points to the end of the consecutive bars or end of metricData
-        // from the starting interval points find the interval end point
-        if(null != startPoints){
-        for (Integer startPoint : startPoints) {
-            Log.debug("StartPoint: "+ startPoint + " --> "+ new Date(metricData.get(startPoint).getTimestamp()));
-            for (int j = 0; j < metricData.size() - 2; j++) {
-                boolean notAtEnd = j < metricData.size();
-                boolean currentBarUndefined = Double.isNaN(metricData.get(j).getValue());
-                boolean nextBarDefined = (notAtEnd) ? !Double.isNaN(metricData.get(j + 1).getValue()) : false;
-                boolean nextBarNotInAnyAvailPeriod = !isAvailabilityDownOrDisabledForBar(metricData.get(j+1).getTimestamp());
-                if (currentBarUndefined && nextBarDefined && notAtEnd && nextBarNotInAnyAvailPeriod) {
-                    Date startDate = new Date(metricData.get(startPoint).getTimestamp());
-                    Date endDate = new Date(metricData.get(j+1).getTimestamp());
-                    //Log.debug("\n\nStartDate: " + startDate);
-                    //Log.debug("EndDate: " + endDate);
-                    DatePair datePair = new DatePair(startDate, endDate);
-                    unknownIntervalList.add(datePair);
-                }
-            }
-        }
-        }
-//        Log.debug("intervalDatePairList.size():" + unknownIntervalList.size());
-//        for (DatePair datePair : unknownIntervalList) {
-//            Log.debug("Unknown Interval: "+ datePair);
-//        }
-    }
-
     private boolean isAvailabilityDownOrDisabledForBar(long timestamp) {
         Date timestampDate = new Date(timestamp);
         if (null != availabilityDownList) {
             for (Availability availability : availabilityDownList) {
-                if (timestampDate.after(new Date(availability.getStartTime()))
-                    && timestampDate.before(new Date(availability.getEndTime()))) {
+                boolean downOrDisabled = (availability.getAvailabilityType().equals(AvailabilityType.DOWN) ||
+                        availability.getAvailabilityType().equals(AvailabilityType.DISABLED));
+                if (downOrDisabled
+                    && (timestampDate.after(new Date(availability.getStartTime()))
+                    && timestampDate.before(new Date(availability.getEndTime())))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+ private boolean isAvailabilityUnknownForBar(long timestamp) {
+        Date timestampDate = new Date(timestamp);
+        if (null != availabilityDownList) {
+            for (Availability availability : availabilityDownList) {
+                if (availability.getAvailabilityType().equals(AvailabilityType.UNKNOWN)
+                    && (timestampDate.after(new Date(availability.getStartTime()))
+                    && timestampDate.before(new Date(availability.getEndTime())))) {
                     return true;
                 }
             }

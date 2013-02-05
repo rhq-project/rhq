@@ -333,12 +333,12 @@ public class D3GraphListView extends LocatableVLayout {
                                 // single graph case
                                 if (measurementId == selectedDefinitionId) {
                                     buildSingleGraph(downAvailList, measurementOOBCompositeList, measurementDefinition,
-                                        metric, 250);
+                                        metric, 300);
                                 }
                             } else {
                                 // multiple graph case
                                 buildSingleGraph(downAvailList, measurementOOBCompositeList, measurementDefinition,
-                                    metric, 250);
+                                    metric, 300);
                             }
                         }
                         i++;

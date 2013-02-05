@@ -184,6 +184,8 @@ public class JPADriftServerBean implements JPADriftServerLocal {
             : new JPADriftCriteria(criteria);
 
         jpaCriteria.fetchChangeSet(true);
+        jpaCriteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
         PageList<JPADrift> drifts = findDriftsByCriteria(subject, jpaCriteria);
         PageList<DriftComposite> result = new PageList<DriftComposite>();
         for (JPADrift drift : drifts) {

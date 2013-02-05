@@ -80,6 +80,7 @@ public class DriftServerServiceImpl implements DriftServerService {
         DriftDefinitionCriteria criteria = new DriftDefinitionCriteria();
         criteria.addFilterResourceIds(resourceIds.toArray(new Integer[resourceIds.size()]));
         criteria.fetchConfiguration(true);
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
         Subject overlord = getSubjectManager().getOverlord();
         PageList<DriftDefinition> definitions = getDriftManager().findDriftDefinitionsByCriteria(overlord, criteria);
@@ -119,6 +120,7 @@ public class DriftServerServiceImpl implements DriftServerService {
         DriftDefinitionCriteria criteria = new DriftDefinitionCriteria();
         criteria.addFilterResourceIds(resourceId);
         criteria.addFilterName(drfitDefName);
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
         DriftManagerLocal driftMgr = getDriftManager();
         SubjectManagerLocal subjectMgr = getSubjectManager();

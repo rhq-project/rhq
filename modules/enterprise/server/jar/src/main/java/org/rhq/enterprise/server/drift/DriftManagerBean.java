@@ -208,6 +208,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         DriftDefinitionCriteria driftDefCriteria = new DriftDefinitionCriteria();
         driftDefCriteria.addFilterResourceIds(resourceId);
         driftDefCriteria.addFilterName(driftDefName);
+        driftDefCriteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
         PageList<DriftDefinition> defs = findDriftDefinitionsByCriteria(overlord, driftDefCriteria);
         if (defs.isEmpty()) {
@@ -286,6 +287,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         criteria.setStrict(true);
         criteria.fetchDrifts(true);
         criteria.addSortVersion(PageOrdering.ASC);
+        criteria.setPageControl(PageControl.getUnlimitedInstance());//disable paging as the code assumes all the results will be returned.
 
         PageList<? extends DriftChangeSet<?>> changeSets = findDriftChangeSetsByCriteria(subject, criteria);
         for (DriftChangeSet<? extends Drift<?, ?>> changeSet : changeSets) {
@@ -303,6 +305,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         criteria.addFilterDriftDefinitionId(request.getDriftDefinitionId());
         criteria.addFilterId(request.getTemplateChangeSetId());
         criteria.fetchDrifts(true);
+        criteria.setPageControl(PageControl.getUnlimitedInstance());//disable paging as the code assumes all the results will be returned.
 
         PageList<? extends DriftChangeSet<?>> changeSets = findDriftChangeSetsByCriteria(subject, criteria);
         if (changeSets.isEmpty()) {
@@ -353,6 +356,8 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             criteria.addFilterName(driftDefName);
             criteria.addFilterResourceIds(resourceId);
             criteria.setStrict(true);
+            criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
             PageList<DriftDefinition> results = driftManager.findDriftDefinitionsByCriteria(subject, criteria);
             DriftDefinition doomedDriftDef = null;
             if (results != null && results.size() == 1) {
@@ -503,6 +508,8 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         DriftDefinitionCriteria criteria = new DriftDefinitionCriteria();
         criteria.addFilterName(summary.getDriftDefinitionName());
         criteria.addFilterResourceIds(resourceId);
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
         PageList<DriftDefinition> definitions = findDriftDefinitionsByCriteria(subject, criteria);
 
         if (definitions.isEmpty()) {
@@ -692,6 +699,8 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
         GenericDriftCriteria criteria = new GenericDriftCriteria();
         criteria.addFilterId(driftId1);
+        criteria.setPageControl(PageControl.getSingleRowInstance());
+
         List<? extends Drift<?, ?>> result = driftServerPlugin.findDriftsByCriteria(subject, criteria);
         if (result.size() != 1) {
             throw new IllegalArgumentException("Drift record not found: " + driftId1);
@@ -699,6 +708,8 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         Drift drift1 = result.get(0);
 
         criteria.addFilterId(driftId2);
+        criteria.setPageControl(PageControl.getSingleRowInstance());
+
         result = driftServerPlugin.findDriftsByCriteria(subject, criteria);
         if (result.size() != 1) {
             throw new IllegalArgumentException("Drift record not found: " + driftId2);
@@ -889,6 +900,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         GenericDriftCriteria criteria = new GenericDriftCriteria();
         criteria.addFilterId(driftId);
         criteria.fetchChangeSet(true);
+        criteria.setPageControl(PageControl.getSingleRowInstance());
 
         DriftDetails driftDetails = new DriftDetails();
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
@@ -946,6 +958,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         criteria.addFilterResourceId(drift.getChangeSet().getResourceId());
         criteria.addFilterDriftDefinitionId(drift.getChangeSet().getDriftDefinitionId());
         criteria.addFilterVersion(Integer.toString(drift.getChangeSet().getVersion() - 1));
+        criteria.setPageControl(PageControl.getSingleRowInstance());
 
         PageList<? extends DriftChangeSet<?>> results = findDriftChangeSetsByCriteria(subject, criteria);
         // TODO handle empty results

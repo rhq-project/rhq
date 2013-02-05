@@ -21,6 +21,11 @@
 
 package org.rhq.enterprise.server.resource;
 
+import static java.util.Arrays.asList;
+import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
+import static org.rhq.core.domain.resource.InventoryStatus.COMMITTED;
+import static org.rhq.core.domain.resource.ResourceCategory.PLATFORM;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,17 +44,12 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.PlatformMetricsSummary;
+import org.rhq.core.domain.resource.composite.PlatformMetricsSummary.CPUMetric;
+import org.rhq.core.domain.resource.composite.PlatformMetricsSummary.MemoryMetric;
+import org.rhq.core.domain.resource.composite.PlatformMetricsSummary.SwapMetric;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
-
-import static java.util.Arrays.asList;
-import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
-import static org.rhq.core.domain.resource.InventoryStatus.COMMITTED;
-import static org.rhq.core.domain.resource.ResourceCategory.PLATFORM;
-import static org.rhq.core.domain.resource.composite.PlatformMetricsSummary.CPUMetric;
-import static org.rhq.core.domain.resource.composite.PlatformMetricsSummary.MemoryMetric;
-import static org.rhq.core.domain.resource.composite.PlatformMetricsSummary.SwapMetric;
 
 /**
  * @author jsanda
@@ -74,6 +74,7 @@ public class PlatformUtilizationManagerBean implements PlatformUtilizationManage
         ResourceTypeCriteria typeCriteria = new ResourceTypeCriteria();
         typeCriteria.addFilterCategory(PLATFORM);
         typeCriteria.fetchMetricDefinitions(true);
+        typeCriteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
         PageList<ResourceType> resourceTypes = resourceTypeMgr.findResourceTypesByCriteria(subject, typeCriteria);
         Map<Integer, Set<Integer>> platformMetricDefs = new HashMap<Integer, Set<Integer>>();
@@ -84,6 +85,7 @@ public class PlatformUtilizationManagerBean implements PlatformUtilizationManage
         ResourceCriteria resourceCriteria = new ResourceCriteria();
         resourceCriteria.addFilterResourceCategories(PLATFORM);
         resourceCriteria.addFilterInventoryStatus(COMMITTED);
+        resourceCriteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
         PageList<Resource> platforms = resourceMgr.findResourcesByCriteria(subject, resourceCriteria);
         PageList<PlatformMetricsSummary> summaries = new PageList<PlatformMetricsSummary>();

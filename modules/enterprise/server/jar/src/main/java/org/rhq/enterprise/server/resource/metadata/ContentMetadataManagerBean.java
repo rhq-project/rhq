@@ -239,6 +239,7 @@ public class ContentMetadataManagerBean implements ContentMetadataManagerLocal {
 
         BundleCriteria criteria = new BundleCriteria();
         criteria.addFilterBundleTypeId(bundleType.getId());
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
         List<Bundle> bundles = bundleMgr.findBundlesByCriteria(subject, criteria);
         for (Bundle bundle : bundles) {

@@ -814,6 +814,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 ResourceCriteria criteria = new ResourceCriteria();
                 criteria.addFilterParentResourceId(ancestor.getResource().getId());
                 criteria.addSortName(PageOrdering.ASC);
+                criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
                 List<Resource> children = findResourcesByCriteriaBounded(subject, criteria, 0, 0);
                 // Remove any that are in the lineage to avoid repeated handling.
                 children.removeAll(rawResourceLineage);
@@ -862,6 +864,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         ResourceCriteria resourceCriteria = new ResourceCriteria();
         resourceCriteria.addFilterIds(resourceIds);
         resourceCriteria.fetchResourceType(true);
+        resourceCriteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
         List<Resource> resources = findResourcesByCriteria(subject, resourceCriteria);
 
         if (ResourceAncestryFormat.RAW == format) {
@@ -886,6 +890,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         ResourceTypeCriteria resourceTypeCriteria = new ResourceTypeCriteria();
         resourceTypeCriteria.addFilterIds(typesSet.toArray(new Integer[typesSet.size()]));
+        resourceCriteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
         List<ResourceType> types = typeManager.findResourceTypesByCriteria(subject, resourceTypeCriteria);
 
         for (Resource resource : resources) {

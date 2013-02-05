@@ -682,6 +682,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterResourceTypeId(existingType.getId());
         criteria.addFilterParentResourceTypeId(obsoleteParentType.getId());
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
         List<Resource> resources = resourceManager.findResourcesByCriteria(overlord, criteria);
         for (Resource resource : resources) {
             Resource newParent = null;

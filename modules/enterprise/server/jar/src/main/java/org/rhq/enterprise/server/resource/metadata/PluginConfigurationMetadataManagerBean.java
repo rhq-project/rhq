@@ -76,6 +76,8 @@ public class PluginConfigurationMetadataManagerBean implements PluginConfigurati
                     Subject overlord = subjectMgr.getOverlord();
                     ResourceCriteria criteria = new ResourceCriteria();
                     criteria.addFilterResourceTypeId(existingType.getId());
+                    criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
                     List<Resource> resources = resourceMgr.findResourcesByCriteria(overlord, criteria);
 
                     for (Resource resource : resources) {

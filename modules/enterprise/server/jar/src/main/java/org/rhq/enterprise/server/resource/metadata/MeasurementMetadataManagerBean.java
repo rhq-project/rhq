@@ -216,6 +216,8 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
 
         MeasurementDefinitionCriteria criteria = new MeasurementDefinitionCriteria();
         criteria.addFilterResourceTypeId(existingType.getId());
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
         List<MeasurementDefinition> definitions = measurementDefinitionMgr.findMeasurementDefinitionsByCriteria(
             subjectMgr.getOverlord(), criteria);
 

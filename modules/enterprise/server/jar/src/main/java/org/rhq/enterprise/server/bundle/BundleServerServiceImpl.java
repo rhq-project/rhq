@@ -71,6 +71,8 @@ public class BundleServerServiceImpl implements BundleServerService {
 
             bfc.addFilterBundleVersionId(bundleVersionId);
             bfc.fetchPackageVersion(true);
+            bfc.clearPaging();//disable paging as the code assumes all the results will be returned.
+
             List<BundleFile> bundleFiles = bm.findBundleFilesByCriteria(subject, bfc);
             List<PackageVersion> packageVersions = new ArrayList<PackageVersion>(bundleFiles.size());
             PackageVersion packageVersion = null;

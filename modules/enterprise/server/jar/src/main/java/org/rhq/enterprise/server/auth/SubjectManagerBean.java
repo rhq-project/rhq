@@ -216,6 +216,8 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         if (newLdapRoles != null) {
             RoleCriteria subjectLdapRolesCriteria = new RoleCriteria();
             subjectLdapRolesCriteria.addFilterLdapSubjectId(subjectToModify.getId());
+            subjectLdapRolesCriteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
             PageList<Role> currentLdapRoles = roleManager.findRolesByCriteria(whoami, subjectLdapRolesCriteria);
 
             ldapRolesModified = !(currentLdapRoles.containsAll(newLdapRoles) && newLdapRoles

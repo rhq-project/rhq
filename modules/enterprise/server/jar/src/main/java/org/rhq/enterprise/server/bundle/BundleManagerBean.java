@@ -376,6 +376,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         criteria.addFilterDestinationId(bundleDestination.getId());
         criteria.addFilterIsLive(true);
         criteria.fetchBundleVersion(true);
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
         List<BundleDeployment> liveDeployments = bundleManager.findBundleDeploymentsByCriteria(subject, criteria);
         BundleDeployment liveDeployment = (liveDeployments.isEmpty()) ? null : liveDeployments.get(0);
 
@@ -450,6 +452,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleCriteria criteria = new BundleCriteria();
         criteria.addFilterBundleTypeId(Integer.valueOf(bundleTypeId));
         criteria.addFilterName(bundleName);
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
         PageList<Bundle> bundles = findBundlesByCriteria(subject, criteria);
         Bundle bundle;
         if (bundles.getTotalSize() == 0) {
@@ -630,6 +634,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         criteria.setStrict(true);
         criteria.addFilterBundleTypeId(bundleType.getId());
         criteria.addFilterName(bundleName);
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
         PageList<Bundle> bundles = bundleManager.findBundlesByCriteria(subject, criteria);
         Bundle bundle;
         if (bundles.getTotalSize() == 0) {
@@ -699,6 +705,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 BundleFileCriteria bfCriteria = new BundleFileCriteria();
                 bfCriteria.addFilterBundleVersionId(bundleVersion.getId());
                 bfCriteria.fetchPackageVersion(true);
+                bfCriteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
                 PageList<BundleFile> bfs = bundleManager.findBundleFilesByCriteria(subjectManager.getOverlord(),
                     bfCriteria);
                 bundleFiles.clear();
@@ -1477,6 +1485,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             Bundle bundle = version.getBundle();
             BundleDestinationCriteria destinationCriteria = new BundleDestinationCriteria();
             destinationCriteria.addFilterBundleId(bundle.getId());
+            destinationCriteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
             List<BundleDestination> destinations = findBundleDestinationsByCriteria(subject,destinationCriteria);
             List<BundleDeployment> resultingDeployments = new ArrayList<BundleDeployment>(version.getBundleDeployments().size());
             // We now have visible destinations - go over the resultingDeployments and only include the ones with vis. destinations
@@ -1534,6 +1544,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         for (Bundle bundle : bundles.getValues()) { // TODO clone the bundle and return the modified clones
             BundleDestinationCriteria destinationCriteria = new BundleDestinationCriteria();
             destinationCriteria.addFilterBundleId(bundle.getId());
+            destinationCriteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
             List<BundleDestination> destinations = findBundleDestinationsByCriteria(subject,destinationCriteria);
             bundle.setDestinations(destinations);
         }

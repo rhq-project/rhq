@@ -172,8 +172,13 @@
                dest="${jboss.modules.dir}" />
 
         <echo>Adding JDBC modules to ${jboss.modules.dir} ...</echo>
+    	<!-- make sure we have an oracle driver jar so the AS7 module is valid and loadable, this is empty -->
+        <copy file="src/main/module-resources/ojdbc6-readme.jar"
+        	  toFile="${jboss.modules.dir}/org/rhq/oracle/main/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar"        	  
+        	  failonerror="false" verbose="true" />
+    	<!-- if we have access to the real driver then overwrite the dummy version-->
         <copy file="${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar"
-              toDir="${jboss.modules.dir}/org/rhq/oracle/main" failonerror="false" verbose="true" />
+              toDir="${jboss.modules.dir}/org/rhq/oracle/main" overwrite="true" failonerror="false" verbose="true" />
         <echo file="${jboss.modules.dir}/org/rhq/oracle/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
 <module xmlns="urn:jboss:module:1.1" name="org.rhq.oracle">
     <resources>

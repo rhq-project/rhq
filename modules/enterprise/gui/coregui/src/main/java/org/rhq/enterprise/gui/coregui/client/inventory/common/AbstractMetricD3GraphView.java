@@ -139,15 +139,15 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
               "                   <stop offset=\"0%\" style=\"stop-color:#E6E6E6;stop-opacity:1\"/>" +
               "                   <stop offset=\"100%\" style=\"stop-color:#F0F0F0;stop-opacity:1\"/>" +
               "               </linearGradient>" +
-              "               <pattern id=\"grayStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\"" +
+              "               <pattern id=\"noDataStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\"" +
               "                        width=\"6\" height=\"3\">" +
               "                   <path d=\"M 0 0 6 0\" style=\"stroke:#CCCCCC; fill:none;\"/>" +
               "               </pattern>" +
-              "               <pattern id=\"blueStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\"" +
+              "               <pattern id=\"unknownStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\"" +
               "                        width=\"6\" height=\"3\">" +
-              "                   <path d=\"M 0 0 6 0\" style=\"stroke:#69BFDE; fill:none;\"/>" +
+              "                   <path d=\"M 0 0 6 0\" style=\"stroke:#2E9EC2; fill:none;\"/>" +
               "               </pattern>" +
-              "               <pattern id=\"redStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\"" +
+              "               <pattern id=\"downStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\"" +
               "                        width=\"6\" height=\"3\">" +
               "                   <path d=\"M 0 0 6 0\" style=\"stroke:#ff8a9a; fill:none;\"/>" +
               "               </pattern>" +

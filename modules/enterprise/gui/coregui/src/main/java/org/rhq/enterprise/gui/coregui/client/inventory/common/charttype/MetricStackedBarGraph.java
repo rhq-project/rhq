@@ -266,11 +266,11 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         .attr("opacity", ".9")
                         .attr("fill", function (d) {
                             if (d.down) {
-                                return  "url(#redStripes)";
+                                return  "url(#downStripes)";
                             } else if (d.unknown) {
-                                return  "url(#blueStripes)";
+                                return  "url(#unknownStripes)";
                             }else if (d.nodata) {
-                                return  "url(#grayStripes)";
+                                return  "url(#noDataStripes)";
                             }
                             else {
                                 return  "#d3d3d6";
@@ -492,10 +492,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         .attr("stroke-width", "1")
                         .attr("stroke-dasharray", "3,3")
                         .attr("stroke-opacity", ".7")
-                        .attr("d", peakLine)
-                        .text("Peak")
-                        .append("title")
-                        .text(function(d ) { return "Peak"; });
+                        .attr("d", peakLine);
 
                 // min Line
                 svg.append("path")
@@ -516,7 +513,6 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         .attr("stroke", "#b0d9b0")
                         .attr("stroke-width", "1.5")
                         .attr("stroke-dasharray", "3,3")
-                        .text("Avg")
                         //.attr("stroke-opacity", ".9")
                         .attr("d", avgLine);
 

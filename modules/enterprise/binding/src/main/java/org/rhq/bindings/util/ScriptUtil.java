@@ -79,6 +79,8 @@ public class ScriptUtil {
 
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterName(string);
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
         return resourceManager.findResourcesByCriteria(getSubjectFromEngine(), criteria);
     }
 

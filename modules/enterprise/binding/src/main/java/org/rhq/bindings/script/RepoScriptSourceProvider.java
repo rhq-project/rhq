@@ -103,6 +103,7 @@ public class RepoScriptSourceProvider extends BaseRhqSchemeScriptSourceProvider 
                 PackageCriteria pCrit = new PackageCriteria();
                 pCrit.addFilterName(scriptName);
                 pCrit.addFilterRepoId(repo.getId());
+                pCrit.clearPaging();//disable paging as the code assumes all the results will be returned.
 
                 List<PackageAndLatestVersionComposite> pvs = contentManager.findPackagesWithLatestVersion(
                     rhqFacade.getSubject(), pCrit);

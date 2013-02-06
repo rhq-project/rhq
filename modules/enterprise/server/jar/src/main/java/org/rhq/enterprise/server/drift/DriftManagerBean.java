@@ -206,6 +206,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         Subject overlord = subjectManager.getOverlord();
 
         DriftDefinitionCriteria driftDefCriteria = new DriftDefinitionCriteria();
+        driftDefCriteria.setStrict(true);
         driftDefCriteria.addFilterResourceIds(resourceId);
         driftDefCriteria.addFilterName(driftDefName);
 
@@ -500,6 +501,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         }
 
         DriftDefinitionCriteria criteria = new DriftDefinitionCriteria();
+        criteria.setStrict(true);
         criteria.addFilterName(summary.getDriftDefinitionName());
         criteria.addFilterResourceIds(resourceId);
         PageList<DriftDefinition> definitions = findDriftDefinitionsByCriteria(subject, criteria);

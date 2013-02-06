@@ -108,9 +108,9 @@ public class ResourceGraphPortlet extends ResourceMetricD3Graph implements Custo
             if (resourceIdProperty != null && measurementDefIdProperty != null) {
                 final Integer entityId = resourceIdProperty.getIntegerValue();
                 final Integer measurementDefId = measurementDefIdProperty.getIntegerValue();
-                //this.metricGraphData = new MetricGraphData();
-                graph.getMetricGraphData().setDefinitionId(measurementDefId);
-                graph.getMetricGraphData().setEntityId(entityId);
+                graph.setDefinitionId(measurementDefId);
+                graph.setEntityId(entityId);
+                Log.debug("Metric Graph Data: "+ graph.getMetricGraphData());
 
                 if (entityId != null && measurementDefId != null) {
 
@@ -122,7 +122,7 @@ public class ResourceGraphPortlet extends ResourceMetricD3Graph implements Custo
     }
 
     private void queryResource(Integer entityId, final Integer measurementDefId) {
-        final long startTime = System.currentTimeMillis();
+        //final long startTime = System.currentTimeMillis();
 
         ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
@@ -156,7 +156,6 @@ public class ResourceGraphPortlet extends ResourceMetricD3Graph implements Custo
                         @Override
                         public void onTypesLoaded(Map<Integer, ResourceType> types) {
                             ResourceType type = types.get(resource.getResourceType().getId());
-                            Log.debug("MeasurementDefs.size(): " + type.getMetricDefinitions().size());
                             for (final MeasurementDefinition def : type.getMetricDefinitions()) {
                                 if (def.getId() == measurementDefId) {
                                     Log.debug("Found portlet measurement definition !" + def);
@@ -184,14 +183,13 @@ public class ResourceGraphPortlet extends ResourceMetricD3Graph implements Custo
              * Satisfied only after ALL of the metric queries AND availability have completed
              */
             public void execute() {
-                Log.debug("Time for Dashboard async query: " + (System.currentTimeMillis() - startTime));
+                Log.debug("Dashboard chart query total time for entity: "+entityId+", MeasurementDef: "+def.getId() +" in "+ (System.currentTimeMillis() - startTime)+" ms");
                 drawGraph();
-                //redraw();
             }
         });
 
+        queryMeasurementsAndMetricData(entityId, def.getId(), countDownLatch);
         queryAvailability(entityId, countDownLatch);
-        queryMeasurementsAndMetricData(entityId, countDownLatch);
         // now the countDown latch will run sometime asynchronously after BOTH the previous 2 queries have executed
     }
 
@@ -214,7 +212,7 @@ public class ResourceGraphPortlet extends ResourceMetricD3Graph implements Custo
 
                 @Override
                 public void onSuccess(PageList<Availability> availList) {
-                    Log.debug("\nSuccessfully queried Dashboard availability in: "
+                    Log.debug("Dashboard chart availability query for: "+entityId+", in: "
                         + (System.currentTimeMillis() - startTime) + " ms.");
                     PageList<Availability> availabilityList = new PageList<Availability>();
                     for (Availability availability : availList) {
@@ -228,11 +226,11 @@ public class ResourceGraphPortlet extends ResourceMetricD3Graph implements Custo
             });
     }
 
-    private void queryMeasurementsAndMetricData(final Integer entityId, final CountDownLatch countDownLatch) {
+    private void queryMeasurementsAndMetricData(final Integer entityId, final Integer definitionId, final CountDownLatch countDownLatch) {
         final long startTime = System.currentTimeMillis();
         //
         GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(entityId,
-            new int[] { graph.getMetricGraphData().getDefinitionId() }, 8, MeasurementUtils.UNIT_HOURS, 60,
+            new int[] { definitionId }, 8, MeasurementUtils.UNIT_HOURS, 60,
             new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                 @Override
                 public void onFailure(Throwable caught) {
@@ -242,7 +240,7 @@ public class ResourceGraphPortlet extends ResourceMetricD3Graph implements Custo
 
                 @Override
                 public void onSuccess(final List<List<MeasurementDataNumericHighLowComposite>> measurementData) {
-                    Log.debug("\nSuccessfully queried Dashboard Metric data in: "
+                    Log.debug("Dashboard Metric data in: "
                         + (System.currentTimeMillis() - startTime) + " ms.");
                     graph.getMetricGraphData().setMetricData(measurementData.get(0));
                     countDownLatch.countDown();

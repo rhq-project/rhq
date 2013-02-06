@@ -75,7 +75,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
             console.log("Chart Height: "+chartContext.height);
             var margin = {top: 10, right: 5, bottom: 5, left: 40},
                     width = 750 - margin.left - margin.right,
-                    adjustedChartHeight = chartContext.chartHeight - 40,
+                    adjustedChartHeight = chartContext.chartHeight - 50,
                     height = adjustedChartHeight - margin.top - margin.bottom,
                     titleHeight = 30, titleSpace = 10,
                     barOffset = 2,
@@ -622,7 +622,6 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                     trigger: 'hover',
                     title: function () {
                         var d = this.__data__;
-                        //console.log("y: " + d.y);
                         return formatHovers(chartContext, d);
                     },
                     show: function (e, el)

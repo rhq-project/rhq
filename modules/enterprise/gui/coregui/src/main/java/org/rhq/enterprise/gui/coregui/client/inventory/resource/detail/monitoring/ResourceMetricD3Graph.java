@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitori
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.HasD3JsniChart;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 
 public class ResourceMetricD3Graph extends AbstractMetricD3GraphView {

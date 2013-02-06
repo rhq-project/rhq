@@ -256,7 +256,7 @@ public class MetricGraphData implements JsonMetricProducer {
     public String getJsonMetrics() {
         StringBuilder sb = new StringBuilder("[");
         boolean gotAdjustedMeasurementUnits = false;
-        Log.debug(" avail records loaded: " + availabilityList.size());
+        //Log.debug(" avail records loaded: " + availabilityList.size());
         if (null != metricData) {
             long firstBarTime = metricData.get(0).getTimestamp();
             long secondBarTime = metricData.get(1).getTimestamp();
@@ -441,4 +441,29 @@ public class MetricGraphData implements JsonMetricProducer {
         return startTime + timeThreshold < endTime;
     }
 
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("MetricGraphData");
+        sb.append("{chartTitleMinLabel='").append(chartTitleMinLabel).append('\'');
+        sb.append(", chartTitleAvgLabel='").append(chartTitleAvgLabel).append('\'');
+        sb.append(", chartTitlePeakLabel='").append(chartTitlePeakLabel).append('\'');
+        sb.append(", chartDateLabel='").append(chartDateLabel).append('\'');
+        sb.append(", chartTimeLabel='").append(chartTimeLabel).append('\'');
+        sb.append(", chartDownLabel='").append(chartDownLabel).append('\'');
+        sb.append(", chartUnknownLabel='").append(chartUnknownLabel).append('\'');
+        sb.append(", chartNoDataLabel='").append(chartNoDataLabel).append('\'');
+        sb.append(", chartHoverStartLabel='").append(chartHoverStartLabel).append('\'');
+        sb.append(", chartHoverEndLabel='").append(chartHoverEndLabel).append('\'');
+        sb.append(", chartHoverPeriodLabel='").append(chartHoverPeriodLabel).append('\'');
+        sb.append(", chartHoverBarLabel='").append(chartHoverBarLabel).append('\'');
+        sb.append(", entityId=").append(entityId);
+        sb.append(", entityName='").append(entityName).append('\'');
+        sb.append(", definitionId=").append(definitionId);
+        sb.append(", adjustedMeasurementUnits=").append(adjustedMeasurementUnits);
+        sb.append(", definition=").append(definition);
+        sb.append(", chartHeight=").append(chartHeight);
+        sb.append('}');
+        return sb.toString();
+    }
 }

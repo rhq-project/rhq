@@ -64,7 +64,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.Agent;
@@ -1077,28 +1076,18 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         if (null == resourceType) {
             try {
-                ResourceTypeCriteria criteria = new ResourceTypeCriteria();
-                criteria.addFilterPluginName(plugin);
-                criteria.addFilterName(name);
-                List<ResourceType> result = resourceTypeManager.findResourceTypesByCriteria(
-                    subjectManager.getOverlord(), criteria);
+                resourceType = this.resourceTypeManager.getResourceTypeByNameAndPlugin(name, plugin);
 
-                if (!result.isEmpty()) {
-                    resourceType = result.get(0);
-                    loadedTypeMap.put(key.toString(), resourceType);
-                }
             } catch (RuntimeException e) {
-                log.error("Failed to lookup Resource type [" + resource.getResourceType() + "] for reported Resource ["
-                    + resource + "] - this should not have happened.");
+                resourceType = null;
+            }
+
+            if (null == resourceType) {
+                log.error("Reported resource [" + resource + "] has an unknown type [" + resource.getResourceType()
+                    + "]. The Agent most likely has a plugin named '" + plugin
+                    + "' installed that is not installed on the Server. Resource will be ignored...");
                 return false;
             }
-        }
-
-        if (null == resourceType) {
-            log.error("Reported resource [" + resource + "] has an unknown type [" + resource.getResourceType()
-                + "]. The Agent most likely has a plugin named '" + resource.getResourceType().getPlugin()
-                + "' installed that is not installed on the Server. Resource will be ignored...");
-            return false;
         }
 
         resource.setResourceType(resourceType);

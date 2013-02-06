@@ -14,6 +14,7 @@ import javax.ws.rs.core.StreamingOutput;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.util.PageList;
@@ -38,6 +39,12 @@ public class ConfigurationHistoryHandler extends AbstractRestBean implements Con
 
     @Override
     public StreamingOutput configurationHistory(final HttpServletRequest request) {
+        return configurationHistoryInternal(request,caller);
+    }
+
+    @Override
+    public StreamingOutput configurationHistoryInternal(final HttpServletRequest request, Subject user) {
+        this.caller = user;
         if (log.isDebugEnabled()) {
             log.debug("Received request to generate report for " + caller);
         }

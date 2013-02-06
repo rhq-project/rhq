@@ -869,6 +869,7 @@
             <compilerArguments>
               <AtargetDirectory>${project.build.directory}/docs/xml</AtargetDirectory>
               <AmodelPkg>org.rhq.enterprise.server.rest.domain</AmodelPkg>
+              <AskipPkg>org.rhq.enterprise.server.rest.reporting</AskipPkg>
               <!-- enable the next line to have the output of the processor shown on console -->
               <!--<Averbose>true</Averbose>-->
             </compilerArguments>

@@ -14,6 +14,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
@@ -37,6 +38,11 @@ public class AlertDefinitionHandler extends AbstractRestBean implements AlertDef
 
     @Override
     public StreamingOutput alertDefinitions(final HttpServletRequest request) {
+        return alertDefinitionsInternal(request, caller);
+    }
+
+    public StreamingOutput alertDefinitionsInternal(final HttpServletRequest request, Subject user) {
+        this.caller = user;
             if (log.isDebugEnabled()) {
                 log.debug("Received request to generate report for " + caller);
             }

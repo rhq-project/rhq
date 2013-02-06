@@ -16,6 +16,7 @@ import javax.ws.rs.core.StreamingOutput;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.DriftCategory;
@@ -37,6 +38,20 @@ public class RecentDriftHandler extends AbstractRestBean implements RecentDriftL
 
     @EJB
     private DriftManagerLocal driftManager;
+
+    public StreamingOutput recentDriftInternal(
+            String categories,
+            Integer snapshot,
+            String path,
+            String definitionName,
+            Long startTime,
+            Long endTime,
+            HttpServletRequest request,
+            Subject user) {
+        this.caller = user;
+
+        return recentDrift(categories,snapshot,path,definitionName,startTime,endTime,request);
+    }
 
     @Override
     public StreamingOutput recentDrift(final String categories, final Integer snapshot, final String path,

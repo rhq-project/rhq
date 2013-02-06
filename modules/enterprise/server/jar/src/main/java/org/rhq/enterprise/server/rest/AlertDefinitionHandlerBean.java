@@ -129,6 +129,7 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     // Redirect from /definition to /definitions for GET requests
     @GET
     @Path("/definition")
+    @ApiOperation(value = "Redirects to /alert/definitions")
     public Response redirectDefinitionToDefinitions(@Context UriInfo uriInfo) {
         UriBuilder uriBuilder = uriInfo.getRequestUriBuilder();
         uriBuilder.replacePath("/rest/alert/definitions"); // TODO there needs to be a better way

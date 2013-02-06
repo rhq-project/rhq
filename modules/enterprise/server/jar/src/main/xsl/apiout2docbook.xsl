@@ -100,7 +100,7 @@
         </emphasis>
       </simpara>
       <simpara><xsl:value-of select="@description"/></simpara>
-      <xsl:if test="not(@gzip = '')">
+      <xsl:if test="@gzip = 'true'">
         <simpara>Supports returning a gzip'ed Content-Encoding</simpara>
       </xsl:if>
       <xsl:choose>
@@ -127,7 +127,19 @@
       </xsl:choose>
       <simpara>
         Return type:
-        <xsl:value-of select="@returnType"/>
+        <xsl:choose>
+        <xsl:when test="starts-with(@returnTypeId,'...')">
+          <link>
+            <xsl:attribute name="linkend">
+                <xsl:value-of select="@returnTypeId"/>
+            </xsl:attribute>
+            <xsl:value-of select="@returnType"/>
+          </link>
+        </xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="@returnType"/>
+          </xsl:otherwise>
+        </xsl:choose>
       </simpara>
       <xsl:if test="error">
         <table>
@@ -168,7 +180,6 @@
       </td>
       <td>
         <xsl:choose>
-
         <xsl:when test="starts-with(@typeId,'...')">
           <link>
             <xsl:attribute name="linkend">

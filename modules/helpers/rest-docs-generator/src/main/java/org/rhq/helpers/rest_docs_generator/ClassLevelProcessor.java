@@ -57,7 +57,7 @@ import org.jboss.resteasy.annotations.GZIP;
  * @author Heiko W. Rupp
  */
 
-@SupportedOptions({ClassLevelProcessor.TARGET_DIRECTORY,ClassLevelProcessor.VERBOSE,ClassLevelProcessor.MODEL_PACKAGE_KEY})
+@SupportedOptions({ClassLevelProcessor.TARGET_DIRECTORY,ClassLevelProcessor.VERBOSE,ClassLevelProcessor.MODEL_PACKAGE_KEY,ClassLevelProcessor.SKIP_PACKAGE_KEY})
 @SupportedSourceVersion(SourceVersion.RELEASE_7)
 @SupportedAnnotationTypes(value = {"com.wordnik.swagger.annotations.*","javax.ws.rs.*","javax.xml.bind.annotation.XmlRootElement"})
 public class ClassLevelProcessor extends AbstractProcessor {
@@ -70,7 +70,9 @@ public class ClassLevelProcessor extends AbstractProcessor {
     public static final String VERBOSE = "verbose";
     private static final String BODY_INDICATOR = "-body-";
     public static final String MODEL_PACKAGE_KEY  = "modelPkg";
+    public static final String SKIP_PACKAGE_KEY  = "skipPkg";
     public String modelPackage = "org.rhq.enterprise.server.rest.domain";
+    public String skipPackage  = "org.rhq.enterprise.server.rest.reporting";
 
     Log log = LogFactory.getLog(getClass().getName());
 
@@ -90,6 +92,10 @@ public class ClassLevelProcessor extends AbstractProcessor {
         if (options.containsKey(MODEL_PACKAGE_KEY)) {
             modelPackage = options.get(MODEL_PACKAGE_KEY);
             System.out.println("== Found a model package of " + modelPackage);
+        }
+        if (options.containsKey(SKIP_PACKAGE_KEY)) {
+            skipPackage = options.get(SKIP_PACKAGE_KEY);
+            System.out.println("== Found a skip package of " + skipPackage);
         }
     }
 
@@ -137,8 +143,11 @@ public class ClassLevelProcessor extends AbstractProcessor {
             File f ;
             if (targetDirectory!=null) {
                 File targetDir = new File(targetDirectory);
-                if (!targetDir.exists())
-                    targetDir.mkdirs();
+                if (!targetDir.exists()) {
+                    boolean success = targetDir.mkdirs();
+                    if (!success)
+                        log.warn(("Creation of target directory " + targetDirectory + " failed"));
+                }
 
                 f = new File(targetDir, API_OUT_XML);
             }
@@ -170,6 +179,10 @@ public class ClassLevelProcessor extends AbstractProcessor {
     private void processClass(Document doc, Element xmlRoot, TypeElement classElementIn) {
 
         log.debug("Looking at " + classElementIn.getQualifiedName().toString());
+        if (classElementIn.getQualifiedName().toString().startsWith(skipPackage)) {
+            log.debug(" .. skipping ..");
+            return;
+        }
         // Process the data classes
         if (classElementIn.getAnnotation(ApiClass.class)!=null) {
             processDataClass(doc, classElementIn, xmlRoot);
@@ -232,24 +245,33 @@ public class ClassLevelProcessor extends AbstractProcessor {
 
         Element methodElement = doc.createElement("method");
         methodElement.setAttribute("path",path);
-        GZIP gzip = td.getAnnotation(GZIP.class);
-        if (gzip!=null) {
-            methodElement.setAttribute("gzip","true");
-        }
         classElement.appendChild(methodElement);
         Name elementName = td.getSimpleName();
         methodElement.setAttribute("name", elementName.toString());
         String httpMethod = getHttpMethod(td.getAnnotationMirrors());
         methodElement.setAttribute("method",httpMethod);
-        ApiOperation apiOperation = td.getAnnotation(ApiOperation.class);
-        if (apiOperation!=null) {
-        String description = apiOperation.value();
-        setOptionalAttribute(methodElement, "description", description);
-
-        String responseClass = !apiOperation.responseClass().equals("ok")? apiOperation.responseClass() : null;
-
-        setOptionalAttribute(methodElement,"returnType",responseClass,td.getReturnType().toString());
+        GZIP gzip = td.getAnnotation(GZIP.class);
+        if (gzip!=null) {
+            methodElement.setAttribute("gzip","true");
         }
+        ApiOperation apiOperation = td.getAnnotation(ApiOperation.class);
+        String responseClass = null;
+        if (apiOperation!=null) {
+            String description = apiOperation.value();
+            setOptionalAttribute(methodElement, "description", description);
+            if (!apiOperation.responseClass().equals("void")) {
+                responseClass = apiOperation.responseClass();
+                if (apiOperation.multiValueResponse())
+                    responseClass = responseClass + " (multi)";
+            }
+        }
+
+        if (responseClass == null) {
+            responseClass = td.getReturnType().toString();
+        }
+
+        // TODO can we somehow make the responseClass fully qualified, so that the link generation works?
+        constructTypeNameAndAssign(methodElement,responseClass,"returnType");
 
         // Loop over the parameters
         processParams(doc, td, methodElement);
@@ -319,24 +341,31 @@ public class ClassLevelProcessor extends AbstractProcessor {
                 element.setAttribute("defaultValue",defaultValue);
 
             String typeString = t.toString();
-            String typeId = typeString;
-            if (typeString.contains("java.lang.")) {
-                typeString = typeString.replaceAll("java\\.lang\\.","");
-            }
-            else if (typeString.contains("java.util.")) {
-                typeString = typeString.replaceAll("java\\.util\\.","");
-            }
-            if (typeString.contains(modelPackage)) {
-                String mps = modelPackage.endsWith(".") ? modelPackage : modelPackage + ".";
-                // For a generic collection we need to find the "inner type" and link to it
-                int offset = typeString.contains("<") ? typeString.indexOf('<') +1 : 0;
-                String restType = typeString.substring(offset + modelPackage.length()+1);
-                typeString = typeString.replace(mps,"");
-                typeId  = "..." + restType;
-            }
-            element.setAttribute("type",  typeString);
-            element.setAttribute("typeId", typeId);
+            constructTypeNameAndAssign(element, typeString, "type");
         }
+    }
+
+    private void constructTypeNameAndAssign(Element element, String typeString, String attributeName) {
+        String typeId = typeString;
+        if (typeString.contains("java.lang.")) {
+            typeString = typeString.replaceAll("java\\.lang\\.","");
+        }
+        else if (typeString.contains("java.util.")) {
+            typeString = typeString.replaceAll("java\\.util\\.","");
+        }
+        if (typeString.contains(modelPackage)) {
+            String mps = modelPackage.endsWith(".") ? modelPackage : modelPackage + ".";
+            // For a generic collection we need to find the "inner type" and link to it
+            int offset = typeString.contains("<") ? typeString.indexOf('<') +1 : 0;
+            String restType = typeString.substring(offset + modelPackage.length()+1);
+            if (restType.endsWith(">"))
+                restType = restType.substring(0,restType.length()-1);
+            System.out.println("REST TYPE " + restType);
+            typeString = typeString.replace(mps,"");
+            typeId  = "..." + restType;
+        }
+        element.setAttribute(attributeName,  typeString);
+        element.setAttribute(attributeName+"Id", typeId);
     }
 
     /**
@@ -376,7 +405,7 @@ public class ClassLevelProcessor extends AbstractProcessor {
 
         String pkg = classElementIn.toString();
         log.debug("Looking at " + pkg);
-        if (!pkg.startsWith(modelPackage)) {
+        if (!pkg.startsWith(modelPackage) || pkg.startsWith(skipPackage)) {
             log.debug(" skipping as it does not meet the required package");
             return;
         }
@@ -497,16 +526,16 @@ public class ClassLevelProcessor extends AbstractProcessor {
     /**
      * Set the passed text as attribute name on the passed xmlElement if the text is not empty
      * @param xmlElement Element to set the attribute on
-     * @param name The name of the attribute
+     * @param attributeName The name of the attribute
      * @param text The text to set
      * @param defaultValue Value to set if text is null or empty
      */
-    private void setOptionalAttribute(Element xmlElement, String name, String text,String defaultValue) {
+    private void setOptionalAttribute(Element xmlElement, String attributeName, String text,String defaultValue) {
         if (text!=null && !text.isEmpty()) {
-            xmlElement.setAttribute(name, text);
+            xmlElement.setAttribute(attributeName, text);
         }
         else {
-            xmlElement.setAttribute(name,defaultValue);
+            xmlElement.setAttribute(attributeName,defaultValue);
         }
     }
 

@@ -58,30 +58,48 @@ public class ReportsInterceptor {
 
     @AroundInvoke
     public Object setCaller(final InvocationContext ctx) throws Exception {
-        HttpServletRequest request = getRequest(ctx.getParameters());
-        if (request == null) {
-            // TODO should we throw a different exception?
-            String msg = "No " + HttpServletRequest.class.getName() + " parameter was found for " + getMethodName(ctx) +
-                ". An " + HttpServletRequest.class.getName() +
-                " parameter must be specified in order to support authentication";
-            log.error(msg);
-            throw new OperationNotSupportedException(msg);
-        }
-
-        Subject subject = getSubject(request);
-        if (subject == null) {
-            throw new IllegalAccessException("Failed to validate request: could not access subject for request URL " +
-                request.getRequestURL());
-        }
-
         AbstractRestBean target = (AbstractRestBean) ctx.getTarget();
-        target.caller = subject;
 
+        boolean fromRest = false;
+        // If we are "forwarded" from the "normal" rest-api, we have a principal, that we can use
+        java.security.Principal p = ejbContext.getCallerPrincipal();
+        if (p!=null) {
+            target.caller = subjectManager.getSubjectByName(p.getName());
+            fromRest = true;
+        }
+
+
+        // If no caller was set from the "normal" api, we need to check if it is
+        // available in cookies, as in this case we were invoked
+        // from the Coregui reports function
+        if (target.caller==null) {
+            HttpServletRequest request = getRequest(ctx.getParameters());
+            if (request == null) {
+                // TODO should we throw a different exception?
+                String msg = "No " + HttpServletRequest.class.getName() + " parameter was found for " + getMethodName(ctx) +
+                    ". An " + HttpServletRequest.class.getName() +
+                    " parameter must be specified in order to support authentication";
+                log.error(msg);
+                throw new OperationNotSupportedException(msg);
+            }
+
+            Subject subject = getSubject(request);
+            if (subject == null) {
+                throw new IllegalAccessException("Failed to validate request: could not access subject for request URL " +
+                    request.getRequestURL());
+            }
+
+            target.caller = subject;
+        }
+
+        // Invoke the target method
         Object result = ctx.proceed();
 
         if (result instanceof StreamingOutput) {
             return new LoggingStreamingOutput((StreamingOutput) result, getMethodName(ctx));
         }
+
+        // TODO invalidate session?
 
         return result;
     }
@@ -123,6 +141,9 @@ public class ReportsInterceptor {
     }
 
     private Cookie getCookie(HttpServletRequest request, String name) {
+        if (request.getCookies()==null)
+            return null;
+
         for (Cookie cookie : request.getCookies()) {
             if (cookie.getName().equals(name)) {
                 return cookie;

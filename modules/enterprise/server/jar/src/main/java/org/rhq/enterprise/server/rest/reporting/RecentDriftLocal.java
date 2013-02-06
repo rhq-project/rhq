@@ -13,6 +13,8 @@ import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiOperation;
 import org.jboss.resteasy.annotations.GZIP;
 
+import org.rhq.core.domain.auth.Subject;
+
 @Path("/recentDrift")
 @Local
 @Api(basePath="http://localhost:7080/coregui/reports", value = "The recent drift report")
@@ -30,5 +32,15 @@ public interface RecentDriftLocal {
             @QueryParam("startTime") Long startTime,
             @QueryParam("endTime") Long endTime,
             @Context HttpServletRequest request);
+
+    StreamingOutput recentDriftInternal(
+            String categories,
+            Integer snapshot,
+            String path,
+            String definitionName,
+            Long startTime,
+            Long endTime,
+            HttpServletRequest request,
+            Subject user);
 
 }

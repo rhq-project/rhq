@@ -290,7 +290,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                             return isNaN(d.high) ? yScale(lowBound) : yScale(d.high);
                         })
                         .attr("height", function (d) {
-                            if (d.down || d.nodata) {
+                            if (d.down || d.unknown || d.nodata) {
                                 return height - yScale(lowBound);
                             }
                             else {
@@ -454,19 +454,16 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                                 })
                                 .y(function (d,i) {
 
-                                    var minuteBarThreshold = 4,
-                                        firstDate = this.__data__[0].x,
-                                        secondDate = this.__data__[1].x,
-                                        barDateDiffInMinutes = (secondDate - firstDate)/ (60000);
+                                    var showBarAvgTrendline =
+                                            global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::showBarAvgTrendLine()();
 
-                                    if(barDateDiffInMinutes > minuteBarThreshold){
+                                    if(showBarAvgTrendline){
                                     // on a bar avg line if the value is undefined then use the last defined value
                                         if(d.y == undefined){
                                             if(i >= 1){
                                                 // count backward until there is a defined value
                                                 for(var j=i; j>=1;j--){
                                                    if(this.__data__[j].y != undefined){
-                                                       //console.log( "using: "+j +" for :"+i+", value"+this.__data__[j].y);
                                                        return yScale(this.__data__[j].y);
                                                    }
                                                 }

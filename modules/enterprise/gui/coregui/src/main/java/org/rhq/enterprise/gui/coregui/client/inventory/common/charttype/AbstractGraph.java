@@ -27,8 +27,12 @@ import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageList;
 
 /**
- * Common Graph capability.
+ * Common Graph capability used across multiple graphs.
  * The MetricGraphData delegate is wrapped for JSNI access via d3 charts.
+ * Also, by delegating and directly extending MetricGraphData we have more
+ * control over the visibility of what we want graphs to 'see'.
+ *
+ * @see MetricGraphData
  *
  * @author Mike Thompson
  */
@@ -93,6 +97,10 @@ public abstract class AbstractGraph implements HasD3JsniChart {
 
     public void setMeasurementOOBCompositeList(PageList<MeasurementOOBComposite> measurementOOBCompositeList) {
         metricGraphData.setMeasurementOOBCompositeList(measurementOOBCompositeList);
+    }
+
+    public boolean showBarAvgTrendLine(){
+        return metricGraphData.showBarAvgTrendLine();
     }
 
     public String getChartTitleMinLabel() {

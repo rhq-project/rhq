@@ -40,6 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
  * The data portion of the graphs making these methods accessible via JSNI to
  * classes extending this and implementing graphs.
  * Provide i18n labels and format the json data for the graph.
+ * @see AbstractGraph
  *
  * @author Mike Thompson
  */
@@ -336,12 +337,34 @@ public class MetricGraphData implements JsonMetricProducer {
                     sb.append(" },");
                 }
             }
-            //}
             sb.setLength(sb.length() - 1); // delete the last ','
         }
         sb.append("]");
         Log.debug(sb.toString());
         return sb.toString();
+    }
+
+    /**
+     * When the scale is adjusted down to a level where bars no longer have
+     * highs and lows different from the avg value then have probably hit a
+     * scale where aggregates no longer exist and we are looking the individual
+     * values. At the very least the data is less interesting and a trendline
+     * connecting the points has less meaning because we are essentially a scatterplot.
+     * A different algorithm could be used here but this will suffice.
+     * @return true if the graphs should show the bar avg line meaning there is aggregates in the data
+     * @see MetricStackedBarGraph
+     */
+    public boolean showBarAvgTrendLine() {
+        for (MeasurementDataNumericHighLowComposite measurement : metricData) {
+            boolean noValuesInCurrentBarUndefined = (!Double.isNaN(measurement.getValue()) && !Double.isNaN(measurement.getHighValue())  && !Double.isNaN(measurement.getLowValue()));
+            boolean foundAggregateBar = (measurement.getValue() != measurement.getHighValue() || measurement.getHighValue() != measurement.getLowValue());
+            // if there exists a even one aggregate bar then I can short circuit this and exit
+            if (noValuesInCurrentBarUndefined && foundAggregateBar){
+                return true;
+            }
+        }
+        return false;
+
     }
 
     private void calculateOOB() {

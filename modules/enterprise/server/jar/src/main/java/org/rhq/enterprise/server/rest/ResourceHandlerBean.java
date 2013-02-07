@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -529,14 +530,38 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
     @ApiOperation(value = "Create a new platform in the Server. If the platform already exists, this is a no-op." +
             "The platform internally has a special name so that it will not clash with one that was generated" +
-            "via a normal RHQ agent")
+            "via a normal RHQ agent. DEPRECATED Use POST /platforms instead")
     @POST
     @Path("platform/{name}")
-    public Response createPlatform(
+    public Response createPlatformOLD(
             @ApiParam(value = "Name of the platform") @PathParam("name") String name,
             @ApiParam(value = "Type of the platform", allowableValues = "Linux,Windows,... TODO") StringValue typeValue,
             @Context UriInfo uriInfo) {
+
         String typeName = typeValue.getValue();
+
+        return createPlatformInternal(name, typeName, uriInfo);
+
+    }
+
+    @POST
+    @Path("platforms")
+    @ApiOperation(value = "Create a new platform in the Server. If the platform already exists, this is a no-op." +
+            "The platform internally has a special name so that it will not clash with one that was generated" +
+            "via a normal RHQ agent. Only resourceName and typeName need to be supplied in the passed object")
+    public Response createPlatform(
+        @ApiParam("The info about the platform. Only type name and resource name need to be supplied") ResourceWithType resource,
+        @Context UriInfo uriInfo)
+    {
+
+        String typeName = resource.getTypeName();
+        String resourceName = resource.getResourceName();
+
+        return createPlatformInternal(resourceName,typeName,uriInfo);
+    }
+
+
+    private Response createPlatformInternal(String name, String typeName, UriInfo uriInfo) {
 
         ResourceType type = resourceTypeManager.getResourceTypeByNameAndPlugin(typeName,"Platforms");
         if (type==null) {
@@ -565,10 +590,8 @@ public class ResourceHandlerBean extends AbstractRestBean {
         agent = new Agent("dummy-agent:name"+name,"-dummy-p:"+name,12345,"http://foo.com/p:name/"+name,"abc-"+name);
         agentMgr.createAgent(agent);
 
-
-
         Resource platform = new Resource(resourceKey,name,type);
-        platform.setUuid(resourceKey);
+        platform.setUuid(UUID.randomUUID().toString());
         platform.setAgent(agent);
         platform.setInventoryStatus(InventoryStatus.COMMITTED);
         platform.setModifiedBy(caller.getName());
@@ -595,39 +618,43 @@ public class ResourceHandlerBean extends AbstractRestBean {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
     }
 
-    private void createSchedules(Resource resource) {
-        ResourceType rt = resource.getResourceType();
-        Set<MeasurementDefinition> definitions = rt.getMetricDefinitions ();
-        for (MeasurementDefinition definition : definitions) {
-            MeasurementSchedule schedule = new MeasurementSchedule(definition,resource);
-            schedule.setEnabled(definition.isDefaultOn());
-            schedule.setInterval(definition.getDefaultInterval());
-            entityManager.persist(schedule);
-        }
-    }
 
-    @ApiOperation(value = "Create a resource with a given type below a certain parent")
+    @ApiOperation(value = "Create a resource with a given type below a certain parent. DEPRECATED Use POST / instead")
     @POST
     @Path("{name}")
-    public Response createResource(
+    public Response createResourceOLD(
             @ApiParam("Name of the new resource") @PathParam("name") String name,
             @ApiParam("Name of the Resource type") StringValue typeValue,
             @ApiParam("Name of the plugin providing the type") @QueryParam("plugin") String plugin,
             @ApiParam("Id of the future parent to attach this to") @QueryParam("parentId") int parentId,
             @Context UriInfo uriInfo) {
 
+        String typeName = typeValue.getValue();
+
+        return createResourceInternal(name, plugin, parentId, typeName, uriInfo);
+    }
+
+    @POST
+    @Path("/")
+    @ApiOperation("Create a new resource as a child of an existing resource¡")
+    public Response createResource(
+        @ApiParam("THe info about the resource. You need to supply resource name, resource type name, plugin name, id of the parent") ResourceWithType resource,
+        @Context UriInfo uriInfo)
+    {
+        return createResourceInternal(resource.getResourceName(),resource.getPluginName(),resource.getParentId(),resource.getTypeName(),uriInfo);
+    }
+
+    private Response createResourceInternal(String name, String plugin, int parentId, String typeName,
+                                            UriInfo uriInfo) {
         Resource parent = resMgr.getResourceById(caller,parentId);
 
-        String typeName = typeValue.getValue();
         ResourceType resType = resourceTypeManager.getResourceTypeByNameAndPlugin(typeName,plugin);
         if (resType==null)
             throw new StuffNotFoundException("ResourceType with name [" + typeName + "] and plugin [" + plugin + "]");
 
         String resourceKey = "res:" + name + ":" + parentId;
-
 
         Resource r = resMgr.getResourceByParentAndKey(caller,parent,resourceKey,plugin,typeName);
         if (r!=null) {
@@ -644,7 +671,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
         }
 
         Resource res = new Resource(resourceKey,name,resType);
-        res.setUuid(resourceKey);
+        res.setUuid(UUID.randomUUID().toString());
         res.setAgent(parent.getAgent());
         res.setParentResource(parent);
         res.setInventoryStatus(InventoryStatus.COMMITTED);
@@ -683,4 +710,16 @@ public class ResourceHandlerBean extends AbstractRestBean {
         return Response.status(Response.Status.NO_CONTENT).build();
 
     }
+
+    private void createSchedules(Resource resource) {
+        ResourceType rt = resource.getResourceType();
+        Set<MeasurementDefinition> definitions = rt.getMetricDefinitions ();
+        for (MeasurementDefinition definition : definitions) {
+            MeasurementSchedule schedule = new MeasurementSchedule(definition,resource);
+            schedule.setEnabled(definition.isDefaultOn());
+            schedule.setInterval(definition.getDefaultInterval());
+            entityManager.persist(schedule);
+        }
+    }
+
 }

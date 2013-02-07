@@ -28,6 +28,7 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.ExcludeDefaultInterceptors;
+import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -136,7 +137,14 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public Role createRole(Subject whoami, Role newRole) {
-        // TODO (ips): Do we want to enforce uniqueness of the Role name?
+        // Make sure there's not an existing role with the same name.
+        RoleCriteria criteria = new RoleCriteria();
+        criteria.addFilterName(newRole.getName());
+        criteria.setStrict(true);
+        PageList<Role> roles = findRolesByCriteria(whoami, criteria);
+        if (!roles.isEmpty()) {
+            throw new EntityExistsException("A user role [" + newRole.getName() + "] already exists.");
+        }
 
         Boolean isSystemRole = newRole.getFsystem();
         if (isSystemRole) {

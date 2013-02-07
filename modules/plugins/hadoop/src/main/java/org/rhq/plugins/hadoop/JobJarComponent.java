@@ -20,10 +20,20 @@
 package org.rhq.plugins.hadoop;
 
 import java.io.File;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Set;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.transfer.DeployPackageStep;
+import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
+import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
+import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.pluginapi.content.ContentFacet;
+import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -36,7 +46,7 @@ import org.rhq.core.pluginapi.operation.OperationResult;
  *
  * @author Lukas Krejci
  */
-public class JobJarComponent implements ResourceComponent<JobTrackerServerComponent>, OperationFacet, DeleteResourceFacet {
+public class JobJarComponent implements ResourceComponent<JobTrackerServerComponent>, OperationFacet, DeleteResourceFacet, ContentFacet {
 
     public static final String RESOURCE_TYPE_NAME = "Job Jar";
     public static final String CONTENT_TYPE_NAME = "jobJar";
@@ -83,5 +93,30 @@ public class JobJarComponent implements ResourceComponent<JobTrackerServerCompon
     @Override
     public void deleteResource() throws Exception {
         jobJar.delete();
+    }
+
+    @Override
+    public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> details, ContentServices services) {
+        return null;
+    }
+
+    @Override
+    public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
+        return null;
+    }
+
+    @Override
+    public List<DeployPackageStep> generateInstallationSteps(ResourcePackageDetails details) {
+        return null;
+    }
+
+    @Override
+    public RemovePackagesResponse removePackages(Set<ResourcePackageDetails> details) {
+        return null;
+    }
+
+    @Override
+    public InputStream retrievePackageBits(ResourcePackageDetails details) {
+        return null;
     }
 }

@@ -31,6 +31,8 @@ import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiOperation;
 import org.jboss.resteasy.annotations.GZIP;
 
+import org.rhq.core.domain.auth.Subject;
+
 @Path("/inventorySummary")
 @Local
 @Api(basePath="http://localhost:7080/coregui/reports", value = "The inventory summary report")
@@ -56,5 +58,11 @@ public interface InventorySummaryLocal {
         @Context HttpServletRequest request,
         @QueryParam("resourceTypeId") String resourceTypeId,
         @QueryParam("version") String version);
+
+    StreamingOutput generateReportInternal(
+        HttpServletRequest request,
+        String resourceTypeId,
+        String version,
+        Subject user);
 
 }

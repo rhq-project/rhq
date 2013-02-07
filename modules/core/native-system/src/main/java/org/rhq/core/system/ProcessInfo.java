@@ -167,14 +167,7 @@ public class ProcessInfo {
 
     private static final Log LOG = LogFactory.getLog(ProcessInfo.class);
 
-    // This interval was introduced because of a SIGAR bug: too close calls to getProcState could
-    // return different values even if the underlying process state has not changed.
-    private static final int REFRESH_INTERVAL_MILLIS = 1000 * 2;
-
-    // This timeout should always be greater than the refresh interval as one thread which acquired the lock
-    // could be waiting for the refresh interval to elapse. This value is deliberately high because multiple
-    // threads could wait for the lock and each of them will also have to wait for the refresh interval to elapse.
-    private static final int REFRESH_LOCK_ACQUIRE_TIMEOUT_SECONDS = 30;
+    private static final int REFRESH_LOCK_ACQUIRE_TIMEOUT_SECONDS = 5;
 
     private static final String UNKNOWN_PROCESS_NAME = "?";
 
@@ -271,8 +264,7 @@ public class ProcessInfo {
     // In a future implementation a new snapshot will be created on each call to refresh
     private ProcessInfoSnapshot snapshot = new ProcessInfoSnapshot();
 
-    private long nextRefreshTime = System.currentTimeMillis();
-
+    // A lock to serialize calls to refresh method
     private ReentrantLock refreshLock = new ReentrantLock();
 
     // useful for mocking this object, this is purposely not public
@@ -290,14 +282,14 @@ public class ProcessInfo {
     }
 
     /**
-     * Takes a fresh snapshot of non static properties of the underlying process
+     * Takes a fresh snapshot of non static properties of the underlying process. This method internally serializes 
+     * calls so that it maintains a consistent view of the various Sigar call results.
      *
      * @throws SystemInfoException
      */
     public void refresh() throws SystemInfoException {
-        // SIGAR has a bug: too close calls to getProcState could return different values even if the underlying
-        // process state has not changed. To be sure to get correct data, a lock and an interval were introduced.
-        // Calling threads must acquire the lock and then make sure the interval has elapsed before calling update.  
+        // Serializing is also important as in somes cases, the process could be reported up while being down.
+        // See this thread on VMWare forum: http://communities.vmware.com/message/2187972#2187972
         boolean acquiredLock = false;
         try {
             acquiredLock = refreshLock.tryLock(REFRESH_LOCK_ACQUIRE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
@@ -308,26 +300,12 @@ public class ProcessInfo {
             throw new RuntimeException("Could not acquire ProcessInfo[" + this.pid + "] refresh lock");
         }
         try {
-            waitForNextRefreshTime();
-            update(this.pid);
-        } finally {
-            nextRefreshTime = System.currentTimeMillis() + REFRESH_INTERVAL_MILLIS;
-            refreshLock.unlock();
-        }
-    }
-
-    private void waitForNextRefreshTime() {
-        for (;;) {
-            long timeToNextRefresh = nextRefreshTime - System.currentTimeMillis();
-            if (timeToNextRefresh > 0) {
-                try {
-                    Thread.sleep(timeToNextRefresh);
-                    break;
-                } catch (InterruptedException ignore) {
-                }
-            } else {
-                break;
+            // No need to update if the process has already been reported down, Sigar will only throw exceptions...
+            if (priorSnaphot().isRunning()) {
+                update(this.pid);
             }
+        } finally {
+            refreshLock.unlock();
         }
     }
 

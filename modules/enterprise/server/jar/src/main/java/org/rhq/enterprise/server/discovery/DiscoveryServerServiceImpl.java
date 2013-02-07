@@ -18,7 +18,9 @@
  */
 package org.rhq.enterprise.server.discovery;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -33,6 +35,7 @@ import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.clientapi.server.discovery.StaleTypeException;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
@@ -52,6 +55,7 @@ import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
+import org.rhq.enterprise.server.util.concurrent.InventoryReportSerializer;
 
 /**
  * This is the service that receives inventory data from agents. As agents discover resources, they report back to the
@@ -68,45 +72,51 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
     @Override
     public ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException,
         StaleTypeException {
-        long start = System.currentTimeMillis();
-        DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
-        ResourceSyncInfo syncInfo;
+
+        InventoryReportSerializer.getSingleton().lock(report.getAgent().getName());
         try {
-            syncInfo = discoveryBoss.mergeInventoryReport(report);
-        } catch (StaleTypeException e) {
-            // There is no need to log this exception as it is part of a normal work flow
-            // that occurs as a result of a user deleting a plugin. DiscoveryBossBean
-            // already logs a message about the stale types that can be useful for
-            // debugging; so, we just need to propagate the exception to the agent.
-            throw e;
-        } catch (InvalidInventoryReportException e) {
-            Agent agent = report.getAgent();
-            if (log.isDebugEnabled()) {
-                log.error("Received invalid inventory report from agent [" + agent + "]", e);
+            long start = System.currentTimeMillis();
+            DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
+            ResourceSyncInfo syncInfo;
+            try {
+                syncInfo = discoveryBoss.mergeInventoryReport(report);
+            } catch (StaleTypeException e) {
+                // There is no need to log this exception as it is part of a normal work flow
+                // that occurs as a result of a user deleting a plugin. DiscoveryBossBean
+                // already logs a message about the stale types that can be useful for
+                // debugging; so, we just need to propagate the exception to the agent.
+                throw e;
+            } catch (InvalidInventoryReportException e) {
+                Agent agent = report.getAgent();
+                if (log.isDebugEnabled()) {
+                    log.error("Received invalid inventory report from agent [" + agent + "]", e);
+                } else {
+                    /* 
+                     * this is expected when the platform is uninventoried, because the agent often has in-flight reports
+                     * going to the server at the time the platform's agent is being deleted from the database
+                     */
+                    log.error("Received invalid inventory report from agent [" + agent + "]: " + e.getMessage());
+                }
+                throw e;
+            } catch (RuntimeException e) {
+                log.error("Fatal error occurred during merging of inventory report from agent [" + report.getAgent()
+                    + "].", e);
+                throw e;
+            }
+
+            long elapsed = (System.currentTimeMillis() - start);
+            if (elapsed > 30000L) {
+                log.warn("Performance: inventory merge (" + elapsed + ")ms");
             } else {
-                /* 
-                 * this is expected when the platform is uninventoried, because the agent often has in-flight reports
-                 * going to the server at the time the platform's agent is being deleted from the database
-                 */
-                log.error("Received invalid inventory report from agent [" + agent + "]: " + e.getMessage());
+                if (log.isDebugEnabled()) {
+                    log.debug("Performance: inventory merge (" + elapsed + ")ms");
+                }
             }
-            throw e;
-        } catch (RuntimeException e) {
-            log.error(
-                "Fatal error occurred during merging of inventory report from agent [" + report.getAgent() + "].", e);
-            throw e;
-        }
 
-        long elapsed = (System.currentTimeMillis() - start);
-        if (elapsed > 30000L) {
-            log.warn("Performance: inventory merge (" + elapsed + ")ms");
-        } else {
-            if (log.isDebugEnabled()) {
-                log.debug("Performance: inventory merge (" + elapsed + ")ms");
-            }
+            return syncInfo;
+        } finally {
+            InventoryReportSerializer.getSingleton().unlock(report.getAgent().getName());
         }
-
-        return syncInfo;
     }
 
     @Override
@@ -123,10 +133,12 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
 
             long elapsed = (System.currentTimeMillis() - start);
             if (elapsed > 20000L) {
-                log.warn("Performance: processed " + reportToString + " - needFull=[" + !ok + "] in (" + elapsed + ")ms");
+                log.warn("Performance: processed " + reportToString + " - needFull=[" + !ok + "] in (" + elapsed
+                    + ")ms");
             } else {
                 if (log.isDebugEnabled()) {
-                    log.debug("Performance: processed " + reportToString + " - needFull=[" + !ok + "] in (" + elapsed + ")ms");
+                    log.debug("Performance: processed " + reportToString + " - needFull=[" + !ok + "] in (" + elapsed
+                        + ")ms");
                 }
             }
 
@@ -157,6 +169,31 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
                 + ", timing (" + (System.currentTimeMillis() - start) + ")ms");
         }
         return resources;
+    }
+
+    @Override
+    public List<Resource> getResourcesAsList(Integer... resourceIds) {
+        long start = System.currentTimeMillis();
+
+        ResourceCriteria criteria = new ResourceCriteria();
+        // get all of the resources for the supplied ids
+        criteria.addFilterIds(resourceIds);
+        // filter out any that are not actually in inventory
+        criteria.addFilterInventoryStatuses(new ArrayList<InventoryStatus>(InventoryStatus.getInInventorySet()));
+        // get all of them, don't limit to default paging
+        criteria.clearPaging();
+        criteria.fetchResourceType(true);
+        criteria.fetchPluginConfiguration(true);
+
+        ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        List<Resource> result = resourceManager.findResourcesByCriteria(overlord, criteria);
+
+        if (log.isDebugEnabled()) {
+            log.debug("Performance: get ResourcesAsList [" + resourceIds + "], timing ("
+                + (System.currentTimeMillis() - start) + ")ms");
+        }
+        return result;
     }
 
     @Override
@@ -237,8 +274,8 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
     }
 
     private static boolean isVisibleInInventory(Resource resource) {
-        return resource.getInventoryStatus() != InventoryStatus.DELETED &&
-            resource.getInventoryStatus() != InventoryStatus.UNINVENTORIED;
+        return resource.getInventoryStatus() != InventoryStatus.DELETED
+            && resource.getInventoryStatus() != InventoryStatus.UNINVENTORIED;
     }
 
     @Override

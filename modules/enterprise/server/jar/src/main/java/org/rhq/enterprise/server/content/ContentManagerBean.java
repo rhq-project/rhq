@@ -93,6 +93,7 @@ import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.MessageDigestGenerator;
@@ -107,6 +108,7 @@ import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.content.PackageDetailsValidationException;
 import org.rhq.enterprise.server.plugin.pc.content.PackageTypeBehavior;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
@@ -144,6 +146,9 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     @EJB
     private ContentManagerLocal contentManager;
 
+    @EJB
+    private ResourceManagerLocal resourceManager;
+    
     @EJB
     private ResourceTypeManagerLocal resourceTypeManager;
     
@@ -1609,6 +1614,13 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     public InstalledPackage getBackingPackageForResource(Subject subject, int resourceId) {
         InstalledPackage result = null;
 
+        // check if the resource is content backed
+        Resource res = resourceManager.getResourceById(subject, resourceId);
+        ResourceType type = res.getResourceType();
+        if (!ResourceCreationDataType.CONTENT.equals(type.getCreationDataType())) {
+            throw new UnsupportedOperationException("Resource [" + resourceId + "] is not content backed.");
+        }
+        
         InstalledPackageCriteria criteria = new InstalledPackageCriteria();
         criteria.addFilterResourceId(resourceId);
         PageList<InstalledPackage> ips = findInstalledPackagesByCriteria(subject, criteria);

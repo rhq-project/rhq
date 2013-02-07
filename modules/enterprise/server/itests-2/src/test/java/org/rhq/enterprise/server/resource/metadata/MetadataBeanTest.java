@@ -79,7 +79,7 @@ public class MetadataBeanTest extends AbstractEJB3Test {
 
         setupDB();
 
-        TestBundleServerPluginService bundleService = new TestBundleServerPluginService();
+        TestBundleServerPluginService bundleService = new TestBundleServerPluginService(getTempDir());
         prepareCustomServerPluginService(bundleService);
         bundleService.startMasterPluginContainerWithoutSchedulingJobs();
         prepareScheduler();

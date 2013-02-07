@@ -25,11 +25,15 @@ package org.rhq.modules.integrationTests.restApi;
 
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.path.json.JsonPath;
+import com.jayway.restassured.path.xml.XmlPath;
+import com.jayway.restassured.path.xml.element.Node;
 import com.jayway.restassured.response.Response;
 
 import org.apache.http.HttpStatus;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
+
+import org.rhq.modules.integrationTests.restApi.d.Resource;
 
 import static com.jayway.restassured.RestAssured.expect;
 import static com.jayway.restassured.RestAssured.get;
@@ -129,7 +133,7 @@ public class ResourcesTest extends AbstractBase {
     @Test
     public void testGetPlatformXml() {
         given()
-            .header("Accept","application/xml")
+            .header("Accept", "application/xml")
         .expect()
             .statusCode(200)
             .contentType(ContentType.XML)
@@ -140,7 +144,7 @@ public class ResourcesTest extends AbstractBase {
     @Test
     public void testGetPlatformSchedules() {
         given()
-            .header("Accept","application/json")
+            .header("Accept", "application/json")
         .expect()
             .statusCode(200)
         .when()
@@ -158,17 +162,65 @@ public class ResourcesTest extends AbstractBase {
     }
 
     @Test
-    public void testCreatePlatform() throws Exception {
+    public void testCreatePlatformOld() throws Exception {
 
         given().body("{\"value\":\"Linux\"}")
-                .header("Content-Type","application/json")
-                .header("Accept","application/json")
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
             .expect().statusCode(201)
             .when().post("/resource/platform/api-test-dummy");
     }
 
     @Test
+    public void testCreatePlatform() throws Exception {
+
+        Resource resource = new Resource();
+        resource.setResourceName("dummy-test");
+        resource.setTypeName("Linux");
+
+        given()
+            .header(acceptXml)
+            .contentType(ContentType.JSON)
+            .body(resource)
+        .expect()
+            .statusCode(201)
+            .log().ifError()
+        .when()
+            .post("/resource/platforms");
+
+    }
+
+    @Test
     public void testCreatePlatformAndRemove() throws Exception {
+
+        Resource resource = new Resource();
+        resource.setResourceName("dummy-test");
+        resource.setTypeName("Linux");
+
+        Response response =
+        given()
+            .header(acceptXml)
+            .contentType(ContentType.JSON)
+            .body(resource)
+        .expect()
+            .statusCode(201)
+            .log().ifError()
+        .when()
+            .post("/resource/platforms");
+
+        XmlPath xmlPath = response.xmlPath();
+        Node resource1 = xmlPath.get("resource");
+        Node platformIdNode =  resource1.get("resourceId");
+        String platformId = platformIdNode.value();
+
+        given().pathParam("id", platformId)
+            .expect().statusCode(HttpStatus.SC_NO_CONTENT)
+            .when().delete("/resource/{id}");
+
+    }
+
+    @Test
+    public void testCreatePlatformOLDAndRemove() throws Exception {
 
         Response response =
             with().body("{\"value\":\"Linux\"}")
@@ -185,12 +237,12 @@ public class ResourcesTest extends AbstractBase {
     }
 
     @Test
-    public void testCreatePlatformWithChildAndRemove() throws Exception {
+    public void testCreatePlatformOLDWithChildOLDAndRemove() throws Exception {
 
         Response response =
             with().body("{\"value\":\"Linux\"}")
                 .header("Content-Type","application/json")
-                .header("Accept","application/json")
+                .header("Accept", "application/json")
             .expect()
                 .statusCode(201)
             .when()
@@ -210,6 +262,50 @@ public class ResourcesTest extends AbstractBase {
                         .statusCode(201)
                         .log().ifError()
                 .when().post("/resource/{name}").andReturn();
+        }
+        finally {
+            given().pathParam("id",platformId)
+                .expect().statusCode(HttpStatus.SC_NO_CONTENT)
+                .when().delete("/resource/{id}");
+        }
+    }
+
+    @Test
+    public void testCreatePlatformWithChildAndRemove() throws Exception {
+
+        Resource platform = new Resource();
+        platform.setResourceName("dummy-test");
+        platform.setTypeName("Linux");
+
+        Response response =
+            with().body(platform)
+                .header("Content-Type","application/json")
+                .header("Accept","application/json")
+            .expect()
+                .statusCode(201)
+                .log().ifError()
+            .when()
+                .post("/resource/platforms");
+
+        String platformId = response.jsonPath().getString("resourceId");
+
+        Resource child = new Resource();
+        child.setResourceName("test");
+        child.setTypeName("CPU");
+        child.setPluginName("Platforms");
+        child.setParentId(Integer.valueOf(platformId));
+
+        try {
+
+            with()
+                .body(child)
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
+            .expect()
+                .statusCode(201)
+                .log().ifError()
+            .when()
+                .post("/resource");
         }
         finally {
             given().pathParam("id",platformId)

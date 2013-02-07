@@ -96,6 +96,10 @@ public abstract class Criteria implements Serializable, BaseCriteria {
 
     private String searchExpression;
 
+    /**
+     * This default constructor will set default paging to avoid unintended fetch of huge results. The default is:
+     * <pre>setPaging(0, 200);</pre>
+     */
     public Criteria() {
         this.filterOverrides = new HashMap<String, String>();
         this.sortOverrides = new HashMap<String, String>();

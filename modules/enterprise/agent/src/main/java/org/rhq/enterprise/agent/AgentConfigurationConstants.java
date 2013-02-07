@@ -549,6 +549,12 @@ public interface AgentConfigurationConstants {
     String PLUGINS_DISABLED = PROPERTY_NAME_PREFIX + "plugins.disabled";
 
     /**
+     * The |-separated list of names of resource types that are to be disabled at startup.
+     * Values are things like "plugin name>parent>child>grandchild|plugin name2>type".
+     */
+    String PLUGINS_DISABLED_RESOURCE_TYPES = PROPERTY_NAME_PREFIX + "plugins.disabled-resource-types";
+
+    /**
      * Defines, in seconds, the initial delay before the first server discovery scan is run.
      */
     String PLUGINS_SERVER_DISCOVERY_INITIAL_DELAY = PROPERTY_NAME_PREFIX

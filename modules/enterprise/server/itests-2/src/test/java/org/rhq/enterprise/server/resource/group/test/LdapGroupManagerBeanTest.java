@@ -101,7 +101,7 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
         ldapGroupManager = LookupUtil.getLdapGroupManager();
 
         //we need this because the drift plugins are referenced from the system settings that we use in our tests
-        testServerPluginService = new TestServerPluginService();
+        testServerPluginService = new TestServerPluginService(getTempDir());
         prepareCustomServerPluginService(testServerPluginService);
         testServerPluginService.startMasterPluginContainer();
 

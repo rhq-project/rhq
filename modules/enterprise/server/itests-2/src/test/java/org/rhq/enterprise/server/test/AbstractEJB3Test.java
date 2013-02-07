@@ -78,6 +78,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
 
     protected static final String JNDI_RHQDS = "java:jboss/datasources/RHQDS";
 
+    protected static File tmpdirRoot = new File("./target/test-tmpdir");
+
     private TestServerCommunicationsService agentService;
     private SchedulerService schedulerService;
     private ServerPluginService serverPluginService;
@@ -90,15 +92,18 @@ public abstract class AbstractEJB3Test extends Arquillian {
     protected InitialContext initialContext;
 
     // We originally (in 4.2.3 days) ran these tests as "unit" tests in the server/jar module using
-    // the embedded conatiner.  With Arquillian it makes sense to actually deploy an EAR because
+    // the embedded container.  With Arquillian it makes sense to actually deploy an EAR because
     // we need a way to deploy dependent ears needed to support the server/jar classes. But
     // building this jar up (as is done in core/domain) was too difficult due to the huge number
-    // of dependencies. It was easier, and probably more sensical, to use the already built rhq.ear
+    // of dependencies. It was easier, and made sense, to use the already built rhq.ear
     // and run as true integration tests.  We do thin rhq.ear by removing all of the WAR files, and 
     // deploy only the EJB jars, and the services, which are really the objects under test.
 
     @Deployment
     protected static EnterpriseArchive getBaseDeployment() {
+
+        // Ensure the test working dir exists       
+        tmpdirRoot.mkdirs();
 
         // deploy the test classes in their own jar, under /lib
         JavaArchive testClassesJar = ShrinkWrap.create(JavaArchive.class, "test-classes.jar");
@@ -122,8 +127,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testClassesJar.addAsResource("test-ldap.properties");
         testClassesJar.addAsResource("test-scheduler.properties");
         testClassesJar
-            .addAsResource(
-                "org/rhq/enterprise/server/configuration/metadata/configuration_metadata_manager_bean_test_v1.xml");
+            .addAsResource("org/rhq/enterprise/server/configuration/metadata/configuration_metadata_manager_bean_test_v1.xml");
         testClassesJar
             .addAsResource("org/rhq/enterprise/server/configuration/metadata/configuration_metadata_manager_bean_test_v2.xml");
         testClassesJar.addAsResource("org/rhq/enterprise/server/discovery/DiscoveryBossBeanTest.xml");
@@ -294,11 +298,12 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testClassesJar.addAsResource("test/metadata/resource-type/updateResourceTypeBundleTarget-v2.xml");
 
         // create test ear by starting with rhq.ear and thinning it
+        String projectVersion = System.getProperty("project.version");
         MavenResolverSystem earResolver = Resolvers.use(MavenResolverSystem.class);
         earResolver.offline();
         // this must be named rhq.ear because the "rhq" portion is used in the jndi names
         EnterpriseArchive testEar = ShrinkWrap.create(EnterpriseArchive.class, "rhq.ear");
-        EnterpriseArchive rhqEar = earResolver.resolve("org.rhq:rhq-enterprise-server-ear:ear:4.6.0-SNAPSHOT")
+        EnterpriseArchive rhqEar = earResolver.resolve("org.rhq:rhq-enterprise-server-ear:ear:" + projectVersion)
             .withoutTransitivity().asSingle(EnterpriseArchive.class);
         // merge rhq.ear into testEar but include only the EJB jars and the supporting libraries. Note that we
         // don't include the services sar because tests are responsible for prepare/unprepare of all required services,
@@ -321,8 +326,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testEar.add(new ClassAsset(StrippedDownStartupBeanPreparation.class), ArchivePaths
             .create("/rhq-enterprise-server-ejb3.jar/org/rhq/enterprise/server/test/"
                 + "StrippedDownStartupBeanPreparation.class"));
-        testEar.addAsManifestResource(new ByteArrayAsset("<beans/>".getBytes()),
-            ArchivePaths.create("beans.xml"));
+        testEar.addAsManifestResource(new ByteArrayAsset("<beans/>".getBytes()), ArchivePaths.create("beans.xml"));
 
         // add the test classes to the deployment
         testEar.addAsLibrary(testClassesJar);
@@ -335,7 +339,6 @@ public abstract class AbstractEJB3Test extends Arquillian {
 
         // add additional 3rd party dependent jars needed to support test classes        
         Collection thirdPartyDeps = new ArrayList();
-        String projectVersion = System.getProperty("project.version");
         thirdPartyDeps.add("joda-time:joda-time");
         thirdPartyDeps.add("org.jboss.shrinkwrap:shrinkwrap-impl-base");
         thirdPartyDeps.add("org.liquibase:liquibase-core");
@@ -1105,11 +1108,11 @@ public abstract class AbstractEJB3Test extends Arquillian {
         return file.delete();
     }
 
-    /**
-     * @return a temp directory for testing that is specific to this test class.
+    /**     
+     * @return a temp directory for testing that is specific to this test class. Specifically tmpdirRoot/this.getClass().getSimpleName().
      */
-    protected File getTempDir() {
-        return new File(System.getProperty("java.io.tmpdir") + "/rhq", this.getClass().getSimpleName());
+    public File getTempDir() {
+        return new File(tmpdirRoot, this.getClass().getSimpleName());
     }
 
 }

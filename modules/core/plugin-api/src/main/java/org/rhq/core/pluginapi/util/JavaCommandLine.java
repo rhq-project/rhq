@@ -28,10 +28,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import com.sun.istack.Nullable;
 
@@ -49,11 +52,19 @@ import org.jetbrains.annotations.NotNull;
  *      or  java [-options] -jar jarfile [args...]
  *         (to execute a jar file)
  * </code></pre>
+ * <p>
+ * Note that this class offers the subclasses to ehance the parsing process by overriding the {@link #processClassArgument(String, String)}
+ * method. To be able to achieve that, the evaluation of the commandline arguments needs to happen lazily.
+ * See the {@link #parseCommandLine()} method for subclassing guidelines.
+ * <p>
+ * This class is <b>NOT</b> thread-safe.
  *
  * @author Ian Springer
+ * @author Lukas Krejci
  */
 public class JavaCommandLine {
-    /** 
+
+    /**
      * When parsing command line options, specifies the valid option value delimiter(s).
      *
      * @see JavaCommandLine#getClassOption(CommandLineOption)
@@ -74,9 +85,18 @@ public class JavaCommandLine {
     private static final String SHORT_OPTION_PREFIX = "-";
     private static final String LONG_OPTION_PREFIX = "--";
 
-    private final Log log = LogFactory.getLog(JavaCommandLine.class);
+    private static final Pattern SYSTEM_PROPERTY_PATTERN = Pattern.compile("-D.+");
 
-    private List<String> arguments;
+    private static final Log log = LogFactory.getLog(JavaCommandLine.class);
+
+    //These properties are passed to the constructors
+    private final List<String> arguments;
+    private final boolean includeSystemPropertiesFromClassArguments;
+    private final Set<OptionValueDelimiter> shortClassOptionValueDelims;
+    private final Set<OptionValueDelimiter> longClassOptionValueDelims;
+
+    //These are lazily evaluated in the getters
+    private boolean argumentsParsed;
     private File javaExecutable;
     private List<String> classPath;
     private Map<String, String> systemProperties;
@@ -84,9 +104,6 @@ public class JavaCommandLine {
     private String mainClassName;
     private File executableJarFile;
     private List<String> classArguments;
-    private boolean includeSystemPropertiesFromClassArguments;
-    private Set<OptionValueDelimiter> shortClassOptionValueDelims;
-    private Set<OptionValueDelimiter> longClassOptionValueDelims;
     private Map<String, String> shortClassOptionNameToOptionValueMap;
     private Map<String, String> longClassOptionNameToOptionValueMap;
 
@@ -132,16 +149,49 @@ public class JavaCommandLine {
 
         // Wrap as list and store as field for use by getArguments() and toString().
         this.arguments = Arrays.asList(args);
-
-        parseCommandLine(args);
     }
 
-    private void parseCommandLine(String[] args) {
+    /**
+     * This method can be called to process the command line from the arguments passed in the constructor.
+     * This is to support lazy evaluation of the parsed properties.
+     * <p>
+     * Any class overriding the {@link #processClassArgument(String, String)} method should make sure to call this method
+     * if it finds that the data extracted in that method is still uninitialized.
+     * <p>
+     * Typically, this will happen during a getter for such data:
+     * <pre>
+     * <code>
+     * public Data getDataExtractedFromCommandLine() {
+     *     if (data == null) {
+     *          parseCommandLine();
+     *     }
+     *
+     *     return data;
+     * }
+     * </code>
+     * </pre>
+     *
+     * The data variable would then be initialized as part of the {@link #processClassArgument(String, String)} method
+     * that gets called during the execution of this method.
+     * <p>
+     * Alternatively to the null check on the data, the subclass can use the {@link #isArgumentsParsed()} method that
+     * returns true only if this method successfully finished.
+     * <p>
+     * If you are overriding this method make sure to call <code>super.parseCommandLine()</code> before any of your other
+     * logic, otherwise you may end up with an <b>endless loop</b> (and eventually stack overflow) if you try to access
+     * any of the getters of the data extracted from the commandline (like {@link #getClassArguments()},
+     * {@link #getClassPath()}, etc).
+     */
+    protected void parseCommandLine() {
         if (log.isDebugEnabled()) {
             log.debug("Parsing " + this + "...");
         }
 
-        this.javaExecutable = new File(args[0]);
+        ListIterator<String> argIterator = arguments.listIterator();
+        ListIterator<String> classArgumentsIterator = arguments.listIterator();
+
+        this.javaExecutable = new File(argIterator.next());
+
         this.classPath = new ArrayList<String>();
         this.systemProperties = new LinkedHashMap<String, String>();
         this.javaOptions = new ArrayList<String>();
@@ -149,26 +199,31 @@ public class JavaCommandLine {
 
         boolean nextArgIsClassPath = false;
         boolean nextArgIsJarFile = false;
-        for (int i = 1; i < args.length; i++) {
-            String arg = args[i];
+
+        while (argIterator.hasNext()) {
+            String arg = argIterator.next();
+
+            //skip along with the main iterator... once we break out of this loop, this iterator
+            //will point to the start of the class arguments.
+            classArgumentsIterator.next();
             if (nextArgIsClassPath) {
                 this.classPath.addAll(Arrays.asList(arg.split(File.pathSeparator)));
                 nextArgIsClassPath = false;
             } else if (nextArgIsJarFile) {
                 this.executableJarFile = new File(arg);
-                parseClassArguments(args, i + 1);
+                parseClassArguments(argIterator, true);
                 break;
             } else if (arg.charAt(0) != '-') {
                 this.mainClassName = arg;
-                parseClassArguments(args, i + 1);
+                parseClassArguments(argIterator, true);
                 break;
             } else if (arg.equals("-cp") || arg.equals("-classpath")) {
-                if ((i + 1) == args.length) {
+                if (!argIterator.hasNext()) {
                     throw new IllegalArgumentException(arg + " option has no argument.");
                 }
                 nextArgIsClassPath = true;
             } else if (arg.equals("-jar")) {
-                if ((i + 1) == args.length) {
+                if (!argIterator.hasNext()) {
                     throw new IllegalArgumentException(arg + " option has no argument.");
                 }
                 nextArgIsJarFile = true;
@@ -180,26 +235,81 @@ public class JavaCommandLine {
             }
         }
 
+        parseClassOptions();
+
+        argumentsParsed = true;
+
+        if (classArgumentsIterator.hasNext()) {
+            parseClassArguments(classArgumentsIterator, false);
+        }
+
         this.classPath = Collections.unmodifiableList(this.classPath);
         this.javaOptions = Collections.unmodifiableList(this.javaOptions);
         this.classArguments = Collections.unmodifiableList(this.classArguments);
         this.systemProperties = Collections.unmodifiableMap(this.systemProperties);
-
-        parseClassOptions();
     }
 
-    private void parseClassArguments(String[] args, int beginIndex) {
-        for (int i = beginIndex; i < args.length; i++) {
-            String classArg = args[i];
-            processClassArgument(classArg, ((i + 1) != args.length) ? args[i + 1] : null);
+    /**
+     * @return true iff the {@link #parseCommandLine()} method was called and successfully finished.
+     */
+    protected boolean isArgumentsParsed() {
+        return argumentsParsed;
+    }
+
+    private void parseClassArguments(Iterator<String> arguments, boolean firstPass) {
+        if (!arguments.hasNext()) {
+            return;
+        }
+
+        //as strange as it seems, this adds each and every argument found in
+        //arguments as a class argument.
+        //Additionally, it will call processClassArgument() with every such class argument and the next argument in line.
+
+        String classArg = arguments.next();
+
+        while (arguments.hasNext()) {
+            String nextArg = arguments.next();
+
+            processClassArgument(classArg, nextArg, firstPass);
+
+            classArg = nextArg;
+        }
+
+        processClassArgument(classArg, null, firstPass);
+    }
+
+    private void processClassArgument(String classArg, String nextArg, boolean firstPass) {
+        if (firstPass) {
+            //in first pass, we do the processing required by this class
+            if (this.includeSystemPropertiesFromClassArguments && isSystemPropertyArgument(classArg)) {
+                parseSystemPropertyArgument(classArg);
+            }
+
             this.classArguments.add(classArg);
+        } else {
+            //in the second pass, we let the subclasses process the class arguments
+            processClassArgument(classArg, nextArg);
         }
     }
 
+    /**
+     * Override this method to do additional processing of the class arguments.
+     * This method is called during the {@link #parseCommandLine()} call but after all other properties are processed.
+     * <p>
+     * It is therefore safe to call {@link #getClassArguments()}, {@link #getExecutableJarFile()} and all other getters
+     * defined by {@link JavaCommandLine}. At the time this method is called during {@link #parseCommandLine()}, the
+     * default implementation of {@link #isArgumentsParsed()} already returns true.
+     * <p>
+     * This method is called at a stage during the parsing of the commandline where all the properties are still writeable
+     * - you can modify the {@link #getSystemProperties() system properties} and other collections.
+     * <p>
+     * By default this method does nothing.
+     *
+     * @param classArg
+     * @param nextArg
+     */
     protected void processClassArgument(String classArg, String nextArg) {
-        if (this.includeSystemPropertiesFromClassArguments && isSystemPropertyArgument(classArg)) {
-            parseSystemPropertyArgument(classArg);
-        }
+        //do nothing by default.
     }
 
     private void parseClassOptions() {
@@ -285,7 +395,7 @@ public class JavaCommandLine {
     }
 
     private boolean isSystemPropertyArgument(String arg) {
-        return arg.matches("-D.+");
+        return SYSTEM_PROPERTY_PATTERN.matcher(arg).matches();
     }
 
     private void parseSystemPropertyArgument(String arg) {
@@ -310,36 +420,64 @@ public class JavaCommandLine {
 
     @NotNull
     public File getJavaExecutable() {
+        if (!argumentsParsed) {
+            parseCommandLine();
+        }
+
         return javaExecutable;
     }
 
     @NotNull
     public List<String> getClassPath() {
+        if (!argumentsParsed) {
+            parseCommandLine();
+        }
+
         return classPath;
     }
 
     @NotNull
     public Map<String, String> getSystemProperties() {
+        if (!argumentsParsed) {
+            parseCommandLine();
+        }
+
         return systemProperties;
     }
 
     @NotNull
     public List<String> getJavaOptions() {
+        if (!argumentsParsed) {
+            parseCommandLine();
+        }
+
         return javaOptions;
     }
 
     @Nullable
     public String getMainClassName() {
+        if (!argumentsParsed) {
+            parseCommandLine();
+        }
+
         return mainClassName;
     }
 
     @Nullable
     public File getExecutableJarFile() {
+        if (!argumentsParsed) {
+            parseCommandLine();
+        }
+
         return executableJarFile;
     }
 
     @NotNull
     public List<String> getClassArguments() {
+        if (!argumentsParsed) {
+            parseCommandLine();
+        }
+
         return classArguments;
     }
 
@@ -351,6 +489,10 @@ public class JavaCommandLine {
      */
     @Nullable
     public String getClassOption(CommandLineOption option) {
+        if (!argumentsParsed) {
+            parseCommandLine();
+        }
+
         return getClassOption(option, null);
     }
 
@@ -363,6 +505,10 @@ public class JavaCommandLine {
      */
     @Nullable
     public String getClassOption(CommandLineOption option, String defaultValue) {
+        if (!argumentsParsed) {
+            parseCommandLine();
+        }
+
         String optionValue = null;
         // Note, we never store null values in either of the option value maps.
 
@@ -403,6 +549,10 @@ public class JavaCommandLine {
     }
 
     public boolean isClassOptionPresent(CommandLineOption option) {
+        if (!argumentsParsed) {
+            parseCommandLine();
+        }
+
         String optionValue = getClassOption(option);
         return (optionValue != null);
     }

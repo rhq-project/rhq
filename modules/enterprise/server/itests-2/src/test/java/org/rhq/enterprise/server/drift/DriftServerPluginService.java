@@ -19,6 +19,7 @@
 
 package org.rhq.enterprise.server.drift;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,6 +33,10 @@ import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginManager;
 
 public class DriftServerPluginService extends TestServerPluginService {
+
+    public DriftServerPluginService(File tmpDir) {
+        super(tmpDir);
+    }
 
     @Override
     protected List<AbstractTypeServerPluginContainer> createPluginContainers(MasterServerPluginContainer master) {

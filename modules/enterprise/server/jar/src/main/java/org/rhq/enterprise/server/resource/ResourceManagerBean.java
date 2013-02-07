@@ -432,14 +432,14 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             log.debug("Overlord is asynchronously deleting resource [" + attachedResource + "]");
         }
 
-        // our unidirectional one-to-many mapping of drift definition makes it not possible to easily bulk delete drift definition
-        // so remove them here and let cascading of delete_orphan do the work
-        if (attachedResource.getDriftDefinitions() != null) {
-            attachedResource.getDriftDefinitions().clear();
-        }
-
-        // one more thing, delete any autogroup backing groups
         if (attachedResource != null) {
+            // our unidirectional one-to-many mapping of drift definition makes it not possible to easily bulk delete drift definition
+            // so remove them here and let cascading of delete_orphan do the work
+            if (attachedResource.getDriftDefinitions() != null) {
+                attachedResource.getDriftDefinitions().clear();
+            }
+
+            // one more thing, delete any autogroup backing groups
             List<ResourceGroup> backingGroups = attachedResource.getAutoGroupBackingGroups();
             if (null != backingGroups && !backingGroups.isEmpty()) {
                 int size = backingGroups.size();
@@ -458,11 +458,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                     }
                 }
             }
+
+            // now we can purge the resource, let cascading do the rest
+            entityManager.remove(attachedResource);
         }
-
-        // now we can purge the resource, let cascading do the rest
-        entityManager.remove(attachedResource);
-
         return;
     }
 

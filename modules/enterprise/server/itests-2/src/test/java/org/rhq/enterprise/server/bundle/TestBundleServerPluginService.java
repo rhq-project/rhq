@@ -66,10 +66,9 @@ public class TestBundleServerPluginService extends ServerPluginService implement
     public RecipeParseResults parseRecipe_returnValue = null;
     public BundleDistributionInfo processBundleDistributionFile_returnValue;
 
-    public TestBundleServerPluginService() {
+    public TestBundleServerPluginService(File tmpdir) {
         // build the config at constructor time so tests have it even before the PC is initialized
-        File dir = new File(System.getProperty("java.io.tmpdir") + "/rhq", this.getClass().getSimpleName());
-        this.masterConfig = new MasterServerPluginContainerConfiguration(dir, dir, dir, null);
+        this.masterConfig = new MasterServerPluginContainerConfiguration(tmpdir, tmpdir, tmpdir, null);
     }
 
     @Override

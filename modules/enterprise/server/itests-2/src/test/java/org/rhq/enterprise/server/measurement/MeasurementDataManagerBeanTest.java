@@ -122,7 +122,7 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
 
         // MeasurementDataManagerUtility looks up config settings from SystemManagerBean.
         // SystemManagerBean.getDriftServerPluginManager method requires drift server plugin. 
-        DriftServerPluginService driftServerPluginService = new DriftServerPluginService();
+        DriftServerPluginService driftServerPluginService = new DriftServerPluginService(getTempDir());
         prepareCustomServerPluginService(driftServerPluginService);
         driftServerPluginService.masterConfig.getPluginDirectory().mkdirs();
 

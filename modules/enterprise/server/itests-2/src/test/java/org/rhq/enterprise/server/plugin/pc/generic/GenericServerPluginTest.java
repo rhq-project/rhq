@@ -55,7 +55,7 @@ public class GenericServerPluginTest extends AbstractEJB3Test {
 
     @Override
     protected void beforeMethod() throws Exception {
-        this.pluginService = new TestGenericServerPluginService();
+        this.pluginService = new TestGenericServerPluginService(getTempDir());
         deleteAllTestPluginJars(); // remove any old server plugins that might be still around
         prepareCustomServerPluginService(this.pluginService);
     }

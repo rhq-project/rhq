@@ -35,6 +35,7 @@ import javax.ws.rs.core.StreamingOutput;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.composite.PlatformMetricsSummary;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.resource.PlatformUtilizationManagerLocal;
@@ -53,8 +54,14 @@ public class PlatformUtilizationHandler extends AbstractRestBean implements Plat
     @EJB
     private PlatformUtilizationManagerLocal platformUtilizationMgr;
 
+    public StreamingOutput generateReportInternal(HttpServletRequest request, Subject user) {
+        this.caller = user;
+
+        return generateReport(request);
+    }
     @Override
     public StreamingOutput generateReport(HttpServletRequest request) {
+
         if (log.isDebugEnabled()) {
             log.debug("Received request to generate report for " + caller);
         }

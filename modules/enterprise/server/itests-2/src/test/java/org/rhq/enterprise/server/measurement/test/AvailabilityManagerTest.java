@@ -90,7 +90,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             this.overlord = LookupUtil.getSubjectManager().getOverlord();
             additionalResources = new ArrayList<Resource>();
 
-            testServerPluginService = new TestServerPluginService();
+            testServerPluginService = new TestServerPluginService(getTempDir());
             prepareCustomServerPluginService(testServerPluginService);
             testServerPluginService.masterConfig.getPluginDirectory().mkdirs();
             testServerPluginService.startMasterPluginContainer();

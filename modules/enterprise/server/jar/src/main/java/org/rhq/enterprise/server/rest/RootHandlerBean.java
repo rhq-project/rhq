@@ -35,6 +35,9 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiOperation;
+
 import org.rhq.enterprise.server.rest.domain.Link;
 
 /**
@@ -42,6 +45,7 @@ import org.rhq.enterprise.server.rest.domain.Link;
  *
  * @author Heiko W. Rupp
  */
+@Api("Handle the root context to have an anchor for discoverability")
 @Path("/")
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
@@ -55,17 +59,20 @@ public class RootHandlerBean extends AbstractRestBean  {
             "status","status",
             "favoriteResources","user/favorites/resource",
             "operationHistory","operation/history",
+            "reports","reports",
             "self",""
     };
 
     @GET
     @Path("index")
+    @ApiOperation("Return links from the root /index of the REST-resource tree")
     public Response index(@Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
         return handleIndex(headers,uriInfo);
     }
 
     @GET
     @Path("/")
+    @ApiOperation("Return links from the root / of the REST-resource tree")
     public Response index2(@Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
         return handleIndex(headers,uriInfo);
     }

@@ -45,6 +45,8 @@ import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.pluginapi.inventory.DisabledResourceComponent;
+import org.rhq.core.pluginapi.inventory.DisabledResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.plugin.PluginContext;
 import org.rhq.core.pluginapi.plugin.PluginLifecycleListener;
 import org.rhq.core.system.SystemInfo;
@@ -73,6 +75,8 @@ public class PluginManager implements ContainerService {
     }
 
     private static final Log log = LogFactory.getLog(PluginManager.class);
+    private static String DISABLED_DISCOVERY_COMPONENT_CLASS = DisabledResourceDiscoveryComponent.class.getName();
+    private static String DISABLED_RESOURCE_COMPONENT_CLASS = DisabledResourceComponent.class.getName();
 
     /**
      * The map of all plugins keyed on plugin name.
@@ -102,6 +106,9 @@ public class PluginManager implements ContainerService {
         loadedPluginEnvironments = new HashMap<String, PluginEnvironment>();
         loadedPlugins = new ArrayList<Plugin>();
         metadataManager = new PluginMetadataManager();
+
+        metadataManager.setDisabledResourceTypes(configuration.getDisabledResourceTypes(),
+            DISABLED_DISCOVERY_COMPONENT_CLASS, DISABLED_RESOURCE_COMPONENT_CLASS);
 
         initUpdateLoadedPluginsCallback();
 

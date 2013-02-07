@@ -40,7 +40,7 @@
           <xsl:element name="tocentry">
             <link>
             <xsl:attribute name="linkend">
-              <xsl:value-of select="@path"/>
+              <xsl:value-of select="generate-id(@path)"/>
             </xsl:attribute>
             <xsl:if test="@basePath">
               <xsl:value-of select="@basePath"/>
@@ -63,7 +63,7 @@
   <xsl:template match="class">
     <xsl:element name="section">
       <xsl:attribute name="xml:id">
-        <xsl:value-of select="@path"/>
+          <xsl:value-of select="generate-id(@path)"/>
       </xsl:attribute>
       <title>
         <!--/<xsl:value-of select="@path"/>-->
@@ -100,7 +100,7 @@
         </emphasis>
       </simpara>
       <simpara><xsl:value-of select="@description"/></simpara>
-      <xsl:if test="not(@gzip = '')">
+      <xsl:if test="@gzip = 'true'">
         <simpara>Supports returning a gzip'ed Content-Encoding</simpara>
       </xsl:if>
       <xsl:choose>
@@ -127,7 +127,19 @@
       </xsl:choose>
       <simpara>
         Return type:
-        <xsl:value-of select="@returnType"/>
+        <xsl:choose>
+        <xsl:when test="starts-with(@returnTypeId,'...')">
+          <link>
+            <xsl:attribute name="linkend">
+                <xsl:value-of select="@returnTypeId"/>
+            </xsl:attribute>
+            <xsl:value-of select="@returnType"/>
+          </link>
+        </xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="@returnType"/>
+          </xsl:otherwise>
+        </xsl:choose>
       </simpara>
       <xsl:if test="error">
         <table>
@@ -167,7 +179,19 @@
         <xsl:value-of select="@required"/>
       </td>
       <td>
-        <xsl:value-of select="@type"/>
+        <xsl:choose>
+        <xsl:when test="starts-with(@typeId,'...')">
+          <link>
+            <xsl:attribute name="linkend">
+                <xsl:value-of select="@typeId"/>
+            </xsl:attribute>
+            <xsl:value-of select="@type"/>
+          </link>
+        </xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="@type"/>
+          </xsl:otherwise>
+        </xsl:choose>
       </td>
       <td>
         <xsl:choose>
@@ -233,6 +257,9 @@
 
   <xsl:template match="data">
     <xsl:element name="section">
+      <xsl:attribute name="xml:id">
+          <xsl:value-of select="@nameId"/>
+      </xsl:attribute>
       <title>Data-Class: <xsl:value-of select="@name"/></title>
       <xsl:if test="@abstract">
         <subtitle><xsl:value-of select="@abstract"/></subtitle>

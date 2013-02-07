@@ -37,6 +37,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
+import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
@@ -59,12 +60,29 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
      *
      * @throws InvalidInventoryReportException if the inventory report is invalid
      */
-    ResourceSyncInfo mergeInventoryReport(InventoryReport report)
+    ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException;
+
+    /**
+     * <p>Exists for transactional boundary reasons only.</p>
+     *
+     * Merge In the provided batch of resources.  The list of resources must provide a parent before its child.
+     * 
+     * @param resourceBatch
+     * @param agent
+     * @throws InvalidInventoryReportException
+     */
+    void mergeResourceInNewTransaction(List<Resource> resourceBatch, Agent agent)
         throws InvalidInventoryReportException;
 
     /**
+     * @param knownAgent the agent for the platform we want to sync with
+     * @return null if platform not found
+     */
+    ResourceSyncInfo getResourceSyncInfo(Agent knownAgent);
+
+    /**
      * Returns a map of platforms (the keys) and their servers (the values) that are in the auto-discovery queue but not
-     * yet imported into inventory. Note that only servers whose direct parent is the plaform will appear in the
+     * yet imported into inventory. Note that only servers whose direct parent is the platform will appear in the
      * returned data. Embedded servers (i.e. servers that are children of other servers) will be automatically imported
      * when you import their parent server.
      *
@@ -147,7 +165,7 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
      * @param  parentResourceId    the id of the resource that will be the parent of the manually discovered resource
      * @param  pluginConfiguration the properties that should be used to connect to the underlying managed resource
      *
-     * @return the newly discovered resource with any associated {@link ResourceError} that might have occurred during
+     * @return NotNull the newly discovered resource with any associated {@link ResourceError} that might have occurred during
      *         the activation of the resource
      *
      * @throws InvalidPluginConfigurationClientException if connecting to the underlying managed resource failed due to

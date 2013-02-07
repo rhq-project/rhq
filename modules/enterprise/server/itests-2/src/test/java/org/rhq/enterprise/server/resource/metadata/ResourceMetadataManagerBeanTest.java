@@ -174,7 +174,6 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         assertResourceTypeAssociationEquals("ServerA", PLUGIN_NAME, "processScans", asList("serverA"));
     }
 
-
     @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.resource.metadata.test", "NewPlugin" })
     public void persistDriftDefinitionTemplates() throws Exception {
         ResourceType type = assertResourceTypeAssociationEquals("ServerA", PLUGIN_NAME, "driftDefinitionTemplates",
@@ -373,13 +372,48 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
     public void upgradePluginWithTypesRemoved() throws Exception {
         createPlugin("remove-types-plugin", "1.0", "remove_types_v1.xml");
 
-        createResources(3, "RemoveTypesPlugin", "ServerC");
         createBundle("test-bundle-1", "Test Bundle", "ServerC", "RemoveTypesPlugin");
         createPackage("ServerC::test-package", "ServerC", "RemoveTypesPlugin");
-        createResourceGroup("ServerC Group", "ServerC", "RemoveTypesPlugin");
         createAlertTemplate("ServerC Alert Template", "ServerC", "RemoveTypesPlugin");
 
+        // This sort of odd looking group stuff was trying to reproduce a reported issue. Didn't reproduce but
+        // I'm leaving here as everything is worth doing for regression reasons
+        List<Resource> resourcesServerE = createResources(3, "RemoveTypesPlugin", "ServerE", null);
+        List<Resource> resourcesServiceE1 = createResources(2, "RemoveTypesPlugin", "ServiceE1",
+            resourcesServerE.get(0));
+        List<Resource> resourcesServiceE2 = createResources(2, "RemoveTypesPlugin", "ServiceE2",
+            resourcesServiceE1.get(0));
+        List<Resource> resourcesServiceE3 = createResources(2, "RemoveTypesPlugin", "ServiceE3",
+            resourcesServiceE2.get(0));
+        // Intentionally greater than 200 to test an issue with Criteria fetch defaults 
+        List<Resource> resourcesServiceE4 = createResources(205, "RemoveTypesPlugin", "ServiceE4",
+            resourcesServiceE3.get(0));
+
+        ResourceGroup rgRecursive = createResourceGroup("ServerE Group", "ServerE", "RemoveTypesPlugin", true);
+        addResourcesToGroup(rgRecursive, resourcesServerE);
+
+        ResourceGroup rgFlat = createResourceGroup("ServiceE4 Group", "ServiceE4", "RemoveTypesPlugin", false);
+        addResourcesToGroup(rgFlat, resourcesServiceE4);
+
         createPlugin("remove-types-plugin", "2.0", "remove_types_v2.xml");
+
+        //Removal of this resource type exceeds default criteria page size.
+        ResourceTypeManagerLocal resourceTypeMgr = LookupUtil.getResourceTypeManager();
+        SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
+        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+        criteria.addFilterName("ServiceE4");
+        criteria.addFilterPluginName("RemoveTypesPlugin");
+        List<ResourceType> resourceTypes = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(),
+            criteria);
+        if ((resourceTypes != null) && (resourceTypes.size() > 0)) {
+            //spinder 1-31-13: sleep for 30s to see if type removal has then completed
+            //it's possible this could fail on smaller boxes. Not sure how to test this otherwise as
+            //after fix to break resource deletion into chunks[BZ 905632] this should work.  
+            Thread.sleep(1000 * 30);
+            resourceTypes = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(), criteria);
+            assertEquals("Resource type '" + resourceTypes.get(0).getName() + "' not fully removed", 0,
+                resourceTypes.size());
+        }
     }
 
     @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.resource.metadata.test",
@@ -411,6 +445,7 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
     @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.resource.metadata.test",
         "RemoveTypes" })
     public void deleteParent() throws Exception {
+
         SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
         ResourceTypeManagerLocal resourceTypeMgr = LookupUtil.getResourceTypeManager();
 
@@ -444,12 +479,16 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
 
     @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.resource.metadata.test",
         "RemoveTypes" })
-    public void deleteTypeAndAllItsDescedantTypes() throws Exception {
+    public void deleteTypeAndAllItsDescendantTypes() throws Exception {
+
         List<?> typesNotRemoved = getEntityManager()
             .createQuery("from ResourceType t where t.plugin = :plugin and t.name in (:resourceTypes)")
             .setParameter("plugin", "RemoveTypesPlugin")
-            .setParameter("resourceTypes", asList("ServerE", "ServerE1", "ServerE2", "ServerE3", "ServerE4"))
-            .getResultList();
+            // the types that should have been removed, if any show up we have a problem
+            .setParameter(
+                "resourceTypes",
+                asList("ServerC", "ServiceC1", "ServiceE4", "ServerF", "ServiceF1", "ServiceF2", "ServiceF3",
+                    "ServiceF4")).getResultList();
 
         assertEquals("Failed to delete resource type or one or more of its descendant types", 0, typesNotRemoved.size());
     }
@@ -604,7 +643,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         assertNotNull("Failed to find $propertyName for type '$resourceTypeName'", property);
     }
 
-    void createResources(int count, String pluginName, String resourceTypeName) throws Exception {
+    List<Resource> createResources(int count, String pluginName, String resourceTypeName, Resource parent)
+        throws Exception {
         ResourceTypeManagerLocal resourceTypeMgr = LookupUtil.getResourceTypeManager();
         ResourceType resourceType = resourceTypeMgr.getResourceTypeByNameAndPlugin(resourceTypeName, pluginName);
 
@@ -620,9 +660,13 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
 
         getTransactionManager().begin();
         for (Resource resource : resources) {
+            resource.setParentResource(parent);
+            resource.setInventoryStatus(InventoryStatus.COMMITTED);
             getEntityManager().persist(resource);
         }
         getTransactionManager().commit();
+
+        return resources;
     }
 
     void createBundle(String bundleName, String bundleTypeName, String resourceTypeName, String pluginName)
@@ -654,7 +698,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         contentMgr.persistPackage(pkg);
     }
 
-    void createResourceGroup(String groupName, String resourceTypeName, String pluginName) throws Exception {
+    ResourceGroup createResourceGroup(String groupName, String resourceTypeName, String pluginName, boolean recursive)
+        throws Exception {
         SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
         ResourceTypeManagerLocal resourceTypeMgr = LookupUtil.getResourceTypeManager();
         ResourceGroupManagerLocal resourceGroupMgr = LookupUtil.getResourceGroupManager();
@@ -665,7 +710,20 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
             + ", plugin: " + pluginName + "]", resourceType);
 
         ResourceGroup resourceGroup = new ResourceGroup(groupName, resourceType);
-        resourceGroupMgr.createResourceGroup(subjectMgr.getOverlord(), resourceGroup);
+        resourceGroup.setRecursive(recursive);
+        ResourceGroup result = resourceGroupMgr.createResourceGroup(subjectMgr.getOverlord(), resourceGroup);
+        return result;
+    }
+
+    void addResourcesToGroup(ResourceGroup rg, List<Resource> resources) throws Exception {
+        SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
+        ResourceGroupManagerLocal resourceGroupMgr = LookupUtil.getResourceGroupManager();
+        int[] ids = new int[resources.size()];
+        int i = 0;
+        for (Resource r : resources) {
+            ids[i++] = r.getId();
+        }
+        resourceGroupMgr.addResourcesToGroup(subjectMgr.getOverlord(), rg.getId(), ids);
     }
 
     void createAlertTemplate(String name, String resourceTypeName, String pluginName) throws Exception {

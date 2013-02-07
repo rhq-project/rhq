@@ -33,6 +33,8 @@ import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiOperation;
 import org.jboss.resteasy.annotations.GZIP;
 
+import org.rhq.core.domain.auth.Subject;
+
 @Path("/platformUtilization")
 @Local
 @Api(basePath="http://localhost:7080/coregui/reports", value = "The platform utilization report")
@@ -44,4 +46,5 @@ public interface PlatformUtilizationLocal {
     @ApiOperation(value = "Export the Platform utilization data as CSV")
     StreamingOutput generateReport(@Context HttpServletRequest request);
 
+    public StreamingOutput generateReportInternal(HttpServletRequest request, Subject user);
 }

@@ -27,15 +27,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.hyperic.sigar.OperatingSystem;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -46,17 +39,13 @@ import org.rhq.core.util.stream.StreamUtil;
 /**
  * @author Thomas Segismont
  */
-public class ProcessInfoRefreshIntervalTest {
-
-    private static final Log LOG = LogFactory.getLog(ProcessInfoRefreshIntervalTest.class);
+public class DeadProcessInfoRefreshTest {
 
     private static final String KNOWN_ARG = "hellosigar";
 
     private Process testProcess;
 
     private ProcessInfo testProcessInfo;
-
-    private ExecutorService executorService;
 
     @BeforeTest(alwaysRun = true)
     public void setup() throws Exception {
@@ -70,11 +59,6 @@ public class ProcessInfoRefreshIntervalTest {
             throw new RuntimeException("Found " + foundProcesses.size() + " with arg [" + KNOWN_ARG + "]");
         }
         testProcessInfo = foundProcesses.iterator().next();
-        int threadCount = Runtime.getRuntime().availableProcessors();
-        executorService = Executors.newFixedThreadPool(threadCount);
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Created an executor service with " + threadCount + " threads");
-        }
     }
 
     private Process createTestProcess() throws Exception {
@@ -106,58 +90,30 @@ public class ProcessInfoRefreshIntervalTest {
             testProcess = null;
         }
         testProcessInfo = null;
-        if (executorService != null) {
-            executorService.shutdownNow();
-        }
     }
 
     /**
-     * We want to be sure that conccurent calls to refresh method will result in correct process state
-     * detection - see comments in {@link ProcessInfo#refresh()}.
+     * We want to be sure that once the process has been reported down, subsequent calls to refresh will not report it
+     * up. See this thread on VMWare forum: http://communities.vmware.com/message/2187972#2187972
      * @throws Exception
      */
-    @Test(timeOut = 1000 * 60)
+    @Test(timeOut = 1000 * 10)
     public void testRefreshInterval() throws Exception {
-        // Create and execute tasks which will ask a freshSnapshot of the processInfo and check if it is running
-        List<Future<Boolean>> futures = submitStateTestingTasks();
-        for (Future<Boolean> future : futures) {
-            // All tasks should see the process running
-            assertTrue(future.get());
-        }
+        // Sigar should see the process running
+        assertTrue(testProcessInfo.freshSnapshot().isRunning());
         // Send kill
         testProcess.destroy();
         // Wait for death
         while (isAlive(testProcess)) {
             Thread.sleep(100);
         }
-        // Create and execute tasks again
-        futures = submitStateTestingTasks();
-        for (Future<Boolean> future : futures) {
-            // All tasks should now see the process down
-            assertFalse(future.get());
+        // Wait at least two seconds to by-pass Sigar cache
+        Thread.sleep(2000);
+        assertFalse(testProcessInfo.freshSnapshot().isRunning());
+        // It should no longer be necessary to wait two seconds
+        for (int i = 0; i < 100; i++) {
+            assertFalse(testProcessInfo.freshSnapshot().isRunning());
         }
-    }
-
-    private List<Future<Boolean>> submitStateTestingTasks() {
-        List<Future<Boolean>> futures = new LinkedList<Future<Boolean>>();
-        for (int i = 0; i < 5; i++) {
-            final int index = i;
-            futures.add(executorService.submit(new Callable<Boolean>() {
-
-                @Override
-                public Boolean call() throws Exception {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Execute state testing task[" + index + "]");
-                    }
-                    boolean isRunning = testProcessInfo.freshSnapshot().isRunning();
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("State testing task[" + index + "] result: " + isRunning);
-                    }
-                    return isRunning;
-                }
-            }));
-        }
-        return futures;
     }
 
     private boolean isAlive(Process process) {

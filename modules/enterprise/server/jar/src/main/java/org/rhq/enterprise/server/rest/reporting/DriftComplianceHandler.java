@@ -26,6 +26,7 @@ import javax.interceptor.Interceptors;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.StreamingOutput;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.drift.DriftComplianceStatus;
 import org.rhq.core.domain.drift.DriftDefinition;
@@ -41,6 +42,18 @@ public class DriftComplianceHandler extends InventorySummaryHandler implements D
     public StreamingOutput generateReport(HttpServletRequest request, String resourceTypeId, String version) {
         return super.generateReport(request, resourceTypeId, version);
     }
+
+    @Override
+    public StreamingOutput generateReportInternal(
+        HttpServletRequest request,
+        String resourceTypeId,
+        String version, Subject user) {
+
+        this.caller = user;
+
+        return super.generateReport(request,resourceTypeId,version);
+    }
+
 
     @Override
     protected List<ResourceInstallCount> getSummaryCounts() {

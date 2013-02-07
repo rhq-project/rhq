@@ -31,6 +31,8 @@ import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiOperation;
 import org.jboss.resteasy.annotations.GZIP;
 
+import org.rhq.core.domain.auth.Subject;
+
 @Path("/driftCompliance")
 @Local
 @Api(basePath="http://localhost:7080/coregui/reports", value = "The drift compliance report")
@@ -38,11 +40,16 @@ public interface DriftComplianceLocal {
 
     @GZIP
     @GET
-    @Produces({"text/csv", "application/xml"})
+    @Produces("text/csv")
     @ApiOperation(value = "Export the drift compliance data")
     StreamingOutput generateReport(
         @Context HttpServletRequest request,
         @QueryParam("resourceTypeId") String resourceTypeId,
         @QueryParam("version") String version);
+
+    public StreamingOutput generateReportInternal(
+        HttpServletRequest request,
+        String resourceTypeId,
+        String version, Subject user);
 
 }

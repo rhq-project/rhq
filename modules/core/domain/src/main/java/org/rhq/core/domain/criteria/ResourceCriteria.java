@@ -43,12 +43,13 @@ import org.rhq.core.domain.util.PageOrdering;
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
 public class ResourceCriteria extends TaggedCriteria {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     private Integer filterId;
     private String filterName;
     private String filterResourceKey;
     private InventoryStatus filterInventoryStatus = InventoryStatus.COMMITTED; // default
+    private List<InventoryStatus> filterInventoryStatuses; // needs overrides
     private String filterVersion;
     private String filterDescription;
     private Integer filterResourceTypeId; // needs overrides
@@ -68,7 +69,7 @@ public class ResourceCriteria extends TaggedCriteria {
     private List<Integer> filterIds; // needs overrides
     private List<Integer> filterExplicitGroupIds; // requires overrides
     private List<Integer> filterImplicitGroupIds; // requires overrides
-    private Integer filterRootResourceId; // requires overrides
+    private Integer filterRootResourceId; // requires overrides    
 
     private boolean fetchResourceType;
     private boolean fetchChildResources;
@@ -141,6 +142,7 @@ public class ResourceCriteria extends TaggedCriteria {
             + "         WHERE implicitGroup.id IN ( ? ) )");
         filterOverrides.put("rootResourceId", "agent.id = (SELECT r2.agent.id FROM Resource r2 where r2.id = ?)");
         filterOverrides.put("resourceTypeIds", "resourceType.id IN (?)");
+        filterOverrides.put("inventoryStatuses", "inventoryStatus IN ( ? )");
 
         sortOverrides.put("resourceTypeName", "resourceType.name");
         sortOverrides.put("resourceCategory", "resourceType.category");
@@ -168,8 +170,24 @@ public class ResourceCriteria extends TaggedCriteria {
         this.filterResourceKey = filterResourceKey;
     }
 
+    /**
+     * Note, by default this filter is set to COMMITTED.  This must be explicitly set to null to get all
+     * Resources. 
+     *  
+     * @param filterInventoryStatus
+     */
     public void addFilterInventoryStatus(InventoryStatus filterInventoryStatus) {
         this.filterInventoryStatus = filterInventoryStatus;
+    }
+
+    /**
+     * Note, setting this filter will set filterInventoryStatus to null since that is a mutually exclusive filter.
+     *  
+     * @param filterInventoryStatus
+     */
+    public void addFilterInventoryStatuses(List<InventoryStatus> filterInventoryStatuses) {
+        this.filterInventoryStatuses = filterInventoryStatuses;
+        this.filterInventoryStatus = null;
     }
 
     public void addFilterVersion(String filterVersion) {

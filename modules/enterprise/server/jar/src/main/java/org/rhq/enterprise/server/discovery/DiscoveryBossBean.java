@@ -385,11 +385,13 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
      * @param servers   the servers in inventory
      */
     public void updateAgentInventoryStatus(List<Resource> platforms, List<Resource> servers) {
+        ResourceSyncInfo syncInfo;
+
         for (Resource platform : platforms) {
             AgentClient agentClient = agentManager.getAgentClient(platform.getAgent());
             try {
-                agentClient.getDiscoveryAgentService().synchronizeInventory(
-                    entityManager.find(ResourceSyncInfo.class, platform.getId()));
+                syncInfo = entityManager.find(ResourceSyncInfo.class, platform.getId());
+                agentClient.getDiscoveryAgentService().synchronizeInventory(syncInfo);
             } catch (Exception e) {
                 log.warn("Could not perform commit synchronization with agent for platform [" + platform.getName()
                     + "]", e);
@@ -400,8 +402,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             if (!platforms.contains(server.getParentResource())) {
                 AgentClient agentClient = agentManager.getAgentClient(server.getAgent());
                 try {
-                    agentClient.getDiscoveryAgentService().synchronizeInventory(
-                        entityManager.find(ResourceSyncInfo.class, server.getId()));
+                    syncInfo = entityManager.find(ResourceSyncInfo.class, server.getId());
+                    agentClient.getDiscoveryAgentService().synchronizeInventory(syncInfo);
                 } catch (Exception e) {
                     log.warn("Could not perform commit synchronization with agent for server [" + server.getName()
                         + "]", e);

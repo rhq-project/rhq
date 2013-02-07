@@ -639,6 +639,88 @@ public class AlertTest extends AbstractBase {
     }
 
     @Test
+    public void testGetNonExistingCondition() throws Exception {
+
+        given()
+            .header(acceptJson)
+            .pathParam("cid",14)
+        .expect()
+            .statusCode(404)
+            .log().ifError()
+        .when()
+            .get("/alert/condition/{cid}");
+
+    }
+
+    @Test
+    public void testGetNonExistingNotification() throws Exception {
+
+        given()
+            .header(acceptXml)
+            .pathParam("cid",14)
+        .expect()
+            .statusCode(404)
+            .log().ifError()
+        .when()
+            .get("/alert/notification/{cid}");
+
+    }
+
+    @Test
+    public void testUpdateNonExistingCondition() throws Exception {
+
+        given()
+            .header(acceptJson)
+            .pathParam("cid",14)
+        .expect()
+            .statusCode(404)
+            .log().ifError()
+        .when()
+            .put("/alert/condition/{cid}");
+
+    }
+
+    @Test
+    public void testUpdateNonExistingNotification() throws Exception {
+
+        given()
+            .header(acceptXml)
+            .pathParam("cid",14)
+        .expect()
+            .statusCode(404)
+            .log().ifError()
+        .when()
+            .put("/alert/notification/{cid}");
+
+    }
+
+    @Test
+    public void testDeleteNonExistingNotification() throws Exception {
+
+        given()
+            .header(acceptJson)
+            .pathParam("cid",14)
+        .expect()
+            .statusCode(204)
+            .log().ifError()
+        .when()
+            .delete("/alert/notification/{cid}");
+    }
+
+    @Test
+    public void testDeleteNonExistingCondition() throws Exception {
+
+        given()
+            .header(acceptJson)
+            .pathParam("cid",14)
+        .expect()
+            .statusCode(204)
+            .log().ifError()
+        .when()
+            .delete("/alert/condition/{cid}");
+    }
+
+    @Test
     public void testCreateDeleteAlertDefinitionWithUnknwonSender() throws Exception {
 
         int definitionId = createEmptyAlertDefinition();

@@ -383,10 +383,14 @@ public class MetricsDAO {
             resultSetMapper, session);
          */
 
-        String query = "SELECT time, schedule_id " + "FROM " + MetricsTable.INDEX + " " + "WHERE bucket =  " + table
-            + " ORDER BY time";
-        return new SimplePagedResult<MetricsIndexEntry>(query, new MetricsIndexEntryMapper(table),
-            session);
+        try {
+            PreparedStatement statement = session.prepare(METRICS_INDEX_QUERY);
+            BoundStatement boundStatement = statement.bind(table.toString());
+
+            return new SimplePagedResult<MetricsIndexEntry>(boundStatement, new MetricsIndexEntryMapper(table), session);
+        } catch (NoHostAvailableException e) {
+            throw new CQLException(e);
+        }
     }
 
     public void updateMetricsIndex(MetricsTable table, Map<Integer, Long> updates) {
@@ -396,8 +400,9 @@ public class MetricsDAO {
             for (Integer scheduleId : updates.keySet()) {
                 statements[i++] =
                     insert("bucket", "time", "schedule_id", "null_col")
-                    .into(MetricsTable.INDEX.getTableName())
-                     .values(table.toString(), new Date(updates.get(scheduleId)), scheduleId, false);
+                    .into(MetricsTable.INDEX.toString())
+                    .values(table.toString(), new Date(updates.get(scheduleId)), scheduleId, false);
+
             }
             session.execute(batch(statements));
         } catch (NoHostAvailableException e) {

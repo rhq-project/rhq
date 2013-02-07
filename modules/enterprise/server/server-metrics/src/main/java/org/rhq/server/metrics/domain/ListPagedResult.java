@@ -38,6 +38,8 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import org.rhq.server.metrics.CQLException;
 
 /**
+ * This class helps paginate Cassandra results that have a list in the matching clause. Instead of running
+ * a single big query, this class will run a single query for every element in the list.
  *
  * @author Stefan Negrea
  *
@@ -52,6 +54,8 @@ public class ListPagedResult<T> implements Iterable<T> {
     private final int pageSize;
     private final List<?> valuesToBind;
 
+    private final PreparedStatement preparedStatement;
+
     /**
      * @param query query to execute
      * @param mapper result set mapper
@@ -64,6 +68,12 @@ public class ListPagedResult<T> implements Iterable<T> {
         this.session = session;
         this.pageSize = pageSize;
         this.valuesToBind = valuesToBind;
+
+        try {
+            this.preparedStatement = this.session.prepare(this.query);
+        } catch (NoHostAvailableException e) {
+            throw new CQLException(e);
+        }
     }
 
     /**
@@ -89,8 +99,7 @@ public class ListPagedResult<T> implements Iterable<T> {
     private ResultSet retrieveNextResultSet(ResultSet existingResultSet, List<?> valuesToBind) {
         try{
             while ((existingResultSet == null || existingResultSet.isExhausted()) && valuesToBind.size() != 0) {
-                PreparedStatement statement = session.prepare(query);
-                BoundStatement boundStatement = statement.bind(valuesToBind.remove(0));
+                BoundStatement boundStatement = this.preparedStatement.bind(valuesToBind.remove(0));
                 return session.execute(boundStatement);
             }
         } catch (NoHostAvailableException e) {

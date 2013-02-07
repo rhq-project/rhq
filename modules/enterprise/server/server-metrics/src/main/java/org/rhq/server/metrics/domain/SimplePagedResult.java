@@ -36,6 +36,11 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import org.rhq.server.metrics.CQLException;
 
 /**
+ * This class is just a placeholder for future pagination implementations once Cassandra gets native support for paging results.
+ * Right now the amount of data that is returned from Cassandra by any of the queries that run through this class
+ * is small (under 10MB). So there is no performance impact for using this class as it is right now.
+ *
+ *  TODO: Update this code to support native pagination once Cassandra supports it.
  *
  * @author Stefan Negrea
  *
@@ -101,7 +106,7 @@ public class SimplePagedResult<T> implements Iterable<T> {
     /**
      * @throws Exception
      */
-    private ResultSet retrieveResultSet() {
+    private ResultSet retrieveInitialResultSet() {
         try {
             return session.execute(this.query);
         } catch (NoHostAvailableException e) {
@@ -115,11 +120,11 @@ public class SimplePagedResult<T> implements Iterable<T> {
     @Override
     public Iterator<T> iterator() {
         return new Iterator<T>() {
-            final ResultSet resultSet = retrieveResultSet();
+            final ResultSet resultSet = retrieveInitialResultSet();
             private T lastRetrievedItem = null;
 
             public boolean hasNext() {
-                return resultSet != null || !resultSet.isExhausted();
+                return resultSet != null && !resultSet.isExhausted();
             }
 
             public T next() {

@@ -34,6 +34,9 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import org.rhq.server.metrics.CQLException;
 
 /**
+ * This class provides a method to paginate Cassandra results based on user provided queries. The user is required to
+ * provided the initial query to obtain the first slice and then additional queries to obtain subsequent slices based
+ * on the last retrieved element from Cassandra.
  *
  * @author Stefan Negrea
  *
@@ -77,9 +80,6 @@ public class SlicedPagedResult<T> implements Iterable<T> {
         return this.pageSize;
     }
 
-    /**
-     * @throws Exception
-     */
     private ResultSet retrieveNextResultSet(ResultSet existingResultSet, T lastRetrievedItem) {
         try{
             if (existingResultSet != null && existingResultSet.isExhausted() && existingResultSet.fetchAll().size() == pageSize) {

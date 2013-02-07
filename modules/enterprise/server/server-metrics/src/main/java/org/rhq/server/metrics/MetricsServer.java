@@ -72,7 +72,7 @@ public class MetricsServer {
     public RawNumericMetric findLatestValueForResource(int scheduleId) {
         Iterable<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, DESC, 1);
 
-        if (metrics.iterator().hasNext()) {
+        if (!metrics.iterator().hasNext()) {
             return null;
         }
 
@@ -154,7 +154,7 @@ public class MetricsServer {
     }
 
     private AggregateNumericMetric createSummaryRawAggregate(Iterable<RawNumericMetric> metrics, long beginTime) {
-        if (metrics.iterator().hasNext()) {
+        if (!metrics.iterator().hasNext()) {
             // We do not care about the scheudule id here so can just use a dummy value of zero.
             return new AggregateNumericMetric(0, Double.NaN, Double.NaN,Double.NaN, beginTime);
         }
@@ -162,7 +162,7 @@ public class MetricsServer {
     }
 
     private AggregateNumericMetric createSummaryAggregate(Iterable<AggregateNumericMetric> metrics, long beginTime) {
-        if (metrics.iterator().hasNext()) {
+        if (!metrics.iterator().hasNext()) {
             // We do not care about the scheudule id here so can just use a dummy value of zero.
             return new AggregateNumericMetric(0, Double.NaN, Double.NaN,Double.NaN, beginTime);
         }

@@ -21,7 +21,6 @@ package org.rhq.enterprise.server.scheduler.jobs;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
-import java.util.List;
 import java.util.Properties;
 
 import org.apache.commons.logging.Log;
@@ -50,7 +49,7 @@ import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.TimingVoodoo;
-import org.rhq.server.metrics.AggregatedNumericMetric;
+import org.rhq.server.metrics.domain.AggregateNumericMetric;
 
 /**
  * This implements {@link StatefulJob} (as opposed to {@link Job}) because we do not need nor want this job triggered
@@ -89,7 +88,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         try {
             Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration(
                 LookupUtil.getSubjectManager().getOverlord());
-            List<AggregatedNumericMetric> oneHourAggregates = compressMeasurementData(LookupUtil.getMetricsManager());
+            Iterable<AggregateNumericMetric> oneHourAggregates = compressMeasurementData(LookupUtil.getMetricsManager());
             purgeEverything(systemConfig);
             performDatabaseMaintenance(LookupUtil.getSystemManager(), systemConfig);
             calculateAutoBaselines(LookupUtil.getMeasurementBaselineManager());
@@ -102,7 +101,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
-    private List<AggregatedNumericMetric> compressMeasurementData(MetricsManagerLocal metricsManager) {
+    private Iterable<AggregateNumericMetric> compressMeasurementData(MetricsManagerLocal metricsManager) {
         long timeStart = System.currentTimeMillis();
         LOG.info("Measurement data compression starting at " + new Date(timeStart));
 
@@ -360,7 +359,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
      * Calculate the OOB values for the last hour.
      * This also removes outdated ones due to recalculated baselines.
      */
-    public void calculateOOBs(List<AggregatedNumericMetric> oneHourAggregates) {
+    public void calculateOOBs(Iterable<AggregateNumericMetric> oneHourAggregates) {
 
         long timeStart = System.currentTimeMillis();
         LOG.info("Auto-calculation of OOBs starting");

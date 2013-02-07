@@ -36,9 +36,9 @@ import javax.ejb.TransactionAttributeType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.enterprise.server.cassandra.SessionManagerBean;
-import org.rhq.server.metrics.AggregatedNumericMetric;
 import org.rhq.server.metrics.MetricsServer;
-import org.rhq.server.metrics.RawNumericMetric;
+import org.rhq.server.metrics.domain.AggregateNumericMetric;
+import org.rhq.server.metrics.domain.RawNumericMetric;
 
 /**
  * @author John Sanda
@@ -58,7 +58,7 @@ public class MetricsManagerBean implements MetricsManagerLocal {
 
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public List<AggregatedNumericMetric> calculateAggregates() {
+    public Iterable<AggregateNumericMetric> calculateAggregates() {
         MetricsServer metricsServer = getMetricsServer();
         return metricsServer.calculateAggregates();
     }
@@ -74,7 +74,7 @@ public class MetricsManagerBean implements MetricsManagerLocal {
 
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public List<MeasurementDataNumericHighLowComposite> findDataForResource(int scheduleId, long beginTime,
+    public Iterable<MeasurementDataNumericHighLowComposite> findDataForResource(int scheduleId, long beginTime,
         long endTime) {
         MetricsServer metricsServer = getMetricsServer();
         return metricsServer.findDataForResource(scheduleId, beginTime, endTime);
@@ -84,7 +84,7 @@ public class MetricsManagerBean implements MetricsManagerLocal {
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public MeasurementAggregate getSummaryAggregate(int scheduleId, long beginTime, long endTime) {
         MetricsServer metricsServer = getMetricsServer();
-        AggregatedNumericMetric summary = metricsServer.getSummaryAggregate(scheduleId, beginTime, endTime);
+        AggregateNumericMetric summary = metricsServer.getSummaryAggregate(scheduleId, beginTime, endTime);
 
         return new MeasurementAggregate(summary.getMin(), summary.getAvg(), summary.getMax());
     }
@@ -93,7 +93,7 @@ public class MetricsManagerBean implements MetricsManagerLocal {
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public MeasurementAggregate getSummaryAggregate(List<Integer> scheduleIds, long beginTime, long endTime) {
         MetricsServer metricsServer = getMetricsServer();
-        AggregatedNumericMetric summary = metricsServer.getSummaryAggregate(scheduleIds, beginTime, endTime);
+        AggregateNumericMetric summary = metricsServer.getSummaryAggregate(scheduleIds, beginTime, endTime);
 
         return new MeasurementAggregate(summary.getMin(), summary.getAvg(), summary.getMax());
     }

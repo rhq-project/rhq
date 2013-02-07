@@ -22,7 +22,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -61,7 +60,7 @@ import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.util.QueryUtility;
-import org.rhq.server.metrics.AggregatedNumericMetric;
+import org.rhq.server.metrics.domain.AggregateNumericMetric;
 
 /**
  * Manager bean for Out-of-Bound measurements.
@@ -192,8 +191,8 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    public void computeOOBsForLastHour(Subject subject, Collection<AggregatedNumericMetric> metrics) {
-        for (AggregatedNumericMetric metric : metrics) {
+    public void computeOOBsForLastHour(Subject subject, Iterable<AggregateNumericMetric> metrics) {
+        for (AggregateNumericMetric metric : metrics) {
             List<MeasurementBaseline> baselines = entityManager.createQuery(
                 "select baseline from MeasurementBaseline baseline where baseline.schedule.id = :scheduleId")
                 .setParameter("scheduleId", metric.getScheduleId())
@@ -240,13 +239,13 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         }
     }
 
-    private boolean isPastUpperBound(MeasurementBaseline baseline, AggregatedNumericMetric metric) {
+    private boolean isPastUpperBound(MeasurementBaseline baseline, AggregateNumericMetric metric) {
         return metric.getAvg() > baseline.getMax() &&
             (baseline.getMax() - baseline.getMin() > 0.1) &&
             (metric.getMax() - baseline.getMax() > 0);
     }
 
-    private boolean isPastLowerBound(MeasurementBaseline baseline, AggregatedNumericMetric metric) {
+    private boolean isPastLowerBound(MeasurementBaseline baseline, AggregateNumericMetric metric) {
         return metric.getAvg() < baseline.getMax() &&
             (baseline.getMax() - baseline.getMin() > 0.1) &&
             (baseline.getMin() - metric.getMin()) > 0;

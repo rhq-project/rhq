@@ -672,7 +672,13 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
                 definitionId, false);
             List<List<MeasurementDataNumericHighLowComposite>> data =
                 new ArrayList<List<MeasurementDataNumericHighLowComposite>>();
-            data.add(metricsManager.findDataForResource(schedule.getId(), beginTime, endTime));
+
+            List<MeasurementDataNumericHighLowComposite> tempList = new ArrayList<MeasurementDataNumericHighLowComposite>();
+            for (MeasurementDataNumericHighLowComposite object : metricsManager.findDataForResource(schedule.getId(),
+                beginTime, endTime)) {
+                tempList.add(object);
+            }
+            data.add(tempList);
 
             return data;
         } else if (context.type == EntityContext.Type.ResourceGroup) {
@@ -689,7 +695,13 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
                 criteria);
             List<List<MeasurementDataNumericHighLowComposite>> data =
                 new ArrayList<List<MeasurementDataNumericHighLowComposite>>();
-            data.add(metricsManager.findDataForResourceGroup(map(schedules), beginTime, endTime));
+
+            List<MeasurementDataNumericHighLowComposite> tempList = new ArrayList<MeasurementDataNumericHighLowComposite>();
+            for (MeasurementDataNumericHighLowComposite object : metricsManager.findDataForResourceGroup(
+                map(schedules), beginTime, endTime)) {
+                tempList.add(object);
+            }
+            data.add(tempList);
 
             return data;
         } else {
@@ -719,8 +731,15 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         for (int nextDefinitionId : definitionIds) {
             MeasurementSchedule schedule = measurementScheduleManager.getSchedule(subject, resourceId, nextDefinitionId,
                 false);
-              results.add(metricsManager.findDataForResource(schedule.getId(), beginTime, endTime));
+
+            List<MeasurementDataNumericHighLowComposite> tempList = new ArrayList<MeasurementDataNumericHighLowComposite>();
+            for(MeasurementDataNumericHighLowComposite object :metricsManager.findDataForResource(schedule.getId(), beginTime, endTime) ){
+                tempList.add(object);
+            }
+
+            results.add(tempList);
         }
+
         return results;
     }
 

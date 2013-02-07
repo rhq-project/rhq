@@ -63,8 +63,8 @@ import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.test.TransactionCallbackReturnable;
 import org.rhq.enterprise.server.util.Overlord;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
-import org.rhq.server.metrics.AggregatedNumericMetric;
 import org.rhq.server.metrics.MetricsDAO;
+import org.rhq.server.metrics.domain.AggregateNumericMetric;
 
 /**
  * @author John Sanda
@@ -151,10 +151,10 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
             baseline(schedule3, 3.2, 3.6, 2.95)
         ));
 
-        List<AggregatedNumericMetric>  metrics = asList(
-            new AggregatedNumericMetric(schedule1.getId(), 3.8, 2.11, 4.6, lastHour.getMillis()),
-            new AggregatedNumericMetric(schedule2.getId(), 9.492, 9.481, 9.53, lastHour.getMillis()),
-            new AggregatedNumericMetric(schedule3.getId(), 3.15, 2.96, 3.59, lastHour.getMillis())
+        List<AggregateNumericMetric>  metrics = asList(
+            new AggregateNumericMetric(schedule1.getId(), 3.8, 2.11, 4.6, lastHour.getMillis()),
+            new AggregateNumericMetric(schedule2.getId(), 9.492, 9.481, 9.53, lastHour.getMillis()),
+            new AggregateNumericMetric(schedule3.getId(), 3.15, 2.96, 3.59, lastHour.getMillis())
         );
 
         oobManager.computeOOBsForLastHour(overlord, metrics);

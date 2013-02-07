@@ -95,7 +95,6 @@ import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.NumericDataPoint;
 import org.rhq.enterprise.server.rest.domain.StringValue;
 import org.rhq.server.metrics.MetricsDAO;
-import org.rhq.server.metrics.domain.PagedResultSet;
 import org.rhq.server.metrics.domain.RawNumericMetric;
 
 /**
@@ -850,70 +849,62 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         @Override
         public void write(OutputStream outputStream) throws IOException, WebApplicationException {
             MetricsDAO metricsDAO = new MetricsDAO(sessionManager.getSession());
-            PagedResultSet<RawNumericMetric> resultSet = metricsDAO.findRawMetricsPaged(scheduleId, startTime, endTime);
+            Iterable<RawNumericMetric> resultSet = metricsDAO.findRawMetrics(scheduleId, startTime, endTime);
 
             PrintWriter pw = new PrintWriter(outputStream);
 
             if (mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
                 boolean needsComma = false;
                 pw.println("[");
-                while (!resultSet.isExhausted()) {
-                    for (RawNumericMetric metric : resultSet.getNextPage()) {
-                        if (needsComma) {
-                            pw.print(",\n");
-                        }
-                        needsComma = true;
-                        pw.print("{");
-                        pw.print("\"scheduleId\":");
-                        pw.print(scheduleId);
-                        pw.print(", ");
-                        pw.print("\"timeStamp\":");
-                        pw.print(metric.getTimestamp());
-                        pw.print(", ");
-                        pw.print("\"value\":");
-                        pw.print(metric.getValue());
-                        pw.print("}");
+                for (RawNumericMetric metric : resultSet) {
+                    if (needsComma) {
+                        pw.print(",\n");
                     }
+                    needsComma = true;
+                    pw.print("{");
+                    pw.print("\"scheduleId\":");
+                    pw.print(scheduleId);
+                    pw.print(", ");
+                    pw.print("\"timeStamp\":");
+                    pw.print(metric.getTimestamp());
+                    pw.print(", ");
+                    pw.print("\"value\":");
+                    pw.print(metric.getValue());
+                    pw.print("}");
                 }
                 pw.println("]");
             } else if (mediaType.equals(MediaType.APPLICATION_XML_TYPE)) {
                 pw.println("<collection>");
-                while (!resultSet.isExhausted()) {
-                    for (RawNumericMetric metric : resultSet.getNextPage()) {
-                        pw.print("  <numericDataPoint scheduleId=\"");
-                        pw.print(scheduleId);
-                        pw.print("\" timeStamp=\"");
-                        pw.print(metric.getTimestamp());
-                        pw.print("\" value=\"");
-                        pw.print(metric.getValue());
-                        pw.println("\"/>");
-                    }
+                for (RawNumericMetric metric : resultSet) {
+                    pw.print("  <numericDataPoint scheduleId=\"");
+                    pw.print(scheduleId);
+                    pw.print("\" timeStamp=\"");
+                    pw.print(metric.getTimestamp());
+                    pw.print("\" value=\"");
+                    pw.print(metric.getValue());
+                    pw.println("\"/>");
                 }
                 pw.println("</collection>");
             } else if (mediaType.toString().equals("text/csv")) {
                 pw.println("#schedule,timestamp,value");
-                while (!resultSet.isExhausted()) {
-                    for (RawNumericMetric metric : resultSet.getNextPage()) {
-                        pw.print(scheduleId);
-                        pw.print(',');
-                        pw.print(metric.getTimestamp());
-                        pw.print(',');
-                        pw.println(metric.getValue());
-                    }
+                for (RawNumericMetric metric : resultSet) {
+                    pw.print(scheduleId);
+                    pw.print(',');
+                    pw.print(metric.getTimestamp());
+                    pw.print(',');
+                    pw.println(metric.getValue());
                 }
             } else if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
                 pw.println("<table>");
                 pw.print("<tr><th>time</th><th>value</th></tr>\n");
-                while (!resultSet.isExhausted()) {
-                    for (RawNumericMetric metric : resultSet.getNextPage()) {
-                        pw.print("  <tr>");
-                        pw.print("<td>");
-                        pw.print(new Date(metric.getTimestamp()));
-                        pw.print("</td><td>");
-                        pw.print(metric.getValue());
-                        pw.print("</td>");
-                        pw.println("</tr>");
-                    }
+                for (RawNumericMetric metric : resultSet) {
+                    pw.print("  <tr>");
+                    pw.print("<td>");
+                    pw.print(new Date(metric.getTimestamp()));
+                    pw.print("</td><td>");
+                    pw.print(metric.getValue());
+                    pw.print("</td>");
+                    pw.println("</tr>");
                 }
                 pw.println("</table>");
 

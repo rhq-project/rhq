@@ -51,9 +51,9 @@ import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.server.metrics.AggregatedNumericMetric;
 import org.rhq.server.metrics.MetricsDAO;
-import org.rhq.server.metrics.MetricsTable;
+import org.rhq.server.metrics.domain.AggregateNumericMetric;
+import org.rhq.server.metrics.domain.MetricsTable;
 
 @Test
 public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
@@ -345,18 +345,18 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             insertMeasurementDataNumeric1H(young, measSched2, 2000.0, 1000.0, 3000.0);
             insertMeasurementDataNumeric1H(youngest, measSched2, 1500.0, 500.0, 2500.0);
 
-            List<AggregatedNumericMetric> aggregates = asList(
-                new AggregatedNumericMetric(measSched.getId(), 0.0, 0.0, 0.0, 0),
-                new AggregatedNumericMetric(measSched.getId(), 30.0, 20.0, 40.0, eldest),
-                new AggregatedNumericMetric(measSched.getId(), 5.0, 2.0, 8.0, elder),
-                new AggregatedNumericMetric(measSched.getId(), 6.0, 3.0, 9.0, young),
-                new AggregatedNumericMetric(measSched.getId(), 40.0, 30.0, 50.0, youngest),
+            List<AggregateNumericMetric> aggregates = asList(
+                new AggregateNumericMetric(measSched.getId(), 0.0, 0.0, 0.0, 0),
+                new AggregateNumericMetric(measSched.getId(), 30.0, 20.0, 40.0, eldest),
+                new AggregateNumericMetric(measSched.getId(), 5.0, 2.0, 8.0, elder),
+                new AggregateNumericMetric(measSched.getId(), 6.0, 3.0, 9.0, young),
+                new AggregateNumericMetric(measSched.getId(), 40.0, 30.0, 50.0, youngest),
 
-                new AggregatedNumericMetric(measSched2.getId(), 40.0, 0.0, 0.0, 0),
-                new AggregatedNumericMetric(measSched2.getId(), 5000.0, 3500.0, 6500.0, eldest),
-                new AggregatedNumericMetric(measSched2.getId(), 5000.0, 3000.0, 7000.0, elder),
-                new AggregatedNumericMetric(measSched2.getId(), 2000.0, 1000.0, 3000.0, young),
-                new AggregatedNumericMetric(measSched2.getId(), 1500.0, 500.0, 2500.0, youngest)
+                new AggregateNumericMetric(measSched2.getId(), 40.0, 0.0, 0.0, 0),
+                new AggregateNumericMetric(measSched2.getId(), 5000.0, 3500.0, 6500.0, eldest),
+                new AggregateNumericMetric(measSched2.getId(), 5000.0, 3000.0, 7000.0, elder),
+                new AggregateNumericMetric(measSched2.getId(), 2000.0, 1000.0, 3000.0, young),
+                new AggregateNumericMetric(measSched2.getId(), 1500.0, 500.0, 2500.0, youngest)
             );
 
             commit();
@@ -467,7 +467,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
         try {
             // perform in-band and out-of-band work in quick succession
-            // deleteResource will remove platform and platform2, as well as the agent 
+            // deleteResource will remove platform and platform2, as well as the agent
             List<Integer> deletedIds = resourceManager.uninventoryResource(overlord, platform.getId());
             for (Integer deletedResourceId : deletedIds) {
                 resourceManager.uninventoryResourceAsyncWork(overlord, deletedResourceId);
@@ -625,7 +625,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
     private void insertMeasurementDataNumeric1H(long timeStamp, MeasurementSchedule schedule, double value, double min,
         double max) {
-        AggregatedNumericMetric metric = new AggregatedNumericMetric(schedule.getId(), value, min, max, timeStamp);
+        AggregateNumericMetric metric = new AggregateNumericMetric(schedule.getId(), value, min, max, timeStamp);
         metricsDAO.insertAggregates(MetricsTable.ONE_HOUR, asList(metric), MetricsTable.ONE_HOUR.getTTL());
 //        String sql = "INSERT INTO RHQ_measurement_data_num_1h "
 //            + "(time_stamp, schedule_id, value, minvalue, maxvalue) " + "VALUES (" + timeStamp + "," + schedule.getId()

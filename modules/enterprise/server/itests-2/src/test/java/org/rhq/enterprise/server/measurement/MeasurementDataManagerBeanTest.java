@@ -65,9 +65,9 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
-import org.rhq.server.metrics.AggregatedNumericMetric;
 import org.rhq.server.metrics.MetricsDAO;
-import org.rhq.server.metrics.MetricsTable;
+import org.rhq.server.metrics.domain.AggregateNumericMetric;
+import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.test.AssertUtils;
 
 /**
@@ -130,7 +130,7 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
         metricsDAO = new MetricsDAO(cassandraSessionManager.getSession());
 
         // MeasurementDataManagerUtility looks up config settings from SystemManagerBean.
-        // SystemManagerBean.getDriftServerPluginManager method requires drift server plugin. 
+        // SystemManagerBean.getDriftServerPluginManager method requires drift server plugin.
         DriftServerPluginService driftServerPluginService = new DriftServerPluginService();
         prepareCustomServerPluginService(driftServerPluginService);
         driftServerPluginService.masterConfig.getPluginDirectory().mkdirs();
@@ -369,9 +369,9 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
     }
 
     private void insert1HourData(List<AggregateTestData> data) {
-        List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>(data.size());
+        List<AggregateNumericMetric> metrics = new ArrayList<AggregateNumericMetric>(data.size());
         for (AggregateTestData datum : data) {
-            metrics.add(new AggregatedNumericMetric(datum.getScheduleId(), datum.getAvg(), datum.getMin(),
+            metrics.add(new AggregateNumericMetric(datum.getScheduleId(), datum.getAvg(), datum.getMin(),
                 datum.getMax(), datum.getTimestamp()));
         }
         metricsDAO.insertAggregates(MetricsTable.ONE_HOUR, metrics, MetricsTable.ONE_HOUR.getTTL());

@@ -70,7 +70,7 @@ import org.rhq.enterprise.server.rest.domain.*;
  * Deal with alert related stuff
  * @author Heiko W. Rupp
  */
-@Produces({"application/json","application/xml","text/plain"})
+@Produces({"application/json","application/xml","text/html"})
 @Path("/alert")
 @Api(value = "Deal with Alerts",description = "This api deals with alerts that have fired.")
 @Stateless

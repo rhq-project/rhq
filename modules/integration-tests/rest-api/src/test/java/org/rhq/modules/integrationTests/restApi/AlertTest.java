@@ -43,10 +43,47 @@ import static org.hamcrest.Matchers.iterableWithSize;
 public class AlertTest extends AbstractBase {
 
     @Test
-    public void testListAllAlerts() throws Exception {
+    public void testListAllAlertsJson() throws Exception {
 
-        expect()
+        given()
+            .header(acceptJson)
+        .expect()
             .statusCode(200)
+        .when()
+            .get("/alert");
+
+    }
+
+    @Test
+    public void testListAllAlertsXml() throws Exception {
+
+        given()
+            .header(acceptXml)
+        .expect()
+            .statusCode(200)
+        .when()
+            .get("/alert");
+    }
+
+    @Test
+    public void testListAllAlertsHtml() throws Exception {
+
+        given()
+            .header(acceptHtml)
+        .expect()
+            .statusCode(200)
+        .when()
+            .get("/alert");
+
+    }
+
+    @Test
+    public void testListAllAlertsTextPlain() throws Exception {
+
+        given()
+            .header("Accept","text/plain")
+        .expect()
+            .statusCode(503)
         .when()
             .get("/alert");
 

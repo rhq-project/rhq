@@ -34,8 +34,10 @@ public abstract class AbstractBase {
     static final String APPLICATION_JSON = "application/json";
     private static final String APPLICATION_XML = "application/xml";
     private static final String TEXT_CSV = "text/csv";
+    private static final String TEXT_HTML = "text/html";
     static Header acceptJson = new Header("Accept", APPLICATION_JSON);
     static Header acceptXml = new Header("Accept", APPLICATION_XML);
+    static Header acceptHtml = new Header("Accept", TEXT_HTML);
     static Header acceptCsv = new Header("Accept", TEXT_CSV);
 
     @Before

@@ -249,41 +249,61 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     public List<Integer> uninventoryResources(Subject user, int[] resourceIds) {
-        List<Integer> uninventoryResourceIds = new ArrayList<Integer>();
+
+        List<Integer> result = new ArrayList<Integer>();
+        boolean isInventoryManager = authorizationManager.isInventoryManager(user);
 
         for (Integer resourceId : resourceIds) {
-            if (!uninventoryResourceIds.contains(resourceId)) {
-                uninventoryResourceIds.addAll(uninventoryResource(user, resourceId));
+            if (!result.contains(resourceId)) {
+                if (!isInventoryManager) {
+                    result.addAll(resourceManager.uninventoryResource(user, resourceId));
+
+                } else {
+                    result.addAll(resourceManager.uninventoryResourceInNewTransaction(resourceId));
+                }
             }
         }
 
-        return uninventoryResourceIds;
+        return result;
     }
 
-    @SuppressWarnings("unchecked")
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public List<Integer> uninventoryResource(Subject user, int resourceId) {
-        //        Resource resource = resourceManager.getResourceTree(resourceId, true);
-        Resource resource = entityManager.find(Resource.class, resourceId);
-        if (resource == null) {
-            log.info("Delete resource not possible, as resource with id [" + resourceId + "] was not found");
-            return Collections.emptyList(); // Resource not found. TODO give a nice message to the user
-        }
 
         // make sure the user is authorized to delete this resource (which implies you can delete all its children)
         // TODO: There is a pretty good argument for this being replaced with MANAGE_INVENTORY.  It takes an
         // inventory manager to import resources, so why not to remove them?  But, since no one has complained
         // we're timid about making a change that may hamstring existing setups.
+
         if (!authorizationManager.hasResourcePermission(user, Permission.DELETE_RESOURCE, resourceId)) {
             throw new PermissionException("You do not have permission to uninventory resource [" + resourceId + "]");
         }
 
+        return uninventoryResourceInNewTransaction(resourceId);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public List<Integer> uninventoryResourceInNewTransaction(int resourceId) {
+
+        Resource resource = entityManager.find(Resource.class, resourceId);
+
+        if (resource == null) {
+            log.info("Delete resource not possible, as resource with id [" + resourceId + "] was not found");
+            return Collections.emptyList(); // Resource not found. TODO give a nice message to the user
+        }
+
         // if the resource has no parent, its a platform resource and its agent should be purged too
         Agent doomedAgent = null;
+        boolean isDebugEnabled = log.isDebugEnabled();
+
         try {
+            Subject overlord = subjectManager.getOverlord();
+
             if (resource.getParentResource() == null) {
                 // note, this needs to be done before the marking because the agent reference is going to be set to null
-                doomedAgent = agentManager.getAgentByResourceId(subjectManager.getOverlord(), resourceId);
+                doomedAgent = agentManager.getAgentByResourceId(overlord, resourceId);
 
                 // note - test code does not always provide the agent, if not found, just warn
                 if (doomedAgent == null) {
@@ -294,18 +314,19 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             AgentClient agentClient = null;
             try {
                 // The test code does not always generate agents for the resources. Catch and log any problem but continue
-                agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
+                agentClient = agentManager.getAgentClient(overlord, resourceId);
             } catch (Throwable t) {
                 log.warn("No AgentClient found for resource [" + resource
                     + "]. Unable to inform agent of inventory removal (this may be ok): " + t);
             }
 
-            // since we delete the resource asynchronously now, we need to make sure we remove things that would cause
-            // system side effects after markForDeletion completed but before the resource was actually removed from the DB
-            Subject overlord = subjectManager.getOverlord();
+            // since we delete the resource asynchronously, make sure we remove things that would cause system 
+            // side effects after markForDeletion completed but before the resource is actually removed from the DB
 
             // delete the resource and all its children
-            log.info("User [" + user + "] is marking resource [" + resource + "] for asynchronous uninventory");
+            if (isDebugEnabled) {
+                log.debug("Marking resource [" + resource + "] for asynchronous uninventory");
+            }
 
             // set agent references null
             // foobar the resourceKeys
@@ -315,15 +336,21 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             List<Integer> toBeDeletedResourceIds = toBeDeletedQuery.getResultList();
 
             int i = 0;
-            log.debug("== total size : " + toBeDeletedResourceIds.size());
+            if (isDebugEnabled) {
+                log.debug("== total size : " + toBeDeletedResourceIds.size());
+            }
 
             while (i < toBeDeletedResourceIds.size()) {
                 int j = i + 1000;
                 if (j > toBeDeletedResourceIds.size())
                     j = toBeDeletedResourceIds.size();
                 List<Integer> idsToDelete = toBeDeletedResourceIds.subList(i, j);
-                log.debug("== Bounds " + i + ", " + j);
+                if (isDebugEnabled) {
+                    log.debug("== Bounds " + i + ", " + j);
+                }
 
+                // refresh overlord session for each batch to avoid session timeout 
+                overlord = subjectManager.getOverlord();
                 boolean hasErrors = uninventoryResourcesBulkDelete(overlord, idsToDelete);
                 if (hasErrors) {
                     throw new IllegalArgumentException("Could not remove resources from their containing groups");
@@ -383,7 +410,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 // are currently being merged into the platform, and associated with the doomed agent.  In this case
                 // the user must wait until the merge is complete.  Make sure the caller knows about this possibility.
                 String msg = "Failed to uninventory platform. This can happen if new resources were actively being imported. Please wait and try again shortly.";
-                throw new IllegalStateException(msg, (log.isDebugEnabled() ? e : null));
+                throw new IllegalStateException(msg, (isDebugEnabled ? e : null));
             }
 
             throw e;
@@ -485,7 +512,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             hasErrors |= resourceManager.bulkNativeQueryDeleteInNewTransaction(overlord, nativeQueryToExecute,
                 resourceIds);
         }
-        
+
         // update the resource type of affected groups by calling setResouceType()
         for (int groupId : groupIds) {
             try {
@@ -1076,8 +1103,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<Resource> findChildResourcesByCategoryAndInventoryStatus(Subject user, Resource parent,
-        @Nullable ResourceCategory category, InventoryStatus status, PageControl pageControl) {
+    public PageList<Resource> findChildResourcesByCategoryAndInventoryStatus(Subject user, Resource parent, @Nullable
+    ResourceCategory category, InventoryStatus status, PageControl pageControl) {
         pageControl.initDefaultOrderingField("res.name");
 
         Query queryCount;

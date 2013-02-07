@@ -13,18 +13,21 @@ import org.rhq.core.domain.resource.ResourceType;
 public interface InventoryManagerLocal {
 
     /**
-     * Marks the specified resource types, including all of their child types, for deletion by setting the deleted
-     * flag on each one. All resources of the affected types are removed from inventory as well. Marking a resource
-     * type for deletion will effectively result in the resource type and all of its associated meta data being removed
-     * from the system. That meta data includes metric definitions, operation definitions, resource configuration
-     * definitions, plugin configuration definitions, event definitions, etc. Note that this method only markes the
-     * resource types and their resources for deletion. The actual deletion is carried out by asynchronously by a
-     * scheduled job.
+     * Marks the specified resource types for deletion by setting the deleted
+     * flag on each one. If <code>uninventoryResources</code> is true then all resources of the affected types are removed from
+     * inventory as well. Marking a resource type for deletion will effectively result in the resource type and all of
+     * its associated meta data being removed from the system. That meta data includes metric definitions, operation 
+     * definitions, resource configuration definitions, plugin configuration definitions, event definitions, etc. 
+     * Note that this method only marks the resource types and their resources for deletion. The actual deletion is 
+     * carried out by asynchronously by a scheduled job (which ultimately will uninventory the resources if not done
+     * beforehand).
      *
      * @param resourceTypeIds The ids of the resource types to delete
+     * @param uninventoryResources True to uninventory the resources of the marked types, False to ignore the resources
+     * 
      * @return The number of types marked for deletion.
      */
-    int markTypesDeleted(List<Integer> resourceTypeIds);
+    int markTypesDeleted(List<Integer> resourceTypeIds, boolean uninventoryResources);
 
     /**
      * @return A list of all resource types that are marked for deletion

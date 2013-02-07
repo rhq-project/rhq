@@ -114,8 +114,8 @@ public class PluginManagerBean implements PluginManagerLocal {
         int resourceTypeCount = getResourceTypeCount(plugin);
         if (resourceTypeCount > 0) {
             if (log.isDebugEnabled()) {
-                log.debug(plugin + " is not ready to be purged. It still has " + resourceTypeCount +
-                    " resource types in the database.");
+                log.debug(plugin + " is not ready to be purged. It still has " + resourceTypeCount
+                    + " resource types in the database.");
             }
             return false;
         }
@@ -268,6 +268,7 @@ public class PluginManagerBean implements PluginManagerLocal {
 
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public void deletePlugins(Subject subject, List<Integer> pluginIds) throws Exception {
         if (pluginIds.isEmpty()) {
             return;
@@ -296,21 +297,79 @@ public class PluginManagerBean implements PluginManagerLocal {
                 + pluginsToDelete);
         }
 
-        List<Plugin> plugins = getAllPluginsById(pluginIds);
+        // In order to avoid a large transaction issue, when deleting one or more plugins with possibly quite a large
+        // resource population, perform in multiple transactions, being mindful of consistency.  Because of plugin
+        // dependency, it's important that minimally all of the plugins and related types are *marked* for
+        // deletion in a single transaction.  This prevents inconsistent plugin state and the method is considered a
+        // success if we commit that transaction. After that, again trying to avoid an overly large umbrella
+        // transaction, we mark the relevant resources for uninventory.  If that fails it will be detected by the
+        // PurgeResourceTypesJob and rectified later.
 
-        if (log.isDebugEnabled()) {
-            log.debug(subject + " preparing to delete the following plugins: " + plugins);
+        List<Plugin> plugins = pluginMgr.getAllPluginsById(pluginIds);
+
+        // Do this in its own transaction to ensure everything gets marked.
+        pluginMgr.markPluginsDeleted(subject, plugins);
+
+        // Now, try and uninventory the resource of doomed plugin types
+        try {
+            for (Plugin plugin : plugins) {
+                deleteResourcesForPlugin(subject, plugin);
+            }
+
+        } catch (Throwable t) {
+            log.warn(
+                "Failed to uninventory all resources of deleted plugins. This should fix itself automatically when the PurgeResourceTypsJob executes.",
+                t);
         }
+    }
+
+    private void deleteResourcesForPlugin(Subject subject, Plugin plugin) throws Exception {
+        // Uninventory all of the top level resources for the plugin's deleted types. The children go away automatically
+        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+        criteria.setStrict(true);
+        criteria.addFilterPluginName(plugin.getName());
+        criteria.addFilterDeleted(true);
+        criteria.addFilterParentResourceTypesEmpty(true);
+        criteria.clearPaging();
+
+        List<ResourceType> deletedServerTypes = resourceTypeMgr.findResourceTypesByCriteria(subject, criteria);
+
+        // Do this type by type in an effort to keep chunks smaller. 
+        for (ResourceType deletedServerType : deletedServerTypes) {
+            deleteResourcesForType(subject, deletedServerType);
+        }
+    }
+
+    private void deleteResourcesForType(Subject subject, ResourceType type) throws Exception {
+
+        List<Integer> typeIds = new ArrayList(1);
+        typeIds.add(type.getId());
+
+        List<Integer> resourceIds = resourceMgr.findIdsByTypeIds(typeIds);
+        for (Integer resourceId : resourceIds) {
+            resourceMgr.uninventoryResourceInNewTransaction(resourceId);
+        }
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public void markPluginsDeleted(Subject subject, List<Plugin> plugins) throws Exception {
+
+        log.debug(subject + " preparing to delete the following plugins: " + plugins);
 
         for (Plugin plugin : plugins) {
             if (plugin.getStatus().equals(PluginStatusType.INSTALLED)) {
                 long startTime = System.currentTimeMillis();
                 List<Integer> resourceTypeIds = resourceTypeMgr.getResourceTypeIdsByPlugin(plugin.getName());
-                Plugin managedPlugin = entityManager.merge(plugin);
-                inventoryMgr.markTypesDeleted(resourceTypeIds);
-                managedPlugin.setStatus(PluginStatusType.DELETED);
+
+                inventoryMgr.markTypesDeleted(resourceTypeIds, false);
+
+                plugin.setStatus(PluginStatusType.DELETED);
+                entityManager.merge(plugin);
+
                 long endTime = System.currentTimeMillis();
                 log.debug("Deleted " + plugin + " in " + (endTime - startTime) + " ms");
+
             } else {
                 log.debug("Skipping " + plugin + ". It is already deleted.");
             }
@@ -377,12 +436,12 @@ public class PluginManagerBean implements PluginManagerLocal {
     // will generate very large transactions. Potentially resulting in timeouts or other issues.
     @TransactionAttribute(TransactionAttributeType.NEVER)
     @Override
-    public void registerPlugin(Plugin plugin, PluginDescriptor pluginDescriptor, File pluginFile,
-                               boolean forceUpdate) throws Exception {
+    public void registerPlugin(Plugin plugin, PluginDescriptor pluginDescriptor, File pluginFile, boolean forceUpdate)
+        throws Exception {
 
         if (isDeleted(plugin)) {
-            String msg = "A deleted version of " + plugin + " already exists in the database. The plugin cannot be " +
-                "installed until the deleted version is purged from the database.";
+            String msg = "A deleted version of " + plugin + " already exists in the database. The plugin cannot be "
+                + "installed until the deleted version is purged from the database.";
             log.warn(msg);
             throw new IllegalStateException(msg);
         }
@@ -409,7 +468,8 @@ public class PluginManagerBean implements PluginManagerLocal {
                     log.debug("Plugin [" + extPluginName
                         + "] will be re-registered because it embeds types from plugin [" + plugin.getName() + "]");
                     pluginMgr.registerPluginTypes(extPluginName, extPluginDescriptor, false, true);
-                    resourceMetadataManager.removeObsoleteTypes(subjectMgr.getOverlord(), extPluginName, metadataManager);
+                    resourceMetadataManager.removeObsoleteTypes(subjectMgr.getOverlord(), extPluginName,
+                        metadataManager);
                 }
             }
 
@@ -433,7 +493,7 @@ public class PluginManagerBean implements PluginManagerLocal {
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @Override
     public boolean installPluginJar(Plugin newPlugin, PluginDescriptor pluginDescriptor, File pluginFile)
-            throws Exception {
+        throws Exception {
 
         Plugin existingPlugin = getPlugin(newPlugin.getName());
         boolean newOrUpdated = (null == existingPlugin);

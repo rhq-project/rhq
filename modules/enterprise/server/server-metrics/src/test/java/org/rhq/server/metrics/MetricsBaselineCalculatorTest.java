@@ -45,6 +45,9 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.server.metrics.domain.AggregateSimpleNumericMetric;
+import org.rhq.server.metrics.domain.AggregateType;
+import org.rhq.server.metrics.domain.MetricsTable;
 
 /**
  * @author Stefan Negrea
@@ -71,7 +74,7 @@ public class MetricsBaselineCalculatorTest {
             .thenReturn(mockMetricsDAO);
 
         when(mockMetricsDAO.findAggregateSimpleMetrics(eq(MetricsTable.ONE_HOUR), eq(1), eq(0),
-                eq(1))).thenReturn(new ArrayList<AggregatedSimpleNumericMetric>());
+                eq(1))).thenReturn(new ArrayList<AggregateSimpleNumericMetric>());
 
         MeasurementSchedule mockSchedule = mock(MeasurementSchedule.class);
         when(mockSchedule.getId()).thenReturn(0);
@@ -96,16 +99,16 @@ public class MetricsBaselineCalculatorTest {
     public void randomDataTest() throws Exception {
         //generate random data
         Random random = new Random();
-        List<AggregatedSimpleNumericMetric> randomData = new ArrayList<AggregatedSimpleNumericMetric>();
+        List<AggregateSimpleNumericMetric> randomData = new ArrayList<AggregateSimpleNumericMetric>();
 
         for (int i = 0; i < 123; i++) {
-            randomData.add(new AggregatedSimpleNumericMetric(random.nextDouble() * 1000, AggregateType.AVG));
-            randomData.add(new AggregatedSimpleNumericMetric(random.nextDouble() * 1000, AggregateType.MAX));
-            randomData.add(new AggregatedSimpleNumericMetric(random.nextDouble() * 1000, AggregateType.MIN));
+            randomData.add(new AggregateSimpleNumericMetric(1, random.nextDouble() * 1000, AggregateType.AVG));
+            randomData.add(new AggregateSimpleNumericMetric(1, random.nextDouble() * 1000, AggregateType.MAX));
+            randomData.add(new AggregateSimpleNumericMetric(1, random.nextDouble() * 1000, AggregateType.MIN));
         }
 
         double average = 0;
-        for (AggregatedSimpleNumericMetric metric : randomData) {
+        for (AggregateSimpleNumericMetric metric : randomData) {
             if (AggregateType.AVG.equals(metric.getType())) {
                 average += metric.getValue();
             }
@@ -113,14 +116,14 @@ public class MetricsBaselineCalculatorTest {
         average = average / 123;
 
         double expectedMax = Double.MIN_VALUE;
-        for (AggregatedSimpleNumericMetric metric : randomData) {
+        for (AggregateSimpleNumericMetric metric : randomData) {
             if (AggregateType.MAX.equals(metric.getType()) && expectedMax < metric.getValue()) {
                 expectedMax = metric.getValue();
             }
         }
 
         double expectedMin = Double.MAX_VALUE;
-        for (AggregatedSimpleNumericMetric metric : randomData) {
+        for (AggregateSimpleNumericMetric metric : randomData) {
             if (AggregateType.MIN.equals(metric.getType()) && expectedMin > metric.getValue()) {
                 expectedMin = metric.getValue();
             }
@@ -180,14 +183,14 @@ public class MetricsBaselineCalculatorTest {
     public void noMinMaxDataTest() throws Exception {
         //generate random data
         Random random = new Random();
-        List<AggregatedSimpleNumericMetric> randomData = new ArrayList<AggregatedSimpleNumericMetric>();
+        List<AggregateSimpleNumericMetric> randomData = new ArrayList<AggregateSimpleNumericMetric>();
 
         for (int i = 0; i < 123; i++) {
-            randomData.add(new AggregatedSimpleNumericMetric(random.nextDouble() * 1000, AggregateType.AVG));
+            randomData.add(new AggregateSimpleNumericMetric(1, random.nextDouble() * 1000, AggregateType.AVG));
         }
 
         double average = 0;
-        for (AggregatedSimpleNumericMetric metric : randomData) {
+        for (AggregateSimpleNumericMetric metric : randomData) {
             average += metric.getValue();
         }
         average = average / 123;

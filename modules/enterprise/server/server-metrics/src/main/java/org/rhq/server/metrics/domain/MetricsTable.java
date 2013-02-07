@@ -31,15 +31,11 @@ import org.joda.time.Duration;
 public enum MetricsTable {
 
     INDEX("metrics_index", -1),
-    RAW("raw_metrics", MetricsTable.SEVEN_DAYS),
-    ONE_HOUR("one_hour_metrics", MetricsTable.TWO_WEEKS),
-    SIX_HOUR("six_hour_metrics", MetricsTable.ONE_MONTH),
-    TWENTY_FOUR_HOUR("twenty_four_hour_metrics", MetricsTable.ONE_YEAR);
+    RAW("raw_metrics", Duration.standardDays(7).toStandardSeconds().getSeconds()),
+    ONE_HOUR("one_hour_metrics", Duration.standardDays(14).toStandardSeconds().getSeconds()),
+    SIX_HOUR("six_hour_metrics", Duration.standardDays(31).toStandardSeconds().getSeconds()),
+    TWENTY_FOUR_HOUR("twenty_four_hour_metrics", Duration.standardDays(365).toStandardSeconds().getSeconds());
 
-    private static final int SEVEN_DAYS = Duration.standardDays(7).toStandardSeconds().getSeconds();
-    private static final int TWO_WEEKS = Duration.standardDays(14).toStandardSeconds().getSeconds();
-    private static final int ONE_MONTH = Duration.standardDays(31).toStandardSeconds().getSeconds();
-    private static final int ONE_YEAR = Duration.standardDays(365).toStandardSeconds().getSeconds();
 
     private final String tableName;
     private final int ttl;

@@ -28,14 +28,26 @@ package org.rhq.server.metrics.domain;
  * @author Stefan Negrea
  *
  */
-public class AggregatedSimpleNumericMetric {
+public class AggregateSimpleNumericMetric {
 
     private Double value;
     private AggregateType type;
+    private int scheduleId;
 
-    public AggregatedSimpleNumericMetric(Double value, AggregateType type) {
+    /**
+     *
+     */
+    public AggregateSimpleNumericMetric() {
+    }
+
+    /**
+     * @param value
+     * @param type
+     */
+    public AggregateSimpleNumericMetric(int scheduleId, Double value, AggregateType type) {
         this.value = value;
         this.type = type;
+        this.setScheduleId(scheduleId);
     }
 
     /**
@@ -64,6 +76,20 @@ public class AggregatedSimpleNumericMetric {
      */
     public void setType(AggregateType type) {
         this.type = type;
+    }
+
+    /**
+     * @return the scheduleId
+     */
+    public int getScheduleId() {
+        return scheduleId;
+    }
+
+    /**
+     * @param scheduleId the scheduleId to set
+     */
+    public void setScheduleId(int scheduleId) {
+        this.scheduleId = scheduleId;
     }
 
 }

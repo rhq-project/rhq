@@ -1,5 +1,4 @@
 /*
- *
  * RHQ Management Platform
  * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
@@ -31,45 +30,40 @@ import java.util.List;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 
-
 /**
  * @author John Sanda
  */
-public class MetricsIndexResultSetMapper implements ResultSetMapper<MetricsIndexEntry> {
-
-    private MetricsTable bucket;
-
-    public MetricsIndexResultSetMapper(MetricsTable bucket) {
-        this.bucket = bucket;
-    }
+public class AggregateSimpleNumericMetricMapper implements ResultSetMapper<AggregateSimpleNumericMetric> {
 
     @Override
-    public List<MetricsIndexEntry> mapAll(ResultSet resultSet) {
-        List<MetricsIndexEntry> result = new ArrayList<MetricsIndexEntry>();
-        for (Row singleRow : resultSet) {
-            result.add(map(singleRow));
+    public List<AggregateSimpleNumericMetric> mapAll(ResultSet resultSet) {
+        List<AggregateSimpleNumericMetric> metrics = new ArrayList<AggregateSimpleNumericMetric>();
+
+        while (!resultSet.isExhausted()) {
+            metrics.add(mapOne(resultSet));
         }
 
-        return result;
+        return metrics;
     }
 
     @Override
-    public MetricsIndexEntry mapOne(ResultSet resultSet) {
-        return map(resultSet.fetchOne());
+    public AggregateSimpleNumericMetric mapOne(ResultSet resultSet) {
+        return this.map(resultSet.fetchOne());
     }
 
     @Override
-    public List<MetricsIndexEntry> map(Row... row) {
-        List<MetricsIndexEntry> result = new ArrayList<MetricsIndexEntry>();
+    public List<AggregateSimpleNumericMetric> map(Row... row) {
+        List<AggregateSimpleNumericMetric> metrics = new ArrayList<AggregateSimpleNumericMetric>();
+
         for (Row singleRow : row) {
-            result.add(new MetricsIndexEntry(bucket, singleRow.getDate(0), singleRow.getInt(1)));
+            metrics.add(map(singleRow));
         }
 
-        return result;
+        return metrics;
     }
 
     @Override
-    public MetricsIndexEntry map(Row row) {
-        return new MetricsIndexEntry(bucket, row.getDate(0), row.getInt(1));
+    public AggregateSimpleNumericMetric map(Row row) {
+        return new AggregateSimpleNumericMetric(row.getInt(0), row.getDouble(2), AggregateType.valueOf(row.getInt(1)));
     }
-}
+};

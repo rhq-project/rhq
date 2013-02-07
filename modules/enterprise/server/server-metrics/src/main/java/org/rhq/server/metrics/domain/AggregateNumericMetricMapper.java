@@ -33,20 +33,20 @@ import com.datastax.driver.core.Row;
 /**
  * @author John Sanda
  */
-public class AggregateMetricMapper implements ResultSetMapper<AggregatedNumericMetric> {
+public class AggregateNumericMetricMapper implements ResultSetMapper<AggregateNumericMetric> {
 
-    private ResultSetMapper<AggregatedNumericMetric> resultSetMapper;
+    private ResultSetMapper<AggregateNumericMetric> resultSetMapper;
 
-    public AggregateMetricMapper() {
+    public AggregateNumericMetricMapper() {
         this(false);
     }
 
-    public AggregateMetricMapper(boolean includeMetadata) {
+    public AggregateNumericMetricMapper(boolean includeMetadata) {
         if (includeMetadata) {
-            resultSetMapper = new ResultSetMapper<AggregatedNumericMetric>() {
+            resultSetMapper = new ResultSetMapper<AggregateNumericMetric>() {
                 @Override
-                public List<AggregatedNumericMetric> mapAll(ResultSet resultSet) {
-                    List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
+                public List<AggregateNumericMetric> mapAll(ResultSet resultSet) {
+                    List<AggregateNumericMetric> metrics = new ArrayList<AggregateNumericMetric>();
                     while (!resultSet.isExhausted()) {
                         metrics.add(mapOne(resultSet));
                     }
@@ -55,16 +55,16 @@ public class AggregateMetricMapper implements ResultSetMapper<AggregatedNumericM
                 }
 
                 @Override
-                public AggregatedNumericMetric mapOne(ResultSet resultSet) {
+                public AggregateNumericMetric mapOne(ResultSet resultSet) {
                     return map(resultSet.fetchOne(), resultSet.fetchOne(), resultSet.fetchOne()).get(0);
                 }
 
                 @Override
-                public List<AggregatedNumericMetric> map(Row... row) {
-                    List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
+                public List<AggregateNumericMetric> map(Row... row) {
+                    List<AggregateNumericMetric> metrics = new ArrayList<AggregateNumericMetric>();
 
                     for (int i = 0; i < row.length; i += 3) {
-                        AggregatedNumericMetric metric = new AggregatedNumericMetric();
+                        AggregateNumericMetric metric = new AggregateNumericMetric();
                         metric.setScheduleId(row[i].getInt(0));
                         metric.setTimestamp(row[i].getDate(1).getTime());
                         metric.setMax(row[i].getDouble(3));
@@ -86,16 +86,16 @@ public class AggregateMetricMapper implements ResultSetMapper<AggregatedNumericM
                 }
 
                 @Override
-                public AggregatedNumericMetric map(Row row) {
+                public AggregateNumericMetric map(Row row) {
                     throw new UnsupportedOperationException(
                         "Method is not supported. Only triples are accepted for mapping.");
                 }
             };
         } else {
-            resultSetMapper = new ResultSetMapper<AggregatedNumericMetric>() {
+            resultSetMapper = new ResultSetMapper<AggregateNumericMetric>() {
                 @Override
-                public List<AggregatedNumericMetric> mapAll(ResultSet resultSet) {
-                    List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
+                public List<AggregateNumericMetric> mapAll(ResultSet resultSet) {
+                    List<AggregateNumericMetric> metrics = new ArrayList<AggregateNumericMetric>();
                     while (!resultSet.isExhausted()) {
                         metrics.add(mapOne(resultSet));
                     }
@@ -104,16 +104,16 @@ public class AggregateMetricMapper implements ResultSetMapper<AggregatedNumericM
                 }
 
                 @Override
-                public AggregatedNumericMetric mapOne(ResultSet resultSet) {
+                public AggregateNumericMetric mapOne(ResultSet resultSet) {
                     return map(resultSet.fetchOne(), resultSet.fetchOne(), resultSet.fetchOne()).get(0);
                 }
 
                 @Override
-                public List<AggregatedNumericMetric> map(Row... row) {
-                    List<AggregatedNumericMetric> metrics = new ArrayList<AggregatedNumericMetric>();
+                public List<AggregateNumericMetric> map(Row... row) {
+                    List<AggregateNumericMetric> metrics = new ArrayList<AggregateNumericMetric>();
 
                     for (int i = 0; i < row.length; i += 3) {
-                        AggregatedNumericMetric metric = new AggregatedNumericMetric();
+                        AggregateNumericMetric metric = new AggregateNumericMetric();
                         metric.setScheduleId(row[i].getInt(0));
                         metric.setTimestamp(row[i].getDate(1).getTime());
                         metric.setMax(row[i].getDouble(3));
@@ -127,7 +127,7 @@ public class AggregateMetricMapper implements ResultSetMapper<AggregatedNumericM
                 }
 
                 @Override
-                public AggregatedNumericMetric map(Row row) {
+                public AggregateNumericMetric map(Row row) {
                     throw new UnsupportedOperationException(
                         "Method is not supported. Only triples are accepted for mapping.");
                 }
@@ -136,22 +136,22 @@ public class AggregateMetricMapper implements ResultSetMapper<AggregatedNumericM
     }
 
     @Override
-    public List<AggregatedNumericMetric> mapAll(ResultSet resultSet) {
+    public List<AggregateNumericMetric> mapAll(ResultSet resultSet) {
         return resultSetMapper.mapAll(resultSet);
     }
 
     @Override
-    public AggregatedNumericMetric mapOne(ResultSet resultSet) {
+    public AggregateNumericMetric mapOne(ResultSet resultSet) {
         return resultSetMapper.mapOne(resultSet);
     }
 
     @Override
-    public List<AggregatedNumericMetric> map(Row... rows) {
+    public List<AggregateNumericMetric> map(Row... rows) {
         return resultSetMapper.map(rows);
     }
 
     @Override
-    public AggregatedNumericMetric map(Row row) {
+    public AggregateNumericMetric map(Row row) {
         return resultSetMapper.map(row);
     }
 }

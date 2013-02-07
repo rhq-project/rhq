@@ -31,6 +31,9 @@ import com.datastax.driver.core.Session;
 
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.server.metrics.domain.AggregateSimpleNumericMetric;
+import org.rhq.server.metrics.domain.AggregateType;
+import org.rhq.server.metrics.domain.MetricsTable;
 
 /**
  * @author Stefan Negrea
@@ -59,14 +62,14 @@ public class MetricsBaselineCalculator {
     }
 
     private MeasurementBaseline calculateBaseline(MeasurementSchedule schedule, long startTime, long endTime) {
-        List<AggregatedSimpleNumericMetric> metrics = this.metricsDAO.findAggregateSimpleMetrics(MetricsTable.ONE_HOUR,
-            schedule.getId(), startTime, endTime);
+        Iterable<AggregateSimpleNumericMetric> metrics = this.metricsDAO.findAggregateSimpleMetrics(
+            MetricsTable.ONE_HOUR, schedule.getId(), startTime, endTime);
 
-        if (metrics.size() != 0) {
+        if (metrics != null && metrics.iterator() != null && metrics.iterator().hasNext()) {
             ArithmeticMeanCalculator mean = new ArithmeticMeanCalculator();
 
             double max = Double.NaN;
-            for (AggregatedSimpleNumericMetric entry : metrics) {
+            for (AggregateSimpleNumericMetric entry : metrics) {
                 if (AggregateType.MAX.equals(entry.getType())) {
                     max = entry.getValue();
                     break;
@@ -74,14 +77,14 @@ public class MetricsBaselineCalculator {
             }
 
             double min = Double.NaN;
-            for (AggregatedSimpleNumericMetric entry : metrics) {
+            for (AggregateSimpleNumericMetric entry : metrics) {
                 if (AggregateType.MIN.equals(entry.getType())) {
                     min = entry.getValue();
                     break;
                 }
             }
 
-            for (AggregatedSimpleNumericMetric entry : metrics) {
+            for (AggregateSimpleNumericMetric entry : metrics) {
                 if (AggregateType.AVG.equals(entry.getType())) {
                     mean.add(entry.getValue());
                 } else if (AggregateType.MAX.equals(entry.getType())) {

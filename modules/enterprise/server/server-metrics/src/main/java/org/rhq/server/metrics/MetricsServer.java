@@ -44,7 +44,7 @@ import org.joda.time.Minutes;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.server.metrics.domain.AggregatedNumericMetric;
+import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.MetricsIndexEntry;
 import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.RawNumericMetric;
@@ -70,26 +70,26 @@ public class MetricsServer {
     }
 
     public RawNumericMetric findLatestValueForResource(int scheduleId) {
-        List<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, DESC, 1);
+        Iterable<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, DESC, 1);
 
-        if (metrics.isEmpty()) {
+        if (metrics.iterator().hasNext()) {
             return null;
         }
 
-        return metrics.get(0);
+        return metrics.iterator().next();
     }
 
-    public List<MeasurementDataNumericHighLowComposite> findDataForResource(int scheduleId, long beginTime,
+    public Iterable<MeasurementDataNumericHighLowComposite> findDataForResource(int scheduleId, long beginTime,
         long endTime) {
         DateTime begin = new DateTime(beginTime);
 
         if (dateTimeService.isInRawDataRange(begin)) {
-            List<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, beginTime, endTime);
+            Iterable<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, beginTime, endTime);
             return createRawComposites(metrics, beginTime, endTime);
         }
 
         MetricsTable table = getTable(begin);
-        List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleId, beginTime, endTime);
+        Iterable<AggregateNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleId, beginTime, endTime);
 
         return createComposites(metrics, beginTime, endTime);
     }
@@ -99,45 +99,45 @@ public class MetricsServer {
         DateTime begin = new DateTime(beginTime);
 
         if (dateTimeService.isInRawDataRange(begin)) {
-            List<RawNumericMetric> metrics = dao.findRawMetrics(scheduleIds, beginTime, endTime);
+            Iterable<RawNumericMetric> metrics = dao.findRawMetrics(scheduleIds, beginTime, endTime);
             return createRawComposites(metrics, beginTime, endTime);
         }
 
         MetricsTable table = getTable(begin);
-        List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleIds, beginTime, endTime);
+        Iterable<AggregateNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleIds, beginTime, endTime);
 
         return createComposites(metrics, beginTime, endTime);
     }
 
-    public AggregatedNumericMetric getSummaryAggregate(int scheduleId, long beginTime, long endTime) {
+    public AggregateNumericMetric getSummaryAggregate(int scheduleId, long beginTime, long endTime) {
         DateTime begin = new DateTime(beginTime);
 
         if (dateTimeService.isInRawDataRange(begin)) {
-            List<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, beginTime, endTime);
+            Iterable<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, beginTime, endTime);
             return createSummaryRawAggregate(metrics, beginTime);
         }
 
         MetricsTable table = getTable(begin);
-        List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleId, beginTime, endTime);
+        Iterable<AggregateNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleId, beginTime, endTime);
 
         return createSummaryAggregate(metrics, beginTime);
     }
 
-    public AggregatedNumericMetric getSummaryAggregate(List<Integer> scheduleIds, long beginTime, long endTime) {
+    public AggregateNumericMetric getSummaryAggregate(List<Integer> scheduleIds, long beginTime, long endTime) {
         DateTime begin = new DateTime(beginTime);
 
         if (dateTimeService.isInRawDataRange(new DateTime(beginTime))) {
-            List<RawNumericMetric> metrics = dao.findRawMetrics(scheduleIds, beginTime, endTime);
+            Iterable<RawNumericMetric> metrics = dao.findRawMetrics(scheduleIds, beginTime, endTime);
             return createSummaryRawAggregate(metrics, beginTime);
         }
 
         MetricsTable table = getTable(begin);
-        List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleIds, beginTime, endTime);
+        Iterable<AggregateNumericMetric> metrics = dao.findAggregateMetrics(table, scheduleIds, beginTime, endTime);
 
         return createSummaryAggregate(metrics, beginTime);
     }
 
-    private List<MeasurementDataNumericHighLowComposite> createRawComposites(List<RawNumericMetric> metrics,
+    private List<MeasurementDataNumericHighLowComposite> createRawComposites(Iterable<RawNumericMetric> metrics,
         long beginTime, long endTime) {
         Buckets buckets = new Buckets(beginTime, endTime);
         for (RawNumericMetric metric : metrics) {
@@ -153,26 +153,26 @@ public class MetricsServer {
         return data;
     }
 
-    private AggregatedNumericMetric createSummaryRawAggregate(List<RawNumericMetric> metrics, long beginTime) {
-        if (metrics.isEmpty()) {
+    private AggregateNumericMetric createSummaryRawAggregate(Iterable<RawNumericMetric> metrics, long beginTime) {
+        if (metrics.iterator().hasNext()) {
             // We do not care about the scheudule id here so can just use a dummy value of zero.
-            return new AggregatedNumericMetric(0, Double.NaN, Double.NaN,Double.NaN, beginTime);
+            return new AggregateNumericMetric(0, Double.NaN, Double.NaN,Double.NaN, beginTime);
         }
         return calculateAggregatedRaw(metrics, beginTime);
     }
 
-    private AggregatedNumericMetric createSummaryAggregate(List<AggregatedNumericMetric> metrics, long beginTime) {
-        if (metrics.isEmpty()) {
+    private AggregateNumericMetric createSummaryAggregate(Iterable<AggregateNumericMetric> metrics, long beginTime) {
+        if (metrics.iterator().hasNext()) {
             // We do not care about the scheudule id here so can just use a dummy value of zero.
-            return new AggregatedNumericMetric(0, Double.NaN, Double.NaN,Double.NaN, beginTime);
+            return new AggregateNumericMetric(0, Double.NaN, Double.NaN,Double.NaN, beginTime);
         }
         return calculateAggregate(metrics, beginTime);
     }
 
-    private List<MeasurementDataNumericHighLowComposite> createComposites(List<AggregatedNumericMetric> metrics,
+    private List<MeasurementDataNumericHighLowComposite> createComposites(Iterable<AggregateNumericMetric> metrics,
         long beginTime, long endTime) {
         Buckets buckets = new Buckets(beginTime, endTime);
-        for (AggregatedNumericMetric metric : metrics) {
+        for (AggregateNumericMetric metric : metrics) {
             buckets.insert(metric.getTimestamp(), metric.getAvg(), metric.getMin(), metric.getMax());
         }
 
@@ -199,7 +199,7 @@ public class MetricsServer {
         dao.updateMetricsIndex(MetricsTable.ONE_HOUR, updates);
     }
 
-    public List<AggregatedNumericMetric> calculateAggregates() {
+    public Iterable<AggregateNumericMetric> calculateAggregates() {
         // We first query the metrics index table to determine which schedules have data to
         // be aggregated. Then we retrieve the metric data and aggregate or compress the
         // data, writing the compressed values into the next wider (i.e., longer life span
@@ -216,60 +216,60 @@ public class MetricsServer {
         // schedule id in that column has in fact been aggregated. It might be better for
         // deleteMetricsIndexEntries to take a list of schedule ids to purge.
 
-        List<AggregatedNumericMetric> newOneHourAggregates = null;
+        Iterable<AggregateNumericMetric> newOneHourAggregates = null;
 
-        List<AggregatedNumericMetric> updatedSchedules = aggregateRawData();
+        Iterable<AggregateNumericMetric> updatedSchedules = aggregateRawData();
         newOneHourAggregates = updatedSchedules;
-        if (!updatedSchedules.isEmpty()) {
+        if (updatedSchedules.iterator().hasNext()) {
             dao.deleteMetricsIndexEntries(MetricsTable.ONE_HOUR);
             updateMetricsIndex(MetricsTable.SIX_HOUR, updatedSchedules, Minutes.minutes(60 * 6));
         }
 
         updatedSchedules = calculateAggregates(MetricsTable.ONE_HOUR, MetricsTable.SIX_HOUR, Minutes.minutes(60 * 6));
-        if (!updatedSchedules.isEmpty()) {
+        if (updatedSchedules.iterator().hasNext()) {
             dao.deleteMetricsIndexEntries(MetricsTable.SIX_HOUR);
             updateMetricsIndex(MetricsTable.TWENTY_FOUR_HOUR, updatedSchedules, Hours.hours(24).toStandardMinutes());
         }
 
         updatedSchedules = calculateAggregates(MetricsTable.SIX_HOUR, MetricsTable.TWENTY_FOUR_HOUR, Hours.hours(24)
             .toStandardMinutes());
-        if (!updatedSchedules.isEmpty()) {
+        if (updatedSchedules.iterator().hasNext()) {
             dao.deleteMetricsIndexEntries(MetricsTable.TWENTY_FOUR_HOUR);
         }
 
         return newOneHourAggregates;
     }
 
-    private void updateMetricsIndex(MetricsTable bucket, List<AggregatedNumericMetric> metrics, Minutes interval) {
+    private void updateMetricsIndex(MetricsTable bucket, Iterable<AggregateNumericMetric> metrics, Minutes interval) {
         Map<Integer, Long> updates = new TreeMap<Integer, Long>();
-        for (AggregatedNumericMetric metric : metrics) {
+        for (AggregateNumericMetric metric : metrics) {
             updates.put(metric.getScheduleId(),
                 dateTimeService.getTimeSlice(new DateTime(metric.getTimestamp()), interval).getMillis());
         }
         dao.updateMetricsIndex(bucket, updates);
     }
 
-    private List<AggregatedNumericMetric> aggregateRawData() {
-        List<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(MetricsTable.ONE_HOUR);
-        List<AggregatedNumericMetric> oneHourMetrics = new ArrayList<AggregatedNumericMetric>();
+    private Iterable<AggregateNumericMetric> aggregateRawData() {
+        Iterable<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(MetricsTable.ONE_HOUR);
+        List<AggregateNumericMetric> oneHourMetrics = new ArrayList<AggregateNumericMetric>();
 
         for (MetricsIndexEntry indexEntry : indexEntries) {
             DateTime startTime = indexEntry.getTime();
             DateTime endTime = startTime.plusMinutes(60);
 
-            List<RawNumericMetric> rawMetrics = dao.findRawMetrics(indexEntry.getScheduleId(), startTime.getMillis(),
-                endTime.getMillis());
-            AggregatedNumericMetric aggregatedRaw = calculateAggregatedRaw(rawMetrics, startTime.getMillis());
+            Iterable<RawNumericMetric> rawMetrics = dao.findRawMetrics(indexEntry.getScheduleId(),
+                startTime.getMillis(), endTime.getMillis());
+            AggregateNumericMetric aggregatedRaw = calculateAggregatedRaw(rawMetrics, startTime.getMillis());
             aggregatedRaw.setScheduleId(indexEntry.getScheduleId());
             oneHourMetrics.add(aggregatedRaw);
         }
 
-        List<AggregatedNumericMetric> updatedSchedules = dao.insertAggregates(MetricsTable.ONE_HOUR, oneHourMetrics,
+        List<AggregateNumericMetric> updatedSchedules = dao.insertAggregates(MetricsTable.ONE_HOUR, oneHourMetrics,
             MetricsTable.ONE_HOUR.getTTL());
         return updatedSchedules;
     }
 
-    private AggregatedNumericMetric calculateAggregatedRaw(List<RawNumericMetric> rawMetrics, long timestamp) {
+    private AggregateNumericMetric calculateAggregatedRaw(Iterable<RawNumericMetric> rawMetrics, long timestamp) {
         double min = Double.NaN;
         double max = min;
         int count = 0;
@@ -293,14 +293,14 @@ public class MetricsServer {
 
         // We let the caller handle setting the schedule id because in some cases we do
         // not care about it.
-        return new AggregatedNumericMetric(0, mean.getArithmeticMean(), min, max, timestamp);
+        return new AggregateNumericMetric(0, mean.getArithmeticMean(), min, max, timestamp);
     }
 
-    private List<AggregatedNumericMetric> calculateAggregates(MetricsTable fromColumnFamily,
+    private List<AggregateNumericMetric> calculateAggregates(MetricsTable fromColumnFamily,
         MetricsTable toColumnFamily, Minutes nextInterval) {
 
-        List<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(toColumnFamily);
-        List<AggregatedNumericMetric> toMetrics = new ArrayList<AggregatedNumericMetric>();
+        Iterable<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(toColumnFamily);
+        List<AggregateNumericMetric> toMetrics = new ArrayList<AggregateNumericMetric>();
 
         DateTime currentHour = getCurrentHour();
         DateTimeComparator dateTimeComparator = DateTimeComparator.getInstance();
@@ -313,25 +313,25 @@ public class MetricsServer {
                 continue;
             }
 
-            List<AggregatedNumericMetric> metrics = dao.findAggregateMetrics(fromColumnFamily,
+            Iterable<AggregateNumericMetric> metrics = dao.findAggregateMetrics(fromColumnFamily,
                 indexEntry.getScheduleId(), startTime.getMillis(), endTime.getMillis());
-            AggregatedNumericMetric aggregatedMetric = calculateAggregate(metrics, startTime.getMillis());
+            AggregateNumericMetric aggregatedMetric = calculateAggregate(metrics, startTime.getMillis());
             aggregatedMetric.setScheduleId(indexEntry.getScheduleId());
             toMetrics.add(aggregatedMetric);
         }
 
-        List<AggregatedNumericMetric> updatedSchedules = dao.insertAggregates(toColumnFamily, toMetrics,
+        List<AggregateNumericMetric> updatedSchedules = dao.insertAggregates(toColumnFamily, toMetrics,
             toColumnFamily.getTTL());
         return updatedSchedules;
     }
 
-    private AggregatedNumericMetric calculateAggregate(List<AggregatedNumericMetric> metrics, long timestamp) {
+    private AggregateNumericMetric calculateAggregate(Iterable<AggregateNumericMetric> metrics, long timestamp) {
         double min = Double.NaN;
         double max = min;
         int count = 0;
         ArithmeticMeanCalculator mean = new ArithmeticMeanCalculator();
 
-        for (AggregatedNumericMetric metric : metrics) {
+        for (AggregateNumericMetric metric : metrics) {
             if (count == 0) {
                 min = metric.getMin();
                 max = metric.getMax();
@@ -347,7 +347,7 @@ public class MetricsServer {
 
         // We let the caller handle setting the schedule id because in some cases we do
         // not care about it.
-        return new AggregatedNumericMetric(0, mean.getArithmeticMean(), min, max, timestamp);
+        return new AggregateNumericMetric(0, mean.getArithmeticMean(), min, max, timestamp);
     }
 
     private MetricsTable getTable(DateTime begin) {

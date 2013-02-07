@@ -27,7 +27,7 @@ package org.rhq.server.metrics.domain;
 /**
  * @author John Sanda
  */
-public class AggregatedNumericMetric {
+public class AggregateNumericMetric {
 
     private int scheduleId;
 
@@ -45,10 +45,10 @@ public class AggregatedNumericMetric {
 
     private ColumnMetadata maxColumnMetadata;
 
-    public AggregatedNumericMetric() {
+    public AggregateNumericMetric() {
     }
 
-    public AggregatedNumericMetric(int scheduleId, Double avg, Double min, Double max, long timestamp) {
+    public AggregateNumericMetric(int scheduleId, Double avg, Double min, Double max, long timestamp) {
         this.scheduleId = scheduleId;
         this.avg = avg;
         this.min = min;
@@ -136,7 +136,7 @@ public class AggregatedNumericMetric {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        AggregatedNumericMetric metric = (AggregatedNumericMetric) o;
+        AggregateNumericMetric metric = (AggregateNumericMetric) o;
 
         if (scheduleId != metric.scheduleId) return false;
         if (timestamp != metric.timestamp) return false;

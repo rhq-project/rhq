@@ -57,7 +57,7 @@ public class RawNumericMetricMapper implements ResultSetMapper<RawNumericMetric>
 
                 @Override
                 public RawNumericMetric mapOne(ResultSet resultSet) {
-                    return mapper.map(resultSet.fetchOne());
+                    return map(resultSet.fetchOne());
                 }
 
                 @Override
@@ -65,12 +65,7 @@ public class RawNumericMetricMapper implements ResultSetMapper<RawNumericMetric>
                     List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
 
                     for (Row singleRow : row) {
-                        RawNumericMetric metric = new RawNumericMetric(singleRow.getInt(0), singleRow.getDate(1)
-                            .getTime(), singleRow.getDouble(2));
-                        ColumnMetadata metadata = new ColumnMetadata(singleRow.getInt(3), singleRow.getLong(4));
-                        metric.setColumnMetadata(metadata);
-
-                        metrics.add(metric);
+                        metrics.add(this.map(singleRow));
                     }
 
                     return metrics;
@@ -92,7 +87,7 @@ public class RawNumericMetricMapper implements ResultSetMapper<RawNumericMetric>
                 public List<RawNumericMetric> mapAll(ResultSet resultSet) {
                     List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
                     for (Row row : resultSet) {
-                        metrics.add(map(row));
+                        metrics.add(this.map(row));
                     }
 
                     return metrics;
@@ -100,15 +95,14 @@ public class RawNumericMetricMapper implements ResultSetMapper<RawNumericMetric>
 
                 @Override
                 public RawNumericMetric mapOne(ResultSet resultSet) {
-                    return map(resultSet.fetchOne());
+                    return this.map(resultSet.fetchOne());
                 }
 
                 @Override
                 public List<RawNumericMetric> map(Row... row) {
                     List<RawNumericMetric> metrics = new ArrayList<RawNumericMetric>();
                     for (Row singleRow : row) {
-                        metrics.add(new RawNumericMetric(singleRow.getInt(0), singleRow.getDate(1).getTime(), singleRow
-                            .getDouble(2)));
+                        metrics.add(this.map(singleRow));
                     }
 
                     return metrics;

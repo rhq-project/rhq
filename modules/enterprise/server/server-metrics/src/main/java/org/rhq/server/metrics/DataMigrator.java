@@ -36,6 +36,8 @@ import org.rhq.core.domain.measurement.MeasurementDataNumeric1D;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric1H;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric6H;
 import org.rhq.core.domain.measurement.MeasurementDataNumericAggregateInterface;
+import org.rhq.server.metrics.domain.AggregateType;
+import org.rhq.server.metrics.domain.MetricsTable;
 
 /**
  * @author Stefan Negrea

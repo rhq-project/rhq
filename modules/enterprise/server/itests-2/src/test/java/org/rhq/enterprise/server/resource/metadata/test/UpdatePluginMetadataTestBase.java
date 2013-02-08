@@ -79,7 +79,7 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
         preparePluginScannerService();
         // we perform lookups of config settings from SystemManagerBean.
         // SystemManagerBean.getDriftServerPluginManager method requires drift server plugin. 
-        DriftServerPluginService driftServerPluginService = new DriftServerPluginService();
+        DriftServerPluginService driftServerPluginService = new DriftServerPluginService(getTempDir());
         prepareCustomServerPluginService(driftServerPluginService);
         driftServerPluginService.masterConfig.getPluginDirectory().mkdirs();
 

@@ -46,6 +46,7 @@ import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceIdWithAvailabilityComposite;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -556,9 +557,41 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 } catch (NoResultException nre) {
                     // This should not happen unless the Resource in the report is stale, which can happen in certain
                     // sync scenarios. A Resource is given its initial Availability/ResourceAvailability when it is
-                    // persisted so it is guaranteed to have Availability, so, the Resource must not exist.
-                    log.info("Skipping mergeAvailabilityReport() for stale resource [" + reported.getResource()
-                        + "]. These messages should go away after the next agent synchronization with the server.");
+                    // persisted so it is guaranteed to have Availability, so, the Resource must not exist. At least
+                    // it must not exist in my utopian view of the world. Let's just make sure...
+                    Resource attachedResource = (Resource) entityManager.find(Resource.class, reported.getResource()
+                        .getId());
+                    if (null == attachedResource) {
+                        // expected case
+                        log.info("Skipping mergeAvailabilityReport() for stale resource [" + reported.getResource()
+                            + "]. These messages should go away after the next agent synchronization with the server.");
+
+                    } else if (InventoryStatus.COMMITTED == attachedResource.getInventoryStatus()) {
+                        // this should not happen, it means the resource exists but has no latest Availability
+                        // record (i.e. sendTime == null).  Try to correct the situation.
+                        log.warn("Resource [" + reported.getResource()
+                            + "] has no latest availability record (i.e. no endtime) - will attempt to repair.\n"
+                            + report.toString(false));
+                        try {
+                            List<Availability> attachedAvails = attachedResource.getAvailability();
+                            if (attachedAvails.isEmpty()) {
+                                attachedResource.initCurrentAvailability();
+                                entityManager.merge(attachedResource);
+
+                            } else {
+                                Availability attachedLastAvail = attachedAvails.get(attachedAvails.size() - 1);
+                                attachedLastAvail.setEndTime(null);
+                                entityManager.merge(attachedLastAvail);
+                            }
+
+                            // ask the agent for a full report so as to ensure we are in sync with agent
+                            askForFullReport = true;
+
+                        } catch (Throwable t) {
+                            log.warn("Unable to repair latest availablity for Resource [" + reported.getResource()
+                                + "]", t);
+                        }
+                    }
 
                 } catch (NonUniqueResultException nure) {
                     // This condition should never happen.  In my world of la-la land, I've done everything
@@ -661,7 +694,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
     public void updateAgentResourceAvailabilities(int agentId, AvailabilityType platformAvailType,
         AvailabilityType childAvailType) {
 
-        platformAvailType = (null == platformAvailType) ? AvailabilityType.UNKNOWN : platformAvailType;
+        platformAvailType = (null == platformAvailType) ? AvailabilityType.DOWN : platformAvailType;
         childAvailType = (null == childAvailType) ? AvailabilityType.UNKNOWN : childAvailType;
 
         // get the platform resource if not already at platformAvailType (since this is the one 
@@ -681,17 +714,8 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         query.setParameter("disabled", AvailabilityType.DISABLED);
         List<ResourceIdWithAvailabilityComposite> resourcesWithStatus = query.getResultList();
 
-        // The above queries only return resources if they have at least one row in Availability.
-        // This may be a problem in the future, and may need to be fixed.
-        // If a resource has 0 rows of availability, then it is by definition "unknown". If,
-        // availabilityType is null, we don't have to do anything since the unknown state hasn't changed.
-        // If this method is told to set all agent resources to something of other than unknown (null)
-        // availability, then we may need to completely rethink the query we do above so it returns composite
-        // objects for all resources, even those that have 0 rows of availability.  Remember though, that once
-        // we get an availability report from an agent, a resource will have at least 1 availability row.  So,
-        // a resource should rarely have 0 avail rows; if it does, it normally gets one within a minute
-        // (since the agent sends avail reports every 60 seconds or so by default).  So this problem might not
-        // be as bad as first thought.
+        // The above queries only return resources if they have at least one row in Availability. This should
+        // not be a problem since a new Resource gets an initial UNKNOWN Availability record at persist-time. 
 
         if (log.isDebugEnabled()) {
             log.debug("Agent #[" + agentId + "] is going to have [" + resourcesWithStatus.size()
@@ -813,6 +837,14 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             } else {
                 firstAvail.setStartTime(toInsert.getStartTime());
             }
+
+            return;
+
+        } catch (NonUniqueResultException nure) {
+            // This should not happen but can happen if the startTime exactly matches an existing start time. In 
+            // this case assume we have somehow been passed a duplicate report, and ignore the entry.
+            log.warn("Resource [" + toInsert.getResource()
+                + "] received a duplicate Availability. It is being ignored: " + toInsert);
 
             return;
         }

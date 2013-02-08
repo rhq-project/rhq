@@ -55,6 +55,7 @@ public class JBossASClient {
     public static final String READ_RESOURCE = "read-resource";
     public static final String WRITE_ATTRIBUTE = "write-attribute";
     public static final String ADD = "add";
+    public static final String REMOVE = "remove";
     public static final String SYSTEM_PROPERTY = "system-property";
     public static final String PERSISTENT = "persistent"; // used by some operations to persist their effects
 
@@ -107,7 +108,7 @@ public class JBossASClient {
     public static ModelNode createWriteAttributeRequest(String attributeName, String attributeValue, Address address) {
         final ModelNode op = createRequest(WRITE_ATTRIBUTE, address);
         op.get(NAME).set(attributeName);
-        op.get(VALUE).set(attributeValue);
+        setPossibleExpression(op, VALUE, attributeValue);
         return op;
     }
 
@@ -220,6 +221,29 @@ public class JBossASClient {
         return "Unknown failure";
     }
 
+    /**
+     * This sets the given node's named attribute to the given value. If the value
+     * appears to be an expression (that is, contains "${" somewhere in it), this will
+     * set the value as an expression on the node.
+     *
+     * @param node the node whose attribute is to be set
+     * @param name the name of the attribute whose value is to be set
+     * @param value the value, possibly an expression
+     *
+     * @return returns the node
+     */
+    public static ModelNode setPossibleExpression(ModelNode node, String name, String value) {
+        if (value != null) {
+            if (value.contains("${")) {
+                return node.get(name).setExpression(value);
+            } else {
+                return node.get(name).set(value);
+            }
+        } else {
+            return node.get(name).clear();
+        }
+    }
+
     /////////////////////////////////////////////////////////////////
     // Non-static methods that need the client
 
@@ -235,12 +259,8 @@ public class JBossASClient {
      * @throws Exception
      */
     public ModelNode execute(ModelNode request) throws Exception {
-        try {
-            return getModelControllerClient().execute(request, OperationMessageHandler.logging);
-        } catch (Exception e) {
-            log.error("Failed to execute request", e);
-            throw e;
-        }
+        ModelControllerClient mcc = getModelControllerClient();
+        return mcc.execute(request, OperationMessageHandler.logging);
     }
 
     /**
@@ -253,7 +273,23 @@ public class JBossASClient {
      * @throws Exception if some error prevented the lookup from even happening
      */
     public ModelNode readResource(Address addr) throws Exception {
+        return readResource(addr, false);
+    }
+
+    /**
+     * This returns information on the resource at the given address, recursively
+     * returning child nodes with the result if recursive argument is set to <code>true</code>.
+     * This will not return an exception if the address points to a non-existent resource, rather,
+     * it will just return null. You can use this as a test for resource existence.
+     *
+     * @param addr
+     * @param recursive if true, return all child data within the resource node
+     * @return the found item or null if not found
+     * @throws Exception if some error prevented the lookup from even happening
+     */
+    public ModelNode readResource(Address addr, boolean recursive) throws Exception {
         final ModelNode request = createRequest(READ_RESOURCE, addr);
+        request.get("recursive").set(recursive);
         final ModelNode results = getModelControllerClient().execute(request, OperationMessageHandler.logging);
         if (isSuccess(results)) {
             final ModelNode resource = getResults(results);
@@ -261,6 +297,21 @@ public class JBossASClient {
         } else {
             return null;
         }
+    }
+
+    /**
+     * Removes the resource at the given address.
+     *
+     * @param doomedAddr the address of the resource to remove
+     * @throws Exception
+     */
+    public void remove(Address doomedAddr) throws Exception {
+        final ModelNode request = createRequest(REMOVE, doomedAddr);
+        final ModelNode response = execute(request);
+        if (!isSuccess(response)) {
+            throw new FailureException(response, "Failed to remove resource at address [" + doomedAddr + "]");
+        }
+        return;
     }
 
     /**

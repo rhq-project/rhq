@@ -199,7 +199,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
     private void uninventoryChildren(Set<Resource> children) {
         for (Resource child : children) {
-            resourceManager.uninventoryResource(subjectManager.getOverlord(), child.getId());
+            resourceManager.uninventoryResourceInNewTransaction(child.getId());
         }
     }
 

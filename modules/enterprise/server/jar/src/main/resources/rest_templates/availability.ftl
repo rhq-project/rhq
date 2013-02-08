@@ -27,4 +27,4 @@ Since: ${var.since?number_to_datetime}
  until ${var.until?number_to_datetime}
 </#if>
 <br/>
-<a href="/rest/1/resource/${var.resourceId?c}.html">Back to Resource</a>
+<a href="/rest/resource/${var.resourceId?c}.html">Back to Resource</a>

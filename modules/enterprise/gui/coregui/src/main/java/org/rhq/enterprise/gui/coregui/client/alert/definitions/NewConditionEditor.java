@@ -815,7 +815,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         formItems.add(helpItem);
 
         SelectItem selection = new SortedSelectItem(AVAILABILITY_DURATION_ITEMNAME,
-            MSG.view_alert_definition_condition_editor_availabilityDuration());
+            MSG.view_alert_definition_condition_editor_availabilityDuration_state());
         LinkedHashMap<String, String> avails = new LinkedHashMap<String, String>(2);
         avails.put(AlertConditionOperator.AVAIL_DURATION_DOWN.name(),
             MSG.view_alert_definition_condition_editor_operator_availability_durationDown());

@@ -24,8 +24,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.quartz.CronTrigger;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
@@ -33,6 +31,7 @@ import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
+import org.rhq.core.domain.operation.composite.GroupOperationScheduleComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite;
 import org.rhq.core.domain.resource.Resource;
@@ -110,14 +109,12 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
             throw getExceptionToThrowToClient(t);
         }
     }
-
+    
     public void scheduleResourceOperation(int resourceId, String operationName, Configuration parameters,
         String description, int timeout, String cronString) throws RuntimeException {
         try {
-            CronTrigger cronTrigger = new CronTrigger("resource " + resourceId + "_" + operationName, "group",
-                cronString);
-            ResourceOperationSchedule opSchedule = operationManager.scheduleResourceOperation(getSessionSubject(),
-                resourceId, operationName, parameters, cronTrigger, description);
+            ResourceOperationSchedule opSchedule = operationManager.scheduleResourceOperationUsingCron(getSessionSubject(),
+                resourceId, operationName, cronString, timeout, parameters, description);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -197,17 +194,28 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
         }
     }
 
-    /** Find scheduled operations, disambiguate them and return that list.
-     * 
-     */
-    public PageList<ResourceOperationScheduleComposite> findScheduledOperations(int pageSize) throws RuntimeException {
+    public PageList<ResourceOperationScheduleComposite> findCurrentlyScheduledResourceOperations(int pageSize)
+        throws RuntimeException {
         try {
             PageControl pageControl = new PageControl(0, pageSize);
             pageControl.initDefaultOrderingField("ro.nextFireTime", PageOrdering.ASC);
             PageList<ResourceOperationScheduleComposite> scheduledResourceOps = operationManager
                 .findCurrentlyScheduledResourceOperations(getSessionSubject(), pageControl);
+            return SerialUtility.prepare(scheduledResourceOps,
+                "OperationService.findCurrentlyScheduledResourceOperations");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
 
-            return SerialUtility.prepare(scheduledResourceOps, "OperationService.findScheduledOperations");
+    public PageList<GroupOperationScheduleComposite> findCurrentlyScheduledGroupOperations(int pageSize)
+        throws RuntimeException {
+        try {
+            PageControl pageControl = new PageControl(0, pageSize);
+            pageControl.initDefaultOrderingField("go.nextFireTime", PageOrdering.ASC);
+            PageList<GroupOperationScheduleComposite> scheduledGroupOps = operationManager
+                .findCurrentlyScheduledGroupOperations(getSessionSubject(), pageControl);
+            return SerialUtility.prepare(scheduledGroupOps, "OperationService.findCurrentlyScheduledGroupOperations");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

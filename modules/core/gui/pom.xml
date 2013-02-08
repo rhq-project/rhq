@@ -113,7 +113,7 @@
          <properties>
             <rhq.rootDir>../../..</rhq.rootDir>
             <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-            <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.earName}/rhq-portal.war/WEB-INF/lib</rhq.deploymentDir>
+            <rhq.deploymentDir>${rhq.containerDir}/${rhq.earDeployDir}/rhq-portal.war/WEB-INF/lib</rhq.deploymentDir>
          </properties>
 
          <build>

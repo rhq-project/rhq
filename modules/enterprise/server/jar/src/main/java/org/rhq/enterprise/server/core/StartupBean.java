@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.server.core;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -53,18 +56,20 @@ import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
 import org.rhq.enterprise.communications.util.SecurityUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.cloud.CloudManagerLocal;
+import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.CacheConsistencyManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.SyncEndpointAddressException;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
+import org.rhq.enterprise.server.naming.NamingHack;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceMBean;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -107,7 +112,7 @@ public class StartupBean {
     private CacheConsistencyManagerLocal cacheConsistencyManager;
 
     @EJB
-    private CloudManagerLocal cloudManager;
+    private TopologyManagerLocal topologyManager;
 
     @EJB
     private ResourceTypeManagerLocal resourceTypeManager;
@@ -124,11 +129,24 @@ public class StartupBean {
     @EJB
     private SystemManagerLocal systemManager;
 
+    @EJB
+    private ShutdownListener shutdownListener;
+
     @Resource
     private TimerService timerService; // needed to schedule our plugin scanner
 
     @Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
     private DataSource dataSource;
+
+    /**
+     * Modifies the naming subsystem to be able to check for Java security permissions on JNDI lookup.
+     * <p>
+     * Made public so that this can be reused in tests.
+     */
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void secureNaming() {
+        NamingHack.bruteForceInitialContextFactoryBuilder();
+    }
 
     /**
      * Performs the final RHQ Server initialization work that needs to talk place. EJBs are available in this method.
@@ -138,12 +156,11 @@ public class StartupBean {
     //@PostConstruct // when AS7-5530 is fixed, uncomment this and remove class StartupBeanToWorkaroundAS7_5530
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void init() throws RuntimeException {
+        secureNaming();
+
         initialized = false;
 
         log.info("All business tier deployments are complete - finishing the startup...");
-
-        // As a security measure, make sure the installer has been undeployed
-        systemManager.undeployInstaller();
 
         // get singletons right now so we load the classes immediately into our classloader
         AlertConditionCacheCoordinator.getInstance();
@@ -179,8 +196,8 @@ public class StartupBean {
         startServerCommunicationServices();
         startScheduler();
         scheduleJobs();
-        startAgentClients();
-        //startEmbeddedAgent();
+        //startAgentClients(); // this could be expensive if we have large number of agents so skip it and we'll create them lazily
+        //startEmbeddedAgent(); // this is obsolete - we no longer have an embedded agent
         registerShutdownListener();
         registerPluginDeploymentScannerJob();
 
@@ -188,6 +205,31 @@ public class StartupBean {
 
         initialized = true;
         return;
+    }
+
+    private long readShutdownTimeLogFile() throws Exception {
+        File timeFile = shutdownListener.getShutdownTimeLogFile();
+        if (!timeFile.exists()) {
+            // this is probably ok, perhaps its the first time we started this server, so this exception
+            // just forces the caller to use startup time instead
+            throw new FileNotFoundException();
+        }
+
+        try {
+            FileInputStream input = new FileInputStream(timeFile);
+            String timeString = new String(StreamUtil.slurp(input));
+            return Long.parseLong(timeString);
+        } catch (Exception e) {
+            if (log.isDebugEnabled()) {
+                log.warn("Failed to read the shutdown time log file", e);
+            } else {
+                log.warn("Failed to read the shutdown time log file: " + e.getMessage());
+            }
+            throw e;
+        } finally {
+            // since we are starting again, we want to remove the now obsolete shutdown time file
+            timeFile.delete();
+        }
     }
 
     private void initializeServer() {
@@ -216,7 +258,8 @@ public class StartupBean {
             log.info("Server is configured to start up in MAINTENANCE mode.");
             Server server = serverManager.getServer();
             Integer[] serverId = new Integer[] { server.getId() };
-            cloudManager.updateServerMode(serverId, OperationMode.MAINTENANCE);
+            topologyManager.updateServerMode(LookupUtil.getSubjectManager().getOverlord(), serverId,
+                OperationMode.MAINTENANCE);
         }
 
         // Establish the current server mode for the server. This will move the server to NORMAL
@@ -241,7 +284,7 @@ public class StartupBean {
      */
     private void createDefaultServerIfNecessary() {
         String identity = serverManager.getIdentity();
-        Server server = cloudManager.getServerByName(identity);
+        Server server = topologyManager.getServerByName(identity);
         if (server == null) {
             server = new Server();
             server.setName(identity);
@@ -414,7 +457,7 @@ public class StartupBean {
         } catch (Exception e) {
             ensureDownTimeSecs = 70;
         }
-        long elapsed = getElapsedTimeSinceStartup();
+        long elapsed = getElapsedTimeSinceLastShutdown();
         long sleepTime = (ensureDownTimeSecs * 1000L) - elapsed;
         if (sleepTime > 0) {
             try {
@@ -600,6 +643,13 @@ public class StartupBean {
      * immediately begin to send any persisted guaranteed messages that might already exist. This method must be called
      * at a time when the server is ready to accept messages from agents because any guaranteed messages that are
      * delivered might trigger the agents to send messages back to the server.
+     * 
+     * NOTE: we don't need to do this - so far, none of the messages the server sends to the agent are marked
+     * with "guaranteed delivery" (this is on purpose and a good thing) so we don't need to start all the agent clients
+     * in case they have persisted messages. Since the number of agents could be large this cache could be huge and
+     * take some time to initialize. If we don't call this, it speeds up start up, and doesn't bloat memory with
+     * clients we might not ever need (since agents might have affinity to other servers). Agent clients
+     * can be created lazily at runtime when the server needs it.
      */
     private void startAgentClients() {
         log.info("Starting agent clients - any persisted messages with guaranteed delivery will be sent...");
@@ -757,19 +807,30 @@ public class StartupBean {
     }
 
     /**
-     * Gets the number of milliseconds since the time when the server was started.
+     * Gets the number of milliseconds since the time when the server was last shutdown.
+     * If we don't know, then return the time since it was started.
      * @return elapsed time since server started, 0 if not known
      */
-    private long getElapsedTimeSinceStartup() throws RuntimeException {
+    private long getElapsedTimeSinceLastShutdown() throws RuntimeException {
         long elapsed;
+
         try {
-            CoreServerMBean coreServer = LookupUtil.getCoreServer();
-            Date startTime = coreServer.getBootTime();
+            long shutdownTime = readShutdownTimeLogFile();
             long currentTime = System.currentTimeMillis();
-            elapsed = currentTime - startTime.getTime();
-        } catch (Exception e) {
-            elapsed = 0;
+            elapsed = currentTime - shutdownTime;
+        } catch (Exception ignore) {
+            // we will have already logged an error, don't bother logging more
+            // but now at least try to see how long its been since we've started
+            try {
+                CoreServerMBean coreServer = LookupUtil.getCoreServer();
+                Date startTime = coreServer.getBootTime();
+                long currentTime = System.currentTimeMillis();
+                elapsed = currentTime - startTime.getTime();
+            } catch (Exception e1) {
+                elapsed = 0;
+            }
         }
+
         return elapsed;
     }
 
@@ -781,5 +842,4 @@ public class StartupBean {
             + ") Server started.");
         log.info("--------------------------------------------------"); // 50 dashes
     }
-
 }

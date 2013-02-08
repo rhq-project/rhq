@@ -30,6 +30,7 @@ import org.rhq.core.clientapi.server.core.AgentVersion;
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.clientapi.server.core.PingRequest;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.AgentCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -60,6 +61,14 @@ public interface AgentManagerLocal {
      * @param agent
      */
     void createAgent(Agent agent);
+
+    /**
+     * Throws away any known agent client that has been cached.
+     * Call this when you know the agent may have changed anything about its endpoint.
+     *
+     * @param agent the agent whose client is to be destroyed.
+     */
+    void destroyAgentClient(Agent agent);
 
     /**
      * Updates an existing agent.
@@ -101,6 +110,7 @@ public interface AgentManagerLocal {
      * Returns a collection of all agents currently in inventory.
      *
      * @return list of all known agents in inventory
+     * @deprecated Use <code>findAgentsByCriteria()</code> instead
      */
     List<Agent> getAllAgents();
 
@@ -109,6 +119,7 @@ public interface AgentManagerLocal {
      *
      * @param serverId the server to filter the agent list by.  pass null to view unfiltered results. 
      * @return list of all known agents in inventory
+     * @deprecated Use <code>findAgentsByCriteria()</code> instead
      */
     PageList<Agent> getAgentsByServer(Subject subject, Integer serverId, PageControl pageControl);
 
@@ -126,6 +137,7 @@ public interface AgentManagerLocal {
      * @param  agentName
      *
      * @return the agent whose name matches the given name; <code>null</code> if there is no agent with the given name
+     * @deprecated Use <code>findAgentsByCriteria()</code> instead
      */
     Agent getAgentByName(String agentName);
 
@@ -136,6 +148,7 @@ public interface AgentManagerLocal {
      * @param  agentId
      *
      * @return the agent whose id matches the given id; <code>null</code> if there is no agent with the given id
+     * @deprecated Use <code>findAgentsByCriteria()</code> instead
      */
     Agent getAgentByID(int agentId);
 
@@ -147,6 +160,7 @@ public interface AgentManagerLocal {
      *
      * @return the agent whose agent token matches the given token; <code>null</code> if there is no agent with the
      *         given token
+     * @deprecated Use <code>findAgentsByCriteria()</code> instead
      */
     Agent getAgentByAgentToken(String token);
 
@@ -159,6 +173,7 @@ public interface AgentManagerLocal {
      *
      * @return the agent to be known at the given address and port; <code>null</code> if there is no agent with the
      *         given token
+     * @deprecated Use <code>findAgentsByCriteria()</code> instead
      */
     Agent getAgentByAddressAndPort(String address, int port);
 
@@ -269,13 +284,13 @@ public interface AgentManagerLocal {
     File getAgentUpdateBinaryFile() throws Exception;
 
     /**
-     * The directory on the server's file system where the agent update version file
-     * and binary file are found.
+     * DO NOT USE THIS. You should be using one of the getAgentUpdateXXX methods directly rather
+     * than looking in the download directory. Not all agent update files are located in this download
+     * directory anymore. This API will be removed from the public API in the near future.
      * 
-     * @return directory where the agent downloads are found
-     *
-     * @throws Exception if could not determine the location or it does not exist
+     * @deprecated
      */
+    @Deprecated
     File getAgentDownloadDir() throws Exception;
 
     void setAgentBackfilled(int agentId, boolean backfilled);
@@ -308,4 +323,15 @@ public interface AgentManagerLocal {
      * @return The updated request object.
      */
     public PingRequest handlePingRequest(PingRequest request);
+    
+    /**
+     * Fetches the agents based on provided criteria.
+     * 
+     * Subject needs MANAGE_SETTINGS and MANAGE_INVENTORY permissions.
+     * 
+     * @param subject caller
+     * @param criteria the criteria
+     * @return list of agents
+     */
+    PageList<Agent> findAgentsByCriteria(Subject subject, AgentCriteria criteria);
 }

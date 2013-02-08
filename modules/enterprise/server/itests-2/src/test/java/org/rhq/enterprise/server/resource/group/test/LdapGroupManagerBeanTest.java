@@ -101,7 +101,7 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
         ldapGroupManager = LookupUtil.getLdapGroupManager();
 
         //we need this because the drift plugins are referenced from the system settings that we use in our tests
-        testServerPluginService = new TestServerPluginService();
+        testServerPluginService = new TestServerPluginService(getTempDir());
         prepareCustomServerPluginService(testServerPluginService);
         testServerPluginService.startMasterPluginContainer();
 
@@ -479,7 +479,7 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
     private void setLdapCtxFactory(final String name) throws Exception {
         //this is a readonly system property that we are trying to override, so we
         //need to be a little bit more persuasive...
-        executeInTransaction(new TransactionCallback() {
+        executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 Query q = getEntityManager().createNamedQuery(SystemConfiguration.FIND_PROPERTY_BY_KEY);

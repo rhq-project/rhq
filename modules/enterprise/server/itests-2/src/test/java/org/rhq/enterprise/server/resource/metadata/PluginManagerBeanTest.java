@@ -24,8 +24,6 @@ import static java.util.Arrays.asList;
 import java.io.File;
 import java.util.List;
 
-import javax.ejb.EJBException;
-
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.plugin.Plugin;
@@ -63,6 +61,8 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         FileUtil.purge(new File(getPluginScannerService().getAgentPluginDir()), true);
 
         unpreparePluginScannerService();
+
+        super.afterMethod();
     }
 
     public void registerPlugins() throws Exception {
@@ -80,8 +80,6 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
             new PurgeResourceTypesJob().execute(null);
             new PurgePluginsJob().execute(null);
         }
-        
-        //createPluginJarFile("child1-plugin.jar", "child1_plugin_v1.xml"));
 
         createPluginJarFile("test-plugin1.jar", "plugin_1.xml");
         createPluginJarFile("test-plugin2.jar", "plugin_2.xml");
@@ -89,6 +87,25 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         createPluginJarFile("test-plugin3.1.jar", "plugin_3.1.xml");
 
         getPluginScannerService().scanAndRegister();
+    }
+
+    @Test(dependsOnMethods = { "registerPlugins" })
+    public void scanAndRegisterTest() throws Exception {
+        Plugin plugin = getPlugin("PluginManagerBeanTestPlugin1");
+        assertNotNull(plugin);
+        pluginDeployed("PluginManagerBeanTestPlugin1");
+
+        plugin = getPlugin("PluginManagerBeanTestPlugin2");
+        assertNotNull(plugin);
+        pluginDeployed("PluginManagerBeanTestPlugin2");
+
+        plugin = getPlugin("PluginManagerBeanTestPlugin3");
+        assertNotNull(plugin);
+        pluginDeployed("PluginManagerBeanTestPlugin3");
+
+        plugin = getPlugin("PluginManagerBeanTestPlugin3.1");
+        assertNotNull(plugin);
+        pluginDeployed("PluginManagerBeanTestPlugin3.1");
     }
 
     @Test(dependsOnMethods = { "registerPlugins" })
@@ -158,18 +175,18 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
     @Test(dependsOnMethods = { "enablePlugins" })
     public void doNotDeletePluginIfDependentPluginIsNotAlsoDeleted() throws Exception {
         Plugin plugin = getPlugin("PluginManagerBeanTestPlugin1");
-        EJBException exception = null;
+        Exception exception = null;
 
         try {
             pluginMgr.deletePlugins(subjectMgr.getOverlord(), asList(plugin.getId()));
-        } catch (EJBException e) {
-            exception = e;
-        }
+            fail("Expected an IllegalArgumentException when trying to delete a plugin with dependent plugins");
 
-        assertNotNull("Expected exception to be thrown when trying to delete a plugin that has dependent plugins",
-            exception);
-        assertTrue("Expected an IllegalArgumentException when trying to delete a plugin with dependent plugins",
-            exception.getCausedByException() instanceof IllegalArgumentException);
+        } catch (IllegalArgumentException e) {
+            // expected
+        } catch (Throwable t) {
+            fail("Expected an IllegalArgumentException when trying to delete a plugin with dependent plugins, got: "
+                + t);
+        }
     }
 
     @Test(dependsOnMethods = { "doNotDeletePluginIfDependentPluginIsNotAlsoDeleted" })

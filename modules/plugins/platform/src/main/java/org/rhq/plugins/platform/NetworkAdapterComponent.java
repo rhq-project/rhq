@@ -48,10 +48,26 @@ public class NetworkAdapterComponent implements ResourceComponent<PlatformCompon
 
     public void start(ResourceContext<PlatformComponent> resourceContext) {
         this.context = resourceContext;
-        if (getInfo().getOperationalStatus()==NetworkAdapterInfo.OperationState.DOWN) {
-            context.getAvailabilityContext().disable();
-            log.info("Disabled " + context.getResourceKey() + " as it was down on start");
-        }
+
+        // BZ 797331 - Since we expect some NetworkAdapters to be inactive, just DISABLE them at the start.  Do
+        // this once-per-start check in a thread because for DOWN adapters this could be a slow call, also
+        // the disable() method requires a server round trip. Together this can seemingly hang agent startup (actually
+        // plugin container startup) as component starts are done sequentially.
+        Thread t = new Thread(new Runnable() {
+            public void run() {
+                NetworkAdapterInfo.OperationState operationState;
+                try {
+                    operationState = getInfo().getOperationalStatus();
+                } catch (Throwable t) {
+                    operationState = NetworkAdapterInfo.OperationState.DOWN;
+                }
+                if (NetworkAdapterInfo.OperationState.DOWN.equals(operationState)) {
+                    context.getAvailabilityContext().disable();
+                    log.info("Disabled " + context.getResourceKey() + " as it was down at component start");
+                }
+            }
+        });
+        t.start();
     }
 
     public void stop() {

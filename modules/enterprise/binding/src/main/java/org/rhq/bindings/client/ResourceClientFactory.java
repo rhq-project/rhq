@@ -9,11 +9,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
-import javax.jws.WebParam;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
@@ -25,6 +20,11 @@ import javassist.bytecode.annotation.Annotation;
 import javassist.bytecode.annotation.StringMemberValue;
 import javassist.util.proxy.MethodHandler;
 import javassist.util.proxy.ProxyFactory;
+
+import javax.jws.WebParam;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.rhq.bindings.util.ConfigurationClassBuilder;
 import org.rhq.bindings.util.ResourceTypeFingerprint;

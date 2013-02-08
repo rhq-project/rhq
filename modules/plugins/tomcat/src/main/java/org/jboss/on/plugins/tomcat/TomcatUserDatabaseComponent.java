@@ -47,6 +47,7 @@ public class TomcatUserDatabaseComponent extends MBeanResourceComponent<TomcatSe
         try {
             if (TomcatGroupComponent.RESOURCE_TYPE_NAME.equals(resourceTypeName)) {
                 name = report.getResourceConfiguration().getSimple("groupname").getStringValue();
+                report.getResourceConfiguration().remove(TomcatGroupComponent.CONFIG_ROLES);
                 objectName = String.format("Users:type=Group,groupname=\"%s\",database=UserDatabase", name);
                 operation = "createGroup";
             } else if (TomcatRoleComponent.RESOURCE_TYPE_NAME.equals(resourceTypeName)) {
@@ -55,6 +56,8 @@ public class TomcatUserDatabaseComponent extends MBeanResourceComponent<TomcatSe
                 operation = "createRole";
             } else if (TomcatUserComponent.RESOURCE_TYPE_NAME.equals(resourceTypeName)) {
                 name = report.getResourceConfiguration().getSimple("username").getStringValue();
+                report.getResourceConfiguration().remove(TomcatUserComponent.CONFIG_ROLES);
+                report.getResourceConfiguration().remove(TomcatUserComponent.CONFIG_GROUPS);
                 objectName = String.format("Users:type=User,username=\"%s\",database=UserDatabase", name);
                 operation = "createUser";
             } else {

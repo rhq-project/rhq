@@ -9,7 +9,7 @@
 
     <context-param>
         <param-name>resteasy.jndi.resources</param-name>
-        <param-value>rhq/InventorySummaryHandler/local,rhq/AlertDefinitionHandler/local,rhq/ConfigurationHistoryHandler/local,rhq/RecentAlertHandler/local,rhq/SuspectMetricHandler/local,rhq/DriftComplianceHandler/local,rhq/RecentOperationsHandler/local,rhq/RecentDriftHandler/local,rhq/PlatformUtilizationHandler/local</param-value>
+        <param-value>java:app/rhq-enterprise-server-ejb3/InventorySummaryHandler,java:app/rhq-enterprise-server-ejb3/AlertDefinitionHandler,java:app/rhq-enterprise-server-ejb3/ConfigurationHistoryHandler,java:app/rhq-enterprise-server-ejb3/RecentAlertHandler,java:app/rhq-enterprise-server-ejb3/SuspectMetricHandler,java:app/rhq-enterprise-server-ejb3/DriftComplianceHandler,java:app/rhq-enterprise-server-ejb3/RecentOperationsHandler,java:app/rhq-enterprise-server-ejb3/RecentDriftHandler,java:app/rhq-enterprise-server-ejb3/PlatformUtilizationHandler</param-value>
         <!--<description>List of jndi names of EJBs local interfaces that define REST stuff</description>-->
     </context-param>
     <context-param>
@@ -198,12 +198,8 @@
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.PlatformUtilizationGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>ReportExporter</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.reports.ReportExportServlet</servlet-class>
-    </servlet>
-    <servlet>
-        <servlet-name>BatikSvgServlet</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.BatikSvgServlet</servlet-class>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI TopologyGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.TopologyGWTServiceImpl</servlet-class>
     </servlet>
 
     <servlet>
@@ -378,12 +374,8 @@
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/PlatformUtilizationGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>ReportExporter</servlet-name>
-        <url-pattern>/ReportExporter</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>BatikSvgServlet</servlet-name>
-        <url-pattern>/BatikSvgServlet</url-pattern>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI TopologyGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/TopologyGWTService</url-pattern>
     </servlet-mapping>
 
     <servlet-mapping>

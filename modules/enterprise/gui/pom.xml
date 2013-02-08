@@ -28,10 +28,10 @@
       </activation>
       <modules>
         <module>portal-war</module>
-        <module>installer</module>
         <module>content_http-war</module>
         <module>coregui</module>
         <module>rest-war</module>
+        <module>rest-examples-war</module>
       </modules>
     </profile>
 

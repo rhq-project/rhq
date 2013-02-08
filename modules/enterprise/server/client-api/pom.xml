@@ -16,13 +16,6 @@
     <description>The implementation of the client API when accessing the server locally</description>
 
   <dependencies>
-  <!-- 
-      <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>rhq-container-lib</artifactId>
-         <version>${project.version}</version>
-      </dependency>
- -->      
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-enterprise-server</artifactId>
@@ -81,7 +74,7 @@
             <properties>
                 <rhq.rootDir>../../..</rhq.rootDir>
                 <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-                <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.earName}/lib</rhq.deploymentDir>
+                <rhq.deploymentDir>${rhq.containerDir}/${rhq.earLibDir}</rhq.deploymentDir>
             </properties>
 
             <build>

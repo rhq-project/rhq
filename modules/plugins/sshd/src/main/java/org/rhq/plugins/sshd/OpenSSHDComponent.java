@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,9 @@ import java.util.Set;
 
 import net.augeas.Augeas;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
@@ -52,37 +55,62 @@ import org.rhq.core.pluginapi.util.ObjectUtil;
 import org.rhq.core.system.AggregateProcessInfo;
 import org.rhq.core.system.NetworkStats;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.core.system.ProcessInfo.ProcessInfoSnapshot;
+import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
  * @author Greg Hinkle
  */
 public class OpenSSHDComponent implements ResourceComponent, ConfigurationFacet, MeasurementFacet {
 
+    private static final Log log = LogFactory.getLog(OpenSSHDComponent.class);
+
     private ResourceContext resourceContext;
     private AggregateProcessInfo processInfo;
 
+    @Override
     public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = resourceContext;
-        getSSHDProcess();
+        this.processInfo = getSSHDProcess();
     }
 
+    @Override
     public void stop() {
     }
 
+    @Override
     public AvailabilityType getAvailability() {
-        return (processInfo != null && processInfo.isRunning()) ? AvailabilityType.UP : AvailabilityType.DOWN;
+        try {
+            // Get a fresh snapshot of the process
+            ProcessInfoSnapshot processInfoSnapshot = (this.processInfo == null) ? null : this.processInfo
+                .freshSnapshot();
+            if (processInfoSnapshot == null || !processInfoSnapshot.isRunning()) {
+                this.processInfo = getSSHDProcess();
+                // Safe to get prior snapshot here, we've just recreated the process info instance
+                processInfoSnapshot = (this.processInfo == null) ? null : this.processInfo.priorSnaphot();
+            }
+            return (this.processInfo != null && processInfoSnapshot.isRunning()) ? AvailabilityType.UP
+                : AvailabilityType.DOWN;
+        } catch (Exception e) {
+            if (log.isDebugEnabled()) {
+                log.debug("failed to get availability: " + ThrowableUtil.getAllMessages(e));
+            }
+            return AvailabilityType.DOWN;
+        }
     }
 
-    private void getSSHDProcess() {
+    private AggregateProcessInfo getSSHDProcess() {
 
         List<ProcessInfo> procs = resourceContext.getSystemInformation().getProcesses(
             "process|basename|match=sshd,process|basename|nomatch|parent=sshd");
 
         if (procs.size() == 1) {
-            this.processInfo = procs.get(0).getAggregateProcessTree();
+            return procs.get(0).getAggregateProcessTree();
         }
+        return null;
     }
 
+    @Override
     public Configuration loadResourceConfiguration() throws Exception {
         Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
         ConfigurationDefinition resourceConfigurationDefinition = resourceContext.getResourceType()
@@ -172,8 +200,7 @@ public class OpenSSHDComponent implements ResourceComponent, ConfigurationFacet,
                 // This very hackish bit of code is to suport the list-of-maps standard with a single simple definition in the map
                 PropertyDefinitionList listDef = ((PropertyDefinitionList) p);
                 PropertyDefinitionMap mapDef = ((PropertyDefinitionMap) listDef.getMemberDefinition());
-                PropertyDefinitionSimple simpleDef = (PropertyDefinitionSimple) mapDef.getPropertyDefinitions()
-                    .get(0);
+                PropertyDefinitionSimple simpleDef = (PropertyDefinitionSimple) mapDef.getPropertyDefinitions().get(0);
                 String name = simpleDef.getName();
 
                 List<String> allValues = new ArrayList<String>();
@@ -196,9 +223,11 @@ public class OpenSSHDComponent implements ResourceComponent, ConfigurationFacet,
         return config;
     }
 
+    @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
     }
 
+    @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
         NetworkStats stats = resourceContext.getSystemInformation().getNetworkStats("localhost", 22);
         processInfo.refresh();

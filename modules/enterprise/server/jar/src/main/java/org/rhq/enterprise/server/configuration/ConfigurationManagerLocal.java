@@ -471,5 +471,6 @@ public interface ConfigurationManagerLocal extends ConfigurationManagerRemote {
     PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdatesByCriteria(Subject subject,
         GroupPluginConfigurationUpdateCriteria criteria);
 
-    ConfigurationDefinition getOptionsForConfigurationDefinition(Subject subject, ConfigurationDefinition def);
+    ConfigurationDefinition getOptionsForConfigurationDefinition(Subject subject, int resourceId,
+        ConfigurationDefinition def);
 }

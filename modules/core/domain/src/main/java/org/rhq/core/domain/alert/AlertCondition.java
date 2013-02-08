@@ -150,6 +150,7 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
         + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionAvailabilityCategoryComposite " //
         + "       ( " //
         + "         ac, " //
+        + "         ad.id, " // needed for avail duration
         + "         res.id, " //
         + "         (" //
         + "           SELECT a.availabilityType " //

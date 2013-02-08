@@ -28,16 +28,6 @@
 
   <dependencyManagement>
     <dependencies>
-
-      <!-- This will pull in the compatible versions of the shrinkwrap and shrinkwrap-resolver deps too. -->
-      <dependency>
-         <groupId>org.jboss.arquillian</groupId>
-         <artifactId>arquillian-bom</artifactId>
-         <version>${arquillian.version}</version>
-         <type>pom</type>
-         <scope>import</scope>
-      </dependency>
-
       <dependency>
         <groupId>org.jboss.jbossas</groupId>
         <artifactId>jboss-as-parent</artifactId>
@@ -457,7 +447,14 @@
       </properties>
 
       <dependencies>
-
+        
+        <dependency>
+          <groupId>org.jboss.shrinkwrap.resolver</groupId>
+          <artifactId>shrinkwrap-resolver-depchain</artifactId>
+          <type>pom</type>
+          <scope>test</scope>
+        </dependency>
+        
       </dependencies>
 
       <build>
@@ -476,6 +473,21 @@
                           <target>
                             <property name="as5.zipfile"
                                       location="${java.io.tmpdir}${file.separator}jboss-as-${as5.version}.zip"/>
+
+                            <!--
+                              Go ahead and clean up the tmp dir first. If in a prior build,
+                              we timeout while downloading the jboss distro, we will be left
+                              with a corrupt zip file which will cause the build to fail as
+                              expected; however, if we do not clean up, then subsequent
+                              builds fail as well. Alternatively we could try and set the
+                              skipexisting attribute on the get task to false which might
+                              also work and be faster but this way ensures we get the
+                              correct bits.
+                            -->
+                            <delete file="${as5.zipfile}"/>
+                            <delete dir="${java.io.tmpdir}/jboss-eap-${as5.version}" failonerror="false"/>
+                            <delete dir="${jboss5.home}"/>
+
                             <get src="${as5.url}" dest="${as5.zipfile}"
                                  usetimestamp="true" verbose="true"/>
                             <unzip src="${as5.zipfile}" dest="${java.io.tmpdir}"/>
@@ -483,7 +495,7 @@
                             <move file="${java.io.tmpdir}/jboss-${as5.version}"
                                   tofile="${jboss5.home}" failonerror="false"
                                   overwrite="false"/>
-                            <!--  This works for EAP versions  -->                                  
+                            <!--  This works for EAP versions  -->
                             <move file="${java.io.tmpdir}/jboss-eap-${as5.version}/jboss-as"
                                   tofile="${jboss5.home}" failonerror="false"
                                   overwrite="false"/>
@@ -583,7 +595,7 @@
         <rhq.rootDir>../../..</rhq.rootDir>
         <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
         <rhq.deploymentDir>
-          ${rhq.containerDir}/jbossas/standalone/deployments/${rhq.earName}/rhq-downloads/rhq-plugins
+          ${rhq.containerDir}/${rhq.agentPluginDir}
         </rhq.deploymentDir>
       </properties>
 

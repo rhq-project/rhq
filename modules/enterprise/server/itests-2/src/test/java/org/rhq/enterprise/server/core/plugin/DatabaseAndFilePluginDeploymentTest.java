@@ -53,8 +53,8 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
 
     private static final String PLUGIN_NAME = "DeployTest"; // as defined in our test descriptors
     private static final String DESCRIPTORS_LOCATION = "test/deployment/";
-    private static final String TEST_DIR = System.getProperty("java.io.tmpdir") + "/rhq/"
-        + DatabaseAndFilePluginDeploymentTest.class.getName() + "/";
+    private static final String TEST_DIR = tmpdirRoot + "/" + DatabaseAndFilePluginDeploymentTest.class.getName()
+        + "/";
     private static final String JARS_LOCATION = TEST_DIR + "jars";
     private static final String DEPLOY_LOCATION = TEST_DIR + "deploy";
     private static final String TESTPLUGIN_1_0_FEB = "1.0-feb";
@@ -199,7 +199,8 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
             buildPluginJar(descriptor, file);
             assert file.exists();
 
-            PluginDescriptor pluginDescriptor = AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL());
+            PluginDescriptor pluginDescriptor = AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI()
+                .toURL());
             testPluginDescriptors.put(entry.getKey(), pluginDescriptor);
 
             Plugin pluginPojo = new Plugin(PLUGIN_NAME, file.getName());

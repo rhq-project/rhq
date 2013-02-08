@@ -352,11 +352,11 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
     }
 
     @Override
-    public ConfigurationDefinition getOptionValuesForConfigDefinition(ConfigurationDefinition definition)
+    public ConfigurationDefinition getOptionValuesForConfigDefinition(int resourceId, ConfigurationDefinition definition)
         throws RuntimeException {
         try {
             ConfigurationDefinition def = configurationManager.getOptionsForConfigurationDefinition(
-                getSessionSubject(), definition);
+                getSessionSubject(), resourceId, definition);
             return SerialUtility.prepare(def, "ConfigurationService.getOptionValuesForPropertySimple");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);

@@ -96,7 +96,7 @@
         <dependency>
             <groupId>commons-httpclient</groupId>
             <artifactId>commons-httpclient</artifactId>
-            <version>3.0.1</version>
+            <version>${commons-httpclient.version}</version>
             <scope>provided</scope> <!-- by JBossAS -->
         </dependency>
 
@@ -166,7 +166,7 @@
                 <rhq.rootDir>../../../..</rhq.rootDir>
                 <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
                 <rhq.deploymentName>${project.build.finalName}.war</rhq.deploymentName>
-                <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.earName}/${rhq.deploymentName}</rhq.deploymentDir>
+                <rhq.deploymentDir>${rhq.containerDir}/${rhq.earDeployDir}/${rhq.deploymentName}</rhq.deploymentDir>
             </properties>
 
             <build>

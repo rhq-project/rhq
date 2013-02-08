@@ -65,7 +65,8 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 @Local
 public interface ResourceManagerLocal {
     /**
-     * Create a new Resource.
+     * Create a new Resource. This method creates only the supplied Resource, it will *NOT* create
+     * the parent or any childResources.
      *
      * @param user the user creating the resource
      * @param resource the resource to be created
@@ -85,9 +86,8 @@ public interface ResourceManagerLocal {
     Resource updateResource(Subject user, Resource resource);
 
     /**
-     * This will delete the resource with the given ID along with all of its child resources. This method will not
-     * create its own transaction; each individual child resource as well as the top level resource identified with the
-     * given ID will be deleted in its own transaction.
+     * This will uninventory the resource with the given ID along with all of its child resources. Existing
+     * transactions will be suspended and the work will be done in a NEW transaction.
      *
      * @param  user       the user deleting the resource
      * @param  resourceId the ID of the resource to be deleted
@@ -96,6 +96,14 @@ public interface ResourceManagerLocal {
      *         its children's IDs
      */
     List<Integer> uninventoryResource(Subject user, int resourceId);
+
+    /**
+     * Internal use only. use with care, avoids authz checking overhead. 
+     *
+     * @param resourceId
+     * @return
+     */
+    List<Integer> uninventoryResourceInNewTransaction(int resourceId);
 
     /**
      * Deletes the given resource (but not its children) in a new transaction. This is normally used only within this
@@ -127,6 +135,12 @@ public interface ResourceManagerLocal {
      */
     Resource setResourceStatus(Subject user, Resource resource, InventoryStatus newStatus, boolean setDescendants);
 
+    /**
+     * @param user
+     * @param resourceId
+     * @return the resource
+     * @throws ResourceNotFoundException if not found. Note, this is an ApplicationException.
+     */
     @NotNull
     Resource getResourceById(Subject user, int resourceId);
 

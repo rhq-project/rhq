@@ -620,7 +620,9 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
     /**
      * Ensures the installer is no longer deployed.
+     * @deprecated
      */
+    @Deprecated
     public void undeployInstaller() {
         // No need for this anymore - the new RHQ installer in AS7 detects it already installed things and will point the user to login screen
         // We leave this in here in case we want to re-introduce the ability to uninstall the installer.

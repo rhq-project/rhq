@@ -40,6 +40,7 @@ import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerRemote;
 import org.rhq.enterprise.server.operation.OperationManagerRemote;
 import org.rhq.enterprise.server.report.DataAccessManagerRemote;
+import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerRemote;
@@ -70,6 +71,7 @@ public enum RhqManager {
     DriftTemplateManager(DriftTemplateManagerRemote.class, "${DriftTemplateManager}"), //
     DiscoveryBoss(DiscoveryBossRemote.class, "${DiscoveryBoss}"), //
     EventManager(EventManagerRemote.class, "${EventManager}"), //
+    GroupDefinitionManager(GroupDefinitionManagerRemote.class, "${GroupDefinitionManager}"), //
     MeasurementBaselineManager(MeasurementBaselineManagerRemote.class, "${MeasurementBaselineManager}"), //
     MeasurementDataManager(MeasurementDataManagerRemote.class, "${MeasurementDataManager}"), //
     MeasurementDefinitionManager(MeasurementDefinitionManagerRemote.class, "${MeasurementDefinitionManager}"), //

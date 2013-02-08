@@ -19,12 +19,15 @@
 package org.rhq.enterprise.startup;
 
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ADD;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ARCHIVE;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.CONTENT;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.DEPLOYMENT;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ENABLED;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.PATH;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.PERSISTENT;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.URL;
 
+import java.io.File;
 import java.net.URL;
 
 import org.jboss.as.controller.AbstractAddStepHandler;
@@ -63,10 +66,17 @@ class StartupSubsystemAdd extends AbstractAddStepHandler {
                 Module module = Module.forClass(getClass());
 
                 URL url = module.getExportedResource(StartupExtension.DEPLOYMENT_APP_EAR);
-                String urlString = url.toExternalForm();
-
                 ModelNode contentItem = new ModelNode();
-                contentItem.get(URL).set(urlString);
+
+                boolean explodedDeployment = true; // this is here just to keep the code around that deploys if we are unexploded
+                if (explodedDeployment) {
+                    String urlString = new File(url.toURI()).getAbsolutePath();
+                    contentItem.get(PATH).set(urlString);
+                    contentItem.get(ARCHIVE).set(false);
+                } else {
+                    String urlString = url.toExternalForm();
+                    contentItem.get(URL).set(urlString);
+                }
 
                 op.get(CONTENT).add(contentItem);
 

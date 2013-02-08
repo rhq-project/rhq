@@ -18,8 +18,11 @@
  */
 package org.rhq.enterprise.server.operation;
 
-public class OperationDefinitionNotFoundException extends Exception {
-    private static final long serialVersionUID = 2781634627849959667L;
+import javax.ejb.ApplicationException;
+
+@ApplicationException(rollback = false, inherited = true)
+public class OperationDefinitionNotFoundException extends RuntimeException {
+    private static final long serialVersionUID = 2L;
 
     public OperationDefinitionNotFoundException() {
     }

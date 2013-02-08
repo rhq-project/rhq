@@ -45,7 +45,7 @@ public class SystemManagerBeanTest extends AbstractEJB3Test {
         overlord = LookupUtil.getSubjectManager().getOverlord();
 
         //we need this because the drift plugins are referenced from the system settings that we use in our tests
-        testServerPluginService = new TestServerPluginService();
+        testServerPluginService = new TestServerPluginService(getTempDir());
         prepareCustomServerPluginService(testServerPluginService);
         testServerPluginService.startMasterPluginContainer();
     }

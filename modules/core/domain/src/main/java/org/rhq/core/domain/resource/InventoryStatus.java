@@ -22,6 +22,8 @@
  */
 package org.rhq.core.domain.resource;
 
+import java.util.EnumSet;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlEnum;
@@ -52,5 +54,13 @@ public enum InventoryStatus {
      *                       resources, after which they are removed from the database completely.</li>
      * </ul>
      */
-    NEW, IGNORED, COMMITTED, DELETED, UNINVENTORIED
+    NEW, IGNORED, COMMITTED, DELETED, UNINVENTORIED;
+
+    /**
+     * @return Returns the InventoryStatus set representing the resources currently in inventory, omitting
+     * the resources marked for special processing (like UNINVNETORIED).
+     */
+    static public EnumSet<InventoryStatus> getInInventorySet() {
+        return EnumSet.of(NEW, IGNORED, COMMITTED);
+    }
 }

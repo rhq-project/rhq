@@ -16,6 +16,7 @@ import javax.ws.rs.core.StreamingOutput;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
@@ -36,6 +37,17 @@ public class RecentOperationsHandler extends AbstractRestBean implements RecentO
     @EJB
     private OperationManagerLocal operationManager;
 
+    public StreamingOutput recentOperationsInternal(
+            String operationRequestStatus,
+            Long startTime,
+            Long endTime,
+            HttpServletRequest request,
+            Subject user) {
+        this.caller = user;
+
+        return recentOperations(operationRequestStatus,startTime,endTime,request);
+    }
+
     @Override
     public StreamingOutput recentOperations(final String operationRequestStatus, final Long startTime,
         final Long endTime, final HttpServletRequest request) {
@@ -54,7 +66,7 @@ public class RecentOperationsHandler extends AbstractRestBean implements RecentO
                 if(endTime != null){
                     criteria.addFilterEndTime(endTime);
                 }
-                // lets default the end time for them to now if they didnt enter it
+                // lets default the end time for them to now if they didn't enter it
                 if(startTime != null && endTime == null){
                     Date today = new Date();
                     criteria.addFilterEndTime(today.getTime());

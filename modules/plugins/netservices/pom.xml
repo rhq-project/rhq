@@ -22,7 +22,7 @@
       <dependency>
          <groupId>commons-httpclient</groupId>
          <artifactId>commons-httpclient</artifactId>
-         <version>3.0.1</version>
+         <version>${commons-httpclient.version}</version>
       </dependency>
        <dependency>
            <groupId>commons-codec</groupId>
@@ -50,7 +50,7 @@
                             <artifactItem>
                                 <groupId>commons-httpclient</groupId>
                                 <artifactId>commons-httpclient</artifactId>
-                                <version>3.0.1</version>
+                                <version>${commons-httpclient.version}</version>
                             </artifactItem>
                             <artifactItem>
                                 <groupId>commons-codec</groupId>
@@ -169,7 +169,7 @@
          <properties>
             <rhq.rootDir>../../..</rhq.rootDir>
             <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-            <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.earName}/rhq-downloads/rhq-plugins</rhq.deploymentDir>
+            <rhq.deploymentDir>${rhq.containerDir}/${rhq.agentPluginDir}</rhq.deploymentDir>
          </properties>
 
          <build>

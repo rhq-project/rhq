@@ -1,0 +1,755 @@
+<?xml version="1.0"?>
+<plugin name="Cassandra"
+        displayName="Cassandra"
+        description="Monitor and manage a Cassandra node. This plugin is currently being developed against the 1.1.x
+        code base of Cassandra which comes from the cassandra-1.1 branch of the Cassandra git repo. The plugin will not
+        yet work with 1.2.x Cassandra builds which come out of its trunk (i.e., master) branch."
+        package="org.rhq.plugins.cassandra"
+        version="5.0.3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+  <!--
+    Note that the plugin does yet work with Cassandra builds coming from the trunk/master
+    branch of the cassandra git repo. I have already run into a couple differences that need
+    to be addressed. A different process scan for CassandraDaemon is needed because
+    CassandraDaemon is in a different package. There are also new properties in
+    cassandra.yaml that are not recognized in 1.1.x builds.
+
+    jsanda - 09/12/12
+  -->
+
+  <depends plugin="JMX" useClasses="true"/>
+
+  <server name="Cassandra Node"
+          discovery="CassandraNodeDiscoveryComponent"
+          class="CassandraNodeComponent">
+
+    <subcategories>
+      <subcategory name="Client Request Metrics" description="Client Request Metrics"/>
+      <subcategory name="Server Request Metrics" description="Server Request Metrics"/>
+      <subcategory name="Internal Server Metrics" description="Internal Server Metrics"/>
+      <subcategory name="Database Management Services" description="Database Management Services"/>
+      <subcategory name="Network Services" description="Network Services"/>
+    </subcategories>
+
+    <plugin-configuration>
+      <c:simple-property name="connectorAddress" displayName="Manager URL" default="service:jmx:rmi:///jndi/rmi://localhost:7199/jmxrmi"
+                         description="The RMI URL with which to connect to the Cassandra node (e.g. service:jmx:rmi:///jndi/rmi://localhost:7199/jmxrmi)."/>
+      <c:simple-property name="type" readOnly="true" default="org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor"
+                         description="The type used to establish the EMS connection to the Cassandra node."/>
+      <c:simple-property name="thriftPort" displayName="Thrift Port" default="9160" required="true" readOnly="false" type="string" description="Thrift interface port"/>
+      <c:simple-property name="installURI" required="false" type="string" description="The installation path for the selected server type which will be used to find client libraries (if appropriate)"/>
+      <c:simple-property name="principal" required="false" description="The login principal/username"/>
+      <c:simple-property name="credentials" required="false" type="password" description="The login credentials/password"/>
+      <c:simple-property name="additionalClassPathEntries" required="false" type="string" description="Comma-separated list of directories and filenames that contain resources and classes needed to communicate with the JMX Server and its MBeans. If you specify 'some/directory/*.jar', all jars found in the given directory will be added."/>
+      <c:simple-property name="commandLine" required="false" type="string" description="the command line of the JVM at the time it was discovered - only used by JVMs with type Local; if the command line of the JVM changes, this property's value will need to be updated accordingly in order for RHQ to connect to the JVM"/>
+      <c:simple-property name="baseDir" displayName="Base Directory" description="The base directory from which the Cassandra Daemon was launched." required="false"/>
+    </plugin-configuration>
+
+    <process-scan name="CassandraDaemon" query="process|basename|match=^java.*,arg|org.apache.cassandra.thrift.CassandraDaemon|match=.*"/>
+
+    <operation name="shutdown" description="Shuts down the Cassandra daemon">
+      <results>
+        <c:simple-property name="shutdownResult" description="Shutdown the Cassandra daemon"/>
+      </results>
+    </operation>
+    <operation name="start" description="Starts the Cassandra daemon">
+      <results>
+        <c:simple-property name="startResult" description="Start the Cassandra daemon"/>
+      </results>
+    </operation>
+    <operation name="restart" description="Restarts the Cassandra daemon">
+      <results>
+        <c:simple-property name="startResult" description="Restart the Cassandra daemon"/>
+      </results>
+    </operation>
+
+    <metric property="cluster" dataType="trait" description="The name of the cluster. This is used to prevent machines in one logical cluster from joining another." displayType="summary"/>
+
+
+    <server name="Cassandra Server JVM"
+            sourcePlugin="JMX" sourceType="JMX Server"
+            discovery="org.rhq.plugins.jmx.EmbeddedJMXServerDiscoveryComponent"
+            class="org.rhq.plugins.jmx.EmbeddedJMXServerComponent"
+            description="The JVM of the Cassandra node"
+            singleton="true">
+
+      <plugin-configuration>
+        <c:simple-property name="type" type="string" default="PARENT" readOnly="true" description="The EMS connection type for this JVM (cannot be modified)"/>
+      </plugin-configuration>
+    </server>
+
+    <service name="StorageProxy"
+             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Database Management Services">
+
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" default="org.apache.cassandra.db:type=StorageProxy"/>
+        <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Storage Proxy"/>
+      </plugin-configuration>
+
+      <metric property="HintsInProgress" measurementType="dynamic" displayType="summary" description="Hints in progress."/>
+      <metric property="RecentRangeLatencyMicros" measurementType="dynamic" displayType="summary" displayName="Recent Range Latency (microseconds)" description="Recent range latency in microseconds."/>
+      <metric property="RecentReadLatencyMicros" measurementType="dynamic" displayType="summary" displayName="Recent Read Latency (microseconds)" description="Recent read latency in microseconds."/>
+      <metric property="RecentWriteLatencyMicros" measurementType="dynamic" displayType="summary" displayName="Recent Write Latency (microseconds)" description="Recent write latency in microseconds."/>
+      <metric property="RangeOperations" measurementType="trendsup" displayType="summary" description="Total number of range operations since execution start"/>
+      <metric property="ReadOperations" measurementType="trendsup" displayType="summary" description="Total number of read operations since execution start"/>
+      <metric property="TotalHints" measurementType="trendsup" displayType="detail" description="Total hints."/>
+      <metric property="TotalRangeLatencyMicros" measurementType="trendsup" displayType="detail" displayName="Total Range Latency (microseconds)" description="The total latency of all range operations since execution start"/>
+      <metric property="TotalReadLatencyMicros" measurementType="trendsup" displayType="detail" displayName="Total Read Latency (microseconds)" description="The latency all of read operations since execution start"/>
+      <metric property="TotalWriteLatencyMicros" measurementType="trendsup" displayType="detail" displayName="Total Write Latency (microseconds)" description="The latency of all write operations since execution start"/>
+      <metric property="WriteOperations" measurementType="trendsup" displayType="summary" description="Total number of write operations since execution start"/>
+
+
+      <resource-configuration>
+        <c:simple-property name="HintedHandoffEnabled" type="boolean" required="true" description="Hinted Handoff Enabled"/>
+        <c:simple-property name="MaxHintsInProgress" type="integer" required="true" description="Max Hints in Progress"/>
+        <c:simple-property name="MaxHintWindow" type="integer" required="true" description="Max Hint Window"/>
+        <c:simple-property name="RPCTimeout" type="long" required="true" displayName="RPC Timeout" description="RPC Timeout"/>
+      </resource-configuration>
+    </service>
+
+    <service name="StorageService"
+             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+             class="org.rhq.plugins.cassandra.StorageServiceComponent"
+             singleton="true"
+             subCategory="Database Management Services">
+
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" default="org.apache.cassandra.db:type=StorageService"/>
+        <c:simple-property name="nameTemplate" type="string" readOnly="true" default="Storage Service"/>
+      </plugin-configuration>
+
+      <operation name="startRPCServer" description="Start the Thrift server"/>
+      <operation name="stopRPCServer" description="Stop the Thrift server"/>
+      <operation name="takeSnapshot"
+                 description="Takes a snapshot of all keyspaces. A snapshot first flushes all in-memory writes to disk and then creates a hard
+                  link of each SSTable file for each keyspace. Note that a column family can have multiple
+                  SSTables on disk. By default snapshots are stored in the &lt;cassandra_data_dir&gt;/&lt;keyspace_name&gt;/&lt;column_family_name&gt;/snapshots
+                  directory. On Linux/UNIX systems cassandra_data_dir defaults to /var/lib/cassandra/data">
+        <parameters>
+          <c:simple-property name="snapshotName" required="false" type="string" displayName="Snapshot Name"
+                             description="Snapshot name. If left empty current system time in milliseconds will be used as the snapshot name."/>
+        </parameters>
+      </operation>
+
+      <operation name="setLog4jLevel"
+                 description="Sets the logging level for classes under the clas qualifier.">
+        <parameters>
+          <c:simple-property name="classQualifier" type="string" required="false" default="org.apache.cassandra"/>
+          <c:simple-property name="level" required="false" default="DEBUG">
+            <c:property-options>
+              <c:option name="ALL" value="ALL"/>
+              <c:option name="DEBUG" value="DEBUG"/>
+              <c:option name="INFO" value="INFO"/>
+              <c:option name="FATAL" value="FATAL"/>
+              <c:option name="WARN" value="WARN"/>
+              <c:option name="ERROR" value="ERROR"/>
+              <c:option name="TRACE" value="TRACE"/>
+              <c:option name="OFF" value="OFF"/>
+            </c:property-options>
+          </c:simple-property>
+        </parameters>
+      </operation>
+
+      <metric property="CurrentGenerationNumber" dataType="trait" displayType="summary" description="Current generation number"/>
+      <metric property="ExceptionCount" measurementType="trendsup" dataType="measurement" displayType="summary" description="Exception Count"/>
+      <metric property="Initialized" dataType="trait" displayType="summary" description="Initialized"/>
+      <metric property="Joined" dataType="trait" displayType="summary" description="Joined"/>
+      <metric property="Load" dataType="measurement" units="bytes" displayType="summary" description="Amount of load in disk usage on the node being queried"/>
+      <metric property="OperationMode" dataType="trait" displayType="summary" description="Current operation mode"/>
+      <metric property="ReleaseVersion" dataType="trait" displayType="summary" description="Cassandra version"/>
+      <metric property="RPCServerRunning" dataType="trait" displayType="summary" displayName="RPC Service Running" description="RPC Service Running"/>
+      <metric property="SchemaVersion" dataType="trait" displayType="summary"
+              description="The current schema version for this node. The value is calculated as a checksum of all rows
+               in the system.schema_* column families. This value is used in an algorithm to compare schema versions
+               between nodes and apply updates as necessary. This value should be the same for all fully initialized
+               nodes in the cluster."/>
+      <metric property="Token" dataType="trait" displayType="summary" description="A string representation of this node's token" defaultOn="true"/>
+
+      <resource-configuration>
+        <c:group name="DataStorage">
+          <c:list-property name="AllDataFileLocations" displayName="Data File Locations" readOnly="true" description="List of data file locations">
+            <c:simple-property name="directory" type="string" readOnly="true"/>
+          </c:list-property>
+          <c:simple-property name="CommitLogLocation" type="string" readOnly="true" default="Location of the commit log directory"/>
+          <c:simple-property name="SavedCachesLocation" type="string" readOnly="true" description="Location of the saved caches directory"/>
+        </c:group>
+
+        <c:group name="NodeConfiguration">
+          <c:simple-property name="CompactionThroughputMbPerSec" type="integer" required="true" displayName="Compaction Throughput Mb Per Sec" description="Compaction throughput in Mb/Sec"/>
+          <c:simple-property name="DrainProgress" type="string" required="false" readOnly="true" description="Drain progress"/>
+          <c:simple-property name="IncrementalBackupsEnabled" type="boolean" required="true" description="Incremental Backups Enabled"/>
+          <c:list-property name="PrimaryRange" readOnly="true" description="Primary Range">
+            <c:simple-property name="element" type="string" readOnly="true"/>
+          </c:list-property>
+          <c:simple-property name="RemovalStatus" type="string" readOnly="true" description="Removal status"/>
+          <c:simple-property name="StreamThroughputMbPerSec" type="integer" required="true" displayName="Stream Throughput Mb Per Sec" description="Stream throughput in Mb/Sec"/>
+        </c:group>
+
+        <c:group name="Cluster Information">
+          <c:list-property name="LeavingNodes" readOnly="true" description="List of nodes currently leaving the ring.">
+            <c:simple-property name="node" readOnly="true"/>
+          </c:list-property>
+          <c:list-property name="LiveNodes" readOnly="true" description="list of live nodes in the cluster, where liveness is determined by the failure detector of the node being queried.">
+            <c:simple-property name="node" readOnly="true"/>
+          </c:list-property>
+          <c:list-property name="JoiningNodes" readOnly="true" description="List of nodes currently joining the ring.">
+            <c:simple-property name="node" readOnly="true"/>
+          </c:list-property>
+          <c:list-property name="LoadMap" readOnly="true" description="Human-readable load values for the cluster.">
+              <c:map-property name="entry" readOnly="true">
+                <c:simple-property name="endpoint" readOnly="true"/>
+                <c:simple-property name="load" readOnly="true"/>
+              </c:map-property>
+          </c:list-property>
+          <c:list-property name="MovingNodes" readOnly="true" description="List of nodes currently moving the ring.">
+            <c:simple-property name="node" readOnly="true"/>
+          </c:list-property>
+          <c:list-property name="Ownership" readOnly="true" description="Mapping of token -> percentage of cluster owned by that token">
+              <c:map-property name="entry" readOnly="true">
+                <c:simple-property name="token" readOnly="true"/>
+                <c:simple-property name="percentage" readOnly="true"/>
+              </c:map-property>
+          </c:list-property>
+          <c:list-property name="TokenToEndpointMap" readOnly="true" description="Token To Endpoint Map">
+              <c:map-property name="entry" readOnly="true">
+                <c:simple-property name="token" readOnly="true"/>
+                <c:simple-property name="endpoint" readOnly="true"/>
+              </c:map-property>
+          </c:list-property>
+          <c:list-property name="UnreachableNodes" readOnly="true" description="List of unreachable nodes in the cluster, as determined by this node's failure detector.">
+            <c:simple-property name="node" readOnly="true"/>
+          </c:list-property>
+        </c:group>
+      </resource-configuration>
+    </service>
+
+
+    <service name="CommitLog"
+             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Database Management Services">
+
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string" default="org.apache.cassandra.db:type=Commitlog"/>
+        <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Commit Log" />
+      </plugin-configuration>
+
+      <metric property="TotalCommitlogSize" measurementType="trendsup" dataType="measurement" displayType="summary" description="Size of all commit log segments"/>
+      <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Number of tasks waiting to be executed"/>
+      <metric property="CompletedTasks" measurementType="trendsup" displayType="summary" description="Number of completed tasks"/>
+    </service>
+
+
+    <service name="ReadTimeouts"
+             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Client Request Metrics">
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string" default="org.apache.cassandra.metrics:type=ClientRequestMetrics,name=ReadTimeouts"/>
+        <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Read Timeouts" />
+      </plugin-configuration>
+      <metric property="Count" displayName="Read Timeouts" measurementType="trendsup" displayType="summary" description="Number of read timeouts occurred for this node"/>
+    </service>
+
+    <service name="ReadUnavailables"
+             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Client Request Metrics">
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string" default="org.apache.cassandra.metrics:type=ClientRequestMetrics,name=ReadUnavailables"/>
+        <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Read Unavailables" />
+      </plugin-configuration>
+      <metric property="Count" displayName="Read Unavailables" measurementType="trendsup" displayType="summary" description="Number of read unavailable occurred for this node"/>
+    </service>
+
+    <service name="WriteTimeouts"
+             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Client Request Metrics">
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string" default="org.apache.cassandra.metrics:type=ClientRequestMetrics,name=WriteTimeouts"/>
+        <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Write Timeouts" />
+      </plugin-configuration>
+      <metric property="Count" displayName="Write Timeouts" measurementType="trendsup" displayType="summary" description="Number of write timeouts occurred for this node"/>
+    </service>
+
+    <service name="WriteUnavailables"
+             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Client Request Metrics">
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string" default="org.apache.cassandra.metrics:type=ClientRequestMetrics,name=WriteUnavailables"/>
+        <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Write Unavailables" />
+      </plugin-configuration>
+      <metric property="Count" displayName="Write Unavailables" measurementType="trendsup" displayType="summary" description="Number of write unavailables occurred for this node"/>
+    </service>
+
+
+    <service name="CompactionManager"
+             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Database Management Services">
+
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string" default="org.apache.cassandra.db:type=CompactionManager"/>
+        <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Compaction Manager" />
+      </plugin-configuration>
+
+      <operation name="stopCompaction" description="Stop all running compaction-like tasks having the provided type.">
+        <parameters>
+          <c:simple-property name="p1" displayName="Type" required="true" description="Type of compaction to stop">
+            <c:property-options>
+              <c:option value="COMPACTION"/>
+              <c:option value="VALIDATION"/>
+              <c:option value="CLEANUP"/>
+              <c:option value="SCRUB"/>
+              <c:option value="INDEX_BUILD"/>
+            </c:property-options>
+          </c:simple-property>
+        </parameters>
+      </operation>
+
+      <metric property="CompletedTasks" measurementType="trendsup" displayType="summary" description="Number of completed compactions since server [re]start"/>
+      <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Number of tasks waiting to be executed"/>
+      <metric property="TotalBytesCompacted" measurementType="trendsup" displayType="detail" description="Total number of bytes compacted since server [re]start"/>
+      <metric property="TotalCompactionsCompleted" measurementType="trendsup" displayType="detail" description="Total number of compactions since server [re]start"/>
+    </service>
+
+
+    <service name="CacheService"
+             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Database Management Services">
+
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string" default="org.apache.cassandra.db:type=Caches"/>
+        <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Cache Service" />
+      </plugin-configuration>
+
+      <operation name="saveCaches" description="Save row and key caches."/>
+      <operation name="invalidateKeyCache" description="Invalidate the key cache."/>
+      <operation name="invalidateRowCache" description="Invalidate the row cache."/>
+
+      <metric property="KeyCacheHits" measurementType="dynamic" displayType="summary" description="Number of key cache hits"/>
+      <metric property="RowCacheHits" measurementType="dynamic" displayType="summary" description="Number of row cache hits"/>
+
+      <metric property="KeyCacheRequests" measurementType="dynamic" displayType="summary" description="Number of key cache requests"/>
+      <metric property="RowCacheRequests" measurementType="dynamic" displayType="summary" description="Number of row cache requests"/>
+
+      <metric property="KeyCacheRecentHitRate" measurementType="dynamic" displayType="summary" description="Recent key cache hit rate"/>
+      <metric property="RowCacheRecentHitRate" measurementType="dynamic" displayType="summary" description="Recent row cache hit rate"/>
+
+      <metric property="KeyCacheCapacityInBytes" measurementType="dynamic" displayType="summary" description="Key cache capacity in bytes"/>
+      <metric property="RowCacheCapacityInBytes" measurementType="dynamic" displayType="summary" description="Row cache capacity in bytes"/>
+
+      <metric property="KeyCacheSize" measurementType="dynamic" displayType="detail" description="Key cache size"/>
+      <metric property="RowCacheSize" measurementType="dynamic" displayType="detail" description="Row cache size"/>
+
+      <resource-configuration>
+        <c:simple-property name="KeyCacheCapacityInMB" type="long" required="true" displayName="Key Cache Capacity In MB" description="Key cache capacity in MB"/>
+        <c:simple-property name="RowCacheCapacityInMB" type="long" required="true" displayName="Row Cache Capacity In MB" description="Row cache capacity in MB"/>
+
+        <c:simple-property name="KeyCacheSavePeriodInSeconds" type="integer" required="true" description="Key cache save period in seconds"/>
+        <c:simple-property name="RowCacheSavePeriodInSeconds" type="integer" required="true" description="Row cache save period in seconds"/>
+      </resource-configuration>
+    </service>
+
+
+    <service name="ConfigurableStages"
+             discovery="org.rhq.plugins.cassandra.MetricsDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Server Request Metrics">
+
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string"
+                           default="org.apache.cassandra.request:type=MutationStage|org.apache.cassandra.request:type=ReadStage|org.apache.cassandra.request:type=ReplicateOnWriteStage"/>
+        <c:simple-property name="nameMarker" readOnly="true" type="string" default="type=" />
+      </plugin-configuration>
+
+      <metric property="ActiveCount" measurementType="dynamic" displayType="summary" description="Active Count"/>
+      <metric property="CurrentlyBlockedTasks" measurementType="dynamic" displayType="summary" description="Currently Blocked Tasks"/>
+      <metric property="CompletedTasks" measurementType="dynamic" displayType="summary" description="Completed Tasks"/>
+      <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Pending Tasks"/>
+      <metric property="TotalBlockedTasks" measurementType="dynamic" displayType="summary" description="Total Blocked Tasks"/>
+
+      <resource-configuration>
+          <c:simple-property name="CorePoolSize" type="integer" required="true" description="Core Pool Size."/>
+      </resource-configuration>
+    </service>
+
+    <service name="EnabledStages"
+             discovery="org.rhq.plugins.cassandra.MetricsDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Server Request Metrics">
+
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string"
+                           default="org.apache.cassandra.request:type=ReadRepairStage|org.apache.cassandra.request:type=RequestResponseStage"/>
+        <c:simple-property name="nameMarker" readOnly="true" type="string" default="type=" />
+      </plugin-configuration>
+
+      <metric property="ActiveCount" measurementType="dynamic" displayType="summary" description="Active Count"/>
+      <metric property="CurrentlyBlockedTasks" measurementType="dynamic" displayType="summary" description="Currently Blocked Tasks"/>
+      <metric property="CompletedTasks" measurementType="dynamic" displayType="summary" description="Completed Tasks"/>
+      <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Pending Tasks"/>
+      <metric property="TotalBlockedTasks" measurementType="dynamic" displayType="summary" description="Total Blocked Tasks"/>
+    </service>
+
+    <service name="ConfigurableInternalServerMetrics"
+             discovery="org.rhq.plugins.cassandra.MetricsDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Internal Server Metrics">
+
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string"
+                           default="org.apache.cassandra.internal:type=AntiEntropySessions"/>
+        <c:simple-property name="nameMarker" readOnly="true" type="string" default="type=" />
+      </plugin-configuration>
+
+      <metric property="ActiveCount" measurementType="dynamic" displayType="summary" description="Active Count"/>
+      <metric property="CurrentlyBlockedTasks" measurementType="dynamic" displayType="summary" description="Currently Blocked Tasks"/>
+      <metric property="CompletedTasks" measurementType="dynamic" displayType="summary" description="Completed Tasks"/>
+      <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Pending Tasks"/>
+      <metric property="TotalBlockedTasks" measurementType="dynamic" displayType="summary" description="Total Blocked Tasks"/>
+
+      <resource-configuration>
+          <c:simple-property name="CorePoolSize" type="integer" required="true" description="Core Pool Size."/>
+      </resource-configuration>
+    </service>
+
+    <service name="EnabledInternalServerMetrics"
+             discovery="org.rhq.plugins.cassandra.MetricsDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Internal Server Metrics">
+
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string"
+                           default="org.apache.cassandra.internal:type=AntiEntropyStage|org.apache.cassandra.internal:type=FlushWriter|org.apache.cassandra.internal:type=GossipStage|org.apache.cassandra.internal:type=HintedHandoff|org.apache.cassandra.internal:type=InternalResponseStage|org.apache.cassandra.internal:type=MemtablePostFlusher|org.apache.cassandra.internal:type=MigrationStage|org.apache.cassandra.internal:type=MiscStage|org.apache.cassandra.internal:type=StreamStage|org.apache.cassandra.internal:type=commitlog_archiver"/>
+        <c:simple-property name="nameMarker" readOnly="true" type="string" default="type=" />
+      </plugin-configuration>
+
+      <metric property="ActiveCount" measurementType="dynamic" displayType="summary" description="Active Count"/>
+      <metric property="CurrentlyBlockedTasks" measurementType="dynamic" displayType="summary" description="Currently Blocked Tasks"/>
+      <metric property="CompletedTasks" measurementType="dynamic" displayType="summary" description="Completed Tasks"/>
+      <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Pending Tasks"/>
+      <metric property="TotalBlockedTasks" measurementType="dynamic" displayType="summary" description="Total Blocked Tasks"/>
+    </service>
+
+
+    <service name="FailureDetector"
+             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+             class="org.rhq.plugins.cassandra.ComplexConfigurationResourceComponent"
+             singleton="true"
+             subCategory="Network Services">
+
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string" default="org.apache.cassandra.net:type=FailureDetector"/>
+        <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Failure Detector" />
+      </plugin-configuration>
+
+      <resource-configuration>
+          <c:simple-property name="PhiConvictThreshold" type="integer" required="true" description="Phi-convict threshold sets the sensitivity of the failure detector. Lower values increase the likelihood that an unresponsive node will be marked as down, while higher values decrease the likelihood."/>
+          <c:simple-property name="AllEndpointStates" type="integer" required="false" readOnly="true" description="States of all the end-points."/>
+          <c:list-property name="SimpleStates" readOnly="true">
+            <c:map-property name="SimpleState" readOnly="true">
+              <c:simple-property name="name" type="string" readOnly="true"/>
+              <c:simple-property name="value" type="string" readOnly="true"/>
+            </c:map-property>
+          </c:list-property>
+      </resource-configuration>
+    </service>
+
+
+    <service name="Gossiper"
+             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+             class="org.rhq.plugins.jmx.MBeanResourceComponent"
+             singleton="true"
+             subCategory="Network Services">
+
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string" default="org.apache.cassandra.net:type=Gossiper"/>
+        <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Gossiper" />
+      </plugin-configuration>
+
+      <operation name="getVersion" description="Get version">
+          <parameters>
+            <c:simple-property name="p1" displayName="Address" required="true" type="string" description="Address"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" description="Version"/>
+          </results>
+      </operation>
+      <operation name="getCurrentGenerationNumber" description="Get current generation number">
+          <parameters>
+            <c:simple-property name="p1" displayName="Address" required="true" type="string" description="Address"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" description="Current Generation Number"/>
+          </results>
+      </operation>
+      <operation name="getEndpointDowntime" description="Get endpoint downtime">
+          <parameters>
+            <c:simple-property name="p1" displayName="Address" required="true" type="string" description="Address"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" description="Endpoint Downtime"/>
+          </results>
+      </operation>
+      <operation name="unsafeAssassinateEndpoint" description="Unsafe assassinate endpoint">
+          <parameters>
+            <c:simple-property name="p1" displayName="Address" required="true" type="string" description="Address"/>
+          </parameters>
+      </operation>
+    </service>
+
+    <service name="StreamingService"
+             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+             class="org.rhq.plugins.cassandra.ComplexConfigurationResourceComponent"
+             singleton="true"
+             subCategory="Network Services">
+
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" type="string" default="org.apache.cassandra.net:type=StreamingService"/>
+        <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Streaming Service" />
+      </plugin-configuration>
+
+      <resource-configuration>
+          <c:simple-property name="Status" type="string" required="false" readOnly="true" description="Status"/>
+          <c:list-property name="StreamDestinations" readOnly="true">
+            <c:simple-property name="StreamDestination" readOnly="true" type="string"/>
+          </c:list-property>
+          <c:list-property name="StreamSources" readOnly="true">
+            <c:simple-property name="StreamSource" readOnly="true" type="string"/>
+          </c:list-property>
+      </resource-configuration>
+    </service>
+
+    <service name="MessagingService"
+             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+             class="org.rhq.plugins.cassandra.ComplexConfigurationResourceComponent"
+             singleton="true"
+             subCategory="Network Services">
+
+      <plugin-configuration>
+        <c:simple-property name="objectName" readOnly="true" default="org.apache.cassandra.net:type=MessagingService"/>
+        <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Messaging Service"/>
+      </plugin-configuration>
+
+      <metric property="TotalTimeouts" measurementType="trendsup" displayType="detail" description="Total timeouts."/>
+      <metric property="RecentTotalTimouts" measurementType="trendsup" displayType="detail" description="Recent total timeouts."/>
+
+      <resource-configuration>
+        <c:list-property name="CommandPendingTasks" readOnly="true">
+          <c:map-property name="CommandPendingTask" readOnly="true">
+              <c:simple-property name="name" type="string" readOnly="true"/>
+              <c:simple-property name="value" type="string" readOnly="true"/>
+          </c:map-property>
+        </c:list-property>
+        <c:list-property name="CommandCompletedTasks" readOnly="true">
+          <c:map-property name="CommandCompletedTask" readOnly="true">
+              <c:simple-property name="name" type="string" readOnly="true"/>
+              <c:simple-property name="value" type="string" readOnly="true"/>
+          </c:map-property>
+        </c:list-property>
+
+        <c:list-property name="ResponsePendingTasks" readOnly="true">
+          <c:map-property name="ResponsePendingTask" readOnly="true">
+              <c:simple-property name="name" type="string" readOnly="true"/>
+              <c:simple-property name="value" type="string" readOnly="true"/>
+          </c:map-property>
+        </c:list-property>
+        <c:list-property name="ResponseCompletedTasks" readOnly="true">
+          <c:map-property name="ResponseCompletedTask" readOnly="true">
+              <c:simple-property name="name" type="string" readOnly="true"/>
+              <c:simple-property name="value" type="string" readOnly="true"/>
+          </c:map-property>
+        </c:list-property>
+
+        <c:list-property name="DroppedMessages" readOnly="true">
+          <c:map-property name="DroppedMessage" readOnly="true">
+              <c:simple-property name="name" type="string" readOnly="true"/>
+              <c:simple-property name="value" type="string" readOnly="true"/>
+          </c:map-property>
+        </c:list-property>
+        <c:list-property name="RecentlyDroppedMessages" readOnly="true">
+          <c:map-property name="RecentlyDroppedMessage" readOnly="true">
+              <c:simple-property name="name" type="string" readOnly="true"/>
+              <c:simple-property name="value" type="string" readOnly="true"/>
+          </c:map-property>
+        </c:list-property>
+
+        <c:list-property name="TimeoutsPerHost" readOnly="true">
+          <c:map-property name="TimeoutPerHost" readOnly="true">
+              <c:simple-property name="name" type="string" readOnly="true"/>
+              <c:simple-property name="value" type="string" readOnly="true"/>
+          </c:map-property>
+        </c:list-property>
+        <c:list-property name="RecentTimeoutsPerHost" readOnly="true">
+          <c:map-property name="RecentTimeoutPerHost" readOnly="true">
+              <c:simple-property name="name" type="string" readOnly="true"/>
+              <c:simple-property name="value" type="string" readOnly="true"/>
+          </c:map-property>
+        </c:list-property>
+      </resource-configuration>
+    </service>
+
+
+    <service name="Keyspace"
+             discovery="org.rhq.plugins.cassandra.KeyspaceDiscoveryComponent"
+             class="org.rhq.plugins.cassandra.KeyspaceComponent">
+
+      <operation name="repair" displayName="Repair Keyspace"
+                 description="Cassandra compares data on this node with the versions on other replicas to update any
+                  out of sync copies of the data. This should be run infrequently as it is a disk IO and CPU intensive
+                  operation. All data for each column that is being repaired is read. Unless you are not performing any
+                  deletes, it is important to run regularly scheduled repairs to ensure that deleted data gets purged.
+                  The frequency that this should be run should be less than the gc_grace_period for each column family.
+                  This runs a repair on all column families in this keyspace." />
+      <operation name="compact" displayName="Compact Keyspace"
+                 description="Forces major compaction of the keyspace. Though major compaction can free disk space
+                  used during runtime it temporarily doubles disk space usage and is I/O and CPU intensive. Once you
+                  run a major compaction, automatic minor compactions are no longer triggered frequently forcing you to
+                  manually run major compactions on a routine basis. So while read performance will be good immediately
+                  following a major compaction, it will continually degrade until the next major compaction is manually invoked."/>
+      <operation name="takeSnapshot"
+                 description="Takes a snapshot of this keyspaces. A snapshot first flushes all in-memory writes to disk and then creates a hard
+                  link of each SSTable file for the keyspace. Note that a column family can have multiple
+                  SSTables on disk. By default snapshots are stored in the &lt;cassandra_data_dir&gt;/&lt;keyspace_name&gt;/&lt;column_family_name&gt;/snapshots
+                  directory. On Linux/UNIX systems cassandra_data_dir defaults to /var/lib/cassandra/data">
+        <parameters>
+          <c:simple-property name="snapshotName" required="false" type="string" displayName="Snapshot Name"
+                             description="Snapshot name. If left empty current system time in milliseconds will be used as the snapshot name."/>
+        </parameters>
+      </operation>
+
+      <resource-configuration>
+        <c:simple-property name="name" type="string" description="The keyspace name" readOnly="true"/>
+        <c:simple-property name="replicationFactor" type="integer" readOnly="true"/>
+        <c:simple-property name="strategyClass" type="string" readOnly="true"/>
+        <c:simple-property name="durableWrites" type="boolean" readOnly="true"/>
+        <c:list-property name="strategyOptions" readOnly="true">
+          <c:map-property name="strategyOptionsMap">
+            <c:simple-property name="strategyOptionName" type="string" readOnly="true"/>
+            <c:simple-property name="strategyOptionValue" type="string" readOnly="true"/>
+          </c:map-property>
+        </c:list-property>
+        <c:list-property name="keyspaceFileLocations" readOnly="true" description="List of data file locations">
+          <c:simple-property name="directory" type="string" readOnly="true"/>
+        </c:list-property>
+      </resource-configuration>
+
+      <service name="ColumnFamily"
+               discovery="org.rhq.plugins.cassandra.ColumnFamilyDiscoveryComponent"
+               class="org.rhq.plugins.cassandra.ColumnFamilyComponent">
+
+        <plugin-configuration>
+          <c:simple-property name="objectName" readOnly="true" type="string"/>
+          <c:simple-property name="name" type="string" description="The column family name"/>
+        </plugin-configuration>
+
+        <operation name="repair" displayName="Repair Column Family"
+                   description="Cassandra compares data on this node with the versions on other replicas to update any
+                    out of sync copies of the data. This should be run infrequently as it is a disk IO and CPU intensive
+                    operation. All data for each column that is being repaired is read. Unless you are not performing any
+                    deletes, it is important to run regularly scheduled repairs to ensure that deleted data gets purged.
+                    The frequency that this should be run should be less than the gc_grace_period for the column family." />
+        <operation name="compact" displayName="Force Major Column Family Compaction"
+                   description="Forces major compaction of this column family. Though major compaction can free disk space
+                    used during runtime it temporarily doubles disk space usage and is I/O and CPU intensive. Once you
+                    run a major compaction, automatic minor compactions are no longer triggered frequently forcing you to
+                    manually run major compactions on a routine basis. So while read performance will be good immediately
+                    following a major compaction, it will continually degrade until the next major compaction is manually invoked."/>
+        <operation name="takeSnapshot"
+                   description="Takes a snapshot of this keyspaces. A snapshot first flushes all in-memory writes to disk and then creates a hard
+                    link of each SSTable file for the keyspace. Note that a column family can have multiple
+                    SSTables on disk. By default snapshots are stored in the &lt;cassandra_data_dir&gt;/&lt;keyspace_name&gt;/&lt;column_family_name&gt;/snapshots
+                    directory. On Linux/UNIX systems cassandra_data_dir defaults to /var/lib/cassandra/data">
+          <parameters>
+            <c:simple-property name="snapshotName" required="false" type="string" displayName="Snapshot Name"
+                               description="Snapshot name. If left empty current system time in milliseconds will be used as the snapshot name."/>
+          </parameters>
+        </operation>
+        <operation name="disableAutoCompaction"
+                   description="Disable automatic compaction. Once you disable compaction, automatic minor compactions are no longer triggered frequently forcing you to
+                    manually run major compactions on a routine basis."/>
+        <operation name="estimateKeys" description="Estimate keys">
+          <results>
+            <c:simple-property name="operationResult" description="Estimated Keys"/>
+          </results>
+        </operation>
+        <operation name="getSSTablesForKey" displayName="Get SSTables For Key" description="Returns a list of filenames that contain the given key on this node.">
+          <parameters>
+            <c:simple-property name="p1" displayName="Key" required="true" type="string" description="Key"/>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" description="Filenames that contain the given key on this node."/>
+          </results>
+        </operation>
+        <operation name="restoreSnapshot" description="Restore the column family from a previously taken snapshot.">
+          <parameters>
+            <c:simple-property name="snapshotName" required="true" type="string" description="Snapshot Name">
+              <c:option-source target="configuration" expression="snapshots/snapshot=name:self"/>
+            </c:simple-property>
+          </parameters>
+          <results>
+            <c:simple-property name="operationResult" description="Filenames that contain the given key on this node."/>
+          </results>
+        </operation>
+
+        <metric property="CompressionRatio" measurementType="dynamic" displayType="summary" description="Compression Ratio"/>
+        <metric property="LiveDiskSpaceUsed" displayName="Live Disk Space Used" measurementType="dynamic" displayType="summary" description="Disk space used by SSTables belonging to this CF"/>
+        <metric property="LiveSSTableCount" displayName="Live SS Table Count" measurementType="dynamic" displayType="summary" description="Number of SSTables on disk for this CF"/>
+        <metric property="MaxRowSize" measurementType="dynamic" displayType="summary" description="Size of the largest compacted row"/>
+        <metric property="MeanRowSize" measurementType="dynamic" displayType="summary" description="Means size of the compacted rows"/>
+        <metric property="MemtableColumnsCount" displayName="Memtable Columns Count" measurementType="dynamic" displayType="summary" description="Total number of columns present in the memtable."/>
+        <metric property="MemtableDataSize" displayName="Memtable Data Size" measurementType="dynamic" displayType="detail" description="Total amount of data stored in the memtable, including column related overhead."/>
+        <metric property="MemtableSwitchCount" displayName="Memtable Switch Count" measurementType="dynamic" displayType="summary" description="Number of times that a flush has resulted in the memtable being switched out."/>
+        <metric property="MinRowSize" measurementType="dynamic" displayType="summary" description="Size of the smallest compacted row"/>
+        <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Estimated number of tasks pending for this column family"/>
+        <metric property="ReadCount" displayName="Read Count"  measurementType="trendsup" displayType="summary" description="Number of read operations since execution start"/>
+        <metric property="RecentReadLatencyMicros" displayName="Recent Read Latency (in micro seconds)" measurementType="trendsup" displayType="detail" description="Latency of read operations since this metric was last sampled"/>
+        <metric property="RecentWriteLatencyMicros" displayName="Recent Write Latency (in micro seconds)" measurementType="trendsup" displayType="detail" description="Latency of write operations since this metric was last sampled"/>
+        <metric property="TotalDiskSpaceUsed" measurementType="dynamic" displayType="detail" description="Total disk space used by SSTables belonging to this CF, including obsolete ones waiting to be GC'd"/>
+        <metric property="TotalReadLatencyMicros" displayName="Total Read Latency (in micro seconds)" measurementType="trendsup" displayType="detail" description="Latency of read operations since execution start"/>
+        <metric property="TotalWriteLatencyMicros" displayName="Total Write Latency (in micro seconds)" measurementType="trendsup" displayType="detail" description="Latency of write operations since execution start"/>
+        <metric property="UnleveledSSTables" measurementType="dynamic" displayType="summary" description="Number of SSTables in L0. Always return 0 if Leveled compaction is not enabled."/>
+        <metric property="WriteCount" displayName="Write Count" measurementType="trendsup" displayType="summary" description="Number of write operations since execution start"/>
+
+        <resource-configuration>
+          <c:simple-property name="gc_grace_seconds" displayName="gc_grace_seconds" required="false" default="864000" type="integer"
+                             description="Specifies the time to wait before garbage collecting tombstones (deletion markers). The value, specified in seconds,
+                              defaults to 10 days and allows for a large amount of time for consistency to be achived prior to deletion. In a single node cluster
+                              this can be reduced to zero."/>
+          <c:simple-property name="CompactionStrategyClass" type="string" required="true" description="Compaction strategy class name."/>
+          <c:simple-property name="CompressionParameters" type="string" readOnly="true" description="Compression parameters"/>
+          <c:simple-property name="MinimumCompactionThreshold" type="integer" required="true" description="Minimum number of sstables in queue before compaction kicks off."/>
+          <c:simple-property name="MaximumCompactionThreshold" type="integer" required="true" description="Maximum number of sstables in queue before compaction kicks off."/>
+          <c:list-property name="snapshots" readOnly="true" required="false">
+            <c:map-property name="snapshot" readOnly="true">
+              <c:simple-property name="name" readOnly="true"/>
+              <c:simple-property name="folder" readOnly="true" description="Snapshot Folder"/>
+            </c:map-property>
+          </c:list-property>
+        </resource-configuration>
+      </service>
+    </service>
+
+  </server>
+</plugin>

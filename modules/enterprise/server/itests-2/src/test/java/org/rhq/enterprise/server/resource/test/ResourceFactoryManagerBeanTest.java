@@ -100,7 +100,7 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
         agentServiceContainer.resourceFactoryService = mockAgentService;
 
         //the server plugins are in play when package types are involved
-        StandardServerPluginService serverPluginService = new StandardServerPluginService();
+        StandardServerPluginService serverPluginService = new StandardServerPluginService(getTempDir());
         prepareCustomServerPluginService(serverPluginService);
         serverPluginService.startMasterPluginContainer();
 

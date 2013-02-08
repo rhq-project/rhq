@@ -19,9 +19,12 @@
 package org.rhq.common.jbossas.client.controller;
 
 import java.io.File;
+import java.util.List;
+import java.util.Properties;
 
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
+import org.jboss.dmr.Property;
 
 /**
  * Provides information to some core services.
@@ -35,9 +38,41 @@ public class CoreJBossASClient extends JBossASClient {
     public static final String PLATFORM_MBEAN = "platform-mbean";
     public static final String DEPLOYMENT_SCANNER = "deployment-scanner";
     public static final String SCANNER = "scanner";
+    public static final String EXTENSION = "extension";
+    public static final String MODULE = "module";
 
     public CoreJBossASClient(ModelControllerClient client) {
         super(client);
+    }
+
+    /**
+     * This returns the system properties that are set in the AS JVM. This is not the system properties
+     * in the JVM of this client object - it is actually the system properties in the remote
+     * JVM of the AS instance that the client is talking to.
+     * 
+     * @return the AS JVM's system properties
+     * @throws Exception
+     */
+    public Properties getSystemProperties() throws Exception {
+        final String[] address = { CORE_SERVICE, PLATFORM_MBEAN, "type", "runtime" };
+        final ModelNode op = createReadAttributeRequest(true, "system-properties", Address.root().add(address));
+        final ModelNode results = execute(op);
+        if (isSuccess(results)) {
+            // extract the DMR representation into a java Properties object
+            final Properties sysprops = new Properties();
+            final ModelNode node = getResults(results);
+            final List<Property> propertyList = node.asPropertyList();
+            for (Property property : propertyList) {
+                final String name = property.getName();
+                final ModelNode value = property.getValue();
+                if (name != null) {
+                    sysprops.put(name, value != null ? value.asString() : "");
+                }
+            }
+            return sysprops;
+        } else {
+            throw new FailureException(results, "Failed to get system properties");
+        }
     }
 
     public String getOperatingSystem() throws Exception {
@@ -190,9 +225,68 @@ public class CoreJBossASClient extends JBossASClient {
     }
 
     /**
+     * Adds a new module extension to the core system.
+     *
+     * @param name the name of the new module extension
+     * @throws Exception
+     */
+    public void addExtension(String name) throws Exception {
+        // /extension=<name>/:add(module=<name>)
+        final ModelNode request = createRequest(ADD, Address.root().add(EXTENSION, name));
+        request.get(MODULE).set(name);
+        final ModelNode response = execute(request);
+        if (!isSuccess(response)) {
+            throw new FailureException(response, "Failed to add new module extension [" + name + "]");
+        }
+        return;
+    }
+
+    /**
+     * Returns true if the given extension is already in existence.
+     *
+     * @param name the name of the extension to check
+     * @return true if the extension already exists; false if not
+     * @throws Exception
+     */
+    public boolean isExtension(String name) throws Exception {
+        return null != readResource(Address.root().add(EXTENSION, name));
+    }
+
+    /**
+     * Adds a new subsystem to the core system.
+     *
+     * @param name the name of the new subsystem
+     * @throws Exception
+     */
+    public void addSubsystem(String name) throws Exception {
+        // /subsystem=<name>:add()
+        final ModelNode request = createRequest(ADD, Address.root().add(SUBSYSTEM, name));
+        final ModelNode response = execute(request);
+        if (!isSuccess(response)) {
+            throw new FailureException(response, "Failed to add new subsystem [" + name + "]");
+        }
+        return;
+    }
+
+    /**
+     * Returns true if the given subsystem is already in existence.
+     *
+     * @param name the name of the subsystem to check
+     * @return true if the subsystem already exists; false if not
+     * @throws Exception
+     */
+    public boolean isSubsystem(String name) throws Exception {
+        return null != readResource(Address.root().add(SUBSYSTEM, name));
+    }
+
+    /**
      * Invokes the management "reload" operation which will shut down all the app server services and
      * restart them again. This is required for certain configuration changes to take effect.
      * This does not shutdown the JVM itself.
+     *
+     * NOTE: once this method returns, the client is probably unusable since the server side
+     * will probably shutdown the connection. You will need to throw away this object and rebuild
+     * another one with a newly reconnected {@link #getModelControllerClient() client}.
      *
      * @throws Exception
      */
@@ -204,6 +298,10 @@ public class CoreJBossASClient extends JBossASClient {
      * Invokes the management "reload" operation which will shut down all the app server services and
      * restart them again potentially in admin-only mode.
      * This does not shutdown the JVM itself.
+     *
+     * NOTE: once this method returns, the client is probably unusable since the server side
+     * will probably shutdown the connection. You will need to throw away this object and rebuild
+     * another one with a newly reconnected {@link #getModelControllerClient() client}.
      *
      * @param adminOnly if <code>true</code>, reloads the server in admin-only mode
      *
@@ -224,7 +322,12 @@ public class CoreJBossASClient extends JBossASClient {
      * (see {@link #shutdown(boolean)}).
      * This means the app server JVM will shutdown but immediately be restarted.
      * Note that the caller may not be returned to since the JVM in which this call is made
-     * will be killed.
+     * will be killed and if the client is co-located with the server JVM, this client will
+     * also die.
+     *
+     * NOTE: even if this method returns, the client is unusable since the server side
+     * will shutdown the connection. You will need to throw away this object and rebuild
+     * another one with a newly reconnected {@link #getModelControllerClient() client}.
      *
      * @throws Exception
      */
@@ -237,7 +340,12 @@ public class CoreJBossASClient extends JBossASClient {
      * If restart is set to true, the JVM will immediately be restarted again. If restart is false,
      * the JVM is killed and will stay down.
      * Note that in either case, the caller may not be returned to since the JVM in which this call is made
-     * will be killed.
+     * will be killed and if the client is co-located with the server JVM, this client will
+     * also die.
+     *
+     * NOTE: even if this method returns, the client is unusable since the server side
+     * will shutdown the connection. You will need to throw away this object and rebuild
+     * another one with a newly reconnected {@link #getModelControllerClient() client}.
      *
      * @param restart if true, the JVM will be restarted
      * @throws Exception

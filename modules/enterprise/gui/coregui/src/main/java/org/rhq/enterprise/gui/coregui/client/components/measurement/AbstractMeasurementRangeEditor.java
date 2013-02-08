@@ -21,10 +21,13 @@ package org.rhq.enterprise.gui.coregui.client.components.measurement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.DateDisplayFormat;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.DateTimeItem;
@@ -34,6 +37,7 @@ import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
+import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.grid.ListGrid;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -133,9 +137,22 @@ public abstract class AbstractMeasurementRangeEditor extends LocatableDynamicFor
         //time range start from
         advancedStartItem = new DateTimeItem(ADVANCED_START_ITEM, MSG.view_measureRange_start());
         advancedStartItem.setTitleAlign(Alignment.LEFT);
+        advancedStartItem.setUseMask(true);
+        advancedStartItem.setDisplayFormat(DateDisplayFormat.TOUSSHORTDATE);
 
         //time range end
         advancedEndItem = new DateTimeItem(ADVANCED_END_ITEM, MSG.common_title_end());
+        advancedEndItem.setUseMask(true);
+        advancedEndItem.setDisplayFormat(DateDisplayFormat.TOUSSHORTDATE);
+
+        //time validator, start should be before end
+        CustomValidator timeValidator = new CustomValidator() {
+            protected boolean condition(Object value) {
+                return advancedEndItem.getValueAsDate().after(advancedStartItem.getValueAsDate());
+            }
+        };
+        timeValidator.setErrorMessage(MSG.view_measureTable_startBeforeEnd());
+        advancedStartItem.setValidators(timeValidator);
 
         setButton = new ButtonItem(SET_ITEM, MSG.common_button_set());
         setButton.setStartRow(false);
@@ -146,14 +163,26 @@ public abstract class AbstractMeasurementRangeEditor extends LocatableDynamicFor
                 MetricRangePreferences prefs = new MetricRangePreferences();
                 prefs.explicitBeginEnd = advanced;
                 if (advanced) {
-                    prefs.begin = advancedStartItem.getValueAsDate().getTime();
-                    prefs.end = advancedEndItem.getValueAsDate().getTime();
+                    try {
+                        if (validate()) {
+                            prefs.begin = advancedStartItem.getValueAsDate().getTime();
+                            prefs.end = advancedEndItem.getValueAsDate().getTime();
+                            setMetricRangeProperties(prefs);
+                        }
+                    } catch (Exception ex) {
+                        // some of the digints are not filled correctly
+                        Map<String, String> errors = new HashMap<String, String>();
+                        errors.put(ADVANCED_END_ITEM, "MM/DD/YYYY HH:MM");
+                        errors.put(ADVANCED_START_ITEM, "MM/DD/YYYY HH:MM");
+                        setErrors(errors, true);
+                    }
                 } else {
                     prefs.lastN = Integer.valueOf(simpleLastValuesItem.getValueAsString());
                     prefs.unit = Integer.valueOf(simpleLastUnitsItem.getValueAsString());
+                    setMetricRangeProperties(prefs);
                 }
-                setMetricRangeProperties(prefs);
             }
+
         });
 
         advancedSimpleButton = new ButtonItem(ADVANCED_BUTTON_ITEM, MSG.common_button_advanced());
@@ -165,7 +194,7 @@ public abstract class AbstractMeasurementRangeEditor extends LocatableDynamicFor
                 update();
             }
         });
-        
+
         space = new SpacerItem();
         space.setWidth(300);
 
@@ -173,7 +202,7 @@ public abstract class AbstractMeasurementRangeEditor extends LocatableDynamicFor
         if (metricRangePrefs != null) {
             advanced = (metricRangePrefs.explicitBeginEnd);
         }
-        
+
         if (displaySetButton) {
             setItems(simpleLastValuesItem, simpleLastUnitsItem, advancedStartItem, advancedEndItem, setButton,
                 advancedSimpleButton, space);

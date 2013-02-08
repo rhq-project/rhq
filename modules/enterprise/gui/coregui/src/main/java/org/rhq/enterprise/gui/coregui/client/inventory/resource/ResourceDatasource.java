@@ -30,6 +30,7 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceD
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE_ID;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.VERSION;
 
 import java.util.HashSet;
@@ -218,6 +219,7 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
                     ResourceType type = types.get(typeId);
                     if (type != null) {
                         record.setAttribute(TYPE.propertyName(), type.getName());
+                        record.setAttribute(TYPE_ID.propertyName(), type.getId());
                     }
 
                     // To avoid a lot of unnecessary String construction, be lazy about building ancestry hover text.

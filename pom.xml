@@ -40,6 +40,13 @@
     <rhq.earName>rhq.ear</rhq.earName>
     <!-- the below path is relative to {rhq-trunk} -->
     <rhq.defaultDevContainerPath>dev-container</rhq.defaultDevContainerPath>
+    <!-- path relative to under dev container path where the EAR is deployed -->
+    <rhq.earDeployDir>modules/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/${rhq.earName}</rhq.earDeployDir>
+    <!-- path relative to under dev container path where other things are stored -->
+    <rhq.agentPluginDir>${rhq.earDeployDir}/rhq-downloads/rhq-plugins</rhq.agentPluginDir>
+    <rhq.serverPluginDir>${rhq.earDeployDir}/rhq-serverplugins</rhq.serverPluginDir>
+    <rhq.earLibDir>${rhq.earDeployDir}/lib</rhq.earLibDir>
+
     <!-- set the below prop to true to enable misc extra build output -->
     <rhq.debug>false</rhq.debug>
 
@@ -117,7 +124,7 @@
     <log4j.version>1.2.16</log4j.version>
     <ojdbc6.version>11.2.0.3.0</ojdbc6.version>
     <ems.version>1.3</ems.version>
-    <postgresql.version>9.1-902.jdbc4</postgresql.version>
+    <postgresql.version>9.2-1002.jdbc4</postgresql.version>
     <h2.version>1.2.139</h2.version>
     <jtds.version>1.2.2</jtds.version>
     <richfaces.version>3.3.3.Final</richfaces.version>
@@ -137,9 +144,12 @@
     <ant.contrib.version>1.0b3</ant.contrib.version>
     <freemarker.version>2.3.18</freemarker.version>
     <powermock.version>1.4.12</powermock.version>
-    <arquillian.version>1.0.2.Final</arquillian.version>
+    <arquillian.version>1.0.3.Final</arquillian.version>
+    <arquillian.jboss.container.version>7.1.1.Final</arquillian.jboss.container.version>
+    <shrinkwrap-resolver.version>2.0.0-alpha-7</shrinkwrap-resolver.version>
     <xercesImpl.version>2.9.1-jbossas-2</xercesImpl.version> <!-- see BZ-820629 and CVE-2009-2625 -->
     <opencsv.version>1.8</opencsv.version>    
+    <commons-httpclient.version>3.0.1</commons-httpclient.version>
     
     <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
     <rhq.db.admin.password>rhqadmin</rhq.db.admin.password>
@@ -225,8 +235,9 @@
     <intentional-api-changes-file>intentional-api-changes-since-${signature-check-base-version}.xml</intentional-api-changes-file>
 
     <jacoco.version>0.6.0.201210061924</jacoco.version>
+    <jacoco-arquillian-extension.version>1.0.0.Alpha5</jacoco-arquillian-extension.version>
   </properties>
-
+ 
 
   <dependencyManagement>
 
@@ -602,7 +613,17 @@
          <scope>import</scope>
       </dependency>
 
-      <!-- This will pull in the compatible versions of the shrinkwrap and shrinkwrap-resolver deps too. -->
+      <!-- We want the shrinkwrap dependency resolver to be newer than that included in the Arquillian BOM.
+           This must go *BEFORE* the Arquillian BOM. -->
+      <dependency>
+          <groupId>org.jboss.shrinkwrap.resolver</groupId>
+          <artifactId>shrinkwrap-resolver-bom</artifactId>
+          <version>${shrinkwrap-resolver.version}</version>
+          <scope>import</scope>
+          <type>pom</type>
+      </dependency>            
+      <!-- This will pull in the compatible versions of shrinkwrap deps too. Note that we want to use an explicit
+           version for the shrinkwrap resolver, which revs more often and has bugfixes. -->
       <dependency>
          <groupId>org.jboss.arquillian</groupId>
          <artifactId>arquillian-bom</artifactId>
@@ -611,7 +632,24 @@
          <scope>import</scope>
       </dependency>
 
-    </dependencies>
+      <dependency>
+         <groupId>org.jboss.arquillian.extension</groupId>
+         <artifactId>arquillian-jacoco</artifactId>
+         <version>${jacoco-arquillian-extension.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jboss.as</groupId>
+         <artifactId>jboss-as-arquillian-container-managed</artifactId>
+         <version>${arquillian.jboss.container.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jacoco</groupId>
+         <artifactId>org.jacoco.core</artifactId>
+         <version>${jacoco.version}</version>
+      </dependency>
+  </dependencies>
 
   </dependencyManagement>
 
@@ -660,11 +698,11 @@
            <artifactId>maven-antrun-plugin</artifactId>
            <version>1.7</version>
            <dependencies>
-             <!-- This includes all the "optional" tasks. -->
+             <!-- Standard ANT dist (no more "nodeps" since 1.8.2) -->
              <dependency>
                 <groupId>org.apache.ant</groupId>
-                <artifactId>ant-nodeps</artifactId>
-                <version>1.8.1</version>
+                <artifactId>ant</artifactId>
+                <version>1.8.4</version>
              </dependency>
 
              <!-- This includes the <if> task, and a bunch of other handy tasks. -->
@@ -1297,7 +1335,7 @@
 
     <!-- This profile is the "opposite" of the code coverage profile and provides
        default values for properties that are set in the code-coverage profile
-          to kick of jacoco java agent. -->
+       to kick of jacoco java agent. -->
     <profile>
        <id>no-code-coverage</id>
        <activation>
@@ -1319,6 +1357,21 @@
              <name>code-coverage</name>
           </property>
        </activation>
+       
+       <dependencies>
+          <dependency>
+             <groupId>org.jboss.arquillian.extension</groupId>
+             <artifactId>arquillian-jacoco</artifactId>
+             <scope>test</scope>
+          </dependency>
+ 
+          <dependency>
+             <groupId>org.jacoco</groupId>
+             <artifactId>org.jacoco.core</artifactId>
+             <scope>test</scope>
+          </dependency>
+       </dependencies>
+       
        <build>
           <plugins>
              <!-- This definition creates the 2 independent coverage reports -
@@ -1646,6 +1699,7 @@
            <plugin>
               <groupId>org.codehaus.mojo</groupId>
               <artifactId>clirr-maven-plugin</artifactId>
+              <version>${clirr.version}</version>
               <executions>
                  <execution>
                     <id>signature-check</id>
@@ -1665,8 +1719,6 @@
                        <failOnError>true</failOnError>
                        <failOnWarning>true</failOnWarning>
                        <skip>${rhq.internal}</skip>
-                       <!-- note that this is only available in clirr maven plugin 2.5, but internally we use a patched version for our CI builds.
-                            Once new Clirr maven plugin is released, this will work for you, too. -->
                        <ignoredDifferencesFile>${intentional-api-changes-file}</ignoredDifferencesFile>
                     </configuration>
                  </execution>
@@ -1680,6 +1732,7 @@
            <plugin>
               <groupId>org.codehaus.mojo</groupId>
               <artifactId>clirr-maven-plugin</artifactId>
+              <version>${clirr.version}</version>
               <configuration>
                  <comparisonVersion>${signature-check-base-version}</comparisonVersion>
                  <comparisonArtifacts>

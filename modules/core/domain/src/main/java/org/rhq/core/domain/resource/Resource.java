@@ -55,9 +55,6 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
@@ -972,9 +969,9 @@ public class Resource implements Comparable<Resource>, Serializable {
     @Summary(index = 4)
     private ResourceType resourceType;
 
-    // do not cascade remove; it would take forever to delete a full platform hierarchy,
-    // so we will manually delete the children ourselves
-    @OneToMany(mappedBy = "parentResource", fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST })
+    // Do not cascade remove; it would take forever to delete a full platform hierarchy, we delete the children
+    // Do not cascade persist; large child sets can take prohibitively long, we manually persist the children
+    @OneToMany(mappedBy = "parentResource", fetch = FetchType.LAZY)
     @OrderBy
     // primary key
     private Set<Resource> childResources;
@@ -1125,10 +1122,7 @@ public class Resource implements Comparable<Resource>, Serializable {
         this.id = id;
     }
 
-    public Resource( //
-        @NotNull String resourceKey, //
-        String name, //
-        @NotNull ResourceType type) {
+    public Resource(String resourceKey, String name, ResourceType type) {
         this();
         this.resourceKey = resourceKey;
         this.name = name;
@@ -1371,13 +1365,15 @@ public class Resource implements Comparable<Resource>, Serializable {
         this.location = location;
     }
 
-    @NotNull
     public Set<Resource> getChildResources() {
         return this.childResources;
     }
 
     public void addChildResource(Resource childResource) {
         childResource.setParentResource(this);
+        if (null == this.childResources) {
+            this.childResources = new HashSet<Resource>(1);
+        }
         this.childResources.add(childResource);
     }
 
@@ -1399,12 +1395,11 @@ public class Resource implements Comparable<Resource>, Serializable {
         }
     }
 
-    @Nullable
     public Resource getParentResource() {
         return parentResource;
     }
 
-    public void setParentResource(@Nullable Resource parentResource) {
+    public void setParentResource(Resource parentResource) {
         this.parentResource = parentResource;
         updateAncestryForResource();
     }
@@ -1559,7 +1554,6 @@ public class Resource implements Comparable<Resource>, Serializable {
         this.explicitGroups.remove(explicitGroup);
     }
 
-    @NotNull
     public List<ResourceOperationHistory> getOperationHistories() {
         if (this.operationHistories == null) {
             this.operationHistories = new ArrayList<ResourceOperationHistory>();

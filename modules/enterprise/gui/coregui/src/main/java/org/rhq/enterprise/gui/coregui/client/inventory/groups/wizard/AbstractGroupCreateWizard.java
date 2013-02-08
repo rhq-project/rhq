@@ -44,8 +44,8 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author John Mazzitelli
  */
 public abstract class AbstractGroupCreateWizard extends AbstractWizard {
-    private GroupCreateStep createStep;
-    private GroupMembersStep memberStep;
+    protected GroupCreateStep createStep;
+    protected GroupMembersStep memberStep;
 
     public AbstractGroupCreateWizard() {
         List<WizardStep> steps = new ArrayList<WizardStep>();

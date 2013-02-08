@@ -21,7 +21,6 @@ package org.rhq.enterprise.server.util;
 import java.lang.management.ManagementFactory;
 
 import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
@@ -63,8 +62,8 @@ import org.rhq.enterprise.server.bundle.BundleManagerBean;
 import org.rhq.enterprise.server.bundle.BundleManagerLocal;
 import org.rhq.enterprise.server.cloud.AffinityGroupManagerBean;
 import org.rhq.enterprise.server.cloud.AffinityGroupManagerLocal;
-import org.rhq.enterprise.server.cloud.CloudManagerBean;
-import org.rhq.enterprise.server.cloud.CloudManagerLocal;
+import org.rhq.enterprise.server.cloud.TopologyManagerBean;
+import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.cloud.FailoverListManagerBean;
 import org.rhq.enterprise.server.cloud.FailoverListManagerLocal;
 import org.rhq.enterprise.server.cloud.PartitionEventManagerBean;
@@ -102,6 +101,8 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.core.CoreServerMBean;
 import org.rhq.enterprise.server.core.EmailManagerBean;
 import org.rhq.enterprise.server.core.EmailManagerLocal;
+import org.rhq.enterprise.server.core.RemoteClientManagerBean;
+import org.rhq.enterprise.server.core.RemoteClientManagerLocal;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.dashboard.DashboardManagerBean;
 import org.rhq.enterprise.server.dashboard.DashboardManagerLocal;
@@ -273,6 +274,10 @@ public final class LookupUtil {
 
     public static AlertConditionConsumerBean getActiveConditionConsumer() {
         return lookupLocal(AlertConditionConsumerBean.class);
+    }
+
+    public static RemoteClientManagerLocal getRemoteClientManager() {
+        return lookupLocal(RemoteClientManagerBean.class);
     }
 
     public static AgentManagerLocal getAgentManager() {
@@ -464,8 +469,8 @@ public final class LookupUtil {
         return lookupLocal(AffinityGroupManagerBean.class);
     }
 
-    public static CloudManagerLocal getCloudManager() {
-        return lookupLocal(CloudManagerBean.class);
+    public static TopologyManagerLocal getTopologyManager() {
+        return lookupLocal(TopologyManagerBean.class);
     }
 
     public static ClusterManagerLocal getClusterManager() {
@@ -585,13 +590,9 @@ public final class LookupUtil {
     }
 
     public static CoreServerMBean getCoreServer() {
-        CoreServerMBean rhqServer;
-        try {
-            MBeanServer mbs = getJBossMBeanServer();
-            rhqServer = (CoreServerMBean) MBeanProxyExt.create(CoreServerMBean.class, CoreServerMBean.OBJECT_NAME, mbs);
-        } catch (MalformedObjectNameException e) {
-            throw new RuntimeException(e);
-        }
+        MBeanServer mbs = getJBossMBeanServer();
+        CoreServerMBean rhqServer = (CoreServerMBean) MBeanProxyExt.create(CoreServerMBean.class,
+            CoreServerMBean.OBJECT_NAME, mbs);
         return rhqServer;
     }
 
@@ -640,7 +641,8 @@ public final class LookupUtil {
         return "java:global/rhq/rhq-enterprise-server-ejb3/" + beanName + "!" + interfaceName;
     }
 
-    private static <T> String getLocalJNDIName(@NotNull Class<? super T> beanClass) {
+    private static <T> String getLocalJNDIName(@NotNull
+    Class<? super T> beanClass) {
         return getLocalJNDIName(beanClass.getSimpleName(), beanClass.getName().replace("Bean", "Local"));
     }
 

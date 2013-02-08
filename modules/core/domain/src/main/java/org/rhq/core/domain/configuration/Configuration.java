@@ -83,7 +83,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Jason Dobies
  * @author Greg Hinkle
- * 
+ *
  * @see    Property
  * @see    PropertySimple
  * @see    PropertyList
@@ -150,7 +150,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
 
     // use the prop name as the map key
     @MapKey(name = "name")
-    // CascadeType.REMOVE has been omitted, the cascade delete has been moved to the data model for performance 
+    // CascadeType.REMOVE has been omitted, the cascade delete has been moved to the data model for performance
     @Cascade({ CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.DELETE_ORPHAN })
     @OneToMany(mappedBy = "configuration", fetch = FetchType.EAGER)
     @XmlTransient
@@ -158,43 +158,53 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
 
     private class PropertiesProxy implements Collection<Property> {
 
+        @Override
         public int size() {
             return properties.size();
         }
 
+        @Override
         public boolean isEmpty() {
             return properties.isEmpty();
         }
 
+        @Override
         public boolean contains(Object o) {
             return properties.containsValue(o);
         }
 
+        @Override
         public Iterator<Property> iterator() {
             return properties.values().iterator();
         }
 
+        @Override
         public Object[] toArray() {
             return properties.values().toArray();
         }
 
+        @Override
         public <T> T[] toArray(T[] a) {
             return properties.values().toArray(a);
         }
 
+        @Override
         public boolean add(Property e) {
             put(e);
             return true; //we always allow adding an element even if it is already present
         }
 
+        @Override
         public boolean remove(Object o) {
             return properties.values().remove(o);
         }
 
+        @Override
         public boolean containsAll(Collection<?> c) {
             return properties.values().containsAll(c);
         }
 
+        @Override
         public boolean addAll(Collection<? extends Property> c) {
             boolean ret = false;
             for (Property p : c) {
@@ -204,6 +214,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
             return ret;
         }
 
+        @Override
         public boolean removeAll(Collection<?> c) {
             boolean ret = false;
             for (Object o : c) {
@@ -213,6 +224,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
             return ret;
         }
 
+        @Override
         public boolean retainAll(Collection<?> c) {
             boolean ret = false;
             ArrayList<Property> ps = new ArrayList<Property>(properties.values());
@@ -225,10 +237,12 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
             return ret;
         }
 
+        @Override
         public void clear() {
             properties.clear();
         }
 
+        @Override
         public boolean equals(Object obj) {
             if (this == obj) {
                 return true;
@@ -241,10 +255,12 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
             return properties.values().equals(obj);
         }
 
+        @Override
         public int hashCode() {
             return properties.values().hashCode();
         }
 
+        @Override
         public String toString() {
             return properties.values().toString();
         }
@@ -304,6 +320,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
      *
      * @param value the new property
      */
+    @Override
     public void put(Property value) {
         getMap().put(value.getName(), value);
         value.setConfiguration(this);
@@ -321,6 +338,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
      *
      * @return the named property or <code>null</code> if there was no direct child with the given name
      */
+    @Override
     public Property get(String name) {
         return getMap().get(name);
     }
@@ -352,6 +370,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
      * @throws ClassCastException if there was a property in this Configuration with the given name, but it was not of
      *                            type {@link PropertySimple}
      */
+    @Override
     public PropertySimple getSimple(String name) {
         return (PropertySimple) getMap().get(name);
     }
@@ -408,6 +427,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
      * @throws ClassCastException if there was a property in this Configuration with the given name, but it was not of
      *                            type {@link PropertyList}
      */
+    @Override
     public PropertyList getList(String name) {
         return (PropertyList) getMap().get(name);
     }
@@ -423,6 +443,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
      * @throws ClassCastException if there was a property in this Configuration with the given name, but it was not of
      *                            type {@link PropertyMap}
      */
+    @Override
     public PropertyMap getMap(String name) {
         return (PropertyMap) getMap().get(name);
     }
@@ -436,6 +457,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
      *
      * @return the actual map of the property objects - this is <b>not</b> a copy
      */
+    @Override
     @NotNull
     public Map<String, Property> getMap() {
         return this.properties;
@@ -457,7 +479,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
      * <p>
      * When adding a property to the collection returned from this method, its
      * {@link Property#getConfiguration() configuration property} is set to this instance.
-     * 
+     *
      * @return all child properties of this Configuration
      */
     @NotNull
@@ -472,6 +494,17 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
     }
 
     public void setProperties(Collection<Property> properties) {
+        //propertiesProxy is a mere view of the properties map.
+        //thus, if one obtained an instance of propertiesProxy from the #getProperties() method and then tried to
+        //pass that instance to this method, the result would be that the set of properties would be effectively
+        //cleared (due to the assignment of the new map to the properties field, of which the propertiesProxy is a
+        //view). We can short-circuit that behavior though, because if we determine that the propertiesProxy is being
+        //assigned as the "new" set of properties, we can return immediately. Logically, the passed in properties are
+        //identical to the ones already present in the properties map in that case.
+        if (propertiesProxy == properties) {
+            return;
+        }
+
         this.properties = new HashMap<String, Property>();
         for (Property p : properties) {
             this.properties.put(p.getName(), p);
@@ -574,6 +607,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
      *
      * @see    #deepCopy()
      */
+    //@Override //GWT trips over this, WTH!
     public Configuration clone() {
         return deepCopy();
     }
@@ -718,9 +752,10 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
         }
     }
 
-    /** Getter for the properties reference. 
-     * 
-     * @return Map<String, Property> 
+    /**
+     * Getter for the properties reference.
+     *
+     * @return Map<String, Property>
      */
     public Map<String, Property> getAllProperties() {
         return this.properties;

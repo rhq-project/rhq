@@ -22,10 +22,14 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.wizard;
 
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE_ID;
+
 import java.util.Set;
 
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceSelector;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
@@ -68,6 +72,16 @@ public class GroupMembersStep extends AbstractWizardStep {
         int i = 0;
         for (Integer id : selectedIds) {
             selection[i++] = id;
+        }
+        return selection;
+    }
+    
+    public Integer[] getSelecterResourceTypeIds() {
+        ListGridRecord[] selectedRecords = selector.getSelectedRecords();
+        Integer[] selection = new Integer[selectedRecords.length];
+        int i = 0;
+        for (ListGridRecord record : selectedRecords) {
+            selection[i++] = record.getAttributeAsInt(TYPE_ID.propertyName());
         }
         return selection;
     }

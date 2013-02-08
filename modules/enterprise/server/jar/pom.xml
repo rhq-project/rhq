@@ -22,7 +22,7 @@
   </properties>
 
   <dependencies>
-    
+
       <!-- Internal Deps -->
 
   <!-- rhq-enterprise-comm pulls in the old version of jboss remoting.  The old version of remoting
@@ -35,7 +35,7 @@
   <dependency>
     <groupId>org.jboss.logging</groupId>
     <artifactId>jboss-logging</artifactId>
-    <version>3.1.0.GA</version>
+    <version>${jboss-logging.version}</version>
     <scope>test</scope>
   </dependency>
   <dependency>
@@ -86,13 +86,7 @@
       <artifactId>rhq-common-drift</artifactId>
       <version>${project.version}</version>
     </dependency>
- 
-    <dependency>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-container-lib</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-   
+
     <dependency>
       <groupId>com.googlecode.java-diff-utils</groupId>
       <artifactId>diffutils</artifactId>
@@ -108,16 +102,20 @@
   <dependency>
     <groupId>org.jboss.as</groupId>
     <artifactId>jboss-as-server</artifactId>
-    <version>${jboss.version}</version>
     <scope>provided</scope> <!-- provided by AS7 -->
   </dependency>
 
+  <dependency>
+    <groupId>org.jboss.as</groupId>
+    <artifactId>jboss-as-naming</artifactId>
+    <scope>provided</scope> <!-- provided by AS7 -->
+  </dependency>
 
       <!--================ Test Deps ================-->
 
       <!-- Note, the test deps are intentionally placed above the other scoped deps because of classpath
            reasons.  Maven orders the [test] classpath in the order listed in the pom.  -->
- 
+
 
   <dependency>
     <groupId>org.jboss.spec</groupId>
@@ -126,7 +124,7 @@
     <scope>provided</scope>
     <type>pom</type>
   </dependency>
- 
+
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>test-utils</artifactId>
@@ -139,7 +137,7 @@
         </exclusion>
       </exclusions>
     </dependency>
- 
+
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-domain</artifactId>
@@ -147,15 +145,15 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
-  
- 
+
+
       <!-- 3rd Party Deps -->
 
-    <!-- do we really need this version, for now use the version provided by AS7, declare just below --> 
+    <!-- do we really need this version, for now use the version provided by AS7, declare just below -->
     <dependency>
       <groupId>org.antlr</groupId>
       <artifactId>antlr-runtime</artifactId>
-      <version>3.2</version>  
+      <version>3.2</version>
       <exclusions>
         <exclusion>
           <groupId>antlr</groupId>
@@ -164,13 +162,13 @@
         <exclusion>
           <groupId>org.antlr</groupId>
           <artifactId>antlr</artifactId>
-        </exclusion>        
-      </exclusions>      
-    </dependency>    
+        </exclusion>
+      </exclusions>
+    </dependency>
 
     <dependency>
       <groupId>antlr</groupId>
-      <artifactId>antlr</artifactId>  
+      <artifactId>antlr</artifactId>
       <scope>provided</scope>
     </dependency>
 
@@ -199,7 +197,7 @@
     <dependency>
       <groupId>commons-httpclient</groupId>
       <artifactId>commons-httpclient</artifactId>
-      <version>3.0.1</version>
+      <version>${commons-httpclient.version}</version>
     </dependency>
 
     <dependency>
@@ -219,7 +217,7 @@
       <groupId>gnu-getopt</groupId>
       <artifactId>getopt</artifactId>
     </dependency>
- 
+
     <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-entitymanager</artifactId>
@@ -228,7 +226,7 @@
 
     <dependency>
       <groupId>jboss</groupId>
-      <artifactId>jboss-cache</artifactId>        
+      <artifactId>jboss-cache</artifactId>
       <scope>compile</scope>
     </dependency>
 
@@ -238,13 +236,13 @@
       <scope>provided</scope>
     </dependency>
 
-    <!-- JBoss annotations like @TransactionTimeout --> 
+    <!-- JBoss annotations like @TransactionTimeout -->
     <dependency>
        <groupId>org.jboss.ejb3</groupId>
        <artifactId>jboss-ejb3-ext-api</artifactId>
        <scope>provided</scope>
     </dependency>
- 
+
     <!-- annotations like @ExcludeDefaultInterceptors -->
     <dependency>
        <groupId>org.jboss.spec.javax.interceptor</groupId>
@@ -270,7 +268,7 @@
       <artifactId>jboss-ejb-api_3.1_spec</artifactId>
       <scope>provided</scope>
     </dependency>
-    
+
     <dependency>
       <groupId>org.jboss.spec.javax.jms</groupId>
       <artifactId>jboss-jms-api_1.1_spec</artifactId>
@@ -404,7 +402,7 @@
       <artifactId>snakeyaml</artifactId>
       <version>1.8</version>
     </dependency>
-    
+
     <dependency>
       <groupId>org.freemarker</groupId>
       <artifactId>freemarker</artifactId>
@@ -424,6 +422,13 @@
       <artifactId>powermock-api-mockito</artifactId>
       <version>${powermock.version}</version>
       <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.rhq.helpers</groupId>
+      <artifactId>rest-docs-generator</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
     </dependency>
 
   </dependencies>
@@ -454,6 +459,16 @@
         <configuration>
           <ejbVersion>3.0</ejbVersion>
           <generateClient>true</generateClient>
+          <!-- We shoudn't need Class-Path manifest entry, at least when deployed in AS
+               but we might need it for CLI. If we don't need the manifest entry in CLI,
+               then we should uncomment this because we get annoying errors in AS7 logs
+               with the manifest entry.
+          <archive>
+            <manifest>
+               <addClasspath>false</addClasspath>
+            </manifest>
+          </archive>
+          -->
         </configuration>
       </plugin>
 
@@ -686,19 +701,6 @@
       </build>
     </profile>
 
-    <!-- if you want to test on oracle, this can pull down the oracle jdbc driver that is needed -->
-    <profile>
-        <id>ojdbc-driver</id>
-        <dependencies>
-            <dependency>
-                <groupId>com.oracle</groupId>
-                <artifactId>ojdbc6</artifactId>
-                <version>${ojdbc6.version}</version>
-            </dependency>
-        </dependencies>
-    </profile>
-
-
     <profile>
       <id>dev</id>
 
@@ -706,7 +708,7 @@
         <rhq.rootDir>../../../..</rhq.rootDir>
         <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
         <rhq.deploymentName>${project.build.finalName}-ejb3.jar</rhq.deploymentName>
-        <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.earName}/${rhq.deploymentName}</rhq.deploymentDir>
+        <rhq.deploymentDir>${rhq.containerDir}/${rhq.earDeployDir}/${rhq.deploymentName}</rhq.deploymentDir>
       </properties>
 
       <build>
@@ -841,26 +843,38 @@
         <groupId>org.rhq.helpers</groupId>
         <artifactId>rest-docs-generator</artifactId>
         <version>${project.version}</version>
-        <scope>provided</scope>
       </dependency>
+
+      <!-- We need this, as otherwise processing fails completely with a class not found exception -->
+      <dependency>
+        <groupId>org.jboss.logging</groupId>
+        <artifactId>jboss-logging</artifactId>
+        <version>${jboss-logging.version}</version>
+      </dependency>
+
     </dependencies>
 
     <build>
       <!-- Document generation from the Annotations on the REST-API. -->
-      <!-- TODO move to a better suited processing phase -->
       <plugins>
-      
         <plugin>
-          <groupId>org.bsc.maven</groupId>
-          <artifactId>maven-processor-plugin</artifactId>
-          <version>2.0.6-redhat</version>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.0</version>
           <configuration>
-            <processors>
+            <annotationProcessors>
               <processor>org.rhq.helpers.rest_docs_generator.ClassLevelProcessor</processor>
-            </processors>
-            <compilerArguments>-AtargetDirectory=${project.build.directory}/docs/xml</compilerArguments>
-            <!-- Comment the next line in to get more verbose output for debugging -->
-            <!--<compilerArguments>-Averbose=true</compilerArguments> -->
+            </annotationProcessors>
+            <proc>only</proc>
+            <compilerArguments>
+              <AtargetDirectory>${project.build.directory}/docs/xml</AtargetDirectory>
+              <AmodelPkg>org.rhq.enterprise.server.rest.domain</AmodelPkg>
+              <AskipPkg>org.rhq.enterprise.server.rest.reporting</AskipPkg>
+              <!-- enable the next line to have the output of the processor shown on console -->
+              <!--<Averbose>true</Averbose>-->
+            </compilerArguments>
+            <!-- set the next to true to enable verbose output of the compiler plugin; default from the evn is true, but this is too noisy -->
+            <verbose>false</verbose>
           </configuration>
           <executions>
             <execution>
@@ -868,19 +882,10 @@
               <phase>process-classes</phase>
               <goals>
                 <!-- We want to process the classes in src/ -->
-                <goal>process</goal>
+                <goal>compile</goal>
               </goals>
             </execution>
           </executions>
-        </plugin>
-        
-        <!-- Disable annotation processors during normal compilation -->
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <configuration>
-            <compilerArgument>-proc:none</compilerArgument>
-          </configuration>
         </plugin>
 
         <plugin>
@@ -897,6 +902,7 @@
           <configuration>
             <transformationSets>
               <transformationSet>
+                <!-- Generate a html rendering -->
                 <!-- org.rhq.helpers.rest_docs_generator.test plugin wrote to target/docs/xml (see -AtargetDirectory above) -->
                 <dir>target/docs/xml</dir>
                 <includes>
@@ -906,7 +912,7 @@
                 <parameters>
                   <parameter>
                     <name>basePath</name>
-                    <value>http://localhost:7080/rest/1</value>
+                    <value>http://localhost:7080/rest</value>
                   </parameter>
                 </parameters>
                 <outputDir>${project.build.directory}/docs/html</outputDir>
@@ -917,6 +923,7 @@
                 </fileMappers>
               </transformationSet>
               <transformationSet>
+                <!-- Generate a docbook file as input to fop -->
                 <!-- org.rhq.helpers.rest_docs_generator.test plugin wrote to target/docs/xml (see -AtargetDirectory above) -->
                 <dir>target/docs/xml</dir>
                 <includes>
@@ -926,7 +933,7 @@
                 <parameters>
                   <parameter>
                     <name>basePath</name>
-                    <value>http://localhost:7080/rest/1</value>
+                    <value>http://localhost:7080/rest</value>
                   </parameter>
                 </parameters>
                 <outputDir>${project.build.directory}/docs/xml</outputDir>
@@ -939,11 +946,11 @@
             </transformationSets>
           </configuration>
         </plugin>
-        
+
         <plugin>
           <groupId>com.agilejava.docbkx</groupId>
           <artifactId>docbkx-maven-plugin</artifactId>
-          <version>2.0.9</version>
+          <version>2.0.14</version>
           <executions>
             <execution>
               <phase>process-classes</phase>
@@ -956,14 +963,14 @@
           <configuration>
             <sourceDirectory>target/docs/xml</sourceDirectory> <!-- from previous plugin, 2nd transformation set -->
             <includes>rest-api-out.dbx.xml</includes>
-            <hyphenate>false</hyphenate>
+            <hyphenate>true</hyphenate>
             <generateToc>true</generateToc>
           </configuration>
         </plugin>
       </plugins>
     </build>
   </profile>
-    
+
     <profile>
       <id>cobertura</id>
       <build>
@@ -1048,6 +1055,31 @@
         </plugins>
       </build>
     </profile>
+
+    <profile>
+      <id>signature-check</id>
+      <activation>
+        <property>
+          <name>signature-check-base-version</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>clirr-maven-plugin</artifactId>
+            <version>${clirr.version}</version>
+            <configuration>
+              <includes>
+                <include>**/*Remote</include>
+                <include>**/ServerVersion</include>
+              </includes>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
   </profiles>
 
   <reporting>

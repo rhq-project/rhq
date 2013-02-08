@@ -25,14 +25,6 @@
             <version>${project.version}</version>
         </dependency>
 
-<!-- 
-        <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-container-lib</artifactId>
-            <version>${project.version}</version>
-        </dependency>
- -->
- 
         <!-- 3rd Party Deps -->
 
         <dependency>
@@ -276,10 +268,6 @@
                                         <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
                                             <fileset dir="${basedir}/target/${project.build.finalName}" />
                                         </copy>
-                                        
-                                        <property name="rhq.earDoDeploy" location="${rhq.containerDir}/jbossas/standalone/deployments/${rhq.earName}.dodeploy" />
-                                        <echo>*** Deleting ${rhq.earDoDeploy}.dodeploy...</echo>                                                
-                                        <delete file="${rhq.earDoDeploy}" />
                                         
                                         <!-- Make sure shell scripts are readable and executable. -->
                                         <chmod perm="ug+x" verbose="true">

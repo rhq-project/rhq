@@ -42,6 +42,7 @@ public class TestContentServerPluginService extends ServerPluginService implemen
 
     private Map<Integer, ContentProvider> providers = new HashMap<Integer, ContentProvider>();
     private TestContentProvider defaultTestContentProvider;
+    private File tmpdir;
 
     /**
      * Creates and initializes the content server plugin container for use with the given test case.
@@ -50,6 +51,7 @@ public class TestContentServerPluginService extends ServerPluginService implemen
      */
     public TestContentServerPluginService(AbstractEJB3Test testContainer) {
         super();
+        tmpdir = testContainer.getTempDir();
         testContainer.prepareCustomServerPluginService(this);
         startMasterPluginContainer();
 
@@ -86,9 +88,8 @@ public class TestContentServerPluginService extends ServerPluginService implemen
 
     protected MasterServerPluginContainer createMasterPluginContainer() {
         MasterServerPluginContainer master = new TestMasterServerPluginContainer();
-        File dir = new File(System.getProperty("java.io.tmpdir") + "/rhq", this.getClass().getSimpleName());
-        MasterServerPluginContainerConfiguration config = new MasterServerPluginContainerConfiguration(dir, dir, dir,
-            null);
+        MasterServerPluginContainerConfiguration config = new MasterServerPluginContainerConfiguration(tmpdir, tmpdir,
+            tmpdir, null);
         master.initialize(config);
         return master;
     }

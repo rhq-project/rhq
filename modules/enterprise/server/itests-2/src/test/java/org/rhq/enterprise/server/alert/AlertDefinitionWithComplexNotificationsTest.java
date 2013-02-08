@@ -224,7 +224,7 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
                 em.persist(resourceAlertDefinition);
 
                 //only need this for a short time now, so that we can precreate the plugin structure
-                alertSenderService = new TestAlertSenderPluginService();
+                alertSenderService = new TestAlertSenderPluginService(getTempDir());
                 prepareCustomServerPluginService(alertSenderService);
                 alertSenderService.masterConfig.getPluginDirectory().mkdirs();
                 unprepareServerPluginService();
@@ -247,7 +247,7 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 
     //@BeforeMethod
     private void containerSetup() {
-        alertSenderService = new TestAlertSenderPluginService();
+        alertSenderService = new TestAlertSenderPluginService(getTempDir());
         prepareCustomServerPluginService(alertSenderService);
         alertSenderService.masterConfig.getPluginDirectory().mkdirs();
 

@@ -54,7 +54,7 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
     @Override
     protected void beforeMethod() {
         TestGenericServerPluginService pluginService;
-        pluginService = new TestGenericServerPluginService();
+        pluginService = new TestGenericServerPluginService(getTempDir());
         prepareCustomServerPluginService(pluginService);
 
         serverPluginsBean = LookupUtil.getServerPlugins();

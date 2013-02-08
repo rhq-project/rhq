@@ -172,6 +172,9 @@ public class Agent implements Serializable {
     public static final String QUERY_UPDATE_STATUS_BY_MEASUREMENT_BASELINE = "Agent.updateStatusByMeasurementBasleine";
     public static final String QUERY_UPDATE_STATUS_BY_AGENT = "Agent.updateStatusByAgent";
     public static final String QUERY_UPDATE_STATUS_FOR_ALL = "Agent.updateStatusForAll";
+    
+    // this value is set, when authorized user wants to reset the token
+    public static final String SECURITY_TOKEN_RESET = "@#$reset$#@";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "id")
@@ -222,7 +225,7 @@ public class Agent implements Serializable {
     /**
      * Creates a new instance of Agent
      */
-    protected Agent() {
+    public Agent() {
     }
 
     /**

@@ -296,7 +296,7 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         if (location == null) {
             return;
         }
-        m_configFile = StringPropertyReplacer.replaceProperties(location);
+        m_configFile = replaceProperties(location);
     }
 
     @Override
@@ -320,7 +320,7 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
             m_overridesFile = null;
         } else {
             // substitute ${} replacement variables found in the location string
-            m_overridesFile = StringPropertyReplacer.replaceProperties(location);
+            m_overridesFile = replaceProperties(location);
         }
     }
 
@@ -806,7 +806,7 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
                 String value = entry.getValue().toString();
 
                 // allow ${var} notation in the values so we can provide variable replacements in the values
-                value = StringPropertyReplacer.replaceProperties(value);
+                value = replaceProperties(value);
 
                 preferences_node.put(key, value);
                 LOG.debug(ServerI18NResourceKeys.CONFIG_PREFERENCE_OVERRIDE, key, value);
@@ -1014,5 +1014,21 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         getServiceContainer().setConcurrencyManager(new ConcurrencyManager(limits));
 
         LOG.info(ServerI18NResourceKeys.NEW_CONCURRENCY_LIMIT, limitName, maxConcurrency);
+    }
+
+    private String replaceProperties(String str) {
+        if (str == null) {
+            return null;
+        }
+
+        // keep replacing properties until no more ${} tokens are left that are replaceable
+        String newValue = "";
+        String oldValue = str;
+        while (!newValue.equals(oldValue)) {
+            oldValue = str;
+            newValue = StringPropertyReplacer.replaceProperties(str);
+            str = newValue;
+        }
+        return newValue;
     }
 }

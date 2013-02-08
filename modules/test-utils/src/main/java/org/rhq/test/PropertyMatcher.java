@@ -23,13 +23,13 @@
 
 package org.rhq.test;
 
-import org.apache.commons.beanutils.PropertyUtils;
-
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.commons.beanutils.PropertyUtils;
 
 public class PropertyMatcher<T> {
 
@@ -38,6 +38,8 @@ public class PropertyMatcher<T> {
     private T actual;
 
     private Set<String> ignoredProperties = new HashSet<String>();
+
+    private Double maxDifference;
 
     public void setExpected(T expected) {
         this.expected = expected;
@@ -49,6 +51,10 @@ public class PropertyMatcher<T> {
 
     public void setIgnoredProperties(Collection<String> ignoredProperties) {
         this.ignoredProperties.addAll(ignoredProperties);
+    }
+
+    public void setMaxDifference(Double maxDifference) {
+        this.maxDifference = maxDifference;
     }
 
     public MatchResult execute() {
@@ -96,6 +102,18 @@ public class PropertyMatcher<T> {
         if (expected == null && actual != null) {
             return false;
         }
+
+        if (maxDifference != null && expected instanceof Double) {
+            boolean result = expected.equals(actual);
+            if (!result) {
+                Double dExpected = (Double) expected;
+                Double dActual = (Double) actual;
+                Double diff = Math.abs(dExpected - dActual);
+                result = ((!diff.isNaN()) && (!diff.isInfinite()) && (diff < maxDifference));
+            }
+            return result;
+        }
+
         return expected.equals(actual);
     }
 }

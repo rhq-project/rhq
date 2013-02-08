@@ -22,14 +22,22 @@
  */
 package org.rhq.core.domain.cloud.composite;
 
+import java.io.Serializable;
+
 import org.rhq.core.domain.cloud.Server;
 
 /**
  * @author Joseph Marques
  */
-public class ServerWithAgentCountComposite {
-    private final Server server;
-    private final int agentCount;
+public class ServerWithAgentCountComposite implements Serializable {
+
+    private static final long serialVersionUID = -7553274660445454259L;
+    private Server server;
+    private int agentCount;
+    
+    public ServerWithAgentCountComposite() {
+     // GWT needs this
+    }
 
     public ServerWithAgentCountComposite(Server server, Number agentCount) {
         super();

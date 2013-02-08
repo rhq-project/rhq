@@ -33,6 +33,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersDataSource;
 import org.rhq.enterprise.gui.coregui.client.dashboard.ConfigurablePortlet;
@@ -57,7 +58,11 @@ public class MessagePortlet extends LocatableHTMLPane implements ConfigurablePor
     private static String DEFAULT_MESSAGE;
     {
         ProductInfo productInfo = CoreGUI.get().getProductInfo();
-        DEFAULT_MESSAGE = MSG.view_dashboardsManager_message_title_details(productInfo.getShortName());
+        String link1 = LinkManager.getAutodiscoveryQueueLink();
+        String link2 = LinkManager.getAllResourcesLink();
+        String link3 = LinkManager.getHelpLink();
+        DEFAULT_MESSAGE = MSG.view_dashboardsManager_message_title_details(productInfo.getShortName(), link1, link2,
+            link3);
     }
 
     public MessagePortlet(String locatorId) {

@@ -156,8 +156,8 @@
 #                              some special string manipulation to get the
 #                              agent script to start. See below for an
 #                              example of how to do this. 
-#RHQ_AGENT_START_COMMAND="su -m -l user -c '${RHQ_AGENT_HOME}/bin/rhq-agent.sh'"
-#RHQ_AGENT_START_COMMAND="su -m -l user -c '$(echo ${RHQ_AGENT_HOME}|sed 's/ /\\ /')/bin/rhq-agent.sh'"
+#RHQ_AGENT_START_COMMAND="su -m user -c '${RHQ_AGENT_HOME}/bin/rhq-agent.sh'"
+#RHQ_AGENT_START_COMMAND="su -m user -c '$(echo ${RHQ_AGENT_HOME}|sed 's/ /\\ /')/bin/rhq-agent.sh'"
 
 #    RHQ_AGENT_PASSWORD_PROMPT - if "true", this indicates that the user
 #                                that is to run the agent must type the

@@ -61,6 +61,11 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
     }
 
     @Override
+    protected int getResourceId() {
+        return -1;
+    }
+
+    @Override
     protected void init(final boolean isReadOnly) {
         if (isNewRecord()) {
             ResourceDatasource resourceDatasource = new ResourceDatasource();

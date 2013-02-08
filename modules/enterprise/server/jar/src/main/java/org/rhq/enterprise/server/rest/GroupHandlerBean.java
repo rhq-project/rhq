@@ -1,3 +1,21 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
 package org.rhq.enterprise.server.rest;
 
 import java.net.URI;
@@ -9,17 +27,37 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiError;
+import com.wordnik.swagger.annotations.ApiErrors;
+import com.wordnik.swagger.annotations.ApiOperation;
+import com.wordnik.swagger.annotations.ApiParam;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.jboss.resteasy.annotations.GZIP;
+import org.jboss.resteasy.annotations.cache.Cache;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
@@ -30,6 +68,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
@@ -51,7 +90,10 @@ import org.rhq.enterprise.server.rest.domain.ResourceWithType;
  */
 @Stateless
 @Interceptors(SetCallerInterceptor.class)
-public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLocal {
+@Path("/group")
+@Api(value="Deal with groups and DynaGroups", description = "Api that deals with resource groups and group definitions")
+@Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
+public class GroupHandlerBean extends AbstractRestBean  {
 
     private final Log log = LogFactory.getLog(GroupHandlerBean.class);
 
@@ -64,13 +106,22 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     @EJB
     GroupDefinitionManagerLocal definitionManager;
 
-    public Response getGroups(String q, @Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
+    EntityManager em;
+
+
+    @GZIP
+    @GET
+    @Path("/")
+    @ApiOperation(value = "List all groups", multiValueResponse = true, responseClass = "GroupRest")
+    public Response getGroups(@ApiParam("String to search in the group name") @QueryParam("q") String q,
+                              @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         if (q!=null) {
             criteria.addFilterName(q);
         }
-        List<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(caller,criteria);
+        List<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(caller, criteria);
 
         List<GroupRest> list = new ArrayList<GroupRest>(groups.size());
         for (ResourceGroup group : groups) {
@@ -78,22 +129,28 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
         }
 
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
-        Response.ResponseBuilder builder;
+        Response.ResponseBuilder builder = Response.ok();
+        builder.type(mediaType);
 
         if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
-            builder = Response.ok(renderTemplate("listGroup", list), mediaType);
+            builder.entity(renderTemplate("listGroup", list));
         }
         else {
             GenericEntity<List<GroupRest>> ret = new GenericEntity<List<GroupRest>>(list) {};
-            builder = Response.ok(ret);
+            builder.entity(ret);
         }
 
         return builder.build();
 
     }
 
-    @Override
-    public Response getGroup(int id, @Context Request request, @Context HttpHeaders headers,
+    @Cache(isPrivate = true,maxAge = 60)
+    @GET
+    @Path("{id}")
+    @ApiOperation(value = "Get the group with the passed id")
+    @ApiError(code = 404, reason = "Group with passed id not found")
+    public Response getGroup(@ApiParam(value = "Id of the group") @PathParam("id") int id,
+                             @Context HttpHeaders headers,
                              @Context UriInfo uriInfo) {
 
         ResourceGroup group = fetchGroup(id, false);
@@ -102,20 +159,35 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
 
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
 
-        Response.ResponseBuilder builder;
+        Response.ResponseBuilder builder = Response.ok();
+        builder.type(mediaType);
 
         if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
-            builder = Response.ok(renderTemplate("group", groupRest), mediaType);
+            builder.entity(renderTemplate("group", groupRest));
         }
         else {
-            builder = Response.ok(groupRest,mediaType);
+            builder.entity(groupRest);
         }
 
         return builder.build();
     }
 
-    @Override
-    public Response createGroup(GroupRest group, @Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+    @POST
+    @Path("/")
+    @ApiOperation(value = "Create a new group")
+    @ApiErrors({
+        @ApiError(code = 404, reason = "Resource type for provided type id does not exist"),
+        @ApiError(code = 406, reason = "No group provided"),
+        @ApiError(code = 406, reason = "Provided group has no name")
+    })
+    public Response createGroup(
+            @ApiParam(value = "A GroupRest object containing at least a name for the group") GroupRest group,
+            @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+
+        if (group==null)
+            throw new BadArgumentException("A group must be provided");
+        if (group.getName()==null)
+            throw new BadArgumentException("A group name is required");
 
         ResourceGroup newGroup = new ResourceGroup(group.getName());
         if (group.getResourceTypeId()!=null) {
@@ -125,29 +197,38 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
                 resourceType = resourceTypeManager.getResourceTypeById(caller,group.getResourceTypeId());
                 newGroup.setResourceType(resourceType);
             } catch (ResourceTypeNotFoundException e) {
-                e.printStackTrace();  // TODO: Customise this generated block
                 throw new StuffNotFoundException("ResourceType with id " + group.getResourceTypeId());
             }
         }
 
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
         Response.ResponseBuilder builder;
         try {
-            newGroup = resourceGroupManager.createResourceGroup(caller,newGroup);
+            newGroup = resourceGroupManager.createResourceGroup(caller, newGroup);
             UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
             uriBuilder.path("/group/{id}");
             URI uri = uriBuilder.build(newGroup.getId());
 
             builder=Response.created(uri);
+            builder.type(mediaType);
             putToCache(newGroup.getId(),ResourceGroup.class,newGroup);
         } catch (Exception e) {
-            e.printStackTrace();  // TODO: Customise this generated block
             builder=Response.status(Response.Status.NOT_ACCEPTABLE);
+            builder.type(mediaType);
+            builder.entity(e.getCause());
         }
         return builder.build();
     }
 
-    @Override
-    public Response updateGroup(int id, GroupRest in, @Context Request request,
+    @PUT
+    @Path("{id}")
+    @ApiOperation(value = "Update the passed group. Currently only name change is supported")
+    @ApiErrors({
+        @ApiError(code = 404, reason = "Group with the passed id does not exist"),
+        @ApiError(code = 406, reason = "Updating the name failed")
+    })
+    public Response updateGroup(@ApiParam(value = "Id of the group to update") @PathParam("id") int id,
+                                @ApiParam(value = "New version of the group") GroupRest in,
                                 @Context HttpHeaders headers,
                                 @Context UriInfo uriInfo) {
 
@@ -166,22 +247,29 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
         return builder.build();
     }
 
-    @Override
-    public Response deleteGroup(int id, @Context Request request, @Context HttpHeaders headers,
-                                @Context UriInfo uriInfo) {
+    @DELETE
+    @Path("{id}")
+    @ApiOperation(value="Delete the group with the passed id")
+    public Response deleteGroup(@ApiParam("Id of the group to delete") @PathParam("id") int id) {
 
         try {
             resourceGroupManager.deleteResourceGroup(caller,id);
             removeFromCache(id,ResourceGroup.class);
-            return Response.ok().build();
         } catch (ResourceGroupDeleteException e) {
             e.printStackTrace();  // TODO: Customise this generated block
             return Response.serverError().build(); // TODO what exactly ?
         }
+        return Response.noContent().build();
     }
 
-    @Override
-    public Response getResources(int id, @Context Request request, @Context HttpHeaders headers,
+    @GZIP
+    @GET
+    @Path("{id}/resources")
+    @Cache(isPrivate = true,maxAge = 60)
+    @ApiOperation(value="Get the resources of the group", multiValueResponse = true, responseClass = "ResourceWithType")
+    @ApiError(code = 404, reason = "Group with passed id does not exist")
+    public Response getResources(@ApiParam("Id of the group to retrieve the resources for") @PathParam("id") int id,
+                                 @Context HttpHeaders headers,
                                  @Context UriInfo uriInfo) {
 
         ResourceGroup resourceGroup = fetchGroup(id, false);
@@ -206,9 +294,16 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
 
     }
 
-    @Override
-    public Response addResource(int id, int resourceId,
-                                @Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+    @PUT
+    @Path("{id}/resource/{resourceId}")
+    @ApiOperation(value="Add a resource to an existing group")
+    @ApiErrors({
+            @ApiError(code = 404,reason = "If there is no resource or group with the passed id "),
+            @ApiError(code = 409,reason =" Resource type does not match the group one")
+    })
+    public Response addResource(@ApiParam("Id of the existing group") @PathParam("id") int id,
+                                @ApiParam("Id of the resource to add") @PathParam("resourceId") int resourceId,
+                                @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         ResourceGroup resourceGroup = fetchGroup(id, false);
         Resource res = resourceManager.getResource(caller,resourceId);
@@ -222,18 +317,31 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
         }
 
         // TODO if comp group and no resourceTypeId set, shall we allow to have it change to a mixed group?
-        resourceGroup.addExplicitResource(res);
+        resourceGroupManager.addResourcesToGroup(caller,id,new int[]{resourceId});
 
-        return Response.ok().build(); // TODO right code?
+        resourceGroup = fetchGroup(id, false);
+        GroupRest gr = fillGroup(resourceGroup,uriInfo);
+
+        Response.ResponseBuilder builder = Response.ok(); // TODO right code?
+        builder.entity(gr);
+        builder.type(headers.getAcceptableMediaTypes().get(0));
+        return builder.build();
 
     }
 
-    @Override
-    public Response removeResource(int id, int resourceId,
-                                   @Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+    @DELETE
+    @Path("{id}/resource/{resourceId}")
+    @ApiOperation("Remove the resource with the passed id from the group")
+    @ApiErrors({
+        @ApiError(code = 404, reason = "Group with the passed id does not exist"),
+        @ApiError(code = 404, reason = "Resource with the passed id does not exist")
+    })
+    public Response removeResource(@ApiParam("Id of the existing group") @PathParam("id") int id,
+                                   @ApiParam("Id of the resource to remove") @PathParam("resourceId") int resourceId,
+                                   @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         ResourceGroup resourceGroup = fetchGroup(id, false);
-        Resource res = resourceManager.getResource(caller,resourceId);
+        Resource res = resourceManager.getResource(caller, resourceId);
         if (res==null)
             throw new StuffNotFoundException("Resource with id " + resourceId);
 
@@ -243,9 +351,14 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
 
     }
 
-    @Override
-    public Response getMetricDefinitionsForGroup(int id,  Request request,  HttpHeaders headers,
-                                                  UriInfo uriInfo) {
+    @GET
+    @GZIP
+    @Path("{id}/metricDefinitions")
+    @ApiOperation(value = "Get the metric definitions for the compatible group with the passed id")
+    @ApiError(code = 404, reason = "Group with the passed id does not exist")
+    public Response getMetricDefinitionsForGroup(@ApiParam(value = "Id of the group") @PathParam("id") int id,
+                                                 @Context HttpHeaders headers,
+                                                 @Context UriInfo uriInfo) {
         ResourceGroup group = fetchGroup(id, true);
 
         Set<MeasurementDefinition> definitions = group.getResourceType().getMetricDefinitions();
@@ -276,34 +389,14 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
         return builder.build();
     }
 
-    private GroupRest fillGroup(ResourceGroup group, UriInfo uriInfo) {
-
-        GroupRest gr = new GroupRest(group.getName());
-        gr.setId(group.getId());
-        gr.setCategory(group.getGroupCategory());
-        gr.setRecursive(group.isRecursive());
-        if (group.getGroupDefinition()!=null)
-            gr.setDynaGroupDefinitionId(group.getGroupDefinition().getId());
-        gr.setExplicitCount(group.getExplicitResources().size());
-        gr.setImplicitCount(group.getImplicitResources().size());
-        UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
-        uriBuilder.path("/group/{id}");
-        URI uri = uriBuilder.build(group.getId());
-        Link link = new Link("edit",uri.toASCIIString());
-        gr.getLinks().add(link);
-
-        uriBuilder = uriInfo.getBaseUriBuilder();
-        uriBuilder.path("/group/{id}/metricDefinitions");
-        uri = uriBuilder.build(group.getId());
-        link = new Link("metricDefinitions",uri.toASCIIString());
-        gr.getLinks().add(link);
-
-        return gr;
-    }
-
-    @Override
-    public Response getGroupDefinitions(String q, @Context Request request, @Context HttpHeaders headers,
-                                        @Context UriInfo uriInfo) {
+    @GZIP
+    @GET
+    @Path("/definitions")
+    @ApiOperation(value="List all existing GroupDefinitions",multiValueResponse = true, responseClass = "GroupDefinitionRest")
+    public Response getGroupDefinitions(
+            @ApiParam("String to search in the group definition name") @QueryParam("q") String q,
+            @Context HttpHeaders headers,
+            @Context UriInfo uriInfo) {
 
         ResourceGroupDefinitionCriteria criteria = new ResourceGroupDefinitionCriteria();
         if (q!=null) {
@@ -332,9 +425,15 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
         return builder.build();
     }
 
-    @Override
-    public Response getGroupDefinition(int definitionId, @Context Request request,
-                                       @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+    @GZIP
+    @GET
+    @Path("/definition/{id}")
+    @Cache(isPrivate = true,maxAge = 60)
+    @ApiOperation(value = "Retrieve a single GroupDefinition by id", responseClass = "GroupDefinitionRest")
+    @ApiError(code = 404, reason = "Group definition with the passed id does not exist.")
+    public Response getGroupDefinition(
+            @ApiParam("The id of the definition to retrieve") @PathParam("id") int definitionId,
+            @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         try {
             GroupDefinition def = definitionManager.getById(definitionId);
@@ -374,9 +473,12 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
         return gdr;
     }
 
-    @Override
-    public Response deleteGroupDefinition(int definitionId, @Context Request request,
-                                          @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+    @DELETE
+    @Path("/definition/{id}")
+    @ApiOperation("Delete the GroupDefinition with the passed id")
+    public Response deleteGroupDefinition(
+            @ApiParam("The id of the definition to delete") @PathParam("id") int definitionId,
+            @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         try {
             GroupDefinition def = definitionManager.getById(definitionId);
@@ -390,9 +492,17 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
         }
     }
 
-    @Override
+    @POST
+    @Path("/definitions")
+    @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
+    @ApiOperation("Create a new GroupDefinition. The name of the group is required in the passed definition.")
+    @ApiErrors({
+        @ApiError(code = 406, reason = "Passed group definition has no name"),
+        @ApiError(code = 409, reason = "There already exists a definition by this name"),
+        @ApiError(code = 406, reason = "Group creation failed")
+    })
     public Response createGroupDefinition(GroupDefinitionRest definition,
-                                          @Context Request request, @Context HttpHeaders headers,
+                                          @Context HttpHeaders headers,
                                           @Context UriInfo uriInfo) {
 
         Response.ResponseBuilder builder = null;
@@ -432,17 +542,28 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
 
         } catch (GroupDefinitionAlreadyExistsException e) {
             builder =Response.status(Response.Status.CONFLICT);
+            builder.entity(e.getMessage());
         } catch (GroupDefinitionCreateException e) {
             e.printStackTrace();  // TODO: Customise this generated block
-            builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR);
+            builder = Response.status(Response.Status.NOT_ACCEPTABLE);
+            builder.entity(e.getMessage());
         }
         return builder.build();
     }
 
-    @Override
-    public Response updateGroupDefinition(int definitionId,
-                                          boolean recalculate, GroupDefinitionRest definition,
-                                          @Context Request request, @Context HttpHeaders headers,
+    @PUT
+    @Path("/definition/{id}")
+    @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
+    @ApiOperation("Update an existing GroupDefinition or recalculate it if the query param 'recalculate' is set to true")
+    @ApiErrors({
+        @ApiError(code = 404, reason = "Group with the passed id does not exist"),
+        @ApiError(code = 406, reason = "Group membership calculation failed")
+    })
+    public Response updateGroupDefinition(@ApiParam("Id fo the definition to update") @PathParam("id") int definitionId,
+                                          @ApiParam("If true, trigger a re-calculation") @QueryParam( "recalculate")
+                                          @DefaultValue("false") boolean recalculate,
+                                          GroupDefinitionRest definition, // TODO mark as optional?
+                                          @Context HttpHeaders headers,
                                           @Context UriInfo uriInfo) {
 
         GroupDefinition gd;
@@ -453,6 +574,19 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
         }
 
         Response.ResponseBuilder builder = null;
+
+        if (recalculate) {
+            try {
+                definitionManager.calculateGroupMembership(caller,gd.getId());
+                builder = Response.noContent();
+            } catch (Exception e) {
+                builder = Response.status(Response.Status.NOT_ACCEPTABLE);
+                builder.entity(e.getLocalizedMessage());
+            }
+            return builder.build();
+        }
+
+        // Not recalculation, but an update
 
         if (!definition.getName().isEmpty())
             gd.setName(definition.getName());
@@ -471,18 +605,11 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
         try {
             definitionManager.updateGroupDefinition(caller,gd);
         } catch (Exception e) {
-            e.printStackTrace();  // TODO: Customise this generated block
             builder = Response.status(Response.Status.NOT_ACCEPTABLE);
             builder.entity(e.getLocalizedMessage());
             return builder.build();
         }
 
-        if (recalculate) {
-            try {
-                definitionManager.calculateGroupMembership(caller,gd.getId());
-            } catch (Exception e) {
-            }
-        }
 
         try {
             // Re-fetch, as groups may have changed
@@ -492,9 +619,12 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
 
             builder = Response.ok(gdr);
         } catch (GroupDefinitionNotFoundException e) {
-            throw new StuffNotFoundException("Group Definition with id " + gd.getId());
+            builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR);
+            builder.entity("Group Definition with id " + gd.getId());
         }
 
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        builder.type(mediaType);
         return builder.build();
     }
 

@@ -35,7 +35,7 @@ public class CloudManagerJob extends AbstractStatefulJob {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
         log.debug("Begin scanning for servers that missed their heartbeat");
         try {
-            LookupUtil.getCloudManager().markStaleServersDown(overlord);
+            LookupUtil.getTopologyManager().markStaleServersDown(overlord);
         } finally {
             log.debug("Finished scanning for servers that missed their heartbeat");
         }

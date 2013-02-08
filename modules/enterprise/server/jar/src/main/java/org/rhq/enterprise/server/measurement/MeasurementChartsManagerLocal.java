@@ -54,15 +54,11 @@ public interface MeasurementChartsManagerLocal {
      * @return
      *
      * @throws MeasurementException
-     * 
-     * @deprecated portal-war
      */
     List<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(Subject subject, int groupId,
         int[] measurementDefinitionIds, long begin, long end, boolean enabledOnly) throws MeasurementException;
 
-    /**
-     * @deprecated portal-war
-     */
+    
     List<MetricDisplaySummary> getMetricDisplaySummariesForCompatibleGroup(Subject subject, int groupId, String viewName);
 
     /**
@@ -79,28 +75,19 @@ public interface MeasurementChartsManagerLocal {
      * @return
      *
      * @throws MeasurementException
-     * 
-     * @deprecated portal-war
      */
     List<MetricDisplaySummary> getMetricDisplaySummariesForAutoGroup(Subject subject, int autoGroupParentResourceId,
         int autoGroupChildResourceTypeId, int[] measurementDefinitionIds, long begin, long end, boolean enabledOnly)
         throws MeasurementException;
 
-    /**
-     * @deprecated portal-war
-     */
+
     List<MetricDisplaySummary> getMetricDisplaySummariesForAutoGroup(Subject subject, int parent, int type,
         String viewName);
 
-    /**
-     * @deprecated portal-war
-     */
     List<MetricDisplaySummary> getMetricDisplaySummariesForResource(Subject subject, int resourceId,
         int[] measurementScheduleIds, long begin, long end) throws MeasurementException;
 
-    /**
-     * @deprecated portal-war
-     */
+
     List<MetricDisplaySummary> getMetricDisplaySummariesForResource(Subject subject, int resourceId, String viewName)
         throws MeasurementException;
 

@@ -24,10 +24,10 @@ package org.rhq.core.system;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
 
 import org.hyperic.sigar.ProcCpu;
 import org.hyperic.sigar.ProcFd;
@@ -110,23 +110,26 @@ public class AggregateProcessInfo extends ProcessInfo {
             // There are some instances where SIGAR can't get one or more of these (maybe permission issues?).
             // Do not bomb if we can't get one or more of these - we'll just handle nulls appropriately.
 
+            // It is safe to get the prior snapshot as we just called super.refresh
+            ProcessInfoSnapshot priorSnaphot = priorSnaphot();
+
             try {
-                procTimes.add(super.procTime);
+                procTimes.add(priorSnaphot.getTime());
             } catch (Exception e) {
             }
 
             try {
-                procMems.add(super.procMem);
+                procMems.add(priorSnaphot.getMemory());
             } catch (Exception e) {
             }
 
             try {
-                procCpus.add(super.procCpu);
+                procCpus.add(priorSnaphot.getCpu());
             } catch (Exception e) {
             }
 
             try {
-                procFds.add(super.procFd);
+                procFds.add(priorSnaphot.getFileDescriptor());
             } catch (Exception e) {
             }
 

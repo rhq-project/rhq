@@ -47,7 +47,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public class MetadataBeanTest extends AbstractEJB3Test {
 
-    private List<Integer> pluginIds = new ArrayList<Integer>();
+    private final String objectFileName = "pluginIds.obj";
+    private Set<Integer> pluginIds;
 
     /** 
      * <pre>IMPORTANT NOTE FOR SUBCLASS IMPLEMENTORS
@@ -63,10 +64,14 @@ public class MetadataBeanTest extends AbstractEJB3Test {
     protected void afterClassWork() throws Exception {
         PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-        pluginMgr.deletePlugins(overlord, pluginIds);
-        pluginMgr.markPluginsForPurge(overlord, pluginIds);
-        new PurgePluginsJob().executeJobCode(null);
+        List<Integer> doomedPlugins = new ArrayList<Integer>(pluginIds);
+        pluginMgr.deletePlugins(overlord, doomedPlugins);
+        pluginMgr.markPluginsForPurge(overlord, new ArrayList(doomedPlugins));
         new PurgeResourceTypesJob().executeJobCode(null);
+        new PurgePluginsJob().executeJobCode(null);
+
+        pluginIds.clear();
+        deleteObjects(objectFileName);
     }
 
     @Override
@@ -74,11 +79,18 @@ public class MetadataBeanTest extends AbstractEJB3Test {
 
         setupDB();
 
-        TestBundleServerPluginService bundleService = new TestBundleServerPluginService();
+        TestBundleServerPluginService bundleService = new TestBundleServerPluginService(getTempDir());
         prepareCustomServerPluginService(bundleService);
         bundleService.startMasterPluginContainerWithoutSchedulingJobs();
         prepareScheduler();
         preparePluginScannerService();
+
+        try {
+            List<Object> objects = readObjects(objectFileName, 1);
+            pluginIds = (Set<Integer>) objects.get(0);
+        } catch (Throwable t) {
+            pluginIds = new HashSet<Integer>();
+        }
     }
 
     /**
@@ -88,6 +100,10 @@ public class MetadataBeanTest extends AbstractEJB3Test {
      */
     @Override
     protected void afterMethod() throws Exception {
+
+        if (!pluginIds.isEmpty()) {
+            writeObjects(objectFileName, pluginIds);
+        }
 
         unpreparePluginScannerService();
         unprepareServerPluginService();

@@ -24,8 +24,6 @@ package org.rhq.core.domain.content.test;
 
 import java.util.List;
 
-import javax.persistence.EntityManager;
-
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.content.Architecture;
@@ -47,8 +45,6 @@ public class ContentSourceSyncResultsTest extends AbstractEJB3Test {
     public void testInsert() throws Exception {
         getTransactionManager().begin();
         try {
-            EntityManager em = getEntityManager();
-
             ResourceType rt = new ResourceType("testCSSRResourceType", "testPlugin", ResourceCategory.PLATFORM, null);
             Resource resource = new Resource("testCSSRResource", "testCSSRResource", rt);
             resource.setUuid("uuid");
@@ -74,8 +70,6 @@ public class ContentSourceSyncResultsTest extends AbstractEJB3Test {
             em.persist(results);
             cs.addSyncResult(results);
             em.flush();
-            //em.close();
-            em = getEntityManager();
 
             cs = em.find(ContentSource.class, cs.getId());
             assert cs != null;
@@ -100,8 +94,6 @@ public class ContentSourceSyncResultsTest extends AbstractEJB3Test {
             em.persist(results);
             cs.addSyncResult(results);
             em.flush();
-            //em.close();
-            em = getEntityManager();
 
             cs = em.find(ContentSource.class, cs.getId());
             assert cs != null;

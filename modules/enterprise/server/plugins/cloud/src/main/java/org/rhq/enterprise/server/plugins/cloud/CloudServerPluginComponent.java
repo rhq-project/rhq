@@ -20,7 +20,7 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.cloud.CloudManagerLocal;
+import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
 import org.rhq.enterprise.server.plugin.pc.ControlFacet;
@@ -57,7 +57,7 @@ public class CloudServerPluginComponent implements ServerPluginComponent, Contro
 
             ControlResults results = new ControlResults();
 
-            CloudManagerLocal cloudMgr = LookupUtil.getCloudManager();
+            TopologyManagerLocal cloudMgr = LookupUtil.getTopologyManager();
             Server server = cloudMgr.getServerByName(serverName);
 
             if (server == null) {
@@ -91,7 +91,7 @@ public class CloudServerPluginComponent implements ServerPluginComponent, Contro
     public void syncServerEndpoints(ScheduledJobInvocationContext context) {
         log.debug("Preparing to sync server endpoints.");
 
-        CloudManagerLocal cloudMgr = LookupUtil.getCloudManager();
+        TopologyManagerLocal cloudMgr = LookupUtil.getTopologyManager();
         List<Server> servers = cloudMgr.getAllServers();
 
         purgeStaleServers(context, servers);

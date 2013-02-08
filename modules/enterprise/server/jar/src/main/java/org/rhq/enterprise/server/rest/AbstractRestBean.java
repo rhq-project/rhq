@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -57,6 +57,7 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.rest.domain.GroupRest;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 
@@ -411,7 +412,7 @@ public class AbstractRestBean {
      * @param requireCompatible Does the group have to be a compatible group?
      * @return the group object if found
      * @throws org.rhq.enterprise.server.rest.StuffNotFoundException if the group is not found (or not accessible by the caller)
-     * @throws IllegalArgumentException if a compatible group is required, but the found one is not a compatible one
+     * @throws BadArgumentException if a compatible group is required, but the found one is not a compatible one
      */
     protected ResourceGroup fetchGroup(int groupId, boolean requireCompatible) {
         ResourceGroup resourceGroup;
@@ -420,13 +421,38 @@ public class AbstractRestBean {
             throw new StuffNotFoundException("Group with id " + groupId);
         if (requireCompatible) {
             if (resourceGroup.getGroupCategory() != GroupCategory.COMPATIBLE) {
-                throw new IllegalArgumentException("Group with id " + groupId + " is no compatible group");
+                throw new BadArgumentException("Group with id " + groupId,"it is no compatible group");
             }
         }
         return resourceGroup;
     }
 
-    private static class CacheKey {
+    protected GroupRest fillGroup(ResourceGroup group, UriInfo uriInfo) {
+
+        GroupRest gr = new GroupRest(group.getName());
+        gr.setId(group.getId());
+        gr.setCategory(group.getGroupCategory());
+        gr.setRecursive(group.isRecursive());
+        if (group.getGroupDefinition()!=null)
+            gr.setDynaGroupDefinitionId(group.getGroupDefinition().getId());
+        gr.setExplicitCount(group.getExplicitResources().size());
+        gr.setImplicitCount(group.getImplicitResources().size());
+        UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.path("/group/{id}");
+        URI uri = uriBuilder.build(group.getId());
+        Link link = new Link("edit",uri.toASCIIString());
+        gr.getLinks().add(link);
+
+        uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.path("/group/{id}/metricDefinitions");
+        uri = uriBuilder.build(group.getId());
+        link = new Link("metricDefinitions",uri.toASCIIString());
+        gr.getLinks().add(link);
+
+        return gr;
+    }
+
+    protected static class CacheKey {
         private String namespace;
         private int id;
 

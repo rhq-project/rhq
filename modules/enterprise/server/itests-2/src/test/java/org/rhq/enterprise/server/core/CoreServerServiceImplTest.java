@@ -145,8 +145,8 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
         // in order to register, we need to mock out the agent version file used by the server
         // to determine the agent version it supports.
         agentVersion = new AgentVersion("1.2.3", "12345");
-        File agentVersionFile = new File(mbean.getJBossServerHomeDir(),
-            "deployments/rhq.ear/rhq-downloads/rhq-agent/rhq-server-agent-versions.properties");
+        File agentVersionFile = new File(mbean.getJBossServerDataDir(),
+            "rhq-downloads/rhq-agent/rhq-server-agent-versions.properties");
         agentVersionFile.getParentFile().mkdirs();
         agentVersionFile.delete();
         Properties agentVersionProps = new Properties();
@@ -178,8 +178,9 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
     protected void afterMethod() throws Exception {
 
         // cleanup our test server
-        LookupUtil.getCloudManager().updateServerMode(new Integer[] { server.getId() }, OperationMode.DOWN);
-        LookupUtil.getCloudManager().deleteServer(server.getId());
+        LookupUtil.getTopologyManager().updateServerMode(LookupUtil.getSubjectManager().getOverlord(),
+            new Integer[] { server.getId() }, OperationMode.DOWN);
+        LookupUtil.getTopologyManager().deleteServer(LookupUtil.getSubjectManager().getOverlord(), server.getId());
 
         // shutdown our mock mbean server
         unprepareCustomServerService(CoreServerMBean.OBJECT_NAME);
@@ -531,17 +532,22 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
 
         @Override
         public File getJBossServerHomeDir() {
-            return getTempDir();
+            return new File(getTempDir(), "CoreServerServiceImplTest");
         }
 
         @Override
         public File getJBossServerDataDir() {
-            return null;
+            return new File(getTempDir(), "CoreServerServiceImplTest");
         }
 
         @Override
         public File getJBossServerTempDir() {
-            return null;
+            return new File(getTempDir(), "CoreServerServiceImplTest");
+        }
+
+        @Override
+        public File getEarDeploymentDir() {
+            return new File(getTempDir(), "CoreServerServiceImplTest");
         }
 
         @Override

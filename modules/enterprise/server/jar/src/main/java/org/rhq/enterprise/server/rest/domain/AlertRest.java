@@ -21,20 +21,17 @@ package org.rhq.enterprise.server.rest.domain;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import com.wordnik.swagger.annotations.ApiClass;
 import com.wordnik.swagger.annotations.ApiProperty;
-
-import org.jboss.resteasy.links.RESTServiceDiscovery;
 
 /**
  * A single alert
  * @author Heiko W. Rupp
  */
 @ApiClass(value = "This class represents a single fired alert.")
-@XmlRootElement
+@XmlRootElement(name = "alert")
 public class AlertRest {
 
     private int id;

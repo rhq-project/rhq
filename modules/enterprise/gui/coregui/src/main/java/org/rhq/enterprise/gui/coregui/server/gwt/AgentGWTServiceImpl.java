@@ -18,7 +18,11 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import java.util.List;
+
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.AgentGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
@@ -26,6 +30,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author Simeon Pinder
+ * @author Jirka Kremser
  */
 public class AgentGWTServiceImpl extends AbstractGWTServiceImpl implements AgentGWTService {
 
@@ -50,6 +55,36 @@ public class AgentGWTServiceImpl extends AbstractGWTServiceImpl implements Agent
             //security handled in AgentManagerBean. requires View_Resource. 
             return SerialUtility.prepare(agentManager.pingAgentByResourceId(getSessionSubject(), resourceId),
                 "AgentService.pingAgentForResource");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public List<Agent> getAllAgents() throws RuntimeException {
+        try {
+            //security handled in AgentManagerBean. requires View_Resource. 
+            return SerialUtility.prepare(agentManager.getAllAgents(), "AgentService.getAllAgents");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public PageList<Agent> getAgentsByServer(Integer serverId, PageControl pc) throws RuntimeException {
+        try {
+            //TODO: security handled in AgentManagerBean. requires View_Resource. 
+            return SerialUtility.prepare(agentManager.getAgentsByServer(getSessionSubject(), serverId, pc),
+                "AgentService.getAgentsByServer");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public Agent getAgentByID(int agentId) throws RuntimeException {
+        try {
+            return SerialUtility.prepare(agentManager.getAgentByID(agentId), "AgentService.getAgentByID");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

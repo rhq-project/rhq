@@ -22,11 +22,11 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
-import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 import org.hyperic.sigar.SigarProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.system.SigarAccess;
 
 /**

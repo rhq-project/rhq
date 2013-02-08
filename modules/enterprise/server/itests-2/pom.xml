@@ -23,15 +23,21 @@
   <properties>
     <jboss.zip>${settings.localRepository}/org/jboss/as/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip</jboss.zip>
     <jboss.unzip.location>${basedir}/target/jboss-as-${jboss.version}</jboss.unzip.location>
-    <jboss.vm.args>-Xmx700m -XX:MaxPermSize=200m</jboss.vm.args>
+    <jboss.vm.args>-Xmx700m -XX:MaxPermSize=200m -Djava.security.manager
+      -Djava.security.policy==${jboss.unzip.location}/security.policy</jboss.vm.args>
     <jboss.vm.args.debug></jboss.vm.args.debug> <!-- -Ditest.debug can override this, see below -->
+    <!-- These properties guide which datasources are used for integration tests. Only one should be true. The default is 
+      Postgres, specify -Pitest.oracle to use Oracle -->
+    <skip.postgres>false</skip.postgres>
+    <skip.oracle>true</skip.oracle>
+
+    <liquibase.version>2.0.3</liquibase.version>
   </properties>
 
   <dependencies>
     <!--================ Test Deps ================ -->
 
     <!-- Note, the test dep ordering can be important. Maven orders the [test] classpath in the order listed in the pom. -->
-
     <dependency>
       <groupId>org.jboss.as</groupId>
       <artifactId>jboss-as-dist</artifactId>
@@ -61,32 +67,22 @@
     </dependency>
 
     <dependency>
-      <groupId>org.jboss.shrinkwrap</groupId>
-      <artifactId>shrinkwrap-impl-base</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
       <groupId>org.jboss.shrinkwrap.resolver</groupId>
-      <artifactId>shrinkwrap-resolver-api</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.jboss.shrinkwrap.resolver</groupId>
-      <artifactId>shrinkwrap-resolver-api-maven</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.jboss.shrinkwrap.resolver</groupId>
-      <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
+      <artifactId>shrinkwrap-resolver-depchain</artifactId>
+      <type>pom</type>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.jboss.arquillian.protocol</groupId>
       <artifactId>arquillian-protocol-servlet</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-arquillian-suite-extension</artifactId>
+      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
 
@@ -145,13 +141,13 @@
       <groupId>org.rhq</groupId>
       <artifactId>test-utils</artifactId>
       <version>${project.version}</version>
-      <scope>test</scope>
       <exclusions>
         <exclusion>
           <groupId>org.testng</groupId>
           <artifactId>testng</artifactId>
         </exclusion>
       </exclusions>
+      <scope>test</scope>
     </dependency>
 
     <dependency>
@@ -177,7 +173,7 @@
     <dependency>
       <groupId>org.powermock</groupId>
       <artifactId>powermock-api-mockito</artifactId>
-      <version>${powermock.version}</version>
+      <version>${powermock.version}</version>      
       <scope>test</scope>
     </dependency>
 
@@ -190,14 +186,14 @@
     <dependency>
       <groupId>org.liquibase</groupId>
       <artifactId>liquibase-core</artifactId>
-      <version>2.0.3</version>
+      <version>${liquibase.version}</version>      
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>joda-time</groupId>
       <artifactId>joda-time</artifactId>
-      <version>2.1</version>
+      <version>2.1</version>      
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -219,11 +215,30 @@
             <id>prepare Standalone XML</id>
             <phase>process-test-resources</phase>
             <configuration>
-              <target>
-                <echo>Unzipping JBossAS ${jboss.version} found at ${jboss.zip}</echo>
-                <unzip src="${jboss.zip}" dest="${jboss.unzip.location}/.." />
-                <echo>JBossAS ${jboss.version} should now be at: ${jboss.unzip.location}</echo>
+              <tasks>
+                <taskdef resource="net/sf/antcontrib/antcontrib.properties" />
                 <property name="jboss.conf" location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
+                <property name="jboss.conf.safe" location="${jboss.conf}.safe" />
+                <if>
+                  <available file="${jboss.unzip.location}" />
+                  <then>
+                    <echo>Skipping unzipping JBossAS ${jboss.version}, it is already unzipped</echo>
+                    <echo>Restoring safe copy of standalone.xml for pending test additions</echo>
+                    <copy file="${jboss.conf.safe}" tofile="${jboss.conf}" overwrite="true" />
+                  </then>
+                  <else>
+                    <echo>Unzipping JBossAS ${jboss.version} found at ${jboss.zip}</echo>
+                    <unzip src="${jboss.zip}" dest="${jboss.unzip.location}/.." />
+                    <echo>JBossAS ${jboss.version} should now be at: ${jboss.unzip.location}</echo>
+
+                    <echo>Copying security policy to JBossAS</echo>
+                    <copy file="${project.build.directory}/test-classes/security.policy" tofile="${jboss.unzip.location}/security.policy" />
+
+                    <echo>Saving copy of standalone.xml</echo>
+                    <copy file="${jboss.conf}" tofile="${jboss.conf.safe}" />
+                  </else>
+                </if>
+
                 <echo>Will now add test configuration to JBossAS config file: ${jboss.conf}</echo>
                 <replace file="${jboss.conf}">
 
@@ -444,8 +459,7 @@
     </dependencies>
 </module>
 ]]></echo>
-
-              </target>
+              </tasks>
             </configuration>
             <goals>
               <goal>run</goal>
@@ -514,7 +528,7 @@
                     </timeout>
                     <statement>
                         <prepared-statement-cache-size>75</prepared-statement-cache-size>
-                    </statement>
+                    </statement> 
                 </xa-datasource>]]></replacevalue>
                   </replacefilter>
 
@@ -569,12 +583,16 @@
                 </datasource>
                 <xa-datasource jta="true" jndi-name="java:jboss/datasources/RHQDS" pool-name="RHQDS" enabled="true" use-java-context="true">
                     <xa-datasource-property name="URL">${rhq.test.ds.connection-url}</xa-datasource-property>
-                    <xa-datasource-property name="ConnectionProperties">SetBigStringTryClob=true</xa-datasource-property>
                     <driver>oracle</driver>
                     <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
                     <xa-pool>
                         <min-pool-size>5</min-pool-size>
                         <max-pool-size>50</max-pool-size>
+                        <!--
+                        Oracle does not like XA connections getting used both inside and outside a JTA transaction.
+                        To workaround the problem you can create separate sub-pools for the different contexts using <no-tx-separate-pools/>
+                        -->                        
+                        <no-tx-separate-pools>true</no-tx-separate-pools>
                     </xa-pool>
                     <security>
                         <security-domain>RHQDSSecurityDomain</security-domain>
@@ -626,15 +644,8 @@
             <clean.db>${clean.db}</clean.db>
             <log4j.configDebug>false</log4j.configDebug>
             <project.version>${project.version}</project.version>
-
-            <rhq.test.ds.type-mapping>${rhq.test.ds.type-mapping}</rhq.test.ds.type-mapping>
-            <rhq.test.ds.server-name>${rhq.test.ds.server-name}</rhq.test.ds.server-name>
-            <rhq.test.ds.db-name>${rhq.test.ds.db-name}</rhq.test.ds.db-name>
-            <rhq.test.ds.connection-url>${rhq.test.ds.connection-url}</rhq.test.ds.connection-url>
-            <rhq.db.admin.username>${rhq.db.admin.username}</rhq.db.admin.username>
-            <rhq.db.admin.password>${rhq.db.admin.password}</rhq.db.admin.password>
-            <rhq.test.ds.user-name>${rhq.test.ds.user-name}</rhq.test.ds.user-name>
-            <rhq.test.ds.password>${rhq.test.ds.password}</rhq.test.ds.password>
+            <rhq.skip.oracle>${skip.oracle}</rhq.skip.oracle>
+            <rhq.ojdbc.version>${ojdbc6.version}</rhq.ojdbc.version>
           </systemPropertyVariables>
           <additionalClasspathElements>
             <!-- The below is required for tests to run against Oracle. -->
@@ -652,10 +663,7 @@
             <configuration>
               <skipTests>${skipTests}</skipTests>
               <excludes>
-                <!-- NOTE: PERF GROUP AND SOME CLASSES EXCLUDED (SEE BZ 874696) -->
-                <exclude>**/JndiAccessTest.java</exclude>
-                <exclude>**/LdapGroupManagerBeanTest.java</exclude>
-                <exclude>**/SynchronizationManagerBeanTest.java</exclude>
+                <!-- NOTE: PERF GROUP EXCLUDED (SEE BZ 874696) -->
                 <exclude>org/rhq/**/performance/**/*.java</exclude>
 
                 <!-- exclude the db tests which are not expected to run in this suite -->
@@ -668,27 +676,39 @@
 
         </executions>
       </plugin>
+
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
   <profiles>
+    <!-- If testing against oracle, override the default property settings -->
     <profile>
-      <id>postgres</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <properties>
-        <skip.postgres>false</skip.postgres>
-        <skip.oracle>true</skip.oracle>
-      </properties>
-    </profile>
-
-    <profile>
-      <id>oracle</id>
+      <id>itest.oracle</id>
       <properties>
         <skip.postgres>true</skip.postgres>
         <skip.oracle>false</skip.oracle>
       </properties>
+
+      <dependencies>
+        <!-- The provided scope in the root pom is not sufficient, we need this fo shrinkwrap to resolve dependency and add 
+          the jar to the deployment. -->
+        <dependency>
+          <groupId>com.oracle</groupId>
+          <artifactId>ojdbc6</artifactId>
+          <version>${ojdbc6.version}</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
     </profile>
 
     <profile>

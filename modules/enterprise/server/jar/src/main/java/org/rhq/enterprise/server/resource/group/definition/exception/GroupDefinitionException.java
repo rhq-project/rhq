@@ -18,8 +18,11 @@
  */
 package org.rhq.enterprise.server.resource.group.definition.exception;
 
-public class GroupDefinitionException extends Exception {
-    private static final long serialVersionUID = 1L;
+import javax.ejb.ApplicationException;
+
+@ApplicationException(rollback = false, inherited = true)
+public class GroupDefinitionException extends RuntimeException {
+    private static final long serialVersionUID = 2L;
 
     public GroupDefinitionException() {
     }

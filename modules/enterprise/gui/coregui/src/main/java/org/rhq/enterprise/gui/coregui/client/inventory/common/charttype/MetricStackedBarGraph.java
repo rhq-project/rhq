@@ -137,6 +137,8 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                             .attr("height", height + margin.top - titleHeight - titleSpace + margin.bottom)
                             .attr("transform", "translate(" + margin.left + "," + (+titleHeight + titleSpace + margin.top) + ")");
 
+            console.log(" *** Chart js obj: "+chart);
+
 
             function createHeader(titleName, minLabel, minValue, avgLabel, avgValue, highLabel, highValue, uom) {
                 var fontSize = 12,
@@ -566,34 +568,34 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                 if (d.down) {
                     // down availability
                     hoverString =
-                            '<div style="text-align:left;z-index:990000;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">' + chartContext.timeLabel + ': </span>' + timeFormatter(date) + '</div>' +
-                                    '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
-                                    '<hr style="width:100%;text-align: center;border: #d3d3d3 solid thin;"></hr>' +
-                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverStartLabel+": "+ timeFormatter(availStartDate)+ '</span></div>' +
-                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverEndLabel+": "+ timeFormatter(availEndDate) + '</span></div>' +
-                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverPeriodLabel+": "+ availDuration + '</span></div>' +
-                                    '<div style="text-align: right;"><span style="width:100%;font-weight: bold;color:#ff8a9a"";">'+chartContext.downLabel +'</span></div>' +
+                            '<div class="chartHoverEnclosingDiv"><span class="chartHoverTimeLabel">' + chartContext.timeLabel + ': </span>' + timeFormatter(date) + '</div>' +
+                                    '<div class="chartHoverAlignLeft"><span class="chartHoverDateLabel">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
+                                    '<hr class="chartHoverDivider"></hr>' +
+                                    '<div class="chartHoverAlignRight"><span class="chartHoverLabelSpan">'+chartContext.hoverStartLabel+": "+ timeFormatter(availStartDate)+ '</span></div>' +
+                                    '<div class="chartHoverAlignRight"><span class="chartHoverLabelSpan">'+chartContext.hoverEndLabel+": "+ timeFormatter(availEndDate) + '</span></div>' +
+                                    '<div class="chartHoverAlignRight"><span class="chartHoverLabelSpan">'+chartContext.hoverPeriodLabel+": "+ availDuration + '</span></div>' +
+                                    '<div class="chartHoverAlignRight"><span id="chartHoverDownValue">'+chartContext.downLabel +'</span></div>' +
                                     '</div>';
                 } else  if (d.unknown) {
                     // unknown availability
                     hoverString =
-                            '<div style="text-align:left;z-index:990000;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">' + chartContext.timeLabel + ': </span>' + timeFormatter(date) + '</div>' +
-                                    '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
-                                    '<hr style="width:100%;text-align: center;border: #d3d3d3 solid thin;"></hr>' +
-                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverStartLabel+": "+ timeFormatter(unknownStartDate)+ '</span></div>' +
-                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverEndLabel+": "+ timeFormatter(unknownEndDate) + '</span></div>' +
-                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverPeriodLabel+": "+ unknownDuration + '</span></div>' +
-                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.unknownLabel+'</span></div>' +
+                            '<div class="chartHoverEnclosingDiv"><span class="chartHoverTimeLabel">' + chartContext.timeLabel + ': </span>' + timeFormatter(date) + '</div>' +
+                                    '<div class="chartHoverAlignLeft"><span class="chartHoverDateLabel">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
+                                    '<hr class="chartHoverDivider" ></hr>' +
+                                    '<div class="chartHoverAlignRight"><span class="chartHoverLabelSpan" >'+chartContext.hoverStartLabel+": "+ timeFormatter(unknownStartDate)+ '</span></div>' +
+                                    '<div class="chartHoverAlignRight"><span class="chartHoverLabelSpan" >'+chartContext.hoverEndLabel+": "+ timeFormatter(unknownEndDate) + '</span></div>' +
+                                    '<div class="chartHoverAlignRight"><span class="chartHoverLabelSpan">'+chartContext.hoverPeriodLabel+": "+ unknownDuration + '</span></div>' +
+                                    '<div class="chartHoverAlignRight"><span class="chartHoverLabelSpan">'+chartContext.unknownLabel+'</span></div>' +
                                     '</div>';
                 }
 
                 else if (d.y == undefined) {
                     // no data
                     hoverString =
-                            '<div style="text-align:left;z-index:990000;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">' + chartContext.timeLabel + ': </span>' + timeFormatter(date) + '</div>' +
-                                    '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
-                                    '<hr style="width:100%;text-align: center;border: #d3d3d3 solid thin;"></hr>' +
-                                    '<div style="text-align: right;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.noDataLabel+'</span></div>' +
+                            '<div class="chartHoverEnclosingDiv"><span class="chartHoverTimeLabel" >' + chartContext.timeLabel + ': </span>' + timeFormatter(date) + '</div>' +
+                                    '<div class="chartHoverAlignLeft"><span class="chartHoverDateLabel">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
+                                    '<hr class="chartHoverDivider" ></hr>' +
+                                    '<div class="chartHoverAlignRight"><span class="chartHoverLabelSpan">'+chartContext.noDataLabel+'</span></div>' +
                                     '</div>';
 
 
@@ -601,13 +603,13 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                 else {
                     // regular bar hover
                     hoverString =
-                            '<div style="text-align:left;z-index:990000;"><span style="width:50px;font-weight: bold;color:#d3d3d6";">' + chartContext.timeLabel + ':  </span><span style="width:50px;">' + timeFormatter(date) + '</span></div>' +
-                                    '<div style="text-align: left;"><span style="width:50px;font-weight: bold;color:#d3d3d6"";">' + chartContext.dateLabel + ':  </span><span style="width:50px;">' + dateFormatter(date) + '</span></div>' +
-                                    '<div style="text-align: left;"><span style="width:100%;font-weight:bold;color:#d3d3d6"";">'+chartContext.hoverBarLabel+": "+ barDuration + '</span></div>' +
-                                    '<hr style="width:100%;text-align: center;border: #d3d3d3 solid thin;"></hr>' +
-                                    '<div style="text-align: right;"><span style="width:50px;font-weight:bold;color:#ff8a9a;";">' + chartContext.peakChartTitle + ': </span><span style="width:50px;">' + highValue + '</span></div>' +
-                                    '<div style="text-align: right;"><span style="text-align:right;width:50px;font-weight:bold;color: #b0d9b0;"">' + chartContext.avgChartTitle + ':  </span><span style="width:50px;">' + avgValue + '</span></div>' +
-                                    '<div style="text-align: right;"><span style="width:50px;font-weight:bold;color:#8ad6ff"">' + chartContext.minChartTitle + ': </span><span style="width:50px;">' + lowValue + '</span></div>' +
+                            '<div class="chartHoverEnclosingDiv"><span class="chartHoverTimeLabel">' + chartContext.timeLabel + ':  </span><span style="width:50px;">' + timeFormatter(date) + '</span></div>' +
+                                    '<div class="chartHoverAlignLeft"><span class="chartHoverDateLabel">' + chartContext.dateLabel + ':  </span><span style="width:50px;">' + dateFormatter(date) + '</span></div>' +
+                                    '<div class="chartHoverAlignLeft"><span class="chartHoverLabelSpan">'+chartContext.hoverBarLabel+": "+ barDuration + '</span></div>' +
+                                    '<hr  class="chartHoverDivider"></hr>' +
+                                    '<div class="chartHoverAlignRight"><span id="chartHoverPeakValue" >' + chartContext.peakChartTitle + ': </span><span style="width:50px;">' + highValue + '</span></div>' +
+                                    '<div class="chartHoverAlignRight"><span id="chartHoverAvgValue" >' + chartContext.avgChartTitle + ':  </span><span style="width:50px;">' + avgValue + '</span></div>' +
+                                    '<div class="chartHoverAlignRight"><span id="chartHoverLowValue" >' + chartContext.minChartTitle + ': </span><span style="width:50px;">' + lowValue + '</span></div>' +
                                     '</div>';
                 }
                 return hoverString;

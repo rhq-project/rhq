@@ -525,10 +525,10 @@
    <profiles>
        <profile>
          <!--
-         This profile has been created to avoid unnecessary resolution of test dependencies during a build that
-         does not run, compile or need tests.
-         More test dependencies are to be moved here if the set of sub-dependencies is complex or conflicts
-         with changing the container version.
+           This profile has been created to avoid unnecessary resolution of test dependencies during a build that
+           does not run, compile or need tests.
+           More test dependencies are to be moved here if the set of sub-dependencies is complex, references project
+           test jars, or conflicts with changing the container version.
          -->
          <id>test.dependencies</id>
          <activation>

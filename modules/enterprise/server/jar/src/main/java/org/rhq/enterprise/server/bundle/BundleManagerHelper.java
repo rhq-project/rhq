@@ -1,7 +1,7 @@
 package org.rhq.enterprise.server.bundle;
 
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
-import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceMBean;
 import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginContainer;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -11,7 +11,7 @@ public class BundleManagerHelper {
         BundleServerPluginContainer pc;
 
         try {
-            ServerPluginServiceManagement mbean = LookupUtil.getServerPluginService();
+            ServerPluginServiceMBean mbean = LookupUtil.getServerPluginService();
             if (!mbean.isMasterPluginContainerStarted()) {
                 throw new IllegalStateException("The master plugin container is not started!");
             }

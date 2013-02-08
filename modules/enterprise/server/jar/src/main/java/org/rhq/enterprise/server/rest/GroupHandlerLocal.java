@@ -44,7 +44,8 @@ public interface GroupHandlerLocal {
     @GET
     @Path("/")
     @ApiOperation(value = "List all groups", multiValueResponse = true)
-    public Response getGroups(@Context Request request, @Context HttpHeaders headers,
+    public Response getGroups(@ApiParam("String to search in the group name") @QueryParam("q") String q,
+            @Context Request request, @Context HttpHeaders headers,
                              @Context UriInfo uriInfo);
 
     @Cache(isPrivate = true,maxAge = 60)
@@ -129,7 +130,8 @@ public interface GroupHandlerLocal {
     @GET
     @Path("/definitions")
     @ApiOperation(value="List all existing GroupDefinitions",multiValueResponse = true)
-    public Response getGroupDefinitions(@Context Request request, @Context HttpHeaders headers,
+    public Response getGroupDefinitions(@ApiParam("String to search in the group definition name") @QueryParam("q") String q,
+                                        @Context Request request, @Context HttpHeaders headers,
                                         @Context UriInfo uriInfo);
 
     @GZIP

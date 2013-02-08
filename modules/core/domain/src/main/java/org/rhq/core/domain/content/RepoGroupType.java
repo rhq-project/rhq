@@ -48,7 +48,7 @@ import javax.persistence.NamedQuery;
 @NamedQueries(
     @NamedQuery(name = RepoGroupType.QUERY_FIND_BY_NAME, query = "SELECT t FROM RepoGroupType t WHERE t.name = :name")
 )
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_GROUP_TYPE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_REPO_GROUP_TYPE_ID_SEQ")
 @Table(name = "RHQ_REPO_GROUP_TYPE")
 public class RepoGroupType implements Serializable {
 

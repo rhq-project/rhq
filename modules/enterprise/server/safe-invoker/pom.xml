@@ -13,30 +13,17 @@
    <artifactId>safe-invoker</artifactId>
    <packaging>jar</packaging>
 
-   <name>RHQ Enterprise Safe WebService Invoker</name>
-   <description>A webservice invoker that safely calls returns ejb3 pojo's with lazy attributes</description>
+   <name>RHQ Enterprise Safe Invoker</name>
+   <description>TODO: Remove this invoker and move HibernateDetachUtility</description>
 
    <dependencies>
-
+ 
       <dependency>
-         <groupId>org.jboss.jbossws</groupId>
-         <artifactId>jbossws-native-core</artifactId>
-         <version>${jbossws-native-dist.version}</version>
+         <groupId>org.hibernate</groupId>
+         <artifactId>hibernate-core</artifactId>    
+         <scope>provided</scope>
       </dependency>
-
-      <dependency>
-         <groupId>org.jboss</groupId>
-         <artifactId>jbossws-spi</artifactId>
-         <version>1.1.1.GA</version>
-      </dependency>
-
-      <dependency>
-         <groupId>hibernate</groupId>
-         <artifactId>hibernate3</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
+ 
    </dependencies>
 
   <profiles>
@@ -48,7 +35,7 @@
             <rhq.rootDir>../../..</rhq.rootDir>
             <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
             <rhq.deploymentName>${project.build.finalName}.jar</rhq.deploymentName>
-            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/lib</rhq.deploymentDir>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.earName}/lib</rhq.deploymentDir>
          </properties>
 
          <build>

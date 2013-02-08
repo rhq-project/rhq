@@ -55,7 +55,7 @@ import org.hibernate.annotations.NamedQuery;
     @NamedQuery(name = Distribution.QUERY_FIND_BY_DIST_LABEL, query = "SELECT dt FROM Distribution dt WHERE dt.label = :label"),
     @NamedQuery(name = Distribution.QUERY_FIND_BY_DIST_PATH, query = "SELECT dt FROM Distribution dt WHERE dt.basePath = :path"),
     @NamedQuery(name = Distribution.QUERY_DELETE_BY_DIST_ID, query = "DELETE Distribution dt WHERE dt.id = :distid") })
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DISTRIBUTION_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_DISTRIBUTION_ID_SEQ")
 @Table(name = "RHQ_DISTRIBUTION")
 public class Distribution implements Serializable {
 

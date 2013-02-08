@@ -18,7 +18,8 @@
             <c:simple-property name="user" required="false"/>
             <c:simple-property name="password" required="false"/>
             <c:simple-property name="realm" required="false"/>
-            <c:simple-property name="validateResponseCode" type="boolean" default="false"/>
+            <c:simple-property name="validateResponseCode" type="boolean" default="false" 
+                    description="Codes in the 200-299 range are considered success"/>
             <c:simple-property name="sslProtocol" default="none">
                 <c:property-options>
                     <c:option value="none"/>

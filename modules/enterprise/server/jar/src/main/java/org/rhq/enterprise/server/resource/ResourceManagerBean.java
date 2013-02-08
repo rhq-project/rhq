@@ -39,14 +39,11 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import org.jboss.annotation.IgnoreDependency;
 
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.alert.Alert;
@@ -124,7 +121,6 @@ import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.discovery.DiscoveryServerServiceImpl;
-import org.rhq.enterprise.server.jaxb.adapter.ResourceListAdapter;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.disambiguation.DisambiguationUpdateStrategy;
 import org.rhq.enterprise.server.resource.disambiguation.Disambiguator;
@@ -165,7 +161,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @EJB
     private ResourceTypeManagerLocal typeManager;
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private MeasurementScheduleManagerLocal measurementScheduleManager;
 
     public void createResource(Subject user, Resource resource, int parentId) throws ResourceAlreadyExistsException {
@@ -2362,8 +2358,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     // lineage is a getXXX (not findXXX) because it logically returns a single object, but modeled as a list here
-    public @XmlJavaTypeAdapter(value = ResourceListAdapter.class)
-    List<Resource> findResourceLineage(Subject subject, int resourceId) {
+    public List<Resource> findResourceLineage(Subject subject, int resourceId) {
         List<Resource> result = getResourceLineage(resourceId);
 
         for (Resource resource : result) {

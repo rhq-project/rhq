@@ -21,20 +21,13 @@ package org.rhq.enterprise.server.report;
 import java.util.List;
 
 import javax.ejb.Remote;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
-import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.PageControl;
-import org.rhq.enterprise.server.system.ServerVersion;
 
 /**
  * @author Greg Hinkle
  */
-@SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface DataAccessManagerRemote {
 
@@ -45,10 +38,8 @@ public interface DataAccessManagerRemote {
      * @param query the query to execute
      * @return a list of object results. Each entry in the rows array will represent an item from the select clause
      */
-    @WebMethod
     public List<Object[]> executeQuery(//
-        @WebParam(name = "subject") Subject subject, // 
-        @WebParam(name = "query") String query);
+        Subject subject, String query);
 
     /**
      * Execute a query filtered by a page control
@@ -58,10 +49,7 @@ public interface DataAccessManagerRemote {
      * @param pageControl pages to load
      * @return list of object array results
      */
-    @WebMethod
     public List<Object[]> executeQueryWithPageControl(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "query") String query, //
-        @WebParam(name = "pageControl") PageControl pageControl);
+        Subject subject, String query, PageControl pageControl);
 
 }

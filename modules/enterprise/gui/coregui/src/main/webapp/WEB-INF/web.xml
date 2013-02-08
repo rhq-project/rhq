@@ -31,10 +31,18 @@
        <filter-name>CacheControlFilter</filter-name>
        <filter-class>org.rhq.enterprise.gui.coregui.server.filter.CacheControlFilter</filter-class>
     </filter>
-
     <filter-mapping>
        <filter-name>CacheControlFilter</filter-name>
        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <filter>
+        <filter-name>RhqRtFilter</filter-name>
+        <filter-class>org.rhq.helpers.rtfilter.filter.RtFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>RhqRtFilter</filter-name>
+        <url-pattern>/*</url-pattern>
     </filter-mapping>
 
     <servlet>
@@ -185,10 +193,6 @@
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI DriftGWTService</servlet-name>
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.DriftGWTServiceImpl</servlet-class>
     </servlet>    
-    <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI TestGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.TestGWTServiceImpl</servlet-class>
-    </servlet>
     <servlet>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI PlatformUtilizationGWTService</servlet-name>
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.PlatformUtilizationGWTServiceImpl</servlet-class>
@@ -369,10 +373,6 @@
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI DriftGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/DriftGWTService</url-pattern>
     </servlet-mapping>    
-    <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI TestGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/TestGWTService</url-pattern>
-    </servlet-mapping>
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI PlatformUtilizationGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/PlatformUtilizationGWTService</url-pattern>

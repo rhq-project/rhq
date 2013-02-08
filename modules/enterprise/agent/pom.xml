@@ -66,17 +66,6 @@
        <version>${jline.version}</version>
     </dependency>
 
-    <dependency>
-      <!-- The only reason why this is here is so we can pull this down from the repo.
-           Its scope is provided so we don't actually put it anywhere.
-           Our assembly process will place this library in the connector directory.
-           I'm not convinced this is actually needed, but it isn't hurting anything. -->
-      <groupId>org.rhq.helpers</groupId>
-      <artifactId>rhq-rtfilter</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
-
     <!-- 3rd Party Deps -->
 
     <dependency>
@@ -90,27 +79,15 @@
       <artifactId>i18nlog</artifactId>
     </dependency>
 
-    <!-- TODO: This is a fix for the Javac bug requiring annotations to be
-         available when compiling dependent classes. It is fixed in JDK 6 -->
-    <dependency>
-      <groupId>javax.persistence</groupId>
-      <artifactId>persistence-api</artifactId>
-      <version>1.0</version>
-      <scope>provided</scope>
-    </dependency>
-
     <dependency>
       <groupId>jboss</groupId>
       <artifactId>jboss-remoting</artifactId>
-      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
     </dependency>
 
     <dependency>
-      <groupId>jboss.jboss-embeddable-ejb3</groupId>
-      <artifactId>hibernate-all</artifactId>
-      <version>1.0.0.Alpha9</version>
-      <scope>provided</scope>
-      <!-- needed for referenced domain entities that use Hibernate annotations -->
+      <groupId>org.jboss.logging</groupId>
+      <artifactId>jboss-logging</artifactId>
+      <version>${jboss-logging.version}</version> <!-- just using the one that is also used by AS7 -->
     </dependency>
 
   </dependencies>
@@ -179,9 +156,10 @@ Build-Number=${buildNumber}
                    <property name="project.version" value="${project.version}" />
                    <property name="concurrent.version" value="${concurrent.version}" />
                    <property name="getopt.version" value="${getopt.version}" />
-                   <property name="jboss.version" value="${jboss.version}" />
+                   <property name="jboss-jmx.version" value="${jboss-jmx.version}" />
                    <property name="jboss-common.version" value="${jboss-common.version}" />
                    <property name="jboss-remoting.version" value="${jboss-remoting.version}" />
+                   <property name="jboss-logging.version" value="${jboss-logging.version}" />
                    <property name="jboss-serialization.version" value="${jboss-serialization.version}" />
                    <property name="sigar.version" value="${sigar.version}" />
                    <property name="jaxb-api.version" value="${jaxb-api.version}" />

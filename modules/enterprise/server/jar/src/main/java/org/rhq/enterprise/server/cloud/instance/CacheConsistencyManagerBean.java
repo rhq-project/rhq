@@ -27,6 +27,7 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.Timeout;
 import javax.ejb.Timer;
+import javax.ejb.TimerConfig;
 import javax.ejb.TimerService;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -60,9 +61,6 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
     @EJB
     CacheConsistencyManagerLocal cacheConsistencyManager;
 
-    private final String TIMER_DATA = "CacheConsistencyManagerBean.reloadServerCacheIfNeeded";
-
-    @SuppressWarnings("unchecked")
     public void scheduleServerCacheReloader() {
         /* each time the webapp is reloaded, it would create 
          * duplicate events if we don't cancel the existing ones
@@ -77,8 +75,7 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
             }
         }
 
-        // single-action timer that will trigger in 30 seconds
-        timerService.createTimer(30000, TIMER_DATA);
+        timerService.createIntervalTimer(30000L, 30000L, new TimerConfig(null, false));
     }
 
     @Timeout
@@ -87,15 +84,6 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
             cacheConsistencyManager.reloadServerCacheIfNeeded();
         } catch (Throwable t) {
             log.error("Failed to reload server cache if needed - will try again later. Cause: " + t);
-        } finally {
-            // reschedule ourself to trigger in another 30 seconds
-            try {
-                timerService.createTimer(30000, TIMER_DATA);
-            } catch (Throwable t) {
-                log
-                    .error("Failed to reschedule cache reload timer! Cache reload handling will not work from this point. A server restart may be needed after issue is resolved:"
-                        + t);
-            }
         }
     }
 

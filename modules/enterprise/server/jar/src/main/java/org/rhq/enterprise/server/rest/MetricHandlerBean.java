@@ -60,8 +60,6 @@ import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
-import org.jboss.cache.Fqn;
-
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
@@ -74,16 +72,16 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.measurement.MeasurementAggregate;
+import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.rest.domain.Baseline;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.MetricAggregate;
-import org.rhq.enterprise.server.measurement.MeasurementAggregate;
-import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.NumericDataPoint;
 import org.rhq.enterprise.server.rest.domain.StringValue;
@@ -368,9 +366,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         cc.setMaxAge(300); // Schedules are valid for 5 mins
         cc.setPrivate(false); // Proxies may cache this
 
-
-        Fqn fqn = getFqn(scheduleId,MeasurementSchedule.class);
-        schedule = getFromCache(fqn,MeasurementSchedule.class);
+        schedule = getFromCache(scheduleId, MeasurementSchedule.class);
         if (schedule!=null) {
                 // If it is on cache, quickly return if match
             long tim = schedule.getMtime() != null ? schedule.getMtime() : 0;
@@ -388,7 +384,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
             if (schedule==null)
                 throw new StuffNotFoundException("Schedule with id " + scheduleId);
             else
-                putToCache(fqn,schedule);
+                putToCache(scheduleId, MeasurementSchedule.class, schedule);
         }
 
         MeasurementDefinition definition = schedule.getDefinition();
@@ -519,8 +515,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         scheduleManager.updateSchedule(caller, schedule);
 
         schedule = scheduleManager.getScheduleById(caller,scheduleId);
-        Fqn fqn = getFqn(scheduleId,MeasurementSchedule.class);
-        putToCache(fqn,schedule);
+        putToCache(scheduleId, MeasurementSchedule.class, schedule);
         MeasurementDefinition def = schedule.getDefinition();
 
         MetricSchedule ret = new MetricSchedule(scheduleId,def.getName(),def.getDisplayName(),

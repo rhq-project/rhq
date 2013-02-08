@@ -46,7 +46,6 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
-import org.rhq.enterprise.server.perspective.Tab;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -70,7 +69,7 @@ public class ResourceUIBean {
     private Resource parent;
     private ResourcePermission permissions;
     private ResourceFacets facets;
-    private List<Tab> tabs;
+    private List<?> tabs;
     private ResourceError invalidPluginConfigurationError;
     private ResourceAvailabilitySummary availabilitySummary;
     private AvailabilityType availabilityType;
@@ -185,7 +184,7 @@ public class ResourceUIBean {
         return this.facets;
     }
 
-    public List<Tab> getTabs() {
+    public List<?> getTabs() {
         return this.tabs;
     }
 

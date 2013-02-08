@@ -57,12 +57,6 @@
       </dependency>
 
       <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-common</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-      </dependency>
-
-      <dependency>
          <groupId>jdom</groupId>
          <artifactId>jdom</artifactId>
          <version>1.0</version>
@@ -107,10 +101,12 @@
                   </goals>
                   <configuration>
                      <artifactItems>
+                        <!-- 
                         <artifactItem>
                            <groupId>jboss</groupId>
                            <artifactId>jboss-common</artifactId>
                         </artifactItem>
+                        -->
                         <artifactItem>
                            <groupId>gnu-getopt</groupId>
                            <artifactId>getopt</artifactId>
@@ -292,7 +288,7 @@
          <properties>
             <rhq.rootDir>../../..</rhq.rootDir>
             <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-downloads/rhq-plugins</rhq.deploymentDir>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.earName}/rhq-downloads/rhq-plugins</rhq.deploymentDir>
          </properties>
 
          <build>

@@ -81,7 +81,7 @@ import org.rhq.core.domain.resource.Resource;
         + "   AND res.parentResource IS NULL " // we only want platforms
         + "   AND avail.availabilityType <> 1") // get all NOT UP
 })
-@SequenceGenerator(name = "RHQ_RESOURCE_AVAIL_SEQ", sequenceName = "RHQ_RESOURCE_AVAIL_ID_SEQ", allocationSize = 100)
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_RESOURCE_AVAIL_SEQ", sequenceName = "RHQ_RESOURCE_AVAIL_ID_SEQ")
 public class ResourceAvailability implements Serializable {
     private static final long serialVersionUID = 1L;
 

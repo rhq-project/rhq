@@ -41,8 +41,8 @@ import org.apache.commons.logging.LogFactory;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.ejb.EntityManagerImpl;
-import org.hibernate.engine.NamedQueryDefinition;
-import org.hibernate.engine.SessionFactoryImplementor;
+import org.hibernate.engine.spi.NamedQueryDefinition;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.jmx.StatisticsService;
 import org.hibernate.stat.Statistics;
 import org.hibernate.type.CustomType;
@@ -369,8 +369,21 @@ public class PersistenceUtility {
      *                      first one in the list returned by MBeanServerFactory.findMBeanServer(null) is used
      */
     public static void enableHibernateStatistics(EntityManager entityManager, MBeanServer server) {
+        enableHibernateStatistics(entityManager, server, true);
+    }
+
+    /**
+     * Enables the hibernate statistics mbean to provide access to information on the ejb3 persistence tier.
+     *
+     * @param entityManager an inject entity manager whose session factory will be tracked with these statistics
+     * @param server        the MBeanServer where the statistics MBean should be registered; if <code>null</code>, the
+     *                      first one in the list returned by MBeanServerFactory.findMBeanServer(null) is used
+     * @param flag          true if the stats are to be enabled; false to disable the stats
+     */
+    public static void enableHibernateStatistics(EntityManager entityManager, MBeanServer server, boolean flag) {
+        SessionFactory sessionFactory = null;
         try {
-            SessionFactory sessionFactory = PersistenceUtility.getHibernateSession(entityManager).getSessionFactory();
+            sessionFactory = PersistenceUtility.getHibernateSession(entityManager).getSessionFactory();
 
             if (server == null) {
                 ArrayList<MBeanServer> list = MBeanServerFactory.findMBeanServer(null);
@@ -381,11 +394,19 @@ public class PersistenceUtility {
             StatisticsService mBean = new StatisticsService();
             mBean.setSessionFactory(sessionFactory);
             server.registerMBean(mBean, objectName);
-            sessionFactory.getStatistics().setStatisticsEnabled(true);
         } catch (InstanceAlreadyExistsException iaee) {
             LOG.info("Duplicate mbean registration ignored: " + HIBERNATE_STATISTICS_MBEAN_OBJECTNAME);
         } catch (Exception e) {
             LOG.warn("Couldn't register hibernate statistics mbean", e);
+        }
+
+        try {
+            if (sessionFactory != null) {
+                sessionFactory.getStatistics().setStatisticsEnabled(flag);
+                LOG.info("Hibernate statistics enable flag set to [" + flag + "]");
+            }
+        } catch (Exception e) {
+            LOG.warn("Couldn't set the statistics enable flag to [" + flag + "]", e);
         }
     }
 

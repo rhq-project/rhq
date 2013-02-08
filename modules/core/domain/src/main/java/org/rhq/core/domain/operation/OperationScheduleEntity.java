@@ -105,16 +105,16 @@ import javax.persistence.Table;
         + "    go.jobGroup, " //
         + "    '', " //
         + "    go.nextFireTime, " //
-        + "    go.group.id, " //
-        + "    go.group.name, " //
-        + "    go.group.resourceType.name) " //
+        + "    g.id, " //
+        + "    g.name, " //
+        + "    g.resourceType.name) " //
         + "  FROM GroupOperationScheduleEntity go " //
         + "  JOIN go.group g " //
         + "  JOIN g.roles r " //
         + "  JOIN r.subjects s " //
         + " WHERE go.nextFireTime IS NOT NULL " //
         + "   AND s = :subject ") })
-@SequenceGenerator(name = "id", sequenceName = "RHQ_OPERATION_SCHEDULE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "id", sequenceName = "RHQ_OPERATION_SCHEDULE_ID_SEQ")
 @Table(name = "RHQ_OPERATION_SCHEDULE")
 public abstract class OperationScheduleEntity implements Serializable {
 

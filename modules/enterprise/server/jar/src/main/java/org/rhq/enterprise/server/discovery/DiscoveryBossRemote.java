@@ -19,22 +19,14 @@
 package org.rhq.enterprise.server.discovery;
 
 import javax.ejb.Remote;
-import javax.jws.WebParam;
-import javax.jws.WebService;
-import javax.jws.soap.SOAPBinding;
-
-import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.enterprise.server.system.ServerVersion;
 
 /**
  * The remote boss interface to the discovery subsystem.
  */
-@SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface DiscoveryBossRemote {
 
@@ -46,9 +38,7 @@ public interface DiscoveryBossRemote {
      * @param subject
      * @param resourceIds
      */
-    void importResources( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceIds") int[] resourceIds);
+    void importResources(Subject subject, int[] resourceIds);
 
     /**
      * Analogous to the GUI feature Ignore Resources in the auto discovery queue.
@@ -58,9 +48,7 @@ public interface DiscoveryBossRemote {
      * @param subject
      * @param resourceIds
      */
-    void ignoreResources( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceIds") int[] resourceIds);
+    void ignoreResources(Subject subject, int[] resourceIds);
 
     /**
      * Analogous to the GUI feature Unignore Resources in the auto discovery queue.
@@ -70,9 +58,7 @@ public interface DiscoveryBossRemote {
      * @param subject
      * @param resourceIds
      */
-    void unignoreResources( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceIds") int[] resourceIds);
+    void unignoreResources(Subject subject, int[] resourceIds);
 
     /**
      * Manually Add the resource of the specified type to inventory using the specified plugin configuration (i.e.
@@ -90,12 +76,7 @@ public interface DiscoveryBossRemote {
      * @throws Exception if connecting to the underlying managed resource failed due to invalid plugin configuration or
      *                   if the manual discovery fails for any reason.
      */
-    @NotNull
-    Resource manuallyAddResource( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceTypeId") int resourceTypeId, //        
-        @WebParam(name = "parentResourceId") int parentResourceId, //
-        @WebParam(name = "pluginConfiguration") Configuration pluginConfiguration) //
-        throws Exception;
+    Resource manuallyAddResource(Subject subject, int resourceTypeId, int parentResourceId,
+        Configuration pluginConfiguration) throws Exception;
 
 }

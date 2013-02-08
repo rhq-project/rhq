@@ -139,7 +139,7 @@ import org.rhq.core.domain.cloud.Server;
         + "    SET a.status = -1 " // negative numbers so that bitmask strategy does not conflict with this one
         + "  WHERE a.status = 0 ") //
 })
-@SequenceGenerator(name = "id", sequenceName = "RHQ_AGENT_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "id", sequenceName = "RHQ_AGENT_ID_SEQ")
 @Table(name = "RHQ_AGENT")
 public class Agent implements Serializable {
     public static final long serialVersionUID = 1L;

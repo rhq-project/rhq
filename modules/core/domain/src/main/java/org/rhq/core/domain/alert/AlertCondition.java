@@ -295,7 +295,7 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
         + "  DELETE FROM AlertCondition ac " //
         + "   WHERE ac.alertDefinition IS NULL " //
         + "     AND NOT EXISTS ( SELECT acl FROM AlertConditionLog acl WHERE acl.condition.id = ac.id ) ") })
-@SequenceGenerator(name = "RHQ_ALERT_CONDITION_ID_SEQ", sequenceName = "RHQ_ALERT_CONDITION_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_ALERT_CONDITION_ID_SEQ", sequenceName = "RHQ_ALERT_CONDITION_ID_SEQ")
 @Table(name = "RHQ_ALERT_CONDITION")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class AlertCondition implements Serializable {

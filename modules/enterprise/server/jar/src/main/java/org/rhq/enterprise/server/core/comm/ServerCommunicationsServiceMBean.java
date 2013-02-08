@@ -19,7 +19,6 @@
 package org.rhq.enterprise.server.core.comm;
 
 import java.util.List;
-import java.util.Properties;
 
 import javax.management.ObjectName;
 
@@ -80,22 +79,15 @@ public interface ServerCommunicationsServiceMBean extends ServiceContainerMetric
     void setPreferencesNodeName(String node);
 
     /**
-     * Returns a set of properties that will override the configuration preferences. If this returns <code>null</code>,
-     * then the configuration preferences takes effect as-is.
-     *
-     * @return configuration setting overrides (may be <code>null</code>)
-     */
-    Properties getConfigurationOverrides();
-
-    /**
      * This allows you to explicitly override configuration preferences found in the configuration file. If this isn't
-     * set, then the settings specified by the configuration preferences file take effect as-is. These overrides can be
-     * set in the bootstrap deployment file (and thus allow you to be able to use any app-server specific settings, like
-     * <code>${jboss.server.data.dir}</code>, in the configuration preference values).
+     * set, then the settings specified by the configuration preferences file take effect as-is. If this is set,
+     * this file is a properties file whose values will override the config file prefs.
      *
-     * @param overrides configuration settings that override the configuration preferences (may be<code>null</code>)
+     * @param overrides configuration settings file that override the configuration preferences (may be<code>null</code>)
      */
-    void setConfigurationOverrides(Properties overrides);
+    void setConfigurationOverridesFile(String overridesFile);
+
+    String getConfigurationOverridesFile();
 
     /**
      * This will clear any and all current configuration preferences and then reload the

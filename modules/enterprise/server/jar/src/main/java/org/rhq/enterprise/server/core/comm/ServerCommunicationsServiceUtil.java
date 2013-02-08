@@ -20,11 +20,14 @@ package org.rhq.enterprise.server.core.comm;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.management.ManagementFactory;
+
 import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jboss.mx.util.MBeanServerLocator;
+
 import org.rhq.core.util.exception.WrappedRemotingException;
 import org.rhq.enterprise.communications.ServiceContainer;
 import org.rhq.enterprise.communications.command.client.RemoteInputStream;
@@ -59,7 +62,7 @@ public class ServerCommunicationsServiceUtil {
     public static ServerCommunicationsServiceMBean getService() {
         ServerCommunicationsServiceMBean serverBootstrapService;
         try {
-            MBeanServer mbean_server = MBeanServerLocator.locateJBoss();
+            MBeanServer mbean_server = ManagementFactory.getPlatformMBeanServer();
             serverBootstrapService = (ServerCommunicationsServiceMBean) MBeanServerInvocationHandler.newProxyInstance(
                 mbean_server, ServerCommunicationsServiceMBean.OBJECT_NAME, ServerCommunicationsServiceMBean.class,
                 false);

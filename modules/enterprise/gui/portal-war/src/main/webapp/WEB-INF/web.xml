@@ -277,6 +277,27 @@
       <url-pattern>*.do</url-pattern>
    </filter-mapping>
 
+    <filter>
+        <filter-name>RhqRtFilter</filter-name>
+        <filter-class>org.rhq.helpers.rtfilter.filter.RtFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>RhqRtFilter</filter-name>
+        <url-pattern>*.xhtml</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>RhqRtFilter</filter-name>
+        <url-pattern>*.rss</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>RhqRtFilter</filter-name>
+        <url-pattern>*.jsp</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>RhqRtFilter</filter-name>
+        <url-pattern>*.do</url-pattern>
+    </filter-mapping>
+
    <!-- This is the object that reads the /WEB-INF/rhq-server-internals.properties for internal configuration settings. -->
    <listener>
       <listener-class>org.rhq.enterprise.gui.startup.Configurator</listener-class>
@@ -286,13 +307,6 @@
    <listener>
       <listener-class>org.rhq.enterprise.gui.startup.SessionCacheListener</listener-class>
    </listener>
-
-   <!-- This is the object that finishes the RHQ Server startup initialization. -->
-   <servlet>
-      <servlet-name>initializer</servlet-name>
-      <servlet-class>org.rhq.enterprise.gui.startup.StartupServlet</servlet-class>
-      <load-on-startup>1</load-on-startup>
-   </servlet>
 
     <servlet>
         <servlet-name>sessionAccess</servlet-name>
@@ -407,12 +421,6 @@
    <servlet-mapping>
       <servlet-name>RemoteClientServlet</servlet-name>
       <url-pattern>/client/download</url-pattern>
-   </servlet-mapping>
-
-    <!-- provides startup progress information (mainly for the installer) -->
-    <servlet-mapping>
-      <servlet-name>initializer</servlet-name>
-      <url-pattern>/startupstatus</url-pattern>
    </servlet-mapping>
 
     <!-- TODO what is this for? -->

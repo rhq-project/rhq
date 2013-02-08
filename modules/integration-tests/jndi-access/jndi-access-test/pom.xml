@@ -18,8 +18,6 @@
         <rhq.server.datasource>java:/RHQDS</rhq.server.datasource>
         <rhq.server.ds-mapping>PostgreSQL</rhq.server.ds-mapping>
         <jboss-embeddable-ejb3.version>1.0.0.Alpha9</jboss-embeddable-ejb3.version>
-        <jnp.port>54987</jnp.port>
-        <jnp.rmiPort>54988</jnp.rmiPort>
     </properties>
 
     <dependencies>
@@ -323,8 +321,6 @@
                         <hibernate.dialect>${rhq.test.ds.hibernate-dialect}</hibernate.dialect>
                         <clean.db>${clean.db}</clean.db>
                         <test.server.jar.path>${settings.localRepository}/org/rhq/jndi-access-remote-server/${project.version}/jndi-access-remote-server-${project.version}.jar</test.server.jar.path>
-                        <jnp.port>${jnp.port}</jnp.port>
-                        <jnp.rmiPort>${jnp.rmiPort}</jnp.rmiPort>
                     </systemPropertyVariables>
                     <argLine>${jacoco.unit-test.args} -Djava.security.manager -Djava.security.policy==${basedir}/target/test-classes/security.policy</argLine>
                     <additionalClasspathElements>

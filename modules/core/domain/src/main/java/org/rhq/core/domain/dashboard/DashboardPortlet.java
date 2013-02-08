@@ -45,7 +45,7 @@ import org.rhq.core.domain.configuration.Configuration;
  * @author Greg Hinkle
  */
 @Entity
-@SequenceGenerator(name = "RHQ_DASHBOARD_PORTLET_ID_SEQ", sequenceName = "RHQ_DASHBOARD_PORTLET_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_DASHBOARD_PORTLET_ID_SEQ", sequenceName = "RHQ_DASHBOARD_PORTLET_ID_SEQ")
 @Table(name = "RHQ_DASHBOARD_PORTLET")
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement

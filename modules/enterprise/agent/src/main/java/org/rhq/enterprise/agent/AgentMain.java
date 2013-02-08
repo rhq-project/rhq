@@ -70,7 +70,6 @@ import org.apache.log4j.xml.DOMConfigurator;
 import org.jboss.remoting.invocation.NameBasedInvocation;
 import org.jboss.remoting.security.SSLSocketBuilder;
 import org.jboss.remoting.transport.http.ssl.HTTPSClientInvoker;
-import org.jboss.util.StringPropertyReplacer;
 
 import org.rhq.core.clientapi.server.bundle.BundleServerService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
@@ -101,6 +100,7 @@ import org.rhq.core.pc.plugin.FileSystemPluginFinder;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.ObjectNameFactory;
+import org.rhq.core.util.StringPropertyReplacer;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.agent.AgentRestartCounter.AgentRestartReason;

@@ -126,7 +126,7 @@ import org.jetbrains.annotations.Nullable;
     @NamedQuery(name = Configuration.QUERY_DELETE_CONFIGURATIONS_BY_CONFIGURATION_IDs, query = "" //
         + "DELETE FROM Configuration c " //
         + " WHERE c.id IN ( :configurationIds )") })
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONFIG_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_CONFIG_ID_SEQ")
 @Table(name = "RHQ_CONFIG")
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement

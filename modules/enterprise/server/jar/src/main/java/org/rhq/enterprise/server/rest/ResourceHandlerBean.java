@@ -33,9 +33,6 @@ import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.HttpHeaders;
@@ -48,6 +45,7 @@ import javax.ws.rs.core.UriInfo;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AvailabilityCriteria;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -93,7 +91,7 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
     private EntityManager entityManager;
 
     @Override
-    public Response getResource(int id, @Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+    public Response getResource(int id, Request request, HttpHeaders headers, UriInfo uriInfo) {
 
         Resource res;
         res = fetchResource(id);
@@ -121,13 +119,39 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
     }
 
     @Override
-    public Response getPlatforms(@Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+    public Response getResourcesByQuery(String q, Request request, HttpHeaders headers,
+                             UriInfo uriInfo) {
+        ResourceCriteria criteria = new ResourceCriteria();
+        criteria.addFilterName(q);
+        List<Resource> ret = resMgr.findResourcesByCriteria(caller,criteria);
+
+        Response.ResponseBuilder builder = getResponseBuilderForResourceList(headers,uriInfo,ret);
+
+        return builder.build();
+    }
+
+    @Override
+    public Response getPlatforms(Request request, HttpHeaders headers, UriInfo uriInfo) {
 
         PageControl pc = new PageControl();
         List<Resource> ret = resMgr.findResourcesByCategory(caller, ResourceCategory.PLATFORM,
             InventoryStatus.COMMITTED, pc);
-        List<ResourceWithType> rwtList = new ArrayList<ResourceWithType>(ret.size());
-        for (Resource r : ret) {
+        Response.ResponseBuilder builder = getResponseBuilderForResourceList(headers, uriInfo, ret);
+
+        return builder.build();
+    }
+
+    /**
+     * Translate the passed list of resources into a response according to the acceptable mime types etc.
+     * @param headers HttpHeaders from the request
+     * @param uriInfo Uri from the request
+     * @param resources List of resources
+     * @return An initialized ResponseBuilder
+     */
+    private Response.ResponseBuilder getResponseBuilderForResourceList(HttpHeaders headers, UriInfo uriInfo,
+                                                                       List<Resource> resources) {
+        List<ResourceWithType> rwtList = new ArrayList<ResourceWithType>(resources.size());
+        for (Resource r : resources) {
             putToCache(r.getId(), Resource.class, r);
             ResourceWithType rwt = fillRWT(r, uriInfo);
             rwtList.add(rwt);
@@ -143,8 +167,7 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
             };
             builder = Response.ok(list);
         }
-
-        return builder.build();
+        return builder;
     }
 
     @Override
@@ -267,7 +290,7 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
     }
 
     public Response getSchedules(int resourceId, String scheduleType, boolean enabledOnly, String name,
-        @Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+        Request request, HttpHeaders headers, UriInfo uriInfo) {
 
         // allow metric as input
         if (scheduleType.equals("metric"))
@@ -333,7 +356,7 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
     }
 
     @Override
-    public Response getChildren(int id, @Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+    public Response getChildren(int id, Request request, HttpHeaders headers, UriInfo uriInfo) {
         PageControl pc = new PageControl();
         Resource parent;
         parent = fetchResource(id);
@@ -387,7 +410,7 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
     }
 
     @Override
-    public Response createPlatform(@PathParam("name") String name, StringValue typeValue, @Context UriInfo uriInfo) {
+    public Response createPlatform(String name, StringValue typeValue, UriInfo uriInfo) {
         String typeName = typeValue.getValue();
 
         ResourceType type = resourceTypeManager.getResourceTypeByNameAndPlugin(typeName,"Platforms");
@@ -462,8 +485,8 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
     }
 
     @Override
-    public Response createResource(@PathParam("name") String name, StringValue typeValue,
-                                   @QueryParam("plugin") String plugin, int parentId, UriInfo uriInfo) {
+    public Response createResource(String name, StringValue typeValue,
+                                   String plugin, int parentId, UriInfo uriInfo) {
 
         Resource parent = resMgr.getResourceById(caller,parentId);
         if (parent==null)

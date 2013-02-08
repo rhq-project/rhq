@@ -51,11 +51,11 @@ public class SchedulesDataSource extends RPCDataSource<MeasurementScheduleCompos
 
     public static final String ATTR_ID = "id";
     public static final String ATTR_DATA_TYPE = MeasurementScheduleCriteria.SORT_FIELD_DATA_TYPE;
-    public static final String ATTR_DEFINITION_ID = MeasurementScheduleCriteria.SORT_FIELD_DEFINITION_ID;
-    public static final String ATTR_DESCRIPTION = MeasurementScheduleCriteria.SORT_FIELD_DESCRIPTION;
+    public static final String ATTR_DEFINITION_ID = "definitionId";
+    public static final String ATTR_DESCRIPTION = "description";
     public static final String ATTR_DISPLAY_NAME = MeasurementScheduleCriteria.SORT_FIELD_DISPLAY_NAME;
-    public static final String ATTR_ENABLED = MeasurementScheduleCriteria.SORT_FIELD_ENABLED;
-    public static final String ATTR_INTERVAL = MeasurementScheduleCriteria.SORT_FIELD_INTERVAL;
+    public static final String ATTR_ENABLED = "enabled";
+    public static final String ATTR_INTERVAL = "interval";
 
     private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
 

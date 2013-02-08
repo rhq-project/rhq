@@ -45,8 +45,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.ejb.QueryImpl;
 
-import org.jboss.annotation.IgnoreDependency;
-import org.jboss.annotation.ejb.TransactionTimeout;
+import org.jboss.ejb3.annotation.TransactionTimeout;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
@@ -107,21 +106,21 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     private final Log log = LogFactory.getLog(AlertManagerBean.class);
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private AlertConditionLogManagerLocal alertConditionLogManager;
     @EJB
     private AlertDefinitionManagerLocal alertDefinitionManager;
     @EJB
     private AuthorizationManagerLocal authorizationManager;
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private ResourceManagerLocal resourceManager;
     @EJB
     private SubjectManagerLocal subjectManager;
     @EJB
     private SystemManagerLocal systemManager;
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private OperationManagerLocal operationManager;
     @EJB
     private EmailManagerLocal emailManager;

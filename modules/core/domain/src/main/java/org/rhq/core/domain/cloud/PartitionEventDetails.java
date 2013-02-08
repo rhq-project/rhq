@@ -53,7 +53,7 @@ import org.rhq.core.domain.resource.Agent;
     + "SELECT ped " //
     + "  FROM PartitionEventDetails ped " //
     + " WHERE ped.partitionEvent.id = :eventId ") })
-@SequenceGenerator(name = "id", sequenceName = "RHQ_PARTITION_DETAILS_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "id", sequenceName = "RHQ_PARTITION_DETAILS_ID_SEQ")
 @Table(name = "RHQ_PARTITION_DETAILS")
 public class PartitionEventDetails implements Serializable {
 

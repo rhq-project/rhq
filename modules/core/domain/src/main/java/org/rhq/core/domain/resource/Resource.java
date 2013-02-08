@@ -235,7 +235,7 @@ import org.rhq.core.domain.util.Summary;
     @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_AUTOGROUP_COMPOSITE, query = ""
         + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), res.parentResource, rt, count(res)) "
         + "    FROM Resource res "
-        + "    JOIN res.resourceType rt LEFT JOIN rt.subCategory JOIN res.currentAvailability a "
+        + "    JOIN res.resourceType rt LEFT JOIN rt.subCategory sc JOIN res.currentAvailability a "
         + "   WHERE res.id = :id "
         + "     AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
         + "GROUP BY res.parentResource, rt "),
@@ -248,16 +248,16 @@ import org.rhq.core.domain.util.Summary;
         + "GROUP BY res.parentResource, rt "),
     @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_AUTOGROUP_COMPOSITE_ADMIN, query = "" //
         + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), res.parentResource, rt, count(res)) "
-        + "    FROM Resource res JOIN res.currentAvailability a JOIN res.resourceType rt LEFT JOIN rt.subCategory "
+        + "    FROM Resource res JOIN res.currentAvailability a JOIN res.resourceType rt LEFT JOIN rt.subCategory sc "
         + "   WHERE res.id = :id " + "GROUP BY res.parentResource, rt"),
     @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_AUTOGROUPS_COMPOSITE_ADMIN, query = "" //
         + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), res.parentResource, rt, count(res)) "
-        + "    FROM Resource res JOIN res.currentAvailability a JOIN res.resourceType rt LEFT JOIN rt.subCategory "
+        + "    FROM Resource res JOIN res.currentAvailability a JOIN res.resourceType rt LEFT JOIN rt.subCategory sc "
         + "   WHERE res.id IN ( :ids ) " + "GROUP BY res.parentResource, rt"),
     @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES, query = ""
         + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), res.parentResource, rt, count(res)) "
         + "    FROM Resource res "
-        + "    JOIN res.resourceType rt LEFT JOIN rt.subCategory JOIN res.currentAvailability a "
+        + "    JOIN res.resourceType rt LEFT JOIN rt.subCategory sc JOIN res.currentAvailability a "
         + "   WHERE res.parentResource = :parent " //
         + "     AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
         + "     AND res.inventoryStatus = :inventoryStatus " //
@@ -272,7 +272,7 @@ import org.rhq.core.domain.util.Summary;
     @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_AUTOGROUP_COMPOSITES_BY_TYPE, query = ""
         + "  SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), res.parentResource, rt, count(res)) "
         + "    FROM Resource res "
-        + "    JOIN res.resourceType rt LEFT JOIN rt.subCategory JOIN res.currentAvailability a "
+        + "    JOIN res.resourceType rt LEFT JOIN rt.subCategory sc JOIN res.currentAvailability a "
         + "   WHERE res.parentResource = :parent " //
         + "     AND rt.id IN ( :resourceTypeIds ) " //
         + "     AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
@@ -282,7 +282,7 @@ import org.rhq.core.domain.util.Summary;
         + "   SELECT new org.rhq.core.domain.resource.group.composite.AutoGroupComposite(avg(a.availabilityType), res.parentResource, rt, count(res)) "
         + "     FROM Resource res " //
         + "     JOIN res.currentAvailability a " //
-        + "     JOIN res.resourceType rt LEFT JOIN rt.subCategory " //
+        + "     JOIN res.resourceType rt LEFT JOIN rt.subCategory sc " //
         + "    WHERE res.parentResource = :parent " //
         + "      AND rt.id IN ( :resourceTypeIds ) " //
         + "      AND res.inventoryStatus = :inventoryStatus GROUP BY res.parentResource, rt"),
@@ -541,14 +541,14 @@ import org.rhq.core.domain.util.Summary;
     @NamedQuery(name = Resource.QUERY_FIND_BY_ID, query = "" //
         + "         SELECT res " //
         + "           FROM Resource res " //
-        + "LEFT JOIN FETCH res.currentAvailability " // fetch to remove extra query, LEFT so unit tests needn't set it
-        + "     JOIN FETCH res.resourceType " // fetch to remove extra query
+        + "LEFT JOIN FETCH res.currentAvailability ca " // fetch to remove extra query, LEFT so unit tests needn't set it
+        + "     JOIN FETCH res.resourceType rt " // fetch to remove extra query
         + "          WHERE res.id =  :resourceId "),
     @NamedQuery(name = Resource.QUERY_FIND_BY_IDS, query = "" //
         + "         SELECT res " //
         + "           FROM Resource res " //
-        + "LEFT JOIN FETCH res.currentAvailability " // fetch to remove extra query, LEFT so unit tests needn't set it
-        + "     JOIN FETCH res.resourceType " // fetch to remove extra query
+        + "LEFT JOIN FETCH res.currentAvailability ca " // fetch to remove extra query, LEFT so unit tests needn't set it
+        + "     JOIN FETCH res.resourceType rt " // fetch to remove extra query
         + "          WHERE res.id IN ( :ids ) " //
         + "            AND res.id IN ( SELECT rr.id FROM Resource rr " //
         + "                              JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s " //
@@ -556,17 +556,17 @@ import org.rhq.core.domain.util.Summary;
     @NamedQuery(name = Resource.QUERY_FIND_BY_IDS_ADMIN, query = "" //
         + "         SELECT res " //
         + "           FROM Resource res " //
-        + "LEFT JOIN FETCH res.currentAvailability " // fetch to remove extra query, LEFT so unit tests needn't set it
-        + "     JOIN FETCH res.resourceType " // fetch to remove extra query
+        + "LEFT JOIN FETCH res.currentAvailability ca " // fetch to remove extra query, LEFT so unit tests needn't set it
+        + "     JOIN FETCH res.resourceType rt " // fetch to remove extra query
         + "          WHERE res.id IN ( :ids )"),
     @NamedQuery(name = Resource.QUERY_FIND_WITH_PARENT_BY_IDS, query = "" //
         + "         SELECT res " //
         + "           FROM Resource res " //
-        + "LEFT JOIN FETCH res.currentAvailability " // fetch to remove extra query, LEFT so unit tests needn't set it
-        + "     JOIN FETCH res.resourceType " // fetch to remove extra query
+        + "LEFT JOIN FETCH res.currentAvailability ca " // fetch to remove extra query, LEFT so unit tests needn't set it
+        + "     JOIN FETCH res.resourceType rt " // fetch to remove extra query
         + "LEFT JOIN FETCH res.parentResource parent " //
-        + "LEFT JOIN FETCH parent.currentAvailability " // left fetch to remove extra query for parent
-        + "LEFT JOIN FETCH parent.resourceType " // left fetch to remove extra query for parent
+        + "LEFT JOIN FETCH parent.currentAvailability pca " // left fetch to remove extra query for parent
+        + "LEFT JOIN FETCH parent.resourceType prt " // left fetch to remove extra query for parent
         + "          WHERE res.id IN ( :ids ) " //
         + "            AND res.id IN ( SELECT rr.id FROM Resource rr " //
         + "                              JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s " //
@@ -574,11 +574,11 @@ import org.rhq.core.domain.util.Summary;
     @NamedQuery(name = Resource.QUERY_FIND_WITH_PARENT_BY_IDS_ADMIN, query = "" //
         + "         SELECT res " //
         + "           FROM Resource res " //
-        + "LEFT JOIN FETCH res.currentAvailability " // fetch to remove extra query, LEFT so unit tests needn't set it
-        + "     JOIN FETCH res.resourceType " // fetch to remove extra query
+        + "LEFT JOIN FETCH res.currentAvailability ca " // fetch to remove extra query, LEFT so unit tests needn't set it
+        + "     JOIN FETCH res.resourceType rt " // fetch to remove extra query
         + "LEFT JOIN FETCH res.parentResource parent " //
-        + "LEFT JOIN FETCH parent.currentAvailability " // left fetch to remove extra query for parent
-        + "LEFT JOIN FETCH parent.resourceType " // left fetch to remove extra query for parent
+        + "LEFT JOIN FETCH parent.currentAvailability pca " // left fetch to remove extra query for parent
+        + "LEFT JOIN FETCH parent.resourceType prt " // left fetch to remove extra query for parent
         + "          WHERE res.id IN ( :ids )"),
     @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE, query = "" //
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceComposite(res, a.availabilityType, " //
@@ -751,24 +751,24 @@ import org.rhq.core.domain.util.Summary;
 
     @NamedQuery(name = Resource.QUERY_RESOURCE_VERSION_AND_DRIFT_IN_COMPLIANCE, query = ""
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceInstallCount("
-        + "r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, count(distinct r), "
+        + "rt.name, rt.plugin, rt.category, rt.id, count(distinct r), "
         + "r.version, size(templates), 0) "
-        + "FROM Resource r JOIN r.resourceType type JOIN type.driftDefinitionTemplates templates "
+        + "FROM Resource r JOIN r.resourceType rt JOIN rt.driftDefinitionTemplates templates "
         + "WHERE r.inventoryStatus = 'COMMITTED' AND " //
         + "      0 = ( SELECT COUNT(defs) FROM r.driftDefinitions defs WHERE NOT defs.complianceStatus = 0) "
-        + "GROUP BY r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, r.version "
-        + "ORDER BY r.resourceType.category, r.resourceType.plugin, r.resourceType.name, r.version "),
+        + "GROUP BY rt.name, rt.plugin, rt.category, rt.id, r.version "
+        + "ORDER BY rt.category, rt.plugin, rt.name, r.version "),
 
     @NamedQuery(name = Resource.QUERY_RESOURCE_VERSION_AND_DRIFT_OUT_OF_COMPLIANCE, query = ""
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceInstallCount("
-        + "r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, count(distinct r), "
+        + "rt.name, rt.plugin, rt.category, rt.id, count(distinct r), "
         + "r.version, size(templates), 1) "
-        + "FROM Resource r JOIN r.resourceType type JOIN type.driftDefinitionTemplates templates "
+        + "FROM Resource r JOIN r.resourceType rt JOIN rt.driftDefinitionTemplates templates "
         + "WHERE r.inventoryStatus = 'COMMITTED' AND " //
         + "      0 < ( SELECT COUNT(defs) FROM r.driftDefinitions defs WHERE defs.complianceStatus <> 0) "
-        + "GROUP BY r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, r.version "
-        + "ORDER BY r.resourceType.category, r.resourceType.plugin, r.resourceType.name, r.version ") })
-@SequenceGenerator(name = "RHQ_RESOURCE_SEQ", sequenceName = "RHQ_RESOURCE_ID_SEQ")
+        + "GROUP BY rt.name, rt.plugin, rt.category, rt.id, r.version "
+        + "ORDER BY rt.category, rt.plugin, rt.name, r.version ") })
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_RESOURCE_SEQ", sequenceName = "RHQ_RESOURCE_ID_SEQ")
 @Table(name = Resource.TABLE_NAME)
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement

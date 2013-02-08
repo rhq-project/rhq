@@ -32,7 +32,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  * @author Heiko W. Rupp
  */
-@ApplicationPath("/rest")
+@ApplicationPath("/1")
 public class RHQApplication extends javax.ws.rs.core.Application {
 
     Log log = LogFactory.getLog(RHQApplication.class);

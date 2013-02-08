@@ -28,8 +28,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.Query;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -45,6 +43,25 @@ public class OperationHistoryTest extends AbstractEJB3Test {
     private Resource newResource;
     private OperationDefinition newOperation;
     private ResourceGroup newGroup;
+
+    @Override
+    protected void beforeMethod() throws Exception {
+        try {
+            newResource = createNewResource();
+            newOperation = newResource.getResourceType().getOperationDefinitions().iterator().next();
+            newGroup = newResource.getExplicitGroups().iterator().next();
+        } catch (Throwable t) {
+            // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
+            // and throw a cryptic NPE (see http://jira.codehaus.org/browse/SUREFIRE-157)!
+            t.printStackTrace();
+            throw new RuntimeException(t);
+        }
+    }
+
+    @Override
+    protected void afterMethod() throws Exception {
+        deleteNewResource(newResource);
+    }
 
     @Test(groups = "integration.ejb3")
     public void testUpdate() throws Exception {
@@ -371,22 +388,4 @@ public class OperationHistoryTest extends AbstractEJB3Test {
         }
     }
 
-    @BeforeMethod
-    public void beforeMethod() throws Exception {
-        try {
-            newResource = createNewResource();
-            newOperation = newResource.getResourceType().getOperationDefinitions().iterator().next();
-            newGroup = newResource.getExplicitGroups().iterator().next();
-        } catch (Throwable t) {
-            // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
-            // and throw a cryptic NPE (see http://jira.codehaus.org/browse/SUREFIRE-157)!
-            t.printStackTrace();
-            throw new RuntimeException(t);
-        }
-    }
-
-    @AfterMethod
-    public void afterMethod() throws Exception {
-        deleteNewResource(newResource);
-    }
 }

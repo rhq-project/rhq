@@ -32,6 +32,7 @@ import javax.transaction.TransactionManager;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
@@ -39,7 +40,6 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
-import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 import org.rhq.core.domain.configuration.definition.constraint.Constraint;
 import org.rhq.core.domain.configuration.definition.constraint.FloatRangeConstraint;
 import org.rhq.core.domain.test.AbstractEJB3Test;
@@ -51,6 +51,7 @@ public class ConfigurationDefinitionTest extends AbstractEJB3Test {
 
     @Test(groups = "integration.ejb3")
     public void testStoreDefinition() throws Exception {
+
         TransactionManager transactionManager = getTransactionManager();
         transactionManager.begin();
 

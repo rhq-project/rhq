@@ -21,11 +21,6 @@ package org.rhq.enterprise.server.operation;
 import java.util.List;
 
 import javax.ejb.Remote;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
-import javax.jws.soap.SOAPBinding;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
@@ -40,11 +35,7 @@ import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.exception.ScheduleException;
 import org.rhq.enterprise.server.exception.UnscheduleException;
-import org.rhq.enterprise.server.jaxb.adapter.ConfigurationAdapter;
-import org.rhq.enterprise.server.system.ServerVersion;
 
-@SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface OperationManagerRemote {
 
@@ -73,11 +64,7 @@ public interface OperationManagerRemote {
      *            this method will not update the history status unless it could successfully tell the agent(s) to
      *            cancel the operation.
      */
-    @WebMethod
-    void cancelOperationHistory( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "operationHistoryId") int operationHistoryId, //
-        @WebParam(name = "ignoreAgentErrors") boolean ignoreAgentErrors);
+    void cancelOperationHistory(Subject subject, int operationHistoryId, boolean ignoreAgentErrors);
 
     /**
      * Purges the history from the database. Doing this loses all audit trails of the invoked operation. This can handle
@@ -99,11 +86,7 @@ public interface OperationManagerRemote {
      *            <code>false</code>, but a user might want to force it to be purged, in which case the UI will want
      *            to pass in <code>true</code>
      */
-    @WebMethod
-    void deleteOperationHistory( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "operationHistoryId") int operationHistoryId, //
-        @WebParam(name = "purgeInProgress") boolean purgeInProgress);
+    void deleteOperationHistory(Subject subject, int operationHistoryId, boolean purgeInProgress);
 
     /**
      * Schedules an operation for execution on the given resource.
@@ -130,18 +113,8 @@ public interface OperationManagerRemote {
      * @return the information on the new schedule
      * @throws ScheduleException TODO
      */
-    @WebMethod
-    ResourceOperationSchedule scheduleResourceOperation( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceid") int resourceId, //
-        @WebParam(name = "operationName") String operationName, //
-        @WebParam(name = "delay") long delay, //
-        @WebParam(name = "repeatInterval") long repeatInterval, //
-        @WebParam(name = "repeatCount") int repeatCount, //
-        @WebParam(name = "timeout") int timeout, //
-        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
-        @WebParam(name = "parameters") Configuration parameters, //
-        @WebParam(name = "description") String description) //
+    ResourceOperationSchedule scheduleResourceOperation(Subject subject, int resourceId, String operationName,
+        long delay, long repeatInterval, int repeatCount, int timeout, Configuration parameters, String description)
         throws ScheduleException;
 
     /**
@@ -156,12 +129,7 @@ public interface OperationManagerRemote {
      * @throws UnscheduleException TODO
      * @throws Exception
      */
-    @WebMethod
-    void unscheduleResourceOperation( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "jobId") String jobId, //
-        @WebParam(name = "resourceId") int resourceId) //
-        throws UnscheduleException;
+    void unscheduleResourceOperation(Subject subject, String jobId, int resourceId) throws UnscheduleException;
 
     /**
      * @param subject
@@ -178,19 +146,9 @@ public interface OperationManagerRemote {
      * @return
      * @throws ScheduleException
      */
-    @WebMethod
-    GroupOperationSchedule scheduleGroupOperation(//
-        @WebParam(name = "subject") Subject subject,//
-        @WebParam(name = "groupId") int groupId,//
-        @WebParam(name = "executionOrderResourceIds") int[] executionOrderResourceIds,//
-        @WebParam(name = "haltOnFailure") boolean haltOnFailure,//
-        @WebParam(name = "operationName") String operationName,//
-        @WebParam(name = "parameters") Configuration parameters,//
-        @WebParam(name = "delay") long delay,//
-        @WebParam(name = "repeatInterval") long repeatInterval,//
-        @WebParam(name = "repeatCount") int repeatCount,//
-        @WebParam(name = "timeout") int timeout,//
-        @WebParam(name = "description") String description)//
+    GroupOperationSchedule scheduleGroupOperation(Subject subject, int groupId, int[] executionOrderResourceIds,
+        boolean haltOnFailure, String operationName, Configuration parameters, long delay, long repeatInterval,
+        int repeatCount, int timeout, String description)//
         throws ScheduleException;
 
     /**
@@ -201,11 +159,7 @@ public interface OperationManagerRemote {
      * @param  resourceGroupId the ID of the group whose operation is getting unscheduled
      * @throws UnscheduleException TODO
      */
-    @WebMethod
-    void unscheduleGroupOperation(//
-        @WebParam(name = "subject") Subject subject,//
-        @WebParam(name = "jobId") String jobId,//
-        @WebParam(name = "resourceGroupId") int resourceGroupId)//
+    void unscheduleGroupOperation(Subject subject, String jobId, int resourceGroupId)//
         throws UnscheduleException;
 
     /**
@@ -221,30 +175,15 @@ public interface OperationManagerRemote {
      * @throws Exception TODO
      * @throws Exception
      */
-    @WebMethod
-    List<ResourceOperationSchedule> findScheduledResourceOperations( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId) //
-        throws Exception;
+    List<ResourceOperationSchedule> findScheduledResourceOperations(Subject subject, int resourceId) throws Exception;
 
-    @WebMethod
-    List<GroupOperationSchedule> findScheduledGroupOperations( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "groupId") int groupId) //
-        throws Exception;
+    List<GroupOperationSchedule> findScheduledGroupOperations(Subject subject, int groupId) throws Exception;
 
-    @WebMethod
-    List<OperationDefinition> findOperationDefinitionsByCriteria( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "criteria") OperationDefinitionCriteria criteria);
+    List<OperationDefinition> findOperationDefinitionsByCriteria(Subject subject, OperationDefinitionCriteria criteria);
 
-    @WebMethod
-    PageList<ResourceOperationHistory> findResourceOperationHistoriesByCriteria( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "criteria") ResourceOperationHistoryCriteria criteria);
+    PageList<ResourceOperationHistory> findResourceOperationHistoriesByCriteria(Subject subject,
+        ResourceOperationHistoryCriteria criteria);
 
-    @WebMethod
-    PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "criteria") GroupOperationHistoryCriteria criteria);
+    PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(Subject subject,
+        GroupOperationHistoryCriteria criteria);
 }

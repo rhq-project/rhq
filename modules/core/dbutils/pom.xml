@@ -17,10 +17,11 @@
     <description>Database schema setup, upgrade and other utilities</description>
 
     <properties>
-        <db.schema.version>2.126</db.schema.version>
+        <db.schema.version>2.128</db.schema.version>
         <rhq.ds.type-mapping>${rhq.test.ds.type-mapping}</rhq.ds.type-mapping>
         <rhq.ds.server-name>${rhq.test.ds.server-name}</rhq.ds.server-name>
         <rhq.ds.db-name>${rhq.test.ds.db-name}</rhq.ds.db-name>
+        <rhq.ds.port>${rhq.test.ds.port}</rhq.ds.port>
         <rhq.ds.connection-url>${rhq.test.ds.connection-url}</rhq.ds.connection-url>
         <rhq.ds.user-name>${rhq.test.ds.user-name}</rhq.ds.user-name>
         <rhq.ds.password>${rhq.test.ds.password}</rhq.ds.password>
@@ -114,6 +115,10 @@
                                     <value>${rhq.ds.db-name}</value>
                                 </systemProperty>
                                 <systemProperty>
+                                    <key>rhq.ds.port</key>
+                                    <value>${rhq.ds.port}</value>
+                                </systemProperty>
+                                <systemProperty>
                                     <key>rhq.ds.connection-url</key>
                                     <value>${rhq.ds.connection-url}</value>
                                 </systemProperty>
@@ -170,10 +175,12 @@
                 </property>
             </activation>
             
+            <!-- these are defined in the dev profile also - see below in that profile for why -->
             <properties>
                 <rhq.ds.type-mapping>${rhq.dev.ds.type-mapping}</rhq.ds.type-mapping>
                 <rhq.ds.server-name>${rhq.dev.ds.server-name}</rhq.ds.server-name>
                 <rhq.ds.db-name>${rhq.dev.ds.db-name}</rhq.ds.db-name>
+                <rhq.ds.port>${rhq.dev.ds.port}</rhq.ds.port>
                 <rhq.ds.connection-url>${rhq.dev.ds.connection-url}</rhq.ds.connection-url>
                 <rhq.ds.user-name>${rhq.dev.ds.user-name}</rhq.ds.user-name>
                 <rhq.ds.password>${rhq.dev.ds.password}</rhq.ds.password>
@@ -226,6 +233,7 @@
                                             <property name="task.classpath.property" refid="maven.test.classpath" />
                                             <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
                                             <property name="rhq.ds.db-name" value="${rhq.ds.db-name}" />
+                                            <property name="rhq.ds.port" value="${rhq.ds.port}" />
                                             <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
                                             <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
                                             <property name="rhq.ds.password" value="${rhq.ds.password}" />
@@ -257,6 +265,7 @@
                                             <property name="task.classpath.property" refid="maven.test.classpath" />
                                             <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
                                             <property name="rhq.ds.db-name" value="${rhq.ds.db-name}" />
+                                            <property name="rhq.ds.port" value="${rhq.ds.port}" />
                                             <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
                                             <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
                                             <property name="rhq.ds.password" value="${rhq.ds.password}" />
@@ -295,6 +304,7 @@
                                             <property name="jtds.version" value="${jtds.version}" />
                                             <property name="task.classpath.property" refid="maven.test.classpath" />
                                             <property name="rhq.ds.db-name" value="${rhq.ds.db-name}" />
+                                            <property name="rhq.ds.port" value="${rhq.ds.port}" />
                                             <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
                                             <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
                                             <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
@@ -343,6 +353,7 @@
                                             <property name="task.classpath.property" refid="maven.test.classpath" />
                                             <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
                                             <property name="rhq.ds.db-name" value="${rhq.ds.db-name}" />
+                                            <property name="rhq.ds.port" value="${rhq.ds.port}" />
                                             <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
                                             <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
                                             <property name="rhq.ds.password" value="${rhq.ds.password}" />
@@ -367,7 +378,20 @@
             <properties>
                 <rhq.rootDir>../../..</rhq.rootDir>
                 <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-                <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/lib</rhq.deploymentDir>
+                <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/deployments/${rhq.earName}/lib</rhq.deploymentDir>
+
+                <!-- these are defined in the db.dev profile also - but if you just use -Pdev without -Ddb=dev or -Pdb.dev
+                     then you won't be using the dev DB. These properties allow -Pdev -Ddbsetup to do what you'd expect
+                     (that is, setup the dev DB)
+                 -->
+                <rhq.ds.type-mapping>${rhq.dev.ds.type-mapping}</rhq.ds.type-mapping>
+                <rhq.ds.server-name>${rhq.dev.ds.server-name}</rhq.ds.server-name>
+                <rhq.ds.db-name>${rhq.dev.ds.db-name}</rhq.ds.db-name>
+                <rhq.ds.port>${rhq.dev.ds.port}</rhq.ds.port>
+                <rhq.ds.connection-url>${rhq.dev.ds.connection-url}</rhq.ds.connection-url>
+                <rhq.ds.user-name>${rhq.dev.ds.user-name}</rhq.ds.user-name>
+                <rhq.ds.password>${rhq.dev.ds.password}</rhq.ds.password>
+                <rhq.ds.driver-class>${rhq.dev.ds.driver-class}</rhq.ds.driver-class>
             </properties>
             <build>
                 <plugins>

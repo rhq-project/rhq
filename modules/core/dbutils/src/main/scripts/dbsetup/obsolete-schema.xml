@@ -6,7 +6,14 @@
     <!-- NOTE: The tables will be dropped in the *** REVERSE ORDER *** as listed in this file! -->
     <!-- NOTE: So, put the table you want dropped first at the bottom, and so on... -->
 
-
+    <!-- !!! JMS tables removed when moving to HornetQ -->
+    
+    <table obsolete="true">JMS_SUBSCRIPTIONS</table>
+    <table obsolete="true">JMS_ROLES</table>
+    <table obsolete="true">JMS_USERS</table>
+    <table obsolete="true">JMS_TRANSACTIONS</table>
+    <table obsolete="true">JMS_MESSAGES</table>
+    
     <!-- !!! REMOVED FROM CONTENT-SCHEMA !!!! -->
     
      <table name="RHQ_DRIFT_TEMPLATE_MAP" obsolete="true">

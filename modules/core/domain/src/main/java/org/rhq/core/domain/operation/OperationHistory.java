@@ -60,7 +60,7 @@ import org.rhq.core.domain.configuration.Configuration;
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @NamedQueries( {
-    @NamedQuery(name = OperationHistory.QUERY_FIND_BY_JOB_ID, query = "SELECT h FROM OperationHistory h LEFT JOIN FETCH h.parameters "
+    @NamedQuery(name = OperationHistory.QUERY_FIND_BY_JOB_ID, query = "SELECT h FROM OperationHistory h LEFT JOIN FETCH h.parameters hp "
         + " WHERE h.jobName = :jobName " + "   AND h.jobGroup = :jobGroup " + "   AND h.createdTime = :createdTime"),
     @NamedQuery(name = OperationHistory.QUERY_GET_RECENTLY_COMPLETED_RESOURCE_ADMIN, query = "SELECT DISTINCT new org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite( "
         + "    ro.id, "
@@ -100,9 +100,9 @@ import org.rhq.core.domain.configuration.Configuration;
         + "    go.operationDefinition.displayName, "
         + "    go.createdTime, "
         + "    go.status, "
-        + "    go.group.id, "
-        + "    go.group.name, "
-        + "    go.group.resourceType.name) "
+        + "    g.id, "
+        + "    g.name, "
+        + "    g.resourceType.name) "
         + " FROM GroupOperationHistory go JOIN go.group g JOIN g.roles r JOIN r.subjects s "
         + " WHERE go.status != 'INPROGRESS' AND s = :subject "),
     @NamedQuery(name = OperationHistory.QUERY_GET_PARAMETER_CONFIGURATION_IDS, query = "" //
@@ -124,7 +124,7 @@ import org.rhq.core.domain.configuration.Configuration;
      )
 })
 
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_OPERATION_HISTORY_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_OPERATION_HISTORY_ID_SEQ")
 @Table(name = "RHQ_OPERATION_HISTORY")
 public abstract class OperationHistory implements Serializable {
     public static final String QUERY_FIND_BY_JOB_ID = "OperationHistory.findByJobId";

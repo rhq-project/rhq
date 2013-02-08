@@ -612,12 +612,13 @@
   <tag>
     <name>availabilitydecorator</name>
     <tag-class>org.rhq.enterprise.gui.legacy.taglib.display.AvailabilityDecorator</tag-class>
-    <body-content>none</body-content>
+    <body-content>empty</body-content>
   </tag>
+<!--
   <tag>
     <name>resourcedecorator</name>
     <tag-class>org.rhq.enterprise.gui.legacy.taglib.display.ResourceDecorator</tag-class>
-    <body-content>none</body-content>
+    <body-content>empty</body-content>
     <attribute>
       <name>baseKey</name>
       <required>false</required>
@@ -660,10 +661,11 @@
       <type>String</type>
     </attribute>
   </tag>
+-->
   <tag>
     <name>booleandecorator</name>
     <tag-class>org.rhq.enterprise.gui.legacy.taglib.display.BooleanDecorator</tag-class>
-    <body-content>none</body-content>
+    <body-content>empty</body-content>
     <attribute>
       <name>flagKey</name>
       <required>true</required>
@@ -673,7 +675,7 @@
   <tag>
     <name>equalsdecorator</name>
     <tag-class>org.rhq.enterprise.gui.legacy.taglib.display.EqualsDecorator</tag-class>
-    <body-content>none</body-content>
+    <body-content>empty</body-content>
     <attribute>
       <name>value</name>
       <required>true</required>
@@ -688,7 +690,7 @@
   <tag>
     <name>prioritydecorator</name>
     <tag-class>org.rhq.enterprise.gui.legacy.taglib.display.PriorityDecorator</tag-class>
-    <body-content>none</body-content>
+    <body-content>empty</body-content>
     <attribute>
       <name>flagKey</name>
       <required>true</required>
@@ -743,7 +745,7 @@
   <tag>
   	<name>measurementDataTypeDecorator</name>
   	<tag-class>org.rhq.enterprise.gui.legacy.taglib.display.MeasurementDataTypeDecorator</tag-class>
-  	<body-content>none</body-content>
+  	<body-content>empty</body-content>
   	<description>Depending on the passed MeasurementDefinition, display the DataType and/or further information</description>
   </tag>
   <!-- for ListHistory's description column for control history. will display
@@ -788,7 +790,7 @@
   <tag>
     <name>metricdecorator</name>
     <tag-class>org.rhq.enterprise.gui.legacy.taglib.display.MetricDecorator</tag-class>
-    <body-content>none</body-content>
+    <body-content>empty</body-content>
     <attribute>
       <name>unit</name>
       <required>true</required>
@@ -806,7 +808,7 @@
   <tag>
     <name>groupmetricdecorator</name>
     <tag-class>org.rhq.enterprise.gui.legacy.taglib.display.GroupMetricsDecorator</tag-class>
-    <body-content>none</body-content>
+    <body-content>empty</body-content>
     <attribute>
       <name>active</name>
       <required>true</required>
@@ -824,13 +826,13 @@
   <tag>
     <name>resource-quicknav-decorator</name>
     <tag-class>org.rhq.enterprise.gui.legacy.taglib.display.ResourceQuicknavDecorator</tag-class>
-    <body-content>none</body-content>
+    <body-content>empty</body-content>
   </tag>
 
   <tag>
     <name>group-quicknav-decorator</name>
     <tag-class>org.rhq.enterprise.gui.legacy.taglib.display.GroupQuicknavDecorator</tag-class>
-    <body-content>none</body-content>
+    <body-content>empty</body-content>
     <attribute>
       <name>group</name>
       <required>false</required>

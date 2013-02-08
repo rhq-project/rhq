@@ -57,7 +57,7 @@ import javax.persistence.Table;
         + "          FROM JPADriftChangeSet dcs " //
         + "         WHERE dcs.driftDefinition.name = :driftDefinitionName AND dcs.resource.id = :resourceId)") })
 @Table(name = "RHQ_DRIFT")
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_DRIFT_ID_SEQ")
 public class JPADrift implements Serializable, Drift<JPADriftChangeSet, JPADriftFile> {
     private static final long serialVersionUID = 1L;
 
@@ -198,7 +198,15 @@ public class JPADrift implements Serializable, Drift<JPADriftChangeSet, JPADrift
 
     @Override
     public String toString() {
-        return "JPADrift [ id=" + id + ", category=" + category + ", path=" + path + ", changeSet=" + changeSet + "]";
+        StringBuilder sb = new StringBuilder("JPADrift [");
+        sb.append("id=" + id).append(", category=" + category).append(", path=" + path);
+        try {
+            sb.append(", changeSet=" + changeSet);
+        } catch (Exception e) {
+            // not attached
+        }
+        sb.append("]");
+        return sb.toString();
     }
 
 }

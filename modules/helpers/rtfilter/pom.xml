@@ -17,7 +17,7 @@
   <description>a servlet filter that logs response times for HTTP requests to JEE web applications</description>
 
    <properties>
-      <moduleName>${groupId}.${artifactId}</moduleName>
+      <moduleName>${project.groupId}.${project.artifactId}</moduleName>
    </properties>
 
   <dependencies>
@@ -87,10 +87,12 @@
       <profile>
          <id>dev</id>
 
+         <!-- TODO - make this build an AS7 module and put it in the modules location -->
+
          <properties>
             <rhq.rootDir>../../..</rhq.rootDir>
             <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/lib</rhq.deploymentDir>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/standalone/lib</rhq.deploymentDir>
          </properties>
 
          <build>
@@ -105,10 +107,13 @@
                         <phase>compile</phase>
                         <configuration>
                           <target>
+                          <!-- TODO: this is for the old 4.2.3 container, put this in the proper AS7 location -->
+                          <!--
                             <mkdir dir="${rhq.deploymentDir}" />
                             <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                             <echo>*** Updating ${deployment.file}...</echo>
                             <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
+                          -->
                           </target>
                         </configuration>
                         <goals>

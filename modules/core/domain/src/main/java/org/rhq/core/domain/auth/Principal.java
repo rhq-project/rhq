@@ -41,7 +41,7 @@ import javax.persistence.Table;
 @NamedQueries( {
     @NamedQuery(name = Principal.QUERY_FIND_BY_USERNAME, query = "SELECT m FROM Principal AS m WHERE m.principal = :principal"),
     @NamedQuery(name = Principal.QUERY_FIND_ALL_USERS, query = "SELECT m FROM Principal AS m") })
-@SequenceGenerator(name = "RHQ_PRINCIPAL_ID_SEQ", sequenceName = "RHQ_PRINCIPAL_ID_SEQ", allocationSize = 10)
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_PRINCIPAL_ID_SEQ", sequenceName = "RHQ_PRINCIPAL_ID_SEQ")
 @Table(name = "RHQ_PRINCIPAL")
 public class Principal implements Serializable {
     public static final String QUERY_FIND_BY_USERNAME = "Principal.findByUsername";

@@ -40,8 +40,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class ResourceLineageRenderer extends Renderer {
     private static final String SEPARATOR = " > ";
 
-    private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-
     /**
      * Encode the beginning of the given {@link ResourceLineageComponent}.
      *
@@ -53,7 +51,8 @@ public class ResourceLineageRenderer extends Renderer {
         ResourceLineageComponent resourceLineage = (ResourceLineageComponent) component;
         ResponseWriter writer = facesContext.getResponseWriter();
         long monitorId = HibernatePerformanceMonitor.get().start();
-        List<Resource> ancestorResources = this.resourceManager.getResourceLineage(resourceLineage.getResourceId());
+        ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+        List<Resource> ancestorResources = resourceManager.getResourceLineage(resourceLineage.getResourceId());
         HibernatePerformanceMonitor.get().stop(monitorId, "ResourceLineage renderer");
         if (ancestorResources.isEmpty()) {
             throw new IllegalStateException(

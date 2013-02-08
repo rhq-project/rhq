@@ -21,20 +21,16 @@ package org.rhq.enterprise.server.core;
 import java.io.File;
 import java.util.Date;
 
-import javax.management.ObjectName;
-
-import org.jboss.mx.util.ObjectNameFactory;
-import org.jboss.system.ServiceMBean;
 import org.rhq.core.domain.common.ProductInfo;
 
 /**
- * An MBean that exposes various core server global attributes (version, uptime, etc.).
+ * An MBean that exposes various global attributes of the underlying AS Server (version, uptime, etc.).
  */
-public interface CoreServerMBean extends ServiceMBean {
+public interface CoreServerMBean {
     /**
      * The name of this MBean when deployed.
      */
-    ObjectName OBJECT_NAME = ObjectNameFactory.create("rhq:service=CoreServer");
+    String OBJECT_NAME = "rhq:service=CoreServer";
 
     /**
      * Returns the version of the core RHQ server.
@@ -67,21 +63,21 @@ public interface CoreServerMBean extends ServiceMBean {
 
     /**
      * Where the JBoss Server Home directory is. Typically, this is something like:
-     * {@link #getInstallDir() install-dir}/jbossas/server/default
+     * {@link #getInstallDir() install-dir}/jbossas/standalone
      * @return jboss server home directory
      */
     File getJBossServerHomeDir();
 
     /**
      * Where the JBoss Server Data directory is. Typically, this is something like:
-     * {@link #getInstallDir() install-dir}/jbossas/server/default/data
+     * {@link #getInstallDir() install-dir}/jbossas/standalone/data
      * @return jboss server home directory
      */
     File getJBossServerDataDir();
 
     /**
      * Where the JBoss Server Temp directory is. Typically, this is something like:
-     * {@link #getInstallDir() install-dir}/jbossas/server/default/tmp
+     * {@link #getInstallDir() install-dir}/jbossas/standalone/tmp
      * @return jboss server home directory
      */
     File getJBossServerTempDir();

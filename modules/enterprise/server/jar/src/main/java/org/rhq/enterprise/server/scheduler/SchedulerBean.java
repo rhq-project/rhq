@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.scheduler;
 
+import java.lang.management.ManagementFactory;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
@@ -42,8 +43,6 @@ import org.quartz.TriggerListener;
 import org.quartz.UnableToInterruptJobException;
 import org.quartz.spi.JobFactory;
 
-import org.jboss.mx.util.MBeanServerLocator;
-
 /**
  * The Scheduler session bean is a proxy to the Quartz scheduler MBean that is used for scheduling jobs to be executed
  * within the JON Server. Use this to provide transactional access to Quartz.
@@ -65,7 +64,7 @@ public class SchedulerBean implements SchedulerLocal {
     private SchedulerServiceMBean getSchedulerService() throws SchedulerException {
         try {
             return (SchedulerServiceMBean) MBeanServerInvocationHandler.newProxyInstance(
-                MBeanServerLocator.locateJBoss(), SCHEDULER_MBEAN_NAME, SchedulerServiceMBean.class, false);
+                ManagementFactory.getPlatformMBeanServer(), SCHEDULER_MBEAN_NAME, SchedulerServiceMBean.class, false);
         } catch (Exception e) {
             throw new SchedulerException("Failed to get a proxy to the scheduler service MBean", e);
         }

@@ -27,7 +27,6 @@ import java.util.Date;
 import java.util.Properties;
 
 import javax.ejb.EJB;
-import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -36,8 +35,7 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.annotation.IgnoreDependency;
-import org.jboss.annotation.ejb.TransactionTimeout;
+import org.jboss.ejb3.annotation.TransactionTimeout;
 
 import org.rhq.core.clientapi.util.TimeUtil;
 import org.rhq.core.util.StopWatch;
@@ -61,19 +59,17 @@ import org.rhq.enterprise.server.util.TimingVoodoo;
 public class MeasurementCompressionManagerBean implements MeasurementCompressionManagerLocal {
     private final Log log = LogFactory.getLog(MeasurementCompressionManagerBean.class);
 
-    private static final String DATASOURCE_NAME = RHQConstants.DATASOURCE_JNDI_NAME;
-
     private static final long SECOND = 1000L;
     private static final long MINUTE = SECOND * 60;
     private static final long HOUR = MINUTE * 60;
     private static final long DAY = HOUR * 24;
     private static final long SIX_HOUR = HOUR * 6;
 
-    @javax.annotation.Resource
-    private SessionContext ctx;
+    @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
+    private DataSource dataSource;
 
     @EJB
-    @IgnoreDependency
+    //@IgnoreDependency
     private SubjectManagerLocal subjectManager;
     @EJB
     private SystemManagerLocal systemManager;
@@ -240,7 +236,7 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         int rows = 0;
         StopWatch watch = new StopWatch();
         try {
-            conn = ((DataSource) ctx.lookup(DATASOURCE_NAME)).getConnection();
+            conn = dataSource.getConnection();
 
             // One special case. If we are compressing from an
             // already compressed table, we'll take the MIN and
@@ -287,7 +283,7 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         ResultSet rs = null;
 
         try {
-            conn = ((DataSource) ctx.lookup(DATASOURCE_NAME)).getConnection();
+            conn = dataSource.getConnection();
             String sql = "SELECT MIN(time_stamp) FROM " + dataTable; // returns null rows if nothing exists
 
             stmt = conn.createStatement();
@@ -313,7 +309,7 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         ResultSet rs = null;
 
         try {
-            conn = ((DataSource) ctx.lookup(DATASOURCE_NAME)).getConnection();
+            conn = dataSource.getConnection();
             String sql = "SELECT MAX(time_stamp) FROM " + dataTable; // returns null rows if nothing exists
 
             stmt = conn.createStatement();
@@ -380,7 +376,7 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
         StopWatch watch = new StopWatch();
         int rows;
         try {
-            conn = ((DataSource) ctx.lookup(DATASOURCE_NAME)).getConnection();
+            conn = dataSource.getConnection();
 
             String sql = "DELETE FROM " + tableName + " WHERE time_stamp >= ? AND time_stamp < ?";
 
@@ -413,7 +409,7 @@ public class MeasurementCompressionManagerBean implements MeasurementCompression
             Statement stmt = null;
             StopWatch watch = new StopWatch();
             try {
-                conn = ((DataSource) ctx.lookup(DATASOURCE_NAME)).getConnection();
+                conn = dataSource.getConnection();
                 stmt = conn.createStatement();
                 long startTime = System.currentTimeMillis();
                 stmt.executeUpdate("TRUNCATE TABLE " + tableName);

@@ -66,7 +66,7 @@ import org.rhq.core.domain.resource.Agent;
     @NamedQuery(name = Server.QUERY_FIND_BY_NAME, query = "" //
         + "         SELECT s " //
         + "           FROM Server s " //
-        + "LEFT JOIN FETCH s.affinityGroup " //
+        + "LEFT JOIN FETCH s.affinityGroup ag " //
         + "          WHERE s.name = :name"),
     @NamedQuery(name = Server.QUERY_FIND_ALL_CLOUD_MEMBERS, query = "SELECT s FROM Server s WHERE NOT s.operationMode = 'INSTALLED'"),
     @NamedQuery(name = Server.QUERY_FIND_ALL_NORMAL_CLOUD_MEMBERS, query = "SELECT s FROM Server s WHERE s.operationMode = 'NORMAL'"),

@@ -21,25 +21,24 @@ package org.rhq.enterprise.server.core;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.management.ManagementFactory;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Properties;
 
 import javax.management.MBeanServer;
-import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.mx.util.MBeanServerLocator;
-import org.jboss.system.ServiceMBeanSupport;
-import org.jboss.system.server.ServerConfig;
-
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.util.ObjectNameFactory;
 
-public class CoreServer extends ServiceMBeanSupport implements CoreServerMBean {
+/**
+ * Get information about RHQ's underlying AS Server.
+ */
+public class CoreServer implements CoreServerMBean {
     private static final String PRODUCT_INFO_PROPERTIES_RESOURCE_PATH =
             "org/rhq/enterprise/server/core/ProductInfo.properties";
 
@@ -69,8 +68,7 @@ public class CoreServer extends ServiceMBeanSupport implements CoreServerMBean {
 
     private Date bootTime;
 
-    @Override
-    protected void createService() throws Exception {
+    protected void start() throws Exception {
         this.buildProps = loadBuildProperties();
         this.bootTime = new Date();
 
@@ -81,7 +79,6 @@ public class CoreServer extends ServiceMBeanSupport implements CoreServerMBean {
         log.info("Version=[" + version + "], Build Number=[" + buildNumber + "], Build Date=[" + buildDate + "]");
     }
 
-    @Override
     public String getName() {
         return "RHQ Server";
     }
@@ -99,36 +96,25 @@ public class CoreServer extends ServiceMBeanSupport implements CoreServerMBean {
     }
 
     public File getInstallDir() {
-        MBeanServer mbs = getMBeanServer();
-        ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
-        Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);
-
-        File homeDir = ((ServerConfig) mbean).getHomeDir();
-        return homeDir.getParentFile(); // jboss homedir is "rhq-install-dir/jbossas", so the install dir is .. from jbossas
+        // use logDir explicitly - NOT homeDir because AS could be installed elsewhere (e.g. via rpm)
+        // but our log dir is always under our own installation directory
+        File homeDir = new File(getServerEnvironmentAttribute("logDir"));
+        return homeDir.getParentFile(); // logDir is "rhq-install-dir/logs", so the install dir is .. from there
     }
 
     public File getJBossServerHomeDir() {
-        MBeanServer mbs = getMBeanServer();
-        ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
-        Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);
-        File serverHomeDir = ((ServerConfig) mbean).getServerHomeDir();
-        return serverHomeDir;
+        File baseDir = new File(getServerEnvironmentAttribute("baseDir"));
+        return baseDir;
     }
 
     public File getJBossServerDataDir() {
-        MBeanServer mbs = getMBeanServer();
-        ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
-        Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);
-        File serverDataDir = ((ServerConfig) mbean).getServerDataDir();
-        return serverDataDir;
+        File dataDir = new File(getServerEnvironmentAttribute("dataDir"));
+        return dataDir;
     }
 
     public File getJBossServerTempDir() {
-        MBeanServer mbs = getMBeanServer();
-        ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
-        Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);
-        File serverTempDir = ((ServerConfig) mbean).getServerTempDir();
-        return serverTempDir;
+        File tempDir = new File(getServerEnvironmentAttribute("tempDir"));
+        return tempDir;
     }
 
     public ProductInfo getProductInfo() {
@@ -177,7 +163,19 @@ public class CoreServer extends ServiceMBeanSupport implements CoreServerMBean {
     }
 
     private MBeanServer getMBeanServer() {
-        return MBeanServerLocator.locateJBoss();
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        return mbs;
+    }
+
+    private String getServerEnvironmentAttribute(String attributeName) {
+        try {
+            MBeanServer mbs = getMBeanServer();
+            ObjectName name = ObjectNameFactory.create("jboss.as:core-service=server-environment");
+            Object value = mbs.getAttribute(name, attributeName);
+            return (value != null) ? value.toString() : null;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private Properties loadBuildProperties() {

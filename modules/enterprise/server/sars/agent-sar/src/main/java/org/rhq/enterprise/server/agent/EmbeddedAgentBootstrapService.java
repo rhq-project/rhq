@@ -30,6 +30,7 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
 import java.util.prefs.BackingStoreException;
@@ -39,8 +40,7 @@ import java.util.prefs.Preferences;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.util.StringPropertyReplacer;
-
+import org.rhq.core.util.StringPropertyReplacer;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.agent.AgentConfiguration;
 import org.rhq.enterprise.agent.AgentConfigurationConstants;
@@ -68,7 +68,12 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
     /**
      * The location of the configuration file - can be a file path or path within classloader.
      */
-    private String configFile = "META-INF/embedded-agent-configuration.xml";
+    private String configFile = "embedded-agent-configuration.xml";
+
+    /**
+     * The location of the configuration overrides properties file - can be a URL, file path or path within classloader.
+     */
+    private String overridesFile = null; // the jboss-service.xml service descriptor must set this
 
     /**
      * The preferences node name that identifies the configuration set used to configure the services.
@@ -79,7 +84,7 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
      * Properties that will be used to override preferences found in the preferences node and the configuration
      * preferences file.
      */
-    private Properties configurationOverrides = null;
+    private Properties configurationOverrides = new Properties();
 
     /**
      * Arguments passed to the agent's main method.
@@ -108,8 +113,9 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
      *
      * @see EmbeddedAgentBootstrapServiceMBean#startAgent()
      */
+    @Override
     public void startAgent() throws Exception {
-        //-- if this method signature changes, you must also change StartupServlet.startEmbeddedAgent
+        //-- if this method signature changes, you must also change StartupBean.startEmbeddedAgent
 
         if (!enabled.booleanValue()) {
             log.info("Will not start the embedded RHQ agent - it is disabled");
@@ -144,7 +150,8 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
                     try {
                         Class<?> agentClass = agentClassLoader.loadClass("org.rhq.enterprise.agent.AgentMain");
                         Constructor<?> agentConstructor = agentClass.getConstructor(new Class[] { String[].class });
-                        Object agentInstance = agentConstructor.newInstance(new Object[] { getAgentArguments() });
+                        Object agentInstance = agentConstructor
+                            .newInstance(new Object[] { getAgentArgumentsAsArray() });
 
                         agentClass.getMethod("start", new Class[0]).invoke(agentInstance, new Object[0]);
 
@@ -178,6 +185,7 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
         return;
     }
 
+    @Override
     public void stopAgent() throws Exception {
         if (agent != null) {
             log.info("Stopping the embedded RHQ Agent...");
@@ -218,60 +226,86 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
         }
     }
 
+    public void start() throws Exception {
+        return; // no-op
+    }
+
     // this method is needed so the JBossAS server will call it when shutting down the service
+    @Override
     public void stop() throws Exception {
         stopAgent();
     }
 
+    @Override
     public boolean isAgentStarted() {
         return agent != null;
     }
 
+    @Override
     public String getAgentEnabled() {
-        //-- if this method signature changes, you must also change StartupServlet.startEmbeddedAgent
+        //-- if this method signature changes, you must also change StartupBean.startEmbeddedAgent
         return enabled.toString();
     }
 
+    @Override
     public void setAgentEnabled(String flag) {
-        enabled = Boolean.valueOf(flag.trim());
+        enabled = Boolean.valueOf(replaceProperties(flag));
     }
 
+    @Override
     public String getResetConfiguration() {
         return resetConfigurationAtStartup.toString();
     }
 
+    @Override
     public void setResetConfiguration(String flag) {
-        resetConfigurationAtStartup = Boolean.valueOf(flag.trim());
+        resetConfigurationAtStartup = Boolean.valueOf(replaceProperties(flag));
     }
 
-    public File getEmbeddedAgentDirectory() {
-        return embeddedAgentDirectory;
+    @Override
+    public String getEmbeddedAgentDirectory() {
+        return embeddedAgentDirectory.getAbsolutePath();
     }
 
-    public void setEmbeddedAgentDirectory(File directory) {
-        if (!directory.exists() || !directory.isDirectory()) {
+    @Override
+    public void setEmbeddedAgentDirectory(String directoryStr) {
+        File directory = null;
+
+        if (directoryStr != null) {
+            directoryStr = replaceProperties(directoryStr);
+            directory = new File(directoryStr);
+        }
+
+        if (directory == null || !directory.exists() || !directory.isDirectory()) {
             enabled = Boolean.FALSE;
-            embeddedAgentDirectory = null;
-            throw new IllegalArgumentException(
-                "Invalid embedded agent directory specified - embedded agent has been disabled: " + directory);
+            directory = null;
+            log.warn("Invalid embedded agent directory specified - embedded agent has been disabled: " + directory);
         }
 
         embeddedAgentDirectory = directory;
     }
 
+    @Override
     public String getConfigurationFile() {
         return configFile;
     }
 
+    @Override
     public void setConfigurationFile(String location) {
-        configFile = StringPropertyReplacer.replaceProperties(location);
+        configFile = replaceProperties(replaceProperties(location));
     }
 
+    @Override
     public String getPreferencesNodeName() {
         return preferencesNodeName;
     }
 
+    @Override
     public void setPreferencesNodeName(String node) {
+        if (node != null) {
+            node = replaceProperties(node);
+        }
+
         if (node == null || node.trim().length() == 0) {
             try {
                 node = InetAddress.getLocalHost().getCanonicalHostName();
@@ -280,18 +314,32 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
             }
             node = node + "-embedded";
         }
-        preferencesNodeName = StringPropertyReplacer.replaceProperties(node);
+        preferencesNodeName = replaceProperties(node);
         System.setProperty("rhq.server.embedded-agent.preferences-node", preferencesNodeName);
     }
 
+    @Override
     public Properties getConfigurationOverrides() {
-        //-- if this method signature changes, you must also change StartupServlet.startEmbeddedAgent
+        //-- if this method signature changes, you must also change StartupBean.startEmbeddedAgent
         return configurationOverrides;
     }
 
+    @Override
     public void setConfigurationOverrides(Properties overrides) {
-        //-- if this method signature changes, you must also change StartupServlet.startEmbeddedAgent
-        configurationOverrides = overrides;
+        //-- if this method signature changes, you must also change StartupBean.startEmbeddedAgent
+
+        if (overrides == null) {
+            return; // do nothing
+        }
+
+        for (String propName : overrides.stringPropertyNames()) {
+            String origValue = overrides.getProperty(propName);
+            String newValue = replaceProperties(origValue);
+            overrides.setProperty(propName, newValue);
+        }
+
+        configurationOverrides.clear();
+        configurationOverrides.putAll(overrides);
 
         // perform some checking to setup defaults if need be
 
@@ -305,17 +353,28 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
                 agent_name = "${jboss.bind.address}";
             }
             agent_name = agent_name + "-embedded";
-            agent_name = StringPropertyReplacer.replaceProperties(agent_name);
+            agent_name = replaceProperties(agent_name);
             configurationOverrides.put("rhq.agent.name", agent_name);
         }
+
+        return;
     }
 
-    public String[] getAgentArguments() {
+    @Override
+    public String getAgentArguments() {
+        // this only returns a human readable string - to use the args, use getAgentArgumentsAsArray instead
+        String[] allArgs = getAgentArgumentsAsArray();
+        return Arrays.toString(allArgs);
+    }
+
+    // we want to use this because it adds some required args
+    private String[] getAgentArgumentsAsArray() {
         ArrayList<String> args = new ArrayList<String>();
 
         if (arguments != null) {
             for (String argument : arguments) {
-                args.add(argument);
+                String realArg = replaceProperties(argument);
+                args.add(realArg);
             }
         }
 
@@ -324,16 +383,23 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
         return args.toArray(new String[args.size()]);
     }
 
-    public void setAgentArguments(String[] args) {
-        arguments = args;
+    @Override
+    public void setAgentArguments(String args) {
+        if (args != null) {
+            arguments = args.split(",");
+        } else {
+            arguments = new String[0];
+        }
     }
 
+    @Override
     public void reloadAgentConfiguration() throws Exception {
         getPreferencesNode().clear();
 
         prepareConfigurationPreferences();
     }
 
+    @Override
     public void cleanDataDirectory() {
         AgentConfiguration config = new AgentConfiguration(getPreferencesNode());
         File data_dir = config.getDataDirectory();
@@ -350,6 +416,7 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
         return;
     }
 
+    @Override
     public Properties getAgentConfiguration() {
         try {
             Properties properties = new Properties();
@@ -365,6 +432,7 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
         }
     }
 
+    @Override
     public void executeAgentPromptCommand(final String command) {
         // all this funky threading/reflection is so we execute the command
         // in the isoloated context of the embedded agent
@@ -403,6 +471,85 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
         return;
     }
 
+    @Override
+    public String getConfigurationOverridesFile() {
+        return overridesFile;
+    }
+
+    @Override
+    public void setConfigurationOverridesFile(String location) {
+        if (location == null) {
+            overridesFile = null;
+        } else {
+            // substitute ${} replacement variables found in the location string
+            overridesFile = replaceProperties(location);
+            try {
+                loadConfigurationOverridesFromFile();
+            } catch (Exception e) {
+                log.warn("Cannot load embedded agent config overrides file [" + overridesFile + "]", e);
+            }
+        }
+    }
+
+    private void loadConfigurationOverridesFromFile() throws Exception {
+        if (overridesFile == null) {
+            return; // nothing to do
+        }
+
+        InputStream is = getFileInputStream(overridesFile);
+        try {
+            Properties props = new Properties();
+            props.load(is);
+            setConfigurationOverrides(props);
+        } finally {
+            is.close(); // if we got here, "is" will never be null
+        }
+
+        return;
+    }
+
+    /**
+     * Loads a file either from file system, from URL or from classloader. If file
+     * can't be found, exception is thrown.
+     * @param file_name the file whose input stream is to be returned
+     * @return input stream of the file - will never be null
+     * @throws IOException if the file input stream cannot be obtained
+     */
+    private InputStream getFileInputStream(String file_name) throws IOException {
+        // first see if the file was specified as a path on the local file system
+        InputStream config_file_input_stream = null;
+        try {
+            File config_file = new File(file_name);
+
+            if (config_file.exists()) {
+                config_file_input_stream = new FileInputStream(config_file);
+            }
+        } catch (Exception e) {
+            // isn't really an error - this just isn't a file on the local file system
+        }
+
+        // see if the file was specified as a URL
+        if (config_file_input_stream == null) {
+            try {
+                URL config_file = new URL(file_name);
+
+                config_file_input_stream = config_file.openStream();
+            } catch (Exception e) {
+                // isn't really an error - this just isn't a URL
+            }
+        }
+
+        // if neither a file path or URL, assume the config file can be found in the classloader
+        if (config_file_input_stream == null) {
+            config_file_input_stream = this.getClass().getClassLoader().getResourceAsStream(file_name);
+        }
+
+        if (config_file_input_stream == null) {
+            throw new IOException("Cannot find config file for embedded agent: " + file_name);
+        }
+        return config_file_input_stream;
+    }
+
     /**
      * This will return URLs to all of the jars and resources that the embedded agent will have access to in its
      * isolated classloader. Only those classes within these jars will be accessible to the embedded agent. Even classes
@@ -429,6 +576,29 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
             classpathUrls.add(jarFile.toURI().toURL());
         }
 
+        // we need jboss-modules.jar because in AS7 it is used to override JAXP impl classes and we can't not use it
+        URL jbossModules = null;
+        String cp = System.getProperty("java.class.path");
+        if (cp != null && cp.contains("jboss-modules.jar")) {
+            for (String cpPath : cp.split(File.pathSeparator)) {
+                if (cpPath.contains("jboss-modules.jar")) {
+                    jbossModules = new File(cpPath).toURI().toURL();
+                    classpathUrls.add(jbossModules);
+                    break;
+                }
+            }
+        }
+
+        if (jbossModules == null) {
+            File rootLocation = new File(System.getProperty("jboss.home.dir"), "jboss-modules.jar");
+            if (rootLocation.exists()) {
+                jbossModules = rootLocation.toURI().toURL();
+                classpathUrls.add(jbossModules);
+            } else {
+                throw new IllegalStateException(
+                    "Cannot find jboss-modules.jar - it is necessary for embedded agent to run.");
+            }
+        }
         return classpathUrls.toArray(new URL[classpathUrls.size()]);
     }
 
@@ -494,7 +664,7 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
                 String value = entry.getValue().toString();
 
                 // allow ${var} notation in the values so we can provide variable replacements in the values
-                value = StringPropertyReplacer.replaceProperties(value);
+                value = replaceProperties(value);
 
                 preferences_node.put(key, value);
             }
@@ -522,38 +692,8 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
     private AgentConfiguration loadConfigurationFile() throws Exception {
         String file_name = getConfigurationFile();
         String preferences_node_name = getPreferencesNodeName();
-        InputStream config_file_input_stream = null;
 
-        // first see if the file was specified as a path on the local file system
-        try {
-            File config_file = new File(file_name);
-
-            if (config_file.exists()) {
-                config_file_input_stream = new FileInputStream(config_file);
-            }
-        } catch (Exception e) {
-            // isn't really an error - this just isn't a file on the local file system
-        }
-
-        // see if the file was specified as a URL
-        if (config_file_input_stream == null) {
-            try {
-                URL config_file = new URL(file_name);
-
-                config_file_input_stream = config_file.openStream();
-            } catch (Exception e) {
-                // isn't really an error - this just isn't a URL
-            }
-        }
-
-        // if neither a file path or URL, assume the config file can be found in the classloader
-        if (config_file_input_stream == null) {
-            config_file_input_stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(file_name);
-        }
-
-        if (config_file_input_stream == null) {
-            throw new IOException("Bad config file: " + file_name);
-        }
+        InputStream config_file_input_stream = getFileInputStream(file_name);
 
         // We need to clear out any previous configuration in case the current config file doesn't specify a preference
         // that already exists in the preferences node.  In this case, the configuration file wants to fall back on the
@@ -562,37 +702,42 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
         // But first we need to backup these original preferences in case the config file fails to load -
         // we'll restore the original values in that case.
 
-        Preferences preferences_node = getPreferencesNode();
-        ByteArrayOutputStream backup = new ByteArrayOutputStream();
-        preferences_node.exportSubtree(backup);
-        preferences_node.clear();
-
-        // now load in the preferences
         try {
-            ByteArrayOutputStream raw_config_file = new ByteArrayOutputStream();
-            StreamUtil.copy(config_file_input_stream, raw_config_file, true);
-            String new_config = StringPropertyReplacer.replaceProperties(raw_config_file.toString());
-            ByteArrayInputStream new_config_input_stream = new ByteArrayInputStream(new_config.getBytes());
-            Preferences.importPreferences(new_config_input_stream);
+            Preferences preferences_node = getPreferencesNode();
+            ByteArrayOutputStream backup = new ByteArrayOutputStream();
+            preferences_node.exportSubtree(backup);
+            preferences_node.clear();
 
-            if (new AgentConfiguration(preferences_node).getAgentConfigurationVersion() == 0) {
-                throw new IllegalArgumentException("Bad node name: " + preferences_node_name);
-            }
-        } catch (Exception e) {
-            // a problem occurred importing the config file; let's restore our original values
+            // now load in the preferences
             try {
-                Preferences.importPreferences(new ByteArrayInputStream(backup.toByteArray()));
-            } catch (Exception e1) {
-                // its conceivable the same problem occurred here as with the original exception (backing store problem?)
-                // let's throw the original exception, not this one
+                ByteArrayOutputStream raw_config_file = new ByteArrayOutputStream();
+                StreamUtil.copy(config_file_input_stream, raw_config_file, true);
+                String new_config = replaceProperties(raw_config_file.toString());
+                ByteArrayInputStream new_config_input_stream = new ByteArrayInputStream(new_config.getBytes());
+                Preferences.importPreferences(new_config_input_stream);
+
+                if (new AgentConfiguration(preferences_node).getAgentConfigurationVersion() == 0) {
+                    throw new IllegalArgumentException("Bad node name: " + preferences_node_name);
+                }
+            } catch (Exception e) {
+                // a problem occurred importing the config file; let's restore our original values
+                try {
+                    Preferences.importPreferences(new ByteArrayInputStream(backup.toByteArray()));
+                } catch (Exception e1) {
+                    // its conceivable the same problem occurred here as with the original exception (backing store problem?)
+                    // let's throw the original exception, not this one
+                }
+
+                throw e;
             }
 
-            throw e;
+            AgentConfiguration agent_configuration = new AgentConfiguration(preferences_node);
+
+            return agent_configuration;
+        } finally {
+            // we know this is not null; if it was, we would have thrown the IOException earlier.
+            config_file_input_stream.close();
         }
-
-        AgentConfiguration agent_configuration = new AgentConfiguration(preferences_node);
-
-        return agent_configuration;
     }
 
     /**
@@ -630,5 +775,21 @@ public class EmbeddedAgentBootstrapService implements EmbeddedAgentBootstrapServ
         }
 
         return;
+    }
+
+    private String replaceProperties(String str) {
+        if (str == null) {
+            return null;
+        }
+
+        // keep replacing properties until no more ${} tokens are left that are replaceable
+        String newValue = "";
+        String oldValue = str;
+        while (!newValue.equals(oldValue)) {
+            oldValue = str;
+            newValue = StringPropertyReplacer.replaceProperties(str);
+            str = newValue;
+        }
+        return newValue;
     }
 }

@@ -279,7 +279,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             throw new PermissionException("You do not have permission to uninventory resource [" + resourceId + "]");
         }
 
-        return uninventoryResourceInNewTransaction(resourceId);
+        return resourceManager.uninventoryResourceInNewTransaction(resourceId);
     }
 
     @Override

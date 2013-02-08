@@ -26,11 +26,12 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.exception.UnscheduleException;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
-import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class AsyncResourceDeleteJob extends AbstractStatefulJob {
@@ -85,28 +86,34 @@ public class AsyncResourceDeleteJob extends AbstractStatefulJob {
     // return true if successful
     private void uninventoryResource(Subject overlord, Integer doomedResourceId, AsyncDeletionStats stats,
         boolean recurse) {
-        if (recurse) {
-            List<Integer> doomedChildrenIds = resourceManager.findChildrenResourceIds(doomedResourceId, null);
-            for (Integer nextDoomedChildId : doomedChildrenIds) {
-                uninventoryResource(overlord, nextDoomedChildId, stats, recurse);
+
+        try {
+            if (recurse) {
+                List<Integer> doomedChildrenIds = resourceManager.findChildrenResourceIds(doomedResourceId, null);
+                for (Integer nextDoomedChildId : doomedChildrenIds) {
+                    uninventoryResource(overlord, nextDoomedChildId, stats, recurse);
+                }
             }
+            log.debug("Before " + (recurse ? "(recursive)" : "") + " asynchronous deletion of resource[id="
+                + doomedResourceId + "]");
+            long startTime = System.currentTimeMillis();
+
+            unscheduleJobs(overlord, doomedResourceId);
+            resourceManager.uninventoryResourceAsyncWork(overlord, doomedResourceId);
+            stats.deletedSuccessfully++;
+
+            long endTime = System.currentTimeMillis();
+            log.debug("After " + (recurse ? "(recursive)" : "") + " asynchronous deletion of resource[id="
+                + doomedResourceId + "] took [" + (endTime - startTime) + "]ms");
+
+            stats.deletionTime += (endTime - startTime);
+
+        } catch (ResourceNotFoundException e) {
+            // ignore, the resource was already removed, likely in a concurrent invocation of this method 
         }
-        log.debug("Before " + (recurse ? "(recursive)" : "") + " asynchronous deletion of resource[id="
-            + doomedResourceId + "]");
-        long startTime = System.currentTimeMillis();
-
-        unscheduleJobs(overlord, doomedResourceId);
-        resourceManager.uninventoryResourceAsyncWork(overlord, doomedResourceId);
-        stats.deletedSuccessfully++;
-
-        long endTime = System.currentTimeMillis();
-        log.debug("After " + (recurse ? "(recursive)" : "") + " asynchronous deletion of resource[id="
-            + doomedResourceId + "] took [" + (endTime - startTime) + "]ms");
-
-        stats.deletionTime += (endTime - startTime);
     }
 
-    private void unscheduleJobs(Subject overlord, Integer resourceId) {
+    private void unscheduleJobs(Subject overlord, Integer resourceId) throws ResourceNotFoundException {
         log.debug("Unscheduling jobs for resource[id=" + resourceId + "]");
         OperationManagerLocal operationManager = LookupUtil.getOperationManager();
         try {
@@ -129,10 +136,17 @@ public class AsyncResourceDeleteJob extends AbstractStatefulJob {
                         + "]", ise);
                 }
             }
+        } catch (ResourceNotFoundException e) {
+            throw e;
+
         } catch (Throwable t) {
+            Throwable cause = t.getCause();
+            if ((null != cause) && (cause instanceof ResourceNotFoundException)) {
+                throw (ResourceNotFoundException) cause;
+            }
+
             log.warn("Failed to get jobs for a resource being deleted [" + resourceId
                 + "]; will not attempt to unschedule anything", t);
         }
     }
-
 }

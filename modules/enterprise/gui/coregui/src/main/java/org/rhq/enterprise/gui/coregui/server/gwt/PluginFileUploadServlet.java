@@ -66,13 +66,16 @@ public class PluginFileUploadServlet extends FileUploadServlet {
             File file = files.values().iterator().next();
             String newPluginFilename = fileNames.values().iterator().next();
 
-            // make sure its a .jar file and strip off any temp file suffix (in case the browser set the name to something odd)
-            int jarExtension = newPluginFilename.lastIndexOf(".jar");
-            if (jarExtension < 0) {
-                newPluginFilename = newPluginFilename + ".jar"; // make sure it ends with ".jar" in case it is some tmp filename
-                jarExtension = newPluginFilename.lastIndexOf(".jar");
+            // see if it is a jar-less plugin descriptor and if not check for .jar
+            if (!newPluginFilename.endsWith("-rhq-plugin.xml")) {
+                // make sure its a .jar file and strip off any temp file suffix (in case the browser set the name to something odd)
+                int jarExtension = newPluginFilename.lastIndexOf(".jar");
+                if (jarExtension < 0) {
+                    newPluginFilename = newPluginFilename + ".jar"; // make sure it ends with ".jar" in case it is some tmp filename
+                    jarExtension = newPluginFilename.lastIndexOf(".jar");
+                }
+                newPluginFilename = newPluginFilename.substring(0, jarExtension + ".jar".length());
             }
-            newPluginFilename = newPluginFilename.substring(0, jarExtension + ".jar".length());
             log.info("A new plugin [" + newPluginFilename + "] has been uploaded to [" + file + "]");
 
             if (file == null || !file.exists()) {

@@ -74,6 +74,8 @@ public interface PluginManagerLocal {
      */
     void deletePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 
+    void markPluginsDeleted(Subject subject, List<Plugin> plugins) throws Exception;
+
     /**
      * Schedules a plugin to be purged. Purging a plugin permanently deletes it from the database. Purging is done
      * asynchronously and will not happen until all resource types defined by the plugin have first been purged. Plugins
@@ -129,8 +131,7 @@ public interface PluginManagerLocal {
         boolean forceUpdate) throws Exception;
 
     /** Exists only for transactional boundary reasons. Not for general consumption. */
-    boolean installPluginJar(Plugin newPlugin, PluginDescriptor pluginDescriptor, File pluginFile)
-        throws Exception;
+    boolean installPluginJar(Plugin newPlugin, PluginDescriptor pluginDescriptor, File pluginFile) throws Exception;
 
     /**
      * Returns the directory where plugins can be dropped for inclusion into the system.

@@ -23,6 +23,7 @@ import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.AlertConditionOperator;
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.util.PageList;
@@ -41,6 +42,17 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
 
     @EJB
     private AlertManagerLocal alertManager;
+
+    public StreamingOutput recentAlertsInternal(
+            String alertPriority,
+            Long startTime,
+            Long endTime,
+            HttpServletRequest request,
+            Subject user
+    ) {
+        this.caller = user;
+        return recentAlerts(alertPriority,startTime,endTime,request);
+    }
 
     @Override
     public StreamingOutput recentAlerts(final String alertPriority, final Long startTime, final Long endTime,

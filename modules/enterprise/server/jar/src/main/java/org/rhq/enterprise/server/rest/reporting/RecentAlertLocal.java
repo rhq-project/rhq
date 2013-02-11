@@ -14,6 +14,8 @@ import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiOperation;
 import org.jboss.resteasy.annotations.GZIP;
 
+import org.rhq.core.domain.auth.Subject;
+
 @Path("/recentAlerts")
 @Local
 @Api(basePath="http://localhost:7080/coregui/reports", value = "The recent alerts report")
@@ -28,5 +30,13 @@ public interface RecentAlertLocal {
             @QueryParam("startTime") Long startTime,
             @QueryParam("endTime") Long endTime,
             @Context HttpServletRequest request);
+
+    StreamingOutput recentAlertsInternal(
+            String alertPriority,
+            Long startTime,
+            Long endTime,
+            HttpServletRequest request,
+            Subject user
+    );
 
 }

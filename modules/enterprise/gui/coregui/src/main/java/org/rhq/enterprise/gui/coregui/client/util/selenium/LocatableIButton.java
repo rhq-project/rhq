@@ -37,6 +37,9 @@ public class LocatableIButton extends IButton implements Locatable {
     private void init(String locatorId) {
         this.locatorId = locatorId;
         SeleniumUtility.setID(this, locatorId);
+        if (getTitle().length() > 15) {
+            setAutoFit(true);
+        }
     }
 
     public String getLocatorId() {

@@ -314,19 +314,10 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      * The returned {@link ProcessInfo} always has a fresh snapshot of non static data: it's whether newly created
      * or got refreshed in order to determine if the process was still running.
      *
-     * @return information on the resource's process
+     * @return information on the resource's process, or null if process was not found
      */
     public ProcessInfo getNativeProcess() {
-        ProcessInfo processInfo = trackedProcesses.getProcessInfo(resourceKey);
-
-        if (!isRediscoveryRequired(processInfo)) {
-            return processInfo;
-        }
-
-        if (LOG.isTraceEnabled()) {
-            LOG.trace("getNativeProcess(): rediscovery required on resource " + resourceType + " with key "
-                + resourceKey + ", syncing on " + trackedProcesses);
-        }
+        ProcessInfo processInfo = null;
 
         synchronized (trackedProcesses) {
             //right, we've entered the critical section...

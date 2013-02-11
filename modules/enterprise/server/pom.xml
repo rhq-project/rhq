@@ -34,7 +34,7 @@
         <module>installer</module>
         <module>safe-invoker</module>
         <module>client-api</module>
-        <module>itests</module>
+        <module>itests-2</module>
       </modules>
     </profile>
 

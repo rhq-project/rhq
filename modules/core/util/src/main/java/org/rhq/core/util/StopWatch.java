@@ -23,13 +23,13 @@
 package org.rhq.core.util;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
+import java.util.TreeSet;
 
 public class StopWatch {
     private long start;
     private long end;
-    private Map markerMap;
+    private Map<String, TimeSlice> markerMap;
 
     public StopWatch() {
         reset();
@@ -55,7 +55,7 @@ public class StopWatch {
 
     public StopWatch(long start) {
         this.start = start;
-        markerMap = new HashMap();
+        markerMap = new HashMap<String, TimeSlice>();
     }
 
     public long reset() {
@@ -63,7 +63,7 @@ public class StopWatch {
             return this.getElapsed();
         } finally {
             start = System.currentTimeMillis();
-            markerMap = new HashMap();
+            markerMap = new HashMap<String, TimeSlice>();
         }
     }
 
@@ -73,30 +73,44 @@ public class StopWatch {
     }
 
     public String toString() {
-        long elap = this.getElapsed();
+        final long elap = this.getElapsed();
+        final StringBuffer buf = new StringBuffer(formatMillis(elap));
 
-        String fraction = (elap % 1000) + "";
+        if (markerMap.size() > 0) {
+            buf.append(" {StopWatch Markers:\n");
+
+            long totalMarked = 0;
+            TreeSet<String> keys = new TreeSet<String>(markerMap.keySet());
+            for (String key : keys) {
+                TimeSlice ts = markerMap.get(key);
+                totalMarked += (ts.end - ts.begin);
+                ts.writeBuf(buf);
+                buf.append('\n');
+            }
+
+            long unmarked = elap - totalMarked;
+            if (unmarked > 99) { // only show if the value is substantial
+                buf.append(" [unmarked=").append(formatMillis(unmarked)).append("]\n");
+            }
+
+            buf.append("}");
+        }
+
+        return buf.toString();
+    }
+
+    private String formatMillis(long millis) {
+        final String fraction = String.valueOf(millis % 1000L);
         int pad = 3 - fraction.length();
 
-        StringBuffer buf = new StringBuffer().append(elap / 1000).append('.');
+        final StringBuffer buf = new StringBuffer().append(millis / 1000L).append('.');
 
-        //for example, 15 millseconds formatted as ".015" rather than ".15"
+        // for example, 15 millseconds formatted as ".015" rather than ".15"
         while (pad-- > 0) {
             buf.append("0");
         }
 
-        buf.append(fraction);
-
-        if (markerMap.size() > 0) {
-            buf.append(" { Markers: ");
-            for (Iterator i = markerMap.values().iterator(); i.hasNext();) {
-                TimeSlice ts = (TimeSlice) i.next();
-                ts.writeBuf(buf);
-            }
-
-            buf.append(" } ");
-        }
-
+        buf.append(fraction).append(" secs");
         return buf.toString();
     }
 
@@ -120,8 +134,7 @@ public class StopWatch {
 
         public void writeBuf(StringBuffer buf) {
             long elap = end - begin;
-            buf.append(" [").append(marker).append("=").append(elap / 1000).append('.').append(elap % 1000)
-                .append("] ");
+            buf.append(" [").append(marker).append("=").append(formatMillis(elap)).append("] ");
         }
     }
 }

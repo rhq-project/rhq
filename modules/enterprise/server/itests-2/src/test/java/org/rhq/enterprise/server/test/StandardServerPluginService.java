@@ -50,10 +50,10 @@ public class StandardServerPluginService extends ServerPluginService implements 
 
     public static class TestMasterServerPluginContainer extends MasterServerPluginContainer {
         private List<AbstractTypeServerPluginContainer> serverPluginContainers = new ArrayList<AbstractTypeServerPluginContainer>();
-        
+
         public TestMasterServerPluginContainer(
             List<Class<? extends AbstractTypeServerPluginContainer>> pluginContainerClasses) {
-            
+
             for (Class<? extends AbstractTypeServerPluginContainer> cls : pluginContainerClasses) {
                 try {
                     Constructor<? extends AbstractTypeServerPluginContainer> ctor = cls
@@ -65,7 +65,7 @@ public class StandardServerPluginService extends ServerPluginService implements 
                 }
             }
         }
-        
+
         @Override
         protected List<AbstractTypeServerPluginContainer> createPluginContainers() {
             return serverPluginContainers;
@@ -83,9 +83,8 @@ public class StandardServerPluginService extends ServerPluginService implements 
      */
     public List<Class<? extends AbstractTypeServerPluginContainer>> pluginContainerClasses;
 
-    public StandardServerPluginService() {
-        File dir = new File(System.getProperty("java.io.tmpdir") + "/rhq", this.getClass().getSimpleName());
-        this.masterConfig = new MasterServerPluginContainerConfiguration(dir, dir, dir, null);
+    public StandardServerPluginService(File tmpdir) {
+        this.masterConfig = new MasterServerPluginContainerConfiguration(tmpdir, tmpdir, tmpdir, null);
         pluginContainerClasses = new ArrayList<Class<? extends AbstractTypeServerPluginContainer>>();
         pluginContainerClasses.add(AlertServerPluginContainer.class);
         pluginContainerClasses.add(BundleServerPluginContainer.class);

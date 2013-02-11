@@ -20,6 +20,7 @@
 package org.rhq.modules.integrationTests.restApi;
 
 import com.jayway.restassured.http.ContentType;
+import com.jayway.restassured.path.xml.XmlPath;
 
 import org.junit.Test;
 
@@ -31,6 +32,7 @@ import org.rhq.modules.integrationTests.restApi.d.Group;
 import static com.jayway.restassured.RestAssured.delete;
 import static com.jayway.restassured.RestAssured.expect;
 import static com.jayway.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.iterableWithSize;
 
@@ -41,9 +43,11 @@ import static org.hamcrest.Matchers.iterableWithSize;
 public class AlertTest extends AbstractBase {
 
     @Test
-    public void testListAllAlerts() throws Exception {
+    public void testListAllAlertsJson() throws Exception {
 
-        expect()
+        given()
+            .header(acceptJson)
+        .expect()
             .statusCode(200)
         .when()
             .get("/alert");
@@ -51,13 +55,67 @@ public class AlertTest extends AbstractBase {
     }
 
     @Test
-    public void testGetAlertCount() throws Exception {
+    public void testListAllAlertsXml() throws Exception {
 
-        expect()
+        given()
+            .header(acceptXml)
+        .expect()
             .statusCode(200)
         .when()
-            .get("/alert/count");
+            .get("/alert");
+    }
 
+    @Test
+    public void testListAllAlertsHtml() throws Exception {
+
+        given()
+            .header(acceptHtml)
+        .expect()
+            .statusCode(200)
+        .when()
+            .get("/alert");
+
+    }
+
+    @Test
+    public void testListAllAlertsTextPlain() throws Exception {
+
+        given()
+            .header("Accept","text/plain")
+        .expect()
+            .statusCode(503)
+        .when()
+            .get("/alert");
+
+    }
+
+    @Test
+    public void testGetAlertCountJson() throws Exception {
+
+        given()
+            .header(acceptJson)
+        .expect()
+            .statusCode(200)
+            .log().ifError()
+            .body("value", instanceOf(Number.class))
+        .when()
+            .get("/alert/count");
+    }
+
+    @Test
+    public void testGetAlertCountXml() throws Exception {
+
+        XmlPath xmlPath =
+        given()
+            .header(acceptXml)
+        .expect()
+            .statusCode(200)
+            .log().everything()
+        .when()
+            .get("/alert/count")
+        .xmlPath();
+
+        int count = xmlPath.getInt("value.@value");
     }
 
     @Test
@@ -581,6 +639,88 @@ public class AlertTest extends AbstractBase {
     }
 
     @Test
+    public void testGetNonExistingCondition() throws Exception {
+
+        given()
+            .header(acceptJson)
+            .pathParam("cid",14)
+        .expect()
+            .statusCode(404)
+            .log().ifError()
+        .when()
+            .get("/alert/condition/{cid}");
+
+    }
+
+    @Test
+    public void testGetNonExistingNotification() throws Exception {
+
+        given()
+            .header(acceptXml)
+            .pathParam("cid",14)
+        .expect()
+            .statusCode(404)
+            .log().ifError()
+        .when()
+            .get("/alert/notification/{cid}");
+
+    }
+
+    @Test
+    public void testUpdateNonExistingCondition() throws Exception {
+
+        given()
+            .header(acceptJson)
+            .pathParam("cid",14)
+        .expect()
+            .statusCode(404)
+            .log().ifError()
+        .when()
+            .put("/alert/condition/{cid}");
+
+    }
+
+    @Test
+    public void testUpdateNonExistingNotification() throws Exception {
+
+        given()
+            .header(acceptXml)
+            .pathParam("cid",14)
+        .expect()
+            .statusCode(404)
+            .log().ifError()
+        .when()
+            .put("/alert/notification/{cid}");
+
+    }
+
+    @Test
+    public void testDeleteNonExistingNotification() throws Exception {
+
+        given()
+            .header(acceptJson)
+            .pathParam("cid",14)
+        .expect()
+            .statusCode(204)
+            .log().ifError()
+        .when()
+            .delete("/alert/notification/{cid}");
+    }
+
+    @Test
+    public void testDeleteNonExistingCondition() throws Exception {
+
+        given()
+            .header(acceptJson)
+            .pathParam("cid",14)
+        .expect()
+            .statusCode(204)
+            .log().ifError()
+        .when()
+            .delete("/alert/condition/{cid}");
+    }
+
+    @Test
     public void testCreateDeleteAlertDefinitionWithUnknwonSender() throws Exception {
 
         int definitionId = createEmptyAlertDefinition();
@@ -600,6 +740,57 @@ public class AlertTest extends AbstractBase {
                 .log().everything()
             .when()
                 .post("/alert/definition/{defId}/notifications");
+        }
+
+        finally {
+            // delete the definition again
+            cleanupDefinition(definitionId);
+        }
+    }
+
+    @Test
+    public void testCreateDeleteAlertDefinitionWithNoPriority() throws Exception {
+
+        AlertDefinition alertDefinition = new AlertDefinition();
+        alertDefinition.setName("-x-test-definition");
+        alertDefinition.setEnabled(false);
+        alertDefinition.setPriority("LOW");
+        alertDefinition.setDampeningCategory("NONE");
+
+        AlertDefinition result =
+        given()
+            .header(acceptJson)
+            .contentType(ContentType.JSON)
+            .body(alertDefinition)
+            .queryParam("resourceId",10001)
+        .expect()
+            .statusCode(201)
+            .log().ifError()
+        .when()
+            .post("/alert/definitions")
+        .as(AlertDefinition.class);
+
+        int definitionId = result.getId();
+
+        // Now update with no priority
+        try {
+            alertDefinition.setId(definitionId);
+            alertDefinition.setPriority(null);
+
+            alertDefinition =
+            given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(alertDefinition)
+                .pathParam("defId",definitionId)
+            .expect()
+                .statusCode(200)
+                .log().ifError()
+            .when()
+                .put("/alert/definition/{defId}")
+            .as(AlertDefinition.class);
+
+            assert alertDefinition.getPriority().equals("LOW");
         }
 
         finally {

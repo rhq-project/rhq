@@ -2,7 +2,7 @@ var rhq = {
 
 dashboard : function() {
     // get all platforms
-    $.get('/rest/resource/platforms', function(data) {
+    $.get('/rest/resource/platforms.json', function(data) {
 
     var table = $("#table");
     for (var i = 0; i < data.length ; i++ ) {

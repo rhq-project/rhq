@@ -60,7 +60,7 @@ function createAppAndRestartJBAS(bundleZipFile, deploymentConfiguration, groupNa
         var bundleVersion = createBundleVersion(bundleZipFile);
         var destination = BundleManager.createBundleDestination(bundleVersion.bundle.id, destinationName, destinationDescription, baseDirName, deployDir, group.id);
 
-        var deployment = deployBundle(bundleVersion, destination, deploymentConfiguration, null);
+        var deployment = deployBundle(destination, bundleVersion, deploymentConfiguration, null, false);
 
         if (deployment.status != BundleDeploymentStatus.SUCCESS) {
             throw "Deployment wasn't successful: " + deployment;
@@ -71,17 +71,7 @@ function createAppAndRestartJBAS(bundleZipFile, deploymentConfiguration, groupNa
         return deployment;
     };
 
-    if (targetResourceType.plugin == "JBossAS" && targetResourceType.name == "JBossAS Server") {
-        return deployFn(_restartAS4);
-    } else if (targetResourceType.plugin == "JBossAS5" && targetResourceType.name == "JBossAS Server") {
-        return deployFn(_restartAS5);
-    } else if (targetResourceType.plugin == "jboss-as-7" &&
-            (targetResourceType.name == "JBossAS7-Standalone" ||
-                    targetResourceType.name == "JBossAS-Managed")) {
-        return deployFn(_restartAS7);
-    }
-
-    throw "The resource group the destination targets doesn't seem to be a JBoss AS server group.";
+    return deployFn(_restartFunction(targetResourceType));
 }
 
 /**
@@ -132,7 +122,7 @@ function updateAppAndRestartJBAS(bundleZipFile, jbasDestination, deploymentConfi
 
     var deployFn = function(restartFn) {
         var bundleVersion = createBundleVersion(bundleZipFile);
-        var deployment = deployBundle(bundleVersion, destination, deploymentConfiguration, null);
+        var deployment = deployBundle(destination, bundleVersion, deploymentConfiguration, null, false);
 
         if (deployment.status != BundleDeploymentStatus.SUCCESS) {
             throw "Deployment wasn't successful: " + deployment;
@@ -143,17 +133,23 @@ function updateAppAndRestartJBAS(bundleZipFile, jbasDestination, deploymentConfi
         return deployment;
     };
 
-    if (targetResourceType.plugin == "JBossAS" && targetResourceType.name == "JBossAS Server") {
-        return deployFn(_restartAS4);
-    } else if (targetResourceType.plugin == "JBossAS5" && targetResourceType.name == "JBossAS Server") {
-        return deployFn(_restartAS5);
-    } else if (targetResourceType.plugin == "jboss-as-7" &&
-            (targetResourceType.name == "JBossAS7-Standalone" ||
-                    targetResourceType.name == "JBossAS-Managed")) {
-        return deployFn(_restartAS7);
-    }
+    return deployFn(_restartFunction(targetResourceType));
+}
 
-    throw "The resource group the destination targets doesn't seem to be a JBoss AS server group.";
+/** Helper method to return a correct restart function for given resource type of JBoss AS */
+function _restartFunction(asResourceType) {
+    if (asResourceType.plugin == "JBossAS" && asResourceType.name == "JBossAS Server") {
+        return _restartAS4;
+    } else if (asResourceType.plugin == "JBossAS5" && asResourceType.name == "JBossAS Server") {
+        return _restartAS5;
+    } else if (asResourceType.plugin == "JBossAS7" &&
+        (asResourceType.name == "JBossAS7 Standalone Server" ||
+         asResourceType.name == "Managed Server")) {
+        
+    	return _restartAS7);
+    } else {
+    	throw "The resource group the destination targets doesn't seem to be a JBoss AS server group.";
+    }
 }
 
 function _loadGroupMembers(group) {
@@ -236,8 +232,8 @@ function _restartAS5(group) {
 }
 
 function _restartAS7(group) {
-    var shutdownOp = group.resourceType.name == "JBossAS7-Standalone" ? "shutdown" : "server:stop";
-    var startOp = group.resourceType.name == "JBossAS7-Standalone" ? "start" : "server:start";
+    var shutdownOp = group.resourceType.name == "JBossAS7 Standalone Server" ? "shutdown" : "stop";
+    var startOp = "start";
 
     _runOperationSequentially(group, shutdownOp, new Configuration);
     _runOperationSequentially(group, startOp, new Configuration);

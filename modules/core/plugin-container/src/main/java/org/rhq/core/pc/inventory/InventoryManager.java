@@ -120,6 +120,7 @@ import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
+import org.rhq.core.util.StopWatch;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.exception.WrappedRemotingException;
 
@@ -143,6 +144,19 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     private static final int COMPONENT_START_TIMEOUT = 60 * 1000; // 60 seconds
     private static final int COMPONENT_STOP_TIMEOUT = 5 * 1000; // 5 seconds
+
+    static private final int SYNC_BATCH_SIZE;
+
+    static {
+
+        int syncBatchSize = 500;
+        try {
+            syncBatchSize = Integer.parseInt(System.getProperty("rhq.agent.sync.batch.size", "500"));
+        } catch (Throwable t) {
+            //
+        }
+        SYNC_BATCH_SIZE = syncBatchSize;
+    }
 
     private final Log log = LogFactory.getLog(InventoryManager.class);
 
@@ -851,8 +865,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 // it will be accessible and editable by the user. Report the start exception at the end.
                 handleInvalidPluginConfigurationResourceError(resource, t);
                 throw new PluginContainerException("The resource [" + resource
-                    + "] has been added but could not be started. Verify the supplied configuration values: ",
-                    t);
+                    + "] has been added but could not be started. Verify the supplied configuration values: ", t);
             }
         }
 
@@ -1108,7 +1121,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         log.info("Syncing local inventory with Server inventory...");
         long startTime = System.currentTimeMillis();
         Set<Resource> syncedResources = new LinkedHashSet<Resource>();
-        Set<Integer> unknownResourceIds = new LinkedHashSet<Integer>();
+        Set<ResourceSyncInfo> unknownResourceSyncInfos = new LinkedHashSet<ResourceSyncInfo>();
         Set<Integer> modifiedResourceIds = new LinkedHashSet<Integer>();
         Set<Integer> deletedResourceIds = new LinkedHashSet<Integer>();
         Set<Resource> newlyCommittedResources = new LinkedHashSet<Resource>();
@@ -1124,16 +1137,16 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
 
             log.debug("Processing Server sync info...");
-            processSyncInfo(syncInfo, syncedResources, unknownResourceIds, modifiedResourceIds, deletedResourceIds,
-                newlyCommittedResources);
+            processSyncInfo(syncInfo, syncedResources, unknownResourceSyncInfos, modifiedResourceIds,
+                deletedResourceIds, newlyCommittedResources);
             if (log.isDebugEnabled()) {
                 log.debug(String.format("DONE Processing sync info - took [%d] ms - synced [%d] Resources "
                     + "- found [%d] unknown Resources and [%d] modified Resources.",
-                    (System.currentTimeMillis() - startTime), syncedResources.size(), unknownResourceIds.size(),
+                    (System.currentTimeMillis() - startTime), syncedResources.size(), unknownResourceSyncInfos.size(),
                     modifiedResourceIds.size()));
             }
 
-            mergeUnknownResources(unknownResourceIds);
+            mergeUnknownResources(unknownResourceSyncInfos);
             mergeModifiedResources(modifiedResourceIds);
             if (!partialInventory) {
                 purgeObsoleteResources(allServerSideUuids);
@@ -1157,7 +1170,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // the upgrade phase. Not to mention the fact that no thread pools are initialized yet by the
             // time the upgrade kicks in..
             if (!isResourceUpgradeActive()
-                && (!syncedResources.isEmpty() || !unknownResourceIds.isEmpty() || !modifiedResourceIds.isEmpty())) {
+                && (!syncedResources.isEmpty() || !unknownResourceSyncInfos.isEmpty() || !modifiedResourceIds.isEmpty())) {
                 performAvailabilityChecks(true);
                 this.inventoryThreadPoolExecutor.schedule((Callable<? extends Object>) this.serviceScanExecutor,
                     configuration.getChildResourceDiscoveryDelay(), TimeUnit.SECONDS);
@@ -1610,8 +1623,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @throws PluginContainerException
      * @return true the resource has been successfully prepared and can be started. False if the resource should not be started.
      */
-    private boolean prepareResourceForActivation(Resource resource, @NotNull ResourceContainer container,
-        boolean forceReinitialization) throws InvalidPluginConfigurationException, PluginContainerException {
+    private boolean prepareResourceForActivation(Resource resource, @NotNull
+    ResourceContainer container, boolean forceReinitialization) throws InvalidPluginConfigurationException,
+        PluginContainerException {
 
         if (resourceUpgradeDelegate.hasUpgradeFailed(resource)) {
             if (log.isTraceEnabled()) {
@@ -1753,8 +1767,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
      *                                             plugin configuration
      * @throws PluginContainerException            for all other errors
      */
-    public void activateResource(Resource resource, @NotNull ResourceContainer container, boolean updatedPluginConfig)
-        throws InvalidPluginConfigurationException, PluginContainerException {
+    public void activateResource(Resource resource, @NotNull
+    ResourceContainer container, boolean updatedPluginConfig) throws InvalidPluginConfigurationException,
+        PluginContainerException {
 
         if (resourceUpgradeDelegate.hasUpgradeFailed(resource)) {
             if (log.isTraceEnabled()) {
@@ -1831,8 +1846,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             getOperationContext(resource), // for operation manager access
             getContentContext(resource), // for content manager access
             getAvailabilityContext(resource, this.availabilityCollectors), // for components that want to perform async avail checking
-            getInventoryContext(resource),
-            this.configuration.getPluginContainerDeployment()); // helps components make determinations of what to do
+            getInventoryContext(resource), this.configuration.getPluginContainerDeployment()); // helps components make determinations of what to do
     }
 
     public <T extends ResourceComponent<?>> ResourceUpgradeContext<T> createResourceUpgradeContext(Resource resource,
@@ -1851,8 +1865,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             getOperationContext(resource), // for operation manager access
             getContentContext(resource), // for content manager access
             getAvailabilityContext(resource, this.availabilityCollectors), // for components that want avail manager access
-            getInventoryContext(resource),
-            this.configuration.getPluginContainerDeployment()); // helps components make determinations of what to do
+            getInventoryContext(resource), this.configuration.getPluginContainerDeployment()); // helps components make determinations of what to do
     }
 
     /**
@@ -2753,8 +2766,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     private void processSyncInfo(ResourceSyncInfo syncInfo, Set<Resource> syncedResources,
-        Set<Integer> unknownResourceIds, Set<Integer> modifiedResourceIds, Set<Integer> deletedResourceIds,
-        Set<Resource> newlyCommittedResources) {
+        Set<ResourceSyncInfo> unknownResourceSyncInfos, Set<Integer> modifiedResourceIds,
+        Set<Integer> deletedResourceIds, Set<Resource> newlyCommittedResources) {
         if (InventoryStatus.DELETED == syncInfo.getInventoryStatus()) {
             // A previously deleted resource still being reported by the server. Support for this option can
             // be removed if the server is ever modified to not report deleted resources. It is happening currently
@@ -2765,7 +2778,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             ResourceContainer container = this.resourceContainers.get(syncInfo.getUuid());
             if (container == null) {
                 // Either a manually added Resource or just something we haven't discovered.
-                unknownResourceIds.add(syncInfo.getId());
+                unknownResourceSyncInfos.add(syncInfo);
                 log.info("Got unknown resource: " + syncInfo.getId());
             } else {
                 Resource resource = container.getResource();
@@ -2811,7 +2824,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
                 // Recurse...
                 for (ResourceSyncInfo childSyncInfo : syncInfo.getChildSyncInfos()) {
-                    processSyncInfo(childSyncInfo, syncedResources, unknownResourceIds, modifiedResourceIds,
+                    processSyncInfo(childSyncInfo, syncedResources, unknownResourceSyncInfos, modifiedResourceIds,
                         deletedResourceIds, newlyCommittedResources);
                 }
             }
@@ -2831,18 +2844,16 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
-    private void mergeUnknownResources(Set<Integer> unknownResourceIds) {
+    private void mergeUnknownResources(Set<ResourceSyncInfo> unknownResourceSyncInfos) {
         if (log.isDebugEnabled()) {
-            log.debug("Merging [" + unknownResourceIds.size()
-                + "] unknown Resources and their descendants into local inventory...");
+            log.debug("Merging [" + unknownResourceSyncInfos.size()
+                + "] unknown resources and descendants into inventory...");
         }
 
-        if (!unknownResourceIds.isEmpty()) {
+        if (!unknownResourceSyncInfos.isEmpty()) {
             PluginMetadataManager pmm = this.pluginManager.getMetadataManager();
 
-            Set<Resource> unknownResources = configuration.getServerServices().getDiscoveryServerService()
-                .getResources(unknownResourceIds, true);
-
+            Set<Resource> unknownResources = getResourcesFromSyncInfos(unknownResourceSyncInfos);
             Set<Integer> toBeIgnored = new HashSet<Integer>();
 
             for (Resource unknownResource : unknownResources) {
@@ -2860,9 +2871,167 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 }
             }
 
-            unknownResourceIds.removeAll(toBeIgnored);
+            unknownResourceSyncInfos.removeAll(toBeIgnored);
         }
         return;
+    }
+
+    private Set<Resource> getResourcesFromSyncInfos(Set<ResourceSyncInfo> syncInfos) {
+
+        final StopWatch stopWatch = new StopWatch();
+        final int syncInfosSize = syncInfos.size();
+        final Set<Resource> result = new HashSet<Resource>(syncInfosSize);
+
+        for (ResourceSyncInfo syncInfo : syncInfos) {
+            Resource resource = getResourceFromSyncInfo(syncInfo);
+            result.add(resource);
+        }
+
+        if (log.isDebugEnabled()) {
+            log.debug("Time to build resource tree from [" + syncInfosSize + "] sync infos=" + stopWatch.getElapsed());
+        }
+
+        return result;
+    }
+
+    private Resource getResourceFromSyncInfo(ResourceSyncInfo syncInfo) {
+        final boolean isDebugEnabled = log.isDebugEnabled();
+        final StopWatch stopWatch = new StopWatch();
+        String marker = null;
+
+        /////
+        // First we need to do a breadth first traversal of the sync info tree and build a list of all resource IDs.
+
+        if (isDebugEnabled) {
+            marker = "a. Breadth-first retrieval of sync info tree";
+            stopWatch.markTimeBegin(marker);
+        }
+
+        List<Integer> resourceIdList = treeToBreadthFirstList(syncInfo);
+        int fullResourceTreeSize = resourceIdList.size();
+        if (isDebugEnabled) {
+            stopWatch.markTimeEnd(marker);
+        }
+
+        /////
+        // Now we need to loop over batches of the resource ID list - asking the server for their resource representations. 
+        // When we get the resources from the server, we put them in our resourceMap, keyed on ID.
+
+        Map<Integer, Resource> resourceMap = new HashMap<Integer, Resource>(resourceIdList.size());
+        int batchNumber = 0;
+        while (!resourceIdList.isEmpty()) {
+            // Our current batch starts at the head of the list, but
+            // we need to determine how big our current batch should be and where in the list of IDs that batch ends
+            int size = resourceIdList.size();
+            int end = (SYNC_BATCH_SIZE < size) ? SYNC_BATCH_SIZE : size;
+            batchNumber++;
+
+            // Determine the content of our current batch - this is simply a sublist of our IDs list.
+            // Note that we use .clear() once we get the batch array in order to advance our progress and help GC.
+            // This usage of .clear() will remove the processed resources from the backing list.
+            String markerPrefix = null;
+            if (isDebugEnabled) {
+                markerPrefix = String.format("b. Batch [%03d] (%d): ", batchNumber, fullResourceTreeSize);
+                marker = String.format("%sGet resource ID sublist - %d of %d remaining", markerPrefix, end, size);
+                stopWatch.markTimeBegin(marker);
+            }
+
+            List<Integer> resourceIdBatch = resourceIdList.subList(0, end);
+            Integer[] resourceIdArray = resourceIdBatch.toArray(new Integer[resourceIdBatch.size()]);
+
+            resourceIdBatch.clear();
+
+            if (isDebugEnabled) {
+                stopWatch.markTimeEnd(marker);
+
+                marker = markerPrefix + "Get sublist of resources from server";
+                stopWatch.markTimeBegin(marker);
+            }
+
+            // Ask the server for the resource representation of all resource IDs in our batch.
+            // This is a potentially expensive operation depending on the size of the batch and the content of the resources.
+            List<Resource> resourceBatch = configuration.getServerServices().getDiscoveryServerService()
+                .getResourcesAsList(resourceIdArray);
+
+            if (isDebugEnabled) {
+                stopWatch.markTimeEnd(marker);
+
+                marker = markerPrefix + "Store sublist of resources to map";
+                stopWatch.markTimeBegin(marker);
+            }
+
+            // Now that the server told us the resources in our batch, we add them to our master map.
+            // Note our usage of clear on the batch - this is to help GC.
+            for (Resource r : resourceBatch) {
+                //  protect against childResources notNull assumptions downstream
+                if (null == r.getChildResources()) {
+                    r.setChildResources(null); // this will actually initialize to an empty Set 
+                }
+                resourceMap.put(r.getId(), r);
+            }
+            resourceBatch.clear();
+
+            if (isDebugEnabled) {
+                stopWatch.markTimeEnd(marker);
+            }
+        }
+
+        if (fullResourceTreeSize != resourceMap.size()) {
+            log.warn("Expected [" + fullResourceTreeSize + "] but found [" + resourceMap.size()
+                + "] resources when fetching from server");
+        }
+
+        /////
+        // We now have all the resources associated with all sync infos in a map.
+        // We need to build the full resource tree using the sync info as the blueprint for how to order the resources in a tree.
+        if (isDebugEnabled) {
+            marker = "c. Build the full resource tree";
+            stopWatch.markTimeBegin(marker);
+        }
+
+        Resource result = syncInfoTreeToResourceTree(syncInfo, resourceMap);
+        resourceMap.clear();
+
+        if (isDebugEnabled) {
+            stopWatch.markTimeEnd(marker);
+
+            log.debug("Full resource tree built from sync info - performance: " + stopWatch);
+        }
+
+        return result;
+    }
+
+    private Resource syncInfoTreeToResourceTree(ResourceSyncInfo syncInfo, Map<Integer, Resource> resourceMap) {
+        Resource result = resourceMap.get(syncInfo.getId());
+
+        if (null == result || null == syncInfo.getChildSyncInfos()) {
+            return result;
+        }
+
+        for (ResourceSyncInfo child : syncInfo.getChildSyncInfos()) {
+            Resource childResource = syncInfoTreeToResourceTree(child, resourceMap);
+            if (null != childResource) {
+                result.addChildResource(childResource);
+            }
+        }
+
+        return result;
+    }
+
+    private List<Integer> treeToBreadthFirstList(ResourceSyncInfo syncInfo) {
+        List<Integer> result = new ArrayList<Integer>();
+
+        LinkedList<ResourceSyncInfo> queue = new LinkedList<ResourceSyncInfo>();
+        queue.add(syncInfo);
+        while (!queue.isEmpty()) {
+            ResourceSyncInfo node = queue.remove();
+            result.add(node.getId());
+            for (ResourceSyncInfo child : node.getChildSyncInfos()) {
+                queue.add(child);
+            }
+        }
+
+        return result;
     }
 
     //    private void print(Resource resourceTreeNode, int level) {

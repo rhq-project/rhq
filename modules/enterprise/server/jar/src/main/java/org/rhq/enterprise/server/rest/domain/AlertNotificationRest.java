@@ -31,7 +31,7 @@ import com.wordnik.swagger.annotations.ApiProperty;
  * Representation of notifications
  * @author Heiko W. Rupp
  */
-@ApiClass("Represents an alert notification")
+@ApiClass("Represents an alert notification definition")
 @XmlRootElement(name = "notification")
 public class AlertNotificationRest {
 
@@ -42,6 +42,7 @@ public class AlertNotificationRest {
     public AlertNotificationRest() {
     }
 
+    @ApiProperty("Id of the definition. This will change if the notification is updated.")
     public int getId() {
         return id;
     }
@@ -59,6 +60,7 @@ public class AlertNotificationRest {
         this.senderName = senderName;
     }
 
+    @ApiProperty("Configuration that needs to be passed to the definition.")
     public Map<String, Object> getConfig() {
         return config;
     }

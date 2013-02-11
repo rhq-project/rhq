@@ -165,6 +165,12 @@ public class ResourceTypeCriteria extends Criteria {
         this.filterCategories = new HashSet<ResourceCategory>(Arrays.asList(filterCategories));
     }
 
+    /**
+     * If set to true this is equivalent to asking only for top level resource types. In other words,
+     * those types whose parent will be the platform.
+     * 
+     * @param filterParentResourceTypesEmpty
+     */
     public void addFilterParentResourceTypesEmpty(boolean filterParentResourceTypesEmpty) {
         this.filterParentResourceTypesEmpty = filterParentResourceTypesEmpty;
     }

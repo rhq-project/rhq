@@ -42,7 +42,6 @@ import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
 import org.quartz.Trigger;
 
-import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.agent.operation.CancelResults;
 import org.rhq.core.clientapi.agent.operation.CancelResults.InterruptedState;
 import org.rhq.core.domain.auth.Subject;
@@ -50,6 +49,7 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUtility;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
@@ -161,6 +161,25 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             }
 
             return scheduleResourceOperation(subject, resourceId, operationName, parameters, trigger, notes);
+        } catch (Exception e) {
+            throw new ScheduleException(e);
+        }
+    }
+
+    public ResourceOperationSchedule scheduleResourceOperationUsingCron(Subject subject, int resourceId,
+        String operationName, String cronExpression, int timeout, Configuration parameters, String description)
+        throws ScheduleException {
+        // if the user set a timeout, add it to our configuration
+        if (timeout > 0L) {
+            if (parameters == null) {
+                parameters = new Configuration();
+            }
+            parameters.put(new PropertySimple(OperationDefinition.TIMEOUT_PARAM_NAME, timeout));
+        }
+        try {
+            CronTrigger cronTrigger = new CronTrigger("resource " + resourceId + "_" + operationName, "group",
+                cronExpression);
+            return scheduleResourceOperation(subject, resourceId, operationName, parameters, cronTrigger, description);
         } catch (Exception e) {
             throw new ScheduleException(e);
         }
@@ -1944,12 +1963,32 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                 if (null == parameters) {
                     parameters = new Configuration();
                 }
-
                 parameters.put(new PropertySimple(OperationDefinition.TIMEOUT_PARAM_NAME, timeout));
             }
 
             return scheduleGroupOperation(subject, groupId, executionOrderResourceIds, haltOnFailure, operationName,
                 parameters, trigger, description);
+        } catch (Exception e) {
+            throw new ScheduleException(e);
+        }
+    }
+
+    public GroupOperationSchedule scheduleGroupOperationUsingCron(Subject subject, int groupId,
+        int[] executionOrderResourceIds, boolean haltOnFailure, String operationName, Configuration parameters,
+        String cronExpression, int timeout, String description) throws ScheduleException {
+
+        // if the user set a timeout, add it to our configuration
+        if (timeout > 0L) {
+            if (parameters == null) {
+                parameters = new Configuration();
+            }
+            parameters.put(new PropertySimple(OperationDefinition.TIMEOUT_PARAM_NAME, timeout));
+        }
+        CronTrigger cronTrigger = new CronTrigger();
+        try {
+            cronTrigger.setCronExpression(cronExpression);
+            return scheduleGroupOperation(subject, groupId, executionOrderResourceIds, haltOnFailure, operationName,
+                parameters, cronTrigger, description);
         } catch (Exception e) {
             throw new ScheduleException(e);
         }

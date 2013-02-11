@@ -34,6 +34,7 @@
                               <pathelement location="../samba/target/rhq-samba-plugin-${project.version}.jar" />
                               <pathelement location="../database/target/rhq-database-plugin-${project.version}.jar" />
                               <pathelement location="../grub/target/rhq-grub-plugin-${project.version}.jar" />
+                              <pathelement location="../hadoop/target/hadoop-plugin-${project.version}.jar" />
                               <!--<pathelement location="../hardware/target/rhq-hardware-plugin-${project.version}.jar" />-->
                               <pathelement location="../hosts/target/rhq-hosts-plugin-${project.version}.jar" />
                               <pathelement location="../hudson/target/rhq-hudson-plugin-${project.version}.jar" />

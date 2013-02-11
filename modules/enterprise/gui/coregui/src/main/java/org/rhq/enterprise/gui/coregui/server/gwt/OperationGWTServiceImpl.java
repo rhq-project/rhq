@@ -24,8 +24,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.quartz.CronTrigger;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
@@ -111,14 +109,12 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
             throw getExceptionToThrowToClient(t);
         }
     }
-
+    
     public void scheduleResourceOperation(int resourceId, String operationName, Configuration parameters,
         String description, int timeout, String cronString) throws RuntimeException {
         try {
-            CronTrigger cronTrigger = new CronTrigger("resource " + resourceId + "_" + operationName, "group",
-                cronString);
-            ResourceOperationSchedule opSchedule = operationManager.scheduleResourceOperation(getSessionSubject(),
-                resourceId, operationName, parameters, cronTrigger, description);
+            ResourceOperationSchedule opSchedule = operationManager.scheduleResourceOperationUsingCron(getSessionSubject(),
+                resourceId, operationName, cronString, timeout, parameters, description);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

@@ -116,7 +116,7 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
     protected void beforeMethod() throws Exception {
         // MeasurementDataManagerUtility looks up config settings from SystemManagerBean.
         // SystemManagerBean.getDriftServerPluginManager method requires drift server plugin.
-        DriftServerPluginService driftServerPluginService = new DriftServerPluginService();
+        DriftServerPluginService driftServerPluginService = new DriftServerPluginService(getTempDir());
         prepareCustomServerPluginService(driftServerPluginService);
         driftServerPluginService.masterConfig.getPluginDirectory().mkdirs();
 

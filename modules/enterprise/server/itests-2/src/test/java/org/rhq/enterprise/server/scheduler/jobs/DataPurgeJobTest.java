@@ -98,7 +98,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
     protected void beforeMethod() throws Exception {
         try {
             //we need this because the drift plugins are referenced from the system settings that we use in our tests
-            testServerPluginService = new TestServerPluginService();
+            testServerPluginService = new TestServerPluginService(getTempDir());
             prepareCustomServerPluginService(testServerPluginService);
             testServerPluginService.startMasterPluginContainer();
 

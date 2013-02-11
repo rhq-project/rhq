@@ -21,4 +21,16 @@
     <justification>Removed already deprecated web services in this release, this file was used for WS client-server
       compatibility</justification>
   </difference>
+  <difference>
+    <className>org/rhq/enterprise/server/operation/OperationManagerRemote</className>
+    <differenceType>7012</differenceType> <!-- method added to an interface -->
+    <method>org.rhq.core.domain.operation.bean.ResourceOperationSchedule scheduleResourceOperationUsingCron(org.rhq.core.domain.auth.Subject, int, java.lang.String, java.lang.String, int, org.rhq.core.domain.configuration.Configuration, java.lang.String)</method>
+    <justification>Adding a method to a remote API interface is safe. This class is never to be implemented by users.</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/enterprise/server/operation/OperationManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added to an interface -->
+     <method>org.rhq.core.domain.operation.bean.GroupOperationSchedule scheduleGroupOperationUsingCron(org.rhq.core.domain.auth.Subject, int, int[], boolean, java.lang.String, org.rhq.core.domain.configuration.Configuration, java.lang.String, int, java.lang.String)</method>
+    <justification>Adding a method to a remote API interface is safe. This class is never to be implemented by users.</justification>
+  </difference>
 </differences>

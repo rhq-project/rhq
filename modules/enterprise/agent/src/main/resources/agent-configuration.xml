@@ -838,6 +838,24 @@ commands named "config", "setconfig" and "setup" and the command line options
 
                <!--
                _______________________________________________________________
+               rhq.agent.plugins.disabled-resource-types
+
+               Defines the names of the resource types to be disabled.
+               This is a vertical-bar-separated list of type names, where a
+               type name is the plugin name (found in the name attribute
+               in the root XML element in the plugin descriptor) followed by
+               a series of ">" followed by type names (which follow the
+               type hierarchy defined in the plugin).
+
+               Example:
+               Platform>Network Adapter|JBossAS Server>Web Application (WAR)>Web Application Context
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.disabled-resource-types" value=""/>
+               -->
+
+               <!--
+               _______________________________________________________________
                rhq.communications.configuration-schema-version
 
                Defines what version of the agent configuration schema this

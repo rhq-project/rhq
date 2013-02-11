@@ -59,10 +59,13 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.inventory.InventoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.scheduler.jobs.AsyncResourceDeleteJob;
+import org.rhq.enterprise.server.scheduler.jobs.PurgeResourceTypesJob;
 
 /**
  * This class manages the metadata for resources. Plugins are registered against this bean so that their metadata can be
@@ -92,6 +95,9 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
     @EJB
     private ResourceTypeManagerLocal resourceTypeManager;
+
+    @EJB
+    private InventoryManagerLocal inventoryManager;
 
     @EJB
     private ResourceMetadataManagerLocal resourceMetadataManager; // self
@@ -182,7 +188,21 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
             if (!obsoleteTypes.isEmpty()) {
                 log.info("Removing " + obsoleteTypes.size() + " obsolete types: " + obsoleteTypes + "...");
-                removeResourceTypes(subject, obsoleteTypes, new HashSet<ResourceType>(obsoleteTypes));
+
+                // removeResourceTypes(subject, obsoleteTypes, new HashSet<ResourceType>(obsoleteTypes));
+
+                // 1) Mark the obsolete types for deletion and uninventory the doomed resources
+                List<Integer> obsoleteTypeIds = new ArrayList<Integer>(obsoleteTypes.size());
+                for (ResourceType rt : obsoleteTypes) {
+                    obsoleteTypeIds.add(rt.getId());
+                }
+                inventoryManager.markTypesDeleted(obsoleteTypeIds, true);
+
+                // 2) Immediately remove the uninventoried resources by forcing the normally async work to run in-band
+                new AsyncResourceDeleteJob().execute(null);
+
+                // 3) Immediately finish removing the deleted types by forcing the normally async work to run in-band
+                new PurgeResourceTypesJob().executeJobCode(null);
             }
 
             // Now it's safe to remove any obsolete subcategories on the legit types.
@@ -206,9 +226,9 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                     }
                 }
             }
-        } catch (Exception e) {
+        } catch (Throwable t) {
             // Catch all exceptions, so a failure here does not cause the outer tx to rollback.
-            log.error("Failure during removal of obsolete ResourceTypes and Subcategories.", e);
+            log.error("Failure during removal of obsolete ResourceTypes and Subcategories.", t);
         }
     }
 
@@ -238,9 +258,11 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
     }
 
+    /*
     // NO TRANSACTION SHOULD BE ACTIVE ON ENTRY
     private void removeResourceTypes(Subject subject, Set<ResourceType> candidateTypes,
         Set<ResourceType> typesToBeRemoved) throws Exception {
+
         for (ResourceType candidateType : candidateTypes) {
             // Remove obsolete descendant types first.
             //Set<ResourceType> childTypes = candidateType.getChildResourceTypes();
@@ -264,12 +286,14 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     private void removeResourceType(Subject subject, ResourceType existingType) {
         log.info("Removing ResourceType [" + toConciseString(existingType) + "]...");
 
-        // Remove all Resources that are of the type (regardless of invenentory status).
+        // Remove all Resources that are of the type (regardless of inventory status).
         ResourceCriteria c = new ResourceCriteria();
         c.addFilterResourceTypeId(existingType.getId());
         c.addFilterInventoryStatus(null);
         List<Resource> resources = resourceManager.findResourcesByCriteria(subject, c);
-        if (resources != null) {
+        //Chunk through the results in 200(default) page element batches to avoid excessive 
+        //memory usage for large deployments
+        while ((resources != null) && (!resources.isEmpty())) {
             Iterator<Resource> resIter = resources.iterator();
             while (resIter.hasNext()) {
                 Resource res = resIter.next();
@@ -281,11 +305,17 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                     resourceManager.uninventoryResourceAsyncWork(subject, deletedResourceId);
                 }
                 resIter.remove();
-            }
+                }
+            //process next batch if available with new criteria instance
+            c = new ResourceCriteria();
+            c.addFilterResourceTypeId(existingType.getId());
+            c.addFilterInventoryStatus(null);
+            resources = resourceManager.findResourcesByCriteria(subject, c);
         }
 
         resourceMetadataManager.completeRemoveResourceType(subject, existingType);
     }
+    */
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void completeRemoveResourceType(Subject subject, ResourceType existingType) {

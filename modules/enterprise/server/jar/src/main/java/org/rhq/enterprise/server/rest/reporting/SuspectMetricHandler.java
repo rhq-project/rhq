@@ -13,6 +13,7 @@ import javax.ws.rs.core.StreamingOutput;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -33,6 +34,11 @@ public class SuspectMetricHandler extends AbstractRestBean implements SuspectMet
 
     @EJB
     private MeasurementOOBManagerLocal measurementOOBMManager;
+
+    public StreamingOutput suspectMetricsInternal(HttpServletRequest request, Subject user) {
+        this.caller = user;
+        return suspectMetrics(request);
+    }
 
     @Override
     public StreamingOutput suspectMetrics(HttpServletRequest request) {

@@ -6,9 +6,6 @@
    <server name="Extension Server B" discovery="ServerBComponent" class="ServerBServerComponent"
            description="Extension Server B Test Server"
            sourcePlugin="Test1" sourceType="Server A">
-      <service name="Service D" discovery="ServiceDComponent" class="ServiceDServerComponent"
-               description="Extension Service D Test Service"
-               sourcePlugin="Test1" sourceType="Service D"/>
            
    </server>
 

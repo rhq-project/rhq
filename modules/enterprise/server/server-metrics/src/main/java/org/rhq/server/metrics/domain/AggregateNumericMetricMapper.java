@@ -56,7 +56,7 @@ public class AggregateNumericMetricMapper implements ResultSetMapper<AggregateNu
 
                 @Override
                 public AggregateNumericMetric mapOne(ResultSet resultSet) {
-                    return map(resultSet.fetchOne(), resultSet.fetchOne(), resultSet.fetchOne()).get(0);
+                    return map(resultSet.one(), resultSet.one(), resultSet.one()).get(0);
                 }
 
                 @Override
@@ -105,7 +105,7 @@ public class AggregateNumericMetricMapper implements ResultSetMapper<AggregateNu
 
                 @Override
                 public AggregateNumericMetric mapOne(ResultSet resultSet) {
-                    return map(resultSet.fetchOne(), resultSet.fetchOne(), resultSet.fetchOne()).get(0);
+                    return map(resultSet.one(), resultSet.one(), resultSet.one()).get(0);
                 }
 
                 @Override

@@ -152,7 +152,7 @@
     <commons-httpclient.version>3.0.1</commons-httpclient.version>
 
     <!-- cassandra dependency versions -->
-    <cassandra.version>1.2.0-rc1</cassandra.version>
+    <cassandra.version>1.2.1</cassandra.version>
     <cassandra.thrift.version>0.7.0</cassandra.thrift.version>
     <cassandra.jdbc.version>1.2.0-SNAPSHOT</cassandra.jdbc.version>
     <!--

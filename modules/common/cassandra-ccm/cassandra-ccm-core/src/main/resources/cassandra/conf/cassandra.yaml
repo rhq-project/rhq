@@ -39,7 +39,8 @@ num_tokens: @@rhq.cassandra.num_tokens@@
 # See http://wiki.apache.org/cassandra/HintedHandoff
 hinted_handoff_enabled: true
 # this defines the maximum amount of time a dead host will have hints
-# generated.  After it has been dead this long, hints will be dropped.
+# generated.  After it has been dead this long, new hints for it will not be
+# created until it has been seen alive and gone down again.
 max_hint_window_in_ms: 10800000 # 3 hours
 # throttle in KB's per second, per delivery thread
 hinted_handoff_throttle_in_kb: 1024
@@ -624,6 +625,7 @@ server_encryption_options:
     # algorithm: SunX509
     # store_type: JKS
     # cipher_suites: [TLS_RSA_WITH_AES_128_CBC_SHA,TLS_RSA_WITH_AES_256_CBC_SHA]
+    # require_client_auth: false
 
 # enable or disable client/server encryption.
 client_encryption_options:
@@ -643,3 +645,9 @@ client_encryption_options:
 #          dc   - traffic between different datacenters is compressed
 #          none - nothing is compressed.
 internode_compression: all
+
+# Enable or disable tcp_nodelay for inter-dc communication.
+# Disabling it will result in larger (but fewer) network packets being sent,
+# reducing overhead from the TCP protocol itself, at the cost of increasing
+# latency if you block for cross-datacenter responses.
+inter_dc_tcp_nodelay: true

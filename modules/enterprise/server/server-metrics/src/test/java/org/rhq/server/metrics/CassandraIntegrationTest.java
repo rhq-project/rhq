@@ -25,6 +25,8 @@
 
 package org.rhq.server.metrics;
 
+import static com.datastax.driver.core.ProtocolOptions.Compression.SNAPPY;
+
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleAuthInfoProvider;
@@ -59,6 +61,7 @@ public class CassandraIntegrationTest {
         Cluster cluster = Cluster.builder()
             .addContactPoints("127.0.0.1", "127.0.0.2")
             .withAuthInfoProvider(authInfoProvider)
+            .withCompression(SNAPPY)
             .build();
         session = cluster.connect("rhq");
     }

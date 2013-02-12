@@ -82,7 +82,7 @@ public class SlicedPagedResult<T> implements Iterable<T> {
 
     private ResultSet retrieveNextResultSet(ResultSet existingResultSet, T lastRetrievedItem) {
         try{
-            if (existingResultSet != null && existingResultSet.isExhausted() && existingResultSet.fetchAll().size() == pageSize) {
+            if (existingResultSet != null && existingResultSet.isExhausted() && existingResultSet.all().size() == pageSize) {
                 return session.execute(queryCreator.buildNextQuery(lastRetrievedItem));
             }
         } catch (NoHostAvailableException e) {

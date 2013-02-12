@@ -26,8 +26,9 @@
 package org.rhq.server.metrics;
 
 
-import static com.datastax.driver.core.utils.querybuilder.QueryBuilder.batch;
-import static com.datastax.driver.core.utils.querybuilder.QueryBuilder.insert;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.batch;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.ttl;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -41,7 +42,6 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
-import com.datastax.driver.core.utils.querybuilder.Using;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.util.PageOrdering;
@@ -164,20 +164,26 @@ public class MetricsDAO {
             int i = 0;
 
             for (AggregateNumericMetric metric : metrics) {
-                statements[i++] = insert("schedule_id", "time", "type", "value")
-                    .into(table.getTableName())
-                    .values(metric.getScheduleId(), new Date(metric.getTimestamp()), AggregateType.MIN.ordinal(),
-                        metric.getMin()).using(Using.ttl(ttl));
+                statements[i++] = insertInto(table.getTableName())
+                    .value("schedule_id", metric.getScheduleId())
+                    .value("time", new Date(metric.getTimestamp()))
+                    .value("type", AggregateType.MIN.ordinal())
+                    .value("value", metric.getMin())
+                    .using(ttl(ttl));
 
-                statements[i++] = insert("schedule_id", "time", "type", "value")
-                    .into(table.getTableName())
-                    .values(metric.getScheduleId(), new Date(metric.getTimestamp()), AggregateType.MAX.ordinal(),
-                        metric.getMax()).using(Using.ttl(ttl));
+                statements[i++] = insertInto(table.getTableName())
+                    .value("schedule_id", metric.getScheduleId())
+                    .value("time", new Date(metric.getTimestamp()))
+                    .value("type", AggregateType.MAX.ordinal())
+                    .value("value", metric.getMax())
+                    .using(ttl(ttl));
 
-                statements[i++] = insert("schedule_id", "time", "type", "value")
-                    .into(table.getTableName())
-                    .values(metric.getScheduleId(), new Date(metric.getTimestamp()), AggregateType.AVG.ordinal(),
-                        metric.getAvg()).using(Using.ttl(ttl));
+                statements[i++] = insertInto(table.getTableName())
+                    .value("schedule_id", metric.getScheduleId())
+                    .value("time", new Date(metric.getTimestamp()))
+                    .value("type", AggregateType.AVG.ordinal())
+                    .value("value", metric.getAvg())
+                    .using(ttl(ttl));
 
                 updates.add(metric);
             }
@@ -201,22 +207,25 @@ public class MetricsDAO {
             Statement statement = null;
 
             for (AggregateNumericMetric metric : metrics) {
-                statement = insert("schedule_id", "time", "type", "value")
-                    .into(table.getTableName())
-                    .values(metric.getScheduleId(), new Date(metric.getTimestamp()), AggregateType.MIN.ordinal(),
-                        metric.getMin()).using(Using.ttl(ttl));
+                statement = insertInto(table.getTableName())
+                    .value("schedule_id", metric.getScheduleId())
+                    .value("time", new Date(metric.getTimestamp()))
+                    .value("type", AggregateType.MIN.ordinal())
+                    .value("value", metric.getMin());
                 updates.add(new MetricResultFuture<AggregateNumericMetric>(session.executeAsync(statement), metric));
 
-                statement = insert("schedule_id", "time", "type", "value")
-                    .into(table.getTableName())
-                    .values(metric.getScheduleId(), new Date(metric.getTimestamp()), AggregateType.MAX.ordinal(),
-                        metric.getMax()).using(Using.ttl(ttl));
+                statement = insertInto(table.getTableName())
+                    .value("schedule_id", metric.getScheduleId())
+                    .value("time", new Date(metric.getTimestamp()))
+                    .value("type", AggregateType.MAX.ordinal())
+                    .value("value", metric.getMax());
                 updates.add(new MetricResultFuture<AggregateNumericMetric>(session.executeAsync(statement), metric));
 
-                statement = insert("schedule_id", "time", "type", "value")
-                    .into(table.getTableName())
-                    .values(metric.getScheduleId(), new Date(metric.getTimestamp()), AggregateType.AVG.ordinal(),
-                        metric.getAvg()).using(Using.ttl(ttl));
+                statement = insertInto(table.getTableName())
+                    .value("schedule_id", metric.getScheduleId())
+                    .value("time", new Date(metric.getTimestamp()))
+                    .value("type", AggregateType.AVG.ordinal())
+                    .value("value", metric.getAvg());
                 updates.add(new MetricResultFuture<AggregateNumericMetric>(session.executeAsync(statement), metric));
             }
 
@@ -398,11 +407,11 @@ public class MetricsDAO {
             Statement[] statements = new Statement[updates.size()];
             int i = 0;
             for (Integer scheduleId : updates.keySet()) {
-                statements[i++] =
-                    insert("bucket", "time", "schedule_id", "null_col")
-                    .into(MetricsTable.INDEX.toString())
-                    .values(table.toString(), new Date(updates.get(scheduleId)), scheduleId, false);
-
+                statements[i++] = insertInto(MetricsTable.INDEX.toString())
+                    .value("bucket", table.getTableName())
+                    .value("time", new Date(updates.get(scheduleId)))
+                    .value("schedule_id", scheduleId)
+                    .value("null_col", false);
             }
             session.execute(batch(statements));
         } catch (NoHostAvailableException e) {

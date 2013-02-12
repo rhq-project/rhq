@@ -25,8 +25,6 @@
 
 package org.rhq.server.metrics;
 
-import static com.datastax.driver.core.utils.querybuilder.QueryBuilder.batch;
-import static com.datastax.driver.core.utils.querybuilder.QueryBuilder.insert;
 import static java.util.Arrays.asList;
 import static org.rhq.core.domain.util.PageOrdering.DESC;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
@@ -41,8 +39,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.utils.querybuilder.Batch;
 import com.google.common.collect.Lists;
 
 import org.joda.time.DateTime;
@@ -52,9 +48,9 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
-import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateSimpleNumericMetric;
+import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.MetricsIndexEntry;
 import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.RawNumericMetric;
@@ -535,24 +531,24 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
     }
 
     //@Test
-    public void batchTest() throws Exception {
-        long timestamp = System.currentTimeMillis();
-
-        Batch batch = batch(
-            insert("schedule_id", "time", "value").into("raw_metrics").values(1, timestamp, 1.001),
-            insert("schedule_id", "time", "value").into("raw_metrics").values(2, timestamp, 2.002),
-            insert("schedule_id", "time", "value").into("raw_metrics").values(3, timestamp, 3.003),
-            insert("schedule_id", "time", "value").into("raw_metrics").values(4, timestamp, 3.003),
-            insert("schedule_id", "time", "value").into("raw_metrics").values(5, timestamp, 3.003),
-            insert("schedule_id", "time", "value").into("raw_metrics").values(6, timestamp, 3.003),
-            insert("schedule_id", "time", "value").into("raw_metrics").values(7, timestamp, 3.003),
-            insert("schedule_id", "time", "value").into("raw_metrics").values(8, timestamp, 3.003),
-            insert("schedule_id", "time", "value").into("raw_metrics").values(9, timestamp, 3.003),
-            insert("schedule_id", "time", "value").into("raw_metrics").values(10, timestamp, 3.003)
-        );
-
-        ResultSet resultsSet = session.execute(batch);
-        assertEquals(resultsSet.fetchAll().size(), 2);
-    }
+//    public void batchTest() throws Exception {
+//        long timestamp = System.currentTimeMillis();
+//
+//        Batch batch = batch(
+//            insert("schedule_id", "time", "value").into("raw_metrics").values(1, timestamp, 1.001),
+//            insert("schedule_id", "time", "value").into("raw_metrics").values(2, timestamp, 2.002),
+//            insert("schedule_id", "time", "value").into("raw_metrics").values(3, timestamp, 3.003),
+//            insert("schedule_id", "time", "value").into("raw_metrics").values(4, timestamp, 3.003),
+//            insert("schedule_id", "time", "value").into("raw_metrics").values(5, timestamp, 3.003),
+//            insert("schedule_id", "time", "value").into("raw_metrics").values(6, timestamp, 3.003),
+//            insert("schedule_id", "time", "value").into("raw_metrics").values(7, timestamp, 3.003),
+//            insert("schedule_id", "time", "value").into("raw_metrics").values(8, timestamp, 3.003),
+//            insert("schedule_id", "time", "value").into("raw_metrics").values(9, timestamp, 3.003),
+//            insert("schedule_id", "time", "value").into("raw_metrics").values(10, timestamp, 3.003)
+//        );
+//
+//        ResultSet resultsSet = session.execute(batch);
+//        assertEquals(resultsSet.fetchAll().size(), 2);
+//    }
 
 }

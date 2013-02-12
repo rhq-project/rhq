@@ -22,7 +22,7 @@ build_datastax_driver()
     #clone_repo "git://github.com/datastax/java-driver.git"
     clone_repo git://github.com/jsanda/java-driver.git
     pushd java-driver
-    git checkout -b master-1.2.0-rc1 origin/master-1.2.0-rc1
+    git checkout -b master-1.2.1 origin/master-1.2.1
     run_mvn install -DskipTests
     popd
 }
@@ -86,6 +86,3 @@ mkdir -p $BUILD_DIR
 pushd $BUILD_DIR
 
 build_datastax_driver
-build_cassandra_jdbc
-build_liquibase
-build_cassandra_liquibase_ext

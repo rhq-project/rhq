@@ -71,9 +71,8 @@ public class SimpleAuthenticator extends LegacyAuthenticator {
                     mode_values += "'" + pm + "', ";
 
                 mode_values += "or leave it unspecified.";
-                throw new AuthenticationException(
-                    "The requested password check mode '" + pmode_plain +
-                        "' is not a valid mode.  Possible values are " + mode_values);
+                throw new AuthenticationException("The requested password check mode '" + pmode_plain +
+                    "' is not a valid mode.  Possible values are " + mode_values);
             }
         }
 
@@ -98,8 +97,8 @@ public class SimpleAuthenticator extends LegacyAuthenticator {
             props.load(in);
 
             // note we keep the message here and for the wrong password exactly the same to prevent attackers from guessing what users are valid
-            if (props.getProperty(username) == null) throw new AuthenticationException(
-                authenticationErrorMessage(mode, username));
+            if (props.getProperty(username) == null)
+                throw new AuthenticationException(authenticationErrorMessage(mode, username));
             switch (mode) {
             case PLAIN:
                 authenticated = password.equals(props.getProperty(username));
@@ -121,8 +120,7 @@ public class SimpleAuthenticator extends LegacyAuthenticator {
             FileUtils.closeQuietly(in);
         }
 
-        if (!authenticated) throw new AuthenticationException(
-            authenticationErrorMessage(mode, username));
+        if (!authenticated) throw new AuthenticationException(authenticationErrorMessage(mode, username));
 
         return new AuthenticatedUser(username);
     }

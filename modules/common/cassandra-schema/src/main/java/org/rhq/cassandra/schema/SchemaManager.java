@@ -25,6 +25,8 @@
 
 package org.rhq.cassandra.schema;
 
+import static com.datastax.driver.core.ProtocolOptions.Compression.SNAPPY;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,12 +40,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.cassandra.CassandraNode;
-
-import liquibase.Liquibase;
-import liquibase.database.Database;
-import liquibase.exception.DatabaseException;
-import liquibase.integration.commandline.CommandLineUtils;
-import liquibase.resource.ClassLoaderResourceAccessor;
 
 /**
  * @author John Sanda
@@ -100,6 +96,7 @@ public class SchemaManager {
         Cluster cluster = Cluster.builder()
             .addContactPoints(hostNames)
             .withAuthInfoProvider(authInfoProvider)
+            .withCompression(SNAPPY)
             .build();
         session = cluster.connect("system");
     }
@@ -126,7 +123,7 @@ public class SchemaManager {
         try {
             String cql = "SELECT keyspace_name FROM schema_keyspaces WHERE keyspace_name = 'rhq'";
             ResultSet resultSet = session.execute(cql);
-            return !resultSet.fetchAll().isEmpty();
+            return !resultSet.all().isEmpty();
         } catch (NoHostAvailableException e) {
             throw new RuntimeException(e);
         }
@@ -134,39 +131,57 @@ public class SchemaManager {
 
     public void updateSchema() {
         try {
-            Database database = createDatabase(nodes.get(0));
-            runLiquibase(database);
-        } catch (DatabaseException e) {
+            session.execute(
+                "CREATE TABLE rhq.raw_metrics (" +
+                    "schedule_id int, " +
+                    "time timestamp, " +
+                    "value double, " +
+                    "PRIMARY KEY (schedule_id, time) " +
+                    ") WITH COMPACT STORAGE"
+            );
+            session.execute(
+                "CREATE TABLE rhq.one_hour_metrics (" +
+                    "schedule_id int, " +
+                    "time timestamp, " +
+                    "type int, " +
+                    "value double, " +
+                    "PRIMARY KEY (schedule_id, time, type) " +
+                ") WITH COMPACT STORAGE"
+            );
+            session.execute(
+                "CREATE TABLE rhq.six_hour_metrics (" +
+                    "schedule_id int, " +
+                    "time timestamp, " +
+                    "type int, " +
+                    "value double, " +
+                    "PRIMARY KEY (schedule_id, time, type) " +
+                ") WITH COMPACT STORAGE;"
+            );
+            session.execute(
+                "CREATE TABLE rhq.twenty_four_hour_metrics (" +
+                    "schedule_id int, " +
+                    "time timestamp, " +
+                    "type int, " +
+                    "value double, " +
+                    "PRIMARY KEY (schedule_id, time, type) " +
+                ") WITH COMPACT STORAGE;"
+            );
+            session.execute(
+                "CREATE TABLE rhq.metrics_index (" +
+                    "bucket varchar, " +
+                    "time timestamp, " +
+                    "schedule_id int, " +
+                    "null_col boolean, " +
+                    "PRIMARY KEY (bucket, time, schedule_id) " +
+                ") WITH COMPACT STORAGE;"
+            );
+        } catch (NoHostAvailableException e) {
             throw new RuntimeException(e);
         }
     }
 
     public void shutdown() {
         session.getCluster().shutdown();
-    }
-
-    private void runLiquibase(Database database) {
-        try {
-            ClassLoaderResourceAccessor resourceAccessor = new ClassLoaderResourceAccessor();
-
-            Liquibase liquibase = new Liquibase("changelog.xml", resourceAccessor, database);
-            liquibase.update(null);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private Database createDatabase(CassandraNode node) throws DatabaseException {
-        String url = "jdbc:cassandra://" + node.getHostName() + ":" + node.getThriftPort() + "/system?version=3.0.0";
-        String driver = "org.apache.cassandra.cql.jdbc.CassandraDriver";
-        String databaseClass = "liquibase.database.ext.CassandraDatabase";
-        String defaultCatalog = null;
-        String defaultSchema = "rhq";
-
-        log.debug("Cassandra JDBC URL: " + url);
-
-        return CommandLineUtils.createDatabaseObject(getClass().getClassLoader(), url, username, password, driver,
-            null, defaultSchema, databaseClass, null);
     }
 
 }

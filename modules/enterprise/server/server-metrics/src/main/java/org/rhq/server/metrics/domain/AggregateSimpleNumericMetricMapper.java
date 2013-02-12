@@ -48,7 +48,7 @@ public class AggregateSimpleNumericMetricMapper implements ResultSetMapper<Aggre
 
     @Override
     public AggregateSimpleNumericMetric mapOne(ResultSet resultSet) {
-        return this.map(resultSet.fetchOne());
+        return this.map(resultSet.one());
     }
 
     @Override

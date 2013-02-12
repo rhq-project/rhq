@@ -57,7 +57,7 @@ public class RawNumericMetricMapper implements ResultSetMapper<RawNumericMetric>
 
                 @Override
                 public RawNumericMetric mapOne(ResultSet resultSet) {
-                    return map(resultSet.fetchOne());
+                    return map(resultSet.one());
                 }
 
                 @Override
@@ -95,7 +95,7 @@ public class RawNumericMetricMapper implements ResultSetMapper<RawNumericMetric>
 
                 @Override
                 public RawNumericMetric mapOne(ResultSet resultSet) {
-                    return this.map(resultSet.fetchOne());
+                    return this.map(resultSet.one());
                 }
 
                 @Override

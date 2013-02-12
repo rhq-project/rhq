@@ -55,7 +55,7 @@ public class MetricsIndexEntryMapper implements ResultSetMapper<MetricsIndexEntr
 
     @Override
     public MetricsIndexEntry mapOne(ResultSet resultSet) {
-        return map(resultSet.fetchOne());
+        return map(resultSet.one());
     }
 
     @Override

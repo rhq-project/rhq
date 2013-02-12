@@ -18,34 +18,11 @@
       <artifactId>rhq-cassandra-ccm-core</artifactId>
       <version>${project.version}</version>
     </dependency>
+
     <dependency>
       <groupId>com.datastax.cassandra</groupId>
       <artifactId>cassandra-driver-core</artifactId>
       <version>0.1.0-SNAPSHOT</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.liquibase</groupId>
-      <artifactId>liquibase-core</artifactId>
-      <version>3.0.0-SNAPSHOT</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.jboss.weld.se</groupId>
-          <artifactId>weld-se</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <dependency>
-      <groupId>cassandra-liquibase-ext</groupId>
-      <artifactId>cassandra-liquibase-ext</artifactId>
-      <version>0.1.0-SNAPSHOT</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache-extras.cassandra-jdbc</groupId>
-      <artifactId>cassandra-jdbc</artifactId>
-      <version>1.2.0-SNAPSHOT</version>
     </dependency>
   </dependencies>
 

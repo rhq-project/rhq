@@ -52,10 +52,9 @@ public class SimpleAuthorizer extends LegacyAuthorizer {
     public EnumSet<Permission> authorize(AuthenticatedUser user, List<Object> resource) {
         if (resource.size() < 2 || !Resources.ROOT.equals(resource.get(0)) ||
             !Resources.KEYSPACES.equals(resource.get(1)))
-            return EnumSet.copyOf(Permission.NONE);
+            return EnumSet.noneOf(Permission.class);
 
         String keyspace, columnFamily = null;
-//        EnumSet<Permission> authorized = EnumSet.copyOf(Permission.NONE);
         EnumSet<Permission> authorized = EnumSet.noneOf(Permission.class);
 
         // /cassandra/keyspaces

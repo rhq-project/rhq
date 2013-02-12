@@ -749,7 +749,6 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
     }
 
     @SuppressWarnings("unchecked")
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void updateAgentResourceAvailabilities(int agentId, AvailabilityType platformAvailType,
         AvailabilityType childAvailType) {
 

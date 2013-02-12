@@ -45,15 +45,16 @@ import org.rhq.enterprise.server.agentclient.AgentClient;
 public interface AgentManagerLocal {
 
     /** 
-     * Call this method to set the agent down and mark it 'backfilled'. Also, sets all of its monitored resources
-     * to an UNKNOWN avail state since the agent is no longer reporting availability.
+     * Call this method to set the agent DOWN and mark it 'backfilled'. Also, sets all of its monitored resources
+     * to an UNKNOWN avail state since the agent is no longer reporting availability.  Done in its own transaction to
+     * avoid large transactions if many agents are simultaneously backfilled.
      * 
      * @param subject
      * @param agentName
      * @param agentId
      */
     // This method should not be remoted.
-    void backfillAgent(Subject subject, String agentName, int agentId);
+    void backfillAgentInNewTransaction(Subject subject, String agentName, int agentId);
 
     /**
      * Persists a new agent.

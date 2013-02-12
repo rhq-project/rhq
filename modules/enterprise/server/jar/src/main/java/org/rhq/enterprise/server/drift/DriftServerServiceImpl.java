@@ -41,6 +41,8 @@ import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.DriftSnapshotRequest;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.util.CriteriaQuery;
+import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
 public class DriftServerServiceImpl implements DriftServerService {
 
@@ -80,10 +82,19 @@ public class DriftServerServiceImpl implements DriftServerService {
         DriftDefinitionCriteria criteria = new DriftDefinitionCriteria();
         criteria.addFilterResourceIds(resourceIds.toArray(new Integer[resourceIds.size()]));
         criteria.fetchConfiguration(true);
-        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
-        Subject overlord = getSubjectManager().getOverlord();
-        PageList<DriftDefinition> definitions = getDriftManager().findDriftDefinitionsByCriteria(overlord, criteria);
+        final Subject overlord = getSubjectManager().getOverlord();
+
+        //Use CriteriaQuery to automatically chunk/page through criteria query results
+        CriteriaQueryExecutor<DriftDefinition, DriftDefinitionCriteria> queryExecutor = new CriteriaQueryExecutor<DriftDefinition, DriftDefinitionCriteria>() {
+            @Override
+            public PageList<DriftDefinition> execute(DriftDefinitionCriteria criteria) {
+                return getDriftManager().findDriftDefinitionsByCriteria(overlord, criteria);
+            }
+        };
+
+        CriteriaQuery<DriftDefinition, DriftDefinitionCriteria> definitions = new CriteriaQuery<DriftDefinition, DriftDefinitionCriteria>(
+            criteria, queryExecutor);
 
         Map<Integer, List<DriftDefinition>> result = new HashMap<Integer, List<DriftDefinition>>();
 

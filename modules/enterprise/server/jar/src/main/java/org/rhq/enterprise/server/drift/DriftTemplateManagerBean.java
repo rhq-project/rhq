@@ -47,6 +47,8 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
+import org.rhq.enterprise.server.util.CriteriaQuery;
+import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
@@ -120,7 +122,7 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @Override
     @TransactionAttribute(NEVER)
-    public void pinTemplate(Subject subject, int templateId, int driftDefId, int snapshotVersion) {
+    public void pinTemplate(final Subject subject, int templateId, int driftDefId, int snapshotVersion) {
         templateMgr.createTemplateChangeSet(subject, templateId, driftDefId, snapshotVersion);
 
         DriftDefinitionTemplateCriteria templateCriteria = new DriftDefinitionTemplateCriteria();
@@ -135,9 +137,18 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
         criteria.addFilterTemplateId(templateId);
         criteria.fetchConfiguration(true);
         criteria.fetchResource(true);
-        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
-        PageList<DriftDefinition> definitions = driftMgr.findDriftDefinitionsByCriteria(subject, criteria);
+        //Use CriteriaQuery to automatically chunk/page through criteria query results
+        CriteriaQueryExecutor<DriftDefinition, DriftDefinitionCriteria> queryExecutor = new CriteriaQueryExecutor<DriftDefinition, DriftDefinitionCriteria>() {
+            @Override
+            public PageList<DriftDefinition> execute(DriftDefinitionCriteria criteria) {
+                return driftMgr.findDriftDefinitionsByCriteria(subject, criteria);
+            }
+        };
+
+        CriteriaQuery<DriftDefinition, DriftDefinitionCriteria> definitions = new CriteriaQuery<DriftDefinition, DriftDefinitionCriteria>(
+            criteria, queryExecutor);
+
         for (DriftDefinition def : definitions) {
             if (def.isAttached()) {
                 int resourceId = def.getResource().getId();

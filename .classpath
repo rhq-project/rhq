@@ -24,9 +24,9 @@
 	<classpathentry kind="src" path="modules/core/util/src/test/java"/>
 	<classpathentry kind="src" path="modules/core/dbutils/src/main/java"/>
 	<classpathentry kind="src" path="modules/core/dbutils/src/test/java"/>
-    <classpathentry kind="src" path="modules/core/native-system/src/main/java"/>
-    <classpathentry kind="src" path="modules/core/native-system/src/test/java"/>
-    <classpathentry kind="src" path="modules/core/native-system/src/test/resources"/>
+	<classpathentry kind="src" path="modules/core/native-system/src/main/java"/>
+	<classpathentry kind="src" path="modules/core/native-system/src/test/java"/>
+	<classpathentry kind="src" path="modules/core/native-system/src/test/resources"/>
 	<classpathentry kind="src" path="modules/core/domain/src/main/java"/>
 	<classpathentry kind="src" path="modules/core/domain/src/test/java"/>
 	<classpathentry kind="src" path="modules/core/plugin-api/src/main/java"/>
@@ -124,6 +124,9 @@
 	<classpathentry kind="src" path="modules/plugins/apache/src/test/resources"/>
 	<classpathentry kind="src" path="modules/plugins/script/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/netservices/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/netservices/src/main/resources"/>
+	<classpathentry kind="src" path="modules/plugins/netservices/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/netservices/src/test/resources"/>
 	<classpathentry kind="src" path="modules/plugins/ant-bundle/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/ant-bundle/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/ant-bundle/src/test/resources"/>
@@ -178,11 +181,11 @@
 	<classpathentry kind="src" path="modules/core/arquillian-integration/container/src/test/java"/>
 	<classpathentry kind="src" path="modules/core/arquillian-integration/container/src/test/resources"/>
 	<classpathentry kind="src" path="modules/test-utils/src/main/java"/>
-    <classpathentry kind="src" path="modules/integration-tests/apache-plugin-test/src/test/java"/>
-    <classpathentry kind="src" path="modules/integration-tests/apache-plugin-test/src/test/resources"/>
-    <classpathentry kind="src" path="modules/integration-tests/jndi-access/jndi-access-test/src/test/java"/>
-    <classpathentry kind="src" path="modules/integration-tests/jndi-access/jndi-access-test/src/test/resources"/>
-    <classpathentry kind="src" path="modules/integration-tests/mod_cluster-plugin-test/src/test/java"/>
+	<classpathentry kind="src" path="modules/integration-tests/apache-plugin-test/src/test/java"/>
+	<classpathentry kind="src" path="modules/integration-tests/apache-plugin-test/src/test/resources"/>
+	<classpathentry kind="src" path="modules/integration-tests/jndi-access/jndi-access-test/src/test/java"/>
+	<classpathentry kind="src" path="modules/integration-tests/jndi-access/jndi-access-test/src/test/resources"/>
+	<classpathentry kind="src" path="modules/integration-tests/mod_cluster-plugin-test/src/test/java"/>
 	<classpathentry kind="src" path="etc/samples/skeleton-plugin/src/main/java"/>
 	<classpathentry kind="src" path="etc/samples/custom-serverplugin/src/main/java"/>
 	<classpathentry kind="src" path="etc/samples/simplereport-serverplugin/src/main/java"/>
@@ -336,9 +339,9 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/spec/javax/jms/jboss-jms-api_1.1_spec/1.0.0.Final/jboss-jms-api_1.1_spec-1.0.0.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/spec/javax/interceptor/jboss-interceptors-api_1.1_spec/1.0.0.Final/jboss-interceptors-api_1.1_spec-1.0.0.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/spec/javax/transaction/jboss-transaction-api_1.1_spec/1.0.0.Final/jboss-transaction-api_1.1_spec-1.0.0.Final.jar"/>
-    <classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/remotingjmx/remoting-jmx/1.0.2.Final/remoting-jmx-1.0.2.Final.jar"/>
-    <classpathentry exported="true" kind="var" path="M2_REPO/javax/enterprise/cdi-api/1.0-SP4/cdi-api-1.0-SP4.jar" sourcepath="M2_REPO/javax/enterprise/cdi-api/1.0-SP4/cdi-api-1.0-SP4-sources.jar"/>
-    <classpathentry exported="true" kind="var" path="M2_REPO/javax/inject/javax.inject/1/javax.inject-1.jar" sourcepath="M2_REPO/javax/inject/javax.inject/1/javax.inject-1-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/remotingjmx/remoting-jmx/1.0.2.Final/remoting-jmx-1.0.2.Final.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/javax/enterprise/cdi-api/1.0-SP4/cdi-api-1.0-SP4.jar" sourcepath="M2_REPO/javax/enterprise/cdi-api/1.0-SP4/cdi-api-1.0-SP4-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/javax/inject/javax.inject/1/javax.inject-1.jar" sourcepath="M2_REPO/javax/inject/javax.inject/1/javax.inject-1-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/mozilla/rhino/1.7R4/rhino-1.7R4.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/picketbox/picketbox/4.0.7.Final/picketbox-4.0.7.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/python/jython-standalone/2.5.2/jython-standalone-2.5.2.jar"/>
@@ -346,9 +349,10 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/joda-time/joda-time/2.1/joda-time-2.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/cassandra/cassandra-thrift/1.1.5/cassandra-thrift-1.1.5.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/hectorclient/hector-core/1.1-1/hector-core-1.1-1.jar"/>
-    <classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman-install/1.5.2/byteman-install-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-install/1.5.2/byteman-install-1.5.2-sources.jar"/>
-    <classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman-submit/1.5.2/byteman-submit-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-submit/1.5.2/byteman-submit-1.5.2-sources.jar"/>
-    <classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman-bmunit/1.5.2/byteman-bmunit-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-bmunit/1.5.2/byteman-bmunit-1.5.2-sources.jar"/>
-    <classpathentry exported="true" kind="var" path="JDK_HOME/lib/tools.jar"/>
-    <classpathentry kind="output" path="eclipse-classes"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman-install/1.5.2/byteman-install-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-install/1.5.2/byteman-install-1.5.2-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman-submit/1.5.2/byteman-submit-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-submit/1.5.2/byteman-submit-1.5.2-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman-bmunit/1.5.2/byteman-bmunit-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-bmunit/1.5.2/byteman-bmunit-1.5.2-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/eclipse/jetty/aggregate/jetty-all/8.1.8.v20121106/jetty-all-8.1.8.v20121106.jar" sourcepath="M2_REPO/org/eclipse/jetty/aggregate/jetty-all/8.1.8.v20121106/jetty-all-8.1.8.v20121106-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="JDK_HOME/lib/tools.jar"/>
+	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

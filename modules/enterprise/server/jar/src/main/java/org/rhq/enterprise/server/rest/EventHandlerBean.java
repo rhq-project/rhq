@@ -59,11 +59,14 @@ import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.rest.domain.EventDefinitionRest;
 import org.rhq.enterprise.server.rest.domain.EventRest;
 import org.rhq.enterprise.server.rest.domain.EventSourceRest;
+import org.rhq.enterprise.server.util.CriteriaQuery;
+import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
 /**
  * Handle event related things
@@ -297,8 +300,16 @@ public class EventHandlerBean extends AbstractRestBean {
 
 
     private Response.ResponseBuilder getEventsAsBuilderForCriteria(HttpHeaders headers, EventCriteria criteria) {
-        List<Event> eventList = eventManager.findEventsByCriteria(caller,criteria);
-        List<EventRest> restEvents = new ArrayList<EventRest>(eventList.size());
+        //Use CriteriaQuery to automatically chunk/page through criteria query results
+        CriteriaQueryExecutor<Event, EventCriteria> queryExecutor = new CriteriaQueryExecutor<Event, EventCriteria>() {
+            @Override
+            public PageList<Event> execute(EventCriteria criteria) {
+                return eventManager.findEventsByCriteria(caller, criteria);
+            }
+        };
+
+        CriteriaQuery<Event, EventCriteria> eventList = new CriteriaQuery<Event, EventCriteria>(criteria, queryExecutor);
+        List<EventRest> restEvents = new ArrayList<EventRest>();
         for (Event event : eventList) {
             restEvents.add(convertEvent(event));
         }

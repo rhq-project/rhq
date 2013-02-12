@@ -80,6 +80,8 @@ import org.rhq.enterprise.server.rest.domain.GroupRest;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
+import org.rhq.enterprise.server.util.CriteriaQuery;
+import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
 /**
  * Deal with group related things.
@@ -114,11 +116,19 @@ public class GroupHandlerBean extends AbstractRestBean  {
         if (q!=null) {
             criteria.addFilterName(q);
         }
-        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
-        List<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(caller, criteria);
+        //Use CriteriaQuery to automatically chunk/page through criteria query results
+        CriteriaQueryExecutor<ResourceGroup, ResourceGroupCriteria> queryExecutor = new CriteriaQueryExecutor<ResourceGroup, ResourceGroupCriteria>() {
+            @Override
+            public PageList<ResourceGroup> execute(ResourceGroupCriteria criteria) {
+                return resourceGroupManager.findResourceGroupsByCriteria(caller, criteria);
+            }
+        };
 
-        List<GroupRest> list = new ArrayList<GroupRest>(groups.size());
+        CriteriaQuery<ResourceGroup, ResourceGroupCriteria> groups = new CriteriaQuery<ResourceGroup, ResourceGroupCriteria>(
+            criteria, queryExecutor);
+
+        List<GroupRest> list = new ArrayList<GroupRest>();
         for (ResourceGroup group : groups) {
             list.add(fillGroup(group, uriInfo));
         }
@@ -373,10 +383,19 @@ public class GroupHandlerBean extends AbstractRestBean  {
         if (q!=null) {
             criteria.addFilterName(q);
         }
-        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
-        PageList<GroupDefinition> gdlist =  definitionManager.findGroupDefinitionsByCriteria(caller, criteria);
-        List<GroupDefinitionRest> list = new ArrayList<GroupDefinitionRest>(gdlist.getTotalSize());
+        //Use CriteriaQuery to automatically chunk/page through criteria query results
+        CriteriaQueryExecutor<GroupDefinition, ResourceGroupDefinitionCriteria> queryExecutor = new CriteriaQueryExecutor<GroupDefinition, ResourceGroupDefinitionCriteria>() {
+            @Override
+            public PageList<GroupDefinition> execute(ResourceGroupDefinitionCriteria criteria) {
+                return definitionManager.findGroupDefinitionsByCriteria(caller, criteria);
+            }
+        };
+
+        CriteriaQuery<GroupDefinition, ResourceGroupDefinitionCriteria> gdlist = new CriteriaQuery<GroupDefinition, ResourceGroupDefinitionCriteria>(
+            criteria, queryExecutor);
+
+        List<GroupDefinitionRest> list = new ArrayList<GroupDefinitionRest>();
         for (GroupDefinition def: gdlist) {
             GroupDefinitionRest definitionRest = buildGDRestFromDefinition(def);
             createLinksForGDRest(uriInfo,definitionRest);

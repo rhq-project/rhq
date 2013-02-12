@@ -118,4 +118,13 @@ public class CriteriaQuery<T, C extends BaseCriteria> implements Iterable<T> {
             throw new UnsupportedOperationException("This iterator does not support removal.");
         }
     }
+
+    public PageList<T> loadAsList() {
+        Iterator<T> iterator = iterator();
+        PageList<T> list = new PageList<T>();
+        while (iterator.hasNext()) {
+            list.add(iterator.next());
+        }
+        return list;
+    }
 }

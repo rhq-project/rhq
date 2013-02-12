@@ -67,6 +67,7 @@ import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -75,6 +76,8 @@ import org.rhq.enterprise.server.rest.domain.OperationDefinitionRest;
 import org.rhq.enterprise.server.rest.domain.OperationHistoryRest;
 import org.rhq.enterprise.server.rest.domain.OperationRest;
 import org.rhq.enterprise.server.rest.domain.SimplePropDef;
+import org.rhq.enterprise.server.util.CriteriaQuery;
+import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
 /**
  * Deal with operations
@@ -343,7 +346,6 @@ public class OperationsHandlerBean extends AbstractRestBean  {
         ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
         JobId jobId = new JobId(jobName);
         criteria.addFilterJobId(jobId);
-        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
         ResourceOperationHistory history ;//= opsManager.getOperationHistoryByJobId(caller,jobName);
         List<ResourceOperationHistory> list = opsManager.findResourceOperationHistoriesByCriteria(caller,criteria);
@@ -387,11 +389,19 @@ public class OperationsHandlerBean extends AbstractRestBean  {
             criteria.addFilterResourceIds(resourceId);
 
         criteria.addSortEndTime(PageOrdering.DESC);
-        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
-        List<ResourceOperationHistory> list = opsManager.findResourceOperationHistoriesByCriteria(caller,criteria);
+        //Use CriteriaQuery to automatically chunk/page through criteria query results
+        CriteriaQueryExecutor<ResourceOperationHistory, ResourceOperationHistoryCriteria> queryExecutor = new CriteriaQueryExecutor<ResourceOperationHistory, ResourceOperationHistoryCriteria>() {
+            @Override
+            public PageList<ResourceOperationHistory> execute(ResourceOperationHistoryCriteria criteria) {
+                return opsManager.findResourceOperationHistoriesByCriteria(caller, criteria);
+            }
+        };
 
-        List<OperationHistoryRest> result = new ArrayList<OperationHistoryRest>(list.size());
+        CriteriaQuery<ResourceOperationHistory, ResourceOperationHistoryCriteria> list = new CriteriaQuery<ResourceOperationHistory, ResourceOperationHistoryCriteria>(
+            criteria, queryExecutor);
+
+        List<OperationHistoryRest> result = new ArrayList<OperationHistoryRest>();
         for (ResourceOperationHistory roh : list) {
             OperationHistoryRest historyRest = historyToHistoryRest(roh,uriInfo);
             result.add(historyRest);

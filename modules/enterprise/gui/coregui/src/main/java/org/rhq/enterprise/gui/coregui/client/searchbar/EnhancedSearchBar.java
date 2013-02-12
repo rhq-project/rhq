@@ -22,14 +22,17 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.types.TextMatchStyle;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
+import com.smartgwt.client.widgets.events.MouseOutEvent;
+import com.smartgwt.client.widgets.events.MouseOutHandler;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.FocusEvent;
 import com.smartgwt.client.widgets.form.fields.events.FocusHandler;
+import com.smartgwt.client.widgets.form.fields.events.IconClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.IconClickHandler;
 import com.smartgwt.client.widgets.form.fields.events.KeyUpEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyUpHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
@@ -61,15 +64,20 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 public class EnhancedSearchBar extends ToolStrip {
     private static final Messages MSG = CoreGUI.getMessages();
     private SearchSubsystem searchSubsystem;
-    private Integer currentSearchId = 0;
     private ToolStripButton saveSearchButton;
-    private ComboBoxItem searchComboboxItem;
+    private TextItem searchTextItem;
     private ListGrid pickListGrid;
     private TextItem saveSearchTextItem;
     private final FavoritesSearchStrategy favoritesSearchStrategy;
     private final BasicSearchStrategy basicSearchStrategy;
 
     private final SearchGWTServiceAsync searchService = GWTServiceLookup.getSearchService();
+
+    /**
+     * The amount of time delayed before an actual search result is displayed.
+     * So that we are not bombarding the server with ajax requests.
+     */
+    private static final int SEARCH_KEYUP_DELAY = 1000;
 
     private static final List<String> IGNORED_KEYS;
 
@@ -92,9 +100,6 @@ public class EnhancedSearchBar extends ToolStrip {
     private EnumMap<SearchMode, AbstractSearchStrategy> searchStrategies = new EnumMap<SearchMode, AbstractSearchStrategy>(
         SearchMode.class);
 
-    public EnhancedSearchBar(SearchSubsystem searchSubsystem) {
-        this(searchSubsystem, null);
-    }
 
     public EnhancedSearchBar(SearchSubsystem searchSubsystem, String initialSearchText) {
         if (null == searchSubsystem) {
@@ -106,7 +111,7 @@ public class EnhancedSearchBar extends ToolStrip {
         setWidth100();
         addSpacer(40);
 
-        searchComboboxItem = new ComboBoxItem("search", MSG.common_button_search());
+        searchTextItem = new TextItem("search", MSG.common_button_search());
         // now that we have searchComboBoxItem setup dependent objects
         favoritesSearchStrategy = new FavoritesSearchStrategy(this);
         basicSearchStrategy = new BasicSearchStrategy(this);
@@ -114,49 +119,78 @@ public class EnhancedSearchBar extends ToolStrip {
         searchStrategies.put(SearchMode.BASIC_SEARCH_MODE, basicSearchStrategy);
         searchStrategies.put(SearchMode.SAVED_SEARCH_MODE, favoritesSearchStrategy);
 
-        searchComboboxItem.setWidth(670);
-        searchComboboxItem.setBrowserSpellCheck(false);
-        //we manually fetch each time we update the picklist values. That makes the delay setting meaningless.
-        searchComboboxItem.setAutoFetchData(false);
-        searchComboboxItem.setFetchDelay(300); // I'm not sure if this has an affect with no autoFetch
+        searchTextItem.setWidth(600);
+        searchTextItem.setBrowserSpellCheck(false);
 
         pickListGrid = new ListGrid();
-        configureCommonHandlers();
 
-        searchComboboxItem.setTextMatchStyle(TextMatchStyle.SUBSTRING);
-        searchComboboxItem.setShowPickListOnKeypress(true);
-        searchComboboxItem.setRedrawOnChange(true);
+        searchTextItem.setShowPickerIcon(true);
+        searchTextItem.setRedrawOnChange(true);
         // this changes it to autocomplete field from combobox
-        searchComboboxItem.setShowPickerIcon(true);
-        searchComboboxItem.addKeyUpHandler(new KeyUpHandler() {
+        searchTextItem.addKeyUpHandler(new KeyUpHandler() {
             @Override
-            public void onKeyUp(KeyUpEvent keyUpEvent) {
-                Log.debug("onKeyUp search Mode: " + searchMode);
+            public void onKeyUp(final KeyUpEvent keyUpEvent) {
+                Log.debug("onKeyUp search Mode: " + searchMode + " key: "+keyUpEvent.getKeyName());
 
                 if (IGNORED_KEYS.contains(keyUpEvent.getKeyName())) {
                     return;
                 }
 
                 if (keyUpEvent.getKeyName().equals("Enter")) {
+                    Log.debug("onKeyUp search Mode Enter key pressed");
                     getSearchStrategy().searchReturnKeyHandler(keyUpEvent);
-                    searchComboboxItem.focusInItem();
-                } else {
-                    getSearchStrategy().searchKeyUpHandler(keyUpEvent);
+                    searchTextItem.focusInItem();
+                    pickListGrid.hide();
+                }
+                else {
+                    Log.debug("Do searchKeyUpHandler...");
+                    // add our own delay
+                    new Timer(){
+                        /**
+                         * This method will be called when a timer fires. Override it to implement the timer's logic.
+                         */
+                        @Override
+                        public void run() {
+                            getSearchStrategy().searchKeyUpHandler(keyUpEvent);
+                            pickListGrid.show();
+                            showPickListGrid();
+                        }
+                    }.schedule(SEARCH_KEYUP_DELAY);
                 }
             }
         });
 
-        searchComboboxItem.addFocusHandler(new FocusHandler() {
+
+        searchTextItem.setShowFocused(false);
+        searchTextItem.addIconClickHandler(new IconClickHandler() {
+            @Override
+            public void onIconClick(IconClickEvent iconClickEvent) {
+                // toggle
+                if(pickListGrid.isVisible()){
+                    pickListGrid.hide();
+                }else {
+                    populateInitialSearch();
+                }
+            }
+
+
+        });
+        searchTextItem.addFocusHandler(new FocusHandler() {
             @Override
             public void onFocus(FocusEvent event) {
                 Log.debug("onFocus search Mode: " + searchMode);
-
-                getSearchStrategy().searchFocusHandler(event);
+                populateInitialSearch();
             }
         });
+        searchTextItem.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
+            @Override
+            public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent clickEvent) {
+                populateInitialSearch();
+            }
+        });
+        configurePickListGrid();
 
-        searchComboboxItem.setPickListProperties(pickListGrid);
-        addFormItem(searchComboboxItem);
+        addFormItem(searchTextItem);
 
         saveSearchButton = new ToolStripButton();
         saveSearchButton.setIcon(IconEnum.STAR_OFF.getIcon16x16Path());
@@ -182,16 +216,26 @@ public class EnhancedSearchBar extends ToolStrip {
                 }
             }
         });
-
+        pickListGrid.addMouseOutHandler(new MouseOutHandler() {
+            @Override
+            public void onMouseOut(MouseOutEvent mouseOutEvent) {
+                //Log.debug("Mouseout x: "+ mouseOutEvent.getX());
+                pickListGrid.hide();
+            }
+        });
         // set the default search provider
         switchToBasicSearchMode();
 
         this.draw();
     }
-
+    private void populateInitialSearch() {
+        getSearchStrategy().searchFocusHandler();
+        pickListGrid.show();
+        showPickListGrid();
+    }
     private void saveFavoriteSearch() {
         Log.debug("Saving Favorite Search: " + saveSearchTextItem.getValueAsString());
-        createSavedSearch(saveSearchTextItem.getValueAsString(), searchComboboxItem.getValueAsString());
+        createSavedSearch(saveSearchTextItem.getValueAsString(), searchTextItem.getValueAsString());
         toggleFavoriteSearch();
     }
 
@@ -201,6 +245,22 @@ public class EnhancedSearchBar extends ToolStrip {
 
     public void setSearchMode(SearchMode searchMode) {
         this.searchMode = searchMode;
+    }
+
+    private void configurePickListGrid() {
+        pickListGrid.setCellHeight(getSearchStrategy().getCellHeight());
+        pickListGrid.addRecordClickHandler(getSearchStrategy());
+        pickListGrid.setCellFormatter(getSearchStrategy());
+        pickListGrid.setShowHeader(false);
+        pickListGrid.redraw();
+    }
+
+    private void showPickListGrid(){
+        pickListGrid.setLeft(searchTextItem.getLeft()+307);
+        pickListGrid.setTop(145);
+        pickListGrid.setWidth(600);
+        pickListGrid.setHeight(400);
+        pickListGrid.redraw();
     }
 
     /**
@@ -214,7 +274,8 @@ public class EnhancedSearchBar extends ToolStrip {
         }
 
         Log.debug("toggleFavorites searchMode set to: " + searchMode);
-        configureCommonHandlers();
+        configurePickListGrid();
+        showPickListGrid();
 
     }
 
@@ -222,7 +283,8 @@ public class EnhancedSearchBar extends ToolStrip {
         setSearchMode(SearchMode.BASIC_SEARCH_MODE);
         saveSearchButton.setIcon(IconEnum.STAR_OFF.getIcon16x16Path());
         saveSearchTextItem.hide();
-        configureCommonHandlers();
+        configurePickListGrid();
+        showPickListGrid();
     }
 
     public void switchToSavedSearchMode() {
@@ -232,18 +294,13 @@ public class EnhancedSearchBar extends ToolStrip {
         saveSearchTextItem.setValue(MSG.search_name_your_search());
         saveSearchTextItem.setSelectOnFocus(true);
         saveSearchTextItem.selectValue();
-        configureCommonHandlers();
+        configurePickListGrid();
+        showPickListGrid();
     }
 
-    private void configureCommonHandlers() {
-        pickListGrid.setCellHeight(getSearchStrategy().getCellHeight());
-        pickListGrid.addRecordClickHandler(getSearchStrategy());
-        pickListGrid.setCellFormatter(getSearchStrategy());
-        pickListGrid.redraw();
-    }
 
     public String getValue() {
-        return searchComboboxItem.getValueAsString();
+        return searchTextItem.getValueAsString();
     }
 
     private void createSavedSearch(final String name, final String pattern) {
@@ -252,7 +309,6 @@ public class EnhancedSearchBar extends ToolStrip {
         searchService.createSavedSearch(newSavedSearch, new AsyncCallback<Integer>() {
             @Override
             public void onSuccess(Integer newSavedSearchId) {
-                currentSearchId = newSavedSearchId;
                 Message message = new Message(MSG.search_successfully_saved_search(name),  Message.Severity.Info);
                 CoreGUI.getMessageCenter().notify(message);
             }
@@ -269,8 +325,12 @@ public class EnhancedSearchBar extends ToolStrip {
         return searchStrategies.get(searchMode);
     }
 
-    public ComboBoxItem getSearchComboboxItem() {
-        return searchComboboxItem;
+    public ListGrid getPickListGrid() {
+        return pickListGrid;
+    }
+
+    public TextItem getSearchTextItem() {
+        return searchTextItem;
     }
 
     public TextItem getSaveSearchTextItem() {

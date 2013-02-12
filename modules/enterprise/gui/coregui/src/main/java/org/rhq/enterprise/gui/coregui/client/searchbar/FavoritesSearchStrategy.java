@@ -81,7 +81,7 @@ public class FavoritesSearchStrategy extends AbstractSearchStrategy {
     public void onRecordClick(RecordClickEvent event) {
         // do nothing here; just here if we need to do something
         searchBar.getSaveSearchTextItem().setValue(event.getRecord().getAttribute(ATTR_NAME));
-        searchBar.getSearchComboboxItem().setValue(event.getRecord().getAttribute(ATTR_PATTERN));
+        searchBar.getSearchTextItem().setValue(event.getRecord().getAttribute(ATTR_PATTERN));
 
     }
 
@@ -90,9 +90,8 @@ public class FavoritesSearchStrategy extends AbstractSearchStrategy {
         populateSearchComboboxSavedSearchesWithAutoComplete();
     }
 
-
     @Override
-    public void searchFocusHandler(FocusEvent focusEvent) {
+    public void searchFocusHandler() {
         // nothing currently
     }
 
@@ -140,7 +139,7 @@ public class FavoritesSearchStrategy extends AbstractSearchStrategy {
                     dataSource.addData(record);
                 }
 
-                searchBar.getSearchComboboxItem().setOptionDataSource(dataSource);
+                searchBar.getSearchTextItem().setOptionDataSource(dataSource);
             }
         });
     }

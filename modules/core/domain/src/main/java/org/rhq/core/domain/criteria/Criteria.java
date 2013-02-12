@@ -96,6 +96,10 @@ public abstract class Criteria implements Serializable, BaseCriteria {
 
     private String searchExpression;
 
+    /**
+     * This default constructor will set default paging to avoid unintended fetch of huge results. The default is:
+     * <pre>setPaging(0, 200);</pre>
+     */
     public Criteria() {
         this.filterOverrides = new HashMap<String, String>();
         this.sortOverrides = new HashMap<String, String>();
@@ -269,5 +273,29 @@ public abstract class Criteria implements Serializable, BaseCriteria {
             this.alias = classSimpleName.toLowerCase();
         }
         return this.alias;
+    }
+
+    /**
+     * Somewhat analogous to JPA's Query.getSingleResult. Wrap a CriteriaQuery result with this method when
+     * expecting a single result from the fetch.  If the result set has only one entry it is returned. Otherwise
+     * a RuntimeException is thrown, indicating whether no results, or multiple results were found.
+     *    
+     * @param result
+     * @return
+     * @throws RuntimeException In not exactly one result is found.  The message will include either the String
+     * "NoResultException" or "NonUniqueResultException", appropriately.  The JPA exceptions are not used so that there
+     * is no dependency on a JPA implementation jar for the caller.
+     */
+    public static <T> T getSingleResult(List<T> result) throws RuntimeException {
+        if (null == result || result.isEmpty()) {
+            throw new RuntimeException("NoResultException: Expected exactly one result but no result was found.");
+        }
+
+        if (1 != result.size()) {
+            throw new RuntimeException(
+                "NonUniqueResultException: Expected exactly one result but found multiple results: " + result);
+        }
+
+        return result.get(0);
     }
 }

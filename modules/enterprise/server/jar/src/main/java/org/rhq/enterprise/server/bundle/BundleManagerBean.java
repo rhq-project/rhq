@@ -450,6 +450,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         // first see if the bundle exists or not; if not, create one
         BundleCriteria criteria = new BundleCriteria();
+        criteria.setStrict(true);
         criteria.addFilterBundleTypeId(Integer.valueOf(bundleTypeId));
         criteria.addFilterName(bundleName);
         criteria.clearPaging();//disable paging as the code assumes all the results will be returned.

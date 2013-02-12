@@ -54,13 +54,6 @@
     </dependency>
 
     <dependency>
-      <groupId>org.jboss.as</groupId>
-      <artifactId>jboss-as-arquillian-container-managed</artifactId>
-      <version>${jboss.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
       <groupId>org.jboss.arquillian.testng</groupId>
       <artifactId>arquillian-testng-container</artifactId>
       <scope>test</scope>
@@ -95,14 +88,6 @@
 
     <dependency>
       <groupId>org.rhq</groupId>
-      <artifactId>rhq-core-domain</artifactId>
-      <version>${project.version}</version>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.rhq</groupId>
       <artifactId>rhq-enterprise-server</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
@@ -126,14 +111,6 @@
       <groupId>${project.groupId}</groupId>
       <artifactId>rhq-serverplugin-drift</artifactId>
       <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>rhq-core-client-api</artifactId>
-      <version>${project.version}</version>
-      <type>test-jar</type>
       <scope>test</scope>
     </dependency>
 
@@ -691,6 +668,48 @@
   </build>
 
   <profiles>
+
+      <profile>
+         <!--
+           This profile has been created to avoid unnecessary resolution of test dependencies during a build that
+           does not run, compile or need tests.
+           More test dependencies are to be moved here if the set of sub-dependencies is complex, references project
+           test jars, or conflicts with changing the container version.
+          -->
+         <id>test.dependencies</id>
+         <activation>
+           <property>
+             <name>maven.test.skip</name>
+             <value>!true</value>
+           </property>
+         </activation>
+
+         <dependencies>
+           <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>rhq-core-client-api</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+           </dependency>
+
+           <dependency>
+            <groupId>org.jboss.as</groupId>
+            <artifactId>jboss-as-arquillian-container-managed</artifactId>
+            <version>${jboss.version}</version>
+            <scope>test</scope>
+           </dependency>
+
+           <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>rhq-core-domain</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+           </dependency>
+         </dependencies>
+       </profile>
+
     <!-- If testing against oracle, override the default property settings -->
     <profile>
       <id>itest.oracle</id>

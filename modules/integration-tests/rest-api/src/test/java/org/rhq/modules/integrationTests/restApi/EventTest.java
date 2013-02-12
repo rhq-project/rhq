@@ -67,6 +67,44 @@ public class EventTest extends AbstractBase {
     }
 
     @Test
+    public void testAddEventSourceForUnknownResource() throws Exception {
+
+        EventSource es = new EventSource();
+        es.setResourceId(15);
+        es.setName("Event Log"); // Name of the event definition
+        es.setLocation("-x-test-location");
+
+        given()
+            .header(acceptJson)
+            .contentType(ContentType.JSON)
+            .pathParam("id",15)
+            .body(es)
+        .expect()
+            .statusCode(404)
+        .when()
+            .post("/event/{id}/sources");
+    }
+
+    @Test
+    public void testAddEventSourceForUnknownDefinition() throws Exception {
+
+        EventSource es = new EventSource();
+        es.setResourceId(10001);
+        es.setName("Frobnitz"); // Name of the event definition
+        es.setLocation("-x-test-location");
+
+        given()
+            .header(acceptJson)
+            .contentType(ContentType.JSON)
+            .pathParam("id", 10001)
+            .body(es)
+        .expect()
+            .statusCode(404)
+        .when()
+            .post("/event/{id}/sources");
+    }
+
+    @Test
     public void testAddGetDeleteEventSource() throws Exception {
 
         EventSource es = new EventSource();
@@ -130,11 +168,12 @@ public class EventTest extends AbstractBase {
             given()
                 .pathParam("id", result.getId())
             .expect()
-                .statusCode(200)
+                .statusCode(204)
             .when()
                 .delete("/event/source/{id}");
         }
     }
+
     @Test
     public void testAddGetEventOnSource() throws Exception {
 
@@ -215,9 +254,20 @@ public class EventTest extends AbstractBase {
             given()
                 .pathParam("id", eventSource.getId())
             .expect()
-                .statusCode(200)
+                .statusCode(204)
             .when()
                 .delete("/event/source/{id}");
         }
+    }
+
+    @Test
+    public void testDeleteUnknownSource() throws Exception {
+            given()
+                .pathParam("id", 123)
+            .expect()
+                .statusCode(204)
+            .when()
+                .delete("/event/source/{id}");
+
     }
 }

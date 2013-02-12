@@ -22,6 +22,7 @@
  */
 package org.rhq.core.clientapi.server.discovery;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -63,8 +64,8 @@ public interface DiscoveryServerService {
     @LimitedConcurrency(CONCURRENCY_LIMIT_INVENTORY_REPORT)
     @Timeout(0L)
     // should be something like 1000L * 60 * 30 but until we can be assured we never take longer, disable timeout
-    ResourceSyncInfo mergeInventoryReport(InventoryReport inventoryReport)
-        throws InvalidInventoryReportException, StaleTypeException;
+    ResourceSyncInfo mergeInventoryReport(InventoryReport inventoryReport) throws InvalidInventoryReportException,
+        StaleTypeException;
 
     /**
      * Merges a new availability report from the agent into the server. This updates the availability statuses of known
@@ -79,7 +80,6 @@ public interface DiscoveryServerService {
      *         in sync. <code>true</code> should always be returned if the given availability report is already a full
      *         report.
      */
-    // GH: Disabled temporarily (JBNADM-2385) @Asynchronous( guaranteedDelivery = true )
     @LimitedConcurrency(CONCURRENCY_LIMIT_AVAILABILITY_REPORT)
     boolean mergeAvailabilityReport(AvailabilityReport availabilityReport);
 
@@ -90,7 +90,17 @@ public interface DiscoveryServerService {
      * @param includeDescendants
      * @return a tree of resources with the latest data
      */
+    @LimitedConcurrency(CONCURRENCY_LIMIT_INVENTORY_SYNC)
     Set<Resource> getResources(Set<Integer> resourceIds, boolean includeDescendants);
+
+    /**
+     * Returns the Resources with the given id's.  The children are not set. 
+     *
+     * @param resourceIds
+     * @return a list of resources in the same order as the passed in ids, with the latest data
+     */
+    @LimitedConcurrency(CONCURRENCY_LIMIT_INVENTORY_SYNC)
+    List<Resource> getResourcesAsList(Integer... resourceIds);
 
     /**
      * Set the specified resource enabled or disabled. The call has no effect if the resource is already
@@ -158,7 +168,7 @@ public interface DiscoveryServerService {
      * @return details on what resources have been upgraded with what data.
      */
     Set<ResourceUpgradeResponse> upgradeResources(Set<ResourceUpgradeRequest> upgradeRequests);
-    
+
     /**
      * Gives the server a chance to apply any necessary post-processing that's needed for newly committed resources
      * that have been successfully synchronized on the agent.

@@ -46,6 +46,8 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 
 import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiError;
+import com.wordnik.swagger.annotations.ApiErrors;
 import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
 
@@ -89,7 +91,6 @@ public class EventHandlerBean extends AbstractRestBean {
     @Path("/{id}/sources")
     @ApiOperation(value = "List the defined event sources for the resource", responseClass = "EventSourceRest", multiValueResponse = true)
     public Response listEventSourcesForResource(@ApiParam("id of the resource") @PathParam("id") int resourceId,
-                                                @Context Request request,
                                                 @Context HttpHeaders headers) {
 
         Resource res = fetchResource(resourceId);
@@ -118,8 +119,7 @@ public class EventHandlerBean extends AbstractRestBean {
     @Path("/{id}/definitions")
     @ApiOperation(value = "List the defined event source definitions for the resource", responseClass = "EventDefintionRest", multiValueResponse = true)
     public Response listEventDefinitionsForResource(@ApiParam("id of the resource") @PathParam("id") int resourceId,
-                                                @Context Request request,
-                                                @Context HttpHeaders headers) {
+                                                    @Context HttpHeaders headers) {
 
         Resource res = fetchResource(resourceId);
         ResourceType resourceType = res.getResourceType();
@@ -151,6 +151,7 @@ public class EventHandlerBean extends AbstractRestBean {
     @GET
     @Path("/source/{id}")
     @ApiOperation(value = "Retrieve the event source with the passed id", responseClass = "EventSourceRest")
+    @ApiError(code = 404, reason = "There is no event source with the passed id")
     public EventSourceRest getEventSource(@ApiParam("Id of the source to retrieve") @PathParam("id") int sourceId) {
 
         EventSource source = findEventSourceById(sourceId);
@@ -165,6 +166,11 @@ public class EventHandlerBean extends AbstractRestBean {
             "The source.name must match an existing definition fo this resource. " +
             "If an event source for the definition name and resource with the same location already exists, no new source is created. " +
             "NOTE: An Event source added this way will not show up in the connection properties.")
+    @ApiErrors({
+        @ApiError(code = 404, reason = "Resource with the passed id does not exist"),
+        @ApiError(code = 404, reason = "Event definition with the passed name not found"),
+        @ApiError(code = 406, reason = "Tried to create an event source on the same definition with the same location")
+    })
     public EventSourceRest addEventSource(@ApiParam("id of the resource") @PathParam("id") int resourceId,
                                           EventSourceRest esr) {
 
@@ -207,10 +213,12 @@ public class EventHandlerBean extends AbstractRestBean {
     @ApiOperation(value = "Delete the event source with the passed id")
     public Response deleteEventSource(@ApiParam("Id of the source to delete") @PathParam("id")  int sourceId) {
 
-        EventSource source = findEventSourceById(sourceId);
-        em.remove(source); // We have a cascade delete on the events TODO make operation async ?
+        EventSource source = em.find(EventSource.class,sourceId);
+        if (source!=null) {
+            em.remove(source); // We have a cascade delete on the events TODO make operation async ?
+        }
 
-        return Response.ok().build();
+        return Response.noContent().build();
     }
 
     @GET @GZIP

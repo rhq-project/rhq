@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.jayway.restassured.http.ContentType;
+import com.jayway.restassured.path.json.JsonPath;
 import com.jayway.restassured.response.Response;
 
 import org.junit.Before;
@@ -183,12 +184,12 @@ public class OperationsTest extends AbstractBase {
             .body(draft)
         .expect()
             .statusCode(200)
-            .log().ifError()
+            .log().everything()
         .when()
             .put("/operation/{id}")
         .as(Operation.class);
 
-        System.out.println(scheduled);
+        System.out.println(scheduled.getId());
         String history = null;
         List<Map<String,Object>> links = scheduled.getLinks();
         for (Map<String,Object> link : links) {
@@ -199,7 +200,7 @@ public class OperationsTest extends AbstractBase {
 
         String historyId = history.substring(history.lastIndexOf("/")+1);
         try {
-            Thread.sleep(5000); // we need to wait a little as the execution may take time
+            Thread.sleep(15000); // we need to wait a little as the execution may take time
 
             given()
                 .pathParam("hid",historyId)
@@ -231,6 +232,32 @@ public class OperationsTest extends AbstractBase {
             assert found;
 
         } finally {
+
+            // Wait until the operation has finished and then delete
+            boolean done = false;
+            int count = 0;
+            while (!done) {
+                Response response =
+                given()
+                    .header(acceptJson)
+                    .pathParam("hid", historyId)
+                .when()
+                    .get("/operation/history/{hid}");
+
+                JsonPath jsonPath = response.jsonPath();
+                String status= jsonPath.getString("status");
+                int code = response.statusCode();
+
+                if (code==200 && (status.equals("Success") || status.equals("Failed"))) {
+                    done = true;
+                } else {
+                    Thread.sleep(2000);
+                }
+                count ++;
+                assert count < 10 :"Waited for 20sec -- something is wrong";
+            }
+
+
 
             // Delete the history item
             given()

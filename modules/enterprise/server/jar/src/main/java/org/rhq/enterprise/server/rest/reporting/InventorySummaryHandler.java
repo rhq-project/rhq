@@ -36,6 +36,7 @@ import javax.ws.rs.core.StreamingOutput;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
@@ -59,9 +60,21 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
     @EJB
     protected ResourceManagerLocal resourceMgr;
 
+    public StreamingOutput generateReportInternal(
+            HttpServletRequest request,
+            String resourceTypeId,
+            String version,
+                Subject user) {
+        this.caller = user;
+
+        return generateReport(request,resourceTypeId,version);
+    }
+
+
     @Override
     public StreamingOutput generateReport(final HttpServletRequest request, final String resourceTypeId,
         final String version) {
+
         if (log.isDebugEnabled()) {
             log.debug("Received request to generate " + getDebugReportName() + " report for " + caller);
         }

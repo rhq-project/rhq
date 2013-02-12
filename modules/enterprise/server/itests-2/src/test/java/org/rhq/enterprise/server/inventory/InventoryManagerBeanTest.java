@@ -37,7 +37,7 @@ public class InventoryManagerBeanTest extends AbstractEJB3Test {
         getTransactionManager().begin();
 
         InventoryManagerLocal inventoryMgr = LookupUtil.getInventoryManager();
-        inventoryMgr.markTypesDeleted(deletedTypeIds);
+        inventoryMgr.markTypesDeleted(deletedTypeIds, true);
         getTransactionManager().commit();
     }
 

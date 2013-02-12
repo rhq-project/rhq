@@ -22,7 +22,6 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarProxy;
@@ -66,6 +65,7 @@ public class SigarAccess {
         if (invocationHandler != null) {
             invocationHandler.close();
         }
+        sigarProxy = null;
     }
 
     public static boolean isSigarAvailable() {
@@ -85,7 +85,6 @@ public class SigarAccess {
 
     private static class SigarAccessHandler implements InvocationHandler {
         private Sigar sigar;
-        private AtomicLong accessCount = new AtomicLong();
 
         public Object invoke(Object proxy, Method meth, Object[] args) throws Throwable {
             // its possible in the time between this handler's creation and now, someone disabled the native layer.
@@ -95,7 +94,6 @@ public class SigarAccess {
             }
 
             try {
-                accessCount.incrementAndGet();
                 synchronized (this) {
                     if (sigar == null) {
                         this.sigar = new Sigar();

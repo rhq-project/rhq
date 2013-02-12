@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -293,7 +294,10 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         ResourceGroupDeleteException {
         ResourceGroup group = getResourceGroupById(subject, groupId, null);
 
-        for (Role doomedRoleRelationship : group.getRoles()) {
+        // create a copy of the collection in order to avoid ConcurrentModificationException 
+        // (as a consequence of iterating and modifying it at once).
+        Set<Role> roles = new HashSet<Role>(group.getRoles());
+        for (Role doomedRoleRelationship : roles) {
             group.removeRole(doomedRoleRelationship);
             entityManager.merge(doomedRoleRelationship);
         }

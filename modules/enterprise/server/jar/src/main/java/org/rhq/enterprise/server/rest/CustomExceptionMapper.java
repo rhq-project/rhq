@@ -93,9 +93,12 @@ public class CustomExceptionMapper implements ExceptionMapper<Exception> {
             log.debug(e.getMessage());
             mediaType = MediaType.TEXT_PLAIN_TYPE;
         }
+        if (mediaType.getType().equals("text") && mediaType.getSubtype().equals("csv"))
+            mediaType = MediaType.TEXT_PLAIN_TYPE;
 
 
         if (mediaType.equals(MediaType.TEXT_PLAIN_TYPE)) {
+            message = message + "\n";
             builder.entity(message);
         } else if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
             builder.entity("<html><body><h1>Error</h1><h2>" + message + "</h2></body></html>");

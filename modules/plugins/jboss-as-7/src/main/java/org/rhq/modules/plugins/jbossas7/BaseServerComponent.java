@@ -54,6 +54,7 @@ import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.modules.plugins.jbossas7.helper.HostConfiguration;
+import org.rhq.modules.plugins.jbossas7.helper.HostPort;
 import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
@@ -242,24 +243,24 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     }
 
     protected boolean waitUntilDown() throws InterruptedException {
-        boolean down=false;
-        int count=0;
+        boolean notAnswering = false;
+        int count = 0;
 
-        while (!down) {
-            Operation op = new ReadAttribute(new Address(),"release-version");
+        while (!notAnswering) {
+            Operation op = new ReadAttribute(new Address(), "release-version");
 
-            try{
+            try {
                 Result res = getASConnection().execute(op);
                 if (!res.isSuccess()) { // If op succeeds, server is not down
-                    down = true;
+                    notAnswering = true;
                 } else if (count > 20) {
                     break;
                 }
             } catch (Exception e) {
-                down = true;
+                notAnswering = true;
             }
 
-            if (!down) {
+            if (!notAnswering) {
                 try {
                     Thread.sleep(1000); // Wait 1s
                 } catch (InterruptedException e) {
@@ -269,8 +270,28 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             count++;
         }
 
-        log.debug("waitUntilDown: Used " + count + " delay round(s) to shut down. Server down=" + down);
-        return down;
+        // BZ 893802: wait until server (the process) is really down
+        HostConfiguration hostConfig = getHostConfig();
+        // commandLine instance is not important for determining whether the HostPort is local or not
+        AS7CommandLine commandLine = new AS7CommandLine(new String[] { "java", "foo.Main",
+            "org.jboss.as.host-controller" });
+        HostPort hostPort = hostConfig.getDomainControllerHostPort(commandLine);
+
+        if (hostPort.isLocal) {
+            // lets be paranoid here
+            while (context.getNativeProcess() != null && context.getNativeProcess().priorSnaphot() != null
+                && context.getNativeProcess().priorSnaphot().isRunning()
+                && count++ <= 20) {
+                try {
+                    Thread.sleep(1000); // Wait 1s
+                } catch (InterruptedException e) {
+                    // ignore
+                }
+            }
+        }
+
+        log.debug("waitUntilDown: Used " + count + " delay round(s) to shut down. Server down=" + notAnswering);
+        return notAnswering;
     }
 
     /**
@@ -520,14 +541,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             return result;
         }
 
-        File configFile = getHostConfigFile();
-        HostConfiguration hostConfig;
-        try {
-            hostConfig = new HostConfiguration(configFile);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to parse configuration file [" + configFile + "].", e);
-        }
-
+        HostConfiguration hostConfig = getHostConfig();
         String realm = pluginConfig.getSimpleValue("realm", "ManagementRealm");
         File propertiesFile = hostConfig.getSecurityPropertyFile(baseDir, getMode(), realm);
         if (!propertiesFile.canWrite()) {
@@ -635,8 +649,9 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         }
     }
 
-    private File getHostConfigFile() {
+    private HostConfiguration getHostConfig() {
         File configFile;
+        HostConfiguration hostConfig;
         try {
             String config = readAttribute(getEnvironmentAddress(), getMode().getHostConfigAttributeName());
             configFile = new File(config);
@@ -652,7 +667,12 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                 throw new RuntimeException("Failed to determine config file path.", e);
             }
         }
-        return configFile;
+        try {
+            hostConfig = new HostConfiguration(configFile);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse configuration file [" + configFile + "].", e);
+        }
+        return hostConfig;
     }
 
     private void collectServerKindTraits(MeasurementReport report, Set<MeasurementScheduleRequest> skmRequests) {

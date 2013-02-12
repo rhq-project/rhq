@@ -140,8 +140,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         // Make sure there's not an existing role with the same name.
         RoleCriteria criteria = new RoleCriteria();
         criteria.addFilterName(newRole.getName());
-        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
-
+        criteria.setStrict(true);
         PageList<Role> roles = findRolesByCriteria(whoami, criteria);
         if (!roles.isEmpty()) {
             throw new EntityExistsException("A user role [" + newRole.getName() + "] already exists.");

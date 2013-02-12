@@ -11,6 +11,7 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -45,17 +46,22 @@ public class InventoryManagerBean implements InventoryManagerLocal {
     @Override
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public int markTypesDeleted(List<Integer> resourceTypeIds) {
-        int typesDeleted = 0;
-        BatchIterator<Integer> batchIterator = new BatchIterator<Integer>(resourceTypeIds);
-        for (List<Integer> typeIdsBatch : batchIterator) {
-            List<Integer> resourceIds = resourceMgr.findIdsByTypeIds(typeIdsBatch);
-            resourceMgr.uninventoryResources(subjectMgr.getOverlord(), toIntArray(resourceIds));
+    public int markTypesDeleted(List<Integer> resourceTypeIds, boolean uninventoryResources) {
 
-            Query query = entityMgr.createNamedQuery(ResourceType.QUERY_MARK_TYPES_DELETED);
+        int typesDeleted = 0;
+        Query query = entityMgr.createNamedQuery(ResourceType.QUERY_MARK_TYPES_DELETED);
+        BatchIterator<Integer> batchIterator = new BatchIterator<Integer>(resourceTypeIds);
+
+        for (List<Integer> typeIdsBatch : batchIterator) {
             query.setParameter("resourceTypeIds", typeIdsBatch);
             typesDeleted += query.executeUpdate();
+
+            if (uninventoryResources) {
+                List<Integer> resourceIds = resourceMgr.findIdsByTypeIds(typeIdsBatch);
+                resourceMgr.uninventoryResources(subjectMgr.getOverlord(), toIntArray(resourceIds));
+            }
         }
+
         return typesDeleted;
     }
 
@@ -82,10 +88,29 @@ public class InventoryManagerBean implements InventoryManagerLocal {
         if (!resourceType.isDeleted()) {
             return false;
         }
+
         Number count = (Number) entityMgr.createQuery("select count(r) from Resource r where r.resourceType = :type")
-            .setParameter("type", resourceType)
-            .getSingleResult();
-        return count.intValue() == 0;
+            .setParameter("type", resourceType).getSingleResult();
+
+        boolean isReady = (count.intValue() == 0);
+
+        // if resources still exist make sure they are all awaiting async uninventory, just in case something is lingering
+        if (!isReady) {
+            Query query = entityMgr
+                .createQuery("select r.id from Resource r where r.resourceType = :type and not r.inventoryStatus = :status");
+            query.setParameter("type", resourceType);
+            query.setParameter("status", InventoryStatus.UNINVENTORIED);
+            List<Integer> rs = query.getResultList();
+            if (!rs.isEmpty()) {
+                try {
+                    resourceMgr.uninventoryResources(subjectMgr.getOverlord(), toIntArray(rs));
+                } catch (Throwable t) {
+                    throw new RuntimeException("Failed to uninventory resources", t);
+                }
+            }
+        }
+
+        return isReady;
     }
 
     @Override

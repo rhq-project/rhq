@@ -49,7 +49,6 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  */
 public class SchedulesDataSource extends RPCDataSource<MeasurementScheduleComposite, Criteria> {
 
-    public static final String ATTR_ID = "id";
     public static final String ATTR_DATA_TYPE = MeasurementScheduleCriteria.SORT_FIELD_DATA_TYPE;
     public static final String ATTR_DEFINITION_ID = "definitionId";
     public static final String ATTR_DESCRIPTION = "description";
@@ -78,6 +77,10 @@ public class SchedulesDataSource extends RPCDataSource<MeasurementScheduleCompos
      */
     public ArrayList<ListGridField> getListGridFields() {
         ArrayList<ListGridField> fields = new ArrayList<ListGridField>();
+        
+        ListGridField scheduleIdField = new ListGridField(ATTR_DEFINITION_ID, MSG.dataSource_operationSchedule_field_id());
+        scheduleIdField.setHidden(true);
+        fields.add(scheduleIdField);
 
         ListGridField displayNameField = new ListGridField(ATTR_DISPLAY_NAME, MSG.common_title_metric());
         fields.add(displayNameField);

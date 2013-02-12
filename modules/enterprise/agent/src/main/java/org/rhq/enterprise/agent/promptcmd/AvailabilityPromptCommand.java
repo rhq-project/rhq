@@ -88,11 +88,13 @@ public class AvailabilityPromptCommand implements AgentPromptCommand {
         PrintWriter out = agent.getOut();
         boolean changedOnly = false;
         boolean verbose = false;
+        boolean quiet = false;
         boolean force = false;
 
-        String sopts = "-cvf";
+        String sopts = "-cvqf";
         LongOpt[] lopts = { new LongOpt("changed", LongOpt.NO_ARGUMENT, null, 'c'),
             new LongOpt("verbose", LongOpt.NO_ARGUMENT, null, 'v'),
+            new LongOpt("quiet", LongOpt.NO_ARGUMENT, null, 'q'),
             new LongOpt("force", LongOpt.NO_ARGUMENT, null, 'f') };
 
         Getopt getopt = new Getopt(getPromptCommandString(), args, sopts, lopts);
@@ -114,6 +116,11 @@ public class AvailabilityPromptCommand implements AgentPromptCommand {
 
             case 'v': {
                 verbose = true;
+                break;
+            }
+
+            case 'q': {
+                quiet = true;
                 break;
             }
 
@@ -158,24 +165,23 @@ public class AvailabilityPromptCommand implements AgentPromptCommand {
             return;
         }
 
-        for (AvailabilityReport.Datum datum : availabilities) {
-            // lookup the heavy-weight resource object
-            int resourceId = datum.getResourceId();
-            Resource resource = inventoryManager.getResourceContainer(resourceId).getResource();
+        if (!quiet) {
+            for (AvailabilityReport.Datum datum : availabilities) {
+                // lookup the heavy-weight resource object
+                int resourceId = datum.getResourceId();
+                Resource resource = inventoryManager.getResourceContainer(resourceId).getResource();
 
-            if (verbose) {
-                out.println(MSG.getMsg(AgentI18NResourceKeys.AVAILABILITY_REPORT_RESOURCE_VERBOSE,
-                    datum.getAvailabilityType(), resource.getName(), resource.getId(), resource.getResourceKey()));
-            } else {
-                out.println(MSG.getMsg(AgentI18NResourceKeys.AVAILABILITY_REPORT_RESOURCE, datum.getAvailabilityType(),
-                    resource.getName()));
+                if (verbose) {
+                    out.println(MSG.getMsg(AgentI18NResourceKeys.AVAILABILITY_REPORT_RESOURCE_VERBOSE,
+                        datum.getAvailabilityType(), resource.getName(), resource.getId(), resource.getResourceKey()));
+                } else {
+                    out.println(MSG.getMsg(AgentI18NResourceKeys.AVAILABILITY_REPORT_RESOURCE,
+                        datum.getAvailabilityType(), resource.getName()));
+                }
             }
         }
 
-        // we need to send the report to the server - otherwise, the "real" availability executor
-        // will not send changed resources thinking someone else did
-        out.println(MSG.getMsg(AgentI18NResourceKeys.AVAILABILITY_REPORT_SENDING));
-        inventoryManager.handleReport(report);
+        // out.println(MSG.getMsg(AgentI18NResourceKeys.AVAILABILITY_REPORT_SENDING));
         out.println(MSG.getMsg(AgentI18NResourceKeys.AVAILABILITY_REPORT_SENT));
 
         return;

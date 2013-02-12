@@ -127,11 +127,11 @@ public class DriftServerServiceImpl implements DriftServerService {
     }
 
     @Override
-    public void updateCompliance(int resourceId, String drfitDefName, DriftComplianceStatus complianceStatus) {
+    public void updateCompliance(int resourceId, String driftDefName, DriftComplianceStatus complianceStatus) {
         DriftDefinitionCriteria criteria = new DriftDefinitionCriteria();
+        criteria.setStrict(true);
         criteria.addFilterResourceIds(resourceId);
-        criteria.addFilterName(drfitDefName);
-        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+        criteria.addFilterName(driftDefName);
 
         DriftManagerLocal driftMgr = getDriftManager();
         SubjectManagerLocal subjectMgr = getSubjectManager();
@@ -141,7 +141,7 @@ public class DriftServerServiceImpl implements DriftServerService {
 
         if (definitions.isEmpty()) {
             log.warn("Cannot update compliance for [resourceId: " + resourceId + ", driftDefinitionName: " +
-                drfitDefName + "]. Could not find drift definition.");
+                driftDefName + "]. Could not find drift definition.");
             return;
         }
 

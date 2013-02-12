@@ -138,16 +138,7 @@
       </exclusions>
     </dependency>
 
-    <dependency>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-core-domain</artifactId>
-      <version>${project.version}</version>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-
-
-      <!-- 3rd Party Deps -->
+    <!-- 3rd Party Deps -->
 
     <!-- do we really need this version, for now use the version provided by AS7, declare just below -->
     <dependency>
@@ -647,6 +638,32 @@
   <profiles>
 
     <profile>
+      <!--
+        This profile has been created to avoid unnecessary resolution of test dependencies during a build that
+        does not run, compile or need tests.
+        More test dependencies are to be moved here if the set of sub-dependencies is complex, references project
+        test jars, or conflicts with changing the container version.
+       -->
+      <id>test.dependencies</id>
+      <activation>
+        <property>
+          <name>maven.test.skip</name>
+          <value>!true</value>
+        </property>
+      </activation>
+
+      <dependencies>
+        <dependency>
+          <groupId>org.rhq</groupId>
+          <artifactId>rhq-core-domain</artifactId>
+          <version>${project.version}</version>
+          <type>test-jar</type>
+          <scope>test</scope>
+       </dependency>
+      </dependencies>
+    </profile>
+
+    <profile>
          <!-- only if we are not running an individual set of tests via -Dtest do we do this -->
       <id>no-individual-test</id>
       <activation>
@@ -869,6 +886,7 @@
             <compilerArguments>
               <AtargetDirectory>${project.build.directory}/docs/xml</AtargetDirectory>
               <AmodelPkg>org.rhq.enterprise.server.rest.domain</AmodelPkg>
+              <AskipPkg>org.rhq.enterprise.server.rest.reporting</AskipPkg>
               <!-- enable the next line to have the output of the processor shown on console -->
               <!--<Averbose>true</Averbose>-->
             </compilerArguments>

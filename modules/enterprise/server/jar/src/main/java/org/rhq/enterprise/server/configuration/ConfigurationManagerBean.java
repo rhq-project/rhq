@@ -120,6 +120,8 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
+import org.rhq.enterprise.server.util.CriteriaQuery;
+import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.QuartzUtil;
@@ -2560,7 +2562,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
      * @param subject Subject of the caller - may limit search results
      * @param pds the PropertyDefinitionSimple to work on
      */
-    private void handlePDS(Subject subject, int resourceId, PropertyDefinitionSimple pds) {
+    private void handlePDS(final Subject subject, int resourceId, PropertyDefinitionSimple pds) {
 
         if (pds.getOptionsSource() != null) {
             // evaluate the source parameters
@@ -2574,8 +2576,16 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
             if (tt == PropertyOptionsSource.TargetType.RESOURCE || tt == PropertyOptionsSource.TargetType.CONFIGURATION) {
                 List<Resource> resources = null;
+                CriteriaQuery<Resource, ResourceCriteria> resourcesPaged = null;
                 ResourceCriteria criteria = new ResourceCriteria();
-                criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
+                //Use CriteriaQuery to automatically chunk/page through criteria query results
+                CriteriaQueryExecutor<Resource, ResourceCriteria> queryExecutor = new CriteriaQueryExecutor<Resource, ResourceCriteria>() {
+                    @Override
+                    public PageList<Resource> execute(ResourceCriteria criteria) {
+                        return resourceManager.findResourcesByCriteria(subject, criteria);
+                    }
+                };
 
                 if (tt == PropertyOptionsSource.TargetType.CONFIGURATION) {
                     // split out expression part for target=configuration
@@ -2586,7 +2596,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
                         if (!"self".equals(expr)) {
                             criteria.setSearchExpression(expr);
-                            resources = resourceManager.findResourcesByCriteria(subject, criteria);
+                            resourcesPaged = new CriteriaQuery<Resource, ResourceCriteria>(criteria, queryExecutor);
                         } else if (resourceId >= 0) {
                             resources = new ArrayList<Resource>();
                             resources.add(resourceManager.getResourceById(subject, resourceId));
@@ -2602,42 +2612,53 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                     }
                 } else {
                     criteria.setSearchExpression(expression);
-                    resources = resourceManager.findResourcesByCriteria(subject, criteria);
+                    resourcesPaged = new CriteriaQuery<Resource, ResourceCriteria>(criteria, queryExecutor);
                 }
 
+                if (resources != null) {//process resources
                 for (Resource resource : resources) {
-                    if (tt == PropertyOptionsSource.TargetType.RESOURCE) {
-                        String name = resource.getName();
-
-                        // filter if the user provided a filter
-                        if (filterPattern != null) {
-                            Matcher m = filterPattern.matcher(name);
-                            if (m.matches()) {
-                                PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(name, "" + name);
-                                pds.getEnumeratedValues().add(pde);
-                            }
-                        } else { // Filter is null -> none provided -> do not filter
-                            PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(name, "" + name);
-                            pds.getEnumeratedValues().add(pde);
-                        }
-                    } else if (tt == PropertyOptionsSource.TargetType.CONFIGURATION) {
-                        //  for configuration we need to drill down into the resource configuration
-                        if (!handleConfigurationTarget(pds, expression, resource))
-                            return;
-
+                        processPropertyOptionsSource(pds, tt, expression, filterPattern, resource);
+                    }
+                } else {// process resourcesPaged(CriteriaQuery parsing)
+                    for (Resource resource : resourcesPaged) {
+                        processPropertyOptionsSource(pds, tt, expression, filterPattern, resource);
                     }
                 }
             } else if (tt == PropertyOptionsSource.TargetType.GROUP) {
                 // for groups we need to talk to the group manager
                 ResourceGroupCriteria criteria = new ResourceGroupCriteria();
                 criteria.setSearchExpression(expression);
-                criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
+                //?? spinder 2-12-13: We  don't do anything with the composite results here? 
                 resourceGroupManager.findResourceGroupCompositesByCriteria(subject, criteria);
             }
             // TODO plugin and resourceType
         }
 
+    }
+
+    private void processPropertyOptionsSource(PropertyDefinitionSimple pds, PropertyOptionsSource.TargetType tt,
+        String expression, Pattern filterPattern, Resource resource) {
+        if (tt == PropertyOptionsSource.TargetType.RESOURCE) {
+            String name = resource.getName();
+
+            // filter if the user provided a filter
+            if (filterPattern != null) {
+                Matcher m = filterPattern.matcher(name);
+                if (m.matches()) {
+                    PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(name, "" + name);
+                    pds.getEnumeratedValues().add(pde);
+                }
+            } else { // Filter is null -> none provided -> do not filter
+                PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(name, "" + name);
+                pds.getEnumeratedValues().add(pde);
+            }
+        } else if (tt == PropertyOptionsSource.TargetType.CONFIGURATION) {
+            //  for configuration we need to drill down into the resource configuration
+            if (!handleConfigurationTarget(pds, expression, resource))
+                return;
+
+        }
     }
 
     /**

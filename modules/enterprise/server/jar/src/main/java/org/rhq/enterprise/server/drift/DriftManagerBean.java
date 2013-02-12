@@ -208,7 +208,6 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         DriftDefinitionCriteria driftDefCriteria = new DriftDefinitionCriteria();
         driftDefCriteria.addFilterResourceIds(resourceId);
         driftDefCriteria.addFilterName(driftDefName);
-        driftDefCriteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
         PageList<DriftDefinition> defs = findDriftDefinitionsByCriteria(overlord, driftDefCriteria);
         if (defs.isEmpty()) {
@@ -223,7 +222,6 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         criteria.addFilterDriftDefinitionId(driftDef.getId());
         criteria.addFilterVersion(Integer.toString(version));
         criteria.fetchDrifts(true);
-        criteria.setPageControl(PageControl.getUnlimitedInstance());//disable paging as the code assumes all the results will be returned.
 
         PageList<? extends DriftChangeSet<?>> changeSets = driftServerPlugin.findDriftChangeSetsByCriteria(overlord,
             criteria);

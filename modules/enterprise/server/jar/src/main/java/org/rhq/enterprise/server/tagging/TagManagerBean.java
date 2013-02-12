@@ -84,7 +84,6 @@ public class TagManagerBean implements TagManagerLocal, TagManagerRemote {
             criteria.addFilterSemantic(tag.getSemantic());
             criteria.addFilterName(tag.getName());
             criteria.setStrict(true);
-            criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
             List<Tag> found = findTagsByCriteria(subject, criteria);
             if (!found.isEmpty()) {

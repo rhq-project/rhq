@@ -33,11 +33,14 @@ import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.criteria.BundleFileCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.exception.WrappedRemotingException;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
 import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility.SerializationType;
+import org.rhq.enterprise.server.util.CriteriaQuery;
+import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -63,18 +66,27 @@ public class BundleServerServiceImpl implements BundleServerService {
 
     public List<PackageVersion> getAllBundleVersionPackageVersions(int bundleVersionId) {
         try {
-            BundleManagerLocal bm = LookupUtil.getBundleManager();
+            final BundleManagerLocal bm = LookupUtil.getBundleManager();
             ContentManagerLocal cm = LookupUtil.getContentManager();
-            Subject subject = LookupUtil.getSubjectManager().getOverlord();
-            BundleFileCriteria bfc = new BundleFileCriteria();
+            final Subject subject = LookupUtil.getSubjectManager().getOverlord();
+            final BundleFileCriteria bfc = new BundleFileCriteria();
             PackageVersionCriteria pvc = new PackageVersionCriteria();
 
             bfc.addFilterBundleVersionId(bundleVersionId);
             bfc.fetchPackageVersion(true);
-            bfc.clearPaging();//disable paging as the code assumes all the results will be returned.
 
-            List<BundleFile> bundleFiles = bm.findBundleFilesByCriteria(subject, bfc);
-            List<PackageVersion> packageVersions = new ArrayList<PackageVersion>(bundleFiles.size());
+            //Use CriteriaQuery to automatically chunk/page through criteria query results
+            CriteriaQueryExecutor<BundleFile, BundleFileCriteria> queryExecutor = new CriteriaQueryExecutor<BundleFile, BundleFileCriteria>() {
+                @Override
+                public PageList<BundleFile> execute(BundleFileCriteria criteria) {
+                    return bm.findBundleFilesByCriteria(subject, bfc);
+                }
+            };
+
+            CriteriaQuery<BundleFile, BundleFileCriteria> bundleFiles = new CriteriaQuery<BundleFile, BundleFileCriteria>(
+                bfc, queryExecutor);
+
+            List<PackageVersion> packageVersions = new ArrayList<PackageVersion>();
             PackageVersion packageVersion = null;
             for (BundleFile bundleFile : bundleFiles) {
                 pvc.addFilterId(bundleFile.getPackageVersion().getId());

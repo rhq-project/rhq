@@ -126,6 +126,8 @@ import org.rhq.enterprise.server.resource.disambiguation.DisambiguationUpdateStr
 import org.rhq.enterprise.server.resource.disambiguation.Disambiguator;
 import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.util.CriteriaQuery;
+import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.QueryUtility;
@@ -853,7 +855,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return resourceLineage;
     }
 
-    public Map<Integer, String> getResourcesAncestry(Subject subject, Integer[] resourceIds,
+    public Map<Integer, String> getResourcesAncestry(final Subject subject, Integer[] resourceIds,
         ResourceAncestryFormat format) {
         Map<Integer, String> result = new HashMap<Integer, String>(resourceIds.length);
 
@@ -861,12 +863,20 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             return result;
         }
 
-        ResourceCriteria resourceCriteria = new ResourceCriteria();
+        final ResourceCriteria resourceCriteria = new ResourceCriteria();
         resourceCriteria.addFilterIds(resourceIds);
         resourceCriteria.fetchResourceType(true);
-        resourceCriteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
-        List<Resource> resources = findResourcesByCriteria(subject, resourceCriteria);
+        //Use CriteriaQuery to automatically chunk/page through criteria query results
+        CriteriaQueryExecutor<Resource, ResourceCriteria> queryExecutor = new CriteriaQueryExecutor<Resource, ResourceCriteria>() {
+            @Override
+            public PageList<Resource> execute(ResourceCriteria criteria) {
+                return findResourcesByCriteria(subject, resourceCriteria);
+            }
+        };
+
+        CriteriaQuery<Resource, ResourceCriteria> resources = new CriteriaQuery<Resource, ResourceCriteria>(
+            resourceCriteria, queryExecutor);
 
         if (ResourceAncestryFormat.RAW == format) {
             for (Resource resource : resources) {
@@ -888,17 +898,34 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         // In addition to the types of the result resources, get the types of their ancestry
         typesSet.addAll(getAncestryTypeIds(ancestries));
 
-        ResourceTypeCriteria resourceTypeCriteria = new ResourceTypeCriteria();
+        final ResourceTypeCriteria resourceTypeCriteria = new ResourceTypeCriteria();
         resourceTypeCriteria.addFilterIds(typesSet.toArray(new Integer[typesSet.size()]));
-        resourceCriteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+        
+      //Use CriteriaQuery to automatically chunk/page through criteria query results
+        CriteriaQueryExecutor<ResourceType, ResourceTypeCriteria> rtQueryExecutor =
+            new CriteriaQueryExecutor<ResourceType, ResourceTypeCriteria>() {
+                @Override
+                public PageList<ResourceType> execute(ResourceTypeCriteria criteria) {
+                    return typeManager.findResourceTypesByCriteria(subject, resourceTypeCriteria);
+                }
+            };
 
-        List<ResourceType> types = typeManager.findResourceTypesByCriteria(subject, resourceTypeCriteria);
+        CriteriaQuery<ResourceType, ResourceTypeCriteria> types =
+            new CriteriaQuery<ResourceType, ResourceTypeCriteria>(resourceTypeCriteria, rtQueryExecutor);
 
         for (Resource resource : resources) {
-            String decodedAncestry = getDecodedAncestry(resource, types, format);
+            String decodedAncestry = getDecodedAncestry(resource, loadAsList(types.iterator()), format);
             result.put(resource.getId(), decodedAncestry);
         }
         return result;
+    }
+
+    private List<ResourceType> loadAsList(Iterator<ResourceType> iterator) {
+        PageList<ResourceType> list = new PageList<ResourceType>();
+        while(iterator.hasNext()){
+            list.add(iterator.next());
+        }
+        return list;
     }
 
     /**

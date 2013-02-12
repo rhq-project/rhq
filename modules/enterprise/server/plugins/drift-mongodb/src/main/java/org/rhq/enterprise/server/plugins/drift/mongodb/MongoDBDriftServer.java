@@ -84,6 +84,8 @@ import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSetEntry;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBFile;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.util.CriteriaQuery;
+import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginComponent {
@@ -397,12 +399,21 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
         return new String(StreamUtil.slurp(file.getInputStream()));
     }
 
-    Map<Integer, Resource> loadResourceMap(Subject subject, Integer[] resourceIds) {
+    Map<Integer, Resource> loadResourceMap(final Subject subject, Integer[] resourceIds) {
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterIds(resourceIds);
 
-        ResourceManagerLocal resourceMgr = getResourceManager();
-        PageList<Resource> resources = resourceMgr.findResourcesByCriteria(subject, criteria);
+        final ResourceManagerLocal resourceMgr = getResourceManager();
+        //Use CriteriaQuery to automatically chunk/page through criteria query results
+        CriteriaQueryExecutor<Resource, ResourceCriteria> queryExecutor = new CriteriaQueryExecutor<Resource, ResourceCriteria>() {
+            @Override
+            public PageList<Resource> execute(ResourceCriteria criteria) {
+                return resourceMgr.findResourcesByCriteria(subject, criteria);
+            }
+        };
+
+        CriteriaQuery<Resource, ResourceCriteria> resources = new CriteriaQuery<Resource, ResourceCriteria>(criteria,
+            queryExecutor);
 
         Map<Integer, Resource> map = new HashMap<Integer, Resource>();
         for (Resource r : resources) {

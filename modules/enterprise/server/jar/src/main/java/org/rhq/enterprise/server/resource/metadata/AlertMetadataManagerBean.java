@@ -1,6 +1,6 @@
 package org.rhq.enterprise.server.resource.metadata;
 
-import java.util.List;
+import java.util.ArrayList;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -12,8 +12,11 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
+import org.rhq.enterprise.server.util.CriteriaQuery;
+import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
 @Stateless
 public class AlertMetadataManagerBean implements AlertMetadataManagerLocal {
@@ -27,20 +30,31 @@ public class AlertMetadataManagerBean implements AlertMetadataManagerLocal {
     private AlertTemplateManagerLocal alertTemplateMgr;
 
     @Override
-    public void deleteAlertTemplates(Subject subject, ResourceType resourceType) {
+    public void deleteAlertTemplates(final Subject subject, ResourceType resourceType) {
         log.debug("Deleting alert templates for " + resourceType);
 
         AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
         criteria.addFilterAlertTemplateResourceTypeId(resourceType.getId());
-        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
-        List<AlertDefinition> templates = alertDefinitionMgr.findAlertDefinitionsByCriteria(subject, criteria);
+        //Use CriteriaQuery to automatically chunk/page through criteria query results
+        CriteriaQueryExecutor<AlertDefinition, AlertDefinitionCriteria> queryExecutor = new CriteriaQueryExecutor<AlertDefinition, AlertDefinitionCriteria>() {
+            @Override
+            public PageList<AlertDefinition> execute(AlertDefinitionCriteria criteria) {
+                return alertDefinitionMgr.findAlertDefinitionsByCriteria(subject, criteria);
+            }
+        };
 
-        Integer[] templateIds = new Integer[templates.size()];
+        CriteriaQuery<AlertDefinition, AlertDefinitionCriteria> templates = new CriteriaQuery<AlertDefinition, AlertDefinitionCriteria>(
+            criteria, queryExecutor);
+
+        ArrayList<Integer> templateIdList = new ArrayList<Integer>();
         int i = 0;
         for (AlertDefinition template : templates) {
-            templateIds[i++] = template.getId();
+            templateIdList.add(template.getId());
         }
+
+        Integer[] templateIds = new Integer[templateIdList.size()];
+        templateIds = templateIdList.toArray(templateIds);
 
         // Alert definitions associated with individual resources and with groups
         // are deleted as part of resource deletion. This commit adds support for

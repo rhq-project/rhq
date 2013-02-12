@@ -24,9 +24,12 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.bundle.BundleManagerLocal;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerLocal;
+import org.rhq.enterprise.server.util.CriteriaQuery;
+import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
 @Stateless
 public class ContentMetadataManagerBean implements ContentMetadataManagerLocal {
@@ -230,7 +233,7 @@ public class ContentMetadataManagerBean implements ContentMetadataManagerLocal {
         }
     }
 
-    private void deleteBundles(Subject subject, ResourceType resourceType) throws Exception {
+    private void deleteBundles(final Subject subject, ResourceType resourceType) throws Exception {
         BundleType bundleType = resourceType.getBundleType();
 
         if (bundleType == null) {
@@ -239,9 +242,18 @@ public class ContentMetadataManagerBean implements ContentMetadataManagerLocal {
 
         BundleCriteria criteria = new BundleCriteria();
         criteria.addFilterBundleTypeId(bundleType.getId());
-        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
-        List<Bundle> bundles = bundleMgr.findBundlesByCriteria(subject, criteria);
+        //Use CriteriaQuery to automatically chunk/page through criteria query results
+        CriteriaQueryExecutor<Bundle, BundleCriteria> queryExecutor = new CriteriaQueryExecutor<Bundle, BundleCriteria>() {
+            @Override
+            public PageList<Bundle> execute(BundleCriteria criteria) {
+                return bundleMgr.findBundlesByCriteria(subject, criteria);
+            }
+        };
+
+        CriteriaQuery<Bundle, BundleCriteria> bundles = new CriteriaQuery<Bundle, BundleCriteria>(criteria,
+            queryExecutor);
+
         for (Bundle bundle : bundles) {
             bundleMgr.deleteBundle(subject, bundle.getId());
         }

@@ -279,7 +279,8 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
         if (hostPort.isLocal) {
             // lets be paranoid here
-            while (context.getNativeProcess() != null && context.getNativeProcess().priorSnaphot().isRunning()
+            while (context.getNativeProcess() != null && context.getNativeProcess().priorSnaphot() != null
+                && context.getNativeProcess().priorSnaphot().isRunning()
                 && count++ <= 20) {
                 try {
                     Thread.sleep(1000); // Wait 1s

@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.scheduler.jobs;
 
+import java.util.ArrayList;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.quartz.Job;
@@ -35,6 +37,8 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
+import org.rhq.enterprise.server.util.CriteriaQuery;
+import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -113,19 +117,31 @@ public class ContentProviderSyncJob implements StatefulJob {
 
     private void syncImportedRepos(ContentSource contentSource) throws InterruptedException {
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
-        Subject overlord = subjectManager.getOverlord();
-        RepoCriteria repoCriteria = new RepoCriteria();
+        final Subject overlord = subjectManager.getOverlord();
+        final RepoCriteria repoCriteria = new RepoCriteria();
         repoCriteria.addFilterContentSourceIds(contentSource.getId());
         repoCriteria.addFilterCandidate(false);
-        repoCriteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
-        RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
-        PageList<Repo> repos = repoManager.findReposByCriteria(overlord, repoCriteria);
-        Integer[] repoIds = new Integer[repos.size()];
-        for (int i = 0; i < repos.size(); i++) {
-            Repo repo = repos.get(i);
-            repoIds[i] = repo.getId();
+        final RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+
+        //Use CriteriaQuery to automatically chunk/page through criteria query results
+        CriteriaQueryExecutor<Repo, RepoCriteria> queryExecutor = new CriteriaQueryExecutor<Repo, RepoCriteria>() {
+            @Override
+            public PageList<Repo> execute(RepoCriteria criteria) {
+                return repoManager.findReposByCriteria(overlord, repoCriteria);
+            }
+        };
+
+        CriteriaQuery<Repo, RepoCriteria> repos = new CriteriaQuery<Repo, RepoCriteria>(repoCriteria, queryExecutor);
+
+
+        ArrayList<Integer> repoIdList = new ArrayList<Integer>();
+        for (Repo repo : repos) {
+            repoIdList.add(repo.getId());
         }
+        Integer[] repoIds = new Integer[repoIdList.size()];
+        repoIds = repoIdList.toArray(repoIds);
+
         repoManager.internalSynchronizeRepos(overlord, repoIds);
     }
 

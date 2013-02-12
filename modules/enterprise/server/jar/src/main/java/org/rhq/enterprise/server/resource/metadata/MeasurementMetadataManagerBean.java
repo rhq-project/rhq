@@ -26,10 +26,13 @@ import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
+import org.rhq.enterprise.server.util.CriteriaQuery;
+import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
 @Stateless
 public class MeasurementMetadataManagerBean implements MeasurementMetadataManagerLocal {
@@ -216,10 +219,18 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
 
         MeasurementDefinitionCriteria criteria = new MeasurementDefinitionCriteria();
         criteria.addFilterResourceTypeId(existingType.getId());
-        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
-        List<MeasurementDefinition> definitions = measurementDefinitionMgr.findMeasurementDefinitionsByCriteria(
-            subjectMgr.getOverlord(), criteria);
+        //Use CriteriaQuery to automatically chunk/page through criteria query results
+        CriteriaQueryExecutor<MeasurementDefinition, MeasurementDefinitionCriteria> queryExecutor = new CriteriaQueryExecutor<MeasurementDefinition, MeasurementDefinitionCriteria>() {
+            @Override
+            public PageList<MeasurementDefinition> execute(MeasurementDefinitionCriteria criteria) {
+                return measurementDefinitionMgr
+                    .findMeasurementDefinitionsByCriteria(subjectMgr.getOverlord(), criteria);
+            }
+        };
+
+        CriteriaQuery<MeasurementDefinition, MeasurementDefinitionCriteria> definitions = new CriteriaQuery<MeasurementDefinition, MeasurementDefinitionCriteria>(
+            criteria, queryExecutor);
 
         // Remove the type's metric definitions. We do this separately, rather than just relying on cascade
         // upon deletion of the ResourceType, because the removeMeasurementDefinition() will also take care

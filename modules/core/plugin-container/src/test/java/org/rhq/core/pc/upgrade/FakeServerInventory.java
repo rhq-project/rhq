@@ -26,6 +26,8 @@ package org.rhq.core.pc.upgrade;
 import static org.testng.Assert.fail;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -52,7 +54,7 @@ import org.rhq.core.domain.resource.ResourceType;
 /**
  * This class represents a server side database store of the inventory for the purposes
  * of the ResourceUpgradeTest unit test.
- * 
+ *
  * @author Lukas Krejci
  */
 public class FakeServerInventory {
@@ -62,7 +64,7 @@ public class FakeServerInventory {
     private int counter;
     private boolean failing;
     private boolean failUpgrade;
-    
+
     private static final Comparator<Resource> ID_COMPARATOR = new Comparator<Resource>() {
         public int compare(Resource o1, Resource o2) {
             return o1.getId() - o2.getId();
@@ -90,18 +92,18 @@ public class FakeServerInventory {
             fakePersist(res, InventoryStatus.COMMITTED, new HashSet<String>());
         }
     }
-    
+
     public synchronized CustomAction mergeInventoryReport(final InventoryStatus requiredInventoryStatus) {
         return new CustomAction("updateServerSideInventory") {
             public Object invoke(Invocation invocation) throws Throwable {
                 synchronized (FakeServerInventory.this) {
                     throwIfFailing();
-    
+
                     InventoryReport inventoryReport = (InventoryReport) invocation.getParameter(0);
-    
+
                     for (Resource res : inventoryReport.getAddedRoots()) {
                         Resource persisted = fakePersist(res, requiredInventoryStatus, new HashSet<String>());
-    
+
                         if (res.getParentResource() == Resource.ROOT) {
                             platform = persisted;
                         }
@@ -117,9 +119,9 @@ public class FakeServerInventory {
             public Object invoke(Invocation invocation) throws Throwable {
                 synchronized (FakeServerInventory.this) {
                     throwIfFailing();
-    
+
                     platform = null;
-    
+
                     return getSyncInfo();
                 }
             }
@@ -131,36 +133,36 @@ public class FakeServerInventory {
             public Object invoke(Invocation invocation) throws Throwable {
                 synchronized(FakeServerInventory.this) {
                     throwIfFailing();
-                    
+
                     ResourceError error = (ResourceError) invocation.getParameter(0);
-                    
+
                     Resource serverSideResource = resourceStore.get(error.getResource().getUuid());
-                    
+
                     if (serverSideResource != null) {
                         List<ResourceError> currentErrors = serverSideResource.getResourceErrors();
                         currentErrors.add(error);
                     }
-                    
+
                     return null;
                 }
             }
         };
     }
-    
+
     public synchronized CustomAction upgradeResources() {
         return new CustomAction("upgradeServerSideInventory") {
             @SuppressWarnings({ "serial", "unchecked" })
             public Object invoke(Invocation invocation) throws Throwable {
                 synchronized(FakeServerInventory.this) {
                     throwIfFailing();
-    
+
                     if (failUpgrade) {
-                        throw new RuntimeException("Failing the upgrade purposefully.");                        
+                        throw new RuntimeException("Failing the upgrade purposefully.");
                     }
-                    
+
                     Set<ResourceUpgradeRequest> requests = (Set<ResourceUpgradeRequest>) invocation.getParameter(0);
                     Set<ResourceUpgradeResponse> responses = new HashSet<ResourceUpgradeResponse>();
-    
+
                     for (final ResourceUpgradeRequest request : requests) {
                         Resource resource = findResource(platform, new Resource() {
                             public int getId() {
@@ -174,18 +176,18 @@ public class FakeServerInventory {
                             if (request.getNewName() != null) {
                                 resource.setName(request.getNewName());
                             }
-    
+
                             if (request.getNewResourceKey() != null) {
                                 resource.setResourceKey(request.getNewResourceKey());
                             }
-    
+
                             if (request.getUpgradeErrorMessage() != null) {
                                 ResourceError error = new ResourceError(resource, ResourceErrorType.UPGRADE,
                                     request.getUpgradeErrorMessage(), request.getUpgradeErrorStackTrace(),
                                     request.getTimestamp());
                                 resource.getResourceErrors().add(error);
                             }
-    
+
                             ResourceUpgradeResponse resp = new ResourceUpgradeResponse();
                             resp.setResourceId(resource.getId());
                             resp.setUpgradedResourceName(resource.getName());
@@ -206,11 +208,28 @@ public class FakeServerInventory {
             public Object invoke(Invocation invocation) throws Throwable {
                 synchronized (FakeServerInventory.this) {
                     throwIfFailing();
-    
+
                     Set<Integer> resourceIds = (Set<Integer>) invocation.getParameter(0);
                     boolean includeDescendants = (Boolean) invocation.getParameter(1);
-    
+
                     return getResources(resourceIds, includeDescendants);
+                }
+            }
+        };
+    }
+
+    public synchronized CustomAction getResourcesAsList() {
+        return new CustomAction("getResourcesAsList") {
+            @Override
+            public Object invoke(Invocation invocation) throws Throwable {
+                synchronized(FakeServerInventory.this) {
+                    throwIfFailing();
+
+                    Integer[] resourceIds = (Integer[]) invocation.getParameter(0);
+
+                    Set<Resource> resources = getResources(new LinkedHashSet<Integer>(Arrays.asList(resourceIds)), false);
+
+                    return new ArrayList<Resource>(resources);
                 }
             }
         };
@@ -227,11 +246,11 @@ public class FakeServerInventory {
     public synchronized boolean isFailUpgrade() {
         return failUpgrade;
     }
-    
+
     public synchronized void setFailUpgrade(boolean failUpgrade) {
         this.failUpgrade = failUpgrade;
     }
-    
+
     @SuppressWarnings("serial")
     public synchronized Set<Resource> findResourcesByType(final ResourceType type) {
         Set<Resource> result = new HashSet<Resource>();
@@ -281,7 +300,7 @@ public class FakeServerInventory {
             removeResource(child);
         }
     }
-    
+
     private Resource fakePersist(Resource agentSideResource, InventoryStatus requiredInventoryStatus,
         Set<String> inProgressUUIds) {
         Resource persisted = resourceStore.get(agentSideResource.getUuid());
@@ -327,9 +346,9 @@ public class FakeServerInventory {
         //i.e. we prefer the current results from the agent but keep the children we used to
         //have in the past. This is the same behavior as the actual RHQ server has.
         childResources.addAll(persisted.getChildResources());
-        
+
         persisted.setChildResources(childResources);
-        
+
         inProgressUUIds.remove(agentSideResource.getUuid());
 
         return persisted;

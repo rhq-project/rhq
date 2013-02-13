@@ -591,52 +591,13 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             // availability reports only tell us the current state at the start time; end time is ignored/must be null
             reported.setEndTime(null);
 
+            // get the latest avail for the reported resource
+            q.setParameter("resourceId", reported.getResource().getId());
+            Availability latest = null;
+
             try {
-                q.setParameter("resourceId", reported.getResource().getId());
-                Availability latest = (Availability) q.getSingleResult();
-                AvailabilityType latestType = latest.getAvailabilityType();
-                AvailabilityType reportedType = reported.getAvailabilityType();
+                latest = (Availability) q.getSingleResult();
 
-                // If the current avail is DISABLED, and this report is not trying to re-enable the resource,
-                // Then ignore the reported avail.
-                if (AvailabilityType.DISABLED == latestType) {
-                    if (!(mergeInfo.isEnablementReport() && (AvailabilityType.UNKNOWN == reportedType))) {
-                        disabledAvailabilities.add(reported);
-                        continue;
-                    }
-                }
-
-                if (reported.getStartTime() >= latest.getStartTime()) {
-                    //log.info( "new avail (latest/reported)-->" + latest + "/" + reported );
-
-                    // the new availability data is for a time after our last known state change
-                    // we are run-length encoded, so only persist data if the availability changed                        
-                    if (latest.getAvailabilityType() != reported.getAvailabilityType()) {
-                        entityManager.persist(reported);
-                        mergeInfo.incrementNumInserted();
-
-                        latest.setEndTime(reported.getStartTime());
-                        latest = entityManager.merge(latest);
-
-                        updateResourceAvailability(reported);
-                    }
-
-                    // our last known state was unknown, ask for a full report to ensure we are in sync with agent
-                    if (latest.getAvailabilityType() == AvailabilityType.UNKNOWN) {
-                        mergeInfo.setAskForFullReport(true);
-                    }
-                } else {
-                    //log.info( "past avail (latest/reported)==>" + latest + "/" + reported );
-
-                    // The new data is for a time in the past, probably an agent sending a report after
-                    // a network outage has been corrected but after we have already backfilled.
-                    // We need to insert it into our past timeline.
-                    insertAvailability(reported);
-                    mergeInfo.incrementNumInserted();
-
-                    // this is an unusual report - ask the agent for a full report so as to ensure we are in sync with agent
-                    mergeInfo.setAskForFullReport(true);
-                }
             } catch (NoResultException nre) {
                 // This should not happen unless the Resource in the report is stale, which can happen in certain
                 // sync scenarios. A Resource is given its initial Availability/ResourceAvailability when it is
@@ -644,37 +605,47 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 // it must not exist in my utopian view of the world. Let's just make sure...
                 Resource attachedResource = (Resource) entityManager.find(Resource.class, reported.getResource()
                     .getId());
-                if (null == attachedResource) {
+
+                if ((null == attachedResource) || (InventoryStatus.COMMITTED != attachedResource.getInventoryStatus())) {
                     // expected case
                     log.info("Skipping mergeAvailabilityReport() for stale resource [" + reported.getResource()
                         + "]. These messages should go away after the next agent synchronization with the server.");
 
-                } else if (InventoryStatus.COMMITTED == attachedResource.getInventoryStatus()) {
-                    // this should not happen, it means the resource exists but has no latest Availability
-                    // record (i.e. sendTime == null).  Try to correct the situation.
+                    continue;
+
+                } else {
+                    // this should not really happen but is possible in rare failure situations, it means the resource
+                    // exists but has no latest Availability record (i.e. sendTime == null).  Correct the situation and
+                    // then process the reported avail.
                     log.warn("Resource [" + reported.getResource()
                         + "] has no latest availability record (i.e. no endtime) - will attempt to repair.\n"
                         + mergeInfo.toString(false));
+
                     try {
                         List<Availability> attachedAvails = attachedResource.getAvailability();
+                        Availability attachedLastAvail = null;
+
                         if (attachedAvails.isEmpty()) {
-                            attachedResource.initCurrentAvailability();
-                            entityManager.merge(attachedResource);
+                            latest = new Availability(attachedResource, 0L, AvailabilityType.UNKNOWN);
+                            entityManager.persist(latest);
 
                         } else {
-                            Availability attachedLastAvail = attachedAvails.get(attachedAvails.size() - 1);
-                            attachedLastAvail.setEndTime(null);
-                            entityManager.merge(attachedLastAvail);
+                            latest = attachedAvails.get(attachedAvails.size() - 1);
+                            latest.setEndTime(null);
+                            latest = entityManager.merge(latest);
                         }
+
+                        updateResourceAvailability(latest);
 
                         // ask the agent for a full report so as to ensure we are in sync with agent
                         mergeInfo.setAskForFullReport(true);
 
                     } catch (Throwable t) {
-                        log.warn("Unable to repair latest availablity for Resource [" + reported.getResource() + "]", t);
+                        log.warn("Unable to repair NoResult latest availablity for Resource [" + reported.getResource()
+                            + "]", t);
+                        continue;
                     }
                 }
-
             } catch (NonUniqueResultException nure) {
                 // This condition should never happen.  In my world of la-la land, I've done everything
                 // correctly so this never happens.  But, due to the asynchronous nature of things,
@@ -686,15 +657,69 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 log.warn("Resource [" + reported.getResource() + "] has multiple availabilities without an endtime ["
                     + nure.getMessage() + "] - will attempt to remove the extra ones\n" + mergeInfo.toString(false));
 
-                q.setParameter("resourceId", reported.getResource().getId());
-                List<Availability> latest = q.getResultList();
+                try {
 
-                // delete all but the last one (our query sorts in ASC start time order)
-                int latestCount = latest.size();
-                for (int i = 0; i < (latestCount - 1); i++) {
-                    entityManager.remove(latest.get(i));
+                    List<Availability> latestList = q.getResultList();
+
+                    // delete all but the last one (our query sorts in ASC start time order)
+                    int latestCount = latestList.size();
+                    for (int i = 0; i < (latestCount - 1); i++) {
+                        entityManager.remove(latestList.get(i));
+                    }
+
+                    latest = latestList.get(latestCount - 1);
+                    updateResourceAvailability(latest);
+
+                    // this is an unusual report - ask the agent for a full report so as to ensure we are in sync with agent
+                    mergeInfo.setAskForFullReport(true);
+
+                } catch (Throwable t) {
+                    log.warn(
+                        "Unable to repair NonUnique Result latest availablity for Resource [" + reported.getResource()
+                            + "]", t);
+                    continue;
                 }
-                updateResourceAvailability(latest.get(latestCount - 1));
+            }
+
+            AvailabilityType latestType = latest.getAvailabilityType();
+            AvailabilityType reportedType = reported.getAvailabilityType();
+
+            // If the current avail is DISABLED, and this report is not trying to re-enable the resource,
+            // Then ignore the reported avail.
+            if (AvailabilityType.DISABLED == latestType) {
+                if (!(mergeInfo.isEnablementReport() && (AvailabilityType.UNKNOWN == reportedType))) {
+                    disabledAvailabilities.add(reported);
+                    continue;
+                }
+            }
+
+            if (reported.getStartTime() >= latest.getStartTime()) {
+                //log.info( "new avail (latest/reported)-->" + latest + "/" + reported );
+
+                // the new availability data is for a time after our last known state change
+                // we are run-length encoded, so only persist data if the availability changed                        
+                if (latest.getAvailabilityType() != reported.getAvailabilityType()) {
+                    entityManager.persist(reported);
+                    mergeInfo.incrementNumInserted();
+
+                    latest.setEndTime(reported.getStartTime());
+                    latest = entityManager.merge(latest);
+
+                    updateResourceAvailability(reported);
+                }
+
+                // our last known state was unknown, ask for a full report to ensure we are in sync with agent
+                if (latest.getAvailabilityType() == AvailabilityType.UNKNOWN) {
+                    mergeInfo.setAskForFullReport(true);
+                }
+            } else {
+                //log.info( "past avail (latest/reported)==>" + latest + "/" + reported );
+
+                // The new data is for a time in the past, probably an agent sending a report after
+                // a network outage has been corrected but after we have already backfilled.
+                // We need to insert it into our past timeline.
+                insertAvailability(reported);
+                mergeInfo.incrementNumInserted();
 
                 // this is an unusual report - ask the agent for a full report so as to ensure we are in sync with agent
                 mergeInfo.setAskForFullReport(true);

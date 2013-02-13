@@ -117,7 +117,7 @@ public class FakeServerInventory {
                     InventoryReport inventoryReport = (InventoryReport) invocation.getParameter(0);
 
                     for (Resource res : inventoryReport.getAddedRoots()) {
-                        Resource persisted = fakePersist(res, judge, new HashSet<String>());
+                        Resource persisted = fakePersist(res, requiredInventoryStatus, new HashSet<String>());
 
                         if (res.getParentResource() == Resource.ROOT) {
                             platform = persisted;
@@ -333,7 +333,7 @@ public class FakeServerInventory {
         }
     }
 
-    private Resource fakePersist(Resource agentSideResource, InventoryStatusJudge statusJudge,
+    private Resource fakePersist(Resource agentSideResource, InventoryStatus requiredInventoryStatus,
         Set<String> inProgressUUIds) {
         Resource persisted = resourceStore.get(agentSideResource.getUuid());
         if (!inProgressUUIds.add(agentSideResource.getUuid())) {

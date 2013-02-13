@@ -23,9 +23,7 @@ import java.util.List;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.fields.DataSourceTextField;
-import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.form.fields.events.FocusEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyUpEvent;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -49,7 +47,6 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Mike Thompson
  */
 public class BasicSearchStrategy extends AbstractSearchStrategy {
-
 
     public BasicSearchStrategy(EnhancedSearchBar searchBar) {
         super(searchBar);
@@ -142,8 +139,6 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
         doSearch(searchExpression);
     }
 
-
-
     @Override
     public void searchKeyUpHandler(KeyUpEvent keyUpEvent) {
         Log.debug("Keyup in BasicSearchStrategy: " + keyUpEvent.getKeyName());
@@ -154,14 +149,13 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
 
     @Override
     public void searchReturnKeyHandler(KeyUpEvent keyUpEvent) {
-        doSearch((String)keyUpEvent.getItem().getValue());
+        doSearch((String) keyUpEvent.getItem().getValue());
     }
 
     private void doSearch(String searchExpression) {
         if (null != searchExpression && searchExpression.length() > 0) {
-            getTabAwareSearchSuggestions(SearchSubsystem.RESOURCE,
-                    searchBar.getSearchTextItem().getValueAsString(), searchBar.getSearchTextItem()
-                    .getValueAsString().length());
+            getTabAwareSearchSuggestions(SearchSubsystem.RESOURCE, searchBar.getSearchTextItem().getValueAsString(),
+                searchBar.getSearchTextItem().getValueAsString().length());
         } else {
             Log.debug("Empty Search expression");
             getTabAwareSearchSuggestions(SearchSubsystem.RESOURCE, null, 0);
@@ -176,11 +170,11 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
     private void getTabAwareSearchSuggestions(final SearchSubsystem searchSubsystem, final String expression,
         int caretPosition) {
 
-        searchBar.getPickListGrid().setData(new ListGridRecord[]{});
+        searchBar.getPickListGrid().setData(new ListGridRecord[] {});
 
         final long suggestStart = System.currentTimeMillis();
 
-        Log.debug("Searching for: "+expression);
+        Log.debug("Searching for: " + expression);
         searchService.getTabAwareSuggestions(searchSubsystem, expression, caretPosition, null,
             new AsyncCallback<List<SearchSuggestion>>() {
 
@@ -208,7 +202,7 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
                     } else {
                         ds.invalidateCache();
                     }
-                    searchBarPickListGrid.setData(new ListGridRecord[]{});
+                    searchBarPickListGrid.setData(new ListGridRecord[] {});
 
                     for (SearchSuggestion searchSuggestion : results) {
                         Log.debug("search tab aware Suggestions: " + searchSuggestion.getKind() + ", "

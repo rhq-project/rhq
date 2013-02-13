@@ -31,8 +31,6 @@ import com.smartgwt.client.widgets.events.MouseOutHandler;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.FocusEvent;
 import com.smartgwt.client.widgets.form.fields.events.FocusHandler;
-import com.smartgwt.client.widgets.form.fields.events.IconClickEvent;
-import com.smartgwt.client.widgets.form.fields.events.IconClickHandler;
 import com.smartgwt.client.widgets.form.fields.events.KeyUpEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyUpHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
@@ -63,13 +61,19 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  */
 public class EnhancedSearchBar extends ToolStrip {
     private static final Messages MSG = CoreGUI.getMessages();
+    private static final int PICKLIST_WIDTH = 600;
+    private static final int PICKLIST_HEIGHT = 400;
+    private static final int PICKLIST_LEFT_OFFSET = 307;
+    private static final int PICKLIST_TOP_OFFSET = 140;
     private SearchSubsystem searchSubsystem;
+    private ToolStripButton searchTextButton;
     private ToolStripButton saveSearchButton;
     private TextItem searchTextItem;
     private ListGrid pickListGrid;
     private TextItem saveSearchTextItem;
     private final FavoritesSearchStrategy favoritesSearchStrategy;
     private final BasicSearchStrategy basicSearchStrategy;
+    private String lastSearchTerm;
 
     private final SearchGWTServiceAsync searchService = GWTServiceLookup.getSearchService();
 
@@ -119,12 +123,11 @@ public class EnhancedSearchBar extends ToolStrip {
         searchStrategies.put(SearchMode.BASIC_SEARCH_MODE, basicSearchStrategy);
         searchStrategies.put(SearchMode.SAVED_SEARCH_MODE, favoritesSearchStrategy);
 
-        searchTextItem.setWidth(600);
+        searchTextItem.setWidth(PICKLIST_WIDTH);
         searchTextItem.setBrowserSpellCheck(false);
 
         pickListGrid = new ListGrid();
 
-        searchTextItem.setShowPickerIcon(true);
         searchTextItem.setRedrawOnChange(true);
         // this changes it to autocomplete field from combobox
         searchTextItem.addKeyUpHandler(new KeyUpHandler() {
@@ -137,10 +140,15 @@ public class EnhancedSearchBar extends ToolStrip {
                 }
 
                 if (keyUpEvent.getKeyName().equals("Enter")) {
+                    String currentSearchTerm = (String)keyUpEvent.getItem().getValue();
                     Log.debug("onKeyUp search Mode Enter key pressed");
-                    getSearchStrategy().searchReturnKeyHandler(keyUpEvent);
-                    searchTextItem.focusInItem();
-                    pickListGrid.hide();
+                    // stop any duplicate searches
+                    if(!currentSearchTerm.equalsIgnoreCase(lastSearchTerm)){
+                        getSearchStrategy().searchReturnKeyHandler(keyUpEvent);
+                        searchTextItem.focusInItem();
+                        pickListGrid.hide();
+                        lastSearchTerm = currentSearchTerm;
+                    }
                 }
                 else {
                     Log.debug("Do searchKeyUpHandler...");
@@ -161,20 +169,6 @@ public class EnhancedSearchBar extends ToolStrip {
         });
 
 
-        searchTextItem.setShowFocused(false);
-        searchTextItem.addIconClickHandler(new IconClickHandler() {
-            @Override
-            public void onIconClick(IconClickEvent iconClickEvent) {
-                // toggle
-                if(pickListGrid.isVisible()){
-                    pickListGrid.hide();
-                }else {
-                    populateInitialSearch();
-                }
-            }
-
-
-        });
         searchTextItem.addFocusHandler(new FocusHandler() {
             @Override
             public void onFocus(FocusEvent event) {
@@ -191,6 +185,20 @@ public class EnhancedSearchBar extends ToolStrip {
         configurePickListGrid();
 
         addFormItem(searchTextItem);
+
+        searchTextButton = new ToolStripButton();
+        searchTextButton.setIcon(IconEnum.ARROW_GRAY.getIcon16x16Path());
+        searchTextButton.addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent event) {
+                if(pickListGrid.isVisible()){
+                    pickListGrid.hide();
+                }else {
+                    populateInitialSearch();
+                }
+            }
+        });
+        addButton(searchTextButton);
 
         saveSearchButton = new ToolStripButton();
         saveSearchButton.setIcon(IconEnum.STAR_OFF.getIcon16x16Path());
@@ -256,10 +264,10 @@ public class EnhancedSearchBar extends ToolStrip {
     }
 
     private void showPickListGrid(){
-        pickListGrid.setLeft(searchTextItem.getLeft()+307);
-        pickListGrid.setTop(145);
-        pickListGrid.setWidth(600);
-        pickListGrid.setHeight(400);
+        pickListGrid.setLeft(searchTextItem.getLeft()+PICKLIST_LEFT_OFFSET);
+        pickListGrid.setTop(searchTextItem.getTop()+PICKLIST_TOP_OFFSET);
+        pickListGrid.setWidth(PICKLIST_WIDTH);
+        pickListGrid.setHeight(PICKLIST_HEIGHT);
         pickListGrid.redraw();
     }
 

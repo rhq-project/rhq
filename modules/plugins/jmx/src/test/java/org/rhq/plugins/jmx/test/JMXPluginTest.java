@@ -72,8 +72,6 @@ import org.rhq.plugins.jmx.util.JvmResourceKey;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-// Disabled until we find a fix for Sigar getProcCredName issue
-@Test(enabled = false)
 public class JMXPluginTest {
 
     private static final int JMX_REMOTING_PORT1 = 9921;
@@ -95,8 +93,9 @@ public class JMXPluginTest {
             this.testServerJvms.add(startTestServerJvm("-Dcom.sun.management.jmxremote.port=" + JMX_REMOTING_PORT1,
                 "-Dcom.sun.management.jmxremote.ssl=false", "-Dcom.sun.management.jmxremote.authenticate=false"));
 
-            this.testServerJvms.add(startTestServerJvm("-D" + JMXDiscoveryComponent.SYSPROP_RHQ_RESOURCE_KEY + "="
-                + EXPLICIT_RESOURCE_KEY1));
+            // FIXME: Disabled until we find a fix for Sigar getProcCredName issue
+            //            this.testServerJvms.add(startTestServerJvm("-D" + JMXDiscoveryComponent.SYSPROP_RHQ_RESOURCE_KEY + "="
+            //                + EXPLICIT_RESOURCE_KEY1));
 
             this.testServerJvms.add(startTestServerJvm("-Dcom.sun.management.jmxremote.port=" + JMX_REMOTING_PORT2,
                 "-Dcom.sun.management.jmxremote.ssl=false", "-Dcom.sun.management.jmxremote.authenticate=false",
@@ -206,7 +205,8 @@ public class JMXPluginTest {
             }
         }
         assert foundJmxRemotingServer : "JMX Remoting server not found.";
-        assert foundExplicitKey1Server : "Explicit key server not found.";
+        // FIXME: Disabled until we find a fix for Sigar getProcCredName issue
+        //assert foundExplicitKey1Server : "Explicit key server not found.";
         assert foundExplicitKey2Server : "JMX Remoting + explicit key server not found.";
     }
 

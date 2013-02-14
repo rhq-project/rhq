@@ -1204,13 +1204,13 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                     nextFormItem.addChangedHandler(this);
                 } else if (nextFormItem instanceof EnhancedSearchBarItem) {
                     searchBarItem = (EnhancedSearchBarItem) nextFormItem;
-                    searchBarItem.getSearchBar().getSearchComboboxItem().addKeyPressHandler(this);
+                    searchBarItem.getSearchBar().getSearchTextItem().addKeyPressHandler(this);
                     String name = searchBarItem.getName();
                     // postfix the name of the item so it is not processed by the filters and that the
                     // hidden item is used instead.
                     searchBarItem.setName(name + "_hidden");
                     hiddenItem = new HiddenItem(name);
-                    hiddenItem.setValue(searchBarItem.getSearchBar().getSearchComboboxItem().getValueAsString());
+                    hiddenItem.setValue(searchBarItem.getSearchBar().getSearchTextItem().getValueAsString());
                 }
             }
 
@@ -1239,8 +1239,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 Log.debug("Table.TableFilter Pressed Enter key");
 
                 if (null != searchBarItem) {
-                    ComboBoxItem comboBoxItem = searchBarItem.getSearchBar().getSearchComboboxItem();
-                    String searchBarValue = comboBoxItem.getValueAsString();
+                    TextItem searchTextItem = searchBarItem.getSearchBar().getSearchTextItem();
+                    String searchBarValue = searchTextItem.getValueAsString();
                     String hiddenValue = (String) hiddenItem.getValue();
                     Log.debug("Table.TableFilter searchBarValue :" + searchBarValue + ", hiddenValue" + hiddenValue);
 

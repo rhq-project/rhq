@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -206,8 +207,8 @@ public interface ResourceManagerLocal {
      * @return the resource, or null if no such resource exists
      */
     @Nullable
-    Resource getResourceByParentAndKey(Subject user, @Nullable Resource parent, String key, String plugin,
-        String typeName);
+    Resource getResourceByParentAndKey(Subject user, @Nullable
+    Resource parent, String key, String plugin, String typeName);
 
     PageList<Resource> findResourceByParentAndInventoryStatus(Subject user, Resource parent, InventoryStatus status,
         PageControl pageControl);
@@ -477,6 +478,12 @@ public interface ResourceManagerLocal {
      */
     List<Resource> findResourcesByCriteriaBounded(Subject subject, ResourceCriteria criteria, int maxResources,
         int maxResourcesByType);
+
+    Map<Agent, AvailabilityReport> getDisableResourcesReportInNewTransaction(Subject subject, int[] resourceIds,
+        List<Integer> disableResourceIds);
+
+    Map<Agent, AvailabilityReport> getEnableResourcesReportInNewTransaction(Subject subject, int[] resourceIds,
+        List<Integer> enableResourceIds);
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //

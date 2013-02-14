@@ -87,8 +87,8 @@ public class CriteriaQueryTest {
 
         FakeEntityCriteria criteria = new FakeEntityCriteria();
 
-        CriteriaQuery<FakeEntity, FakeEntityCriteria> query =
-            new CriteriaQuery<FakeEntity, FakeEntityCriteria>(criteria, queryExecutor);
+        CriteriaQuery<FakeEntity, FakeEntityCriteria> query = new CriteriaQuery<FakeEntity, FakeEntityCriteria>(
+            criteria, queryExecutor);
 
         List<FakeEntity> actual = new ArrayList<FakeEntity>();
         for (FakeEntity entity : query) {
@@ -111,8 +111,8 @@ public class CriteriaQueryTest {
         FakeEntityCriteria criteria = new FakeEntityCriteria();
         criteria.setPageControl(pc);
 
-        CriteriaQuery<FakeEntity, FakeEntityCriteria> query =
-            new CriteriaQuery<FakeEntity, FakeEntityCriteria>(criteria, queryExecutor);
+        CriteriaQuery<FakeEntity, FakeEntityCriteria> query = new CriteriaQuery<FakeEntity, FakeEntityCriteria>(
+            criteria, queryExecutor);
 
         List<FakeEntity> actual = new ArrayList<FakeEntity>();
         for (FakeEntity entity : query) {
@@ -120,6 +120,50 @@ public class CriteriaQueryTest {
         }
 
         assertEquals(actual, expected);
+    }
+
+    @Test
+    public void singleResultTest() {
+        // This test doesn't really fit here but I;m adding it for convenience
+        List<FakeEntity> result = null;
+
+        try {
+            FakeEntityCriteria.getSingleResult(result);
+            assert false : "Should have thrown Runtime Exception";
+
+        } catch (RuntimeException e) {
+            assert e.getMessage().contains("NoResultException");
+        }
+
+        result = new ArrayList<FakeEntity>(2);
+
+        try {
+            FakeEntityCriteria.getSingleResult(result);
+            assert false : "Should have thrown Runtime Exception";
+
+        } catch (RuntimeException e) {
+            assert e.getMessage().contains("NoResultException");
+        }
+
+        result.add(new FakeEntity(1));
+
+        try {
+            FakeEntity r = FakeEntityCriteria.getSingleResult(result);
+            assert r.getId() == 1 : "Should have retuned expected entity but returned: " + r;
+
+        } catch (Throwable t) {
+            assert false : "Should have returned single result";
+        }
+
+        result.add(new FakeEntity(2));
+
+        try {
+            FakeEntityCriteria.getSingleResult(result);
+            assert false : "Should have thrown Runtime Exception";
+
+        } catch (RuntimeException e) {
+            assert e.getMessage().contains("NonUniqueResultException");
+        }
     }
 
 }

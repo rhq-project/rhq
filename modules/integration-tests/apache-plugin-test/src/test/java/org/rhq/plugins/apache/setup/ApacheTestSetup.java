@@ -41,6 +41,7 @@ import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.upgrade.FakeServerInventory;
 import org.rhq.core.system.SystemInfoFactory;
@@ -257,9 +258,23 @@ public class ApacheTestSetup {
     public void addDefaultExceptations(Expectations expectations) throws Exception {
         ServerServices ss = PluginContainerTest.getCurrentPluginContainerConfiguration().getServerServices();
 
+        //only import the apache servers we actually care about - we can't assume another apache won't be present
+        //on the machine running the test...
+        final ResourceType serverResourceType = apacheResourceTypes.findByName("Apache HTTP Server");
         expectations.allowing(ss.getDiscoveryServerService()).mergeInventoryReport(
             expectations.with(Expectations.any(InventoryReport.class)));
-        expectations.will(fakeInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
+        expectations.will(fakeInventory.mergeInventoryReport(new FakeServerInventory.InventoryStatusJudge() {
+            @Override
+            public InventoryStatus judge(Resource resource) {
+                if (serverResourceType.equals(resource.getResourceType())) {
+                    return deploymentConfig.serverRoot.equals(resource.getPluginConfiguration().getSimpleValue(
+                        ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT)) ? InventoryStatus.COMMITTED
+                        : InventoryStatus.IGNORED;
+                } else {
+                    return InventoryStatus.COMMITTED;
+                }
+            }
+        }));
 
         expectations.allowing(ss.getDiscoveryServerService()).upgradeResources(
             expectations.with(Expectations.any(Set.class)));

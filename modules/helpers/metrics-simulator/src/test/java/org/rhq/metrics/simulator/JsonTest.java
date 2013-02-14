@@ -1,4 +1,4 @@
-package org.rhq.perf.metrics;/*
+/*
  *
  *  * RHQ Management Platform
  *  * Copyright (C) 2005-2012 Red Hat, Inc.
@@ -23,17 +23,29 @@ package org.rhq.perf.metrics;/*
  *
  */
 
+package org.rhq.metrics.simulator;
+
+import static org.testng.AssertJUnit.assertNotNull;
+
+import java.io.InputStream;
+import java.util.Map;
+
+import org.codehaus.jackson.map.ObjectMapper;
 import org.testng.annotations.Test;
 
 /**
  * @author John Sanda
  */
-public class SimulatorTest {
+public class JsonTest {
 
     @Test
-    public void runSimulator() throws Exception {
-        Simulator simulator = new Simulator();
-        simulator.run();
+    public void mapJson() throws Exception {
+        InputStream inputStream = getClass().getResourceAsStream("test-simulator.json");
+        ObjectMapper mapper = new ObjectMapper();
+//        Simulation simulation = mapper.readValue(getClass().getResourceAsStream("test-simulator.json"),
+//            Simulation.class);
+        Map<String, Object>  simulation = mapper.readValue(inputStream, Map.class);
+        assertNotNull(simulation);
     }
 
 }

@@ -23,7 +23,7 @@
  *
  */
 
-package org.rhq.perf.metrics;
+package org.rhq.metrics.simulator;
 
 /**
  * @author John Sanda

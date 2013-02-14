@@ -23,7 +23,7 @@
  *
  */
 
-package org.rhq.perf.metrics;
+package org.rhq.metrics.simulator;
 
 import static com.datastax.driver.core.ProtocolOptions.Compression.SNAPPY;
 
@@ -51,6 +51,9 @@ import org.rhq.cassandra.CassandraNode;
 import org.rhq.cassandra.ClusterInitService;
 import org.rhq.cassandra.DeploymentOptions;
 import org.rhq.cassandra.schema.SchemaManager;
+import org.rhq.metrics.simulator.plan.ScheduleGroup;
+import org.rhq.metrics.simulator.plan.SimulationPlan;
+import org.rhq.metrics.simulator.plan.SimulationPlanner;
 import org.rhq.server.metrics.MetricsServer;
 
 /**
@@ -60,7 +63,10 @@ public class Simulator {
 
     private final Log log = LogFactory.getLog(Simulator.class);
 
-    public void run() throws Exception {
+    public void run(File jsonFile) throws Exception {
+        SimulationPlanner planner = new SimulationPlanner();
+        SimulationPlan plan = planner.create(jsonFile);
+
         List<CassandraNode> nodes = deployCluster();
         waitForClusterToInitialize(nodes);
 
@@ -71,7 +77,7 @@ public class Simulator {
         MetricsServer metricsServer = new MetricsServer();
         metricsServer.setSession(session);
 
-        Set<Schedule> schedules = initSchedules();
+        Set<Schedule> schedules = initSchedules(plan.getScheduleSets().get(0));
         PriorityQueue<Schedule> queue = new PriorityQueue<Schedule>(schedules);
         ReentrantLock queueLock = new ReentrantLock();
 
@@ -80,9 +86,10 @@ public class Simulator {
         measurementCollector.setQueue(queue);
         measurementCollector.setQueueLock(queueLock);
 
-        ScheduledExecutorService executorService = Executors.newScheduledThreadPool(3);
+        ScheduledExecutorService executorService = Executors.newScheduledThreadPool(plan.getThreadPoolSize());
         log.info("Starting executor service");
-        executorService.scheduleAtFixedRate(measurementCollector, 0, 500, TimeUnit.MILLISECONDS);
+        executorService.scheduleAtFixedRate(measurementCollector, 0, plan.getCollectionInterval(),
+            TimeUnit.MILLISECONDS);
 
         try {
             Thread.sleep(10000);
@@ -134,12 +141,12 @@ public class Simulator {
         return cluster.connect("rhq");
     }
 
-    private Set<Schedule> initSchedules() {
+    private Set<Schedule> initSchedules(ScheduleGroup scheduleSet) {
         long nextCollection = System.currentTimeMillis();
         Set<Schedule> schedules = new HashSet<Schedule>();
-        for (int i = 0; i < 10; ++i) {
+        for (int i = 0; i < scheduleSet.getCount(); ++i) {
             Schedule schedule = new Schedule(i);
-            schedule.setInterval(500);
+            schedule.setInterval(scheduleSet.getInterval());
             schedule.setNextCollection(nextCollection);
             schedules.add(schedule);
         }

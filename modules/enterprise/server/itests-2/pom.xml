@@ -35,167 +35,7 @@
   </properties>
 
   <dependencies>
-    <!--================ Test Deps ================ -->
-
-    <!-- Note, the test dep ordering can be important. Maven orders the [test] classpath in the order listed in the pom. -->
-    <dependency>
-      <groupId>org.jboss.as</groupId>
-      <artifactId>jboss-as-dist</artifactId>
-      <type>zip</type>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.jboss.spec</groupId>
-      <artifactId>jboss-javaee-6.0</artifactId>
-      <version>${jboss.javaee6.spec.version}</version>
-      <scope>provided</scope>
-      <type>pom</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.jboss.as</groupId>
-      <artifactId>jboss-as-arquillian-container-managed</artifactId>
-      <version>${jboss.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.jboss.arquillian.testng</groupId>
-      <artifactId>arquillian-testng-container</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.jboss.shrinkwrap.resolver</groupId>
-      <artifactId>shrinkwrap-resolver-depchain</artifactId>
-      <type>pom</type>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.jboss.arquillian.protocol</groupId>
-      <artifactId>arquillian-protocol-servlet</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-arquillian-suite-extension</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-core-domain</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-core-domain</artifactId>
-      <version>${project.version}</version>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-enterprise-server</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-script-bindings</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-server-client-api</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>rhq-serverplugin-drift</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>rhq-core-client-api</artifactId>
-      <version>${project.version}</version>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.rhq</groupId>
-      <artifactId>test-utils</artifactId>
-      <version>${project.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.testng</groupId>
-          <artifactId>testng</artifactId>
-        </exclusion>
-      </exclusions>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.rhq.helpers</groupId>
-      <artifactId>perftest-support</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.hibernate</groupId>
-      <artifactId>hibernate-entitymanager</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.powermock</groupId>
-      <artifactId>powermock-module-testng</artifactId>
-      <version>${powermock.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.powermock</groupId>
-      <artifactId>powermock-api-mockito</artifactId>
-      <version>${powermock.version}</version>      
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.opensymphony.quartz</groupId>
-      <artifactId>quartz</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.liquibase</groupId>
-      <artifactId>liquibase-core</artifactId>
-      <version>${liquibase.version}</version>      
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>joda-time</groupId>
-      <artifactId>joda-time</artifactId>
-      <version>2.1</version>      
-      <scope>test</scope>
-    </dependency>
+    <!-- see the test.dependencies profile below -->
   </dependencies>
 
   <build>
@@ -691,6 +531,185 @@
   </build>
 
   <profiles>
+
+    <profile>
+      <!-- This profile has been created to avoid unnecessary resolution of test dependencies during a build that does not 
+        run, compile or need tests. There are product build dependencies on this profile, don't remove. -->
+
+      <id>test.dependencies</id>
+      <activation>
+        <property>
+          <name>maven.test.skip</name>
+          <value>!true</value>
+        </property>
+      </activation>
+
+
+      <dependencies>
+        <!-- Note, the test dep ordering can be important. Maven orders the [test] classpath in the order listed in the pom. -->
+
+        <dependency>
+          <groupId>org.jboss.as</groupId>
+          <artifactId>jboss-as-dist</artifactId>
+          <type>zip</type>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.spec</groupId>
+          <artifactId>jboss-javaee-6.0</artifactId>
+          <version>${jboss.javaee6.spec.version}</version>
+          <scope>provided</scope>
+          <type>pom</type>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.as</groupId>
+          <artifactId>jboss-as-arquillian-container-managed</artifactId>
+          <version>${jboss.version}</version>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.arquillian.testng</groupId>
+          <artifactId>arquillian-testng-container</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.shrinkwrap.resolver</groupId>
+          <artifactId>shrinkwrap-resolver-depchain</artifactId>
+          <type>pom</type>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.jboss.arquillian.protocol</groupId>
+          <artifactId>arquillian-protocol-servlet</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.rhq</groupId>
+          <artifactId>rhq-arquillian-suite-extension</artifactId>
+          <version>${project.version}</version>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.rhq</groupId>
+          <artifactId>rhq-core-domain</artifactId>
+          <version>${project.version}</version>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>${project.groupId}</groupId>
+          <artifactId>rhq-core-domain</artifactId>
+          <version>${project.version}</version>
+          <type>test-jar</type>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.rhq</groupId>
+          <artifactId>rhq-enterprise-server</artifactId>
+          <version>${project.version}</version>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.rhq</groupId>
+          <artifactId>rhq-script-bindings</artifactId>
+          <version>${project.version}</version>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.rhq</groupId>
+          <artifactId>rhq-server-client-api</artifactId>
+          <version>${project.version}</version>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>${project.groupId}</groupId>
+          <artifactId>rhq-serverplugin-drift</artifactId>
+          <version>${project.version}</version>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>${project.groupId}</groupId>
+          <artifactId>rhq-core-client-api</artifactId>
+          <version>${project.version}</version>
+          <type>test-jar</type>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.rhq</groupId>
+          <artifactId>test-utils</artifactId>
+          <version>${project.version}</version>
+          <exclusions>
+            <exclusion>
+              <groupId>org.testng</groupId>
+              <artifactId>testng</artifactId>
+            </exclusion>
+          </exclusions>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.rhq.helpers</groupId>
+          <artifactId>perftest-support</artifactId>
+          <version>${project.version}</version>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.hibernate</groupId>
+          <artifactId>hibernate-entitymanager</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.powermock</groupId>
+          <artifactId>powermock-module-testng</artifactId>
+          <version>${powermock.version}</version>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.powermock</groupId>
+          <artifactId>powermock-api-mockito</artifactId>
+          <version>${powermock.version}</version>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.opensymphony.quartz</groupId>
+          <artifactId>quartz</artifactId>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.liquibase</groupId>
+          <artifactId>liquibase-core</artifactId>
+          <version>${liquibase.version}</version>
+          <scope>test</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>joda-time</groupId>
+          <artifactId>joda-time</artifactId>
+          <version>2.1</version>
+          <scope>test</scope>
+        </dependency>
+
+      </dependencies>
+    </profile>
+
     <!-- If testing against oracle, override the default property settings -->
     <profile>
       <id>itest.oracle</id>

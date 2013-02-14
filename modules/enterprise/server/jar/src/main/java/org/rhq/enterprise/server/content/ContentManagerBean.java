@@ -1614,11 +1614,11 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     public InstalledPackage getBackingPackageForResource(Subject subject, int resourceId) {
         InstalledPackage result = null;
 
-        // check if the resource is content backed
+        // check if the resource is content backed if not, return null
         Resource res = resourceManager.getResourceById(subject, resourceId);
         ResourceType type = res.getResourceType();
         if (!ResourceCreationDataType.CONTENT.equals(type.getCreationDataType())) {
-            throw new UnsupportedOperationException("Resource [" + resourceId + "] is not content backed.");
+            return null;
         }
         
         InstalledPackageCriteria criteria = new InstalledPackageCriteria();

@@ -24,13 +24,13 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.pc.PluginContainer;
-import org.rhq.plugins.test.avail.AvailDiscoveryComponent;
-import org.rhq.plugins.test.avail.AvailResourceComponent;
 import org.rhq.core.pc.inventory.AvailabilityExecutor;
 import org.rhq.core.pc.inventory.AvailabilityExecutor.Scan;
 import org.rhq.core.pc.inventory.ForceAvailabilityExecutor;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.plugins.test.avail.AvailDiscoveryComponent;
+import org.rhq.plugins.test.avail.AvailResourceComponent;
 import org.rhq.test.arquillian.AfterDiscovery;
 import org.rhq.test.arquillian.BeforeDiscovery;
 import org.rhq.test.arquillian.FakeServerInventory;
@@ -184,7 +184,7 @@ public class AvailTest extends Arquillian {
             Assert.assertEquals(datum.getAvailabilityType(), AvailabilityType.UP, "should be UP at the start");
         }
         AvailabilityExecutor.Scan scan = executor.getMostRecentScanHistory();
-        assertScan(scan, true, true, 29, 28, 29, 28, 0, 0);
+        assertScan(scan, true, true, 29, 29, 29, 28, 0, 0);
 
         // do a forced avail check again - nothing changed, so we should have an empty report
         report = executor.call();
@@ -514,7 +514,7 @@ public class AvailTest extends Arquillian {
         Assert.assertEquals(scan.getNumResources(), numResources,
             "Unexpected numResources, remember to include the implied platform?");
         Assert.assertEquals(scan.getNumAvailabilityChanges(), numChanges,
-            "Unexpected numChanges, remember to omit the implied platform");
+            "Unexpected numChanges, remember to include the implied platform");
         Assert.assertEquals(scan.getNumGetAvailabilityCalls(), numCalls,
             "Unexpected numGetAvailCalls, remember to include the implied platform");
         Assert.assertEquals(scan.getNumScheduledRandomly(), numSched,

@@ -24,7 +24,6 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
-import com.smartgwt.client.widgets.form.fields.events.FocusEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyUpEvent;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
@@ -114,6 +113,7 @@ public class FavoritesSearchStrategy extends AbstractSearchStrategy {
             public void onSuccess(List<SavedSearch> result) {
                 long fetchTime = System.currentTimeMillis() - startTime;
                 Log.debug(result.size() + " saved searches fetched in: " + fetchTime + "ms");
+                searchBar.getPickListGrid().setData(new ListGridRecord[] {});
 
                 DataSource dataSource = new DataSource();
                 dataSource.setClientOnly(true);

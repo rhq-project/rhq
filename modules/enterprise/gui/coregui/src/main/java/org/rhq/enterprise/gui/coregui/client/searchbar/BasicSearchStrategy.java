@@ -55,8 +55,6 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
     @Override
     public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
 
-        //Log.debug("Using BasicSearch Formatter");
-
         String name = record.getAttribute(ATTR_NAME);
         String kind = record.getAttribute(ATTR_KIND);
 
@@ -164,7 +162,7 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
 
     @Override
     public int getCellHeight() {
-        return 25;
+        return 20;
     }
 
     private void getTabAwareSearchSuggestions(final SearchSubsystem searchSubsystem, final String expression,

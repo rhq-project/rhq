@@ -24,6 +24,8 @@ import java.util.List;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.Autofit;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.MouseOutEvent;
@@ -62,7 +64,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 public class EnhancedSearchBar extends ToolStrip {
     private static final Messages MSG = CoreGUI.getMessages();
     private static final int PICKLIST_WIDTH = 600;
-    private static final int PICKLIST_HEIGHT = 400;
+    private static final int PICKLIST_HEIGHT = 500;
     private static final int PICKLIST_LEFT_OFFSET = 307;
     private static final int PICKLIST_TOP_OFFSET = 140;
     private SearchSubsystem searchSubsystem;
@@ -227,7 +229,6 @@ public class EnhancedSearchBar extends ToolStrip {
         pickListGrid.addMouseOutHandler(new MouseOutHandler() {
             @Override
             public void onMouseOut(MouseOutEvent mouseOutEvent) {
-                //Log.debug("Mouseout x: "+ mouseOutEvent.getX());
                 pickListGrid.hide();
             }
         });
@@ -260,7 +261,11 @@ public class EnhancedSearchBar extends ToolStrip {
         pickListGrid.addRecordClickHandler(getSearchStrategy());
         pickListGrid.setCellFormatter(getSearchStrategy());
         pickListGrid.setShowHeader(false);
-        pickListGrid.redraw();
+//        pickListGrid.setShowAllRecords(true);
+//        pickListGrid.setBodyOverflow(Overflow.CLIP_V);
+//        pickListGrid.setOverflow(Overflow.CLIP_V);
+//        pickListGrid.setLeaveScrollbarGap(false);
+
     }
 
     private void showPickListGrid(){

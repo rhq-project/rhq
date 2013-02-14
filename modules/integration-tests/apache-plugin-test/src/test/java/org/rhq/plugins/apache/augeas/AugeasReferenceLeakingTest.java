@@ -49,6 +49,7 @@ import org.rhq.core.pc.configuration.ConfigurationManager;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.upgrade.FakeServerInventory;
+import org.rhq.plugins.apache.ApacheServerComponent;
 import org.rhq.plugins.apache.PluginLocation;
 import org.rhq.plugins.apache.setup.ApacheTestConfiguration;
 import org.rhq.plugins.apache.setup.ApacheTestSetup;
@@ -58,7 +59,7 @@ import org.rhq.test.pc.PluginContainerSetup;
 import org.rhq.test.pc.PluginContainerTest;
 
 /**
- * 
+ *
  *
  * @author Lukas Krejci
  */
@@ -126,13 +127,13 @@ public class AugeasReferenceLeakingTest extends BMNGRunner {
             configureApacheServerToUseAugeas();
 
             PluginContainer pc = PluginContainer.getInstance();
-            Resource platform = pc.getInventoryManager().getPlatform();
+            Resource apacheServer = findApacheServerResource().getResource();
 
             for (int i = 0; i < configurationReadingInvocationCount; ++i) {
-                checkConfigurationRecursively(platform, pc.getConfigurationManager());
+                checkApacheServerConfigurationRecursively(apacheServer, pc.getConfigurationManager());
                 Thread.sleep(10000);
             }
-            
+
             //wait a couple of seconds for the loadConfig calls to finish
             Thread.sleep(60000);
         } finally {
@@ -192,14 +193,14 @@ public class AugeasReferenceLeakingTest extends BMNGRunner {
         }
     }
 
-    private void checkConfigurationRecursively(Resource resource, ConfigurationManager cm)
+    private void checkApacheServerConfigurationRecursively(Resource resource, ConfigurationManager cm)
         throws PluginContainerException {
         if (resource.getResourceType().getResourceConfigurationDefinition() != null) {
             cm.loadResourceConfiguration(resource.getId());
         }
 
         for (Resource child : resource.getChildResources()) {
-            checkConfigurationRecursively(child, cm);
+            checkApacheServerConfigurationRecursively(child, cm);
         }
     }
 
@@ -208,32 +209,36 @@ public class AugeasReferenceLeakingTest extends BMNGRunner {
 
         InventoryManager im = PluginContainer.getInstance().getInventoryManager();
 
-        ResourceContainer apacheServer = findResource(resourceTypes.findByName("Apache HTTP Server"));
+        ResourceContainer apacheServer = findApacheServerResource();
 
         Configuration config = apacheServer.getResourceContext().getPluginConfiguration();
 
         config.getSimple("augeasEnabled").setValue("yes");
 
         im.updatePluginConfiguration(apacheServer.getResource().getId(), config);
-        
+
         //and run discovery so that the new resources can go into inventory
-        
+
         im.executeServiceScanImmediately();
     }
 
-    private ResourceContainer findResource(ResourceType resourceType) {
+    private ResourceContainer findApacheServerResource() throws Exception {
         InventoryManager im = PluginContainer.getInstance().getInventoryManager();
+        ResourceTypes resourceTypes = new ResourceTypes(PluginLocation.APACHE_PLUGIN);
+        ResourceType apacheServerResourceType = resourceTypes.findByName("Apache HTTP Server");
 
-        return findResource(im, resourceType, im.getPlatform());
+        return findApacheServerResource(im, apacheServerResourceType, im.getPlatform());
     }
 
-    private ResourceContainer findResource(InventoryManager im, ResourceType rt, Resource root) {
-        if (root.getResourceType().equals(rt)) {
+    private ResourceContainer findApacheServerResource(InventoryManager im, ResourceType rt, Resource root) {
+        if (root.getResourceType().equals(rt)
+            && root.getPluginConfiguration().getSimpleValue(ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT)
+                .equals(setup.getDeploymentConfig().serverRoot)) {
             return im.getResourceContainer(root);
         }
 
         for (Resource child : root.getChildResources()) {
-            ResourceContainer rc = findResource(im, rt, child);
+            ResourceContainer rc = findApacheServerResource(im, rt, child);
             if (rc != null) {
                 return rc;
             }

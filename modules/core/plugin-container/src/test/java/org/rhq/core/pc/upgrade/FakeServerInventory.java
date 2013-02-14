@@ -59,6 +59,10 @@ import org.rhq.core.domain.resource.ResourceType;
  */
 public class FakeServerInventory {
 
+    public interface InventoryStatusJudge {
+        InventoryStatus judge(Resource resource);
+    }
+
     private Resource platform;
     private Map<String, Resource> resourceStore = new HashMap<String, Resource>();
     private int counter;
@@ -77,6 +81,13 @@ public class FakeServerInventory {
         }
     };
 
+    private static final Comparator<Resource> RESOURCE_TYPE_AND_STATUS_COMPARATOR = new Comparator<Resource>() {
+        public int compare(Resource o1, Resource o2) {
+            return o1.getResourceType().equals(o2.getResourceType())
+                && o1.getInventoryStatus() == o2.getInventoryStatus() ? 0 : o1.getId() - o2.getId();
+        }
+    };
+
     public FakeServerInventory() {
         this(false);
     }
@@ -86,14 +97,18 @@ public class FakeServerInventory {
     }
 
     public synchronized void prepopulateInventory(Resource platform, Collection<Resource> topLevelServers) {
-        this.platform = fakePersist(platform, InventoryStatus.COMMITTED, new HashSet<String>());
+        this.platform = fakePersist(platform, getSimpleJudge(InventoryStatus.COMMITTED), new HashSet<String>());
         for (Resource res : topLevelServers) {
             res.setParentResource(this.platform);
-            fakePersist(res, InventoryStatus.COMMITTED, new HashSet<String>());
+            fakePersist(res, getSimpleJudge(InventoryStatus.COMMITTED), new HashSet<String>());
         }
     }
 
     public synchronized CustomAction mergeInventoryReport(final InventoryStatus requiredInventoryStatus) {
+        return mergeInventoryReport(getSimpleJudge(requiredInventoryStatus));
+    }
+
+    public synchronized CustomAction mergeInventoryReport(final InventoryStatusJudge judge) {
         return new CustomAction("updateServerSideInventory") {
             public Object invoke(Invocation invocation) throws Throwable {
                 synchronized (FakeServerInventory.this) {
@@ -102,7 +117,7 @@ public class FakeServerInventory {
                     InventoryReport inventoryReport = (InventoryReport) invocation.getParameter(0);
 
                     for (Resource res : inventoryReport.getAddedRoots()) {
-                        Resource persisted = fakePersist(res, requiredInventoryStatus, new HashSet<String>());
+                        Resource persisted = fakePersist(res, judge, new HashSet<String>());
 
                         if (res.getParentResource() == Resource.ROOT) {
                             platform = persisted;
@@ -265,6 +280,23 @@ public class FakeServerInventory {
     }
 
     @SuppressWarnings("serial")
+    public synchronized Set<Resource> findResourcesByTypeAndStatus(final ResourceType type, final InventoryStatus status) {
+        Set<Resource> result = new HashSet<Resource>();
+        if (platform != null) {
+            findResources(platform, new Resource() {
+                public ResourceType getResourceType() {
+                    return type;
+                }
+
+                public InventoryStatus getInventoryStatus() {
+                    return status;
+                }
+            }, result, RESOURCE_TYPE_AND_STATUS_COMPARATOR);
+        }
+        return result;
+    }
+
+    @SuppressWarnings("serial")
     private Set<Resource> getResources(Set<Integer> resourceIds, boolean includeDescendants) {
         //it is important to keep the hierarchical order of the resource in the returned set
         //so that plugin container can merge the resources from top to bottom.
@@ -301,7 +333,7 @@ public class FakeServerInventory {
         }
     }
 
-    private Resource fakePersist(Resource agentSideResource, InventoryStatus requiredInventoryStatus,
+    private Resource fakePersist(Resource agentSideResource, InventoryStatusJudge statusJudge,
         Set<String> inProgressUUIds) {
         Resource persisted = resourceStore.get(agentSideResource.getUuid());
         if (!inProgressUUIds.add(agentSideResource.getUuid())) {
@@ -316,6 +348,7 @@ public class FakeServerInventory {
             persisted.setUuid(agentSideResource.getUuid());
             resourceStore.put(persisted.getUuid(), persisted);
         }
+
         persisted.setAgent(agentSideResource.getAgent());
         persisted.setCurrentAvailability(agentSideResource.getCurrentAvailability());
         persisted.setDescription(agentSideResource.getDescription());
@@ -323,13 +356,15 @@ public class FakeServerInventory {
         persisted.setPluginConfiguration(agentSideResource.getPluginConfiguration().clone());
         persisted.setResourceConfiguration(agentSideResource.getResourceConfiguration().clone());
         persisted.setVersion(agentSideResource.getVersion());
-        persisted.setInventoryStatus(requiredInventoryStatus);
         persisted.setResourceKey(agentSideResource.getResourceKey());
         persisted.setResourceType(agentSideResource.getResourceType());
 
+        InventoryStatus status = statusJudge.judge(persisted);
+        persisted.setInventoryStatus(status);
+
         Resource parent = agentSideResource.getParentResource();
         if (parent != null && parent != Resource.ROOT) {
-            parent = fakePersist(agentSideResource.getParentResource(), requiredInventoryStatus,
+            parent = fakePersist(agentSideResource.getParentResource(), statusJudge,
                 inProgressUUIds);
             persisted.setParentResource(parent);
             parent.getChildResources().add(persisted);
@@ -340,7 +375,7 @@ public class FakeServerInventory {
         //persist the children
         Set<Resource> childResources = new LinkedHashSet<Resource>();
         for (Resource child : agentSideResource.getChildResources()) {
-            childResources.add(fakePersist(child, requiredInventoryStatus, inProgressUUIds));
+            childResources.add(fakePersist(child, statusJudge, inProgressUUIds));
         }
         //now update the list with whatever the persisted resource contained in the past
         //i.e. we prefer the current results from the agent but keep the children we used to
@@ -398,6 +433,7 @@ public class FakeServerInventory {
 
                 children.add(syncChild);
             }
+
             getPrivateField(clazz, "childSyncInfos").set(ret, children);
 
             return ret;
@@ -443,5 +479,15 @@ public class FakeServerInventory {
                 findResources(child, template, result, comparator);
             }
         }
+    }
+
+    private InventoryStatusJudge getSimpleJudge(final InventoryStatus requiredStatus) {
+        return new InventoryStatusJudge() {
+
+            @Override
+            public InventoryStatus judge(Resource resource) {
+                return requiredStatus;
+            }
+        };
     }
 }

@@ -25,6 +25,7 @@ import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.form.fields.events.KeyUpEvent;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 
@@ -44,29 +45,27 @@ import org.rhq.enterprise.gui.coregui.client.util.Log;
  */
 public class FavoritesSearchStrategy extends AbstractSearchStrategy {
 
-    public FavoritesSearchStrategy(EnhancedSearchBar searchBar){
+    public FavoritesSearchStrategy(EnhancedSearchBar searchBar) {
         super(searchBar);
     }
 
     @Override
     public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
 
-        Log.debug("Using Favorites Formatter");
-
         String name = record.getAttribute(ATTR_NAME);
         Integer resultCount = record.getAttributeAsInt(ATTR_RESULT_COUNT);
         String pattern = record.getAttribute(ATTR_PATTERN);
 
-        String resultAsString = (resultCount != null) ? "("+String.valueOf(resultCount)+")" : "";
+        String resultAsString = (resultCount != null) ? "(" + String.valueOf(resultCount) + ")" : "";
         final String styleStr = "font-family:arial;font-size:11px;white-space:nowrap;overflow:hidden;";
-        String formatString = "<table>" +
-                "<tr><td ><span style='" + styleStr + "width:170px;color:green;float:left'>" + name + "</span></td>" +
-                "<td align='right'><span style='" + styleStr + "width:50px;float:right;font-weight:bold'>" + resultAsString+ "</span></td></tr>" +
-                "<tr><td colSpan=2><span style='" + styleStr + "width:220px;float:left'>" + pattern + "</span></td></tr></table>";
+        String formatString = "<table>" + "<tr><td ><span style='" + styleStr + "width:170px;color:green;float:left'>"
+            + name + "</span></td>" + "<td align='right'><span style='" + styleStr
+            + "width:50px;float:right;font-weight:bold'>" + resultAsString + "</span></td></tr>"
+            + "<tr><td colSpan=2><span style='" + styleStr + "width:220px;float:left'>" + pattern
+            + "</span></td></tr></table>";
 
         return formatString;
     }
-
 
     /**
      * Executed when this field is clicked on.  Note that if {@link
@@ -94,13 +93,15 @@ public class FavoritesSearchStrategy extends AbstractSearchStrategy {
         // nothing currently
     }
 
-    private void populateSearchComboboxSavedSearchesWithAutoComplete(){
+    private void populateSearchComboboxSavedSearchesWithAutoComplete() {
 
+        Log.debug("Search Saved Searches");
         SavedSearchCriteria savedSearchCriteria = new SavedSearchCriteria();
         Subject subject = UserSessionManager.getSessionSubject();
         savedSearchCriteria.addFilterSubjectId(subject.getId());
         savedSearchCriteria.setStrict(true);
         final long startTime = System.currentTimeMillis();
+        searchBar.getPickListGrid().setData(new ListGridRecord[] {});
 
         searchService.findSavedSearchesByCriteria(savedSearchCriteria, new AsyncCallback<List<SavedSearch>>() {
 
@@ -113,19 +114,24 @@ public class FavoritesSearchStrategy extends AbstractSearchStrategy {
             public void onSuccess(List<SavedSearch> result) {
                 long fetchTime = System.currentTimeMillis() - startTime;
                 Log.debug(result.size() + " saved searches fetched in: " + fetchTime + "ms");
-                searchBar.getPickListGrid().setData(new ListGridRecord[] {});
+                ListGrid searchBarPickListGrid = searchBar.getPickListGrid();
+                DataSource ds = searchBarPickListGrid.getDataSource();
 
-                DataSource dataSource = new DataSource();
-                dataSource.setClientOnly(true);
-                DataSourceTextField valueField = new DataSourceTextField(ATTR_ID, "Id");
-                valueField.setPrimaryKey(true);
-                DataSourceTextField kindField = new DataSourceTextField(ATTR_KIND, "Kind");
-                DataSourceTextField nameField = new DataSourceTextField(ATTR_NAME, "Name");
-                DataSourceTextField patternField = new DataSourceTextField(ATTR_PATTERN, "Pattern");
-                DataSourceTextField descriptionField = new DataSourceTextField(ATTR_DESCRIPTION, "Description");
-                DataSourceIntegerField recordCount = new DataSourceIntegerField(ATTR_RESULT_COUNT, "Result Count");
-                dataSource.setFields(valueField, kindField,nameField,patternField,descriptionField,recordCount);
-
+                if (null == ds) {
+                    ds = new DataSource();
+                    ds.setClientOnly(true);
+                    DataSourceTextField valueField = new DataSourceTextField(ATTR_ID, "Id");
+                    valueField.setPrimaryKey(true);
+                    DataSourceTextField kindField = new DataSourceTextField(ATTR_KIND, "Kind");
+                    DataSourceTextField nameField = new DataSourceTextField(ATTR_NAME, "Name");
+                    DataSourceTextField patternField = new DataSourceTextField(ATTR_PATTERN, "Pattern");
+                    DataSourceTextField descriptionField = new DataSourceTextField(ATTR_DESCRIPTION, "Description");
+                    DataSourceIntegerField recordCount = new DataSourceIntegerField(ATTR_RESULT_COUNT, "Result Count");
+                    ds.setFields(valueField, kindField, nameField, patternField, descriptionField, recordCount);
+                } else {
+                    ds.invalidateCache();
+                }
+                searchBarPickListGrid.setData(new ListGridRecord[] {});
                 for (SavedSearch savedSearch : result) {
                     Log.debug("savedSearch: " + savedSearch.getName());
                     ListGridRecord record = new ListGridRecord();
@@ -136,10 +142,14 @@ public class FavoritesSearchStrategy extends AbstractSearchStrategy {
                     record.setAttribute(ATTR_PATTERN, savedSearch.getPattern());
                     if (savedSearch.getResultCount() != null)
                         record.setAttribute(ATTR_RESULT_COUNT, savedSearch.getResultCount());
-                    dataSource.addData(record);
+                    ds.addData(record);
                 }
 
-                searchBar.getSearchTextItem().setOptionDataSource(dataSource);
+                try {
+                    searchBarPickListGrid.fetchData();
+                } catch (Exception e) {
+                    Log.debug("Caught exception on fetchData: " + e);
+                }
             }
         });
     }

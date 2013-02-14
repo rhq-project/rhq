@@ -87,12 +87,13 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
         Log.debug("BasicSearchStrategy click");
         String kind = event.getRecord().getAttribute(ATTR_KIND);
         if (kind.equals("SAVED") || kind.equals("GLOBAL")) {
+            Log.debug("Saved or Global Search Click");
             searchBar.switchToSavedSearchMode();
             String savedSearchName = event.getRecord().getAttribute(ATTR_VALUE);
             searchBar.getSaveSearchTextItem().setValue(savedSearchName);
             assignSavedSearchExpression(savedSearchName, searchBar.getSearchTextItem());
         } else {
-
+            Log.debug("Regular Search Click");
             String clickedExpression = event.getRecord().getAttribute(ATTR_NAME);
             searchBar.getSearchTextItem().setValue(clickedExpression);
             if (null != clickedExpression && clickedExpression.length() > 0) {

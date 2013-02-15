@@ -50,6 +50,7 @@ public class SimulationPlanner {
         SimulationPlan simulation = new SimulationPlan();
 
         simulation.setCollectionInterval(root.get("collectionInterval").asLong());
+        simulation.setAggregationInterval(root.get("aggregationInterval").asLong());
         simulation.setThreadPoolSize(root.get("threadPoolSize").asInt());
 
         for (JsonNode node : root.get("schedules")) {

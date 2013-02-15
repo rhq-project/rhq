@@ -92,9 +92,14 @@ public class Simulator {
         measurementCollector.setQueue(queue);
         measurementCollector.setQueueLock(queueLock);
 
+        MeasurementAggregator measurementAggregator = new MeasurementAggregator();
+        measurementAggregator.setMetricsServer(metricsServer);
+
         ScheduledExecutorService executorService = Executors.newScheduledThreadPool(plan.getThreadPoolSize());
         log.info("Starting executor service");
         executorService.scheduleAtFixedRate(measurementCollector, 0, plan.getCollectionInterval(),
+            TimeUnit.MILLISECONDS);
+        executorService.scheduleAtFixedRate(measurementAggregator, 0, plan.getAggregationInterval(),
             TimeUnit.MILLISECONDS);
 
         try {

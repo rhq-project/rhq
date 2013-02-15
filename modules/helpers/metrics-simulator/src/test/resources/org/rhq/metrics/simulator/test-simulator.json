@@ -6,7 +6,8 @@
         }
     ],
     "collectionInterval": 500,
-    "threadPoolSize": 3,
+    "aggregationInterval": 1000,
+    "threadPoolSize": 4,
     "ttl": [
         {
             "table": "raw_metrics",

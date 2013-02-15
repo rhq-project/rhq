@@ -41,6 +41,8 @@ public class SimulationPlan {
 
     private long collectionInterval;
 
+    private long aggregationInterval;
+
     private MetricsConfiguration metricsServerConfiguration;
 
     public List<ScheduleGroup> getScheduleSets() {
@@ -77,5 +79,13 @@ public class SimulationPlan {
 
     public void setMetricsServerConfiguration(MetricsConfiguration metricsServerConfiguration) {
         this.metricsServerConfiguration = metricsServerConfiguration;
+    }
+
+    public long getAggregationInterval() {
+        return aggregationInterval;
+    }
+
+    public void setAggregationInterval(long aggregationInterval) {
+        this.aggregationInterval = aggregationInterval;
     }
 }

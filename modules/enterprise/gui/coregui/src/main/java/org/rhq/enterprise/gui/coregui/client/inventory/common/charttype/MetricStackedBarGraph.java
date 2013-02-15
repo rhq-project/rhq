@@ -138,41 +138,29 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                             .attr("transform", "translate(" + margin.left + "," + (+titleHeight + titleSpace + margin.top) + ")");
 
 
-            function createMinAvgPeakSidePanel( minLabel, minValue, avgLabel, avgValue, highLabel, highValue, uom){
+            function createMinAvgPeakSidePanel( minLabel, minValue, avgLabel, avgValue, highLabel, highValue, uom ){
                 var fontSize = 12,
-                        yTitle = 27,
                         fgColor = "#003168",
-                        baseX = 420,
-                        xInc = 55;
-
+                        xLabel = 772,
+                        xValue = 820,
+                        yBase = 100,
+                        yInc = 25;
 
                 // title/header
-                var title = chart.append("g").append("rect")
-                        .attr("class", "title")
-                        .attr("x", 10)
-                        .attr("y", margin.top)
-                        .attr("height", titleHeight)
-                        .attr("width", width + 30 + margin.left)
-                    //.attr("stroke", "#878B94")
-                    //.attr("stroke-width", "0.25" )
-                        .attr("fill", "none");
-                //.attr("fill", "#E6E6E6");
+                var sidebar = chart.append("g").append("rect")
+                        .attr("class", "rightSidePanel")
+                        .attr("x", xLabel -10)
+                        .attr("y", margin.top + 60)
+                        .attr("height", 100)
+                        .attr("width", 135)
+                        .attr("opacity", "0.3")
+                        .attr("fill", "#E8E8E8");
 
-                chart.append("text")
-                        .attr("class", "titleName")
-                        .attr("x", 30)
-                        .attr("y", yTitle)
-                        .attr("font-size", fontSize)
-                        .attr("font-weight", "bold")
-                        .attr("text-anchor", "left")
-                        .text(titleName)
-                        .attr("fill", fgColor);
-
-
+                // min
                 chart.append("text")
                         .attr("class", "minLabel")
-                        .attr("x", baseX)
-                        .attr("y", yTitle)
+                        .attr("x", xLabel)
+                        .attr("y", yBase)
                         .attr("font-size", fontSize)
                         .attr("font-weight", "bold")
                         .attr("text-anchor", "left")
@@ -181,8 +169,8 @@ public final class MetricStackedBarGraph extends AbstractGraph {
 
                 chart.append("text")
                         .attr("class", "minText")
-                        .attr("x", baseX + xInc)
-                        .attr("y", yTitle)
+                        .attr("x", xValue)
+                        .attr("y", yBase)
                         .attr("font-size", fontSize)
                         .attr("text-anchor", "left")
                         .text(minValue.toPrecision(3)+ " "+uom)
@@ -191,8 +179,8 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                 //avg
                 chart.append("text")
                         .attr("class", "avgLabel")
-                        .attr("x", baseX + 2 * xInc)
-                        .attr("y", yTitle)
+                        .attr("x", xLabel)
+                        .attr("y", yBase + yInc)
                         .attr("font-size", fontSize)
                         .attr("font-weight", "bold")
                         .attr("text-anchor", "left")
@@ -201,8 +189,8 @@ public final class MetricStackedBarGraph extends AbstractGraph {
 
                 chart.append("text")
                         .attr("class", "avgText")
-                        .attr("x", baseX + 3 * xInc)
-                        .attr("y", yTitle)
+                        .attr("x", xValue)
+                        .attr("y", yBase + yInc)
                         .attr("font-size", fontSize)
                         .attr("text-anchor", "left")
                         .text(avgValue.toPrecision(3) + " "+uom)
@@ -211,8 +199,8 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                 // high
                 chart.append("text")
                         .attr("class", "highLabel")
-                        .attr("x", 10 + baseX + 4 * xInc)
-                        .attr("y", yTitle)
+                        .attr("x", xLabel)
+                        .attr("y", yBase + 2 * yInc)
                         .attr("font-size", fontSize)
                         .attr("font-weight", "bold")
                         .attr("text-anchor", "left")
@@ -221,18 +209,17 @@ public final class MetricStackedBarGraph extends AbstractGraph {
 
                 chart.append("text")
                         .attr("class", "highText")
-                        .attr("x", 10 + baseX + 5 * xInc)
-                        .attr("y", yTitle)
+                        .attr("x", xValue)
+                        .attr("y", yBase + 2 * yInc)
                         .attr("font-size", fontSize)
                         .attr("text-anchor", "left")
                         .text(highValue.toPrecision(3) + " "+ uom)
                         .attr("fill", fgColor);
-                return title;
 
 
             }
 
-            function createHeader(titleName, minLabel, minValue, avgLabel, avgValue, highLabel, highValue, uom) {
+            function createHeader(titleName ){
                 var      title = chart.append("g").append("rect")
                         .attr("class", "title")
                         .attr("x", 10)
@@ -530,7 +517,6 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         .attr("stroke", "#b0d9b0")
                         .attr("stroke-width", "1.5")
                         .attr("stroke-dasharray", "3,3")
-                        //.attr("stroke-opacity", ".9")
                         .attr("d", avgLine);
 
                 // min baseline Line
@@ -658,7 +644,8 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                     console.log("chart id: " + chartContext.chartSelection);
                     //console.log("Json Data:\n"+chartContext.data);
 
-                    createHeader(chartContext.yAxisLabel, chartContext.minChartTitle, min, chartContext.avgChartTitle, avg, chartContext.peakChartTitle, peak, chartContext.yAxisUnits, chartContext.hoverBarLabel);
+                    createHeader(chartContext.yAxisLabel);
+                    createMinAvgPeakSidePanel(chartContext.minChartTitle, min, chartContext.avgChartTitle, avg, chartContext.peakChartTitle, peak, chartContext.yAxisUnits );
                     createYAxisGridLines();
                     createStackedBars();
                     createXandYAxes();

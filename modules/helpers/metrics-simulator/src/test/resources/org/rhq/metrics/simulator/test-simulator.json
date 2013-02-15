@@ -6,5 +6,40 @@
         }
     ],
     "collectionInterval": 500,
-    "threadPoolSize": 3
+    "threadPoolSize": 3,
+    "ttl": [
+        {
+            "table": "raw_metrics",
+            "value": 3600
+        },
+        {
+            "table": "one_hour_metrics",
+            "value": 7200
+        },
+        {
+            "table": "six_hour_metrics",
+            "value": 10800
+        },
+        {
+            "table": "twenty_four_hour_metrics",
+            "value": 14400
+        }
+    ],
+    "timeSliceDuration": {
+        "units": "minutes",
+        "values": [
+            {
+                "table": "raw_metrics",
+                "value": 1
+            },
+            {
+                "table": "one_hour_metrics",
+                "value": 6
+            },
+            {
+                "table": "six_hour_metrics",
+                "value": 24
+            }
+        ]
+    }
 }

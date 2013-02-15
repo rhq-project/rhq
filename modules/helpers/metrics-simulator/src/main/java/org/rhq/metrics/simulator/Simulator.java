@@ -54,6 +54,7 @@ import org.rhq.cassandra.schema.SchemaManager;
 import org.rhq.metrics.simulator.plan.ScheduleGroup;
 import org.rhq.metrics.simulator.plan.SimulationPlan;
 import org.rhq.metrics.simulator.plan.SimulationPlanner;
+import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsServer;
 
 /**
@@ -76,6 +77,11 @@ public class Simulator {
 
         MetricsServer metricsServer = new MetricsServer();
         metricsServer.setSession(session);
+        metricsServer.setConfiguration(plan.getMetricsServerConfiguration());
+
+        DateTimeService dateTimeService = new DateTimeService();
+        dateTimeService.setConfiguration(plan.getMetricsServerConfiguration());
+        metricsServer.setDateTimeService(dateTimeService);
 
         Set<Schedule> schedules = initSchedules(plan.getScheduleSets().get(0));
         PriorityQueue<Schedule> queue = new PriorityQueue<Schedule>(schedules);

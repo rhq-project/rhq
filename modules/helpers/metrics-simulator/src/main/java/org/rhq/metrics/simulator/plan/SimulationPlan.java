@@ -28,6 +28,8 @@ package org.rhq.metrics.simulator.plan;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rhq.server.metrics.MetricsConfiguration;
+
 /**
  * @author John Sanda
  */
@@ -39,6 +41,7 @@ public class SimulationPlan {
 
     private long collectionInterval;
 
+    private MetricsConfiguration metricsServerConfiguration;
 
     public List<ScheduleGroup> getScheduleSets() {
         return scheduleSets;
@@ -66,5 +69,13 @@ public class SimulationPlan {
 
     public void setCollectionInterval(long collectionInterval) {
         this.collectionInterval = collectionInterval;
+    }
+
+    public MetricsConfiguration getMetricsServerConfiguration() {
+        return metricsServerConfiguration;
+    }
+
+    public void setMetricsServerConfiguration(MetricsConfiguration metricsServerConfiguration) {
+        this.metricsServerConfiguration = metricsServerConfiguration;
     }
 }

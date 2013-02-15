@@ -137,10 +137,8 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                             .attr("height", height + margin.top - titleHeight - titleSpace + margin.bottom)
                             .attr("transform", "translate(" + margin.left + "," + (+titleHeight + titleSpace + margin.top) + ")");
 
-            console.log(" *** Chart js obj: "+chart);
 
-
-            function createHeader(titleName, minLabel, minValue, avgLabel, avgValue, highLabel, highValue, uom) {
+            function createMinAvgPeakSidePanel( minLabel, minValue, avgLabel, avgValue, highLabel, highValue, uom){
                 var fontSize = 12,
                         yTitle = 27,
                         fgColor = "#003168",
@@ -155,10 +153,10 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         .attr("y", margin.top)
                         .attr("height", titleHeight)
                         .attr("width", width + 30 + margin.left)
-                        .attr("stroke", "#878B94")
-                        .attr("stroke-width", "0.25" )
-                        .attr("fill", "url(#headerGrad)");
-                        //.attr("fill", "#E6E6E6");
+                    //.attr("stroke", "#878B94")
+                    //.attr("stroke-width", "0.25" )
+                        .attr("fill", "none");
+                //.attr("fill", "#E6E6E6");
 
                 chart.append("text")
                         .attr("class", "titleName")
@@ -229,6 +227,30 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         .attr("text-anchor", "left")
                         .text(highValue.toPrecision(3) + " "+ uom)
                         .attr("fill", fgColor);
+                return title;
+
+
+            }
+
+            function createHeader(titleName, minLabel, minValue, avgLabel, avgValue, highLabel, highValue, uom) {
+                var      title = chart.append("g").append("rect")
+                        .attr("class", "title")
+                        .attr("x", 10)
+                        .attr("y", margin.top)
+                        .attr("height", titleHeight)
+                        .attr("width", width + 30 + margin.left)
+                        .attr("fill", "none");
+
+                chart.append("text")
+                        .attr("class", "titleName")
+                        .attr("x", 40)
+                        .attr("y", 37)
+                        .attr("font-size", "12")
+                        .attr("font-weight", "bold")
+                        .attr("text-anchor", "left")
+                        .text(titleName)
+                        .attr("fill", "#003168");
+
                 return title;
 
             }

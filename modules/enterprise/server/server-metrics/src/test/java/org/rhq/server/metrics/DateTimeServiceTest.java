@@ -26,9 +26,13 @@
 package org.rhq.server.metrics;
 
 import static org.joda.time.DateTime.now;
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
+import org.joda.time.DateTime;
+import org.joda.time.Minutes;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -36,7 +40,60 @@ import org.testng.annotations.Test;
  */
 public class DateTimeServiceTest {
 
-    DateTimeService dateTimeService = new DateTimeService();
+    private DateTimeService dateTimeService;
+
+    private MetricsConfiguration configuration;
+
+    @BeforeMethod
+    public void initService() {
+        configuration = new MetricsConfiguration();
+        dateTimeService = new DateTimeService();
+        dateTimeService.setConfiguration(configuration);
+    }
+
+    @Test
+    public void getHourTimeSliceForRawData() {
+        DateTime currentHour = dateTimeService.hour0().plusHours(2);
+        DateTime currentTime = currentHour.plusMinutes(2);
+
+        DateTime timeSlice = dateTimeService.getTimeSlice(currentTime, configuration.getRawTimeSliceDuration());
+
+        assertEquals(timeSlice, currentHour, "The hour time slice for raw data is wrong");
+    }
+
+    @Test
+    public void getMinuteTimeSliceForRawData() {
+        configuration = new MetricsConfiguration();
+        configuration.setRawTimeSliceDuration(Minutes.ONE.toStandardDuration());
+
+        DateTime currentMinute = dateTimeService.hour0().plusHours(2).plusMinutes(3);
+
+        DateTime timeSlice = dateTimeService.getTimeSlice(currentMinute.plusSeconds(27),
+            configuration.getRawTimeSliceDuration());
+
+        assertEquals(timeSlice, currentMinute, "The minute time slice for raw data is wrong");
+    }
+
+    @Test
+    public void getHourTimeSliceForOneHourData() {
+        DateTime currentHour = dateTimeService.hour0().plusHours(9);
+        DateTime timeSlice = dateTimeService.getTimeSlice(currentHour, configuration.getOneHourTimeSliceDuration());
+        DateTime expected = dateTimeService.hour0().plusHours(6);
+
+        assertEquals(timeSlice, expected, "The hour time slice for one hour data is wrong");
+    }
+
+    @Test
+    public void getMinuteTimeSliceForOneHourData() {
+        configuration = new MetricsConfiguration();
+        configuration.setOneHourTimeSliceDuration(Minutes.minutes(6).toStandardDuration());
+
+        DateTime currentTime = dateTimeService.hour0().plusHours(2).plusMinutes(11);
+        DateTime timeSlice = dateTimeService.getTimeSlice(currentTime, configuration.getOneHourTimeSliceDuration());
+        DateTime expectedTime = dateTimeService.hour0().plusHours(2).plusMinutes(6);
+
+        assertEquals(timeSlice, expectedTime, "The minute time slice for one hour data is wrong");
+    }
 
     @Test
     public void timestampBefore7DaysShouldBeInRawDataRange() {

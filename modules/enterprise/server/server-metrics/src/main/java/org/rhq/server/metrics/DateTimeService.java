@@ -34,6 +34,7 @@ import org.joda.time.DateTimeField;
 import org.joda.time.DateTimeFieldType;
 import org.joda.time.Duration;
 import org.joda.time.Minutes;
+import org.joda.time.Period;
 import org.joda.time.chrono.GregorianChronology;
 import org.joda.time.field.DividedDateTimeField;
 
@@ -49,6 +50,12 @@ public class DateTimeService {
 
     private DateTimeComparator dateTimeComparator = DateTimeComparator.getInstance();
 
+    private MetricsConfiguration configuration;
+
+    public void setConfiguration(MetricsConfiguration configuration) {
+        this.configuration = configuration;
+    }
+
     public DateTime getTimeSlice(DateTime dateTime, Minutes interval) {
         Chronology chronology = GregorianChronology.getInstance();
         DateTimeField hourField = chronology.hourOfDay();
@@ -57,22 +64,44 @@ public class DateTimeService {
         long timestamp = dividedField.roundFloor(dateTime.getMillis());
 
         return new DateTime(timestamp);
+        //return dateTimeFloor(dateTime, interval.toPeriod());
+    }
+
+    public DateTime getTimeSlice(DateTime dt, Duration duration) {
+        Period p = duration.toPeriod();
+
+        if (p.getYears() != 0) {
+            return dt.yearOfEra().roundFloorCopy().minusYears(dt.getYearOfEra() % p.getYears());
+        } else if (p.getMonths() != 0) {
+            return dt.monthOfYear().roundFloorCopy().minusMonths((dt.getMonthOfYear() - 1) % p.getMonths());
+        } else if (p.getWeeks() != 0) {
+            return dt.weekOfWeekyear().roundFloorCopy().minusWeeks((dt.getWeekOfWeekyear() - 1) % p.getWeeks());
+        } else if (p.getDays() != 0) {
+            return dt.dayOfMonth().roundFloorCopy().minusDays((dt.getDayOfMonth() - 1) % p.getDays());
+        } else if (p.getHours() != 0) {
+            return dt.hourOfDay().roundFloorCopy().minusHours(dt.getHourOfDay() % p.getHours());
+        } else if (p.getMinutes() != 0) {
+            return dt.minuteOfHour().roundFloorCopy().minusMinutes(dt.getMinuteOfHour() % p.getMinutes());
+        } else if (p.getSeconds() != 0) {
+            return dt.secondOfMinute().roundFloorCopy().minusSeconds(dt.getSecondOfMinute() % p.getSeconds());
+        }
+        return dt.millisOfSecond().roundCeilingCopy().minusMillis(dt.getMillisOfSecond() % p.getMillis());
     }
 
     public boolean isInRawDataRange(DateTime dateTime) {
-        return dateTimeComparator.compare(now().minusDays(7), dateTime) < 0;
+        return dateTimeComparator.compare(now().minus(configuration.getRawRetention()), dateTime) < 0;
     }
 
     public boolean isIn1HourDataRange(DateTime dateTime) {
-        return dateTimeComparator.compare(now().minusDays(14), dateTime) < 0;
+        return dateTimeComparator.compare(now().minus(configuration.getOneHourRetention()), dateTime) < 0;
     }
 
     public boolean isIn6HourDataRnage(DateTime dateTime) {
-        return dateTimeComparator.compare(now().minusDays(31), dateTime) < 0;
+        return dateTimeComparator.compare(now().minus(configuration.getSixHourRetention()), dateTime) < 0;
     }
 
     public boolean isIn24HourDataRnage(DateTime dateTime) {
-        return dateTimeComparator.compare(now().minusDays(365), dateTime) < 0;
+        return dateTimeComparator.compare(now().minus(configuration.getTwentyFourHourRetention()), dateTime) < 0;
     }
 
     public DateTime hour0() {

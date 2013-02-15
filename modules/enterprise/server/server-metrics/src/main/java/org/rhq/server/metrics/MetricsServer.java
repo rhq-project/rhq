@@ -39,8 +39,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeComparator;
-import org.joda.time.Hours;
-import org.joda.time.Minutes;
+import org.joda.time.Duration;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
@@ -64,9 +63,19 @@ public class MetricsServer {
 
     private MetricsDAO dao;
 
+    private MetricsConfiguration configuration;
+
     public void setSession(Session session) {
         this.session = session;
         dao = new MetricsDAO(session);
+    }
+
+    public void setConfiguration(MetricsConfiguration configuration) {
+        this.configuration = configuration;
+    }
+
+    public void setDateTimeService(DateTimeService dateTimeService) {
+        this.dateTimeService = dateTimeService;
     }
 
     public RawNumericMetric findLatestValueForResource(int scheduleId) {
@@ -186,15 +195,15 @@ public class MetricsServer {
     }
 
     public void addNumericData(Set<MeasurementDataNumeric> dataSet) {
-        Set<MeasurementDataNumeric> updates = dao.insertRawMetrics(dataSet, MetricsTable.RAW.getTTL());
+        Set<MeasurementDataNumeric> updates = dao.insertRawMetrics(dataSet, configuration.getRawTTL());
         updateMetricsIndex(updates);
     }
 
     void updateMetricsIndex(Set<MeasurementDataNumeric> rawMetrics) {
         Map<Integer, Long> updates = new TreeMap<Integer, Long>();
         for (MeasurementDataNumeric rawMetric : rawMetrics) {
-            updates.put(rawMetric.getScheduleId(), new DateTime(rawMetric.getTimestamp()).hourOfDay().roundFloorCopy()
-                .getMillis());
+            updates.put(rawMetric.getScheduleId(), dateTimeService.getTimeSlice(
+                new DateTime(rawMetric.getTimestamp()), configuration.getRawTimeSliceDuration()).getMillis());
         }
         dao.updateMetricsIndex(MetricsTable.ONE_HOUR, updates);
     }
@@ -222,17 +231,19 @@ public class MetricsServer {
         newOneHourAggregates = updatedSchedules;
         if (updatedSchedules.iterator().hasNext()) {
             dao.deleteMetricsIndexEntries(MetricsTable.ONE_HOUR);
-            updateMetricsIndex(MetricsTable.SIX_HOUR, updatedSchedules, Minutes.minutes(60 * 6));
+            updateMetricsIndex(MetricsTable.SIX_HOUR, updatedSchedules, configuration.getOneHourTimeSliceDuration());
         }
 
-        updatedSchedules = calculateAggregates(MetricsTable.ONE_HOUR, MetricsTable.SIX_HOUR, Minutes.minutes(60 * 6));
+        updatedSchedules = calculateAggregates(MetricsTable.ONE_HOUR, MetricsTable.SIX_HOUR,
+            configuration.getOneHourTimeSliceDuration());
         if (updatedSchedules.iterator().hasNext()) {
             dao.deleteMetricsIndexEntries(MetricsTable.SIX_HOUR);
-            updateMetricsIndex(MetricsTable.TWENTY_FOUR_HOUR, updatedSchedules, Hours.hours(24).toStandardMinutes());
+            updateMetricsIndex(MetricsTable.TWENTY_FOUR_HOUR, updatedSchedules,
+                configuration.getSixHourTimeSliceDuration());
         }
 
-        updatedSchedules = calculateAggregates(MetricsTable.SIX_HOUR, MetricsTable.TWENTY_FOUR_HOUR, Hours.hours(24)
-            .toStandardMinutes());
+        updatedSchedules = calculateAggregates(MetricsTable.SIX_HOUR, MetricsTable.TWENTY_FOUR_HOUR,
+            configuration.getSixHourTimeSliceDuration());
         if (updatedSchedules.iterator().hasNext()) {
             dao.deleteMetricsIndexEntries(MetricsTable.TWENTY_FOUR_HOUR);
         }
@@ -240,11 +251,11 @@ public class MetricsServer {
         return newOneHourAggregates;
     }
 
-    private void updateMetricsIndex(MetricsTable bucket, Iterable<AggregateNumericMetric> metrics, Minutes interval) {
+    private void updateMetricsIndex(MetricsTable bucket, Iterable<AggregateNumericMetric> metrics, Duration duration) {
         Map<Integer, Long> updates = new TreeMap<Integer, Long>();
         for (AggregateNumericMetric metric : metrics) {
             updates.put(metric.getScheduleId(),
-                dateTimeService.getTimeSlice(new DateTime(metric.getTimestamp()), interval).getMillis());
+                dateTimeService.getTimeSlice(new DateTime(metric.getTimestamp()), duration).getMillis());
         }
         dao.updateMetricsIndex(bucket, updates);
     }
@@ -296,10 +307,10 @@ public class MetricsServer {
         return new AggregateNumericMetric(0, mean.getArithmeticMean(), min, max, timestamp);
     }
 
-    private List<AggregateNumericMetric> calculateAggregates(MetricsTable fromColumnFamily,
-        MetricsTable toColumnFamily, Minutes nextInterval) {
+    private List<AggregateNumericMetric> calculateAggregates(MetricsTable fromTable,
+        MetricsTable toTable, Duration nextDuration) {
 
-        Iterable<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(toColumnFamily);
+        Iterable<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(toTable);
         List<AggregateNumericMetric> toMetrics = new ArrayList<AggregateNumericMetric>();
 
         DateTime currentHour = getCurrentHour();
@@ -307,21 +318,21 @@ public class MetricsServer {
 
         for (MetricsIndexEntry indexEntry : indexEntries) {
             DateTime startTime = indexEntry.getTime();
-            DateTime endTime = startTime.plus(nextInterval);
+            DateTime endTime = startTime.plus(nextDuration);
 
             if (dateTimeComparator.compare(currentHour, endTime) < 0) {
                 continue;
             }
 
-            Iterable<AggregateNumericMetric> metrics = dao.findAggregateMetrics(fromColumnFamily,
+            Iterable<AggregateNumericMetric> metrics = dao.findAggregateMetrics(fromTable,
                 indexEntry.getScheduleId(), startTime.getMillis(), endTime.getMillis());
             AggregateNumericMetric aggregatedMetric = calculateAggregate(metrics, startTime.getMillis());
             aggregatedMetric.setScheduleId(indexEntry.getScheduleId());
             toMetrics.add(aggregatedMetric);
         }
 
-        List<AggregateNumericMetric> updatedSchedules = dao.insertAggregates(toColumnFamily, toMetrics,
-            toColumnFamily.getTTL());
+        List<AggregateNumericMetric> updatedSchedules = dao.insertAggregates(toTable, toMetrics,
+            toTable.getTTL());
         return updatedSchedules;
     }
 

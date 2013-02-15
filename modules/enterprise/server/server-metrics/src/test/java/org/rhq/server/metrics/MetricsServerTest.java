@@ -75,6 +75,10 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
     private MetricsDAO dao;
 
+    private DateTimeService dateTimeService;
+
+    private MetricsConfiguration configuration = new MetricsConfiguration();
+
     private static class MetricsServerStub extends MetricsServer {
         private DateTime currentHour;
 
@@ -95,6 +99,11 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     public void initServer() throws Exception {
         metricsServer = new MetricsServerStub();
         metricsServer.setSession(session);
+        metricsServer.setConfiguration(configuration);
+
+        dateTimeService = new DateTimeService();
+        dateTimeService.setConfiguration(configuration);
+        metricsServer.setDateTimeService(dateTimeService);
 
         dao = new MetricsDAO(session);
 
@@ -210,7 +219,6 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             firstValue, thirdValue, hour8.getMillis())));
 
         // verify that the 6 hour index is updated
-        DateTimeService dateTimeService = new DateTimeService();
         List<MetricsIndexEntry> expected6HourIndex = asList(new MetricsIndexEntry(MetricsTable.SIX_HOUR,
             dateTimeService.getTimeSlice(hour9, Minutes.minutes(60 * 6)), scheduleId));
 
@@ -716,10 +724,10 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         }
     }
 
-    private void assertMetricsIndexEquals(MetricsTable columnFamily, List<MetricsIndexEntry> expected, String msg) {
-        List<MetricsIndexEntry> actual = Lists.newArrayList(dao.findMetricsIndexEntries(columnFamily));
-        assertCollectionMatchesNoOrder("Failed to retrieve raw metric data", expected, actual, msg + ": " +
-            columnFamily + " index not match expected values.");
+    private void assertMetricsIndexEquals(MetricsTable table, List<MetricsIndexEntry> expected, String msg) {
+        List<MetricsIndexEntry> actual = Lists.newArrayList(dao.findMetricsIndexEntries(table));
+        assertCollectionMatchesNoOrder(msg + ": " + table + " index does not match expected values.",
+            expected, actual);
     }
 
     private void assert1HourDataEquals(int scheduleId, List<AggregateNumericMetric> expected) {

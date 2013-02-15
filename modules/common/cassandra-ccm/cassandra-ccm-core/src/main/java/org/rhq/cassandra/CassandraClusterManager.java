@@ -130,11 +130,12 @@ public class CassandraClusterManager {
 
                 nodeOptions.merge(deploymentOptions);
                 try {
+                    nodeOptions.load();
                     deployer.deploy(nodeOptions, i);
                     nodes.add(new CassandraNode(address, nodeOptions.getRpcPort(),
                         nodeOptions.getNativeTransportPort()));
                     installedNodeDirs.add(basedir);
-                }  catch (CassandraException e) {
+                }  catch (Exception e) {
                     log.error("Failed to install node at " + basedir);
                     throw new RuntimeException("Failed to install node at " + basedir, e);
                 }

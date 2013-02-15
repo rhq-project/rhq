@@ -64,6 +64,7 @@ public class MeasurementCollector implements Runnable {
     @Override
     public void run() {
         long startTime = System.currentTimeMillis();
+        int metricsCollected = 0;
         try {
             log.info("Starting metrics collections...");
             Set<Schedule> schedules = new HashSet<Schedule>();
@@ -93,6 +94,7 @@ public class MeasurementCollector implements Runnable {
                     schedule.getNextValue()));
                 schedule.updateCollection();
             }
+            metricsCollected = data.size();
             metricsServer.addNumericData(data);
 
             try {
@@ -105,7 +107,8 @@ public class MeasurementCollector implements Runnable {
             }
         } finally {
             long endTime = System.currentTimeMillis();
-            log.info("Finished collecting and storing raw metric in " + (endTime - startTime) + " ms.");
+            log.info("Finished collecting and storing " + metricsCollected + " raw metric in " +
+                (endTime - startTime) + " ms.");
         }
     }
 }

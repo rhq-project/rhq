@@ -148,6 +148,14 @@
                         required="true"
                         type="string"/>
 
+    <rhq:input-property name="rhq.cassandra.max.heap.size"
+                        required="false"
+                        defaultValue="${MAX_HEAP_SIZE}"/>
+
+    <rhq:input-property name="rhq.cassandra.heap.new.size"
+                        required="false"
+                        defaultValue="${HEAP_NEWSIZE}"/>
+
     <rhq:deployment-unit name="cassandra" preinstallTarget="pre-install" postinstallTarget="post-install">
 <!--
       <rhq:file name="dbsetup.script" destinationFile="scripts/dbsetup.script" replace="true"/>

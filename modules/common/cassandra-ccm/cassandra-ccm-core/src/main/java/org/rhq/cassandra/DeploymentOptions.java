@@ -87,6 +87,8 @@ public class DeploymentOptions {
     private String accessPropertiesFile;
     private Integer jmxPort;
     private String seeds;
+    private String heapSize;
+    private String heapNewSize;
 
     public DeploymentOptions() {
     }
@@ -161,6 +163,8 @@ public class DeploymentOptions {
         setJmxPort(Integer.valueOf(loadProperty("rhq.cassandra.jmx.port", properties)));
         setSeeds(loadProperty("rhq.cassandra.seeds", properties));
         setBasedir(loadProperty("rhq.cassandra.basedir", properties));
+        setHeapSize(loadProperty("rhq.cassandra.max.heap.size", properties));
+        setHeapNewSize(loadProperty("rhq.cassandra.heap.new.size", properties));
     }
 
     private String loadProperty(String key, Properties properties) {
@@ -489,6 +493,28 @@ public class DeploymentOptions {
     public void setSeeds(String seeds) {
         if (this.seeds == null) {
             this.seeds = seeds;
+        }
+    }
+
+    @BundleProperty(name = "rhq.cassandra.max.heap.size")
+    public String getHeapSize() {
+        return heapSize;
+    }
+
+    public void setHeapSize(String heapSize) {
+        if (this.heapSize == null) {
+            this.heapSize = heapSize;
+        }
+    }
+
+    @BundleProperty(name = "rhq.cassandra.heap.new.size")
+    public String getHeapNewSize() {
+        return heapNewSize;
+    }
+
+    public void setHeapNewSize(String heapNewSize) {
+        if (this.heapNewSize == null) {
+            this.heapNewSize = heapNewSize;
         }
     }
 

@@ -175,9 +175,9 @@ JVM_OPTS="$JVM_OPTS -XX:ThreadPriorityPolicy=42"
 # stop-the-world GC pauses during resize, and so that we can lock the
 # heap in memory on startup to prevent any of it from being swapped
 # out.
-JVM_OPTS="$JVM_OPTS -Xms${MAX_HEAP_SIZE}"
-JVM_OPTS="$JVM_OPTS -Xmx${MAX_HEAP_SIZE}"
-JVM_OPTS="$JVM_OPTS -Xmn${HEAP_NEWSIZE}"
+JVM_OPTS="$JVM_OPTS -Xms@@rhq.cassandra.max.heap.size@@"
+JVM_OPTS="$JVM_OPTS -Xmx@@rhq.cassandra.max.heap.size@@"
+JVM_OPTS="$JVM_OPTS -Xmn@@rhq.cassandra.heap.new.size@@"
 JVM_OPTS="$JVM_OPTS -XX:+HeapDumpOnOutOfMemoryError"
 
 # set jvm HeapDumpPath with CASSANDRA_HEAPDUMP_DIR

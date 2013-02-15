@@ -267,11 +267,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
 
                         .attr("opacity", ".9")
                         .attr("fill", function (d) {
-                            if (d.down) {
-                                return  "url(#downStripes)";
-                            } else if (d.unknown) {
-                                return  "url(#unknownStripes)";
-                            }else if (d.nodata) {
+                            if (d.down || d.unknown || d.nodata) {
                                 return  "url(#noDataStripes)";
                             }
                             else {

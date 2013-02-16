@@ -87,23 +87,26 @@ public class Simulator {
         PriorityQueue<Schedule> queue = new PriorityQueue<Schedule>(schedules);
         ReentrantLock queueLock = new ReentrantLock();
 
-        MeasurementCollector measurementCollector = new MeasurementCollector();
-        measurementCollector.setMetricsServer(metricsServer);
-        measurementCollector.setQueue(queue);
-        measurementCollector.setQueueLock(queueLock);
-
         MeasurementAggregator measurementAggregator = new MeasurementAggregator();
         measurementAggregator.setMetricsServer(metricsServer);
 
         ScheduledExecutorService executorService = Executors.newScheduledThreadPool(plan.getThreadPoolSize());
         log.info("Starting executor service");
-        executorService.scheduleAtFixedRate(measurementCollector, 0, plan.getCollectionInterval(),
-            TimeUnit.MILLISECONDS);
+        for (int i = 0; i < plan.getNumMeasurementCollectors(); ++i) {
+            MeasurementCollector measurementCollector = new MeasurementCollector();
+            measurementCollector.setMetricsServer(metricsServer);
+            measurementCollector.setQueue(queue);
+            measurementCollector.setQueueLock(queueLock);
+
+            executorService.scheduleAtFixedRate(measurementCollector, 0, plan.getCollectionInterval(),
+                TimeUnit.MILLISECONDS);
+        }
+
         executorService.scheduleAtFixedRate(measurementAggregator, 0, plan.getAggregationInterval(),
             TimeUnit.MILLISECONDS);
 
         try {
-            Thread.sleep(10000);
+            Thread.sleep(10000 * 6 * 20);
         } catch (InterruptedException e) {
         }
         log.info("Shutting down executor service");
@@ -117,6 +120,9 @@ public class Simulator {
         DeploymentOptions deploymentOptions = new DeploymentOptions();
         deploymentOptions.setClusterDir(clusterDir.getAbsolutePath());
         deploymentOptions.setNumNodes(2);
+        deploymentOptions.setHeapSize("64M");
+        deploymentOptions.setHeapNewSize("8M");
+        deploymentOptions.setLoggingLevel("INFO");
         deploymentOptions.load();
 
         CassandraClusterManager ccm = new CassandraClusterManager(deploymentOptions);

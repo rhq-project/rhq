@@ -1,29 +1,34 @@
 {
     "schedules": [
         {
-            "count": 2,
+            "count": 2000,
             "interval": 500
+        },
+        {
+            "count": 1000,
+            "interval": 1000
         }
     ],
     "collectionInterval": 500,
     "aggregationInterval": 1000,
-    "threadPoolSize": 4,
+    "numMeasurementCollectors": 5,
+    "threadPoolSize": 6,
     "ttl": [
         {
             "table": "raw_metrics",
-            "value": 3600
+            "value": 180
         },
         {
             "table": "one_hour_metrics",
-            "value": 7200
+            "value": 360
         },
         {
             "table": "six_hour_metrics",
-            "value": 10800
+            "value": 540
         },
         {
             "table": "twenty_four_hour_metrics",
-            "value": 14400
+            "value": 720
         }
     ],
     "timeSliceDuration": {

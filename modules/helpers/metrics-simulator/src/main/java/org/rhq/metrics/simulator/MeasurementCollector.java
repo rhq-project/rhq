@@ -65,6 +65,8 @@ public class MeasurementCollector implements Runnable {
     public void run() {
         long startTime = System.currentTimeMillis();
         int metricsCollected = 0;
+        // TODO parameterize threshold
+        int threshold = 500;
         try {
             log.info("Starting metrics collections...");
             Set<Schedule> schedules = new HashSet<Schedule>();
@@ -73,7 +75,8 @@ public class MeasurementCollector implements Runnable {
                 Schedule first = queue.peek();
                 if (first != null && first.getNextCollection() <= System.currentTimeMillis()) {
                     Schedule next = first;
-                    while (next != null && next.getNextCollection() == first.getNextCollection()) {
+                    while (next != null && next.getNextCollection() == first.getNextCollection() &&
+                        schedules.size() < threshold) {
                         schedules.add(queue.poll());
                         next = queue.peek();
                     }

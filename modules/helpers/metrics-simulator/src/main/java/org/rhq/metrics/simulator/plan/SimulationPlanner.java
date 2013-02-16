@@ -52,6 +52,7 @@ public class SimulationPlanner {
         simulation.setCollectionInterval(root.get("collectionInterval").asLong());
         simulation.setAggregationInterval(root.get("aggregationInterval").asLong());
         simulation.setThreadPoolSize(root.get("threadPoolSize").asInt());
+        simulation.setNumMeasurementCollectors(root.get("numMeasurementCollectors").asInt());
 
         for (JsonNode node : root.get("schedules")) {
             simulation.addScheduleSet(new ScheduleGroup(node.get("count").asInt(), node.get("interval").asLong()));

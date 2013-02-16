@@ -45,6 +45,8 @@ public class SimulationPlan {
 
     private MetricsConfiguration metricsServerConfiguration;
 
+    private int numMeasurementCollectors;
+
     public List<ScheduleGroup> getScheduleSets() {
         return scheduleSets;
     }
@@ -87,5 +89,13 @@ public class SimulationPlan {
 
     public void setAggregationInterval(long aggregationInterval) {
         this.aggregationInterval = aggregationInterval;
+    }
+
+    public int getNumMeasurementCollectors() {
+        return numMeasurementCollectors;
+    }
+
+    public void setNumMeasurementCollectors(int numMeasurementCollectors) {
+        this.numMeasurementCollectors = numMeasurementCollectors;
     }
 }

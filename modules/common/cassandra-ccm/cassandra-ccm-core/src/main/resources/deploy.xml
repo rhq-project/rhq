@@ -149,11 +149,11 @@
                         type="string"/>
 
     <rhq:input-property name="rhq.cassandra.max.heap.size"
-                        required="false"
+                        required="true"
                         defaultValue="${MAX_HEAP_SIZE}"/>
 
     <rhq:input-property name="rhq.cassandra.heap.new.size"
-                        required="false"
+                        required="true"
                         defaultValue="${HEAP_NEWSIZE}"/>
 
     <rhq:deployment-unit name="cassandra" preinstallTarget="pre-install" postinstallTarget="post-install">

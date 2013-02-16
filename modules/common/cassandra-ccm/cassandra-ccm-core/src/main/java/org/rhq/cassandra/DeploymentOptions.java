@@ -203,6 +203,8 @@ public class DeploymentOptions {
         setJmxPort(other.jmxPort);
         setSeeds(other.seeds);
         setBasedir(other.basedir);
+        setHeapSize(other.heapSize);
+        setHeapNewSize(other.heapNewSize);
     }
 
     public String getBundleFileName() {

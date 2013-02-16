@@ -55,25 +55,26 @@
   </dependencies>
 
   <build>
-    <resources>
-      <resource>
-        <directory>src/main/resources</directory>
-        <filtering>true</filtering>
-      </resource>
-      <resource>
-        <directory>src/main/cassandra/cql</directory>
-      </resource>
-    </resources>
-
-    <filters>
-      <filter>src/main/resources/cassandra.properties</filter>
-    </filters>
-
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-resources-plugin</artifactId>
         <configuration>
+          <resources>
+            <resource>
+              <directory>src/main/resources</directory>
+              <filtering>true</filtering>
+              <excludes>
+                <exclude>src/main/resources/cassandra/conf/cassandra-env.sh</exclude>
+              </excludes>
+            </resource>
+            <resource>
+              <directory>src/main/cassandra/cql</directory>
+            </resource>
+          </resources>
+          <delimiters>
+            <delimiter>${*}</delimiter>
+          </delimiters>
           <escapeString>\</escapeString>
         </configuration>
       </plugin>

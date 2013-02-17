@@ -307,6 +307,9 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         .attr("width", function (d) {
                             return  (width / chartContext.data.length - barOffset  );
                         })
+                        .attr("data-rhq-value", function(d){
+                            return d.y;
+                        })
                         .attr("opacity", 0.9)
                         .attr("fill", "#1794bc");
 

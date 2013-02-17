@@ -41,9 +41,11 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
 
+    @Deprecated
     protected HTMLFlow resourceTitle;
     protected AbstractGraph graph;
     private Integer chartHeight;
+    protected boolean isPortalGraph = false;
 
     public AbstractMetricD3GraphView(String locatorId) {
         super(locatorId);
@@ -80,9 +82,6 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
             + "               </pattern>" + "</defs>";
     }
 
-    protected HTMLFlow getEntityTitle() {
-        return resourceTitle;
-    }
 
     @Override
     protected void onDraw() {

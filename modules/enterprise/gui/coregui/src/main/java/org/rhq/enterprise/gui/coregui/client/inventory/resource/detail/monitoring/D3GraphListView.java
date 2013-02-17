@@ -46,6 +46,7 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricStackedBarGraph;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -69,56 +70,116 @@ public class D3GraphListView extends LocatableVLayout {
     private Set<Integer> definitionIds = null;
     private Label loadingLabel = new Label(MSG.common_msg_loading());
     private UserPreferencesMeasurementRangeEditor measurementRangeEditor;
+    //private SliderRangeEditor sliderRangeEditor;
     private boolean useSummaryData = false;
+    private boolean monitorDetailView = false;
     private PageList<Availability> availabilityList;
     private PageList<MeasurementOOBComposite> measurementOOBCompositeList;
     private List<List<MeasurementDataNumericHighLowComposite>> metricsDataList;
+    private AvailabilityD3Graph availabilityGraph;
 
-    public static D3GraphListView createMultipleGraphs(String locatorId, Resource resource, Set<Integer> definitionIds) {
+    public static D3GraphListView createMultipleGraphs(String locatorId, Resource resource, Set<Integer> definitionIds, boolean monitorDetailView) {
 
-        return new D3GraphListView(locatorId, resource, definitionIds);
+        return new D3GraphListView(locatorId, resource, definitionIds, monitorDetailView);
     }
 
-    public static D3GraphListView createSummaryMultipleGraphs(String locatorId, Resource resource) {
-        return new D3GraphListView(locatorId, resource);
+    public static D3GraphListView createSummaryMultipleGraphs(String locatorId, Resource resource, boolean monitorDetailView) {
+        return new D3GraphListView(locatorId, resource, monitorDetailView);
     }
 
     public static D3GraphListView createSingleGraph(String locatorId, Resource resource, Integer measurementId) {
         TreeSet<Integer> definitionIds = new TreeSet<Integer>();
         definitionIds.add(measurementId);
-        return new D3GraphListView(locatorId, resource, definitionIds);
+        return new D3GraphListView(locatorId, resource, definitionIds, false);
     }
 
-    private D3GraphListView(String locatorId, Resource resource, Set<Integer> definitionIds) {
+    private D3GraphListView(String locatorId, Resource resource, Set<Integer> definitionIds, boolean monitorDetailView) {
         super(locatorId);
         this.resource = resource;
         commonConstructorSettings();
         this.definitionIds = definitionIds;
+        this.monitorDetailView = monitorDetailView;
     }
 
-    private D3GraphListView(String locatorId, Resource resource) {
+    private D3GraphListView(String locatorId, Resource resource, boolean monitorDetailView) {
         super(locatorId);
         this.resource = resource;
+        this.monitorDetailView = monitorDetailView;
         commonConstructorSettings();
         useSummaryData = true;
     }
 
     private void commonConstructorSettings() {
+        //sliderRangeEditor = new SliderRangeEditor(this.getLocatorId());
         measurementRangeEditor = new UserPreferencesMeasurementRangeEditor(this.getLocatorId());
         setOverflow(Overflow.AUTO);
     }
 
     public void addSetButtonClickHandler(ClickHandler clickHandler) {
+        //Log.debug("measurementRangeEditor " + sliderRangeEditor);
         Log.debug("measurementRangeEditor " + measurementRangeEditor);
         measurementRangeEditor.getSetButton().addClickHandler(clickHandler);
     }
 
+    private void queryAvailability(final Resource resource, final CountDownLatch countDownLatch) {
+
+        final long startTime = System.currentTimeMillis();
+
+        // now return the availability
+        AvailabilityCriteria c = new AvailabilityCriteria();
+        c.addFilterResourceId(resource.getId());
+        c.addFilterInitialAvailability(false);
+        c.addSortStartTime(PageOrdering.ASC);
+        GWTServiceLookup.getAvailabilityService().findAvailabilityByCriteria(c,
+                new AsyncCallback<PageList<Availability>>() {
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(
+                                MSG.view_resource_monitor_availability_loadFailed(), caught);
+                        if(countDownLatch != null){
+                            countDownLatch.countDown();
+                        }
+                    }
+
+                    @Override
+                    public void onSuccess(PageList<Availability> availList) {
+                        Log.debug("\nSuccessfully queried availability in: "
+                                + (System.currentTimeMillis() - startTime) + " ms.");
+                        availabilityList = new PageList<Availability>();
+                        for (Availability availability : availList) {
+                            if (!availability.getAvailabilityType().equals(AvailabilityType.UP)){
+                                availabilityList.add(availability);
+                            }
+                        }
+                        Log.debug("avail list size: " + availabilityList.size());
+                        if(countDownLatch != null){
+                            countDownLatch.countDown();
+                        }
+                    }
+                });
+    }
+
+
     @Override
     protected void onDraw() {
         super.onDraw();
+        Log.debug("D3GraphListView.onDraw()");
         destroyMembers();
 
+        //addMember(sliderRangeEditor);
         addMember(measurementRangeEditor);
+
+        if(monitorDetailView){
+            Log.debug("show monitor view");
+            //List<Long> startEndList = sliderRangeEditor.getBeginEndTimes();
+            availabilityGraph = new AvailabilityD3Graph("avail", new AvailabilityLineGraphType(resource.getId()));
+            // first step in 2 step to create d3 chart
+            // create a placeholder for avail graph
+            availabilityGraph.createGraphMarker();
+            addMember(availabilityGraph);
+            Log.debug("*** added avail chart");
+
+        }
 
         if (resource != null) {
             buildGraphs();
@@ -127,6 +188,7 @@ public class D3GraphListView extends LocatableVLayout {
 
     public void redrawGraphs() {
         this.onDraw();
+        availabilityGraph.drawGraph();
     }
 
     /**
@@ -136,6 +198,7 @@ public class D3GraphListView extends LocatableVLayout {
     private void buildGraphs() {
         final long startTimer = System.currentTimeMillis();
         List<Long> startEndList = measurementRangeEditor.getBeginEndTimes();
+        //List<Long> startEndList = sliderRangeEditor.getBeginEndTimes();
         final long startTime = startEndList.get(0);
         final long endTime = startEndList.get(1);
 
@@ -192,7 +255,13 @@ public class D3GraphListView extends LocatableVLayout {
                                 } else {
                                     determineGraphsToBuild(metricsDataList, measurementDefinitions, definitionIds);
                                 }
+                                // we only need the first metricData since we are only taking the
+                                // availability data set in there for the dropdowns already
+                                availabilityGraph.setMetricData(metricsDataList.get(0));
+                                availabilityGraph.setAvailabilityList(availabilityList);
+                                availabilityGraph.drawGraph();
                             }
+
                         }
                     });
 
@@ -226,39 +295,6 @@ public class D3GraphListView extends LocatableVLayout {
                         });
                 }
 
-                private void queryAvailability(final Resource resource, final CountDownLatch countDownLatch) {
-
-                    final long startTime = System.currentTimeMillis();
-
-                    // now return the availability
-                    AvailabilityCriteria c = new AvailabilityCriteria();
-                    c.addFilterResourceId(resource.getId());
-                    c.addFilterInitialAvailability(false);
-                    c.addSortStartTime(PageOrdering.ASC);
-                    GWTServiceLookup.getAvailabilityService().findAvailabilityByCriteria(c,
-                        new AsyncCallback<PageList<Availability>>() {
-                            @Override
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(
-                                    MSG.view_resource_monitor_availability_loadFailed(), caught);
-                                countDownLatch.countDown();
-                            }
-
-                            @Override
-                            public void onSuccess(PageList<Availability> availList) {
-                                Log.debug("\nSuccessfully queried availability in: "
-                                    + (System.currentTimeMillis() - startTime) + " ms.");
-                                availabilityList = new PageList<Availability>();
-                                for (Availability availability : availList) {
-                                    if (!availability.getAvailabilityType().equals(AvailabilityType.UP)){
-                                        availabilityList.add(availability);
-                                    }
-                                }
-                                Log.debug("avail list size: " + availabilityList.size());
-                                countDownLatch.countDown();
-                            }
-                        });
-                }
 
                 private void queryOOBMetrics(final Resource resource, final CountDownLatch countDownLatch) {
 

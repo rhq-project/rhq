@@ -435,7 +435,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         viewFactory = (!visibleToIE8) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                d3GraphListView = D3GraphListView.createSummaryMultipleGraphs(monitoringTab.extendLocatorId("NewGraphs"), resourceComposite.getResource());
+                d3GraphListView = D3GraphListView.createSummaryMultipleGraphs(monitoringTab.extendLocatorId("NewGraphs"), resourceComposite.getResource(), true);
                 return d3GraphListView;
             }
         };
@@ -652,10 +652,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
 
                                 @Override
                                 public void onSuccess(Subject result) {
-                                    if (Log.isDebugEnabled()) {
-                                        Log.debug("Updated recently viewed resources for " + result
-                                            + " with resourceId [" + resourceId + "]");
-                                    }
+                                    Log.debug("Updated recently viewed resources for " + result
+                                        + " with resourceId [" + resourceId + "]");
                                 }
                             });
                     }

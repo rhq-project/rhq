@@ -61,7 +61,7 @@ public class MetricGraphData implements JsonMetricProducer {
     private final String chartHoverEndLabel = MSG.chart_hover_end_label();
     private final String chartHoverPeriodLabel = MSG.chart_hover_period_label();
     private final String chartHoverBarLabel = MSG.chart_hover_bar_label();
-    private int entityId;
+    private int entityId = 0;
     private String entityName;
     private int definitionId;
     private MeasurementUnits adjustedMeasurementUnits;
@@ -217,7 +217,7 @@ public class MetricGraphData implements JsonMetricProducer {
 
     public String getYAxisTitle() {
 
-        Log.debug("** Definition: " + definition + ", id: " + definitionId);
+        //Log.debug("** Definition: " + definition + ", id: " + definitionId);
         if (null != definition.getDisplayName() && definition.getDisplayName().length() > 55) {
             return definition.getDisplayName().substring(0, 55) + "...";
         } else {

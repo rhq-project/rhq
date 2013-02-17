@@ -238,7 +238,7 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
                                     final ResourceComposite resourceComposite = result.get(0);
 
                                     ChartViewWindow window = new ChartViewWindow(extendLocatorId("ChartWindow"), "");
-                                    final D3GraphListView graphListView = D3GraphListView.createMultipleGraphs(extendLocatorId("D3Graphs"), resourceComposite.getResource(), definitionIds);
+                                    final D3GraphListView graphListView = D3GraphListView.createMultipleGraphs(extendLocatorId("D3Graphs"), resourceComposite.getResource(), definitionIds, true);
                                     graphListView.addSetButtonClickHandler(new ClickHandler()
                                     {
                                         @Override

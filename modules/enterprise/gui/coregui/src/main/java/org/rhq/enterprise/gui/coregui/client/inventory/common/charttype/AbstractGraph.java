@@ -36,7 +36,7 @@ import org.rhq.core.domain.util.PageList;
  *
  * @author Mike Thompson
  */
-public abstract class AbstractGraph implements HasD3JsniChart {
+public abstract class AbstractGraph implements HasD3MetricJsniChart {
 
     private MetricGraphData metricGraphData;
 

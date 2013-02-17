@@ -12,6 +12,9 @@
 var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, yAxisLabel, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, noDataLabel, hoverStartLabel,hoverEndLabel, hoverPeriodLabel, hoverBarLabel)
 {
     "use strict";
+    if(!(this instanceof ChartContext)){
+        throw new Error("ChartContext function cannot be called as a function.")
+    }
     this.chartId = chartId;
     this.chartHandle = "#rChart-" + this.chartId;
     this.chartSelection = this.chartHandle + " svg";

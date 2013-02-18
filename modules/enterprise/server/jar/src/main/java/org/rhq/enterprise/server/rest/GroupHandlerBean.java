@@ -83,8 +83,6 @@ import org.rhq.enterprise.server.rest.domain.GroupRest;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
-import org.rhq.enterprise.server.util.CriteriaQuery;
-import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
 /**
  * Deal with group related things.
@@ -124,16 +122,7 @@ public class GroupHandlerBean extends AbstractRestBean  {
             criteria.addFilterName(q);
         }
 
-        //Use CriteriaQuery to automatically chunk/page through criteria query results
-        CriteriaQueryExecutor<ResourceGroup, ResourceGroupCriteria> queryExecutor = new CriteriaQueryExecutor<ResourceGroup, ResourceGroupCriteria>() {
-            @Override
-            public PageList<ResourceGroup> execute(ResourceGroupCriteria criteria) {
-                return resourceGroupManager.findResourceGroupsByCriteria(caller, criteria);
-            }
-        };
-
-        CriteriaQuery<ResourceGroup, ResourceGroupCriteria> groups = new CriteriaQuery<ResourceGroup, ResourceGroupCriteria>(
-            criteria, queryExecutor);
+        PageList<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(caller, criteria);
 
         List<GroupRest> list = new ArrayList<GroupRest>();
         for (ResourceGroup group : groups) {
@@ -415,16 +404,7 @@ public class GroupHandlerBean extends AbstractRestBean  {
             criteria.addFilterName(q);
         }
 
-        //Use CriteriaQuery to automatically chunk/page through criteria query results
-        CriteriaQueryExecutor<GroupDefinition, ResourceGroupDefinitionCriteria> queryExecutor = new CriteriaQueryExecutor<GroupDefinition, ResourceGroupDefinitionCriteria>() {
-            @Override
-            public PageList<GroupDefinition> execute(ResourceGroupDefinitionCriteria criteria) {
-                return definitionManager.findGroupDefinitionsByCriteria(caller, criteria);
-            }
-        };
-
-        CriteriaQuery<GroupDefinition, ResourceGroupDefinitionCriteria> gdlist = new CriteriaQuery<GroupDefinition, ResourceGroupDefinitionCriteria>(
-            criteria, queryExecutor);
+        PageList<GroupDefinition> gdlist = definitionManager.findGroupDefinitionsByCriteria(caller, criteria);
 
         List<GroupDefinitionRest> list = new ArrayList<GroupDefinitionRest>();
         for (GroupDefinition def: gdlist) {

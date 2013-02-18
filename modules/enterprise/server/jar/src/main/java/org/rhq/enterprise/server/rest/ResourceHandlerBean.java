@@ -329,7 +329,6 @@ public class ResourceHandlerBean extends AbstractRestBean {
         criteria.addFilterInterval(start,end);
         criteria.addFilterResourceId(resourceId);
         criteria.addSortStartTime(PageOrdering.DESC);
-        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
         List<Availability> points = availMgr.findAvailabilityByCriteria(caller,criteria);
         List<AvailabilityRest> ret = new ArrayList<AvailabilityRest>(points.size());
@@ -524,7 +523,6 @@ public class ResourceHandlerBean extends AbstractRestBean {
     public List<Link> getAlertsForResource(@ApiParam("Id of the resource to query") @PathParam("id") int resourceId) {
         AlertCriteria criteria = new AlertCriteria();
         criteria.addFilterResourceIds(resourceId);
-        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
         List<Alert> alerts = alertManager.findAlertsByCriteria(caller, criteria);
         List<Link> links = new ArrayList<Link>(alerts.size());

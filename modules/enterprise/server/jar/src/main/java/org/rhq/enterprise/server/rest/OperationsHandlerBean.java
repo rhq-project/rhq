@@ -76,8 +76,6 @@ import org.rhq.enterprise.server.rest.domain.OperationDefinitionRest;
 import org.rhq.enterprise.server.rest.domain.OperationHistoryRest;
 import org.rhq.enterprise.server.rest.domain.OperationRest;
 import org.rhq.enterprise.server.rest.domain.SimplePropDef;
-import org.rhq.enterprise.server.util.CriteriaQuery;
-import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
 /**
  * Deal with operations
@@ -390,16 +388,7 @@ public class OperationsHandlerBean extends AbstractRestBean  {
 
         criteria.addSortEndTime(PageOrdering.DESC);
 
-        //Use CriteriaQuery to automatically chunk/page through criteria query results
-        CriteriaQueryExecutor<ResourceOperationHistory, ResourceOperationHistoryCriteria> queryExecutor = new CriteriaQueryExecutor<ResourceOperationHistory, ResourceOperationHistoryCriteria>() {
-            @Override
-            public PageList<ResourceOperationHistory> execute(ResourceOperationHistoryCriteria criteria) {
-                return opsManager.findResourceOperationHistoriesByCriteria(caller, criteria);
-            }
-        };
-
-        CriteriaQuery<ResourceOperationHistory, ResourceOperationHistoryCriteria> list = new CriteriaQuery<ResourceOperationHistory, ResourceOperationHistoryCriteria>(
-            criteria, queryExecutor);
+        PageList<ResourceOperationHistory> list = opsManager.findResourceOperationHistoriesByCriteria(caller, criteria);
 
         List<OperationHistoryRest> result = new ArrayList<OperationHistoryRest>();
         for (ResourceOperationHistory roh : list) {

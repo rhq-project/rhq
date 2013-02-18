@@ -1242,26 +1242,32 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             Thread.sleep(1000);
             availabilityManager.mergeAvailabilityReport(report);
 
+            // the end time of avail 4 should have been reset to the start time of avail 5. Avail 5 should have been
+            // added and should be DOWN 
             avails = getResourceAvailabilities(theResource);
-            assertEquals(avails.toString(), 4, avails.size());
+            assertEquals(avails.toString(), 5, avails.size());
 
-            // avail start times should now be 0, 1:00 (UP), 1:10(DOWN), 1:40(UP)
+            // avail start times should now be 0, 1:00 (UP), 1:20(DOWN), 1:40(UP), 1:45(DOWN)
             avail = avails.get(0); // 0..1:00
             assertTrue(avail.toString(), Math.abs(avail.getStartTime() - 0L) < 1000L);
             assertEquals(avail.toString(), AvailabilityType.UNKNOWN, avail.getAvailabilityType());
             assertTrue(avail.toString(), Math.abs(avail.getEndTime() - avails.get(1).getStartTime()) < 1000L);
             avail = avails.get(1); // 1:00..1:20
-            assertTrue(avail.toString(), Math.abs(currentStartTime - (avail.getStartTime() + (40 * 60 * 1000))) < 1000L);
+            assertTrue(avail.toString(), Math.abs(newStartTime - (avail.getStartTime() + (45 * 60 * 1000))) < 1000L);
             assertEquals(avail.toString(), AvailabilityType.UP, avail.getAvailabilityType());
             assertTrue(avail.toString(), Math.abs(avail.getEndTime() - avails.get(2).getStartTime()) < 1000L);
             avail = avails.get(2); // 1:20..1:40
-            assertTrue(avail.toString(), Math.abs(currentStartTime - (avail.getStartTime() + (20 * 60 * 1000))) < 1000L);
+            assertTrue(avail.toString(), Math.abs(newStartTime - (avail.getStartTime() + (25 * 60 * 1000))) < 1000L);
             assertEquals(avail.toString(), AvailabilityType.DOWN, avail.getAvailabilityType());
             assertTrue(avail.toString(), Math.abs(avail.getEndTime() - avails.get(3).getStartTime()) < 1000L);
-            avail = avails.get(3); // 1:40
-            assertTrue(avail.toString(), Math.abs(currentStartTime - avail.getStartTime()) < 1000L);
+            avail = avails.get(3); // 1:40..1:45
+            assertTrue(avail.toString(), Math.abs(newStartTime - (avail.getStartTime() + (5 * 60 * 1000))) < 1000L);
             assertEquals(avail.toString(), AvailabilityType.UP, avail.getAvailabilityType());
-            assertEquals(avail.toString(), null, avail.getEndTime()); // THIS IS THE CHANGE
+            assertTrue(avail.toString(), Math.abs(avail.getEndTime() - avails.get(4).getStartTime()) < 1000L); // THE FIX
+            avail = avails.get(4); // 1:45..null
+            assertTrue(avail.toString(), Math.abs(newStartTime - avail.getStartTime()) < 1000L);
+            assertEquals(avail.toString(), AvailabilityType.DOWN, avail.getAvailabilityType());
+            assertEquals(avail.toString(), null, avail.getEndTime());
 
         } catch (Exception e) {
             e.printStackTrace();

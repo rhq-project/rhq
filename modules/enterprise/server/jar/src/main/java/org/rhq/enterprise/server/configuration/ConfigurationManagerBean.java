@@ -83,7 +83,6 @@ import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
@@ -2625,12 +2624,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                     }
                 }
             } else if (tt == PropertyOptionsSource.TargetType.GROUP) {
-                // for groups we need to talk to the group manager
-                ResourceGroupCriteria criteria = new ResourceGroupCriteria();
-                criteria.setSearchExpression(expression);
-
-                //?? spinder 2-12-13: We  don't do anything with the composite results here? 
-                resourceGroupManager.findResourceGroupCompositesByCriteria(subject, criteria);
+                // spinder 2-15-13: commenting out this code below as we don't appear to be using any of it. Half done.                
+                //                // for groups we need to talk to the group manager
+                //                ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+                //                criteria.setSearchExpression(expression);
+                //
+                //                resourceGroupManager.findResourceGroupCompositesByCriteria(subject, criteria);
             }
             // TODO plugin and resourceType
         }

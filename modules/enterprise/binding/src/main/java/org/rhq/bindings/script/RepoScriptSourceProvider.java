@@ -125,7 +125,8 @@ public class RepoScriptSourceProvider extends BaseRhqSchemeScriptSourceProvider 
                 CriteriaQuery<PackageAndLatestVersionComposite, PackageCriteria> pvs = new CriteriaQuery<PackageAndLatestVersionComposite, PackageCriteria>(
                     pCrit, pQueryExecutor);
 
-                if (!pvs.iterator().hasNext()) {
+                //                if (!pvs.iterator().hasNext()) {
+                if (pvs.iterator().hasNext()) {
                     PackageAndLatestVersionComposite pv = pvs.iterator().next();
 
                     byte[] bytes = repoManager.getPackageVersionBytes(rhqFacade.getSubject(), repo.getId(), pv

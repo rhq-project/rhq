@@ -74,8 +74,6 @@ import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerRemote;
 import org.rhq.enterprise.server.operation.OperationManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
-import org.rhq.enterprise.server.util.CriteriaQuery;
-import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
 /**
  * Implements a local object that exposes resource related data as
@@ -237,18 +235,9 @@ public class ResourceClientProxy {
     private void initChildren() {
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterParentResourceId(resourceId);
-
-        //Use CriteriaQuery to automatically chunk/page through criteria query results
-        CriteriaQueryExecutor<Resource, ResourceCriteria> queryExecutor = new CriteriaQueryExecutor<Resource, ResourceCriteria>() {
-            @Override
-            public PageList<Resource> execute(ResourceCriteria criteria) {
-                return remoteClient.getProxy(ResourceManagerRemote.class).findResourcesByCriteria(
-                    remoteClient.getSubject(), criteria);
-            }
-        };
-
-        CriteriaQuery<Resource, ResourceCriteria> childResources = new CriteriaQuery<Resource, ResourceCriteria>(
-            criteria, queryExecutor);
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+        PageList<Resource> childResources = remoteClient.getProxy(ResourceManagerRemote.class).findResourcesByCriteria(
+            remoteClient.getSubject(), criteria);
 
         for (Resource child : childResources) {
             this.children.add(proxyFactory.getResource(child.getId()));
@@ -258,26 +247,14 @@ public class ResourceClientProxy {
     private void initMeasurements() {
         MeasurementDefinitionCriteria criteria = new MeasurementDefinitionCriteria();
         criteria.addFilterResourceTypeId(resource.getResourceType().getId());
-        //        criteria.addFilterResourceTypeName(resource.getResourceType().getName());
-        //        criteria.setStrict(true);
+        //      criteria.addFilterResourceTypeName(resource.getResourceType().getName());
+        //      criteria.setStrict(true);
 
-        //Use CriteriaQuery to automatically chunk/page through criteria query results
-        CriteriaQueryExecutor<MeasurementDefinition, MeasurementDefinitionCriteria> queryExecutor = new CriteriaQueryExecutor<MeasurementDefinition, MeasurementDefinitionCriteria>() {
-            @Override
-            public PageList<MeasurementDefinition> execute(MeasurementDefinitionCriteria criteria) {
-                return remoteClient.getProxy(MeasurementDefinitionManagerRemote.class)
-                    .findMeasurementDefinitionsByCriteria(remoteClient.getSubject(), criteria);
-            }
-        };
-
-        CriteriaQuery<MeasurementDefinition, MeasurementDefinitionCriteria> measurementDefIterator = new CriteriaQuery<MeasurementDefinition, MeasurementDefinitionCriteria>(
-            criteria, queryExecutor);
-
-        this.measurementDefinitions = new PageList<MeasurementDefinition>();
+        this.measurementDefinitions = remoteClient.getProxy(MeasurementDefinitionManagerRemote.class)
+            .findMeasurementDefinitionsByCriteria(remoteClient.getSubject(), criteria);
 
         this.measurementMap = new HashMap<String, Measurement>();
-        for (MeasurementDefinition def : measurementDefIterator) {
-            this.measurementDefinitions.add(def);
+        for (MeasurementDefinition def : measurementDefinitions) {
             Measurement m = new Measurement(def);
 
             String name = def.getDisplayName().replaceAll("\\W", "");

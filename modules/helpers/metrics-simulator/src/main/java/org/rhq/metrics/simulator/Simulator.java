@@ -90,13 +90,19 @@ public class Simulator {
         MeasurementAggregator measurementAggregator = new MeasurementAggregator();
         measurementAggregator.setMetricsServer(metricsServer);
 
+        Stats stats = new Stats();
+        StatsCollector statsCollector = new StatsCollector(stats);
+
         ScheduledExecutorService executorService = Executors.newScheduledThreadPool(plan.getThreadPoolSize());
         log.info("Starting executor service");
+        executorService.scheduleAtFixedRate(statsCollector, 0, 1, TimeUnit.MINUTES);
+
         for (int i = 0; i < plan.getNumMeasurementCollectors(); ++i) {
             MeasurementCollector measurementCollector = new MeasurementCollector();
             measurementCollector.setMetricsServer(metricsServer);
             measurementCollector.setQueue(queue);
             measurementCollector.setQueueLock(queueLock);
+            measurementCollector.setStats(stats);
 
             executorService.scheduleAtFixedRate(measurementCollector, 0, plan.getCollectionInterval(),
                 TimeUnit.MILLISECONDS);
@@ -106,12 +112,15 @@ public class Simulator {
             TimeUnit.MILLISECONDS);
 
         try {
-            Thread.sleep(10000 * 6 * 20);
+//            Thread.sleep(10000 * 6 * 20);
+            Thread.sleep(10000 * 6 * 5);
         } catch (InterruptedException e) {
         }
         log.info("Shutting down executor service");
         executorService.shutdown();
         executorService.awaitTermination(5, TimeUnit.SECONDS);
+
+        statsCollector.logSummary();
     }
 
     private List<CassandraNode> deployCluster() throws IOException {

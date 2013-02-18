@@ -1,7 +1,7 @@
 {
     "schedules": [
         {
-            "count": 2000,
+            "count": 5000,
             "interval": 500
         },
         {
@@ -11,8 +11,8 @@
     ],
     "collectionInterval": 500,
     "aggregationInterval": 1000,
-    "numMeasurementCollectors": 5,
-    "threadPoolSize": 6,
+    "numMeasurementCollectors": 8,
+    "threadPoolSize": 10,
     "ttl": [
         {
             "table": "raw_metrics",

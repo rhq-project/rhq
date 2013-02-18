@@ -49,6 +49,10 @@ public class MeasurementCollector implements Runnable {
 
     private ReentrantLock queueLock;
 
+    private Stats stats;
+
+    private int batchSize = 500;
+
     public void setQueue(PriorityQueue<Schedule> queue) {
         this.queue = queue;
     }
@@ -61,12 +65,15 @@ public class MeasurementCollector implements Runnable {
         this.queueLock = queueLock;
     }
 
+    public void setStats(Stats stats) {
+        this.stats = stats;
+    }
+
     @Override
     public void run() {
         long startTime = System.currentTimeMillis();
         int metricsCollected = 0;
         // TODO parameterize threshold
-        int threshold = 500;
         try {
             log.info("Starting metrics collections...");
             Set<Schedule> schedules = new HashSet<Schedule>();
@@ -76,7 +83,7 @@ public class MeasurementCollector implements Runnable {
                 if (first != null && first.getNextCollection() <= System.currentTimeMillis()) {
                     Schedule next = first;
                     while (next != null && next.getNextCollection() == first.getNextCollection() &&
-                        schedules.size() < threshold) {
+                        schedules.size() < batchSize) {
                         schedules.add(queue.poll());
                         next = queue.peek();
                     }
@@ -99,7 +106,7 @@ public class MeasurementCollector implements Runnable {
             }
             metricsCollected = data.size();
             metricsServer.addNumericData(data);
-
+            stats.rawDataInserted(metricsCollected);
             try {
                 queueLock.lock();
                 for (Schedule schedule : schedules) {
@@ -110,8 +117,9 @@ public class MeasurementCollector implements Runnable {
             }
         } finally {
             long endTime = System.currentTimeMillis();
-            log.info("Finished collecting and storing " + metricsCollected + " raw metric in " +
-                (endTime - startTime) + " ms.");
+            long totalTime = endTime - startTime;
+            stats.addRawDataInsertTime(totalTime);
+            log.info("Finished collecting and storing " + metricsCollected + " raw metric in " +totalTime + " ms.");
         }
     }
 }

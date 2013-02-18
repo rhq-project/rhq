@@ -82,8 +82,6 @@ import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
-import org.rhq.enterprise.server.util.CriteriaQuery;
-import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
@@ -180,24 +178,13 @@ public class JPADriftServerBean implements JPADriftServerLocal {
     }
 
     @Override
-    public PageList<DriftComposite> findDriftCompositesByCriteria(final Subject subject, DriftCriteria criteria) {
+    public PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftCriteria criteria) {
 
         JPADriftCriteria jpaCriteria = (criteria instanceof JPADriftCriteria) ? (JPADriftCriteria) criteria
             : new JPADriftCriteria(criteria);
 
         jpaCriteria.fetchChangeSet(true);
-
-        //Use CriteriaQuery to automatically chunk/page through criteria query results
-        CriteriaQueryExecutor<JPADrift, JPADriftCriteria> queryExecutor = new CriteriaQueryExecutor<JPADrift, JPADriftCriteria>() {
-            @Override
-            public PageList<JPADrift> execute(JPADriftCriteria jpaCriteria) {
-                return findDriftsByCriteria(subject, jpaCriteria);
-            }
-        };
-
-        CriteriaQuery<JPADrift, JPADriftCriteria> drifts = new CriteriaQuery<JPADrift, JPADriftCriteria>(jpaCriteria,
-            queryExecutor);
-
+        PageList<JPADrift> drifts = findDriftsByCriteria(subject, jpaCriteria);
         PageList<DriftComposite> result = new PageList<DriftComposite>();
         for (JPADrift drift : drifts) {
             JPADriftChangeSet changeSet = drift.getChangeSet();

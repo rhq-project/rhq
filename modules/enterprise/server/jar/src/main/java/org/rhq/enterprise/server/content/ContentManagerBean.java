@@ -111,8 +111,6 @@ import org.rhq.enterprise.server.plugin.pc.content.PackageTypeBehavior;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
-import org.rhq.enterprise.server.util.CriteriaQuery;
-import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
@@ -1595,26 +1593,17 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return runner.execute();
     }
     
-    public PageList<PackageAndLatestVersionComposite> findPackagesWithLatestVersion(final Subject subject,
+    public PageList<PackageAndLatestVersionComposite> findPackagesWithLatestVersion(Subject subject,
         PackageCriteria criteria) {
         if (criteria.getFilterRepoId() == null) {
             throw new IllegalArgumentException("The criteria query has to have a filter for a specific repo.");
         }
         
         criteria.fetchVersions(true);
+        PageList<Package> packages = findPackagesByCriteria(subject, criteria);
 
-        //Use CriteriaQuery to automatically chunk/page through criteria query results
-        CriteriaQueryExecutor<Package, PackageCriteria> queryExecutor = new CriteriaQueryExecutor<Package, PackageCriteria>() {
-            @Override
-            public PageList<Package> execute(PackageCriteria criteria) {
-                return findPackagesByCriteria(subject, criteria);
-            }
-        };
-
-        CriteriaQuery<Package, PackageCriteria> packages = new CriteriaQuery<Package, PackageCriteria>(criteria,
-            queryExecutor);
-
-        PageList<PackageAndLatestVersionComposite> ret = new PageList<PackageAndLatestVersionComposite>();
+        PageList<PackageAndLatestVersionComposite> ret = new PageList<PackageAndLatestVersionComposite>(
+            packages.getTotalSize(), packages.getPageControl());
                 
         for(Package p : packages) {
             PackageVersion latest = repoManager.getLatestPackageVersion(subject, p.getId(), criteria.getFilterRepoId());

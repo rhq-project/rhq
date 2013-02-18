@@ -11670,7 +11670,7 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="false" description="Outbound Socket binding to SMTP server">
+          <c:simple-property name="outbound-socket-binding-ref" required="true" type="string" readOnly="false" description="Outbound Socket binding to SMTP server">
             <c:option-source target="configuration" expression="*1/remote-destination-outbound-socket-binding=name:type=SocketBindingGroup"/>
           </c:simple-property>
           <c:simple-property name="password" required="false" type="string" readOnly="false" description="Password to authenticate on server"/>
@@ -11694,7 +11694,7 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="false" description="Outbound Socket binding to IMAP server">
+          <c:simple-property name="outbound-socket-binding-ref" required="true" type="string" readOnly="false" description="Outbound Socket binding to IMAP server">
             <c:option-source target="configuration" expression="*1/remote-destination-outbound-socket-binding=name:type=SocketBindingGroup"/>
           </c:simple-property>
           <c:simple-property name="password" required="false" type="string" readOnly="false" description="Password to authenticate on server"/>
@@ -11718,7 +11718,7 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="false" description="Outbound Socket binding to POP3 server">
+          <c:simple-property name="outbound-socket-binding-ref" required="true" type="string" readOnly="false" description="Outbound Socket binding to POP3 server">
             <c:option-source target="configuration" expression="*1/remote-destination-outbound-socket-binding=name:type=SocketBindingGroup"/>
           </c:simple-property>
           <c:simple-property name="password" required="false" type="string" readOnly="false" description="Password to authenticate on server"/>

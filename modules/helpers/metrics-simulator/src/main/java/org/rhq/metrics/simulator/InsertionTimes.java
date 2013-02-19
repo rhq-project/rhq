@@ -25,41 +25,36 @@
 
 package org.rhq.metrics.simulator;
 
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
-
 /**
  * @author John Sanda
  */
-public class RawDataStats {
+public class InsertionTimes {
 
-    private long startTime;
+    private double max;
+    private double min;
+    private double mean;
+    private double standardDeviation;
 
-    private long endTime;
-
-    private SummaryStatistics stats = new SummaryStatistics();
-
-    public void startSamplingPeriod() {
-        startTime = System.currentTimeMillis();
+    public InsertionTimes(double max, double min, double mean, double standardDeviation) {
+        this.max = max;
+        this.min = min;
+        this.mean = mean;
+        this.standardDeviation = standardDeviation;
     }
 
-    public void endSamplingPeriod() {
-        endTime = System.currentTimeMillis();
+    public double getMax() {
+        return max;
     }
 
-    public long getStartTime() {
-        return startTime;
+    public double getMin() {
+        return min;
     }
 
-    public long getEndTime() {
-        return endTime;
+    public double getMean() {
+        return mean;
     }
 
-    public long getSamplingPeriod() {
-        return endTime - startTime;
+    public double getStandardDeviation() {
+        return standardDeviation;
     }
-
-    public SummaryStatistics getStatistics() {
-        return stats;
-    }
-
 }

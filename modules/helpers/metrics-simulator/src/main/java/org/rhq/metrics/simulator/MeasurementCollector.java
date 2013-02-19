@@ -106,7 +106,7 @@ public class MeasurementCollector implements Runnable {
             }
             metricsCollected = data.size();
             metricsServer.addNumericData(data);
-            stats.rawDataInserted(metricsCollected);
+            stats.addRawInserts(metricsCollected);
             try {
                 queueLock.lock();
                 for (Schedule schedule : schedules) {

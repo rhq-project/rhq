@@ -25,83 +25,84 @@
 
 package org.rhq.metrics.simulator;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.NavigableSet;
+import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.apache.commons.math3.stat.descriptive.AggregateSummaryStatistics;
-import org.apache.commons.math3.stat.descriptive.StatisticalSummaryValues;
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 /**
  * @author John Sanda
  */
 public class Stats {
 
-    private List<RawDataStats> rawDataInserts = new ArrayList<RawDataStats>();
+    /**
+     * The total number of raw data inserted
+     */
+    private AtomicLong totalRawInserts = new AtomicLong(0);
 
-    private SummaryStatistics rawDataInsertTimes = new SummaryStatistics();
+    /**
+     * A set of per-minute samples of raw inserts
+     */
+    private NavigableSet<RawInserts> rawInsertsPerMinute = new TreeSet<RawInserts>();
 
-    private RawDataStats currentRawDataStats;
+    private int rawInsertsThisInterval;
 
-    private ReentrantLock rawDataInsertsLock = new ReentrantLock();
+    private long currentInterval;
 
-    private ReentrantLock rawDataInsertTimesLock = new ReentrantLock();
+    private DescriptiveStatistics rawDataInsertTimes = new DescriptiveStatistics(200);
 
-    public void rawDataInserted(int count) {
+    private ReentrantLock insertCountsLock = new ReentrantLock();
+
+    private ReentrantLock insertTimesLock = new ReentrantLock();
+
+    public void addRawInserts(int count) {
+        totalRawInserts.addAndGet(count);
         try {
-            rawDataInsertsLock.lock();
-            currentRawDataStats.getStatistics().addValue(count);
+            insertCountsLock.lock();
+            rawInsertsThisInterval += count;
         } finally {
-            rawDataInsertsLock.unlock();
+            insertCountsLock.unlock();
         }
+    }
+
+    public long getTotalRawInserts() {
+        return totalRawInserts.get();
+    }
+
+    public RawInserts getRawInsertsForLastInterval() {
+        return rawInsertsPerMinute.pollLast();
+    }
+
+    public void startNewInterval(long startTime) {
+        int insertsLastInterval;
+        try {
+            insertCountsLock.lock();
+            insertsLastInterval = rawInsertsThisInterval;
+        } finally {
+            insertCountsLock.unlock();
+        }
+        rawInsertsPerMinute.add(new RawInserts(currentInterval, insertsLastInterval));
+        currentInterval = startTime;
     }
 
     public void addRawDataInsertTime(long time) {
         try {
-            rawDataInsertTimesLock.lock();
+            insertTimesLock.lock();
             rawDataInsertTimes.addValue(time);
         } finally {
-            rawDataInsertTimesLock.unlock();
+            insertTimesLock.unlock();
         }
     }
 
-    public void startNewSample() {
-        if (currentRawDataStats == null) {
-            currentRawDataStats = new RawDataStats();
-            currentRawDataStats.startSamplingPeriod();
-        } else {
-            RawDataStats lastRawDataStats = currentRawDataStats;
-            try {
-                rawDataInsertsLock.lock();
-                lastRawDataStats.endSamplingPeriod();
-                currentRawDataStats = new RawDataStats();
-                currentRawDataStats.startSamplingPeriod();
-            } finally {
-                rawDataInsertsLock.unlock();
-            }
-            rawDataInserts.add(lastRawDataStats);
+    public InsertionTimes getInsertionTimes() {
+        try {
+            insertTimesLock.lock();
+            return new InsertionTimes(rawDataInsertTimes.getMax(), rawDataInsertTimes.getMin(),
+                rawDataInsertTimes.getMean(), rawDataInsertTimes.getStandardDeviation());
+        } finally {
+            insertTimesLock.unlock();
         }
     }
-
-    public RawDataStats getLastSample() {
-        if (rawDataInserts.isEmpty()) {
-            return null;
-        }
-        return rawDataInserts.get(rawDataInserts.size() - 1);
-    }
-
-    public StatisticalSummaryValues getAggregateSummary() {
-        AggregateSummaryStatistics summary = new AggregateSummaryStatistics();
-        List<SummaryStatistics> stats = new ArrayList<SummaryStatistics>(rawDataInserts.size());
-        for (RawDataStats raw : rawDataInserts) {
-            stats.add(raw.getStatistics());
-        }
-        return summary.aggregate(stats);
-    }
-
-    public SummaryStatistics getRawDataInsertTimes() {
-        return rawDataInsertTimes;
-    }
-
 }

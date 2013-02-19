@@ -29,7 +29,6 @@ import java.util.Date;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.joda.time.Duration;
 
 /**
  * @author John Sanda
@@ -46,18 +45,32 @@ public class StatsCollector implements Runnable {
 
     @Override
     public void run() {
-        stats.startNewSample();
-        RawDataStats rawStats = stats.getLastSample();
-        if (rawStats != null) {
-            Duration duration = new Duration(rawStats.getStartTime(), rawStats.getEndTime());
-            log.info("Reporting summary of raw data inserts/minute starting at " + new Date(rawStats.getStartTime()) +
-                " for a duration of " + duration.toStandardSeconds().getSeconds() + " seconds\n" +
-                rawStats.getStatistics());
+        long totalRawInserts = stats.getTotalRawInserts();
+        long now = System.currentTimeMillis();
+        stats.startNewInterval(now);
+        RawInserts inserts = stats.getRawInsertsForLastInterval();
+
+        // inserts will be null on the first run
+        if (inserts == null) {
+            return;
         }
+
+        log.info("Inserted " + totalRawInserts + " raw metrics in total.");
+        log.info("Inserted " + inserts.getCount() + " for interval starting at " + new Date(inserts.getTimestamp()));
+        logInsertionTimeStats();
+    }
+
+    private void logInsertionTimeStats() {
+        InsertionTimes insertionTimes = stats.getInsertionTimes();
+        log.info("Summary of raw insertion time stats (milliseconds):\n" +
+            "Min: " + insertionTimes.getMin() + "\n" +
+            "Mean: " + insertionTimes.getMean() + "\n" +
+            "Max: " + insertionTimes.getMax() + "\n" +
+            "Standard Deviation: " + insertionTimes.getStandardDeviation());
     }
 
     public void logSummary() {
-        log.info("Summary of raw data inserts/minute\n" + stats.getAggregateSummary());
-        log.info("Summary of raw data insertion times in milliseconds\n" + stats.getRawDataInsertTimes());
+//        log.info("Summary of raw data inserts/minute\n" + stats.getAggregateSummary());
+//        log.info("Summary of raw data insertion times in milliseconds\n" + stats.getRawDataInsertTimes());
     }
 }

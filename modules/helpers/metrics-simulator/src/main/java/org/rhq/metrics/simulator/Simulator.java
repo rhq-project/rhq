@@ -119,8 +119,6 @@ public class Simulator {
         log.info("Shutting down executor service");
         executorService.shutdown();
         executorService.awaitTermination(5, TimeUnit.SECONDS);
-
-        statsCollector.logSummary();
     }
 
     private List<CassandraNode> deployCluster() throws IOException {

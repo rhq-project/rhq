@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
@@ -41,7 +42,6 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -157,10 +157,10 @@ public class ConditionsAlertDefinitionForm extends LocatableVLayout implements E
     private void buildForm() {
         if (!formBuilt) {
 
-            LocatableDynamicForm conditionExpressionForm;
-            conditionExpressionForm = new LocatableDynamicForm(this.extendLocatorId("conditionExpressionForm"));
-            conditionExpression = new SelectItem("conditionExpression", MSG
-                .view_alert_common_tab_conditions_expression());
+            DynamicForm conditionExpressionForm;
+            conditionExpressionForm = new DynamicForm();
+            conditionExpression = new SelectItem("conditionExpression",
+                MSG.view_alert_common_tab_conditions_expression());
             LinkedHashMap<String, String> condExprs = new LinkedHashMap<String, String>(2);
             condExprs.put(BooleanExpression.ANY.name(), BooleanExpression.ANY.toString());
             condExprs.put(BooleanExpression.ALL.name(), BooleanExpression.ALL.toString());
@@ -170,8 +170,8 @@ public class ConditionsAlertDefinitionForm extends LocatableVLayout implements E
             conditionExpression.setHoverWidth(300);
             conditionExpression.setTooltip(MSG.view_alert_common_tab_conditions_expression_tooltip());
 
-            conditionExpressionStatic = new StaticTextItem("conditionExpressionStatic", MSG
-                .view_alert_common_tab_conditions_expression());
+            conditionExpressionStatic = new StaticTextItem("conditionExpressionStatic",
+                MSG.view_alert_common_tab_conditions_expression());
             conditionExpressionStatic.setWrapTitle(false);
 
             conditionExpressionForm.setFields(conditionExpression, conditionExpressionStatic);

@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.test;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.History;
@@ -28,20 +31,18 @@ import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.SortDirection;
+import com.smartgwt.client.widgets.HTMLPane;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.util.rpc.RemoteServiceStatistics;
 import org.rhq.enterprise.gui.coregui.client.util.rpc.RemoteServiceStatistics.Record.Summary;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
-
-import java.util.LinkedHashMap;
-import java.util.List;
 
 /**
  * A view that gives a display of statistics for all remote services executed since the application was loaded.
@@ -51,7 +52,7 @@ import java.util.List;
 public class TestRemoteServiceStatisticsView extends Table {
 
     public static void showInWindow() {
-        new StatisticsWindow("StatisticsWindow").show();
+        new StatisticsWindow().show();
     }
 
     public static final String TABLE_TITLE = "Remote Service Statistics";
@@ -73,8 +74,8 @@ public class TestRemoteServiceStatisticsView extends Table {
     private Timer refreshTimer = null;
     private boolean refreshOnPageChange = false;
 
-    public TestRemoteServiceStatisticsView(String locatorId) {
-        super(locatorId, TABLE_TITLE, null, defaultSorts, null, false);
+    public TestRemoteServiceStatisticsView() {
+        super(TABLE_TITLE, null, defaultSorts, null, false);
 
         refreshTimer = new Timer() {
             @Override
@@ -112,14 +113,14 @@ public class TestRemoteServiceStatisticsView extends Table {
         getListGrid().setFields(serviceName, methodName, count, slowest, average, fastest, stddev);
         refresh();
 
-        addTableAction(extendLocatorId("deleteAll"), MSG.common_button_delete_all(), MSG.common_msg_areYouSure(),
-            new AbstractTableAction(TableActionEnablement.ALWAYS) {
-                @Override
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    RemoteServiceStatistics.clearAll();
-                    refresh();
-                }
-            });
+        addTableAction(MSG.common_button_delete_all(), MSG.common_msg_areYouSure(), new AbstractTableAction(
+            TableActionEnablement.ALWAYS) {
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                RemoteServiceStatistics.clearAll();
+                refresh();
+            }
+        });
 
         addTableAction(extendLocatorId("export"), "Export To CSV",
             new AbstractTableAction(TableActionEnablement.ALWAYS) {
@@ -147,8 +148,7 @@ public class TestRemoteServiceStatisticsView extends Table {
                             .append(record.getAttribute(FIELD_STDDEV)).append('\n');
                     }
 
-                    new MessageWindow(extendLocatorId("csv"), "Export To CSV", "<pre>" + csv.toString() + "</pre>")
-                        .show();
+                    new MessageWindow("Export To CSV", "<pre>" + csv.toString() + "</pre>").show();
 
                     refresh();
                 }
@@ -181,41 +181,40 @@ public class TestRemoteServiceStatisticsView extends Table {
                 }
             });
 
-            addTableAction(extendLocatorId("refreshTimer"), "Refresh Timer", null, timerValues,
-                new AbstractTableAction(TableActionEnablement.ALWAYS) {
-                    @Override
-                    public void executeAction(ListGridRecord[] selection, Object actionValue) {
+            addTableAction("Refresh Timer", null, timerValues, new AbstractTableAction(TableActionEnablement.ALWAYS) {
+                @Override
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
 
-                        Integer timeout = (Integer) actionValue;
+                    Integer timeout = (Integer) actionValue;
 
-                        // if being asked to refresh now, just refresh but don't touch our schedules
-                        if (timeout == null || timeout.intValue() == -2) {
-                            refresh();
-                            return;
-                        }
-
-                        // cancel everything - will reinstate if user elected to do one of these
-                        refreshTimer.cancel();
-                        refreshOnPageChange = false;
-
-                        if (timeout.intValue() == -1) {
-                            updateTitleCanvas(TABLE_TITLE);
-                        } else if (timeout.intValue() == 0) {
-                            refreshOnPageChange = true;
-                            updateTitleCanvas(TABLE_TITLE + " (refresh on page change)");
-                        } else {
-                            refreshTimer.scheduleRepeating(timeout.intValue() * 1000);
-                            updateTitleCanvas(TABLE_TITLE + " (refresh every " + timeout + "s)");
-                        }
-                        refreshTableInfo();
+                    // if being asked to refresh now, just refresh but don't touch our schedules
+                    if (timeout == null || timeout.intValue() == -2) {
+                        refresh();
+                        return;
                     }
-                });
+
+                    // cancel everything - will reinstate if user elected to do one of these
+                    refreshTimer.cancel();
+                    refreshOnPageChange = false;
+
+                    if (timeout.intValue() == -1) {
+                        updateTitleCanvas(TABLE_TITLE);
+                    } else if (timeout.intValue() == 0) {
+                        refreshOnPageChange = true;
+                        updateTitleCanvas(TABLE_TITLE + " (refresh on page change)");
+                    } else {
+                        refreshTimer.scheduleRepeating(timeout.intValue() * 1000);
+                        updateTitleCanvas(TABLE_TITLE + " (refresh every " + timeout + "s)");
+                    }
+                    refreshTableInfo();
+                }
+            });
         } else { // not in the standalone window
             addTableAction(extendLocatorId("showInWin"), "Show In Window", new AbstractTableAction(
                 TableActionEnablement.ALWAYS) {
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    new StatisticsWindow(extendLocatorId("statsWin")).show();
+                    new StatisticsWindow().show();
                     refresh();
                 }
             });
@@ -263,11 +262,11 @@ public class TestRemoteServiceStatisticsView extends Table {
         return record;
     }
 
-    class MessageWindow extends LocatableWindow {
-        public MessageWindow(String locatorId, String title, String message) {
-            super(locatorId);
+    class MessageWindow extends Window {
+        public MessageWindow(String title, String message) {
+            super();
 
-            LocatableHTMLPane htmlPane = new LocatableHTMLPane(extendLocatorId("winDetailsPane"));
+            HTMLPane htmlPane = new HTMLPane();
             htmlPane.setMargin(10);
             htmlPane.setDefaultWidth(600);
             htmlPane.setDefaultHeight(400);
@@ -295,14 +294,14 @@ public class TestRemoteServiceStatisticsView extends Table {
         }
     }
 
-    static class StatisticsWindow extends LocatableWindow {
+    static class StatisticsWindow extends Window {
         private Timer blinkTimer;
 
-        public StatisticsWindow(String locatorId) {
-            super(locatorId);
+        public StatisticsWindow() {
+            super();
 
             final TestRemoteServiceStatisticsView view;
-            view = new TestRemoteServiceStatisticsView(extendLocatorId("StatsViewInWin"));
+            view = new TestRemoteServiceStatisticsView();
             view.window = this;
 
             setTitle(TABLE_TITLE);

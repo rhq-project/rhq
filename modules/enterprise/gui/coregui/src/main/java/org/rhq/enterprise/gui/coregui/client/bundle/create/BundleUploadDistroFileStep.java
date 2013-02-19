@@ -51,8 +51,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 public class BundleUploadDistroFileStep extends AbstractWizardStep {
 
@@ -72,27 +70,23 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         this.wizard = bundleCreationWizard;
     }
 
-    public Canvas getCanvas(Locatable parent) {
+    public Canvas getCanvas() {
         if (mainCanvasForm == null) {
             LinkedHashMap<String, DynamicForm> radioItems = new LinkedHashMap<String, DynamicForm>();
             radioItems.put(URL_OPTION, createUrlForm());
             radioItems.put(UPLOAD_OPTION, createUploadForm());
             radioItems.put(RECIPE_OPTION, createRecipeForm());
 
-            if (parent != null) {
-                mainCanvasForm = new RadioDynamicForm(parent.extendLocatorId("mainCanvasForm"));
-            } else {
-                mainCanvasForm = new RadioDynamicForm("mainCanvasForm");
-            }
+            mainCanvasForm = new RadioDynamicForm();
 
-            radioGroup = new RadioGroupWithComponentsItem("bundleDistRadioGroup", MSG
-                .view_bundle_createWizard_bundleDistro(), radioItems, mainCanvasForm);
+            radioGroup = new RadioGroupWithComponentsItem("bundleDistRadioGroup",
+                MSG.view_bundle_createWizard_bundleDistro(), radioItems, mainCanvasForm);
             radioGroup.setShowTitle(false);
 
             mainCanvasForm.setItems(radioGroup);
         }
 
-        // If we've already created a bundle verison, don't allow the user to submit something else.
+        // If we've already created a bundle version, don't allow the user to submit something else.
         // The user must hit the cancel button and start over if they want to use a different bundle distribution file.
         if (wizard.getBundleVersion() != null) {
             mainCanvasForm.setDisabled(true);
@@ -142,7 +136,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         urlTextItem.setRequired(false);
         urlTextItem.setShowTitle(false);
         urlTextItem.setWidth(400);
-        DynamicForm urlForm = new LocatableDynamicForm("BundleDistUrl");
+        DynamicForm urlForm = new DynamicForm();
         urlForm.setPadding(20);
         urlForm.setWidth100();
         urlForm.setItems(urlTextItem);
@@ -150,7 +144,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
     }
 
     private BundleDistributionFileUploadForm createUploadForm() {
-        uploadDistroForm = new BundleDistributionFileUploadForm("BundleCreateUploadDistFile", false);
+        uploadDistroForm = new BundleDistributionFileUploadForm(false);
         uploadDistroForm.setPadding(20);
         uploadDistroForm.setWidth(400);
         uploadDistroForm.addFormHandler(new DynamicFormHandler() {
@@ -167,19 +161,19 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
     }
 
     private DynamicForm createRecipeForm() {
-        recipeForm = new DynamicCallbackForm("BundleRecipe", "recipeForm");
+        recipeForm = new DynamicCallbackForm("recipeForm");
         recipeForm.setMargin(Integer.valueOf(20));
         recipeForm.setShowInlineErrors(false);
 
-        final ButtonItem showUpload = new ButtonItem("recipeUploadLink", MSG
-            .view_bundle_createWizard_clickToUploadRecipe());
+        final ButtonItem showUpload = new ButtonItem("recipeUploadLink",
+            MSG.view_bundle_createWizard_clickToUploadRecipe());
         showUpload.setIcon(ImageManager.getUploadIcon());
 
         final CanvasItem upload = new CanvasItem("recipeUploadCanvas");
         upload.setShowTitle(false);
         upload.setVisible(false);
 
-        final TextFileRetrieverForm textFileRetrieverForm = new TextFileRetrieverForm("BundleCreateRecipeUpload");
+        final TextFileRetrieverForm textFileRetrieverForm = new TextFileRetrieverForm();
         upload.setCanvas(textFileRetrieverForm);
 
         showUpload.addClickHandler(new ClickHandler() {
@@ -337,10 +331,10 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         }
     }
 
-    private class RadioDynamicForm extends LocatableDynamicForm {
+    private class RadioDynamicForm extends DynamicForm {
 
-        public RadioDynamicForm(String locatorId) {
-            super(locatorId);
+        public RadioDynamicForm() {
+            super();
         }
 
         @Override

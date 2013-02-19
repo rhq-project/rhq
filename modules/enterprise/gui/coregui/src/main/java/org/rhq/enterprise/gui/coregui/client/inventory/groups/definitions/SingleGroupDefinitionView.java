@@ -24,7 +24,10 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGro
 import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.TYPE;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -41,6 +44,7 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
@@ -80,10 +84,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions.GroupD
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-
 
 /**
  * @author Joseph Marques
@@ -132,10 +134,10 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         name.setValue(groupDefinition.getName());
         recursive.setValue(groupDefinition.isRecursive());
         description.setValue(groupDefinition.getDescription());
-        recalculationInterval.setValue(groupDefinition.getRecalculationInterval() /(60 * 1000));
+        recalculationInterval.setValue(groupDefinition.getRecalculationInterval() / (60 * 1000));
         expression.setValue(groupDefinition.getExpression());
 
-        final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("GroupDefinitionForm"));
+        final DynamicForm form = new DynamicForm();
         form.setFields(id, name, description, templateSelectorTitleSpacer, templateSelector, expression, recursive,
             recalculationInterval);
         form.setDataSource(GroupDefinitionDataSource.getInstance());
@@ -149,15 +151,14 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
             groupDefinitionId);
 
         // button setup
-        IButton saveButton = new LocatableIButton(this.extendLocatorId("save"), MSG.common_button_save());
+        IButton saveButton = new EnhancedIButton(MSG.common_button_save());
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 saveForm(form, dynaGroupChildrenView, false);
             }
         });
 
-        IButton recalculateButton = new LocatableIButton(this.extendLocatorId("saveAndRecalculate"), MSG
-            .view_dynagroup_saveAndRecalculate());
+        IButton recalculateButton = new EnhancedIButton(MSG.view_dynagroup_saveAndRecalculate());
         recalculateButton.setWidth(150);
         recalculateButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -165,7 +166,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
             }
         });
 
-        IButton resetButton = new LocatableIButton(this.extendLocatorId("Reset"), MSG.common_button_reset());
+        IButton resetButton = new EnhancedIButton(MSG.common_button_reset());
         resetButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 form.reset();
@@ -186,7 +187,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         markForRedraw();
     }
 
-    private void saveForm(final LocatableDynamicForm form, final DynaGroupChildrenView dynaGroupChildrenView,
+    private void saveForm(final DynamicForm form, final DynaGroupChildrenView dynaGroupChildrenView,
         final boolean recalc) {
         if (form.validate()) {
             form.saveData(new DSCallback() {
@@ -209,11 +210,10 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
                                 }
                             }
 
-                            if(!hasDuplicateNameError){
+                            if (!hasDuplicateNameError) {
                                 CoreGUI.getErrorHandler().handleError(
                                     MSG.view_dynagroup_singleSaveFailure(String.valueOf(results.length)));
                             }
-
 
                         } else {
                             Record newRecord = results[0];
@@ -258,8 +258,8 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
 
     class DynaGroupChildrenView extends Table<ResourceGroupsDataSource> {
         public DynaGroupChildrenView(String locatorId, int groupDefinitionId) {
-            super(locatorId, MSG.view_dynagroup_children(), new Criteria("groupDefinitionId", String
-                .valueOf(groupDefinition.getId())));
+            super(MSG.view_dynagroup_children(), new Criteria("groupDefinitionId", String.valueOf(groupDefinition
+                .getId())));
             setDataSource(ResourceGroupsDataSource.getInstance());
         }
 
@@ -416,7 +416,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
 
         recalculationInterval = new SpinnerItem("recalculationInterval", MSG.view_dynagroup_recalculationInterval());
         recalculationInterval.setMin(0);
-        recalculationInterval.setMax(60 * 24 * 7 ); // max set to 1 week
+        recalculationInterval.setMax(60 * 24 * 7); // max set to 1 week
         recalculationInterval.setDefaultValue(0);
         recalculationInterval.setStep(1); // the recalc interval is in milliseconds, step up one minute at a time
     }
@@ -513,7 +513,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
 
     private void showExpressionBuilder() {
         if (builder == null) {
-            builder = new GroupDefinitionExpressionBuilder(extendLocatorId("exprBuilder"), new AddExpressionHandler() {
+            builder = new GroupDefinitionExpressionBuilder(new AddExpressionHandler() {
                 @Override
                 public void addExpression(String newExpression) {
                     String currentExpression = "";

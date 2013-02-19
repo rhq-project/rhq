@@ -43,8 +43,8 @@ public class TimelineView extends LocatableVLayout {
 
     @Override
     protected void onDraw() {
-        final FullHTMLPane timelinePane = new FullHTMLPane(extendLocatorId("Timeline"),
-            "/resource/common/monitor/events/EventsView.jsp?id=" + resourceComposite.getResource().getId());
+        final FullHTMLPane timelinePane = new FullHTMLPane("/resource/common/monitor/events/EventsView.jsp?id="
+            + resourceComposite.getResource().getId());
 
         // we create a simple subclass because we need to know when a new range has been set in order to refresh the timeline
         class RangeEditor extends UserPreferencesMeasurementRangeEditor {

@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.VLayout;
 
@@ -39,7 +40,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**This portlet allows the end user to customize the Package History display
  *
@@ -54,21 +54,21 @@ public class ResourcePkgHistoryPortlet extends GroupPkgHistoryPortlet {
 
     private int resourceId = -1;
 
-    public ResourcePkgHistoryPortlet(String locatorId, int resourceId) {
-        super(locatorId, -1);
+    public ResourcePkgHistoryPortlet(int resourceId) {
+        super(-1);
         this.resourceId = resourceId;
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
             if (EntityContext.Type.Resource != context.getType()) {
                 throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
             }
 
-            return new ResourcePkgHistoryPortlet(locatorId, context.getResourceId());
+            return new ResourcePkgHistoryPortlet(context.getResourceId());
         }
     }
 
@@ -102,7 +102,7 @@ public class ResourcePkgHistoryPortlet extends GroupPkgHistoryPortlet {
             @Override
             public void onFailure(Throwable caught) {
                 Log.debug("Error retrieving installed package history for group [" + resourceId + "]:"
-                        + caught.getMessage());
+                    + caught.getMessage());
                 currentlyLoading = false;
             }
 
@@ -112,9 +112,7 @@ public class ResourcePkgHistoryPortlet extends GroupPkgHistoryPortlet {
                 column.setHeight(10);
                 if (!result.isEmpty()) {
                     for (InstalledPackageHistory history : result) {
-                        LocatableDynamicForm row = new LocatableDynamicForm(recentPkgHistoryContent
-                            .extendLocatorId(history.getPackageVersion().getFileName()
-                                + history.getPackageVersion().getVersion()));
+                        DynamicForm row = new DynamicForm();
                         row.setNumCols(3);
 
                         StaticTextItem iconItem = AbstractActivityView.newTextItemIcon(
@@ -122,7 +120,7 @@ public class ResourcePkgHistoryPortlet extends GroupPkgHistoryPortlet {
                         String title = history.getPackageVersion().getFileName() + ":";
                         String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + resourceId
                             + "&selectedHistoryId=" + history.getId();
-                        //spinder 4/27/11: diabling links as they point into portal.war content pages
+                        //spinder 4/27/11: disabling links as they point into portal.war content pages
                         //                        LinkItem link = AbstractActivityView.newLinkItem(title, destination);
                         StaticTextItem link = AbstractActivityView.newTextItem(title);
                         StaticTextItem time = AbstractActivityView.newTextItem(GwtRelativeDurationConverter
@@ -132,13 +130,12 @@ public class ResourcePkgHistoryPortlet extends GroupPkgHistoryPortlet {
                         column.addMember(row);
                     }
                     //                    //insert see more link
-                    //                    LocatableDynamicForm row = new LocatableDynamicForm(recentPkgHistoryContent
+                    //                    DynamicForm row = new DynamicForm(recentPkgHistoryContent
                     //                        .extendLocatorId("PkgHistoryContentSeeMore"));
                     //                    String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + groupId;
                     //                    addSeeMoreLink(row, destination, column);
                 } else {
-                    LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(recentPkgHistoryContent
-                        .extendLocatorId("None"), MSG.view_portlet_results_empty());
+                    DynamicForm row = AbstractActivityView.createEmptyDisplayRow(MSG.view_portlet_results_empty());
                     column.addMember(row);
                 }
                 //cleanup

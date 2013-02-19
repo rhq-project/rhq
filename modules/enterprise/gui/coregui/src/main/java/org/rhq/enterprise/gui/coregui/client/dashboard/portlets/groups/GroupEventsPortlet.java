@@ -52,8 +52,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.Abs
 import org.rhq.enterprise.gui.coregui.client.util.GwtTuple;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**This portlet allows the end user to customize the Events display
@@ -86,11 +84,11 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
     }
 
     private int groupId = -1;
-    protected LocatableCanvas recentEventsContent = new LocatableCanvas(extendLocatorId("RecentEvents"));
+    protected Canvas recentEventsContent = new Canvas();
     protected boolean currentlyLoading = false;
 
-    public GroupEventsPortlet(String locatorId, int groupId) {
-        super(locatorId);
+    public GroupEventsPortlet(int groupId) {
+        super();
         this.groupId = groupId;
     }
 
@@ -140,13 +138,13 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
             if (EntityContext.Type.ResourceGroup != context.getType()) {
                 throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
             }
 
-            return new GroupEventsPortlet(locatorId, context.getGroupId());
+            return new GroupEventsPortlet(context.getGroupId());
         }
     }
 
@@ -156,8 +154,8 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
 
     @Override
     public DynamicForm getCustomSettingsForm() {
-        final LocatableDynamicForm customSettings = new LocatableDynamicForm(extendLocatorId("customSettings"));
-        LocatableVLayout page = new LocatableVLayout(customSettings.extendLocatorId("page"));
+        final DynamicForm customSettings = new DynamicForm();
+        LocatableVLayout page = new LocatableVLayout();
 
         final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
         final Configuration portletConfig = storedPortlet.getConfiguration();
@@ -248,16 +246,13 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
                         }
                     }
                     //build display
-                    LocatableVLayout column = new LocatableVLayout(recentEventsContent.extendLocatorId("canvas"));
+                    LocatableVLayout column = new LocatableVLayout();
                     column.setHeight(10);
 
                     if (!results.isEmpty()) {
                         int rowNum = 0;
                         for (GwtTuple<EventSeverity, Integer> tuple : results) {
-                            // event history records do not have a usable locatorId, we'll use rownum, which is unique and
-                            // may be repeatable.
-                            LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent
-                                .extendLocatorId(String.valueOf(rowNum++)));
+                            DynamicForm row = new DynamicForm();
                             row.setNumCols(2);
                             row.setWidth(10);//pack.
 
@@ -272,14 +267,12 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
                         }
                         column.markForRedraw();
                         //insert see more link
-                        LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent.extendLocatorId(String
-                            .valueOf(rowNum++)));
+                        DynamicForm row = new DynamicForm();
                         String link = LinkManager.getGroupEventHistoryListLink(EntityContext.forGroup(groupId));
                         AbstractActivityView.addSeeMoreLink(row, link, column);
                     } else {
-                        LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(
-                            recentEventsContent.extendLocatorId("None"),
-                            AbstractActivityView.RECENT_CRITERIA_EVENTS_NONE);
+                        DynamicForm row = AbstractActivityView
+                            .createEmptyDisplayRow(AbstractActivityView.RECENT_CRITERIA_EVENTS_NONE);
                         column.addMember(row);
                     }
                     //cleanup

@@ -31,6 +31,7 @@ import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLPane;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
@@ -56,8 +57,6 @@ import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryDataSourc
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Option;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -70,14 +69,14 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
 
     private static final String HEADER_ICON = "subsystems/control/Operation_24.png";
 
-    public AbstractOperationHistoryListView(String locatorId, T dataSource, String title) {
-        super(locatorId, title);
+    public AbstractOperationHistoryListView(T dataSource, String title) {
+        super(title);
         setDataSource(dataSource);
         setHeaderIcon(HEADER_ICON);
     }
 
-    public AbstractOperationHistoryListView(String locatorId, T dataSource, String title, Criteria criteria) {
-        super(locatorId, title, criteria);
+    public AbstractOperationHistoryListView(T dataSource, String title, Criteria criteria) {
+        super(title, criteria);
         setDataSource(dataSource);
     }
 
@@ -98,65 +97,63 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
         // from OperationHistoryView. Perhaps independently developed and the developer of one didn't know the other
         // existed. In any case, this code is almost identical as the table action in OperationHistoryView with the
         // exception that this code uses AbstractOperationHistoryDataSource.Field constants.
-        addTableAction(extendLocatorId("Cancel"), MSG.common_button_cancel(),
-            MSG.view_operationHistoryList_cancelConfirm(), new TableAction() {
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    int count = selection.length;
-                    for (ListGridRecord item : selection) {
-                        if (!OperationRequestStatus.INPROGRESS.name().equals(
-                            item.getAttribute(AbstractOperationHistoryDataSource.Field.STATUS))) {
-                            count--; // one selected item was not in-progress, it doesn't count
-                        }
+        addTableAction(MSG.common_button_cancel(), MSG.view_operationHistoryList_cancelConfirm(), new TableAction() {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                int count = selection.length;
+                for (ListGridRecord item : selection) {
+                    if (!OperationRequestStatus.INPROGRESS.name().equals(
+                        item.getAttribute(AbstractOperationHistoryDataSource.Field.STATUS))) {
+                        count--; // one selected item was not in-progress, it doesn't count
                     }
-                    return (count >= 1 && hasControlPermission());
                 }
+                return (count >= 1 && hasControlPermission());
+            }
 
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    int numCancelRequestsSubmitted = 0;
-                    OperationGWTServiceAsync opService = GWTServiceLookup.getOperationService();
-                    for (ListGridRecord toBeCanceled : selection) {
-                        // only cancel those selected operations that are currently in progress
-                        if (OperationRequestStatus.INPROGRESS.name().equals(
-                            toBeCanceled.getAttribute(AbstractOperationHistoryDataSource.Field.STATUS))) {
-                            numCancelRequestsSubmitted++;
-                            final int historyId = toBeCanceled.getAttributeAsInt(OperationHistoryDataSource.Field.ID);
-                            opService.cancelOperationHistory(historyId, false, new AsyncCallback<Void>() {
-                                public void onSuccess(Void result) {
-                                    Message msg = new Message(MSG.view_operationHistoryList_cancelSuccess(String
-                                        .valueOf(historyId)), Severity.Info, EnumSet.of(Option.BackgroundJobResult));
-                                    CoreGUI.getMessageCenter().notify(msg);
-                                };
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                int numCancelRequestsSubmitted = 0;
+                OperationGWTServiceAsync opService = GWTServiceLookup.getOperationService();
+                for (ListGridRecord toBeCanceled : selection) {
+                    // only cancel those selected operations that are currently in progress
+                    if (OperationRequestStatus.INPROGRESS.name().equals(
+                        toBeCanceled.getAttribute(AbstractOperationHistoryDataSource.Field.STATUS))) {
+                        numCancelRequestsSubmitted++;
+                        final int historyId = toBeCanceled.getAttributeAsInt(OperationHistoryDataSource.Field.ID);
+                        opService.cancelOperationHistory(historyId, false, new AsyncCallback<Void>() {
+                            public void onSuccess(Void result) {
+                                Message msg = new Message(MSG.view_operationHistoryList_cancelSuccess(String
+                                    .valueOf(historyId)), Severity.Info, EnumSet.of(Option.BackgroundJobResult));
+                                CoreGUI.getMessageCenter().notify(msg);
+                            };
 
-                                public void onFailure(Throwable caught) {
-                                    Message msg = new Message(MSG.view_operationHistoryList_cancelFailure(String
-                                        .valueOf(historyId)), caught, Severity.Error, EnumSet
-                                        .of(Option.BackgroundJobResult));
-                                    CoreGUI.getMessageCenter().notify(msg);
-                                };
-                            });
-                        }
+                            public void onFailure(Throwable caught) {
+                                Message msg = new Message(MSG.view_operationHistoryList_cancelFailure(String
+                                    .valueOf(historyId)), caught, Severity.Error, EnumSet
+                                    .of(Option.BackgroundJobResult));
+                                CoreGUI.getMessageCenter().notify(msg);
+                            };
+                        });
                     }
-                    CoreGUI.getMessageCenter().notify(
-                        new Message(MSG.view_operationHistoryList_cancelSubmitted(String
-                            .valueOf(numCancelRequestsSubmitted)), Severity.Info));
-                    refreshTableInfo();
                 }
-            });
+                CoreGUI.getMessageCenter().notify(
+                    new Message(MSG.view_operationHistoryList_cancelSubmitted(String
+                        .valueOf(numCancelRequestsSubmitted)), Severity.Info));
+                refreshTableInfo();
+            }
+        });
 
-        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), getDeleteConfirmMessage(),
+        addTableAction(MSG.common_button_delete(), getDeleteConfirmMessage(), new TableAction() {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                int count = selection.length;
+                return (count >= 1 && hasControlPermission());
+            }
+
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                deleteSelectedRecords();
+            }
+        });
+
+        addTableAction(MSG.view_operationHistoryList_button_forceDelete(), getDeleteConfirmMessage(),
             new TableAction() {
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    int count = selection.length;
-                    return (count >= 1 && hasControlPermission());
-                }
-
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    deleteSelectedRecords();
-                }
-            });
-
-        addTableAction(extendLocatorId("ForceDelete"), MSG.view_operationHistoryList_button_forceDelete(),
-            getDeleteConfirmMessage(), new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
                     int count = selection.length;
                     return (count >= 1 && hasControlPermission());
@@ -259,8 +256,7 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
                 String statusStr = record.getAttribute(AbstractOperationHistoryDataSource.Field.STATUS);
                 OperationRequestStatus status = OperationRequestStatus.valueOf(statusStr);
                 if (status == OperationRequestStatus.FAILURE) {
-                    final Window winModal = new LocatableWindow(AbstractOperationHistoryListView.this
-                        .extendLocatorId("statusDetailsWin"));
+                    final Window winModal = new Window();
                     winModal.setTitle(MSG.common_title_details());
                     winModal.setOverflow(Overflow.VISIBLE);
                     winModal.setShowMinimizeButton(false);
@@ -279,8 +275,7 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
                         }
                     });
 
-                    LocatableHTMLPane htmlPane = new LocatableHTMLPane(AbstractOperationHistoryListView.this
-                        .extendLocatorId("statusDetailsPane"));
+                    HTMLPane htmlPane = new HTMLPane();
                     htmlPane.setMargin(10);
                     htmlPane.setDefaultWidth(500);
                     htmlPane.setDefaultHeight(400);
@@ -329,8 +324,8 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
     protected void deleteSelectedRecords(DSRequest requestProperties) {
         final ListGridRecord[] recordsToBeDeleted = getListGrid().getSelectedRecords();
         final int numberOfRecordsToBeDeleted = recordsToBeDeleted.length;
-        Boolean forceValue = (requestProperties != null &&
-                requestProperties.getAttributeAsBoolean(AbstractOperationHistoryDataSource.RequestAttribute.FORCE));
+        Boolean forceValue = (requestProperties != null && requestProperties
+            .getAttributeAsBoolean(AbstractOperationHistoryDataSource.RequestAttribute.FORCE));
         boolean force = ((forceValue != null) && forceValue);
         final List<Integer> successIds = new ArrayList<Integer>();
         final List<Integer> failureIds = new ArrayList<Integer>();
@@ -346,7 +341,7 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
                     public void onFailure(Throwable caught) {
                         // TODO: i18n
                         CoreGUI.getErrorHandler().handleError("Failed to delete " + operationHistoryToRemove + ".",
-                                caught);
+                            caught);
                         failureIds.add(operationHistoryToRemove.getId());
                         handleCompletion(successIds, failureIds, numberOfRecordsToBeDeleted);
                     }
@@ -358,10 +353,13 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
         if ((successIds.size() + failureIds.size()) == numberOfRecordsToBeDeleted) {
             // TODO: i18n
             if (successIds.size() == numberOfRecordsToBeDeleted) {
-                CoreGUI.getMessageCenter().notify(new Message("Deleted " + numberOfRecordsToBeDeleted + " operation history items."));
+                CoreGUI.getMessageCenter().notify(
+                    new Message("Deleted " + numberOfRecordsToBeDeleted + " operation history items."));
             } else {
-                CoreGUI.getMessageCenter().notify(new Message("Deleted " + successIds.size()
-                        + " operation history items, but failed to delete the items with the following IDs: " + failureIds));
+                CoreGUI.getMessageCenter().notify(
+                    new Message("Deleted " + successIds.size()
+                        + " operation history items, but failed to delete the items with the following IDs: "
+                        + failureIds));
             }
             refresh();
         }

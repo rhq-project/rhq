@@ -45,7 +45,6 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -69,8 +68,8 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
 
     private String baseViewPath;
 
-    public AbstractRecentAlertsPortlet(String locatorId, EntityContext entityContext) {
-        super(locatorId, null, entityContext);
+    public AbstractRecentAlertsPortlet(EntityContext entityContext) {
+        super(null, entityContext);
 
         this.baseViewPath = LinkManager.getEntityTabLink(getContext(), "Alerts", "History");
 
@@ -163,9 +162,9 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
     @Override
     public DynamicForm getCustomSettingsForm() {
 
-        LocatableDynamicForm customSettingsForm = new LocatableDynamicForm(extendLocatorId("CustomSettings"));
-        LocatableVLayout page = new LocatableVLayout(customSettingsForm.extendLocatorId("Page"));
-        LocatableDynamicForm filterForm = new LocatableDynamicForm(page.extendLocatorId("Filter"));
+        DynamicForm customSettingsForm = new DynamicForm();
+        LocatableVLayout page = new LocatableVLayout();
+        DynamicForm filterForm = new DynamicForm();
         filterForm.setMargin(5);
 
         final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();

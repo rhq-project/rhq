@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Img;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
@@ -52,7 +53,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.PluginGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVStack;
 
@@ -85,14 +85,14 @@ public class ServerPluginControlView extends LocatableVStack {
     protected void onDraw() {
         super.onDraw();
 
-        LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("controlForm"));
+        DynamicForm form = new DynamicForm();
         addMember(form);
 
-        paramsLayout = new LocatableVLayout(extendLocatorId("paramsLayout"));
+        paramsLayout = new LocatableVLayout();
         paramsLayout.setVisible(false);
         addMember(paramsLayout);
 
-        resultsLayout = new LocatableVLayout(extendLocatorId("resultsLayout"));
+        resultsLayout = new LocatableVLayout();
         resultsLayout.setVisible(false);
         addMember(resultsLayout);
 
@@ -101,7 +101,8 @@ public class ServerPluginControlView extends LocatableVStack {
         executeButton.setSrc(ImageManager.getOperationIcon());
         executeButton.setPrompt(MSG.common_button_execute());
 
-        final SelectItem controlNamesItem = new SortedSelectItem("controlMenu", MSG.view_admin_plugins_serverControls_name());
+        final SelectItem controlNamesItem = new SortedSelectItem("controlMenu",
+            MSG.view_admin_plugins_serverControls_name());
         LinkedHashMap<String, String> controlNames = new LinkedHashMap<String, String>();
         for (ServerPluginControlDefinition def : controlDefinitions) {
             controlNames.put(def.getName(), def.getDisplayName());
@@ -167,10 +168,10 @@ public class ServerPluginControlView extends LocatableVStack {
         if (selectedParamsDef != null) {
             paramsLayout.setVisible(true);
             Configuration config = new Configuration();
-            selectedParamsEditor = new ConfigurationEditor(extendLocatorId("params"), selectedParamsDef, config);
+            selectedParamsEditor = new ConfigurationEditor(selectedParamsDef, config);
             selectedParamsEditor.setAutoHeight();
 
-            LocatableDynamicForm paramsForm = new LocatableDynamicForm(extendLocatorId("paramsForm"));
+            DynamicForm paramsForm = new DynamicForm();
             paramsForm.setWidth100();
             paramsForm.setIsGroup(true);
             paramsForm.setGroupTitle(MSG.view_admin_plugins_serverControls_parameters());
@@ -200,7 +201,7 @@ public class ServerPluginControlView extends LocatableVStack {
     private void showResults(final ServerPluginControlResults results) {
         resultsLayout.destroyMembers();
 
-        LocatableDynamicForm resultsForm = new LocatableDynamicForm(extendLocatorId("resultsForm"));
+        DynamicForm resultsForm = new DynamicForm();
         resultsForm.setWidth100();
         resultsForm.setIsGroup(true);
         resultsForm.setGroupTitle(MSG.view_admin_plugins_serverControls_results());
@@ -223,8 +224,7 @@ public class ServerPluginControlView extends LocatableVStack {
         }
 
         if (selectedResultsDef != null && results.getComplexResults() != null) {
-            ConfigurationEditor editor = new ConfigurationEditor(extendLocatorId("params"), selectedResultsDef,
-                results.getComplexResults());
+            ConfigurationEditor editor = new ConfigurationEditor(selectedResultsDef, results.getComplexResults());
             editor.setReadOnly(true);
             editor.setAutoHeight();
 

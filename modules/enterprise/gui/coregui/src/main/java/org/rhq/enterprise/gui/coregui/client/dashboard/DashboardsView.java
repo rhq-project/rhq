@@ -71,7 +71,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MashupPortl
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -183,8 +183,7 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
         tabSet.setWidth100();
         tabSet.setHeight100();
 
-        editButton = new LocatableIButton(extendLocatorId("Mode"), editMode ? MSG.common_title_view_mode()
-            : MSG.common_title_edit_mode());
+        editButton = new EnhancedIButton(editMode ? MSG.common_title_view_mode() : MSG.common_title_edit_mode());
         editButton.setAutoFit(true);
         editButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -197,8 +196,7 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
             }
         });
 
-        final IButton newDashboardButton = new LocatableIButton(extendLocatorId("New"),
-            MSG.common_title_new_dashboard());
+        final IButton newDashboardButton = new EnhancedIButton(MSG.common_title_new_dashboard());
         newDashboardButton.setAutoFit(true);
         newDashboardButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -325,8 +323,8 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
 
         DashboardPortlet news = new DashboardPortlet(MashupPortlet.NAME, MashupPortlet.KEY, 300);
         if (isRHQ) {
-            news.getConfiguration()
-                .put(new PropertySimple("address", "https://docs.jboss.org/author/display/RHQ/User+Documentation"));
+            news.getConfiguration().put(
+                new PropertySimple("address", "https://docs.jboss.org/author/display/RHQ/User+Documentation"));
         } else {
             news.getConfiguration().put(
                 new PropertySimple("address",

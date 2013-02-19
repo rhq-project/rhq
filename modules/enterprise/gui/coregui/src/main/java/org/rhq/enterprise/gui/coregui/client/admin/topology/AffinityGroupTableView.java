@@ -57,7 +57,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
 
 /**
  * Shows the table of all affinity groups.
@@ -73,7 +73,7 @@ public class AffinityGroupTableView extends TableSection<AffinityGroupWithCounts
         + AdministrationView.SECTION_TOPOLOGY_VIEW_ID + "/" + VIEW_ID;
 
     public AffinityGroupTableView(String locatorId) {
-        super(locatorId, null);
+        super(null);
         setHeight100();
         setWidth100();
         setDataSource(new AffinityGroupWithCountsDatasource());
@@ -204,14 +204,13 @@ public class AffinityGroupTableView extends TableSection<AffinityGroupWithCounts
         spacer.setHeight(10);
         layout.addMember(spacer);
 
-        IButton cancel = new LocatableIButton(this.extendLocatorId("Cancel"), MSG.common_button_cancel());
+        IButton cancel = new EnhancedIButton(MSG.common_button_cancel());
         cancel.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 modalWindow.destroy();
             }
         });
-        final IButton create = new LocatableIButton(this.extendLocatorId("Create"),
-            MSG.view_adminTopology_affinityGroups_createNew());
+        final IButton create = new EnhancedIButton(MSG.view_adminTopology_affinityGroups_createNew());
         create.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 createNewGroup(modalWindow, form);

@@ -70,8 +70,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**This portlet allows the end user to customize the metric display
@@ -83,7 +81,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
     private int groupId = -1;
     private boolean isAutoCluster;
     private boolean isAutoGroup;
-    protected LocatableCanvas recentMeasurementsContent = new LocatableCanvas(extendLocatorId("RecentMetrics"));
+    protected Canvas recentMeasurementsContent = new Canvas();
     protected boolean currentlyLoading = false;
     protected long start = -1;
     protected long end = -1;
@@ -112,8 +110,8 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
         CONFIG_INCLUDE.add(Constant.METRIC_RANGE_UNIT);
     }
 
-    public GroupMetricsPortlet(String locatorId, EntityContext context) {
-        super(locatorId);
+    public GroupMetricsPortlet(EntityContext context) {
+        super();
         this.groupId = context.getGroupId();
         this.isAutoGroup = context.isAutoGroup();
         this.isAutoCluster = context.isAutoCluster();
@@ -164,13 +162,13 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
             if (EntityContext.Type.ResourceGroup != context.getType()) {
                 throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
             }
 
-            return new GroupMetricsPortlet(locatorId, context);
+            return new GroupMetricsPortlet(context);
         }
     }
 
@@ -184,9 +182,9 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
     @Override
     public DynamicForm getCustomSettingsForm() {
         //root form.
-        LocatableDynamicForm customSettings = new LocatableDynamicForm(extendLocatorId("customSettings"));
+        DynamicForm customSettings = new DynamicForm();
         //embed range editor in it own container
-        LocatableVLayout page = new LocatableVLayout(customSettings.extendLocatorId("page"));
+        LocatableVLayout page = new LocatableVLayout();
         final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
         final Configuration portletConfig = storedPortlet.getConfiguration();
         final CustomConfigMeasurementRangeEditor measurementRangeEditor = PortletConfigurationEditorComponent
@@ -369,8 +367,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                                                 commaDelimitedList += d.getValue() + ",";
                                                             }
                                                         }
-                                                        LocatableDynamicForm row = new LocatableDynamicForm(
-                                                            recentMeasurementsContent.extendLocatorId(md.getName()));
+                                                        DynamicForm row = new DynamicForm();
                                                         row.setNumCols(3);
                                                         HTMLFlow graph = new HTMLFlow();
                                                         //                        String contents = "<span id='sparkline_" + index + "' class='dynamicsparkline' width='0'>"
@@ -380,7 +377,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                                             + commaDelimitedList + "'>...</span>";
                                                         graph.setContents(contents);
                                                         graph.setContentsType(ContentsType.PAGE);
-                                                        //diable scrollbars on span
+                                                        //disable scrollbars on span
                                                         graph.setScrollbarSize(0);
 
                                                         CanvasItem graphContainer = new CanvasItem();
@@ -400,13 +397,9 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                                         link.addClickHandler(new ClickHandler() {
                                                             @Override
                                                             public void onClick(ClickEvent event) {
-                                                                ChartViewWindow window = new ChartViewWindow(
-                                                                    recentMeasurementsContent
-                                                                        .extendLocatorId("ChartWindow"), title);
+                                                                ChartViewWindow window = new ChartViewWindow(title);
                                                                 //generate and include iframed content
-                                                                FullHTMLPane iframe = new FullHTMLPane(
-                                                                    recentMeasurementsContent
-                                                                        .extendLocatorId("View"), destination);
+                                                                FullHTMLPane iframe = new FullHTMLPane(destination);
                                                                 //                                                                            .extendLocatorId("View"),
                                                                 //                                                                        AbstractActivityView.iframeLink(destination));
                                                                 window.addItem(iframe);
@@ -430,15 +423,12 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                                         }
                                                     }
                                                     if (!someChartedData) {// when there are results but no chartable entries.
-                                                        LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(
-                                                            recentMeasurementsContent.extendLocatorId("None"),
-                                                            AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
+                                                        DynamicForm row = AbstractActivityView
+                                                            .createEmptyDisplayRow(AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
                                                         column.addMember(row);
                                                     } else {
                                                         //insert see more link
-                                                        LocatableDynamicForm row = new LocatableDynamicForm(
-                                                            recentMeasurementsContent
-                                                                .extendLocatorId("RecentMeasurementsContentSeeMore"));
+                                                        DynamicForm row = new DynamicForm();
                                                         String link = LinkManager
                                                             .getGroupMonitoringGraphsLink(EntityContext
                                                                 .forGroup(groupId));
@@ -447,34 +437,34 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                                     //call out to 3rd party javascript lib
                                                     BrowserUtility.graphSparkLines();
                                                 } else {
-                                                    LocatableDynamicForm row = AbstractActivityView
-                                                        .createEmptyDisplayRow(
-                                                            recentMeasurementsContent.extendLocatorId("None"),
-                                                            AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
+                                                    DynamicForm row = AbstractActivityView.createEmptyDisplayRow(
+
+                                                    AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
                                                     column.addMember(row);
                                                 }
                                                 setRefreshing(false);
                                             }
                                         };
-                                        
+
                                         //make the asynchronous call for all the measurement data
                                         if (end != -1 && start != -1) {
                                             GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroup(
                                                 groupId, definitionArrayIds, start, end, 60, callback);
                                         } else if (lastN != -1 && units != -1) {
-                                            GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroupForLast(
-                                                groupId, definitionArrayIds, lastN, units, 60, callback);
+                                            GWTServiceLookup.getMeasurementDataService()
+                                                .findDataForCompatibleGroupForLast(groupId, definitionArrayIds, lastN,
+                                                    units, 60, callback);
                                         } else {
-                                            GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroupForLast(
-                                                groupId, definitionArrayIds, 8, MeasurementUtility.UNIT_HOURS, 60, callback);
+                                            GWTServiceLookup.getMeasurementDataService()
+                                                .findDataForCompatibleGroupForLast(groupId, definitionArrayIds, 8,
+                                                    MeasurementUtility.UNIT_HOURS, 60, callback);
                                         }
                                     }
                                 });
                         }
                     } else {
-                        LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(
-                            recentMeasurementsContent.extendLocatorId("None"),
-                            AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
+                        DynamicForm row = AbstractActivityView
+                            .createEmptyDisplayRow(AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
                         column.addMember(row);
                         setRefreshing(false);
                     }

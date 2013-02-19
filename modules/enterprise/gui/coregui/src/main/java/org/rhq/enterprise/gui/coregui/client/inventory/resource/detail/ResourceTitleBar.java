@@ -217,8 +217,7 @@ public class ResourceTitleBar extends LocatableVLayout {
                 Resource resource = resourceComposite.getResource();
                 ResourceErrorsDataSource errors = new ResourceErrorsDataSource(resource.getId());
 
-                ResourceErrorsView errorsGrid = new ResourceErrorsView(extendLocatorId("errors"), null,
-                    ResourceTitleBar.this);
+                ResourceErrorsView errorsGrid = new ResourceErrorsView(null, ResourceTitleBar.this);
 
                 errorsGrid.setDataSource(errors);
 
@@ -244,7 +243,7 @@ public class ResourceTitleBar extends LocatableVLayout {
         detailsForm.setHeight(10);
         detailsForm.setAlign(Alignment.LEFT);
 
-        detailsFormSummary = new OverviewForm(extendLocatorId("Title_Optional_Summary"), resourceComposite, this);
+        detailsFormSummary = new OverviewForm(resourceComposite, this);
         detailsFormSummary.setWidth100();
         detailsFormSummary.setPadding(3);
         detailsFormSummary.setMargin(3);

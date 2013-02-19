@@ -23,6 +23,10 @@
 
 package org.rhq.enterprise.gui.coregui.client.components.form;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
@@ -30,12 +34,8 @@ import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * TODO
@@ -62,8 +62,7 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
         }
 
         this.form = form;
-        // since the name is an internal identifier I think it can be used as the locatorId
-        this.canvas = new RGWCCanvas(name);
+        this.canvas = new RGWCCanvas();
         this.selected = null;
         setCanvas(this.canvas);
     }
@@ -144,10 +143,10 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
         }
     }
 
-    public class RGWCCanvas extends LocatableDynamicForm {
+    public class RGWCCanvas extends DynamicForm {
 
-        public RGWCCanvas(String locatorId) {
-            super(locatorId);
+        public RGWCCanvas() {
+            super();
             setNumCols(3);
         }
 

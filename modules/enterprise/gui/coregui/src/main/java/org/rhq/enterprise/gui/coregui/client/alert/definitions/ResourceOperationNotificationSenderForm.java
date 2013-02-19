@@ -63,7 +63,6 @@ import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourcePicker.OkHandler;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.SingleResourcePicker;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -81,7 +80,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
     private final ResourceType resourceType; // the type representing the current resource or the current type being edited
     private final Resource theResource; // if we are editing a resource instance, this is it - otherwise, will be null (for group/template alert defs)
 
-    private LocatableDynamicForm dynamicForm;
+    private DynamicForm dynamicForm;
     private SelectItem modeSelectItem;
     private StaticTextItem singleResourceTextItem;
     private SelectItem ancestorTypeSelectItem;
@@ -90,10 +89,10 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
     private HLayout operationArgumentsCanvasItem;
     private SelectItem operationSelectItem;
 
-    public ResourceOperationNotificationSenderForm(String locatorId, AlertNotification notif, String sender,
-        ResourceType resourceType, Resource res) {
+    public ResourceOperationNotificationSenderForm(AlertNotification notif, String sender, ResourceType resourceType,
+        Resource res) {
 
-        super(locatorId, notif, sender);
+        super(notif, sender);
         this.resourceType = resourceType;
         this.theResource = res;
 
@@ -102,7 +101,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
 
     private void buildUI() {
 
-        dynamicForm = new LocatableDynamicForm(extendLocatorId("resOpForm"));
+        dynamicForm = new DynamicForm();
         dynamicForm.setNumCols(3);
 
         operationArgumentsCanvasItem = new LocatableHLayout(extendLocatorId("opArgLayout"));
@@ -110,8 +109,8 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
         operationArgumentsCanvasItem.setHeight(400);
         operationArgumentsCanvasItem.setWidth(500);
 
-        operationSelectItem = new SortedSelectItem("operationSelectItem", MSG
-            .view_alert_definition_notification_operation_editor_common_operation());
+        operationSelectItem = new SortedSelectItem("operationSelectItem",
+            MSG.view_alert_definition_notification_operation_editor_common_operation());
         operationSelectItem.setStartRow(true);
         operationSelectItem.setEndRow(true);
         operationSelectItem.setWrapTitle(false);
@@ -128,8 +127,8 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
 
         // for SPECIFIC mode
 
-        singleResourceTextItem = new StaticTextItem("singleResourceTextItem", MSG
-            .view_alert_definition_notification_operation_editor_specific_resource());
+        singleResourceTextItem = new StaticTextItem("singleResourceTextItem",
+            MSG.view_alert_definition_notification_operation_editor_specific_resource());
         singleResourceTextItem.setStartRow(true);
         singleResourceTextItem.setEndRow(false);
         singleResourceTextItem.setValue("Pick a resource...");
@@ -137,8 +136,8 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
         singleResourceTextItem.setAttribute(RESOURCE_ID_ATTRIBUTE, 0); // we hide the resource ID in this attribute
         singleResourceTextItem.setValidators(new ResourceIdValidator(singleResourceTextItem));
 
-        ButtonItem singleResourceButtonItem = new ButtonItem("singleResourceButtonItem", MSG
-            .view_alert_definition_notification_operation_editor_specific_pick_button());
+        ButtonItem singleResourceButtonItem = new ButtonItem("singleResourceButtonItem",
+            MSG.view_alert_definition_notification_operation_editor_specific_pick_button());
         singleResourceButtonItem.setStartRow(false);
         singleResourceButtonItem.setEndRow(true);
         singleResourceButtonItem.setShowTitle(false);
@@ -161,8 +160,8 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
 
         // for RELATIVE mode
 
-        ancestorTypeSelectItem = new SortedSelectItem("ancestorTypeSelectItem", MSG
-            .view_alert_definition_notification_operation_editor_relative_ancestor());
+        ancestorTypeSelectItem = new SortedSelectItem("ancestorTypeSelectItem",
+            MSG.view_alert_definition_notification_operation_editor_relative_ancestor());
         ancestorTypeSelectItem.setStartRow(true);
         ancestorTypeSelectItem.setEndRow(true);
         ancestorTypeSelectItem.setWrapTitle(false);
@@ -179,8 +178,8 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
             }
         });
 
-        descendantTypeSelectItem = new SortedSelectItem("descendantTypeSelectItem", MSG
-            .view_alert_definition_notification_operation_editor_relative_descendant());
+        descendantTypeSelectItem = new SortedSelectItem("descendantTypeSelectItem",
+            MSG.view_alert_definition_notification_operation_editor_relative_descendant());
         descendantTypeSelectItem.setStartRow(true);
         descendantTypeSelectItem.setEndRow(false);
         descendantTypeSelectItem.setWrapTitle(false);
@@ -209,8 +208,8 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
 
         // the mode selector menu
 
-        modeSelectItem = new SortedSelectItem("modeSelectItem", MSG
-            .view_alert_definition_notification_operation_editor_mode_title());
+        modeSelectItem = new SortedSelectItem("modeSelectItem",
+            MSG.view_alert_definition_notification_operation_editor_mode_title());
         modeSelectItem.setStartRow(true);
         modeSelectItem.setEndRow(true);
         modeSelectItem.setWrapTitle(false);
@@ -262,18 +261,18 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
             modeSelectItem.setValue(mode.name());
             switch (mode) {
             case SELF: {
-                setOperationDropDownMenuValues(resourceType.getId(), notifInfo.getOperationId(), notifInfo
-                    .getOperationArguments());
+                setOperationDropDownMenuValues(resourceType.getId(), notifInfo.getOperationId(),
+                    notifInfo.getOperationArguments());
                 break;
             }
             case SPECIFIC: {
-                setSpecificResource(notifInfo.getResourceId(), notifInfo.getOperationId(), notifInfo
-                    .getOperationArguments());
+                setSpecificResource(notifInfo.getResourceId(), notifInfo.getOperationId(),
+                    notifInfo.getOperationArguments());
                 break;
             }
             case RELATIVE: {
-                populateRelativeDropDownMenus(notifInfo.getAncestorTypeId(), notifInfo.getDescendantTypeId(), notifInfo
-                    .getOperationId(), notifInfo.getOperationArguments());
+                populateRelativeDropDownMenus(notifInfo.getAncestorTypeId(), notifInfo.getDescendantTypeId(),
+                    notifInfo.getOperationId(), notifInfo.getOperationArguments());
                 if (notifInfo.getDescendantName() != null) {
                     descendantNameTextItem.setValue(notifInfo.getDescendantName());
                 }
@@ -341,8 +340,8 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
                 @Override
                 public void onSuccess(HashMap<Integer, String> results) {
                     LinkedHashMap<String, String> map = new LinkedHashMap<String, String>(results.size() + 1);
-                    map.put(String.valueOf(rootResourceTypeId), MSG
-                        .view_alert_definition_notification_operation_editor_relative_ancestor_root());
+                    map.put(String.valueOf(rootResourceTypeId),
+                        MSG.view_alert_definition_notification_operation_editor_relative_ancestor_root());
                     for (Map.Entry<Integer, String> entry : results.entrySet()) {
                         map.put(entry.getKey().toString(), entry.getValue());
                     }
@@ -531,7 +530,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
         SeleniumUtility.destroyMembers(operationArgumentsCanvasItem);
 
         if (def != null) {
-            ConfigurationEditor configEditor = new ConfigurationEditor(extendLocatorId("opArgs"), def, config);
+            ConfigurationEditor configEditor = new ConfigurationEditor(def, config);
             operationArgumentsCanvasItem.addMember(configEditor);
         } else {
             Label l = new Label(MSG.view_alert_definition_notification_operation_editor_operations_no_parameters());

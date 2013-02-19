@@ -25,6 +25,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 
@@ -50,7 +51,6 @@ import org.rhq.enterprise.gui.coregui.client.drift.util.DiffUtility;
 import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * A carousel view used for display of Drift Definition detail.  Each carousel member is a snapshot delta
@@ -281,7 +281,7 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
 
                         public void onSuccess(FileDiffReport diffReport) {
                             String diffContents = DiffUtility.formatAsHtml(diffReport.getDiff(), 1, 2);
-                            LocatableWindow window = DiffUtility.createDiffViewerWindow(diffContents, path, 1, 2);
+                            Window window = DiffUtility.createDiffViewerWindow(diffContents, path, 1, 2);
                             window.show();
                         }
                     });

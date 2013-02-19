@@ -69,7 +69,7 @@ public class DriftCarouselMemberView extends DriftHistoryView implements Carouse
     public DriftCarouselMemberView(String locatorId, EntityContext context, DriftChangeSet driftChangeSet,
         boolean hasWriteAccess, Criteria initialCriteria) {
 
-        super(locatorId, null, context, hasWriteAccess, initialCriteria);
+        super(null, context, hasWriteAccess, initialCriteria);
 
         this.carouselCriteria = initialCriteria;
         this.changeSet = driftChangeSet;

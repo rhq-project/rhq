@@ -26,6 +26,7 @@ import java.util.EnumSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.ValuesManager;
 import com.smartgwt.client.widgets.form.fields.AutoFitTextAreaItem;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
@@ -42,15 +43,13 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardSte
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author Greg Hinkle
  */
 public class GroupCreateStep extends AbstractWizardStep {
 
-    private LocatableDynamicForm form;
+    private DynamicForm form;
     private ResourceGroupGWTServiceAsync groupService;
     boolean canContinue = false;
 
@@ -59,15 +58,10 @@ public class GroupCreateStep extends AbstractWizardStep {
         groupService = GWTServiceLookup.getResourceGroupService();
     }
 
-    public Canvas getCanvas(Locatable parent) {
+    public Canvas getCanvas() {
 
         if (form == null) {
-
-            if (parent != null) {
-                form = new LocatableDynamicForm(parent.extendLocatorId("GroupCreate"));
-            } else {
-                form = new LocatableDynamicForm("GroupCreate");
-            }
+            form = new DynamicForm();
             form.setValuesManager(new ValuesManager());
             form.setWidth100();
             form.setNumCols(2);
@@ -87,10 +81,10 @@ public class GroupCreateStep extends AbstractWizardStep {
                     criteria.addFilterVisible(true);
                     criteria.setRestriction(ResourceGroupCriteria.Restriction.COLLECTION_ONLY);
 
-                    groupService.findResourceGroupsByCriteria(criteria,new AsyncCallback<PageList<ResourceGroup>>() {
+                    groupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
                         @Override
                         public void onFailure(Throwable throwable) {
-                            // failure is no issue - we will catch possiple upd later
+                            // failure is no issue - we will catch possible upd later
                         }
 
                         @Override
@@ -98,27 +92,27 @@ public class GroupCreateStep extends AbstractWizardStep {
 
                             // criteria query may return more than we want, so search for an exact match
                             boolean found = false;
-                            for (ResourceGroup group: resourceGroups) {
+                            for (ResourceGroup group : resourceGroups) {
                                 if (group.getName().equals(newGroupName))
                                     found = true;
                             }
 
                             if (found) {
                                 canContinue = false;
-                                Message msg = new Message(MSG.view_groupCreateWizard_createStep_group_exists(newGroupName),
-                                        Message.Severity.Warning, EnumSet.of(Message.Option.Transient));
+                                Message msg = new Message(MSG
+                                    .view_groupCreateWizard_createStep_group_exists(newGroupName),
+                                    Message.Severity.Warning, EnumSet.of(Message.Option.Transient));
                                 CoreGUI.getMessageCenter().notify(msg);
 
-                            }
-                            else {
+                            } else {
                                 canContinue = true;
-                                CoreGUI.getMessageCenter().notify(new Message("", Message.Severity.Blank,EnumSet.of(Message.Option.Transient)));
+                                CoreGUI.getMessageCenter().notify(
+                                    new Message("", Message.Severity.Blank, EnumSet.of(Message.Option.Transient)));
                             }
                         }
                     });
                 }
             });
-
 
             TextAreaItem description = new AutoFitTextAreaItem("description", MSG.common_title_description());
             description.setWidth(300);

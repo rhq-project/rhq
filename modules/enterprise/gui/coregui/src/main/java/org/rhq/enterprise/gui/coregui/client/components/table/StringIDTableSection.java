@@ -40,39 +40,38 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 @SuppressWarnings("unchecked")
 public abstract class StringIDTableSection<DS extends RPCDataSource> extends AbstractTableSection<DS, String> {
 
-    public StringIDTableSection(String locatorId, String tableTitle, boolean autoFetchData) {
-        super(locatorId, tableTitle, autoFetchData);
+    public StringIDTableSection(String tableTitle, boolean autoFetchData) {
+        super(tableTitle, autoFetchData);
     }
 
-    public StringIDTableSection(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
+    public StringIDTableSection(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
         String[] excludedFieldNames, boolean autoFetchData) {
-        super(locatorId, tableTitle, criteria, sortSpecifiers, excludedFieldNames, autoFetchData);
+        super(tableTitle, criteria, sortSpecifiers, excludedFieldNames, autoFetchData);
     }
 
-    public StringIDTableSection(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
+    public StringIDTableSection(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
         String[] excludedFieldNames) {
-        super(locatorId, tableTitle, criteria, sortSpecifiers, excludedFieldNames);
+        super(tableTitle, criteria, sortSpecifiers, excludedFieldNames);
     }
 
-    public StringIDTableSection(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers) {
-        super(locatorId, tableTitle, criteria, sortSpecifiers);
+    public StringIDTableSection(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers) {
+        super(tableTitle, criteria, sortSpecifiers);
     }
 
-    public StringIDTableSection(String locatorId, String tableTitle, Criteria criteria) {
-        super(locatorId, tableTitle, criteria);
+    public StringIDTableSection(String tableTitle, Criteria criteria) {
+        super(tableTitle, criteria);
     }
 
-    public StringIDTableSection(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers,
-        String[] excludedFieldNames) {
-        super(locatorId, tableTitle, sortSpecifiers, excludedFieldNames);
+    public StringIDTableSection(String tableTitle, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames) {
+        super(tableTitle, sortSpecifiers, excludedFieldNames);
     }
 
-    public StringIDTableSection(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers) {
-        super(locatorId, tableTitle, sortSpecifiers);
+    public StringIDTableSection(String tableTitle, SortSpecifier[] sortSpecifiers) {
+        super(tableTitle, sortSpecifiers);
     }
 
-    public StringIDTableSection(String locatorId, String tableTitle) {
-        super(locatorId, tableTitle);
+    public StringIDTableSection(String tableTitle) {
+        super(tableTitle);
     }
 
     @Override
@@ -95,8 +94,8 @@ public abstract class StringIDTableSection<DS extends RPCDataSource> extends Abs
         if (id != null && id.length() > 0) {
             CoreGUI.goToView(getBasePath() + "/" + convertIDToCurrentViewPath(id));
         } else {
-            String msg = MSG.view_tableSection_error_badId(this.getClass().toString(), (id == null) ? "null" : id
-                .toString());
+            String msg = MSG.view_tableSection_error_badId(this.getClass().toString(),
+                (id == null) ? "null" : id.toString());
             CoreGUI.getErrorHandler().handleError(msg);
             throw new IllegalArgumentException(msg);
         }

@@ -54,7 +54,6 @@ import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.enterprise.gui.coregui.client.ErrorMessageWindow;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -151,7 +150,7 @@ public class BundleResourceDeploymentHistoryListView extends LocatableVLayout {
     }
 
     private void showDetails(ListGridRecord record) {
-        DynamicForm form = new LocatableDynamicForm(extendLocatorId("detailsForm"));
+        DynamicForm form = new DynamicForm();
         form.setHeight100();
         form.setWidth100();
         form.setPadding(20);

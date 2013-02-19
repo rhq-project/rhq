@@ -76,9 +76,6 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.Resourc
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourcePkgHistoryPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -95,7 +92,7 @@ public class DashboardView extends LocatableVLayout {
     private boolean editMode = false;
 
     PortalLayout portalLayout;
-    LocatableDynamicForm editForm;
+    DynamicForm editForm;
     IMenuButton addPortlet;
 
     HashSet<PortletWindow> portletWindows = new HashSet<PortletWindow>();
@@ -112,7 +109,7 @@ public class DashboardView extends LocatableVLayout {
     private HashMap<Integer, String> refreshMenuMappings;
     private MenuItem[] refreshMenuItems;
     private int refreshInterval = 0;
-    private LocatableIMenuButton refreshMenuButton;
+    private IMenuButton refreshMenuButton;
 
     private EntityContext context;
     private ResourceGroupComposite groupComposite = null;
@@ -228,7 +225,7 @@ public class DashboardView extends LocatableVLayout {
     }
 
     private DynamicForm buildEditForm() {
-        editForm = new LocatableDynamicForm(extendLocatorId("Editor"));
+        editForm = new DynamicForm();
         editForm.setMargin(5);
         editForm.setAutoWidth();
         editForm.setNumCols(canEditName() ? 12 : 10);
@@ -306,7 +303,7 @@ public class DashboardView extends LocatableVLayout {
         });
 
         // build the menu of valid portlets for this context, sorted by portlet name
-        final Menu addPortletMenu = new LocatableMenu(editForm.extendLocatorId("PortletMenu"));
+        final Menu addPortletMenu = new Menu();
         LinkedHashMap<String, String> valueMap;
 
         switch (context.getType()) {
@@ -337,8 +334,7 @@ public class DashboardView extends LocatableVLayout {
             addPortletMenu.addItem(menuItem);
         }
 
-        addPortlet = new LocatableIMenuButton(editForm.extendLocatorId("AddPortlet"), MSG.common_title_add_portlet(),
-            addPortletMenu);
+        addPortlet = new IMenuButton(MSG.common_title_add_portlet(), addPortletMenu);
         addPortlet.setIcon("[skin]/images/actions/add.png");
         addPortlet.setAutoFit(true);
 
@@ -373,7 +369,7 @@ public class DashboardView extends LocatableVLayout {
         });
 
         //refresh interval
-        LocatableMenu refreshMenu = new LocatableMenu("AutoRefreshMenu");
+        Menu refreshMenu = new Menu();
         refreshMenu.setShowShadow(true);
         refreshMenu.setShadowDepth(10);
         refreshMenu.setAutoWidth();
@@ -420,8 +416,7 @@ public class DashboardView extends LocatableVLayout {
         }
 
         refreshMenu.setItems(refreshMenuItems);
-        refreshMenuButton = new LocatableIMenuButton("AutoRefreshButton", MSG.common_title_change_refresh_time(),
-            refreshMenu);
+        refreshMenuButton = new IMenuButton(MSG.common_title_change_refresh_time(), refreshMenu);
         refreshMenu.setAutoHeight();
         refreshMenuButton.getMenu().setItems(refreshMenuItems);
         refreshMenuButton.setWidth(140);

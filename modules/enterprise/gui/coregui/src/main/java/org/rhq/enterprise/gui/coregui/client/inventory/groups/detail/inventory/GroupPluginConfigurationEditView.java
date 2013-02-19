@@ -50,9 +50,9 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -93,7 +93,7 @@ public class GroupPluginConfigurationEditView extends LocatableVLayout implement
         toolStrip.setMembersMargin(5);
         toolStrip.setLayoutMargin(5);
 
-        this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
+        this.saveButton = new EnhancedIButton(MSG.common_button_save());
         this.saveButton.setTooltip(MSG.view_group_pluginConfig_edit_saveTooltip());
         this.saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -133,8 +133,7 @@ public class GroupPluginConfigurationEditView extends LocatableVLayout implement
 
     private void initEditor() {
         if (this.configurationDefinition != null && this.memberConfigurations != null) {
-            this.editor = new GroupConfigurationEditor(this.extendLocatorId("Editor"), this.configurationDefinition,
-                this.memberConfigurations);
+            this.editor = new GroupConfigurationEditor(this.configurationDefinition, this.memberConfigurations);
             this.editor.setEditorTitle(MSG.view_group_pluginConfig_edit_currentGroupProperties());
             this.editor.setOverflow(Overflow.AUTO);
             this.editor.addPropertyValueChangeListener(this);
@@ -223,8 +222,8 @@ public class GroupPluginConfigurationEditView extends LocatableVLayout implement
                 public void onSuccess(Void result) {
                     CoreGUI.getMessageCenter().notify(
                         new Message(MSG.view_group_pluginConfig_edit_saveInitiated_concise(), MSG
-                            .view_group_pluginConfig_edit_saveInitiated_full(group.getResourceType().getName(), group
-                                .getName()), Message.Severity.Info));
+                            .view_group_pluginConfig_edit_saveInitiated_full(group.getResourceType().getName(),
+                                group.getName()), Message.Severity.Info));
                     refresh();
                 }
             });
@@ -252,8 +251,8 @@ public class GroupPluginConfigurationEditView extends LocatableVLayout implement
                     Message.Option.Transient, Message.Option.Sticky));
             } else {
                 this.saveButton.disable();
-                message = new Message(MSG
-                    .view_group_pluginConfig_edit_invalid(invalidPropertyNames.values().toString()),
+                message = new Message(
+                    MSG.view_group_pluginConfig_edit_invalid(invalidPropertyNames.values().toString()),
                     Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             }
             messageCenter.notify(message);

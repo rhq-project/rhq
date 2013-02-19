@@ -71,7 +71,7 @@ public class ServerTableView extends
     private final Integer id;
 
     public ServerTableView(String locatorId, Integer id, boolean isAffinityGroupId) {
-        super(locatorId, null);
+        super(null);
         this.showActions = id == null && !isAffinityGroupId;
         this.isAffinityGroupId = isAffinityGroupId;
         this.id = id;

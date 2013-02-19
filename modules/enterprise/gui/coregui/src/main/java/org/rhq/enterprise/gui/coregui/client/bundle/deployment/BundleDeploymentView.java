@@ -35,6 +35,7 @@ import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
@@ -79,8 +80,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -137,8 +137,8 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         addMember(detail);
     }
 
-    private LocatableDynamicForm createSummaryForm() {
-        LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("Summary"));
+    private DynamicForm createSummaryForm() {
+        DynamicForm form = new DynamicForm();
         form.setWidth100();
         form.setAutoHeight();
         form.setNumCols(5);
@@ -157,7 +157,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         actionItem.setColSpan(1);
         actionItem.setRowSpan(4);
         actionItem.setShowTitle(false);
-        actionItem.setCanvas(getActionLayout(form.extendLocatorId("actions")));
+        actionItem.setCanvas(getActionLayout());
 
         StaticTextItem bundleVersionName = new StaticTextItem("bundleVersion");
         bundleVersionName.setTitle(MSG.view_bundle_bundleVersion());
@@ -211,8 +211,8 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         return form;
     }
 
-    private Canvas getActionLayout(String locatorId) {
-        LocatableVLayout actionLayout = new LocatableVLayout(locatorId, 10);
+    private Canvas getActionLayout() {
+        LocatableVLayout actionLayout = new LocatableVLayout(10);
 
         // we can only revert the live deployments, only show revert button when appropriate
         // in addition, we provide a purge button if you are viewing the live deployment, so
@@ -220,8 +220,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         // deployment represents content on the remote machines, showing purge only for live
         // deployments makes sense).
         if (deployment.isLive()) {
-            IButton revertButton = new LocatableIButton(actionLayout.extendLocatorId("Revert"),
-                MSG.view_bundle_revert());
+            IButton revertButton = new EnhancedIButton(MSG.view_bundle_revert());
             revertButton.setIcon("subsystems/bundle/BundleAction_Revert_16.png");
             revertButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(com.smartgwt.client.widgets.events.ClickEvent event) {
@@ -230,7 +229,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
             });
             actionLayout.addMember(revertButton);
 
-            IButton purgeButton = new LocatableIButton(actionLayout.extendLocatorId("Purge"), MSG.view_bundle_purge());
+            IButton purgeButton = new EnhancedIButton(MSG.view_bundle_purge());
             purgeButton.setIcon("subsystems/bundle/BundleDestinationAction_Purge_16.png");
             purgeButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
@@ -271,7 +270,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
             }
         }
 
-        IButton deleteButton = new LocatableIButton(actionLayout.extendLocatorId("Delete"), MSG.common_button_delete());
+        IButton deleteButton = new EnhancedIButton(MSG.common_button_delete());
         deleteButton.setIcon("subsystems/bundle/BundleDeploymentAction_Delete_16.png");
         deleteButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             @Override

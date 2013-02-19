@@ -22,8 +22,8 @@ import com.google.gwt.core.client.GWT;
 
 public class PluginFileUploadForm extends FileUploadForm {
 
-    public PluginFileUploadForm(String locatorId, String name, boolean showNameLabel) {
-        super(locatorId, name, "0", showNameLabel, true, null);
+    public PluginFileUploadForm(String name, boolean showNameLabel) {
+        super(name, "0", showNameLabel, true, null);
         setAction(GWT.getModuleBaseURL() + "PluginFileUploadServlet");
     }
 

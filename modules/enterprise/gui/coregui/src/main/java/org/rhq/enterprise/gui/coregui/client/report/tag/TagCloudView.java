@@ -42,7 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -61,8 +61,8 @@ public class TagCloudView extends LocatableVLayout {
     private String selectedTag;
     private IButton deleteButton;
 
-    public TagCloudView(String locatorId) {
-        super(locatorId);
+    public TagCloudView() {
+        super();
     }
 
     @Override
@@ -209,7 +209,7 @@ public class TagCloudView extends LocatableVLayout {
         return null;
     }
 
-    class DeleteButton extends LocatableIButton {
+    class DeleteButton extends EnhancedIButton {
         public DeleteButton(String locatorId) {
             super(locatorId);
         }

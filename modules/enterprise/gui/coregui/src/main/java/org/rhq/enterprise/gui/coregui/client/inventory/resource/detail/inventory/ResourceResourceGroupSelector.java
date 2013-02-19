@@ -38,7 +38,7 @@ public class ResourceResourceGroupSelector extends ResourceGroupSelector {
 
     public ResourceResourceGroupSelector(String locatorId, Collection<ResourceGroup> resourceGroups) {
 
-        super(locatorId);
+        super();
 
         if (null != resourceGroups) {
             ListGridRecord[] data = (new ResourceGroupsDataSource()).buildRecords(resourceGroups);

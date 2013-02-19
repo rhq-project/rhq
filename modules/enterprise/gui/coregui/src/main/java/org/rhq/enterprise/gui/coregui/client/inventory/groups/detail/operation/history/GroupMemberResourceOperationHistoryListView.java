@@ -28,11 +28,11 @@ public class GroupMemberResourceOperationHistoryListView extends
 
     private ResourceGroupComposite groupComposite;
 
-    public GroupMemberResourceOperationHistoryListView(String locatorId, ResourceGroupComposite groupComposite,
+    public GroupMemberResourceOperationHistoryListView(ResourceGroupComposite groupComposite,
         int groupOperationHistoryId) {
-        super(locatorId, new ResourceOperationHistoryDataSource(), null, new Criteria(
-            ResourceOperationHistoryDataSource.CriteriaField.GROUP_OPERATION_HISTORY_ID, String
-                .valueOf(groupOperationHistoryId)));
+        super(new ResourceOperationHistoryDataSource(), null, new Criteria(
+            ResourceOperationHistoryDataSource.CriteriaField.GROUP_OPERATION_HISTORY_ID,
+            String.valueOf(groupOperationHistoryId)));
         this.groupComposite = groupComposite;
     }
 

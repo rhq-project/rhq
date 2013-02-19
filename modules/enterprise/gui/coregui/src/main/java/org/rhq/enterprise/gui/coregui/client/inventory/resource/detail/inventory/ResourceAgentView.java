@@ -24,6 +24,7 @@ import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.HeaderItem;
@@ -37,7 +38,6 @@ import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.admin.topology.AgentTableView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -49,7 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 public class ResourceAgentView extends LocatableVLayout implements RefreshableView {
 
     private int resourceId;
-    private LocatableDynamicForm form;
+    private DynamicForm form;
     private StaticTextItem nameValue;
     private StaticTextItem addressValue;
     private StaticTextItem portValue;
@@ -74,7 +74,7 @@ public class ResourceAgentView extends LocatableVLayout implements RefreshableVi
         setLeft("10%");
         setWidth("80%");
 
-        this.form = new LocatableDynamicForm(extendLocatorId("Agent_Info"));
+        this.form = new DynamicForm();
         final List<FormItem> formItems = createFormItems();
         this.form.setItems(formItems.toArray(new FormItem[formItems.size()]));
         loadData();
@@ -110,8 +110,8 @@ public class ResourceAgentView extends LocatableVLayout implements RefreshableVi
         // Agent Status
         agentStatusIcon = new FormItemIcon();
         agentStatusIcon.setSrc(ImageManager.getAvailabilityLargeIcon(null));
-        StaticTextItem agentStatus = new StaticTextItem("agent-comm-status", MSG
-            .view_inventory_summary_agent_status_title());
+        StaticTextItem agentStatus = new StaticTextItem("agent-comm-status",
+            MSG.view_inventory_summary_agent_status_title());
         agentStatus.setIcons(agentStatusIcon);
         agentStatus.setWrapTitle(false);
         formItems.add(agentStatus);
@@ -121,7 +121,7 @@ public class ResourceAgentView extends LocatableVLayout implements RefreshableVi
         lastAvailReportValue = new StaticTextItem(lastAvailReport, MSG.view_inventory_summary_agent_last_title());
         lastAvailReportValue.setWrapTitle(false);
         formItems.add(lastAvailReportValue);
-        
+
         // Last Received Avail ping
         lastAvailPingValue = new StaticTextItem("last-avail-ping", MSG.view_adminTopology_agent_lastAvailabilityPing());
         lastAvailPingValue.setWrapTitle(false);
@@ -131,7 +131,7 @@ public class ResourceAgentView extends LocatableVLayout implements RefreshableVi
         String fullEndpoint = "full-endpoint";
         endpointValue = new StaticTextItem(fullEndpoint, MSG.view_inventory_summary_agent_fullEnpoint());
         formItems.add(endpointValue);
-        
+
         // link to agent topology view
         String topologyView = "topology-view";
         topologyViewItem = new StaticTextItem("topology-view", MSG.view_admin_topology());
@@ -189,7 +189,8 @@ public class ResourceAgentView extends LocatableVLayout implements RefreshableVi
                 addressValue.setValue(agent.getAddress());
                 portValue.setValue(agent.getPort());
                 Long lastAvailReport = agent.getLastAvailabilityReport();
-                lastAvailReportValue.setValue((null != lastAvailReport) ? new Date(lastAvailReport) : MSG.common_val_none());
+                lastAvailReportValue.setValue((null != lastAvailReport) ? new Date(lastAvailReport) : MSG
+                    .common_val_none());
                 Long lastAvailPing = agent.getLastAvailabilityPing();
                 lastAvailPingValue.setValue((null != lastAvailPing) ? new Date(lastAvailPing) : MSG.common_val_none());
                 String remoteEndpoint = agent.getRemoteEndpoint();
@@ -201,7 +202,7 @@ public class ResourceAgentView extends LocatableVLayout implements RefreshableVi
                     remoteEndpoint = MSG.view_inventory_summary_agent_fullEnpoint_err1();
                 }
                 endpointValue.setValue(remoteEndpoint);
-                
+
                 // make clickable link for agent topology view
                 String detailsUrl = "#" + AgentTableView.VIEW_PATH + "/" + agent.getId();
                 String formattedValue = StringUtility.escapeHtml(MSG.common_label_link());

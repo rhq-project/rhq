@@ -33,7 +33,6 @@ import com.smartgwt.client.widgets.tab.events.TabDeselectedEvent;
 import com.smartgwt.client.widgets.tab.events.TabDeselectedHandler;
 
 import org.rhq.core.domain.alert.AlertDefinition;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -73,7 +72,7 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
 
         final Tab generalPropertiesTab = new LocatableTab(tabSet.extendLocatorId("General"),
             MSG.view_alert_common_tab_general());
-        generalProperties = new GeneralPropertiesAlertDefinitionForm(this.getLocatorId(), alertDefinition);
+        generalProperties = new GeneralPropertiesAlertDefinitionForm(alertDefinition);
         generalPropertiesTab.setPane(generalProperties);
         generalPropertiesTab.addTabDeselectedHandler(new TabDeselectedHandler() {
 
@@ -97,8 +96,7 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
         notificationsTab.setPane(notifications);
 
         Tab recoveryTab = new LocatableTab(tabSet.extendLocatorId("Recovery"), MSG.view_alert_common_tab_recovery());
-        recovery = new RecoveryAlertDefinitionForm(this.getLocatorId(), alertDefView.getAlertDefinitionDataSource(),
-            alertDefinition);
+        recovery = new RecoveryAlertDefinitionForm(alertDefView.getAlertDefinitionDataSource(), alertDefinition);
         recoveryTab.setPane(recovery);
 
         Tab dampeningTab = new LocatableTab(tabSet.extendLocatorId("Dampening"), MSG.view_alert_common_tab_dampening());
@@ -110,9 +108,9 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
         final HLayout buttons = new HLayout();
         buttons.setMembersMargin(20);
 
-        editButton = new LocatableButton(this.extendLocatorId("Edit"), MSG.common_button_edit());
-        saveButton = new LocatableButton(this.extendLocatorId("Save"), MSG.common_button_save());
-        cancelButton = new LocatableButton(this.extendLocatorId("Cancel"), MSG.common_button_cancel());
+        editButton = new Button(MSG.common_button_edit());
+        saveButton = new Button(MSG.common_button_save());
+        cancelButton = new Button(MSG.common_button_cancel());
 
         editButton.show();
         saveButton.hide();
@@ -140,16 +138,17 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
                     setAlertDefinition(getAlertDefinition()); // loads data into static fields
                     makeViewOnly();
 
-                    alertDefView.commitAlertDefinition(getAlertDefinition(), resetMatching, new AsyncCallback<AlertDefinition>() {
-                        @Override
-                        public void onSuccess(AlertDefinition result) {
-                            setAlertDefinition(result);
-                        }
-                        
-                        @Override
-                        public void onFailure(Throwable caught) {
-                        }
-                    });
+                    alertDefView.commitAlertDefinition(getAlertDefinition(), resetMatching,
+                        new AsyncCallback<AlertDefinition>() {
+                            @Override
+                            public void onSuccess(AlertDefinition result) {
+                                setAlertDefinition(result);
+                            }
+
+                            @Override
+                            public void onFailure(Throwable caught) {
+                            }
+                        });
                 } else {
                     tabSet.selectTab(generalPropertiesTab);
                 }

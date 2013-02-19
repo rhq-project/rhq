@@ -34,6 +34,6 @@ public class ResourceDriftHistoryView extends DriftHistoryView {
     }
 
     private ResourceDriftHistoryView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess) {
-        super(locatorId, tableTitle, context, hasWriteAccess);
+        super(tableTitle, context, hasWriteAccess);
     }
 }

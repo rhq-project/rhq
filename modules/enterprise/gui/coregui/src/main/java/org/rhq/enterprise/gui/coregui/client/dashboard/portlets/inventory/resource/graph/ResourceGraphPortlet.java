@@ -57,8 +57,8 @@ public class ResourceGraphPortlet extends ResourceMetricGraphView implements Cus
     public static final String CFG_RESOURCE_ID = "resourceId";
     public static final String CFG_DEFINITION_ID = "definitionId";
 
-    public ResourceGraphPortlet(String locatorId) {
-        super(locatorId);
+    public ResourceGraphPortlet() {
+        super();
         setOverflow(Overflow.HIDDEN);
     }
 
@@ -74,16 +74,16 @@ public class ResourceGraphPortlet extends ResourceMetricGraphView implements Cus
 
         if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID) != null) {
             PropertySimple propertySimple = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID);
-            if (propertySimple!=null) {
+            if (propertySimple != null) {
                 Integer integerValue = propertySimple.getIntegerValue();
-                if (integerValue!=null)
+                if (integerValue != null)
                     setEntityId(integerValue);
             }
             propertySimple = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
-            if (propertySimple!=null) {
+            if (propertySimple != null) {
 
                 Integer integerValue = propertySimple.getIntegerValue();
-                if (integerValue!=null)
+                if (integerValue != null)
                     setDefinitionId(integerValue);
             }
         }
@@ -98,7 +98,7 @@ public class ResourceGraphPortlet extends ResourceMetricGraphView implements Cus
         DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
 
         PropertySimple simple = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID);
-        if (simple == null || simple.getIntegerValue()==null) {
+        if (simple == null || simple.getIntegerValue() == null) {
             removeMembers(getMembers());
             addMember(new Label("<i>" + MSG.view_portlet_configure_needed() + "</i>"));
         } else {
@@ -146,12 +146,12 @@ public class ResourceGraphPortlet extends ResourceMetricGraphView implements Cus
 
         if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID) != null) {
             Integer integerValue = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID).getIntegerValue();
-            if (integerValue!=null) {
+            if (integerValue != null) {
                 form.setValue(CFG_RESOURCE_ID, integerValue);
             }
 
             PropertySimple propertySimple = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
-            if (propertySimple!=null && propertySimple.getIntegerValue()!=null) {
+            if (propertySimple != null && propertySimple.getIntegerValue() != null) {
                 form.setValue(CFG_DEFINITION_ID, propertySimple.getIntegerValue());
             }
         }
@@ -182,7 +182,7 @@ public class ResourceGraphPortlet extends ResourceMetricGraphView implements Cus
 
         DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
         PropertySimple simple = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID);
-        if (simple == null || simple.getIntegerValue()==null) {
+        if (simple == null || simple.getIntegerValue() == null) {
             addMember(new Label("<i>" + MSG.view_portlet_configure_needed() + "</i>"));
         } else {
             renderGraph();
@@ -192,9 +192,9 @@ public class ResourceGraphPortlet extends ResourceMetricGraphView implements Cus
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
-            return new ResourceGraphPortlet(locatorId);
+            return new ResourceGraphPortlet();
         }
     }
 }

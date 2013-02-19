@@ -30,12 +30,8 @@ import org.rhq.core.domain.resource.group.GroupCategory;
  */
 public class SingleResourceGroupSelector extends ResourceGroupSelector {
 
-    public SingleResourceGroupSelector(String locatorId) {
-        super(locatorId);
-    }
-
-    public SingleResourceGroupSelector(String locatorId, GroupCategory categoryFilter, boolean isReadOnly) {
-        super(locatorId, categoryFilter, isReadOnly);
+    public SingleResourceGroupSelector(GroupCategory categoryFilter, boolean isReadOnly) {
+        super(categoryFilter, isReadOnly);
     }
 
     @Override

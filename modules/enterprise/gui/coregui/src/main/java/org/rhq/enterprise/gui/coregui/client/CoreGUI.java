@@ -386,13 +386,13 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
             UserSessionManager.logout();
             rootCanvas.hide();
 
-            LoginView logoutView = new LoginView("Login");
+            LoginView logoutView = new LoginView();
             canvas = logoutView;
             logoutView.showLoginDialog();
         } else if (viewName.equals(TaggedView.VIEW_ID.getName())) {
             canvas = new TaggedView(viewName);
         } else if (viewName.equals("Subsystems")) {
-            canvas = new AlertHistoryView("Alert");
+            canvas = new AlertHistoryView();
         } else if (viewName.equals(TestTopView.VIEW_ID.getName())) {
             canvas = new TestTopView();
         } else {

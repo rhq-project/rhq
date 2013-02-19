@@ -22,11 +22,12 @@ package org.rhq.enterprise.gui.coregui.client.components.buttons;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.smartgwt.client.widgets.Button;
+
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.components.table.AuthorizedTableAction;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableButton;
 
 // TODO: This utility isCurrently unused. Candidate for removal. 
 
@@ -37,14 +38,14 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableButton;
  *  
  * @author Jay Shaughnessy
  */
-public class AuthorizedButton extends LocatableButton {
+public class AuthorizedButton extends Button {
 
     HashSet<Permission> globalPermissions = new HashSet<Permission>();
 
     Boolean isGlobalAuthorized;
 
-    public AuthorizedButton(String locatorId, String title, Permission... permissions) {
-        super(locatorId, title);
+    public AuthorizedButton(String title, Permission... permissions) {
+        super(title);
 
         if (permissions.length == 0) {
             throw new IllegalArgumentException("Must provide at least one Permission");

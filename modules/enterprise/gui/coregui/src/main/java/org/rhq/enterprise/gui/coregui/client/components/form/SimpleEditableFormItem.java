@@ -36,7 +36,6 @@ import com.smartgwt.client.widgets.form.validator.Validator;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * This form item can be used to display a value normally in "read-only" form (i.e. as a StaticTextItem),
@@ -79,7 +78,7 @@ public class SimpleEditableFormItem extends CanvasItem {
             setValueEditedHandler(handler);
         }
 
-        this.innerForm = new LocatableDynamicForm(getName() + "_innerForm");
+        this.innerForm = new DynamicForm();
         this.staticItem = prepareStaticFormItem();
         this.editItem = prepareEditFormItem();
         this.innerForm.setCanFocus(true);

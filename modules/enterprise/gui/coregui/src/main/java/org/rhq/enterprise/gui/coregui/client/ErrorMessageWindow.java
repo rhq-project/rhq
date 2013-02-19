@@ -24,10 +24,10 @@
 package org.rhq.enterprise.gui.coregui.client;
 
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLPane;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * This is a convienence component that is a simple modal dialog box used to display
@@ -37,11 +37,11 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
  *
  * @author John Mazzitelli
  */
-public class ErrorMessageWindow extends LocatableWindow {
+public class ErrorMessageWindow extends Window {
     public ErrorMessageWindow(String locatorId, String title, String message) {
-        super(locatorId);
+        super();
 
-        LocatableHTMLPane htmlPane = new LocatableHTMLPane(extendLocatorId("winDetailsPane"));
+        HTMLPane htmlPane = new HTMLPane();
         htmlPane.setMargin(10);
         htmlPane.setDefaultWidth(500);
         htmlPane.setDefaultHeight(400);
@@ -51,7 +51,7 @@ public class ErrorMessageWindow extends LocatableWindow {
     }
 
     public ErrorMessageWindow(String locatorId, String title, Canvas item) {
-        super(locatorId);
+        super();
         setupWindow(title, item);
     }
 

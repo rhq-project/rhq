@@ -41,8 +41,8 @@ public abstract class AbstractNotificationSenderForm extends LocatableVLayout {
     private Configuration extraConfiguration;
     private final String sender;
 
-    public AbstractNotificationSenderForm(String locatorId, AlertNotification notif, String sender) {
-        super(locatorId);
+    public AbstractNotificationSenderForm(AlertNotification notif, String sender) {
+        super();
 
         this.sender = sender;
 

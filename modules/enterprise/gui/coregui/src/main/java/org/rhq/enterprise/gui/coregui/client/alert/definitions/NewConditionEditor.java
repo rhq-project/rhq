@@ -58,6 +58,7 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.components.form.DurationItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.NumberWithUnitsValidator;
 import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
@@ -65,12 +66,13 @@ import org.rhq.enterprise.gui.coregui.client.components.form.TimeUnit;
 import org.rhq.enterprise.gui.coregui.client.util.measurement.MeasurementParser;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author John Mazzitelli
  */
-public class NewConditionEditor extends LocatableDynamicForm {
+public class NewConditionEditor extends DynamicForm {
+
+    protected Messages MSG = CoreGUI.getMessages();
 
     // these aren't "real" calltime condition categories (not real AlertConditionCategory enums)
     // but we need these values for the drop down menu selections
@@ -127,10 +129,10 @@ public class NewConditionEditor extends LocatableDynamicForm {
     private Runnable closeFunction; // this is called after a button is pressed and the editor should close 
     private ResourceType resourceType;
 
-    public NewConditionEditor(String locatorId, HashSet<AlertCondition> conditions, SelectItem conditionExpression,
-        ResourceType rtype, Runnable closeFunc) {
+    public NewConditionEditor(HashSet<AlertCondition> conditions, SelectItem conditionExpression, ResourceType rtype,
+        Runnable closeFunc) {
 
-        super(locatorId);
+        super();
         this.conditions = conditions;
         this.conditionExpression = conditionExpression;
         this.closeFunction = closeFunc;
@@ -830,7 +832,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         supportedTimeUnits.add(TimeUnit.MINUTES);
         supportedTimeUnits.add(TimeUnit.HOURS);
         DurationItem durationValue = new DurationItem(AVAILABILITY_DURATION_VAL_ITEMNAME, MSG.common_title_duration(),
-            TimeUnit.SECONDS, supportedTimeUnits, false, false, this);
+            TimeUnit.SECONDS, supportedTimeUnits, false, false);
         durationValue.setWrapTitle(false);
         durationValue.setRequired(true);
         durationValue.setTooltip(MSG.view_alert_definition_condition_editor_availabilityDuration_tooltip_duration());
@@ -968,7 +970,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
         }
 
         LinkedHashMap<String, String> metricsMap = new LinkedHashMap<String, String>();
-        Set<MeasurementDefinition> sortedDefs = new HashSet<MeasurementDefinition>(this.resourceType.getMetricDefinitions());
+        Set<MeasurementDefinition> sortedDefs = new HashSet<MeasurementDefinition>(
+            this.resourceType.getMetricDefinitions());
 
         for (MeasurementDefinition def : sortedDefs) {
             if (def.getDataType() == DataType.MEASUREMENT) {

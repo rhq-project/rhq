@@ -41,7 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyVa
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -56,7 +56,7 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Pro
     private Resource resource;
     private ResourcePermission resourcePermission;
     private ConfigurationEditor editor;
-    private LocatableIButton saveButton;
+    private EnhancedIButton saveButton;
 
     // flags to indicate if the config editor is refreshing its internal config/configDef objects
     private boolean refreshingConfig = false;
@@ -79,7 +79,7 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Pro
         toolStrip.setMembersMargin(5);
         toolStrip.setLayoutMargin(5);
 
-        this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
+        this.saveButton = new EnhancedIButton(MSG.common_button_save());
         this.saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();
@@ -114,8 +114,8 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Pro
         }
         // TODO (ips): Load the config and config def ourselves, so we can remove that logic from the ConfigurationEditor,
         //       whose only purpose should be to render a config.
-        editor = new ConfigurationEditor(extendLocatorId("Editor"), resource.getId(), resource.getResourceType()
-            .getId(), ConfigurationEditor.ConfigType.plugin);
+        editor = new ConfigurationEditor(resource.getId(), resource.getResourceType().getId(),
+            ConfigurationEditor.ConfigType.plugin);
         editor.setOverflow(Overflow.AUTO);
         editor.addPropertyValueChangeListener(this);
         editor.setReadOnly(!this.resourcePermission.isInventory());
@@ -167,7 +167,8 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Pro
             } else {
                 this.saveButton.disable();
                 message = new Message(MSG.view_connectionSettingsDetails_somePropertiesInvalid(invalidPropertyNames
-                    .values().toString()), Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
+                    .values().toString()), Message.Severity.Error, EnumSet.of(Message.Option.Transient,
+                    Message.Option.Sticky));
             }
             messageCenter.notify(message);
         } else {

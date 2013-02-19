@@ -27,7 +27,6 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.components.table.TableWidget;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
 /**
@@ -52,11 +51,11 @@ public class UpdateExistingSchedulesWidget extends LocatableHLayout implements T
         spacer.setWidth(20);
         addMember(spacer);
 
-        DynamicForm form = new LocatableDynamicForm(this.getLocatorId());
+        DynamicForm form = new DynamicForm();
         form.setNumCols(3);
 
-        CheckboxItem checkboxItem = new CheckboxItem("updateExistingSchedules", MSG
-            .view_admin_measTemplates_updateExisting_title());
+        CheckboxItem checkboxItem = new CheckboxItem("updateExistingSchedules",
+            MSG.view_admin_measTemplates_updateExisting_title());
         checkboxItem.setDefaultValue(schedulesView.isUpdateExistingSchedules());
         checkboxItem.setTooltip(MSG.view_admin_measTemplates_updateExisting_tooltip());
         checkboxItem.setHoverWidth(200);

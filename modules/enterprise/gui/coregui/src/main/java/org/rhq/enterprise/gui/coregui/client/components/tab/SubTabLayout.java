@@ -35,7 +35,6 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -101,7 +100,7 @@ public class SubTabLayout extends LocatableVLayout {
      * @param subTab not null
      */
     public void showSubTab(SubTab subTab) {
-        LocatableButton button = subTab.getButton();
+        Button button = subTab.getButton();
         if (null == button) {
             button = createSubTabButton(subTab);
 
@@ -162,8 +161,8 @@ public class SubTabLayout extends LocatableVLayout {
         return (null != subTab && null != subTab.getButton());
     }
 
-    private LocatableButton createSubTabButton(final SubTab subTab) {
-        LocatableButton button = new LocatableButton(subTab.getLocatorId(), subTab.getTitle());
+    private Button createSubTabButton(final SubTab subTab) {
+        Button button = new Button(subTab.getTitle());
         button.setShowRollOver(false);
         button.setActionType(SelectionType.RADIO);
         button.setRadioGroup("subTabs");

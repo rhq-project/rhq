@@ -43,7 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceDetailView;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -80,7 +80,7 @@ public class DriftDefinitionEditView extends LocatableVLayout implements Propert
         buttonbar.setMembersMargin(5);
         buttonbar.setLayoutMargin(5);
 
-        this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
+        this.saveButton = new EnhancedIButton(MSG.common_button_save());
         this.saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();
@@ -94,8 +94,8 @@ public class DriftDefinitionEditView extends LocatableVLayout implements Propert
         refresh();
 
         if (!this.hasWriteAccess) {
-            Message message = new Message(MSG.view_configurationDetails_noPermission(), Message.Severity.Info, EnumSet
-                .of(Message.Option.Transient, Message.Option.Sticky));
+            Message message = new Message(MSG.view_configurationDetails_noPermission(), Message.Severity.Info,
+                EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             CoreGUI.getMessageCenter().notify(message);
         }
     }
@@ -124,7 +124,7 @@ public class DriftDefinitionEditView extends LocatableVLayout implements Propert
                     configDef = DriftConfigurationDefinition.getInstanceForExistingConfiguration();
                 }
 
-                editor = new ConfigurationEditor(extendLocatorId("Editor"), configDef, result.getConfiguration());
+                editor = new ConfigurationEditor(configDef, result.getConfiguration());
                 editor.setOverflow(Overflow.AUTO);
                 editor.addPropertyValueChangeListener(DriftDefinitionEditView.this);
                 editor.setReadOnly(!hasWriteAccess);

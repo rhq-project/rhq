@@ -29,6 +29,7 @@ import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
@@ -45,15 +46,17 @@ import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author John Mazzitelli
  */
-public class NewNotificationEditor extends LocatableDynamicForm {
+public class NewNotificationEditor extends DynamicForm {
+
+    protected Messages MSG = CoreGUI.getMessages();
 
     private final AlertDefinition alertDefinition; // the definition we are adding the notification to
     private final List<AlertNotification> notifications; // if we are creating a new notification, it gets added to this list
@@ -64,10 +67,10 @@ public class NewNotificationEditor extends LocatableDynamicForm {
     private CanvasItem senderCanvasItem;
     private boolean senderCanvasInitialized = false;
 
-    public NewNotificationEditor(String locatorId, AlertDefinition alertDefinition, List<AlertNotification> notifs,
+    public NewNotificationEditor(AlertDefinition alertDefinition, List<AlertNotification> notifs,
         AlertNotification notifToEdit, Runnable closeFunc) {
 
-        super(locatorId);
+        super();
         this.alertDefinition = alertDefinition;
         this.notifications = notifs;
         this.notificationToEdit = notifToEdit;
@@ -85,8 +88,8 @@ public class NewNotificationEditor extends LocatableDynamicForm {
         senderCanvasItem.setShowTitle(false);
         senderCanvasItem.setColSpan(2);
 
-        notificationSenderSelectItem = new SortedSelectItem("notificationSender", MSG
-            .view_alert_definition_notification_editor_sender());
+        notificationSenderSelectItem = new SortedSelectItem("notificationSender",
+            MSG.view_alert_definition_notification_editor_sender());
         notificationSenderSelectItem.setDefaultToFirstOption(true);
         notificationSenderSelectItem.setWrapTitle(false);
         notificationSenderSelectItem.setRedrawOnChange(true);
@@ -165,7 +168,7 @@ public class NewNotificationEditor extends LocatableDynamicForm {
                             saveNewNotification();
                             closeFunction.run();
                         }
-                        
+
                         public void onFailure(Throwable t) {
                             //do nothing
                             //the sender form is supposed to warn the user about what is wrong
@@ -230,7 +233,7 @@ public class NewNotificationEditor extends LocatableDynamicForm {
     }
 
     private AbstractNotificationSenderForm createNotificationSenderForm(String sender) {
-        String newLocatorId = extendLocatorId(SeleniumUtility.getSafeId(sender));
+
         AbstractNotificationSenderForm newCanvas;
 
         // NOTE: today there is no way for an alert server plugin developer
@@ -241,9 +244,9 @@ public class NewNotificationEditor extends LocatableDynamicForm {
         // For those that want to write their own custom alert plugins, you are restricted to
         // using configuration definitions as the only way to configure the sender.
         if ("System Users".equals(sender)) {
-            newCanvas = new SystemUsersNotificationSenderForm(newLocatorId, notificationToEdit, sender);
+            newCanvas = new SystemUsersNotificationSenderForm(notificationToEdit, sender);
         } else if ("System Roles".equals(sender)) {
-            newCanvas = new SystemRolesNotificationSenderForm(newLocatorId, notificationToEdit, sender);
+            newCanvas = new SystemRolesNotificationSenderForm(notificationToEdit, sender);
         } else if ("Resource Operations".equals(sender)) {
             ResourceType rt;
             Resource res = null;
@@ -255,13 +258,13 @@ public class NewNotificationEditor extends LocatableDynamicForm {
                 res = alertDefinition.getResource();
                 rt = res.getResourceType();
             }
-            newCanvas = new ResourceOperationNotificationSenderForm(newLocatorId, notificationToEdit, sender, rt, res);
+            newCanvas = new ResourceOperationNotificationSenderForm(notificationToEdit, sender, rt, res);
         } else if ("CLI Script".equals(sender)) {
-            newCanvas = new CliNotificationSenderForm(newLocatorId, notificationToEdit, sender);
+            newCanvas = new CliNotificationSenderForm(notificationToEdit, sender);
         } else {
             // catch all - all other senders are assumed to just have simple configuration definition
             // that can be used by our configuration editor UI component to ask for config values.
-            newCanvas = new SimpleNotificationSenderForm(newLocatorId, notificationToEdit, sender);
+            newCanvas = new SimpleNotificationSenderForm(notificationToEdit, sender);
         }
         return newCanvas;
     }

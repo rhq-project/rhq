@@ -28,6 +28,7 @@ import java.util.Map;
 
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.DateDisplayFormat;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.DateTimeItem;
@@ -41,17 +42,19 @@ import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.grid.ListGrid;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableWidget;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author Simeon Pinder
  * @author Greg Hinkle
  */
-public abstract class AbstractMeasurementRangeEditor extends LocatableDynamicForm implements TableWidget {
+public abstract class AbstractMeasurementRangeEditor extends DynamicForm implements TableWidget {
+
+    protected Messages MSG = CoreGUI.getMessages();
 
     //keyed map of translated date units Ex. minutes,hours,days
     protected static LinkedHashMap<String, String> lastUnits;
@@ -80,6 +83,8 @@ public abstract class AbstractMeasurementRangeEditor extends LocatableDynamicFor
     public static String SET_ITEM = "set";
 
     static {
+        Messages MSG = CoreGUI.getMessages();
+
         lastUnits = new LinkedHashMap<String, String>(3);
         lastUnits.put(String.valueOf(MeasurementUtility.UNIT_MINUTES), MSG.common_unit_minutes());
         lastUnits.put(String.valueOf(MeasurementUtility.UNIT_HOURS), MSG.common_unit_hours());
@@ -89,7 +94,7 @@ public abstract class AbstractMeasurementRangeEditor extends LocatableDynamicFor
     }
 
     public AbstractMeasurementRangeEditor(String locatorId) {
-        super(locatorId);
+        super();
         setNumCols(10);
         setWrapItemTitles(false);
         setAlign(Alignment.LEFT);

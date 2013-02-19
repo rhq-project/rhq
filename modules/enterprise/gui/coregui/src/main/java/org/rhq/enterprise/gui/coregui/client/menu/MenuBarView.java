@@ -99,7 +99,7 @@ public class MenuBarView extends LocatableVLayout {
     }
 
     private Canvas getLogoSection() {
-        final AboutModalWindow aboutModalWindow = new AboutModalWindow(extendLocatorId("AboutModalWindow"));
+        final AboutModalWindow aboutModalWindow = new AboutModalWindow();
         HLayout logoSection = new HLayout();
         logoSection.setOverflow(Overflow.VISIBLE);
 

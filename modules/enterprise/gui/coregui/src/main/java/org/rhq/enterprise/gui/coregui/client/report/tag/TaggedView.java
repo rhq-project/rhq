@@ -33,7 +33,12 @@ import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.tagging.Tag;
-import org.rhq.enterprise.gui.coregui.client.*;
+import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.bundle.deployment.BundleDeploymentListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.destination.BundleDestinationListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesListView;
@@ -73,11 +78,11 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView, Ha
     protected void onInit() {
         super.onInit();
 
-//        TitleBar titleBar = new TitleBar(this, TaggedView.VIEW_ID.getTitle(), "global/Tag_24.png");
-//        titleBar.setExtraSpace(10);
-//        addMember(titleBar);
+        //        TitleBar titleBar = new TitleBar(this, TaggedView.VIEW_ID.getTitle(), "global/Tag_24.png");
+        //        titleBar.setExtraSpace(10);
+        //        addMember(titleBar);
 
-        tagCloudView = new TagCloudView(extendLocatorId("TagCloud"));
+        tagCloudView = new TagCloudView();
         tagCloudView.setAutoHeight();
         tagCloudView.setExtraSpace(10);
         addMember(tagCloudView);
@@ -131,7 +136,7 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView, Ha
 
             BundleDeploymentListView bundleDeploymentListView = new BundleDeploymentListView(
                 extendLocatorId("bundleDeploymentListView"), criteria,
-                    this.globalPermissions.contains(Permission.MANAGE_BUNDLE));
+                this.globalPermissions.contains(Permission.MANAGE_BUNDLE));
             viewsWithTags.add(bundleDeploymentListView);
             tab = new LocatableTab(extendLocatorId("bundleDeploymentsList"), MSG.view_bundle_bundleDeployments());
             tab.setIcon("subsystems/bundle/BundleDeployment_16.png");
@@ -146,8 +151,7 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView, Ha
             tab.setPane(bundleDestinationListView);
             container.addTab(tab);
 
-            ResourceSearchView resourceView = new ResourceSearchView(extendLocatorId("resourceView"), criteria, MSG
-                .view_taggedResources_title());
+            ResourceSearchView resourceView = new ResourceSearchView(criteria, MSG.view_taggedResources_title());
             viewsWithTags.add(resourceView);
             tab = new LocatableTab(extendLocatorId("resourceList"), MSG.view_taggedResources_title());
             tab.setIcon(ImageManager.getResourceIcon(ResourceCategory.SERVICE));
@@ -194,7 +198,6 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView, Ha
             tagCloudView.setSelectedTag(null);
         }
     }
-
 
     @Override
     public ViewName getViewName() {

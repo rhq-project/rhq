@@ -30,7 +30,6 @@ import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -47,7 +46,7 @@ public class DriftPinTemplateWizardConfigStep extends AbstractWizardStep {
         this.wizard = wizard;
     }
 
-    public Canvas getCanvas(Locatable parent) {
+    public Canvas getCanvas() {
         // to skip a step just return null, the wizard framework will then just call nextPage()
         if (!wizard.isCreateTemplate()) {
             return null;
@@ -57,14 +56,13 @@ public class DriftPinTemplateWizardConfigStep extends AbstractWizardStep {
         // be able to see the wizard's next/cancel buttons. This vlayout also provides for easier expansion if we add more items.
         if (vLayout == null) {
 
-            String locatorId = (null == parent) ? "DriftDefConfig" : parent.extendLocatorId("DriftDefConfig");
-            vLayout = new LocatableVLayout(locatorId);
+            vLayout = new LocatableVLayout();
 
             vLayout.setOverflow(Overflow.AUTO);
 
             Configuration startingConfig = wizard.getSnapshotDriftDef().getConfiguration();
             ConfigurationDefinition def = DriftConfigurationDefinition.getNewPinnedTemplateInstance();
-            editor = new ConfigurationEditor(vLayout.extendLocatorId("Editor"), def, startingConfig);
+            editor = new ConfigurationEditor(def, startingConfig);
             vLayout.addMember(editor);
         }
 

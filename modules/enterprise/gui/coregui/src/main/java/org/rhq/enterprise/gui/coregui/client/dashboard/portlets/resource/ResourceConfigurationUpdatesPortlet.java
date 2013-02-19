@@ -68,21 +68,21 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
 
     private ResourceConfigurationHistoryCriteriaView resourceHistoryTable;
 
-    public ResourceConfigurationUpdatesPortlet(String locatorId, int resourceId) {
-        super(locatorId, null);
+    public ResourceConfigurationUpdatesPortlet(int resourceId) {
+        super(null);
         this.resourceId = resourceId;
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
             if (EntityContext.Type.Resource != context.getType()) {
                 throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
             }
 
-            return new ResourceConfigurationUpdatesPortlet(locatorId, context.getResourceId());
+            return new ResourceConfigurationUpdatesPortlet(context.getResourceId());
         }
     }
 

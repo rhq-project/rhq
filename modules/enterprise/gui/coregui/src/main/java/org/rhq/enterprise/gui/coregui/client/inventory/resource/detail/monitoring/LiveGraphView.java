@@ -65,7 +65,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWidgetCanvas;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author Greg Hinkle
@@ -271,7 +270,7 @@ public class LiveGraphView extends LocatableVLayout {
 
     public static void displayAsDialog(String locatorId, int resourceId, MeasurementDefinition def) {
         final LiveGraphView graph = new LiveGraphView(locatorId, resourceId, def);
-        final Window graphPopup = new LocatableWindow(locatorId);
+        final Window graphPopup = new Window();
         graphPopup.setTitle(MSG.view_resource_monitor_detailed_graph_label());
         graphPopup.setWidth(800);
         graphPopup.setHeight(400);

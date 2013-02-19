@@ -50,7 +50,7 @@ public class CalltimeView extends TableSection<CalltimeDataSource> implements Ha
     }
 
     public CalltimeView(String locatorId, EntityContext context) {
-        super(locatorId, SUBSYSTEM_VIEW_ID.getTitle());
+        super(SUBSYSTEM_VIEW_ID.getTitle());
         setDataSource(new CalltimeDataSource(context));
         destinationFilter = new TextItem(CalltimeDataSource.FILTER_DESTINATION,
             MSG.view_resource_monitor_calltime_destinationFilter());

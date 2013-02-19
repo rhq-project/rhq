@@ -96,10 +96,9 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
 
     private List<GroupMemberConfiguration> memberConfigurations;
 
-    public GroupConfigurationEditor(String locatorId, ConfigurationDefinition configurationDefinition,
+    public GroupConfigurationEditor(ConfigurationDefinition configurationDefinition,
         List<GroupMemberConfiguration> memberConfigurations) {
-        super(locatorId, configurationDefinition, buildAggregateConfiguration(memberConfigurations,
-            configurationDefinition));
+        super(configurationDefinition, buildAggregateConfiguration(memberConfigurations, configurationDefinition));
         this.memberConfigurations = memberConfigurations;
     }
 
@@ -141,9 +140,8 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
     }
 
     @Override
-    protected List<FormItem> buildFieldsForPropertyList(String locatorId, PropertyDefinition propertyDefinition,
-        boolean oddRow, PropertyDefinitionList propertyDefinitionList, PropertyDefinition memberDefinition,
-        PropertyList propertyList) {
+    protected List<FormItem> buildFieldsForPropertyList(PropertyDefinition propertyDefinition, boolean oddRow,
+        PropertyDefinitionList propertyDefinitionList, PropertyDefinition memberDefinition, PropertyList propertyList) {
         List<FormItem> fields = new ArrayList<FormItem>();
 
         StaticTextItem nameItem = buildNameItem(propertyDefinition);
@@ -229,7 +227,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
     private void displayMemberValuesEditor(String locatorId, final PropertyDefinitionSimple propertyDefinitionSimple,
         final PropertySimple aggregatePropertySimple, Integer index, final FormItem aggregateValueItem) {
 
-        final PopupWindow popup = new PopupWindow(extendLocatorId("memberValuesEditor"), null);
+        final PopupWindow popup = new PopupWindow(null);
         popup.setTitle(MSG.view_groupConfigEdit_valsDiffForProp(propertyDefinitionSimple.getName()));
         popup.setWidth(800);
         popup.setHeight(600);

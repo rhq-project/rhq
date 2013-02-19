@@ -58,8 +58,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -68,7 +67,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class ResourceAutodiscoveryView extends LocatableVLayout implements RefreshableView, HasViewName {
 
-    public static final ViewName VIEW_ID = new ViewName("AutodiscoveryQueue", MSG.view_inventory_adq(), IconEnum.DISCOVERY_QUEUE);
+    public static final ViewName VIEW_ID = new ViewName("AutodiscoveryQueue", MSG.view_inventory_adq(),
+        IconEnum.DISCOVERY_QUEUE);
 
     private boolean simple;
     private TreeGrid treeGrid;
@@ -86,15 +86,14 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
     //                       Agents, etc.).
     private ResourceGWTServiceAsync importResourceService = GWTServiceLookup.getResourceService(3 * 60 * 1000);
 
-    public ResourceAutodiscoveryView(String locatorId) {
-        super(locatorId);
-
-        setWidth100();
-        setHeight100();
+    public ResourceAutodiscoveryView() {
+        this(false);
     }
 
-    public ResourceAutodiscoveryView(String locatorId, boolean simple) {
-        this(locatorId);
+    public ResourceAutodiscoveryView(boolean simple) {
+        setWidth100();
+        setHeight100();
+
         this.simple = simple;
     }
 
@@ -143,11 +142,9 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
 
         addMember(footer);
 
-        final IButton importButton = new LocatableIButton(this.extendLocatorId("Import"), MSG.common_button_import());
-        final IButton ignoreButton = new LocatableIButton(this.extendLocatorId("Ignore"), MSG
-            .view_autoDiscoveryQ_ignore());
-        final IButton unignoreButton = new LocatableIButton(this.extendLocatorId("Unignore"), MSG
-            .view_autoDiscoveryQ_unignore());
+        final IButton importButton = new EnhancedIButton(MSG.common_button_import());
+        final IButton ignoreButton = new EnhancedIButton(MSG.view_autoDiscoveryQ_ignore());
+        final IButton unignoreButton = new EnhancedIButton(MSG.view_autoDiscoveryQ_unignore());
 
         footer.addMember(importButton);
         footer.addMember(ignoreButton);
@@ -159,7 +156,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
 
         // The remaining footer items (status filter, (de)select all buttons, and refresh button) will be right-aligned.
 
-        DynamicForm form = new LocatableDynamicForm(this.extendLocatorId("Status"));
+        DynamicForm form = new DynamicForm();
         final SelectItem statusSelectItem = new SelectItem("status", MSG.view_autoDiscoveryQ_showStatus());
         statusSelectItem.setValueMap(AutodiscoveryQueueDataSource.NEW, AutodiscoveryQueueDataSource.IGNORED,
             AutodiscoveryQueueDataSource.NEW_AND_IGNORED);
@@ -174,15 +171,13 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
         });
         footer.addMember(form);
 
-        final IButton selectAllButton = new LocatableIButton(this.extendLocatorId("SelectAll"), MSG
-            .view_autoDiscoveryQ_selectAll());
+        final IButton selectAllButton = new EnhancedIButton(MSG.view_autoDiscoveryQ_selectAll());
         footer.addMember(selectAllButton);
-        final IButton deselectAllButton = new LocatableIButton(this.extendLocatorId("DeselectAll"), MSG
-            .view_autoDiscoveryQ_deselectAll());
+        final IButton deselectAllButton = new EnhancedIButton(MSG.view_autoDiscoveryQ_deselectAll());
         deselectAllButton.setDisabled(true);
         footer.addMember(deselectAllButton);
 
-        IButton refreshButton = new LocatableIButton(extendLocatorId("Refresh"), MSG.common_button_refresh());
+        IButton refreshButton = new EnhancedIButton(MSG.common_button_refresh());
         refreshButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 refresh();
@@ -197,7 +192,8 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
                 }
                 selectionChangedHandlerDisabled = true;
 
-                final TreeNode selectedNode = treeGrid.getTree().findById(selectionEvent.getRecord().getAttribute("id"));
+                final TreeNode selectedNode = treeGrid.getTree()
+                    .findById(selectionEvent.getRecord().getAttribute("id"));
                 TreeNode parentNode = treeGrid.getTree().getParent(selectedNode);
                 boolean isPlatform = treeGrid.getTree().isRoot(parentNode);
                 boolean isCheckboxMarked = treeGrid.isSelected(selectedNode);

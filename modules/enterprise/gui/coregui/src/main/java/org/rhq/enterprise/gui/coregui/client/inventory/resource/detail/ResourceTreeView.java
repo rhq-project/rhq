@@ -102,7 +102,6 @@ import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -163,8 +162,8 @@ public class ResourceTreeView extends LocatableVLayout {
 
         treeGrid.setLeaveScrollbarGap(false);
 
-        resourceContextMenu = new LocatableMenu(extendLocatorId("resourceContextMenu"));
-        autoGroupContextMenu = new ResourceGroupContextMenu(extendLocatorId("autoGroupContextMenu"));
+        resourceContextMenu = new Menu();
+        autoGroupContextMenu = new ResourceGroupContextMenu();
 
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
 

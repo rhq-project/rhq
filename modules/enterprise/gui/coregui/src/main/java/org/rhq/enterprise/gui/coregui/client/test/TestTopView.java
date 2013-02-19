@@ -121,7 +121,7 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     private NavigationSection buildInventorySection() {
         NavigationItem resourceSelectorItem = new NavigationItem(PAGE_RESOURCE_SELECTOR, null, new ViewFactory() {
             public Canvas createView() {
-                return new ResourceSelector(extendLocatorId(PAGE_RESOURCE_SELECTOR.getName()));
+                return new ResourceSelector();
             }
         });
 
@@ -163,8 +163,8 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem readOnlyGroupConfigEditorItem = new NavigationItem(PAGE_READONLY_GROUP_CONFIG_EDITOR, null,
             new ViewFactory() {
                 public Canvas createView() {
-                    return new TestReadOnlyGroupConfigurationView(extendLocatorId(PAGE_READONLY_GROUP_CONFIG_EDITOR
-                        .getName()));
+                    return new TestReadOnlyGroupConfigurationView(
+                        extendLocatorId(PAGE_READONLY_GROUP_CONFIG_EDITOR.getName()));
                 }
             });
 
@@ -175,51 +175,50 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     private NavigationSection buildServerAccessSection() {
         NavigationItem userPrefsItem = new NavigationItem(PAGE_USER_PREFERENCES, null, new ViewFactory() {
             public Canvas createView() {
-                return new TestUserPreferencesView(extendLocatorId(PAGE_USER_PREFERENCES.getName()));
+                return new TestUserPreferencesView();
             }
         });
 
         NavigationItem remoteServiceStatisticsItem = new NavigationItem(PAGE_REMOTE_SERVICE_STATISTICS, null,
             new ViewFactory() {
                 public Canvas createView() {
-                    return new TestRemoteServiceStatisticsView(
-                        extendLocatorId(PAGE_REMOTE_SERVICE_STATISTICS.getName()));
+                    return new TestRemoteServiceStatisticsView();
                 }
             });
 
         NavigationItem sqlItem = new NavigationItem(PAGE_SQL, null, new ViewFactory() {
             public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId(PAGE_SQL.getName()), "/admin/test/sql.jsp");
+                return new FullHTMLPane("/admin/test/sql.jsp");
             }
         });
 
         NavigationItem hibernateItem = new NavigationItem(PAGE_HIBERNATE, null, new ViewFactory() {
             public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId(PAGE_HIBERNATE.getName()), "/admin/test/hibernate.jsp");
+                return new FullHTMLPane("/admin/test/hibernate.jsp");
             }
         });
 
         NavigationItem entityBrowserItem = new NavigationItem(PAGE_ENTITY_BROWSER, null, new ViewFactory() {
             public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId(PAGE_ENTITY_BROWSER.getName()), "/admin/test/browser.jsp");
+                return new FullHTMLPane("/admin/test/browser.jsp");
             }
         });
 
         NavigationItem adminControlItem = new NavigationItem(PAGE_ADMIN_CONTROL, null, new ViewFactory() {
             public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId(PAGE_ADMIN_CONTROL.getName()), "/admin/test/control.jsp");
+                return new FullHTMLPane("/admin/test/control.jsp");
             }
         });
 
         NavigationItem emailItem = new NavigationItem(PAGE_EMAIL, null, new ViewFactory() {
             public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId(PAGE_EMAIL.getName()), "/admin/test/email.jsp");
+                return new FullHTMLPane("/admin/test/email.jsp");
             }
         });
 
         NavigationItem agentItem = new NavigationItem(PAGE_AGENT, null, new ViewFactory() {
             public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId(PAGE_AGENT.getName()), "/admin/test/agent.jsp");
+                return new FullHTMLPane("/admin/test/agent.jsp");
             }
         });
 

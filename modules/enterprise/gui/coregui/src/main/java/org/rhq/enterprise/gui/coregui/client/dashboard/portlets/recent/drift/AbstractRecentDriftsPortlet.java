@@ -42,7 +42,6 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigura
 import org.rhq.enterprise.gui.coregui.client.drift.DriftDataSource;
 import org.rhq.enterprise.gui.coregui.client.drift.DriftHistoryView;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -65,8 +64,8 @@ public abstract class AbstractRecentDriftsPortlet extends DriftHistoryView imple
     // autorefresh timer
     private Timer refreshTimer;
 
-    public AbstractRecentDriftsPortlet(String locatorId, EntityContext entityContext) {
-        super(locatorId, null, entityContext);
+    public AbstractRecentDriftsPortlet(EntityContext entityContext) {
+        super(null, entityContext);
 
         setShowFilterForm(false); //disable filter form for portlet
         setOverflow(Overflow.VISIBLE);
@@ -129,9 +128,9 @@ public abstract class AbstractRecentDriftsPortlet extends DriftHistoryView imple
     @Override
     public DynamicForm getCustomSettingsForm() {
 
-        LocatableDynamicForm customSettingsForm = new LocatableDynamicForm(extendLocatorId("CustomSettings"));
-        LocatableVLayout page = new LocatableVLayout(customSettingsForm.extendLocatorId("Page"));
-        LocatableDynamicForm filterForm = new LocatableDynamicForm(page.extendLocatorId("Filter"));
+        DynamicForm customSettingsForm = new DynamicForm();
+        LocatableVLayout page = new LocatableVLayout();
+        DynamicForm filterForm = new DynamicForm();
         filterForm.setMargin(5);
 
         final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();

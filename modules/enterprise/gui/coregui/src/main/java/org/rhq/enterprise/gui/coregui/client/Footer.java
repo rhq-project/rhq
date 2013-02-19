@@ -27,8 +27,8 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.enterprise.gui.coregui.client.footer.FavoritesButton;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageBar;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenterView;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -55,8 +55,8 @@ public class Footer extends LocatableHLayout {
     protected void onDraw() {
         super.onDraw();
 
-        messageCenter = new MessageCenterView(extendLocatorId(MessageCenterView.LOCATOR_ID));
-        final FavoritesButton favoritesButton = new FavoritesButton(extendLocatorId("Favorites"));
+        messageCenter = new MessageCenterView();
+        final FavoritesButton favoritesButton = new FavoritesButton();
         messageBar = new MessageBar();
 
         // leave space for the RPC Activity Spinner (I think this has been removed, giving back the space) 
@@ -83,7 +83,7 @@ public class Footer extends LocatableHLayout {
         layout.setAlign(Alignment.CENTER);
         layout.setAutoWidth();
 
-        LocatableIButton button = new LocatableIButton(extendLocatorId("button"), MSG.view_messageCenter_messageTitle());
+        EnhancedIButton button = new EnhancedIButton(MSG.view_messageCenter_messageTitle());
         button.setAlign(Alignment.CENTER);
         button.setAutoFit(true);
         button.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {

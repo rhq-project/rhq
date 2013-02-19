@@ -89,6 +89,7 @@ import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.MenuItemSeparator;
@@ -126,16 +127,12 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * A SmartGWT widget for editing an RHQ {@link Configuration} that conforms to a {@link ConfigurationDefinition}.
@@ -199,21 +196,14 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     private LoadHandler loadHandler = null;
 
-    private ConfigurationEditor(String locatorId) {
-        super(locatorId);
-    }
-
-    public ConfigurationEditor(String locatorId, int resourceId, int resourceTypeId, ConfigType configType) {
-        this(locatorId);
+    public ConfigurationEditor(int resourceId, int resourceTypeId, ConfigType configType) {
 
         this.resourceId = resourceId;
         this.resourceTypeId = resourceTypeId;
         this.configType = configType;
     }
 
-    public ConfigurationEditor(String locatorId, ConfigurationDefinition configurationDefinition,
-        Configuration configuration) {
-        this(locatorId);
+    public ConfigurationEditor(ConfigurationDefinition configurationDefinition, Configuration configuration) {
 
         if (configuration == null) {
             throw new IllegalArgumentException("Null configuration.");
@@ -432,7 +422,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             List<PropertyDefinition> propertyDefinitions = new ArrayList<PropertyDefinition>(
                 configurationDefinition.getNonGroupedProperties());
 
-            DynamicForm form = buildPropertiesForm(layout.extendLocatorId("Props"), propertyDefinitions, configuration);
+            DynamicForm form = buildPropertiesForm(propertyDefinitions, configuration);
             form.setBorder("1px solid #AAA");
             form.validate();
             layout.addMember(form);
@@ -493,7 +483,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             toolStrip.addMember(titleLabel);
         }
 
-        Menu menu = new LocatableMenu(toolStrip.extendLocatorId("JumpMenu"));
+        Menu menu = new Menu();
         for (SectionStackSection section : sectionStack.getSections()) {
             MenuItem item = new MenuItem(section.getTitle());
             item.setAttribute("name", section.getName());
@@ -518,8 +508,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         });
         menu.addItem(hideAllItem);
 
-        toolStrip.addMember(new LocatableIMenuButton(toolStrip.extendLocatorId("Jump"), MSG
-            .view_configEdit_jumpToSection(), menu));
+        toolStrip.addMember(new IMenuButton(MSG.view_configEdit_jumpToSection(), menu));
 
         return toolStrip;
     }
@@ -545,7 +534,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             ((group == null) ? configurationDefinition.getNonGroupedProperties()
                 : configurationDefinition.getPropertiesInGroup(group.getName())));
 
-        DynamicForm form = buildPropertiesForm(locatorId, propertyDefinitions, configuration);
+        DynamicForm form = buildPropertiesForm(propertyDefinitions, configuration);
 
         // If the group contains any invalid properties, expand the section so the user can see the error icons next to
         // the invalid properties.
@@ -557,10 +546,10 @@ public class ConfigurationEditor extends LocatableVLayout {
         return section;
     }
 
-    protected LocatableDynamicForm buildPropertiesForm(String locatorId,
-        Collection<PropertyDefinition> propertyDefinitions, AbstractPropertyMap propertyMap) {
+    protected DynamicForm buildPropertiesForm(Collection<PropertyDefinition> propertyDefinitions,
+        AbstractPropertyMap propertyMap) {
 
-        LocatableDynamicForm form = new LocatableDynamicForm(locatorId);
+        DynamicForm form = new DynamicForm();
         if (propertyMap instanceof Configuration) {
             this.topLevelPropertiesValuesManager.addMember(form);
         }
@@ -571,7 +560,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         List<FormItem> fields = new ArrayList<FormItem>();
         addHeaderItems(fields);
-        addItemsForPropertiesRecursively(locatorId, propertyDefinitions, propertyMap, fields);
+        addItemsForPropertiesRecursively(propertyDefinitions, propertyMap, fields);
         form.setFields(fields.toArray(new FormItem[fields.size()]));
 
         return form;
@@ -592,7 +581,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         return unsetHeader;
     }
 
-    private void addItemsForPropertiesRecursively(String locatorId, Collection<PropertyDefinition> propertyDefinitions,
+    private void addItemsForPropertiesRecursively(Collection<PropertyDefinition> propertyDefinitions,
         AbstractPropertyMap propertyMap, List<FormItem> fields) {
         boolean odd = true;
         List<PropertyDefinition> sortedPropertyDefinitions = new ArrayList<PropertyDefinition>(propertyDefinitions);
@@ -605,15 +594,14 @@ public class ConfigurationEditor extends LocatableVLayout {
                     propertyMap.put(property);
                 }
             }
-            addItemsForPropertyRecursively(locatorId + "_" + propertyDefinition.getName(), propertyDefinition,
-                property, odd, fields);
+            addItemsForPropertyRecursively(propertyDefinition, property, odd, fields);
             odd = !odd;
         }
         return;
     }
 
-    private void addItemsForPropertyRecursively(String locatorId, PropertyDefinition propertyDefinition,
-        Property property, boolean oddRow, List<FormItem> fields) {
+    private void addItemsForPropertyRecursively(PropertyDefinition propertyDefinition, Property property,
+        boolean oddRow, List<FormItem> fields) {
         List<FormItem> fieldsForThisProperty;
 
         if (propertyDefinition instanceof PropertyDefinitionSimple) {
@@ -630,8 +618,8 @@ public class ConfigurationEditor extends LocatableVLayout {
                 propertyList = new PropertyList(propertyDefinitionList.getName());
                 configuration.put(propertyList);
             }
-            fieldsForThisProperty = buildFieldsForPropertyList(locatorId, propertyDefinition, oddRow,
-                propertyDefinitionList, memberDefinition, propertyList);
+            fieldsForThisProperty = buildFieldsForPropertyList(propertyDefinition, oddRow, propertyDefinitionList,
+                memberDefinition, propertyList);
         } else if (propertyDefinition instanceof PropertyDefinitionMap) {
             PropertyDefinitionMap propertyDefinitionMap = (PropertyDefinitionMap) propertyDefinition;
             PropertyMap propertyMap = (PropertyMap) property;
@@ -640,7 +628,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                 configuration.put(propertyMap);
             }
 
-            fieldsForThisProperty = buildFieldsForPropertyMap(locatorId, propertyDefinitionMap, propertyMap);
+            fieldsForThisProperty = buildFieldsForPropertyMap(propertyDefinitionMap, propertyMap);
         } else {
             throw new IllegalStateException("Property definition null or of unknown type: " + propertyDefinition);
         }
@@ -673,9 +661,8 @@ public class ConfigurationEditor extends LocatableVLayout {
         return fields;
     }
 
-    protected List<FormItem> buildFieldsForPropertyList(String locatorId, PropertyDefinition propertyDefinition,
-        boolean oddRow, PropertyDefinitionList propertyDefinitionList, PropertyDefinition memberDefinition,
-        PropertyList propertyList) {
+    protected List<FormItem> buildFieldsForPropertyList(PropertyDefinition propertyDefinition, boolean oddRow,
+        PropertyDefinitionList propertyDefinitionList, PropertyDefinition memberDefinition, PropertyList propertyList) {
         List<FormItem> fields = new ArrayList<FormItem>();
 
         StaticTextItem nameItem = buildNameItem(propertyDefinition);
@@ -687,13 +674,12 @@ public class ConfigurationEditor extends LocatableVLayout {
             // the description as a tooltip when the user hovers over the property name.
             nameItem.setTooltip(propertyDefinition.getDescription());
             PropertyDefinitionMap memberDefinitionMap = (PropertyDefinitionMap) memberDefinition;
-            CanvasItem listOfMapsItem = buildListOfMapsField(locatorId, memberDefinitionMap, propertyDefinitionList,
-                propertyList);
+            CanvasItem listOfMapsItem = buildListOfMapsField(memberDefinitionMap, propertyDefinitionList, propertyList);
             fields.add(listOfMapsItem);
         } else if (memberDefinition instanceof PropertyDefinitionSimple) {
             SpacerItem spacerItem = new SpacerItem();
             fields.add(spacerItem);
-            CanvasItem listOfSimplesItem = buildListOfSimplesField(locatorId, propertyDefinitionList, propertyList);
+            CanvasItem listOfSimplesItem = buildListOfSimplesField(propertyDefinitionList, propertyList);
             fields.add(listOfSimplesItem);
 
             StaticTextItem descriptionItem = buildDescriptionField(propertyDefinition);
@@ -711,7 +697,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         return fields;
     }
 
-    protected List<FormItem> buildFieldsForPropertyMap(String locatorId, PropertyDefinitionMap propertyDefinitionMap,
+    protected List<FormItem> buildFieldsForPropertyMap(PropertyDefinitionMap propertyDefinitionMap,
         PropertyMap propertyMap) {
         List<FormItem> fields = new ArrayList<FormItem>();
 
@@ -719,7 +705,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         fields.add(nameItem);
 
         // Note: This field spans 3 columns.
-        FormItem mapField = buildMapField(locatorId, propertyDefinitionMap, propertyMap);
+        FormItem mapField = buildMapField(propertyDefinitionMap, propertyMap);
         fields.add(mapField);
 
         return fields;
@@ -770,8 +756,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         return this.invalidPropertyNameToDisplayNameMap;
     }
 
-    private FormItem buildMapField(String parentLocatorId, PropertyDefinitionMap propertyDefinitionMap,
-        final PropertyMap propertyMap) {
+    private FormItem buildMapField(PropertyDefinitionMap propertyDefinitionMap, final PropertyMap propertyMap) {
         boolean isDynamic = isDynamic(propertyDefinitionMap);
         if (isDynamic) {
             PropertyDefinitionMap propertyDefinitionMapClone = new PropertyDefinitionMap(
@@ -782,14 +767,14 @@ public class ConfigurationEditor extends LocatableVLayout {
             addMemberPropertyDefinitionsToDynamicPropertyMap(propertyDefinitionMapClone, propertyMap);
             propertyDefinitionMap = propertyDefinitionMapClone;
         }
-        LocatableVLayout layout = new LocatableVLayout(parentLocatorId + "_Layout");
+        LocatableVLayout layout = new LocatableVLayout();
 
         HTMLFlow description = new HTMLFlow(propertyDefinitionMap.getDescription());
         layout.addMember(description);
 
         final PropertyDefinitionMap propertyDefinitionMapFinal = propertyDefinitionMap;
-        LocatableDynamicForm valuesCanvas = buildPropertiesForm(layout.getLocatorId(),
-            propertyDefinitionMapFinal.getOrderedPropertyDefinitions(), propertyMap);
+        DynamicForm valuesCanvas = buildPropertiesForm(propertyDefinitionMapFinal.getOrderedPropertyDefinitions(),
+            propertyMap);
         layout.addMember(valuesCanvas);
 
         if (isDynamic && !isReadOnly(propertyDefinitionMap, propertyMap)) {
@@ -798,7 +783,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             buttonBar.setPadding(5);
             buttonBar.setMembersMargin(15);
 
-            final IButton newButton = new LocatableIButton(buttonBar.extendLocatorId("New"), MSG.common_button_new());
+            final IButton newButton = new EnhancedIButton(MSG.common_button_new());
             newButton.setIcon(Window.getImgURL("[SKIN]/actions/add.png"));
             newButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
@@ -833,7 +818,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             deleteControlsLayout.setMargin(3);
             deleteControlsLayout.setMembersMargin(3);
             deleteControlsLayout.setWidth100();
-            LocatableDynamicForm deleteForm = new LocatableDynamicForm(deleteControlsLayout.extendLocatorId("Form"));
+            DynamicForm deleteForm = new DynamicForm();
             deleteForm.setWidth100();
 
             final SelectItem selectItem = new SortedSelectItem();
@@ -843,7 +828,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             selectItem.setValueMap(propertyDefinitionMap.getMap().keySet()
                 .toArray(new String[propertyDefinitionMap.getMap().size()]));
 
-            final LocatableIButton okButton = new LocatableIButton(buttonBar.extendLocatorId("OK"));
+            final EnhancedIButton okButton = new EnhancedIButton(buttonBar.extendLocatorId("OK"));
             okButton.setTitle(MSG.common_button_ok());
             okButton.setDisabled(true);
             okButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
@@ -933,12 +918,11 @@ public class ConfigurationEditor extends LocatableVLayout {
         return canvasItem;
     }
 
-    private CanvasItem buildListOfMapsField(final String locatorId,
-        final PropertyDefinitionMap memberPropertyDefinitionMap, final PropertyDefinitionList propertyDefinitionList,
-        final PropertyList propertyList) {
+    private CanvasItem buildListOfMapsField(final PropertyDefinitionMap memberPropertyDefinitionMap,
+        final PropertyDefinitionList propertyDefinitionList, final PropertyList propertyList) {
         Log.debug("Building list-of-maps grid for " + propertyList + "...");
 
-        final LocatableListGrid summaryTable = new LocatableListGrid(locatorId);
+        final LocatableListGrid summaryTable = new LocatableListGrid("TODO");
         summaryTable.setAlternateRecordStyles(true);
         summaryTable.setShowAllRecords(true);
         // [BZ 822173 - Table layout problem on configuration page.] 
@@ -1037,7 +1021,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         ListGridRecord[] rows = buildSummaryRecords(propertyList, propertyDefinitions);
         summaryTable.setData(rows);
 
-        VLayout summaryTableHolder = new LocatableVLayout(locatorId);
+        VLayout summaryTableHolder = new LocatableVLayout();
 
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
@@ -1110,11 +1094,11 @@ public class ConfigurationEditor extends LocatableVLayout {
         return records;
     }
 
-    private CanvasItem buildListOfSimplesField(String locatorId, final PropertyDefinitionList propertyDefinitionList,
+    private CanvasItem buildListOfSimplesField(final PropertyDefinitionList propertyDefinitionList,
         final PropertyList propertyList) {
         Log.debug("Building list-of-simples field for " + propertyList + "...");
 
-        LocatableVLayout vLayout = new LocatableVLayout(locatorId);
+        LocatableVLayout vLayout = new LocatableVLayout();
 
         final DynamicForm listGrid = new DynamicForm();
         vLayout.addMember(listGrid);
@@ -1137,7 +1121,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             footer.setMembersMargin(15);
             vLayout.addMember(footer);
 
-            final IButton deleteButton = new LocatableIButton(extendLocatorId("Delete"));
+            final IButton deleteButton = new EnhancedIButton(extendLocatorId("Delete"));
             deleteButton.setIcon(Window.getImgURL(ImageManager.getRemoveIcon()));
             deleteButton.setTooltip(MSG.view_configEdit_tooltip_1());
             deleteButton.setDisabled(true);
@@ -1188,7 +1172,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                 }
             });
 
-            final IButton newButton = new LocatableIButton(vLayout.extendLocatorId("New"), MSG.common_button_new());
+            final IButton newButton = new EnhancedIButton(MSG.common_button_new());
             newButton.setIcon(Window.getImgURL(ImageManager.getAddIcon()));
             newButton.setTooltip(MSG.view_configEdit_tooltip_2());
             newButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
@@ -1197,7 +1181,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                     if (propertyList.getList().size() >= propertyDefinitionList.getMax()) {
                         SC.say(MSG.view_configEdit_maxBoundsExceeded(String.valueOf(propertyDefinitionList.getMax())));
                     } else {
-                        final LocatableWindow popup = createPopup(MSG.view_configEdit_addItem(), 300, 145);
+                        final Window popup = createPopup(MSG.view_configEdit_addItem(), 300, 145);
 
                         VLayout vLayout = new VLayout();
                         vLayout.setMargin(10);
@@ -1226,7 +1210,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                         form.setItems(simpleField, spacer);
                         vLayout.addMember(form);
 
-                        final IButton okButton = new LocatableIButton(extendLocatorId("OK"), MSG.common_button_ok());
+                        final IButton okButton = new EnhancedIButton(MSG.common_button_ok());
                         okButton.disable();
                         okButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                             public void onClick(ClickEvent clickEvent) {
@@ -1256,21 +1240,20 @@ public class ConfigurationEditor extends LocatableVLayout {
                             }
                         });
 
-                        final IButton cancelButton = new LocatableIButton(extendLocatorId("Cancel"), MSG
-                            .common_button_cancel());
+                        final IButton cancelButton = new EnhancedIButton(MSG.common_button_cancel());
                         cancelButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                             public void onClick(ClickEvent clickEvent) {
                                 popup.destroy();
                             }
                         });
-                        
+
                         ToolStrip buttonBar = new ToolStrip();
                         buttonBar.setPadding(5);
                         buttonBar.setWidth100();
                         buttonBar.setMembersMargin(15);
                         buttonBar.setAlign(Alignment.CENTER);
                         buttonBar.setMembers(okButton, cancelButton);
-                        
+
                         vLayout.addMember(buttonBar);
 
                         popup.addItem(vLayout);
@@ -1645,6 +1628,8 @@ public class ConfigurationEditor extends LocatableVLayout {
         case DOUBLE:
             typeValidator = new IsFloatValidator();
             break;
+        default:
+            break;
         }
         if (typeValidator != null) {
             validators.add(typeValidator);
@@ -1703,13 +1688,13 @@ public class ConfigurationEditor extends LocatableVLayout {
             .deepCopy(true);
 
         final String title = (mapReadOnly) ? MSG.view_configEdit_viewRow() : MSG.view_configEdit_editRow();
-        final LocatableWindow popup = createPopup(title, 800, 600);
+        final Window popup = createPopup(title, 800, 600);
 
-        final LocatableVLayout layout = new LocatableVLayout(popup.extendLocatorId("Layout"));
+        final LocatableVLayout layout = new LocatableVLayout();
         layout.setHeight100();
         layout.setMargin(8);
 
-        final DynamicForm childForm = buildPropertiesForm(layout.extendLocatorId("Form"), memberDefinitions, workingMap);
+        final DynamicForm childForm = buildPropertiesForm(memberDefinitions, workingMap);
         childForm.setHeight100();
         layout.addMember(childForm);
 
@@ -1718,7 +1703,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         buttonBar.setWidth100();
         buttonBar.setMembersMargin(15);
         buttonBar.setAlign(Alignment.CENTER);
-                
+
         final IButton okButton = new IButton(MSG.common_button_ok());
         if (!mapReadOnly) {
             okButton.disable();
@@ -1785,8 +1770,8 @@ public class ConfigurationEditor extends LocatableVLayout {
         popup.show();
     }
 
-    private LocatableWindow createPopup(String title, int width, int height) {
-        final LocatableWindow popup = new LocatableWindow(extendLocatorId("MapEditor"));
+    private Window createPopup(String title, int width, int height) {
+        final Window popup = new Window();
         popup.setTitle(title);
         popup.setWidth(width);
         popup.setHeight(height);

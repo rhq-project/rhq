@@ -26,6 +26,6 @@ import org.rhq.core.domain.common.EntityContext;
 
 public class SubsystemResourceAlertView extends AlertHistoryView {
     public SubsystemResourceAlertView(String locatorId, boolean hasWriteAccess) {
-        super(locatorId, MSG.common_title_recent_alerts(), EntityContext.forSubsystemView(), hasWriteAccess);
+        super(MSG.common_title_recent_alerts(), EntityContext.forSubsystemView(), hasWriteAccess);
     }
 }

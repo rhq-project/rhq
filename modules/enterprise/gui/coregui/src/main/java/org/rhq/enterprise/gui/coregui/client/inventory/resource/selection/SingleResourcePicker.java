@@ -28,7 +28,7 @@ import java.util.Set;
 public class SingleResourcePicker extends ResourcePicker {
 
     public SingleResourcePicker(String locatorId, OkHandler okHandler, CancelHandler cancelHandler) {
-        super(locatorId, okHandler, cancelHandler);
+        super(okHandler, cancelHandler);
     }
 
     @Override
@@ -38,7 +38,7 @@ public class SingleResourcePicker extends ResourcePicker {
 
     @Override
     protected ResourceSelector createResourceSelector() {
-        return new SingleResourceSelector(extendLocatorId("singleResourceSelector"));
+        return new SingleResourceSelector();
     }
 
     protected void ok() {

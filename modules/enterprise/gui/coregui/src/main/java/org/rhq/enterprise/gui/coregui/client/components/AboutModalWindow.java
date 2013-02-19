@@ -23,6 +23,7 @@ import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.HTMLPane;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -30,10 +31,9 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * The "About RHQ" modal window.
@@ -41,7 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
  * @author Ian Springer
  * @author Joseph Marques
  */
-public class AboutModalWindow extends LocatableWindow {
+public class AboutModalWindow extends Window {
 
     private static final Messages MSG = CoreGUI.getMessages();
 
@@ -49,11 +49,9 @@ public class AboutModalWindow extends LocatableWindow {
      * <pre>
      * ID Format: "simpleClassname_locatorId"
      * </pre>
-     *
-     * @param locatorId not null or empty.
      */
-    public AboutModalWindow(String locatorId) {
-        super(locatorId);
+    public AboutModalWindow() {
+        super();
 
         setWidth(300);
         setHeight(300);
@@ -73,7 +71,7 @@ public class AboutModalWindow extends LocatableWindow {
 
         setTitle(MSG.view_aboutBox_title(productInfo.getFullName()));
 
-        LocatableVLayout contentPane = new LocatableVLayout(extendLocatorId("Content"));
+        LocatableVLayout contentPane = new LocatableVLayout();
         contentPane.setPadding(10);
 
         // TODO (ips, 09/06/11): Convert this raw HTML to SmartGWT widgets.
@@ -98,8 +96,7 @@ public class AboutModalWindow extends LocatableWindow {
         buttonBar.setHeight(30);
         buttonBar.setAlign(Alignment.RIGHT);
 
-        LocatableIButton closeButton = new LocatableIButton(buttonBar.extendLocatorId("Close"),
-                MSG.common_button_close());
+        EnhancedIButton closeButton = new EnhancedIButton(MSG.common_button_close());
         closeButton.setShowRollOver(true);
         closeButton.setShowDown(true);
         closeButton.setWidth(60);

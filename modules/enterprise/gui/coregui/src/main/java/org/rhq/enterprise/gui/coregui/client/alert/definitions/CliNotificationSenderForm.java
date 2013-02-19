@@ -64,7 +64,6 @@ import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormHandle
 import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormSubmitCompleteEvent;
 import org.rhq.enterprise.gui.coregui.client.components.upload.PackageVersionFileUploadForm;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * A form to configure the CLI script alert notification.
@@ -133,7 +132,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
          * @param packageTypeId
          */
         public PackageVersionFileUploadFormWithVersion(String locatorId, int packageTypeId) {
-            super(locatorId, packageTypeId, null, null, null, null, true, false, false);
+            super(packageTypeId, null, null, null, null, true, false, false);
             setName("File");
         }
 
@@ -198,8 +197,8 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
 
     private Config config;
 
-    public CliNotificationSenderForm(String locatorId, AlertNotification notif, String sender) {
-        super(locatorId, notif, sender);
+    public CliNotificationSenderForm(AlertNotification notif, String sender) {
+        super(notif, sender);
     }
 
     @Override
@@ -216,7 +215,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
                 public void onSuccess(PackageTypeAndVersionFormatComposite result) {
                     cliScriptPackageType = result;
 
-                    LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("form"));
+                    DynamicForm form = new DynamicForm();
                     form.setTitleOrientation(TitleOrientation.TOP);
                     form.setWidth(500);
 
@@ -288,7 +287,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
     private void setupUserSelector() {
         if (config.selectedSubject != null && !UserSessionManager.getSessionSubject().equals(config.selectedSubject)) {
             userSelector.setSelected(MSG.view_alert_definition_notification_cliScript_editor_anotherUser());
-            LocatableDynamicForm anotherUserForm = (LocatableDynamicForm) userSelector.getSelectedComponent();
+            DynamicForm anotherUserForm = (DynamicForm) userSelector.getSelectedComponent();
             anotherUserForm.getItem("userName").setValue(config.selectedSubject.getName());
         } else {
             userSelector.setSelected(MSG.view_alert_definition_notification_cliScript_editor_thisUser());
@@ -429,7 +428,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
                 String versionRegex = cliScriptPackageType.getVersionFormat().getFullFormatRegex();
                 if (versionRegex != null) {
                     Object version = uploadForm.getField("version").getValue();
-                    if (version == null ||!matches(version.toString(), versionRegex)) {
+                    if (version == null || !matches(version.toString(), versionRegex)) {
                         uploadForm.getItem("editableVersion").setIcons(failureIcon);
                         callback.onFailure(null);
                         return;
@@ -537,7 +536,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
     }
 
     private DynamicForm createAnotherUserForm() {
-        LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("anotherUserForm"));
+        DynamicForm form = new DynamicForm();
         form.setTitleOrientation(TitleOrientation.TOP);
         anotherUserName = new TextItem("userName", MSG.dataSource_users_field_name());
         anotherUserPassword = new PasswordItem("password", MSG.common_title_password());
@@ -572,7 +571,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
     }
 
     private DynamicForm createExistingPackageForm() {
-        LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("existingPackageForm"));
+        DynamicForm form = new DynamicForm();
         form.setTitleOrientation(TitleOrientation.TOP);
         existingPackageSelector = new SortedSelectItem(extendLocatorId("existingPackageSelector"), "");
         existingPackageSelector.setDefaultToFirstOption(true);

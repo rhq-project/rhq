@@ -40,7 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGro
 public class ResourceGroupTreeContextMenu extends ResourceGroupContextMenu {
 
     public ResourceGroupTreeContextMenu(String locatorId) {
-        super(locatorId);
+        super();
     }
 
     public void showContextMenu(final TreeGrid treeGrid, final ResourceGroupEnhancedTreeNode node) {

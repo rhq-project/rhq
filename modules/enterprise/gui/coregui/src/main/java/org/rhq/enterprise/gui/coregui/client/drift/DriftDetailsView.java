@@ -27,6 +27,7 @@ import java.util.LinkedHashMap;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
@@ -48,9 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellForma
 import org.rhq.enterprise.gui.coregui.client.drift.util.DiffUtility;
 import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author Jay Shaughnessy
@@ -95,7 +94,7 @@ public class DriftDetailsView extends LocatableVLayout {
 
         addMember(createChangeSetForm(driftDetails.getDrift()));
 
-        DynamicForm driftForm = new LocatableDynamicForm(extendLocatorId("form"));
+        DynamicForm driftForm = new DynamicForm();
         driftForm.setIsGroup(true);
         driftForm.setGroupTitle(MSG.view_tabs_common_drift());
         driftForm.setWrapItemTitles(false);
@@ -199,7 +198,7 @@ public class DriftDetailsView extends LocatableVLayout {
     }
 
     private DynamicForm createChangeSetForm(Drift<?, ?> drift) {
-        DynamicForm changeSetForm = new LocatableDynamicForm(extendLocatorId("changeSetForm"));
+        DynamicForm changeSetForm = new DynamicForm();
         changeSetForm.setIsGroup(true);
         changeSetForm.setGroupTitle(MSG.view_drift_table_snapshot());
         changeSetForm.setWrapItemTitles(false);
@@ -252,7 +251,7 @@ public class DriftDetailsView extends LocatableVLayout {
 
                     @Override
                     public void onSuccess(String contents) {
-                        LocatableWindow fileViewer = createFileViewer(contents, path, version);
+                        Window fileViewer = createFileViewer(contents, path, version);
                         fileViewer.show();
                     }
                 });
@@ -262,7 +261,7 @@ public class DriftDetailsView extends LocatableVLayout {
         return link;
     }
 
-    private LocatableWindow createFileViewer(String contents, String path, int version) {
+    private Window createFileViewer(String contents, String path, int version) {
         VLayout layout = new VLayout();
         DynamicForm form = new DynamicForm();
         form.setWidth100();
@@ -278,7 +277,7 @@ public class DriftDetailsView extends LocatableVLayout {
         form.setItems(textArea);
         layout.addMember(form);
 
-        PopupWindow window = new PopupWindow("fileViewer", layout);
+        PopupWindow window = new PopupWindow(layout);
         window.setIsModal(false);
         window.setTitle(path + ":" + version);
 
@@ -300,8 +299,8 @@ public class DriftDetailsView extends LocatableVLayout {
                     public void onSuccess(FileDiffReport diffReport) {
                         int newVersion = drift.getChangeSet().getVersion();
                         String diffContents = DiffUtility.formatAsHtml(diffReport.getDiff(), oldVersion, newVersion);
-                        LocatableWindow window = DiffUtility.createDiffViewerWindow(diffContents, drift.getPath(),
-                            oldVersion, newVersion);
+                        Window window = DiffUtility.createDiffViewerWindow(diffContents, drift.getPath(), oldVersion,
+                            newVersion);
                         window.show();
                     }
                 });

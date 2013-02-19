@@ -43,8 +43,8 @@ public class SimpleNotificationSenderForm extends AbstractNotificationSenderForm
 
     private ConfigurationEditor configEditor;
 
-    public SimpleNotificationSenderForm(String locatorId, AlertNotification notif, String sender) {
-        super(locatorId, notif, sender);
+    public SimpleNotificationSenderForm(AlertNotification notif, String sender) {
+        super(notif, sender);
     }
 
     @Override
@@ -55,8 +55,7 @@ public class SimpleNotificationSenderForm extends AbstractNotificationSenderForm
             new AsyncCallback<ConfigurationDefinition>() {
                 @Override
                 public void onSuccess(ConfigurationDefinition configDef) {
-                    configEditor = new ConfigurationEditor(extendLocatorId("configEditor"), configDef,
-                        getConfiguration());
+                    configEditor = new ConfigurationEditor(configDef, getConfiguration());
                     configEditor.setHeight(400);
                     configEditor.setWidth(600);
                     addMember(configEditor);

@@ -31,6 +31,7 @@ import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
@@ -62,7 +63,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**This portlet allows the end user to customize the metric display
  *
@@ -77,21 +77,21 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
 
     private int resourceId = -1;
 
-    public ResourceMetricsPortlet(String locatorId, int resourceId) {
-        super(locatorId, EntityContext.forResource(-1));
+    public ResourceMetricsPortlet(int resourceId) {
+        super(EntityContext.forResource(-1));
         this.resourceId = resourceId;
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
             if (EntityContext.Type.Resource != context.getType()) {
                 throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
             }
 
-            return new ResourceMetricsPortlet(locatorId, context.getResourceId());
+            return new ResourceMetricsPortlet(context.getResourceId());
         }
     }
 
@@ -193,7 +193,7 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                         definitionArrayIds[index++] = measurementDefMap.get(definitionToDisplay)
                                             .getId();
                                     }
-                                    
+
                                     AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>> callback = new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                                         @Override
                                         public void onFailure(Throwable caught) {
@@ -203,8 +203,7 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                         }
 
                                         @Override
-                                        public void onSuccess(
-                                            List<List<MeasurementDataNumericHighLowComposite>> results) {
+                                        public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> results) {
                                             if (!results.isEmpty()) {
                                                 boolean someChartedData = false;
                                                 //iterate over the retrieved charting data
@@ -239,10 +238,9 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                             commaDelimitedList += d.getValue() + ",";
                                                         }
                                                     }
-                                                    LocatableDynamicForm row = new LocatableDynamicForm(
-                                                        recentMeasurementsContent.extendLocatorId(md.getName()));
+                                                    DynamicForm row = new DynamicForm();
                                                     row.setNumCols(3);
-                                                    row.setColWidths(65,"*",100);
+                                                    row.setColWidths(65, "*", 100);
                                                     row.setWidth100();
                                                     row.setAutoHeight();
                                                     row.setOverflow(Overflow.VISIBLE);
@@ -267,8 +265,8 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                         + resourceId + "&m=" + md.getId();
 
                                                     //have link launch modal window on click
-                                                    LinkItem link = AbstractActivityView.newLinkItem(title,
-                                                        destination);
+                                                    LinkItem link = AbstractActivityView
+                                                        .newLinkItem(title, destination);
                                                     link.setTooltip(title);
                                                     link.setTitleVAlign(VerticalAlignment.TOP);
                                                     link.setAlign(Alignment.LEFT);
@@ -279,13 +277,11 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                     link.addClickHandler(new ClickHandler() {
                                                         @Override
                                                         public void onClick(ClickEvent event) {
-                                                            ChartViewWindow window = new ChartViewWindow(
-                                                                recentMeasurementsContent
-                                                                    .extendLocatorId("ChartWindow"), title);
+                                                            ChartViewWindow window = new ChartViewWindow(title);
                                                             //generate and include iframed content
                                                             FullHTMLPane iframe = new FullHTMLPane(
-                                                                recentMeasurementsContent.extendLocatorId("View"),
-                                                                destination);
+
+                                                            destination);
                                                             window.addItem(iframe);
                                                             window.show();
                                                         }
@@ -293,8 +289,8 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
 
                                                     //Value
                                                     String convertedValue;
-                                                    convertedValue = AbstractActivityView
-                                                        .convertLastValueForDisplay(lastValue, md);
+                                                    convertedValue = AbstractActivityView.convertLastValueForDisplay(
+                                                        lastValue, md);
                                                     StaticTextItem value = AbstractActivityView
                                                         .newTextItem(convertedValue);
                                                     value.setVAlign(VerticalAlignment.TOP);
@@ -311,16 +307,13 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                     }
                                                 }
                                                 if (!someChartedData) {// when there are results but no chartable entries.
-                                                    LocatableDynamicForm row = AbstractActivityView
-                                                        .createEmptyDisplayRow(
-                                                            recentMeasurementsContent.extendLocatorId("None"),
-                                                            AbstractActivityView.RECENT_MEASUREMENTS_NONE);
+                                                    DynamicForm row = AbstractActivityView.createEmptyDisplayRow(
+
+                                                    AbstractActivityView.RECENT_MEASUREMENTS_NONE);
                                                     column.addMember(row);
                                                 } else {
                                                     //insert see more link
-                                                    LocatableDynamicForm row = new LocatableDynamicForm(
-                                                        recentMeasurementsContent
-                                                            .extendLocatorId("RecentMeasurementsContentSeeMore"));
+                                                    DynamicForm row = new DynamicForm();
                                                     String link = LinkManager
                                                         .getResourceMonitoringGraphsLink(resourceId);
                                                     AbstractActivityView.addSeeMoreLink(row, link, column);
@@ -328,10 +321,8 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                 //call out to 3rd party javascript lib
                                                 BrowserUtility.graphSparkLines();
                                             } else {
-                                                LocatableDynamicForm row = AbstractActivityView
-                                                    .createEmptyDisplayRow(
-                                                        recentMeasurementsContent.extendLocatorId("None"),
-                                                        AbstractActivityView.RECENT_MEASUREMENTS_NONE);
+                                                DynamicForm row = AbstractActivityView
+                                                    .createEmptyDisplayRow(AbstractActivityView.RECENT_MEASUREMENTS_NONE);
                                                 column.addMember(row);
                                             }
                                             setRefreshing(false);
@@ -340,14 +331,15 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
 
                                     //make the asynchronous call for all the measurement data
                                     if (end != -1 && start != -1) {
-                                        GWTServiceLookup.getMeasurementDataService().findDataForResource(
-                                            resourceId, definitionArrayIds, start, end, 60, callback);
+                                        GWTServiceLookup.getMeasurementDataService().findDataForResource(resourceId,
+                                            definitionArrayIds, start, end, 60, callback);
                                     } else if (lastN != -1 && units != -1) {
                                         GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(
                                             resourceId, definitionArrayIds, lastN, units, 60, callback);
                                     } else {
                                         GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(
-                                            resourceId, definitionArrayIds, 8, MeasurementUtility.UNIT_HOURS, 60, callback);
+                                            resourceId, definitionArrayIds, 8, MeasurementUtility.UNIT_HOURS, 60,
+                                            callback);
                                     }
                                 }
                             });

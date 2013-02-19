@@ -76,7 +76,7 @@ public class GeneralProperties extends LocatableVLayout {
         spacer.setHeight(10);
         addMember(spacer);
 
-        final EnhancedDynamicForm generalPropsForm = new EnhancedDynamicForm(this.extendLocatorId("General"));
+        final EnhancedDynamicForm generalPropsForm = new EnhancedDynamicForm();
 
         List<FormItem> formItems = new ArrayList<FormItem>();
 

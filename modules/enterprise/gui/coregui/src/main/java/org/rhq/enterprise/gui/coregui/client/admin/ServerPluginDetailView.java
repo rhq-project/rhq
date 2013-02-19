@@ -32,6 +32,7 @@ import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.SectionStack;
@@ -53,8 +54,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.PluginGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -192,14 +192,12 @@ public class ServerPluginDetailView extends LocatableVLayout {
                     buttons.setMembersMargin(5);
                     buttons.setLayoutMargin(5);
 
-                    final IButton saveButtonPC = new LocatableIButton(extendLocatorId("pcSave"), MSG
-                        .common_button_save());
+                    final IButton saveButtonPC = new EnhancedIButton(MSG.common_button_save());
 
-                    final IButton resetButtonPC = new LocatableIButton(extendLocatorId("pcRest"), MSG
-                        .common_button_reset());
+                    final IButton resetButtonPC = new EnhancedIButton(MSG.common_button_reset());
 
                     Configuration config = plugin.getPluginConfiguration();
-                    final ConfigurationEditor editorPC = new ConfigurationEditor(extendLocatorId("pcEdit"), def, config);
+                    final ConfigurationEditor editorPC = new ConfigurationEditor(def, config);
                     editorPC.setOverflow(Overflow.AUTO);
                     editorPC.addPropertyValueChangeListener(new PropertyValueChangeListener() {
                         public void propertyValueChanged(PropertyValueChangeEvent event) {
@@ -280,16 +278,14 @@ public class ServerPluginDetailView extends LocatableVLayout {
                     buttons.setMembersMargin(5);
                     buttons.setLayoutMargin(5);
 
-                    final IButton saveButtonSJ = new LocatableIButton(extendLocatorId("sjSave"), MSG
-                        .common_button_save());
+                    final IButton saveButtonSJ = new EnhancedIButton(MSG.common_button_save());
                     buttons.addMember(saveButtonSJ);
 
-                    final IButton resetButtonSJ = new LocatableIButton(extendLocatorId("sjRest"), MSG
-                        .common_button_reset());
+                    final IButton resetButtonSJ = new EnhancedIButton(MSG.common_button_reset());
                     buttons.addMember(resetButtonSJ);
 
                     Configuration config = plugin.getScheduledJobsConfiguration();
-                    final ConfigurationEditor editorSJ = new ConfigurationEditor(extendLocatorId("sjEdit"), def, config);
+                    final ConfigurationEditor editorSJ = new ConfigurationEditor(def, config);
                     editorSJ.setOverflow(Overflow.AUTO);
                     editorSJ.addPropertyValueChangeListener(new PropertyValueChangeListener() {
                         public void propertyValueChanged(PropertyValueChangeEvent event) {
@@ -369,7 +365,7 @@ public class ServerPluginDetailView extends LocatableVLayout {
     }
 
     private void prepareDetailsSection(SectionStack stack, ServerPlugin plugin) {
-        LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("detailsForm"));
+        DynamicForm form = new DynamicForm();
         form.setMargin(10);
         form.setWidth100();
         form.setWrapItemTitles(false);

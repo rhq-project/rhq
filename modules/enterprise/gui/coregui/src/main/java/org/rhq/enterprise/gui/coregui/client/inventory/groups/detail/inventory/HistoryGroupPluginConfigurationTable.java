@@ -121,7 +121,7 @@ public class HistoryGroupPluginConfigurationTable extends Table<HistoryGroupPlug
         ListGrid listGrid = getListGrid();
         listGrid.setFields(fieldId, fieldDateCreated, fieldLastUpdated, fieldStatus, fieldUser);
 
-        addTableAction(extendLocatorId("deleteAction"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
+        addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(),
             new AbstractTableAction(this.groupPerms.isInventory() ? TableActionEnablement.ANY
                 : TableActionEnablement.NEVER) {
 

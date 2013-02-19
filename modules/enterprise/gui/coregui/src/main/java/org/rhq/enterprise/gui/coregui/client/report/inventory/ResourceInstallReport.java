@@ -90,7 +90,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
 
     private void showResourceList(Criteria criteria) {
         hideResourceList();
-        resourceList = new ResourceSearchView(extendLocatorId("resourceList"), criteria, true);
+        resourceList = new ResourceSearchView(criteria, true);
         addMember(resourceList);
         markForRedraw();
     }

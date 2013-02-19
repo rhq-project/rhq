@@ -31,6 +31,7 @@ import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HeaderControl;
 import com.smartgwt.client.widgets.HeaderControl.HeaderIcon;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
@@ -49,14 +50,12 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHeaderControl;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author Greg Hinkle
  * @author Jay Shaughnessy
  */
-public class PortletWindow extends LocatableWindow {
+public class PortletWindow extends Window {
 
     private static final String RSS = "Rss";
 
@@ -125,7 +124,7 @@ public class PortletWindow extends LocatableWindow {
 
     public PortletWindow(String locatorId, DashboardView dashboardView, DashboardPortlet dashboardPortlet,
         EntityContext context) {
-        super(locatorId);
+        super();
 
         this.dashboardView = dashboardView;
         this.storedPortlet = dashboardPortlet;
@@ -138,7 +137,7 @@ public class PortletWindow extends LocatableWindow {
         //            setShowEdges(false);
 
         //configure HeaderControls with toolTips
-        LocatableHeaderControl RssHeader = new LocatableHeaderControl(extendLocatorId(RSS), new HeaderIcon(
+        HeaderControl RssHeader = new HeaderControl(new HeaderIcon(
             "[SKIN]/headerIcons/clipboard.png"), rssHandler);
         RssHeader.setTooltip(RSS);
 
@@ -257,14 +256,14 @@ public class PortletWindow extends LocatableWindow {
         super.onInit();
 
         // each portletWindow wraps a single portlet view, so just extend the window's locatorId with a static id
-        view = PortletFactory.buildPortlet(extendLocatorId("View"), this, storedPortlet, context);
+        view = PortletFactory.buildPortlet(this, storedPortlet, context);
 
         Canvas canvas = (Canvas) view;
         addItem(canvas);
 
         settingsHandlerDelegate = new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                new PortletSettingsWindow(extendLocatorId("Settings"), PortletWindow.this, storedPortlet, view).show();
+                new PortletSettingsWindow(PortletWindow.this, storedPortlet, view).show();
             }
         };
 

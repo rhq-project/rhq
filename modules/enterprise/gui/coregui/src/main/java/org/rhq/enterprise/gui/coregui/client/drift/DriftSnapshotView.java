@@ -202,7 +202,7 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
         TableActionEnablement pinEnablement = hasWriteAccess ? TableActionEnablement.ALWAYS
             : TableActionEnablement.NEVER;
 
-        addTableAction("PinToDef", MSG.view_drift_button_pinToDef(), MSG.view_drift_button_pinToDef_confirm(),
+        addTableAction(MSG.view_drift_button_pinToDef(), MSG.view_drift_button_pinToDef_confirm(),
             new AbstractTableAction(pinEnablement) {
 
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
@@ -215,8 +215,8 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
                 }
             });
 
-        addTableAction("PinToTemplate", MSG.view_drift_button_pinToTemplate(),
-            MSG.view_drift_button_pinToTemplate_confirm(), new AbstractTableAction(pinEnablement) {
+        addTableAction(MSG.view_drift_button_pinToTemplate(), MSG.view_drift_button_pinToTemplate_confirm(),
+            new AbstractTableAction(pinEnablement) {
 
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     pinToTemplate();
@@ -270,7 +270,7 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
         private DirectoryViewDataSource dataSource;
 
         public DirectoryView(String locatorId, String directory) {
-            super(locatorId, null, true);
+            super(null, true);
 
             this.directory = directory;
 

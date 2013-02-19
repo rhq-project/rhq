@@ -85,20 +85,19 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
     private MeasurementDefinition definition;
     private List<MeasurementDataNumericHighLowComposite> data;
 
-    public AbstractMetricGraphView(String locatorId) {
-        super(locatorId);
+    public AbstractMetricGraphView() {
+        super();
     }
 
-    public AbstractMetricGraphView(String locatorId, int entityId, int definitionId) {
-        this(locatorId);
-
+    public AbstractMetricGraphView(int entityId, int definitionId) {
         this.entityId = entityId;
         this.definitionId = definitionId;
+
+        // Should this not also set H+W=100?
     }
 
-    public AbstractMetricGraphView(String locatorId, int entityId, MeasurementDefinition def,
+    public AbstractMetricGraphView(int entityId, MeasurementDefinition def,
         List<MeasurementDataNumericHighLowComposite> data) {
-        this(locatorId);
 
         this.entityId = entityId;
         this.definition = def;
@@ -107,7 +106,7 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
         setWidth100();
     }
 
-    public abstract AbstractMetricGraphView getInstance(String locatorId, int entityId, MeasurementDefinition def,
+    public abstract AbstractMetricGraphView getInstance(int entityId, MeasurementDefinition def,
         List<MeasurementDataNumericHighLowComposite> data);
 
     protected abstract void renderGraph();
@@ -194,7 +193,7 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
             title.setWidth100();
             title.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
-                    displayAsDialog(extendLocatorId("Dialog"));
+                    displayAsDialog();
                 }
             });
             addMember(title);
@@ -325,21 +324,20 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
 
         int xTicks = getDefaultWidth() / 140;
 
-        plotOptions.addXAxisOptions(new AxisOptions().setTicks(xTicks)
-            .setTickFormatter(new TickFormatter() {
-                public String formatTickValue(double tickValue, Axis axis) {
-                    com.google.gwt.i18n.client.DateTimeFormat dateFormat = DateTimeFormat
-                        .getFormat(PredefinedFormat.DATE_TIME_SHORT);
-                    return dateFormat.format(new Date((long) tickValue));
-                    //                return String.valueOf(new Date((long) tickValue));
-                    //                return MONTH_NAMES[(int) (tickValue - 1)];
-                }
-            }));
+        plotOptions.addXAxisOptions(new AxisOptions().setTicks(xTicks).setTickFormatter(new TickFormatter() {
+            public String formatTickValue(double tickValue, Axis axis) {
+                com.google.gwt.i18n.client.DateTimeFormat dateFormat = DateTimeFormat
+                    .getFormat(PredefinedFormat.DATE_TIME_SHORT);
+                return dateFormat.format(new Date((long) tickValue));
+                //                return String.valueOf(new Date((long) tickValue));
+                //                return MONTH_NAMES[(int) (tickValue - 1)];
+            }
+        }));
 
     }
 
-    private void displayAsDialog(String locatorId) {
-        AbstractMetricGraphView graph = getInstance(locatorId, entityId, definition, data);
+    private void displayAsDialog() {
+        AbstractMetricGraphView graph = getInstance(entityId, definition, data);
         Window graphPopup = new Window();
         graphPopup.setTitle(MSG.view_resource_monitor_detailed_graph_label());
         graphPopup.setWidth(800);

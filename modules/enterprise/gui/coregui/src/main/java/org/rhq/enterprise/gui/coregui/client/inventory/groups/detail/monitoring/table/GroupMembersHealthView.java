@@ -82,10 +82,9 @@ public class GroupMembersHealthView extends MembersView {
                 for (int rId : resourceIds) {
                     destination += "&r=" + rId;
                 }
-                ChartViewWindow window = new ChartViewWindow(extendLocatorId("CompareWindow"), "", MSG
-                    .common_title_compare_metrics());
+                ChartViewWindow window = new ChartViewWindow("", MSG.common_title_compare_metrics());
                 //generate and include iframed content
-                FullHTMLPane iframe = new FullHTMLPane(extendLocatorId("View"), destination);
+                FullHTMLPane iframe = new FullHTMLPane(destination);
                 window.addItem(iframe);
                 window.show();
                 GroupMembersHealthView.this.refreshTableInfo();

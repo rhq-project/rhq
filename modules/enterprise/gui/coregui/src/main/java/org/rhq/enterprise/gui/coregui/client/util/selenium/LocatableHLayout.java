@@ -19,7 +19,10 @@ public class LocatableHLayout extends HLayout implements Locatable {
      */
     public LocatableHLayout(String locatorId) {
         super();
-        init(locatorId);
+    }
+
+    public LocatableHLayout() {
+        super();
     }
 
     /** 
@@ -29,15 +32,10 @@ public class LocatableHLayout extends HLayout implements Locatable {
      * @param locatorId not null or empty.
      * @param membersMargin
      */
-    public LocatableHLayout(String locatorId, int membersMargin) {
+    public LocatableHLayout(int membersMargin) {
         super(membersMargin);
-        init(locatorId);
     }
 
-    private void init(String locatorId) {
-        this.locatorId = locatorId;
-        SeleniumUtility.setID(this, locatorId);
-    }
 
     public String getLocatorId() {
         return locatorId;

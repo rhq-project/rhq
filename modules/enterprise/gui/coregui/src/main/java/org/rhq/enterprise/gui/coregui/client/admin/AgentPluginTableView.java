@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -36,6 +40,7 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.plugin.Plugin;
@@ -54,18 +59,15 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
 
 /**
  * @author John Mazzitelli
  */
 public class AgentPluginTableView extends TableSection<AgentPluginDataSource> {
 
-    public static final ViewName VIEW_ID = new ViewName("AgentPlugins", MSG.view_adminConfig_agentPlugins(), IconEnum.PLUGIN);
+    public static final ViewName VIEW_ID = new ViewName("AgentPlugins", MSG.view_adminConfig_agentPlugins(),
+        IconEnum.PLUGIN);
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_CONFIGURATION_VIEW_ID + "/" + VIEW_ID;
 
@@ -80,7 +82,7 @@ public class AgentPluginTableView extends TableSection<AgentPluginDataSource> {
     private boolean showDeleted = false;
 
     public AgentPluginTableView(String locatorId) {
-        super(locatorId, null);
+        super(null);
         setHeight100();
         setWidth100();
         setDataSource(new AgentPluginDataSource());
@@ -93,30 +95,31 @@ public class AgentPluginTableView extends TableSection<AgentPluginDataSource> {
         listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
         listGrid.sort(FIELD_NAME, SortDirection.ASCENDING);
 
-        addTableAction(extendLocatorId("enable"), MSG.common_button_enable(), MSG.common_msg_areYouSure(),
-            new AuthorizedTableAction(this, TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
-                public void executeAction(ListGridRecord[] selections, Object actionValue) {
-                    int[] selectedIds = getSelectedIds(selections);
-                    GWTServiceLookup.getPluginService().enableAgentPlugins(selectedIds,
-                        new AsyncCallback<ArrayList<String>>() {
-                            @Override
-                            public void onSuccess(ArrayList<String> result) {
-                                Message msg = new Message(
-                                    MSG.view_admin_plugins_enabledAgentPlugins(result.toString()), Severity.Info);
-                                CoreGUI.getMessageCenter().notify(msg);
-                                refresh();
-                            }
+        addTableAction(MSG.common_button_enable(), MSG.common_msg_areYouSure(), new AuthorizedTableAction(this,
+            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
+            public void executeAction(ListGridRecord[] selections, Object actionValue) {
+                int[] selectedIds = getSelectedIds(selections);
+                GWTServiceLookup.getPluginService().enableAgentPlugins(selectedIds,
+                    new AsyncCallback<ArrayList<String>>() {
+                        @Override
+                        public void onSuccess(ArrayList<String> result) {
+                            Message msg = new Message(MSG.view_admin_plugins_enabledAgentPlugins(result.toString()),
+                                Severity.Info);
+                            CoreGUI.getMessageCenter().notify(msg);
+                            refresh();
+                        }
 
-                            @Override
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(
+                        @Override
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler()
+                                .handleError(
                                     MSG.view_admin_plugins_enabledAgentPluginsFailure() + " " + caught.getMessage(),
                                     caught);
-                                refreshTableInfo();
-                            }
-                        });
-                }
-            });
+                            refreshTableInfo();
+                        }
+                    });
+            }
+        });
 
         addTableAction(extendLocatorId("disable"), MSG.common_button_disable(), new AuthorizedTableAction(this,
             TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
@@ -188,41 +191,39 @@ public class AgentPluginTableView extends TableSection<AgentPluginDataSource> {
             }
         });
 
-        addTableAction(extendLocatorId("purge"), MSG.common_button_purge(), MSG.common_msg_areYouSure(),
-            new AuthorizedTableAction(this, TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    if (showDeleted) {
-                        return super.isEnabled(selection);
-                    } else {
-                        return false; // we aren't showing deleted plugins, so there is no plugin shown that can be purged anyway
-                    }
+        addTableAction(MSG.common_button_purge(), MSG.common_msg_areYouSure(), new AuthorizedTableAction(this,
+            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                if (showDeleted) {
+                    return super.isEnabled(selection);
+                } else {
+                    return false; // we aren't showing deleted plugins, so there is no plugin shown that can be purged anyway
                 }
+            }
 
-                public void executeAction(ListGridRecord[] selections, Object actionValue) {
-                    int[] selectedIds = getSelectedIds(selections);
-                    GWTServiceLookup.getPluginService().purgeAgentPlugins(selectedIds,
-                        new AsyncCallback<ArrayList<String>>() {
-                            @Override
-                            public void onSuccess(ArrayList<String> result) {
-                                Message msg = new Message(MSG.view_admin_plugins_purgedAgentPlugins(result.toString()),
-                                    Severity.Info);
-                                CoreGUI.getMessageCenter().notify(msg);
-                                refresh();
-                            }
+            public void executeAction(ListGridRecord[] selections, Object actionValue) {
+                int[] selectedIds = getSelectedIds(selections);
+                GWTServiceLookup.getPluginService().purgeAgentPlugins(selectedIds,
+                    new AsyncCallback<ArrayList<String>>() {
+                        @Override
+                        public void onSuccess(ArrayList<String> result) {
+                            Message msg = new Message(MSG.view_admin_plugins_purgedAgentPlugins(result.toString()),
+                                Severity.Info);
+                            CoreGUI.getMessageCenter().notify(msg);
+                            refresh();
+                        }
 
-                            @Override
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(
-                                    MSG.view_admin_plugins_purgedAgentPluginsFailure() + " " + caught.getMessage(),
-                                    caught);
-                                refreshTableInfo();
-                            }
-                        });
-                }
-            });
+                        @Override
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError(
+                                MSG.view_admin_plugins_purgedAgentPluginsFailure() + " " + caught.getMessage(), caught);
+                            refreshTableInfo();
+                        }
+                    });
+            }
+        });
 
-        IButton scanForUpdatesButton = new LocatableIButton(extendLocatorId("scanButton"),
-            MSG.view_admin_plugins_scan());
+        IButton scanForUpdatesButton = new EnhancedIButton(MSG.view_admin_plugins_scan());
         scanForUpdatesButton.setAutoFit(true);
         scanForUpdatesButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
@@ -244,8 +245,7 @@ public class AgentPluginTableView extends TableSection<AgentPluginDataSource> {
             }
         });
 
-        final IButton showDeletedButton = new LocatableIButton(extendLocatorId("showDeletedButton"),
-            MSG.view_admin_plugins_showDeleted());
+        final IButton showDeletedButton = new EnhancedIButton(MSG.view_admin_plugins_showDeleted());
         showDeletedButton.setAutoFit(true);
         showDeletedButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
@@ -261,8 +261,7 @@ public class AgentPluginTableView extends TableSection<AgentPluginDataSource> {
             }
         });
 
-        PluginFileUploadForm pluginUploadForm = new PluginFileUploadForm(extendLocatorId("upload"),
-            MSG.view_admin_plugins_upload(), true);
+        PluginFileUploadForm pluginUploadForm = new PluginFileUploadForm(MSG.view_admin_plugins_upload(), true);
 
         addExtraWidget(scanForUpdatesButton, true);
         addExtraWidget(showDeletedButton, true);

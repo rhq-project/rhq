@@ -33,6 +33,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
@@ -45,7 +46,6 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
@@ -157,7 +157,7 @@ public class AgentDetailView extends LocatableVLayout {
     }
 
     private void prepareDetailsSection(SectionStack stack, Agent agent) {
-        final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("detailsForm"));
+        final DynamicForm form = new DynamicForm();
         form.setMargin(10);
         form.setWidth100();
         form.setWrapItemTitles(false);
@@ -168,8 +168,9 @@ public class AgentDetailView extends LocatableVLayout {
 
         StaticTextItem addressItem = new StaticTextItem(FIELD_ADDRESS.propertyName(), FIELD_ADDRESS.title());
         addressItem.setValue(agent.getAddress());
-        
-        StaticTextItem remoteEndpointItem = new StaticTextItem(FIELD_REMOTE_ENDPOINT.propertyName(), FIELD_REMOTE_ENDPOINT.title());
+
+        StaticTextItem remoteEndpointItem = new StaticTextItem(FIELD_REMOTE_ENDPOINT.propertyName(),
+            FIELD_REMOTE_ENDPOINT.title());
         remoteEndpointItem.setValue(agent.getRemoteEndpoint());
 
         StaticTextItem portItem = new StaticTextItem(FIELD_PORT.propertyName(), FIELD_PORT.title());
@@ -183,7 +184,7 @@ public class AgentDetailView extends LocatableVLayout {
         String lastReport = agent.getLastAvailabilityReport() == null ? "unknown" : TimestampCellFormatter.format(
             Long.valueOf(agent.getLastAvailabilityReport()), TimestampCellFormatter.DATE_TIME_FORMAT_LONG);
         lastAvailabilityReportItem.setValue(lastReport);
-        
+
         StaticTextItem lastAvailabilityPingItem = new StaticTextItem(FIELD_LAST_AVAILABILITY_PING.propertyName(),
             FIELD_LAST_AVAILABILITY_PING.title());
         String lastPing = agent.getLastAvailabilityPing() == null ? "unknown" : TimestampCellFormatter.format(

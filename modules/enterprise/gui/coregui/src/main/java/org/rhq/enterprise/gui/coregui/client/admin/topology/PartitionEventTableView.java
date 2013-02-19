@@ -85,7 +85,7 @@ public class PartitionEventTableView extends TableSection<PartitionEventDatasour
     }
 
     public PartitionEventTableView(String locatorId, String tableTitle) {
-        super(locatorId, tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
+        super(tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
         setHeight100();
         setWidth100();
         setInitialCriteriaFixed(false);

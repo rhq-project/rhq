@@ -99,7 +99,7 @@ public class DriftDefinitionsView extends TableSection<DriftDefinitionDataSource
     }
 
     protected DriftDefinitionsView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess) {
-        super(locatorId, tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
+        super(tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
         this.context = context;
         this.hasWriteAccess = hasWriteAccess;
 
@@ -145,25 +145,24 @@ public class DriftDefinitionsView extends TableSection<DriftDefinitionDataSource
             }
         });
 
-        addTableAction("Delete", MSG.common_button_delete(), MSG.view_drift_confirm_deleteDefs(),
-            new AbstractTableAction(deleteEnablement) {
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    delete(selection);
-                }
-            });
+        addTableAction(MSG.common_button_delete(), MSG.view_drift_confirm_deleteDefs(), new AbstractTableAction(
+            deleteEnablement) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                delete(selection);
+            }
+        });
 
-        addTableAction("DeleteAll", MSG.common_button_delete_all(), MSG.view_drift_confirm_deleteAllDefs(),
-            new TableAction() {
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    ListGrid grid = getListGrid();
-                    ResultSet resultSet = (null != grid) ? grid.getResultSet() : null;
-                    return (hasWriteAccess && grid != null && resultSet != null && !resultSet.isEmpty());
-                }
+        addTableAction(MSG.common_button_delete_all(), MSG.view_drift_confirm_deleteAllDefs(), new TableAction() {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                ListGrid grid = getListGrid();
+                ResultSet resultSet = (null != grid) ? grid.getResultSet() : null;
+                return (hasWriteAccess && grid != null && resultSet != null && !resultSet.isEmpty());
+            }
 
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    deleteAll();
-                }
-            });
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                deleteAll();
+            }
+        });
 
         addTableAction("DetectNow", MSG.view_drift_button_detectNow(), null, new AbstractTableAction(
             detectNowEnablement) {

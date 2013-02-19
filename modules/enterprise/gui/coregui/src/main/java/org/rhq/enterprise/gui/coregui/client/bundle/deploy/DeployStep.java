@@ -35,7 +35,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -57,13 +56,9 @@ public class DeployStep extends AbstractWizardStep {
         return MSG.view_bundle_deployWizard_deployStep();
     }
 
-    public Canvas getCanvas(Locatable parent) {
+    public Canvas getCanvas() {
         if (canvas == null) {
-            if (parent != null) {
-                canvas = new LocatableVLayout(parent.extendLocatorId("BundleDeployDeploy"));
-            } else {
-                canvas = new LocatableVLayout("BundleDeployDeploy");
-            }
+            canvas = new LocatableVLayout();
             canvas.setWidth100();
             canvas.setHeight100();
             canvas.setAlign(Alignment.CENTER);
@@ -87,12 +82,12 @@ public class DeployStep extends AbstractWizardStep {
                         deployingMessage.setText(MSG.view_bundle_deployWizard_deploymentCreated());
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_bundle_deployWizard_deploymentCreatedDetail_concise(result.getName()),
-                                MSG.view_bundle_deployWizard_deploymentCreatedDetail(result.getName(), result
-                                    .getDescription()), Severity.Info));
+                                MSG.view_bundle_deployWizard_deploymentCreatedDetail(result.getName(),
+                                    result.getDescription()), Severity.Info));
                         wizard.setNewDeployment(result);
 
-                        bundleServer.scheduleBundleDeployment(wizard.getNewDeployment().getId(), wizard
-                            .isCleanDeployment(), //
+                        bundleServer.scheduleBundleDeployment(wizard.getNewDeployment().getId(),
+                            wizard.isCleanDeployment(), //
                             new AsyncCallback<BundleDeployment>() {
                                 public void onSuccess(BundleDeployment result) {
                                     deployingImage.setSrc("/images/status_complete.gif");

@@ -21,12 +21,11 @@ package org.rhq.enterprise.gui.coregui.client.bundle.create;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author John Mazzitelli
@@ -39,14 +38,9 @@ public class BundleSummaryStep extends AbstractWizardStep {
         this.wizard = bundleCreationWizard;
     }
 
-    public Canvas getCanvas(Locatable parent) {
+    public Canvas getCanvas() {
 
-        LocatableDynamicForm form;
-        if (parent != null) {
-            form = new LocatableDynamicForm(parent.extendLocatorId("BundleCreateSummary"));
-        } else {
-            form = new LocatableDynamicForm("BundleCreateSummary");
-        }
+        DynamicForm form = new DynamicForm();
         form.setNumCols(2);
         form.setMargin(20);
 

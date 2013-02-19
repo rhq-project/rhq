@@ -4,6 +4,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchVi
 
 public class TestSearchBarView extends ResourceSearchView {
     public TestSearchBarView(String locatorId) {
-        super(locatorId);
+        super();
     }
 }

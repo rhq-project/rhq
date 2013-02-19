@@ -35,7 +35,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.Resourc
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceOperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -111,8 +111,8 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
         Canvas[] members = getMembers();
         removeMembers(members);
         //pass in the resource information
-        dashboardView = new DashboardView(extendLocatorId(dashboard.getName()), this, dashboard, EntityContext
-            .forResource(resourceComposite.getResource().getId()), resourceComposite);
+        dashboardView = new DashboardView(extendLocatorId(dashboard.getName()), this, dashboard,
+            EntityContext.forResource(resourceComposite.getResource().getId()), resourceComposite);
         addMember(dashboardView);
 
         footer = new LocatableToolStrip(extendLocatorId("Footer"));
@@ -120,8 +120,7 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
         footer.setWidth100();
         footer.setMembersMargin(15);
 
-        editButton = new LocatableIButton(footer.extendLocatorId("Mode"), editMode ? MSG.common_title_view_mode() : MSG
-            .common_title_edit_mode());
+        editButton = new EnhancedIButton(editMode ? MSG.common_title_view_mode() : MSG.common_title_edit_mode());
         editButton.setAutoFit(true);
         editButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -131,7 +130,7 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
             }
         });
 
-        resetButton = new LocatableIButton(footer.extendLocatorId("Reset"), MSG.common_button_reset());
+        resetButton = new EnhancedIButton(MSG.common_button_reset());
         resetButton.setAutoFit(true);
         resetButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {

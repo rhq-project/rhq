@@ -23,6 +23,7 @@ import java.util.EnumSet;
 import java.util.LinkedHashMap;
 
 import com.smartgwt.client.types.MultipleAppearance;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SliderItem;
@@ -34,7 +35,6 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Option;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 public class TestMessageCenterView extends LocatableVLayout {
@@ -116,7 +116,7 @@ public class TestMessageCenterView extends LocatableVLayout {
             }
         });
 
-        LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("form"));
+        DynamicForm form = new DynamicForm();
         form.setWidth(500);
         form.setItems(severityMenu, optionMenu, exceptionItem, conciseMessageItem, detailsMessageItem, button);
 

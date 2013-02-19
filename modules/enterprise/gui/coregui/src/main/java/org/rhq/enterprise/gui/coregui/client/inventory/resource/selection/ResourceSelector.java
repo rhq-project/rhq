@@ -43,7 +43,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypePluginTreeDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author Greg Hinkle
@@ -55,19 +54,19 @@ public class ResourceSelector extends AbstractSelector<Resource, ResourceCriteri
     private boolean displayResourceTypeFilter = true;
     private IPickTreeItem typeSelectItem;
 
-    public ResourceSelector(String locatorId) {
-        this(locatorId, null, false);
+    public ResourceSelector() {
+        this(null, false);
     }
 
-    public ResourceSelector(String locatorId, ResourceType resourceTypeFilter, boolean forceResourceTypeFilter) {
-        super(locatorId);
+    public ResourceSelector(ResourceType resourceTypeFilter, boolean forceResourceTypeFilter) {
+        super();
         this.resourceTypeFilter = resourceTypeFilter;
         this.forceResourceTypeFilter = forceResourceTypeFilter;
     }
 
     protected DynamicForm getAvailableFilterForm() {
         if (null == availableFilterForm) {
-            availableFilterForm = new LocatableDynamicForm(extendLocatorId("ResSelectAvailFilterForm"));
+            availableFilterForm = new DynamicForm();
             availableFilterForm.setNumCols(6);
             availableFilterForm.setWidth("75%");
             final TextItem search = new TextItem("search", MSG.common_title_search());

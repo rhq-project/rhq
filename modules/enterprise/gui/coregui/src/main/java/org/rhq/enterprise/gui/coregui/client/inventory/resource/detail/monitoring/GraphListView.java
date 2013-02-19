@@ -102,8 +102,8 @@ public class GraphListView extends LocatableVLayout implements ResourceSelectLis
                         measDefIdArray[i] = measurementDefinitions.get(i).getId();
                     }
 
-                    GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(resource.getId(), measDefIdArray,
-                        8, MeasurementUtils.UNIT_HOURS, 60,
+                    GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(resource.getId(),
+                        measDefIdArray, 8, MeasurementUtils.UNIT_HOURS, 60,
                         new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                             public void onFailure(Throwable caught) {
                                 CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_loadFailed(),
@@ -129,8 +129,7 @@ public class GraphListView extends LocatableVLayout implements ResourceSelectLis
     }
 
     private void buildGraph(MeasurementDefinition def, List<MeasurementDataNumericHighLowComposite> data) {
-        ResourceMetricGraphView graph = new ResourceMetricGraphView(extendLocatorId(def.getName()), resource.getId(),
-            def, data);
+        ResourceMetricGraphView graph = new ResourceMetricGraphView(resource.getId(), def, data);
         graph.setWidth("95%");
         graph.setHeight(220);
 

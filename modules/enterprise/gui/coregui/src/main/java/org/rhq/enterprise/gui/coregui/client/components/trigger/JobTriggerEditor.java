@@ -49,7 +49,6 @@ import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm
 import org.rhq.enterprise.gui.coregui.client.components.form.TimeUnit;
 import org.rhq.enterprise.gui.coregui.client.components.form.UnitType;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -81,7 +80,7 @@ public class JobTriggerEditor extends LocatableVLayout {
     private EnhancedDynamicForm calendarTypeForm;
     private DynamicForm laterForm;
     private DynamicForm repeatForm;
-    private LocatableDynamicForm cronForm;
+    private DynamicForm cronForm;
 
     // These flags allow us to determine the trigger type.
     private boolean isStartLater;
@@ -149,7 +148,7 @@ public class JobTriggerEditor extends LocatableVLayout {
 
                     DurationItem repeatIntervalItem = (DurationItem) this.repeatForm.getItem(FIELD_REPEAT_INTERVAL);
                     repeatIntervalItem.setAndFormatValue(this.jobTrigger.getRepeatInterval());
-                    
+
                     FormItem endTimeItem = this.repeatForm.getField(FIELD_END_TIME);
                     DurationItem repeatDurationItem = (DurationItem) this.repeatForm.getItem(FIELD_REPEAT_DURATION);
                     FormItem recurrenceTypeItem = this.repeatForm.getField(FIELD_RECURRENCE_TYPE);
@@ -177,7 +176,7 @@ public class JobTriggerEditor extends LocatableVLayout {
     protected void onDraw() {
         super.onDraw();
 
-        this.modeForm = new EnhancedDynamicForm(extendLocatorId("ModeForm"), this.isReadOnly);
+        this.modeForm = new EnhancedDynamicForm(this.isReadOnly);
         this.modeForm.setNumCols(3);
         this.modeForm.setColWidths("140", "220", "*");
 
@@ -195,7 +194,7 @@ public class JobTriggerEditor extends LocatableVLayout {
 
         this.calendarModeLayout = new LocatableVLayout(extendLocatorId("CalendarModeLayout"));
 
-        this.calendarTypeForm = new EnhancedDynamicForm(extendLocatorId("CalendarTypeForm"), this.isReadOnly);
+        this.calendarTypeForm = new EnhancedDynamicForm(this.isReadOnly);
 
         RadioGroupItem calendarTypeItem = new RadioGroupItem("calendarType");
         calendarTypeItem.setWidth(440);
@@ -217,7 +216,7 @@ public class JobTriggerEditor extends LocatableVLayout {
         this.cronModeLayout = new LocatableVLayout(extendLocatorId("CronModeLayout"));
         this.cronModeLayout.setVisible(false);
 
-        this.cronForm = new LocatableDynamicForm(this.cronModeLayout.extendLocatorId("Form"));
+        this.cronForm = new DynamicForm();
 
         TextItem cronExpressionItem = new TextItem(FIELD_CRON_EXPRESSION,
             MSG.widget_jobTriggerEditor_field_cronExpression());
@@ -514,12 +513,12 @@ public class JobTriggerEditor extends LocatableVLayout {
             repeatIntervalItem.setTitle(MSG.widget_jobTriggerEditor_field_repeatInterval_later());
             repeatIntervalItem.redraw();
         }
-        if (isStartLater)  {
+        if (isStartLater) {
             laterForm.show();
         } else {
             laterForm.hide();
         }
-        if (isRecurring)  {
+        if (isRecurring) {
             repeatForm.show();
         } else {
             repeatForm.hide();
@@ -538,7 +537,7 @@ public class JobTriggerEditor extends LocatableVLayout {
     }
 
     private DynamicForm createRepeatForm() {
-        final EnhancedDynamicForm repeatForm = new EnhancedDynamicForm(extendLocatorId("RepeatForm"), this.isReadOnly);
+        final EnhancedDynamicForm repeatForm = new EnhancedDynamicForm(this.isReadOnly);
         repeatForm.setNumCols(6);
         repeatForm.setColWidths(140, 130, 130, 130, 130);
 
@@ -551,7 +550,7 @@ public class JobTriggerEditor extends LocatableVLayout {
         supportedUnits.add(TimeUnit.MONTHS);
         supportedUnits.add(TimeUnit.YEARS);
         DurationItem repeatIntervalItem = new DurationItem(FIELD_REPEAT_INTERVAL,
-            MSG.widget_jobTriggerEditor_field_repeatInterval_now(), supportedUnits, false, this.isReadOnly, repeatForm);
+            MSG.widget_jobTriggerEditor_field_repeatInterval_now(), supportedUnits, false, this.isReadOnly);
         repeatIntervalItem.setRequired(true);
         repeatIntervalItem.setContextualHelp(MSG.widget_jobTriggerEditor_fieldHelp_repeatInterval());
 
@@ -573,7 +572,7 @@ public class JobTriggerEditor extends LocatableVLayout {
         supportedUnits.add(TimeUnit.MONTHS);
         supportedUnits.add(TimeUnit.YEARS);
         final DurationItem repeatDurationItem = new DurationItem(FIELD_REPEAT_DURATION, null, supportedUnits, true,
-            this.isReadOnly, repeatForm);
+            this.isReadOnly);
         repeatDurationItem.setShowTitle(false);
         repeatDurationItem.setVisible(false);
         repeatDurationItem.setContextualHelp(MSG.widget_jobTriggerEditor_fieldHelp_repeatDuration());
@@ -625,7 +624,7 @@ public class JobTriggerEditor extends LocatableVLayout {
     }
 
     private DynamicForm createLaterForm() {
-        final EnhancedDynamicForm laterForm = new EnhancedDynamicForm(extendLocatorId("LaterForm"), this.isReadOnly);
+        final EnhancedDynamicForm laterForm = new EnhancedDynamicForm(this.isReadOnly);
         laterForm.setNumCols(4);
         laterForm.setColWidths(140, 130, 130);
 
@@ -648,7 +647,7 @@ public class JobTriggerEditor extends LocatableVLayout {
         supportedUnits.add(TimeUnit.MONTHS);
         supportedUnits.add(TimeUnit.YEARS);
         final DurationItem startDelayItem = new DurationItem(FIELD_START_DELAY, null, supportedUnits, false,
-            this.isReadOnly, laterForm);
+            this.isReadOnly);
         startDelayItem.setShowTitle(false);
         startDelayItem.setVisible(false);
         startDelayItem.setContextualHelp(MSG.widget_jobTriggerEditor_fieldHelp_startDelay());

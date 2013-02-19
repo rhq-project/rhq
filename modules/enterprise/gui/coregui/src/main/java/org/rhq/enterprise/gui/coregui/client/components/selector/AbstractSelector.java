@@ -105,12 +105,12 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
     private boolean isReadOnly;
     private Label messageLayout;
 
-    public AbstractSelector(String locatorId) {
-        this(locatorId, false);
+    public AbstractSelector() {
+        this(false);
     }
 
-    public AbstractSelector(String locatorId, boolean isReadOnly) {
-        super(locatorId);
+    public AbstractSelector(boolean isReadOnly) {
+        super();
 
         this.isReadOnly = isReadOnly;
 

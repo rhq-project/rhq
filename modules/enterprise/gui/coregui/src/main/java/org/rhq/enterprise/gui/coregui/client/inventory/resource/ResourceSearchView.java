@@ -99,22 +99,22 @@ public class ResourceSearchView extends Table {
     /**
      * A list of all Resources in the system.
      */
-    public ResourceSearchView(String locatorId) {
-        this(locatorId, null, null, null, null, false);
+    public ResourceSearchView() {
+        this(null, null, null, null, false);
     }
 
     /**
      * A Resource list filtered by a given criteria.
      */
-    public ResourceSearchView(String locatorId, Criteria criteria) {
-        this(locatorId, criteria, null, null, null, false);
+    public ResourceSearchView(Criteria criteria) {
+        this(criteria, null, null, null, false);
     }
 
     /**
      * A Resource list filtered by a given criteria and optionally exportable
      */
-    public ResourceSearchView(String locatorId, Criteria criteria, boolean exportable) {
-        this(locatorId, criteria, null, null, null, exportable);
+    public ResourceSearchView(Criteria criteria, boolean exportable) {
+        this(criteria, null, null, null, exportable);
     }
 
     /**
@@ -122,8 +122,8 @@ public class ResourceSearchView extends Table {
      *
      * @param headerIcons 24x24 icon(s) to be displayed in the header
      */
-    public ResourceSearchView(String locatorId, Criteria criteria, String title, String... headerIcons) {
-        this(locatorId, criteria, title, null, null, false, headerIcons);
+    public ResourceSearchView(Criteria criteria, String title, String... headerIcons) {
+        this(criteria, title, null, null, false, headerIcons);
     }
 
     /**
@@ -131,10 +131,10 @@ public class ResourceSearchView extends Table {
      *
      * @param headerIcons 24x24 icon(s) to be displayed in the header
      */
-    public ResourceSearchView(String locatorId, Criteria criteria, String title, SortSpecifier[] sortSpecifier,
-        String[] excludeFields, String... headerIcons) {
+    public ResourceSearchView(Criteria criteria, String title, SortSpecifier[] sortSpecifier, String[] excludeFields,
+        String... headerIcons) {
 
-        this(locatorId, criteria, title, sortSpecifier, excludeFields, false, headerIcons);
+        this(criteria, title, sortSpecifier, excludeFields, false, headerIcons);
     }
 
     /**
@@ -142,11 +142,11 @@ public class ResourceSearchView extends Table {
      *
      * @param headerIcons 24x24 icon(s) to be displayed in the header
      */
-    public ResourceSearchView(String locatorId, Criteria criteria, String title, SortSpecifier[] sortSpecifier,
-        String[] excludeFields, boolean exportable, String... headerIcons) {
+    public ResourceSearchView(Criteria criteria, String title, SortSpecifier[] sortSpecifier, String[] excludeFields,
+        boolean exportable, String... headerIcons) {
 
-        super(locatorId, (null == title) ? DEFAULT_TITLE : title, criteria,
-            (null == sortSpecifier) ? DEFAULT_SORT_SPECIFIER : sortSpecifier, excludeFields);
+        super((null == title) ? DEFAULT_TITLE : title, criteria, (null == sortSpecifier) ? DEFAULT_SORT_SPECIFIER
+            : sortSpecifier, excludeFields);
 
         this.exportable = exportable;
 
@@ -168,10 +168,9 @@ public class ResourceSearchView extends Table {
         List<ListGridField> fields = createFields();
         setListGridFields(fields.toArray(new ListGridField[fields.size()]));
 
-        addTableAction(extendLocatorId("Uninventory"), MSG.common_button_uninventory(),
-            MSG.view_inventory_resources_uninventoryConfirm(), new ResourceAuthorizedTableAction(
-                ResourceSearchView.this, TableActionEnablement.ANY, Permission.DELETE_RESOURCE,
-                new RecordExtractor<Integer>() {
+        addTableAction(MSG.common_button_uninventory(), MSG.view_inventory_resources_uninventoryConfirm(),
+            new ResourceAuthorizedTableAction(ResourceSearchView.this, TableActionEnablement.ANY,
+                Permission.DELETE_RESOURCE, new RecordExtractor<Integer>() {
 
                     public Collection<Integer> extract(Record[] records) {
                         List<Integer> result = new ArrayList<Integer>(records.length);
@@ -203,8 +202,7 @@ public class ResourceSearchView extends Table {
                 }
             });
 
-        addTableAction(extendLocatorId("Disable"), MSG.common_button_disable(),
-            MSG.view_inventory_resources_disableConfirm(),
+        addTableAction(MSG.common_button_disable(), MSG.view_inventory_resources_disableConfirm(),
             new AvailabilityTypeResourceAuthorizedTableAction(ResourceSearchView.this, TableActionEnablement.ANY,
                 EnumSet.complementOf(EnumSet.of(AvailabilityType.DISABLED)), Permission.DELETE_RESOURCE,
                 new RecordExtractor<AvailabilityType>() {
@@ -269,10 +267,10 @@ public class ResourceSearchView extends Table {
                 }
             });
 
-        addTableAction(extendLocatorId("Enable"), MSG.common_button_enable(),
-            MSG.view_inventory_resources_enableConfirm(), new AvailabilityTypeResourceAuthorizedTableAction(
-                ResourceSearchView.this, TableActionEnablement.ANY, EnumSet.of(AvailabilityType.DISABLED),
-                Permission.DELETE_RESOURCE, new RecordExtractor<AvailabilityType>() {
+        addTableAction(MSG.common_button_enable(), MSG.view_inventory_resources_enableConfirm(),
+            new AvailabilityTypeResourceAuthorizedTableAction(ResourceSearchView.this, TableActionEnablement.ANY,
+                EnumSet.of(AvailabilityType.DISABLED), Permission.DELETE_RESOURCE,
+                new RecordExtractor<AvailabilityType>() {
 
                     public Collection<AvailabilityType> extract(Record[] records) {
                         List<AvailabilityType> result = new ArrayList<AvailabilityType>(records.length);
@@ -380,7 +378,7 @@ public class ResourceSearchView extends Table {
 
     protected void onUninventorySuccess() {
         refresh(true);
-	// the group type may have changed
+        // the group type may have changed
         CoreGUI.refresh();
     }
 

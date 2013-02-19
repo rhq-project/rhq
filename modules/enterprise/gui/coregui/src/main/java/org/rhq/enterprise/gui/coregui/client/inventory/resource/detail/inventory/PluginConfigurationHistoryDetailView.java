@@ -55,8 +55,7 @@ public class PluginConfigurationHistoryDetailView extends LocatableVLayout imple
 
                 public void onTypesLoaded(ResourceType type) {
                     ConfigurationDefinition definition = type.getPluginConfigurationDefinition();
-                    ConfigurationEditor editor = new ConfigurationEditor("PluginConfigHist-"
-                        + update.getResource().getName(), definition, update.getConfiguration());
+                    ConfigurationEditor editor = new ConfigurationEditor(definition, update.getConfiguration());
                     editor.setReadOnly(true);
                     editor.setEditorTitle(MSG.common_title_version() + " - " + update.getId());
                     addMember(editor);

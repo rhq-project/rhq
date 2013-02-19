@@ -224,7 +224,7 @@ public class PortletFactory {
         portletIconMap.put(ResourceConfigurationUpdatesPortlet.KEY, ImageManager.getConfigureIcon());
     }
 
-    public static Portlet buildPortlet(String locatorId, PortletWindow portletWindow, DashboardPortlet storedPortlet,
+    public static Portlet buildPortlet(PortletWindow portletWindow, DashboardPortlet storedPortlet,
         EntityContext context) {
 
         PortletViewFactory viewFactory = globalPortletFactoryMap.get(storedPortlet.getPortletKey());
@@ -257,7 +257,7 @@ public class PortletFactory {
             }
         }
 
-        Portlet view = viewFactory.getInstance(locatorId, context);
+        Portlet view = viewFactory.getInstance(context);
         view.configure(portletWindow, storedPortlet);
 
         //add code to initiate refresh cycle for portlets

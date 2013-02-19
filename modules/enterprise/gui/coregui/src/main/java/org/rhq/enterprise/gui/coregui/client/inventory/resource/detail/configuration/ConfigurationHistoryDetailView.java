@@ -55,8 +55,7 @@ public class ConfigurationHistoryDetailView extends LocatableVLayout implements 
 
                 public void onTypesLoaded(ResourceType type) {
                     ConfigurationDefinition definition = type.getResourceConfigurationDefinition();
-                    ConfigurationEditor editor = new ConfigurationEditor("ResConfigHist-"
-                        + update.getResource().getName(), definition, update.getConfiguration());
+                    ConfigurationEditor editor = new ConfigurationEditor(definition, update.getConfiguration());
                     editor.setReadOnly(true);
                     editor.setEditorTitle(MSG.common_title_version() + " - " + update.getId());
                     addMember(editor);

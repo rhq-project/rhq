@@ -56,8 +56,8 @@ public class SystemRolesNotificationSenderForm extends AbstractNotificationSende
 
     private RoleSelector selector;
 
-    public SystemRolesNotificationSenderForm(String locatorId, AlertNotification notif, String sender) {
-        super(locatorId, notif, sender);
+    public SystemRolesNotificationSenderForm(AlertNotification notif, String sender) {
+        super(notif, sender);
     }
 
     @Override
@@ -94,8 +94,7 @@ public class SystemRolesNotificationSenderForm extends AbstractNotificationSende
     }
 
     private void createNewSelector(Collection<Role> preselectedRoles) {
-        String selectorLocatorId = extendLocatorId("roleSelector");
-        selector = new RoleSelector(selectorLocatorId, preselectedRoles);
+        selector = new RoleSelector(preselectedRoles);
         selector.setWidth(400);
         selector.setHeight(300);
         addMember(selector);
@@ -162,8 +161,8 @@ public class SystemRolesNotificationSenderForm extends AbstractNotificationSende
     }
 
     private class RoleSelector extends AbstractSelector<Role, RoleCriteria> {
-        public RoleSelector(String id, Collection<Role> roles) {
-            super(id);
+        public RoleSelector(Collection<Role> roles) {
+            super();
             if (roles != null) {
                 ListGridRecord[] data = (new RolesDataSource()).buildRecords(roles);
                 setAssigned(data);

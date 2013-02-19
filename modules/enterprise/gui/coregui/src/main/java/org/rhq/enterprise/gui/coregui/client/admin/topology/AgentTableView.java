@@ -59,7 +59,7 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
     private final Integer id;
 
     public AgentTableView(String locatorId, Integer id, boolean isAffinityGroupId) {
-        super(locatorId, null);
+        super(null);
         this.isAffinityGroupId = isAffinityGroupId;
         this.id = id;
         setHeight100();

@@ -72,8 +72,8 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
 
     private Timer refreshTimer;
 
-    public RecentlyAddedResourcesPortlet(String locatorId) {
-        super(locatorId);
+    public RecentlyAddedResourcesPortlet() {
+        super();
 
         //insert the datasource
         this.dataSource = new RecentlyAddedResourceDS(this);
@@ -242,9 +242,9 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
-            return new RecentlyAddedResourcesPortlet(locatorId);
+            return new RecentlyAddedResourcesPortlet();
         }
     }
 

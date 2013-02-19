@@ -22,7 +22,6 @@ package org.rhq.enterprise.gui.coregui.client.components.form;
 import java.util.EnumSet;
 import java.util.List;
 
-import java.util.logging.Logger;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -50,8 +49,8 @@ import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -167,7 +166,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
 
     protected EnhancedDynamicForm buildForm() {
         boolean isNewRecord = (this.recordId == ID_NEW);
-        EnhancedDynamicForm form = new EnhancedDynamicForm(this.getLocatorId(), isFormReadOnly(), isNewRecord);
+        EnhancedDynamicForm form = new EnhancedDynamicForm(isFormReadOnly(), isNewRecord);
         form.setDataSource(this.dataSource);
 
         List<FormItem> items = createFormItems(form);
@@ -459,7 +458,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
             hLayout.setMembersMargin(10);
             vLayout.addMember(hLayout);
 
-            saveButton = new LocatableIButton(extendLocatorId("Save"), MSG.common_button_save());
+            saveButton = new EnhancedIButton(MSG.common_button_save());
             saveButton.setDisabled(true);
             saveButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
@@ -468,7 +467,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
             });
             hLayout.addMember(saveButton);
 
-            resetButton = new LocatableIButton(extendLocatorId("Reset"), MSG.common_button_reset());
+            resetButton = new EnhancedIButton(MSG.common_button_reset());
             resetButton.setDisabled(true);
             resetButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
@@ -479,7 +478,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
             });
             hLayout.addMember(resetButton);
 
-            cancelButton = new LocatableIButton(extendLocatorId("Cancel"), MSG.common_button_cancel());
+            cancelButton = new EnhancedIButton(MSG.common_button_cancel());
             cancelButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     CoreGUI.goToView(getListViewPath());

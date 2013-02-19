@@ -59,8 +59,8 @@ public class FavoriteGroupsPortlet extends ResourceGroupListView implements Auto
 
     private Timer refreshTimer;
 
-    public FavoriteGroupsPortlet(String locatorId) {
-        super(locatorId, createInitialCriteria(), NAME);
+    public FavoriteGroupsPortlet() {
+        super(createInitialCriteria(), NAME);
         setOverflow(Overflow.VISIBLE);
 
         setShowHeader(false);
@@ -120,9 +120,9 @@ public class FavoriteGroupsPortlet extends ResourceGroupListView implements Auto
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
-            return new FavoriteGroupsPortlet(locatorId);
+            return new FavoriteGroupsPortlet();
         }
     }
 

@@ -51,7 +51,6 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author Greg Hinkle
@@ -267,7 +266,7 @@ public class ConfigurationComparisonView extends VLayout {
         ArrayList<Configuration> configurations, ArrayList<String> titles) {
 
         ConfigurationComparisonView view = new ConfigurationComparisonView(definition, configurations, titles);
-        final Window dialog = new LocatableWindow("configCompare");
+        final Window dialog = new Window();
         dialog.setTitle(MSG.view_configCompare_comparingConfigs());
         dialog.setShowMinimizeButton(true);
         dialog.setShowMaximizeButton(true);

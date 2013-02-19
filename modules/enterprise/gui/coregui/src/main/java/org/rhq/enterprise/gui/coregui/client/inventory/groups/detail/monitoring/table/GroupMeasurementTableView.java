@@ -66,7 +66,7 @@ public class GroupMeasurementTableView extends Table<GroupMeasurementTableDataSo
                 String defId = record.getAttribute(GroupMeasurementTableDataSource.FIELD_METRIC_DEF_ID);
                 String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricMultiResource&groupId=";
                 destination += groupId + "&m=" + defId;
-                FullHTMLPane iframe = new FullHTMLPane("MeasurementTableFrameView", destination);
+                FullHTMLPane iframe = new FullHTMLPane(destination);
                 window.addItem(iframe);
                 window.show();
             }

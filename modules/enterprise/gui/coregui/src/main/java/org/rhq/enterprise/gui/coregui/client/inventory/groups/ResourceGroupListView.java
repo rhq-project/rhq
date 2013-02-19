@@ -75,16 +75,16 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
     private boolean showDeleteButton = true;
     private boolean showNewButton = true;
 
-    public ResourceGroupListView(String locatorId) {
-        this(locatorId, DEFAULT_TITLE);
+    public ResourceGroupListView() {
+        this(DEFAULT_TITLE);
     }
 
-    public ResourceGroupListView(String locatorId, String title) {
-        this(locatorId, null, title);
+    public ResourceGroupListView(String title) {
+        this(null, title);
     }
 
-    public ResourceGroupListView(String locatorId, Criteria criteria, String title, String... headerIcons) {
-        super(locatorId, title, criteria);
+    public ResourceGroupListView(Criteria criteria, String title, String... headerIcons) {
+        super(title, criteria);
 
         for (String headerIcon : headerIcons) {
             addHeaderIcon(headerIcon);
@@ -94,8 +94,8 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         setDataSource(datasource);
     }
 
-    public ResourceGroupListView(String locatorId, Criteria criteria) {
-        super(locatorId, null, criteria);
+    public ResourceGroupListView(Criteria criteria) {
+        super(null, criteria);
 
         final ResourceGroupCompositeDataSource datasource = ResourceGroupCompositeDataSource.getInstance();
         setDataSource(datasource);
@@ -181,30 +181,30 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
             availabilityChildrenField, availabilityDescendantsField);
 
         if (this.showDeleteButton) {
-            addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
-                new AuthorizedTableAction(this, TableActionEnablement.ANY, Permission.MANAGE_INVENTORY) {
-                    public void executeAction(ListGridRecord[] selections, Object actionValue) {
-                        int[] groupIds = new int[selections.length];
-                        int index = 0;
-                        for (ListGridRecord selection : selections) {
-                            groupIds[index++] = selection.getAttributeAsInt("id");
-                        }
-                        ResourceGroupGWTServiceAsync resourceGroupManager = GWTServiceLookup.getResourceGroupService();
-
-                        resourceGroupManager.deleteResourceGroups(groupIds, new AsyncCallback<Void>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(MSG.view_inventory_groups_deleteFailed(), caught);
-                                refreshTableInfo();
-                            }
-
-                            public void onSuccess(Void result) {
-                                CoreGUI.getMessageCenter().notify(
-                                    new Message(MSG.view_inventory_groups_deleteSuccessful(), Severity.Info));
-                                refresh(true);
-                            }
-                        });
+            addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(), new AuthorizedTableAction(this,
+                TableActionEnablement.ANY, Permission.MANAGE_INVENTORY) {
+                public void executeAction(ListGridRecord[] selections, Object actionValue) {
+                    int[] groupIds = new int[selections.length];
+                    int index = 0;
+                    for (ListGridRecord selection : selections) {
+                        groupIds[index++] = selection.getAttributeAsInt("id");
                     }
-                });
+                    ResourceGroupGWTServiceAsync resourceGroupManager = GWTServiceLookup.getResourceGroupService();
+
+                    resourceGroupManager.deleteResourceGroups(groupIds, new AsyncCallback<Void>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError(MSG.view_inventory_groups_deleteFailed(), caught);
+                            refreshTableInfo();
+                        }
+
+                        public void onSuccess(Void result) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message(MSG.view_inventory_groups_deleteSuccessful(), Severity.Info));
+                            refresh(true);
+                        }
+                    });
+                }
+            });
         }
 
         if (this.showNewButton) {
@@ -215,9 +215,10 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
                     String categoryString = getInitialCriteria() == null ? null : getInitialCriteria().getAttribute(
                         ResourceGroupDataSourceField.CATEGORY.propertyName());
                     if (categoryString != null) {
-                        category = GroupCategory.COMPATIBLE.name().equals(categoryString) ? GroupCategory.COMPATIBLE : GroupCategory.MIXED;
+                        category = GroupCategory.COMPATIBLE.name().equals(categoryString) ? GroupCategory.COMPATIBLE
+                            : GroupCategory.MIXED;
                     }
-                    
+
                     new GroupCreateWizard(ResourceGroupListView.this, category).startWizard();
                     // we can refresh the table buttons immediately since the wizard is a dialog, the
                     // user can't access enabled buttons anyway.
@@ -235,8 +236,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
                             ResourceGroupListView.this.extendLocatorId("MembershipView"),
                             ResourceGroupListView.this.resourceIdToModify.intValue());
 
-                        final PopupWindow winModal = new PopupWindow(extendLocatorId("MembershipWindow"),
-                            membershipView);
+                        final PopupWindow winModal = new PopupWindow(membershipView);
                         winModal.setTitle(MSG.view_tabs_common_group_membership());
                         winModal.setWidth(700);
                         winModal.setHeight(450);
@@ -276,7 +276,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
     public static ResourceGroupListView getGroupsOf(String locatorId, int explicitResourceId,
         boolean canModifyMembership) {
 
-        ResourceGroupListView view = new ResourceGroupListView(locatorId, new Criteria("explicitResourceId",
+        ResourceGroupListView view = new ResourceGroupListView(new Criteria("explicitResourceId",
             String.valueOf(explicitResourceId)), MSG.common_title_resourceGroups());
         if (canModifyMembership) {
             view.resourceIdToModify = Integer.valueOf(explicitResourceId);

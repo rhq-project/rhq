@@ -32,6 +32,7 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
@@ -58,8 +59,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallb
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -122,9 +122,9 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
         markForRedraw();
     }
 
-    private LocatableDynamicForm createSummaryForm() {
+    private DynamicForm createSummaryForm() {
 
-        LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("Summary"));
+        DynamicForm form = new DynamicForm();
         form.setWidth100();
         form.setColWidths("20%", "40%", "40%");
         form.setNumCols(3);
@@ -139,7 +139,7 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
         actionItem.setColSpan(1);
         actionItem.setRowSpan(4);
         actionItem.setShowTitle(false);
-        actionItem.setCanvas(getActionLayout(form.extendLocatorId("actions")));
+        actionItem.setCanvas(getActionLayout());
 
         StaticTextItem versionItem = new StaticTextItem("version", MSG.common_title_version());
         versionItem.setValue(version.getVersion());
@@ -157,9 +157,9 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
         return form;
     }
 
-    private Canvas getActionLayout(String locatorId) {
-        LocatableVLayout actionLayout = new LocatableVLayout(locatorId, 10);
-        IButton deleteButton = new LocatableIButton(extendLocatorId("Delete"), MSG.common_button_delete());
+    private Canvas getActionLayout() {
+        LocatableVLayout actionLayout = new LocatableVLayout(10);
+        IButton deleteButton = new EnhancedIButton(MSG.common_button_delete());
         deleteButton.setIcon("subsystems/bundle/BundleVersionAction_Delete_16.png");
         deleteButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -222,7 +222,7 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
 
     private Tab createRecipeTab() {
         LocatableTab tab = new LocatableTab(extendLocatorId("Recipe"), MSG.view_bundle_recipe());
-        LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("RecipeForm"));
+        DynamicForm form = new DynamicForm();
 
         TextAreaItem recipeCanvas = new TextAreaItem("recipe", MSG.view_bundle_recipe());
         recipeCanvas.setShowTitle(false);

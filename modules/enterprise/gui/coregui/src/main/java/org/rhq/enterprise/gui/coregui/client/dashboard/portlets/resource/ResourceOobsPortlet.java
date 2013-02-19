@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
@@ -41,7 +42,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.Abs
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**This portlet allows the end user to customize the OOB display
  *
@@ -56,21 +56,21 @@ public class ResourceOobsPortlet extends GroupOobsPortlet {
 
     private int resourceId = -1;
 
-    public ResourceOobsPortlet(String locatorId, int resourceId) {
-        super(locatorId, -1);
+    public ResourceOobsPortlet(int resourceId) {
+        super(-1);
         this.resourceId = resourceId;
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
             if (EntityContext.Type.Resource != context.getType()) {
                 throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
             }
 
-            return new ResourceOobsPortlet(locatorId, context.getResourceId());
+            return new ResourceOobsPortlet(context.getResourceId());
         }
     }
 
@@ -90,12 +90,11 @@ public class ResourceOobsPortlet extends GroupOobsPortlet {
         }
 
         GWTServiceLookup.getMeasurementDataService().getHighestNOOBsForResource(resourceId,
-            Integer.valueOf(resultCount),
-            new AsyncCallback<PageList<MeasurementOOBComposite>>() {
+            Integer.valueOf(resultCount), new AsyncCallback<PageList<MeasurementOOBComposite>>() {
                 @Override
                 public void onFailure(Throwable caught) {
                     Log.debug("Error retrieving out of bound metrics for resource [" + resourceId + "]:"
-                            + caught.getMessage());
+                        + caught.getMessage());
                     currentlyLoading = false;
                 }
 
@@ -105,8 +104,7 @@ public class ResourceOobsPortlet extends GroupOobsPortlet {
                     column.setHeight(10);
                     if (!result.isEmpty()) {
                         for (MeasurementOOBComposite oob : result) {
-                            LocatableDynamicForm row = new LocatableDynamicForm(recentOobContent.extendLocatorId(oob
-                                .getScheduleName()));
+                            DynamicForm row = new DynamicForm();
                             row.setNumCols(2);
 
                             final String title = oob.getScheduleName();
@@ -116,11 +114,9 @@ public class ResourceOobsPortlet extends GroupOobsPortlet {
                             link.addClickHandler(new ClickHandler() {
                                 @Override
                                 public void onClick(ClickEvent event) {
-                                    ChartViewWindow window = new ChartViewWindow(recentOobContent
-                                        .extendLocatorId("ChartWindow"), title);
+                                    ChartViewWindow window = new ChartViewWindow(title);
                                     //generate and include iframed content
-                                    FullHTMLPane iframe = new FullHTMLPane(recentOobContent.extendLocatorId("View"),
-                                        destination);
+                                    FullHTMLPane iframe = new FullHTMLPane(destination);
                                     window.addItem(iframe);
                                     window.show();
                                 }
@@ -134,8 +130,8 @@ public class ResourceOobsPortlet extends GroupOobsPortlet {
                         }
                         //insert see more link spinder(2/24/11): no page that displays all oobs... See More not possible.
                     } else {
-                        LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(recentOobContent
-                            .extendLocatorId("None"), AbstractActivityView.RECENT_OOB_NONE);
+                        DynamicForm row = AbstractActivityView
+                            .createEmptyDisplayRow(AbstractActivityView.RECENT_OOB_NONE);
                         column.addMember(row);
                     }
                     recentOobContent.setContents("");

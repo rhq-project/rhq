@@ -41,7 +41,6 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigura
 import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryDataSource;
 import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -64,8 +63,8 @@ public abstract class AbstractOperationHistoryPortlet extends OperationHistoryVi
 
     private String baseViewPath;
 
-    public AbstractOperationHistoryPortlet(String locatorId, EntityContext entityContext) {
-        super(locatorId, null, entityContext);
+    public AbstractOperationHistoryPortlet(EntityContext entityContext) {
+        super(null, entityContext);
 
         this.baseViewPath = LinkManager.getEntityTabLink(getContext(), "Operations", "History");
 
@@ -135,9 +134,9 @@ public abstract class AbstractOperationHistoryPortlet extends OperationHistoryVi
     @Override
     public DynamicForm getCustomSettingsForm() {
 
-        LocatableDynamicForm customSettingsForm = new LocatableDynamicForm(extendLocatorId("CustomSettings"));
-        LocatableVLayout page = new LocatableVLayout(customSettingsForm.extendLocatorId("Page"));
-        LocatableDynamicForm filterForm = new LocatableDynamicForm(page.extendLocatorId("Filter"));
+        DynamicForm customSettingsForm = new DynamicForm();
+        LocatableVLayout page = new LocatableVLayout();
+        DynamicForm filterForm = new DynamicForm();
         filterForm.setMargin(5);
 
         final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();

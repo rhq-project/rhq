@@ -32,8 +32,8 @@ public class GroupOperationHistoryListView extends AbstractOperationHistoryListV
 
     private ResourceGroupComposite groupComposite;
 
-    public GroupOperationHistoryListView(String locatorId, ResourceGroupComposite groupComposite) {
-        super(locatorId, new GroupOperationHistoryDataSource(), null, new Criteria(
+    public GroupOperationHistoryListView(ResourceGroupComposite groupComposite) {
+        super(new GroupOperationHistoryDataSource(), null, new Criteria(
             GroupOperationHistoryDataSource.CriteriaField.GROUP_ID, String.valueOf(groupComposite.getResourceGroup()
                 .getId())));
         this.groupComposite = groupComposite;

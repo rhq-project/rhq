@@ -60,7 +60,6 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.resource.ProblemResourcesDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
@@ -97,8 +96,8 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
 
     private Timer refreshTimer;
 
-    public ProblemResourcesPortlet(String locatorId) {
-        super(locatorId, NAME, true);
+    public ProblemResourcesPortlet() {
+        super(NAME, true);
 
         setShowHeader(false);
         setShowFooter(true);
@@ -216,7 +215,7 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
      */
     public DynamicForm getCustomSettingsForm() {
 
-        final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("customSettings"));
+        final DynamicForm form = new DynamicForm();
 
         final DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
 
@@ -292,9 +291,9 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
-            return new ProblemResourcesPortlet(locatorId);
+            return new ProblemResourcesPortlet();
         }
     }
 

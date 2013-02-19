@@ -68,7 +68,8 @@ public class HistoryGroupResourceConfigurationSettings extends LocatableVLayout 
 
         setMargin(5);
         setMembersMargin(5);
-        String backPath = LinkManager.getGroupResourceConfigurationUpdateHistoryLink(EntityContext.forGroup(this.group), null);
+        String backPath = LinkManager.getGroupResourceConfigurationUpdateHistoryLink(
+            EntityContext.forGroup(this.group), null);
         BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
             backPath);
         addMember(backButton);
@@ -87,8 +88,7 @@ public class HistoryGroupResourceConfigurationSettings extends LocatableVLayout 
 
     private void initEditor() {
         if (this.configurationDefinition != null && this.memberConfigurations != null) {
-            this.editor = new GroupConfigurationEditor(this.extendLocatorId("Editor"), this.configurationDefinition,
-                this.memberConfigurations);
+            this.editor = new GroupConfigurationEditor(this.configurationDefinition, this.memberConfigurations);
             this.editor.setEditorTitle(MSG.view_group_resConfig_view_groupProperties() + " - " + this.groupUpdateId);
             this.editor.setOverflow(Overflow.AUTO);
             this.editor.setReadOnly(true);

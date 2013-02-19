@@ -53,8 +53,7 @@ import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelecto
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
 
 /**
  * Component for assigning the servers into affinity group.
@@ -71,12 +70,12 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, Serve
     private List<Integer> originallyAssignedIds;
 
     private AffinityGroupServersSelector() {
-        super("");
+        super();
         affinityGroupId = -1;
     }
 
-    private AffinityGroupServersSelector(String id, Integer affinityGroupId) {
-        super(id, false);
+    private AffinityGroupServersSelector(Integer affinityGroupId) {
+        super(false);
         this.affinityGroupId = affinityGroupId;
         prepareMembers(this);
     }
@@ -84,7 +83,7 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, Serve
     @Override
     protected DynamicForm getAvailableFilterForm() {
         if (availableFilterForm == null) {
-            availableFilterForm = new LocatableDynamicForm(extendLocatorId("SerSelectAvailFilterForm"));
+            availableFilterForm = new DynamicForm();
             availableFilterForm.setNumCols(4);
             availableFilterForm.setWidth("75%");
             final TextItem search = new TextItem(FIELD_NAME.propertyName(), MSG.common_title_search());
@@ -164,17 +163,17 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, Serve
         layout.setWidth100();
         layout.setHeight100();
 
-        final AffinityGroupServersSelector selector = new AffinityGroupServersSelector("assignServers", affinityGroupId);
+        final AffinityGroupServersSelector selector = new AffinityGroupServersSelector(affinityGroupId);
         selector.setMargin(10);
         layout.addMember(selector);
 
-        IButton cancel = new LocatableIButton(selector.extendLocatorId("Cancel"), MSG.common_button_cancel());
+        IButton cancel = new EnhancedIButton(MSG.common_button_cancel());
         cancel.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 closeAndRefresh(parrent, false);
             }
         });
-        IButton save = new LocatableIButton(selector.extendLocatorId("Save"), MSG.common_button_save());
+        IButton save = new EnhancedIButton(MSG.common_button_save());
         save.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 List<Integer> actuallySelected = getIdList(selector.getSelectedRecords());

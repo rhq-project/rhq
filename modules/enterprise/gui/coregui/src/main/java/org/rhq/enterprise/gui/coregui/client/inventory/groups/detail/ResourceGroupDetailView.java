@@ -85,7 +85,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
     public static final String AUTO_CLUSTER_VIEW = "ResourceGroup/AutoCluster";
     public static final String AUTO_GROUP_VIEW = "Resource/AutoGroup";
-   // public static final String DYNA_GROUP_VIEW = "Inventory/Groups/DynagroupDefinitions";
+    // public static final String DYNA_GROUP_VIEW = "Inventory/Groups/DynagroupDefinitions";
 
     private Integer groupId;
     private ResourceGroupComposite groupComposite;
@@ -306,7 +306,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                     } else if (groupContext.isAutoCluster()) {
                         url += "&groupType=cluster";
                     }
-                    return new IFrameWithMeasurementRangeEditorView(monitorGraphs.extendLocatorId("View"), url);
+                    return new IFrameWithMeasurementRangeEditorView(url);
                 }
             };
             updateSubTab(this.monitoringTab, this.monitorGraphs, visible, true, viewFactory);
@@ -327,7 +327,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             viewFactory = (!visible) ? null : new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new TraitsView(monitorTraits.extendLocatorId("View"), groupId);
+                    return new TraitsView(groupId);
                 }
             };
             updateSubTab(this.monitoringTab, this.monitorTraits, visible, true, viewFactory);
@@ -396,7 +396,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             updateSubTab(this.operationsTab, this.operationsHistory, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new GroupOperationHistoryListView(operationsHistory.extendLocatorId("View"), groupComposite);
+                    return new GroupOperationHistoryListView(groupComposite);
                 }
             });
         }

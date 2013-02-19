@@ -22,7 +22,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.table;
 
-import java.util.logging.Logger;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.AnimationEffect;
@@ -70,40 +69,38 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
     private boolean initialDisplay;
     private boolean initialized;
 
-    protected AbstractTableSection(String locatorId, String tableTitle) {
-        super(locatorId, tableTitle);
+    protected AbstractTableSection(String tableTitle) {
+        super(tableTitle);
     }
 
-    protected AbstractTableSection(String locatorId, String tableTitle, Criteria criteria) {
-        super(locatorId, tableTitle, criteria);
+    protected AbstractTableSection(String tableTitle, Criteria criteria) {
+        super(tableTitle, criteria);
     }
 
-    protected AbstractTableSection(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers) {
-        super(locatorId, tableTitle, sortSpecifiers);
+    protected AbstractTableSection(String tableTitle, SortSpecifier[] sortSpecifiers) {
+        super(tableTitle, sortSpecifiers);
     }
 
-    protected AbstractTableSection(String locatorId, String tableTitle, Criteria criteria,
-        SortSpecifier[] sortSpecifiers) {
-        super(locatorId, tableTitle, sortSpecifiers, criteria);
+    protected AbstractTableSection(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers) {
+        super(tableTitle, sortSpecifiers, criteria);
     }
 
-    protected AbstractTableSection(String locatorId, String tableTitle, boolean autoFetchData) {
-        super(locatorId, tableTitle, autoFetchData);
+    protected AbstractTableSection(String tableTitle, boolean autoFetchData) {
+        super(tableTitle, autoFetchData);
     }
 
-    protected AbstractTableSection(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers,
+    protected AbstractTableSection(String tableTitle, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames) {
+        super(tableTitle, null, sortSpecifiers, excludedFieldNames);
+    }
+
+    protected AbstractTableSection(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
         String[] excludedFieldNames) {
-        super(locatorId, tableTitle, null, sortSpecifiers, excludedFieldNames);
+        super(tableTitle, criteria, sortSpecifiers, excludedFieldNames);
     }
 
-    protected AbstractTableSection(String locatorId, String tableTitle, Criteria criteria,
-        SortSpecifier[] sortSpecifiers, String[] excludedFieldNames) {
-        super(locatorId, tableTitle, criteria, sortSpecifiers, excludedFieldNames);
-    }
-
-    protected AbstractTableSection(String locatorId, String tableTitle, Criteria criteria,
-        SortSpecifier[] sortSpecifiers, String[] excludedFieldNames, boolean autoFetchData) {
-        super(locatorId, tableTitle, criteria, sortSpecifiers, excludedFieldNames, autoFetchData);
+    protected AbstractTableSection(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
+        String[] excludedFieldNames, boolean autoFetchData) {
+        super(tableTitle, criteria, sortSpecifiers, excludedFieldNames, autoFetchData);
     }
 
     @Override

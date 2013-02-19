@@ -53,7 +53,6 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.operation.ScheduledOperationsDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -150,7 +149,8 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
         ListGridField operationNext = new ListGridField(ScheduledOperationsDataSource.Field.OPERATION.propertyName(),
             ScheduledOperationsDataSource.Field.OPERATION.title());
 
-        ListGridField resourceNext = new ListGridField(ScheduledOperationsDataSource.Field.RESOURCE_OR_GROUP.propertyName(),
+        ListGridField resourceNext = new ListGridField(
+            ScheduledOperationsDataSource.Field.RESOURCE_OR_GROUP.propertyName(),
             ScheduledOperationsDataSource.Field.RESOURCE_OR_GROUP.title());
         resourceNext.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
@@ -181,8 +181,8 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
             }
         });
 
-        
-        ListGridField ancestryNext = new ListGridField(AncestryUtil.RESOURCE_ANCESTRY, CoreGUI.getMessages().common_title_ancestry());
+        ListGridField ancestryNext = new ListGridField(AncestryUtil.RESOURCE_ANCESTRY, CoreGUI.getMessages()
+            .common_title_ancestry());
         ancestryNext.setAlign(Alignment.LEFT);
         ancestryNext.setCellAlign(Alignment.LEFT);
         AncestryUtil.setupAncestryListGridFieldCellFormatter(ancestryNext);
@@ -197,7 +197,7 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
                 }
             }
         });
-        
+
         scheduledOperationsGrid.setFields(timeNext, operationNext, resourceNext, ancestryNext);
     }
 
@@ -251,7 +251,7 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
     public DynamicForm getCustomSettingsForm() {
 
         //root dynamic form instance
-        final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("CustomSettings"));
+        final DynamicForm form = new DynamicForm();
 
         final DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
 
@@ -356,9 +356,9 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
-            return new OperationSchedulePortlet(locatorId);
+            return new OperationSchedulePortlet();
         }
     }
 

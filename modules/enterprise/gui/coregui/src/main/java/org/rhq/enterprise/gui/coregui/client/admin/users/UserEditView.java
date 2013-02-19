@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import java.util.logging.Logger;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.Record;
@@ -135,8 +134,7 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
             ListGridRecord[] roleListGridRecords = toListGridRecordArray(roleRecords);
             boolean rolesAreReadOnly = areRolesReadOnly(record);
 
-            this.roleSelector = new SubjectRoleSelector(this.extendLocatorId("Roles"), roleListGridRecords,
-                rolesAreReadOnly);
+            this.roleSelector = new SubjectRoleSelector(roleListGridRecords, rolesAreReadOnly);
             this.roleSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
                 public void onSelectionChanged(AssignedItemsChangedEvent event) {
                     UserEditView.this.onItemChanged();

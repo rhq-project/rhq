@@ -411,8 +411,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         ViewFactory viewFactory = (!visible) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new IFrameWithMeasurementRangeEditorView(monitorGraphs.extendLocatorId("View"),
-                    "/rhq/resource/monitor/graphs-plain.xhtml?id=" + resource.getId());
+                return new IFrameWithMeasurementRangeEditorView("/rhq/resource/monitor/graphs-plain.xhtml?id="
+                    + resource.getId());
             }
         };
         updateSubTab(this.monitoringTab, this.monitorGraphs, visible, true, viewFactory);
@@ -430,7 +430,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         viewFactory = (!visible) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new TraitsView(monitoringTab.extendLocatorId("TraitsView"), resource.getId());
+                return new TraitsView(resource.getId());
             }
         };
         updateSubTab(this.monitoringTab, this.monitorTraits, visible, true, viewFactory);
@@ -552,32 +552,28 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             updateSubTab(this.contentTab, this.contentDeployed, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new FullHTMLPane(contentDeployed.extendLocatorId("View"),
-                        "/rhq/resource/content/view-plain.xhtml?id=" + resource.getId());
+                    return new FullHTMLPane("/rhq/resource/content/view-plain.xhtml?id=" + resource.getId());
                 }
             });
 
             updateSubTab(this.contentTab, this.contentNew, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new FullHTMLPane(contentNew.extendLocatorId("View"),
-                        "/rhq/resource/content/deploy-plain.xhtml?id=" + resource.getId());
+                    return new FullHTMLPane("/rhq/resource/content/deploy-plain.xhtml?id=" + resource.getId());
                 }
             });
 
             updateSubTab(this.contentTab, this.contentSubscrip, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new FullHTMLPane(contentSubscrip.extendLocatorId("View"),
-                        "/rhq/resource/content/subscription-plain.xhtml?id=" + resource.getId());
+                    return new FullHTMLPane("/rhq/resource/content/subscription-plain.xhtml?id=" + resource.getId());
                 }
             });
 
             updateSubTab(this.contentTab, this.contentHistory, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new FullHTMLPane(configHistory.extendLocatorId("View"),
-                        "/rhq/resource/content/history-plain.xhtml?id=" + resource.getId());
+                    return new FullHTMLPane("/rhq/resource/content/history-plain.xhtml?id=" + resource.getId());
                 }
             });
         }

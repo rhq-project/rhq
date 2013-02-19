@@ -19,15 +19,14 @@
 package org.rhq.enterprise.gui.coregui.client.components;
 
 import com.smartgwt.client.types.ContentsType;
-
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
+import com.smartgwt.client.widgets.HTMLPane;
 
 /**
  * @author Greg Hinkle
  */
-public class FullHTMLPane extends LocatableHTMLPane {
-    public FullHTMLPane(String locatorId, String url) {
-        super(locatorId);
+public class FullHTMLPane extends HTMLPane {
+    public FullHTMLPane(String url) {
+        super();
         setWidth100();
         setHeight100();
         setContentsType(ContentsType.PAGE);

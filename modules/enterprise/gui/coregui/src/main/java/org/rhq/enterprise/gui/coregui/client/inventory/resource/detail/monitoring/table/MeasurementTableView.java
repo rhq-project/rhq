@@ -28,6 +28,7 @@ import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.SelectionStyle;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -44,7 +45,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * Views a resource's measurements in a tabular view.
@@ -174,7 +174,7 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
                 }
                 ChartViewWindow window = new ChartViewWindow(extendLocatorId("ChartWindow"), "");
                 //generate and include iframed content
-                FullHTMLPane iframe = new FullHTMLPane(extendLocatorId("View"), destination);
+                FullHTMLPane iframe = new FullHTMLPane(destination);
                 window.addItem(iframe);
                 window.show();
                 refreshTableInfo();
@@ -183,7 +183,7 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
     }
 
     private void showLiveData(ArrayList<ListGridRecord> records) {
-        final LocatableWindow liveDataWindow = new LocatableWindow(extendLocatorId("liveDataWindow"));
+        final Window liveDataWindow = new Window();
         liveDataWindow.setTitle(MSG.view_measureTable_live_title());
         liveDataWindow.setShowModalMask(true);
         liveDataWindow.setShowMinimizeButton(false);

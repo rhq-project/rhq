@@ -33,6 +33,7 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
@@ -61,8 +62,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -114,8 +114,8 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         addMember(detail);
     }
 
-    private LocatableDynamicForm createSummaryForm() {
-        LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("Summary"));
+    private DynamicForm createSummaryForm() {
+        DynamicForm form = new DynamicForm();
         form.setWidth100();
         form.setColWidths("20%", "40%", "40%");
         form.setNumCols(3);
@@ -135,7 +135,7 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         actionItem.setColSpan(1);
         actionItem.setRowSpan(5);
         actionItem.setShowTitle(false);
-        actionItem.setCanvas(getActionLayout(form.extendLocatorId("actions")));
+        actionItem.setCanvas(getActionLayout());
 
         StaticTextItem created = new StaticTextItem("created", MSG.view_bundle_dest_created());
         created.setValue(new Date(destination.getCtime()));
@@ -181,9 +181,9 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         return tagEditor;
     }
 
-    private Canvas getActionLayout(String locatorId) {
-        LocatableVLayout actionLayout = new LocatableVLayout(locatorId, 10);
-        IButton deployButton = new LocatableIButton(actionLayout.extendLocatorId("Deploy"), MSG.view_bundle_deploy());
+    private Canvas getActionLayout() {
+        LocatableVLayout actionLayout = new LocatableVLayout(10);
+        IButton deployButton = new EnhancedIButton(MSG.view_bundle_deploy());
         deployButton.setIcon(IconEnum.BUNDLE_DEPLOY.getIcon16x16Path());
         deployButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -192,7 +192,7 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         });
         actionLayout.addMember(deployButton);
 
-        IButton revertButton = new LocatableIButton(actionLayout.extendLocatorId("Revert"), MSG.view_bundle_revert());
+        IButton revertButton = new EnhancedIButton(MSG.view_bundle_revert());
         revertButton.setIcon(IconEnum.BUNDLE_REVERT.getIcon16x16Path());
         revertButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -207,7 +207,7 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         });
         actionLayout.addMember(revertButton);
 
-        IButton purgeButton = new LocatableIButton(actionLayout.extendLocatorId("Purge"), MSG.view_bundle_purge());
+        IButton purgeButton = new EnhancedIButton(MSG.view_bundle_purge());
         purgeButton.setIcon(IconEnum.BUNDLE_DESTINATION_PURGE.getIcon16x16Path());
         purgeButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -240,7 +240,7 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         checkIfDisabled(purgeButton);
         actionLayout.addMember(purgeButton);
 
-        IButton deleteButton = new LocatableIButton(actionLayout.extendLocatorId("Delete"), MSG.common_button_delete());
+        IButton deleteButton = new EnhancedIButton(MSG.common_button_delete());
         deleteButton.setIcon(IconEnum.BUNDLE_DESTINATION_DELETE.getIcon16x16Path());
         deleteButton.addClickHandler(new ClickHandler() {
             @Override

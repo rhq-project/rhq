@@ -9,7 +9,13 @@ import com.smartgwt.client.widgets.layout.VLayout;
  */
 public class LocatableVLayout extends VLayout implements Locatable {
 
-    private String locatorId;
+    public LocatableVLayout() {
+        super();
+    }
+
+    public LocatableVLayout(int membersMargin) {
+        super(membersMargin);
+    }
 
     /** 
      * <pre>
@@ -35,16 +41,15 @@ public class LocatableVLayout extends VLayout implements Locatable {
     }
 
     private void init(String locatorId) {
-        this.locatorId = locatorId;
         SeleniumUtility.setID(this, locatorId);
     }
 
     public String getLocatorId() {
-        return locatorId;
+        return "";
     }
 
     public String extendLocatorId(String extension) {
-        return this.locatorId + "_" + extension;
+        return extension;
     }
 
     public void destroyMembers() {

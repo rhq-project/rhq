@@ -98,12 +98,12 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
         HTMLFlow hr = new HTMLFlow("<hr/>");
         contentPane.addMember(hr);
 
-        this.executionModeForm = new EnhancedDynamicForm(extendLocatorId("ExecutionModeForm"), isReadOnly());
+        this.executionModeForm = new EnhancedDynamicForm(isReadOnly());
         this.executionModeForm.setNumCols(2);
         this.executionModeForm.setColWidths(FIRST_COLUMN_WIDTH, "*");
 
-        RadioGroupItem executionModeItem = new RadioGroupItem(FIELD_EXECUTION_MODE, MSG
-            .view_group_operationScheduleDetails_field_execute());
+        RadioGroupItem executionModeItem = new RadioGroupItem(FIELD_EXECUTION_MODE,
+            MSG.view_group_operationScheduleDetails_field_execute());
         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>(2);
         valueMap.put(EXECUTION_ORDER_PARALLEL, MSG.view_group_operationScheduleDetails_value_parallel());
         valueMap.put(EXECUTION_ORDER_SEQUENTIAL, MSG.view_group_operationScheduleDetails_value_sequential());

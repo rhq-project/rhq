@@ -31,6 +31,7 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
@@ -58,7 +59,6 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellForma
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author John Mazzitelli
@@ -316,9 +316,9 @@ public class ChildHistoryView extends Table<ChildHistoryView.DataSource> {
         }
     }
 
-    class DetailsWindow extends LocatableWindow {
+    class DetailsWindow extends Window {
         public DetailsWindow(String locatorId, Canvas canvas) {
-            super(locatorId);
+            super();
             setTitle(MSG.common_title_details());
             setShowMinimizeButton(false);
             setShowMaximizeButton(true);

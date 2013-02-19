@@ -34,6 +34,6 @@ public class GroupAlertHistoryView extends AlertHistoryView {
     }
 
     private GroupAlertHistoryView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess) {
-        super(locatorId, tableTitle, context, hasWriteAccess);
+        super(tableTitle, context, hasWriteAccess);
     }
 }

@@ -31,6 +31,7 @@ import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
@@ -48,7 +49,6 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceBossGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 public class InventorySummaryPortlet extends LocatableVLayout implements AutoRefreshPortlet {
@@ -60,11 +60,11 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
 
     private ResourceBossGWTServiceAsync resourceBossService = GWTServiceLookup.getResourceBossService();
 
-    private LocatableDynamicForm form;
+    private DynamicForm form;
     private Timer refreshTimer;
 
-    public InventorySummaryPortlet(String locatorId) {
-        super(locatorId);
+    public InventorySummaryPortlet() {
+        super();
 
         loadInventoryViewData();
     }
@@ -84,7 +84,7 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
             }
 
             public void onSuccess(InventorySummary summary) {
-                form = new LocatableDynamicForm(extendLocatorId("Form"));
+                form = new DynamicForm();
                 form.setPadding(5);
 
                 List<FormItem> formItems = new ArrayList<FormItem>();
@@ -186,8 +186,8 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
-            return new InventorySummaryPortlet(locatorId);
+        public final Portlet getInstance(EntityContext context) {
+            return new InventorySummaryPortlet();
         }
     }
 

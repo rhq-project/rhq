@@ -22,7 +22,6 @@ import com.smartgwt.client.widgets.Canvas;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 
 /**
  * A step in a {@link Wizard wizard}.
@@ -37,11 +36,9 @@ public interface WizardStep {
      * Returns the canvas containing this step's widget content. This method should <b>not</b> add the canvas to the
      * parent canvas - the wizard framework will take care of that.
      *
-     * @param parent the parent canvas to which the returned canvas will be added -
-     *
      * @return the canvas containing this step's widget content
      */
-    Canvas getCanvas(Locatable parent);
+    Canvas getCanvas();
 
     /**
      * Returns true if this step's Next or Finish button should be enabled, or false if it should be disabled.

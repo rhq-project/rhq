@@ -23,15 +23,20 @@
 
 package org.rhq.enterprise.gui.coregui.client.test;
 
+import java.util.Map;
+
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.RecordList;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.SortDirection;
+import com.smartgwt.client.widgets.HTMLPane;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -40,10 +45,6 @@ import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableActio
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
-
-import java.util.Map;
 
 public class TestUserPreferencesView extends Table {
 
@@ -60,8 +61,8 @@ public class TestUserPreferencesView extends Table {
         return "User Preferences (" + UserSessionManager.getSessionSubject().getName() + ")";
     }
 
-    public TestUserPreferencesView(String locatorId) {
-        super(locatorId, getTableTitle(), null, defaultSorts, null, false);
+    public TestUserPreferencesView() {
+        super(getTableTitle(), null, defaultSorts, null, false);
         prefs = UserSessionManager.getUserPreferences();
     }
 
@@ -94,8 +95,7 @@ public class TestUserPreferencesView extends Table {
                             .append(s).append(record.getAttribute(FIELD_VALUE)).append('\n');
                     }
 
-                    new MessageWindow(extendLocatorId("csv"), "Export To CSV", "<pre>" + csv.toString() + "</pre>")
-                        .show();
+                    new MessageWindow("Export To CSV", "<pre>" + csv.toString() + "</pre>").show();
 
                     refreshTableInfo();
                 }
@@ -139,11 +139,11 @@ public class TestUserPreferencesView extends Table {
         return record;
     }
 
-    class MessageWindow extends LocatableWindow {
-        public MessageWindow(String locatorId, String title, String message) {
-            super(locatorId);
+    class MessageWindow extends Window {
+        public MessageWindow(String title, String message) {
+            super();
 
-            LocatableHTMLPane htmlPane = new LocatableHTMLPane(extendLocatorId("winDetailsPane"));
+            HTMLPane htmlPane = new HTMLPane();
             htmlPane.setMargin(10);
             htmlPane.setDefaultWidth(600);
             htmlPane.setDefaultHeight(400);

@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration;
 
+import static java.util.EnumSet.of;
+
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -53,10 +55,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceD
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-
-import static java.util.EnumSet.*;
 
 /**
  * A view for editing a group's configuration.
@@ -93,7 +93,7 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
 
         if (!this.resourcePermission.isConfigureWrite()) {
             Message message = new Message(MSG.view_group_resConfig_edit_noperm(), Message.Severity.Info, of(
-                    Message.Option.Transient, Message.Option.Sticky));
+                Message.Option.Transient, Message.Option.Sticky));
             CoreGUI.getMessageCenter().notify(message);
         }
     }
@@ -105,7 +105,7 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
         buttonbar.setMembersMargin(5);
         buttonbar.setLayoutMargin(5);
 
-        this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
+        this.saveButton = new EnhancedIButton(MSG.common_button_save());
         this.saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();
@@ -116,7 +116,6 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
         return buttonbar;
     }
 
-
     @Override
     public void refresh() {
         if (this.refreshing) {
@@ -124,7 +123,7 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
         }
 
         this.refreshing = true;
-        
+
         if (editor != null) {
             editor.destroy();
             removeMember(editor);
@@ -139,13 +138,12 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
 
     private void initEditor() {
         if (this.configurationDefinition != null && this.memberConfigurations != null) {
-            this.editor = new GroupConfigurationEditor(this.extendLocatorId("Editor"), this.configurationDefinition,
-                this.memberConfigurations);
+            this.editor = new GroupConfigurationEditor(this.configurationDefinition, this.memberConfigurations);
             this.editor.setOverflow(Overflow.AUTO);
             this.editor.addPropertyValueChangeListener(this);
             this.editor.setReadOnly(!this.resourcePermission.isConfigureWrite());
             addMember(this.editor);
-            addMember(createButtonBar());            
+            addMember(createButtonBar());
             this.refreshing = false; // when we get here, we know we are done the refresh
         }
     }
@@ -226,11 +224,12 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
                 }
 
                 public void onSuccess(Void result) {
-                    String configHistoryUrl = LinkManager.getEntityTabLink(EntityContext.forGroup(group), ResourceDetailView.Tab.CONFIGURATION, ResourceDetailView.ConfigurationSubTab.HISTORY);
+                    String configHistoryUrl = LinkManager.getEntityTabLink(EntityContext.forGroup(group),
+                        ResourceDetailView.Tab.CONFIGURATION, ResourceDetailView.ConfigurationSubTab.HISTORY);
                     String configHistoryView = configHistoryUrl.substring(1); // chop off the leading '#'
                     Message message = new Message(MSG.view_group_resConfig_edit_saveInitiated_concise(), MSG
-                        .view_group_resConfig_edit_saveInitiated_full(group.getResourceType().getName(), group
-                            .getName()), Message.Severity.Info);
+                        .view_group_resConfig_edit_saveInitiated_full(group.getResourceType().getName(),
+                            group.getName()), Message.Severity.Info);
                     CoreGUI.goToView(configHistoryView, message);
                 }
             });

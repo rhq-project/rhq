@@ -50,18 +50,18 @@ public class ResourceMetricGraphView extends AbstractMetricGraphView {
 
     private HTMLFlow resourceTitle;
 
-    public ResourceMetricGraphView(String locatorId) {
-        super(locatorId);
+    public ResourceMetricGraphView() {
+        super();
     }
 
-    public ResourceMetricGraphView(String locatorId, int resourceId, int definitionId) {
-        super(locatorId, resourceId, definitionId);
+    public ResourceMetricGraphView(int resourceId, int definitionId) {
+        super(resourceId, definitionId);
     }
 
-    public ResourceMetricGraphView(String locatorId, int resourceId, MeasurementDefinition def,
+    public ResourceMetricGraphView(int resourceId, MeasurementDefinition def,
         List<MeasurementDataNumericHighLowComposite> data) {
 
-        super(locatorId, resourceId, def, data);
+        super(resourceId, def, data);
     }
 
     protected HTMLFlow getEntityTitle() {
@@ -110,8 +110,9 @@ public class ResourceMetricGraphView extends AbstractMetricGraphView {
                                     if (def.getId() == getDefinitionId()) {
                                         setDefinition(def);
 
-                                        GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(getEntityId(),
-                                            new int[] { getDefinitionId() }, 8, MeasurementUtils.UNIT_HOURS, 60,
+                                        GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(
+                                            getEntityId(), new int[] { getDefinitionId() }, 8,
+                                            MeasurementUtils.UNIT_HOURS, 60,
                                             new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                                                 public void onFailure(Throwable caught) {
                                                     CoreGUI.getErrorHandler().handleError(
@@ -147,9 +148,9 @@ public class ResourceMetricGraphView extends AbstractMetricGraphView {
     }
 
     @Override
-    public AbstractMetricGraphView getInstance(String locatorId, int entityId, MeasurementDefinition def,
+    public AbstractMetricGraphView getInstance(int entityId, MeasurementDefinition def,
         List<MeasurementDataNumericHighLowComposite> data) {
 
-        return new ResourceMetricGraphView(locatorId, entityId, def, data);
+        return new ResourceMetricGraphView(entityId, def, data);
     }
 }

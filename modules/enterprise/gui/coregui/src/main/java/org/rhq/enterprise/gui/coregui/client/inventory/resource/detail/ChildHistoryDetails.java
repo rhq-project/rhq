@@ -28,7 +28,6 @@ import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -65,7 +64,7 @@ public class ChildHistoryDetails extends LocatableVLayout {
     }
 
     private DynamicForm buildForCreate(CreateResourceHistory history) {
-        DynamicForm form = new LocatableDynamicForm(extendLocatorId("createForm"));
+        DynamicForm form = new DynamicForm();
         form.setWidth100();
         form.setHeight100();
         form.setWrapItemTitles(false);
@@ -145,7 +144,7 @@ public class ChildHistoryDetails extends LocatableVLayout {
     }
 
     private DynamicForm buildForDelete(DeleteResourceHistory history) {
-        DynamicForm form = new LocatableDynamicForm(extendLocatorId("deleteForm"));
+        DynamicForm form = new DynamicForm();
         form.setWidth100();
         form.setHeight100();
         form.setWrapItemTitles(false);

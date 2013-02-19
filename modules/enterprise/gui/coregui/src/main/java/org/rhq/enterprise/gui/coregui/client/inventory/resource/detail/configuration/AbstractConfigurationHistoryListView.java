@@ -49,10 +49,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public abstract class AbstractConfigurationHistoryListView<T
-        extends AbstractConfigurationHistoryDataSource
-        <? extends AbstractResourceConfigurationUpdate, ? extends AbstractResourceConfigurationUpdateCriteria>>
-        extends TableSection<T> {
+public abstract class AbstractConfigurationHistoryListView<T extends AbstractConfigurationHistoryDataSource<? extends AbstractResourceConfigurationUpdate, ? extends AbstractResourceConfigurationUpdateCriteria>>
+    extends TableSection<T> {
 
     private Integer resourceId;
     private boolean hasWritePerm; // can delete history or rollback to a previous config
@@ -61,7 +59,7 @@ public abstract class AbstractConfigurationHistoryListView<T
      * Use this constructor to view config histories for all viewable Resources.
      */
     public AbstractConfigurationHistoryListView(String locatorId, String title, boolean hasWritePerm) {
-        super(locatorId, title);
+        super(title);
         this.hasWritePerm = hasWritePerm;
         this.resourceId = null;
     }
@@ -72,7 +70,7 @@ public abstract class AbstractConfigurationHistoryListView<T
      * @param resourceId a Resource ID
      */
     public AbstractConfigurationHistoryListView(String locatorId, String title, boolean hasWritePerm, int resourceId) {
-        super(locatorId, title, createCriteria(resourceId));
+        super(title, createCriteria(resourceId));
         this.hasWritePerm = hasWritePerm;
         this.resourceId = resourceId;
     }
@@ -96,34 +94,31 @@ public abstract class AbstractConfigurationHistoryListView<T
         List<ListGridField> fields = getDataSource().getListGridFields(this.resourceId == null);
         setListGridFields(true, fields.toArray(new ListGridField[fields.size()])); // true = always show the ID field
 
-        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
-            new AbstractTableAction(hasWritePerm ? TableActionEnablement.ANY : TableActionEnablement.NEVER) {
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    if (selection != null && selection.length > 0) {
-                        int[] doomedIds = new int[selection.length];
-                        int i = 0;
-                        for (ListGridRecord selected : selection) {
-                            doomedIds[i++] = selected
-                                .getAttributeAsInt(AbstractConfigurationHistoryDataSource.Field.ID);
-                            if (selected
-                                .getAttribute(AbstractConfigurationHistoryDataSource.Field.GROUP_CONFIG_UPDATE_ID) != null) {
-                                CoreGUI.getMessageCenter().notify(
-                                    new Message(MSG.view_configurationHistoryList_cannotDeleteGroupItems(),
-                                        Severity.Warning));
-                                return; // abort
-                            }
-                            if (Boolean.parseBoolean(selected
-                                .getAttribute(AbstractConfigurationHistoryDataSource.Field.CURRENT_CONFIG))) {
-                                CoreGUI.getMessageCenter().notify(
-                                    new Message(MSG.view_configurationHistoryList_cannotDeleteCurrent(),
-                                        Severity.Warning));
-                                return; // abort
-                            }
+        addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(), new AbstractTableAction(
+            hasWritePerm ? TableActionEnablement.ANY : TableActionEnablement.NEVER) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                if (selection != null && selection.length > 0) {
+                    int[] doomedIds = new int[selection.length];
+                    int i = 0;
+                    for (ListGridRecord selected : selection) {
+                        doomedIds[i++] = selected.getAttributeAsInt(AbstractConfigurationHistoryDataSource.Field.ID);
+                        if (selected.getAttribute(AbstractConfigurationHistoryDataSource.Field.GROUP_CONFIG_UPDATE_ID) != null) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message(MSG.view_configurationHistoryList_cannotDeleteGroupItems(),
+                                    Severity.Warning));
+                            return; // abort
                         }
-                        delete(doomedIds);
+                        if (Boolean.parseBoolean(selected
+                            .getAttribute(AbstractConfigurationHistoryDataSource.Field.CURRENT_CONFIG))) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message(MSG.view_configurationHistoryList_cannotDeleteCurrent(), Severity.Warning));
+                            return; // abort
+                        }
                     }
+                    delete(doomedIds);
                 }
-            });
+            }
+        });
 
         addTableAction(extendLocatorId("Compare"), MSG.common_button_compare(), null, new AbstractTableAction(
             TableActionEnablement.MULTIPLE) {
@@ -140,39 +135,39 @@ public abstract class AbstractConfigurationHistoryListView<T
 
                 Criteria criteria = new Criteria();
                 criteria.addCriteria(AbstractConfigurationHistoryDataSource.CriteriaField.IDS,
-                        updateIds.toArray(new Integer[updateIds.size()]));
+                    updateIds.toArray(new Integer[updateIds.size()]));
 
                 DSRequest requestProperties = new DSRequest();
-                requestProperties.setAttribute(AbstractConfigurationHistoryDataSource.RequestProperty.FETCH_CONFIGURATION,
-                        true);
+                requestProperties.setAttribute(
+                    AbstractConfigurationHistoryDataSource.RequestProperty.FETCH_CONFIGURATION, true);
 
                 getDataSource().fetchData(criteria, new DSCallback() {
-                            public void execute(DSResponse response, Object rawData, DSRequest request) {
-                                ArrayList<AbstractResourceConfigurationUpdate> updatesWithConfigs = new ArrayList<AbstractResourceConfigurationUpdate>();
-                                Record[] records = response.getData();
-                                for (Record record : records) {
-                                    AbstractResourceConfigurationUpdate update = (AbstractResourceConfigurationUpdate) record
-                                            .getAttributeAsObject(AbstractConfigurationHistoryDataSource.Field.OBJECT);
-                                    updatesWithConfigs.add(update);
-                                }
-                                ConfigurationComparisonView.displayComparisonDialog(updatesWithConfigs);
-                            }
-                        }, requestProperties);
+                    public void execute(DSResponse response, Object rawData, DSRequest request) {
+                        ArrayList<AbstractResourceConfigurationUpdate> updatesWithConfigs = new ArrayList<AbstractResourceConfigurationUpdate>();
+                        Record[] records = response.getData();
+                        for (Record record : records) {
+                            AbstractResourceConfigurationUpdate update = (AbstractResourceConfigurationUpdate) record
+                                .getAttributeAsObject(AbstractConfigurationHistoryDataSource.Field.OBJECT);
+                            updatesWithConfigs.add(update);
+                        }
+                        ConfigurationComparisonView.displayComparisonDialog(updatesWithConfigs);
+                    }
+                }, requestProperties);
             }
         });
 
         if (getResourceId() != null) {
-            addTableAction(extendLocatorId("Rollback"), MSG.view_configurationHistoryList_rollback(), MSG
-                .common_msg_areYouSure(), new AbstractTableAction(hasWritePerm ? TableActionEnablement.SINGLE
-                : TableActionEnablement.NEVER) {
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    if (selection != null && selection.length == 1) {
-                        ListGridRecord record = selection[0];
-                        int configHistoryIdToRollbackTo = record.getAttributeAsInt(AbstractConfigurationHistoryDataSource.Field.ID);
-                        rollback(configHistoryIdToRollbackTo);
+            addTableAction(MSG.view_configurationHistoryList_rollback(), MSG.common_msg_areYouSure(),
+                new AbstractTableAction(hasWritePerm ? TableActionEnablement.SINGLE : TableActionEnablement.NEVER) {
+                    public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                        if (selection != null && selection.length == 1) {
+                            ListGridRecord record = selection[0];
+                            int configHistoryIdToRollbackTo = record
+                                .getAttributeAsInt(AbstractConfigurationHistoryDataSource.Field.ID);
+                            rollback(configHistoryIdToRollbackTo);
+                        }
                     }
-                }
-            });
+                });
         }
 
         super.configureTable();

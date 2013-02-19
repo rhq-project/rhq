@@ -268,8 +268,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
                 subjectListGridRecords = filteredSubjectRecords.toArray(new ListGridRecord[filteredSubjectRecords
                     .size()]);
             }
-            this.subjectSelector = new RoleSubjectSelector(this.extendLocatorId("Subjects"), subjectListGridRecords,
-                !this.hasManageSecurityPermission);
+            this.subjectSelector = new RoleSubjectSelector(subjectListGridRecords, !this.hasManageSecurityPermission);
             this.subjectSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
                 public void onSelectionChanged(AssignedItemsChangedEvent event) {
                     onItemChanged();
@@ -280,8 +279,8 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
             if (this.isLdapConfigured) {
                 Record[] ldapGroupRecords = record.getAttributeAsRecordArray(RolesDataSource.Field.LDAP_GROUPS);
                 ListGridRecord[] ldapGroupListGridRecords = toListGridRecordArray(ldapGroupRecords);
-                this.ldapGroupSelector = new RoleLdapGroupSelector(this.extendLocatorId("LdapGroups"),
-                    ldapGroupListGridRecords, !this.hasManageSecurityPermission);
+                this.ldapGroupSelector = new RoleLdapGroupSelector(ldapGroupListGridRecords,
+                    !this.hasManageSecurityPermission);
                 this.ldapGroupSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
                     public void onSelectionChanged(AssignedItemsChangedEvent event) {
                         onItemChanged();

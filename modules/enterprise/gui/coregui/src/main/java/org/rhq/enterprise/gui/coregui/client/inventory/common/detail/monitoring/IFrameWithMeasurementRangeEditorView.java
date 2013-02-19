@@ -20,10 +20,10 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.monitoring;
 
 import com.smartgwt.client.types.ContentsType;
+import com.smartgwt.client.widgets.HTMLPane;
 
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -35,22 +35,22 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 public class IFrameWithMeasurementRangeEditorView extends LocatableVLayout implements RefreshableView {
 
     UserPreferencesMeasurementRangeEditor editor;
-    LocatableHTMLPane iframe;
-    
-    public IFrameWithMeasurementRangeEditorView(String locatorId, final String url) {
-        super(locatorId);
+    HTMLPane iframe;
 
-        iframe = new LocatableHTMLPane(extendLocatorId("jsf")); 
+    public IFrameWithMeasurementRangeEditorView(final String url) {
+        super();
+
+        iframe = new HTMLPane();
         iframe.setContentsURL(url);
         iframe.setContentsType(ContentsType.PAGE);
         iframe.setWidth100();
-        
+
         addMember(iframe);
 
         LocatableToolStrip footer = new LocatableToolStrip("toolStrip");
         footer.setWidth100();
         addMember(footer);
-                
+
         editor = new UserPreferencesMeasurementRangeEditor(extendLocatorId("range")) {
             @Override
             public void setMetricRangeProperties(MetricRangePreferences prefs) {
@@ -58,10 +58,10 @@ public class IFrameWithMeasurementRangeEditorView extends LocatableVLayout imple
                 iframe.setContentsURL(url);
             }
         };
-        
+
         footer.addMember(editor);
     }
-    
+
     public void refresh() {
         editor.refresh(null);
     }

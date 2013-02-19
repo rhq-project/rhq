@@ -104,7 +104,7 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
 
     protected DriftDefinitionTemplatesView(String locatorId, String tableTitle, ResourceType type,
         boolean hasWriteAccess) {
-        super(locatorId, tableTitle, null, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
+        super(tableTitle, null, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
 
         this.type = type;
         this.hasWriteAccess = hasWriteAccess;
@@ -150,36 +150,36 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
         TableActionEnablement deleteEnablement = hasWriteAccess ? TableActionEnablement.ANY
             : TableActionEnablement.NEVER;
 
-        addTableAction("New", MSG.common_button_new(), new AbstractTableAction(addEnablement) {
+        addTableAction(MSG.common_button_new(), new AbstractTableAction(addEnablement) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 add();
             }
         });
 
-        addTableAction("Delete", MSG.common_button_delete(), MSG.view_drift_confirm_deleteTemplate(),
-            new AbstractTableAction(deleteEnablement) {
+        addTableAction(MSG.common_button_delete(), MSG.view_drift_confirm_deleteTemplate(), new AbstractTableAction(
+            deleteEnablement) {
 
-                boolean result = false;
+            boolean result = false;
 
-                @Override
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    if (super.isEnabled(selection)) {
-                        for (ListGridRecord record : selection) {
-                            if (!record.getAttributeAsBoolean(DriftDefinitionTemplateDataSource.ATTR_IS_USER_DEFINED)
-                                .booleanValue()) {
-                                return false;
-                            }
+            @Override
+            public boolean isEnabled(ListGridRecord[] selection) {
+                if (super.isEnabled(selection)) {
+                    for (ListGridRecord record : selection) {
+                        if (!record.getAttributeAsBoolean(DriftDefinitionTemplateDataSource.ATTR_IS_USER_DEFINED)
+                            .booleanValue()) {
+                            return false;
                         }
-                        result = true;
                     }
-
-                    return result;
+                    result = true;
                 }
 
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    delete(selection);
-                }
-            });
+                return result;
+            }
+
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                delete(selection);
+            }
+        });
     }
 
     private void add() {
@@ -270,7 +270,7 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
         private TemplateDefinitionsDataSource dataSource;
 
         public TemplateDefinitionsView(String locatorId, int templateId) {
-            super(locatorId, null, true);
+            super(null, true);
 
             this.templateId = templateId;
 

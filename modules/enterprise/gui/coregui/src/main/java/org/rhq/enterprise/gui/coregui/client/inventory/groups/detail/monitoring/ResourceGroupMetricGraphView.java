@@ -47,18 +47,18 @@ public class ResourceGroupMetricGraphView extends AbstractMetricGraphView {
 
     private HTMLFlow resourceGroupTitle;
 
-    public ResourceGroupMetricGraphView(String locatorId) {
-        super(locatorId);
+    public ResourceGroupMetricGraphView() {
+        super();
     }
 
-    public ResourceGroupMetricGraphView(String locatorId, int groupId, int definitionId) {
-        super(locatorId, groupId, definitionId);
+    public ResourceGroupMetricGraphView(int groupId, int definitionId) {
+        super(groupId, definitionId);
     }
 
-    public ResourceGroupMetricGraphView(String locatorId, int groupId, MeasurementDefinition def,
+    public ResourceGroupMetricGraphView(int groupId, MeasurementDefinition def,
         List<MeasurementDataNumericHighLowComposite> data) {
 
-        super(locatorId, groupId, def, data);
+        super(groupId, def, data);
     }
 
     protected HTMLFlow getEntityTitle() {
@@ -126,9 +126,9 @@ public class ResourceGroupMetricGraphView extends AbstractMetricGraphView {
     }
 
     @Override
-    public AbstractMetricGraphView getInstance(String locatorId, int entityId, MeasurementDefinition def,
+    public AbstractMetricGraphView getInstance(int entityId, MeasurementDefinition def,
         List<MeasurementDataNumericHighLowComposite> data) {
 
-        return new ResourceGroupMetricGraphView(locatorId, entityId, def, data);
+        return new ResourceGroupMetricGraphView(entityId, def, data);
     }
 }

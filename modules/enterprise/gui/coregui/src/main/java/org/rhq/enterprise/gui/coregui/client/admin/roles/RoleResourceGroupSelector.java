@@ -32,7 +32,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.Resour
 public class RoleResourceGroupSelector extends ResourceGroupSelector {
 
     public RoleResourceGroupSelector(String locatorId, ListGridRecord[] groupRecords, boolean isReadOnly) {
-        super(locatorId, isReadOnly);
+        super(isReadOnly);
         
         setAssigned(groupRecords);
     }

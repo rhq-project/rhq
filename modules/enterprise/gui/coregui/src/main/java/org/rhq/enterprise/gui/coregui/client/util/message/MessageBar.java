@@ -37,7 +37,6 @@ import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
 
 /**
  * A bar for displaying a message at the top of a page - the equivalent of the JSF h:messages component.
@@ -72,7 +71,7 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
         label.setCanSelectText(true);
         addMember(label);
 
-        showDetailsMenu = new LocatableMenu(extendLocatorId("showDetailsMenu"));
+        showDetailsMenu = new Menu();
         MenuItem showDetailsMenuItem = new MenuItem(MSG.view_messageCenter_messageBarShowDetails());
         showDetailsMenuItem.addClickHandler(new ClickHandler() {
             @Override

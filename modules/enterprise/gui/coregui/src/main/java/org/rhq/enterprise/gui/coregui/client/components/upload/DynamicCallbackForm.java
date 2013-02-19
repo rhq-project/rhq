@@ -24,10 +24,14 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.smartgwt.client.widgets.form.DynamicForm;
 
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 
-public class DynamicCallbackForm extends LocatableDynamicForm implements DynamicCallbackFormImplHost {
+public class DynamicCallbackForm extends DynamicForm implements DynamicCallbackFormImplHost {
+
+    protected Messages MSG = CoreGUI.getMessages();
 
     private static int frameIndex = 0;
 
@@ -36,8 +40,8 @@ public class DynamicCallbackForm extends LocatableDynamicForm implements Dynamic
     private DynamicCallbackFormHandlerCollection formHandlers;
     private static DynamicCallbackFormImpl impl = GWT.create(DynamicCallbackFormImpl.class);
 
-    public DynamicCallbackForm(String locatorId, String frameName) {
-        super(locatorId);
+    public DynamicCallbackForm(String frameName) {
+        super();
         this.frameName = frameName + (frameIndex++);
         setTarget(this.frameName);
         init();

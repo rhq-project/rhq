@@ -55,7 +55,7 @@ public class BundleDeploymentListView extends Table<BundleDeploymentDataSource> 
     private final boolean canManageBundles;
 
     public BundleDeploymentListView(String locatorId, Criteria criteria, boolean canManageBundles) {
-        super(locatorId, MSG.view_bundle_bundleDeployments(), criteria);
+        super(MSG.view_bundle_bundleDeployments(), criteria);
         this.canManageBundles = canManageBundles;
         setDataSource(new BundleDeploymentDataSource());
         setHeaderIcon("subsystems/bundle/BundleDeployment_24.png");
@@ -72,16 +72,16 @@ public class BundleDeploymentListView extends Table<BundleDeploymentDataSource> 
     @Override
     protected void configureTable() {
         ListGridField idField = new ListGridField(BundleDeploymentDataSource.FIELD_ID, MSG.common_title_id());
-        ListGridField nameField = new ListGridField(BundleDeploymentDataSource.FIELD_NAME, MSG
-            .view_bundle_deploy_name());
-        ListGridField descriptionField = new ListGridField(BundleDeploymentDataSource.FIELD_DESCRIPTION, MSG
-            .common_title_description());
+        ListGridField nameField = new ListGridField(BundleDeploymentDataSource.FIELD_NAME,
+            MSG.view_bundle_deploy_name());
+        ListGridField descriptionField = new ListGridField(BundleDeploymentDataSource.FIELD_DESCRIPTION,
+            MSG.common_title_description());
         ListGridField bundleVersionField = new ListGridField(BundleDeploymentDataSource.FIELD_BUNDLE_VERSION_VERSION,
             MSG.view_bundle_bundleVersion());
-        ListGridField statusField = new ListGridField(BundleDeploymentDataSource.FIELD_STATUS, MSG
-            .common_title_status());
-        ListGridField deployTimeField = new ListGridField(BundleDeploymentDataSource.FIELD_DEPLOY_TIME, MSG
-            .view_bundle_deploy_time());
+        ListGridField statusField = new ListGridField(BundleDeploymentDataSource.FIELD_STATUS,
+            MSG.common_title_status());
+        ListGridField deployTimeField = new ListGridField(BundleDeploymentDataSource.FIELD_DEPLOY_TIME,
+            MSG.view_bundle_deploy_time());
         TimestampCellFormatter.prepareDateField(deployTimeField);
         deployTimeField.setType(ListGridFieldType.DATE);
 
@@ -90,9 +90,9 @@ public class BundleDeploymentListView extends Table<BundleDeploymentDataSource> 
             nameField.setCellFormatter(new CellFormatter() {
                 public String format(Object value, ListGridRecord record, int i, int i1) {
                     return "<a href=\""
-                        + LinkManager.getBundleDeploymentLink(record
-                            .getAttributeAsInt(BundleDeploymentDataSource.FIELD_BUNDLE_ID), record
-                            .getAttributeAsInt(BundleDeploymentDataSource.FIELD_ID)) + "\">"
+                        + LinkManager.getBundleDeploymentLink(
+                            record.getAttributeAsInt(BundleDeploymentDataSource.FIELD_BUNDLE_ID),
+                            record.getAttributeAsInt(BundleDeploymentDataSource.FIELD_ID)) + "\">"
                         + StringUtility.escapeHtml(String.valueOf(value)) + "</a>";
                 }
             });
@@ -105,9 +105,9 @@ public class BundleDeploymentListView extends Table<BundleDeploymentDataSource> 
         bundleVersionField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord record, int i, int i1) {
                 return "<a href=\""
-                    + LinkManager.getBundleVersionLink(record
-                        .getAttributeAsInt(BundleDeploymentDataSource.FIELD_BUNDLE_ID), record
-                        .getAttributeAsInt(BundleDeploymentDataSource.FIELD_BUNDLE_VERSION_ID)) + "\">"
+                    + LinkManager.getBundleVersionLink(
+                        record.getAttributeAsInt(BundleDeploymentDataSource.FIELD_BUNDLE_ID),
+                        record.getAttributeAsInt(BundleDeploymentDataSource.FIELD_BUNDLE_VERSION_ID)) + "\">"
                     + String.valueOf(o) + "</a>";
             }
         });
@@ -151,8 +151,8 @@ public class BundleDeploymentListView extends Table<BundleDeploymentDataSource> 
                     if (selectedRows != null && selectedRows.length == 1) {
                         String selectedId = selectedRows[0].getAttribute(BundleVersionDataSource.FIELD_BUNDLE_ID);
                         String selectedVersionId = selectedRows[0].getAttribute(BundleVersionDataSource.FIELD_ID);
-                        CoreGUI.goToView(LinkManager.getBundleDeploymentLink(Integer.valueOf(selectedId), Integer
-                            .valueOf(selectedVersionId)));
+                        CoreGUI.goToView(LinkManager.getBundleDeploymentLink(Integer.valueOf(selectedId),
+                            Integer.valueOf(selectedVersionId)));
                     }
                 }
             });

@@ -63,14 +63,13 @@ import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 public class BundleView extends LocatableVLayout implements BookmarkableView {
-    private LocatableDynamicForm form;
+    private DynamicForm form;
 
     private int bundleBeingViewed = 0;
     private HeaderLabel headerLabel;
@@ -169,7 +168,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
 
     private DynamicForm createSummaryForm() {
 
-        form = new LocatableDynamicForm(extendLocatorId("Summary"));
+        form = new DynamicForm();
         form.setWidth100();
         form.setColWidths("20%", "40%", "40%");
         form.setNumCols(3);
@@ -202,9 +201,9 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
     }
 
     private Canvas getActionCanvas() {
-        VLayout layout = new LocatableVLayout(form.extendLocatorId("Actions"), 10);
+        VLayout layout = new LocatableVLayout(10);
 
-        IButton deployButton = new LocatableIButton(form.extendLocatorId("Deploy"), MSG.view_bundle_deploy());
+        IButton deployButton = new EnhancedIButton(MSG.view_bundle_deploy());
         deployButton.setIcon(IconEnum.BUNDLE_DEPLOY.getIcon16x16Path());
         deployButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -233,7 +232,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
         });
         layout.addMember(deployButton);
 
-        IButton deleteButton = new LocatableIButton(form.extendLocatorId("Delete"), MSG.common_button_delete());
+        IButton deleteButton = new EnhancedIButton(MSG.common_button_delete());
         deleteButton.setIcon(IconEnum.BUNDLE_DELETE.getIcon16x16Path());
         deleteButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {

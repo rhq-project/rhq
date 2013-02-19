@@ -38,38 +38,38 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  */
 public abstract class TableSection<DS extends RPCDataSource> extends AbstractTableSection<DS, Integer> {
 
-    public TableSection(String locatorId, String tableTitle, boolean autoFetchData) {
-        super(locatorId, tableTitle, autoFetchData);
+    public TableSection(String tableTitle, boolean autoFetchData) {
+        super(tableTitle, autoFetchData);
     }
 
-    public TableSection(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
+    public TableSection(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
         String[] excludedFieldNames, boolean autoFetchData) {
-        super(locatorId, tableTitle, criteria, sortSpecifiers, excludedFieldNames, autoFetchData);
+        super(tableTitle, criteria, sortSpecifiers, excludedFieldNames, autoFetchData);
     }
 
-    public TableSection(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
+    public TableSection(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
         String[] excludedFieldNames) {
-        super(locatorId, tableTitle, criteria, sortSpecifiers, excludedFieldNames);
+        super(tableTitle, criteria, sortSpecifiers, excludedFieldNames);
     }
 
-    public TableSection(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers) {
-        super(locatorId, tableTitle, criteria, sortSpecifiers);
+    public TableSection(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers) {
+        super(tableTitle, criteria, sortSpecifiers);
     }
 
-    public TableSection(String locatorId, String tableTitle, Criteria criteria) {
-        super(locatorId, tableTitle, criteria);
+    public TableSection(String tableTitle, Criteria criteria) {
+        super(tableTitle, criteria);
     }
 
-    public TableSection(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames) {
-        super(locatorId, tableTitle, sortSpecifiers, excludedFieldNames);
+    public TableSection(String tableTitle, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames) {
+        super(tableTitle, sortSpecifiers, excludedFieldNames);
     }
 
-    public TableSection(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers) {
-        super(locatorId, tableTitle, sortSpecifiers);
+    public TableSection(String tableTitle, SortSpecifier[] sortSpecifiers) {
+        super(tableTitle, sortSpecifiers);
     }
 
-    public TableSection(String locatorId, String tableTitle) {
-        super(locatorId, tableTitle);
+    public TableSection(String tableTitle) {
+        super(tableTitle);
     }
 
     @Override
@@ -88,8 +88,8 @@ public abstract class TableSection<DS extends RPCDataSource> extends AbstractTab
         if (id != null && id.intValue() > 0) {
             CoreGUI.goToView(getBasePath() + "/" + id);
         } else {
-            String msg = MSG.view_tableSection_error_badId(this.getClass().toString(), (id == null) ? "null" : id
-                .toString());
+            String msg = MSG.view_tableSection_error_badId(this.getClass().toString(),
+                (id == null) ? "null" : id.toString());
             CoreGUI.getErrorHandler().handleError(msg);
             throw new IllegalArgumentException(msg);
         }

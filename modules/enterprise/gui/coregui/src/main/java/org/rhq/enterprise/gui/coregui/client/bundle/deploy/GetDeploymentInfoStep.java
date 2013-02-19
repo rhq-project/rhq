@@ -31,8 +31,6 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author Jay Shaughnessy
@@ -52,13 +50,9 @@ public class GetDeploymentInfoStep extends AbstractWizardStep {
         return MSG.view_bundle_deployWizard_getInfoStep();
     }
 
-    public Canvas getCanvas(Locatable parent) {
+    public Canvas getCanvas() {
         if (form == null) {
-            if (parent != null) {
-                form = new LocatableDynamicForm(parent.extendLocatorId("BundleDeployGetDepInfo"));
-            } else {
-                form = new LocatableDynamicForm("BundleDeployGetDepInfo");
-            }
+            form = new DynamicForm();
             form.setWidth100();
             form.setNumCols(2);
             form.setColWidths("50%", "*");

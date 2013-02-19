@@ -37,7 +37,6 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardSte
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -58,21 +57,18 @@ public class ResourceFactoryConfigurationStep extends AbstractWizardStep impleme
         this.wizard = wizard;
     }
 
-    public Canvas getCanvas(Locatable parent) {
+    public Canvas getCanvas() {
         boolean newCanvas = this.vLayout == null;
 
         if (newCanvas) {
-            String locatorId = (null == parent) ? "ResourceFactoryConfig" : parent
-                .extendLocatorId("ResourceFactoryConfig");
-            this.vLayout = new LocatableVLayout(locatorId);
+            this.vLayout = new LocatableVLayout();
 
             // only create the timeout member 1 time, even if we end up recreating the config editor
             TreeSet<TimeUnit> supportedUnits = new TreeSet<TimeUnit>();
             supportedUnits.add(TimeUnit.SECONDS);
             supportedUnits.add(TimeUnit.MINUTES);
             timeoutItem = new DurationItem(AbstractOperationScheduleDataSource.Field.TIMEOUT,
-                MSG.view_operationScheduleDetails_field_timeout(), TimeUnit.MILLISECONDS, supportedUnits, false, false,
-                vLayout);
+                MSG.view_operationScheduleDetails_field_timeout(), TimeUnit.MILLISECONDS, supportedUnits, false, false);
             ProductInfo productInfo = CoreGUI.get().getProductInfo();
             timeoutItem.setContextualHelp(MSG.widget_resourceFactoryWizard_timeoutHelp(productInfo.getShortName()));
 
@@ -112,7 +108,7 @@ public class ResourceFactoryConfigurationStep extends AbstractWizardStep impleme
                         }
 
                         private void createAndAddConfigurationEditor(ConfigurationDefinition def) {
-                            editor = new ConfigurationEditor(vLayout.extendLocatorId("Editor"), def, startingConfig);
+                            editor = new ConfigurationEditor(def, startingConfig);
                             editor.setAllPropertiesWritable(true);
                             editor.addPropertyValueChangeListener(ResourceFactoryConfigurationStep.this);
                             wizard.getView().updateButtonEnablement();

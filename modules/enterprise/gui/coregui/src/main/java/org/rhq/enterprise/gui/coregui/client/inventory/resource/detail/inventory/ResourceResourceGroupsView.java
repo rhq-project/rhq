@@ -33,7 +33,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -77,7 +77,7 @@ public class ResourceResourceGroupsView extends LocatableVLayout {
         toolStrip.setMembersMargin(5);
         toolStrip.setLayoutMargin(5);
 
-        IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
+        IButton saveButton = new EnhancedIButton(MSG.common_button_save());
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();
@@ -123,9 +123,8 @@ public class ResourceResourceGroupsView extends LocatableVLayout {
                         .getMessageCenter()
                         .notify(
                             new Message(
-                                MSG
-                                    .view_resourceResourceGroupList_message_updateSuccess(ResourceResourceGroupsView.this.resource
-                                        .getName()), Message.Severity.Info));
+                                MSG.view_resourceResourceGroupList_message_updateSuccess(ResourceResourceGroupsView.this.resource
+                                    .getName()), Message.Severity.Info));
                     CoreGUI.refresh();
                 }
             });

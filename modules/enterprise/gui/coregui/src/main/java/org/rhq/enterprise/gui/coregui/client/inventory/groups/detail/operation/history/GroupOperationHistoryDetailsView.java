@@ -23,6 +23,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
+
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -54,17 +55,17 @@ public class GroupOperationHistoryDetailsView extends AbstractOperationHistoryDe
         criteria.fetchParameters(true);
 
         GWTServiceLookup.getOperationService().findGroupOperationHistoriesByCriteria(criteria,
-                new AsyncCallback<PageList<GroupOperationHistory>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler()
-                                .handleError(MSG.view_operationHistoryDetails_error_fetchFailure(), caught);
-                    }
+            new AsyncCallback<PageList<GroupOperationHistory>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler()
+                        .handleError(MSG.view_operationHistoryDetails_error_fetchFailure(), caught);
+                }
 
-                    public void onSuccess(PageList<GroupOperationHistory> result) {
-                        GroupOperationHistory groupOperationHistory = result.get(0);
-                        displayDetails(groupOperationHistory);
-                    }
-                });
+                public void onSuccess(PageList<GroupOperationHistory> result) {
+                    GroupOperationHistory groupOperationHistory = result.get(0);
+                    displayDetails(groupOperationHistory);
+                }
+            });
     }
 
     @Override
@@ -75,9 +76,8 @@ public class GroupOperationHistoryDetailsView extends AbstractOperationHistoryDe
         title.setHeight(27);
         resultsSection.addMember(title);
 
-        GroupMemberResourceOperationHistoryListView memberHistoryListView =
-                new GroupMemberResourceOperationHistoryListView(extendLocatorId("MembersListView"), this.groupComposite,
-                        getOperationHistory().getId());
+        GroupMemberResourceOperationHistoryListView memberHistoryListView = new GroupMemberResourceOperationHistoryListView(
+            this.groupComposite, getOperationHistory().getId());
         memberHistoryListView.setOverflow(Overflow.VISIBLE);
         memberHistoryListView.setHeight(200);
         resultsSection.addMember(memberHistoryListView);

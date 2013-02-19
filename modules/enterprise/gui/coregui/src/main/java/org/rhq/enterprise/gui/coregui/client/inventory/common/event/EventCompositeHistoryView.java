@@ -93,7 +93,7 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
     }
 
     private EventCompositeHistoryView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess) {
-        super(locatorId, tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
+        super(tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
         this.context = context;
         this.hasWriteAccess = hasWriteAccess;
 
@@ -125,10 +125,10 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
         severityIcons.put(EventSeverity.WARN.name(), ImageManager.getEventSeverityBadge(EventSeverity.WARN));
         severityIcons.put(EventSeverity.ERROR.name(), ImageManager.getEventSeverityBadge(EventSeverity.ERROR));
         severityIcons.put(EventSeverity.FATAL.name(), ImageManager.getEventSeverityBadge(EventSeverity.FATAL));
-        final EnumSelectItem severityFilter = new EnumSelectItem(EventCompositeDatasource.FILTER_SEVERITIES, MSG
-            .view_inventory_eventHistory_severityFilter(), EventSeverity.class, severities, severityIcons);
+        final EnumSelectItem severityFilter = new EnumSelectItem(EventCompositeDatasource.FILTER_SEVERITIES,
+            MSG.view_inventory_eventHistory_severityFilter(), EventSeverity.class, severities, severityIcons);
 
-        startDateFilter = new DateTimeFilterItem(DateTimeFilterItem.START_DATE_FILTER, MSG.filter_from_date() );
+        startDateFilter = new DateTimeFilterItem(DateTimeFilterItem.START_DATE_FILTER, MSG.filter_from_date());
         endDateFilter = new DateTimeFilterItem(DateTimeFilterItem.END_DATE_FILTER, MSG.filter_to_date());
 
         SpacerItem spacerItem = new SpacerItem();
@@ -164,21 +164,21 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
     private void setupTableInteractions() {
         TableActionEnablement singleTargetEnablement = hasWriteAccess ? TableActionEnablement.ANY
             : TableActionEnablement.NEVER;
-        addTableAction("deleteButton", MSG.common_button_delete(), MSG.common_msg_areYouSure(),
-            new AbstractTableAction(singleTargetEnablement) {
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    deleteButtonPressed(selection);
-                }
-            });
+        addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(), new AbstractTableAction(
+            singleTargetEnablement) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                deleteButtonPressed(selection);
+            }
+        });
 
         TableActionEnablement multipleTargetEnablement = hasWriteAccess ? TableActionEnablement.ALWAYS
             : TableActionEnablement.NEVER;
-        addTableAction("purgeAllButton", MSG.common_button_purgeAll(), MSG.common_msg_areYouSure(),
-            new AbstractTableAction(multipleTargetEnablement) {
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    purgeButtonPressed();
-                }
-            });
+        addTableAction(MSG.common_button_purgeAll(), MSG.common_msg_areYouSure(), new AbstractTableAction(
+            multipleTargetEnablement) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                purgeButtonPressed();
+            }
+        });
     }
 
     private void deleteButtonPressed(ListGridRecord[] selection) {
@@ -190,8 +190,8 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
             @Override
             public void onSuccess(Integer result) {
                 CoreGUI.getMessageCenter().notify(
-                    new Message(MSG.view_inventory_eventHistory_deleteSuccessful(result.toString(), context
-                        .toShortString()), Severity.Info));
+                    new Message(MSG.view_inventory_eventHistory_deleteSuccessful(result.toString(),
+                        context.toShortString()), Severity.Info));
                 refresh();
             }
 
@@ -208,8 +208,8 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
             @Override
             public void onSuccess(Integer result) {
                 CoreGUI.getMessageCenter().notify(
-                    new Message(MSG.view_inventory_eventHistory_purgeSuccessful(result.toString(), context
-                        .toShortString()), Severity.Info));
+                    new Message(MSG.view_inventory_eventHistory_purgeSuccessful(result.toString(),
+                        context.toShortString()), Severity.Info));
                 refresh();
             }
 

@@ -49,7 +49,6 @@ import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.bundle.deploy.selection.SingleCompatibleResourceGroupSelector;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
@@ -62,8 +61,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -75,7 +72,7 @@ public class GetDestinationStep extends AbstractWizardStep {
     private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
     private final BundleDeployWizard wizard;
     private VLayout form;
-    DynamicForm valForm = new LocatableDynamicForm("GetDestinationStepValForm");
+    DynamicForm valForm = new DynamicForm();
     private SingleCompatibleResourceGroupSelector selector;
     private BundleDestination destination = new BundleDestination();
     private boolean createInProgress = false;
@@ -89,14 +86,9 @@ public class GetDestinationStep extends AbstractWizardStep {
         return MSG.view_bundle_deployWizard_getDestStep();
     }
 
-    public Canvas getCanvas(Locatable parent) {
+    public Canvas getCanvas() {
         if (this.form == null) {
-            if (parent != null) {
-                this.form = new LocatableVLayout(parent.extendLocatorId("BundleDeployGetDest"));
-            } else {
-                this.form = new LocatableVLayout("BundleDeployGetDest");
-            }
-
+            this.form = new LocatableVLayout();
             this.valForm.setWidth100();
             this.valForm.setNumCols(2);
             this.valForm.setColWidths("50%", "*");
@@ -116,8 +108,8 @@ public class GetDestinationStep extends AbstractWizardStep {
             });
             FormUtility.addContextualHelp(nameTextItem, MSG.view_bundle_deployWizard_getDest_name_help());
 
-            final TextAreaItem descriptionTextAreaItem = new TextAreaItem("description", MSG
-                .view_bundle_deployWizard_getDest_desc());
+            final TextAreaItem descriptionTextAreaItem = new TextAreaItem("description",
+                MSG.view_bundle_deployWizard_getDest_desc());
             descriptionTextAreaItem.setWidth(300);
             descriptionTextAreaItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
@@ -129,8 +121,8 @@ public class GetDestinationStep extends AbstractWizardStep {
                 }
             });
 
-            final TextItem deployDirTextItem = new TextItem("deployDir", MSG
-                .view_bundle_deployWizard_getDest_deployDir());
+            final TextItem deployDirTextItem = new TextItem("deployDir",
+                MSG.view_bundle_deployWizard_getDest_deployDir());
             deployDirTextItem.setWidth(300);
             deployDirTextItem.setRequired(true);
             deployDirTextItem.addChangedHandler(new ChangedHandler() {
@@ -144,8 +136,8 @@ public class GetDestinationStep extends AbstractWizardStep {
             });
             FormUtility.addContextualHelp(deployDirTextItem, MSG.view_bundle_deployWizard_getDest_deployDir_help());
 
-            this.destBaseDirItem = new RadioGroupItem("destBaseDir", MSG
-                .view_bundle_deployWizard_getDest_destBaseDirName());
+            this.destBaseDirItem = new RadioGroupItem("destBaseDir",
+                MSG.view_bundle_deployWizard_getDest_destBaseDirName());
             this.destBaseDirItem.setWidth(300);
             this.destBaseDirItem.setRequired(true);
             this.destBaseDirItem.setDisabled(true);
@@ -250,8 +242,8 @@ public class GetDestinationStep extends AbstractWizardStep {
                     wizard.setNewDestination(true);
                     CoreGUI.getMessageCenter().notify(
                         new Message(MSG.view_bundle_deployWizard_destinationCreatedDetail_concise(result.getName()),
-                            MSG.view_bundle_deployWizard_destinationCreatedDetail(result.getName(), result
-                                .getDescription()), Severity.Info));
+                            MSG.view_bundle_deployWizard_destinationCreatedDetail(result.getName(),
+                                result.getDescription()), Severity.Info));
                     createInProgress = false;
                     wizard.getView().incrementStep();
                 }
@@ -287,8 +279,8 @@ public class GetDestinationStep extends AbstractWizardStep {
                                 menuItems = new LinkedHashMap<String, String>(baseDirs.size());
                                 for (BundleDestinationBaseDirectory baseDir : baseDirs) {
                                     if (baseDir.getDescription() != null) {
-                                        menuItems.put(baseDir.getName(), "<b>" + baseDir.getName() + "</b>: "
-                                            + baseDir.getDescription());
+                                        menuItems.put(baseDir.getName(),
+                                            "<b>" + baseDir.getName() + "</b>: " + baseDir.getDescription());
                                     } else {
                                         menuItems.put(baseDir.getName(), baseDir.getName());
                                     }
@@ -348,7 +340,7 @@ public class GetDestinationStep extends AbstractWizardStep {
                 });
             return true;
         }
-        
+
         @Override
         public void groupCreateCallback(final ResourceGroup group) {
             // note: "group" is essentially a flyweight - it doesn't have much other than ID

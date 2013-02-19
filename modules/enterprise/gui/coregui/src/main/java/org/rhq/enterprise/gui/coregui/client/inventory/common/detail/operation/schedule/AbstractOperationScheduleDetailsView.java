@@ -117,6 +117,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
     }
 
     protected abstract boolean hasControlPermission();
+
     protected abstract int getResourceId();
 
     @Override
@@ -248,7 +249,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
         hr = new HTMLFlow("<hr/>");
         contentPane.addMember(hr);
 
-        this.notesForm = new EnhancedDynamicForm(extendLocatorId("NotesForm"), isReadOnly(), isNewRecord());
+        this.notesForm = new EnhancedDynamicForm(isReadOnly(), isNewRecord());
         this.notesForm.setColWidths(FIRST_COLUMN_WIDTH, "50%", "140", "50%");
 
         this.notesForm.addItemChangedHandler(new ItemChangedHandler() {
@@ -264,7 +265,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
         supportedUnits.add(TimeUnit.MINUTES);
         supportedUnits.add(TimeUnit.HOURS);
         DurationItem timeoutItem = new DurationItem(AbstractOperationScheduleDataSource.Field.TIMEOUT,
-            MSG.view_operationScheduleDetails_field_timeout(), supportedUnits, false, isReadOnly(), this.notesForm);
+            MSG.view_operationScheduleDetails_field_timeout(), supportedUnits, false, isReadOnly());
         ProductInfo productInfo = CoreGUI.get().getProductInfo();
         timeoutItem.setContextualHelp(MSG.view_operationScheduleDetails_fieldHelp_timeout(productInfo.getShortName()));
         notesFields.add(timeoutItem);
@@ -463,8 +464,8 @@ public abstract class AbstractOperationScheduleDetailsView extends
 
                         @Override
                         public void onFailure(Throwable throwable) {
-                            operationParametersConfigurationEditor = new ConfigurationEditor("ParametersEditor",
-                                parametersDefinition, operationParameters);
+                            operationParametersConfigurationEditor = new ConfigurationEditor(parametersDefinition,
+                                operationParameters);
                             operationParametersConfigurationEditor.setReadOnly(isReadOnly());
                             operationParametersConfigurationHolder.addMember(operationParametersConfigurationEditor);
                             operationParametersConfigurationHolder.show();
@@ -473,8 +474,8 @@ public abstract class AbstractOperationScheduleDetailsView extends
 
                         @Override
                         public void onSuccess(ConfigurationDefinition result) {
-                            operationParametersConfigurationEditor = new ConfigurationEditor("ParametersEditor",
-                                result, operationParameters);
+                            operationParametersConfigurationEditor = new ConfigurationEditor(result,
+                                operationParameters);
                             operationParametersConfigurationEditor.setReadOnly(isReadOnly());
                             operationParametersConfigurationHolder.addMember(operationParametersConfigurationEditor);
                             operationParametersConfigurationHolder.show();

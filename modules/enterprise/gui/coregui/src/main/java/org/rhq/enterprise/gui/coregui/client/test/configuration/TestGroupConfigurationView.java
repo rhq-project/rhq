@@ -40,19 +40,18 @@ import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyVa
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeListener;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Ian Springer
  */
-public class TestGroupConfigurationView
-    extends LocatableVLayout implements PropertyValueChangeListener {
+public class TestGroupConfigurationView extends LocatableVLayout implements PropertyValueChangeListener {
 
     private static final int GROUP_SIZE = 2;
 
     private ConfigurationEditor editor;
-    private LocatableIButton saveButton;
+    private EnhancedIButton saveButton;
     private ToolStrip buttonBar;
     private ConfigurationDefinition configurationDefinition;
     private List<GroupMemberConfiguration> memberConfigurations;
@@ -84,7 +83,7 @@ public class TestGroupConfigurationView
         buttonBar.setWidth100();
         buttonBar.addMember(new LayoutSpacer());
 
-        this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), "Save");
+        this.saveButton = new EnhancedIButton(MSG.common_button_save());
         this.saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();
@@ -106,13 +105,11 @@ public class TestGroupConfigurationView
                 this.saveButton.enable();
                 message = new Message("All properties now have valid values, so the configuration can now be saved.",
                     Message.Severity.Info, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
-            }
-            else {
+            } else {
                 this.saveButton.disable();
-                message = new Message(
-                    "The following properties have invalid values: " + invalidPropertyNames.values()
-                        + " - the values must be corrected before the configuration can be saved.",
-                    Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
+                message = new Message("The following properties have invalid values: " + invalidPropertyNames.values()
+                    + " - the values must be corrected before the configuration can be saved.", Message.Severity.Error,
+                    EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             }
             messageCenter.notify(message);
         } else {
@@ -135,7 +132,7 @@ public class TestGroupConfigurationView
     }
 
     protected GroupConfigurationEditor createConfigurationEditor() {
-        GroupConfigurationEditor editor = new GroupConfigurationEditor(extendLocatorId("Editor"), this.configurationDefinition,
+        GroupConfigurationEditor editor = new GroupConfigurationEditor(this.configurationDefinition,
             this.memberConfigurations);
         editor.setEditorTitle("Test Group Configuration");
         editor.setOverflow(Overflow.AUTO);

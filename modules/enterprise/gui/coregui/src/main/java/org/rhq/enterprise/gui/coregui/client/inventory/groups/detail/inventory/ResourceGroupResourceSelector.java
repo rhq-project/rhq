@@ -48,7 +48,7 @@ public class ResourceGroupResourceSelector extends ResourceSelector {
     public ResourceGroupResourceSelector(String locatorId, Collection<Resource> resources,
         ResourceType resourceTypeFilter, boolean forceResourceTypeFilter) {
 
-        super(locatorId, resourceTypeFilter, forceResourceTypeFilter);
+        super(resourceTypeFilter, forceResourceTypeFilter);
 
         this.resources = resources;
 

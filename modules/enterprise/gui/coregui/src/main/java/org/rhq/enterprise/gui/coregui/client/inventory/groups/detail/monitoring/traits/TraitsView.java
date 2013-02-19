@@ -58,8 +58,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 public class TraitsView extends AbstractMeasurementDataTraitListView {
     private int groupId;
 
-    public TraitsView(String locatorId, int groupId) {
-        super(locatorId, new TraitsDataSource(groupId), createCriteria(groupId));
+    public TraitsView(int groupId) {
+        super(new TraitsDataSource(groupId), createCriteria(groupId));
         this.groupId = groupId;
     }
 

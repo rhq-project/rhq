@@ -52,7 +52,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.MetadataType;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author John Mazzitelli
@@ -183,8 +182,7 @@ public class ConditionsEditor extends LocatableVLayout {
                                         }
                                     }
                                 }
-                                final Window winModal = new LocatableWindow(ConditionsEditor.this
-                                    .extendLocatorId("newConditionEditorWindow"));
+                                final Window winModal = new Window();
                                 winModal.setTitle(MSG.view_alert_common_tab_conditions_modal_title());
                                 winModal.setOverflow(Overflow.VISIBLE);
                                 winModal.setShowMinimizeButton(false);
@@ -203,8 +201,7 @@ public class ConditionsEditor extends LocatableVLayout {
                                 });
 
                                 final int numConditions = conditions.size();
-                                NewConditionEditor newConditionEditor = new NewConditionEditor(
-                                    extendLocatorId("newConditionEditor"), conditions,
+                                NewConditionEditor newConditionEditor = new NewConditionEditor(conditions,
                                     ConditionsEditor.this.conditionExpression, ConditionsEditor.this.resourceType,
                                     new Runnable() {
                                         @Override
@@ -221,7 +218,7 @@ public class ConditionsEditor extends LocatableVLayout {
                 }
             });
 
-            table.addTableAction(this.extendLocatorId("delete"), MSG.common_button_delete(), MSG
+            table.addTableAction(MSG.common_button_delete(), MSG
                 .view_alert_definition_condition_editor_delete_confirm(), new AbstractTableAction(
                 TableActionEnablement.ANY) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {

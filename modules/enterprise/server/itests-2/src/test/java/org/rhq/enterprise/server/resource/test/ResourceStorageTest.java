@@ -237,9 +237,6 @@ public class ResourceStorageTest extends AbstractEJB3Test {
 
         //verify that all resource objects are actually parsed. 
         Map<String, Object> resourceNames = new HashMap<String, Object>();
-
-        ArrayList<Resource> allResources = new ArrayList<Resource>();
-
         int resourceCount = 700; //assuming 200 per page at least 4 pages of results.
 
         try {
@@ -275,8 +272,8 @@ public class ResourceStorageTest extends AbstractEJB3Test {
             //query the results and delete the resources
             ResourceCriteria criteria = new ResourceCriteria();
             criteria.addFilterName(prefix);
+            criteria.addSortName(PageOrdering.ASC);
             criteria.setPaging(0, 47);
-            //            PageList<Resource> resources = resourceManager.findResourcesByCriteria(subject, criteria);
 
             //iterate over the results with CriteriaQuery
             CriteriaQueryExecutor<Resource, ResourceCriteria> queryExecutor = new CriteriaQueryExecutor<Resource, ResourceCriteria>() {
@@ -292,12 +289,16 @@ public class ResourceStorageTest extends AbstractEJB3Test {
 
             start = System.currentTimeMillis();
             //iterate over the entire result set efficiently
+            ArrayList<String> alreadySeen = new ArrayList<String>();
+            int actualCount = 0;
             for (Resource r : resources) {
-                allResources.add(r);
+                actualCount++;
+                //                System.out.println(actualCount + " @@@ " + r.getId() + ":"
+                //                    + ((resourceNames.containsKey(String.valueOf(r.getId()))) ? "NEW" : "DIRTY") + ":" + r.getName());
                 resourceNames.remove(String.valueOf(r.getId()));
             }
 
-            System.out.println("----------- Parsed " + resourceCount + " resource(s) in "
+            System.out.println("----------- Parsed " + actualCount + " resource(s) in "
                 + (System.currentTimeMillis() - start)
                 + " ms.");
 

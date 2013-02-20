@@ -154,13 +154,12 @@
     <!-- cassandra dependency versions -->
     <cassandra.version>1.2.1</cassandra.version>
     <cassandra.thrift.version>0.7.0</cassandra.thrift.version>
-    <cassandra.jdbc.version>1.2.0-SNAPSHOT</cassandra.jdbc.version>
     <!--
       This is a transitive, runtime dependency of the cassandra jdbc driver. This property
       is used in the container build. It should only be changed when the the
       cassandra.jdbc.version property is changed as well.
       -->
-    <cassandra.jdbc.guava.version>12.0</cassandra.jdbc.guava.version>
+    <cassandra.jdbc.guava.version>13.0.1</cassandra.jdbc.guava.version>
     <!--
       This is a transitive, runtime dependency of the cassandra jdbc driver. This property
       is used in the container build. It should only be changed when the the

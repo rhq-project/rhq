@@ -113,6 +113,9 @@ public class CriteriaQuery<T, C extends BaseCriteria> implements Iterable<T> {
 
                 PageControl pc = currentPage.getPageControl();
                 criteria.setPaging(pc.getPageNumber() + 1, pc.getPageSize());
+                //help out the GC.
+                currentPage.clear();
+
                 //move the current pagelist forward one
                 currentPage = queryExecutor.execute(criteria);
                 currentPage.setPageControl(new PageControl(pc.getPageNumber() + 1, pc.getPageSize()));

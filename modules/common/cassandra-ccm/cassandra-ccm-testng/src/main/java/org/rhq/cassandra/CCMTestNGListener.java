@@ -125,8 +125,8 @@ public class CCMTestNGListener implements IInvokedMethodListener {
         SchemaManager schemaManager = new SchemaManager(annotation.username(), annotation.password(), nodes);
         if (!schemaManager.schemaExists()) {
             schemaManager.createSchema();
+            schemaManager.updateSchema();
         }
-        schemaManager.updateSchema();
         schemaManager.shutdown();
     }
 

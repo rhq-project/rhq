@@ -35,6 +35,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 
 /**
  * @author Joseph Marques
@@ -96,6 +97,9 @@ public abstract class Criteria implements Serializable, BaseCriteria {
 
     private String searchExpression;
 
+    // All Criteria support sorting on ID
+    private PageOrdering sortId;
+
     /**
      * This default constructor will set default paging to avoid unintended fetch of huge results. The default is:
      * <pre>setPaging(0, 200);</pre>
@@ -137,6 +141,11 @@ public abstract class Criteria implements Serializable, BaseCriteria {
 
     public PageControl getPageControlOverrides() {
         return pageControlOverrides;
+    }
+
+    public void addSortId(PageOrdering sortId) {
+        addSortField("id");
+        this.sortId = sortId;
     }
 
     protected void addSortField(String fieldName) {

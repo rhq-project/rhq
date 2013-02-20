@@ -27,6 +27,7 @@ import java.util.NoSuchElementException;
 import org.rhq.core.domain.criteria.BaseCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 
 /** This class provides a way to make PageList results easily iterable with 'for each','while',etc. loops
  *  and importantly automatically handles iteration through all PageControl results.  This 
@@ -50,9 +51,28 @@ public class CriteriaQuery<T, C extends BaseCriteria> implements Iterable<T> {
     //Executor
     private CriteriaQueryExecutor<T, C> queryExecutor;
 
+    /**
+     * It is important that the <code>criteria</code> includes sorting.  If not then paging is nonsensical as the DB
+     * provides no guarantee of ordering.  If no sort is specified, an implicit sort on ID is added.
+     * 
+     * @param criteria The criteria applied to each execution of the fetch. If no sort is specified, an implicit sort on
+     * ID is added.
+     * @param queryExecutor
+     */
     public CriteriaQuery(C criteria, CriteriaQueryExecutor<T, C> queryExecutor) {
         this.criteria = criteria;
         this.queryExecutor = queryExecutor;
+
+        // make sure we have at least a default sort, otherwise chunking doesn't work
+        PageControl pageControlOverrides = this.criteria.getPageControlOverrides();
+        if (null != pageControlOverrides) {
+            if (pageControlOverrides.getOrderingFields().isEmpty()) {
+                pageControlOverrides.addDefaultOrderingField("id");
+            }
+
+        } else if (this.criteria.getOrderingFieldNames().isEmpty()) {
+            this.criteria.addSortId(PageOrdering.ASC);
+        }
     }
 
     /** Returns iterator for a single page of results as defined by
@@ -104,21 +124,31 @@ public class CriteriaQuery<T, C extends BaseCriteria> implements Iterable<T> {
                 if (count == currentPage.getTotalSize()) {
                     throw new NoSuchElementException();
                 }
-                deletable = null;//reset deletable.
+
+                deletable = null; // reset deletable.
+
                 //remove all flagged instances of T
                 if (!forDeletion.isEmpty()) {
                     currentPage.removeAll(forDeletion);
                     forDeletion.clear();
                 }
 
-                PageControl pc = currentPage.getPageControl();
-                criteria.setPaging(pc.getPageNumber() + 1, pc.getPageSize());
+                // advance the page. Although strange to be using a page control override in conjunction with
+                // CriteriaQuery, nonetheless make sure we advance it if it exists, because the normal setPaging is
+                // ignored when their is an overrides.
+                PageControl pcCurrent = currentPage.getPageControl();
+                PageControl pcOverrides = criteria.getPageControlOverrides();
+
+                if (null != pcOverrides) {
+                    pcOverrides.setPageNumber(pcOverrides.getPageNumber() + 1);
+                } else {
+                    criteria.setPaging(pcCurrent.getPageNumber() + 1, pcCurrent.getPageSize());
+                }
+
                 //help out the GC.
                 currentPage.clear();
 
-                //move the current pagelist forward one
                 currentPage = queryExecutor.execute(criteria);
-                currentPage.setPageControl(new PageControl(pc.getPageNumber() + 1, pc.getPageSize()));
                 iterator = currentPage.iterator();
             }
 

@@ -221,9 +221,12 @@ public class ResourceStorageTest extends AbstractEJB3Test {
     }
 
     /** Test creates a large number of resources and pages through them using CriteriaQuery.
+     * 
      *  NOTE: CriteriaQuery uses PageList instances underneath and are susceptible to dirty
-     *  read issues if the total number of resources being parsed is i)very large or ii)processing
-     *  each instance takes a significant amount of time. Ex. Begin parsing all resource types, 
+     *  read issues if the underlying dataset changes because the total number of resources being 
+     *  parsed is i)very large or ii)processing each instance takes a significant amount of 
+     *  time such that another action/process/object may have changed the original resources 
+     *  before resultset processing could be completed. Ex. Begin parsing all resource types, 
      *  while plugin update is removing some of those same types.
      *  
      * @throws Exception

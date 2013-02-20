@@ -8834,6 +8834,7 @@
     <runs-inside>
       <parent-resource-type name="Deployment" plugin="&pluginName;"/>
       <parent-resource-type name="Subdeployment" plugin="&pluginName;"/>
+      <parent-resource-type name="ManagedServerDeployment" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>

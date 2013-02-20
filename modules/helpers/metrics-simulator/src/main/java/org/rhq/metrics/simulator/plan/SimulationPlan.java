@@ -47,6 +47,10 @@ public class SimulationPlan {
 
     private int numMeasurementCollectors;
 
+    private int simulationTime;
+
+    private ClusterConfig clusterConfig;
+
     public List<ScheduleGroup> getScheduleSets() {
         return scheduleSets;
     }
@@ -97,5 +101,21 @@ public class SimulationPlan {
 
     public void setNumMeasurementCollectors(int numMeasurementCollectors) {
         this.numMeasurementCollectors = numMeasurementCollectors;
+    }
+
+    public int getSimulationTime() {
+        return simulationTime;
+    }
+
+    public void setSimulationTime(int simulationTime) {
+        this.simulationTime = simulationTime;
+    }
+
+    public ClusterConfig getClusterConfig() {
+        return clusterConfig;
+    }
+
+    public void setClusterConfig(ClusterConfig clusterConfig) {
+        this.clusterConfig = clusterConfig;
     }
 }

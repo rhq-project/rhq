@@ -45,12 +45,14 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.joda.time.Minutes;
 
 import org.rhq.cassandra.CassandraClusterManager;
 import org.rhq.cassandra.CassandraNode;
 import org.rhq.cassandra.ClusterInitService;
 import org.rhq.cassandra.DeploymentOptions;
 import org.rhq.cassandra.schema.SchemaManager;
+import org.rhq.metrics.simulator.plan.ClusterConfig;
 import org.rhq.metrics.simulator.plan.ScheduleGroup;
 import org.rhq.metrics.simulator.plan.SimulationPlan;
 import org.rhq.metrics.simulator.plan.SimulationPlanner;
@@ -68,7 +70,7 @@ public class Simulator {
         SimulationPlanner planner = new SimulationPlanner();
         SimulationPlan plan = planner.create(jsonFile);
 
-        List<CassandraNode> nodes = deployCluster();
+        List<CassandraNode> nodes = deployCluster(plan.getClusterConfig());
         waitForClusterToInitialize(nodes);
 
         createSchema(nodes);
@@ -113,8 +115,7 @@ public class Simulator {
             TimeUnit.MILLISECONDS);
 
         try {
-//            Thread.sleep(10000 * 6 * 20);
-            Thread.sleep(10000 * 6 * 5);
+            Thread.sleep(Minutes.minutes(plan.getSimulationTime()).toStandardDuration().getMillis());
         } catch (InterruptedException e) {
         }
         log.info("Shutting down executor service");
@@ -122,14 +123,14 @@ public class Simulator {
         executorService.awaitTermination(5, TimeUnit.SECONDS);
     }
 
-    private List<CassandraNode> deployCluster() throws IOException {
-        File clusterDir = new File("target/cassandra");
+    private List<CassandraNode> deployCluster(ClusterConfig clusterConfig) throws IOException {
+        File clusterDir = new File(clusterConfig.getClusterDir(), "cassandra");
         log.info("Deploying cluster to " + clusterDir);
         DeploymentOptions deploymentOptions = new DeploymentOptions();
         deploymentOptions.setClusterDir(clusterDir.getAbsolutePath());
-        deploymentOptions.setNumNodes(2);
-        deploymentOptions.setHeapSize("256M");
-        deploymentOptions.setHeapNewSize("64M");
+        deploymentOptions.setNumNodes(clusterConfig.getNumNodes());
+        deploymentOptions.setHeapSize(clusterConfig.getHeapSize());
+        deploymentOptions.setHeapNewSize(clusterConfig.getHeapNewSize());
         deploymentOptions.setLoggingLevel("INFO");
         deploymentOptions.load();
 

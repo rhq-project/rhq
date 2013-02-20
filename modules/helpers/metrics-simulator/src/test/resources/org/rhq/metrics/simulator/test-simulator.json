@@ -1,4 +1,9 @@
 {
+    "simulationTime": 10,
+    "collectionInterval": 500,
+    "aggregationInterval": 1000,
+    "numMeasurementCollectors": 8,
+    "threadPoolSize": 10,
     "schedules": [
         {
             "count": 5000,
@@ -9,10 +14,6 @@
             "interval": 1000
         }
     ],
-    "collectionInterval": 500,
-    "aggregationInterval": 1000,
-    "numMeasurementCollectors": 8,
-    "threadPoolSize": 10,
     "ttl": [
         {
             "table": "raw_metrics",
@@ -47,5 +48,12 @@
                 "value": 24
             }
         ]
+    },
+    "cluster": {
+        "embedded": true,
+        "clusterDir": "target",
+        "numNodes": 2,
+        "heapSize": "64M",
+        "heapNewSize": "8M"
     }
 }

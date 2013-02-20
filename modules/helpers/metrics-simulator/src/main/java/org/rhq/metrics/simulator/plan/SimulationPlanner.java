@@ -53,6 +53,7 @@ public class SimulationPlanner {
         simulation.setAggregationInterval(root.get("aggregationInterval").asLong());
         simulation.setThreadPoolSize(root.get("threadPoolSize").asInt());
         simulation.setNumMeasurementCollectors(root.get("numMeasurementCollectors").asInt());
+        simulation.setSimulationTime(root.get("simulationTime").asInt());
 
         for (JsonNode node : root.get("schedules")) {
             simulation.addScheduleSet(new ScheduleGroup(node.get("count").asInt(), node.get("interval").asLong()));
@@ -74,6 +75,15 @@ public class SimulationPlanner {
             MetricsTable table = getTable(node.get("table").asText());
             setTimeSliceDuration(table, duration, serverConfiguration);
         }
+
+        ClusterConfig clusterConfig = new ClusterConfig();
+        JsonNode clusterConfigNode = root.get("cluster");
+        clusterConfig.setEmbedded(clusterConfigNode.get("embedded").asBoolean());
+        clusterConfig.setClusterDir(clusterConfigNode.get("clusterDir").asText());
+        clusterConfig.setHeapSize(clusterConfigNode.get("heapSize").asText());
+        clusterConfig.setHeapNewSize(clusterConfigNode.get("heapNewSize").asText());
+        clusterConfig.setNumNodes(clusterConfigNode.get("numNodes").asInt());
+        simulation.setClusterConfig(clusterConfig);
 
         return simulation;
     }

@@ -35,6 +35,7 @@ import org.rhq.modules.integrationTests.restApi.d.GroupDef;
 import static com.jayway.restassured.RestAssured.expect;
 import static com.jayway.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.iterableWithSize;
 
 /**
@@ -117,6 +118,20 @@ public class GroupTest extends AbstractBase {
         assert jsonPath.get("[0].name").equals(X_TEST_GROUP); // [0] as the query returns a list
         int groupId = jsonPath.get("[0].id");
         assert groupId == createdId;
+
+        // Fetch id by id
+        given()
+            .pathParam("id",groupId)
+            .header(acceptJson)
+        .expect()
+            .statusCode(200)
+            .body("name",is(X_TEST_GROUP))
+            .body("id",is(groupId))
+            .body("explicitCount",is(0))
+            .log().ifError()
+        .when()
+            .get("/group/{id}");
+
 
         // delete the group again
         given()
@@ -429,7 +444,6 @@ public class GroupTest extends AbstractBase {
         int id = Integer.parseInt(location.substring(location.lastIndexOf("/")+1));
 
         try {
-            response =
             given()
                 .header(acceptJson)
                 .pathParam("id",id)
@@ -472,7 +486,6 @@ public class GroupTest extends AbstractBase {
         list.add("resource.name");
         gd.setExpression(list);
 
-        Response response =
         given()
             .contentType(ContentType.JSON)
             .header("Accept","application/json")
@@ -507,19 +520,18 @@ public class GroupTest extends AbstractBase {
 
 
         String location = response.getHeader("Location");
-        int defintionId = Integer.parseInt(location.substring(location.lastIndexOf("/")+1));
+        int definitionId = Integer.parseInt(location.substring(location.lastIndexOf("/")+1));
 
         try {
             // retrieve by id
             given()
-                .pathParam("id", defintionId)
+                .pathParam("id", definitionId)
             .expect()
                 .statusCode(200)
             .when()
                 .get("/group/definition/{id}");
 
             // retrieve by query
-            Response resp =
             given()
                 .queryParam("q", "-x-test-def")
             .expect()
@@ -534,7 +546,7 @@ public class GroupTest extends AbstractBase {
             expect()
                 .statusCode(204)
             .when()
-                .delete("/group/definition/" + defintionId);
+                .delete("/group/definition/" + definitionId);
         }
 
     }

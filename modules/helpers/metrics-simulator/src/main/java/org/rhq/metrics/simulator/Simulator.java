@@ -97,6 +97,7 @@ public class Simulator {
         log.info("Starting executor service");
         executorService.scheduleAtFixedRate(statsCollector, 0, 1, TimeUnit.MINUTES);
 
+
         for (int i = 0; i < plan.getNumMeasurementCollectors(); ++i) {
             MeasurementCollector measurementCollector = new MeasurementCollector();
             measurementCollector.setMetricsServer(metricsServer);
@@ -127,8 +128,8 @@ public class Simulator {
         DeploymentOptions deploymentOptions = new DeploymentOptions();
         deploymentOptions.setClusterDir(clusterDir.getAbsolutePath());
         deploymentOptions.setNumNodes(2);
-        deploymentOptions.setHeapSize("64M");
-        deploymentOptions.setHeapNewSize("8M");
+        deploymentOptions.setHeapSize("256M");
+        deploymentOptions.setHeapNewSize("64M");
         deploymentOptions.setLoggingLevel("INFO");
         deploymentOptions.load();
 

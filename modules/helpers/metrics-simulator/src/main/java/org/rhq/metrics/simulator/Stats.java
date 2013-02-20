@@ -80,6 +80,7 @@ public class Stats {
         try {
             insertCountsLock.lock();
             insertsLastInterval = rawInsertsThisInterval;
+            rawInsertsThisInterval = 0;
         } finally {
             insertCountsLock.unlock();
         }

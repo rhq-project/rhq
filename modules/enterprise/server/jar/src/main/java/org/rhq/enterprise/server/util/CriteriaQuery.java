@@ -20,6 +20,7 @@
  */
 package org.rhq.enterprise.server.util;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -27,13 +28,13 @@ import org.rhq.core.domain.criteria.BaseCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
-/** This class provides a way to make PageList results easily iterable for 'for each' loops
+/** This class provides a way to make PageList results easily iterable with 'for each','while',etc. loops
  *  and importantly automatically handles iteration through all PageControl results.  This 
  *  means that with a CriteriaQuery instance once can do:
  *  
  *   for (Resource entity : query) { 
  * 
- * and automatically page through the results in PageControl.getPageSize(def. 200) chunks.
+ * and automatically page through all of the results in PageControl.getPageSize(def. 200) chunks.
  * 
  * @author John Sanda
  * @author Simeon Pinder
@@ -71,13 +72,17 @@ public class CriteriaQuery<T, C extends BaseCriteria> implements Iterable<T> {
     //    i)creates page sized chunks results
     //    ii)at the end of each pageList, moves the iterator to next page and continues iteration
     //
-    //NOTE: Assumes criteria page iteration starts with page 0.  If that is not the case
-    private class QueryResultsIterator implements Iterator<T> {
+    //NOTE: Assumes criteria page iteration starts with page 0. Will continue to iterate over N members.
+    protected class QueryResultsIterator implements Iterator<T> {
         private int count;
 
         private PageList<T> currentPage;
 
         private Iterator<T> iterator;
+
+        private T deletable = null;
+
+        private ArrayList<T> forDeletion = new ArrayList<T>();
 
         /**The first pageList returned by the criteria instance is where iteration begins.
          * @param firstPage
@@ -99,6 +104,12 @@ public class CriteriaQuery<T, C extends BaseCriteria> implements Iterable<T> {
                 if (count == currentPage.getTotalSize()) {
                     throw new NoSuchElementException();
                 }
+                deletable = null;//reset deletable.
+                //remove all flagged instances of T
+                if (!forDeletion.isEmpty()) {
+                    currentPage.removeAll(forDeletion);
+                    forDeletion.clear();
+                }
 
                 PageControl pc = currentPage.getPageControl();
                 criteria.setPaging(pc.getPageNumber() + 1, pc.getPageSize());
@@ -109,22 +120,20 @@ public class CriteriaQuery<T, C extends BaseCriteria> implements Iterable<T> {
             }
 
             T next = iterator.next();
+            deletable = next;
             count++;
             return next;
         }
 
         @Override
         public void remove() {
-            throw new UnsupportedOperationException("This iterator does not support removal.");
+            if (deletable != null) {
+                forDeletion.add(deletable);
+                deletable = null;
+            } else {
+                throw new IllegalStateException(
+                    "Not allowed to call remove() without calling next() just before this call.");
+            }
         }
-    }
-
-    public PageList<T> loadAsList() {
-        Iterator<T> iterator = iterator();
-        PageList<T> list = new PageList<T>();
-        while (iterator.hasNext()) {
-            list.add(iterator.next());
-        }
-        return list;
     }
 }

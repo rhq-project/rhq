@@ -60,7 +60,7 @@ public class UsersView extends TableSection<UsersDataSource> implements HasViewN
 
     private boolean hasManageSecurity;
 
-    public UsersView(String locatorId, boolean hasManageSecurity) {
+    public UsersView(boolean hasManageSecurity) {
         super(null);
 
         final UsersDataSource dataSource = UsersDataSource.getInstance();
@@ -222,7 +222,7 @@ public class UsersView extends TableSection<UsersDataSource> implements HasViewN
 
     @Override
     public Canvas getDetailsView(Integer subjectId) {
-        return new UserEditView(extendLocatorId("Detail"), subjectId);
+        return new UserEditView(subjectId);
     }
 
     @Override

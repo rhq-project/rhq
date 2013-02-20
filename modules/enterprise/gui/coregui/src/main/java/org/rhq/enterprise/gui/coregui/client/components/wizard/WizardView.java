@@ -40,7 +40,6 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLFlow;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -123,7 +122,7 @@ public class WizardView extends LocatableVLayout {
         messageBar.setHeight(20);
         messageBar.setPadding(2);
         messageBar.setBackgroundColor("#F0F0F0");
-        messageLabel = new LocatableHTMLFlow(extendLocatorId("Message"));
+        messageLabel = new HTMLFlow();
         messageLabel.setWidth("*");
         messageLabel.setLeft(20);
         messageBar.addMember(messageLabel);

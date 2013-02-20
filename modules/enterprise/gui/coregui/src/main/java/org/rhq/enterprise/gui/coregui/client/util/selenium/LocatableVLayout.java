@@ -25,7 +25,6 @@ public class LocatableVLayout extends VLayout implements Locatable {
      */
     public LocatableVLayout(String locatorId) {
         super();
-        init(locatorId);
     }
 
     /** 
@@ -37,12 +36,8 @@ public class LocatableVLayout extends VLayout implements Locatable {
      */
     public LocatableVLayout(String locatorId, int membersMargin) {
         super(membersMargin);
-        init(locatorId);
     }
 
-    private void init(String locatorId) {
-        SeleniumUtility.setID(this, locatorId);
-    }
 
     public String getLocatorId() {
         return "";

@@ -74,8 +74,8 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
     private final ResourcePermission groupPerms;
     private final int groupUpdateId;
 
-    public HistoryGroupPluginConfigurationMembers(String locatorId, ResourceGroupComposite groupComposite, int updateId) {
-        super(locatorId);
+    public HistoryGroupPluginConfigurationMembers(ResourceGroupComposite groupComposite, int updateId) {
+        super();
         this.group = groupComposite.getResourceGroup();
         this.groupPerms = groupComposite.getResourcePermission();
         this.groupUpdateId = updateId;
@@ -84,11 +84,10 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
         setMembersMargin(5);
         String backPath = LinkManager.getGroupPluginConfigurationUpdateHistoryLink(EntityContext.forGroup(this.group),
             null);
-        BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
-            backPath);
+        BackButton backButton = new BackButton(MSG.view_tableSection_backButton(), backPath);
         addMember(backButton);
 
-        MembersTable table = new MembersTable(extendLocatorId("Table"));
+        MembersTable table = new MembersTable();
         addMember(table);
     }
 
@@ -98,8 +97,8 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
     }
 
     private class MembersTable extends Table<MembersTable.DataSource> {
-        public MembersTable(String locatorId) {
-            super(locatorId, MSG.view_group_pluginConfig_members_title());
+        public MembersTable() {
+            super(MSG.view_group_pluginConfig_members_title());
             setDataSource(new DataSource());
         }
 
@@ -154,8 +153,8 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
             fieldStatus.addRecordClickHandler(new RecordClickHandler() {
                 @Override
                 public void onRecordClick(RecordClickEvent event) {
-                    new ErrorMessageWindow("statusDetailsWin", MSG.view_group_pluginConfig_members_statusDetails(),
-                        "<pre>" + getStatusHtmlString(event.getRecord()) + "</pre>").show();
+                    new ErrorMessageWindow(MSG.view_group_pluginConfig_members_statusDetails(), "<pre>"
+                        + getStatusHtmlString(event.getRecord()) + "</pre>").show();
                 }
             });
             fieldStatus.setShowHover(true);

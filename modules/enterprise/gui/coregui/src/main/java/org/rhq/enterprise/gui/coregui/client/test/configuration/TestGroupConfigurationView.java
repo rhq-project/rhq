@@ -56,8 +56,8 @@ public class TestGroupConfigurationView extends LocatableVLayout implements Prop
     private ConfigurationDefinition configurationDefinition;
     private List<GroupMemberConfiguration> memberConfigurations;
 
-    public TestGroupConfigurationView(String locatorId) {
-        super(locatorId);
+    public TestGroupConfigurationView() {
+        super();
     }
 
     @Override

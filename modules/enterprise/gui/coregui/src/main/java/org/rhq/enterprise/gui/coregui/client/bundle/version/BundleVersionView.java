@@ -74,7 +74,7 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
     private boolean canManageBundles = false;
 
     public BundleVersionView(String locatorId, boolean canManageBundles) {
-        super(locatorId);
+        super();
         this.canManageBundles = canManageBundles;
         setWidth100();
         setHeight100();
@@ -87,8 +87,8 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
 
         this.version = version;
 
-        addMember(new BackButton(extendLocatorId("BackButton"), MSG.view_bundle_version_backToBundle() + ": "
-            + version.getBundle().getName(), LinkManager.getBundleLink(version.getBundle().getId())));
+        addMember(new BackButton(MSG.view_bundle_version_backToBundle() + ": " + version.getBundle().getName(),
+            LinkManager.getBundleLink(version.getBundle().getId())));
 
         addMember(new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleVersion_24.png"), version.getName() + ": "
             + version.getVersion()));

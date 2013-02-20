@@ -40,7 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.AutodiscoveryQueueDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 
 /**
  * @author Simeon Pinder
@@ -122,7 +122,7 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
         final DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
 
         //horizontal display component
-        LocatableHLayout row = new LocatableHLayout(extendLocatorId("auto-discovery.configuration"));
+        EnhancedHLayout row = new EnhancedHLayout();
 
         //-------------combobox for number of platforms to display on the dashboard
         final SelectItem maximumPlatformsComboBox = new SelectItem(AUTODISCOVERY_PLATFORM_MAX);

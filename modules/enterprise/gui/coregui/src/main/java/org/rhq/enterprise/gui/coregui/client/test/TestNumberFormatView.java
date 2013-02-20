@@ -37,8 +37,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 public class TestNumberFormatView extends LocatableVLayout {
 
-    public TestNumberFormatView(String locatorId) {
-        super(locatorId);
+    public TestNumberFormatView() {
+        super();
     }
 
     @Override

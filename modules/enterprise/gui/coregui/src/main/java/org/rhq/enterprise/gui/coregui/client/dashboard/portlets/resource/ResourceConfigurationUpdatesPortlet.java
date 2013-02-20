@@ -120,11 +120,11 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
                         criteria.addSortStatus(PageOrdering.DESC);
                         criteria.addFilterResourceIds(resourceId);
 
-                        resourceHistoryTable = new ResourceConfigurationHistoryCriteriaView(extendLocatorId("Table"),
-                            resourceComposite.getResourcePermission().isConfigureWrite(), resourceId);
+                        resourceHistoryTable = new ResourceConfigurationHistoryCriteriaView(resourceComposite
+                            .getResourcePermission().isConfigureWrite(), resourceId);
                     } else {
-                        resourceHistoryTable = new ResourceConfigurationHistoryCriteriaView(extendLocatorId("Table"),
-                            resourceComposite.getResourcePermission().isConfigureWrite(), -1);
+                        resourceHistoryTable = new ResourceConfigurationHistoryCriteriaView(resourceComposite
+                            .getResourcePermission().isConfigureWrite(), -1);
                     }
                     resourceHistoryTable.setDataSource(new ConfigurationUdpatesCriteriaDataSource(portletConfig));
                     resourceHistoryTable.setShowHeader(false);
@@ -143,8 +143,8 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
 
     class ResourceConfigurationHistoryCriteriaView extends ResourceConfigurationHistoryListView {
 
-        public ResourceConfigurationHistoryCriteriaView(String locatorId, boolean hasWritePerm, int resourceId) {
-            super(locatorId, hasWritePerm, resourceId);
+        public ResourceConfigurationHistoryCriteriaView(boolean hasWritePerm, int resourceId) {
+            super(hasWritePerm, resourceId);
         }
 
         @Override

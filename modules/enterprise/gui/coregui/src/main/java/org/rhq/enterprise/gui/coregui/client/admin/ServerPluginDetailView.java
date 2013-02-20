@@ -55,7 +55,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.PluginGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -68,7 +67,7 @@ public class ServerPluginDetailView extends LocatableVLayout {
     private final PluginGWTServiceAsync pluginManager = GWTServiceLookup.getPluginService();
     private final int pluginId;
 
-    private final LocatableSectionStack sectionStack;
+    private final SectionStack sectionStack;
     private SectionStackSection detailsSection = null;
     private SectionStackSection helpSection = null;
     private SectionStackSection controlsSection = null;
@@ -76,14 +75,14 @@ public class ServerPluginDetailView extends LocatableVLayout {
     private SectionStackSection scheduledJobsSection = null;
     private int initSectionCount = 0;
 
-    public ServerPluginDetailView(String locatorId, int pluginId) {
-        super(locatorId);
+    public ServerPluginDetailView(int pluginId) {
+        super();
         this.pluginId = pluginId;
         setHeight100();
         setWidth100();
         setOverflow(Overflow.AUTO);
 
-        sectionStack = new LocatableSectionStack(extendLocatorId("stack"));
+        sectionStack = new SectionStack();
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
         sectionStack.setWidth100();
         sectionStack.setHeight100();

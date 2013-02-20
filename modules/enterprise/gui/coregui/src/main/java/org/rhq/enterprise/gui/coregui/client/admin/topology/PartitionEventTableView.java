@@ -84,7 +84,7 @@ public class PartitionEventTableView extends TableSection<PartitionEventDatasour
         }
     }
 
-    public PartitionEventTableView(String locatorId, String tableTitle) {
+    public PartitionEventTableView(String tableTitle) {
         super(tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
         setHeight100();
         setWidth100();
@@ -136,7 +136,7 @@ public class PartitionEventTableView extends TableSection<PartitionEventDatasour
 
     @Override
     public Canvas getDetailsView(Integer id) {
-        return new PartitionEventDetailView(extendLocatorId("detailsView"), id);
+        return new PartitionEventDetailView(id);
     }
 
     private void showActions() {
@@ -146,8 +146,8 @@ public class PartitionEventTableView extends TableSection<PartitionEventDatasour
     }
 
     private void addTableAction(final TableAction action) {
-        addTableAction(extendLocatorId(action.toString()), action.title, null, new AuthorizedTableAction(this,
-            action.enablement, Permission.MANAGE_SETTINGS) {
+        addTableAction(action.title, null, new AuthorizedTableAction(this, action.enablement,
+            Permission.MANAGE_SETTINGS) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                 String eventTypes = getSelectedEventTypes(selections).toString();
                 String message = null;

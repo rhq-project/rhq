@@ -109,7 +109,7 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
 
         this.initialDisplay = true;
 
-        detailsHolder = new LocatableVLayout(extendLocatorId("tableSection"));
+        detailsHolder = new LocatableVLayout();
         detailsHolder.setAlign(VerticalAlignment.TOP);
         //detailsHolder.setWidth100();
         //detailsHolder.setHeight100();
@@ -386,10 +386,9 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
         if (!isEditable) {
             // Only add the "Back to List" button if the details are definitely not editable, because if they are
             // editable, a Cancel button should already be provided by the details view.
-            BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
-                basePath);
+            BackButton backButton = new BackButton(MSG.view_tableSection_backButton(), basePath);
             detailsHolder.addMember(backButton);
-            VLayout verticalSpacer = new LocatableVLayout(extendLocatorId("verticalSpacer"));
+            VLayout verticalSpacer = new LocatableVLayout();
             verticalSpacer.setHeight(8);
             detailsHolder.addMember(verticalSpacer);
         }

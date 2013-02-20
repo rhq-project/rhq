@@ -31,8 +31,8 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -92,7 +92,7 @@ public class AboutModalWindow extends Window {
         htmlPane.setHeight(220);
         contentPane.addMember(htmlPane);
 
-        LocatableHLayout buttonBar = new LocatableHLayout(contentPane.extendLocatorId("ButtonBar"));
+        EnhancedHLayout buttonBar = new EnhancedHLayout();
         buttonBar.setHeight(30);
         buttonBar.setAlign(Alignment.RIGHT);
 

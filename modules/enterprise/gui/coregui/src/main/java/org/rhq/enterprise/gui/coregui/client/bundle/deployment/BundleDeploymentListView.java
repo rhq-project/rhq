@@ -45,7 +45,6 @@ import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFor
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 
 /**
  * @author Greg Hinkle
@@ -62,8 +61,8 @@ public class BundleDeploymentListView extends Table<BundleDeploymentDataSource> 
     }
 
     @Override
-    protected LocatableListGrid createListGrid(String locatorId) {
-        LocatableListGrid grid = super.createListGrid(locatorId);
+    protected ListGrid createListGrid() {
+        ListGrid grid = super.createListGrid();
         grid.setSortField(BundleDeploymentDataSource.FIELD_DEPLOY_TIME);
         grid.setSortDirection(SortDirection.DESCENDING);
         return grid;
@@ -128,7 +127,7 @@ public class BundleDeploymentListView extends Table<BundleDeploymentDataSource> 
                 String err = event.getRecord().getAttribute(BundleDeploymentDataSource.FIELD_ERROR_MESSAGE);
                 if (err != null && err.length() > 0) {
                     err = "<pre>" + err + "</pre>";
-                    new ErrorMessageWindow(extendLocatorId("errWin"), MSG.common_severity_error(), err).show();
+                    new ErrorMessageWindow(MSG.common_severity_error(), err).show();
                 }
             }
         });

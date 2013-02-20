@@ -56,13 +56,12 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
 
     private boolean isAuthorizedToModifyAlertDefinitions;
 
-    public SingleAlertDefinitionView(String locatorId, AbstractAlertDefinitionsView alertDefView) {
-        this(locatorId, alertDefView, null);
+    public SingleAlertDefinitionView(AbstractAlertDefinitionsView alertDefView) {
+        this(alertDefView, null);
     }
 
-    public SingleAlertDefinitionView(String locatorId, final AbstractAlertDefinitionsView alertDefView,
-        AlertDefinition alertDefinition) {
-        super(locatorId);
+    public SingleAlertDefinitionView(final AbstractAlertDefinitionsView alertDefView, AlertDefinition alertDefinition) {
+        super();
 
         this.alertDefinition = alertDefinition;
         this.isAuthorizedToModifyAlertDefinitions = alertDefView.isAuthorizedToModifyAlertDefinitions();
@@ -100,7 +99,7 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
         recoveryTab.setPane(recovery);
 
         Tab dampeningTab = new LocatableTab(tabSet.extendLocatorId("Dampening"), MSG.view_alert_common_tab_dampening());
-        dampening = new DampeningAlertDefinitionForm(this.getLocatorId(), alertDefinition);
+        dampening = new DampeningAlertDefinitionForm(alertDefinition);
         dampeningTab.setPane(dampening);
 
         tabSet.setTabs(generalPropertiesTab, conditionsTab, notificationsTab, recoveryTab, dampeningTab);

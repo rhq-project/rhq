@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client;
 
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -27,23 +28,21 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.enterprise.gui.coregui.client.footer.FavoritesButton;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageBar;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenterView;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  * @author Joseph Marques
  */
-public class Footer extends LocatableHLayout {
-    private static final String LOCATOR_ID = "CoreFooter";
+public class Footer extends EnhancedHLayout {
 
     private MessageBar messageBar;
     private MessageCenterView messageCenter;
 
     public Footer() {
-        super(LOCATOR_ID);
+        super();
         setHeight(30);
         setAlign(Alignment.LEFT);
         setWidth100();
@@ -77,7 +76,7 @@ public class Footer extends LocatableHLayout {
     }
 
     private LocatableVLayout getMessageCenterButton() {
-        LocatableVLayout layout = new LocatableVLayout(extendLocatorId("layout"));
+        LocatableVLayout layout = new LocatableVLayout();
         layout.setMembersMargin(5);
         layout.setHeight100();
         layout.setAlign(Alignment.CENTER);
@@ -99,9 +98,9 @@ public class Footer extends LocatableHLayout {
 
     // Leaving this although it's unused. It used to be the subclass for the alert count mechanism, which is now
     // gone, but this may be useful in the future for something else.
-    public abstract static class RefreshableLabel extends LocatableLabel {
-        public RefreshableLabel(String locatorId) {
-            super(locatorId);
+    public abstract static class RefreshableLabel extends Label {
+        public RefreshableLabel() {
+            super();
         }
 
         // scheduling refreshes is sub-optimal, really need to move to a message bus architecture

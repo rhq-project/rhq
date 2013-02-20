@@ -69,7 +69,7 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
     private boolean refreshing = false;
 
     public ResourceConfigurationEditView(String locatorId, ResourceComposite resourceComposite) {
-        super(locatorId);
+        super();
 
         this.resource = resourceComposite.getResource();
         this.resourcePermission = resourceComposite.getResourcePermission();

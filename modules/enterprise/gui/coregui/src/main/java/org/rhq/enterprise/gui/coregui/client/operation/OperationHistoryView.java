@@ -91,20 +91,19 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
     }
 
     // for subsystem views
-    public OperationHistoryView(String locatorId) {
-        this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), EntityContext.forSubsystemView(), false);
+    public OperationHistoryView() {
+        this(SUBSYSTEM_VIEW_ID.getTitle(), EntityContext.forSubsystemView(), false);
     }
 
-    public OperationHistoryView(String locatorId, EntityContext entityContext) {
-        this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), entityContext, false);
+    public OperationHistoryView(EntityContext entityContext) {
+        this(SUBSYSTEM_VIEW_ID.getTitle(), entityContext, false);
     }
 
-    public OperationHistoryView(String locatorId, String tableTitle, EntityContext entityContext) {
-        this(locatorId, tableTitle, entityContext, false);
+    public OperationHistoryView(String tableTitle, EntityContext entityContext) {
+        this(tableTitle, entityContext, false);
     }
 
-    protected OperationHistoryView(String locatorId, String tableTitle, EntityContext context,
-        boolean hasControlPermission) {
+    protected OperationHistoryView(String tableTitle, EntityContext context, boolean hasControlPermission) {
         super(tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
         this.context = context;
         this.hasControlPermission = hasControlPermission;
@@ -288,7 +287,7 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
 
     @Override
     public Canvas getDetailsView(Integer id) {
-        return new ResourceOperationHistoryDetailsView(extendLocatorId("Detail"));
+        return new ResourceOperationHistoryDetailsView();
     }
 
     @Override

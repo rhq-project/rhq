@@ -60,7 +60,7 @@ public class GeneralProperties extends LocatableVLayout {
 
     public GeneralProperties(String locatorId, ResourceGroupComposite groupComposite, ResourceGroupTitleBar titleBar,
         boolean isEditable) {
-        super(locatorId);
+        super();
         this.groupComposite = groupComposite;
         this.titleBar = titleBar;
         this.isEditable = isEditable;

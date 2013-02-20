@@ -185,7 +185,7 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
 
     @Override
     public Canvas getDetailsView(String driftId) {
-        return new DriftDetailsView(extendLocatorId("Details"), driftId);
+        return new DriftDetailsView(driftId);
     }
 
     public EntityContext getContext() {

@@ -65,7 +65,7 @@ public class ConditionsAlertDefinitionForm extends LocatableVLayout implements E
     }
 
     public ConditionsAlertDefinitionForm(String locatorId, ResourceType resourceType, AlertDefinition alertDefinition) {
-        super(locatorId);
+        super();
         this.resourceType = resourceType;
         this.alertDefinition = alertDefinition;
         this.updated = false;

@@ -17,7 +17,7 @@ public class LocatableToolStrip extends ToolStrip implements Locatable {
      * </pre>
      * @param locatorId not null or empty.
      */
-    public LocatableToolStrip(String locatorId) {
+    public LocatableToolStrip() {
         super();
         this.locatorId = locatorId;
         SeleniumUtility.setID(this, locatorId);

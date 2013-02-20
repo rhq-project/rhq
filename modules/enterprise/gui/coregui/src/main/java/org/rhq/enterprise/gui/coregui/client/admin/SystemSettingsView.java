@@ -74,8 +74,8 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
     private IButton saveButton;
     private IButton dumpToLogButton;
 
-    public SystemSettingsView(String locatorId) {
-        super(locatorId);
+    public SystemSettingsView() {
+        super();
         setHeight100();
         setWidth100();
 

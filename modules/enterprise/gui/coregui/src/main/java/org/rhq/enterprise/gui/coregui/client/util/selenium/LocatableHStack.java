@@ -33,6 +33,10 @@ public class LocatableHStack extends HStack implements Locatable {
 
     private String locatorId;
 
+    public LocatableHStack() {
+        super();
+    }
+
     /**
      * <pre>
      * ID Format: "simpleClassname_locatorId"

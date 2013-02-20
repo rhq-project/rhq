@@ -45,8 +45,8 @@ public abstract class AbstractMeasurementDataTraitListDetailView extends Table<A
     //new SortSpecifier(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME, SortDirection.ASCENDING)
     };
 
-    public AbstractMeasurementDataTraitListDetailView(String locatorId, String title,
-        AbstractMeasurementDataTraitDataSource dataSource, Criteria criteria) {
+    public AbstractMeasurementDataTraitListDetailView(String title, AbstractMeasurementDataTraitDataSource dataSource,
+        Criteria criteria) {
         super(title, criteria, SORT_SPECIFIERS, EXCLUDED_FIELD_NAMES);
         setDataSource(dataSource);
     }

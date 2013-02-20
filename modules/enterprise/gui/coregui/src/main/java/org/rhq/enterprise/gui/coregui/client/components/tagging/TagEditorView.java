@@ -32,6 +32,7 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.TextMatchStyle;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.Dialog;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.events.ClickEvent;
@@ -53,9 +54,7 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDialog;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLayout;
 
 /**
@@ -71,7 +70,7 @@ public class TagEditorView extends LocatableLayout {
     private boolean readOnly;
     private TagsChangedCallback callback;
     private HTMLFlow tagTitleLabel;
-    private ArrayList<LocatableHLayout> tagLayouts;
+    private ArrayList<EnhancedHLayout> tagLayouts;
     private Img addImg;
     private TagInputDialog tagInputDialog;
 
@@ -82,7 +81,7 @@ public class TagEditorView extends LocatableLayout {
     public TagEditorView(String locatorId, Set<Tag> tags, boolean readOnly, TagsChangedCallback callback,
         boolean vertical) {
 
-        super(locatorId);
+        super();
 
         setVertical(vertical);
         setAutoWidth();
@@ -101,9 +100,9 @@ public class TagEditorView extends LocatableLayout {
         tagTitleLabel.setAutoWidth();
 
         if (!this.readOnly) {
-            tagInputDialog = new TagInputDialog(extendLocatorId("tagInputDialog"));
+            tagInputDialog = new TagInputDialog();
 
-            addImg = new LocatableImg(extendLocatorId("addImg"), "[skin]/images/actions/add.png", 16, 16);
+            addImg = new Img("[skin]/images/actions/add.png", 16, 16);
             addImg.setTooltip(MSG.view_tags_tooltip_2());
             addImg.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
@@ -134,7 +133,7 @@ public class TagEditorView extends LocatableLayout {
     private void setup() {
         // destroy dated tagLayouts
         if (tagLayouts != null) {
-            for (LocatableHLayout tagLayout : tagLayouts) {
+            for (EnhancedHLayout tagLayout : tagLayouts) {
                 removeMember(tagLayout);
                 tagLayout.destroy();
             }
@@ -149,7 +148,7 @@ public class TagEditorView extends LocatableLayout {
         addMember(tagTitleLabel);
 
         tagLayouts = createTagLayouts();
-        for (LocatableHLayout tagLayout : tagLayouts) {
+        for (EnhancedHLayout tagLayout : tagLayouts) {
             addMember(tagLayout);
         }
 
@@ -161,11 +160,11 @@ public class TagEditorView extends LocatableLayout {
         markForRedraw();
     }
 
-    private ArrayList<LocatableHLayout> createTagLayouts() {
-        ArrayList<LocatableHLayout> tagLayouts = new ArrayList<LocatableHLayout>(tags.size());
+    private ArrayList<EnhancedHLayout> createTagLayouts() {
+        ArrayList<EnhancedHLayout> tagLayouts = new ArrayList<EnhancedHLayout>(tags.size());
 
         for (final Tag tag : tags) {
-            LocatableHLayout tagLayout = new LocatableHLayout(extendLocatorId(tag.getName()));
+            EnhancedHLayout tagLayout = new EnhancedHLayout();
             tagLayout.setHeight(18);
             tagLayout.setHeight(16);
 
@@ -179,8 +178,7 @@ public class TagEditorView extends LocatableLayout {
                 spacer.setHeight(16);
                 spacer.setWidth(16);
 
-                final Img remove = new LocatableImg(tagLayout.extendLocatorId("Remove"),
-                    "[skin]/images/actions/remove.png", 16, 16);
+                final Img remove = new Img("[skin]/images/actions/remove.png", 16, 16);
                 remove.setTooltip(MSG.view_tags_tooltip_1());
                 remove.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent clickEvent) {
@@ -243,11 +241,11 @@ public class TagEditorView extends LocatableLayout {
         TagEditorView.this.setup();
     }
 
-    private class TagInputDialog extends LocatableDialog {
+    private class TagInputDialog extends Dialog {
         private ComboBoxItem tagInputItem;
 
-        public TagInputDialog(String locatorId) {
-            super(locatorId);
+        public TagInputDialog() {
+            super();
 
             setIsModal(true);
             setShowHeader(false);

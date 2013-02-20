@@ -35,7 +35,6 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 
 /**
  * A view that displays a non-paginated table of {@link org.rhq.core.domain.measurement.MeasurementDataTrait trait}s,
@@ -77,12 +76,12 @@ public abstract class AbstractMeasurementDataTraitListView extends TableSection<
         ListGridField displayNameField = listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME);
         displayNameField.setWidth("20%");
 
-        addTableAction(extendLocatorId("liveValue"), MSG.view_measureTable_getLive(), getLiveValueAction());
+        addTableAction(MSG.view_measureTable_getLive(), getLiveValueAction());
     }
 
     protected abstract TableAction getLiveValueAction();
 
-    protected abstract LocatableListGrid decorateLiveDataGrid(List<ListGridRecord> records);
+    protected abstract ListGrid decorateLiveDataGrid(List<ListGridRecord> records);
 
     @Override
     protected String getDetailsLinkColumnName() {
@@ -112,7 +111,7 @@ public abstract class AbstractMeasurementDataTraitListView extends TableSection<
             }
         });
 
-        LocatableListGrid liveDataGrid = decorateLiveDataGrid(records);
+        ListGrid liveDataGrid = decorateLiveDataGrid(records);
         liveDataWindow.addItem(liveDataGrid);
         liveDataWindow.show();
     }

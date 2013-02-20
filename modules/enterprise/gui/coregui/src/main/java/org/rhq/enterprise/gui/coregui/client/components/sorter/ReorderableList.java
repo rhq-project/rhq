@@ -27,6 +27,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordDropEvent;
@@ -35,7 +36,6 @@ import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -45,7 +45,7 @@ public class ReorderableList extends LocatableVLayout {
 
     protected ListGridRecord[] initialSelection;
     protected HLayout hlayout;
-    protected LocatableListGrid listGrid;
+    protected ListGrid listGrid;
     /** an icon displayed next to each item in the list grids, or null if no icon should be displayed */
     private String itemIcon;
     /** the item title (i.e. display name), which should be plural and capitalized, e.g. "Resource Groups", "Roles". */
@@ -69,7 +69,7 @@ public class ReorderableList extends LocatableVLayout {
 
     public ReorderableList(String locatorId, boolean isReadOnly, ListGridRecord[] records, String itemTitle,
         String itemIcon, HoverCustomizer nameHoverCustomizer) {
-        super(locatorId);
+        super();
 
         this.isReadOnly = isReadOnly;
 
@@ -77,7 +77,7 @@ public class ReorderableList extends LocatableVLayout {
         setMargin(7);
 
         this.hlayout = new HLayout();
-        this.listGrid = new LocatableListGrid(extendLocatorId("listGrid"));
+        this.listGrid = new ListGrid();
         this.initialSelection = records;
         this.listGrid.setRecords(records);
 

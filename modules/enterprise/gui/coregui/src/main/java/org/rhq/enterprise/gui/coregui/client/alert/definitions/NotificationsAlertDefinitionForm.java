@@ -69,7 +69,7 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
     private Table table;
 
     public NotificationsAlertDefinitionForm(String locatorId, AlertDefinition alertDefinition) {
-        super(locatorId);
+        super();
         this.alertDefinition = alertDefinition;
         extractShallowCopyOfNotifications(this.alertDefinition);
     }
@@ -150,7 +150,7 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
     private void buildForm() {
         if (!formBuilt) {
 
-            table = new NotificationTable(extendLocatorId("notificationsTable"));
+            table = new NotificationTable();
 
             addMember(table);
 
@@ -245,8 +245,8 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
     }
 
     private class NotificationTable extends Table<NotificationDataSource> {
-        public NotificationTable(String locatorId) {
-            super(locatorId);
+        public NotificationTable() {
+            super();
             setShowHeader(false);
 
             final NotificationDataSource dataSource = new NotificationDataSource();
@@ -275,7 +275,7 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
                 }
             });
 
-            addTableAction(this.extendLocatorId("add"), MSG.common_button_add(), null, new AbstractTableAction() {
+            addTableAction(MSG.common_button_add(), null, new AbstractTableAction() {
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     popupNotificationEditor(null);

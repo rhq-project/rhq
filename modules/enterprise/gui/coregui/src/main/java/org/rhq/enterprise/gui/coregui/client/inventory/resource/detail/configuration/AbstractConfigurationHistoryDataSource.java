@@ -196,7 +196,7 @@ public abstract class AbstractConfigurationHistoryDataSource<T extends AbstractR
                 String err = event.getRecord().getAttribute(Field.ERROR_MESSAGE);
                 if (err != null && err.length() > 0) {
                     err = "<pre>" + err + "</pre>";
-                    new ErrorMessageWindow("errWin", MSG.common_severity_error(), err).show();
+                    new ErrorMessageWindow(MSG.common_severity_error(), err).show();
                 }
             }
         });

@@ -37,7 +37,7 @@ public class GroupMonitoringTablesView extends LocatableVLayout implements Refre
      * @param locatorId
      */
     public GroupMonitoringTablesView(String locatorId, ResourceGroupComposite groupComposite) {
-        super(locatorId);
+        super();
         
         metrics = new GroupMeasurementTableView(extendLocatorId("ViewMetrics"), groupComposite, groupComposite.getResourceGroup().getId());
         memberHealth = new GroupMembersHealthView(extendLocatorId("ViewHealth"), groupComposite.getResourceGroup().getId(), false);

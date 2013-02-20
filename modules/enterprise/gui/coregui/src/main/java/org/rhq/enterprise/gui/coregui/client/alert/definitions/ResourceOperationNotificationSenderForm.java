@@ -63,7 +63,7 @@ import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourcePicker.OkHandler;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.SingleResourcePicker;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -104,7 +104,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
         dynamicForm = new DynamicForm();
         dynamicForm.setNumCols(3);
 
-        operationArgumentsCanvasItem = new LocatableHLayout(extendLocatorId("opArgLayout"));
+        operationArgumentsCanvasItem = new EnhancedHLayout();
         operationArgumentsCanvasItem.setOverflow(Overflow.VISIBLE);
         operationArgumentsCanvasItem.setHeight(400);
         operationArgumentsCanvasItem.setWidth(500);

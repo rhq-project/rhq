@@ -79,27 +79,26 @@ public class TestUserPreferencesView extends Table {
         getListGrid().setFields(id, name, value);
         refresh();
 
-        addTableAction(extendLocatorId("export"), "Export To CSV",
-            new AbstractTableAction(TableActionEnablement.ALWAYS) {
-                @Override
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    final String s = "~";
-                    StringBuilder csv = new StringBuilder();
-                    csv.append(FIELD_ID).append(s).append(FIELD_NAME).append(s).append(FIELD_VALUE).append('\n');
+        addTableAction("Export To CSV", new AbstractTableAction(TableActionEnablement.ALWAYS) {
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                final String s = "~";
+                StringBuilder csv = new StringBuilder();
+                csv.append(FIELD_ID).append(s).append(FIELD_NAME).append(s).append(FIELD_VALUE).append('\n');
 
-                    RecordList records = getListGrid().getDataAsRecordList();
-                    int recordsSize = records.getLength();
-                    for (int i = 0; i < recordsSize; i++) {
-                        Record record = records.get(i);
-                        csv.append(record.getAttribute(FIELD_ID)).append(s).append(record.getAttribute(FIELD_NAME))
-                            .append(s).append(record.getAttribute(FIELD_VALUE)).append('\n');
-                    }
-
-                    new MessageWindow("Export To CSV", "<pre>" + csv.toString() + "</pre>").show();
-
-                    refreshTableInfo();
+                RecordList records = getListGrid().getDataAsRecordList();
+                int recordsSize = records.getLength();
+                for (int i = 0; i < recordsSize; i++) {
+                    Record record = records.get(i);
+                    csv.append(record.getAttribute(FIELD_ID)).append(s).append(record.getAttribute(FIELD_NAME))
+                        .append(s).append(record.getAttribute(FIELD_VALUE)).append('\n');
                 }
-            });
+
+                new MessageWindow("Export To CSV", "<pre>" + csv.toString() + "</pre>").show();
+
+                refreshTableInfo();
+            }
+        });
     }
 
     @Override

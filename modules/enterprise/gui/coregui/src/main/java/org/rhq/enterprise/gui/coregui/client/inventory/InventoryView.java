@@ -109,11 +109,11 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
     }
 
     protected Canvas defaultView() {
-        LocatableVLayout vLayout = new LocatableVLayout(this.extendLocatorId("Default"));
+        LocatableVLayout vLayout = new LocatableVLayout();
         vLayout.setWidth100();
 
         // TODO: Admin icon.
-        TitleBar titleBar = new TitleBar(this, MSG.common_title_inventory(), IconEnum.INVENTORY.getIcon24x24Path());
+        TitleBar titleBar = new TitleBar(MSG.common_title_inventory(), IconEnum.INVENTORY.getIcon24x24Path());
         vLayout.addMember(titleBar);
 
         Label label = new Label(MSG.view_inventory_sectionHelp());
@@ -210,13 +210,13 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
     private NavigationSection buildGroupsSection() {
         NavigationItem dynagroupDefinitionsItem = new NavigationItem(PAGE_DYNAGROUP_DEFINITIONS, new ViewFactory() {
             public Canvas createView() {
-                return new GroupDefinitionListView(extendLocatorId(PAGE_DYNAGROUP_DEFINITIONS.getName()));
+                return new GroupDefinitionListView();
             }
         }, this.globalPermissions.contains(Permission.MANAGE_INVENTORY));
 
         NavigationItem allGroupsItem = new NavigationItem(PAGE_ALL_GROUPS, new ViewFactory() {
             public Canvas createView() {
-                return new ResourceGroupListView(extendLocatorId(PAGE_ALL_GROUPS.getName()));
+                return new ResourceGroupListView();
             }
         });
 

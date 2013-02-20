@@ -36,7 +36,7 @@ public class HistoryGroupResourceConfigurationView extends LocatableVLayout impl
     private Canvas detailsCanvas = null;
 
     public HistoryGroupResourceConfigurationView(String locatorId, ResourceGroupComposite groupComposite) {
-        super(locatorId);
+        super();
         this.groupComposite = groupComposite;
 
         groupHistoryTable = new HistoryGroupResourceConfigurationTable(extendLocatorId("Table"), groupComposite);

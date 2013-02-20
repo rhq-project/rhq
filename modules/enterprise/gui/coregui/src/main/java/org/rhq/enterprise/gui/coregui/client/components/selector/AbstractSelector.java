@@ -65,8 +65,6 @@ import com.smartgwt.client.widgets.layout.VStack;
 
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTransferImgButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVStack;
@@ -89,8 +87,8 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
     protected List<Record> availableRecords;
     protected DynamicForm availableFilterForm;
     protected HLayout hlayout;
-    protected LocatableListGrid availableGrid;
-    protected LocatableListGrid assignedGrid;
+    protected ListGrid availableGrid;
+    protected ListGrid assignedGrid;
     protected RPCDataSource<T, C> datasource;
 
     private Set<AssignedItemsChangedHandler> assignedItemsChangedHandlers = new HashSet<AssignedItemsChangedHandler>();
@@ -118,12 +116,12 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
         setMargin(7);
 
         this.hlayout = new HLayout();
-        this.assignedGrid = new LocatableListGrid(extendLocatorId("assignedGrid"));
+        this.assignedGrid = new ListGrid();
 
         if (this.isReadOnly) {
             this.assignedGrid.setSelectionType(SelectionStyle.NONE);
         } else {
-            this.availableGrid = new LocatableListGrid(extendLocatorId("availableGrid"));
+            this.availableGrid = new ListGrid();
         }
     }
 
@@ -254,7 +252,7 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
     }
 
     private SectionStack buildAvailableItemsStack() {
-        SectionStack availableSectionStack = new LocatableSectionStack(extendLocatorId("Available"));
+        SectionStack availableSectionStack = new SectionStack();
         availableSectionStack.setWidth("*");
         availableSectionStack.setHeight100();
 
@@ -441,7 +439,7 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
     }
 
     private SectionStack buildAssignedItemsStack() {
-        SectionStack assignedSectionStack = new LocatableSectionStack(extendLocatorId("Assigned"));
+        SectionStack assignedSectionStack = new SectionStack();
         assignedSectionStack.setWidth("*");
         assignedSectionStack.setHeight100();
         assignedSectionStack.setAlign(Alignment.LEFT);
@@ -610,12 +608,12 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
     }
 
     @Deprecated
-    public LocatableListGrid getAvailableGrid() {
+    public ListGrid getAvailableGrid() {
         return availableGrid;
     }
 
     @Deprecated
-    public LocatableListGrid getAssignedGrid() {
+    public ListGrid getAssignedGrid() {
         return assignedGrid;
     }
 

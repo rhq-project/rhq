@@ -46,8 +46,8 @@ public class ResourceResourceGroupsView extends LocatableVLayout {
     private ResourceResourceGroupSelector selector;
     private ClickHandler saveButtonHandler;
 
-    public ResourceResourceGroupsView(String locatorId, int resourceId) {
-        super(locatorId);
+    public ResourceResourceGroupsView(int resourceId) {
+        super();
 
         this.resourceId = resourceId;
     }

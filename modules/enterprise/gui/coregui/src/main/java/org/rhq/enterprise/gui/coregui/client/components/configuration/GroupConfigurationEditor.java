@@ -253,7 +253,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         // create the header strip - will contain "set all values to" form
         LocatableToolStrip headerStrip = null;
         if (!propertyIsReadOnly) {
-            headerStrip = new LocatableToolStrip(extendLocatorId("headerStrip"));
+            headerStrip = new LocatableToolStrip();
             headerStrip.setWidth100();
             headerStrip.setPadding(5);
             headerStrip.setMembersMargin(10);
@@ -356,7 +356,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         layout.addMember(memberValuesGrid);
 
         // create the footer strip - will contain ok and cancel buttons
-        LocatableToolStrip footerStrip = new LocatableToolStrip(extendLocatorId("footerStrip"));
+        LocatableToolStrip footerStrip = new LocatableToolStrip();
         footerStrip.setWidth100();
         footerStrip.setPadding(5);
         footerStrip.setMembersMargin(10);

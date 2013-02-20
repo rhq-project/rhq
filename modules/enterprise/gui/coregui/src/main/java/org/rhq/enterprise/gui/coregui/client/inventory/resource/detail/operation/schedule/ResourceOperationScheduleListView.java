@@ -47,8 +47,7 @@ public class ResourceOperationScheduleListView extends AbstractOperationSchedule
 
     @Override
     public Canvas getDetailsView(Integer scheduleId) {
-        return new ResourceOperationScheduleDetailsView(extendLocatorId("DetailsView"), this.resourceComposite,
-            scheduleId);
+        return new ResourceOperationScheduleDetailsView(this.resourceComposite, scheduleId);
     }
 
 }

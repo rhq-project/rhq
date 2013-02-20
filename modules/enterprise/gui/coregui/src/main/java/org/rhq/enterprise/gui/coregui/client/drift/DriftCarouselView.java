@@ -72,8 +72,8 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
 
     private DriftGWTServiceAsync driftService = GWTServiceLookup.getDriftService();
 
-    public DriftCarouselView(String locatorId, EntityContext entityContext, int driftDefId, boolean hasWriteAccess) {
-        super(locatorId);
+    public DriftCarouselView(EntityContext entityContext, int driftDefId, boolean hasWriteAccess) {
+        super();
 
         this.context = entityContext;
         this.driftDefId = driftDefId;
@@ -136,8 +136,8 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
                     Criteria initialCriteria = getInitialMemberCriteria(isRefresh ? getCurrentCriteria() : null);
 
                     for (DriftChangeSet changeSet : result) {
-                        DriftCarouselMemberView view = new DriftCarouselMemberView(extendLocatorId(changeSet.getId()),
-                            context, changeSet, hasWriteAccess, initialCriteria);
+                        DriftCarouselMemberView view = new DriftCarouselMemberView(context, changeSet, hasWriteAccess,
+                            initialCriteria);
                         addCarouselMember(view);
                         view.addDriftSelectionListener(new DriftSelectionListener() {
 
@@ -253,7 +253,7 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
     private void buildTitle(DriftDefinition driftDef) {
 
         setTitleString(driftDef.getName());
-        setTitleBackButton(new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
+        setTitleBackButton(new BackButton(MSG.view_tableSection_backButton(),
             LinkManager.getDriftDefinitionsLink(this.context.getResourceId())));
     }
 
@@ -365,10 +365,9 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
     @Override
     public Canvas getDetailsView(String id) {
         if (this.useDriftDetailsView) {
-            return new DriftDetailsView(extendLocatorId("Drift"), id);
+            return new DriftDetailsView(id);
         }
 
-        return new DriftSnapshotView(extendLocatorId("Snapshot"), null, context.getResourceId(), driftDefId,
-            Integer.valueOf(id), hasWriteAccess);
+        return new DriftSnapshotView(null, context.getResourceId(), driftDefId, Integer.valueOf(id), hasWriteAccess);
     }
 }

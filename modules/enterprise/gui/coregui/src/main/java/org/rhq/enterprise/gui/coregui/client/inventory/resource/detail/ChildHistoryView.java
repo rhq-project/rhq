@@ -124,8 +124,8 @@ public class ChildHistoryView extends Table<ChildHistoryView.DataSource> {
         ListGridField createdField = new ListGridField(DataSource.Field.CREATED_DATE, MSG.common_title_dateCreated());
         TimestampCellFormatter.prepareDateField(createdField);
 
-        ListGridField modifiedField = new ListGridField(DataSource.Field.LAST_MODIFIED_TIME, MSG
-            .common_title_lastUpdated());
+        ListGridField modifiedField = new ListGridField(DataSource.Field.LAST_MODIFIED_TIME,
+            MSG.common_title_lastUpdated());
         TimestampCellFormatter.prepareDateField(modifiedField);
 
         ListGridField subjectField = new ListGridField(DataSource.Field.SUBJECT_NAME, MSG.common_title_user());
@@ -183,13 +183,13 @@ public class ChildHistoryView extends Table<ChildHistoryView.DataSource> {
                     if (DataSource.TYPE_CREATE.equals(typeString)) {
                         CreateResourceHistory history = (CreateResourceHistory) selectedRows[0]
                             .getAttributeAsObject(DataSource.Field.OBJECT);
-                        detailsView = new ChildHistoryDetails(extendLocatorId("details"), history);
+                        detailsView = new ChildHistoryDetails(history);
                     } else if (DataSource.TYPE_DELETE.equals(typeString)) {
                         DeleteResourceHistory history = (DeleteResourceHistory) selectedRows[0]
                             .getAttributeAsObject(DataSource.Field.OBJECT);
-                        detailsView = new ChildHistoryDetails(extendLocatorId("details"), history);
+                        detailsView = new ChildHistoryDetails(history);
                     }
-                    new DetailsWindow(extendLocatorId("detailsWin"), detailsView).show();
+                    new DetailsWindow(detailsView).show();
                 }
             }
         });
@@ -317,7 +317,7 @@ public class ChildHistoryView extends Table<ChildHistoryView.DataSource> {
     }
 
     class DetailsWindow extends Window {
-        public DetailsWindow(String locatorId, Canvas canvas) {
+        public DetailsWindow(Canvas canvas) {
             super();
             setTitle(MSG.common_title_details());
             setShowMinimizeButton(false);

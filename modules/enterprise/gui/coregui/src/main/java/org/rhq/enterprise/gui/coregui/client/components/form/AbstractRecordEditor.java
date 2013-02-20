@@ -49,8 +49,8 @@ import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -81,8 +81,8 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
     private LocatableVLayout contentPane;
     private boolean postFetchHandlerExecutedAlready;
 
-    public AbstractRecordEditor(String locatorId, DS dataSource, int recordId, String dataTypeName, String headerIcon) {
-        super(locatorId);
+    public AbstractRecordEditor(DS dataSource, int recordId, String dataTypeName, String headerIcon) {
+        super();
         this.dataSource = dataSource;
         this.recordId = recordId;
         this.dataTypeName = capitalize(dataTypeName);
@@ -94,7 +94,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         addMember(LOADING_LABEL);
 
         // Add title bar. We'll set the actual title later.
-        this.titleBar = new TitleBar(this, null, headerIcon);
+        this.titleBar = new TitleBar(null, headerIcon);
         this.titleBar.hide();
         addMember(this.titleBar);
     }
@@ -445,7 +445,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         private IButton cancelButton;
 
         ButtonBar() {
-            super(AbstractRecordEditor.this.extendLocatorId("ButtonBar"));
+            super();
 
             setWidth100();
             setHeight(35);
@@ -454,7 +454,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
             vLayout.setAlign(VerticalAlignment.CENTER);
             vLayout.setLayoutMargin(4);
 
-            LocatableHLayout hLayout = new LocatableHLayout(vLayout.extendLocatorId("HLayout"));
+            EnhancedHLayout hLayout = new EnhancedHLayout();
             hLayout.setMembersMargin(10);
             vLayout.addMember(hLayout);
 

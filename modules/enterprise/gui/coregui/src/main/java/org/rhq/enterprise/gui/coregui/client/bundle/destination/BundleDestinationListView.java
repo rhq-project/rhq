@@ -45,11 +45,11 @@ import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
  */
 public class BundleDestinationListView extends Table<BundleDestinationDataSource> {
 
-    public BundleDestinationListView(String locatorId) {
-        this(locatorId, null);
+    public BundleDestinationListView() {
+        this(null);
     }
 
-    public BundleDestinationListView(String locatorId, Criteria criteria) {
+    public BundleDestinationListView(Criteria criteria) {
         super(MSG.view_bundle_bundleDestinations(), criteria);
         setHeaderIcon("subsystems/bundle/BundleDestination_24.png");
         setDataSource(new BundleDestinationDataSource());

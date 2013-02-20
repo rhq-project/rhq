@@ -59,7 +59,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -101,7 +100,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
     protected void onInit() {
         super.onInit();
 
-        treeGrid = new LocatableTreeGrid(this.getLocatorId());
+        treeGrid = new TreeGrid();
 
         treeGrid.setHeight100();
 

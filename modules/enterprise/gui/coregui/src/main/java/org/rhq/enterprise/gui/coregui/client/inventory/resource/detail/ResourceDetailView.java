@@ -156,8 +156,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private SubTab contentSubscrip;
     private SubTab contentHistory;
 
-    public ResourceDetailView(String locatorId) {
-        super(locatorId, BASE_VIEW_PATH);
+    public ResourceDetailView() {
+        super(BASE_VIEW_PATH);
 
         // hide until we have our tabs in place
         this.hide();
@@ -274,7 +274,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     }
 
     protected ResourceTitleBar createTitleBar() {
-        return new ResourceTitleBar(extendLocatorId("TitleBar"));
+        return new ResourceTitleBar();
     }
 
     protected void updateTabContent(ResourceComposite resourceComposite, boolean isRefresh) {
@@ -365,8 +365,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         viewFactory = (!visible) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new PluginConfigurationHistoryListView(inventoryConnHistory.extendLocatorId("View"),
-                    resourceComposite.getResourcePermission().isInventory(), resourceComposite.getResource().getId());
+                return new PluginConfigurationHistoryListView(resourceComposite.getResourcePermission().isInventory(),
+                    resourceComposite.getResource().getId());
             }
         };
         updateSubTab(this.inventoryTab, this.inventoryConnHistory, visible, true, viewFactory);
@@ -454,8 +454,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         viewFactory = (!visible) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new CalltimeView(monitoringTab.extendLocatorId("CalltimeView"),
-                    EntityContext.forResource(resource.getId()));
+                return new CalltimeView(EntityContext.forResource(resource.getId()));
             }
         };
         updateSubTab(this.monitoringTab, this.monitorCallTime, visible, true, viewFactory);
@@ -494,8 +493,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             updateSubTab(this.operationsTab, this.operationsHistory, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new ResourceOperationHistoryListView(operationsTab.extendLocatorId("HistoryView"),
-                        resourceComposite);
+                    return new ResourceOperationHistoryListView(resourceComposite);
                 }
             });
         }
@@ -517,8 +515,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             updateSubTab(this.configurationTab, this.configHistory, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new ResourceConfigurationHistoryListView(configurationTab.extendLocatorId("ConfigHistView"),
-                        resourceComposite.getResourcePermission().isConfigureWrite(), resource.getId());
+                    return new ResourceConfigurationHistoryListView(resourceComposite.getResourcePermission()
+                        .isConfigureWrite(), resource.getId());
                 }
             });
         }
@@ -540,7 +538,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             updateSubTab(this.driftTab, this.driftDefinitions, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return ResourceDriftDefinitionsView.get(driftDefinitions.extendLocatorId("View"), resourceComposite);
+                    return ResourceDriftDefinitionsView.get(resourceComposite);
                 }
             });
         }

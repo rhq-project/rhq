@@ -108,8 +108,8 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
 
     private boolean initialized = false;
 
-    public DashboardsView(String locatorId) {
-        super(locatorId);
+    public DashboardsView() {
+        super();
         setOverflow(Overflow.AUTO);
         setPadding(5);
         setWidth100();
@@ -178,7 +178,7 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
             this.dashboardsByName.put(dashboard.getName(), dashboard);
         }
 
-        tabSet = new NamedTabSet(getLocatorId());
+        tabSet = new NamedTabSet();
 
         tabSet.setWidth100();
         tabSet.setHeight100();

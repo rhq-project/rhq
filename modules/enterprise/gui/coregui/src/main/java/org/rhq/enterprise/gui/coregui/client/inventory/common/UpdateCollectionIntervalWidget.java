@@ -33,7 +33,7 @@ import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import com.smartgwt.client.widgets.grid.ListGrid;
 
 import org.rhq.enterprise.gui.coregui.client.components.table.TableWidget;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 
 /**
  * Widget for updating the collection intervals for the selected metrics. It displays two form fields for
@@ -42,7 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
  *
  * @author Ian Springer
  */
-public class UpdateCollectionIntervalWidget extends LocatableHLayout implements TableWidget {
+public class UpdateCollectionIntervalWidget extends EnhancedHLayout implements TableWidget {
 
     private static final String ITEM_INTERVAL = "interval";
     private static final String ITEM_UNITS = "units";
@@ -63,8 +63,8 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
     private DynamicForm form;
     private Button setButton;
 
-    public UpdateCollectionIntervalWidget(String locatorId, AbstractSchedulesView schedulesView) {
-        super(locatorId);
+    public UpdateCollectionIntervalWidget(AbstractSchedulesView schedulesView) {
+        super();
         this.schedulesView = schedulesView;
     }
 

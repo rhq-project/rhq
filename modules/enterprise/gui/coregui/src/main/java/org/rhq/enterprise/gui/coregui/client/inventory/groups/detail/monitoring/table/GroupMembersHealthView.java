@@ -58,7 +58,7 @@ public class GroupMembersHealthView extends MembersView {
         setListGridFields(fields.toArray(new ListGridField[fields.size()]));
 
         //add chart selected metric action
-        addTableAction(extendLocatorId("chartValues"), MSG.common_title_compare_metrics(), new TableAction() {
+        addTableAction(MSG.common_title_compare_metrics(), new TableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
                 return selection != null && selection.length > 1;

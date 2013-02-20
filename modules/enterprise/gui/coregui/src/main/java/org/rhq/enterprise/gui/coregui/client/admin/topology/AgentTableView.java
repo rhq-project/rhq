@@ -58,7 +58,7 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
     private final boolean isAffinityGroupId;
     private final Integer id;
 
-    public AgentTableView(String locatorId, Integer id, boolean isAffinityGroupId) {
+    public AgentTableView(Integer id, boolean isAffinityGroupId) {
         super(null);
         this.isAffinityGroupId = isAffinityGroupId;
         this.id = id;
@@ -126,24 +126,24 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
     }
 
     private void showUpdateMembersAction() {
-        addTableAction(extendLocatorId("editGroupAgents"), MSG.view_groupInventoryMembers_button_updateMembership(),
-            new AuthorizedTableAction(this, TableActionEnablement.ALWAYS, Permission.MANAGE_SETTINGS) {
-                public void executeAction(final ListGridRecord[] selections, Object actionValue) {
-                    AffinityGroupAgentsSelector.show(id, AgentTableView.this);
-                }
-            });
+        addTableAction(MSG.view_groupInventoryMembers_button_updateMembership(), new AuthorizedTableAction(this,
+            TableActionEnablement.ALWAYS, Permission.MANAGE_SETTINGS) {
+            public void executeAction(final ListGridRecord[] selections, Object actionValue) {
+                AffinityGroupAgentsSelector.show(id, AgentTableView.this);
+            }
+        });
     }
 
     @Override
     public Canvas getDetailsView(Integer id) {
-        return new AgentDetailView(extendLocatorId("detailsView"), id);
+        return new AgentDetailView(id);
     }
 
     @Override
     public ViewName getViewName() {
         return VIEW_ID;
     }
-    
+
     @Override
     protected String getBasePath() {
         return VIEW_PATH;

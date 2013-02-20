@@ -36,7 +36,7 @@ public class HistoryGroupPluginConfigurationView extends LocatableVLayout implem
     private Canvas detailsCanvas = null;
 
     public HistoryGroupPluginConfigurationView(String locatorId, ResourceGroupComposite groupComposite) {
-        super(locatorId);
+        super();
         this.groupComposite = groupComposite;
 
         groupHistoryTable = new HistoryGroupPluginConfigurationTable(extendLocatorId("Table"), groupComposite);
@@ -76,8 +76,7 @@ public class HistoryGroupPluginConfigurationView extends LocatableVLayout implem
                 detailsCanvas = new HistoryGroupPluginConfigurationSettings(extendLocatorId("SettingsView"),
                     this.groupComposite, groupHistoryId);
             } else {
-                detailsCanvas = new HistoryGroupPluginConfigurationMembers(extendLocatorId("MembersView"),
-                    this.groupComposite, groupHistoryId);
+                detailsCanvas = new HistoryGroupPluginConfigurationMembers(this.groupComposite, groupHistoryId);
             }
             addMember(detailsCanvas);
             setVisibleMember(detailsCanvas);

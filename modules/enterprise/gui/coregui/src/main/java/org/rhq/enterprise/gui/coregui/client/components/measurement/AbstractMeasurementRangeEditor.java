@@ -93,7 +93,7 @@ public abstract class AbstractMeasurementRangeEditor extends DynamicForm impleme
         lastValues = new String[] { "4", "8", "12", "24", "30", "36", "48", "60", "90", "120" };
     }
 
-    public AbstractMeasurementRangeEditor(String locatorId) {
+    public AbstractMeasurementRangeEditor() {
         super();
         setNumCols(10);
         setWrapItemTitles(false);

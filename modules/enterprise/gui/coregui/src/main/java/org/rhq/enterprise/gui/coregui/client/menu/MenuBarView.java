@@ -46,7 +46,6 @@ import org.rhq.enterprise.gui.coregui.client.help.HelpView;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHStack;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -61,10 +60,10 @@ public class MenuBarView extends LocatableVLayout {
     public static final ViewName LOGOUT_VIEW_ID = new ViewName("LogOut", MSG.view_menuBar_logout());
 
     private String currentlySelectedSection = DashboardsView.VIEW_ID.getName();
-    private LocatableLabel userLabel;
+    private Label userLabel;
 
-    public MenuBarView(String locatorId) {
-        super(locatorId);
+    public MenuBarView() {
+        super();
     }
 
     protected void onDraw() {
@@ -124,7 +123,7 @@ public class MenuBarView extends LocatableVLayout {
         layout.setMargin(10);
         layout.setAlign(Alignment.RIGHT);
 
-        userLabel = new LocatableLabel(this.extendLocatorId("User"), UserSessionManager.getSessionSubject().getName());
+        userLabel = new Label(UserSessionManager.getSessionSubject().getName());
         userLabel.setAutoWidth();
 
         Label lineLabel = new Label(" | ");
@@ -133,7 +132,7 @@ public class MenuBarView extends LocatableVLayout {
 
         String contents = "<a href='#" + LOGOUT_VIEW_ID.getName() + "' style='white-space: nowrap'>"
             + LOGOUT_VIEW_ID.getTitle() + "</a>";
-        LocatableLabel logoutLink = new LocatableLabel(this.extendLocatorId("LogoutLink"), contents);
+        Label logoutLink = new Label(contents);
         logoutLink.setAutoWidth();
 
         layout.addMember(userLabel);
@@ -147,7 +146,7 @@ public class MenuBarView extends LocatableVLayout {
         private final Map<String, VLayout> sectionNameToLinkVLayoutMap = new HashMap<String, VLayout>();
 
         LinkBar() {
-            super(MenuBarView.this.extendLocatorId("LinkBar"));
+            super();
 
             setWidth100();
             setHeight100();
@@ -164,7 +163,7 @@ public class MenuBarView extends LocatableVLayout {
 
                 String contents = "<a class='menuBar' href='#" + sectionName.getName() + "'>" + sectionName.getTitle()
                     + "</a>";
-                LocatableLabel link = new LocatableLabel(extendLocatorId(sectionName.getName()), contents);
+                Label link = new Label(contents);
                 link.setAutoHeight();
                 link.setAlign(Alignment.CENTER);
                 link.setStyleName("inheritColor");

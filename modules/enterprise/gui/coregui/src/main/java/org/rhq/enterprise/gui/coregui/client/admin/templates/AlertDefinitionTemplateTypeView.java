@@ -20,6 +20,11 @@
 
 package org.rhq.enterprise.gui.coregui.client.admin.templates;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.grid.ListGrid;
@@ -27,20 +32,20 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeGridField;
+
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite;
-import org.rhq.enterprise.gui.coregui.client.*;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.TemplateAlertDefinitionsView;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author Jay Shaughnessy
@@ -55,8 +60,8 @@ public class AlertDefinitionTemplateTypeView extends ResourceTypeTreeView {
 
     private Layout canvas;
 
-    public AlertDefinitionTemplateTypeView(String locatorId) {
-        super(locatorId);
+    public AlertDefinitionTemplateTypeView() {
+        super();
     }
 
     @Override
@@ -72,7 +77,7 @@ public class AlertDefinitionTemplateTypeView extends ResourceTypeTreeView {
     @Override
     protected TitleBar getTitleBar() {
 
-        return new TitleBar(this, MSG.view_adminConfig_alertDefTemplates(), VIEW_ID.getIcon().getIcon24x24Path());
+        return new TitleBar(MSG.view_adminConfig_alertDefTemplates(), VIEW_ID.getIcon().getIcon24x24Path());
     }
 
     @Override

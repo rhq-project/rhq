@@ -48,6 +48,7 @@ import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.WidgetCanvas;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -64,7 +65,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWidgetCanvas;
 
 /**
  * @author Greg Hinkle
@@ -86,12 +86,12 @@ public class LiveGraphView extends LocatableVLayout {
     @SuppressWarnings("unused")
     private long min, max;
 
-    public LiveGraphView(String locatorId) {
-        super(locatorId);
+    public LiveGraphView() {
+        super();
     }
 
     public LiveGraphView(String locatorId, int resourceId, MeasurementDefinition def) {
-        super(locatorId);
+        super();
         this.resourceId = resourceId;
         this.definition = def;
         setHeight100();
@@ -205,7 +205,7 @@ public class LiveGraphView extends LocatableVLayout {
             addMember(title);
         }
 
-        addMember(new LocatableWidgetCanvas(this.getLocatorId(), plot));
+        addMember(new WidgetCanvas(plot));
     }
 
     private String getHover(PlotItem item) {

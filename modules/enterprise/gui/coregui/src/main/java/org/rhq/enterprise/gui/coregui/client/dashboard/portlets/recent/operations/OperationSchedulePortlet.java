@@ -32,6 +32,7 @@ import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VStack;
@@ -53,8 +54,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.operation.ScheduledOperationsDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -84,7 +84,7 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
     private PortletWindow portletWindow;
 
     //ListGrids for operations
-    private LocatableListGrid scheduledOperationsGrid = null;
+    private ListGrid scheduledOperationsGrid = null;
 
     private ScheduledOperationsDataSource dataSourceScheduled;
     public static String unlimited = "-1";
@@ -94,13 +94,8 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
 
     private Timer refreshTimer;
 
-    //default no-args constructor for serialization.
-    private OperationSchedulePortlet() {
-        super("(uninitialized)");
-    }
-
-    public OperationSchedulePortlet(String locatorId) {
-        super(locatorId);
+    public OperationSchedulePortlet() {
+        super();
         this.dataSourceScheduled = new ScheduledOperationsDataSource(this);
     }
 
@@ -108,7 +103,7 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
     protected void onInit() {
         super.onInit();
 
-        this.scheduledOperationsGrid = new LocatableListGrid(extendLocatorId("Scheduled"));
+        this.scheduledOperationsGrid = new ListGrid();
         scheduledOperationsGrid.setDataSource(getDataSourceScheduled());
         scheduledOperationsGrid.setAutoFetchData(true);
         scheduledOperationsGrid.setWidth100();
@@ -259,7 +254,7 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
         VStack column = new VStack();
 
         //horizontal layout
-        LocatableHLayout sheduledOperationsLayout = new LocatableHLayout(extendLocatorId("EnableScheduledOperations"));
+        EnhancedHLayout sheduledOperationsLayout = new EnhancedHLayout();
 
         final CheckboxItem enableScheduledOperationsGrouping = new CheckboxItem();
         enableScheduledOperationsGrouping.setName(OPERATIONS_RANGE_SCHEDULED_ENABLED);
@@ -378,7 +373,7 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
         return this.dataSourceScheduled;
     }
 
-    public LocatableListGrid getScheduledOperationsGrid() {
+    public ListGrid getScheduledOperationsGrid() {
         return this.scheduledOperationsGrid;
     }
 

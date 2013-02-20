@@ -67,8 +67,8 @@ import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.measurement.GwtMonitorUtils;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -78,9 +78,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 public abstract class AbstractActivityView extends LocatableVLayout implements RefreshableView {
 
     //contains the activity display region
-    private LocatableHLayout columnSection = new LocatableHLayout("ActivityRegion");
+    private EnhancedHLayout columnSection = new EnhancedHLayout();
 
-    //Locatable ui references
     protected VLayout leftPane = new VLayout();
     protected VLayout rightPane = new VLayout();
 
@@ -123,7 +122,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
 
     public AbstractActivityView(String locatorId, ResourceGroupComposite groupComposite,
         ResourceComposite resourceComposite) {
-        super(locatorId);
+        super();
         if (groupComposite != null) {
             this.groupComposite = groupComposite;
         }

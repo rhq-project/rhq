@@ -40,7 +40,6 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -54,21 +53,21 @@ public class AffinityGroupDetailView extends LocatableVLayout implements Bookmar
     private final int affinityGroupId;
 
     private static final int SECTION_COUNT = 3;
-    private final LocatableSectionStack sectionStack;
+    private final SectionStack sectionStack;
     private SectionStackSection detailsSection = null;
     private SectionStackSection agentSection = null;
     private SectionStackSection serverSection = null;
 
     private volatile int initSectionCount = 0;
 
-    public AffinityGroupDetailView(String locatorId, int affinityGroupId) {
-        super(locatorId);
+    public AffinityGroupDetailView(int affinityGroupId) {
+        super();
         this.affinityGroupId = affinityGroupId;
         setHeight100();
         setWidth100();
         setOverflow(Overflow.AUTO);
 
-        sectionStack = new LocatableSectionStack(extendLocatorId("stack"));
+        sectionStack = new SectionStack();
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
         sectionStack.setWidth100();
         sectionStack.setHeight100();
@@ -138,8 +137,7 @@ public class AffinityGroupDetailView extends LocatableVLayout implements Bookmar
     private void prepareAgentSection(SectionStack stack) {
         SectionStackSection section = new SectionStackSection(MSG.view_adminTopology_affinityGroups_agetnMembers());
         section.setExpanded(true);
-        AgentTableView agentsTable = new AgentTableView(extendLocatorId(AgentTableView.VIEW_ID.getName()),
-            affinityGroupId, true);
+        AgentTableView agentsTable = new AgentTableView(affinityGroupId, true);
         section.setItems(agentsTable);
 
         agentSection = section;
@@ -150,8 +148,7 @@ public class AffinityGroupDetailView extends LocatableVLayout implements Bookmar
     private void prepareServerSection(SectionStack stack) {
         SectionStackSection section = new SectionStackSection(MSG.view_adminTopology_affinityGroups_serverMembers());
         section.setExpanded(true);
-        ServerTableView serverTable = new ServerTableView(extendLocatorId(AgentTableView.VIEW_ID.getName()),
-            affinityGroupId, true);
+        ServerTableView serverTable = new ServerTableView(affinityGroupId, true);
         section.setItems(serverTable);
 
         serverSection = section;
@@ -169,7 +166,7 @@ public class AffinityGroupDetailView extends LocatableVLayout implements Bookmar
         final TextItem nameItem = new TextItem(FIELD_NAME.propertyName(), FIELD_NAME.title());
         nameItem.setValue(affinityGroup.getName());
 
-        LocatableToolStrip footer = new LocatableToolStrip(extendLocatorId("detailsFooter"));
+        LocatableToolStrip footer = new LocatableToolStrip();
         footer.setPadding(5);
         footer.setWidth100();
         footer.setMembersMargin(15);

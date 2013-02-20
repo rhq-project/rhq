@@ -80,8 +80,8 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
     private boolean isLdapConfigured;
     private boolean isSystemRole;
 
-    public RoleEditView(String locatorId, int roleId) {
-        super(locatorId, new RolesDataSource(), roleId, MSG.common_label_role(), HEADER_ICON);
+    public RoleEditView(int roleId) {
+        super(new RolesDataSource(), roleId, MSG.common_label_role(), HEADER_ICON);
     }
 
     @Override

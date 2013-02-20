@@ -77,11 +77,11 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
 
     @Override
     protected LocatableVLayout defaultView() {
-        LocatableVLayout vLayout = new LocatableVLayout(this.extendLocatorId("Default"));
+        LocatableVLayout vLayout = new LocatableVLayout();
         vLayout.setWidth100();
 
         // TODO: Help icon.
-        TitleBar titleBar = new TitleBar(this, MSG.common_title_help(), VIEW_ID.getIcon().getIcon24x24Path());
+        TitleBar titleBar = new TitleBar(MSG.common_title_help(), VIEW_ID.getIcon().getIcon24x24Path());
         vLayout.addMember(titleBar);
 
         Label label = new Label(MSG.view_helpTop_description());

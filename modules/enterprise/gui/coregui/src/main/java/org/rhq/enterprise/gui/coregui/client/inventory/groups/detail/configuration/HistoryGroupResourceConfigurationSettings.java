@@ -61,7 +61,7 @@ public class HistoryGroupResourceConfigurationSettings extends LocatableVLayout 
 
     public HistoryGroupResourceConfigurationSettings(String locatorId, ResourceGroupComposite groupComposite,
         int updateId) {
-        super(locatorId);
+        super();
         this.group = groupComposite.getResourceGroup();
         this.groupPerms = groupComposite.getResourcePermission();
         this.groupUpdateId = updateId;
@@ -70,8 +70,7 @@ public class HistoryGroupResourceConfigurationSettings extends LocatableVLayout 
         setMembersMargin(5);
         String backPath = LinkManager.getGroupResourceConfigurationUpdateHistoryLink(
             EntityContext.forGroup(this.group), null);
-        BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
-            backPath);
+        BackButton backButton = new BackButton(MSG.view_tableSection_backButton(), backPath);
         addMember(backButton);
     }
 

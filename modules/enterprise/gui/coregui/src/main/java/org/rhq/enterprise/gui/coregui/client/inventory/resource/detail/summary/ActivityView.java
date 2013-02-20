@@ -66,7 +66,7 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
     private boolean isInitialized = false;
 
     public ActivityView(String locatorId, ResourceComposite resourceComposite) {
-        super(locatorId);
+        super();
         this.resourceComposite = resourceComposite;
     }
 
@@ -115,7 +115,7 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
             EntityContext.forResource(resourceComposite.getResource().getId()), resourceComposite);
         addMember(dashboardView);
 
-        footer = new LocatableToolStrip(extendLocatorId("Footer"));
+        footer = new LocatableToolStrip();
         footer.setPadding(5);
         footer.setWidth100();
         footer.setMembersMargin(15);

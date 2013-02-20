@@ -47,8 +47,8 @@ public class DriftComplianceReport extends LocatableVLayout implements Bookmarka
 
     private ResourceSearchView resourceList;
 
-    public DriftComplianceReport(String locatorId ) {
-        super(locatorId);
+    public DriftComplianceReport() {
+        super();
         setHeight100();
         setWidth100();
     }
@@ -74,7 +74,7 @@ public class DriftComplianceReport extends LocatableVLayout implements Bookmarka
     @Override
     protected void onInit() {
         super.onInit();
-        addMember(new DriftComplianceReportTable(extendLocatorId("table")));
+        addMember(new DriftComplianceReportTable());
     }
 
     protected Criteria createResourceSearchViewCriteria(int resourceTypeId) {

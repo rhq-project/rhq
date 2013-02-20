@@ -65,7 +65,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 
 /**
  * A view that displays a nested table view of a snapshot. The outer table is a list of directories in the snapshot
@@ -89,20 +88,18 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
     protected DriftSnapshotDataSource dataSource;
     protected DriftSnapshotListGrid listGrid;
 
-    public DriftSnapshotView(String locatorId, String tableTitle, int templateId, boolean hasWriteAccess) {
-        this(locatorId, (null == tableTitle) ? DEFAULT_TITLE : tableTitle, templateId, null, null, null, hasWriteAccess);
+    public DriftSnapshotView(String tableTitle, int templateId, boolean hasWriteAccess) {
+        this((null == tableTitle) ? DEFAULT_TITLE : tableTitle, templateId, null, null, null, hasWriteAccess);
     }
 
-    public DriftSnapshotView(String locatorId, String tableTitle, int resourceId, int driftDefId, int version,
-        boolean hasWriteAccess) {
-        this(locatorId, (null == tableTitle) ? DEFAULT_TITLE : tableTitle, null, resourceId, driftDefId, version,
-            hasWriteAccess);
+    public DriftSnapshotView(String tableTitle, int resourceId, int driftDefId, int version, boolean hasWriteAccess) {
+        this((null == tableTitle) ? DEFAULT_TITLE : tableTitle, null, resourceId, driftDefId, version, hasWriteAccess);
     }
 
-    private DriftSnapshotView(String locatorId, String tableTitle, Integer templateId, Integer resourceId,
-        Integer driftDefId, Integer version, boolean hasWriteAccess) {
+    private DriftSnapshotView(String tableTitle, Integer templateId, Integer resourceId, Integer driftDefId,
+        Integer version, boolean hasWriteAccess) {
 
-        super(locatorId, tableTitle);
+        super(tableTitle);
 
         this.templateId = templateId;
         this.resourceId = resourceId;
@@ -127,8 +124,8 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
     }
 
     @Override
-    protected LocatableListGrid createListGrid(String locatorId) {
-        return new DriftSnapshotListGrid(locatorId);
+    protected ListGrid createListGrid() {
+        return new DriftSnapshotListGrid();
     }
 
     @Override
@@ -246,10 +243,10 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
         DriftSnapshotView.this.refreshTableInfo();
     }
 
-    private class DriftSnapshotListGrid extends LocatableListGrid {
+    private class DriftSnapshotListGrid extends ListGrid {
 
-        public DriftSnapshotListGrid(String locatorId) {
-            super(locatorId);
+        public DriftSnapshotListGrid() {
+            super();
 
             setCanExpandRecords(true);
             setCanExpandMultipleRecords(true);
@@ -260,7 +257,7 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
         protected Canvas getExpansionComponent(ListGridRecord record) {
             String dirPath = record.getAttribute(DriftSnapshotDataSource.ATTR_DIR_PATH);
 
-            return new DirectoryView(extendLocatorId(dirPath), dirPath);
+            return new DirectoryView(dirPath);
         }
     }
 
@@ -269,7 +266,7 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
         private String directory;
         private DirectoryViewDataSource dataSource;
 
-        public DirectoryView(String locatorId, String directory) {
+        public DirectoryView(String directory) {
             super(null, true);
 
             this.directory = directory;
@@ -313,14 +310,14 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
         }
 
         @Override
-        protected LocatableListGrid createListGrid(String locatorId) {
-            return new DirectoryViewListGrid(locatorId);
+        protected ListGrid createListGrid() {
+            return new DirectoryViewListGrid();
         }
 
-        private class DirectoryViewListGrid extends LocatableListGrid {
+        private class DirectoryViewListGrid extends ListGrid {
 
-            public DirectoryViewListGrid(String locatorId) {
-                super(locatorId);
+            public DirectoryViewListGrid() {
+                super();
 
                 setCanExpandRecords(true);
                 setCanExpandMultipleRecords(true);
@@ -359,7 +356,7 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
             protected Canvas getExpansionComponent(ListGridRecord record) {
                 String driftId = record.getAttribute(DriftDataSource.ATTR_ID);
 
-                return new DriftSnapshotDriftDetailsView(extendLocatorId(driftId), driftId);
+                return new DriftSnapshotDriftDetailsView(driftId);
             }
         }
 

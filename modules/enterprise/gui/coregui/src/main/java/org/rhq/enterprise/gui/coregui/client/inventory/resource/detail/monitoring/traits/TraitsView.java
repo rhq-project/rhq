@@ -31,6 +31,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -41,7 +42,6 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitListView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 
 /**
  * The Resource Monitoring>Traits subtab.
@@ -58,7 +58,7 @@ public class TraitsView extends AbstractMeasurementDataTraitListView {
 
     @Override
     public Canvas getDetailsView(Integer definitionId) {
-        return new TraitsDetailView(extendLocatorId("Detail"), this.resourceId, definitionId);
+        return new TraitsDetailView(this.resourceId, definitionId);
     }
 
     @Override
@@ -132,8 +132,8 @@ public class TraitsView extends AbstractMeasurementDataTraitListView {
     }
 
     @Override
-    protected LocatableListGrid decorateLiveDataGrid(List<ListGridRecord> records) {
-        LocatableListGrid liveDataGrid = new LocatableListGrid(extendLocatorId("liveDataListGrid"));
+    protected ListGrid decorateLiveDataGrid(List<ListGridRecord> records) {
+        ListGrid liveDataGrid = new ListGrid();
         liveDataGrid.setShowAllRecords(true);
         liveDataGrid.setData(records.toArray(new ListGridRecord[records.size()]));
         liveDataGrid.setSelectionType(SelectionStyle.NONE);

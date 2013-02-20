@@ -70,7 +70,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.TypeConversionUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -92,7 +92,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
     private Map<String, ConfigurationDefinition> operationNameToParametersDefinitionMap = new HashMap<String, ConfigurationDefinition>();
     private StaticTextItem operationDescriptionItem;
     private StaticTextItem operationParametersItem;
-    private LocatableHLayout operationParametersConfigurationHolder;
+    private EnhancedHLayout operationParametersConfigurationHolder;
     private ConfigurationEditor operationParametersConfigurationEditor;
     private Configuration operationParameters;
     private JobTriggerEditor triggerEditor;
@@ -101,9 +101,9 @@ public abstract class AbstractOperationScheduleDetailsView extends
     private ViewPath viewPath;
     private boolean isImmediateExecution;
 
-    public AbstractOperationScheduleDetailsView(String locatorId, AbstractOperationScheduleDataSource dataSource,
+    public AbstractOperationScheduleDetailsView(AbstractOperationScheduleDataSource dataSource,
         ResourceType resourceType, int scheduleId) {
-        super(locatorId, dataSource, scheduleId, MSG.view_operationScheduleDetails_operationSchedule(), null);
+        super(dataSource, scheduleId, MSG.view_operationScheduleDetails_operationSchedule(), null);
 
         this.setMembersMargin(5);
 
@@ -236,7 +236,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
     protected LocatableVLayout buildContentPane() {
         LocatableVLayout contentPane = super.buildContentPane();
 
-        this.operationParametersConfigurationHolder = new LocatableHLayout(extendLocatorId("ConfigHolder"));
+        this.operationParametersConfigurationHolder = new EnhancedHLayout();
         this.operationParametersConfigurationHolder.setVisible(false);
         contentPane.addMember(this.operationParametersConfigurationHolder);
 

@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.client.content.repository.tree;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
 import com.smartgwt.client.types.SelectionStyle;
+import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 import com.smartgwt.client.widgets.tree.events.NodeClickEvent;
 import com.smartgwt.client.widgets.tree.events.NodeClickHandler;
@@ -32,15 +33,14 @@ import com.smartgwt.client.widgets.tree.events.NodeClickHandler;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 
 /**
  * @author Greg Hinkle
  */
-public class ContentRepositoryTreeView extends LocatableTreeGrid {
+public class ContentRepositoryTreeView extends TreeGrid {
 
-    public ContentRepositoryTreeView(String locatorId) {
-        super(locatorId);
+    public ContentRepositoryTreeView() {
+        super();
         setWidth100();
         setHeight100();
 

@@ -53,7 +53,7 @@ public class GraphListView extends LocatableVLayout implements ResourceSelectLis
     private Label loadingLabel = new Label(MSG.common_msg_loading());
 
     public GraphListView(String locatorId, Resource resource) {
-        super(locatorId);
+        super();
 
         this.resource = resource;
         setOverflow(Overflow.AUTO);
@@ -69,7 +69,7 @@ public class GraphListView extends LocatableVLayout implements ResourceSelectLis
 
         //        addMember(loadingLabel);
 
-        addMember(new UserPreferencesMeasurementRangeEditor(this.getLocatorId()));
+        addMember(new UserPreferencesMeasurementRangeEditor());
 
         if (resource != null) {
             buildGraphs();

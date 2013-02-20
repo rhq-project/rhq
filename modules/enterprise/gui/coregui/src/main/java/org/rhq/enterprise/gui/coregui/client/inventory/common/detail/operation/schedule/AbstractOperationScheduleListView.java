@@ -59,7 +59,7 @@ public abstract class AbstractOperationScheduleListView extends TableSection<Abs
 
         setListGridFields(true, idField, operationField, subjectField, nextFireTimeField, descriptionField);
 
-        addTableAction(extendLocatorId("New"), MSG.common_button_new(), new TableAction() {
+        addTableAction(MSG.common_button_new(), new TableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
                 return hasControlPermission();
             }

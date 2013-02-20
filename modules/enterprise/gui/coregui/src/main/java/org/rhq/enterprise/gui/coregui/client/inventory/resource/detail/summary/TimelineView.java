@@ -34,7 +34,7 @@ public class TimelineView extends LocatableVLayout {
     private final ResourceComposite resourceComposite;
 
     public TimelineView(String locatorId, ResourceComposite resourceComposite) {
-        super(locatorId);
+        super();
         this.resourceComposite = resourceComposite;
 
         setMargin(10);
@@ -49,7 +49,7 @@ public class TimelineView extends LocatableVLayout {
         // we create a simple subclass because we need to know when a new range has been set in order to refresh the timeline
         class RangeEditor extends UserPreferencesMeasurementRangeEditor {
             RangeEditor(String editorLocatorId) {
-                super(editorLocatorId);
+                super();
             }
 
             @Override

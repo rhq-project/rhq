@@ -27,7 +27,7 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.components.table.TableWidget;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 
 /**
  * A table widget that provides a checkbox for selecting whether or not to update existing schedules when updating
@@ -35,11 +35,11 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
  *
  * @author Ian Springer
  */
-public class UpdateExistingSchedulesWidget extends LocatableHLayout implements TableWidget {
+public class UpdateExistingSchedulesWidget extends EnhancedHLayout implements TableWidget {
     private TemplateSchedulesView schedulesView;
 
     public UpdateExistingSchedulesWidget(TemplateSchedulesView schedulesView) {
-        super(schedulesView.extendLocatorId("UpdateExistingSchedulesWidget"));
+        super();
         this.schedulesView = schedulesView;
     }
 

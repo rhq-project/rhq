@@ -309,7 +309,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
     public void buildCoreUI() {
         // If the core gui is already built (eg. from previous login) skip the build and just refire event
         if (rootCanvas == null) {
-            menuBarView = new MenuBarView("TopMenu");
+            menuBarView = new MenuBarView();
             menuBarView.setWidth("100%");
             footer = new Footer();
 
@@ -367,17 +367,17 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         Canvas canvas;
 
         if (viewName.equals(DashboardsView.VIEW_ID.getName())) {
-            canvas = new DashboardsView(viewName);
+            canvas = new DashboardsView();
         } else if (viewName.equals(InventoryView.VIEW_ID.getName())) {
             canvas = new InventoryView();
         } else if (viewName.equals(ResourceTopView.VIEW_ID.getName())) {
-            canvas = new ResourceTopView(viewName);
+            canvas = new ResourceTopView();
         } else if (viewName.equals(ResourceGroupTopView.VIEW_ID.getName())) {
-            canvas = new ResourceGroupTopView(viewName);
+            canvas = new ResourceGroupTopView();
         } else if (viewName.equals(ReportTopView.VIEW_ID.getName())) {
             canvas = new ReportTopView();
         } else if (viewName.equals(BundleTopView.VIEW_ID.getName())) {
-            canvas = new BundleTopView(viewName);
+            canvas = new BundleTopView();
         } else if (viewName.equals(AdministrationView.VIEW_ID.getName())) {
             canvas = new AdministrationView();
         } else if (viewName.equals(HelpView.VIEW_ID.getName())) {
@@ -390,7 +390,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
             canvas = logoutView;
             logoutView.showLoginDialog();
         } else if (viewName.equals(TaggedView.VIEW_ID.getName())) {
-            canvas = new TaggedView(viewName);
+            canvas = new TaggedView();
         } else if (viewName.equals("Subsystems")) {
             canvas = new AlertHistoryView();
         } else if (viewName.equals(TestTopView.VIEW_ID.getName())) {

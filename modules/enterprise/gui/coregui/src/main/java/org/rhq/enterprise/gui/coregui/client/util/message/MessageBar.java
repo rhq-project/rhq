@@ -24,6 +24,7 @@ import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.events.RightMouseDownEvent;
@@ -35,8 +36,8 @@ import com.smartgwt.client.widgets.menu.events.ClickHandler;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
+
 
 /**
  * A bar for displaying a message at the top of a page - the equivalent of the JSF h:messages component.
@@ -46,25 +47,24 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
  * @author Ian Springer
  * @author Jay Shaughnessy
  */
-public class MessageBar extends LocatableHLayout implements MessageCenter.MessageListener {
+public class MessageBar extends EnhancedHLayout implements MessageCenter.MessageListener {
 
-    private static final String LOCATOR_ID = "MessageBar";
     private static final int AUTO_HIDE_DELAY_MILLIS = 30000;
     private static final String NON_BREAKING_SPACE = "&nbsp;";
 
-    private LocatableLabel label;
+    private Label label;
     private Message currentMessage;
     private Message stickyMessage; // this message will always be shown until dismissed by user.
     private Menu showDetailsMenu;
     private Timer messageClearingTimer;
 
     public MessageBar() {
-        super(LOCATOR_ID);
+        super();
         setOverflow(Overflow.VISIBLE);
         setWidth100();
         setAlign(Alignment.CENTER);
 
-        label = new LocatableLabel(extendLocatorId("Label"));
+        label = new Label();
         label.setAlign(Alignment.CENTER);
         label.setWidth100();
         label.setHeight("30px");

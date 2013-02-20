@@ -39,8 +39,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 public class TestMessageCenterView extends LocatableVLayout {
 
-    public TestMessageCenterView(String locatorId) {
-        super(locatorId);
+    public TestMessageCenterView() {
+        super();
     }
 
     @Override

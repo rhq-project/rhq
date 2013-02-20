@@ -40,8 +40,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class PluginConfigurationHistoryDetailView extends LocatableVLayout implements BookmarkableView {
 
-    public PluginConfigurationHistoryDetailView(String locatorId) {
-        super(locatorId);
+    public PluginConfigurationHistoryDetailView() {
+        super();
 
         setWidth100();
         setHeight100();

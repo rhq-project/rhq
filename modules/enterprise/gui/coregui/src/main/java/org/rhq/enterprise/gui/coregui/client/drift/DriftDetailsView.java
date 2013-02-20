@@ -58,8 +58,8 @@ public class DriftDetailsView extends LocatableVLayout {
 
     private String driftId;
 
-    public DriftDetailsView(String locatorId, String driftId) {
-        super(locatorId);
+    public DriftDetailsView(String driftId) {
+        super();
         this.driftId = driftId;
         setMembersMargin(10);
     }

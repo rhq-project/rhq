@@ -22,8 +22,7 @@ package org.rhq.enterprise.gui.coregui.client.components;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Label;
 
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -35,16 +34,16 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 public class TitleBar extends LocatableToolStrip {
     private Label label;
 
-    public TitleBar(Locatable parent) {
-        this(parent, null, null);
+    public TitleBar() {
+        this(null, null);
     }
 
-    public TitleBar(Locatable parent, String title) {
-        this(parent, title, null);
+    public TitleBar(String title) {
+        this(title, null);
     }
 
-    public TitleBar(Locatable parent, String title, String icon) {
-        super(parent.extendLocatorId("TitleBar"));
+    public TitleBar(String title, String icon) {
+        super();
 
         setWidth100();
         setHeight(30);
@@ -53,7 +52,7 @@ public class TitleBar extends LocatableToolStrip {
         vLayout.setAlign(VerticalAlignment.CENTER);
         vLayout.setLayoutMargin(6);
 
-        LocatableHLayout hLayout = new LocatableHLayout(vLayout.extendLocatorId("HLayout"));
+        EnhancedHLayout hLayout = new EnhancedHLayout();
         vLayout.addMember(hLayout);
 
         this.label = new Label();

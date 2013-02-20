@@ -54,17 +54,17 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
     @SuppressWarnings("unused")
     private ResourceComposite resourceComposite;
 
-    public ResourceOperationHistoryDetailsView(String locatorId) {
-        this(locatorId, false);
+    public ResourceOperationHistoryDetailsView() {
+        this(false);
     }
 
-    public ResourceOperationHistoryDetailsView(String locatorId, ResourceComposite resourceComposite) {
-        this(locatorId);
+    public ResourceOperationHistoryDetailsView(ResourceComposite resourceComposite) {
+        this(false);
         this.resourceComposite = resourceComposite;
     }
 
-    public ResourceOperationHistoryDetailsView(String locatorId, boolean showResourceField) {
-        super(locatorId);
+    public ResourceOperationHistoryDetailsView(boolean showResourceField) {
+        super();
 
         this.showResourceField = showResourceField;
     }

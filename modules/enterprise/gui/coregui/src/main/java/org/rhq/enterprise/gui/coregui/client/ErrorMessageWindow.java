@@ -38,7 +38,7 @@ import com.smartgwt.client.widgets.events.CloseClickHandler;
  * @author John Mazzitelli
  */
 public class ErrorMessageWindow extends Window {
-    public ErrorMessageWindow(String locatorId, String title, String message) {
+    public ErrorMessageWindow(String title, String message) {
         super();
 
         HTMLPane htmlPane = new HTMLPane();
@@ -50,7 +50,7 @@ public class ErrorMessageWindow extends Window {
         setupWindow(title, htmlPane);
     }
 
-    public ErrorMessageWindow(String locatorId, String title, Canvas item) {
+    public ErrorMessageWindow(String title, Canvas item) {
         super();
         setupWindow(title, item);
     }

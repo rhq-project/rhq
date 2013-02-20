@@ -122,8 +122,8 @@ public class ResourceTreeView extends LocatableVLayout {
     // Maps autogroup/type backing group ids to the corresponding autogroup/type nodes.
     private Map<Integer, AutoGroupTreeNode> autoGroupNodeMap = new HashMap<Integer, AutoGroupTreeNode>();
 
-    public ResourceTreeView(String locatorId) {
-        super(locatorId);
+    public ResourceTreeView() {
+        super();
 
         setWidth("250");
         setHeight100();
@@ -144,7 +144,7 @@ public class ResourceTreeView extends LocatableVLayout {
     }
 
     private void buildTree() {
-        treeGrid = new CustomResourceTreeGrid(getLocatorId());
+        treeGrid = new CustomResourceTreeGrid();
 
         treeGrid.setOpenerImage("resources/dir.png");
         treeGrid.setOpenerIconSize(16);

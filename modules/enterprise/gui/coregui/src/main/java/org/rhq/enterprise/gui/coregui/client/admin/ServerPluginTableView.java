@@ -81,7 +81,7 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
 
     private boolean showUndeployed = false;
 
-    public ServerPluginTableView(String locatorId) {
+    public ServerPluginTableView() {
         super(null);
         setHeight100();
         setWidth100();
@@ -120,8 +120,8 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
             }
         });
 
-        addTableAction(extendLocatorId("disable"), MSG.common_button_disable(), new AuthorizedTableAction(this,
-            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
+        addTableAction(MSG.common_button_disable(), new AuthorizedTableAction(this, TableActionEnablement.ANY,
+            Permission.MANAGE_SETTINGS) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                 ArrayList<String> selectedNames = getSelectedNames(selections);
                 String message = MSG.view_admin_plugins_serverDisableConfirm(selectedNames.toString());
@@ -155,8 +155,8 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
             }
         });
 
-        addTableAction(extendLocatorId("undeploy"), MSG.view_admin_plugins_undeploy(), new AuthorizedTableAction(this,
-            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
+        addTableAction(MSG.view_admin_plugins_undeploy(), new AuthorizedTableAction(this, TableActionEnablement.ANY,
+            Permission.MANAGE_SETTINGS) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                 ArrayList<String> selectedNames = getSelectedNames(selections);
                 String message = MSG.view_admin_plugins_serverUndeployConfirm(selectedNames.toString());
@@ -299,7 +299,7 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
 
     @Override
     public Canvas getDetailsView(Integer id) {
-        return new ServerPluginDetailView(extendLocatorId("detailsView"), id);
+        return new ServerPluginDetailView(id);
     }
 
     private int[] getSelectedIds(ListGridRecord[] selections) {

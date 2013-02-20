@@ -47,7 +47,7 @@ public class GroupOperationScheduleListView extends AbstractOperationScheduleLis
 
     @Override
     public Canvas getDetailsView(Integer scheduleId) {
-        return new GroupOperationScheduleDetailsView(extendLocatorId("DetailsView"), this.groupComposite, scheduleId);
+        return new GroupOperationScheduleDetailsView(this.groupComposite, scheduleId);
     }
 
 }

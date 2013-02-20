@@ -75,7 +75,7 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
 
         final boolean isAuthorized = isAuthorizedToModifyAlertDefinitions();
 
-        addTableAction(extendLocatorId("New"), MSG.common_button_new(), null, new AbstractTableAction() {
+        addTableAction(MSG.common_button_new(), null, new AbstractTableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
                 return super.isEnabled(selection) && isAuthorized;
             }
@@ -128,15 +128,13 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
         }
 
         AlertDefinition alertDef = getAlertDefinitionDataSource().copyValues(record);
-        SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView(
-            this.extendLocatorId(alertDef.getName()), this, alertDef);
+        SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView(this, alertDef);
         return singleAlertDefinitionView;
     }
 
     @Override
     public SingleAlertDefinitionView getDetailsView(final Integer id) {
-        final SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView(
-            this.extendLocatorId("singleAlertDefinitionView"), this);
+        final SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView(this);
 
         if (id == 0) {
             // create an empty one with all defaults

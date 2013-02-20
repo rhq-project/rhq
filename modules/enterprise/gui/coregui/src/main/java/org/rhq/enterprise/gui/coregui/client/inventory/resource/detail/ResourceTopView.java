@@ -24,13 +24,13 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 
 /**
  * @author Jay Shaughnessy
  * @author Greg Hinkle
  */
-public class ResourceTopView extends LocatableHLayout implements BookmarkableView {
+public class ResourceTopView extends EnhancedHLayout implements BookmarkableView {
     public static final ViewName VIEW_ID = new ViewName("Resource", MSG.common_title_resource());
 
     private Canvas contentCanvas;
@@ -38,13 +38,13 @@ public class ResourceTopView extends LocatableHLayout implements BookmarkableVie
     private ResourceDetailView detailView;
     private ResourceGroupDetailView autoGroupDetailView;
 
-    public ResourceTopView(String locatorId) {
-        super(locatorId);
+    public ResourceTopView() {
+        super();
 
         setWidth100();
         setHeight100();
 
-        treeView = new ResourceTreeView(getLocatorId());
+        treeView = new ResourceTreeView();
         addMember(treeView);
 
         contentCanvas = new Canvas();
@@ -63,7 +63,7 @@ public class ResourceTopView extends LocatableHLayout implements BookmarkableVie
 
     private void setToDetailView() {
 
-        this.detailView = new ResourceDetailView(extendLocatorId("Detail"));
+        this.detailView = new ResourceDetailView();
         this.detailView.addViewRenderedListener(new ResourceDetailView.ViewRenderedListener() {
 
             public void onViewRendered() {
@@ -76,8 +76,7 @@ public class ResourceTopView extends LocatableHLayout implements BookmarkableVie
     }
 
     private void setToAutoGroupView() {
-        this.autoGroupDetailView = new ResourceGroupDetailView(this.extendLocatorId("AutoGroupDetail"),
-            ResourceGroupDetailView.AUTO_GROUP_VIEW);
+        this.autoGroupDetailView = new ResourceGroupDetailView(ResourceGroupDetailView.AUTO_GROUP_VIEW);
         this.autoGroupDetailView.addViewRenderedListener(new ResourceGroupDetailView.ViewRenderedListener() {
 
             public void onViewRendered() {

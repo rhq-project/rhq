@@ -58,16 +58,16 @@ public class DriftCarouselMemberView extends DriftHistoryView implements Carouse
     private Criteria carouselCriteria;
     private ArrayList<DriftSelectionListener> driftSelectionListeners = new ArrayList<DriftSelectionListener>();
 
-    public static DriftCarouselMemberView get(String locatorId, ResourceComposite composite,
-        DriftChangeSet driftChangeSet, Criteria initialCriteria) {
+    public static DriftCarouselMemberView get(ResourceComposite composite, DriftChangeSet driftChangeSet,
+        Criteria initialCriteria) {
 
         EntityContext context = EntityContext.forResource(composite.getResource().getId());
         boolean hasWriteAccess = composite.getResourcePermission().isDrift();
-        return new DriftCarouselMemberView(locatorId, context, driftChangeSet, hasWriteAccess, initialCriteria);
+        return new DriftCarouselMemberView(context, driftChangeSet, hasWriteAccess, initialCriteria);
     }
 
-    public DriftCarouselMemberView(String locatorId, EntityContext context, DriftChangeSet driftChangeSet,
-        boolean hasWriteAccess, Criteria initialCriteria) {
+    public DriftCarouselMemberView(EntityContext context, DriftChangeSet driftChangeSet, boolean hasWriteAccess,
+        Criteria initialCriteria) {
 
         super(null, context, hasWriteAccess, initialCriteria);
 
@@ -150,8 +150,8 @@ public class DriftCarouselMemberView extends DriftHistoryView implements Carouse
     public void updateTitleCanvas(String titleString) {
         int resourceId = getContext().getResourceId();
         String imageHtml = Canvas.imgHTML(ImageManager.getViewIcon());
-        String link = LinkManager.getDriftCarouselSnapshotLink(resourceId, changeSet.getDriftDefinitionId(), changeSet
-            .getVersion());
+        String link = LinkManager.getDriftCarouselSnapshotLink(resourceId, changeSet.getDriftDefinitionId(),
+            changeSet.getVersion());
         StringBuilder sb = new StringBuilder();
 
         sb.append("<a href=\"").append(link).append("\">");

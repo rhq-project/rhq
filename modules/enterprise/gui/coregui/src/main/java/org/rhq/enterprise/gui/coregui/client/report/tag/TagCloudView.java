@@ -161,7 +161,7 @@ public class TagCloudView extends LocatableVLayout {
      */
     public IButton getDeleteButton() {
         if (this.deleteButton == null) {
-            final IButton button = new DeleteButton(extendLocatorId("deleteButton"));
+            final IButton button = new DeleteButton();
             button.setIcon(REMOVE_ICON);
             button.setIconWidth(16);
             button.setIconHeight(16);
@@ -210,8 +210,8 @@ public class TagCloudView extends LocatableVLayout {
     }
 
     class DeleteButton extends EnhancedIButton {
-        public DeleteButton(String locatorId) {
-            super(locatorId);
+        public DeleteButton() {
+            super();
         }
 
         @Override

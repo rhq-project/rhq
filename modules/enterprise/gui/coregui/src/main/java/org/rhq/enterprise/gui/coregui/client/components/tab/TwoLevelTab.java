@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.components.tab;
 
 import com.smartgwt.client.widgets.Canvas;
+
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 
@@ -43,13 +44,13 @@ public class TwoLevelTab extends NamedTab {
     public TwoLevelTab(String locatorId, ViewName viewName, String icon) {
         super(locatorId, viewName, icon);
 
-        layout = new SubTabLayout(locatorId);
+        layout = new SubTabLayout();
     }
 
     public TwoLevelTab(String locatorId, ViewName viewName, IconEnum iconEnum) {
         super(locatorId, viewName, iconEnum.getIcon16x16DisabledPath());
 
-        layout = new SubTabLayout(locatorId);
+        layout = new SubTabLayout();
     }
 
     public void registerSubTabs(SubTab... subTabs) {

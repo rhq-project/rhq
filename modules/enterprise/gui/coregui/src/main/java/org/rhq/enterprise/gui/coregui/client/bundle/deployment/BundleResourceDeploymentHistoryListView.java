@@ -54,7 +54,6 @@ import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.enterprise.gui.coregui.client.ErrorMessageWindow;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -66,7 +65,7 @@ public class BundleResourceDeploymentHistoryListView extends LocatableVLayout {
     private HashMap<String, String> statusIcons;
 
     public BundleResourceDeploymentHistoryListView(String locatorId, BundleResourceDeployment resourceDeployment) {
-        super(locatorId);
+        super();
         setWidth100();
         setHeight100();
         this.resourceDeployment = resourceDeployment;
@@ -87,7 +86,7 @@ public class BundleResourceDeploymentHistoryListView extends LocatableVLayout {
     protected void onInit() {
         super.onInit();
 
-        final ListGrid grid = new LocatableListGrid(this.getLocatorId());
+        final ListGrid grid = new ListGrid();
         grid.setWidth100();
         grid.setHeight100();
         grid.setSelectionType(SelectionStyle.SINGLE);
@@ -188,7 +187,7 @@ public class BundleResourceDeploymentHistoryListView extends LocatableVLayout {
         form.setItems(timestamp, action, category, user, status, info, message, detail);
         form.editRecord(record);
 
-        Window win = new ErrorMessageWindow(extendLocatorId("detailsWin"), MSG.view_bundle_deploy_installDetails(),
+        Window win = new ErrorMessageWindow(MSG.view_bundle_deploy_installDetails(),
             form);
         win.setWidth(500);
         win.show();

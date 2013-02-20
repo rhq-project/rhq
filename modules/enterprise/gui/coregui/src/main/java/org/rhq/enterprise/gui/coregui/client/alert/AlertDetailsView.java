@@ -65,15 +65,15 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
 
     private int alertId;
 
-    private static AlertDetailsView INSTANCE = new AlertDetailsView("alertDetailsView");
+    private static AlertDetailsView INSTANCE = new AlertDetailsView();
 
     public static AlertDetailsView getInstance() {
         return INSTANCE;
     }
 
-    private AlertDetailsView(String locatorId) {
+    private AlertDetailsView() {
         // access through the static singleton only
-        super(locatorId);
+        super();
     }
 
     private void show(int alertId) {
@@ -103,7 +103,7 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
     }
 
     private TabSet getDetailsTabSet(Record record) {
-        TabSet tabset = new NamedTabSet(extendLocatorId("detailsTabSet"));
+        TabSet tabset = new NamedTabSet();
 
         Tab generalTab = new NamedTab(extendLocatorId("general"), new ViewName("general",
             MSG.view_alert_common_tab_general()));

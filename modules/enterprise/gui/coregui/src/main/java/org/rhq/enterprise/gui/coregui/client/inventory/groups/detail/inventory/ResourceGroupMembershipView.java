@@ -48,8 +48,8 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
     private ClickHandler saveButtonHandler;
     private ClickHandler cancelButtonHandler;
 
-    public ResourceGroupMembershipView(String locatorId, int resourceGroupId) {
-        super(locatorId);
+    public ResourceGroupMembershipView(int resourceGroupId) {
+        super();
 
         this.resourceGroupId = resourceGroupId;
     }

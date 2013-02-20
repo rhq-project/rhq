@@ -25,6 +25,7 @@ import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -47,7 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
+
 
 public class PlatformSummaryPortlet extends Table<PlatformMetricDataSource> implements Portlet, HasViewName {
 
@@ -131,8 +132,8 @@ public class PlatformSummaryPortlet extends Table<PlatformMetricDataSource> impl
     }
 
     @Override
-    protected LocatableListGrid createListGrid(String locatorId) {
-        return new LocatableListGrid(locatorId) {
+    protected ListGrid createListGrid() {
+        return new ListGrid() {
             {
                 setShowRecordComponents(true);
                 setShowRecordComponentsByCell(true);

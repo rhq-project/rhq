@@ -102,8 +102,7 @@ public class HistoryGroupResourceConfigurationTable extends Table<GroupResourceC
         fieldStatus.addRecordClickHandler(new RecordClickHandler() {
             @Override
             public void onRecordClick(RecordClickEvent event) {
-                new ErrorMessageWindow("errWin", MSG.common_severity_error(), getStatusHtmlString(event.getRecord()))
-                    .show();
+                new ErrorMessageWindow(MSG.common_severity_error(), getStatusHtmlString(event.getRecord())).show();
             }
         });
         fieldStatus.setShowHover(true);
@@ -156,27 +155,27 @@ public class HistoryGroupResourceConfigurationTable extends Table<GroupResourceC
                 }
             });
 
-        addTableAction(extendLocatorId("viewSettingsAction"), MSG.view_group_resConfig_table_viewSettings(),
-            new AbstractTableAction(TableActionEnablement.SINGLE) {
-                @Override
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    CoreGUI.goToView(LinkManager.getGroupResourceConfigurationUpdateHistoryLink(
-                        EntityContext.forGroup(HistoryGroupResourceConfigurationTable.this.group), null)
-                        + "/" + selection[0].getAttribute(GroupResourceConfigurationDataSource.Field.ID) + "/Settings");
-                    refreshTableInfo();
-                }
-            });
+        addTableAction(MSG.view_group_resConfig_table_viewSettings(), new AbstractTableAction(
+            TableActionEnablement.SINGLE) {
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                CoreGUI.goToView(LinkManager.getGroupResourceConfigurationUpdateHistoryLink(
+                    EntityContext.forGroup(HistoryGroupResourceConfigurationTable.this.group), null)
+                    + "/" + selection[0].getAttribute(GroupResourceConfigurationDataSource.Field.ID) + "/Settings");
+                refreshTableInfo();
+            }
+        });
 
-        addTableAction(extendLocatorId("viewMemberHistoryAction"), MSG.view_group_resConfig_table_viewMemberHistory(),
-            new AbstractTableAction(TableActionEnablement.SINGLE) {
-                @Override
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    CoreGUI.goToView(LinkManager.getGroupResourceConfigurationUpdateHistoryLink(
-                        EntityContext.forGroup(HistoryGroupResourceConfigurationTable.this.group), null)
-                        + "/" + selection[0].getAttribute(GroupResourceConfigurationDataSource.Field.ID) + "/Members");
-                    refreshTableInfo();
-                }
-            });
+        addTableAction(MSG.view_group_resConfig_table_viewMemberHistory(), new AbstractTableAction(
+            TableActionEnablement.SINGLE) {
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                CoreGUI.goToView(LinkManager.getGroupResourceConfigurationUpdateHistoryLink(
+                    EntityContext.forGroup(HistoryGroupResourceConfigurationTable.this.group), null)
+                    + "/" + selection[0].getAttribute(GroupResourceConfigurationDataSource.Field.ID) + "/Members");
+                refreshTableInfo();
+            }
+        });
 
     }
 

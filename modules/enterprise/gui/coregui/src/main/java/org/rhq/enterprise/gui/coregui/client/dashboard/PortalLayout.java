@@ -37,14 +37,14 @@ import com.smartgwt.client.widgets.events.ResizedHandler;
 import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
  * @author Jay Shaughnessy
  */
-public class PortalLayout extends LocatableHLayout {
+public class PortalLayout extends EnhancedHLayout {
 
     private DashboardView dashboardView;
     private Integer dragResizeColumnCount;
@@ -57,7 +57,7 @@ public class PortalLayout extends LocatableHLayout {
      * evenly. If null column 0 defaults to 30%.
      */
     public PortalLayout(String locatorId, DashboardView dashboardView, int numColumns, String[] columnWidths) {
-        super(locatorId);
+        super();
 
         if (numColumns < 1) {
             throw new IllegalArgumentException("Invalid number of columns [" + numColumns + "]");

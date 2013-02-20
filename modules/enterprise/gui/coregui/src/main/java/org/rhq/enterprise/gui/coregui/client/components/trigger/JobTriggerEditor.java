@@ -96,7 +96,7 @@ public class JobTriggerEditor extends LocatableVLayout {
      * @param locatorId
      */
     public JobTriggerEditor(String locatorId, boolean isReadOnly) {
-        super(locatorId);
+        super();
 
         this.isReadOnly = isReadOnly;
     }
@@ -108,7 +108,7 @@ public class JobTriggerEditor extends LocatableVLayout {
      * @param jobTrigger
      */
     public JobTriggerEditor(String locatorId, JobTrigger jobTrigger) {
-        super(locatorId);
+        super();
 
         this.jobTrigger = jobTrigger;
         this.isReadOnly = true;

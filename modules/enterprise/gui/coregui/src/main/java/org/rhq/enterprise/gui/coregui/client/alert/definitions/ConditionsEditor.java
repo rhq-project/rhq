@@ -66,7 +66,7 @@ public class ConditionsEditor extends LocatableVLayout {
 
     public ConditionsEditor(String locatorId, SelectItem conditionExpression, ResourceType resourceType,
         HashSet<AlertCondition> conditions) {
-        super(locatorId);
+        super();
         this.conditionExpression = conditionExpression;
         this.resourceType = resourceType;
         this.updated = false;
@@ -126,7 +126,7 @@ public class ConditionsEditor extends LocatableVLayout {
     protected void onInit() {
         super.onInit();
 
-        table = new ConditionsTable(extendLocatorId("conditionsTable"));
+        table = new ConditionsTable();
 
         addMember(table);
     }
@@ -144,8 +144,8 @@ public class ConditionsEditor extends LocatableVLayout {
     }
 
     private class ConditionsTable extends Table<ConditionDataSource> {
-        private ConditionsTable(String locatorId) {
-            super(locatorId);
+        private ConditionsTable() {
+            super();
 
             setShowHeader(false);
 
@@ -155,7 +155,7 @@ public class ConditionsEditor extends LocatableVLayout {
 
         @Override
         protected void configureTable() {
-            addTableAction(this.extendLocatorId("add"), "Add", null, new AbstractTableAction() {
+            addTableAction(MSG.common_button_add(), null, new AbstractTableAction() {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
 
                     // we need the drift definition templates (if there are any) so we know if we should offer drift conditions as an option

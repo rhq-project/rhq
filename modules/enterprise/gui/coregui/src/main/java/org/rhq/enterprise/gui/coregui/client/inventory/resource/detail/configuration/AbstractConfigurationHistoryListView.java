@@ -58,7 +58,7 @@ public abstract class AbstractConfigurationHistoryListView<T extends AbstractCon
     /**
      * Use this constructor to view config histories for all viewable Resources.
      */
-    public AbstractConfigurationHistoryListView(String locatorId, String title, boolean hasWritePerm) {
+    public AbstractConfigurationHistoryListView(String title, boolean hasWritePerm) {
         super(title);
         this.hasWritePerm = hasWritePerm;
         this.resourceId = null;
@@ -69,7 +69,7 @@ public abstract class AbstractConfigurationHistoryListView<T extends AbstractCon
      *
      * @param resourceId a Resource ID
      */
-    public AbstractConfigurationHistoryListView(String locatorId, String title, boolean hasWritePerm, int resourceId) {
+    public AbstractConfigurationHistoryListView(String title, boolean hasWritePerm, int resourceId) {
         super(title, createCriteria(resourceId));
         this.hasWritePerm = hasWritePerm;
         this.resourceId = resourceId;
@@ -120,8 +120,7 @@ public abstract class AbstractConfigurationHistoryListView<T extends AbstractCon
             }
         });
 
-        addTableAction(extendLocatorId("Compare"), MSG.common_button_compare(), null, new AbstractTableAction(
-            TableActionEnablement.MULTIPLE) {
+        addTableAction(MSG.common_button_compare(), null, new AbstractTableAction(TableActionEnablement.MULTIPLE) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 // The config updates do not have their Configurations fetched, so we need to reload the selected
                 // config updates, specifying that their Configurations should be fetched, in order to compare the

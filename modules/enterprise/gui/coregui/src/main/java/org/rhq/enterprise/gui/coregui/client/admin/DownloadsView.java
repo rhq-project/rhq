@@ -29,6 +29,7 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 
 import org.rhq.core.domain.common.ProductInfo;
@@ -37,7 +38,6 @@ import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SystemGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -55,7 +55,7 @@ public class DownloadsView extends LocatableVLayout {
 
     private final SystemGWTServiceAsync systemManager = GWTServiceLookup.getSystemService();
 
-    private LocatableSectionStack sectionStack;
+    private SectionStack sectionStack;
     private SectionStackSection agentSection;
     private SectionStackSection cliSection;
     private SectionStackSection bundleSection;
@@ -65,14 +65,14 @@ public class DownloadsView extends LocatableVLayout {
 
     private ProductInfo productInfo;
 
-    public DownloadsView(String locatorId) {
-        super(locatorId);
+    public DownloadsView() {
+        super();
         productInfo = CoreGUI.get().getProductInfo();
 
         setHeight100();
         setWidth100();
 
-        sectionStack = new LocatableSectionStack(extendLocatorId("stack"));
+        sectionStack = new SectionStack();
         sectionStack.setShowResizeBar(true);
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
         sectionStack.setWidth100();

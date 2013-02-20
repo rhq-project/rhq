@@ -41,8 +41,8 @@ public class PluginTypeTreeView extends LocatableVLayout {
 
     private ResourceTypeGWTServiceAsync resourceTypeService = GWTServiceLookup.getResourceTypeGWTService();
 
-    public PluginTypeTreeView(String locatorId) {
-        super(locatorId);
+    public PluginTypeTreeView() {
+        super();
         setWidth100();
         setHeight100();
     }

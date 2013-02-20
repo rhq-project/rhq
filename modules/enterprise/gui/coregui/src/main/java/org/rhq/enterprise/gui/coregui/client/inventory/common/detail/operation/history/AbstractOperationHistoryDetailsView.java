@@ -60,8 +60,8 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
 
     private DynamicForm form;
 
-    public AbstractOperationHistoryDetailsView(String locatorId) {
-        super(locatorId);
+    public AbstractOperationHistoryDetailsView() {
+        super();
 
         setWidth100();
         setHeight100();

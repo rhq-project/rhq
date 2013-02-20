@@ -54,8 +54,8 @@ public class TestConfigurationView extends LocatableVLayout implements PropertyV
     private ConfigurationDefinition configurationDefinition;
     private Configuration configuration;
 
-    public TestConfigurationView(String locatorId) {
-        super(locatorId);
+    public TestConfigurationView() {
+        super();
     }
 
     @Override
@@ -77,7 +77,7 @@ public class TestConfigurationView extends LocatableVLayout implements PropertyV
     }
 
     private LocatableToolStrip createButtonBar() {
-        LocatableToolStrip toolStrip = new LocatableToolStrip(extendLocatorId("ToolStrip"));
+        LocatableToolStrip toolStrip = new LocatableToolStrip();
         toolStrip.setWidth100();
 
         toolStrip.addMember(new LayoutSpacer());

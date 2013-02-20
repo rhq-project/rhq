@@ -27,12 +27,12 @@ import com.smartgwt.client.widgets.Canvas;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class ResourceGroupTopView extends LocatableHLayout implements BookmarkableView {
+public class ResourceGroupTopView extends EnhancedHLayout implements BookmarkableView {
     public static final ViewName VIEW_ID = new ViewName("ResourceGroup", MSG.common_title_resource_group());
 
     private Canvas contentCanvas;
@@ -40,13 +40,13 @@ public class ResourceGroupTopView extends LocatableHLayout implements Bookmarkab
     private ResourceGroupDetailView detailView;
     private boolean isAutoClusterView = false;
 
-    public ResourceGroupTopView(String locatorId) {
-        super(locatorId);
+    public ResourceGroupTopView() {
+        super();
 
         setWidth100();
         setHeight100();
 
-        treeView = new ResourceGroupTreeView(extendLocatorId("Tree"));
+        treeView = new ResourceGroupTreeView();
         addMember(treeView);
 
         contentCanvas = new Canvas();
@@ -70,10 +70,9 @@ public class ResourceGroupTopView extends LocatableHLayout implements Bookmarkab
 
         if (null == detailView) {
             if (isAutoClusterPath) {
-                detailView = new ResourceGroupDetailView(this.extendLocatorId("AutoClusterDetail"),
-                    ResourceGroupDetailView.AUTO_CLUSTER_VIEW);
+                detailView = new ResourceGroupDetailView(ResourceGroupDetailView.AUTO_CLUSTER_VIEW);
             } else {
-                detailView = new ResourceGroupDetailView(this.extendLocatorId("groupDetail"), VIEW_ID.getName());
+                detailView = new ResourceGroupDetailView(VIEW_ID.getName());
             }
             isAutoClusterView = isAutoClusterPath;
             this.setContent(detailView);

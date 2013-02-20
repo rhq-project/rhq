@@ -25,7 +25,7 @@ package org.rhq.enterprise.gui.coregui.client.alert;
 import org.rhq.core.domain.common.EntityContext;
 
 public class SubsystemResourceAlertView extends AlertHistoryView {
-    public SubsystemResourceAlertView(String locatorId, boolean hasWriteAccess) {
+    public SubsystemResourceAlertView(boolean hasWriteAccess) {
         super(MSG.common_title_recent_alerts(), EntityContext.forSubsystemView(), hasWriteAccess);
     }
 }

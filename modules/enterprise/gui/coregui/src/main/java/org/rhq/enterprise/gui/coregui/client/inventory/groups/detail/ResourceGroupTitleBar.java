@@ -45,8 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -74,7 +73,7 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
     private GeneralProperties generalProperties;
 
     public ResourceGroupTitleBar(String locatorId, boolean isAutoGroup, boolean isAutoCluster) {
-        super(locatorId);
+        super();
 
         this.isAutoGroup = isAutoGroup;
         this.isAutoCluster = isAutoCluster;
@@ -91,7 +90,7 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
             child.destroy();
         }
 
-        final LocatableHLayout hlayout = new LocatableHLayout(extendLocatorId("hlayout"));
+        final EnhancedHLayout hlayout = new EnhancedHLayout();
         addMember(hlayout);
 
         this.title = new HTMLFlow();
@@ -100,7 +99,7 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
         this.availabilityImage = new Img(ImageManager.getAvailabilityLargeIcon(null), 24, 24);
 
         if (this.supportsFavorite) {
-            this.favoriteButton = new LocatableImg(this.extendLocatorId("Favorite"), NOT_FAV_ICON, 24, 24);
+            this.favoriteButton = new Img(NOT_FAV_ICON, 24, 24);
 
             this.favoriteButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {

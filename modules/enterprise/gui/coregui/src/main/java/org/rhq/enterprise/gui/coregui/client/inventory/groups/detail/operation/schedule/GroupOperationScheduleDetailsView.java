@@ -49,9 +49,9 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
     private EnhancedDynamicForm executionModeForm;
     private ReorderableList memberExecutionOrderer;
 
-    public GroupOperationScheduleDetailsView(String locatorId, ResourceGroupComposite groupComposite, int scheduleId) {
-        super(locatorId, new GroupOperationScheduleDataSource(groupComposite), groupComposite.getResourceGroup()
-            .getResourceType(), scheduleId);
+    public GroupOperationScheduleDetailsView(ResourceGroupComposite groupComposite, int scheduleId) {
+        super(new GroupOperationScheduleDataSource(groupComposite),
+            groupComposite.getResourceGroup().getResourceType(), scheduleId);
         this.groupComposite = groupComposite;
     }
 

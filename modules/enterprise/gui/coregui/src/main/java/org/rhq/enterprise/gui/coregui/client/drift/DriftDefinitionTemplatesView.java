@@ -63,7 +63,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -121,8 +120,8 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
     }
 
     @Override
-    protected LocatableListGrid createListGrid(String locatorId) {
-        return new DriftDefinitionTemplatesListGrid(locatorId);
+    protected ListGrid createListGrid() {
+        return new DriftDefinitionTemplatesListGrid();
     }
 
     public static String getTitle(ResourceType type) {
@@ -232,21 +231,21 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
     public Canvas getDetailsView(Integer driftTemplateId) {
         if (this.useSnapshotDetailsView) {
             if (null == snapshotDriftDetailsId) {
-                return new DriftDefinitionTemplateSnapshotView(extendLocatorId("TemplateSnapshot"), driftTemplateId);
+                return new DriftDefinitionTemplateSnapshotView(driftTemplateId);
             }
-            return new DriftDetailsView(extendLocatorId("TemplateSnapshotDrift"), snapshotDriftDetailsId);
+            return new DriftDetailsView(snapshotDriftDetailsId);
         }
 
-        return new DriftDefinitionTemplateEditView(extendLocatorId("TemplateEdit"), driftTemplateId, hasWriteAccess);
+        return new DriftDefinitionTemplateEditView(driftTemplateId, hasWriteAccess);
     }
 
     /**
      * The expandable list grid     
      */
-    private class DriftDefinitionTemplatesListGrid extends LocatableListGrid {
+    private class DriftDefinitionTemplatesListGrid extends ListGrid {
 
-        public DriftDefinitionTemplatesListGrid(String locatorId) {
-            super(locatorId);
+        public DriftDefinitionTemplatesListGrid() {
+            super();
 
             setCanExpandRecords(true);
             setCanExpandMultipleRecords(true);
@@ -258,7 +257,7 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
             int templateId = record.getAttributeAsInt(DriftDefinitionTemplateDataSource.ATTR_ID);
             String templateName = record.getAttribute(DriftDefinitionTemplateDataSource.ATTR_NAME);
 
-            return new TemplateDefinitionsView(extendLocatorId(templateName), templateId);
+            return new TemplateDefinitionsView(templateId);
         }
     }
 
@@ -269,7 +268,7 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
         private int templateId;
         private TemplateDefinitionsDataSource dataSource;
 
-        public TemplateDefinitionsView(String locatorId, int templateId) {
+        public TemplateDefinitionsView(int templateId) {
             super(null, true);
 
             this.templateId = templateId;
@@ -306,8 +305,8 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
         }
 
         @Override
-        protected LocatableListGrid createListGrid(String locatorId) {
-            return new TemplateDefinitionsListGrid(locatorId);
+        protected ListGrid createListGrid() {
+            return new TemplateDefinitionsListGrid();
         }
 
         @Override
@@ -319,10 +318,10 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
         /**
          * The definitions list grid     
          */
-        private class TemplateDefinitionsListGrid extends LocatableListGrid {
+        private class TemplateDefinitionsListGrid extends ListGrid {
 
-            public TemplateDefinitionsListGrid(String locatorId) {
-                super(locatorId);
+            public TemplateDefinitionsListGrid() {
+                super();
             }
         }
 

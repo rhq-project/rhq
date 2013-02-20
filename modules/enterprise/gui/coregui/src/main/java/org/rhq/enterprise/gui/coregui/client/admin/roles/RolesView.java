@@ -52,7 +52,7 @@ public class RolesView extends TableSection<RolesDataSource> implements HasViewN
 
     private boolean hasManageSecurity;
 
-    public RolesView(String locatorId, boolean hasManageSecurity) {
+    public RolesView(boolean hasManageSecurity) {
         super(null);
 
         final RolesDataSource datasource = RolesDataSource.getInstance();
@@ -156,7 +156,7 @@ public class RolesView extends TableSection<RolesDataSource> implements HasViewN
 
     @Override
     public Canvas getDetailsView(Integer roleId) {
-        return new RoleEditView(extendLocatorId("Detail"), roleId);
+        return new RoleEditView(roleId);
     }
 
     @Override

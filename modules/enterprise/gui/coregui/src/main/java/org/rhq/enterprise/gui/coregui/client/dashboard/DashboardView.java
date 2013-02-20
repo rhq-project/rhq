@@ -143,7 +143,7 @@ public class DashboardView extends LocatableVLayout {
     public DashboardView(String locatorId, DashboardContainer dashboardContainer, Dashboard storedDashboard,
         EntityContext context, Object composite) {
 
-        super(locatorId);
+        super();
 
         this.dashboardContainer = dashboardContainer;
         this.storedDashboard = storedDashboard;
@@ -547,9 +547,8 @@ public class DashboardView extends LocatableVLayout {
     private void loadPortletWindows() {
         for (int i = 0; i < storedDashboard.getColumns(); i++) {
             for (DashboardPortlet storedPortlet : storedDashboard.getPortlets(i)) {
-                String locatorId = getPortletLocatorId(portalLayout, storedPortlet);
 
-                PortletWindow portletWindow = new PortletWindow(locatorId, this, storedPortlet, context);
+                PortletWindow portletWindow = new PortletWindow(this, storedPortlet, context);
                 portletWindow.setTitle(storedPortlet.getName());
                 portletWindow.setHeight(storedPortlet.getHeight());
                 portletWindow.setVisible(true);
@@ -560,38 +559,11 @@ public class DashboardView extends LocatableVLayout {
         }
     }
 
-    /**
-     * LocatorIds need to be repeatable and non-duplicated.  The natural key for a portlet is the Id but the Id
-     * is not a good locatorId as it may change (it's a sequence generated id) on subsequent test runs.  A portlet has
-     * an internal identifier (portletKey) and a name, but the key-name tuple is not guaranteed to be unique as
-     * multiple instances of the same portlet type may be present on the same, or across multiple dashboards. There
-     * is one tuple that is guaranteed unique and useful for a repeatable locator Id: DashBoard-Position.  This
-     * means that the on a single dashboard each portlet has a unique column-columnIndex pair.  Although portlets
-     * can move, and the positions can change at runtime, it's still valid for a locatorId because it is
-     * unique and repeatable for test purposes. We also add the portletKey for an easier visual cue.
-     * The portalLayout's locatorId already incorporates the dashboardName, so we need only extend it with the
-     * positioning information. 
-     * 
-     * @param portalLayout
-     * @param dashboardPortlet
-     * @return The locatorId for the portlet. Form PortleyKey_DashboardId_Column_ColumnIndex
-     */
-    private String getPortletLocatorId(PortalLayout portalLayout, DashboardPortlet dashboardPortlet) {
-        StringBuilder locatorId = new StringBuilder(dashboardPortlet.getPortletKey());
-        locatorId.append("_");
-        locatorId.append(dashboardPortlet.getColumn());
-        locatorId.append("_");
-        locatorId.append(dashboardPortlet.getIndex());
-
-        return portalLayout.extendLocatorId(locatorId.toString());
-    }
-
     protected void addPortlet(String portletKey, String portletName) {
         DashboardPortlet storedPortlet = new DashboardPortlet(portletName, portletKey, 250);
         storedDashboard.addPortlet(storedPortlet);
 
-        String locatorId = getPortletLocatorId(portalLayout, storedPortlet);
-        final PortletWindow newPortletWindow = new PortletWindow(locatorId, this, storedPortlet, context);
+        final PortletWindow newPortletWindow = new PortletWindow(this, storedPortlet, context);
         newPortletWindow.setTitle(portletName);
         newPortletWindow.setHeight(350);
         newPortletWindow.setVisible(false);

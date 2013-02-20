@@ -122,40 +122,38 @@ public class TestRemoteServiceStatisticsView extends Table {
             }
         });
 
-        addTableAction(extendLocatorId("export"), "Export To CSV",
-            new AbstractTableAction(TableActionEnablement.ALWAYS) {
-                @Override
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    StringBuilder csv = new StringBuilder();
-                    csv.append(FIELD_SERVICENAME).append(',') //
-                        .append(FIELD_METHODNAME).append(',') //
-                        .append(FIELD_COUNT).append(',') //
-                        .append(FIELD_SLOWEST).append(',') //
-                        .append(FIELD_AVERAGE).append(',') //
-                        .append(FIELD_FASTEST).append(',') //
-                        .append(FIELD_STDDEV).append('\n');
+        addTableAction("Export To CSV", new AbstractTableAction(TableActionEnablement.ALWAYS) {
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                StringBuilder csv = new StringBuilder();
+                csv.append(FIELD_SERVICENAME).append(',') //
+                    .append(FIELD_METHODNAME).append(',') //
+                    .append(FIELD_COUNT).append(',') //
+                    .append(FIELD_SLOWEST).append(',') //
+                    .append(FIELD_AVERAGE).append(',') //
+                    .append(FIELD_FASTEST).append(',') //
+                    .append(FIELD_STDDEV).append('\n');
 
-                    RecordList records = getListGrid().getDataAsRecordList();
-                    int recordsSize = records.getLength();
-                    for (int i = 0; i < recordsSize; i++) {
-                        Record record = records.get(i);
-                        csv.append(record.getAttribute(FIELD_SERVICENAME)).append(',') //
-                            .append(record.getAttribute(FIELD_METHODNAME)).append(',') //
-                            .append(record.getAttribute(FIELD_COUNT)).append(',') //
-                            .append(record.getAttribute(FIELD_SLOWEST)).append(',') //
-                            .append(record.getAttribute(FIELD_AVERAGE)).append(',') //
-                            .append(record.getAttribute(FIELD_FASTEST)).append(',') //
-                            .append(record.getAttribute(FIELD_STDDEV)).append('\n');
-                    }
-
-                    new MessageWindow("Export To CSV", "<pre>" + csv.toString() + "</pre>").show();
-
-                    refresh();
+                RecordList records = getListGrid().getDataAsRecordList();
+                int recordsSize = records.getLength();
+                for (int i = 0; i < recordsSize; i++) {
+                    Record record = records.get(i);
+                    csv.append(record.getAttribute(FIELD_SERVICENAME)).append(',') //
+                        .append(record.getAttribute(FIELD_METHODNAME)).append(',') //
+                        .append(record.getAttribute(FIELD_COUNT)).append(',') //
+                        .append(record.getAttribute(FIELD_SLOWEST)).append(',') //
+                        .append(record.getAttribute(FIELD_AVERAGE)).append(',') //
+                        .append(record.getAttribute(FIELD_FASTEST)).append(',') //
+                        .append(record.getAttribute(FIELD_STDDEV)).append('\n');
                 }
-            });
 
-        addTableAction(extendLocatorId("refresh"), MSG.common_button_refresh(), new AbstractTableAction(
-            TableActionEnablement.ALWAYS) {
+                new MessageWindow("Export To CSV", "<pre>" + csv.toString() + "</pre>").show();
+
+                refresh();
+            }
+        });
+
+        addTableAction(MSG.common_button_refresh(), new AbstractTableAction(TableActionEnablement.ALWAYS) {
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 refresh();
@@ -210,8 +208,7 @@ public class TestRemoteServiceStatisticsView extends Table {
                 }
             });
         } else { // not in the standalone window
-            addTableAction(extendLocatorId("showInWin"), "Show In Window", new AbstractTableAction(
-                TableActionEnablement.ALWAYS) {
+            addTableAction("Show In Window", new AbstractTableAction(TableActionEnablement.ALWAYS) {
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     new StatisticsWindow().show();

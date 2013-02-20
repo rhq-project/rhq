@@ -82,8 +82,8 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
     private Bundle bundle;
     private final boolean canManageBundles;
 
-    public BundleView(String locatorId, Set<Permission> perms) {
-        super(locatorId);
+    public BundleView(Set<Permission> perms) {
+        super();
         this.canManageBundles = (perms != null) ? perms.contains(Permission.MANAGE_BUNDLE) : false;
         setWidth100();
         setHeight100();
@@ -97,8 +97,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
 
         this.bundle = bundle;
 
-        BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_bundle_list_backToAll(),
-            BundleTopView.VIEW_ID.getTitle());
+        BackButton backButton = new BackButton(MSG.view_bundle_list_backToAll(), BundleTopView.VIEW_ID.getTitle());
         headerLabel = new HeaderLabel(IconEnum.BUNDLE.getIcon24x24Path(), StringUtility.escapeHtml(bundle.getName()));
         tabs = new LocatableTabSet(getLocatorId());
         versionsTab = createVersionsTab();
@@ -153,7 +152,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
         LocatableTab destinationsTab = new LocatableTab(extendLocatorId("Destinations"), MSG.view_bundle_destinations());
         Criteria criteria = new Criteria();
         criteria.addCriteria("bundleId", bundle.getId());
-        destinationsTab.setPane(new BundleDestinationListView(destinationsTab.getLocatorId(), criteria));
+        destinationsTab.setPane(new BundleDestinationListView(criteria));
         return destinationsTab;
     }
 
@@ -161,7 +160,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
         LocatableTab versionsTab = new LocatableTab(extendLocatorId("Versions"), MSG.view_bundle_versions());
         Criteria criteria = new Criteria();
         criteria.addCriteria("bundleId", bundleBeingViewed);
-        bundleVersionsTable = new BundleVersionListView(versionsTab.getLocatorId(), criteria);
+        bundleVersionsTable = new BundleVersionListView(criteria);
         versionsTab.setPane(bundleVersionsTable);
         return versionsTab;
     }

@@ -20,6 +20,12 @@
 
 package org.rhq.enterprise.gui.coregui.client.admin.templates;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
+
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.grid.ListGrid;
@@ -27,18 +33,22 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeGridField;
+
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite;
-import org.rhq.enterprise.gui.coregui.client.*;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.drift.DriftDefinitionTemplatesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-
-import java.util.*;
 
 /**
  * @author Jay Shaughnessy
@@ -55,8 +65,8 @@ public class DriftDefinitionTemplateTypeView extends ResourceTypeTreeView {
 
     private Layout canvas;
 
-    public DriftDefinitionTemplateTypeView(String locatorId) {
-        super(locatorId);
+    public DriftDefinitionTemplateTypeView() {
+        super();
     }
 
     @Override
@@ -72,7 +82,7 @@ public class DriftDefinitionTemplateTypeView extends ResourceTypeTreeView {
     @Override
     protected TitleBar getTitleBar() {
 
-        return new TitleBar(this, MSG.view_adminConfig_driftDefTemplates(), ImageManager.getDriftIcon());
+        return new TitleBar(MSG.view_adminConfig_driftDefTemplates(), ImageManager.getDriftIcon());
     }
 
     @Override

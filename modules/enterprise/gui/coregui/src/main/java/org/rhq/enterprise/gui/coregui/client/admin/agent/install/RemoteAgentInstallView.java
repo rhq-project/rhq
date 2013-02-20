@@ -71,8 +71,8 @@ public class RemoteAgentInstallView extends LocatableVLayout {
     private ButtonItem stopButton;
     private VLayout agentInfoLayout;
 
-    public RemoteAgentInstallView(String locatorId) {
-        super(locatorId);
+    public RemoteAgentInstallView() {
+        super();
         setMembersMargin(1);
         setWidth100();
         setHeight100();

@@ -46,7 +46,6 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -60,20 +59,20 @@ public class AgentDetailView extends LocatableVLayout {
     private final int agentId;
 
     private static final int SECTION_COUNT = 2;
-    private final LocatableSectionStack sectionStack;
+    private final SectionStack sectionStack;
     private SectionStackSection detailsSection = null;
     private SectionStackSection failoverListSection = null;
 
     private volatile int initSectionCount = 0;
 
-    public AgentDetailView(String locatorId, int agentId) {
-        super(locatorId);
+    public AgentDetailView(int agentId) {
+        super();
         this.agentId = agentId;
         setHeight100();
         setWidth100();
         setOverflow(Overflow.AUTO);
 
-        sectionStack = new LocatableSectionStack(extendLocatorId("stack"));
+        sectionStack = new SectionStack();
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
         sectionStack.setWidth100();
         sectionStack.setHeight100();
@@ -147,8 +146,7 @@ public class AgentDetailView extends LocatableVLayout {
     private void prepareFailoverListSection(SectionStack stack, Agent agent) {
         SectionStackSection section = new SectionStackSection(MSG.view_adminTopology_agentDetail_agentFailoverList());
         section.setExpanded(true);
-        ServerTableView agentsTable = new ServerTableView(extendLocatorId(ServerTableView.VIEW_ID.getName()),
-            agent.getId(), false);
+        ServerTableView agentsTable = new ServerTableView(agent.getId(), false);
         section.setItems(agentsTable);
 
         failoverListSection = section;

@@ -29,8 +29,8 @@ public class DriftDefinitionTemplateSnapshotView extends DriftSnapshotView imple
 
     private int templateId;
 
-    public DriftDefinitionTemplateSnapshotView(String locatorId, int templateId) {
-        super(locatorId, null, templateId, false);
+    public DriftDefinitionTemplateSnapshotView(int templateId) {
+        super(null, templateId, false);
 
         this.templateId = templateId;
     }

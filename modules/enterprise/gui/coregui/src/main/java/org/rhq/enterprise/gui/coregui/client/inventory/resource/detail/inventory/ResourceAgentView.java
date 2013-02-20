@@ -62,7 +62,7 @@ public class ResourceAgentView extends LocatableVLayout implements RefreshableVi
     private boolean loading = false; // will be true if loadData is currently waiting for responses
 
     public ResourceAgentView(String locatorId, int resourceId) {
-        super(locatorId);
+        super();
 
         this.resourceId = resourceId;
     }

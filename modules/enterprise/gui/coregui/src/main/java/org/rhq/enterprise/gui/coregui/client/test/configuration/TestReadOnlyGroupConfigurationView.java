@@ -26,8 +26,8 @@ import org.rhq.enterprise.gui.coregui.client.components.configuration.GroupConfi
  */
 public class TestReadOnlyGroupConfigurationView extends TestGroupConfigurationView {
 
-    public TestReadOnlyGroupConfigurationView(String locatorId) {
-        super(locatorId);
+    public TestReadOnlyGroupConfigurationView() {
+        super();
     }
 
     @Override

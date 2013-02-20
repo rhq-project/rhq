@@ -17,7 +17,7 @@ public class LocatableLayout extends Layout implements Locatable {
      * </pre>
      * @param locatorId not null or empty.
      */
-    public LocatableLayout(String locatorId) {
+    public LocatableLayout() {
         super();
         this.locatorId = locatorId;
         SeleniumUtility.setID(this, locatorId);

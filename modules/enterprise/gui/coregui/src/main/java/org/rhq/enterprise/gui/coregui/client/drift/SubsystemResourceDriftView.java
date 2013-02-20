@@ -29,7 +29,7 @@ import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 
 public class SubsystemResourceDriftView extends DriftHistoryView {
-    public SubsystemResourceDriftView(String locatorId, boolean hasWriteAccess) {
+    public SubsystemResourceDriftView(boolean hasWriteAccess) {
         super(MSG.common_title_recent_drifts(), EntityContext.forSubsystemView(), hasWriteAccess);
     }
 

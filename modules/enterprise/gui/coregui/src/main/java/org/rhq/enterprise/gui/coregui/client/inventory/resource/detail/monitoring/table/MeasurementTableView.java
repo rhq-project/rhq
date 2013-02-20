@@ -31,6 +31,7 @@ import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -44,7 +45,6 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 
 /**
  * Views a resource's measurements in a tabular view.
@@ -56,7 +56,7 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
     private final int resourceId;
 
     public MeasurementTableView(String locatorId, int resourceId) {
-        super(locatorId);
+        super();
         this.resourceId = resourceId;
         setDataSource(new MeasurementTableDataSource(resourceId));
     }
@@ -64,8 +64,8 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
     protected void configureTable() {
         ArrayList<ListGridField> fields = getDataSource().getListGridFields();
         setListGridFields(fields.toArray(new ListGridField[0]));
-        addExtraWidget(new UserPreferencesMeasurementRangeEditor(extendLocatorId("range")), true);
-        addTableAction(extendLocatorId("liveValue"), MSG.view_measureTable_getLive(), new TableAction() {
+        addExtraWidget(new UserPreferencesMeasurementRangeEditor(), true);
+        addTableAction(MSG.view_measureTable_getLive(), new TableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
                 return selection != null && selection.length > 0;
@@ -137,7 +137,7 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
             }
         });
         //add chart selected metric action
-        addTableAction(extendLocatorId("chartValues"), MSG.view_measureTable_chartMetricValues(), new TableAction() {
+        addTableAction(MSG.view_measureTable_chartMetricValues(), new TableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
                 return selection != null && selection.length > 0;
@@ -172,7 +172,7 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
                 for (int mId : definitionIds) {
                     destination += "&m=" + mId;
                 }
-                ChartViewWindow window = new ChartViewWindow(extendLocatorId("ChartWindow"), "");
+                ChartViewWindow window = new ChartViewWindow("");
                 //generate and include iframed content
                 FullHTMLPane iframe = new FullHTMLPane(destination);
                 window.addItem(iframe);
@@ -205,7 +205,7 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
             }
         });
 
-        LocatableListGrid liveDataGrid = new LocatableListGrid(extendLocatorId("liveDataListGrid"));
+        ListGrid liveDataGrid = new ListGrid();
         liveDataGrid.setShowAllRecords(true);
         liveDataGrid.setData(records.toArray(new ListGridRecord[records.size()]));
         liveDataGrid.setSelectionType(SelectionStyle.NONE);

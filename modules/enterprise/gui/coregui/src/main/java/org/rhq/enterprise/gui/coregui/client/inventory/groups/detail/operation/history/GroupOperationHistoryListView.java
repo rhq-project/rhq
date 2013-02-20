@@ -46,7 +46,7 @@ public class GroupOperationHistoryListView extends AbstractOperationHistoryListV
 
     @Override
     public Canvas getDetailsView(Integer id) {
-        return new GroupOperationHistoryDetailsView(extendLocatorId("DetailsView"), this.groupComposite);
+        return new GroupOperationHistoryDetailsView(this.groupComposite);
     }
 
 }

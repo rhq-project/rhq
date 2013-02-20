@@ -41,11 +41,11 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
  */
 public class BundleVersionListView extends Table<BundleVersionDataSource> {
 
-    public BundleVersionListView(String locatorId) {
-        this(locatorId, null);
+    public BundleVersionListView() {
+        this(null);
     }
 
-    public BundleVersionListView(String locatorId, Criteria criteria) {
+    public BundleVersionListView(Criteria criteria) {
         super(MSG.view_bundle_bundleVersions(), criteria);
         setHeaderIcon("subsystems/bundle/BundleVersion_24.png");
         setDataSource(new BundleVersionDataSource());

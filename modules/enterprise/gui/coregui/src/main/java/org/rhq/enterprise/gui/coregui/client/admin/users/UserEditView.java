@@ -65,8 +65,8 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     private boolean loggedInUserHasManageSecurityPermission;
     private boolean ldapAuthorizationEnabled;
 
-    public UserEditView(String locatorId, int subjectId) {
-        super(locatorId, new UsersDataSource(), subjectId, MSG.common_label_user(), HEADER_ICON);
+    public UserEditView(int subjectId) {
+        super(new UsersDataSource(), subjectId, MSG.common_label_user(), HEADER_ICON);
     }
 
     @Override

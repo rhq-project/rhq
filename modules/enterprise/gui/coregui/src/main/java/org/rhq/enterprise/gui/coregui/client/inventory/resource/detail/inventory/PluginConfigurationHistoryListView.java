@@ -36,14 +36,14 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
  */
 public class PluginConfigurationHistoryListView extends
     AbstractConfigurationHistoryListView<PluginConfigurationHistoryDataSource> {
-    public static final ViewName VIEW_ID = new ViewName("PluginConfigurationHistoryView", MSG
-        .view_tabs_common_connectionSettingsHistory());
+    public static final ViewName VIEW_ID = new ViewName("PluginConfigurationHistoryView",
+        MSG.view_tabs_common_connectionSettingsHistory());
 
     /**
      * Use this constructor to view plugin config histories for all viewable Resources.
      */
-    public PluginConfigurationHistoryListView(String locatorId, boolean hasWritePerm) {
-        super(locatorId, VIEW_ID.getTitle(), hasWritePerm);
+    public PluginConfigurationHistoryListView(boolean hasWritePerm) {
+        super(VIEW_ID.getTitle(), hasWritePerm);
         PluginConfigurationHistoryDataSource datasource = new PluginConfigurationHistoryDataSource();
         setDataSource(datasource);
     }
@@ -53,15 +53,15 @@ public class PluginConfigurationHistoryListView extends
      *
      * @param resourceId a Resource ID
      */
-    public PluginConfigurationHistoryListView(String locatorId, boolean hasWritePerm, int resourceId) {
-        super(locatorId, VIEW_ID.getTitle(), hasWritePerm, resourceId);
+    public PluginConfigurationHistoryListView(boolean hasWritePerm, int resourceId) {
+        super(VIEW_ID.getTitle(), hasWritePerm, resourceId);
         PluginConfigurationHistoryDataSource datasource = new PluginConfigurationHistoryDataSource();
         setDataSource(datasource);
     }
 
     @Override
     public Canvas getDetailsView(Integer id) {
-        PluginConfigurationHistoryDetailView detailView = new PluginConfigurationHistoryDetailView(this.getLocatorId());
+        PluginConfigurationHistoryDetailView detailView = new PluginConfigurationHistoryDetailView();
         return detailView;
     }
 

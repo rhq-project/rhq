@@ -90,7 +90,7 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
     public void showMessageCenterWindow() {
         try {
             if (window == null) {
-                window = new MessageCenterWindow("MessageCenterViewWindow");
+                window = new MessageCenterWindow();
                 window.addItem(this); // Use addItem(), not addMember(), when adding a widget to a Window!
                 window.addCloseClickHandler(new CloseClickHandler() {
                     @Override
@@ -390,7 +390,7 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
     static class MessageCenterWindow extends Window {
         private Timer blinkTimer;
 
-        public MessageCenterWindow(String locatorId) {
+        public MessageCenterWindow() {
             super();
             setTitle(TABLE_TITLE);
             setShowMinimizeButton(true);

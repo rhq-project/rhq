@@ -72,7 +72,7 @@ public class AffinityGroupTableView extends TableSection<AffinityGroupWithCounts
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_TOPOLOGY_VIEW_ID + "/" + VIEW_ID;
 
-    public AffinityGroupTableView(String locatorId) {
+    public AffinityGroupTableView() {
         super(null);
         setHeight100();
         setWidth100();
@@ -90,51 +90,50 @@ public class AffinityGroupTableView extends TableSection<AffinityGroupWithCounts
 
     @Override
     public Canvas getDetailsView(Integer id) {
-        return new AffinityGroupDetailView(extendLocatorId("detailsView"), id);
+        return new AffinityGroupDetailView(id);
     }
 
     private void showActions() {
-        addTableAction(extendLocatorId("createNew"), MSG.view_adminTopology_affinityGroups_createNew(),
-            new AuthorizedTableAction(this, TableActionEnablement.ALWAYS, Permission.MANAGE_SETTINGS) {
-                public void executeAction(final ListGridRecord[] selections, Object actionValue) {
-                    showCreateAffinityGroupWindow();
-                }
-            });
+        addTableAction(MSG.view_adminTopology_affinityGroups_createNew(), new AuthorizedTableAction(this,
+            TableActionEnablement.ALWAYS, Permission.MANAGE_SETTINGS) {
+            public void executeAction(final ListGridRecord[] selections, Object actionValue) {
+                showCreateAffinityGroupWindow();
+            }
+        });
 
-        addTableAction(extendLocatorId("removeSelected"), MSG.view_adminTopology_server_removeSelected(), null,
-            new AuthorizedTableAction(this, TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
-                public void executeAction(final ListGridRecord[] selections, Object actionValue) {
-                    final List<String> selectedNames = getSelectedNames(selections);
-                    String message = MSG.view_adminTopology_message_removeAGroupsConfirm(selectedNames.toString());
-                    SC.ask(message, new BooleanCallback() {
-                        public void execute(Boolean confirmed) {
-                            if (confirmed) {
-                                int[] selectedIds = getSelectedIds(selections);
-                                GWTServiceLookup.getTopologyService().deleteAffinityGroups(selectedIds,
-                                    new AsyncCallback<Integer>() {
-                                        public void onSuccess(Integer count) {
-                                            Message msg = new Message(MSG
-                                                .view_adminTopology_message_removedAGroups(String.valueOf(count)),
-                                                Message.Severity.Info);
-                                            CoreGUI.getMessageCenter().notify(msg);
-                                            refresh();
-                                        }
+        addTableAction(MSG.view_adminTopology_server_removeSelected(), null, new AuthorizedTableAction(this,
+            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
+            public void executeAction(final ListGridRecord[] selections, Object actionValue) {
+                final List<String> selectedNames = getSelectedNames(selections);
+                String message = MSG.view_adminTopology_message_removeAGroupsConfirm(selectedNames.toString());
+                SC.ask(message, new BooleanCallback() {
+                    public void execute(Boolean confirmed) {
+                        if (confirmed) {
+                            int[] selectedIds = getSelectedIds(selections);
+                            GWTServiceLookup.getTopologyService().deleteAffinityGroups(selectedIds,
+                                new AsyncCallback<Integer>() {
+                                    public void onSuccess(Integer count) {
+                                        Message msg = new Message(MSG.view_adminTopology_message_removedAGroups(String
+                                            .valueOf(count)), Message.Severity.Info);
+                                        CoreGUI.getMessageCenter().notify(msg);
+                                        refresh();
+                                    }
 
-                                        public void onFailure(Throwable caught) {
-                                            CoreGUI.getErrorHandler().handleError(
-                                                MSG.view_adminTopology_message_removeAGroupsFail(selectedNames
-                                                    .toString()) + " " + caught.getMessage(), caught);
-                                            refreshTableInfo();
-                                        }
+                                    public void onFailure(Throwable caught) {
+                                        CoreGUI.getErrorHandler().handleError(
+                                            MSG.view_adminTopology_message_removeAGroupsFail(selectedNames.toString())
+                                                + " " + caught.getMessage(), caught);
+                                        refreshTableInfo();
+                                    }
 
-                                    });
-                            } else {
-                                refreshTableInfo();
-                            }
+                                });
+                        } else {
+                            refreshTableInfo();
                         }
-                    });
-                }
-            });
+                    }
+                });
+            }
+        });
     }
 
     private int[] getSelectedIds(ListGridRecord[] selections) {

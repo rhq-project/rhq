@@ -74,7 +74,7 @@ public class ServerPluginControlView extends LocatableVStack {
 
     public ServerPluginControlView(String locatorId, ServerPlugin plugin,
         ArrayList<ServerPluginControlDefinition> controlDefs) {
-        super(locatorId);
+        super();
         this.plugin = plugin;
         this.controlDefinitions = controlDefs;
         setAutoHeight();
@@ -216,8 +216,7 @@ public class ServerPluginControlView extends LocatableVStack {
             statusItem.setPrompt(MSG.view_admin_plugins_serverControls_clickForError());
             statusItem.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
-                    ErrorMessageWindow win = new ErrorMessageWindow(extendLocatorId("errorWin"), MSG
-                        .common_label_error(), results.getError());
+                    ErrorMessageWindow win = new ErrorMessageWindow(MSG.common_label_error(), results.getError());
                     win.show();
                 }
             });

@@ -34,8 +34,8 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
  */
 public class DriftComplianceReportTable extends InventorySummaryReportTable {
 
-    public DriftComplianceReportTable(String locatorId) {
-        super(locatorId);
+    public DriftComplianceReportTable() {
+        super();
         setDataSource(new DriftComplianceDataSource());
     }
 

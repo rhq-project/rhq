@@ -97,7 +97,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
     private final HashMap<String, String> statusIcons;
 
     public BundleDeploymentView(String locatorId, boolean canManageBundles) {
-        super(locatorId);
+        super();
         this.canManageBundles = canManageBundles;
         setWidth100();
         setHeight100();
@@ -119,9 +119,8 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         this.version = bundleDeployment.getBundleVersion();
         this.bundle = bundleDeployment.getBundleVersion().getBundle();
 
-        addMember(new BackButton(extendLocatorId("BackButton"), MSG.view_bundle_deploy_backButton() + ": "
-            + deployment.getDestination().getName(), LinkManager.getBundleDestinationLink(version.getBundle().getId(),
-            deployment.getDestination().getId())));
+        addMember(new BackButton(MSG.view_bundle_deploy_backButton() + ": " + deployment.getDestination().getName(),
+            LinkManager.getBundleDestinationLink(version.getBundle().getId(), deployment.getDestination().getId())));
         addMember(new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleDeployment_24.png"), deployment.getName()));
 
         //conditionally add tags. Defaults to true, not available in JON builds.
@@ -198,8 +197,8 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
             status.addClickHandler(new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent event) {
-                    ErrorMessageWindow win = new ErrorMessageWindow(extendLocatorId("errWin"), MSG
-                        .common_severity_error(), "<pre>" + deployment.getErrorMessage() + "</pre>");
+                    ErrorMessageWindow win = new ErrorMessageWindow(MSG.common_severity_error(), "<pre>"
+                        + deployment.getErrorMessage() + "</pre>");
                     win.show();
                 }
             });
@@ -337,7 +336,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         Table table = new Table(extendLocatorId("Deployments"), MSG.view_bundle_deploy_deploymentPlatforms());
         table.setShowFooterRefresh(false);
 
-        TitleBar titleBar = new TitleBar(this, MSG.view_bundle_deploy_selectARow());
+        TitleBar titleBar = new TitleBar(MSG.view_bundle_deploy_selectARow());
         table.setTitleBar(titleBar);
 
         // resource icon field

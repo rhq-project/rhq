@@ -41,12 +41,13 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class ResourceInstallReport extends LocatableVLayout implements BookmarkableView, HasViewName {
 
-    public static final ViewName VIEW_ID = new ViewName("InventorySummary", MSG.common_title_inventorySummary(), IconEnum.INVENTORY_SUMMARY);
+    public static final ViewName VIEW_ID = new ViewName("InventorySummary", MSG.common_title_inventorySummary(),
+        IconEnum.INVENTORY_SUMMARY);
 
     private ResourceSearchView resourceList;
 
-    public ResourceInstallReport(String locatorId ) {
-        super(locatorId);
+    public ResourceInstallReport() {
+        super();
         setHeight100();
         setWidth100();
     }
@@ -72,7 +73,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
     @Override
     protected void onInit() {
         super.onInit();
-        addMember(new InventorySummaryReportTable(extendLocatorId("table")));
+        addMember(new InventorySummaryReportTable());
     }
 
     protected Criteria createResourceSearchViewCriteria(int resourceTypeId) {

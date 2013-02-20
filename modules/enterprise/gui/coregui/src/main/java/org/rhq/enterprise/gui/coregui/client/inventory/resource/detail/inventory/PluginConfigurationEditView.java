@@ -63,7 +63,7 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Pro
     private boolean refreshingConfigDef = false;
 
     public PluginConfigurationEditView(String locatorId, ResourceComposite resourceComposite) {
-        super(locatorId);
+        super();
 
         this.resource = resourceComposite.getResource();
         this.resourcePermission = resourceComposite.getResourcePermission();

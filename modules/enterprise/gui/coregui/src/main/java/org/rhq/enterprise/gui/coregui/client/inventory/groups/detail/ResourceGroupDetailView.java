@@ -124,8 +124,8 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     private String currentTabName;
     private String currentSubTabName;
 
-    public ResourceGroupDetailView(String locatorId, String baseViewPath) {
-        super(locatorId, baseViewPath);
+    public ResourceGroupDetailView(String baseViewPath) {
+        super(baseViewPath);
         this.hide();
     }
 
@@ -345,8 +345,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             viewFactory = (!visible) ? null : new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new CalltimeView(monitorCallTime.extendLocatorId("CalltimeView"),
-                        EntityContext.forGroup(groupComposite.getResourceGroup()));
+                    return new CalltimeView(EntityContext.forGroup(groupComposite.getResourceGroup()));
                 }
             };
             updateSubTab(this.monitoringTab, this.monitorCallTime, visible, true, viewFactory);

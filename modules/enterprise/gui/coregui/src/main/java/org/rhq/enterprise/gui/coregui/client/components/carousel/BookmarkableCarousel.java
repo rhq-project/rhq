@@ -19,7 +19,6 @@
 
 package org.rhq.enterprise.gui.coregui.client.components.carousel;
 
-import java.util.logging.Logger;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.types.VerticalAlignment;
@@ -49,16 +48,16 @@ public abstract class BookmarkableCarousel extends Carousel implements Bookmarka
     private Canvas detailsView;
     private String basePath;
 
-    public BookmarkableCarousel(String locatorId) {
-        super(locatorId);
+    public BookmarkableCarousel() {
+        super();
     }
 
-    public BookmarkableCarousel(String locatorId, String titleString) {
-        super(locatorId, titleString);
+    public BookmarkableCarousel(String titleString) {
+        super(titleString);
     }
 
-    public BookmarkableCarousel(String locatorId, String titleString, Criteria criteria) {
-        super(locatorId, titleString, criteria);
+    public BookmarkableCarousel(String titleString, Criteria criteria) {
+        super(titleString, criteria);
     }
 
     @Override
@@ -67,7 +66,7 @@ public abstract class BookmarkableCarousel extends Carousel implements Bookmarka
 
         this.initialDisplay = true;
 
-        detailsHolder = new LocatableVLayout(extendLocatorId("carousel"));
+        detailsHolder = new LocatableVLayout();
         detailsHolder.setAlign(VerticalAlignment.TOP);
         detailsHolder.setMargin(4);
         detailsHolder.hide();
@@ -168,10 +167,9 @@ public abstract class BookmarkableCarousel extends Carousel implements Bookmarka
         if (!isEditable) {
             // Only add the "Back to List" button if the details are definitely not editable, because if they are
             // editable, a Cancel button should already be provided by the details view.
-            BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
-                basePath);
+            BackButton backButton = new BackButton(MSG.view_tableSection_backButton(), basePath);
             detailsHolder.addMember(backButton);
-            VLayout verticalSpacer = new LocatableVLayout(extendLocatorId("verticalSpacer"));
+            VLayout verticalSpacer = new LocatableVLayout();
             verticalSpacer.setHeight(8);
             detailsHolder.addMember(verticalSpacer);
         }

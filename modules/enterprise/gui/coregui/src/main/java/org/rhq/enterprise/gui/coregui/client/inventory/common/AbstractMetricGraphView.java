@@ -44,6 +44,7 @@ import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.WidgetCanvas;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -54,10 +55,8 @@ import com.smartgwt.client.widgets.layout.HLayout;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWidgetCanvas;
 
 /**
  * @author Greg Hinkle
@@ -163,7 +162,7 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
 
     protected void drawGraph() {
 
-        HLayout titleHLayout = new LocatableHLayout(extendLocatorId("HTitle"));
+        HLayout titleHLayout = new EnhancedHLayout();
 
         if (definition != null) {
             titleHLayout.setAutoHeight();
@@ -176,7 +175,7 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
             }
 
             if (supportsLiveGraphViewDialog()) {
-                Img liveGraph = new LocatableImg(extendLocatorId("Live"), "subsystems/monitor/Monitor_16.png", 16, 16);
+                Img liveGraph = new Img("subsystems/monitor/Monitor_16.png", 16, 16);
                 liveGraph.setTooltip(MSG.view_resource_monitor_graph_live_tooltip());
 
                 liveGraph.addClickHandler(new ClickHandler() {
@@ -268,7 +267,7 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
 
         // put it on a panel
 
-        addMember(new LocatableWidgetCanvas(extendLocatorId("Plot"), plot));
+        addMember(new WidgetCanvas(plot));
 
         plot.setSize(String.valueOf(getInnerContentWidth()),
             String.valueOf(getInnerContentHeight() - titleHLayout.getHeight() - 50));

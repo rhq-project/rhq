@@ -63,8 +63,8 @@ public class DriftDefinitionTemplateEditView extends LocatableVLayout implements
 
     private boolean refreshing = false;
 
-    public DriftDefinitionTemplateEditView(String locatorId, int driftTemplateId, boolean hasWriteAccess) {
-        super(locatorId);
+    public DriftDefinitionTemplateEditView(int driftTemplateId, boolean hasWriteAccess) {
+        super();
 
         this.driftTemplateId = driftTemplateId;
         this.hasWriteAccess = hasWriteAccess;

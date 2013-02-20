@@ -69,11 +69,11 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
      * @param locatorId
      * @param perms if perms is null, no button actions will be shown in the table
      */
-    public BundlesListView(String locatorId, Set<Permission> perms) {
-        this(locatorId, null, perms);
+    public BundlesListView(Set<Permission> perms) {
+        this(null, perms);
     }
 
-    public BundlesListView(String locatorId, Criteria criteria, Set<Permission> perms) {
+    public BundlesListView(Criteria criteria, Set<Permission> perms) {
         super(MSG.view_bundle_bundles(), criteria, IconEnum.BUNDLE.getIcon24x24Path());
         this.permissions = perms;
         setHeaderIcon(IconEnum.BUNDLE.getIcon24x24Path());
@@ -135,7 +135,7 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
 
             boolean hasAuth = permissions.contains(Permission.MANAGE_BUNDLE);
 
-            addTableAction(extendLocatorId("New"), MSG.common_button_new(), null, new AbstractTableAction(
+            addTableAction(MSG.common_button_new(), null, new AbstractTableAction(
                 (hasAuth) ? TableActionEnablement.ALWAYS : TableActionEnablement.NEVER) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     new BundleCreateWizard().startWizard();
@@ -184,7 +184,7 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
 
             // can change this back to SINGLE selection when we feel like it. currently allowing the wizard to
             // select the bundle.
-            addTableAction(extendLocatorId("Deploy"), MSG.view_bundle_deploy(), null, new AbstractTableAction(
+            addTableAction(MSG.view_bundle_deploy(), null, new AbstractTableAction(
                 (hasAuth) ? TableActionEnablement.ALWAYS : TableActionEnablement.NEVER) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     if (selection.length == 0) {

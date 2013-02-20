@@ -120,8 +120,8 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
     private TextAreaItem expression;
     private SpinnerItem recalculationInterval;
 
-    public SingleGroupDefinitionView(String locatorId) {
-        super(locatorId);
+    public SingleGroupDefinitionView() {
+        super();
         buildForm();
         setWidth100();
     }

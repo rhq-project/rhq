@@ -47,11 +47,11 @@ public class IFrameWithMeasurementRangeEditorView extends LocatableVLayout imple
 
         addMember(iframe);
 
-        LocatableToolStrip footer = new LocatableToolStrip("toolStrip");
+        LocatableToolStrip footer = new LocatableToolStrip();
         footer.setWidth100();
         addMember(footer);
 
-        editor = new UserPreferencesMeasurementRangeEditor(extendLocatorId("range")) {
+        editor = new UserPreferencesMeasurementRangeEditor() {
             @Override
             public void setMetricRangeProperties(MetricRangePreferences prefs) {
                 super.setMetricRangeProperties(prefs);

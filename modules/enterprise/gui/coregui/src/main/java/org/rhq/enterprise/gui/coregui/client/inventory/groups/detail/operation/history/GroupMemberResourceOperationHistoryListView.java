@@ -81,7 +81,7 @@ public class GroupMemberResourceOperationHistoryListView extends
 
     @Override
     public Canvas getDetailsView(Integer id) {
-        return new ResourceOperationHistoryDetailsView(extendLocatorId("DetailsView"), true);
+        return new ResourceOperationHistoryDetailsView(true);
     }
 
     @Override

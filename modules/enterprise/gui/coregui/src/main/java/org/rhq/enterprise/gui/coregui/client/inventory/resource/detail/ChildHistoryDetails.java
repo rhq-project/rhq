@@ -39,14 +39,14 @@ public class ChildHistoryDetails extends LocatableVLayout {
     private CreateResourceHistory createHistory;
     private DeleteResourceHistory deleteHistory;
 
-    public ChildHistoryDetails(String locatorId, CreateResourceHistory history) {
-        super(locatorId);
+    public ChildHistoryDetails(CreateResourceHistory history) {
+        super();
         createHistory = history;
         deleteHistory = null;
     }
 
-    public ChildHistoryDetails(String locatorId, DeleteResourceHistory history) {
-        super(locatorId);
+    public ChildHistoryDetails(DeleteResourceHistory history) {
+        super();
         createHistory = null;
         deleteHistory = history;
     }

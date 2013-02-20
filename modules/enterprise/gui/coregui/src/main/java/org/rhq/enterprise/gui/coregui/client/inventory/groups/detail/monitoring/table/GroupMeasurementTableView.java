@@ -43,7 +43,7 @@ public class GroupMeasurementTableView extends Table<GroupMeasurementTableDataSo
     private final int groupId;
 
     public GroupMeasurementTableView(String locatorId, ResourceGroupComposite groupComposite, int groupId) {
-        super(locatorId);
+        super();
         this.groupId = groupId;
         setDataSource(new GroupMeasurementTableDataSource(groupComposite, groupId));
         //disable fields used when is full screen
@@ -72,6 +72,6 @@ public class GroupMeasurementTableView extends Table<GroupMeasurementTableDataSo
             }
         });
         setListGridFields(fields.toArray(new ListGridField[getDataSource().getListGridFields().size()]));
-        addExtraWidget(new UserPreferencesMeasurementRangeEditor(extendLocatorId("range")), true);
+        addExtraWidget(new UserPreferencesMeasurementRangeEditor(), true);
     }
 }

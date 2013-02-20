@@ -56,7 +56,7 @@ public class FileListView extends LocatableVLayout {
     private int bundleVersionId;
 
     public FileListView(String locatorId, int bundleVersionId) {
-        super(locatorId);
+        super();
         this.bundleVersionId = bundleVersionId;
     }
 

@@ -77,7 +77,7 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
     private boolean canManageBundles;
 
     public BundleDestinationView(String locatorId, boolean canManageBundles) {
-        super(locatorId);
+        super();
         this.canManageBundles = canManageBundles;
         setWidth100();
         setHeight100();
@@ -91,8 +91,8 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         this.destination = bundleDestination;
         this.bundle = bundleDestination.getBundle();
 
-        BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_bundle_dest_backToBundle()
-            + ": " + StringUtility.escapeHtml(bundle.getName()), "Bundles/Bundle/" + bundle.getId());
+        BackButton backButton = new BackButton(MSG.view_bundle_dest_backToBundle() + ": "
+            + StringUtility.escapeHtml(bundle.getName()), "Bundles/Bundle/" + bundle.getId());
 
         HeaderLabel header = new HeaderLabel(Canvas.getImgURL(IconEnum.BUNDLE_DESTINATION.getIcon24x24Path()),
             StringUtility.escapeHtml(destination.getName()));

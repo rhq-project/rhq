@@ -62,8 +62,8 @@ public class DriftDefinitionEditView extends LocatableVLayout implements Propert
 
     private boolean refreshing = false;
 
-    public DriftDefinitionEditView(String locatorId, EntityContext context, int driftDefId, boolean hasWriteAccess) {
-        super(locatorId);
+    public DriftDefinitionEditView(EntityContext context, int driftDefId, boolean hasWriteAccess) {
+        super();
 
         this.context = context;
         this.driftDefId = driftDefId;

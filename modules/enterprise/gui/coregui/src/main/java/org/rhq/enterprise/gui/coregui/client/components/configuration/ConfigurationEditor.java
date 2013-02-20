@@ -127,10 +127,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -428,7 +426,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             layout.addMember(form);
         } else {
             // One or more prop groups, so create a section stack with one section per group.
-            final SectionStack sectionStack = new LocatableSectionStack(layout.extendLocatorId("Sections"));
+            final SectionStack sectionStack = new SectionStack();
             sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
             sectionStack.setWidth100();
             sectionStack.setHeight100();
@@ -471,7 +469,7 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     private LocatableToolStrip buildToolStrip(LocatableVLayout layout, final SectionStack sectionStack) {
-        LocatableToolStrip toolStrip = new LocatableToolStrip(layout.extendLocatorId("Tools"));
+        LocatableToolStrip toolStrip = new LocatableToolStrip();
         toolStrip.setBackgroundImage(null);
         toolStrip.setWidth100();
         toolStrip.setMembersMargin(3);
@@ -779,7 +777,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         if (isDynamic && !isReadOnly(propertyDefinitionMap, propertyMap)) {
             // Map is not read-only - add footer with New and Delete buttons to allow user to add or remove members.
-            LocatableToolStrip buttonBar = new LocatableToolStrip(layout.extendLocatorId("ButtonBar"));
+            LocatableToolStrip buttonBar = new LocatableToolStrip();
             buttonBar.setPadding(5);
             buttonBar.setMembersMargin(15);
 
@@ -814,7 +812,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             spacer.setWidth(12);
             buttonBar.addMember(spacer);
 
-            LocatableHLayout deleteControlsLayout = new LocatableHLayout(buttonBar.extendLocatorId("DeleteControls"));
+            EnhancedHLayout deleteControlsLayout = new EnhancedHLayout();
             deleteControlsLayout.setMargin(3);
             deleteControlsLayout.setMembersMargin(3);
             deleteControlsLayout.setWidth100();
@@ -922,7 +920,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         final PropertyDefinitionList propertyDefinitionList, final PropertyList propertyList) {
         Log.debug("Building list-of-maps grid for " + propertyList + "...");
 
-        final LocatableListGrid summaryTable = new LocatableListGrid("TODO");
+        final ListGrid summaryTable = new ListGrid();
         summaryTable.setAlternateRecordStyles(true);
         summaryTable.setShowAllRecords(true);
         // [BZ 822173 - Table layout problem on configuration page.] 

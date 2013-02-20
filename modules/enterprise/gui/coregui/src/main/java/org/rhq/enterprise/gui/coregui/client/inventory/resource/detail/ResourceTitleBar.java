@@ -54,8 +54,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallb
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -65,9 +64,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 public class ResourceTitleBar extends LocatableVLayout {
 
     //represents row of Resource title details[icon,title,show-details,tags,availability,favorites]
-    private LocatableHLayout top;
+    private EnhancedHLayout top;
     //represents normally closed region of Resource details[to verbosely describe resource across all tabs]
-    private LocatableHLayout details;
+    private EnhancedHLayout details;
     private static final String FAV_ICON = "Favorite_24_Selected.png";
     private static final String NOT_FAV_ICON = "Favorite_24.png";
     private static final String EXPANDED_ICON = "[SKIN]/ListGrid/row_expanded.png";
@@ -85,19 +84,19 @@ public class ResourceTitleBar extends LocatableVLayout {
     private HTMLFlow title;
     private Img availabilityImage;
     private boolean favorite;
-    private LocatableHLayout detailsForm;
+    private EnhancedHLayout detailsForm;
     private OverviewForm detailsFormSummary;
     private Img pluginErrors;
 
-    public ResourceTitleBar(String locatorId) {
-        super(locatorId);
+    public ResourceTitleBar() {
+        super();
         //define two rows of content
-        top = new LocatableHLayout(locatorId + "_Top");
+        top = new EnhancedHLayout();
         top.setPadding(0);
         top.setMembersMargin(0);
         top.setHeight(30);
 
-        details = new LocatableHLayout(locatorId + "_Details");
+        details = new EnhancedHLayout();
         details.setWidth100();
 
         //modify VLayout settings
@@ -123,7 +122,7 @@ public class ResourceTitleBar extends LocatableVLayout {
             }
         });
 
-        this.favoriteButton = new LocatableImg(this.extendLocatorId("Favorite"), NOT_FAV_ICON, 24, 24);
+        this.favoriteButton = new Img(NOT_FAV_ICON, 24, 24);
 
         this.favoriteButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -238,7 +237,7 @@ public class ResourceTitleBar extends LocatableVLayout {
         top.addMember(availabilityImage);
         top.addMember(favoriteButton);
 
-        detailsForm = new LocatableHLayout(extendLocatorId("_Resource_Details"));
+        detailsForm = new EnhancedHLayout();
         detailsForm.setWidth100();
         detailsForm.setHeight(10);
         detailsForm.setAlign(Alignment.LEFT);

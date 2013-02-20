@@ -64,8 +64,8 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedSearchBarItem;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
@@ -78,7 +78,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Jay Shaughnessy
  */
 @SuppressWarnings("unchecked")
-public abstract class Carousel extends LocatableHLayout implements RefreshableView {
+public abstract class Carousel extends EnhancedHLayout implements RefreshableView {
 
     private static final String FILTER_CAROUSEL_START = "CarouselStart";
     private static final String FILTER_CAROUSEL_SIZE = "CarouselSize";
@@ -96,7 +96,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
 
     private CarouselFilter filterForm;
 
-    private LocatableHLayout carouselHolder;
+    private EnhancedHLayout carouselHolder;
 
     private Label carouselInfo;
 
@@ -130,16 +130,16 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
     private Integer carouselSizeFilter = getDefaultCarouselSize();
     private boolean carouselUsingFixedWidths = false;
 
-    public Carousel(String locatorId) {
-        this(locatorId, null, null);
+    public Carousel() {
+        this(null, null);
     }
 
-    public Carousel(String locatorId, String titleString) {
-        this(locatorId, titleString, null);
+    public Carousel(String titleString) {
+        this(titleString, null);
     }
 
-    public Carousel(String locatorId, String titleString, Criteria criteria) {
-        super(locatorId);
+    public Carousel(String titleString, Criteria criteria) {
+        super();
 
         setWidth100();
         setHeight100();
@@ -175,7 +175,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
     protected void onInit() {
         super.onInit();
 
-        contents = new LocatableVLayout(extendLocatorId("Contents"));
+        contents = new LocatableVLayout();
         contents.setWidth100();
         contents.setHeight100();
 
@@ -198,7 +198,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
             }
         }
 
-        carouselHolder = new LocatableHLayout(extendLocatorId("Holder"));
+        carouselHolder = new EnhancedHLayout();
         carouselHolder.setOverflow(Overflow.AUTO);
         carouselHolder.setWidth100();
         contents.addMember(carouselHolder);
@@ -222,7 +222,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
             setTitleString(this.titleString);
 
             if (showTitle) {
-                titleLayout = new LocatableHLayout(contents.extendLocatorId("Title"));
+                titleLayout = new EnhancedHLayout();
                 titleLayout.setAutoHeight();
                 titleLayout.setAlign(VerticalAlignment.BOTTOM);
                 titleLayout.setMembersMargin(4);
@@ -243,14 +243,14 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
 
             // A second toolstrip that optionally appears before the main footer - it will contain extra widgets.
             // This is hidden from view unless extra widgets are actually added to the carousel above the main footer.
-            this.footerExtraWidgets = new LocatableToolStrip(contents.extendLocatorId("FooterExtraWidgets"));
+            this.footerExtraWidgets = new LocatableToolStrip();
             footerExtraWidgets.setPadding(5);
             footerExtraWidgets.setWidth100();
             footerExtraWidgets.setMembersMargin(15);
             footerExtraWidgets.hide();
             contents.addMember(footerExtraWidgets);
 
-            this.footer = new LocatableToolStrip(contents.extendLocatorId("Footer"));
+            this.footer = new LocatableToolStrip();
             footer.setPadding(5);
             footer.setWidth100();
             footer.setMembersMargin(15);

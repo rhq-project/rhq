@@ -81,7 +81,7 @@ public class AgentPluginTableView extends TableSection<AgentPluginDataSource> {
 
     private boolean showDeleted = false;
 
-    public AgentPluginTableView(String locatorId) {
+    public AgentPluginTableView() {
         super(null);
         setHeight100();
         setWidth100();
@@ -121,8 +121,8 @@ public class AgentPluginTableView extends TableSection<AgentPluginDataSource> {
             }
         });
 
-        addTableAction(extendLocatorId("disable"), MSG.common_button_disable(), new AuthorizedTableAction(this,
-            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
+        addTableAction(MSG.common_button_disable(), new AuthorizedTableAction(this, TableActionEnablement.ANY,
+            Permission.MANAGE_SETTINGS) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                 ArrayList<String> selectedNames = getSelectedNames(selections);
                 String message = MSG.view_admin_plugins_agentDisableConfirm(selectedNames.toString());
@@ -156,8 +156,8 @@ public class AgentPluginTableView extends TableSection<AgentPluginDataSource> {
             }
         });
 
-        addTableAction(extendLocatorId("delete"), MSG.common_button_delete(), new AuthorizedTableAction(this,
-            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
+        addTableAction(MSG.common_button_delete(), new AuthorizedTableAction(this, TableActionEnablement.ANY,
+            Permission.MANAGE_SETTINGS) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                 ArrayList<String> selectedNames = getSelectedNames(selections);
                 String message = MSG.view_admin_plugins_agentDeleteConfirm(selectedNames.toString());
@@ -272,7 +272,7 @@ public class AgentPluginTableView extends TableSection<AgentPluginDataSource> {
 
     @Override
     public Canvas getDetailsView(Integer id) {
-        return new AgentPluginDetailView(extendLocatorId("detailsView"), id);
+        return new AgentPluginDetailView(id);
     }
 
     private int[] getSelectedIds(ListGridRecord[] selections) {

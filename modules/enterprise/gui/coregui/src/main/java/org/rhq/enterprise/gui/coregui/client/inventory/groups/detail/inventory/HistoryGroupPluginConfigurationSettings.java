@@ -60,7 +60,7 @@ public class HistoryGroupPluginConfigurationSettings extends LocatableVLayout {
     private GroupConfigurationEditor editor;
 
     public HistoryGroupPluginConfigurationSettings(String locatorId, ResourceGroupComposite groupComposite, int updateId) {
-        super(locatorId);
+        super();
         this.group = groupComposite.getResourceGroup();
         this.groupPerms = groupComposite.getResourcePermission();
         this.groupUpdateId = updateId;
@@ -69,8 +69,7 @@ public class HistoryGroupPluginConfigurationSettings extends LocatableVLayout {
         setMembersMargin(5);
         String backPath = LinkManager.getGroupPluginConfigurationUpdateHistoryLink(EntityContext.forGroup(this.group),
             null);
-        BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
-            backPath);
+        BackButton backButton = new BackButton(MSG.view_tableSection_backButton(), backPath);
         addMember(backButton);
     }
 

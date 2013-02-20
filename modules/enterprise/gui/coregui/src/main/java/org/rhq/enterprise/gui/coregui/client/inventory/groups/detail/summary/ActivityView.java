@@ -93,7 +93,7 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
 
     public ActivityView(String locatorId, ResourceGroupComposite groupComposite, boolean isAutoCluster,
         boolean isAutoGroup) {
-        super(locatorId);
+        super();
         this.groupComposite = groupComposite;
         this.isAutoCluster = isAutoCluster;
         this.isAutoGroup = isAutoGroup;
@@ -146,7 +146,7 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
             groupComposite);
         addMember(dashboardView);
 
-        footer = new LocatableToolStrip(extendLocatorId("Footer"));
+        footer = new LocatableToolStrip();
         footer.setPadding(5);
         footer.setWidth100();
         footer.setMembersMargin(15);

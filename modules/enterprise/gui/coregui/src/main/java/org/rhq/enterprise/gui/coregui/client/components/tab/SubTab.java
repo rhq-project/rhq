@@ -162,7 +162,6 @@ public class SubTab implements Locatable {
         destroyButton();
     }
 
-    @Override
     public String extendLocatorId(String extension) {
         return this.locatorId + "_" + extension;
     }

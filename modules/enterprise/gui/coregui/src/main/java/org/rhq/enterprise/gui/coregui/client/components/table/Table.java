@@ -83,9 +83,8 @@ import org.rhq.enterprise.gui.coregui.client.util.CriteriaUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
@@ -103,7 +102,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Ian Springer
  */
 @SuppressWarnings("rawtypes")
-public class Table<DS extends RPCDataSource> extends LocatableHLayout implements RefreshableView, InitializableView {
+public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements RefreshableView, InitializableView {
 
     private static final int DATA_PAGE_SIZE = 50;
 
@@ -248,7 +247,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
      */
     protected LocatableVLayout createTableContents() {
         if (null == contents) {
-            contents = new LocatableVLayout(extendLocatorId("Contents"));
+            contents = new LocatableVLayout();
         }
 
         return contents;
@@ -314,7 +313,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             }
         }
 
-        listGrid = createListGrid(contents.extendLocatorId("ListGrid"));
+        listGrid = createListGrid();
         configureListGrid(listGrid);
 
         listGrid.setAutoFetchData(autoFetchData);
@@ -439,14 +438,14 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
             // A second toolstrip that optionally appears before the main footer - it will contain extra widgets.
             // This is hidden from view unless extra widgets are actually added to the table above the main footer.
-            this.footerExtraWidgets = new LocatableToolStrip(contents.extendLocatorId("FooterExtraWidgets"));
+            this.footerExtraWidgets = new LocatableToolStrip();
             footerExtraWidgets.setPadding(5);
             footerExtraWidgets.setWidth100();
             footerExtraWidgets.setMembersMargin(15);
             footerExtraWidgets.hide();
             contents.addMember(footerExtraWidgets);
 
-            this.footer = new LocatableToolStrip(contents.extendLocatorId("Footer"));
+            this.footer = new LocatableToolStrip();
             footer.setPadding(5);
             footer.setWidth100();
             footer.setMembersMargin(15);
@@ -540,7 +539,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     private void drawHeader() {
         // just use the first icon (not sure use case for multiple icons in title)
-        titleBar = new TitleBar(titleLayout, titleString);
+        titleBar = new TitleBar(titleString);
         if (titleIcon != null) {
             titleBar.setIcon(titleIcon);
         }
@@ -851,14 +850,12 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     /**
      * Creates this Table's list grid (called by onInit()). Subclasses can override this if they require a custom
-     * subclass of LocatableListGrid.
+     * subclass of ListGrid.
      *
-     * @param locatorId the locatorId that should be set on the returned LocatableListGrid
-     *
-     * @return this Table's list grid (must be an instance of LocatableListGrid)
+     * @return this Table's list grid (must be an instance of ListGrid)
      */
-    protected LocatableListGrid createListGrid(String locatorId) {
-        return new LocatableListGrid(locatorId);
+    protected ListGrid createListGrid() {
+        return new ListGrid();
     }
 
     /**

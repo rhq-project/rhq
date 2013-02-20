@@ -40,8 +40,8 @@ public class GroupOperationHistoryDetailsView extends AbstractOperationHistoryDe
 
     private ResourceGroupComposite groupComposite;
 
-    public GroupOperationHistoryDetailsView(String locatorId, ResourceGroupComposite groupComposite) {
-        super(locatorId);
+    public GroupOperationHistoryDetailsView(ResourceGroupComposite groupComposite) {
+        super();
 
         this.groupComposite = groupComposite;
     }

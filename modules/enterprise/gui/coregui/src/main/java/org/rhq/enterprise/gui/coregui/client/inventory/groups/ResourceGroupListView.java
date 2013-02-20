@@ -208,8 +208,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         }
 
         if (this.showNewButton) {
-            addTableAction(extendLocatorId("New"), MSG.common_button_new(), new AuthorizedTableAction(this,
-                Permission.MANAGE_INVENTORY) {
+            addTableAction(MSG.common_button_new(), new AuthorizedTableAction(this, Permission.MANAGE_INVENTORY) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     GroupCategory category = null;
                     String categoryString = getInitialCriteria() == null ? null : getInitialCriteria().getAttribute(
@@ -228,35 +227,34 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         }
 
         if (this.resourceIdToModify != null) {
-            addTableAction(extendLocatorId("Membership"), MSG.view_tabs_common_group_membership() + "...",
-                new AbstractTableAction(TableActionEnablement.ALWAYS) {
-                    @Override
-                    public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                        ResourceResourceGroupsView membershipView = new ResourceResourceGroupsView(
-                            ResourceGroupListView.this.extendLocatorId("MembershipView"),
-                            ResourceGroupListView.this.resourceIdToModify.intValue());
+            addTableAction(MSG.view_tabs_common_group_membership() + "...", new AbstractTableAction(
+                TableActionEnablement.ALWAYS) {
+                @Override
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    ResourceResourceGroupsView membershipView = new ResourceResourceGroupsView(
+                        ResourceGroupListView.this.resourceIdToModify.intValue());
 
-                        final PopupWindow winModal = new PopupWindow(membershipView);
-                        winModal.setTitle(MSG.view_tabs_common_group_membership());
-                        winModal.setWidth(700);
-                        winModal.setHeight(450);
-                        winModal.addCloseClickHandler(new CloseClickHandler() {
-                            public void onCloseClick(CloseClickEvent event) {
-                                refreshTableInfo(); // make sure we re-enable the footer buttons in case user canceled
-                            }
-                        });
+                    final PopupWindow winModal = new PopupWindow(membershipView);
+                    winModal.setTitle(MSG.view_tabs_common_group_membership());
+                    winModal.setWidth(700);
+                    winModal.setHeight(450);
+                    winModal.addCloseClickHandler(new CloseClickHandler() {
+                        public void onCloseClick(CloseClickEvent event) {
+                            refreshTableInfo(); // make sure we re-enable the footer buttons in case user canceled
+                        }
+                    });
 
-                        membershipView.setSaveButtonHandler(new ClickHandler() {
-                            @Override
-                            public void onClick(ClickEvent event) {
-                                winModal.markForDestroy();
-                                CoreGUI.refresh();
-                            }
-                        });
+                    membershipView.setSaveButtonHandler(new ClickHandler() {
+                        @Override
+                        public void onClick(ClickEvent event) {
+                            winModal.markForDestroy();
+                            CoreGUI.refresh();
+                        }
+                    });
 
-                        winModal.show();
-                    }
-                });
+                    winModal.show();
+                }
+            });
         }
 
         setListGridDoubleClickHandler(new DoubleClickHandler() {

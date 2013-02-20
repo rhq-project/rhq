@@ -31,6 +31,7 @@ import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
@@ -60,8 +61,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.resource.ProblemResourcesDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -119,7 +119,7 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
     protected void configureTable() {
         ListGrid listGrid = getListGrid();
         if (listGrid != null) {
-            addExtraWidget(new TimeRange(extendLocatorId("TimeRange"), this), false);
+            addExtraWidget(new TimeRange(this), false);
         }
 
         ListGridField resourceField = new ListGridField(RESOURCE.propertyName(), RESOURCE.title());
@@ -364,12 +364,12 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
  *
  * @author spinder
  */
-class TimeRange extends LocatableHLayout implements TableWidget {
-    private LocatableLabel label = new LocatableLabel(extendLocatorId("timeRange"));
+class TimeRange extends EnhancedHLayout implements TableWidget {
+    private Label label = new Label();
     private ProblemResourcesPortlet portlet = null;
 
-    public TimeRange(String locatorId, ProblemResourcesPortlet problemResourcesPortlet) {
-        super(locatorId);
+    public TimeRange(ProblemResourcesPortlet problemResourcesPortlet) {
+        super();
         this.portlet = problemResourcesPortlet;
     }
 

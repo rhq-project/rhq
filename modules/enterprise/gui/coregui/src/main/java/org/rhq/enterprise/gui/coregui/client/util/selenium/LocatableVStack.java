@@ -19,7 +19,10 @@ public class LocatableVStack extends VStack implements Locatable {
      */
     public LocatableVStack(String locatorId) {
         super();
-        init(locatorId);
+    }
+
+    public LocatableVStack() {
+        super();
     }
 
     /**
@@ -31,13 +34,8 @@ public class LocatableVStack extends VStack implements Locatable {
      */
     public LocatableVStack(String locatorId, int membersMargin) {
         super(membersMargin);
-        init(locatorId);
     }
 
-    private void init(String locatorId) {
-        this.locatorId = locatorId;
-        SeleniumUtility.setID(this, locatorId);
-    }
 
     public String getLocatorId() {
         return locatorId;

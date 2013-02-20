@@ -81,7 +81,7 @@ public class ResourceAvailabilityView extends LocatableVLayout {
     private StaticTextItem currentTimeField;
 
     public ResourceAvailabilityView(String locatorId, ResourceComposite resourceComposite) {
-        super(locatorId);
+        super();
 
         this.resourceComposite = resourceComposite;
 

@@ -56,7 +56,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
@@ -71,20 +70,20 @@ public class ServerDetailView extends LocatableVLayout implements BookmarkableVi
     private final int serverId;
 
     private static final int SECTION_COUNT = 2;
-    private final LocatableSectionStack sectionStack;
+    private final SectionStack sectionStack;
     private SectionStackSection detailsSection = null;
     private SectionStackSection agentSection = null;
 
     private volatile int initSectionCount = 0;
 
-    public ServerDetailView(String locatorId, int serverId) {
-        super(locatorId);
+    public ServerDetailView(int serverId) {
+        super();
         this.serverId = serverId;
         setHeight100();
         setWidth100();
         setOverflow(Overflow.AUTO);
 
-        sectionStack = new LocatableSectionStack(extendLocatorId("stack"));
+        sectionStack = new SectionStack();
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
         sectionStack.setWidth100();
         sectionStack.setHeight100();
@@ -158,8 +157,7 @@ public class ServerDetailView extends LocatableVLayout implements BookmarkableVi
     private void prepareAgentSection(SectionStack stack, Server server) {
         SectionStackSection section = new SectionStackSection(MSG.view_adminTopology_serverDetail_connectedAgents());
         section.setExpanded(true);
-        AgentTableView agentsTable = new AgentTableView(extendLocatorId(AgentTableView.VIEW_ID.getName()), serverId,
-            false);
+        AgentTableView agentsTable = new AgentTableView(serverId, false);
         section.setItems(agentsTable);
 
         agentSection = section;
@@ -250,7 +248,7 @@ public class ServerDetailView extends LocatableVLayout implements BookmarkableVi
         form.setItems(nameItem, addressItem, portItem, securePortItem, operationModeItem, affinityGroupItem,
             installationDateItem, lastUpdatetem);
 
-        LocatableToolStrip footer = new LocatableToolStrip(extendLocatorId("detailsFooter"));
+        LocatableToolStrip footer = new LocatableToolStrip();
         footer.setPadding(5);
         footer.setWidth100();
         footer.setMembersMargin(15);

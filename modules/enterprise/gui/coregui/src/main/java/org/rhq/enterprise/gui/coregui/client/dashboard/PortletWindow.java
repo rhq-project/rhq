@@ -122,8 +122,7 @@ public class PortletWindow extends Window {
         }
     });
 
-    public PortletWindow(String locatorId, DashboardView dashboardView, DashboardPortlet dashboardPortlet,
-        EntityContext context) {
+    public PortletWindow(DashboardView dashboardView, DashboardPortlet dashboardPortlet, EntityContext context) {
         super();
 
         this.dashboardView = dashboardView;
@@ -137,8 +136,7 @@ public class PortletWindow extends Window {
         //            setShowEdges(false);
 
         //configure HeaderControls with toolTips
-        HeaderControl RssHeader = new HeaderControl(new HeaderIcon(
-            "[SKIN]/headerIcons/clipboard.png"), rssHandler);
+        HeaderControl RssHeader = new HeaderControl(new HeaderIcon("[SKIN]/headerIcons/clipboard.png"), rssHandler);
         RssHeader.setTooltip(RSS);
 
         //detect customized Header icon

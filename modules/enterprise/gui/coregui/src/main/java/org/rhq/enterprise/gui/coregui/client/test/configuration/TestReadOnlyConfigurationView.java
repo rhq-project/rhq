@@ -26,8 +26,8 @@ import org.rhq.enterprise.gui.coregui.client.components.configuration.Configurat
  */
 public class TestReadOnlyConfigurationView extends TestConfigurationView {
 
-    public TestReadOnlyConfigurationView(String locatorId) {
-        super(locatorId);
+    public TestReadOnlyConfigurationView() {
+        super();
     }
 
     @Override

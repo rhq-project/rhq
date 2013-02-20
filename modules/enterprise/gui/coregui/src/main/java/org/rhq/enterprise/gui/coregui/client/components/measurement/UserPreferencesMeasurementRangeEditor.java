@@ -28,8 +28,8 @@ public class UserPreferencesMeasurementRangeEditor extends AbstractMeasurementRa
 
     private MeasurementUserPreferences measurementUserPrefs;
 
-    public UserPreferencesMeasurementRangeEditor(String locatorId) {
-        super(locatorId);
+    public UserPreferencesMeasurementRangeEditor() {
+        super();
         measurementUserPrefs = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
     }
 

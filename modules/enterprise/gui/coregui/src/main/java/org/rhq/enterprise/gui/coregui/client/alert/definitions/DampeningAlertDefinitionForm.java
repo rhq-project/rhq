@@ -75,11 +75,11 @@ public class DampeningAlertDefinitionForm extends DynamicForm implements EditAle
 
     private boolean updated;
 
-    public DampeningAlertDefinitionForm(String locatorId) {
-        this(locatorId, null);
+    public DampeningAlertDefinitionForm() {
+        this(null);
     }
 
-    public DampeningAlertDefinitionForm(String locatorId, AlertDefinition alertDefinition) {
+    public DampeningAlertDefinitionForm(AlertDefinition alertDefinition) {
         super();
         this.alertDefinition = alertDefinition;
         this.updated = false;

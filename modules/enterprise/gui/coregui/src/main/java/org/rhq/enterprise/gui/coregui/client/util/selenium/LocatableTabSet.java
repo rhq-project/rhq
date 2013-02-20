@@ -42,6 +42,12 @@ public class LocatableTabSet extends TabSet {
         SeleniumUtility.setID(this, locatorId);
     }
 
+    public LocatableTabSet() {
+        super();
+        this.locatorId = "TODO";
+        SeleniumUtility.setID(this, locatorId);
+    }
+
     public void setTabs(LocatableTab... tabs) {
         super.setTabs(tabs);
     }

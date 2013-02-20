@@ -36,8 +36,8 @@ import org.rhq.core.domain.drift.DriftDetails;
  */
 public class DriftSnapshotDriftDetailsView extends DriftDetailsView {
 
-    public DriftSnapshotDriftDetailsView(String locatorId, String driftId) {
-        super(locatorId, driftId);
+    public DriftSnapshotDriftDetailsView(String driftId) {
+        super(driftId);
     }
 
     @Override

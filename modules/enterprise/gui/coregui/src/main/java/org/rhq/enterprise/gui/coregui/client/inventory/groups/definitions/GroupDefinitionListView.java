@@ -53,7 +53,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
  */
 public class GroupDefinitionListView extends TableSection<GroupDefinitionDataSource> {
 
-    public GroupDefinitionListView(String locatorId) {
+    public GroupDefinitionListView() {
         super(null);
 
         setDataSource(GroupDefinitionDataSource.getInstance());
@@ -147,14 +147,13 @@ public class GroupDefinitionListView extends TableSection<GroupDefinitionDataSou
             }
         });
 
-        addTableAction(extendLocatorId("New"), MSG.common_button_new(), null, new AbstractTableAction() {
+        addTableAction(MSG.common_button_new(), null, new AbstractTableAction() {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newDetails();
             }
         });
 
-        addTableAction(extendLocatorId("Recalculate"), MSG.view_dynagroup_recalculate(), null, new AbstractTableAction(
-            TableActionEnablement.ANY) {
+        addTableAction(MSG.view_dynagroup_recalculate(), null, new AbstractTableAction(TableActionEnablement.ANY) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 final int[] groupDefinitionIds = TableUtility.getIds(selection);
                 ResourceGroupGWTServiceAsync resourceGroupManager = GWTServiceLookup.getResourceGroupService();
@@ -184,8 +183,7 @@ public class GroupDefinitionListView extends TableSection<GroupDefinitionDataSou
 
     @Override
     public Canvas getDetailsView(Integer id) {
-        final SingleGroupDefinitionView singleGroupDefinitionView = new SingleGroupDefinitionView(
-            this.extendLocatorId("Details"));
+        final SingleGroupDefinitionView singleGroupDefinitionView = new SingleGroupDefinitionView();
         return singleGroupDefinitionView;
     }
 

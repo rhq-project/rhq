@@ -59,8 +59,8 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
     private U titleBar;
     protected Set<Permission> globalPermissions;
 
-    public AbstractTwoLevelTabSetView(String locatorId, String baseViewPath) {
-        super(locatorId);
+    public AbstractTwoLevelTabSetView(String baseViewPath) {
+        super();
         this.baseViewPath = baseViewPath;
 
         setWidth100();
@@ -69,7 +69,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
         this.titleBar = createTitleBar();
         addMember(this.titleBar);
 
-        this.tabSet = new TwoLevelTabSet(extendLocatorId("TabSet"));
+        this.tabSet = new TwoLevelTabSet();
         this.tabSet.setTabBarPosition(Side.TOP);
         this.tabSet.setWidth100();
         this.tabSet.setHeight100();

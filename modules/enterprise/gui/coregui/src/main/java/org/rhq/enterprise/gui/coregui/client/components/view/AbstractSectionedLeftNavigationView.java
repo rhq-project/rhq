@@ -48,9 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -61,7 +59,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Ian Springer
  * @author Jay Shaughnessy
  */
-public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayout implements BookmarkableView,
+public abstract class AbstractSectionedLeftNavigationView extends EnhancedHLayout implements BookmarkableView,
     InitializableView {
 
     private String viewId;
@@ -80,7 +78,7 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
     private Set<Permission> globalPermissions = EnumSet.noneOf(Permission.class);
 
     public AbstractSectionedLeftNavigationView(String viewId) {
-        super(viewId);
+        super();
         this.viewId = viewId;
     }
 
@@ -95,7 +93,7 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
         contentCanvas.setWidth("*");
         contentCanvas.setHeight100();
 
-        sectionStack = new LocatableSectionStack(this.getLocatorId());
+        sectionStack = new SectionStack();
         sectionStack.setShowResizeBar(true);
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
         sectionStack.setWidth(250);
@@ -133,7 +131,7 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
     protected abstract List<NavigationSection> getNavigationSections();
 
     private TreeGrid buildTreeGridForSection(NavigationSection navigationSection) {
-        final TreeGrid treeGrid = new LocatableTreeGrid(navigationSection.getName());
+        final TreeGrid treeGrid = new TreeGrid();
         treeGrid.setLeaveScrollbarGap(false);
         treeGrid.setShowHeader(false);
         treeGrid.setSelectionType(SelectionStyle.SINGLE);
@@ -297,12 +295,12 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
     }
 
     private LocatableVLayout decorateWithTitleBar(ViewName viewName, Canvas pageBody){
-        LocatableVLayout vLayout = new LocatableVLayout(extendLocatorId(viewName.getName()));
+        LocatableVLayout vLayout = new LocatableVLayout();
         vLayout.setWidth100();
         vLayout.setHeight100();
         // default to 24x24 otherwise use 16x16
         String iconPath = (viewName.getIcon().getIcon24x24Path() != null) ? viewName.getIcon().getIcon24x24Path() : viewName.getIcon().getIcon16x16Path();
-        vLayout.addMember( new TitleBar(vLayout,viewName.getTitle(), iconPath));
+        vLayout.addMember(new TitleBar(viewName.getTitle(), iconPath));
         vLayout.addMember(pageBody);
         return vLayout;
 

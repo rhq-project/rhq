@@ -11,8 +11,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
  */
 public class NamedTabSet extends LocatableTabSet {
 
-    public NamedTabSet(String locatorId) {
-        super(locatorId);
+    public NamedTabSet() {
+        super();
     }
 
     public void setTabs(NamedTab... tabs) {

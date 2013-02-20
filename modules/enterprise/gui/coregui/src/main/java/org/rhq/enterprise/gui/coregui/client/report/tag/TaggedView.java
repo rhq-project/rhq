@@ -68,8 +68,8 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView, Ha
     private int selectedTabNum = 0;
     private Set<Permission> globalPermissions;
 
-    public TaggedView(String locatorId) {
-        super(locatorId);
+    public TaggedView() {
+        super();
         setWidth100();
         setHeight100();
     }
@@ -119,15 +119,14 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView, Ha
 
             Tab tab;
 
-            BundlesListView bundlesView = new BundlesListView(extendLocatorId("bundleListView"), criteria, null);
+            BundlesListView bundlesView = new BundlesListView(criteria, null);
             viewsWithTags.add(bundlesView);
             tab = new LocatableTab(extendLocatorId("bundleList"), MSG.view_bundle_bundles());
             tab.setIcon(ImageManager.getBundleIcon());
             tab.setPane(bundlesView);
             container.addTab(tab);
 
-            BundleVersionListView bundleVersionListView = new BundleVersionListView(
-                extendLocatorId("bundleVersionListView"), criteria);
+            BundleVersionListView bundleVersionListView = new BundleVersionListView(criteria);
             viewsWithTags.add(bundleVersionListView);
             tab = new LocatableTab(extendLocatorId("bundleVersionList"), MSG.view_bundle_bundleVersions());
             tab.setIcon("subsystems/bundle/BundleVersion_16.png");
@@ -143,8 +142,7 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView, Ha
             tab.setPane(bundleDeploymentListView);
             container.addTab(tab);
 
-            BundleDestinationListView bundleDestinationListView = new BundleDestinationListView(
-                extendLocatorId("bundleDestinationListView"), criteria);
+            BundleDestinationListView bundleDestinationListView = new BundleDestinationListView(criteria);
             viewsWithTags.add(bundleDestinationListView);
             tab = new LocatableTab(extendLocatorId("bundleDestinationsList"), MSG.view_bundle_bundleDestinations());
             tab.setIcon("subsystems/bundle/BundleDestination_16.png");

@@ -79,7 +79,7 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
     private boolean refreshing = false;
 
     public GroupResourceConfigurationEditView(String locatorId, ResourceGroupComposite groupComposite) {
-        super(locatorId);
+        super();
 
         this.group = groupComposite.getResourceGroup();
         this.resourcePermission = groupComposite.getResourcePermission();

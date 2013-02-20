@@ -134,8 +134,8 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
         }
     };
 
-    public ResourceGroupTreeView(String locatorId) {
-        super(locatorId);
+    public ResourceGroupTreeView() {
+        super();
 
         setWidth(250);
         setHeight100();
@@ -147,7 +147,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
     protected void onInit() {
         super.onInit();
 
-        treeGrid = new CustomResourceGroupTreeGrid(extendLocatorId("groupTree"));
+        treeGrid = new CustomResourceGroupTreeGrid();
         treeGrid.setWidth100();
         treeGrid.setHeight100();
         treeGrid.setAnimateFolders(false);
@@ -169,7 +169,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
             }
         });
 
-        contextMenu = new ResourceGroupTreeContextMenu(extendLocatorId("contextMenu"));
+        contextMenu = new ResourceGroupTreeContextMenu();
         treeGrid.setContextMenu(contextMenu);
 
         treeGrid.addNodeContextClickHandler(new NodeContextClickHandler() {
@@ -573,8 +573,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
             // label the tree node so the user knows this cluster node is not representative of the entire group membership
             double percentage = (double) memberCount / (double) clusterSize;
             String percentageStr = NumberFormat.getFormat("0%").format(percentage);
-            String title = childName + " <span style=\"color: red; font-style: italic\">(" + percentageStr
-                + ")</span>";
+            String title = childName + " <span style=\"color: red; font-style: italic\">(" + percentageStr + ")</span>";
             node.setTitle(title);
 
             // "1 out of 2 group members have "foo" child resources"

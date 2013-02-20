@@ -36,7 +36,6 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.PluginGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -49,8 +48,8 @@ public class AgentPluginDetailView extends LocatableVLayout {
     private final PluginGWTServiceAsync pluginManager = GWTServiceLookup.getPluginService();
     private final int pluginId;
 
-    public AgentPluginDetailView(String locatorId, int pluginId) {
-        super(locatorId);
+    public AgentPluginDetailView(int pluginId) {
+        super();
         this.pluginId = pluginId;
         setHeight100();
         setWidth100();
@@ -60,9 +59,9 @@ public class AgentPluginDetailView extends LocatableVLayout {
     protected void onDraw() {
         super.onDraw();
 
-        final LocatableSectionStack sectionStack;
+        final SectionStack sectionStack;
 
-        sectionStack = new LocatableSectionStack(extendLocatorId("stack"));
+        sectionStack = new SectionStack();
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
         sectionStack.setWidth100();
         sectionStack.setHeight100();

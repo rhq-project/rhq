@@ -56,8 +56,8 @@ public class SubTabLayout extends LocatableVLayout {
 
     private SubTab tail;
 
-    public SubTabLayout(String locatorId) {
-        super(locatorId);
+    public SubTabLayout() {
+        super();
         setOverflow(Overflow.AUTO);
     }
 
@@ -70,7 +70,7 @@ public class SubTabLayout extends LocatableVLayout {
         setMargin(0);
         setPadding(0);
 
-        buttonBar = new LocatableToolStrip(extendLocatorId("ButtonBar"));
+        buttonBar = new LocatableToolStrip();
         buttonBar.setBackgroundColor("grey");
         buttonBar.setWidth100();
         buttonBar.setBorder(null);
@@ -223,8 +223,8 @@ public class SubTabLayout extends LocatableVLayout {
     }
 
     private void buildSubTabList(SubTab[] tabs) {
-//        head = tabs[0];
-//        tail = tabs[tabs.length - 1];
+        //        head = tabs[0];
+        //        tail = tabs[tabs.length - 1];
         SubTab current = tabs[0];
         for (int i = 1; i < tabs.length; ++i) {
             current.setActualNext(tabs[i]);
@@ -233,12 +233,11 @@ public class SubTabLayout extends LocatableVLayout {
         }
     }
 
-
-//    public void registerSubTab(SubTab subTab) {
-//        String locatorId = subTab.getLocatorId();
-//
-//        subTabs.put(locatorId, subTab);
-//    }
+    //    public void registerSubTab(SubTab subTab) {
+    //        String locatorId = subTab.getLocatorId();
+    //
+    //        subTabs.put(locatorId, subTab);
+    //    }
 
     /**
      * Walks the list of visible tabs to find the closest, visible predecessor. Because it

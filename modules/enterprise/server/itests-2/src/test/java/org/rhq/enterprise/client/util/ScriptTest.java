@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.client.security.test.JndiAccessTest;
+import org.rhq.enterprise.client.ScriptableAbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.SessionTestHelper;
 
@@ -26,7 +26,7 @@ import org.rhq.enterprise.server.util.SessionTestHelper;
  * @author Simeon Pinder
  */
 @Test
-public class ScriptTest extends JndiAccessTest {
+public class ScriptTest extends ScriptableAbstractEJB3Test {
 
     /** Exercise the ScriptUtil.findResoruces
      * 

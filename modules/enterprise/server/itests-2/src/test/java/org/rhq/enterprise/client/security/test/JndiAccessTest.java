@@ -18,11 +18,7 @@
  */
 package org.rhq.enterprise.client.security.test;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.security.PermissionCollection;
-import java.util.Collections;
 
 import javax.naming.Context;
 import javax.script.ScriptEngine;
@@ -31,15 +27,10 @@ import javax.script.ScriptException;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import org.rhq.bindings.ScriptEngineFactory;
-import org.rhq.bindings.StandardBindings;
-import org.rhq.bindings.StandardScriptPermissions;
-import org.rhq.bindings.util.PackageFinder;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.enterprise.client.LocalClient;
+import org.rhq.enterprise.client.ScriptableAbstractEJB3Test;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.system.SystemManagerBean;
-import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -48,7 +39,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Lukas Krejci
  */
 @Test
-public class JndiAccessTest extends AbstractEJB3Test {
+public class JndiAccessTest extends ScriptableAbstractEJB3Test {
 
     public void testScriptCantOverrideSystemProperties() throws Exception {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
@@ -271,15 +262,6 @@ public class JndiAccessTest extends AbstractEJB3Test {
     //            NamingHack.bruteForceInitialContextFactoryBuilder();
     //        }
     //    }
-    
-    protected ScriptEngine getEngine(Subject subject) throws ScriptException, IOException {
-        StandardBindings bindings = new StandardBindings(new PrintWriter(System.out), new LocalClient(subject));
-        
-        PermissionCollection perms = new StandardScriptPermissions();
-        
-        return ScriptEngineFactory.getSecuredScriptEngine("javascript",
-            new PackageFinder(Collections.<File> emptyList()), bindings, perms);
-    }
     
     private static void checkIsDesiredSecurityException(ScriptException e) {
         String message = e.getMessage();

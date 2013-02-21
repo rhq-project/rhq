@@ -170,6 +170,9 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Failed to determine the server time. Cause: {0}")
     String TIME_UNKNOWN = "AgentMain.time-unknown";
 
+    @I18NMessage("The server thinks this agent is down. Will notify the server of up-to-date information when possible.")
+    String SERVER_THINKS_AGENT_IS_DOWN = "AgentMain.server-thinks-agent-is-down";
+
     @I18NMessage("Timed out waiting for the connectAgent R/W lock to avoid a possible deadlock")
     String TIMEOUT_WAITING_FOR_CONNECT_LOCK = "AgentMain.connect-lock-timeout";
 

@@ -272,7 +272,7 @@ public class JndiAccessTest extends AbstractEJB3Test {
     //        }
     //    }
     
-    private ScriptEngine getEngine(Subject subject) throws ScriptException, IOException {
+    protected ScriptEngine getEngine(Subject subject) throws ScriptException, IOException {
         StandardBindings bindings = new StandardBindings(new PrintWriter(System.out), new LocalClient(subject));
         
         PermissionCollection perms = new StandardScriptPermissions();

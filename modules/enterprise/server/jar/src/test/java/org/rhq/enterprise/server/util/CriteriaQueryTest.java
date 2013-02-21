@@ -73,7 +73,9 @@ public class CriteriaQueryTest {
         }
 
         public void addPage(List<FakeEntity> entities) {
-            pages.add(new PageList<FakeEntity>(entities, totalSize, pc));
+            int pageNumber = pages.size();
+            pages
+                .add(new PageList<FakeEntity>(entities, totalSize, new PageControl(pageNumber, this.pc.getPageSize())));
         }
 
         @Override
@@ -113,7 +115,8 @@ public class CriteriaQueryTest {
         queryExecutor.addPage(expected.subList(2, 4));
 
         FakeEntityCriteria criteria = new FakeEntityCriteria();
-        criteria.setPageControl(pc);
+        //spinder 2-20-13: DO NOT use criteria.setPageControl(pc) here as it causes ignore of pageNumber/pageSize
+        criteria.setPaging(pc.getPageNumber(), pc.getPageSize());
 
         CriteriaQuery<FakeEntity, FakeEntityCriteria> query = new CriteriaQuery<FakeEntity, FakeEntityCriteria>(
             criteria, queryExecutor);
@@ -164,7 +167,7 @@ public class CriteriaQueryTest {
 
         //build criteria and attach pageControl
         FakeEntityCriteria criteria = new FakeEntityCriteria();
-        //DO NOT use criteria.setPageControl(pc) here as it causes ignore of pageNumber/pageSize
+        //spinder 2-20-13:DO NOT use criteria.setPageControl(pc) here as it causes ignore of pageNumber/pageSize
         criteria.setPaging(pc.getPageNumber(), pc.getPageSize());
 
         //?? So which pageControl has the right details? Criteria.pageControl? OR PageControl passed into the QueryExecutor.

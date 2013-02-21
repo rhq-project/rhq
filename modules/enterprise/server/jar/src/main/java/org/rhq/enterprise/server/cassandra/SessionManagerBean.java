@@ -25,6 +25,8 @@
 
 package org.rhq.enterprise.server.cassandra;
 
+import static com.datastax.driver.core.ProtocolOptions.Compression.SNAPPY;
+
 import javax.annotation.PostConstruct;
 import javax.ejb.Singleton;
 
@@ -71,6 +73,7 @@ public class SessionManagerBean {
             Cluster cluster = Cluster.builder()
                 .addContactPoints(hostNames)
                 .withAuthInfoProvider(new SimpleAuthInfoProvider().add("username", username).add("password", password))
+                .withCompression(SNAPPY)
                 .build();
             session = cluster.connect("rhq");
         } catch (NoHostAvailableException e) {

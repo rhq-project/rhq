@@ -487,9 +487,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         * is triggering save based on the semantics that we want to provide for configuration updates.
         * For the same reason, we pass null as the subject.
         */
-        ResourceConfigurationUpdate update = this.configurationManager.persistNewResourceConfigurationUpdateHistory(
-            this.subjectManager.getOverlord(), resource.getId(), liveConfig, ConfigurationUpdateStatus.SUCCESS, null,
-            false);
+        ResourceConfigurationUpdate update = this.configurationManager
+            .persistResourceConfigurationUpdateInNewTransaction(this.subjectManager.getOverlord(), resource.getId(),
+                liveConfig, ConfigurationUpdateStatus.SUCCESS, null, false);
 
         // resource.setResourceConfiguration(liveConfig.deepCopy(false));
         resource.setResourceConfiguration(liveConfig.deepCopyWithoutProxies());
@@ -1248,8 +1248,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             return resourceConfigurationUpdate;
         }
 
-        ResourceConfigurationUpdate newUpdate = configurationManager.persistNewResourceConfigurationUpdateHistory(
-            subject, resourceId, configToUpdate, ConfigurationUpdateStatus.INPROGRESS, subject.getName(), false);
+        ResourceConfigurationUpdate newUpdate = configurationManager
+            .persistResourceConfigurationUpdateInNewTransaction(subject, resourceId, configToUpdate,
+                ConfigurationUpdateStatus.INPROGRESS, subject.getName(), false);
         executeResourceConfigurationUpdate(newUpdate);
         return newUpdate;
     }
@@ -1307,9 +1308,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         // configuration.
         // TODO: Consider synchronizing to avoid the condition where someone calls this method twice quickly in two
         // different tx's, which would put two updates in INPROGRESS and cause havoc.
-        ResourceConfigurationUpdate newUpdate = configurationManager.persistNewResourceConfigurationUpdateHistory(
-            subject, resourceId, newResourceConfiguration, ConfigurationUpdateStatus.INPROGRESS, subject.getName(),
-            false);
+        ResourceConfigurationUpdate newUpdate = configurationManager
+            .persistResourceConfigurationUpdateInNewTransaction(subject, resourceId, newResourceConfiguration,
+                ConfigurationUpdateStatus.INPROGRESS, subject.getName(), false);
 
         executeResourceConfigurationUpdate(newUpdate);
 
@@ -1382,91 +1383,83 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public ResourceConfigurationUpdate persistNewResourceConfigurationUpdateHistory(Subject subject, int resourceId,
-        Configuration newConfiguration, ConfigurationUpdateStatus newStatus, String newSubject,
+    public ResourceConfigurationUpdate persistResourceConfigurationUpdateInNewTransaction(Subject subject,
+        int resourceId, Configuration newConfiguration, ConfigurationUpdateStatus newStatus, String newSubject,
         boolean isPartofGroupUpdate) throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException {
-        // get the resource that we will be updating
-        Resource resource = resourceManager.getResourceById(subject, resourceId);
 
-        // make sure the user has the proper permissions to do this
-        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE_WRITE, resource.getId())) {
-            throw new PermissionException("User [" + subject.getName()
-                + "] does not have permission to modify configuration for resource [" + resource + "]");
-        }
-
-        // see if there was a previous update request and make sure it isn't still in progress
-        List<ResourceConfigurationUpdate> previousRequests = resource.getResourceConfigurationUpdates();
-
+        ResourceConfigurationUpdate current = null;
         String errorMessage = null;
-        if (previousRequests != null) {
-            for (ResourceConfigurationUpdate previousRequest : previousRequests) {
-                if (previousRequest.getStatus() == ConfigurationUpdateStatus.INPROGRESS) {
-                    // A previous update is still in progresss for this Resource. If this update is part of a group
-                    // update, persist it with FAILURE status, so it is still listed as part of the group history.
-                    // Otherwise, throw an exception that can bubble up to the GUI.
-                    if (isPartofGroupUpdate) {
-                        newStatus = ConfigurationUpdateStatus.FAILURE;
-                        errorMessage = "Resource configuration Update was aborted because an update request for the Resource was already in progress.";
-                    } else {
-                        // NOTE: If you change this to another exception, make sure you change getLatestResourceConfigurationUpdate().
-                        throw new ConfigurationUpdateStillInProgressException(
-                            "Resource ["
-                                + resource
-                                + "] has a resource configuration update request already in progress - please wait for it to finish: "
-                                + previousRequest);
-                    }
+
+        // for efficiency, in one query fetch IN_PROGRESS and/or the current update
+        Query query = entityManager
+            .createNamedQuery(ResourceConfigurationUpdate.QUERY_FIND_CURRENT_AND_IN_PROGRESS_CONFIGS);
+        query.setParameter("resourceId", resourceId);
+        List<?> updates = query.getResultList();
+        for (Object result : updates) {
+            current = (ResourceConfigurationUpdate) result;
+
+            if (ConfigurationUpdateStatus.INPROGRESS == current.getStatus()) {
+                // A previous update is still in progress for this Resource. If this update is part of a group
+                // update, persist it with FAILURE status, so it is still listed as part of the group history.
+                // Otherwise, throw an exception that can bubble up to the GUI.
+                if (isPartofGroupUpdate) {
+                    newStatus = ConfigurationUpdateStatus.FAILURE;
+                    errorMessage = "Resource configuration Update was aborted because an update request for the Resource was already in progress.";
+
+                } else {
+                    // NOTE: If you change this to another exception, make sure you change getLatestResourceConfigurationUpdate().
+                    throw new ConfigurationUpdateStillInProgressException(
+                        "Resource ["
+                            + resourceId
+                            + "] has a resource configuration update request already in progress - please wait for it to finish: "
+                            + current);
                 }
             }
         }
 
-        ResourceConfigurationUpdate current;
+        Resource resource = null;
 
-        // Get the latest configuration as known to the server (i.e. persisted in the DB).
-        try {
-            Query query = entityManager
-                .createNamedQuery(ResourceConfigurationUpdate.QUERY_FIND_CURRENTLY_ACTIVE_CONFIG);
-            query.setParameter("resourceId", resourceId);
-            current = (ResourceConfigurationUpdate) query.getSingleResult();
-            resource = current.getResource();
-        } catch (NoResultException nre) {
-            current = null; // The resource hasn't been successfully configured yet.
-        }
-
-        // If this update is not part of an group update, don't bother persisting a new entry if the Configuration
-        // hasn't changed. If it's part of an group update, persist a new entry no matter what, so the group
-        // update isn't missing any member updates.
-        if (!isPartofGroupUpdate && current != null) {
-            Configuration currentConfiguration = current.getConfiguration();
-            Hibernate.initialize(currentConfiguration.getMap());
-            if (currentConfiguration.equals(newConfiguration)) {
-                return null;
+        if (null != current) {
+            // Always persist a group update because each member must have an update. Otherwise, only persist a
+            // single resource update if it has changed.
+            if (!isPartofGroupUpdate) {
+                Configuration currentConfiguration = current.getConfiguration();
+                Hibernate.initialize(currentConfiguration.getMap());
+                if (currentConfiguration.equals(newConfiguration)) {
+                    return null;
+                }
             }
+
+            resource = current.getResource();
+
+        } else {
+            // make sure the resource exists
+            resource = resourceManager.getResourceById(subject, resourceId);
         }
 
-        //Configuration zeroedConfiguration = newConfiguration.deepCopy(false);
         Configuration zeroedConfiguration = newConfiguration.deepCopyWithoutProxies();
 
-        // create our new update request and assign it to our resource - its status will initially be "in progress"
+        // create our new update request and assign it to our resource - its status will initially be INPROGRESS
         ResourceConfigurationUpdate newUpdateRequest = new ResourceConfigurationUpdate(resource, zeroedConfiguration,
             newSubject);
-
         newUpdateRequest.setStatus(newStatus);
-        if (newStatus == ConfigurationUpdateStatus.FAILURE) {
+
+        if (ConfigurationUpdateStatus.FAILURE == newStatus) {
             newUpdateRequest.setErrorMessage(errorMessage);
         }
 
         entityManager.persist(newUpdateRequest);
-        if (current != null) {
-            if (newStatus == ConfigurationUpdateStatus.SUCCESS) {
-                // If this is the first configuration update since the resource was imported, don't alert
+
+        // No need to alert on the first configuration update, only on subsequent change
+        if (null != current) {
+            if (ConfigurationUpdateStatus.SUCCESS == newStatus) {
                 notifyAlertConditionCacheManager("persistNewResourceConfigurationUpdateHistory", newUpdateRequest);
             }
         }
 
         resource.addResourceConfigurationUpdates(newUpdateRequest);
 
-        // agent and childResources fields are LAZY - force them to load, because the caller will need them.
-        Hibernate.initialize(resource.getChildResources());
+        // provide the agent while we have the entity, it's typically needed by the caller
         Hibernate.initialize(resource.getAgent());
 
         return newUpdateRequest;

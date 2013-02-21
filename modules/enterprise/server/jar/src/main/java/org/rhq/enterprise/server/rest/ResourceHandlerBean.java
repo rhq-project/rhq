@@ -31,6 +31,8 @@ import java.util.UUID;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.interceptor.Interceptors;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -362,6 +364,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
     @PUT
     @Path("/{id}/availability")
     @ApiOperation("Set the current availability of the passed resource")
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public void reportAvailability(@ApiParam("Id of the resource to update") @PathParam("id") int resourceId,
                 @ApiParam(value= "New Availability setting", required = true) AvailabilityRest avail) {
         if (avail.getResourceId() != resourceId)
@@ -374,11 +377,12 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
         // According to jshaughn, plaforms must not be set to DISABLED, so catch this case here.
         if (resource.getResourceType().getCategory()==ResourceCategory.PLATFORM && at==AvailabilityType.DISABLED) {
-            throw new BadArgumentException("Availabilty","Platforms must not be set to DISABLED");
+            throw new BadArgumentException("Availability","Platforms must not be set to DISABLED");
         }
 
+        Agent agent = agentMgr.getAgentByResourceId(caller,resourceId);
 
-        AvailabilityReport report = new AvailabilityReport(true, resource.getAgent().getName());
+        AvailabilityReport report = new AvailabilityReport(true, agent.getName());
         Availability availability = new Availability(resource, avail.getSince(), at);
         report.addAvailability(availability);
 

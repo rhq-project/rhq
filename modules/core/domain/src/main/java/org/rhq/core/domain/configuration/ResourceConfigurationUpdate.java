@@ -38,7 +38,7 @@ import org.rhq.core.domain.resource.Resource;
 
 @DiscriminatorValue("resource")
 @Entity
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_ALL_IN_STATUS, query = "" //
         + "SELECT cu " //
         + "  FROM ResourceConfigurationUpdate cu " //
@@ -58,7 +58,8 @@ import org.rhq.core.domain.resource.Resource;
         + "                                   WHERE icu.resource.id = res.id) " //
         + "            ) " //
         + "       )"),
-    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_CURRENTLY_ACTIVE_CONFIG, query = "" //
+    // Note: Changes to this query should also be applied to QUERY_FIND_CURRENT_AND_IN_PROGRESS_CONFIGS, below. 
+    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_CURRENTLY_ACTIVE_CONFIG, query = "" //    
         + "SELECT cu " //
         + "  FROM ResourceConfigurationUpdate cu " //
         + " WHERE cu.resource.id = :resourceId " //
@@ -67,6 +68,17 @@ import org.rhq.core.domain.resource.Resource;
         + "                             FROM ResourceConfigurationUpdate cu2 " //
         + "                            WHERE cu2.resource.id = :resourceId " //
         + "                              AND cu2.status = 'SUCCESS' ) "),
+    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_CURRENT_AND_IN_PROGRESS_CONFIGS, query = "" //
+        + "SELECT cu " //
+        + "  FROM ResourceConfigurationUpdate cu " //
+        + " WHERE cu.resource.id = :resourceId " //
+        + "   AND ( ( cu.status = 'INPROGRESS' ) " //
+        + "    OR   ( cu.status = 'SUCCESS' " //        
+        + "   AND     cu.modifiedTime = ( SELECT MAX(cu2.modifiedTime) " //
+        + "                                 FROM ResourceConfigurationUpdate cu2 " //
+        + "                                WHERE cu2.resource.id = :resourceId " //
+        + "                                  AND cu2.status = 'SUCCESS' ) " //
+        + "         ) ) "),
     @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_LATEST_BY_RESOURCE_ID, query = "" //
         + "SELECT cu " //
         + "  FROM ResourceConfigurationUpdate cu " //
@@ -178,6 +190,7 @@ public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUp
     public static final String QUERY_FIND_ALL_IN_STATUS = "ResourceConfigurationUpdate.findAllInStatus";
     public static final String QUERY_FIND_ALL_BY_RESOURCE_ID = "ResourceConfigurationUpdate.findAllByResourceId";
     public static final String QUERY_FIND_CURRENTLY_ACTIVE_CONFIG = "ResourceConfigurationUpdate.findCurrentlyActiveConfig";
+    public static final String QUERY_FIND_CURRENT_AND_IN_PROGRESS_CONFIGS = "ResourceConfigurationUpdate.findCurrentAndInProgressConfigs";
     public static final String QUERY_FIND_LATEST_BY_RESOURCE_ID = "ResourceConfigurationUpdate.findByLatestByResourceId";
     public static final String QUERY_FIND_BY_GROUP_ID_AND_STATUS = "ResourceConfigurationUpdate.findByGroupIdAndStatus";
     public static final String QUERY_FIND_BY_PARENT_UPDATE_ID_AND_STATUS = "ResourceConfigurationUpdate.findByParentUpdateIdAndStatus";

@@ -39,6 +39,8 @@ public class StringUtil {
 
     private static final Log log = LogFactory.getLog(StringUtil.class);
 
+    public static final String EMPTY_STRING = "";
+
     /**
      * @param  source  The source string to perform replacements on.
      * @param  find    The substring to find in source.
@@ -119,7 +121,7 @@ public class StringUtil {
      *
      * @return The Iterator's elements in a user-friendly string format.
      */
-    public static String iteratorToString(Iterator i, String delim) {
+    public static String iteratorToString(Iterator<?> i, String delim) {
         return iteratorToString(i, delim, "");
     }
 
@@ -132,7 +134,7 @@ public class StringUtil {
      *
      * @return The Iterator's elements in a user-friendly string format.
      */
-    public static String iteratorToString(Iterator i, String delim, String quoteChar) {
+    public static String iteratorToString(Iterator<?> i, String delim, String quoteChar) {
         Object elt = null;
         StringBuilder rstr = new StringBuilder();
         String s;
@@ -166,21 +168,21 @@ public class StringUtil {
      *
      * @return The List in a user-friendly string format.
      */
-    public static String listToString(List list, String delim) {
+    public static String listToString(List<?> list, String delim) {
         if (list == null) {
             return "NULL";
         }
 
-        Iterator i = list.iterator();
+        Iterator<?> i = list.iterator();
         return iteratorToString(i, delim, null);
     }
 
-    public static String collectionToString(Collection collection, String delim) {
+    public static String collectionToString(Collection<?> collection, String delim) {
         if (collection == null) {
             return "NULL";
         }
 
-        Iterator i = collection.iterator();
+        Iterator<?> i = collection.iterator();
         return iteratorToString(i, delim, null);
     }
 
@@ -191,11 +193,11 @@ public class StringUtil {
      *
      * @return The List in a user-friendly string format.
      */
-    public static String listToString(List list) {
+    public static String listToString(List<?> list) {
         return listToString(list, ",");
     }
 
-    public static String collectionToString(Collection collection) {
+    public static String collectionToString(Collection<?> collection) {
         return collectionToString(collection, ",");
     }
 
@@ -278,7 +280,7 @@ public class StringUtil {
      *
      * @return A string with objects in the list seperated by delim
      */
-    public static String implode(List objs, String delim) {
+    public static String implode(List<?> objs, String delim) {
         StringBuilder buf = new StringBuilder();
         int size = objs.size();
 

@@ -51,6 +51,7 @@ import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.pluginapi.util.StartScriptConfiguration;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
+import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.modules.plugins.jbossas7.helper.HostConfiguration;
@@ -69,8 +70,8 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * @author Heiko W. Rupp
  * @author Ian Springer
  */
-public abstract class BaseServerComponent<T extends ResourceComponent<?>> extends BaseComponent<T>
-        implements MeasurementFacet {
+public abstract class BaseServerComponent<T extends ResourceComponent<?>> extends BaseComponent<T> implements
+    MeasurementFacet {
 
     private static final String SEPARATOR = "\n-----------------------\n";
 
@@ -88,9 +89,8 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
         serverPluginConfig = new ServerPluginConfiguration(pluginConfiguration);
         connection = new ASConnection(serverPluginConfig.getHostname(), serverPluginConfig.getPort(),
-                serverPluginConfig.getUser(), serverPluginConfig.getPassword());
-        @SuppressWarnings("UnusedDeclaration")
-        AvailabilityType avail = getAvailability();
+            serverPluginConfig.getUser(), serverPluginConfig.getPassword());
+        getAvailability();
         logFileEventDelegate = new LogFileEventResourceComponentHelper(context);
         logFileEventDelegate.startLogFileEventPollers();
         startScriptConfig = new StartScriptConfiguration(pluginConfiguration);
@@ -127,7 +127,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     private void validateServerAttributes() throws InvalidPluginConfigurationException {
         // Validate the base dir (e.g. /opt/jboss-as-7.1.1.Final/standalone).
         File runtimeBaseDir;
-        File baseDir=null;
+        File baseDir = null;
         try {
             String runtimeBaseDirString = readAttribute(getEnvironmentAddress(), getBaseDirAttributeName());
             // Canonicalize both paths before comparing them!
@@ -142,12 +142,12 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             log.error("Failed to validate base dir for " + getResourceDescription() + ".", e);
         }
         if ((runtimeBaseDir != null) && (baseDir != null)) {
-            if(!runtimeBaseDir.equals(baseDir)) {
+            if (!runtimeBaseDir.equals(baseDir)) {
                 throw new InvalidPluginConfigurationException("The server listening on "
-                        + serverPluginConfig.getHostname() + ":" + serverPluginConfig.getPort()
-                        + " has base dir [" + runtimeBaseDir + "], but the base dir we expected was [" + baseDir
-                        + "]. Perhaps the management hostname or port has been changed for the server with base dir ["
-                        + baseDir + "].");
+                    + serverPluginConfig.getHostname() + ":" + serverPluginConfig.getPort() + " has base dir ["
+                    + runtimeBaseDir + "], but the base dir we expected was [" + baseDir
+                    + "]. Perhaps the management hostname or port has been changed for the server with base dir ["
+                    + baseDir + "].");
             }
         }
 
@@ -161,9 +161,9 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         }
         if (runtimeMode != null) {
             String mode = getMode().name();
-            if(!runtimeMode.equals(mode)) {
-                throw new InvalidPluginConfigurationException("The original mode discovered for this AS7 server was " +
-                        getMode() + ", but the server is now reporting its mode is [" + runtimeMode + "].");
+            if (!runtimeMode.equals(mode)) {
+                throw new InvalidPluginConfigurationException("The original mode discovered for this AS7 server was "
+                    + getMode() + ", but the server is now reporting its mode is [" + runtimeMode + "].");
             }
         }
 
@@ -171,8 +171,8 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         JBossProductType runtimeType;
         try {
             String runtimeTypeString = readAttribute("product-name");
-            runtimeType = (runtimeTypeString != null && !runtimeTypeString.isEmpty()) ?
-                    JBossProductType.getValueByProductName(runtimeTypeString) : JBossProductType.AS;
+            runtimeType = (runtimeTypeString != null && !runtimeTypeString.isEmpty()) ? JBossProductType
+                .getValueByProductName(runtimeTypeString) : JBossProductType.AS;
         } catch (Exception e) {
             runtimeType = null;
             log.error("Failed to validate product type for " + getResourceDescription() + ".", e);
@@ -180,8 +180,9 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         if (runtimeType != null) {
             JBossProductType type = serverPluginConfig.getProductType();
             if (runtimeType != type) {
-                throw new InvalidPluginConfigurationException("The original product type discovered for this AS7 server was "
-                        + type + ", but the server is now reporting its product type is [" + runtimeType + "].");
+                throw new InvalidPluginConfigurationException(
+                    "The original product type discovered for this AS7 server was " + type
+                        + ", but the server is now reporting its product type is [" + runtimeType + "].");
             }
         }
     }
@@ -225,7 +226,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
         List<String> errors = validateStartScriptPluginConfigProps();
         if (!errors.isEmpty()) {
-            OperationResult result  = new OperationResult();
+            OperationResult result = new OperationResult();
             setErrorMessage(result, errors);
             return result;
         }
@@ -279,9 +280,17 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
         if (hostPort.isLocal) {
             // lets be paranoid here
-            while (context.getNativeProcess() != null && context.getNativeProcess().priorSnaphot() != null
-                && context.getNativeProcess().priorSnaphot().isRunning()
-                && count++ <= 20) {
+            for (; count <= 20; count++) {
+                ProcessInfo processInfo = context.getNativeProcess();
+                if (processInfo == null) {
+                    // Process not found, so it died, that's fine
+                    break;
+                }
+                if (!processInfo.priorSnaphot().isRunning()) {
+                    // Process info says process is no longer running, that's fine
+                    break;
+                }
+                // Process is still running, wait a second and check again
                 try {
                     Thread.sleep(1000); // Wait 1s
                 } catch (InterruptedException e) {
@@ -314,7 +323,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         String startScriptPrefix = startScriptConfig.getStartScriptPrefix();
         File startScriptFile = getStartScriptFile();
         ProcessExecution processExecution = ProcessExecutionUtility.createProcessExecution(startScriptPrefix,
-                startScriptFile);
+            startScriptFile);
 
         List<String> arguments = processExecution.getArguments();
         if (arguments == null) {
@@ -352,7 +361,8 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         if (results.getError() != null) {
             operationResult.setErrorMessage(results.getError().getMessage());
         } else if (results.getExitCode() != null) {
-            operationResult.setErrorMessage("Start failed with error code " + results.getExitCode() + ":\n" + results.getCapturedOutput());
+            operationResult.setErrorMessage("Start failed with error code " + results.getExitCode() + ":\n"
+                + results.getCapturedOutput());
         } else {
             // Try to connect to the server - ping once per second, timing out after 20s.
             boolean up = waitForServerToStart();
@@ -368,7 +378,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     }
 
     private boolean isManuallyAddedServer(OperationResult operationResult, String operation) {
-        if (pluginConfiguration.get("manuallyAdded")!=null) {
+        if (pluginConfiguration.get("manuallyAdded") != null) {
             operationResult.setErrorMessage(operation + " is not enabled for manually added servers");
             return true;
         }
@@ -410,8 +420,8 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         Map<String, String> startScriptEnv = startScriptConfig.getStartScriptEnv();
         if (startScriptEnv.isEmpty()) {
             errors.add("No start script environment variables are set. At a minimum, PATH should be set "
-                     + "(on UNIX, it should contain at least /bin and /usr/bin). It is recommended that "
-                     + "JAVA_HOME also be set, otherwise the PATH will be used to find java.");
+                + "(on UNIX, it should contain at least /bin and /usr/bin). It is recommended that "
+                + "JAVA_HOME also be set, otherwise the PATH will be used to find java.");
         }
 
         return errors;
@@ -438,7 +448,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         int count = 0;
         while (!up) {
             Operation op = new ReadAttribute(new Address(), "release-version");
-            try{
+            try {
                 Result res = getASConnection().execute(op);
                 if (res.isSuccess()) { // If op succeeds, server is not down
                     up = true;
@@ -478,7 +488,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
      */
     protected OperationResult postProcessResult(String name, Result res) {
         OperationResult operationResult = new OperationResult();
-        if (res==null) {
+        if (res == null) {
             operationResult.setErrorMessage("No result received from server");
             return operationResult;
         }
@@ -490,29 +500,29 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
              * reading, this is a good sign.
              */
             if (!res.isSuccess()) {
-                if (res.getRhqThrowable()!=null && (res.getRhqThrowable() instanceof ConnectException || res.getRhqThrowable().getMessage().equals("Connection refused"))) {
+                if (res.getRhqThrowable() != null
+                    && (res.getRhqThrowable() instanceof ConnectException || res.getRhqThrowable().getMessage()
+                        .equals("Connection refused"))) {
                     operationResult.setSimpleResult("Success");
-                    log.debug("Got a ConnectionRefused for operation " + name + " this is considered ok, as the remote server sometimes closes the communications channel before sending a reply");
+                    log.debug("Got a ConnectionRefused for operation "
+                        + name
+                        + " this is considered ok, as the remote server sometimes closes the communications channel before sending a reply");
                 }
                 if (res.getFailureDescription().contains("Socket closed")) { // See https://issues.jboss.org/browse/AS7-4192
                     operationResult.setSimpleResult("Success");
-                    log.debug("Got a 'Socket closed' result from AS for operation " + name );
-                }
-                else
+                    log.debug("Got a 'Socket closed' result from AS for operation " + name);
+                } else
                     operationResult.setErrorMessage(res.getFailureDescription());
-            }
-            else {
+            } else {
                 operationResult.setSimpleResult("Success");
             }
-        }
-        else {
+        } else {
             if (res.isSuccess()) {
-                if (res.getResult()!=null)
+                if (res.getResult() != null)
                     operationResult.setSimpleResult(res.getResult().toString());
                 else
                     operationResult.setSimpleResult("-None provided by server-");
-            }
-            else
+            } else
                 operationResult.setErrorMessage(res.getFailureDescription());
         }
         return operationResult;
@@ -525,8 +535,9 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         OperationResult result = new OperationResult();
 
         PropertySimple remoteProp = pluginConfig.getSimple("manuallyAdded");
-        if (remoteProp!=null && remoteProp.getBooleanValue()!= null && remoteProp.getBooleanValue()) {
-            result.setErrorMessage("This is a manually added server. This operation can not be used to install a management user. Use the server's 'bin/add-user.sh'");
+        if (remoteProp != null && remoteProp.getBooleanValue() != null && remoteProp.getBooleanValue()) {
+            result
+                .setErrorMessage("This is a manually added server. This operation can not be used to install a management user. Use the server's 'bin/add-user.sh'");
             return result;
         }
 
@@ -537,7 +548,8 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
         File baseDir = serverPluginConfig.getBaseDir();
         if (baseDir == null) {
-            result.setErrorMessage("'" + ServerPluginConfiguration.Property.BASE_DIR + "' plugin config prop is not set.");
+            result.setErrorMessage("'" + ServerPluginConfiguration.Property.BASE_DIR
+                + "' plugin config prop is not set.");
             return result;
         }
 
@@ -562,14 +574,13 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             PropertiesFileUpdate propsFileUpdate = new PropertiesFileUpdate(propertiesFile.getPath());
             userAlreadyExisted = propsFileUpdate.update(user, encryptedPassword);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to update management users properties file [" + propertiesFile + "].",
-                    e);
+            throw new RuntimeException("Failed to update management users properties file [" + propertiesFile + "].", e);
         }
 
         String verb = (userAlreadyExisted) ? "updated" : "added";
         result.setSimpleResult("Management user [" + user + "] " + verb + ".");
         log.info("Management user [" + user + "] " + verb + " for " + context.getResourceType().getName()
-                + " server with key [" + context.getResourceKey() + "].");
+            + " server with key [" + context.getResourceKey() + "].");
 
         context.getAvailabilityContext().requestAvailabilityCheck();
         context.getInventoryContext().requestDeferredChildResourcesDiscovery();
@@ -588,7 +599,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
         Set<MeasurementScheduleRequest> skmRequests = new HashSet<MeasurementScheduleRequest>(requests.size());
         Set<MeasurementScheduleRequest> leftovers = new HashSet<MeasurementScheduleRequest>(requests.size());
-        for (MeasurementScheduleRequest request: requests) {
+        for (MeasurementScheduleRequest request : requests) {
             String requestName = request.getName();
             if (requestName.equals("startTime")) {
                 collectStartTimeTrait(report, request);
@@ -681,14 +692,14 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         op.includeRuntime(true);
         ComplexResult res = getASConnection().executeComplex(op);
         if (res.isSuccess()) {
-            Map<String,Object> props = res.getResult();
+            Map<String, Object> props = res.getResult();
 
-            for (MeasurementScheduleRequest request: skmRequests) {
+            for (MeasurementScheduleRequest request : skmRequests) {
                 String requestName = request.getName();
                 String realName = requestName.substring(requestName.indexOf(':') + 1);
-                String val=null;
+                String val = null;
                 if (props.containsKey(realName)) {
-                    val = getStringValue( props.get(realName) );
+                    val = getStringValue(props.get(realName));
                 }
 
                 if ("null".equals(val)) {
@@ -699,7 +710,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                     else
                         log.debug("Value for " + realName + " was 'null' and no replacement found");
                 }
-                MeasurementDataTrait data = new MeasurementDataTrait(request,val);
+                MeasurementDataTrait data = new MeasurementDataTrait(request, val);
                 report.addData(data);
             }
         } else {

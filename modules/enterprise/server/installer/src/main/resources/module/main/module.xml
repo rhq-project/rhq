@@ -22,19 +22,20 @@
           dependencies that are known to be needed. They are known to be needed
           because excluding them results in a ClassNotFoundException.
         -->
-        <resource-root path="cassandra-driver-core-0.1.0-SNAPSHOT.jar"/>
+        <resource-root path="cassandra-driver-core-${cassandra.driver.version}.jar"/>
         <resource-root path="slf4j-api-1.7.2.jar"/>
         <resource-root path="slf4j-log4j12-1.6.6.jar"/>
         <resource-root path="netty-3.5.9.Final.jar"/>
         <resource-root path="cassandra-all-${cassandra.version}.jar"/>
         <resource-root path="metrics-core-2.2.0.jar"/>
-        <resource-root path="guava-12.0.jar"/>
+        <resource-root path="guava-13.0.1.jar"/>
         <resource-root path="cassandra-thrift-${cassandra.version}.jar"/>
         <resource-root path="libthrift-${cassandra.thrift.version}.jar"/>
         <resource-root path="jackson-mapper-asl-1.4.0.jar"/>
         <resource-root path="jackson-core-asl-1.4.0.jar"/>
+        <resource-root path="snappy-java-1.0.4.1.jar"/>
       <!-- end rhq-cassandra-schema dependencies -->
-      <resource-root path="commons-codec-1.3.jar"/>
+      <resource-root path="commons-codec-1.2.jar"/>
     </resources>
 
     <dependencies>

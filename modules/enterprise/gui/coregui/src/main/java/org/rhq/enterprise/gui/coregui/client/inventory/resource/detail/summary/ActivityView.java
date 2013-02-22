@@ -122,7 +122,6 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
 
         editButton = new LocatableIButton(footer.extendLocatorId("Mode"), editMode ? MSG.common_title_view_mode() : MSG
             .common_title_edit_mode());
-        editButton.setAutoFit(true);
         editButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 editMode = !editMode;
@@ -132,7 +131,6 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
         });
 
         resetButton = new LocatableIButton(footer.extendLocatorId("Reset"), MSG.common_button_reset());
-        resetButton.setAutoFit(true);
         resetButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 String message = MSG.view_summaryDashboard_resetConfirm();

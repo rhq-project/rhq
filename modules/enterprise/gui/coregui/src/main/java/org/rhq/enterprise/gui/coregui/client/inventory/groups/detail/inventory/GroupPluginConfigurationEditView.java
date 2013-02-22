@@ -76,7 +76,7 @@ public class GroupPluginConfigurationEditView extends EnhancedVLayout implements
 
     private boolean refreshing = false;
 
-    public GroupPluginConfigurationEditView(String locatorId, ResourceGroupComposite groupComposite) {
+    public GroupPluginConfigurationEditView(ResourceGroupComposite groupComposite) {
         super();
 
         this.group = groupComposite.getResourceGroup();

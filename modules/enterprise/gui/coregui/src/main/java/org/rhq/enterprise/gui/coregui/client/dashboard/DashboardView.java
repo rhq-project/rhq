@@ -77,7 +77,6 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.Resourc
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Jay Shaughnessy
@@ -603,21 +602,7 @@ public class DashboardView extends EnhancedVLayout {
         storedDashboard.removePortlet(portletWindow.getStoredPortlet());
         this.portletWindows.remove(portletWindow);
 
-        // portlet remove means the portlet locations may have changed. The selenium testing locators include
-        // positioning info. So, in this case we have to take the hit and completely refresh the dash.
-        AsyncCallback<Dashboard> callback = SeleniumUtility.getUseDefaultIds() ? null : new AsyncCallback<Dashboard>() {
-
-            @Override
-            public void onFailure(Throwable caught) {
-                rebuild();
-            }
-
-            @Override
-            public void onSuccess(Dashboard result) {
-                rebuild();
-            }
-        };
-        save(callback);
+        save();
     }
 
     public void save(Dashboard dashboard) {

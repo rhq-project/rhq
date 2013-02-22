@@ -91,8 +91,7 @@ public class ActivityView extends EnhancedVLayout implements DashboardContainer,
     private int rowRight = 0;
     private boolean displayLeft = false;
 
-    public ActivityView(String locatorId, ResourceGroupComposite groupComposite, boolean isAutoCluster,
-        boolean isAutoGroup) {
+    public ActivityView(ResourceGroupComposite groupComposite, boolean isAutoCluster, boolean isAutoGroup) {
         super();
         this.groupComposite = groupComposite;
         this.isAutoCluster = isAutoCluster;

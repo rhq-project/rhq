@@ -66,7 +66,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A tabular report that shows alert definitions on all resources in inventory.
@@ -261,7 +260,7 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
             resourceField.setCellFormatter(new CellFormatter() {
                 public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
                     String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
-                    return SeleniumUtility.getLocatableHref(url, StringUtility.escapeHtml(value.toString()), null);
+                    return LinkManager.getHref(url, StringUtility.escapeHtml(value.toString()));
                 }
             });
             resourceField.setShowHover(true);

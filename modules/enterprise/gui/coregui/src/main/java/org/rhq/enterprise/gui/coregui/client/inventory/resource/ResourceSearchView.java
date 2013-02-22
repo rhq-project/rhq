@@ -76,7 +76,6 @@ import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * The list view for {@link Resource}s. If not specified a default title is assigned.  If not specified the list will
@@ -408,7 +407,7 @@ public class ResourceSearchView extends Table {
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
                 String url = LinkManager.getResourceLink(record.getAttributeAsInt("id"));
                 String name = StringUtility.escapeHtml(value.toString());
-                return SeleniumUtility.getLocatableHref(url, name, null);
+                return LinkManager.getHref(url, name);
             }
         });
         nameField.setShowHover(true);

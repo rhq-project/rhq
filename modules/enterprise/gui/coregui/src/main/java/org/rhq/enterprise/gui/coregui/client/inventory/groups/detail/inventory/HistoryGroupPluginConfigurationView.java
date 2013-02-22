@@ -35,7 +35,7 @@ public class HistoryGroupPluginConfigurationView extends EnhancedVLayout impleme
     private HistoryGroupPluginConfigurationTable groupHistoryTable;
     private Canvas detailsCanvas = null;
 
-    public HistoryGroupPluginConfigurationView(String locatorId, ResourceGroupComposite groupComposite) {
+    public HistoryGroupPluginConfigurationView(ResourceGroupComposite groupComposite) {
         super();
         this.groupComposite = groupComposite;
 

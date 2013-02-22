@@ -64,7 +64,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Jay Shaughnessy
@@ -128,7 +127,7 @@ public class OperationHistoryDataSource extends
             resourceNameField.setCellFormatter(new CellFormatter() {
                 public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                     String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
-                    return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                    return LinkManager.getHref(url, o.toString());
                 }
             });
             resourceNameField.setShowHover(true);
@@ -171,7 +170,7 @@ public class OperationHistoryDataSource extends
                     Integer opHistoryId = record.getAttributeAsInt("id");
                     String url = LinkManager.getEntityTabLink(entityContext, "Operations", "History") + "/"
                         + opHistoryId;
-                    return SeleniumUtility.getLocatableHref(url, timestamp, null);
+                    return LinkManager.getHref(url, timestamp);
                 } else {
                     return "<i>" + MSG.view_operationHistoryList_notYetStarted() + "</i>";
                 }

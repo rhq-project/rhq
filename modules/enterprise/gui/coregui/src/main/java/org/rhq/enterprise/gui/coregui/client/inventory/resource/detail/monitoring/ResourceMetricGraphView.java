@@ -39,7 +39,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricGraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
 /**
@@ -100,8 +99,7 @@ public class ResourceMetricGraphView extends AbstractMetricGraphView {
 
                             public void onTypesLoaded(Map<Integer, ResourceType> types) {
                                 String url = LinkManager.getResourceLink(resource.getId());
-                                resourceTitle = new HTMLFlow(SeleniumUtility.getLocatableHref(url, resource.getName(),
-                                    null));
+                                resourceTitle = new HTMLFlow(LinkManager.getHref(url, resource.getName()));
                                 resourceTitle.setTooltip(AncestryUtil.getAncestryHoverHTMLForResource(resource, types,
                                     0));
 

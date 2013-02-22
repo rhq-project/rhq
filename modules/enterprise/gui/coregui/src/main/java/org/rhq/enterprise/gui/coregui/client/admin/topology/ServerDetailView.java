@@ -50,6 +50,7 @@ import org.rhq.core.domain.criteria.ServerCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -58,7 +59,6 @@ import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * Shows details of a server.
@@ -205,7 +205,7 @@ public class ServerDetailView extends EnhancedVLayout implements BookmarkableVie
         if (ag != null && ag.getName() != null && !ag.getName().isEmpty()) {
             String detailsUrl = "#" + AffinityGroupTableView.VIEW_PATH + "/" + ag.getId();
             String formattedValue = StringUtility.escapeHtml(ag.getName());
-            affinityGroupItemText = SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
+            affinityGroupItemText = LinkManager.getHref(detailsUrl, formattedValue);
         }
         affinityGroupItem.setValue(affinityGroupItemText);
 

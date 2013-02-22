@@ -37,7 +37,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricGraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
@@ -85,7 +84,7 @@ public class ResourceGroupMetricGraphView extends AbstractMetricGraphView {
 
                     final ResourceGroup group = result.get(0);
                     String url = LinkManager.getResourceGroupLink(group);
-                    resourceGroupTitle = new HTMLFlow(SeleniumUtility.getLocatableHref(url, group.getName(), null));
+                    resourceGroupTitle = new HTMLFlow(LinkManager.getHref(url, group.getName()));
 
                     ResourceTypeRepository.Cache.getInstance().getResourceTypes(group.getResourceType().getId(),
                         EnumSet.of(ResourceTypeRepository.MetadataType.measurements),

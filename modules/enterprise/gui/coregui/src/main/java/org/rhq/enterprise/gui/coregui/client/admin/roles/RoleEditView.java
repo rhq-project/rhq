@@ -32,6 +32,7 @@ import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.tab.Tab;
+import com.smartgwt.client.widgets.tab.TabSet;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -51,8 +52,6 @@ import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsCh
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedHandler;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceGroupSelector;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
@@ -64,16 +63,16 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
 
     private static final String HEADER_ICON = "global/Role_24.png";
 
-    private LocatableTab permissionsTab;
+    private Tab permissionsTab;
     private PermissionsEditor permissionsEditor;
 
-    private LocatableTab resourceGroupsTab;
+    private Tab resourceGroupsTab;
     private ResourceGroupSelector resourceGroupSelector;
 
-    private LocatableTab subjectsTab;
+    private Tab subjectsTab;
     private RoleSubjectSelector subjectSelector;
 
-    private LocatableTab ldapGroupsTab;
+    private Tab ldapGroupsTab;
     private RoleLdapGroupSelector ldapGroupSelector;
 
     private boolean hasManageSecurityPermission;
@@ -150,7 +149,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
 
         contentPane.addMember(topPane);
 
-        LocatableTabSet tabSet = new LocatableTabSet();
+        TabSet tabSet = new TabSet();
         tabSet.setWidth100();
         tabSet.setHeight100();
 
@@ -176,30 +175,29 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
         return contentPane;
     }
 
-    private LocatableTab buildPermissionsTab(LocatableTabSet tabSet) {
-        LocatableTab tab = new LocatableTab(MSG.common_title_permissions(), "global/Locked_16.png");
+    private Tab buildPermissionsTab(TabSet tabSet) {
+        Tab tab = new Tab(MSG.common_title_permissions(), "global/Locked_16.png");
         // NOTE: We will set the tab content to the permissions editor later once the Role has been fetched.
 
         return tab;
     }
 
-    private LocatableTab buildResourceGroupsTab(LocatableTabSet tabSet) {
-        LocatableTab tab = new LocatableTab(MSG.common_title_resourceGroups(),
-            ImageManager.getGroupIcon(GroupCategory.MIXED));
+    private Tab buildResourceGroupsTab(TabSet tabSet) {
+        Tab tab = new Tab(MSG.common_title_resourceGroups(), ImageManager.getGroupIcon(GroupCategory.MIXED));
         // NOTE: We will set the tab content to the resource group selector later once the Role has been fetched.
 
         return tab;
     }
 
-    private LocatableTab buildSubjectsTab(LocatableTabSet tabSet) {
-        LocatableTab tab = new LocatableTab(MSG.common_title_users(), "global/User_16.png");
+    private Tab buildSubjectsTab(TabSet tabSet) {
+        Tab tab = new Tab(MSG.common_title_users(), "global/User_16.png");
         // NOTE: We will set the tab content to the subject selector later once the Role has been fetched.
 
         return tab;
     }
 
-    private LocatableTab buildLdapGroupsTab(LocatableTabSet tabSet) {
-        LocatableTab tab = new LocatableTab(MSG.common_title_ldapGroups(), "global/Role_16.png");
+    private Tab buildLdapGroupsTab(TabSet tabSet) {
+        Tab tab = new Tab(MSG.common_title_ldapGroups(), "global/Role_16.png");
         // NOTE: We will set the tab content to the LDAP group selector later once the Role has been fetched.
 
         return tab;

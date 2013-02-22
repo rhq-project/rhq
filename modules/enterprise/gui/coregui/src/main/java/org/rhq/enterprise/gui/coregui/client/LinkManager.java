@@ -249,8 +249,7 @@ public class LinkManager {
         }
         return link;
     }
-    
-    
+
     public static String getSubsystemGroupOperationScheduleLink(int groupId, int opScheduleId) {
         return "#ResourceGroup/" + groupId + "/Operations/Schedules/" + opScheduleId;
     }
@@ -563,6 +562,18 @@ public class LinkManager {
 
     public static String getHelpLink() {
         return "#Help";
+    }
+
+    /** 
+     * Return an href element for links
+     * 
+     * @param url the target url
+     * @param value the display value for the link
+     * @return
+     */
+    static public String getHref(String url, String value) {
+        String result = "<a href=\"" + url + "\">" + value + "</a>";
+        return result;
     }
 
 }

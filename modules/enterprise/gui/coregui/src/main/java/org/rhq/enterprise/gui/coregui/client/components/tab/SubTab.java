@@ -27,37 +27,33 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Enhanced;
 
 /**
- * A Locatable SubTab associating a Button with a Canvas.
+ * A SubTab associating a Button with a Canvas.  SubTabs for the same parent Tab must have different viewNames.
  *  
  * @author Jay Shaughnessy
  */
 public class SubTab implements Enhanced {
-    private String locatorId;
+    private NamedTab parent;
     private ViewName viewName;
     private Canvas canvas;
     private ViewFactory viewFactory;
     private Button button;
+    private String id;
 
     private SubTab actualNext;
     private SubTab visibleNext;
 
-    public SubTab(String locatorId, ViewName viewName, Canvas canvas) {
-        this.locatorId = locatorId;
+    public SubTab(NamedTab parent, ViewName viewName, Canvas canvas) {
+        this(parent, viewName, canvas, null);
+    }
+
+    public SubTab(NamedTab parent, ViewName viewName, Canvas canvas, ViewFactory viewFactory) {
+        this.parent = parent;
         this.viewName = viewName;
         this.canvas = canvas;
-        this.button = null;
-    }
-
-    public SubTab(String locatorId, ViewName viewName, Canvas initialCanvas, ViewFactory viewFactory) {
-        this.locatorId = locatorId;
-        this.viewName = viewName;
-        this.canvas = initialCanvas;
         this.viewFactory = viewFactory;
         this.button = null;
-    }
 
-    public String getLocatorId() {
-        return locatorId;
+        this.id = parent.getViewName().getName() + "_:_" + viewName.getName();
     }
 
     public Canvas getCanvas() {
@@ -87,6 +83,10 @@ public class SubTab implements Enhanced {
         this.button = button;
     }
 
+    public NamedTab getParent() {
+        return parent;
+    }
+
     public ViewName getViewName() {
         return viewName;
     }
@@ -97,6 +97,13 @@ public class SubTab implements Enhanced {
 
     public String getTitle() {
         return viewName.getTitle();
+    }
+
+    /**
+     * @return a unique identifier for the SubTab that combines the parent Tab viewName and the SubTab viewName. 
+     */
+    public String getId() {
+        return id;
     }
 
     /**
@@ -162,13 +169,9 @@ public class SubTab implements Enhanced {
         destroyButton();
     }
 
-    public String extendLocatorId(String extension) {
-        return this.locatorId + "_" + extension;
-    }
-
     @Override
     public String toString() {
-        return "SubTab[title=" + this.viewName.getTitle() + ", name=" + this.viewName.getName() + ", locatorId="
-            + this.locatorId + "]";
+        return "SubTab[parent=" + parent.getName() + ", title=" + this.viewName.getTitle() + ", name=" + this.viewName
+            + "]";
     }
 }

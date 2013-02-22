@@ -32,8 +32,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellForma
  */
 public abstract class AbstractOperationScheduleListView extends TableSection<AbstractOperationScheduleDataSource> {
 
-    public AbstractOperationScheduleListView(String locatorId, AbstractOperationScheduleDataSource dataSource,
-        String title) {
+    public AbstractOperationScheduleListView(AbstractOperationScheduleDataSource dataSource, String title) {
         super(title);
 
         setDataSource(dataSource);

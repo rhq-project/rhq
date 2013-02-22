@@ -27,6 +27,7 @@ import java.util.Set;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.tab.Tab;
+import com.smartgwt.client.widgets.tab.TabSet;
 import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
 import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
 
@@ -47,8 +48,6 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
@@ -63,7 +62,7 @@ public class TaggedView extends EnhancedVLayout implements BookmarkableView, Has
     public static final ViewName VIEW_ID = new ViewName("Tags", MSG.view_tags_tags(), IconEnum.TAGS);
 
     private TagCloudView tagCloudView;
-    private LocatableTabSet container;
+    private TabSet container;
     private ArrayList<Table> viewsWithTags = new ArrayList<Table>();
     private int selectedTabNum = 0;
     private Set<Permission> globalPermissions;
@@ -106,7 +105,7 @@ public class TaggedView extends EnhancedVLayout implements BookmarkableView, Has
             criteria.addCriteria("tagSemantic", tag.getSemantic());
             criteria.addCriteria("tagName", tag.getName());
 
-            container = new LocatableTabSet();
+            container = new TabSet();
             container.setWidth100();
             container.setHeight100();
             container.setTabBarControls(tagCloudView.getDeleteButton());
@@ -121,14 +120,14 @@ public class TaggedView extends EnhancedVLayout implements BookmarkableView, Has
 
             BundlesListView bundlesView = new BundlesListView(criteria, null);
             viewsWithTags.add(bundlesView);
-            tab = new LocatableTab(MSG.view_bundle_bundles());
+            tab = new Tab(MSG.view_bundle_bundles());
             tab.setIcon(ImageManager.getBundleIcon());
             tab.setPane(bundlesView);
             container.addTab(tab);
 
             BundleVersionListView bundleVersionListView = new BundleVersionListView(criteria);
             viewsWithTags.add(bundleVersionListView);
-            tab = new LocatableTab(MSG.view_bundle_bundleVersions());
+            tab = new Tab(MSG.view_bundle_bundleVersions());
             tab.setIcon("subsystems/bundle/BundleVersion_16.png");
             tab.setPane(bundleVersionListView);
             container.addTab(tab);
@@ -136,21 +135,21 @@ public class TaggedView extends EnhancedVLayout implements BookmarkableView, Has
             BundleDeploymentListView bundleDeploymentListView = new BundleDeploymentListView(criteria,
                 this.globalPermissions.contains(Permission.MANAGE_BUNDLE));
             viewsWithTags.add(bundleDeploymentListView);
-            tab = new LocatableTab(MSG.view_bundle_bundleDeployments());
+            tab = new Tab(MSG.view_bundle_bundleDeployments());
             tab.setIcon("subsystems/bundle/BundleDeployment_16.png");
             tab.setPane(bundleDeploymentListView);
             container.addTab(tab);
 
             BundleDestinationListView bundleDestinationListView = new BundleDestinationListView(criteria);
             viewsWithTags.add(bundleDestinationListView);
-            tab = new LocatableTab(MSG.view_bundle_bundleDestinations());
+            tab = new Tab(MSG.view_bundle_bundleDestinations());
             tab.setIcon("subsystems/bundle/BundleDestination_16.png");
             tab.setPane(bundleDestinationListView);
             container.addTab(tab);
 
             ResourceSearchView resourceView = new ResourceSearchView(criteria, MSG.view_taggedResources_title());
             viewsWithTags.add(resourceView);
-            tab = new LocatableTab(MSG.view_taggedResources_title());
+            tab = new Tab(MSG.view_taggedResources_title());
             tab.setIcon(ImageManager.getResourceIcon(ResourceCategory.SERVICE));
             tab.setPane(resourceView);
             container.addTab(tab);

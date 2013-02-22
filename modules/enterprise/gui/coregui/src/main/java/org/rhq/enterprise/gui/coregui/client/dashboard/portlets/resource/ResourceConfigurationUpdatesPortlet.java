@@ -40,6 +40,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
@@ -50,7 +51,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configura
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**This portlet allows the end user to customize the Package History display
  *
@@ -166,7 +166,7 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
                 public String format(Object value, ListGridRecord record, int i, int i1) {
                     Integer recordId = getId(record);
                     String detailsUrl = "#" + getBasePath() + "/" + recordId;
-                    return SeleniumUtility.getLocatableHref(detailsUrl, value.toString(), null);
+                    return LinkManager.getHref(detailsUrl, value.toString());
                 }
             };
         }

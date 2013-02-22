@@ -63,7 +63,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A list view that displays a paginated table of {@link org.rhq.core.domain.drift.DriftDefinitionTemplate}s. It 
@@ -340,7 +339,7 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
                         Integer resourceId = listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
                         Integer driftDefId = listGridRecord.getAttributeAsInt("id");
                         String url = LinkManager.getDriftDefinitionCarouselLink(resourceId, driftDefId);
-                        return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                        return LinkManager.getHref(url, o.toString());
                     }
                 });
                 fields.add(nameField);
@@ -387,7 +386,7 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
                     public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                         Integer resourceId = listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
                         String url = LinkManager.getResourceLink(resourceId);
-                        return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                        return LinkManager.getHref(url, o.toString());
                     }
                 });
                 resourceNameField.setShowHover(true);

@@ -80,7 +80,7 @@ public class ResourceAvailabilityView extends EnhancedVLayout {
     private StaticTextItem unknownField;
     private StaticTextItem currentTimeField;
 
-    public ResourceAvailabilityView(String locatorId, ResourceComposite resourceComposite) {
+    public ResourceAvailabilityView(ResourceComposite resourceComposite) {
         super();
 
         this.resourceComposite = resourceComposite;

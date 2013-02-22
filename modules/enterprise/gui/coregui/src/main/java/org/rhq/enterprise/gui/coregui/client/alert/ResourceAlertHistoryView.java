@@ -26,14 +26,15 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
  * @author Jay Shaughnessy
  */
 public class ResourceAlertHistoryView extends AlertHistoryView {
-    public static ResourceAlertHistoryView get(String locatorId, ResourceComposite composite) {
+    public static ResourceAlertHistoryView get(ResourceComposite composite) {
+
         String tableTitle = MSG.view_alerts_table_title_resource();
         EntityContext context = EntityContext.forResource(composite.getResource().getId());
         boolean hasWriteAccess = composite.getResourcePermission().isAlert();
-        return new ResourceAlertHistoryView(locatorId, tableTitle, context, hasWriteAccess);
+        return new ResourceAlertHistoryView(tableTitle, context, hasWriteAccess);
     }
 
-    private ResourceAlertHistoryView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess) {
+    private ResourceAlertHistoryView(String tableTitle, EntityContext context, boolean hasWriteAccess) {
         super(tableTitle, context, hasWriteAccess);
     }
 }

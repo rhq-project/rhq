@@ -43,9 +43,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
  */
 public class SubTabLayout extends EnhancedVLayout {
 
-    /** maps subTab locator IDs to SubTabs. Unlike names, locatorIDs are qualified by the Tab and therefore unique. */
+    /** maps subTab IDs to SubTabs. Unlike names, IDs are qualified by the Tab and therefore unique. */
     private Map<String, SubTab> subTabs = new LinkedHashMap<String, SubTab>();
-    /** locator IDs of subTabs that are disabled. Unlike names, locator IDs are qualified by the Tab and therefore unique. */
+    /** IDs of subTabs that are disabled. Unlike names, IDs are qualified by the Tab and therefore unique. */
     private Set<String> disabledSubTabs = new HashSet<String>();
 
     private SubTab currentlyDisplayed;
@@ -86,7 +86,7 @@ public class SubTabLayout extends EnhancedVLayout {
         if (null == currentlySelected) {
             SubTab initial = getDefaultSubTab();
             if (null != initial) {
-                currentlySelected = initial.getLocatorId();
+                currentlySelected = initial.getId();
             }
         }
         if (null != currentlySelected) {
@@ -176,7 +176,7 @@ public class SubTabLayout extends EnhancedVLayout {
 
         button.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                SubTabLayout.this.currentlySelected = subTab.getLocatorId();
+                SubTabLayout.this.currentlySelected = subTab.getId();
                 fireSubTabSelection();
                 markForRedraw();
             }
@@ -190,7 +190,7 @@ public class SubTabLayout extends EnhancedVLayout {
      */
     public void enableSubTab(SubTab subTab) {
         if (isSubTabVisible(subTab)) {
-            disabledSubTabs.remove(subTab.getLocatorId());
+            disabledSubTabs.remove(subTab.getId());
             subTab.getButton().enable();
             subTab.getButton().show();
         }
@@ -201,7 +201,7 @@ public class SubTabLayout extends EnhancedVLayout {
      */
     public void disableSubTab(SubTab subTab) {
         if (isSubTabVisible(subTab)) {
-            disabledSubTabs.add(subTab.getLocatorId());
+            disabledSubTabs.add(subTab.getId());
             subTab.getButton().disable();
             subTab.getButton().show();
         }
@@ -216,7 +216,7 @@ public class SubTabLayout extends EnhancedVLayout {
 
     public void registerSubTabs(SubTab... tabs) {
         for (SubTab subTab : tabs) {
-            String locatorId = subTab.getLocatorId();
+            String locatorId = subTab.getId();
             subTabs.put(locatorId, subTab);
         }
         buildSubTabList(tabs);
@@ -313,7 +313,7 @@ public class SubTabLayout extends EnhancedVLayout {
         if (subTab == null) {
             throw new IllegalArgumentException("subTab is null.");
         }
-        return selectSubTabByLocatorId(subTab.getLocatorId(), showCanvas);
+        return selectSubTabByLocatorId(subTab.getId(), showCanvas);
     }
 
     /**
@@ -375,12 +375,12 @@ public class SubTabLayout extends EnhancedVLayout {
         if (subTab == null) {
             return false;
         } else {
-            if (this.disabledSubTabs.contains(subTab.getLocatorId())) {
+            if (this.disabledSubTabs.contains(subTab.getId())) {
                 // Nice try - user tried to select a disabled tab, probably by going directly to a bookmark URL.
                 CoreGUI.getErrorHandler().handleError(MSG.view_subTab_error_disabled(subTab.getTitle()));
                 return false;
             }
-            this.currentlySelected = subTab.getLocatorId();
+            this.currentlySelected = subTab.getId();
             setCurrentlySelected(showCanvas);
             return true;
         }
@@ -390,7 +390,7 @@ public class SubTabLayout extends EnhancedVLayout {
         if (null == currentlySelected) {
             SubTab current = getDefaultSubTab();
             if (null != current) {
-                currentlySelected = current.getLocatorId();
+                currentlySelected = current.getId();
             }
             return current;
         }

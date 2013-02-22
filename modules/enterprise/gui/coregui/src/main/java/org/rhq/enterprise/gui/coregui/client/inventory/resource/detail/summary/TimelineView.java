@@ -33,7 +33,7 @@ public class TimelineView extends EnhancedVLayout {
 
     private final ResourceComposite resourceComposite;
 
-    public TimelineView(String locatorId, ResourceComposite resourceComposite) {
+    public TimelineView(ResourceComposite resourceComposite) {
         super();
         this.resourceComposite = resourceComposite;
 

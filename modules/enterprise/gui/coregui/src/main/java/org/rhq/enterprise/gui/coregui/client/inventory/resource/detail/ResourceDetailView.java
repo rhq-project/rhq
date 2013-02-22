@@ -168,101 +168,85 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
 
         summaryTab = new TwoLevelTab(new ViewName("Summary", MSG.common_title_summary()), ImageManager.getResourceIcon(
             ResourceCategory.SERVICE, AvailabilityType.UP));
-        summaryActivity = new SubTab(summaryTab.extendLocatorId("Activity"), new ViewName("Activity",
-            MSG.view_tabs_common_activity()), null);
-        summaryTimeline = new SubTab(summaryTab.extendLocatorId("Timeline"), new ViewName("Timeline",
-            MSG.view_tabs_common_timeline()), null);
+        summaryActivity = new SubTab(summaryTab, new ViewName("Activity", MSG.view_tabs_common_activity()), null);
+        summaryTimeline = new SubTab(summaryTab, new ViewName("Timeline", MSG.view_tabs_common_timeline()), null);
         summaryTab.registerSubTabs(summaryActivity, summaryTimeline);
         tabs.add(summaryTab);
 
         inventoryTab = new TwoLevelTab(new ViewName("Inventory", MSG.view_tabs_common_inventory()),
             IconEnum.INVENTORY_SUMMARY);
-        inventoryChildren = new SubTab(inventoryTab.extendLocatorId("Children"), new ViewName("Children",
-            MSG.view_tabs_common_child_resources()), null);
-        inventoryChildHistory = new SubTab(inventoryTab.extendLocatorId("ChildHist"), new ViewName("ChildHistory",
+        inventoryChildren = new SubTab(inventoryTab, new ViewName("Children", MSG.view_tabs_common_child_resources()),
+            null);
+        inventoryChildHistory = new SubTab(inventoryTab, new ViewName("ChildHistory",
             MSG.view_tabs_common_child_history()), null);
-        inventoryConn = new SubTab(inventoryTab.extendLocatorId("ConnectionSettings"), new ViewName(
-            "ConnectionSettings", MSG.view_tabs_common_connectionSettings()), null);
-        inventoryConnHistory = new SubTab(inventoryTab.extendLocatorId("ConnSetHist"),
-            PluginConfigurationHistoryListView.VIEW_ID, null);
-        inventoryGroups = new SubTab(inventoryTab.extendLocatorId("Groups"), new ViewName("Groups",
-            MSG.view_tabs_common_groups()), null);
-        inventoryAgent = new SubTab(inventoryTab.extendLocatorId("Agent"), new ViewName("Agent",
-            MSG.view_tabs_common_agent()), null);
+        inventoryConn = new SubTab(inventoryTab, new ViewName("ConnectionSettings",
+            MSG.view_tabs_common_connectionSettings()), null);
+        inventoryConnHistory = new SubTab(inventoryTab, PluginConfigurationHistoryListView.VIEW_ID, null);
+        inventoryGroups = new SubTab(inventoryTab, new ViewName("Groups", MSG.view_tabs_common_groups()), null);
+        inventoryAgent = new SubTab(inventoryTab, new ViewName("Agent", MSG.view_tabs_common_agent()), null);
         inventoryTab.registerSubTabs(this.inventoryChildren, this.inventoryChildHistory, this.inventoryConn,
             this.inventoryConnHistory, this.inventoryGroups, this.inventoryAgent);
         tabs.add(inventoryTab);
 
         alertsTab = new TwoLevelTab(new ViewName("Alerts", MSG.common_title_alerts()), IconEnum.ALERT_DEFINITIONS);
-        this.alertHistory = new SubTab(alertsTab.extendLocatorId("History"), new ViewName("History",
-            MSG.view_tabs_common_history()), null);
-        this.alertDef = new SubTab(alertsTab.extendLocatorId("Definitions"), new ViewName("Definitions",
-            MSG.common_title_definitions()), null);
+        this.alertHistory = new SubTab(alertsTab, new ViewName("History", MSG.view_tabs_common_history()), null);
+        this.alertDef = new SubTab(alertsTab, new ViewName("Definitions", MSG.common_title_definitions()), null);
         alertsTab.registerSubTabs(alertHistory, alertDef);
         tabs.add(alertsTab);
 
         monitoringTab = new TwoLevelTab(new ViewName("Monitoring", MSG.view_tabs_common_monitoring()),
             IconEnum.SUSPECT_METRICS);
-        monitorGraphs = new SubTab(monitoringTab.extendLocatorId("Graphs"), new ViewName("Graphs",
-            MSG.view_tabs_common_graphs()), null);
-        monitorTables = new SubTab(monitoringTab.extendLocatorId("Tables"), new ViewName("Tables",
-            MSG.view_tabs_common_tables()), null);
-        monitorTraits = new SubTab(monitoringTab.extendLocatorId("Traits"), new ViewName("Traits",
-            MSG.view_tabs_common_traits()), null);
-        monitorAvail = new SubTab(monitoringTab.extendLocatorId("Availability"), new ViewName("Availability",
-            MSG.view_tabs_common_availability()), null);
-        monitorSched = new SubTab(monitoringTab.extendLocatorId("Schedules"), new ViewName("Schedules",
-            MSG.view_tabs_common_schedules()), null);
-        monitorCallTime = new SubTab(monitoringTab.extendLocatorId("CallTime"), new ViewName("CallTime",
-            MSG.view_tabs_common_calltime()), null);
+        monitorGraphs = new SubTab(monitoringTab, new ViewName("Graphs", MSG.view_tabs_common_graphs()), null);
+        monitorTables = new SubTab(monitoringTab, new ViewName("Tables", MSG.view_tabs_common_tables()), null);
+        monitorTraits = new SubTab(monitoringTab, new ViewName("Traits", MSG.view_tabs_common_traits()), null);
+        monitorAvail = new SubTab(monitoringTab, new ViewName("Availability", MSG.view_tabs_common_availability()),
+            null);
+        monitorSched = new SubTab(monitoringTab, new ViewName("Schedules", MSG.view_tabs_common_schedules()), null);
+        monitorCallTime = new SubTab(monitoringTab, new ViewName("CallTime", MSG.view_tabs_common_calltime()), null);
         monitoringTab.registerSubTabs(monitorTables, monitorGraphs, monitorTraits, monitorAvail, monitorSched,
             monitorCallTime);
         tabs.add(monitoringTab);
 
         eventsTab = new TwoLevelTab(new ViewName("Events", MSG.view_tabs_common_events()), IconEnum.EVENTS);
-        this.eventHistory = new SubTab(eventsTab.extendLocatorId("History"), new ViewName("History",
-            MSG.view_tabs_common_history()), null);
+        this.eventHistory = new SubTab(eventsTab, new ViewName("History", MSG.view_tabs_common_history()), null);
         eventsTab.registerSubTabs(eventHistory);
         tabs.add(eventsTab);
 
         operationsTab = new TwoLevelTab(new ViewName(Tab.OPERATIONS, MSG.common_title_operations()),
             IconEnum.RECENT_OPERATIONS);
-        this.operationsSchedules = new SubTab(operationsTab.extendLocatorId(OperationsSubTab.SCHEDULES), new ViewName(
-            OperationsSubTab.SCHEDULES, MSG.view_tabs_common_schedules()), null);
-        this.operationsHistory = new SubTab(operationsTab.extendLocatorId(OperationsSubTab.HISTORY), new ViewName(
-            OperationsSubTab.HISTORY, MSG.view_tabs_common_history()), null);
+        this.operationsSchedules = new SubTab(operationsTab, new ViewName(OperationsSubTab.SCHEDULES,
+            MSG.view_tabs_common_schedules()), null);
+        this.operationsHistory = new SubTab(operationsTab, new ViewName(OperationsSubTab.HISTORY,
+            MSG.view_tabs_common_history()), null);
         operationsTab.registerSubTabs(this.operationsSchedules, this.operationsHistory);
         tabs.add(operationsTab);
 
         configurationTab = new TwoLevelTab(new ViewName(Tab.CONFIGURATION, MSG.common_title_configuration()),
             IconEnum.CONFIGURATION_HISTORY);
-        this.configCurrent = new SubTab(configurationTab.extendLocatorId(ConfigurationSubTab.CURRENT), new ViewName(
-            ConfigurationSubTab.CURRENT, MSG.view_tabs_common_current()), null);
-        this.configHistory = new SubTab(configurationTab.extendLocatorId(ConfigurationSubTab.HISTORY), new ViewName(
-            ConfigurationSubTab.HISTORY, MSG.view_tabs_common_history()), null);
+        this.configCurrent = new SubTab(configurationTab, new ViewName(ConfigurationSubTab.CURRENT,
+            MSG.view_tabs_common_current()), null);
+        this.configHistory = new SubTab(configurationTab, new ViewName(ConfigurationSubTab.HISTORY,
+            MSG.view_tabs_common_history()), null);
         configurationTab.registerSubTabs(this.configCurrent, this.configHistory);
         tabs.add(configurationTab);
 
         driftTab = new TwoLevelTab(new ViewName(Tab.DRIFT, MSG.view_tabs_common_drift()), IconEnum.DRIFT_COMPLIANCE);
         // TODO: Experimenting with not shoing a drift history tab and having all resource level drift viewing
         // go through the comprehensive drift carousel view.  Leave it in, but commented, in case we want it back. 
-        //this.driftHistory = new SubTab(driftTab.extendLocatorId(DriftSubTab.HISTORY), new ViewName(DriftSubTab.HISTORY,
+        //this.driftHistory = new SubTab(driftTab, new ViewName(DriftSubTab.HISTORY,
         //    MSG.view_tabs_common_history()), null);
-        this.driftDefinitions = new SubTab(driftTab.extendLocatorId(DriftSubTab.DEFINITIONS), new ViewName(
-            DriftSubTab.DEFINITIONS, MSG.common_title_definitions()), null);
+        this.driftDefinitions = new SubTab(driftTab, new ViewName(DriftSubTab.DEFINITIONS,
+            MSG.common_title_definitions()), null);
         //driftTab.registerSubTabs(driftHistory, driftDefinitions);
         driftTab.registerSubTabs(driftDefinitions);
         tabs.add(driftTab);
 
         contentTab = new TwoLevelTab(new ViewName("Content", MSG.view_tabs_common_content()), IconEnum.CONTENT);
-        this.contentDeployed = new SubTab(contentTab.extendLocatorId("Deployed"), new ViewName("Deployed",
-            MSG.view_tabs_common_deployed()), null);
-        this.contentNew = new SubTab(contentTab.extendLocatorId("New"), new ViewName("New", MSG.common_button_new()),
-            null);
-        this.contentSubscrip = new SubTab(contentTab.extendLocatorId("Subscriptions"), new ViewName("Subscriptions",
+        this.contentDeployed = new SubTab(contentTab, new ViewName("Deployed", MSG.view_tabs_common_deployed()), null);
+        this.contentNew = new SubTab(contentTab, new ViewName("New", MSG.common_button_new()), null);
+        this.contentSubscrip = new SubTab(contentTab, new ViewName("Subscriptions",
             MSG.view_tabs_common_subscriptions()), null);
-        this.contentHistory = new SubTab(contentTab.extendLocatorId("History"), new ViewName("History",
-            MSG.view_tabs_common_history()), null);
+        this.contentHistory = new SubTab(contentTab, new ViewName("History", MSG.view_tabs_common_history()), null);
         contentTab.registerSubTabs(contentDeployed, contentNew, contentSubscrip, contentHistory);
         tabs.add(contentTab);
 
@@ -311,14 +295,14 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         updateSubTab(this.summaryTab, this.summaryActivity, true, true, new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new ActivityView(summaryActivity.extendLocatorId("View"), resourceComposite);
+                return new ActivityView(resourceComposite);
             }
         });
 
         updateSubTab(this.summaryTab, this.summaryTimeline, true, true, new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new TimelineView(summaryTimeline.extendLocatorId("View"), resourceComposite);
+                return new TimelineView(resourceComposite);
             }
         });
     }
@@ -332,8 +316,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         ViewFactory viewFactory = (!visible) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                return ResourceCompositeSearchView.getChildrenOf(inventoryTab.extendLocatorId("ChildrenView"),
-                    resourceComposite);
+                return ResourceCompositeSearchView.getChildrenOf(resourceComposite);
             }
         };
         updateSubTab(this.inventoryTab, this.inventoryChildren, visible, true, viewFactory);
@@ -342,7 +325,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         viewFactory = (!visible) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new ChildHistoryView(inventoryTab.extendLocatorId("ChildHistory"), resourceComposite);
+                return new ChildHistoryView(resourceComposite);
             }
         };
         updateSubTab(this.inventoryTab, this.inventoryChildHistory, visible, true, viewFactory);
@@ -351,8 +334,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         viewFactory = (!visible) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new PluginConfigurationEditView(inventoryTab.extendLocatorId("PluginConfigView"),
-                    resourceComposite);
+                return new PluginConfigurationEditView(resourceComposite);
             }
         };
         updateSubTab(this.inventoryTab, this.inventoryConn, visible, true, viewFactory);
@@ -371,8 +353,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         updateSubTab(this.inventoryTab, this.inventoryGroups, true, true, new ViewFactory() {
             @Override
             public Canvas createView() {
-                return ResourceGroupListView.getGroupsOf(inventoryTab.extendLocatorId("GroupsView"), resource.getId(),
-                    canModifyMembership);
+                return ResourceGroupListView.getGroupsOf(resource.getId(), canModifyMembership);
             }
         });
 
@@ -380,7 +361,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         viewFactory = (!enabled) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new ResourceAgentView(inventoryTab.extendLocatorId("AgentView"), resourceId);
+                return new ResourceAgentView(resourceId);
             }
         };
         updateSubTab(this.inventoryTab, this.inventoryAgent, true, enabled, viewFactory);
@@ -390,7 +371,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         updateSubTab(this.alertsTab, this.alertHistory, true, true, new ViewFactory() {
             @Override
             public Canvas createView() {
-                return ResourceAlertHistoryView.get(alertHistory.extendLocatorId("View"), resourceComposite);
+                return ResourceAlertHistoryView.get(resourceComposite);
             }
         });
 
@@ -417,7 +398,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         viewFactory = (!visible) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new MeasurementTableView(monitorTables.extendLocatorId("View"), resource.getId());
+                return new MeasurementTableView(resource.getId());
             }
         };
         updateSubTab(this.monitoringTab, this.monitorTables, visible, true, viewFactory);
@@ -434,7 +415,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         updateSubTab(this.monitoringTab, this.monitorAvail, true, true, new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new ResourceAvailabilityView(monitoringTab.extendLocatorId("AvailView"), resourceComposite);
+                return new ResourceAvailabilityView(resourceComposite);
             }
         });
 
@@ -462,8 +443,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             updateSubTab(this.eventsTab, this.eventHistory, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return EventCompositeHistoryView.get(eventsTab.extendLocatorId("CompositeHistoryView"),
-                        resourceComposite);
+                    return EventCompositeHistoryView.get(resourceComposite);
                 }
             });
         }
@@ -481,8 +461,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             updateSubTab(this.operationsTab, this.operationsSchedules, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new ResourceOperationScheduleListView(operationsTab.extendLocatorId("SchedulesView"),
-                        resourceComposite);
+                    return new ResourceOperationScheduleListView(resourceComposite);
                 }
             });
 
@@ -503,8 +482,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             updateSubTab(this.configurationTab, this.configCurrent, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new ResourceConfigurationEditView(configurationTab.extendLocatorId("ResourceConfigView"),
-                        resourceComposite);
+                    return new ResourceConfigurationEditView(resourceComposite);
                 }
             });
 

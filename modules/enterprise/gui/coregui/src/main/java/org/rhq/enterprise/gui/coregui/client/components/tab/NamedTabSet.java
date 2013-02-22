@@ -1,15 +1,14 @@
 package org.rhq.enterprise.gui.coregui.client.components.tab;
 
 import com.smartgwt.client.widgets.tab.Tab;
-
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
+import com.smartgwt.client.widgets.tab.TabSet;
 
 /**
- * A Wrapper for org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet allowing for a Set of NamedTabs.
+ * A Wrapper for {@link TabSet} allowing for a Set of NamedTabs.
  * 
  * @author Jay Shaughnessy
  */
-public class NamedTabSet extends LocatableTabSet {
+public class NamedTabSet extends TabSet {
 
     public NamedTabSet() {
         super();

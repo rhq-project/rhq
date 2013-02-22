@@ -40,6 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.DetailsView;
 import org.rhq.enterprise.gui.coregui.client.InitializableView;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -203,7 +204,7 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
                 String detailsUrl = "#" + getBasePath() + "/" + convertIDToCurrentViewPath(recordId);
                 String formattedValue = (escapeHtmlInDetailsLinkColumn) ? StringUtility.escapeHtml(value.toString())
                     : value.toString();
-                return SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
+                return LinkManager.getHref(detailsUrl, formattedValue);
             }
         };
     }

@@ -60,8 +60,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
@@ -100,7 +98,7 @@ public class BundleVersionView extends EnhancedVLayout implements BookmarkableVi
 
         addMember(createSummaryForm());
 
-        TabSet tabs = new LocatableTabSet();
+        TabSet tabs = new TabSet();
         tabs.addTab(createRecipeTab());
         tabs.addTab(createLiveDeploymentsTab());
         tabs.addTab(createFilesTab());
@@ -220,7 +218,7 @@ public class BundleVersionView extends EnhancedVLayout implements BookmarkableVi
     }
 
     private Tab createRecipeTab() {
-        LocatableTab tab = new LocatableTab(MSG.view_bundle_recipe());
+        Tab tab = new Tab(MSG.view_bundle_recipe());
         DynamicForm form = new DynamicForm();
 
         TextAreaItem recipeCanvas = new TextAreaItem("recipe", MSG.view_bundle_recipe());
@@ -245,7 +243,7 @@ public class BundleVersionView extends EnhancedVLayout implements BookmarkableVi
     }
 
     private Tab createLiveDeploymentsTab() {
-        LocatableTab tab = new LocatableTab(MSG.view_bundle_deployments());
+        Tab tab = new Tab(MSG.view_bundle_deployments());
         Criteria criteria = new Criteria();
         criteria.setAttribute("bundleVersionId", version.getId());
         tab.setPane(new BundleDeploymentListView(criteria, this.canManageBundles));
@@ -253,8 +251,8 @@ public class BundleVersionView extends EnhancedVLayout implements BookmarkableVi
     }
 
     private Tab createFilesTab() {
-        LocatableTab tab = new LocatableTab(MSG.view_bundle_files());
-        FileListView filesView = new FileListView(tab.getLocatorId(), version.getId());
+        Tab tab = new Tab(MSG.view_bundle_files());
+        FileListView filesView = new FileListView(version.getId());
         tab.setPane(filesView);
         return tab;
     }

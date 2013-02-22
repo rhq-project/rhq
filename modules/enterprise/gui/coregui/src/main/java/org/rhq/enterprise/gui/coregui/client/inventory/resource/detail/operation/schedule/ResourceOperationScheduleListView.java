@@ -35,8 +35,8 @@ public class ResourceOperationScheduleListView extends AbstractOperationSchedule
 
     private ResourceComposite resourceComposite;
 
-    public ResourceOperationScheduleListView(String locatorId, ResourceComposite resourceComposite) {
-        super(locatorId, new ResourceOperationScheduleDataSource(resourceComposite), TITLE);
+    public ResourceOperationScheduleListView(ResourceComposite resourceComposite) {
+        super(new ResourceOperationScheduleDataSource(resourceComposite), TITLE);
         this.resourceComposite = resourceComposite;
     }
 

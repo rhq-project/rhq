@@ -34,6 +34,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.components.table.AuthorizedTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
@@ -41,7 +42,6 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * Shows the table of all agents.
@@ -86,7 +86,7 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
                         }
                         String detailsUrl = "#" + VIEW_PATH + "/" + getId(record);
                         String formattedValue = StringUtility.escapeHtml(value.toString());
-                        return SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
+                        return LinkManager.getHref(detailsUrl, formattedValue);
 
                     }
                 });
@@ -101,7 +101,7 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
                         String detailsUrl = "#" + ServerTableView.VIEW_PATH + "/"
                             + record.getAttributeAsString(FIELD_SERVER_ID.propertyName());
                         String formattedValue = StringUtility.escapeHtml(value.toString());
-                        return SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
+                        return LinkManager.getHref(detailsUrl, formattedValue);
                     }
                 });
             } else if (field.getName() == FIELD_AFFINITY_GROUP.propertyName()) {
@@ -115,7 +115,7 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
                         String detailsUrl = "#" + AffinityGroupTableView.VIEW_PATH + "/"
                             + record.getAttributeAsString(FIELD_AFFINITY_GROUP_ID.propertyName());
                         String formattedValue = StringUtility.escapeHtml(value.toString());
-                        return SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
+                        return LinkManager.getHref(detailsUrl, formattedValue);
                     }
                 });
             }

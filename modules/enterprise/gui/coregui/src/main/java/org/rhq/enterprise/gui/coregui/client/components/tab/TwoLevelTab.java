@@ -35,7 +35,7 @@ public class TwoLevelTab extends NamedTab {
 
     /**
      * Use the more type safe version instead.<br/>
-     * <code>TwoLevelTab(String locatorId, ViewName viewName, String icon)</code>
+     * <code>TwoLevelTab(ViewName viewName, String icon)</code>
      * @param viewName
      * @param icon String representation of Icon not as typesafe as IconEnum.
      */
@@ -74,10 +74,6 @@ public class TwoLevelTab extends NamedTab {
 
     public SubTab getSubTabByName(String name) {
         return this.layout.getSubTabByName(name);
-    }
-
-    public SubTab getSubTabByLocatorId(String locatorId) {
-        return this.layout.getSubTabByLocatorId(locatorId);
     }
 
     public SubTab getDefaultSubTab() {
@@ -137,6 +133,6 @@ public class TwoLevelTab extends NamedTab {
 
     @Override
     public String toString() {
-        return "TwoLevelTab[title=" + getTitle() + ", locatorId=" + getLocatorId() + "]";
+        return "TwoLevelTab[title=" + getTitle() + ", viewName=" + getViewName() + "]";
     }
 }

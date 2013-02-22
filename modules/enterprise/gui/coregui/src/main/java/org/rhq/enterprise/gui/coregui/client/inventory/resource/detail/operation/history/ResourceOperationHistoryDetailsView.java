@@ -42,7 +42,6 @@ import org.rhq.enterprise.gui.coregui.client.components.configuration.Configurat
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryDetailsView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Ian Springer
@@ -117,8 +116,7 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
                     if (showResourceField) {
                         Resource resource = resourceOperationHistory.getResource();
                         String url = LinkManager.getResourceLink(resource.getId());
-                        disambiguatedResourceName = SeleniumUtility.getLocatableHref(url, resource.getName(),
-                            String.valueOf(resource.getId()));
+                        disambiguatedResourceName = LinkManager.getHref(url, resource.getName());
                     }
 
                     displayDetails(resourceOperationHistory);

@@ -38,7 +38,6 @@ import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
@@ -110,29 +109,7 @@ public class PortalLayout extends EnhancedHLayout {
                         colNum++;
                     }
 
-                    // drop means the portlet location has changed. The selenium testing locators include positioning
-                    // info. So, in this case we have to take the hit and completely rebuild the dash.
-                    AsyncCallback<Dashboard> callback = SeleniumUtility.getUseDefaultIds() ? null
-                        : new AsyncCallback<Dashboard>() {
-
-                            @Override
-                            public void onFailure(Throwable caught) {
-                                rebuild();
-                            }
-
-                            @Override
-                            public void onSuccess(Dashboard result) {
-                                // for some reason the drag drop operation is leaving the target widget (the
-                                // portlet window) in the DOM, detached from its original parent (the PortalLayout),
-                                // and therefore not destroyed in the redraw().  So, kill it off manually to
-                                // avoid ID conflicts if the portlet is again dragged back its original position. 
-                                target.removeFromParent();
-                                target.destroy();
-
-                                rebuild();
-                            }
-                        };
-                    save(callback);
+                    save();
 
                     Log.info("Rearranged column indexes");
                 }

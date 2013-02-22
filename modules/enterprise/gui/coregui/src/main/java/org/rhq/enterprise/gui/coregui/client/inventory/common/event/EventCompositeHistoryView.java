@@ -43,6 +43,7 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.form.DateTimeFilterItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
@@ -52,7 +53,6 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellForma
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Joseph Marques
@@ -78,21 +78,21 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
         INITIAL_CRITERIA.addCriteria(EventCompositeDatasource.FILTER_SEVERITIES, severityNames);
     }
 
-    public static EventCompositeHistoryView get(String locatorId, ResourceGroupComposite composite) {
+    public static EventCompositeHistoryView get(ResourceGroupComposite composite) {
         String tableTitle = MSG.view_inventory_eventHistory_groupEventHistory();
         EntityContext context = EntityContext.forGroup(composite.getResourceGroup().getId());
         boolean hasWriteAccess = composite.getResourcePermission().isEvent();
-        return new EventCompositeHistoryView(locatorId, tableTitle, context, hasWriteAccess);
+        return new EventCompositeHistoryView(tableTitle, context, hasWriteAccess);
     }
 
-    public static EventCompositeHistoryView get(String locatorId, ResourceComposite composite) {
+    public static EventCompositeHistoryView get(ResourceComposite composite) {
         String tableTitle = MSG.view_inventory_eventHistory_resourceEventHistory();
         EntityContext context = EntityContext.forResource(composite.getResource().getId());
         boolean hasWriteAccess = composite.getResourcePermission().isEvent();
-        return new EventCompositeHistoryView(locatorId, tableTitle, context, hasWriteAccess);
+        return new EventCompositeHistoryView(tableTitle, context, hasWriteAccess);
     }
 
-    private EventCompositeHistoryView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess) {
+    private EventCompositeHistoryView(String tableTitle, EntityContext context, boolean hasWriteAccess) {
         super(tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
         this.context = context;
         this.hasWriteAccess = hasWriteAccess;
@@ -156,7 +156,7 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
                 Integer recordId = getId(record);
                 String detailsUrl = "#" + getBasePath() + "/" + recordId;
-                return SeleniumUtility.getLocatableHref(detailsUrl, TimestampCellFormatter.format(value), null);
+                return LinkManager.getHref(detailsUrl, TimestampCellFormatter.format(value));
             }
         };
     }

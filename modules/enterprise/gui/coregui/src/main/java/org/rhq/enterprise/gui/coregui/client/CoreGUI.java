@@ -64,7 +64,6 @@ import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * The GWT {@link EntryPoint entry point} to the RHQ GUI.
@@ -129,11 +128,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         if (hostPageBaseURL.indexOf("/coregui/") == -1) {
             Log.info("Suppressing load of CoreGUI module");
             return; // suppress loading this module if not using the new GWT app
-        }
-
-        String enableLocators = Location.getParameter("enableLocators");
-        if ((null != enableLocators) && Boolean.parseBoolean(enableLocators)) {
-            SeleniumUtility.setUseDefaultIds(false);
         }
 
         rpcTimeout = -1;

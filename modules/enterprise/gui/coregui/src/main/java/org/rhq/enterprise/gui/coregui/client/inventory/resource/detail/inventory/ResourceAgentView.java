@@ -34,12 +34,12 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.admin.topology.AgentTableView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * The content pane for the Resource Inventory>Agent subtab.
@@ -61,7 +61,7 @@ public class ResourceAgentView extends EnhancedVLayout implements RefreshableVie
 
     private boolean loading = false; // will be true if loadData is currently waiting for responses
 
-    public ResourceAgentView(String locatorId, int resourceId) {
+    public ResourceAgentView(int resourceId) {
         super();
 
         this.resourceId = resourceId;
@@ -206,7 +206,7 @@ public class ResourceAgentView extends EnhancedVLayout implements RefreshableVie
                 // make clickable link for agent topology view
                 String detailsUrl = "#" + AgentTableView.VIEW_PATH + "/" + agent.getId();
                 String formattedValue = StringUtility.escapeHtml(MSG.common_label_link());
-                String topologyViewItemText = SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
+                String topologyViewItemText = LinkManager.getHref(detailsUrl, formattedValue);
                 topologyViewItem.setValue(topologyViewItemText);
 
                 form.markForRedraw();

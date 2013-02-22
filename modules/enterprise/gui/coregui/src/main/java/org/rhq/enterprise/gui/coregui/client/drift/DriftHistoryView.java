@@ -43,7 +43,6 @@ import org.rhq.enterprise.gui.coregui.client.components.table.StringIDTableSecti
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A view that displays a paginated table of {@link org.rhq.core.domain.drift.JPADrift}s, along with the
@@ -174,7 +173,7 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
                 String driftId = getId(record);
                 String url = LinkManager.getDriftCarouselDriftLink(resourceId, driftDefId, driftId);
                 String formattedValue = TimestampCellFormatter.format(value);
-                return SeleniumUtility.getLocatableHref(url, formattedValue, null);
+                return LinkManager.getHref(url, formattedValue);
             }
         };
     }

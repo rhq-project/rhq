@@ -62,7 +62,7 @@ public class PluginConfigurationEditView extends EnhancedVLayout implements Prop
     private boolean refreshingConfig = false;
     private boolean refreshingConfigDef = false;
 
-    public PluginConfigurationEditView(String locatorId, ResourceComposite resourceComposite) {
+    public PluginConfigurationEditView(ResourceComposite resourceComposite) {
         super();
 
         this.resource = resourceComposite.getResource();

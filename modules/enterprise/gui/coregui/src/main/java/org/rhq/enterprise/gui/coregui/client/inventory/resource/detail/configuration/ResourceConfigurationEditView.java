@@ -68,7 +68,7 @@ public class ResourceConfigurationEditView extends EnhancedVLayout implements Pr
     private IButton saveButton;
     private boolean refreshing = false;
 
-    public ResourceConfigurationEditView(String locatorId, ResourceComposite resourceComposite) {
+    public ResourceConfigurationEditView(ResourceComposite resourceComposite) {
         super();
 
         this.resource = resourceComposite.getResource();

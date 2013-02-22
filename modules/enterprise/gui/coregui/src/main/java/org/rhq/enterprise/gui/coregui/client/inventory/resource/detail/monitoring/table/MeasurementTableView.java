@@ -55,7 +55,7 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
 
     private final int resourceId;
 
-    public MeasurementTableView(String locatorId, int resourceId) {
+    public MeasurementTableView(int resourceId) {
         super();
         this.resourceId = resourceId;
         setDataSource(new MeasurementTableDataSource(resourceId));

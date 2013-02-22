@@ -71,17 +71,17 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
     private boolean hasImportableTypes;
     private boolean canCreate;
 
-    public ResourceCompositeSearchView(String locatorId, ResourceComposite parentResourceComposite, Criteria criteria,
-        String title, SortSpecifier[] sortSpecifier, String[] excludeFields, String... headerIcons) {
+    public ResourceCompositeSearchView(ResourceComposite parentResourceComposite, Criteria criteria, String title,
+        SortSpecifier[] sortSpecifier, String[] excludeFields, String... headerIcons) {
         super(criteria, title, sortSpecifier, excludeFields, headerIcons);
         this.parentResourceComposite = parentResourceComposite;
         this.canCreate = this.parentResourceComposite.getResourcePermission().isCreateChildResources();
         setInitialCriteriaFixed(true);
     }
 
-    public ResourceCompositeSearchView(String locatorId, ResourceComposite parentResourceComposite, Criteria criteria,
-        String title, String... headerIcons) {
-        this(locatorId, parentResourceComposite, criteria, title, null, null, headerIcons);
+    public ResourceCompositeSearchView(ResourceComposite parentResourceComposite, Criteria criteria, String title,
+        String... headerIcons) {
+        this(parentResourceComposite, criteria, title, null, null, headerIcons);
     }
 
     @Override
@@ -379,8 +379,8 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
 
     // -------- Static Utility loaders ------------
 
-    public static ResourceCompositeSearchView getChildrenOf(String locatorId, ResourceComposite parentResourceComposite) {
-        return new ResourceCompositeSearchView(locatorId, parentResourceComposite, new Criteria("parentId",
+    public static ResourceCompositeSearchView getChildrenOf(ResourceComposite parentResourceComposite) {
+        return new ResourceCompositeSearchView(parentResourceComposite, new Criteria("parentId",
             String.valueOf(parentResourceComposite.getResource().getId())), MSG.view_tabs_common_child_resources());
     }
 

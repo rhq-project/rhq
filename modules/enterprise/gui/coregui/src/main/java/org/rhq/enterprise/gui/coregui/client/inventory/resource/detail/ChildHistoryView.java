@@ -72,8 +72,8 @@ public class ChildHistoryView extends Table<ChildHistoryView.DataSource> {
     private final ResourceComposite resourceComposite;
     private FormItem dateRangeItem;
 
-    public ChildHistoryView(String locatorId, ResourceComposite resourceComposite) {
-        super(locatorId, VIEW_ID.getTitle());
+    public ChildHistoryView(ResourceComposite resourceComposite) {
+        super(VIEW_ID.getTitle());
         this.resourceComposite = resourceComposite;
         setDataSource(new DataSource());
     }

@@ -59,7 +59,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.wizard.GroupCreate
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceResourceGroupsView;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
@@ -150,7 +149,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
             public String format(Object value, ListGridRecord record, int i, int i1) {
                 String groupId = record.getAttribute("id");
                 String groupUrl = LinkManager.getResourceGroupLink(Integer.valueOf(groupId));
-                return SeleniumUtility.getLocatableHref(groupUrl, value.toString(), null);
+                return LinkManager.getHref(groupUrl, value.toString());
             }
         });
 
@@ -271,8 +270,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
 
     // -------- Static Utility loaders ------------
 
-    public static ResourceGroupListView getGroupsOf(String locatorId, int explicitResourceId,
-        boolean canModifyMembership) {
+    public static ResourceGroupListView getGroupsOf(int explicitResourceId, boolean canModifyMembership) {
 
         ResourceGroupListView view = new ResourceGroupListView(new Criteria("explicitResourceId",
             String.valueOf(explicitResourceId)), MSG.common_title_resourceGroups());

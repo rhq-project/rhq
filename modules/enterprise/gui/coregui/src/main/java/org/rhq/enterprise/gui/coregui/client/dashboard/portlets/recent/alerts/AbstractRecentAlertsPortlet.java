@@ -46,7 +46,6 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigura
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A base class for deriving recent alerts portlets for different entity contexts.  In this way the
@@ -90,7 +89,7 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
             public String format(Object value, ListGridRecord record, int i, int i1) {
                 String url = getAlertDetailLink(record);
                 String formattedValue = TimestampCellFormatter.format(value);
-                return SeleniumUtility.getLocatableHref(url, formattedValue, null);
+                return LinkManager.getHref(url, formattedValue);
             }
         };
     }

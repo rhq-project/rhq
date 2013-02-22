@@ -64,8 +64,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 public class BundleView extends EnhancedVLayout implements BookmarkableView {
@@ -99,7 +97,7 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
 
         BackButton backButton = new BackButton(MSG.view_bundle_list_backToAll(), BundleTopView.VIEW_ID.getTitle());
         headerLabel = new HeaderLabel(IconEnum.BUNDLE.getIcon24x24Path(), StringUtility.escapeHtml(bundle.getName()));
-        tabs = new LocatableTabSet();
+        tabs = new TabSet();
         versionsTab = createVersionsTab();
         destinationsTab = createDestinationsTab();
         tabs.addTab(versionsTab);
@@ -147,7 +145,7 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
     }
 
     private Tab createDestinationsTab() {
-        LocatableTab destinationsTab = new LocatableTab(MSG.view_bundle_destinations());
+        Tab destinationsTab = new Tab(MSG.view_bundle_destinations());
         Criteria criteria = new Criteria();
         criteria.addCriteria("bundleId", bundle.getId());
         destinationsTab.setPane(new BundleDestinationListView(criteria));
@@ -155,7 +153,7 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
     }
 
     private Tab createVersionsTab() {
-        LocatableTab versionsTab = new LocatableTab(MSG.view_bundle_versions());
+        Tab versionsTab = new Tab(MSG.view_bundle_versions());
         Criteria criteria = new Criteria();
         criteria.addCriteria("bundleId", bundleBeingViewed);
         bundleVersionsTable = new BundleVersionListView(criteria);

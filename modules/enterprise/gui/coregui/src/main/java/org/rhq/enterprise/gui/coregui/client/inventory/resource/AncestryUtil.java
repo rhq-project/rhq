@@ -35,7 +35,6 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A utility class for working with Resource ancestry values.
@@ -159,8 +158,7 @@ public abstract class AncestryUtil {
             sbResources.append((i > 0) ? " < " : "");
             //sbResources.append(" < ");
             String url = LinkManager.getResourceLink(ancestorResourceId);
-            String suffix = resourceId + "_" + entryTokens[1];
-            String href = SeleniumUtility.getLocatableHref(url, ancestorName, suffix);
+            String href = LinkManager.getHref(url, ancestorName);
             sbResources.append(href);
 
             if (null != sbTypes) {
@@ -218,8 +216,7 @@ public abstract class AncestryUtil {
             sbResources.append((i > 0) ? " &lt; " : "");
             if (generateLinks) {
                 String url = LinkManager.getResourceLink(ancestorResourceId);
-                String suffix = resourceId + "_" + entryTokens[1];
-                String href = SeleniumUtility.getLocatableHref(url, ancestorName, suffix);
+                String href = LinkManager.getHref(url, ancestorName);
                 sbResources.append(href);
             } else {
                 sbResources.append(ancestorName);

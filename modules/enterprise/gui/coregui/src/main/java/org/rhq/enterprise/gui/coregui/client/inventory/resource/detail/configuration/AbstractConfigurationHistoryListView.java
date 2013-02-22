@@ -35,13 +35,13 @@ import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.AbstractResourceConfigurationUpdateCriteria;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationComparisonView;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * The superclass to the main plugin/resource views that lists all configuration history items.
@@ -183,7 +183,7 @@ public abstract class AbstractConfigurationHistoryListView<T extends AbstractCon
             public String format(Object value, ListGridRecord record, int i, int i1) {
                 Integer recordId = getId(record);
                 String detailsUrl = "#" + getBasePath() + "/" + recordId;
-                String cellHtml = SeleniumUtility.getLocatableHref(detailsUrl, value.toString(), null);
+                String cellHtml = LinkManager.getHref(detailsUrl, value.toString());
                 String isCurrentConfig = record
                     .getAttribute(AbstractConfigurationHistoryDataSource.Field.CURRENT_CONFIG);
                 if (Boolean.parseBoolean(isCurrentConfig)) {

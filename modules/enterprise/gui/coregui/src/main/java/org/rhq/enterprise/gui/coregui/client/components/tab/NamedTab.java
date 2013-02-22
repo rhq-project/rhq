@@ -1,17 +1,16 @@
 package org.rhq.enterprise.gui.coregui.client.components.tab;
 
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.tab.Tab;
 
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
 
 /**
- * A Wrapper for org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab allowing for a Tab that separates
- * internal naming and external title.
+ * A Wrapper for {@link Tab} allowing for a Tab that separates internal naming and external title.
  * 
  * @author Jay Shaughnessy
  */
-public class NamedTab extends LocatableTab {
+public class NamedTab extends Tab {
 
     private ViewName viewName;
 

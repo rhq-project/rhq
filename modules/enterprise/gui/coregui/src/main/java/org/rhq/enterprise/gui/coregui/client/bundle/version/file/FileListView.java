@@ -55,7 +55,7 @@ public class FileListView extends EnhancedVLayout {
 
     private int bundleVersionId;
 
-    public FileListView(String locatorId, int bundleVersionId) {
+    public FileListView(int bundleVersionId) {
         super();
         this.bundleVersionId = bundleVersionId;
     }

@@ -43,7 +43,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasuremen
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A DataSource for reading traits for the current group.
@@ -82,7 +81,7 @@ public class TraitsDataSource extends AbstractMeasurementDataTraitDataSource {
         resourceNameField.setCellFormatter(new CellFormatter() {
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
                 String url = LinkManager.getResourceLink(record.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
-                return SeleniumUtility.getLocatableHref(url, value.toString(), null);
+                return LinkManager.getHref(url, value.toString());
             }
         });
         resourceNameField.setShowHover(true);

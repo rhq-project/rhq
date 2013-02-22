@@ -56,7 +56,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.operation.ScheduledOperationsDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A view that displays a live table of completed Operations and scheduled operations. 
@@ -131,7 +130,7 @@ public class OperationSchedulePortlet extends EnhancedVLayout implements CustomS
                     } else {
                         url = LinkManager.getSubsystemResourceOperationScheduleLink(id, opScheduleId);
                     }
-                    return SeleniumUtility.getLocatableHref(url, timestamp, null);
+                    return LinkManager.getHref(url, timestamp);
                 } else {
                     return "<i>" + MSG.common_label_none() + "</i>";
                 }
@@ -157,7 +156,7 @@ public class OperationSchedulePortlet extends EnhancedVLayout implements CustomS
                 } else {
                     url = LinkManager.getResourceLink(id);
                 }
-                return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                return LinkManager.getHref(url, o.toString());
             }
         });
         resourceNext.setShowHover(true);

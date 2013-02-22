@@ -65,7 +65,7 @@ public class ActivityView extends EnhancedVLayout implements DashboardContainer,
 
     private boolean isInitialized = false;
 
-    public ActivityView(String locatorId, ResourceComposite resourceComposite) {
+    public ActivityView(ResourceComposite resourceComposite) {
         super();
         this.resourceComposite = resourceComposite;
     }

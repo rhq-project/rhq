@@ -35,8 +35,8 @@ public class GroupOperationScheduleListView extends AbstractOperationScheduleLis
 
     private ResourceGroupComposite groupComposite;
 
-    public GroupOperationScheduleListView(String locatorId, ResourceGroupComposite groupComposite) {
-        super(locatorId, new GroupOperationScheduleDataSource(groupComposite), TITLE);
+    public GroupOperationScheduleListView(ResourceGroupComposite groupComposite) {
+        super(new GroupOperationScheduleDataSource(groupComposite), TITLE);
         this.groupComposite = groupComposite;
     }
 

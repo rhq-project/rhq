@@ -7,31 +7,18 @@ import com.smartgwt.client.widgets.IButton;
  */
 public class EnhancedIButton extends IButton {
 
-    /**
-     * <pre>
-     * ID Format: "simpleClassname_locatorId"
-     * </pre>
-     * @param locatorId not null or empty.
-     */
     public EnhancedIButton() {
-        super();
-        init();
+        this(null);
     }
 
-    /**
-     * <pre>
-     * ID Format: "simpleClassname_locatorId"
-     * </pre>
-     * @param locatorId not null or empty.
-     * @param title
-     */
     public EnhancedIButton(String title) {
         super(title);
         init();
     }
 
     private void init() {
-        if (getTitle().length() > 15) {
+        String title = getTitle();
+        if (title != null && title.length() > 15) {
             setAutoFit(true);
         }
     }

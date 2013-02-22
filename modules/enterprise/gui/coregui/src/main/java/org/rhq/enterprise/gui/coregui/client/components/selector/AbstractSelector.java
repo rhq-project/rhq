@@ -65,9 +65,9 @@ import com.smartgwt.client.widgets.layout.VStack;
 
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVStack;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVStack;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 
 /**
  * @author Greg Hinkle
@@ -217,8 +217,8 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
 
     @Override
     public void destroy() {
-        // explicitly destroy non-locatable member layouts
-        SeleniumUtility.destroyMembers(hlayout);
+        // explicitly destroy non-enhanced member layouts
+        EnhancedUtility.destroyMembers(hlayout);
         super.destroy();
 
         // For reasons unknown, possibly issues in smartgwt's cleanup of VStack and SectionStack, these

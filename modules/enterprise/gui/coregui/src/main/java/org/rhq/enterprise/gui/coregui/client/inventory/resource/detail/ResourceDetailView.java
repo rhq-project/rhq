@@ -505,7 +505,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             //updateSubTab(this.driftTab, this.driftHistory, true, true, new ViewFactory() {
             //    @Override
             //    public Canvas createView() {
-            //        return ResourceDriftHistoryView.get(driftHistory.extendLocatorId("View"), resourceComposite);
+            //        return ResourceDriftHistoryView.get(resourceComposite);
             //    }
             //});
 

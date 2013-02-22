@@ -63,8 +63,8 @@ import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourcePicker.OkHandler;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.SingleResourcePicker;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 
 /**
  * This notification form will be used for the Resource Operation sender. This form lets
@@ -521,12 +521,12 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
     }
 
     private void hideOperationArguments() {
-        SeleniumUtility.destroyMembers(operationArgumentsCanvasItem);
+        EnhancedUtility.destroyMembers(operationArgumentsCanvasItem);
         markForRedraw();
     }
 
     private void showOperationArguments(ConfigurationDefinition def, Configuration config) {
-        SeleniumUtility.destroyMembers(operationArgumentsCanvasItem);
+        EnhancedUtility.destroyMembers(operationArgumentsCanvasItem);
 
         if (def != null) {
             ConfigurationEditor configEditor = new ConfigurationEditor(def, config);

@@ -51,7 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.report.inventory.ResourceInstallRep
 import org.rhq.enterprise.gui.coregui.client.report.measurement.MeasurementOOBView;
 import org.rhq.enterprise.gui.coregui.client.report.operation.SubsystemOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * The Reports top-level view.
@@ -67,7 +67,6 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
     public static final ViewName SECTION_INVENTORY_VIEW_ID = new ViewName("Inventory", MSG.common_title_inventory());
 
     public ReportTopView() {
-        // This is a top level view, so our locator id can simply be our view id.
         super(VIEW_ID.getName());
     }
 

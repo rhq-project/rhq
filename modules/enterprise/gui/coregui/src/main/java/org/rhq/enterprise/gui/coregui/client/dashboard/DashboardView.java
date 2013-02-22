@@ -76,7 +76,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.Resourc
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourcePkgHistoryPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Jay Shaughnessy
@@ -123,7 +123,6 @@ public class DashboardView extends EnhancedVLayout {
     /**
      * Convenience constructor for subsystem context.
      * 
-     * @param locatorId
      * @param dashboardContainer
      * @param storedDashboard
      */
@@ -133,7 +132,6 @@ public class DashboardView extends EnhancedVLayout {
     }
 
     /**
-     * @param locatorId
      * @param dashboardContainer
      * @param storedDashboard
      * @param context

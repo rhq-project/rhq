@@ -35,8 +35,8 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
@@ -90,7 +90,7 @@ public class SubTabLayout extends EnhancedVLayout {
             }
         }
         if (null != currentlySelected) {
-            selectSubTabByLocatorId(currentlySelected, true);
+            selectSubTabById(currentlySelected, true);
         }
     }
 
@@ -216,8 +216,8 @@ public class SubTabLayout extends EnhancedVLayout {
 
     public void registerSubTabs(SubTab... tabs) {
         for (SubTab subTab : tabs) {
-            String locatorId = subTab.getId();
-            subTabs.put(locatorId, subTab);
+            String id = subTab.getId();
+            subTabs.put(id, subTab);
         }
         buildSubTabList(tabs);
     }
@@ -232,12 +232,6 @@ public class SubTabLayout extends EnhancedVLayout {
             current = tabs[i];
         }
     }
-
-    //    public void registerSubTab(SubTab subTab) {
-    //        String locatorId = subTab.getLocatorId();
-    //
-    //        subTabs.put(locatorId, subTab);
-    //    }
 
     /**
      * Walks the list of visible tabs to find the closest, visible predecessor. Because it
@@ -313,24 +307,24 @@ public class SubTabLayout extends EnhancedVLayout {
         if (subTab == null) {
             throw new IllegalArgumentException("subTab is null.");
         }
-        return selectSubTabByLocatorId(subTab.getId(), showCanvas);
+        return selectSubTabById(subTab.getId(), showCanvas);
     }
 
     /**
-     * @param name locatorId the subtab locatorId
+     * @param Id the subtab Id
      * @param showCanvas if true then ensure the subtab canvas is shown. Otherwise the state is unchanged.
      * @return true if selected successfully, otherwise false
      */
-    public boolean selectSubTabByLocatorId(String locatorId, boolean showCanvas) {
+    public boolean selectSubTabById(String id, boolean showCanvas) {
         boolean foundTab = false;
-        for (String subTabLocatorId : this.subTabs.keySet()) {
-            if (subTabLocatorId.equals(locatorId)) {
-                if (this.disabledSubTabs.contains(subTabLocatorId)) {
+        for (String subTabId : this.subTabs.keySet()) {
+            if (subTabId.equals(id)) {
+                if (this.disabledSubTabs.contains(subTabId)) {
                     // Nice try - user tried to select a disabled tab, probably by going directly to a bookmark URL.
-                    SubTab subTab = this.subTabs.get(subTabLocatorId);
+                    SubTab subTab = this.subTabs.get(subTabId);
                     CoreGUI.getErrorHandler().handleError(MSG.view_subTab_error_disabled(subTab.getTitle()));
                 } else {
-                    this.currentlySelected = subTabLocatorId;
+                    this.currentlySelected = subTabId;
                     foundTab = true;
                 }
                 break;
@@ -345,8 +339,8 @@ public class SubTabLayout extends EnhancedVLayout {
     }
 
     public SubTab getSubTabByName(String name) {
-        for (String subTabLocatorId : this.subTabs.keySet()) {
-            SubTab subTab = this.subTabs.get(subTabLocatorId);
+        for (String subTabId : this.subTabs.keySet()) {
+            SubTab subTab = this.subTabs.get(subTabId);
             if (subTab.getName().equals(name)) {
                 return subTab;
             }
@@ -355,10 +349,10 @@ public class SubTabLayout extends EnhancedVLayout {
         return null;
     }
 
-    public SubTab getSubTabByLocatorId(String locatorId) {
-        for (String subTabLocatorId : this.subTabs.keySet()) {
-            if (subTabLocatorId.equals(locatorId)) {
-                return this.subTabs.get(subTabLocatorId);
+    public SubTab getSubTabById(String id) {
+        for (String subTabId : this.subTabs.keySet()) {
+            if (subTabId.equals(id)) {
+                return this.subTabs.get(subTabId);
             }
         }
 

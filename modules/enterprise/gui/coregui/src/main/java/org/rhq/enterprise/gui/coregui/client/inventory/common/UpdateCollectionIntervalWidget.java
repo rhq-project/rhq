@@ -33,7 +33,7 @@ import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import com.smartgwt.client.widgets.grid.ListGrid;
 
 import org.rhq.enterprise.gui.coregui.client.components.table.TableWidget;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
 
 /**
  * Widget for updating the collection intervals for the selected metrics. It displays two form fields for

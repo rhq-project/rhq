@@ -64,11 +64,11 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedSearchBarItem;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 
 /**
  * Similar to (i.e. originally a copy of) Table but instead of encapsulating a ListGrid, it manages a list of 
@@ -278,7 +278,7 @@ public abstract class Carousel extends EnhancedHLayout implements RefreshableVie
 
     @Override
     public void destroy() {
-        SeleniumUtility.destroyMembers(contents);
+        EnhancedUtility.destroyMembers(contents);
         super.destroy();
     }
 
@@ -684,8 +684,8 @@ public abstract class Carousel extends EnhancedHLayout implements RefreshableVie
      * (via refresh() or CoreGUI.refresh()) or footer (via refreshCarouselActions) are refreshed as needed at action
      * completion. Failure to do so may leave the widgets disabled.
      */
-    public void addCarouselAction(String locatorId, String title, CarouselAction action) {
-        this.addCarouselAction(locatorId, title, null, null, action);
+    public void addCarouselAction(String title, CarouselAction action) {
+        this.addCarouselAction(title, null, null, action);
     }
 
     /**
@@ -694,8 +694,8 @@ public abstract class Carousel extends EnhancedHLayout implements RefreshableVie
      * (via refresh() or CoreGUI.refresh()) or footer (via refreshCarouselActions) are refreshed as needed at action
      * completion. Failure to do so may leave the widgets disabled.
      */
-    public void addCarouselAction(String locatorId, String title, String confirmation, CarouselAction action) {
-        this.addCarouselAction(locatorId, title, confirmation, null, action);
+    public void addCarouselAction(String title, String confirmation, CarouselAction action) {
+        this.addCarouselAction(title, confirmation, null, action);
     }
 
     /**
@@ -704,17 +704,8 @@ public abstract class Carousel extends EnhancedHLayout implements RefreshableVie
      * (via refresh() or CoreGUI.refresh()) or footer (via refreshCarouselActions) are refreshed as needed at action
      * completion. Failure to do so may leave the widgets disabled.
      */
-    public void addCarouselAction(String locatorId, String title, String confirmation,
-        LinkedHashMap<String, ? extends Object> valueMap, CarouselAction action) {
-        // If the specified locator ID is qualified, strip off the ancestry prefix, so we can make sure its locator ID
-        // extends the footer's locator ID as it should.
-        int underscoreIndex = locatorId.lastIndexOf('_');
-        String unqualifiedLocatorId;
-        if (underscoreIndex >= 0 && underscoreIndex != (locatorId.length() - 1)) {
-            unqualifiedLocatorId = locatorId.substring(underscoreIndex + 1);
-        } else {
-            unqualifiedLocatorId = locatorId;
-        }
+    public void addCarouselAction(String title, String confirmation, LinkedHashMap<String, ? extends Object> valueMap,
+        CarouselAction action) {
         CarouselActionInfo info = new CarouselActionInfo(title, confirmation, valueMap, action);
         carouselActions.add(info);
     }

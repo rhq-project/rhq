@@ -80,8 +80,8 @@ import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
@@ -407,7 +407,7 @@ public class BundleDeploymentView extends EnhancedVLayout implements Bookmarkabl
                     BundleResourceDeployment bundleResourceDeployment = (BundleResourceDeployment) selectionEvent
                         .getRecord().getAttributeAsObject("object");
                     BundleResourceDeploymentHistoryListView detailView = new BundleResourceDeploymentHistoryListView(
-                        "Detail", bundleResourceDeployment);
+                        bundleResourceDeployment);
 
                     detail.removeMembers(detail.getMembers());
                     detail.addMember(detailView);

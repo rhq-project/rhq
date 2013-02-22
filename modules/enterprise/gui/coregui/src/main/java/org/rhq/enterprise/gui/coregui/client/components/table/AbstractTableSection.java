@@ -46,8 +46,8 @@ import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 
 /**
  * Provides the typical table view with the additional ability of traversing to a "details" view
@@ -372,7 +372,7 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
                  * therefore, we need to explicitly destroy what's already there (presumably the detailsView
                  * in create-mode), and then rebuild it (presumably the detailsView in edit-mode).
                  */
-                SeleniumUtility.destroyMembers(detailsHolder);
+                EnhancedUtility.destroyMembers(detailsHolder);
 
                 buildDetailsView();
             }
@@ -418,14 +418,14 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
                 detailsHolder.animateHide(AnimationEffect.WIPE, new AnimationCallback() {
                     @Override
                     public void execute(boolean b) {
-                        SeleniumUtility.destroyMembers(detailsHolder);
+                        EnhancedUtility.destroyMembers(detailsHolder);
 
                         contents.animateShow(AnimationEffect.WIPE);
                     }
                 });
             } else {
                 if (detailsHolder != null) {
-                    SeleniumUtility.destroyMembers(detailsHolder);
+                    EnhancedUtility.destroyMembers(detailsHolder);
                 }
                 contents.animateShow(AnimationEffect.WIPE);
             }

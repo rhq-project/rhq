@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.util.selenium;
+package org.rhq.enterprise.gui.coregui.client.util.enhanced;
 
 import com.smartgwt.client.widgets.layout.VStack;
 
@@ -20,7 +20,7 @@ public class EnhancedVStack extends VStack implements Enhanced {
     }
 
     public void destroyMembers() {
-        SeleniumUtility.destroyMembers(this);
+        EnhancedUtility.destroyMembers(this);
     }
 
     @Override

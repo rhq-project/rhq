@@ -49,7 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 
 /**
  * @author John Mazzitelli
@@ -224,7 +224,7 @@ public class NewNotificationEditor extends DynamicForm {
         // Canvas on the first "switch".
         if (senderCanvasInitialized) {
             Layout senderLayout = (Layout) senderCanvasItem.getCanvas();
-            SeleniumUtility.destroyMembers(senderLayout);
+            EnhancedUtility.destroyMembers(senderLayout);
             senderLayout.destroy();
         }
         senderCanvasInitialized = true;

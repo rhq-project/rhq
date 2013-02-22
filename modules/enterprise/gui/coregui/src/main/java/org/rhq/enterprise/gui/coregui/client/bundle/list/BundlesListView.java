@@ -66,7 +66,6 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
     /**
      * Creates a new list view.
      * 
-     * @param locatorId
      * @param perms if perms is null, no button actions will be shown in the table
      */
     public BundlesListView(Set<Permission> perms) {

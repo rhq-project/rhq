@@ -49,7 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSour
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * The Inventory top-level view.
@@ -93,7 +93,6 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
     private Set<Permission> globalPermissions;
 
     public InventoryView() {
-        // This is a top level view, so our locator id can simply be our view id.
         super(VIEW_ID.getName());
     }
 

@@ -299,7 +299,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             viewFactory = (!visible) ? null : new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    //                    return new FullHTMLPane(monitorTables.extendLocatorId("View"),
+                    //                    return new FullHTMLPane(
                     //                        "/rhq/group/monitor/tables-plain.xhtml?groupId=" + groupId);
                     //gwt version of group table view.
                     return new GroupMonitoringTablesView(groupComposite);
@@ -448,14 +448,14 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     //            updateSubTab(this.driftTab, this.driftHistory, true, true, new ViewFactory() {
     //                @Override
     //                public Canvas createView() {
-    //                    return ResourceDriftHistoryView.get(driftHistory.extendLocatorId("View"), null);
+    //                    return ResourceDriftHistoryView.get(null);
     //                }
     //            });
     //
     //            updateSubTab(this.driftTab, this.driftDefinition, true, true, new ViewFactory() {
     //                @Override
     //                public Canvas createView() {
-    //                    return ResourceDriftDefinitionsView.get(driftDefinition.extendLocatorId("View"), null);
+    //                    return ResourceDriftDefinitionsView.get(null);
     //                }
     //            });
     //        }

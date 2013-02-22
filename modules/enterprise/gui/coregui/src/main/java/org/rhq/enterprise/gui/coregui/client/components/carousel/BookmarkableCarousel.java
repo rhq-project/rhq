@@ -32,8 +32,8 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableSection;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 
 /**
  * Provides the typical carousel view with the additional ability of traversing to "details" views - a masters/detail 
@@ -152,7 +152,7 @@ public abstract class BookmarkableCarousel extends Carousel implements Bookmarka
                  * therefore, we need to explicitly destroy what's already there (presumably the detailsView
                  * in create-mode), and then rebuild it (presumably the detailsView in edit-mode).
                  */
-                SeleniumUtility.destroyMembers(detailsHolder);
+                EnhancedUtility.destroyMembers(detailsHolder);
 
                 buildDetailsView();
             }
@@ -198,14 +198,14 @@ public abstract class BookmarkableCarousel extends Carousel implements Bookmarka
                 detailsHolder.animateHide(AnimationEffect.WIPE, new AnimationCallback() {
                     @Override
                     public void execute(boolean b) {
-                        SeleniumUtility.destroyMembers(detailsHolder);
+                        EnhancedUtility.destroyMembers(detailsHolder);
 
                         contents.animateShow(AnimationEffect.WIPE);
                     }
                 });
             } else {
                 if (detailsHolder != null) {
-                    SeleniumUtility.destroyMembers(detailsHolder);
+                    EnhancedUtility.destroyMembers(detailsHolder);
                 }
                 contents.animateShow(AnimationEffect.WIPE);
             }

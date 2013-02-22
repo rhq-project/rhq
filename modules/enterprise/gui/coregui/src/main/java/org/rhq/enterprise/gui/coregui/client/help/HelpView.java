@@ -41,7 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * The Help top-level view.
@@ -59,7 +59,6 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
     private boolean contentFromProductInfo;
 
     public HelpView() {
-        // This is a top level view, so our locator id can simply be our view id.
         super(VIEW_ID.getName());
     }
 

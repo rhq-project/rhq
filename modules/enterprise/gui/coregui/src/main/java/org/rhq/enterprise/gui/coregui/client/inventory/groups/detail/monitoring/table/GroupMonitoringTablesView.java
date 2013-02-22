@@ -21,7 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring
 
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * 
@@ -33,9 +33,6 @@ public class GroupMonitoringTablesView extends EnhancedVLayout implements Refres
     private GroupMeasurementTableView metrics;
     private GroupMembersHealthView memberHealth;
 
-    /**
-     * @param locatorId
-     */
     public GroupMonitoringTablesView(ResourceGroupComposite groupComposite) {
         super();
 

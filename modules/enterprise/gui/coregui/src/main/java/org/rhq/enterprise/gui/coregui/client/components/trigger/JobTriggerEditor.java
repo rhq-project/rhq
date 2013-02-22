@@ -49,7 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm
 import org.rhq.enterprise.gui.coregui.client.components.form.TimeUnit;
 import org.rhq.enterprise.gui.coregui.client.components.form.UnitType;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A SmartGWT widget that provides the ability to create a new {@link JobTrigger job trigger}, or view or edit an
@@ -90,11 +90,6 @@ public class JobTriggerEditor extends EnhancedVLayout {
     private boolean isStartDelay;
     private boolean isStartTime;
 
-    /**
-     * Create a new job trigger.
-     *
-     * @param locatorId
-     */
     public JobTriggerEditor(boolean isReadOnly) {
         super();
 
@@ -104,7 +99,6 @@ public class JobTriggerEditor extends EnhancedVLayout {
     /**
      * View or edit an existing job trigger.
      *
-     * @param locatorId
      * @param jobTrigger
      */
     public JobTriggerEditor(JobTrigger jobTrigger) {

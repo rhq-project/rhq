@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.util.selenium;
+package org.rhq.enterprise.gui.coregui.client.util.enhanced;
 
 import com.smartgwt.client.widgets.layout.Layout;
 
@@ -16,7 +16,7 @@ public class EnhancedLayout extends Layout implements Enhanced {
     }
 
     public void destroyMembers() {
-        SeleniumUtility.destroyMembers(this);
+        EnhancedUtility.destroyMembers(this);
     }
 
     @Override

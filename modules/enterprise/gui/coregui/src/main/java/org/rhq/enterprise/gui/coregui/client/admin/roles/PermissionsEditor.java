@@ -49,7 +49,7 @@ import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVStack;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVStack;
 
 /**
  * An editor for editing the set of RHQ {@link Permission permission}s associated with an RHQ {@link Role role}.

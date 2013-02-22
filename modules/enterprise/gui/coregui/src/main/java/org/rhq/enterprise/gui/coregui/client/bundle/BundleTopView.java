@@ -39,8 +39,8 @@ import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.tree.BundleTreeView;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.content.repository.tree.ContentRepositoryTreeView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 
 
 /**
@@ -138,7 +138,7 @@ public class BundleTopView extends EnhancedHLayout implements BookmarkableView {
     }
 
     private void setContent(Canvas newContent) {
-        SeleniumUtility.destroyMembers(contentCanvas);
+        EnhancedUtility.destroyMembers(contentCanvas);
 
         contentCanvas.addMember(newContent);
         contentCanvas.markForRedraw();

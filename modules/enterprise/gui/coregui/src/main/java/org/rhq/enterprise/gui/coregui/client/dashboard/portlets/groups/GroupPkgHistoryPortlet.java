@@ -53,7 +53,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**This portlet allows the end user to customize the Package History display
  *
@@ -240,8 +240,7 @@ public class GroupPkgHistoryPortlet extends EnhancedVLayout implements CustomSet
                         column.addMember(row);
                     }
                     //                    //insert see more link
-                    //                    DynamicForm row = new DynamicForm(recentPkgHistoryContent
-                    //                        .extendLocatorId("PkgHistoryContentSeeMore"));
+                    //                    DynamicForm row = new DynamicForm();
                     //                    String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + groupId;
                     //                    addSeeMoreLink(row, destination, column);
                 } else {

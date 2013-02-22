@@ -71,8 +71,8 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MashupPortl
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Jay Shaughnessy
@@ -81,10 +81,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 public class DashboardsView extends EnhancedVLayout implements DashboardContainer, BookmarkableView, InitializableView {
 
     public static final ViewName VIEW_ID = new ViewName("Dashboards", MSG.view_dashboards_title());
-
-    // for repeatable locators we need to use repeatable naming for localizable tab names
-    private static final ViewName NAME_CUSTOM_DASH = new ViewName("CustomDashboard", MSG.common_title_custom());
-    private static final ViewName NAME_DEFAULT_DASH = new ViewName("DefaultDashboard", MSG.common_title_default());
 
     // Each NamedTab is a Dashboard, name=Dashboard.id, title=Dashboard.name
     private NamedTabSet tabSet;
@@ -233,7 +229,6 @@ public class DashboardsView extends EnhancedVLayout implements DashboardContaine
         for (Dashboard dashboard : dashboards) {
             String dashboardName = String.valueOf(dashboard.getId());
             String dashboardTitle = dashboard.getName();
-            String dashboardLocatorId = getDashboardLocatorId(dashboardTitle);
             DashboardView dashboardView = new DashboardView(this, dashboard);
             Tab tab = new NamedTab(new ViewName(dashboardName, dashboardTitle), null);
             tab.setPane(dashboardView);
@@ -269,30 +264,6 @@ public class DashboardsView extends EnhancedVLayout implements DashboardContaine
         });
 
         addMember(tabSet);
-    }
-
-    /**
-     * The stored name for a dashboard is initially set to a generated, localizable name. It can later be edited
-     * by the user. Automation tests must be valid independent of localization so we must use repeatable locators.
-     * This method checks for generated dash names and returns a repeatable locator for them.
-     * 
-     * @return a repeatable locatorId for a generated dash name, otherwise just return the passed in name. 
-     */
-    private String getDashboardLocatorId(String dashboardName) {
-        if (null == dashboardName) {
-            return dashboardName;
-        }
-
-        if (dashboardName.equals(NAME_DEFAULT_DASH.getTitle())) {
-            return NAME_DEFAULT_DASH.getName();
-        }
-
-        if (dashboardName.startsWith(NAME_CUSTOM_DASH.getTitle())) {
-            return NAME_CUSTOM_DASH.getName() + dashboardName.substring(NAME_CUSTOM_DASH.getTitle().length());
-
-        }
-
-        return dashboardName;
     }
 
     protected Dashboard getDefaultDashboard() {
@@ -389,7 +360,6 @@ public class DashboardsView extends EnhancedVLayout implements DashboardContaine
                 String dashboardName = String.valueOf(result.getId());
                 String dashboardTitle = result.getName();
                 dashboardsByName.put(dashboardTitle, result); // update map so name can not be reused
-                String dashboardLocatorId = getDashboardLocatorId(dashboardTitle);
                 DashboardView dashboardView = new DashboardView(DashboardsView.this, result);
                 NamedTab tab = new NamedTab(new ViewName(dashboardName, dashboardTitle), null);
                 tab.setPane(dashboardView);

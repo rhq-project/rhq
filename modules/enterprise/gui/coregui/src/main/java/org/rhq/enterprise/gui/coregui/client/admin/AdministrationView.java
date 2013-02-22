@@ -47,7 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * The Administration top-level view.
@@ -82,7 +82,6 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         IconEnum.CONTENT);
 
     public AdministrationView() {
-        // This is a top level view, so our locator id can simply be our view id.
         super(VIEW_ID.getName());
     }
 

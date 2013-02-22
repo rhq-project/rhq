@@ -45,8 +45,8 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardsView;
 import org.rhq.enterprise.gui.coregui.client.help.HelpView;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHStack;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHStack;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
@@ -80,7 +80,7 @@ public class MenuBarView extends EnhancedVLayout {
         topStrip.addMember(getActionsSection());
 
         addMember(topStrip);
-        //addMember(new SearchBarPane(this.extendLocatorId("Search")));
+        //addMember(new SearchBarPane());
 
         markForRedraw();
     }

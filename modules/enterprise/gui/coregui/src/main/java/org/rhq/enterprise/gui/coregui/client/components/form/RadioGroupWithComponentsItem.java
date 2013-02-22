@@ -35,7 +35,7 @@ import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 
 /**
  * TODO
@@ -88,7 +88,7 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
     }
 
     public void setSelected(String selected) {
-        RadioGroupItem radio = (RadioGroupItem) canvas.getItem(SeleniumUtility.getSafeId(selected));
+        RadioGroupItem radio = (RadioGroupItem) canvas.getItem(EnhancedUtility.getSafeId(selected));
         if (radio != null) {
             this.selected = selected;
             radio.setValue(selected);
@@ -110,7 +110,7 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
         private String title;
 
         public NameAndTitle(String title) {
-            name = SeleniumUtility.getSafeId(title);
+            name = EnhancedUtility.getSafeId(title);
             this.title = title;
         }
 

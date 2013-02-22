@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.util.selenium;
+package org.rhq.enterprise.gui.coregui.client.util.enhanced;
 
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.Layout;
@@ -8,14 +8,14 @@ import com.smartgwt.client.widgets.layout.Layout;
  * 
  * @author Jay Shaughnessy
  */
-public class SeleniumUtility {
+public class EnhancedUtility {
 
     static public String getSimpleClassName(final Object widget) {
         String className = widget.getClass().getName();
         return className.substring(className.lastIndexOf(".") + 1);
     }
 
-    static private String getSmallStackTrace(Throwable t) {
+    static public String getSmallStackTrace(Throwable t) {
         StringBuilder smallStack = new StringBuilder();
 
         StackTraceElement[] stack = (null == t) ? new Exception().getStackTrace() : t.getStackTrace();

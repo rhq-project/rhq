@@ -83,11 +83,11 @@ import org.rhq.enterprise.gui.coregui.client.util.CriteriaUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 
 /**
  * A tabular view of set of data records from an {@link RPCDataSource}.
@@ -421,7 +421,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
             updateTitleCanvas(this.titleString);
 
             if (showHeader) {
-                // titleLayout not really needed now as TitleBar has a LocatableVLayout
+                // titleLayout not really needed now as TitleBar has a VLayout
                 titleLayout = new EnhancedVLayout();
                 titleLayout.setAutoHeight();
                 titleLayout.setAlign(VerticalAlignment.BOTTOM);
@@ -533,7 +533,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
         // logic. This happens in selenium testing or when a user navs away prior to the refresh.
         this.listGrid = null;
 
-        SeleniumUtility.destroyMembers(createTableContents());
+        EnhancedUtility.destroyMembers(createTableContents());
         super.destroy();
     }
 

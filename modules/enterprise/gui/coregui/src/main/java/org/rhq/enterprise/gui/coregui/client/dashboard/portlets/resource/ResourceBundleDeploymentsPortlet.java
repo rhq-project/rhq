@@ -135,7 +135,7 @@ public class ResourceBundleDeploymentsPortlet extends GroupBundleDeploymentsPort
                         }
                         //insert see more link
                         //TODO: spinder:2/25/11 (add this later) no current view for seeing all bundle deployments
-                        //                        DynamicForm row = new DynamicForm(recentBundleDeployContent.extendLocatorId("RecentBundleContentSeeMore"));
+                        //                        DynamicForm row = new DynamicForm();
                         //                        addSeeMoreLink(row, LinkManager.getResourceGroupLink(groupId) + "/Events/History/", column);
                     } else {
                         DynamicForm row = AbstractActivityView.createEmptyDisplayRow(MSG.view_portlet_results_empty());

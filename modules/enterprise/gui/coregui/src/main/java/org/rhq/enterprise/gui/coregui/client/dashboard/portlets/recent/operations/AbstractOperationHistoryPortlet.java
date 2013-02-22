@@ -41,7 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigura
 import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryDataSource;
 import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A base class for deriving recent resource operations portlets for different entity contexts.  In this way the

@@ -127,11 +127,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
 
     private static class PackageVersionFileUploadFormWithVersion extends PackageVersionFileUploadForm {
 
-        /**
-         * @param locatorId
-         * @param packageTypeId
-         */
-        public PackageVersionFileUploadFormWithVersion(String locatorId, int packageTypeId) {
+        public PackageVersionFileUploadFormWithVersion(int packageTypeId) {
             super(packageTypeId, null, null, null, null, true, false, false);
             setName("File");
         }
@@ -584,7 +580,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
     }
 
     private DynamicForm createUploadNewScriptForm() {
-        uploadForm = new PackageVersionFileUploadFormWithVersion("uploadForm", cliScriptPackageType.getPackageType()
+        uploadForm = new PackageVersionFileUploadFormWithVersion(cliScriptPackageType.getPackageType()
             .getId());
         uploadForm.setTitleOrientation(TitleOrientation.TOP);
         uploadForm.setPackageTypeId(cliScriptPackageType.getPackageType().getId());

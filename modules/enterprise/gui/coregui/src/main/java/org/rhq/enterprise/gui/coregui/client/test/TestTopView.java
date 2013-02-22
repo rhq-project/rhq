@@ -38,7 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.test.configuration.TestGroupConfigu
 import org.rhq.enterprise.gui.coregui.client.test.configuration.TestReadOnlyConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.test.configuration.TestReadOnlyGroupConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.test.inventory.TestSearchBarView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * The Test top-level view. This view is "hidden", i.e. there are no links to it, so the user must go to the URL
@@ -80,7 +80,6 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     private static final ViewName PAGE_NUMBER_FORMAT_TEST = new ViewName("NumberFormatTest");
 
     public TestTopView() {
-        // This is a top level view, so our locator id can simply be our view id.
         super(VIEW_ID.getName());
     }
 

@@ -253,7 +253,7 @@ public class PortletWindow extends Window {
     protected void onInit() {
         super.onInit();
 
-        // each portletWindow wraps a single portlet view, so just extend the window's locatorId with a static id
+        // each portletWindow wraps a single portlet view
         view = PortletFactory.buildPortlet(this, storedPortlet, context);
 
         Canvas canvas = (Canvas) view;

@@ -133,10 +133,10 @@ public abstract class AncestryUtil {
     /**
      * Decode the provided ancestry into display values.
      * 
-     * @param resourceId Used for unique locators in the LocatableHref links. 
+     * @param resourceId 
      * @param ancestry The encoded ancestry for the resource
      * @param types if provided, must contain all of the resource types found in the ancestry.
-     * @return Array of length 2. result[0] is the resource ancestry, complete with locatable Hrefs. result[1] is
+     * @return Array of length 2. result[0] is the resource ancestry, complete with hrefs. result[1] is
      * the type ancestry, or null if types were not provided. 
      */
     public static String[] decodeAncestry(int resourceId, String ancestry, Map<Integer, ResourceType> types) {
@@ -260,12 +260,12 @@ public abstract class AncestryUtil {
 
     public static String getAncestryHoverHTMLForResource(Resource resource, Map<Integer, ResourceType> types, int width) {
 
-        return getAncestryHoverHTMLString(resource.getName(), resource.getAncestry(), resource
-            .getResourceType().getId(), types, width);
+        return getAncestryHoverHTMLString(resource.getName(), resource.getAncestry(), resource.getResourceType()
+            .getId(), types, width);
     }
 
-    private static String getAncestryHoverHTMLString(String resourceName, String ancestry,
-                                                     int resourceTypeId, Map<Integer, ResourceType> types, int width) {
+    private static String getAncestryHoverHTMLString(String resourceName, String ancestry, int resourceTypeId,
+        Map<Integer, ResourceType> types, int width) {
         ResourceType type = types.get(resourceTypeId);
         String resourceLongName = getResourceLongName(resourceName, type);
 

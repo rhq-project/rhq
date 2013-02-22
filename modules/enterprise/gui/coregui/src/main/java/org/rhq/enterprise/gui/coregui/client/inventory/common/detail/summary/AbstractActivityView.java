@@ -67,10 +67,10 @@ import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.measurement.GwtMonitorUtils;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 
 /**
  * @author Simeon Pinder
@@ -120,8 +120,7 @@ public abstract class AbstractActivityView extends EnhancedVLayout implements Re
     private ToolStrip footer;
     private boolean firstRightPanePortletLoaded = false;
 
-    public AbstractActivityView(String locatorId, ResourceGroupComposite groupComposite,
-        ResourceComposite resourceComposite) {
+    public AbstractActivityView(ResourceGroupComposite groupComposite, ResourceComposite resourceComposite) {
         super();
         if (groupComposite != null) {
             this.groupComposite = groupComposite;
@@ -172,7 +171,8 @@ public abstract class AbstractActivityView extends EnhancedVLayout implements Re
         }
 
         //recentMetrics.xhtml
-        HLayout recentMetricsTitle = new TitleWithIcon(IconEnum.RECENT_MEASUREMENTS.getIcon24x24Path(), RECENT_MEASUREMENTS);
+        HLayout recentMetricsTitle = new TitleWithIcon(IconEnum.RECENT_MEASUREMENTS.getIcon24x24Path(),
+            RECENT_MEASUREMENTS);
         if ((resource != null) || ((group != null) && (groupCategory.equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
             leftPane.addMember(recentMetricsTitle);
             leftPane.addMember(recentMeasurementsContent);
@@ -210,7 +210,8 @@ public abstract class AbstractActivityView extends EnhancedVLayout implements Re
         }
 
         //recentOperations.xhtml
-        HLayout recentOperationsTitle = new TitleWithIcon(IconEnum.RECENT_OPERATIONS.getIcon24x24Path(), RECENT_OPERATIONS);
+        HLayout recentOperationsTitle = new TitleWithIcon(IconEnum.RECENT_OPERATIONS.getIcon24x24Path(),
+            RECENT_OPERATIONS);
         recentOperationsContent.setHeight(20);
         if (((resource != null) && (resourceFacets.contains(ResourceTypeFacet.OPERATION)))
             || (displayGroupOperations(groupCategory, facets))) {//resource
@@ -234,7 +235,7 @@ public abstract class AbstractActivityView extends EnhancedVLayout implements Re
             firstRightPanePortletLoaded = true;
         }
         //recentPackageHistory.xhtml
-        HLayout recentPkgHistoryTitle = new TitleWithIcon(IconEnum.CONTENT.getIcon24x24Path(),RECENT_PKG_HISTORY);
+        HLayout recentPkgHistoryTitle = new TitleWithIcon(IconEnum.CONTENT.getIcon24x24Path(), RECENT_PKG_HISTORY);
         recentPkgHistoryContent.setHeight(20);
         if ((resource != null) || ((group != null) && (groupCategory.equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
             if (firstRightPanePortletLoaded) {
@@ -338,9 +339,9 @@ public abstract class AbstractActivityView extends EnhancedVLayout implements Re
 
     @Override
     public void destroy() {
-        // destroy members of non-locatable layouts
-        SeleniumUtility.destroyMembers(leftPane);
-        SeleniumUtility.destroyMembers(rightPane);
+        // destroy members of non-enhanced layouts
+        EnhancedUtility.destroyMembers(leftPane);
+        EnhancedUtility.destroyMembers(rightPane);
 
         super.destroy();
     }
@@ -382,7 +383,7 @@ public abstract class AbstractActivityView extends EnhancedVLayout implements Re
 
         @Override
         public void destroy() {
-            SeleniumUtility.destroyMembers(this);
+            EnhancedUtility.destroyMembers(this);
             super.destroy();
         }
     }

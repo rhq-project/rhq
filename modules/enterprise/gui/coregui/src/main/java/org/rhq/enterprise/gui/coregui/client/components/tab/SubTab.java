@@ -24,7 +24,7 @@ import com.smartgwt.client.widgets.Canvas;
 
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Enhanced;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.Enhanced;
 
 /**
  * A SubTab associating a Button with a Canvas.  SubTabs for the same parent Tab must have different viewNames.

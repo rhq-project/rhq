@@ -50,8 +50,8 @@ import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 
 /**
  * A tree view of all known ResourceTypes, which includes summaries of metric schedule and alert definition templates
@@ -164,14 +164,14 @@ public abstract class ResourceTypeTreeView extends EnhancedVLayout implements Bo
      * @param canvasToShow the canvas to show in the parent
      */
     protected void switchToCanvas(Layout parentCanvas, Canvas canvasToShow) {
-        SeleniumUtility.destroyMembers(parentCanvas);
+        EnhancedUtility.destroyMembers(parentCanvas);
 
         parentCanvas.addMember(canvasToShow);
         parentCanvas.markForRedraw();
     }
 
     protected void prepareSubCanvas(Layout parentCanvas, Canvas canvasToShow, boolean showBackButton) {
-        SeleniumUtility.destroyMembers(parentCanvas);
+        EnhancedUtility.destroyMembers(parentCanvas);
 
         if (showBackButton) {
             String backLink = getEditLink(null).substring(1); // strip the #

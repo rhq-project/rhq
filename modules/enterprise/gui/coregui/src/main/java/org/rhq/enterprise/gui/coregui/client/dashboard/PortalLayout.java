@@ -37,7 +37,7 @@ import com.smartgwt.client.widgets.events.ResizedHandler;
 import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
 
 /**
  * @author Greg Hinkle
@@ -49,7 +49,6 @@ public class PortalLayout extends EnhancedHLayout {
     private Integer dragResizeColumnCount;
 
     /**
-     * @param locatorId
      * @param dashboardView
      * @param numColumns
      * @param columnWidths Currently only the first column width is set, others are ignored and share the remaining space

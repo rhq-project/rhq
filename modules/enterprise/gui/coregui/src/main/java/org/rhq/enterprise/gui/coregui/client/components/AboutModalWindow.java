@@ -31,9 +31,9 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * The "About RHQ" modal window.
@@ -45,11 +45,6 @@ public class AboutModalWindow extends Window {
 
     private static final Messages MSG = CoreGUI.getMessages();
 
-    /**
-     * <pre>
-     * ID Format: "simpleClassname_locatorId"
-     * </pre>
-     */
     public AboutModalWindow() {
         super();
 

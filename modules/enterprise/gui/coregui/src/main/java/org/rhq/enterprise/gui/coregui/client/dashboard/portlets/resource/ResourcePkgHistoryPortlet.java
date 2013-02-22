@@ -130,8 +130,7 @@ public class ResourcePkgHistoryPortlet extends GroupPkgHistoryPortlet {
                         column.addMember(row);
                     }
                     //                    //insert see more link
-                    //                    DynamicForm row = new DynamicForm(recentPkgHistoryContent
-                    //                        .extendLocatorId("PkgHistoryContentSeeMore"));
+                    //                    DynamicForm row = new DynamicForm();
                     //                    String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + groupId;
                     //                    addSeeMoreLink(row, destination, column);
                 } else {

@@ -68,7 +68,6 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 @SuppressWarnings("unchecked")
 public class MessageCenterView extends Table implements MessageCenter.MessageListener {
 
-    public static final String LOCATOR_ID = "MessageCenter";
     public static final String TABLE_TITLE = MSG.view_messageCenter_messageTitle();
 
     private static final String FIELD_TIME = "time";
@@ -265,20 +264,6 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
                 }
             }
         });
-
-        /*
-        // TODO only for testing, remove this when done testing
-        addTableAction(extendLocatorId("test"), "TEST MSG", null,
-            new AbstractTableAction(TableActionEnablement.ALWAYS) {
-                @Override
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    for (Severity severity : java.util.EnumSet.allOf(Severity.class)) {
-                        Message m = new Message(severity.name() + ':' + System.currentTimeMillis(), severity);
-                        CoreGUI.getMessageCenter().notify(m);
-                    }
-                }
-            });
-        */
 
         // initial population of the list with current messages
         try {

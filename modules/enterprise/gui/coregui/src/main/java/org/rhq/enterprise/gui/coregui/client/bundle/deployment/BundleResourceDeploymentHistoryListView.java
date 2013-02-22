@@ -54,7 +54,7 @@ import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.enterprise.gui.coregui.client.ErrorMessageWindow;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
@@ -64,7 +64,7 @@ public class BundleResourceDeploymentHistoryListView extends EnhancedVLayout {
     private BundleResourceDeployment resourceDeployment;
     private HashMap<String, String> statusIcons;
 
-    public BundleResourceDeploymentHistoryListView(String locatorId, BundleResourceDeployment resourceDeployment) {
+    public BundleResourceDeploymentHistoryListView(BundleResourceDeployment resourceDeployment) {
         super();
         setWidth100();
         setHeight100();

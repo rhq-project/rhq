@@ -35,7 +35,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Jay Shaughnessy
@@ -58,7 +58,7 @@ public class DeployStep extends AbstractWizardStep {
 
     public Canvas getCanvas() {
         if (canvas == null) {
-            canvas = new LocatableVLayout();
+            canvas = new EnhancedVLayout();
             canvas.setWidth100();
             canvas.setHeight100();
             canvas.setAlign(Alignment.CENTER);

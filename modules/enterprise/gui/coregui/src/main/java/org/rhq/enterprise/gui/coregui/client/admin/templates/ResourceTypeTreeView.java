@@ -50,7 +50,7 @@ import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -60,7 +60,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public abstract class ResourceTypeTreeView extends LocatableVLayout implements BookmarkableView {
+public abstract class ResourceTypeTreeView extends EnhancedVLayout implements BookmarkableView {
 
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_CONFIGURATION_VIEW_ID + "/";
@@ -118,7 +118,7 @@ public abstract class ResourceTypeTreeView extends LocatableVLayout implements B
 
     private Canvas getGridCanvas() {
         if (this.gridCanvas == null) {
-            LocatableVLayout layout = new LocatableVLayout(extendLocatorId("gridLayout"));
+            EnhancedVLayout layout = new EnhancedVLayout();
 
             TitleBar titleBar = getTitleBar();
             titleBar.setExtraSpace(10);

@@ -65,16 +65,15 @@ import com.smartgwt.client.widgets.layout.VStack;
 
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTransferImgButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVStack;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria.Criteria> extends LocatableVLayout {
+public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria.Criteria> extends EnhancedVLayout {
 
     private static final String SELECTOR_KEY = "id";
 
@@ -395,12 +394,12 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
     }
 
     private VStack buildButtonStack() {
-        VStack moveButtonStack = new LocatableVStack(extendLocatorId("MoveButtons"), 6);
+        VStack moveButtonStack = new EnhancedVStack(6);
         moveButtonStack.setWidth(42);
         moveButtonStack.setHeight(250);
         moveButtonStack.setAlign(VerticalAlignment.CENTER);
 
-        this.addButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.RIGHT);
+        this.addButton = new TransferImgButton(TransferImgButton.RIGHT);
         this.addButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 addSelectedRows();
@@ -408,7 +407,7 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
         });
         moveButtonStack.addMember(this.addButton);
 
-        this.removeButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.LEFT);
+        this.removeButton = new TransferImgButton(TransferImgButton.LEFT);
         this.removeButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 removeSelectedRows();
@@ -417,7 +416,7 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
         });
         moveButtonStack.addMember(this.removeButton);
 
-        this.addAllButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.RIGHT_ALL);
+        this.addAllButton = new TransferImgButton(TransferImgButton.RIGHT_ALL);
         this.addAllButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 availableGrid.selectAllRecords();
@@ -426,7 +425,7 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
         });
         moveButtonStack.addMember(this.addAllButton);
 
-        this.removeAllButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.LEFT_ALL);
+        this.removeAllButton = new TransferImgButton(TransferImgButton.LEFT_ALL);
         this.removeAllButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 assignedGrid.selectAllRecords();

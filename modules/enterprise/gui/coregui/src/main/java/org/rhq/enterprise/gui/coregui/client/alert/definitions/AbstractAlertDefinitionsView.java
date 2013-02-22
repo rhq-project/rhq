@@ -47,7 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
  */
 public abstract class AbstractAlertDefinitionsView extends TableSection<AbstractAlertDefinitionsDataSource> {
 
-    public AbstractAlertDefinitionsView(String locatorId, String tableTitle, Criteria initialCriteria) {
+    public AbstractAlertDefinitionsView(String tableTitle, Criteria initialCriteria) {
         super(tableTitle, initialCriteria);
 
         setEscapeHtmlInDetailsLinkColumn(true);

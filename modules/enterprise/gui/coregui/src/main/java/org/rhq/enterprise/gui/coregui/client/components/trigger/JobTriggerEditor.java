@@ -49,7 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm
 import org.rhq.enterprise.gui.coregui.client.components.form.TimeUnit;
 import org.rhq.enterprise.gui.coregui.client.components.form.UnitType;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * A SmartGWT widget that provides the ability to create a new {@link JobTrigger job trigger}, or view or edit an
@@ -57,7 +57,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  *
  * @author Ian Springer
  */
-public class JobTriggerEditor extends LocatableVLayout {
+public class JobTriggerEditor extends EnhancedVLayout {
 
     // Field Names
     private static final String FIELD_MODE = "mode";
@@ -73,8 +73,8 @@ public class JobTriggerEditor extends LocatableVLayout {
     private JobTrigger jobTrigger;
     private boolean isReadOnly;
 
-    private LocatableVLayout calendarModeLayout;
-    private LocatableVLayout cronModeLayout;
+    private EnhancedVLayout calendarModeLayout;
+    private EnhancedVLayout cronModeLayout;
 
     private EnhancedDynamicForm modeForm;
     private EnhancedDynamicForm calendarTypeForm;
@@ -95,7 +95,7 @@ public class JobTriggerEditor extends LocatableVLayout {
      *
      * @param locatorId
      */
-    public JobTriggerEditor(String locatorId, boolean isReadOnly) {
+    public JobTriggerEditor(boolean isReadOnly) {
         super();
 
         this.isReadOnly = isReadOnly;
@@ -107,7 +107,7 @@ public class JobTriggerEditor extends LocatableVLayout {
      * @param locatorId
      * @param jobTrigger
      */
-    public JobTriggerEditor(String locatorId, JobTrigger jobTrigger) {
+    public JobTriggerEditor(JobTrigger jobTrigger) {
         super();
 
         this.jobTrigger = jobTrigger;
@@ -192,7 +192,7 @@ public class JobTriggerEditor extends LocatableVLayout {
         this.modeForm.setFields(modeItem);
         addMember(this.modeForm);
 
-        this.calendarModeLayout = new LocatableVLayout(extendLocatorId("CalendarModeLayout"));
+        this.calendarModeLayout = new EnhancedVLayout();
 
         this.calendarTypeForm = new EnhancedDynamicForm(this.isReadOnly);
 
@@ -213,7 +213,7 @@ public class JobTriggerEditor extends LocatableVLayout {
         this.calendarModeLayout.addMember(this.calendarTypeForm);
         addMember(this.calendarModeLayout);
 
-        this.cronModeLayout = new LocatableVLayout(extendLocatorId("CronModeLayout"));
+        this.cronModeLayout = new EnhancedVLayout();
         this.cronModeLayout.setVisible(false);
 
         this.cronForm = new DynamicForm();

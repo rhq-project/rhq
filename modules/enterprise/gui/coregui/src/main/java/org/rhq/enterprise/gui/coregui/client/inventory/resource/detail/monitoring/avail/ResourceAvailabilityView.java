@@ -55,7 +55,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.AvailabilityGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * This shows the availability history for a resource.
@@ -63,7 +63,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Jay Shaughnessy
  * @author John Mazzitelli
  */
-public class ResourceAvailabilityView extends LocatableVLayout {
+public class ResourceAvailabilityView extends EnhancedVLayout {
 
     private ResourceComposite resourceComposite;
     private StaticTextItem currentField;

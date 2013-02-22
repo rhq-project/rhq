@@ -56,8 +56,8 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -65,7 +65,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * 
  * @author Jirka Kremser
  */
-public class ServerDetailView extends LocatableVLayout implements BookmarkableView {
+public class ServerDetailView extends EnhancedVLayout implements BookmarkableView {
 
     private final int serverId;
 
@@ -248,7 +248,7 @@ public class ServerDetailView extends LocatableVLayout implements BookmarkableVi
         form.setItems(nameItem, addressItem, portItem, securePortItem, operationModeItem, affinityGroupItem,
             installationDateItem, lastUpdatetem);
 
-        LocatableToolStrip footer = new LocatableToolStrip();
+        EnhancedToolStrip footer = new EnhancedToolStrip();
         footer.setPadding(5);
         footer.setWidth100();
         footer.setMembersMargin(15);

@@ -42,12 +42,12 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author John Mazzitelli
  */
-public class ConditionsAlertDefinitionForm extends LocatableVLayout implements EditAlertDefinitionForm {
+public class ConditionsAlertDefinitionForm extends EnhancedVLayout implements EditAlertDefinitionForm {
 
     private final ResourceType resourceType;
     private AlertDefinition alertDefinition;
@@ -60,11 +60,11 @@ public class ConditionsAlertDefinitionForm extends LocatableVLayout implements E
     private boolean formBuilt = false;
     private boolean updated;
 
-    public ConditionsAlertDefinitionForm(String locatorId, ResourceType resourceType) {
-        this(locatorId, resourceType, null);
+    public ConditionsAlertDefinitionForm(ResourceType resourceType) {
+        this(resourceType, null);
     }
 
-    public ConditionsAlertDefinitionForm(String locatorId, ResourceType resourceType, AlertDefinition alertDefinition) {
+    public ConditionsAlertDefinitionForm(ResourceType resourceType, AlertDefinition alertDefinition) {
         super();
         this.resourceType = resourceType;
         this.alertDefinition = alertDefinition;
@@ -176,8 +176,7 @@ public class ConditionsAlertDefinitionForm extends LocatableVLayout implements E
 
             conditionExpressionForm.setFields(conditionExpression, conditionExpressionStatic);
 
-            conditionsEditor = new ConditionsEditor(this.extendLocatorId("conditionsEditor"), conditionExpression,
-                resourceType, null);
+            conditionsEditor = new ConditionsEditor(conditionExpression, resourceType, null);
 
             conditionExpression.addChangeHandler(new ChangeHandler() {
                 @Override

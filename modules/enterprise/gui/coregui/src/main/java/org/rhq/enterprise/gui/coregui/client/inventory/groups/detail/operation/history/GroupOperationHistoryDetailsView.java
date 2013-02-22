@@ -31,7 +31,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryDetailsView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Ian Springer
@@ -70,7 +70,7 @@ public class GroupOperationHistoryDetailsView extends AbstractOperationHistoryDe
 
     @Override
     protected Canvas buildResultsSection(GroupOperationHistory operationHistory) {
-        LocatableVLayout resultsSection = new LocatableVLayout(extendLocatorId("ResultsSection"));
+        EnhancedVLayout resultsSection = new EnhancedVLayout();
 
         Label title = new Label("<h4>" + MSG.view_operationHistoryDetails_results() + "</h4>");
         title.setHeight(27);

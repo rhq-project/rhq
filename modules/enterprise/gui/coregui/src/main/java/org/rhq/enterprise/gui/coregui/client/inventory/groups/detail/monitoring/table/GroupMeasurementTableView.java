@@ -42,7 +42,7 @@ public class GroupMeasurementTableView extends Table<GroupMeasurementTableDataSo
 
     private final int groupId;
 
-    public GroupMeasurementTableView(String locatorId, ResourceGroupComposite groupComposite, int groupId) {
+    public GroupMeasurementTableView(ResourceGroupComposite groupComposite, int groupId) {
         super();
         this.groupId = groupId;
         setDataSource(new GroupMeasurementTableDataSource(groupComposite, groupId));

@@ -49,7 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * The base class for the various top-level views which have a sectioned navigation menu on the left side and a content
@@ -195,7 +195,7 @@ public abstract class AbstractSectionedLeftNavigationView extends EnhancedHLayou
 
     public void setContent(Canvas newContent) {
         if (newContent instanceof HasViewName) {
-            LocatableVLayout decoratedContent = decorateWithTitleBar(((HasViewName) newContent).getViewName(),
+            EnhancedVLayout decoratedContent = decorateWithTitleBar(((HasViewName) newContent).getViewName(),
                 newContent);
             contentCanvas.addChild(decoratedContent);
         } else {
@@ -294,8 +294,8 @@ public abstract class AbstractSectionedLeftNavigationView extends EnhancedHLayou
         return globalPermissions;
     }
 
-    private LocatableVLayout decorateWithTitleBar(ViewName viewName, Canvas pageBody){
-        LocatableVLayout vLayout = new LocatableVLayout();
+    private EnhancedVLayout decorateWithTitleBar(ViewName viewName, Canvas pageBody){
+        EnhancedVLayout vLayout = new EnhancedVLayout();
         vLayout.setWidth100();
         vLayout.setHeight100();
         // default to 24x24 otherwise use 16x16

@@ -66,7 +66,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -89,7 +89,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Ian Springer
  * @author John Mazzitelli
  */
-public class ResourceGroupTreeView extends LocatableVLayout implements BookmarkableView {
+public class ResourceGroupTreeView extends EnhancedVLayout implements BookmarkableView {
 
     private static final String FAKE_ROOT_ID = "__fakeRoot__"; // id of the parent node of our real root node
 

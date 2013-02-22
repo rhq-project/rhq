@@ -21,14 +21,14 @@ package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring
 
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * 
  *
  * @author Lukas Krejci
  */
-public class GroupMonitoringTablesView extends LocatableVLayout implements RefreshableView {
+public class GroupMonitoringTablesView extends EnhancedVLayout implements RefreshableView {
 
     private GroupMeasurementTableView metrics;
     private GroupMembersHealthView memberHealth;
@@ -39,8 +39,8 @@ public class GroupMonitoringTablesView extends LocatableVLayout implements Refre
     public GroupMonitoringTablesView(String locatorId, ResourceGroupComposite groupComposite) {
         super();
         
-        metrics = new GroupMeasurementTableView(extendLocatorId("ViewMetrics"), groupComposite, groupComposite.getResourceGroup().getId());
-        memberHealth = new GroupMembersHealthView(extendLocatorId("ViewHealth"), groupComposite.getResourceGroup().getId(), false);
+        metrics = new GroupMeasurementTableView(groupComposite, groupComposite.getResourceGroup().getId());
+        memberHealth = new GroupMembersHealthView(groupComposite.getResourceGroup().getId(), false);
         addMember(metrics);
         addMember(memberHealth);
     }

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,17 +20,32 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
 package org.rhq.enterprise.gui.coregui.client.util.selenium;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Messages;
+import com.smartgwt.client.widgets.layout.HStack;
 
 /**
- * Interface to all locatable components.
- * Implement this to ensure Selenium testability for the implementing component.
+ * Wrapper for a SmartGWT {@link HStack} that adds some destroy logic.
+ * 
+ * TODO: Ensure this added destroy logic is necessary now that Selenium support has been removed.
+ * 
+ * @author Ian Springer
  */
-public interface Locatable {
 
-    Messages MSG = CoreGUI.getMessages();
+public class EnhancedHStack extends HStack implements Enhanced {
+
+    public EnhancedHStack() {
+        super();
+    }
+
+    public void destroyMembers() {
+        SeleniumUtility.destroyMembers(this);
+    }
+
+    @Override
+    public void destroy() {
+        destroyMembers();
+        super.destroy();
+    }
+
 }

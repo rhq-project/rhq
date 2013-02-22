@@ -51,8 +51,8 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * An editor for a SmartGWT {@link Record} backed by an {@link RPCDataSource}.
@@ -60,7 +60,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Ian Springer
  */
 @SuppressWarnings("unchecked")
-public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends LocatableVLayout implements
+public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends EnhancedVLayout implements
     BookmarkableView, DetailsView {
 
     private static final Label LOADING_LABEL = new Label(MSG.common_msg_loading());
@@ -78,7 +78,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
     private String dataTypeName;
     private String listViewPath;
     private ButtonBar buttonBar;
-    private LocatableVLayout contentPane;
+    private EnhancedVLayout contentPane;
     private boolean postFetchHandlerExecutedAlready;
 
     public AbstractRecordEditor(DS dataSource, int recordId, String dataTypeName, String headerIcon) {
@@ -143,8 +143,8 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         }
     }
 
-    protected LocatableVLayout buildContentPane() {
-        LocatableVLayout contentPane = new LocatableVLayout(extendLocatorId("Content"));
+    protected EnhancedVLayout buildContentPane() {
+        EnhancedVLayout contentPane = new EnhancedVLayout();
         contentPane.setWidth100();
         contentPane.setHeight100();
         contentPane.setOverflow(Overflow.AUTO);
@@ -185,7 +185,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         return this.isReadOnly;
     }
 
-    public LocatableVLayout getContentPane() {
+    public EnhancedVLayout getContentPane() {
         return this.contentPane;
     }
 
@@ -438,7 +438,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         return Character.toUpperCase(itemTitle.charAt(ID_NEW)) + itemTitle.substring(1);
     }
 
-    protected class ButtonBar extends LocatableToolStrip {
+    protected class ButtonBar extends EnhancedToolStrip {
 
         private IButton saveButton;
         private IButton resetButton;
@@ -450,7 +450,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
             setWidth100();
             setHeight(35);
 
-            LocatableVLayout vLayout = new LocatableVLayout(extendLocatorId("VLayout"));
+            EnhancedVLayout vLayout = new EnhancedVLayout();
             vLayout.setAlign(VerticalAlignment.CENTER);
             vLayout.setLayoutMargin(4);
 

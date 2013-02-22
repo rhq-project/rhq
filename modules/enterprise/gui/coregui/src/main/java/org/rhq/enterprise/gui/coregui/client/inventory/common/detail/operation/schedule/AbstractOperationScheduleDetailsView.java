@@ -71,7 +71,7 @@ import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.TypeConversionUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * A view for viewing or editing an RHQ {@link org.rhq.core.domain.operation.bean.OperationSchedule operation schedule}.
@@ -233,8 +233,8 @@ public abstract class AbstractOperationScheduleDetailsView extends
     }
 
     @Override
-    protected LocatableVLayout buildContentPane() {
-        LocatableVLayout contentPane = super.buildContentPane();
+    protected EnhancedVLayout buildContentPane() {
+        EnhancedVLayout contentPane = super.buildContentPane();
 
         this.operationParametersConfigurationHolder = new EnhancedHLayout();
         this.operationParametersConfigurationHolder.setVisible(false);
@@ -243,7 +243,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
         HTMLFlow hr = new HTMLFlow("<hr/>");
         contentPane.addMember(hr);
 
-        this.triggerEditor = new JobTriggerEditor(extendLocatorId("TriggerEditor"), isReadOnly());
+        this.triggerEditor = new JobTriggerEditor(isReadOnly());
         contentPane.addMember(this.triggerEditor);
 
         hr = new HTMLFlow("<hr/>");

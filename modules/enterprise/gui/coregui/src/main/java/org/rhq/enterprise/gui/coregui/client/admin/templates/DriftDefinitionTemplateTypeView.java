@@ -48,7 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.drift.DriftDefinitionTemplatesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Jay Shaughnessy
@@ -57,7 +57,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 public class DriftDefinitionTemplateTypeView extends ResourceTypeTreeView {
 
     public static final ViewName VIEW_ID = new ViewName("DriftDefTemplates", MSG.view_adminConfig_driftDefTemplates(),
-            IconEnum.DRIFT_COMPLIANCE);
+        IconEnum.DRIFT_COMPLIANCE);
     public static final String VIEW_PATH = ResourceTypeTreeView.VIEW_PATH + VIEW_ID;
 
     public static final String ATTR_PLUGIN_TEMPLATES = "pluginTemplates";
@@ -113,8 +113,8 @@ public class DriftDefinitionTemplateTypeView extends ResourceTypeTreeView {
             public void onPermissionsLoaded(Set<Permission> permissions) {
 
                 Layout templatesCanvas = getCanvas();
-                DriftDefinitionTemplatesView view = new DriftDefinitionTemplatesView(extendLocatorId("DriftTemplates"),
-                    type, permissions.contains(Permission.MANAGE_SETTINGS));
+                DriftDefinitionTemplatesView view = new DriftDefinitionTemplatesView(type, permissions
+                    .contains(Permission.MANAGE_SETTINGS));
 
                 renderTemplateView(templatesCanvas, view, viewPath);
             }
@@ -159,7 +159,7 @@ public class DriftDefinitionTemplateTypeView extends ResourceTypeTreeView {
 
     private Layout getCanvas() {
         if (this.canvas == null) {
-            LocatableVLayout layout = new LocatableVLayout(extendLocatorId("metricTemplateLayout"));
+            EnhancedVLayout layout = new EnhancedVLayout();
             layout.setHeight100();
             layout.setWidth100();
             layout.setMargin(5);

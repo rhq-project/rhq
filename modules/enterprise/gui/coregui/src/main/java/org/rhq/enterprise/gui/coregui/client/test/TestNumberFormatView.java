@@ -33,9 +33,9 @@ import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.enterprise.gui.coregui.client.util.measurement.MeasurementParser;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
-public class TestNumberFormatView extends LocatableVLayout {
+public class TestNumberFormatView extends EnhancedVLayout {
 
     public TestNumberFormatView() {
         super();

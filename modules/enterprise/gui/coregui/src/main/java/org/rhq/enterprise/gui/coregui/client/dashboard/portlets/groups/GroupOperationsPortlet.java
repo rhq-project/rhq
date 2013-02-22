@@ -62,12 +62,12 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.h
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.history.GroupOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Simeon Pinder
  */
-public class GroupOperationsPortlet extends LocatableVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
+public class GroupOperationsPortlet extends EnhancedVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "GroupOperations";
@@ -235,7 +235,7 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
         final Configuration portletConfig = storedPortlet.getConfiguration();
 
         DynamicForm customSettings = new DynamicForm();
-        LocatableVLayout page = new LocatableVLayout();
+        EnhancedVLayout page = new EnhancedVLayout();
         //build editor form container
         final DynamicForm form = new DynamicForm();
         form.setMargin(5);

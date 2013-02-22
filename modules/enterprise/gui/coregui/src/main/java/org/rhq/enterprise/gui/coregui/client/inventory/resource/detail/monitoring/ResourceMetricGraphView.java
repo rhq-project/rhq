@@ -144,7 +144,7 @@ public class ResourceMetricGraphView extends AbstractMetricGraphView {
     }
 
     protected void displayLiveGraphViewDialog() {
-        LiveGraphView.displayAsDialog(getLocatorId(), getEntityId(), getDefinition());
+        LiveGraphView.displayAsDialog(getEntityId(), getDefinition());
     }
 
     @Override

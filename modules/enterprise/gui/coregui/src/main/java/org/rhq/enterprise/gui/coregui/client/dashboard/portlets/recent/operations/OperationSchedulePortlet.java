@@ -55,7 +55,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.operation.ScheduledOperationsDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -63,7 +63,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  *
  * @author Simeon Pinder
  */
-public class OperationSchedulePortlet extends LocatableVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
+public class OperationSchedulePortlet extends EnhancedVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "OperationSchedule";

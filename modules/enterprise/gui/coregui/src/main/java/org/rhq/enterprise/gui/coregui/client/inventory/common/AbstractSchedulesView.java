@@ -52,8 +52,7 @@ public abstract class AbstractSchedulesView extends Table<SchedulesDataSource> {
 
     protected SchedulesDataSource dataSource;
 
-    public AbstractSchedulesView(String locatorId, String tableTitle, EntityContext entityContext,
-        boolean hasWriteAccess) {
+    public AbstractSchedulesView(String tableTitle, EntityContext entityContext, boolean hasWriteAccess) {
 
         super(tableTitle, SORT_SPECIFIERS);
         this.entityContext = entityContext;

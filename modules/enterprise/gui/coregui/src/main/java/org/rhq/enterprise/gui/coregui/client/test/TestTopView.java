@@ -38,7 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.test.configuration.TestGroupConfigu
 import org.rhq.enterprise.gui.coregui.client.test.configuration.TestReadOnlyConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.test.configuration.TestReadOnlyGroupConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.test.inventory.TestSearchBarView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * The Test top-level view. This view is "hidden", i.e. there are no links to it, so the user must go to the URL
@@ -85,7 +85,7 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     }
 
     protected Canvas defaultView() {
-        LocatableVLayout vLayout = new LocatableVLayout();
+        EnhancedVLayout vLayout = new EnhancedVLayout();
         vLayout.setWidth100();
 
         // TODO: Help icon.

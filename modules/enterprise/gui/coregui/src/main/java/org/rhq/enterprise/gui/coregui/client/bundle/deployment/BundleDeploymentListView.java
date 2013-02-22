@@ -53,7 +53,7 @@ public class BundleDeploymentListView extends Table<BundleDeploymentDataSource> 
 
     private final boolean canManageBundles;
 
-    public BundleDeploymentListView(String locatorId, Criteria criteria, boolean canManageBundles) {
+    public BundleDeploymentListView(Criteria criteria, boolean canManageBundles) {
         super(MSG.view_bundle_bundleDeployments(), criteria);
         this.canManageBundles = canManageBundles;
         setDataSource(new BundleDeploymentDataSource());

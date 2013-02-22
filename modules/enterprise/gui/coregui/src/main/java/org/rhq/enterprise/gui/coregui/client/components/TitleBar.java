@@ -23,15 +23,15 @@ import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Label;
 
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * A title bar to be displayed at the top of a content view - contains a label and/or an icon.
  *
  * @author Ian Springer
  */
-public class TitleBar extends LocatableToolStrip {
+public class TitleBar extends EnhancedToolStrip {
     private Label label;
 
     public TitleBar() {
@@ -48,7 +48,7 @@ public class TitleBar extends LocatableToolStrip {
         setWidth100();
         setHeight(30);
 
-        LocatableVLayout vLayout = new LocatableVLayout(extendLocatorId("VLayout"));
+        EnhancedVLayout vLayout = new EnhancedVLayout();
         vLayout.setAlign(VerticalAlignment.CENTER);
         vLayout.setLayoutMargin(6);
 

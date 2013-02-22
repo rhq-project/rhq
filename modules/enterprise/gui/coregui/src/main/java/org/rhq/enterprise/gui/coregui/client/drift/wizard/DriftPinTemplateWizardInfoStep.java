@@ -44,7 +44,7 @@ import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Jay Shaughnessy
@@ -54,7 +54,7 @@ public class DriftPinTemplateWizardInfoStep extends AbstractWizardStep {
     static private final String CREATE_TEMPLATE = "create";
     static private final String SELECT_TEMPLATE = "select";
 
-    private LocatableVLayout canvas;
+    private EnhancedVLayout canvas;
     private DynamicForm radioForm;
     private AbstractDriftPinTemplateWizard wizard;
 
@@ -67,7 +67,7 @@ public class DriftPinTemplateWizardInfoStep extends AbstractWizardStep {
 
     public Canvas getCanvas() {
         if (null == canvas) {
-            canvas = new LocatableVLayout();
+            canvas = new EnhancedVLayout();
             canvas.setWidth100();
 
             radioForm = new DynamicForm();

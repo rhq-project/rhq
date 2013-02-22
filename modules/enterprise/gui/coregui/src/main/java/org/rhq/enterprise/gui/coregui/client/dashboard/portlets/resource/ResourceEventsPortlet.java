@@ -43,7 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.Abs
 import org.rhq.enterprise.gui.coregui.client.util.GwtTuple;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**This portlet allows the end user to customize the Events display
  *
@@ -137,7 +137,7 @@ public class ResourceEventsPortlet extends GroupEventsPortlet {
                         }
                     }
                     //build display
-                    LocatableVLayout column = new LocatableVLayout();
+                    EnhancedVLayout column = new EnhancedVLayout();
                     column.setHeight(10);
 
                     if (!results.isEmpty()) {

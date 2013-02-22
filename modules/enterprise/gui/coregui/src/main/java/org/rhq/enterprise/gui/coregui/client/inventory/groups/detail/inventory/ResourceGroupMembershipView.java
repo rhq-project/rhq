@@ -35,12 +35,12 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Jay Shaughnessy
  */
-public class ResourceGroupMembershipView extends LocatableVLayout {
+public class ResourceGroupMembershipView extends EnhancedVLayout {
 
     private int resourceGroupId;
     private ResourceGroup resourceGroup;
@@ -128,7 +128,6 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
                     ResourceGroup group = result.get(0);
                     ResourceGroupMembershipView.this.resourceGroup = group;
                     ResourceGroupMembershipView.this.selector = new ResourceGroupResourceSelector(
-                        ResourceGroupMembershipView.this.getLocatorId(),
                         group.getExplicitResources(),
                         (GroupCategory.COMPATIBLE == ResourceGroupMembershipView.this.resourceGroup.getGroupCategory()) ? group
                             .getResourceType() : null, false);

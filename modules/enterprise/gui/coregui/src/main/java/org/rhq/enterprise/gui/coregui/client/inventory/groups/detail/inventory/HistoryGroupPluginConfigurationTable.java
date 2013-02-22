@@ -66,8 +66,8 @@ public class HistoryGroupPluginConfigurationTable extends Table<HistoryGroupPlug
     private final ResourceGroup group;
     private final ResourcePermission groupPerms;
 
-    public HistoryGroupPluginConfigurationTable(String locatorId, ResourceGroupComposite groupComposite) {
-        super(locatorId, MSG.view_group_pluginConfig_table_title());
+    public HistoryGroupPluginConfigurationTable(ResourceGroupComposite groupComposite) {
+        super(MSG.view_group_pluginConfig_table_title());
         this.group = groupComposite.getResourceGroup();
         this.groupPerms = groupComposite.getResourcePermission();
 

@@ -41,7 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * The Help top-level view.
@@ -76,8 +76,8 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
     }
 
     @Override
-    protected LocatableVLayout defaultView() {
-        LocatableVLayout vLayout = new LocatableVLayout();
+    protected EnhancedVLayout defaultView() {
+        EnhancedVLayout vLayout = new EnhancedVLayout();
         vLayout.setWidth100();
 
         // TODO: Help icon.

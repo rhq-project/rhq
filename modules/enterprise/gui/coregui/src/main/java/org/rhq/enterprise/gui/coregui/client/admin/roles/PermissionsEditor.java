@@ -49,14 +49,14 @@ import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVStack;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVStack;
 
 /**
  * An editor for editing the set of RHQ {@link Permission permission}s associated with an RHQ {@link Role role}.
  *
  * @author Ian Springer
  */
-public class PermissionsEditor extends LocatableVStack {
+public class PermissionsEditor extends EnhancedVStack {
 
     private static Messages MSG = CoreGUI.getMessages();
 
@@ -68,7 +68,7 @@ public class PermissionsEditor extends LocatableVStack {
     private Object originalValue;
 
     public PermissionsEditor(RoleEditView roleEditView, boolean isReadOnly) {
-        super(roleEditView.extendLocatorId("Permissions"));
+        super();
 
         this.roleEditView = roleEditView;
         this.isReadOnly = isReadOnly;

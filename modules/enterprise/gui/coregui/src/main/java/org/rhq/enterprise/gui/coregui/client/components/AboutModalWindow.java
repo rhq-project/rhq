@@ -33,7 +33,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * The "About RHQ" modal window.
@@ -71,7 +71,7 @@ public class AboutModalWindow extends Window {
 
         setTitle(MSG.view_aboutBox_title(productInfo.getFullName()));
 
-        LocatableVLayout contentPane = new LocatableVLayout();
+        EnhancedVLayout contentPane = new EnhancedVLayout();
         contentPane.setPadding(10);
 
         // TODO (ips, 09/06/11): Convert this raw HTML to SmartGWT widgets.

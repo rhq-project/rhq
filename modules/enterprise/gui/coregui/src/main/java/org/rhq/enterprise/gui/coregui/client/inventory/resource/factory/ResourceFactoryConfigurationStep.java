@@ -37,7 +37,7 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardSte
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * This step displays a config editor for the user to enter the new Resource's initial Resource or plugin configuration.
@@ -47,7 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class ResourceFactoryConfigurationStep extends AbstractWizardStep implements PropertyValueChangeListener {
 
-    private LocatableVLayout vLayout;
+    private EnhancedVLayout vLayout;
     private ConfigurationEditor editor;
     private Configuration startingConfig;
     private DurationItem timeoutItem;
@@ -61,7 +61,7 @@ public class ResourceFactoryConfigurationStep extends AbstractWizardStep impleme
         boolean newCanvas = this.vLayout == null;
 
         if (newCanvas) {
-            this.vLayout = new LocatableVLayout();
+            this.vLayout = new EnhancedVLayout();
 
             // only create the timeout member 1 time, even if we end up recreating the config editor
             TreeSet<TimeUnit> supportedUnits = new TreeSet<TimeUnit>();

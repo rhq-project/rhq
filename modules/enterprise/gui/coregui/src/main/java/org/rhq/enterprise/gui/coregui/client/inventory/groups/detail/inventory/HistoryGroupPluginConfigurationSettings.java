@@ -43,7 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * Read only view that shows group plugin configuration properties. These are properties
@@ -51,7 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  *
  * @author John Mazzitelli
  */
-public class HistoryGroupPluginConfigurationSettings extends LocatableVLayout {
+public class HistoryGroupPluginConfigurationSettings extends EnhancedVLayout {
     private final ResourceGroup group;
     private final ResourcePermission groupPerms;
     private final int groupUpdateId;
@@ -59,7 +59,7 @@ public class HistoryGroupPluginConfigurationSettings extends LocatableVLayout {
     private List<GroupMemberConfiguration> memberConfigurations;
     private GroupConfigurationEditor editor;
 
-    public HistoryGroupPluginConfigurationSettings(String locatorId, ResourceGroupComposite groupComposite, int updateId) {
+    public HistoryGroupPluginConfigurationSettings(ResourceGroupComposite groupComposite, int updateId) {
         super();
         this.group = groupComposite.getResourceGroup();
         this.groupPerms = groupComposite.getResourcePermission();

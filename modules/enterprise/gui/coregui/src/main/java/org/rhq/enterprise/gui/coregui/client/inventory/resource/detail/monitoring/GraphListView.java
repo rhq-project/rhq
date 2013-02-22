@@ -41,13 +41,13 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityBarView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
 /**
  * @author Greg Hinkle
  */
-public class GraphListView extends LocatableVLayout implements ResourceSelectListener {
+public class GraphListView extends EnhancedVLayout implements ResourceSelectListener {
 
     private Resource resource;
     private Label loadingLabel = new Label(MSG.common_msg_loading());

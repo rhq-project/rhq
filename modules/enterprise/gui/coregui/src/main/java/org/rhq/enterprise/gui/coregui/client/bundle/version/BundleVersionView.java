@@ -62,18 +62,18 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class BundleVersionView extends LocatableVLayout implements BookmarkableView {
+public class BundleVersionView extends EnhancedVLayout implements BookmarkableView {
 
     private BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
     private BundleVersion version;
     private boolean canManageBundles = false;
 
-    public BundleVersionView(String locatorId, boolean canManageBundles) {
+    public BundleVersionView(boolean canManageBundles) {
         super();
         this.canManageBundles = canManageBundles;
         setWidth100();
@@ -100,7 +100,7 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
 
         addMember(createSummaryForm());
 
-        TabSet tabs = new LocatableTabSet(extendLocatorId("Tabs"));
+        TabSet tabs = new LocatableTabSet();
         tabs.addTab(createRecipeTab());
         tabs.addTab(createLiveDeploymentsTab());
         tabs.addTab(createFilesTab());
@@ -158,7 +158,7 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
     }
 
     private Canvas getActionLayout() {
-        LocatableVLayout actionLayout = new LocatableVLayout(10);
+        EnhancedVLayout actionLayout = new EnhancedVLayout(10);
         IButton deleteButton = new EnhancedIButton(MSG.common_button_delete());
         deleteButton.setIcon("subsystems/bundle/BundleVersionAction_Delete_16.png");
         deleteButton.addClickHandler(new ClickHandler() {
@@ -197,31 +197,30 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
 
     private TagEditorView createTagEditor() {
         boolean readOnly = !this.canManageBundles;
-        TagEditorView tagEditor = new TagEditorView(extendLocatorId("Tags"), version.getTags(), readOnly,
-            new TagsChangedCallback() {
-                public void tagsChanged(HashSet<Tag> tags) {
-                    GWTServiceLookup.getTagService().updateBundleVersionTags(version.getId(), tags,
-                        new AsyncCallback<Void>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(
-                                    MSG.view_bundle_version_bundleVersionTagUpdateFailure(), caught);
-                            }
+        TagEditorView tagEditor = new TagEditorView(version.getTags(), readOnly, new TagsChangedCallback() {
+            public void tagsChanged(HashSet<Tag> tags) {
+                GWTServiceLookup.getTagService().updateBundleVersionTags(version.getId(), tags,
+                    new AsyncCallback<Void>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError(
+                                MSG.view_bundle_version_bundleVersionTagUpdateFailure(), caught);
+                        }
 
-                            public void onSuccess(Void result) {
-                                CoreGUI.getMessageCenter().notify(
-                                    new Message(MSG.view_bundle_version_bundleVersionTagUpdateSuccessful(),
-                                        Message.Severity.Info));
-                            }
-                        });
-                }
-            });
+                        public void onSuccess(Void result) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message(MSG.view_bundle_version_bundleVersionTagUpdateSuccessful(),
+                                    Message.Severity.Info));
+                        }
+                    });
+            }
+        });
         tagEditor.setAutoHeight();
         tagEditor.setExtraSpace(10);
         return tagEditor;
     }
 
     private Tab createRecipeTab() {
-        LocatableTab tab = new LocatableTab(extendLocatorId("Recipe"), MSG.view_bundle_recipe());
+        LocatableTab tab = new LocatableTab(MSG.view_bundle_recipe());
         DynamicForm form = new DynamicForm();
 
         TextAreaItem recipeCanvas = new TextAreaItem("recipe", MSG.view_bundle_recipe());
@@ -246,15 +245,15 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
     }
 
     private Tab createLiveDeploymentsTab() {
-        LocatableTab tab = new LocatableTab(extendLocatorId("Deployments"), MSG.view_bundle_deployments());
+        LocatableTab tab = new LocatableTab(MSG.view_bundle_deployments());
         Criteria criteria = new Criteria();
         criteria.setAttribute("bundleVersionId", version.getId());
-        tab.setPane(new BundleDeploymentListView(tab.getLocatorId(), criteria, this.canManageBundles));
+        tab.setPane(new BundleDeploymentListView(criteria, this.canManageBundles));
         return tab;
     }
 
     private Tab createFilesTab() {
-        LocatableTab tab = new LocatableTab(extendLocatorId("Files"), MSG.view_bundle_files());
+        LocatableTab tab = new LocatableTab(MSG.view_bundle_files());
         FileListView filesView = new FileListView(tab.getLocatorId(), version.getId());
         tab.setPane(filesView);
         return tab;

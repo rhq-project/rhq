@@ -66,8 +66,8 @@ import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedSearchBarItem;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -83,7 +83,7 @@ public abstract class Carousel extends EnhancedHLayout implements RefreshableVie
     private static final String FILTER_CAROUSEL_START = "CarouselStart";
     private static final String FILTER_CAROUSEL_SIZE = "CarouselSize";
 
-    private LocatableVLayout contents;
+    private EnhancedVLayout contents;
 
     private HLayout titleLayout;
     private Canvas titleComponent;
@@ -114,8 +114,8 @@ public abstract class Carousel extends EnhancedHLayout implements RefreshableVie
     private boolean carouselActionDisableOverride = false;
     protected List<Canvas> extraWidgetsAboveFooter = new ArrayList<Canvas>();
     protected List<Canvas> extraWidgetsInMainFooter = new ArrayList<Canvas>();
-    private LocatableToolStrip footer;
-    private LocatableToolStrip footerExtraWidgets;
+    private EnhancedToolStrip footer;
+    private EnhancedToolStrip footerExtraWidgets;
     private EnhancedIButton refreshButton;
     private EnhancedIButton nextButton;
     private EnhancedIButton previousButton;
@@ -175,7 +175,7 @@ public abstract class Carousel extends EnhancedHLayout implements RefreshableVie
     protected void onInit() {
         super.onInit();
 
-        contents = new LocatableVLayout();
+        contents = new EnhancedVLayout();
         contents.setWidth100();
         contents.setHeight100();
 
@@ -243,14 +243,14 @@ public abstract class Carousel extends EnhancedHLayout implements RefreshableVie
 
             // A second toolstrip that optionally appears before the main footer - it will contain extra widgets.
             // This is hidden from view unless extra widgets are actually added to the carousel above the main footer.
-            this.footerExtraWidgets = new LocatableToolStrip();
+            this.footerExtraWidgets = new EnhancedToolStrip();
             footerExtraWidgets.setPadding(5);
             footerExtraWidgets.setWidth100();
             footerExtraWidgets.setMembersMargin(15);
             footerExtraWidgets.hide();
             contents.addMember(footerExtraWidgets);
 
-            this.footer = new LocatableToolStrip();
+            this.footer = new EnhancedToolStrip();
             footer.setPadding(5);
             footer.setWidth100();
             footer.setMembersMargin(15);
@@ -715,8 +715,7 @@ public abstract class Carousel extends EnhancedHLayout implements RefreshableVie
         } else {
             unqualifiedLocatorId = locatorId;
         }
-        CarouselActionInfo info = new CarouselActionInfo(this.footer.extendLocatorId(unqualifiedLocatorId), title,
-            confirmation, valueMap, action);
+        CarouselActionInfo info = new CarouselActionInfo(title, confirmation, valueMap, action);
         carouselActions.add(info);
     }
 
@@ -946,24 +945,19 @@ public abstract class Carousel extends EnhancedHLayout implements RefreshableVie
     }
 
     public static class CarouselActionInfo {
-        private String locatorId;
         private String title;
         private String confirmMessage;
         private LinkedHashMap<String, ? extends Object> valueMap;
         private CarouselAction action;
         private Canvas actionCanvas;
 
-        protected CarouselActionInfo(String locatorId, String title, String confirmMessage,
+        protected CarouselActionInfo(String title, String confirmMessage,
             LinkedHashMap<String, ? extends Object> valueMap, CarouselAction action) {
-            this.locatorId = locatorId;
+
             this.title = title;
             this.confirmMessage = confirmMessage;
             this.valueMap = valueMap;
             this.action = action;
-        }
-
-        public String getLocatorId() {
-            return locatorId;
         }
 
         public String getTitle() {

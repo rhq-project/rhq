@@ -33,12 +33,12 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class ConfigurationHistoryDetailView extends LocatableVLayout implements BookmarkableView {
+public class ConfigurationHistoryDetailView extends EnhancedVLayout implements BookmarkableView {
 
     public ConfigurationHistoryDetailView() {
         super();

@@ -85,12 +85,12 @@ import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Joseph Marques
  */
-public class SingleGroupDefinitionView extends LocatableVLayout implements BookmarkableView {
+public class SingleGroupDefinitionView extends EnhancedVLayout implements BookmarkableView {
 
     private static final String TEMPLATE_JBOSSAS4_CLUSTERS = MSG.view_dynagroup_template_jbossas4_clusters();
     private static final String TEMPLATE_JBOSSAS5_CLUSTERS = MSG.view_dynagroup_template_jbossas5_clusters(); // true for AS 5 and 6
@@ -147,8 +147,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
             : DSOperationType.UPDATE;
         form.setSaveOperationType(saveOperationType);
 
-        final DynaGroupChildrenView dynaGroupChildrenView = new DynaGroupChildrenView(extendLocatorId("DynaGroups"),
-            groupDefinitionId);
+        final DynaGroupChildrenView dynaGroupChildrenView = new DynaGroupChildrenView(groupDefinitionId);
 
         // button setup
         IButton saveButton = new EnhancedIButton(MSG.common_button_save());
@@ -257,7 +256,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
     }
 
     class DynaGroupChildrenView extends Table<ResourceGroupsDataSource> {
-        public DynaGroupChildrenView(String locatorId, int groupDefinitionId) {
+        public DynaGroupChildrenView(int groupDefinitionId) {
             super(MSG.view_dynagroup_children(), new Criteria("groupDefinitionId", String.valueOf(groupDefinition
                 .getId())));
             setDataSource(ResourceGroupsDataSource.getInstance());

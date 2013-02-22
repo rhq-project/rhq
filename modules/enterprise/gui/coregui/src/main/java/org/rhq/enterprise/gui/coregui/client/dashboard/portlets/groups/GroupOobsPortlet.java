@@ -55,13 +55,13 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.Abs
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**This portlet allows the end user to customize the OOB display
  *
  * @author Simeon Pinder
  */
-public class GroupOobsPortlet extends LocatableVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
+public class GroupOobsPortlet extends EnhancedVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "GroupOobs";
@@ -155,7 +155,7 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
         final Configuration portletConfig = storedPortlet.getConfiguration();
 
         DynamicForm customSettings = new DynamicForm();
-        LocatableVLayout page = new LocatableVLayout();
+        EnhancedVLayout page = new EnhancedVLayout();
         //build editor form container
         final DynamicForm form = new DynamicForm();
         form.setMargin(5);

@@ -23,14 +23,14 @@ import com.smartgwt.client.widgets.Canvas;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * A view for group resource configuration history.
  *
  * @author John Mazzitelli
  */
-public class HistoryGroupResourceConfigurationView extends LocatableVLayout implements BookmarkableView {
+public class HistoryGroupResourceConfigurationView extends EnhancedVLayout implements BookmarkableView {
     private final ResourceGroupComposite groupComposite;
     private HistoryGroupResourceConfigurationTable groupHistoryTable;
     private Canvas detailsCanvas = null;
@@ -39,7 +39,7 @@ public class HistoryGroupResourceConfigurationView extends LocatableVLayout impl
         super();
         this.groupComposite = groupComposite;
 
-        groupHistoryTable = new HistoryGroupResourceConfigurationTable(extendLocatorId("Table"), groupComposite);
+        groupHistoryTable = new HistoryGroupResourceConfigurationTable(groupComposite);
         addMember(groupHistoryTable);
     }
 
@@ -73,11 +73,9 @@ public class HistoryGroupResourceConfigurationView extends LocatableVLayout impl
             }
 
             if (configView) {
-                detailsCanvas = new HistoryGroupResourceConfigurationSettings(extendLocatorId("SettingsView"),
-                    this.groupComposite, groupHistoryId);
+                detailsCanvas = new HistoryGroupResourceConfigurationSettings(this.groupComposite, groupHistoryId);
             } else {
-                detailsCanvas = new HistoryGroupResourceConfigurationMembers(extendLocatorId("MembersView"),
-                    this.groupComposite, groupHistoryId);
+                detailsCanvas = new HistoryGroupResourceConfigurationMembers(this.groupComposite, groupHistoryId);
             }
             addMember(detailsCanvas);
             setVisibleMember(detailsCanvas);

@@ -29,26 +29,25 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
  */
 public class TwoLevelTab extends NamedTab {
     private SubTabLayout layout;
-    
+
     private TwoLevelTab actualNext;
     private TwoLevelTab visibleNext;
 
     /**
      * Use the more type safe version instead.<br/>
      * <code>TwoLevelTab(String locatorId, ViewName viewName, String icon)</code>
-     * @param locatorId
      * @param viewName
      * @param icon String representation of Icon not as typesafe as IconEnum.
      */
     @Deprecated
-    public TwoLevelTab(String locatorId, ViewName viewName, String icon) {
-        super(locatorId, viewName, icon);
+    public TwoLevelTab(ViewName viewName, String icon) {
+        super(viewName, icon);
 
         layout = new SubTabLayout();
     }
 
-    public TwoLevelTab(String locatorId, ViewName viewName, IconEnum iconEnum) {
-        super(locatorId, viewName, iconEnum.getIcon16x16DisabledPath());
+    public TwoLevelTab(ViewName viewName, IconEnum iconEnum) {
+        super(viewName, iconEnum.getIcon16x16DisabledPath());
 
         layout = new SubTabLayout();
     }

@@ -28,14 +28,14 @@ import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * Details view for a single child history entity.
  * 
  * @author John Mazzitelli
  */
-public class ChildHistoryDetails extends LocatableVLayout {
+public class ChildHistoryDetails extends EnhancedVLayout {
     private CreateResourceHistory createHistory;
     private DeleteResourceHistory deleteHistory;
 

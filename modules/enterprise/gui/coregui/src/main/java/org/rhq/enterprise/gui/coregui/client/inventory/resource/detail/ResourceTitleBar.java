@@ -55,13 +55,13 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class ResourceTitleBar extends LocatableVLayout {
+public class ResourceTitleBar extends EnhancedVLayout {
 
     //represents row of Resource title details[icon,title,show-details,tags,availability,favorites]
     private EnhancedHLayout top;
@@ -133,26 +133,24 @@ public class ResourceTitleBar extends LocatableVLayout {
 
         badge = new Img(ImageManager.getResourceLargeIcon(ResourceCategory.SERVICE), 24, 24);
 
-        TagEditorView tagEditorView = new TagEditorView(extendLocatorId("TagEdit"), resource.getTags(),
-            !resourceComposite.getResourcePermission().isInventory(), new TagsChangedCallback() {
-                public void tagsChanged(final HashSet<Tag> tags) {
-                    GWTServiceLookup.getTagService().updateResourceTags(resource.getId(), tags,
-                        new AsyncCallback<Void>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler()
-                                    .handleError(MSG.view_resource_title_tagUpdateFailed(), caught);
-                            }
+        TagEditorView tagEditorView = new TagEditorView(resource.getTags(), !resourceComposite.getResourcePermission()
+            .isInventory(), new TagsChangedCallback() {
+            public void tagsChanged(final HashSet<Tag> tags) {
+                GWTServiceLookup.getTagService().updateResourceTags(resource.getId(), tags, new AsyncCallback<Void>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_resource_title_tagUpdateFailed(), caught);
+                    }
 
-                            public void onSuccess(Void result) {
-                                CoreGUI.getMessageCenter().notify(
-                                    new Message(MSG.view_titleBar_common_updateTagsSuccessful(resource.getName()),
-                                        Message.Severity.Info));
-                                // update what is essentially our local cache
-                                resource.setTags(tags);
-                            }
-                        });
-                }
-            });
+                    public void onSuccess(Void result) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.view_titleBar_common_updateTagsSuccessful(resource.getName()),
+                                Message.Severity.Info));
+                        // update what is essentially our local cache
+                        resource.setTags(tags);
+                    }
+                });
+            }
+        });
 
         loadTags(tagEditorView);
 
@@ -207,7 +205,7 @@ public class ResourceTitleBar extends LocatableVLayout {
                 disposalReminder.setValign(VerticalAlignment.CENTER);
                 disposalReminder.setContents(MSG.view_resource_title_component_errors_cleanup());
 
-                LocatableVLayout form = new LocatableVLayout(extendLocatorId("_Modal_Form"));
+                EnhancedVLayout form = new EnhancedVLayout();
                 form.setAlign(VerticalAlignment.CENTER);
                 form.setLayoutMargin(10);
                 form.setWidth100();

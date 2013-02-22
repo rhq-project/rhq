@@ -61,7 +61,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Jay Shaughnessy
@@ -88,7 +88,7 @@ public class GetDestinationStep extends AbstractWizardStep {
 
     public Canvas getCanvas() {
         if (this.form == null) {
-            this.form = new LocatableVLayout();
+            this.form = new EnhancedVLayout();
             this.valForm.setWidth100();
             this.valForm.setNumCols(2);
             this.valForm.setColWidths("50%", "*");

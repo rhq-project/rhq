@@ -60,7 +60,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -68,14 +68,13 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  *
  * @author John Mazzitelli
  */
-public class HistoryGroupResourceConfigurationMembers extends LocatableVLayout {
+public class HistoryGroupResourceConfigurationMembers extends EnhancedVLayout {
     private final ResourceGroup group;
     @SuppressWarnings("unused")
     private final ResourcePermission groupPerms;
     private final int groupUpdateId;
 
-    public HistoryGroupResourceConfigurationMembers(String locatorId, ResourceGroupComposite groupComposite,
-        int updateId) {
+    public HistoryGroupResourceConfigurationMembers(ResourceGroupComposite groupComposite, int updateId) {
         super();
         this.group = groupComposite.getResourceGroup();
         this.groupPerms = groupComposite.getResourcePermission();

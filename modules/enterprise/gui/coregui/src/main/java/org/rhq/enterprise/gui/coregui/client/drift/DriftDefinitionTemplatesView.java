@@ -97,12 +97,11 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
     }
 
     // for subsystem views
-    public DriftDefinitionTemplatesView(String locatorId, ResourceType type, boolean hasWriteAccess) {
-        this(locatorId, getTitle(type), type, hasWriteAccess);
+    public DriftDefinitionTemplatesView(ResourceType type, boolean hasWriteAccess) {
+        this(getTitle(type), type, hasWriteAccess);
     }
 
-    protected DriftDefinitionTemplatesView(String locatorId, String tableTitle, ResourceType type,
-        boolean hasWriteAccess) {
+    protected DriftDefinitionTemplatesView(String tableTitle, ResourceType type, boolean hasWriteAccess) {
         super(tableTitle, null, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
 
         this.type = type;

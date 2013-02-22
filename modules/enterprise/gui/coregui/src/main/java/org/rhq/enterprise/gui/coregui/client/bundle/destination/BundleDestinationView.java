@@ -63,12 +63,12 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class BundleDestinationView extends LocatableVLayout implements BookmarkableView {
+public class BundleDestinationView extends EnhancedVLayout implements BookmarkableView {
     private BundleDestination destination;
     private Bundle bundle;
 
@@ -76,7 +76,7 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
 
     private boolean canManageBundles;
 
-    public BundleDestinationView(String locatorId, boolean canManageBundles) {
+    public BundleDestinationView(boolean canManageBundles) {
         super();
         this.canManageBundles = canManageBundles;
         setWidth100();
@@ -160,29 +160,28 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
 
     private TagEditorView createTagEditor() {
         boolean readOnly = !this.canManageBundles;
-        TagEditorView tagEditor = new TagEditorView(extendLocatorId("Tags"), destination.getTags(), readOnly,
-            new TagsChangedCallback() {
-                public void tagsChanged(HashSet<Tag> tags) {
-                    GWTServiceLookup.getTagService().updateBundleDestinationTags(destination.getId(), tags,
-                        new AsyncCallback<Void>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(MSG.view_bundle_dest_tagUpdateFailure(), caught);
-                            }
+        TagEditorView tagEditor = new TagEditorView(destination.getTags(), readOnly, new TagsChangedCallback() {
+            public void tagsChanged(HashSet<Tag> tags) {
+                GWTServiceLookup.getTagService().updateBundleDestinationTags(destination.getId(), tags,
+                    new AsyncCallback<Void>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError(MSG.view_bundle_dest_tagUpdateFailure(), caught);
+                        }
 
-                            public void onSuccess(Void result) {
-                                CoreGUI.getMessageCenter().notify(
-                                    new Message(MSG.view_bundle_dest_tagUpdateSuccessful(), Message.Severity.Info));
-                            }
-                        });
-                }
-            });
+                        public void onSuccess(Void result) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message(MSG.view_bundle_dest_tagUpdateSuccessful(), Message.Severity.Info));
+                        }
+                    });
+            }
+        });
         tagEditor.setAutoHeight();
         tagEditor.setExtraSpace(10);
         return tagEditor;
     }
 
     private Canvas getActionLayout() {
-        LocatableVLayout actionLayout = new LocatableVLayout(10);
+        EnhancedVLayout actionLayout = new EnhancedVLayout(10);
         IButton deployButton = new EnhancedIButton(MSG.view_bundle_deploy());
         deployButton.setIcon(IconEnum.BUNDLE_DEPLOY.getIcon16x16Path());
         deployButton.addClickHandler(new ClickHandler() {
@@ -304,8 +303,7 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
     private Table createDeploymentsTable() {
         Criteria criteria = new Criteria();
         criteria.addCriteria("bundleDestinationId", destination.getId());
-        BundleDeploymentListView deployments = new BundleDeploymentListView(extendLocatorId("Deployments"), criteria,
-            canManageBundles);
+        BundleDeploymentListView deployments = new BundleDeploymentListView(criteria, canManageBundles);
         deployments.setHeight100();
         deployments.setShowResizeBar(true);
         return deployments;

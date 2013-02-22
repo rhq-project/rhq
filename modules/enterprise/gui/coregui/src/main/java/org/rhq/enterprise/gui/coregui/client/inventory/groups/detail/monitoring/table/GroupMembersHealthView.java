@@ -40,8 +40,8 @@ public class GroupMembersHealthView extends MembersView {
     private int groupId;
     private boolean canModifyMembers;
 
-    public GroupMembersHealthView(String locatorId, int groupId, boolean canModifyMembers) {
-        super(locatorId, groupId, false);
+    public GroupMembersHealthView(int groupId, boolean canModifyMembers) {
+        super(groupId, false);
         this.canModifyMembers = canModifyMembers;
         this.groupId = groupId;
         setShowFilterForm(false);

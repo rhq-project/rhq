@@ -36,14 +36,14 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.PluginGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * Shows details of an agent plugin.
  * 
  * @author John Mazzitelli
  */
-public class AgentPluginDetailView extends LocatableVLayout {
+public class AgentPluginDetailView extends EnhancedVLayout {
 
     private final PluginGWTServiceAsync pluginManager = GWTServiceLookup.getPluginService();
     private final int pluginId;

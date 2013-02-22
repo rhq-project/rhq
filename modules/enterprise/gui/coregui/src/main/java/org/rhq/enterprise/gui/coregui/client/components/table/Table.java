@@ -85,8 +85,8 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -109,11 +109,11 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
     protected static final String FIELD_ID = "id";
     protected static final String FIELD_NAME = "name";
 
-    private LocatableVLayout contents;
+    private EnhancedVLayout contents;
 
     private HTMLFlow titleCanvas;
 
-    private LocatableVLayout titleLayout;
+    private EnhancedVLayout titleLayout;
 
     private TitleBar titleBar;
     private String titleIcon;
@@ -146,8 +146,8 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
     private boolean tableActionDisableOverride = false;
     protected List<Canvas> extraWidgetsAboveFooter = new ArrayList<Canvas>();
     protected List<Canvas> extraWidgetsInMainFooter = new ArrayList<Canvas>();
-    private LocatableToolStrip footer;
-    private LocatableToolStrip footerExtraWidgets;
+    private EnhancedToolStrip footer;
+    private EnhancedToolStrip footerExtraWidgets;
     private EnhancedIButton refreshButton;
     private boolean initialized;
 
@@ -245,9 +245,9 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
      * @return the Layout for all of the Table contents
      * @see #configureTableContents(Layout)
      */
-    protected LocatableVLayout createTableContents() {
+    protected EnhancedVLayout createTableContents() {
         if (null == contents) {
-            contents = new LocatableVLayout();
+            contents = new EnhancedVLayout();
         }
 
         return contents;
@@ -270,7 +270,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
         contents.setOverflow(Overflow.AUTO);
     }
 
-    public LocatableVLayout getTableContents() {
+    public EnhancedVLayout getTableContents() {
         return contents;
     }
 
@@ -422,7 +422,7 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
 
             if (showHeader) {
                 // titleLayout not really needed now as TitleBar has a LocatableVLayout
-                titleLayout = new LocatableVLayout(contents.extendLocatorId("Title"));
+                titleLayout = new EnhancedVLayout();
                 titleLayout.setAutoHeight();
                 titleLayout.setAlign(VerticalAlignment.BOTTOM);
                 contents.addMember(titleLayout, 0);
@@ -438,14 +438,14 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
 
             // A second toolstrip that optionally appears before the main footer - it will contain extra widgets.
             // This is hidden from view unless extra widgets are actually added to the table above the main footer.
-            this.footerExtraWidgets = new LocatableToolStrip();
+            this.footerExtraWidgets = new EnhancedToolStrip();
             footerExtraWidgets.setPadding(5);
             footerExtraWidgets.setWidth100();
             footerExtraWidgets.setMembersMargin(15);
             footerExtraWidgets.hide();
             contents.addMember(footerExtraWidgets);
 
-            this.footer = new LocatableToolStrip();
+            this.footer = new EnhancedToolStrip();
             footer.setPadding(5);
             footer.setWidth100();
             footer.setMembersMargin(15);

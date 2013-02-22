@@ -34,7 +34,7 @@ import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * A window dialog box that lets you pick one or more resources.
@@ -80,7 +80,7 @@ public class ResourcePicker extends Window {
             }
         });
 
-        LocatableVLayout layout = new LocatableVLayout();
+        EnhancedVLayout layout = new EnhancedVLayout();
         layout.setLayoutAlign(Alignment.CENTER);
         layout.setLayoutMargin(10);
 

@@ -44,7 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * A canvas that shows basic information/properties on a specific group.
@@ -52,14 +52,13 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Ian Springer
  * @author John Mazzitelli
  */
-public class GeneralProperties extends LocatableVLayout {
+public class GeneralProperties extends EnhancedVLayout {
     private ResourceGroupGWTServiceAsync resourceGroupService = GWTServiceLookup.getResourceGroupService();
     private ResourceGroupComposite groupComposite;
     private final ResourceGroupTitleBar titleBar;
     private boolean isEditable;
 
-    public GeneralProperties(String locatorId, ResourceGroupComposite groupComposite, ResourceGroupTitleBar titleBar,
-        boolean isEditable) {
+    public GeneralProperties(ResourceGroupComposite groupComposite, ResourceGroupTitleBar titleBar, boolean isEditable) {
         super();
         this.groupComposite = groupComposite;
         this.titleBar = titleBar;

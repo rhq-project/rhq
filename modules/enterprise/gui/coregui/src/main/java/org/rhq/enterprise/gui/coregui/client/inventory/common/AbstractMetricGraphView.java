@@ -56,13 +56,13 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
  * @author Jay Shaughnessy
  */
-public abstract class AbstractMetricGraphView extends LocatableVLayout {
+public abstract class AbstractMetricGraphView extends EnhancedVLayout {
 
     private static final String INSTRUCTIONS = MSG.view_resource_monitor_graph_instructions();
 

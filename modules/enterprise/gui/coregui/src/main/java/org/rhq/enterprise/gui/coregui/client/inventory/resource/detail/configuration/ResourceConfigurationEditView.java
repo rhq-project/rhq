@@ -50,7 +50,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * A view for editing a Resource's configuration.
@@ -58,7 +58,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class ResourceConfigurationEditView extends LocatableVLayout implements PropertyValueChangeListener,
+public class ResourceConfigurationEditView extends EnhancedVLayout implements PropertyValueChangeListener,
     RefreshableView {
 
     private Resource resource;

@@ -27,7 +27,7 @@ import java.util.Set;
  */
 public class SingleResourcePicker extends ResourcePicker {
 
-    public SingleResourcePicker(String locatorId, OkHandler okHandler, CancelHandler cancelHandler) {
+    public SingleResourcePicker(OkHandler okHandler, CancelHandler cancelHandler) {
         super(okHandler, cancelHandler);
     }
 

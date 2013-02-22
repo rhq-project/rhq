@@ -55,7 +55,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedLayout;
 
 /**
  * A reusable component that shows a set of tags and, if not read only, allows the user
@@ -64,7 +64,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLayout;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public class TagEditorView extends LocatableLayout {
+public class TagEditorView extends EnhancedLayout {
 
     private LinkedHashSet<Tag> tags = new LinkedHashSet<Tag>();
     private boolean readOnly;
@@ -74,12 +74,11 @@ public class TagEditorView extends LocatableLayout {
     private Img addImg;
     private TagInputDialog tagInputDialog;
 
-    public TagEditorView(String locatorId, Set<Tag> tags, boolean readOnly, TagsChangedCallback callback) {
-        this(locatorId, tags, readOnly, callback, false);
+    public TagEditorView(Set<Tag> tags, boolean readOnly, TagsChangedCallback callback) {
+        this(tags, readOnly, callback, false);
     }
 
-    public TagEditorView(String locatorId, Set<Tag> tags, boolean readOnly, TagsChangedCallback callback,
-        boolean vertical) {
+    public TagEditorView(Set<Tag> tags, boolean readOnly, TagsChangedCallback callback, boolean vertical) {
 
         super();
 

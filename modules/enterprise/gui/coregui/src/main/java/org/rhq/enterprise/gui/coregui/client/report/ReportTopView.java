@@ -51,7 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.report.inventory.ResourceInstallRep
 import org.rhq.enterprise.gui.coregui.client.report.measurement.MeasurementOOBView;
 import org.rhq.enterprise.gui.coregui.client.report.operation.SubsystemOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * The Reports top-level view.
@@ -86,7 +86,7 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
 
     @Override
     protected VLayout defaultView() {
-        LocatableVLayout vLayout = new LocatableVLayout();
+        EnhancedVLayout vLayout = new EnhancedVLayout();
         vLayout.setWidth100();
 
         TitleBar titleBar = new TitleBar(MSG.view_reportsTop_title(), IconEnum.REPORT.getIcon24x24Path());

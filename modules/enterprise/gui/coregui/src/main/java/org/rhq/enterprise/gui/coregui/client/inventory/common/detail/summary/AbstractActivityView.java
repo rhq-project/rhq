@@ -69,13 +69,13 @@ import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.measurement.GwtMonitorUtils;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Simeon Pinder
  */
-public abstract class AbstractActivityView extends LocatableVLayout implements RefreshableView {
+public abstract class AbstractActivityView extends EnhancedVLayout implements RefreshableView {
 
     //contains the activity display region
     private EnhancedHLayout columnSection = new EnhancedHLayout();

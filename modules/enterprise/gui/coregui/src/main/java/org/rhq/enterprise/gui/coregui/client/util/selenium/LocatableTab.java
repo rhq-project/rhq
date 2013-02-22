@@ -25,7 +25,7 @@ import com.smartgwt.client.widgets.tab.Tab;
  * 
  * @author Jay Shaughnessy
  */
-public class LocatableTab extends Tab implements Locatable {
+public class LocatableTab extends Tab implements Enhanced {
 
     private String locatorId;
 
@@ -35,9 +35,9 @@ public class LocatableTab extends Tab implements Locatable {
      * </pre>
      * @param locatorId not null or empty.
      */
-    public LocatableTab(String locatorId, String title) {
+    public LocatableTab(String title) {
         super(title);
-        init(locatorId);
+        init("TODO!!!!");
     }
 
     /** 
@@ -46,9 +46,9 @@ public class LocatableTab extends Tab implements Locatable {
      * </pre>
      * @param locatorId not null or empty.
      */
-    public LocatableTab(String locatorId, String title, String icon) {
+    public LocatableTab(String title, String icon) {
         super(title, icon);
-        init(locatorId);
+        init("TODO!!!");
     }
 
     private void init(String locatorId) {

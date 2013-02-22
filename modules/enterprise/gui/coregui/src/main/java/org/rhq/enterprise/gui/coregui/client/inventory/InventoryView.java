@@ -49,7 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSour
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * The Inventory top-level view.
@@ -109,7 +109,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
     }
 
     protected Canvas defaultView() {
-        LocatableVLayout vLayout = new LocatableVLayout();
+        EnhancedVLayout vLayout = new EnhancedVLayout();
         vLayout.setWidth100();
 
         // TODO: Admin icon.

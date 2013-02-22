@@ -26,7 +26,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * Superclass to all alert senders' forms. Instances of this class
@@ -35,7 +35,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  *  
  * @author John Mazzitelli
  */
-public abstract class AbstractNotificationSenderForm extends LocatableVLayout {
+public abstract class AbstractNotificationSenderForm extends EnhancedVLayout {
 
     private Configuration configuration;
     private Configuration extraConfiguration;

@@ -45,7 +45,7 @@ public class MembersView extends ResourceSearchView {
     private int groupId;
     private boolean canModifyMembers;
 
-    public MembersView(String locatorId, int groupId, boolean canModifyMembers) {
+    public MembersView(int groupId, boolean canModifyMembers) {
         super(new Criteria(ResourceDatasource.FILTER_GROUP_ID, String.valueOf(groupId)), MSG
             .view_inventory_resources_members());
         setInitialCriteriaFixed(true);

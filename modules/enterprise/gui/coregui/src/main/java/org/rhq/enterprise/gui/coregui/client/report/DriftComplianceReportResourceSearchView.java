@@ -66,7 +66,7 @@ public class DriftComplianceReportResourceSearchView extends ResourceSearchView 
 
     private final int resourceTypeId;
 
-    public DriftComplianceReportResourceSearchView(String locatorId, Criteria criteria, boolean exportable) {
+    public DriftComplianceReportResourceSearchView(Criteria criteria, boolean exportable) {
         super(criteria, exportable);
 
         setInitialCriteriaFixed(true);

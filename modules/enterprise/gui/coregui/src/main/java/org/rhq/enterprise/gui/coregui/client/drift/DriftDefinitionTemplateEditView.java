@@ -43,14 +43,14 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * A view for editing a Resource's configuration.
  *
  * @author Jay Shaughnessy
  */
-public class DriftDefinitionTemplateEditView extends LocatableVLayout implements PropertyValueChangeListener,
+public class DriftDefinitionTemplateEditView extends EnhancedVLayout implements PropertyValueChangeListener,
     RefreshableView {
 
     private int driftTemplateId;

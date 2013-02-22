@@ -24,14 +24,14 @@ import com.smartgwt.client.widgets.Canvas;
 
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.Enhanced;
 
 /**
  * A Locatable SubTab associating a Button with a Canvas.
  *  
  * @author Jay Shaughnessy
  */
-public class SubTab implements Locatable {
+public class SubTab implements Enhanced {
     private String locatorId;
     private ViewName viewName;
     private Canvas canvas;

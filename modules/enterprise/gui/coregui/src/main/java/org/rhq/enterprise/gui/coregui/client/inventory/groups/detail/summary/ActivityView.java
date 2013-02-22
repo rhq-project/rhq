@@ -54,8 +54,8 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOper
 import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * The content pane for the group Summary>Activity subtab.
@@ -63,7 +63,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Simeon Pinder
  * @author Jay Shaughnessy
  */
-public class ActivityView extends LocatableVLayout implements DashboardContainer, InitializableView {
+public class ActivityView extends EnhancedVLayout implements DashboardContainer, InitializableView {
 
     private static final String DASHBOARD_NAME_PREFIX = "GroupDashboard_";
 
@@ -75,7 +75,7 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
 
     private DashboardView dashboardView;
 
-    private LocatableToolStrip footer;
+    private EnhancedToolStrip footer;
     private IButton editButton;
     private IButton resetButton;
 
@@ -142,11 +142,10 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
         //pass in the group information
         EntityContext context = EntityContext.forGroup(groupComposite.getResourceGroup().getId(), isAutoCluster,
             isAutoGroup);
-        dashboardView = new DashboardView(extendLocatorId(dashboard.getName()), this, dashboard, context,
-            groupComposite);
+        dashboardView = new DashboardView(this, dashboard, context, groupComposite);
         addMember(dashboardView);
 
-        footer = new LocatableToolStrip();
+        footer = new EnhancedToolStrip();
         footer.setPadding(5);
         footer.setWidth100();
         footer.setMembersMargin(15);

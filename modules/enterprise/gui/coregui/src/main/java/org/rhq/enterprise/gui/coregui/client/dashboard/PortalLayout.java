@@ -56,7 +56,7 @@ public class PortalLayout extends EnhancedHLayout {
      * @param columnWidths Currently only the first column width is set, others are ignored and share the remaining space
      * evenly. If null column 0 defaults to 30%.
      */
-    public PortalLayout(String locatorId, DashboardView dashboardView, int numColumns, String[] columnWidths) {
+    public PortalLayout(DashboardView dashboardView, int numColumns, String[] columnWidths) {
         super();
 
         if (numColumns < 1) {

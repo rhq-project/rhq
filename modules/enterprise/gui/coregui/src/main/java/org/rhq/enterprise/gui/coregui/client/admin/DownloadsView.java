@@ -38,7 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SystemGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * A simple page to view the downloads the server provides (like
@@ -46,7 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * 
  * @author John Mazzitelli
  */
-public class DownloadsView extends LocatableVLayout {
+public class DownloadsView extends EnhancedVLayout {
 
     public static final ViewName VIEW_ID = new ViewName("Downloads", MSG.view_adminConfig_downloads(),
         IconEnum.DOWNLOAD);

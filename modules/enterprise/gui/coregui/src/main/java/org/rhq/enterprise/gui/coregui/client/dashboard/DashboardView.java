@@ -76,7 +76,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.Resourc
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourcePkgHistoryPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -84,7 +84,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Greg Hinkle
  * @author Simeon Pinder
  */
-public class DashboardView extends LocatableVLayout {
+public class DashboardView extends EnhancedVLayout {
 
     private DashboardContainer dashboardContainer;
     private Dashboard storedDashboard;
@@ -128,9 +128,9 @@ public class DashboardView extends LocatableVLayout {
      * @param dashboardContainer
      * @param storedDashboard
      */
-    public DashboardView(String locatorId, DashboardContainer dashboardContainer, Dashboard storedDashboard) {
+    public DashboardView(DashboardContainer dashboardContainer, Dashboard storedDashboard) {
 
-        this(locatorId, dashboardContainer, storedDashboard, EntityContext.forSubsystemView(), null);
+        this(dashboardContainer, storedDashboard, EntityContext.forSubsystemView(), null);
     }
 
     /**
@@ -140,8 +140,8 @@ public class DashboardView extends LocatableVLayout {
      * @param context
      * @param composite ResourceComposite, ResourceGroupComposite or null depending on context
      */
-    public DashboardView(String locatorId, DashboardContainer dashboardContainer, Dashboard storedDashboard,
-        EntityContext context, Object composite) {
+    public DashboardView(DashboardContainer dashboardContainer, Dashboard storedDashboard, EntityContext context,
+        Object composite) {
 
         super();
 
@@ -208,8 +208,7 @@ public class DashboardView extends LocatableVLayout {
     public void buildPortlets() {
         this.setBackgroundColor(storedDashboard.getConfiguration().getSimpleValue(Dashboard.CFG_BACKGROUND, "white"));
 
-        portalLayout = new PortalLayout(extendLocatorId("PortalLayout"), this, storedDashboard.getColumns(),
-            storedDashboard.getColumnWidths());
+        portalLayout = new PortalLayout(this, storedDashboard.getColumns(), storedDashboard.getColumnWidths());
 
         portalLayout.setOverflow(Overflow.AUTO);
         portalLayout.setWidth100();

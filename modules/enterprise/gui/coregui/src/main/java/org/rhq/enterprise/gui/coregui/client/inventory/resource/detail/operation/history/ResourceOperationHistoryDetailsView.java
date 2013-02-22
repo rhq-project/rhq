@@ -41,7 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryDetailsView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -130,7 +130,7 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
     protected Canvas buildResultsSection(ResourceOperationHistory operationHistory) {
         OperationRequestStatus status = operationHistory.getStatus();
         if (status == OperationRequestStatus.SUCCESS) {
-            LocatableVLayout resultsSection = new LocatableVLayout(extendLocatorId("ResultsSection"));
+            EnhancedVLayout resultsSection = new EnhancedVLayout();
 
             Label title = new Label("<h4>" + MSG.view_operationHistoryDetails_results() + "</h4>");
             title.setHeight(27);

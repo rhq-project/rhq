@@ -30,7 +30,7 @@ import org.rhq.enterprise.gui.coregui.client.components.sorter.ReorderableList;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDetailsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * The details view of the Group Operations>Schedules subtab.
@@ -92,8 +92,8 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
     }
 
     @Override
-    protected LocatableVLayout buildContentPane() {
-        LocatableVLayout contentPane = super.buildContentPane();
+    protected EnhancedVLayout buildContentPane() {
+        EnhancedVLayout contentPane = super.buildContentPane();
 
         HTMLFlow hr = new HTMLFlow("<hr/>");
         contentPane.addMember(hr);
@@ -133,8 +133,8 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
                 return AncestryUtil.getAncestryHoverHTML(listGridRecord, 0);
             }
         };
-        this.memberExecutionOrderer = new ReorderableList(extendLocatorId("MemberExecutionOrderer"),
-            this.memberResourceRecords, null, memberIcon, nameHoverCustomizer);
+        this.memberExecutionOrderer = new ReorderableList(this.memberResourceRecords, null, memberIcon,
+            nameHoverCustomizer);
         this.memberExecutionOrderer.setVisible(false);
         this.memberExecutionOrderer.setNameFieldTitle(MSG.view_group_operationScheduleDetails_memberResource());
         hLayout.addMember(this.memberExecutionOrderer);

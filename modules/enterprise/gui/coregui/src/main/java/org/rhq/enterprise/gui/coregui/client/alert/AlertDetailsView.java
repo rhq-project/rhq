@@ -55,13 +55,13 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellForma
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Joseph Marques
  * @author Ian Springer
  */
-public class AlertDetailsView extends LocatableVLayout implements BookmarkableView {
+public class AlertDetailsView extends EnhancedVLayout implements BookmarkableView {
 
     private int alertId;
 
@@ -105,16 +105,13 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
     private TabSet getDetailsTabSet(Record record) {
         TabSet tabset = new NamedTabSet();
 
-        Tab generalTab = new NamedTab(extendLocatorId("general"), new ViewName("general",
-            MSG.view_alert_common_tab_general()));
+        Tab generalTab = new NamedTab(new ViewName("general", MSG.view_alert_common_tab_general()));
         generalTab.setPane(getDetailsTableForAlert(record));
 
-        Tab conditionsTab = new NamedTab(extendLocatorId("conditions"), new ViewName("conditions",
-            MSG.view_alert_common_tab_conditions()));
+        Tab conditionsTab = new NamedTab(new ViewName("conditions", MSG.view_alert_common_tab_conditions()));
         conditionsTab.setPane(getConditionsForAlert(record));
 
-        Tab notificationsTab = new NamedTab(extendLocatorId("notifications"), new ViewName("notifications",
-            MSG.view_alert_common_tab_notifications()));
+        Tab notificationsTab = new NamedTab(new ViewName("notifications", MSG.view_alert_common_tab_notifications()));
         notificationsTab.setPane(getNotificationsForAlert(record));
 
         tabset.addTab(generalTab);

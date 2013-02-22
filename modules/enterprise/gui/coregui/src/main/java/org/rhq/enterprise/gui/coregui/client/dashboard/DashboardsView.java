@@ -72,13 +72,13 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePort
 import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Jay Shaughnessy
  * @author Greg Hinkle
  */
-public class DashboardsView extends LocatableVLayout implements DashboardContainer, BookmarkableView, InitializableView {
+public class DashboardsView extends EnhancedVLayout implements DashboardContainer, BookmarkableView, InitializableView {
 
     public static final ViewName VIEW_ID = new ViewName("Dashboards", MSG.view_dashboards_title());
 
@@ -234,9 +234,8 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
             String dashboardName = String.valueOf(dashboard.getId());
             String dashboardTitle = dashboard.getName();
             String dashboardLocatorId = getDashboardLocatorId(dashboardTitle);
-            String locatorId = extendLocatorId(dashboardLocatorId);
-            DashboardView dashboardView = new DashboardView(locatorId, this, dashboard);
-            Tab tab = new NamedTab(locatorId, new ViewName(dashboardName, dashboardTitle), null);
+            DashboardView dashboardView = new DashboardView(this, dashboard);
+            Tab tab = new NamedTab(new ViewName(dashboardName, dashboardTitle), null);
             tab.setPane(dashboardView);
             tab.setCanClose(true);
 
@@ -391,10 +390,8 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
                 String dashboardTitle = result.getName();
                 dashboardsByName.put(dashboardTitle, result); // update map so name can not be reused
                 String dashboardLocatorId = getDashboardLocatorId(dashboardTitle);
-                DashboardView dashboardView = new DashboardView(extendLocatorId(dashboardLocatorId),
-                    DashboardsView.this, result);
-                NamedTab tab = new NamedTab(extendLocatorId(dashboardLocatorId), new ViewName(dashboardName,
-                    dashboardTitle), null);
+                DashboardView dashboardView = new DashboardView(DashboardsView.this, result);
+                NamedTab tab = new NamedTab(new ViewName(dashboardName, dashboardTitle), null);
                 tab.setPane(dashboardView);
                 tab.setCanClose(true);
 

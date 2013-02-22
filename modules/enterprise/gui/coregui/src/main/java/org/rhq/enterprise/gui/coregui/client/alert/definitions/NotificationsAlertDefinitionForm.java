@@ -51,12 +51,12 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author John Mazzitelli
  */
-public class NotificationsAlertDefinitionForm extends LocatableVLayout implements EditAlertDefinitionForm {
+public class NotificationsAlertDefinitionForm extends EnhancedVLayout implements EditAlertDefinitionForm {
     private static final String FIELD_OBJECT = "obj";
     private static final String FIELD_SENDER = "sender";
     private static final String FIELD_CONFIGURATION = "configuration";
@@ -68,7 +68,7 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
 
     private Table table;
 
-    public NotificationsAlertDefinitionForm(String locatorId, AlertDefinition alertDefinition) {
+    public NotificationsAlertDefinitionForm(AlertDefinition alertDefinition) {
         super();
         this.alertDefinition = alertDefinition;
         extractShallowCopyOfNotifications(this.alertDefinition);

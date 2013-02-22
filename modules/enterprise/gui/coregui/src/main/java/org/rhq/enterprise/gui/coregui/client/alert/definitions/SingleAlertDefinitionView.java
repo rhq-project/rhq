@@ -35,12 +35,12 @@ import com.smartgwt.client.widgets.tab.events.TabDeselectedHandler;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author John Mazzitelli
  */
-public class SingleAlertDefinitionView extends LocatableVLayout {
+public class SingleAlertDefinitionView extends EnhancedVLayout {
 
     private AlertDefinition alertDefinition;
 
@@ -66,7 +66,7 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
         this.alertDefinition = alertDefinition;
         this.isAuthorizedToModifyAlertDefinitions = alertDefView.isAuthorizedToModifyAlertDefinitions();
 
-        final LocatableTabSet tabSet = new LocatableTabSet(this.getLocatorId());
+        final LocatableTabSet tabSet = new LocatableTabSet();
         tabSet.setHeight100();
 
         final Tab generalPropertiesTab = new LocatableTab(tabSet.extendLocatorId("General"),
@@ -85,13 +85,12 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
 
         Tab conditionsTab = new LocatableTab(tabSet.extendLocatorId("Conditions"),
             MSG.view_alert_common_tab_conditions());
-        conditions = new ConditionsAlertDefinitionForm(this.getLocatorId(), alertDefView.getResourceType(),
-            alertDefinition);
+        conditions = new ConditionsAlertDefinitionForm(alertDefView.getResourceType(), alertDefinition);
         conditionsTab.setPane(conditions);
 
         Tab notificationsTab = new LocatableTab(tabSet.extendLocatorId("Notifications"),
             MSG.view_alert_common_tab_notifications());
-        notifications = new NotificationsAlertDefinitionForm(this.getLocatorId(), alertDefinition);
+        notifications = new NotificationsAlertDefinitionForm(alertDefinition);
         notificationsTab.setPane(notifications);
 
         Tab recoveryTab = new LocatableTab(tabSet.extendLocatorId("Recovery"), MSG.view_alert_common_tab_recovery());

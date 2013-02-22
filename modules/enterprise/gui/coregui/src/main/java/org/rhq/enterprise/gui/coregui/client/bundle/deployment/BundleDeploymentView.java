@@ -81,12 +81,12 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class BundleDeploymentView extends LocatableVLayout implements BookmarkableView {
+public class BundleDeploymentView extends EnhancedVLayout implements BookmarkableView {
     private BundleDeployment deployment;
     private BundleVersion version;
     private Bundle bundle;
@@ -96,7 +96,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
 
     private final HashMap<String, String> statusIcons;
 
-    public BundleDeploymentView(String locatorId, boolean canManageBundles) {
+    public BundleDeploymentView(boolean canManageBundles) {
         super();
         this.canManageBundles = canManageBundles;
         setWidth100();
@@ -211,7 +211,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
     }
 
     private Canvas getActionLayout() {
-        LocatableVLayout actionLayout = new LocatableVLayout(10);
+        EnhancedVLayout actionLayout = new EnhancedVLayout(10);
 
         // we can only revert the live deployments, only show revert button when appropriate
         // in addition, we provide a purge button if you are viewing the live deployment, so
@@ -309,23 +309,21 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
 
     private TagEditorView createTagEditor() {
         boolean readOnly = !this.canManageBundles;
-        TagEditorView tagEditor = new TagEditorView(extendLocatorId("tagEditor"), version.getTags(), readOnly,
-            new TagsChangedCallback() {
-                public void tagsChanged(HashSet<Tag> tags) {
-                    GWTServiceLookup.getTagService().updateBundleDeploymentTags(deployment.getId(), tags,
-                        new AsyncCallback<Void>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler()
-                                    .handleError(MSG.view_bundle_deploy_tagUpdateFailure(), caught);
-                            }
+        TagEditorView tagEditor = new TagEditorView(version.getTags(), readOnly, new TagsChangedCallback() {
+            public void tagsChanged(HashSet<Tag> tags) {
+                GWTServiceLookup.getTagService().updateBundleDeploymentTags(deployment.getId(), tags,
+                    new AsyncCallback<Void>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deploy_tagUpdateFailure(), caught);
+                        }
 
-                            public void onSuccess(Void result) {
-                                CoreGUI.getMessageCenter().notify(
-                                    new Message(MSG.view_bundle_deploy_tagUpdateSuccessful(), Message.Severity.Info));
-                            }
-                        });
-                }
-            });
+                        public void onSuccess(Void result) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message(MSG.view_bundle_deploy_tagUpdateSuccessful(), Message.Severity.Info));
+                        }
+                    });
+            }
+        });
         tagEditor.setAutoHeight();
         tagEditor.setExtraSpace(10);
         return tagEditor;
@@ -333,7 +331,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
 
     @SuppressWarnings("unchecked")
     private Table addMemberDeploymentsTable() {
-        Table table = new Table(extendLocatorId("Deployments"), MSG.view_bundle_deploy_deploymentPlatforms());
+        Table table = new Table(MSG.view_bundle_deploy_deploymentPlatforms());
         table.setShowFooterRefresh(false);
 
         TitleBar titleBar = new TitleBar(MSG.view_bundle_deploy_selectARow());

@@ -29,14 +29,14 @@ import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Jay Shaughnessy
  */
 public class DriftAddDefinitionWizardConfigStep extends AbstractWizardStep {
 
-    private LocatableVLayout vLayout;
+    private EnhancedVLayout vLayout;
     private ConfigurationEditor editor;
     AbstractDriftAddDefinitionWizard wizard;
     private Configuration startingConfig;
@@ -50,7 +50,7 @@ public class DriftAddDefinitionWizardConfigStep extends AbstractWizardStep {
         // be able to see the wizard's next/cancel buttons. This vlayout also provides for easier expansion if we add more items.
         if (vLayout == null || !wizard.getNewStartingConfiguration().equals(startingConfig)) {
 
-            vLayout = new LocatableVLayout();
+            vLayout = new EnhancedVLayout();
 
             vLayout.setOverflow(Overflow.AUTO);
 

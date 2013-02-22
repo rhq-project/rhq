@@ -56,14 +56,14 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * A view for editing a group's configuration.
  *
  * @author Ian Springer
  */
-public class GroupResourceConfigurationEditView extends LocatableVLayout implements PropertyValueChangeListener,
+public class GroupResourceConfigurationEditView extends EnhancedVLayout implements PropertyValueChangeListener,
     RefreshableView {
     private final ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
 

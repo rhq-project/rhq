@@ -43,13 +43,13 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedH
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends LocatableVLayout implements
+public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends EnhancedVLayout implements
     BookmarkableView, TwoLevelTabSelectedHandler {
 
     private String baseViewPath;

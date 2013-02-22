@@ -31,7 +31,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * A tabular report that shows the types of resources are installed and how many
@@ -39,7 +39,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * 
  * @author John Mazzitelli
  */
-public class ResourceInstallReport extends LocatableVLayout implements BookmarkableView, HasViewName {
+public class ResourceInstallReport extends EnhancedVLayout implements BookmarkableView, HasViewName {
 
     public static final ViewName VIEW_ID = new ViewName("InventorySummary", MSG.common_title_inventorySummary(),
         IconEnum.INVENTORY_SUMMARY);

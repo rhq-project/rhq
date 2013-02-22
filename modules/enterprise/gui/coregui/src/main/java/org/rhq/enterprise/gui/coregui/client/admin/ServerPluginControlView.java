@@ -53,27 +53,26 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.PluginGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVStack;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVStack;
 
 /**
  * A component used to invoke controls on a server plugin.
  *
  * @author John Mazzitelli
  */
-public class ServerPluginControlView extends LocatableVStack {
+public class ServerPluginControlView extends EnhancedVStack {
 
     private final ServerPlugin plugin;
     private final ArrayList<ServerPluginControlDefinition> controlDefinitions;
-    private LocatableVLayout paramsLayout;
-    private LocatableVLayout resultsLayout;
+    private EnhancedVLayout paramsLayout;
+    private EnhancedVLayout resultsLayout;
     private String selectedControlName;
     private ConfigurationDefinition selectedParamsDef;
     private ConfigurationEditor selectedParamsEditor;
     private ConfigurationDefinition selectedResultsDef;
 
-    public ServerPluginControlView(String locatorId, ServerPlugin plugin,
-        ArrayList<ServerPluginControlDefinition> controlDefs) {
+    public ServerPluginControlView(ServerPlugin plugin, ArrayList<ServerPluginControlDefinition> controlDefs) {
         super();
         this.plugin = plugin;
         this.controlDefinitions = controlDefs;
@@ -88,11 +87,11 @@ public class ServerPluginControlView extends LocatableVStack {
         DynamicForm form = new DynamicForm();
         addMember(form);
 
-        paramsLayout = new LocatableVLayout();
+        paramsLayout = new EnhancedVLayout();
         paramsLayout.setVisible(false);
         addMember(paramsLayout);
 
-        resultsLayout = new LocatableVLayout();
+        resultsLayout = new EnhancedVLayout();
         resultsLayout.setVisible(false);
         addMember(resultsLayout);
 

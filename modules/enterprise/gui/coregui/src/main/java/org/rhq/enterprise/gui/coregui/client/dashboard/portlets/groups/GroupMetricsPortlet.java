@@ -70,13 +70,13 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**This portlet allows the end user to customize the metric display
  *
  * @author Simeon Pinder
  */
-public class GroupMetricsPortlet extends LocatableVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
+public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
 
     private int groupId = -1;
     private boolean isAutoCluster;
@@ -184,7 +184,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
         //root form.
         DynamicForm customSettings = new DynamicForm();
         //embed range editor in it own container
-        LocatableVLayout page = new LocatableVLayout();
+        EnhancedVLayout page = new EnhancedVLayout();
         final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
         final Configuration portletConfig = storedPortlet.getConfiguration();
         final CustomConfigMeasurementRangeEditor measurementRangeEditor = PortletConfigurationEditorComponent

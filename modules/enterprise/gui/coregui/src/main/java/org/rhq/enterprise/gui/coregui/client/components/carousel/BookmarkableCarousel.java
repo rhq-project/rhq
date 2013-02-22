@@ -32,7 +32,7 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableSection;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -66,7 +66,7 @@ public abstract class BookmarkableCarousel extends Carousel implements Bookmarka
 
         this.initialDisplay = true;
 
-        detailsHolder = new LocatableVLayout();
+        detailsHolder = new EnhancedVLayout();
         detailsHolder.setAlign(VerticalAlignment.TOP);
         detailsHolder.setMargin(4);
         detailsHolder.hide();
@@ -169,7 +169,7 @@ public abstract class BookmarkableCarousel extends Carousel implements Bookmarka
             // editable, a Cancel button should already be provided by the details view.
             BackButton backButton = new BackButton(MSG.view_tableSection_backButton(), basePath);
             detailsHolder.addMember(backButton);
-            VLayout verticalSpacer = new LocatableVLayout();
+            VLayout verticalSpacer = new EnhancedVLayout();
             verticalSpacer.setHeight(8);
             detailsHolder.addMember(verticalSpacer);
         }

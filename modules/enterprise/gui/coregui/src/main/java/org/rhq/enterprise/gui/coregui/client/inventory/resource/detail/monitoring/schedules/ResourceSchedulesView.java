@@ -41,8 +41,8 @@ public class ResourceSchedulesView extends AbstractSchedulesView {
     private ResourceComposite resourceComposite;
     private int resourceId;
 
-    public ResourceSchedulesView(String locatorId, ResourceComposite resourceComposite) {
-        super(locatorId, TITLE, EntityContext.forResource(resourceComposite.getResource().getId()), resourceComposite
+    public ResourceSchedulesView(ResourceComposite resourceComposite) {
+        super(TITLE, EntityContext.forResource(resourceComposite.getResource().getId()), resourceComposite
             .getResourcePermission().isMeasure());
 
         this.resourceComposite = resourceComposite;

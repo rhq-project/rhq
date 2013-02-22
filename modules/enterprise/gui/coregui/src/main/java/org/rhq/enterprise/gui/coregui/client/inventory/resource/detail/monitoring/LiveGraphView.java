@@ -64,12 +64,12 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class LiveGraphView extends LocatableVLayout {
+public class LiveGraphView extends EnhancedVLayout {
 
     private static final String INSTRUCTIONS = MSG.view_resource_monitor_graph_instructions();
 
@@ -90,7 +90,7 @@ public class LiveGraphView extends LocatableVLayout {
         super();
     }
 
-    public LiveGraphView(String locatorId, int resourceId, MeasurementDefinition def) {
+    public LiveGraphView(int resourceId, MeasurementDefinition def) {
         super();
         this.resourceId = resourceId;
         this.definition = def;
@@ -268,8 +268,8 @@ public class LiveGraphView extends LocatableVLayout {
 
     }
 
-    public static void displayAsDialog(String locatorId, int resourceId, MeasurementDefinition def) {
-        final LiveGraphView graph = new LiveGraphView(locatorId, resourceId, def);
+    public static void displayAsDialog(int resourceId, MeasurementDefinition def) {
+        final LiveGraphView graph = new LiveGraphView(resourceId, def);
         final Window graphPopup = new Window();
         graphPopup.setTitle(MSG.view_resource_monitor_detailed_graph_label());
         graphPopup.setWidth(800);

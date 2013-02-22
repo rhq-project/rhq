@@ -66,9 +66,9 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
-public class BundleView extends LocatableVLayout implements BookmarkableView {
+public class BundleView extends EnhancedVLayout implements BookmarkableView {
     private DynamicForm form;
 
     private int bundleBeingViewed = 0;
@@ -99,7 +99,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
 
         BackButton backButton = new BackButton(MSG.view_bundle_list_backToAll(), BundleTopView.VIEW_ID.getTitle());
         headerLabel = new HeaderLabel(IconEnum.BUNDLE.getIcon24x24Path(), StringUtility.escapeHtml(bundle.getName()));
-        tabs = new LocatableTabSet(getLocatorId());
+        tabs = new LocatableTabSet();
         versionsTab = createVersionsTab();
         destinationsTab = createDestinationsTab();
         tabs.addTab(versionsTab);
@@ -127,29 +127,27 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
 
     private TagEditorView createTagEditor() {
         boolean readOnly = !this.canManageBundles;
-        TagEditorView tagEditor = new TagEditorView(extendLocatorId("TagEditor"), bundle.getTags(), readOnly,
-            new TagsChangedCallback() {
-                public void tagsChanged(HashSet<Tag> tags) {
-                    GWTServiceLookup.getTagService().updateBundleTags(bundleBeingViewed, tags,
-                        new AsyncCallback<Void>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(MSG.view_bundle_list_tagUpdateFailure(), caught);
-                            }
+        TagEditorView tagEditor = new TagEditorView(bundle.getTags(), readOnly, new TagsChangedCallback() {
+            public void tagsChanged(HashSet<Tag> tags) {
+                GWTServiceLookup.getTagService().updateBundleTags(bundleBeingViewed, tags, new AsyncCallback<Void>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_bundle_list_tagUpdateFailure(), caught);
+                    }
 
-                            public void onSuccess(Void result) {
-                                CoreGUI.getMessageCenter().notify(
-                                    new Message(MSG.view_bundle_list_tagUpdateSuccessful(), Message.Severity.Info));
-                            }
-                        });
-                }
-            });
+                    public void onSuccess(Void result) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.view_bundle_list_tagUpdateSuccessful(), Message.Severity.Info));
+                    }
+                });
+            }
+        });
         tagEditor.setAutoHeight();
         tagEditor.setExtraSpace(10);
         return tagEditor;
     }
 
     private Tab createDestinationsTab() {
-        LocatableTab destinationsTab = new LocatableTab(extendLocatorId("Destinations"), MSG.view_bundle_destinations());
+        LocatableTab destinationsTab = new LocatableTab(MSG.view_bundle_destinations());
         Criteria criteria = new Criteria();
         criteria.addCriteria("bundleId", bundle.getId());
         destinationsTab.setPane(new BundleDestinationListView(criteria));
@@ -157,7 +155,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
     }
 
     private Tab createVersionsTab() {
-        LocatableTab versionsTab = new LocatableTab(extendLocatorId("Versions"), MSG.view_bundle_versions());
+        LocatableTab versionsTab = new LocatableTab(MSG.view_bundle_versions());
         Criteria criteria = new Criteria();
         criteria.addCriteria("bundleId", bundleBeingViewed);
         bundleVersionsTable = new BundleVersionListView(criteria);
@@ -200,7 +198,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
     }
 
     private Canvas getActionCanvas() {
-        VLayout layout = new LocatableVLayout(10);
+        VLayout layout = new EnhancedVLayout(10);
 
         IButton deployButton = new EnhancedIButton(MSG.view_bundle_deploy());
         deployButton.setIcon(IconEnum.BUNDLE_DEPLOY.getIcon16x16Path());
@@ -315,7 +313,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
             if (viewPath.getCurrent().getPath().equals("versions")) {
                 if (!viewPath.isEnd()) {
                     // a specific version
-                    BundleVersionView view = new BundleVersionView(extendLocatorId("Version"), canManageBundles);
+                    BundleVersionView view = new BundleVersionView(canManageBundles);
                     addMember(view);
                     view.renderView(viewPath.next());
                 }
@@ -329,16 +327,14 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
                 } else {
                     // a specific deployment
                     //removeMembers(getMembers());
-                    BundleDeploymentView view = new BundleDeploymentView(extendLocatorId("Deployment"),
-                        canManageBundles);
+                    BundleDeploymentView view = new BundleDeploymentView(canManageBundles);
                     addMember(view);
                     view.renderView(viewPath.next());
                 }
             } else if (viewPath.getCurrent().getPath().equals("destinations")) {
                 if (!viewPath.isEnd()) {
                     // a specific destination
-                    BundleDestinationView view = new BundleDestinationView(extendLocatorId("Destination"),
-                        canManageBundles);
+                    BundleDestinationView view = new BundleDestinationView(canManageBundles);
                     addMember(view);
                     view.renderView(viewPath.next());
                 }

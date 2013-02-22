@@ -50,14 +50,14 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellForma
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.TopologyGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * Shows details of a partition event.
  * 
  * @author Jirka Kremser
  */
-public class PartitionEventDetailView extends LocatableVLayout implements BookmarkableView {
+public class PartitionEventDetailView extends EnhancedVLayout implements BookmarkableView {
 
     private final int partitionEventId;
 

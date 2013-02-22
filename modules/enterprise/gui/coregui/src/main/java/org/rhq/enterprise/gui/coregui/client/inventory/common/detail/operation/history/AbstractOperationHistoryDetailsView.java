@@ -47,13 +47,13 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVStack;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVStack;
 
 /**
  * @author Greg Hinkle
  */
-public abstract class AbstractOperationHistoryDetailsView<T extends OperationHistory> extends LocatableVStack implements
+public abstract class AbstractOperationHistoryDetailsView<T extends OperationHistory> extends EnhancedVStack implements
     BookmarkableView {
 
     private T operationHistory;
@@ -104,7 +104,7 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
 
         // Parameters (if applicable)
         if (operationHistory.getParameters() != null) {
-            LocatableVLayout parametersSection = new LocatableVLayout(extendLocatorId("ParametersSection"));
+            EnhancedVLayout parametersSection = new EnhancedVLayout();
 
             Label title = new Label("<h4>" + MSG.view_operationHistoryDetails_parameters() + "</h4>");
             title.setHeight(27);

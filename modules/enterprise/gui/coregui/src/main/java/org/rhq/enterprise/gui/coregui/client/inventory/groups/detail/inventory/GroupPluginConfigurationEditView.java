@@ -53,7 +53,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * A view for editing a group's current plugin configuration.
@@ -61,7 +61,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Ian Springer
  * @author John Mazzitelli
  */
-public class GroupPluginConfigurationEditView extends LocatableVLayout implements PropertyValueChangeListener,
+public class GroupPluginConfigurationEditView extends EnhancedVLayout implements PropertyValueChangeListener,
     RefreshableView {
     private final ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
     private final ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();

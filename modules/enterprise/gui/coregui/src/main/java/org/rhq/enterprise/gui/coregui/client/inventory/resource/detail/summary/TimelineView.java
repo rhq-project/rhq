@@ -23,12 +23,12 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author John Mazzitelli
  */
-public class TimelineView extends LocatableVLayout {
+public class TimelineView extends EnhancedVLayout {
     public static final ViewName VIEW_ID = new ViewName("ResourceTimeline", MSG.view_tabs_common_timeline());
 
     private final ResourceComposite resourceComposite;
@@ -48,7 +48,7 @@ public class TimelineView extends LocatableVLayout {
 
         // we create a simple subclass because we need to know when a new range has been set in order to refresh the timeline
         class RangeEditor extends UserPreferencesMeasurementRangeEditor {
-            RangeEditor(String editorLocatorId) {
+            RangeEditor() {
                 super();
             }
 
@@ -59,7 +59,7 @@ public class TimelineView extends LocatableVLayout {
             }
         }
 
-        RangeEditor range = new RangeEditor(extendLocatorId("TimeRangeEditor"));
+        RangeEditor range = new RangeEditor();
         addMember(range); // put it at the top above the timeline's filters 
         addMember(timelinePane);
     }

@@ -59,12 +59,12 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class ResourceAutodiscoveryView extends LocatableVLayout implements RefreshableView, HasViewName {
+public class ResourceAutodiscoveryView extends EnhancedVLayout implements RefreshableView, HasViewName {
 
     public static final ViewName VIEW_ID = new ViewName("AutodiscoveryQueue", MSG.view_inventory_adq(),
         IconEnum.DISCOVERY_QUEUE);

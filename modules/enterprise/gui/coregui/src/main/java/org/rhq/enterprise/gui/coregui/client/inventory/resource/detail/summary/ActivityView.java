@@ -36,15 +36,15 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.Resourc
 import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * The content pane for the resource Summary>Activity subtab.
  *
  * @author Jay Shaughnessy
  */
-public class ActivityView extends LocatableVLayout implements DashboardContainer, InitializableView {
+public class ActivityView extends EnhancedVLayout implements DashboardContainer, InitializableView {
 
     private static final String DASHBOARD_NAME_PREFIX = "ResourceDashboard_";
 
@@ -54,7 +54,7 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
 
     private DashboardView dashboardView;
 
-    private LocatableToolStrip footer;
+    private EnhancedToolStrip footer;
     private IButton editButton;
     private IButton resetButton;
 
@@ -111,11 +111,11 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
         Canvas[] members = getMembers();
         removeMembers(members);
         //pass in the resource information
-        dashboardView = new DashboardView(extendLocatorId(dashboard.getName()), this, dashboard,
-            EntityContext.forResource(resourceComposite.getResource().getId()), resourceComposite);
+        dashboardView = new DashboardView(this, dashboard, EntityContext.forResource(resourceComposite.getResource()
+            .getId()), resourceComposite);
         addMember(dashboardView);
 
-        footer = new LocatableToolStrip();
+        footer = new EnhancedToolStrip();
         footer.setPadding(5);
         footer.setWidth100();
         footer.setMembersMargin(15);

@@ -38,7 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.admin.topology.AgentTableView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -46,7 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  *
  * @author Simeon Pinder
  */
-public class ResourceAgentView extends LocatableVLayout implements RefreshableView {
+public class ResourceAgentView extends EnhancedVLayout implements RefreshableView {
 
     private int resourceId;
     private DynamicForm form;

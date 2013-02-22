@@ -102,13 +102,13 @@ import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Jay Shaughnessy
  * @author Greg Hinkle
  */
-public class ResourceTreeView extends LocatableVLayout {
+public class ResourceTreeView extends EnhancedVLayout {
 
     private TreeGrid treeGrid;
     private String selectedNodeId;

@@ -1,24 +1,21 @@
 package org.rhq.enterprise.gui.coregui.client.util.selenium;
 
-import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.VStack;
 
 /**
- * Wrapper for a SmartGWT {@link HLayout} that adds some destroy logic.
+ * Wrapper for a SmartGWT {@link VStack} that adds some destroy logic.
  * 
  * TODO: Ensure this added destroy logic is necessary now that Selenium support has been removed.
  * 
  * @author Jay Shaughnessy
  */
-public class EnhancedHLayout extends HLayout implements Enhanced {
+public class EnhancedVStack extends VStack implements Enhanced {
 
-    public EnhancedHLayout() {
+    public EnhancedVStack() {
         super();
     }
 
-    /** 
-     * @param membersMargin
-     */
-    public EnhancedHLayout(int membersMargin) {
+    public EnhancedVStack(int membersMargin) {
         super(membersMargin);
     }
 
@@ -31,5 +28,4 @@ public class EnhancedHLayout extends HLayout implements Enhanced {
         destroyMembers();
         super.destroy();
     }
-
 }

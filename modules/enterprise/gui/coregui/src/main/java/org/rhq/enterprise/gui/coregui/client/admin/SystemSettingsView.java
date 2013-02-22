@@ -55,21 +55,21 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * A simple form to view and edit the server system settings.
  *
  * @author John Mazzitelli
  */
-public class SystemSettingsView extends LocatableVLayout implements PropertyValueChangeListener {
+public class SystemSettingsView extends EnhancedVLayout implements PropertyValueChangeListener {
 
     public static final ViewName VIEW_ID = new ViewName("SystemSettings", MSG.view_adminConfig_systemSettings(),
         IconEnum.CONFIGURE);
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_CONFIGURATION_VIEW_ID + "/" + VIEW_ID;
 
-    private LocatableVLayout canvas;
+    private EnhancedVLayout canvas;
     private ConfigurationEditor editor;
     private IButton saveButton;
     private IButton dumpToLogButton;
@@ -79,7 +79,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         setHeight100();
         setWidth100();
 
-        canvas = new LocatableVLayout("innerLayout");
+        canvas = new EnhancedVLayout();
         canvas.setHeight100();
         canvas.setWidth100();
         canvas.setMargin(15);

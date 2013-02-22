@@ -40,15 +40,15 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * Shows details of a affinity group.
  * 
  * @author Jirka Kremser
  */
-public class AffinityGroupDetailView extends LocatableVLayout implements BookmarkableView {
+public class AffinityGroupDetailView extends EnhancedVLayout implements BookmarkableView {
 
     private final int affinityGroupId;
 
@@ -166,7 +166,7 @@ public class AffinityGroupDetailView extends LocatableVLayout implements Bookmar
         final TextItem nameItem = new TextItem(FIELD_NAME.propertyName(), FIELD_NAME.title());
         nameItem.setValue(affinityGroup.getName());
 
-        LocatableToolStrip footer = new LocatableToolStrip();
+        EnhancedToolStrip footer = new EnhancedToolStrip();
         footer.setPadding(5);
         footer.setWidth100();
         footer.setMembersMargin(15);

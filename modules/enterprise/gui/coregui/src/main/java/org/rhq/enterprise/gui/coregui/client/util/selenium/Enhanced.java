@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,21 +20,16 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
-import com.smartgwt.client.widgets.grid.ListGridRecord;
+package org.rhq.enterprise.gui.coregui.client.util.selenium;
 
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceGroupSelector;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 
 /**
- * @author Greg Hinkle
+ * Interface to all Enhanced components.
  */
-public class RoleResourceGroupSelector extends ResourceGroupSelector {
+public interface Enhanced {
 
-    public RoleResourceGroupSelector(ListGridRecord[] groupRecords, boolean isReadOnly) {
-        super(isReadOnly);
-
-        setAssigned(groupRecords);
-    }
-
+    Messages MSG = CoreGUI.getMessages();
 }

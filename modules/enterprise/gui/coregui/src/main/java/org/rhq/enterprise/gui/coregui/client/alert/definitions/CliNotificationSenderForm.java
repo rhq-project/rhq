@@ -227,7 +227,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
                     SectionItem userSection = new SectionItem("userSection");
                     userSection.setDefaultValue(MSG.view_alert_definition_notification_cliScript_editor_whichUser());
 
-                    repoSelector = new SortedSelectItem(extendLocatorId("repoSelector"),
+                    repoSelector = new SortedSelectItem("repoSelector",
                         MSG.view_alert_definition_notification_cliScript_editor_selectRepo());
                     repoSelector.setDefaultToFirstOption(true);
                     repoSelector.setWrapTitle(false);
@@ -240,22 +240,20 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
                         createExistingPackageForm());
                     packageSelectItems.put(MSG.view_alert_definition_notification_cliScript_editor_uploadNewScript(),
                         createUploadNewScriptForm());
-                    packageSelector = new RadioGroupWithComponentsItem(extendLocatorId("packageSelector"), "",
-                        packageSelectItems, form);
+                    packageSelector = new RadioGroupWithComponentsItem("packageSelector", "", packageSelectItems, form);
                     packageSelector.setWidth("100%");
 
                     LinkedHashMap<String, DynamicForm> userSelectItems = new LinkedHashMap<String, DynamicForm>();
                     userSelectItems.put(MSG.view_alert_definition_notification_cliScript_editor_thisUser(), null);
                     userSelectItems.put(MSG.view_alert_definition_notification_cliScript_editor_anotherUser(),
                         createAnotherUserForm());
-                    userSelector = new RadioGroupWithComponentsItem(extendLocatorId("userSelector"), "",
-                        userSelectItems, form);
+                    userSelector = new RadioGroupWithComponentsItem("userSelector", "", userSelectItems, form);
                     userSelector.setWidth("100%");
                     userSelector.setShowTitle(false);
 
-                    repoSection.setItemIds(extendLocatorId("repoSelector"));
-                    packageSection.setItemIds(extendLocatorId("packageSelector"));
-                    userSection.setItemIds(extendLocatorId("userSelector"));
+                    repoSection.setItemIds("repoSelector");
+                    packageSection.setItemIds("packageSelector");
+                    userSection.setItemIds("userSelector");
 
                     form.setFields(userSection, userSelector, repoSection, repoSelector, packageSection,
                         packageSelector);
@@ -573,7 +571,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
     private DynamicForm createExistingPackageForm() {
         DynamicForm form = new DynamicForm();
         form.setTitleOrientation(TitleOrientation.TOP);
-        existingPackageSelector = new SortedSelectItem(extendLocatorId("existingPackageSelector"), "");
+        existingPackageSelector = new SortedSelectItem("existingPackageSelector", "");
         existingPackageSelector.setDefaultToFirstOption(true);
         existingPackageSelector.setWrapTitle(false);
         existingPackageSelector.setRedrawOnChange(true);
@@ -586,8 +584,8 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
     }
 
     private DynamicForm createUploadNewScriptForm() {
-        uploadForm = new PackageVersionFileUploadFormWithVersion(extendLocatorId("uploadForm"), cliScriptPackageType
-            .getPackageType().getId());
+        uploadForm = new PackageVersionFileUploadFormWithVersion("uploadForm", cliScriptPackageType.getPackageType()
+            .getId());
         uploadForm.setTitleOrientation(TitleOrientation.TOP);
         uploadForm.setPackageTypeId(cliScriptPackageType.getPackageType().getId());
 

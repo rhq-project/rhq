@@ -46,9 +46,9 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
-public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements CustomSettingsPortlet,
+public class RecentlyAddedResourcesPortlet extends EnhancedVLayout implements CustomSettingsPortlet,
     AutoRefreshPortlet {
 
     // A non-displayed, persisted identifier for the portlet

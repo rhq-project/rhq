@@ -146,14 +146,13 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
             @Override
             public void onClick(ClickEvent event) {
                 SingleResourcePicker singleResourcePicker;
-                singleResourcePicker = new SingleResourcePicker(extendLocatorId("singleResourcePicker"),
-                    new OkHandler() {
-                        public boolean ok(Set<Integer> resourceIdSelection) {
-                            final int resourceId = resourceIdSelection.iterator().next().intValue();
-                            setSpecificResource(resourceId, null, null);
-                            return true;
-                        }
-                    }, null);
+                singleResourcePicker = new SingleResourcePicker(new OkHandler() {
+                    public boolean ok(Set<Integer> resourceIdSelection) {
+                        final int resourceId = resourceIdSelection.iterator().next().intValue();
+                        setSpecificResource(resourceId, null, null);
+                        return true;
+                    }
+                }, null);
                 singleResourcePicker.show();
             }
         });

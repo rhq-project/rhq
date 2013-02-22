@@ -30,7 +30,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.MessageBar;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenterView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
@@ -75,8 +75,8 @@ public class Footer extends EnhancedHLayout {
         addMember(createHSpacer(0));
     }
 
-    private LocatableVLayout getMessageCenterButton() {
-        LocatableVLayout layout = new LocatableVLayout();
+    private EnhancedVLayout getMessageCenterButton() {
+        EnhancedVLayout layout = new EnhancedVLayout();
         layout.setMembersMargin(5);
         layout.setHeight100();
         layout.setAlign(Alignment.CENTER);

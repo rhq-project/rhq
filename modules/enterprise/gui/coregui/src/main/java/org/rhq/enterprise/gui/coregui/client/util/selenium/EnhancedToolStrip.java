@@ -1,25 +1,18 @@
 package org.rhq.enterprise.gui.coregui.client.util.selenium;
 
-import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 /**
- * Wrapper for a SmartGWT {@link HLayout} that adds some destroy logic.
+ * Wrapper for a SmartGWT {@link ToolStrip} that adds some destroy logic.
  * 
  * TODO: Ensure this added destroy logic is necessary now that Selenium support has been removed.
  * 
  * @author Jay Shaughnessy
  */
-public class EnhancedHLayout extends HLayout implements Enhanced {
+public class EnhancedToolStrip extends ToolStrip implements Enhanced {
 
-    public EnhancedHLayout() {
+    public EnhancedToolStrip() {
         super();
-    }
-
-    /** 
-     * @param membersMargin
-     */
-    public EnhancedHLayout(int membersMargin) {
-        super(membersMargin);
     }
 
     public void destroyMembers() {
@@ -31,5 +24,4 @@ public class EnhancedHLayout extends HLayout implements Enhanced {
         destroyMembers();
         super.destroy();
     }
-
 }

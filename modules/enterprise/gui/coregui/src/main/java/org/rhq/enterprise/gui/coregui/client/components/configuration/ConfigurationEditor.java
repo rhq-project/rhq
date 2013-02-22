@@ -129,8 +129,8 @@ import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * A SmartGWT widget for editing an RHQ {@link Configuration} that conforms to a {@link ConfigurationDefinition}.
@@ -143,7 +143,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 // but there were problems with having different editors active for different rows in the table at the same time.
 // Smart says they're working on enhancing this area, but the DynamicForm might be a better option anyway. (ghinkle)
 //
-public class ConfigurationEditor extends LocatableVLayout {
+public class ConfigurationEditor extends EnhancedVLayout {
 
     static final LinkedHashMap<String, String> BOOLEAN_PROPERTY_ITEM_VALUE_MAP = new LinkedHashMap<String, String>();
     static {
@@ -153,7 +153,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     private ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
 
-    private LocatableToolStrip toolStrip;
+    private EnhancedToolStrip toolStrip;
 
     private ConfigurationDefinition configurationDefinition;
     private Configuration configuration;
@@ -395,7 +395,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         if (configurationDefinition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED
             || configurationDefinition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED_AND_RAW) {
             Log.debug("Building structured configuration editor...");
-            LocatableVLayout structuredConfigLayout = buildStructuredPane();
+            EnhancedVLayout structuredConfigLayout = buildStructuredPane();
             addMember(structuredConfigLayout);
         } else {
             Label label = new Label("Structured configuration is not supported.");
@@ -411,8 +411,8 @@ public class ConfigurationEditor extends LocatableVLayout {
         reload();
     }
 
-    protected LocatableVLayout buildStructuredPane() {
-        LocatableVLayout layout = new LocatableVLayout(extendLocatorId("Structured"));
+    protected EnhancedVLayout buildStructuredPane() {
+        EnhancedVLayout layout = new EnhancedVLayout();
         List<PropertyGroupDefinition> groupDefinitions = configurationDefinition.getGroupDefinitions();
 
         if (groupDefinitions.isEmpty()) {
@@ -434,12 +434,12 @@ public class ConfigurationEditor extends LocatableVLayout {
             sectionStack.setOverflow(Overflow.AUTO);
 
             if (!configurationDefinition.getNonGroupedProperties().isEmpty()) {
-                sectionStack.addSection(buildGroupSection(layout.extendLocatorId("NoGroup"), null));
+                sectionStack.addSection(buildGroupSection(null));
             }
 
             for (PropertyGroupDefinition definition : groupDefinitions) {
                 //            com.allen_sauer.gwt.log.client.Log.info("building: " + definition.getDisplayName());
-                sectionStack.addSection(buildGroupSection(layout.extendLocatorId(definition.getName()), definition));
+                sectionStack.addSection(buildGroupSection(definition));
             }
 
             this.toolStrip = buildToolStrip(layout, sectionStack);
@@ -468,8 +468,8 @@ public class ConfigurationEditor extends LocatableVLayout {
         }
     }
 
-    private LocatableToolStrip buildToolStrip(LocatableVLayout layout, final SectionStack sectionStack) {
-        LocatableToolStrip toolStrip = new LocatableToolStrip();
+    private EnhancedToolStrip buildToolStrip(EnhancedVLayout layout, final SectionStack sectionStack) {
+        EnhancedToolStrip toolStrip = new EnhancedToolStrip();
         toolStrip.setBackgroundImage(null);
         toolStrip.setWidth100();
         toolStrip.setMembersMargin(3);
@@ -511,7 +511,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         return toolStrip;
     }
 
-    public SectionStackSection buildGroupSection(String locatorId, PropertyGroupDefinition group) {
+    public SectionStackSection buildGroupSection(PropertyGroupDefinition group) {
         SectionStackSection section;
         if (group == null) {
             section = new SectionStackSection(MSG.common_title_generalProp());
@@ -765,7 +765,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             addMemberPropertyDefinitionsToDynamicPropertyMap(propertyDefinitionMapClone, propertyMap);
             propertyDefinitionMap = propertyDefinitionMapClone;
         }
-        LocatableVLayout layout = new LocatableVLayout();
+        EnhancedVLayout layout = new EnhancedVLayout();
 
         HTMLFlow description = new HTMLFlow(propertyDefinitionMap.getDescription());
         layout.addMember(description);
@@ -777,7 +777,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         if (isDynamic && !isReadOnly(propertyDefinitionMap, propertyMap)) {
             // Map is not read-only - add footer with New and Delete buttons to allow user to add or remove members.
-            LocatableToolStrip buttonBar = new LocatableToolStrip();
+            EnhancedToolStrip buttonBar = new EnhancedToolStrip();
             buttonBar.setPadding(5);
             buttonBar.setMembersMargin(15);
 
@@ -826,7 +826,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             selectItem.setValueMap(propertyDefinitionMap.getMap().keySet()
                 .toArray(new String[propertyDefinitionMap.getMap().size()]));
 
-            final EnhancedIButton okButton = new EnhancedIButton(buttonBar.extendLocatorId("OK"));
+            final EnhancedIButton okButton = new EnhancedIButton();
             okButton.setTitle(MSG.common_button_ok());
             okButton.setDisabled(true);
             okButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
@@ -1019,7 +1019,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         ListGridRecord[] rows = buildSummaryRecords(propertyList, propertyDefinitions);
         summaryTable.setData(rows);
 
-        VLayout summaryTableHolder = new LocatableVLayout();
+        VLayout summaryTableHolder = new EnhancedVLayout();
 
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
@@ -1096,7 +1096,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         final PropertyList propertyList) {
         Log.debug("Building list-of-simples field for " + propertyList + "...");
 
-        LocatableVLayout vLayout = new LocatableVLayout();
+        EnhancedVLayout vLayout = new EnhancedVLayout();
 
         final DynamicForm listGrid = new DynamicForm();
         vLayout.addMember(listGrid);
@@ -1119,7 +1119,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             footer.setMembersMargin(15);
             vLayout.addMember(footer);
 
-            final IButton deleteButton = new EnhancedIButton(extendLocatorId("Delete"));
+            final IButton deleteButton = new EnhancedIButton();
             deleteButton.setIcon(Window.getImgURL(ImageManager.getRemoveIcon()));
             deleteButton.setTooltip(MSG.view_configEdit_tooltip_1());
             deleteButton.setDisabled(true);
@@ -1688,7 +1688,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         final String title = (mapReadOnly) ? MSG.view_configEdit_viewRow() : MSG.view_configEdit_editRow();
         final Window popup = createPopup(title, 800, 600);
 
-        final LocatableVLayout layout = new LocatableVLayout();
+        final EnhancedVLayout layout = new EnhancedVLayout();
         layout.setHeight100();
         layout.setMargin(8);
 

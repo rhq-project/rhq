@@ -45,14 +45,15 @@ import org.rhq.enterprise.gui.coregui.client.alert.definitions.TemplateAlertDefi
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Jay Shaughnessy
  */
 public class AlertDefinitionTemplateTypeView extends ResourceTypeTreeView {
 
-    public static final ViewName VIEW_ID = new ViewName("AlertDefTemplates", MSG.view_adminConfig_alertDefTemplates(), IconEnum.ALERT_FLAG_BLUE);
+    public static final ViewName VIEW_ID = new ViewName("AlertDefTemplates", MSG.view_adminConfig_alertDefTemplates(),
+        IconEnum.ALERT_FLAG_BLUE);
     public static final String VIEW_PATH = ResourceTypeTreeView.VIEW_PATH + VIEW_ID;
 
     public static final String ATTR_ENABLED_TEMPLATES = "enabledTemplates";
@@ -110,9 +111,7 @@ public class AlertDefinitionTemplateTypeView extends ResourceTypeTreeView {
 
             public void onPermissionsLoaded(Set<Permission> permissions) {
                 final Layout alertCanvas = getCanvas();
-                String locatorId = extendLocatorId("alertTemplateDef");
-                final TemplateAlertDefinitionsView defsView = new TemplateAlertDefinitionsView(locatorId, type,
-                    permissions);
+                final TemplateAlertDefinitionsView defsView = new TemplateAlertDefinitionsView(type, permissions);
                 renderTemplateAlertView(alertCanvas, defsView, viewPath);
             }
         });
@@ -150,7 +149,7 @@ public class AlertDefinitionTemplateTypeView extends ResourceTypeTreeView {
 
     private Layout getCanvas() {
         if (null == this.canvas) {
-            LocatableVLayout layout = new LocatableVLayout(extendLocatorId("alertTemplateLayout"));
+            EnhancedVLayout layout = new EnhancedVLayout();
             layout.setHeight100();
             layout.setWidth100();
             layout.setMargin(5);

@@ -45,15 +45,15 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardsView;
 import org.rhq.enterprise.gui.coregui.client.help.HelpView;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHStack;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedHStack;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
  * @author Joseph Marques
  * @author Ian Springer
  */
-public class MenuBarView extends LocatableVLayout {
+public class MenuBarView extends EnhancedVLayout {
 
     public static final ViewName[] SECTIONS = { DashboardsView.VIEW_ID, InventoryView.VIEW_ID, ReportTopView.VIEW_ID,
         BundleTopView.VIEW_ID, AdministrationView.VIEW_ID, HelpView.VIEW_ID };
@@ -142,7 +142,7 @@ public class MenuBarView extends LocatableVLayout {
         return layout;
     }
 
-    class LinkBar extends LocatableHStack implements ValueChangeHandler<String> {
+    class LinkBar extends EnhancedHStack implements ValueChangeHandler<String> {
         private final Map<String, VLayout> sectionNameToLinkVLayoutMap = new HashMap<String, VLayout>();
 
         LinkBar() {

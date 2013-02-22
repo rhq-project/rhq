@@ -40,12 +40,12 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class WizardView extends LocatableVLayout {
+public class WizardView extends EnhancedVLayout {
 
     static private final Messages MSG = CoreGUI.getMessages();
 
@@ -79,7 +79,7 @@ public class WizardView extends LocatableVLayout {
     HashSet<Canvas> createdCanvases = new HashSet<Canvas>();
 
     public WizardView(Wizard wizard) {
-        super("WizardView", 10);
+        super(10);
 
         this.wizard = wizard;
     }

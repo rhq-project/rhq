@@ -43,7 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Jay Shaughnessy
@@ -109,8 +109,7 @@ public class MetricTemplateTypeView extends ResourceTypeTreeView {
 
             public void onPermissionsLoaded(Set<Permission> permissions) {
                 Layout metricCanvas = getCanvas();
-                TemplateSchedulesView templateSchedulesView = new TemplateSchedulesView(
-                    extendLocatorId("MetricTemplate"), type, permissions);
+                TemplateSchedulesView templateSchedulesView = new TemplateSchedulesView(type, permissions);
                 prepareSubCanvas(metricCanvas, templateSchedulesView, true);
                 switchToCanvas(MetricTemplateTypeView.this, metricCanvas);
             }
@@ -119,7 +118,7 @@ public class MetricTemplateTypeView extends ResourceTypeTreeView {
 
     private Layout getCanvas() {
         if (this.canvas == null) {
-            LocatableVLayout layout = new LocatableVLayout(extendLocatorId("metricTemplateLayout"));
+            EnhancedVLayout layout = new EnhancedVLayout();
             layout.setHeight100();
             layout.setWidth100();
             layout.setMargin(5);

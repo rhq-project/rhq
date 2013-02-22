@@ -70,7 +70,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
@@ -238,7 +238,7 @@ public class LoginView extends Canvas {
         int fieldWidth = 120;
 
         //Build registration window.
-        LocatableVLayout column = new LocatableVLayout();
+        EnhancedVLayout column = new EnhancedVLayout();
         column.setMargin(25);
         HeaderItem header = new HeaderItem();
         //Locate product info for registration screen.

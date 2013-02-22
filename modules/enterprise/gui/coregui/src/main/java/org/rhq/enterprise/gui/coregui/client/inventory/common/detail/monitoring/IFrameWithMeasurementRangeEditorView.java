@@ -24,15 +24,15 @@ import com.smartgwt.client.widgets.HTMLPane;
 
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * 
  *
  * @author Lukas Krejci
  */
-public class IFrameWithMeasurementRangeEditorView extends LocatableVLayout implements RefreshableView {
+public class IFrameWithMeasurementRangeEditorView extends EnhancedVLayout implements RefreshableView {
 
     UserPreferencesMeasurementRangeEditor editor;
     HTMLPane iframe;
@@ -47,7 +47,7 @@ public class IFrameWithMeasurementRangeEditorView extends LocatableVLayout imple
 
         addMember(iframe);
 
-        LocatableToolStrip footer = new LocatableToolStrip();
+        EnhancedToolStrip footer = new EnhancedToolStrip();
         footer.setWidth100();
         addMember(footer);
 

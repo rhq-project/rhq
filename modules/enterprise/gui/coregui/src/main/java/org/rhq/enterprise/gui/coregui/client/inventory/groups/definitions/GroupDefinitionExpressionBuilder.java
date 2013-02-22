@@ -56,7 +56,7 @@ import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.GroupDefinitionExpressionBuilderGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * A dialog window that lets you build custom dynagroup expressions.
@@ -336,7 +336,7 @@ public class GroupDefinitionExpressionBuilder extends Window {
             this.pluginItem, this.resourceTypeItem, this.propertyNameItem, this.unsetItem, this.compareTypeItem,
             this.valueItem, addButton, closeButton);
 
-        LocatableVLayout layout = new LocatableVLayout();
+        EnhancedVLayout layout = new EnhancedVLayout();
         layout.setLayoutMargin(5);
         layout.setAutoHeight();
         layout.setAutoWidth();

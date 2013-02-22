@@ -55,13 +55,13 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**This portlet allows the end user to customize the Bundle Deployment display
  *
  * @author Simeon Pinder
  */
-public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements CustomSettingsPortlet,
+public class GroupBundleDeploymentsPortlet extends EnhancedVLayout implements CustomSettingsPortlet,
     AutoRefreshPortlet {
 
     private int groupId = -1;
@@ -156,7 +156,7 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
         final Configuration portletConfig = storedPortlet.getConfiguration();
 
         DynamicForm customSettings = new DynamicForm();
-        LocatableVLayout page = new LocatableVLayout();
+        EnhancedVLayout page = new EnhancedVLayout();
         //build editor form container
         final DynamicForm form = new DynamicForm();
         form.setMargin(5);

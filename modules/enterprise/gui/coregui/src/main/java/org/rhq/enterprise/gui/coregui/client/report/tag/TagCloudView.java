@@ -43,7 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * Shows the tags in a large HTML block, where the most used tags are shown in bigger fonts.
@@ -51,7 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  * @author John  Mazzitelli
  */
-public class TagCloudView extends LocatableVLayout {
+public class TagCloudView extends EnhancedVLayout {
 
     private static final String REMOVE_ICON = "[skin]/images/actions/remove.png";
     private static final int MIN_FONTSIZE = 8;

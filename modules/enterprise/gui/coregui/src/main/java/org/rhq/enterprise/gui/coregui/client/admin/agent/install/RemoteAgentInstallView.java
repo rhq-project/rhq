@@ -53,12 +53,12 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.RemoteInstallGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class RemoteAgentInstallView extends LocatableVLayout {
+public class RemoteAgentInstallView extends EnhancedVLayout {
     public static final ViewName VIEW_ID = new ViewName("RemoteAgentInstall",
         MSG.view_adminTopology_remoteAgentInstall(), IconEnum.AGENT);
 

@@ -45,7 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -109,7 +109,7 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
 
         this.initialDisplay = true;
 
-        detailsHolder = new LocatableVLayout();
+        detailsHolder = new EnhancedVLayout();
         detailsHolder.setAlign(VerticalAlignment.TOP);
         //detailsHolder.setWidth100();
         //detailsHolder.setHeight100();
@@ -388,7 +388,7 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
             // editable, a Cancel button should already be provided by the details view.
             BackButton backButton = new BackButton(MSG.view_tableSection_backButton(), basePath);
             detailsHolder.addMember(backButton);
-            VLayout verticalSpacer = new LocatableVLayout();
+            VLayout verticalSpacer = new EnhancedVLayout();
             verticalSpacer.setHeight(8);
             detailsHolder.addMember(verticalSpacer);
         }

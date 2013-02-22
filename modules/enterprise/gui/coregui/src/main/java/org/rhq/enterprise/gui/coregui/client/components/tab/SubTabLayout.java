@@ -35,13 +35,13 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class SubTabLayout extends LocatableVLayout {
+public class SubTabLayout extends EnhancedVLayout {
 
     /** maps subTab locator IDs to SubTabs. Unlike names, locatorIDs are qualified by the Tab and therefore unique. */
     private Map<String, SubTab> subTabs = new LinkedHashMap<String, SubTab>();
@@ -70,7 +70,7 @@ public class SubTabLayout extends LocatableVLayout {
         setMargin(0);
         setPadding(0);
 
-        buttonBar = new LocatableToolStrip();
+        buttonBar = new EnhancedToolStrip();
         buttonBar.setBackgroundColor("grey");
         buttonBar.setWidth100();
         buttonBar.setBorder(null);

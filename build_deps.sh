@@ -16,6 +16,16 @@
 # include utility library
 source `dirname $0`/rhq_bash.lib
 
+build_snappy_java()
+{
+    echo "Building Snappy for Java..."
+    clone_repo git://github.com/jsanda/snappy-java.git
+    pushd snappy-java
+    git checkout -b 1.0.5-M3 origin/1.0.5-M3
+    run_mvn compile
+    make
+}
+
 build_datastax_driver()
 {
     echo "Building DataStax Java driver..."
@@ -85,4 +95,5 @@ rm -rf $BUILD_DIR
 mkdir -p $BUILD_DIR
 pushd $BUILD_DIR
 
+build_snappy_java
 build_datastax_driver

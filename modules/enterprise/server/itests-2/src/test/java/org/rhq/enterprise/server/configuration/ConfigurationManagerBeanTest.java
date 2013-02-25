@@ -78,11 +78,8 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
     private Agent agent;
     private Subject overlord;
 
-    /**
-     * Prepares things for the entire test class.
-     */
-    //@BeforeClass don't use BeforeClass as Arquillian 1.0.2 invokes it on every test method
-    protected void beforeClass() {
+    @Override
+    protected void beforeMethod() throws Exception {
         // Make sure page control sorts so the latest config update is last (the default is for the latest to be first).
         configUpdatesPageControl = PageControl.getUnlimitedInstance();
         // (ips, 04/01/10): Use createdTime, rather than id, to order by, since the id's are not guaranteed to be
@@ -92,12 +89,6 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
 
         configurationManager = LookupUtil.getConfigurationManager();
         resourceManager = LookupUtil.getResourceManager();
-        overlord = LookupUtil.getSubjectManager().getOverlord();
-    }
-
-    @Override
-    protected void beforeMethod() throws Exception {
-        beforeClass();
 
         prepareScheduler();
 
@@ -105,6 +96,8 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         TestServices testServices = new TestServices();
         agentServiceContainer.configurationService = testServices;
         agentServiceContainer.discoveryService = testServices;
+
+        overlord = LookupUtil.getSubjectManager().getOverlord();
 
         getTransactionManager().begin();
 
@@ -254,6 +247,87 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         } while (inProgress);
 
         assertTrue(inProgressTested);
+    }
+
+    @Test(enabled = ENABLE_TESTS)
+    public void testInProgressConfiguration() throws Exception {
+        int resourceId = newResource1.getId();
+
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+
+        // create 3 configs: config1 will be stored as current. config2 will be in progress, config3 should get
+        // blocked from updating by the inprogress update
+        Configuration configuration1 = new Configuration();
+        configuration1.put(new PropertySimple("myboolean", "true"));
+
+        Configuration configuration2 = new Configuration();
+        configuration2.put(new PropertySimple("myboolean", "false"));
+        configuration2.put(new PropertySimple("mysleep", "7000"));
+
+        Configuration configuration3 = new Configuration();
+        configuration3.put(new PropertySimple("mysleep", "10000"));
+
+        // make config1 the current
+        configurationManager.updateResourceConfiguration(overlord, resourceId, configuration1);
+        Thread.sleep(2000); // wait for the test agent to complete the request
+
+        ResourceConfigurationUpdate history1;
+        history1 = configurationManager.getLatestResourceConfigurationUpdate(overlord, resourceId);
+        assert history1 != null;
+        PropertySimple myprop = history1.getConfiguration().getSimple("myboolean");
+        assert myprop != null;
+        assert "true".equals(myprop.getStringValue());
+
+        // now update to config2 - the "agent" will sleep for a bit before it completes
+        // so we will have an INPROGRESS configuration for a few seconds before it goes to SUCCESS                
+        configurationManager.updateResourceConfiguration(overlord, resourceId, configuration2);
+
+        // now update to config3 - this should fail as you can't update while there is one in progress
+        try {
+            configurationManager.updateResourceConfiguration(overlord, resourceId, configuration3);
+            assert false : "Should have thrown an in progress exception";
+
+        } catch (ConfigurationUpdateStillInProgressException e) {
+            System.out.println("======> " + e);
+
+            // make sure everything works as expected (like the above test)
+
+            boolean inProgress = false;
+            boolean inProgressTested = false;
+
+            do {
+                ResourceConfigurationUpdate history2 = configurationManager.getLatestResourceConfigurationUpdate(
+                    overlord, resourceId);
+                inProgress = configurationManager.isResourceConfigurationUpdateInProgress(overlord, resourceId);
+
+                if (inProgress) {
+                    // history2 should be history1 since the update is not complete                
+                    assert history2 != null;
+                    assert history2.getId() == history1.getId();
+                    myprop = history2.getConfiguration().getSimple("myboolean");
+                    assert myprop != null;
+                    assert "true".equals(myprop.getStringValue());
+                    myprop = history2.getConfiguration().getSimple("mysleep"); // this wasn't in the first config
+                    assert myprop == null;
+                    // record that this test case ran, we expect it will if the agent delay is there 
+                    inProgressTested = true;
+                } else {
+                    // update is complete, history 2 should be different
+                    history2 = configurationManager.getLatestResourceConfigurationUpdate(overlord, resourceId);
+                    assert history2 != null;
+                    assert history2.getId() != history1.getId();
+                    myprop = history2.getConfiguration().getSimple("myboolean");
+                    assert myprop != null;
+                    assert "false".equals(myprop.getStringValue());
+                    myprop = history2.getConfiguration().getSimple("mysleep");
+                    assert myprop.getLongValue() != null;
+                    assert myprop.getLongValue().longValue() == 7000L;
+                }
+            } while (inProgress);
+
+        } catch (Throwable t) {
+            assert false : "Should have thrown an in progress exception, not: " + t;
+        }
     }
 
     @Test(enabled = ENABLE_TESTS)

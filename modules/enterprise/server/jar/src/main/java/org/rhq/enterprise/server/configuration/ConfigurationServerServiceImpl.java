@@ -43,8 +43,8 @@ public class ConfigurationServerServiceImpl implements ConfigurationServerServic
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
 
         int configUpdateId = response.getConfigurationUpdateId();
-        ResourceConfigurationUpdate configUpdate = configurationManager.getResourceConfigurationUpdate(subjectManager
-            .getOverlord(), configUpdateId);
+        ResourceConfigurationUpdate configUpdate = configurationManager.getResourceConfigurationUpdate(
+            subjectManager.getOverlord(), configUpdateId);
 
         if (configUpdate != null) {
             Resource resource = configUpdate.getResource();
@@ -67,7 +67,7 @@ public class ConfigurationServerServiceImpl implements ConfigurationServerServic
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
 
         Subject overlord = subjectManager.getOverlord();
-        ResourceConfigurationUpdate update = configurationManager.persistNewResourceConfigurationUpdateHistory(
+        ResourceConfigurationUpdate update = configurationManager.persistResourceConfigurationUpdateInNewTransaction(
             overlord, resourceId, resourceConfiguration, ConfigurationUpdateStatus.SUCCESS, null, false);
 
         if (update == null) {
@@ -76,7 +76,7 @@ public class ConfigurationServerServiceImpl implements ConfigurationServerServic
             return;
         }
 
-        Configuration configuration = update.getConfiguration().deepCopy(false);  // clone the config, zeroing out ids
+        Configuration configuration = update.getConfiguration().deepCopy(false); // clone the config, zeroing out ids
         configurationManager.setResourceConfiguration(resourceId, configuration); // now set it as the current config on the Resource
     }
 }

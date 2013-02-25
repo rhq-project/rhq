@@ -91,6 +91,7 @@
     <system-properties>
         <property name="project.version" value="${project.version}"/>
         <property name="rhq.server.content.filesystem" value="${jboss.unzip.location}/standalone/data/packagebits" />
+        <property name="jboss.socket.binding.port-offset" value="${jboss.socket.binding.port-offset}" />
     </system-properties>]]></replacevalue>
                   </replacefilter>
 
@@ -741,5 +742,22 @@
         <jboss.vm.args.debug>-Xrunjdwp:transport=dt_socket,address=8798,server=y,suspend=y</jboss.vm.args.debug>
       </properties>
     </profile>
+
+    <!-- These two properties allow Arquillian to inspect AS7 through the mgmt port, to determine the ports it needs to interact 
+      with when spawning the AS7 instance. This allows the AS7 to run on non-default ports. If these properties are not set (for 
+      example, in settings.xml) then we must set the defaults here. The offset is then provided via the standalone.xml properties -->
+    <profile>
+      <id>arquillian-ports</id>
+      <activation>
+        <property>
+          <name>!jboss.socket.binding.port-offset</name>
+        </property>
+      </activation>
+      <properties>
+        <jboss.socket.binding.port-offset>0</jboss.socket.binding.port-offset>
+        <jboss.management.native.port>9999</jboss.management.native.port>
+      </properties>
+    </profile>
+
   </profiles>
 </project>

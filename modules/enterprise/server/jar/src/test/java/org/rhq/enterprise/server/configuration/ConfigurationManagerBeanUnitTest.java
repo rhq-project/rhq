@@ -149,7 +149,7 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
 
             allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
             
-            oneOf(configurationMgrLocal).persistNewResourceConfigurationUpdateHistory(fixture.subject,
+            oneOf(configurationMgrLocal).persistResourceConfigurationUpdateInNewTransaction(fixture.subject,
                 fixture.resourceId, fixture.configuration, INPROGRESS, fixture.subject.getName(),
                 fixture.isPartOfGroupUpdate);
             will(returnValue(expectedUpdate));
@@ -191,7 +191,7 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
             oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_WRITE, fixture.resourceId);
             will(returnValue(true));
 
-            oneOf(configurationMgrLocal).persistNewResourceConfigurationUpdateHistory(fixture.subject,
+            oneOf(configurationMgrLocal).persistResourceConfigurationUpdateInNewTransaction(fixture.subject,
                 fixture.resourceId, fixture.configuration, INPROGRESS, fixture.subject.getName(),
                 fixture.isPartOfGroupUpdate);
             will(returnValue(expectedUpdate));
@@ -252,7 +252,7 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
             oneOf(configAgentService).validate(fixture.configuration, fixture.resourceId, FROM_STRUCTURED);
             inSequence(configUdpate);
 
-            oneOf(configurationMgrLocal).persistNewResourceConfigurationUpdateHistory(fixture.subject,
+            oneOf(configurationMgrLocal).persistResourceConfigurationUpdateInNewTransaction(fixture.subject,
                 fixture.resourceId, fixture.configuration, INPROGRESS, fixture.subject.getName(),
                 fixture.isPartOfGroupUpdate);
             will(returnValue(expectedUpdate));
@@ -302,7 +302,7 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
             oneOf(configAgentService).merge(fixture.configuration, fixture.resourceId, FROM_RAW);
             will(returnValue(translatedConfig)); inSequence(configUdpate);
 
-            oneOf(configurationMgrLocal).persistNewResourceConfigurationUpdateHistory(fixture.subject,
+            oneOf(configurationMgrLocal).persistResourceConfigurationUpdateInNewTransaction(fixture.subject,
                 fixture.resourceId, translatedConfig, INPROGRESS, fixture.subject.getName(),
                 fixture.isPartOfGroupUpdate);
             will(returnValue(expectedUpdate));
@@ -350,7 +350,7 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
             oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_WRITE, fixture.resourceId);
             will(returnValue(true));
             
-            oneOf(configurationMgrLocal).persistNewResourceConfigurationUpdateHistory(fixture.subject, fixture.resourceId,
+            oneOf(configurationMgrLocal).persistResourceConfigurationUpdateInNewTransaction(fixture.subject, fixture.resourceId,
                 fixture.configuration, INPROGRESS, fixture.subject.getName(), fixture.isPartOfGroupUpdate);
             will(returnValue(expectedUpdate));
 

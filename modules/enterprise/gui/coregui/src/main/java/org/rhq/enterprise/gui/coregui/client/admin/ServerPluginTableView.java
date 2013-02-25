@@ -57,9 +57,9 @@ import org.rhq.enterprise.gui.coregui.client.components.upload.PluginFileUploadF
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
 
 /**
  * @author John Mazzitelli
@@ -225,7 +225,6 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
         });
 
         IButton scanForUpdatesButton = new EnhancedIButton(MSG.view_admin_plugins_scan());
-        scanForUpdatesButton.setAutoFit(true);
         scanForUpdatesButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 GWTServiceLookup.getPluginService().scanAndRegister(new AsyncCallback<Void>() {
@@ -247,7 +246,6 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
         });
 
         IButton restartMasterPCButton = new EnhancedIButton(MSG.view_admin_plugins_restartMasterPC());
-        restartMasterPCButton.setAutoFit(true);
         restartMasterPCButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 Message msg = new Message(MSG.view_admin_plugins_restartMasterPCStarted(), Severity.Info);
@@ -272,7 +270,6 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
         });
 
         final IButton showUndeployedButton = new EnhancedIButton(MSG.view_admin_plugins_showUndeployed());
-        showUndeployedButton.setAutoFit(true);
         showUndeployedButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 showUndeployed = !showUndeployed;

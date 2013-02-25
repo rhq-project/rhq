@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,78 +19,93 @@
 
 package org.rhq.plugins.netservices;
 
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.GetMethod;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Set;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.pluginapi.operation.OperationFacet;
-import org.rhq.core.pluginapi.operation.OperationResult;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Set;
-import java.net.InetAddress;
-import java.net.Inet4Address;
-import java.net.UnknownHostException;
-
+import org.rhq.core.util.StringUtil;
 
 /**
- * Monitoring of HTTP Servers
+ * Monitoring of IP addresses
  *
  * @author Greg Hinkle
  */
 public class PingNetServiceComponent implements ResourceComponent, MeasurementFacet {
 
-    public static final String CONFIG_ADDRESS = "address";
+    public static final class ConfigKeys {
 
+        private ConfigKeys() {
+            // Defensive
+        }
 
-    private ResourceContext resourceContext;
+        public static final String ADDRESS = "address";
+    }
 
-    public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
-        this.resourceContext = resourceContext;
-        String addressString = resourceContext.getPluginConfiguration().getSimple(CONFIG_ADDRESS).getStringValue();
+    private static final Log LOG = LogFactory.getLog(PingNetServiceComponent.class);
+
+    private static final int PING_TIMEOUT = 5000;
+
+    private InetAddress address;
+
+    @Override
+    public void start(@SuppressWarnings("rawtypes")
+    ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
+        address = createComponentConfiguration(resourceContext.getPluginConfiguration());
+    }
+
+    static InetAddress createComponentConfiguration(Configuration pluginConfig)
+        throws InvalidPluginConfigurationException {
+        String addressString = pluginConfig.getSimpleValue(ConfigKeys.ADDRESS, StringUtil.EMPTY_STRING);
+        if (StringUtil.isBlank(addressString)) {
+            throw new InvalidPluginConfigurationException("Address is not defined");
+        }
         try {
-            InetAddress address = InetAddress.getByName(addressString);
+            return InetAddress.getByName(addressString);
         } catch (UnknownHostException uhe) {
             throw new InvalidPluginConfigurationException(uhe);
         }
     }
 
+    @Override
     public void stop() {
+        address = null;
     }
 
+    @Override
     public AvailabilityType getAvailability() {
         try {
-            String addressString = resourceContext.getPluginConfiguration().getSimple(CONFIG_ADDRESS).getStringValue();
-            InetAddress address = InetAddress.getByName(addressString);
-            return address.isReachable(5000) ? AvailabilityType.UP : AvailabilityType.DOWN;
+            return address.isReachable(PING_TIMEOUT) ? AvailabilityType.UP : AvailabilityType.DOWN;
         } catch (Exception e) {
+            if (LOG.isWarnEnabled()) {
+                LOG.warn(address.getHostAddress() + " not reachable", e);
+            }
             return AvailabilityType.DOWN;
         }
     }
 
-
+    @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-        String addressString = resourceContext.getPluginConfiguration().getSimple(CONFIG_ADDRESS).getStringValue();
-        InetAddress address = InetAddress.getByName(addressString);
-
-        for (MeasurementScheduleRequest request :metrics) {
+        for (MeasurementScheduleRequest request : metrics) {
             if (request.getName().equals("ipAddress")) {
                 report.addData(new MeasurementDataTrait(request, address.getHostAddress()));
             } else if (request.getName().equals("hostName")) {
                 report.addData(new MeasurementDataTrait(request, address.getCanonicalHostName()));
             } else if (request.getName().equals("responseTime")) {
                 long start = System.currentTimeMillis();
-                address.isReachable(5000);
+                address.isReachable(PING_TIMEOUT);
                 report.addData(new MeasurementDataNumeric(request, (double) (System.currentTimeMillis() - start)));
             }
         }

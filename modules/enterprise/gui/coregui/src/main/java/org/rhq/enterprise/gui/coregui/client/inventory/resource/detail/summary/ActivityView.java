@@ -121,7 +121,6 @@ public class ActivityView extends EnhancedVLayout implements DashboardContainer,
         footer.setMembersMargin(15);
 
         editButton = new EnhancedIButton(editMode ? MSG.common_title_view_mode() : MSG.common_title_edit_mode());
-        editButton.setAutoFit(true);
         editButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 editMode = !editMode;
@@ -131,7 +130,6 @@ public class ActivityView extends EnhancedVLayout implements DashboardContainer,
         });
 
         resetButton = new EnhancedIButton(MSG.common_button_reset());
-        resetButton.setAutoFit(true);
         resetButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 String message = MSG.view_summaryDashboard_resetConfirm();

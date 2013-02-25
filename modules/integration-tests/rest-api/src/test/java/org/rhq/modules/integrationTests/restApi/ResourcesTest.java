@@ -220,6 +220,61 @@ public class ResourcesTest extends AbstractBase {
     }
 
     @Test
+    public void testCreatePlatformUpdateAvailabilityAndRemove() throws Exception {
+
+        Resource resource = new Resource();
+        resource.setResourceName("dummy-test");
+        resource.setTypeName("Linux");
+
+        Response response =
+        given()
+            .header(acceptXml)
+            .contentType(ContentType.JSON)
+            .body(resource)
+        .expect()
+            .statusCode(201)
+            .log().ifError()
+        .when()
+            .post("/resource/platforms");
+
+        XmlPath xmlPath = response.xmlPath();
+        Node resource1 = xmlPath.get("resource");
+        Node platformIdNode =  resource1.get("resourceId");
+        String platformId = platformIdNode.value();
+
+        try {
+            long now = System.currentTimeMillis()-100;
+            given().body("{\"since\":" + now + ",\"type\":\"DOWN\",\"resourceId\":" + platformId + "}")
+                    .header("Content-Type","application/json")
+                    .header("Accept","application/json")
+                    .pathParam("id",platformId)
+            .expect()
+                    .statusCode(HttpStatus.SC_NO_CONTENT)
+                    .log().ifError()
+            .when().put("/resource/{id}/availability");
+
+            now += 50;
+            given().body("{\"since\":" + now + ",\"type\":\"UP\",\"resourceId\":" + platformId + "}")
+                    .header("Content-Type","application/json")
+                    .header("Accept","application/json")
+                    .pathParam("id",platformId)
+            .expect()
+                    .statusCode(HttpStatus.SC_NO_CONTENT)
+                    .log().ifError()
+            .when().put("/resource/{id}/availability");
+
+
+        }
+
+        finally {
+            given().pathParam("id", platformId)
+                .expect().statusCode(HttpStatus.SC_NO_CONTENT)
+                .when().delete("/resource/{id}");
+        }
+
+    }
+
+    @Test
     public void testCreatePlatformOLDAndRemove() throws Exception {
 
         Response response =

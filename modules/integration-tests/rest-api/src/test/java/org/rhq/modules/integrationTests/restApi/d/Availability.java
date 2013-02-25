@@ -16,32 +16,49 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
-package org.rhq.enterprise.server.rest;
 
-import javax.ejb.ApplicationException;
+package org.rhq.modules.integrationTests.restApi.d;
 
 /**
- * Exception if arguments are bad.
- * Don't use java.lang.IllegalArgumentException, as this is no
- * Application Exception and gets wrapped
+ * Availability for testing
  * @author Heiko W. Rupp
  */
-@ApplicationException(rollback = false, inherited = true)
-public class BadArgumentException extends RuntimeException {
+public class Availability {
 
-    private static final long serialVersionUID = 1L;
+    long since;
+    String type;
+    int resourceId;
 
-    public BadArgumentException(String message) {
-        super("Bad parameter(s) given: " + message);
+    public Availability() {
     }
 
-    /**
-     * Construct a new instance of this Exception.
-     * @param parameterName Denotes which parameter is bad
-     * @param cause Denotes why it is bad
-     */
-    public BadArgumentException(String parameterName, String cause) {
-        super("Parameter " + parameterName + " is bad: " + cause);
+    public Availability(int resourceId, long since, String type) {
+        this.resourceId = resourceId;
+        this.since = since;
+        this.type = type;
     }
 
+    public int getResourceId() {
+        return resourceId;
+    }
+
+    public void setResourceId(int resourceId) {
+        this.resourceId = resourceId;
+    }
+
+    public long getSince() {
+        return since;
+    }
+
+    public void setSince(long since) {
+        this.since = since;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
 }

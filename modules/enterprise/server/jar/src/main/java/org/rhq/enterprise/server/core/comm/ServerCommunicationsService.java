@@ -45,6 +45,7 @@ import mazz.i18n.Logger;
 import org.jboss.remoting.InvokerLocator;
 import org.jboss.util.StringPropertyReplacer;
 
+import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.content.ContentServerService;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
 import org.rhq.core.clientapi.server.measurement.MeasurementServerService;
@@ -642,6 +643,17 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
     public void setMeasurementScheduleRequestConcurrencyLimit(Integer maxConcurrency) {
         setConcurrencyLimit(MeasurementServerService.CONCURRENCY_LIMIT_MEASUREMENT_SCHEDULE_REQUEST, maxConcurrency,
             true);
+    }
+
+    @Override
+    public Integer getConfigurationUpdateConcurrencyLimit() {
+        return getServiceContainer().getConcurrencyManager().getConfiguredNumberOfPermitsAllowed(
+            ConfigurationServerService.CONCURRENCY_LIMIT_CONFIG_UPDATE);
+    }
+
+    @Override
+    public void setConfigurationUpdateConcurrencyLimit(Integer maxConcurrency) {
+        setConcurrencyLimit(ConfigurationServerService.CONCURRENCY_LIMIT_CONFIG_UPDATE, maxConcurrency, true);
     }
 
     @Override

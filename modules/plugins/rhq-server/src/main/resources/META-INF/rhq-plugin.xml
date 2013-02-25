@@ -616,6 +616,13 @@
             required="true"
             activationPolicy="immediate"
             description="Number of measurement schedule requests that can be processed concurrently; if zero or less, there is no limit" />
+          <c:simple-property
+            name="ConfigurationUpdateConcurrencyLimit"
+            displayName="Configuration Update Concurrency Limit"
+            type="integer"
+            required="true"
+            activationPolicy="immediate"
+            description="Number of configuration updates originating from agents that can be processed concurrently; if zero or less, there is no limit" />
         </c:group>
         <c:group
           name="ha"

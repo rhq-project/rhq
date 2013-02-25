@@ -134,47 +134,51 @@ public interface AgentManagerLocal {
     /**
      * Given an agent name, this will look up and return the {@link Agent} with that name. If no agent with the given
      * name exists, <code>null</code> is returned.
-     *
+     * This method is very efficient if you want to find a single agent by its name.
+     * If you need to get more than one agent, you could use <code>findAgentsByCriteria</code>.
+     * 
      * @param  agentName
      *
      * @return the agent whose name matches the given name; <code>null</code> if there is no agent with the given name
-     * @deprecated Use <code>findAgentsByCriteria()</code> instead
      */
     Agent getAgentByName(String agentName);
 
     /**
      * Given an agent id, this will look up and return the {@link Agent} with that id. If no agent with the given
      * name exists, <code>null</code> is returned.
+     * This method is very efficient if you want to find a single agent by its ID.
+     * If you need to get more than one agent, you could use <code>findAgentsByCriteria</code>.
      *
      * @param  agentId
      *
      * @return the agent whose id matches the given id; <code>null</code> if there is no agent with the given id
-     * @deprecated Use <code>findAgentsByCriteria()</code> instead
      */
     Agent getAgentByID(int agentId);
 
     /**
      * Given an agent token string, this will look up and return the {@link Agent} associated with that token. If the
      * given token is invalid, <code>null</code> is returned.
+     * This method is very efficient if you want to find a single agent by its token.
+     * If you need to get more than one agent, you could use <code>findAgentsByCriteria</code>.
      *
      * @param  token the agent token
      *
      * @return the agent whose agent token matches the given token; <code>null</code> if there is no agent with the
      *         given token
-     * @deprecated Use <code>findAgentsByCriteria()</code> instead
      */
     Agent getAgentByAgentToken(String token);
 
     /**
      * Given an agent's address and port, this will look up and return the {@link Agent} associated with that address
      * and port. If no agent is found, <code>null</code> is returned.
+     * This method is very efficient if you want to find a single agent by its endpoint.
+     * If you need to get more than one agent, you could use <code>findAgentsByCriteria</code>.
      *
      * @param  address the address that the agent is bound to
      * @param  port    the port at the given address that the agent is listening on
      *
      * @return the agent to be known at the given address and port; <code>null</code> if there is no agent with the
      *         given token
-     * @deprecated Use <code>findAgentsByCriteria()</code> instead
      */
     Agent getAgentByAddressAndPort(String address, int port);
 

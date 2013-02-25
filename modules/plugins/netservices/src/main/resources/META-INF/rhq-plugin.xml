@@ -11,30 +11,29 @@
     <service name="HTTPService"
              discovery="HTTPNetServiceDiscoveryComponent"
              class="HTTPNetServiceComponent"
-             supportsManualAdd="true">
+             supportsManualAdd="true"
+             description="HTTP Endpoint monitoring service">
 
         <plugin-configuration>
-            <c:simple-property name="url"/>
-            <c:simple-property name="user" required="false"/>
-            <c:simple-property name="password" required="false"/>
-            <c:simple-property name="realm" required="false"/>
-            <c:simple-property name="validateResponseCode" type="boolean" default="false" 
-                    description="Codes in the 200-299 range are considered success"/>
-            <c:simple-property name="sslProtocol" default="none">
-                <c:property-options>
-                    <c:option value="none"/>
-                    <c:option value="SSL"/>
-                    <c:option value="TLS"/>
-                </c:property-options>
-            </c:simple-property>
+            <c:simple-property name="url" description="Http URL of the endpoint" />
+            <c:simple-property name="user" required="false"
+                               description="User name if http endpoint requires authentication." />
+            <c:simple-property name="password" required="false"
+                               description="Password if http endpoint requires authentication." />
+            <c:simple-property name="realm" required="false"
+                               description="Authentication Realm. By default user name and password will be used with any realm." />
             <c:simple-property name="method" default="GET">
                 <c:property-options>
                     <c:option value="HEAD"/>
                     <c:option value="GET"/>
                 </c:property-options>
             </c:simple-property>
-            <c:simple-property name="followRedirects" type="boolean" default="false"/>
-            <c:simple-property name="responsePattern" required="false"/>
+            <c:simple-property name="followRedirects" type="boolean" default="false"
+                               description="Follow http redirects when contacting endpoints?" />
+            <c:simple-property name="validateResponseCode" type="boolean" default="false"
+                               description="Set this to true if response code should determine availability. Codes in the 200-299 range are considered success." />
+            <c:simple-property name="validateResponsePattern" required="false"
+                               description="If not empty, availability will depend on http response having content matching this (Java style) regular expression."/>
         </plugin-configuration>
 
         <metric property="connectTime" units="milliseconds" displayType="summary"
@@ -46,17 +45,17 @@
         <metric property="contentAge" units="milliseconds"
                 description="The declared age of the requested page"/>
 
-
     </service>
 
 
     <service name="PingService"
              discovery="PingNetServiceDiscoveryComponent"
              class="PingNetServiceComponent"
-             supportsManualAdd="true">
+             supportsManualAdd="true"
+             description="IP address ping service">
 
         <plugin-configuration>
-            <c:simple-property name="address"/>
+            <c:simple-property name="address" description="IP address"/>
         </plugin-configuration>
 
         <metric property="ipAddress" displayType="summary" dataType="trait" description="The ip address of the host"/>

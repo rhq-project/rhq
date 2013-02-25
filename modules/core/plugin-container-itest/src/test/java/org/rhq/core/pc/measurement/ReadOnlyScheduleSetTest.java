@@ -19,6 +19,7 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.pc.PluginContainer;
+import org.rhq.core.pc.inventory.ForceAvailabilityExecutor;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.plugins.test.SingleResourceDiscoveryComponent;
 import org.rhq.plugins.test.measurement.BZ821058ResourceComponent;
@@ -84,6 +85,9 @@ public class ReadOnlyScheduleSetTest extends Arquillian {
     public void waitForAsyncDiscoveries() throws Exception {
         if (discoveryCompleteChecker != null) {
             discoveryCompleteChecker.waitForDiscoveryComplete(10000);
+
+            // Since the avail job is not running, make sure our discovered resources get their initial UP avail
+            new ForceAvailabilityExecutor(pluginContainer.getInventoryManager()).call();
         }
     }
 

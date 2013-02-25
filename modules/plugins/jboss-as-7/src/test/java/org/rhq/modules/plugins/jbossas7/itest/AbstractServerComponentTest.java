@@ -62,6 +62,7 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
     private static final Map<String, String> EAP6_VERSION_TO_AS7_VERSION_MAP = new HashMap<String, String>();
     static {
         EAP6_VERSION_TO_AS7_VERSION_MAP.put("6.0.0", "7.1.2.Final-redhat-1");
+        EAP6_VERSION_TO_AS7_VERSION_MAP.put("6.0.1", "7.1.3.Final-redhat-4");
     }
 
     private static final String RELEASE_VERSION_TRAIT_NAME = "_skm:release-version";

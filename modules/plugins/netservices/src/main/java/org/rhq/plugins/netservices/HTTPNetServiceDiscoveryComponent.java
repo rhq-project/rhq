@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,48 +19,37 @@
 
 package org.rhq.plugins.netservices;
 
+import java.util.Collections;
+import java.util.Set;
+
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.ManualAddFacet;
-import org.rhq.core.domain.configuration.Configuration;
-
-import java.util.Set;
-import java.util.Collections;
-import java.net.URL;
-import java.net.MalformedURLException;
 
 /**
  * @author Greg Hinkle
  */
 public class HTTPNetServiceDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
-    public Set discoverResources(ResourceDiscoveryContext resourceDiscoveryContext) throws InvalidPluginConfigurationException, Exception {
+
+    @Override
+    public Set discoverResources(ResourceDiscoveryContext resourceDiscoveryContext)
+        throws InvalidPluginConfigurationException, Exception {
         // We don't support auto-discovery.
         return Collections.emptySet();
     }
 
+    @Override
     public DiscoveredResourceDetails discoverResource(Configuration config,
-                                                      ResourceDiscoveryContext resourceDiscoveryContext)
-            throws InvalidPluginConfigurationException {
-        String configURL = config.getSimple(HTTPNetServiceComponent.CONFIG_URL).getStringValue();
-        URL url;
-        try {
-            url = new URL(configURL);
-        }
-        catch (MalformedURLException e) {
-            throw new InvalidPluginConfigurationException("Property '" + HTTPNetServiceComponent.CONFIG_URL
-                    + "' is not a valid URL.");
-        }
-        DiscoveredResourceDetails details =
-                new DiscoveredResourceDetails(
-                        resourceDiscoveryContext.getResourceType(),
-                        url.toExternalForm(),
-                        url.toExternalForm(),
-                        null,
-                        null,
-                        config,
-                        null);
+        ResourceDiscoveryContext resourceDiscoveryContext) throws InvalidPluginConfigurationException {
+        // Get the component configuration. This call will also make configuration checks
+        HTTPNetServiceComponentConfiguration componentConfiguration = HTTPNetServiceComponent
+            .createComponentConfiguration(config);
+        String endPointUrl = componentConfiguration.getEndPointUrl().toExternalForm();
+        DiscoveredResourceDetails details = new DiscoveredResourceDetails(resourceDiscoveryContext.getResourceType(),
+            endPointUrl, endPointUrl, null, null, config, null);
         return details;
     }
 }

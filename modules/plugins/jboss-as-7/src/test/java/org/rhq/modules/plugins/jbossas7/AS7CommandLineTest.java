@@ -48,6 +48,8 @@ import org.rhq.core.util.stream.StreamUtil;
 public class AS7CommandLineTest {
     private static final File FAKE_JBOSS_HOME = new File(".");
 
+    private static final String FILE_URL_PREFIX = (File.separatorChar == '/') ? "file://" : "file:///";
+
     private interface CommandLineProducer {
         AS7CommandLine get();
     }
@@ -73,8 +75,8 @@ public class AS7CommandLineTest {
         File propsFile1 = File.createTempFile("jboss1-", ".properties");
         File propsFile2 = File.createTempFile("jboss2-", ".properties");
 
-        String propsFile1Path = "file://" + propsFile1;
-        String propsFile2Path = "file://" + propsFile2;
+        String propsFile1Path = FILE_URL_PREFIX + propsFile1;
+        String propsFile2Path = FILE_URL_PREFIX + propsFile2;
 
         try {
             testSysProps(propsFile1, propsFile2, FAKE_JBOSS_HOME,
@@ -197,8 +199,8 @@ public class AS7CommandLineTest {
         File propsFile1 = File.createTempFile("jboss1-", ".properties");
         File propsFile2 = File.createTempFile("jboss2-", ".properties");
 
-        String propsFile1Path = "file://" + propsFile1;
-        String propsFile2Path = "file://" + propsFile2;
+        String propsFile1Path = FILE_URL_PREFIX + propsFile1;
+        String propsFile2Path = FILE_URL_PREFIX + propsFile2;
 
         FakeServerProcess fakeServer = startFakeServer(FAKE_JBOSS_HOME, FAKE_JBOSS_HOME, propsFile1Path, propsFile2Path);
 
@@ -218,8 +220,8 @@ public class AS7CommandLineTest {
         File propsFile1 = File.createTempFile("jboss1-", ".properties");
         File propsFile2 = File.createTempFile("jboss2-", ".properties");
 
-        String propsFile1Path = "file://" + propsFile1;
-        String propsFile2Path = "file://" + propsFile2;
+        String propsFile1Path = FILE_URL_PREFIX + propsFile1;
+        String propsFile2Path = FILE_URL_PREFIX + propsFile2;
 
         FakeServerProcess fakeServer = startFakeServer(new File(".."), FAKE_JBOSS_HOME, propsFile1Path, propsFile2Path);
 
@@ -385,11 +387,7 @@ public class AS7CommandLineTest {
 
             Assert
                 .fail("The fake jboss as server process has finished even though it should keep running. The exit value was "
-                    + exitValue
-                    + ". Stdout was:\n"
-                    + stdout
-                    + "\n\nStderr was:\n"
-                    + stderr);
+                    + exitValue + ". Stdout was:\n" + stdout + "\n\nStderr was:\n" + stderr);
         } catch (IllegalThreadStateException e) {
             //expected
         }

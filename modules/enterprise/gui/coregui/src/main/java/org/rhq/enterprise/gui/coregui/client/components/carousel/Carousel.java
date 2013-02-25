@@ -362,7 +362,6 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
                     .getTitle());
                 menuButton.setMenu(menu);
                 menuButton.setDisabled(true);
-                menuButton.setAutoFit(true); // this makes it pretty tight, but maybe better than the default, which is pretty wide
                 menuButton.setOverflow(Overflow.VISIBLE);
                 menuButton.setShowMenuBelow(false);
 

@@ -233,15 +233,11 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Enh
             IButton saveButton = this.buttonBar.getSaveButton();
             if (saveButton.isDisabled()) {
                 saveButton.setDisabled(false);
-                // removing blink, I think it's distracting and it's not consistent with the rest of the gui (jshaughn)
-                //CanvasUtility.blink(saveButton);
             }
 
             IButton resetButton = this.buttonBar.getResetButton();
             if (resetButton.isDisabled()) {
                 resetButton.setDisabled(false);
-                // removing blink, I think it's distracting and it's not consistent with the rest of the gui (jshaughn)                
-                //CanvasUtility.blink(resetButton);
             }
         }
     }

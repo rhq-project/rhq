@@ -386,3 +386,8 @@ a.menuBar, a.menuBar:link, a.menuBar:visited, a.menuBar:hover {
     background-color: #EEE; /* light gray */
     font-weight: bolder;
 }
+
+.menuButton, .menuButtonOver, .menuButtonDown, .menuButtonDisabled, .menuButtonSelected, .menuButtonSelectedDown, .menuButtonSelectedOver, .menuButtonSelectedDisabled {
+    border: none;
+    font-weight: bold;
+}

@@ -43,6 +43,7 @@ public class TimelineView extends EnhancedVLayout {
 
     @Override
     protected void onDraw() {
+        //TODO: replace with GWT version
         final FullHTMLPane timelinePane = new FullHTMLPane("/resource/common/monitor/events/EventsView.jsp?id="
             + resourceComposite.getResource().getId());
 

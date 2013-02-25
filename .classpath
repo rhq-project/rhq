@@ -354,5 +354,10 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman-bmunit/1.5.2/byteman-bmunit-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-bmunit/1.5.2/byteman-bmunit-1.5.2-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/eclipse/jetty/aggregate/jetty-all/8.1.8.v20121106/jetty-all-8.1.8.v20121106.jar" sourcepath="M2_REPO/org/eclipse/jetty/aggregate/jetty-all/8.1.8.v20121106/jetty-all-8.1.8.v20121106-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="JDK_HOME/lib/tools.jar"/>
+	<classpathentry kind="var" path="M2_REPO/batik/batik-codec/1.7/batik-codec-1.7.jar"/>
+	<classpathentry kind="var" path="M2_REPO/batik/batik-transcoder/1.7/batik-transcoder-1.7.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/apache/xmlgraphics/batik-util/1.7/batik-util-1.7.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/apache/xmlgraphics/batik-svg-dom/1.7/batik-svg-dom-1.7.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/apache/xmlgraphics/batik-dom/1.7/batik-dom-1.7.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

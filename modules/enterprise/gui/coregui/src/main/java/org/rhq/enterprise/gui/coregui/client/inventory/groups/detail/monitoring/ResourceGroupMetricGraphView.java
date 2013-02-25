@@ -50,20 +50,18 @@ public class ResourceGroupMetricGraphView extends AbstractMetricGraphView {
         super();
     }
 
-    public ResourceGroupMetricGraphView(int groupId, int definitionId) {
-        super(groupId, definitionId);
-    }
-
     public ResourceGroupMetricGraphView(int groupId, MeasurementDefinition def,
         List<MeasurementDataNumericHighLowComposite> data) {
 
         super(groupId, def, data);
     }
 
+    @Override
     protected HTMLFlow getEntityTitle() {
         return resourceGroupTitle;
     }
 
+    @Override
     protected void renderGraph() {
         if (null == getDefinition()) {
 
@@ -73,10 +71,12 @@ public class ResourceGroupMetricGraphView extends AbstractMetricGraphView {
             criteria.addFilterId(getEntityId());
             criteria.fetchResourceType(true);
             groupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
+                @Override
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_lookupFailed(), caught);
                 }
 
+                @Override
                 public void onSuccess(PageList<ResourceGroup> result) {
                     if (result.isEmpty()) {
                         return;
@@ -99,11 +99,13 @@ public class ResourceGroupMetricGraphView extends AbstractMetricGraphView {
                                             getEntityId(), new int[] { getDefinitionId() }, 8,
                                             MeasurementUtility.UNIT_HOURS, 60,
                                             new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
+                                                @Override
                                                 public void onFailure(Throwable caught) {
                                                     CoreGUI.getErrorHandler().handleError(
                                                         MSG.view_resource_monitor_graphs_loadFailed(), caught);
                                                 }
 
+                                                @Override
                                                 public void onSuccess(
                                                     List<List<MeasurementDataNumericHighLowComposite>> result) {
                                                     setData(result.get(0));

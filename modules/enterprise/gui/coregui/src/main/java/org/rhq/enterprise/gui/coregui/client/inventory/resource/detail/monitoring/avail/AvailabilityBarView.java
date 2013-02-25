@@ -36,6 +36,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 
 /**
@@ -71,6 +72,7 @@ public class AvailabilityBarView extends HLayout {
                 }
 
                 public void onSuccess(PageList<Availability> result) {
+                    Log.info("\n\n******Dude avail I have: "+result.size());
                     update(result);
                 }
             });

@@ -253,16 +253,16 @@ public abstract class AbstractMeasurementRangeEditor extends DynamicForm impleme
     protected void update() {
         if (advanced) {
             advancedSimpleButton.setTitle(MSG.view_measureRange_simple());
-            showItem("start");
-            showItem("end");
-            hideItem("lastValues");
-            hideItem("lastUnits");
+            showItem(ADVANCED_END_ITEM);
+            showItem(ADVANCED_END_ITEM);
+            hideItem(SIMPLE_VALUE_ITEM);
+            hideItem(SIMPLE_UNIT_ITEM);
         } else {
             advancedSimpleButton.setTitle(MSG.common_button_advanced());
-            hideItem("start");
-            hideItem("end");
-            showItem("lastValues");
-            showItem("lastUnits");
+            hideItem(ADVANCED_START_ITEM);
+            hideItem(ADVANCED_END_ITEM);
+            showItem(SIMPLE_VALUE_ITEM);
+            showItem(SIMPLE_UNIT_ITEM);
         }
 
         // populate the fields - first with defaults in case we have no prefs, then with the appropriate prefs
@@ -332,6 +332,14 @@ public abstract class AbstractMeasurementRangeEditor extends DynamicForm impleme
             return (explicitBeginEnd) ? "[begin=" + begin + end + ",end=" + end + "]" : "[lastN=" + lastN + ",unit="
                 + unit + "]";
         }
+    }
+
+    /**
+     * Returns the SetButton so you can set a click handler from a dialog box
+     * @return ButtonItem setButton
+     */
+    public ButtonItem getSetButton(){
+        return setButton;
     }
 
     public boolean isDisplaySetButton() {

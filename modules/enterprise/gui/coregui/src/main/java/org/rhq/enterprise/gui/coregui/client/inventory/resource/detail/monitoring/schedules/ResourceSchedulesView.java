@@ -38,14 +38,12 @@ public class ResourceSchedulesView extends AbstractSchedulesView {
 
     private static final String TITLE = MSG.view_resource_monitor_schedules_title();
 
-    private ResourceComposite resourceComposite;
     private int resourceId;
 
     public ResourceSchedulesView(ResourceComposite resourceComposite) {
         super(TITLE, EntityContext.forResource(resourceComposite.getResource().getId()), resourceComposite
             .getResourcePermission().isMeasure());
 
-        this.resourceComposite = resourceComposite;
         this.resourceId = resourceComposite.getResource().getId();
     }
 
@@ -132,9 +130,7 @@ public class ResourceSchedulesView extends AbstractSchedulesView {
             });
     }
 
-    public ResourceComposite getResourceComposite() {
-        return resourceComposite;
-    }
+
 
     public int getResourceId() {
         return resourceId;

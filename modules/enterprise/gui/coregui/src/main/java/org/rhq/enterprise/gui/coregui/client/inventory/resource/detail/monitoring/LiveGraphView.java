@@ -69,6 +69,7 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 /**
  * @author Greg Hinkle
  */
+@Deprecated
 public class LiveGraphView extends EnhancedVLayout {
 
     private static final String INSTRUCTIONS = MSG.view_resource_monitor_graph_instructions();

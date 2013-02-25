@@ -70,10 +70,9 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.s
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary.ActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.CalltimeView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-
-// TODO: Re-enable and flesh out Drift support        
 
 /**
  * The right panel of a Resource Group view (#ResourceGroup/* or #Resource/AutoGroup/*).
@@ -85,7 +84,6 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
     public static final String AUTO_CLUSTER_VIEW = "ResourceGroup/AutoCluster";
     public static final String AUTO_GROUP_VIEW = "Resource/AutoGroup";
-    // public static final String DYNA_GROUP_VIEW = "Inventory/Groups/DynagroupDefinitions";
 
     private Integer groupId;
     private ResourceGroupComposite groupComposite;
@@ -96,7 +94,6 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     private TwoLevelTab inventoryTab;
     private TwoLevelTab operationsTab;
     private TwoLevelTab alertsTab;
-    // private TwoLevelTab driftTab;
     private TwoLevelTab configurationTab;
     private TwoLevelTab eventsTab;
 
@@ -104,6 +101,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     private SubTab summaryActivity;
     private SubTab summaryTimeline;
     private SubTab monitorGraphs;
+    private SubTab monitorNewGraphs;
     private SubTab monitorTables;
     private SubTab monitorTraits;
     private SubTab monitorSched;
@@ -115,8 +113,6 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     private SubTab operationsSchedules;
     private SubTab alertHistory;
     private SubTab alertDef;
-    // private SubTab driftDefinition;
-    // private SubTab driftHistory;
     private SubTab configCurrent;
     private SubTab configHistory;
     private SubTab eventHistory;
@@ -160,6 +156,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         return new ResourceGroupTitleBar(isAutoGroup(), isAutoCluster());
     }
 
+    @Override
     protected List<TwoLevelTab> createTabs() {
         List<TwoLevelTab> tabs = new ArrayList<TwoLevelTab>();
 
@@ -190,12 +187,14 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         monitoringTab = new TwoLevelTab(new ViewName("Monitoring", MSG.view_tabs_common_monitoring()),
             IconEnum.SUSPECT_METRICS);
         monitorGraphs = new SubTab(monitoringTab, new ViewName("Graphs", MSG.view_tabs_common_graphs()), null);
+        monitorNewGraphs = new SubTab(monitoringTab, new ViewName("NewGraphs", "d3 Graphs"), null);
         monitorTables = new SubTab(monitoringTab, new ViewName("Tables", MSG.view_tabs_common_tables()), null);
         monitorTraits = new SubTab(monitoringTab, new ViewName("Traits", MSG.view_tabs_common_traits()), null);
 
         monitorSched = new SubTab(monitoringTab, new ViewName("Schedules", MSG.view_tabs_common_schedules()), null);
         monitorCallTime = new SubTab(monitoringTab, new ViewName("CallTime", MSG.view_tabs_common_calltime()), null);
-        monitoringTab.registerSubTabs(monitorGraphs, monitorTables, monitorTraits, monitorSched, monitorCallTime);
+        monitoringTab.registerSubTabs(monitorGraphs, monitorNewGraphs, monitorTables, monitorTraits, monitorSched,
+            monitorCallTime);
         tabs.add(monitoringTab);
 
         eventsTab = new TwoLevelTab(new ViewName("Events", MSG.view_tabs_common_events()), IconEnum.EVENTS);
@@ -231,6 +230,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         return tabs;
     }
 
+    @Override
     protected void updateTabContent(ResourceGroupComposite groupComposite, boolean isRefresh) {
         super.updateTabContent(groupComposite, isRefresh);
 
@@ -294,6 +294,17 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                 }
             };
             updateSubTab(this.monitoringTab, this.monitorGraphs, visible, true, viewFactory);
+
+            boolean visibleToIE8 = !BrowserUtility.isBrowserIE8();
+
+            viewFactory = (!visibleToIE8) ? null : new ViewFactory() {
+                @Override
+                public Canvas createView() {
+                    return new D3GroupGraphListView(groupComposite.getResourceGroup());
+                }
+            };
+
+            updateSubTab(this.monitoringTab, this.monitorNewGraphs, visible, true, viewFactory);
 
             // visible = same test as above           
             viewFactory = (!visible) ? null : new ViewFactory() {
@@ -466,6 +477,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         return this.groupComposite;
     }
 
+    @Override
     protected void loadSelectedItem(final int groupId, final ViewPath viewPath) {
         this.groupId = groupId;
 
@@ -484,12 +496,14 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
         GWTServiceLookup.getResourceGroupService().findResourceGroupCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceGroupComposite>>() {
+                @Override
                 public void onFailure(Throwable caught) {
                     Message message = new Message(MSG.view_group_detail_failLoadComp(String.valueOf(groupId)),
                         Message.Severity.Warning);
                     CoreGUI.goToView(InventoryView.VIEW_ID.getName(), message);
                 }
 
+                @Override
                 public void onSuccess(PageList<ResourceGroupComposite> result) {
                     if (result.isEmpty()) {
                         //noinspection ThrowableInstanceNeverThrown
@@ -503,10 +517,12 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                             UserSessionManager.getUserPreferences().addRecentResourceGroup(groupId,
                                 new AsyncCallback<Subject>() {
 
+                                    @Override
                                     public void onFailure(Throwable caught) {
                                         Log.error("Unable to update recently viewed resource groups", caught);
                                     }
 
+                                    @Override
                                     public void onSuccess(Subject result) {
                                         if (Log.isDebugEnabled()) {
                                             Log.debug("Updated recently viewed resource groups for " + result

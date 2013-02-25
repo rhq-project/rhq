@@ -123,9 +123,10 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
     private int rpcTimeout;
     private ProductInfo productInfo;
 
+    @Override
     public void onModuleLoad() {
         String hostPageBaseURL = GWT.getHostPageBaseURL();
-        if (hostPageBaseURL.indexOf("/coregui/") == -1) {
+        if (!hostPageBaseURL.contains("/coregui/")) {
             Log.info("Suppressing load of CoreGUI module");
             return; // suppress loading this module if not using the new GWT app
         }
@@ -181,6 +182,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         return rpcTimeout;
     }
 
+    @Override
     public void onPreviewNativeEvent(Event.NativePreviewEvent event) {
         if (SC.isIE() && event.getTypeInt() == Event.ONCLICK) {
             NativeEvent nativeEvent = event.getNativeEvent();
@@ -280,11 +282,13 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
     public void init() {
         if (productInfo == null) {
             GWTServiceLookup.getSystemService().getProductInfo(new AsyncCallback<ProductInfo>() {
+                @Override
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_aboutBox_failedToLoad(), caught);
                     buildCoreUI();
                 }
 
+                @Override
                 public void onSuccess(ProductInfo result) {
                     productInfo = result;
                     Window.setTitle(productInfo.getName());
@@ -344,6 +348,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         }
     }
 
+    @Override
     public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
         currentView = URL.decodeQueryString(stringValueChangeEvent.getValue());
         Log.debug("Handling history event for view: " + currentView);
@@ -513,6 +518,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
             this.currentViewId = null;
         }
 
+        @Override
         public void renderView(ViewPath viewPath) {
             // If the session is logged out ensure that we only navigate to the log out view, otherwise keep 
             // our CoreGUI session alive by refreshing the session timer each time the user performs navigation
@@ -575,6 +581,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
                     new Timer() {
                         final long startTime = System.currentTimeMillis();
 
+                        @Override
                         public void run() {
                             if (initializableView.isInitialized()) {
                                 if (RootCanvas.this.currentCanvas instanceof BookmarkableView) {

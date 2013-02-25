@@ -62,6 +62,7 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
  * @author Greg Hinkle
  * @author Jay Shaughnessy
  */
+@Deprecated
 public abstract class AbstractMetricGraphView extends EnhancedVLayout {
 
     private static final String INSTRUCTIONS = MSG.view_resource_monitor_graph_instructions();
@@ -77,6 +78,8 @@ public abstract class AbstractMetricGraphView extends EnhancedVLayout {
     private final Label selectedPointLabel = new Label(INSTRUCTIONS);
     private final Label positionLabel = new Label();
     private final Label hoverLabel = new Label();
+
+    private HTMLFlow resourceTitle;
 
     private int entityId;
     private int definitionId;
@@ -110,7 +113,9 @@ public abstract class AbstractMetricGraphView extends EnhancedVLayout {
 
     protected abstract void renderGraph();
 
-    protected abstract HTMLFlow getEntityTitle();
+    protected HTMLFlow getEntityTitle(){
+        return resourceTitle;
+    }
 
     public int getEntityId() {
         return this.entityId;

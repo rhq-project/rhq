@@ -111,7 +111,6 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         EnhancedVLayout vLayout = new EnhancedVLayout();
         vLayout.setWidth100();
 
-        // TODO: Admin icon.
         TitleBar titleBar = new TitleBar(MSG.common_title_inventory(), IconEnum.INVENTORY.getIcon24x24Path());
         vLayout.addMember(titleBar);
 
@@ -253,11 +252,6 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
 
         public ResourceSearchViewWrapper(ViewName viewName, Criteria criteria, String... headerIcons) {
             super(criteria, viewName.getTitle(), headerIcons);
-            this.viewName = viewName;
-        }
-
-        public ResourceSearchViewWrapper(ViewName viewName, Criteria criteria) {
-            super(criteria);
             this.viewName = viewName;
         }
 

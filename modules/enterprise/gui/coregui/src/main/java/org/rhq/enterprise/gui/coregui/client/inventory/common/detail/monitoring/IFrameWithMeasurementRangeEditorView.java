@@ -29,9 +29,10 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * 
- *
+ * @deprecated  Should be replaced now with GWT graphs and not portal war JSF graphs.
  * @author Lukas Krejci
  */
+
 public class IFrameWithMeasurementRangeEditorView extends EnhancedVLayout implements RefreshableView {
 
     UserPreferencesMeasurementRangeEditor editor;

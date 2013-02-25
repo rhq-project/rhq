@@ -1,4 +1,4 @@
-<html>
+<html xmlns="http://www.w3.org/1999/html">
 <head>
     <!-- this forces us to emulate IE8 "quirks" mode regardless of IE browser version.  It:
          1) Follows the SmartGWT recommendation of not declaring a DOCTYPE and instead using these meta elements.
@@ -10,8 +10,7 @@
     <!-- support internationalized characters -->
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
 
-
-    <script>
+    <script type="text/javascript">
         var search = location.search;
         // only do this if you have not specified locale as query param
         if(search.indexOf("locale") == -1){
@@ -21,8 +20,7 @@
             document.write("<meta name='gwt:property' content='locale="+lang +"'>");
         }
     </script>
-	<script src="/coregui/js/jquery-1.7.2.min.js"/>
-	
+
     <title>RHQ</title>
     <link rel="icon" type="image/png" href="/images/favicon.png" />
     <link rel="apple-touch-icon" href="/images/favicon.png" />
@@ -31,15 +29,12 @@
         var isomorphicDir = "org.rhq.enterprise.gui.coregui.CoreGUI/sc/";
     </script>
 
+
     <link rel="stylesheet" href="CoreGUI.css">
+    <link rel="stylesheet" href="css/nv.d3.css">
+    <link rel="stylesheet" href="css/tipsy.css">
+    <link rel="stylesheet" href="css/charts.css">
 
-    <style type="text/css">
-        .menuButton, .menuButtonOver, .menuButtonDown, .menuButtonDisabled, .menuButtonSelected, .menuButtonSelectedDown, .menuButtonSelectedOver, .menuButtonSelectedDisabled {
-            border: none;
-            font-weight: bold;
-        }
-
-    </style>
 </head>
 <body>
 

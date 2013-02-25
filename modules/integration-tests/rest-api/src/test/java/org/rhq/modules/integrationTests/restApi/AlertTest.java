@@ -259,7 +259,7 @@ public class AlertTest extends AbstractBase {
                 .header(acceptJson)
                 .contentType(ContentType.JSON)
                 .body(alertDefinition)
-                .queryParam("resourceId",10001)
+                .queryParam("resourceId",_platformId)
             .expect()
                 .statusCode(201)
                 .body("dampeningCategory",is("NONE"))
@@ -289,7 +289,7 @@ public class AlertTest extends AbstractBase {
             .header(acceptJson)
             .contentType(ContentType.JSON)
             .body(alertDefinition)
-            .queryParam("resourceId",10001)
+            .queryParam("resourceId",_platformId)
         .expect()
             .statusCode(406)
             .log().everything()
@@ -316,7 +316,7 @@ public class AlertTest extends AbstractBase {
                 .header(acceptJson)
                 .contentType(ContentType.JSON)
                 .body(alertDefinition)
-                .queryParam("resourceId",10001)
+                .queryParam("resourceId",_platformId)
             .expect()
                 .statusCode(201)
                 .body("dampeningCategory",is("PARTIAL_COUNT"))
@@ -351,7 +351,7 @@ public class AlertTest extends AbstractBase {
                 .header(acceptJson)
                 .contentType(ContentType.JSON)
                 .body(alertDefinition)
-                .queryParam("resourceId", 10001)
+                .queryParam("resourceId", _platformId)
             .expect()
                 .statusCode(201)
                 .body("dampeningCategory",is("DURATION_COUNT"))
@@ -800,7 +800,7 @@ public class AlertTest extends AbstractBase {
             .header(acceptJson)
             .contentType(ContentType.JSON)
             .body(alertDefinition)
-            .queryParam("resourceId",10001)
+            .queryParam("resourceId",_platformId)
         .expect()
             .statusCode(201)
             .log().ifError()
@@ -933,7 +933,7 @@ public class AlertTest extends AbstractBase {
                 .header(acceptJson)
                 .body(alertDefinition)
                 .log().everything()
-                .queryParam("resourceId", 10001)
+                .queryParam("resourceId", _platformId)
             .expect()
                 .statusCode(201)
                 .log().ifError()
@@ -999,7 +999,7 @@ public class AlertTest extends AbstractBase {
                 .contentType(ContentType.JSON)
                 .header(acceptJson)
                 .body(alertDefinition)
-                .queryParam("resourceId", 10001)
+                .queryParam("resourceId", _platformId)
             .expect()
                 .statusCode(201)
                 .body("priority", is("HIGH"))
@@ -1146,10 +1146,12 @@ public class AlertTest extends AbstractBase {
     @Test
     public void testCreateDefinitionForGroup() throws Exception {
 
+        assert _platformTypeId!=0 : "Set up did not run or failed";
+
         // Create a group
         Group group = new Group("test-group-" + System.currentTimeMillis()/1000);
         group.setCategory("COMPATIBLE");
-        group.setResourceTypeId(10001);
+        group.setResourceTypeId(_platformTypeId);
 
         String groupUri =
         given()
@@ -1204,7 +1206,7 @@ public class AlertTest extends AbstractBase {
             .header(acceptJson)
             .contentType(ContentType.JSON)
             .body(alertDefinition)
-            .queryParam("resourceTypeId",10001)
+            .queryParam("resourceTypeId",_platformTypeId)
         .expect()
             .statusCode(201)
             .log().ifError()
@@ -1242,10 +1244,10 @@ public class AlertTest extends AbstractBase {
 
             // Send a avail down/up sequence -> alert definition should fire
             long now = System.currentTimeMillis();
-            Availability a = new Availability(10001,now-2000,"DOWN");
+            Availability a = new Availability(_platformId,now-2000,"DOWN");
             given()
                 .contentType(ContentType.JSON)
-                .pathParam("id", 10001)
+                .pathParam("id", _platformId)
                 .body(a)
             .expect()
                 .statusCode(204)
@@ -1253,10 +1255,10 @@ public class AlertTest extends AbstractBase {
             .when()
                 .put("/resource/{id}/availability");
 
-            a = new Availability(10001,now-1000,"UP");
+            a = new Availability(_platformId,now-1000,"UP");
             given()
                 .contentType(ContentType.JSON)
-                .pathParam("id", 10001)
+                .pathParam("id", _platformId)
                 .body(a)
             .expect()
                 .statusCode(204)
@@ -1370,10 +1372,10 @@ public class AlertTest extends AbstractBase {
 
             // Send a avail down/up sequence -> alert definition should fire
             long now = System.currentTimeMillis();
-            Availability a = new Availability(10001,now-2000,"DOWN");
+            Availability a = new Availability(_platformId,now-2000,"DOWN");
             given()
                 .contentType(ContentType.JSON)
-                .pathParam("id", 10001)
+                .pathParam("id", _platformId)
                 .body(a)
             .expect()
                 .statusCode(204)
@@ -1381,10 +1383,10 @@ public class AlertTest extends AbstractBase {
             .when()
                 .put("/resource/{id}/availability");
 
-            a = new Availability(10001,now-1000,"UP");
+            a = new Availability(_platformId,now-1000,"UP");
             given()
                 .contentType(ContentType.JSON)
-                .pathParam("id", 10001)
+                .pathParam("id", _platformId)
                 .body(a)
             .expect()
                 .statusCode(204)
@@ -1479,7 +1481,7 @@ public class AlertTest extends AbstractBase {
             .header(acceptJson)
             .contentType(ContentType.JSON)
             .body(alertDefinition)
-            .queryParam("resourceId",10001)
+            .queryParam("resourceId",_platformId)
         .expect()
             .statusCode(201)
             .log().ifError()

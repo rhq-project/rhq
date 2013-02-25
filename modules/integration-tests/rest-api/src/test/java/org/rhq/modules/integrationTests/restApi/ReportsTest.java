@@ -38,13 +38,6 @@ public class ReportsTest extends AbstractBase {
 
     private static final int NUMBER_REPORTS = 9;
 
-    @Override
-    @Before
-    public void setUp() throws Exception {
-        super.setUp();
-
-    }
-
     @Test
     public void testReportListJson() throws Exception {
         given()

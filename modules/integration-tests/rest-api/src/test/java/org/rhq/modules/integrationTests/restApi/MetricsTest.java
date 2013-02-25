@@ -46,21 +46,21 @@ public class MetricsTest extends AbstractBase {
     private int numericScheduleId;
     private long defaultInterval;
 
-    @Override
     @Before
     public void setUp() throws Exception {
-        super.setUp();// is not called by junit before this one
+        super.setUp();
 
         // Determine a schedule id for the common cases
         Response r =
         given()
             .header(acceptJson)
             .queryParam("type", "metric")
+            .pathParam("rid",_platformId)
         .expect()
             .statusCode(200)
             .log().ifError()
         .when()
-            .get("/resource/10001/schedules");
+            .get("/resource/{rid}/schedules");
 
         JsonPath jp = r.jsonPath();
         numericScheduleId = jp.getInt("[0].scheduleId");
@@ -216,11 +216,12 @@ public class MetricsTest extends AbstractBase {
         given()
             .header(acceptJson)
             .queryParam("type", "trait")
+            .pathParam("rid",_platformId)
         .expect()
             .statusCode(200)
             .log().ifError()
         .when()
-            .get("/resource/10001/schedules");
+            .get("/resource/{rid}/schedules");
 
         JsonPath jp = r.jsonPath();
         int tsId = jp.getInt("[0].scheduleId");

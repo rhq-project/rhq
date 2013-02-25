@@ -40,38 +40,50 @@ public class UserTest extends AbstractBase {
     @Test
     public void testGetFavoritesResources() throws Exception {
 
-        expect().statusCode(200)
-                .log().ifError()
-            .when().get("/user/favorites/resource");
+        expect()
+            .statusCode(200)
+            .log().ifError()
+        .when()
+            .get("/user/favorites/resource");
     }
 
     @Test
     public void testGetFavoriteGroups() throws Exception {
 
-        expect().statusCode(200)
-                .log().ifError()
-            .when().get("/user/favorites/group");
+        expect()
+            .statusCode(200)
+            .log().ifError()
+        .when()
+            .get("/user/favorites/group");
     }
 
     @Test
     public void testAddRemoveFavoriteResources() throws Exception {
 
-        expect().statusCode(204)
-            .when().put("/user/favorites/resource/10001");
+        given()
+            .pathParam("rid",_platformId)
+        .expect()
+            .statusCode(204)
+        .when()
+            .put("/user/favorites/resource/{rid}");
 
         try {
             Response r =
             expect()
                 .statusCode(200)
+                .log().everything()
             .when()
                 .get("/user/favorites/resource");
             JsonPath jp = r.jsonPath();
-            assert jp.getList("resourceId").contains("10001");
+            assert jp.getList("resourceId").contains(String.valueOf(_platformId));
         }
         finally {
-            expect()
+            given()
+                .pathParam("rid",_platformId)
+            .expect()
                 .statusCode(204)
-            .when().delete("/user/favorites/resource/10001");
+            .when()
+                .delete("/user/favorites/resource/{rid}");
         }
     }
 

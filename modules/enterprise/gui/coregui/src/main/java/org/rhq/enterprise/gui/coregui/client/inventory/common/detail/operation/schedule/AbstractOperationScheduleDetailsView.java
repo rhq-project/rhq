@@ -355,7 +355,6 @@ public abstract class AbstractOperationScheduleDetailsView extends
 
         this.operationParameters = (Configuration) record
             .getAttributeAsObject(AbstractOperationScheduleDataSource.Field.PARAMETERS);
-
         super.editExistingRecord(record);
     }
 
@@ -426,11 +425,14 @@ public abstract class AbstractOperationScheduleDetailsView extends
     private void refreshOperationParametersItem() {
         String operationName = getSelectedOperationName();
         String value;
-        operationParameters = null; // reset params between dropdown selects
-        // make sure we wipe out anything left by the previous op def
-        for (Canvas child : this.operationParametersConfigurationHolder.getChildren()) {
-            child.destroy();
+        if (isNewRecord()) { // BZ 909157: do it only for new schedule
+            operationParameters = null; // reset params between dropdown selects
+            // make sure we wipe out anything left by the previous op def
+            for (Canvas child : this.operationParametersConfigurationHolder.getChildren()) {
+                child.destroy();
+            }
         }
+
         if (operationName == null) {
             value = "<i>" + MSG.view_operationScheduleDetails_fieldDefault_parameters() + "</i>";
             this.operationParametersConfigurationHolder.hide();
@@ -453,8 +455,6 @@ public abstract class AbstractOperationScheduleDetailsView extends
                     ConfigurationTemplate defaultTemplate = parametersDefinition.getDefaultTemplate();
                     this.operationParameters = (defaultTemplate != null) ? defaultTemplate.createConfiguration()
                         : new Configuration();
-                } else {
-                    this.operationParameters = new Configuration();
                 }
 
                 ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();

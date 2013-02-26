@@ -28,6 +28,7 @@ package org.rhq.enterprise.server.installer;
 public class InstallerConfiguration {
     private String managementHost = "127.0.0.1";
     private int managementPort = 9999; // this is the default AS port
+    private boolean forceInstall = false;
 
     public InstallerConfiguration() {
     }
@@ -58,5 +59,13 @@ public class InstallerConfiguration {
             port = 9999;
         }
         this.managementPort = port;
+    }
+
+    public boolean isForceInstall() {
+        return this.forceInstall;
+    }
+
+    public void setForceInstall(boolean flag) {
+        this.forceInstall = flag;
     }
 }

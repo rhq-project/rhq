@@ -27,6 +27,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.enterprise.server.measurement.AvailabilityManagerBean.MergeInfo;
 
 /**
  * Manager that is used to determine a resource's availability over a span of time.
@@ -125,12 +126,19 @@ public interface AvailabilityManagerLocal extends AvailabilityManagerRemote {
     boolean mergeAvailabilityReport(AvailabilityReport report);
 
     /**
+     * Internal use only. Used only for transactional processing purposes.
+     * @param availabilities
+     * @param mergeInfo
+     */
+    void mergeAvailabilitiesInNewTransaction(List<Availability> availabilities, MergeInfo mergeInfo);
+
+    /**
      * Executing this method will update the given agent's lastAvailabilityReport time
      * in a new transaction
      *  
      * @param agentId the id of the agent
      */
-    void updateLastAvailabilityReport(int agentId);
+    void updateLastAvailabilityReportInNewTransaction(int agentId);
 
     /**
      * Update availabilities for all resources managed by the given agent to the given availability type (which may be

@@ -142,6 +142,13 @@ public class TestServerCommunicationsService implements TestServerCommunications
     public void setMeasurementScheduleRequestConcurrencyLimit(Integer maxConcurrency) {
     }
 
+    public Integer getConfigurationUpdateConcurrencyLimit() {
+        return 1;
+    }
+
+    public void setConfigurationUpdateConcurrencyLimit(Integer maxConcurrency) {
+    }
+
     public Boolean getMaintenanceModeAtStartup() {
         return Boolean.FALSE;
     }

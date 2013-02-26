@@ -613,12 +613,25 @@ public class InventoryManager extends AgentService implements ContainerService, 
         inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) discoveryExecutor);
     }
 
-    /** this will NOT send a availability report up to the server! */
+    /**
+     * This method implicitly calls {@link #handleReport(AvailabilityReport)} so any report generating entries
+     * *will be sent to the server*.  Callers should subsequently *NOT* send the report.
+     * 
+     * @param changedOnlyReport
+     * @return The report, for inspection
+     */
     public AvailabilityReport executeAvailabilityScanImmediately(boolean changedOnlyReport) {
         return executeAvailabilityScanImmediately(changedOnlyReport, false);
     }
 
-    /** this will NOT send a availability report up to the server! */
+    /**
+     * This method implicitly calls {@link #handleReport(AvailabilityReport)} so any report generating entries
+     * *will be sent to the server*.  Callers should subsequently *NOT* send the report.
+     * 
+     * @param changedOnlyReport
+     * @param forceChecks
+     * @return The report, for inspection
+     */
     public AvailabilityReport executeAvailabilityScanImmediately(boolean changedOnlyReport, boolean forceChecks) {
         try {
             AvailabilityExecutor availExec = (forceChecks) ? new ForceAvailabilityExecutor(this)
@@ -633,19 +646,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
             AvailabilityReport availabilityReport = availabilityThreadPoolExecutor.submit(
                 (Callable<AvailabilityReport>) availExec).get();
 
-            // because the above uses the Callable interface (on purpose), the avail executor will not
-            // hand the report off to the Inventory Manager for sending to the server. Because this report
-            // will not be sent to the server, we need to be careful because our ResourceContainers will
-            // still have their availabilities updated. This may mean a change in availability detected
-            // in the above scan will not make its way to the server. To avoid the possibility of losing
-            // availability status changes, we need to tell the real availability executor to send a
-            // full report next time it runs its periodic scan. (RHQ-1997)  So, if the report contains
-            // any entries, request the full report.
-            if (!(null == availabilityReport || availabilityReport.getResourceAvailability().isEmpty())) {
-                this.availabilityExecutor.sendFullReportNextTime();
-            }
+            // make sure the server is notified of any changes in availability
+            handleReport(availabilityReport);
 
             return availabilityReport;
+
         } catch (InterruptedException e) {
             throw new RuntimeException("Availability scan execution was interrupted", e);
         } catch (ExecutionException e) {
@@ -1160,10 +1165,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     (System.currentTimeMillis() - startTime)));
             }
 
-            // If we synced any Resources, one or more Resource components were probably started,
-            // so run an avail check to report on their availabilities immediately. Also kick off
-            // a service scan to scan those Resources for new child Resources. Kick both tasks off
+            // If we synced any Resources, one or more Resource components were probably started, request a
+            // full avail report to make sure their availabilities are determined on the next avail run (typically
+            // < 30s away). A full avail report will ensure an initial avail check is performed for a resource.
+            // 
+            // Also kick off a service scan to scan those Resources for new child Resources. Kick both tasks off
             // asynchronously.
+            //
             // Do this only if we are finished with resource upgrade because no availability checks
             // or discoveries can happen during upgrade. This is to ensure maximum consistency of the
             // inventory with the server side as well as to disallow any other server-agent traffic during
@@ -1171,7 +1179,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // time the upgrade kicks in..
             if (!isResourceUpgradeActive()
                 && (!syncedResources.isEmpty() || !unknownResourceSyncInfos.isEmpty() || !modifiedResourceIds.isEmpty())) {
-                performAvailabilityChecks(true);
+
+                // TODO: If someday this is undesirable for scalability reasons, we could probably instead call
+                // requestAvailabilityCheck on each unknown or modified resource.
+                requestFullAvailabilityReport();
+
                 this.inventoryThreadPoolExecutor.schedule((Callable<? extends Object>) this.serviceScanExecutor,
                     configuration.getChildResourceDiscoveryDelay(), TimeUnit.SECONDS);
             }
@@ -2384,24 +2396,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
         mgr.setDriftManager(PluginContainer.getInstance().getDriftManager());
         mgr.setInventoryManager(this);
         return mgr;
-    }
-
-    /**
-     * Calling this method will immediately perform an availability check on all inventories resources. The availability
-     * checks will be made asynchronously; this method will not block.
-     *
-     * @param sendFullReport if <code>true</code>, the availability report that is sent will contain availability
-     *                       records for all resources; if <code>false</code> the report will only contain records for
-     *                       those resources whose availability changed from their last known state.
-     */
-    private void performAvailabilityChecks(boolean sendFullReport) {
-        if (sendFullReport) {
-            availabilityExecutor.sendFullReportNextTime();
-        }
-
-        if (!availabilityThreadPoolExecutor.isShutdown()) {
-            availabilityThreadPoolExecutor.schedule((Runnable) availabilityExecutor, 0, TimeUnit.MILLISECONDS);
-        }
     }
 
     public void requestFullAvailabilityReport() {

@@ -274,4 +274,28 @@ public abstract class Criteria implements Serializable, BaseCriteria {
         }
         return this.alias;
     }
+
+    /**
+     * Somewhat analogous to JPA's Query.getSingleResult. Wrap a CriteriaQuery result with this method when
+     * expecting a single result from the fetch.  If the result set has only one entry it is returned. Otherwise
+     * a RuntimeException is thrown, indicating whether no results, or multiple results were found.
+     *    
+     * @param result
+     * @return
+     * @throws RuntimeException In not exactly one result is found.  The message will include either the String
+     * "NoResultException" or "NonUniqueResultException", appropriately.  The JPA exceptions are not used so that there
+     * is no dependency on a JPA implementation jar for the caller.
+     */
+    public static <T> T getSingleResult(List<T> result) throws RuntimeException {
+        if (null == result || result.isEmpty()) {
+            throw new RuntimeException("NoResultException: Expected exactly one result but no result was found.");
+        }
+
+        if (1 != result.size()) {
+            throw new RuntimeException(
+                "NonUniqueResultException: Expected exactly one result but found multiple results: " + result);
+        }
+
+        return result.get(0);
+    }
 }

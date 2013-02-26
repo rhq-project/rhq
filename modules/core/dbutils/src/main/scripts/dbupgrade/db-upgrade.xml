@@ -1944,6 +1944,7 @@
             </schemaSpec>
 
             <schemaSpec version="2.125">
+            	<!-- Note, JON 3.1.2 includes this already but it is safe to re-execute -->
                 <!-- We were using a buggy version of password obfuscation from JBoss AS. This task sets the affected
                      passwords to NULL. Fortunately, this currently affects only CSP content sources, so the damage
                      is not huge from the user perspective. -->
@@ -1952,6 +1953,7 @@
 
             <!-- BZ 865167 -->
             <schemaSpec version="2.126">
+                <!-- Note, JON 3.1.2 includes this already but it is safe to re-execute -->
                 <schema-directSQL>
                     <statement targetDBVendor="postgresql">
                         INSERT INTO RHQ_RESOURCE_AVAIL ( ID, RESOURCE_ID, AVAILABILITY_TYPE )
@@ -1988,6 +1990,27 @@
                 </schema-directSQL>
             </schemaSpec>
 
+<!-- RHQ 4.6.0 uses DB Schema 2.128 -->        	
+        	
+            <!-- BZ 881848 -->
+            <schemaSpec version="2.129">
+                <schema-directSQL>
+                    <statement targetDBVendor="postgresql">
+                        INSERT INTO RHQ_AVAILABILITY ( ID, RESOURCE_ID, START_TIME, END_TIME, AVAILABILITY_TYPE )
+                             SELECT nextval('RHQ_AVAILABILITY_ID_SEQ'::text), res.ID, 0, NULL, 2
+                               FROM RHQ_RESOURCE res
+                              WHERE NOT EXISTS ( SELECT * FROM RHQ_AVAILABILITY WHERE RESOURCE_ID = res.ID )
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        INSERT INTO RHQ_AVAILABILITY ( ID, RESOURCE_ID, START_TIME, END_TIME, AVAILABILITY_TYPE )
+                             SELECT RHQ_AVAILABILITY_ID_SEQ.nextval, res.ID, 0, NULL, 2
+                               FROM RHQ_RESOURCE res
+                              WHERE NOT EXISTS ( SELECT * FROM RHQ_AVAILABILITY WHERE RESOURCE_ID = res.ID )
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
+        	
         </dbupgrade>
     </target>
 </project>

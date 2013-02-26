@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,40 +19,37 @@
 
 package org.rhq.plugins.netservices;
 
+import java.net.InetAddress;
+import java.util.Collections;
+import java.util.Set;
+
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.ManualAddFacet;
-import org.rhq.core.domain.configuration.Configuration;
-
-import java.util.Set;
-import java.util.Collections;
 
 /**
  * @author Greg Hinkle
  */
 public class PingNetServiceDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
+
+    private static final String RESOURCE_NAME_PREFIX = "Ping ";
+
+    @Override
     public Set discoverResources(ResourceDiscoveryContext resourceDiscoveryContext)
-            throws InvalidPluginConfigurationException, Exception {
+        throws InvalidPluginConfigurationException, Exception {
         // We don't support auto-discovery.
         return Collections.emptySet();
     }
 
+    @Override
     public DiscoveredResourceDetails discoverResource(Configuration config,
-                                                      ResourceDiscoveryContext resourceDiscoveryContext)
-            throws InvalidPluginConfigurationException {
-        String address = config.getSimple(PingNetServiceComponent.CONFIG_ADDRESS).getStringValue();
-        // TODO: Validate the address is a valid host name or IP address.
-        DiscoveredResourceDetails details =
-                new DiscoveredResourceDetails(
-                        resourceDiscoveryContext.getResourceType(),
-                        address,
-                        "Ping " + address,
-                        null,
-                        null,
-                        config,
-                        null);
+        ResourceDiscoveryContext resourceDiscoveryContext) throws InvalidPluginConfigurationException {
+        InetAddress address = PingNetServiceComponent.createComponentConfiguration(config);
+        DiscoveredResourceDetails details = new DiscoveredResourceDetails(resourceDiscoveryContext.getResourceType(),
+            address.getHostAddress(), RESOURCE_NAME_PREFIX + address.getHostAddress(), null, null, config, null);
         return details;
     }
 }

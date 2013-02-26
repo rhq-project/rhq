@@ -340,6 +340,23 @@ public interface ServerCommunicationsServiceMBean extends ServiceContainerMetric
     void setMeasurementScheduleRequestConcurrencyLimit(Integer maxConcurrency);
 
     /**
+     * Gets the concurrency limit for configuration updates. This is the amount of new configuration updates that the server
+     * will allow to be processed concurrently. A configuration update is something the agent originates when it needs to
+     * let the server know when a resource's configuration has changed.
+     *
+     * @return number of concurrent calls allowed
+     */
+    Integer getConfigurationUpdateConcurrencyLimit();
+
+    /**
+     * Sets the new concurrency limit for configuration updates. This new number is the amount of configuration updates
+     * that the server will allow to be processed concurrently.
+     *
+     * @param maxConcurrency
+     */
+    void setConfigurationUpdateConcurrencyLimit(Integer maxConcurrency);
+
+    /**
      * Returns <code>true</code> if the server should always start up in maintenance mode.
      * If <code>false</code>, the server will startup in the same state it was in when it
      * was shutdown.

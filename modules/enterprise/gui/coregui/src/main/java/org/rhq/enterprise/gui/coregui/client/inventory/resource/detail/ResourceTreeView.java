@@ -573,7 +573,7 @@ public class ResourceTreeView extends LocatableVLayout {
         Integer[] singletonChildTypes = getSingletonChildTypes(resourceType);
 
         // To properly filter Create Child and Import menus we need existing singleton child resources. If the
-        // user has creat permission and the parent type has singleton child types and creatable or importable child
+        // user has created permission and the parent type has singleton child types and creatable or importable child
         // types, perform an async call to fetch the singleton children.
         if (canCreate && singletonChildTypes.length > 0 && (hasCreatableTypes || hasImportableTypes)) {
 
@@ -587,12 +587,14 @@ public class ResourceTreeView extends LocatableVLayout {
                     public void onSuccess(PageList<Resource> singletonChildren) {
                         if (hasCreatableTypes) {
                             Map<String, ResourceType> displayNameMap = getDisplayNames(creatableChildTypes);
-                            addMenu(MSG.common_button_create_child(), true, singletonChildren, resource, displayNameMap);
+                            addMenu(MSG.common_button_create_child(), true, singletonChildren, resource,
+                                displayNameMap, true);
                         }
 
                         if (hasImportableTypes) {
                             Map<String, ResourceType> displayNameMap = getDisplayNames(importableChildTypes);
-                            addMenu(MSG.common_button_import(), true, singletonChildren, resource, displayNameMap);
+                            addMenu(MSG.common_button_import(), true, singletonChildren, resource, displayNameMap,
+                                false);
                         }
 
                         resourceContextMenu.showContextMenu();
@@ -607,22 +609,22 @@ public class ResourceTreeView extends LocatableVLayout {
         } else if (canCreate && singletonChildTypes.length == 0 && (hasCreatableTypes || hasImportableTypes)) {
             if (hasCreatableTypes) {
                 Map<String, ResourceType> displayNameMap = getDisplayNames(creatableChildTypes);
-                addMenu(MSG.common_button_create_child(), true, null, resource, displayNameMap);
+                addMenu(MSG.common_button_create_child(), true, null, resource, displayNameMap, true);
             }
 
             if (hasImportableTypes) {
                 Map<String, ResourceType> displayNameMap = getDisplayNames(importableChildTypes);
-                addMenu(MSG.common_button_import(), true, null, resource, displayNameMap);
+                addMenu(MSG.common_button_import(), true, null, resource, displayNameMap, false);
             }
 
             resourceContextMenu.showContextMenu();
 
         } else {
             if (!canCreate && hasCreatableTypes) {
-                addMenu(MSG.common_button_create_child(), false, null, null, null);
+                addMenu(MSG.common_button_create_child(), false, null, null, null, true);
             }
             if (!canCreate && hasImportableTypes) {
-                addMenu(MSG.common_button_import(), false, null, null, null);
+                addMenu(MSG.common_button_import(), false, null, null, null, false);
             }
 
             resourceContextMenu.showContextMenu();
@@ -630,12 +632,12 @@ public class ResourceTreeView extends LocatableVLayout {
     }
 
     private void addMenu(String name, boolean enabled, List<Resource> singletonChildren, Resource resource,
-        Map<String, ResourceType> displayNameMap) {
+        Map<String, ResourceType> displayNameMap, boolean isCreate) {
         MenuItem menu = new MenuItem(name);
         if (enabled) {
             Menu subMenu = new Menu();
-            singletonChildren = (null == singletonChildren) ? new ArrayList() : singletonChildren;
-            Menu filteredSubMenu = checkForSingletons(singletonChildren, resource, displayNameMap, subMenu, true);
+            singletonChildren = (null == singletonChildren) ? new ArrayList<Resource>() : singletonChildren;
+            Menu filteredSubMenu = checkForSingletons(singletonChildren, resource, displayNameMap, subMenu, isCreate);
             menu.setSubmenu(filteredSubMenu);
         } else {
             menu.setEnabled(false);
@@ -676,7 +678,7 @@ public class ResourceTreeView extends LocatableVLayout {
 
             // omit the type's menu item if the singleton already exists, otherwise add the necessary click handler.
             // note: we omit as opposed to disable the menu item to match the behavior of the buttons in the Inventory
-            // -> Child Resources view, which has no facility to do the anologous disabling.
+            // -> Child Resources view, which has no facility to do the analogous disabling.
             if (!exists) {
                 itemToAdd.addClickHandler(new ClickHandler() {
                     public void onClick(MenuItemClickEvent event) {

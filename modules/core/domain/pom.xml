@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-parent</artifactId>
-      <version>4.6.0-SNAPSHOT</version>
+      <version>4.7.0-SNAPSHOT</version>
    </parent>
 
    <artifactId>rhq-core-domain</artifactId>
@@ -234,6 +234,16 @@
                     <property name="jboss.conf" location="${jboss.unzip.location}/standalone/configuration/standalone.xml" />
                     <echo>Will now add test configuration to JBossAS config file: ${jboss.conf}</echo>
                     <replace file="${jboss.conf}">
+                      <replacefilter>
+                        <replacetoken>&lt;/extensions></replacetoken>
+                        <replacevalue><![CDATA[
+    </extensions>
+                    
+    <!-- FOR RHQ TESTING -->
+    <system-properties>
+        <property name="jboss.socket.binding.port-offset" value="${jboss.socket.binding.port-offset}" />
+    </system-properties>]]></replacevalue>
+                      </replacefilter>
                       <replacefilter>
                         <replacetoken>&lt;/drivers></replacetoken>
                         <replacevalue><![CDATA[
@@ -525,10 +535,10 @@
    <profiles>
        <profile>
          <!--
-         This profile has been created to avoid unnecessary resolution of test dependencies during a build that
-         does not run, compile or need tests.
-         More test dependencies are to be moved here if the set of sub-dependencies is complex or conflicts
-         with changing the container version.
+           This profile has been created to avoid unnecessary resolution of test dependencies during a build that
+           does not run, compile or need tests.
+           More test dependencies are to be moved here if the set of sub-dependencies is complex, references project
+           test jars, or conflicts with changing the container version.
          -->
          <id>test.dependencies</id>
          <activation>
@@ -681,6 +691,22 @@
           <jboss.vm.args.debug>-Xrunjdwp:transport=dt_socket,address=8798,server=y,suspend=y</jboss.vm.args.debug>
         </properties>
       </profile>
+
+    <!-- These two properties allow Arquillian to inspect AS7 through the mgmt port, to determine the ports it needs to interact 
+      with when spawning the AS7 instance. This allows the AS7 to run on non-default ports. If these properties are not set (for 
+      example, in settings.xml) then we must set the defaults here. The offset is then provided via the standalone.xml properties -->
+    <profile>
+      <id>arquillian-ports</id>
+      <activation>
+        <property>
+          <name>!jboss.socket.binding.port-offset</name>
+        </property>
+      </activation>
+      <properties>
+        <jboss.socket.binding.port-offset>0</jboss.socket.binding.port-offset>
+        <jboss.management.native.port>9999</jboss.management.native.port>
+      </properties>
+    </profile>
       
    </profiles>
 

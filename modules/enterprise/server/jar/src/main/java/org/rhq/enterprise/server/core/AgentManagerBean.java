@@ -192,7 +192,7 @@ public class AgentManagerBean implements AgentManagerLocal {
         server_bootstrap.removeDownedAgent(downedAgent.getRemoteEndpoint());
         log.info("Agent with name [" + agentName + "] just went down");
 
-        agentManager.backfillAgent(subjectManager.getOverlord(), agentName, downedAgent.getId());
+        agentManager.backfillAgentInNewTransaction(subjectManager.getOverlord(), agentName, downedAgent.getId());
         return;
     }
 
@@ -272,7 +272,8 @@ public class AgentManagerBean implements AgentManagerLocal {
                 log.info("Have not heard from agent [" + record.getAgentName() + "] since ["
                     + new Date(record.getLastAvailabilityPing()) + "]. Will be backfilled since we suspect it is down");
 
-                agentManager.backfillAgent(subjectManager.getOverlord(), record.getAgentName(), record.getAgentId());
+                agentManager.backfillAgentInNewTransaction(subjectManager.getOverlord(), record.getAgentName(),
+                    record.getAgentId());
             }
         }
 
@@ -281,7 +282,8 @@ public class AgentManagerBean implements AgentManagerLocal {
         return;
     }
 
-    public void backfillAgent(Subject subject, String agentName, int agentId) {
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void backfillAgentInNewTransaction(Subject subject, String agentName, int agentId) {
         // make sure we lock out all processing of any availability reports that might come our way to avoid concurrency
         // problems
         AvailabilityReportSerializer.getSingleton().lock(agentName);
@@ -299,7 +301,6 @@ public class AgentManagerBean implements AgentManagerLocal {
         }
     }
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void setAgentBackfilled(int agentId, boolean backfilled) {
         Query query = entityManager.createNamedQuery(Agent.QUERY_SET_AGENT_BACKFILLED);
         query.setParameter("agentId", agentId);

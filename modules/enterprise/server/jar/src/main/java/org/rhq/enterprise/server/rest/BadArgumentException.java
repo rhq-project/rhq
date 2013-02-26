@@ -32,7 +32,7 @@ public class BadArgumentException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
     public BadArgumentException(String message) {
-        super("Bad parameter given: " + message);
+        super("Bad parameter(s) given: " + message);
     }
 
     /**
@@ -43,4 +43,5 @@ public class BadArgumentException extends RuntimeException {
     public BadArgumentException(String parameterName, String cause) {
         super("Parameter " + parameterName + " is bad: " + cause);
     }
+
 }

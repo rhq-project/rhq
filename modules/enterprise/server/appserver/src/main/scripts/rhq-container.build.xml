@@ -557,6 +557,7 @@ rhq.server.concurrency-limit.content-report=5
 rhq.server.concurrency-limit.content-download=5
 rhq.server.concurrency-limit.measurement-report=10
 rhq.server.concurrency-limit.measurement-schedule-request=10
+rhq.server.concurrency-limit.configuration-update=10
 
 # Content Local Filesystem Repository
 rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits

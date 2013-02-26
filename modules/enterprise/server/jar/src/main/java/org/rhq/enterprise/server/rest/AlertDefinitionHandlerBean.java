@@ -31,6 +31,7 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.ws.rs.DELETE;
@@ -52,6 +53,8 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiError;
+import com.wordnik.swagger.annotations.ApiErrors;
 import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
 
@@ -159,6 +162,7 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @GET
     @Path("/definition/{id}")
     @ApiOperation(value = "Get one AlertDefinition by id", responseClass = "AlertDefinitionRest")
+    @ApiError(code = 404, reason = "No definition found with the passed id.")
     public Response getAlertDefinition(@ApiParam("Id of the alert definition to retrieve") @PathParam("id") int definitionId,
                                        @ApiParam("Should conditions be returned too?") @QueryParam("full") @DefaultValue("false") boolean full,
             @Context Request request) {
@@ -181,6 +185,10 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @POST
     @Path("/definitions")
     @ApiOperation("Create an AlertDefinition for the resource/group/resource type passed as query param. One and only one of the three params must be given at any time.")
+    @ApiErrors({
+        @ApiError(code = 406, reason = "There was not exactly one of 'resourceId','groupId' or 'resourceTypeId' given"),
+        @ApiError(code = 404, reason = "A non existing alert notification sender was requested.")
+    })
     public Response createAlertDefinition(@ApiParam("The id of the resource to attach the definition to") @QueryParam("resourceId") Integer resourceId,
                                           @ApiParam("The id of the group to attach the definition to") @QueryParam("groupId") Integer groupId,
                                           @ApiParam("The id of the resource type to attach the definition to") @QueryParam("resourceTypeId") Integer resourceTypeId,
@@ -266,6 +274,7 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @PUT
     @Path("/definition/{id}")
     @ApiOperation(value = "Update the alert definition (priority, enablement, dampening, recovery)", notes = "Priority must be HIGH,LOW,MEDIUM. If not provided, LOW is assumed.")
+    @ApiError(code = 404, reason = "No AlertDefinition with the passed id exists")
     public Response updateDefinition(
             @ApiParam("Id of the alert definition to update") @PathParam("id") int definitionId,
             @ApiParam("Data for the update") AlertDefinitionRest definitionRest) {
@@ -385,6 +394,7 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @POST
     @Path("definition/{id}/conditions")
     @ApiOperation("Add a new alert condition to an existing alert definition")
+    @ApiError(code = 404, reason = "No AlertDefinition with the passed id exists")
     public Response addConditionToDefinition(
         @ApiParam("The id of the alert definition") @PathParam("id") int definitionId,
         @ApiParam("The condition to add") AlertConditionRest conditionRest, @Context UriInfo uriInfo) {
@@ -409,9 +419,17 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @ApiOperation("Remove an alert condition")
     public Response deleteCondition(
         @ApiParam("The id of the condition to remove")@PathParam("cid") int conditionId) {
-        Integer definitionId = findDefinitionIdForConditionId(conditionId);
 
-        AlertDefinition definition2 = entityManager.find(AlertDefinition.class,definitionId);
+        Integer definitionId;
+        try {
+            definitionId = findDefinitionIdForConditionId(conditionId);
+        }
+        catch (NoResultException nre) {
+            return Response.noContent().build();
+        }
+
+        AlertDefinition definition2;
+        definition2 = entityManager.find(AlertDefinition.class,definitionId);
         AlertCondition condition=null;
         for (AlertCondition c: definition2.getConditions()) {
             if (c.getId() == conditionId)
@@ -444,11 +462,18 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @PUT
     @Path("condition/{cid}")
     @ApiOperation("Update an existing condition of an alert definition.Note that the update will change the id of the condition")
+    @ApiError(code = 404, reason = "Condition with passed id does not exist")
     public Response updateCondition(
         @ApiParam("The id of the condition to update") @PathParam("cid") int conditionId,
         @ApiParam("The updated condition") AlertConditionRest conditionRest, @Context UriInfo uriInfo) {
 
-        Integer definitionId = findDefinitionIdForConditionId(conditionId);
+        Integer definitionId;
+        try {
+            definitionId = findDefinitionIdForConditionId(conditionId);
+        }
+        catch (NoResultException nre) {
+            throw new StuffNotFoundException("Condition with id " + conditionId);
+        }
 
         AlertDefinition definition = entityManager.find(AlertDefinition.class,definitionId);
         AlertCondition condition=null;
@@ -485,10 +510,13 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @GET
     @Path("condition/{cid}")
     @ApiOperation("Retrieve a condition of an alert definition by its condition id")
+    @ApiError(code = 404, reason = "No condition with the passed id exists")
     public Response getCondition(
         @ApiParam("The id of the condition to retrieve") @PathParam("cid") int conditionId) {
 
         AlertCondition condition = conditionMgr.getAlertConditionById(conditionId);
+        if (condition==null)
+            throw new StuffNotFoundException("No condition with id " + conditionId);
         AlertConditionRest acr = conditionToConditionRest(condition);
 
         return Response.ok(acr).build();
@@ -543,10 +571,13 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @GET
     @Path("notification/{nid}")
     @ApiOperation("Return a notification definition by its id")
+    @ApiError(code = 404, reason = "No notification with the passed id found")
     public Response getNotification(
         @ApiParam("The id of the notification definition to retrieve") @PathParam("nid") int notificationId) {
 
         AlertNotification notification = notificationMgr.getAlertNotification(caller,notificationId);
+        if (notification==null)
+            throw new StuffNotFoundException("No notification with id " + notificationId);
         AlertNotificationRest anr = notificationToNotificationRest(notification);
 
         return Response.ok(anr).build();
@@ -559,26 +590,30 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
         @ApiParam("The id of the notification definition to remove") @PathParam("nid") int notificationId) {
 
         AlertNotification notification = notificationMgr.getAlertNotification(caller,notificationId);
-        AlertDefinition definition = alertDefinitionManager.getAlertDefinition(caller,notification.getAlertDefinition().getId());
+        if (notification!=null) {
+            AlertDefinition definition = alertDefinitionManager.getAlertDefinition(caller,notification.getAlertDefinition().getId());
 
-        definition.getAlertNotifications().remove(notification);
+            definition.getAlertNotifications().remove(notification);
 
-        alertDefinitionManager.updateAlertDefinitionInternal(caller,definition.getId(),definition,true,true,true);
-//        alertDefinitionManager.updateAlertDefinition(caller, definition.getId(), copiedDef, true);
+            alertDefinitionManager.updateAlertDefinitionInternal(caller,definition.getId(),definition,true,true,true);
 
-        entityManager.flush();
-
+            entityManager.flush();
+        }
         return Response.noContent().build();
     }
 
     @PUT
     @Path("notification/{nid}")
     @ApiOperation("Update a notification definition")
+    @ApiError(code = 404, reason = "There is no notification with the passed id")
     public Response updateNotification(
         @ApiParam("The id of the notification definition to update") @PathParam("nid") int notificationId,
         @ApiParam("The updated notification definition to use") AlertNotificationRest notificationRest) {
 
         AlertNotification notification = notificationMgr.getAlertNotification(caller,notificationId);
+        if (notification==null)
+            throw new StuffNotFoundException("No notification with id " + notificationId);
+
         AlertDefinition definition = alertDefinitionManager.getAlertDefinition(caller,notification.getAlertDefinition().getId());
 
         AlertNotification newNotif = notificationRestToNotification(definition,notificationRest);
@@ -607,6 +642,10 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @POST
     @Path("definition/{id}/notifications")
     @ApiOperation("Add a new notification definition to an alert definition")
+    @ApiErrors({
+        @ApiError(code = 404, reason = "Requested alert notification sender does not exist"),
+        @ApiError(code = 404, reason = "There is no alert definition with the passed id")
+    })
     public Response addNotificationToDefinition(
         @ApiParam("Id of the alert definition that should get the notification definition") @PathParam("id") int definitionId,
         @ApiParam("The notification definition to add") AlertNotificationRest notificationRest, @Context UriInfo uriInfo) {
@@ -701,6 +740,7 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @ApiOperation("Return an alert notification sender by name. This includes information about the configuration it expects")
     @GET @GZIP
     @Path("sender/{name}")
+    @ApiError(code = 404, reason = "There is no sender with the passed name")
     public Response getAlertSenderByName(
         @ApiParam("Name of the sender to retrieve") @PathParam("name")String senderName, @Context UriInfo uriInfo) {
 

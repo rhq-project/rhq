@@ -26,6 +26,7 @@ import com.jayway.restassured.path.json.JsonPath;
 import com.jayway.restassured.response.Response;
 
 import org.apache.http.HttpStatus;
+import org.junit.Before;
 import org.junit.Test;
 
 import org.rhq.modules.integrationTests.restApi.d.Group;
@@ -34,13 +35,38 @@ import org.rhq.modules.integrationTests.restApi.d.GroupDef;
 import static com.jayway.restassured.RestAssured.expect;
 import static com.jayway.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.iterableWithSize;
 
 /**
  * Test group related stuff
  * @author Heiko W. Rupp
  */
 public class GroupTest extends AbstractBase {
+
+    private static final String X_TEST_GROUP = "-x-test-group";
+
+    @Override
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+
+        // Remove group that was left over (just in case)
+        Response response =
+            given()
+                .header(acceptJson)
+                .queryParam("q", X_TEST_GROUP)
+            .when()
+                .get("/group");
+
+        JsonPath jsonPath = response.jsonPath();
+        if (jsonPath.get("id[0]")!=null) {
+            int groupId = jsonPath.getInt("id[0]");
+            given()
+                .pathParam("id", groupId)
+            .delete("/group/{id}");
+        }
+    }
 
     @Test
     public void testGetGroups() throws Exception {
@@ -59,7 +85,7 @@ public class GroupTest extends AbstractBase {
 
     @Test
     public void testCreateGroupAndRemove() throws Exception {
-        Group group = new Group("-x-test-group");
+        Group group = new Group(X_TEST_GROUP);
 
         // create the group
         Response created =
@@ -81,22 +107,37 @@ public class GroupTest extends AbstractBase {
         // Search for it
         Response response =
         given()
-                .queryParam("q", "-x-test-group")
+            .header(acceptJson)
+            .queryParam("q", X_TEST_GROUP)
         .expect()
-                .statusCode(200)
+            .statusCode(200)
         .when()
-                .get("/group");
+            .get("/group");
 
         JsonPath jsonPath = response.jsonPath();
-        assert jsonPath.get("[0].name").equals("-x-test-group"); // [0] as the query returns a list
+        assert jsonPath.get("[0].name").equals(X_TEST_GROUP); // [0] as the query returns a list
         int groupId = jsonPath.get("[0].id");
         assert groupId == createdId;
+
+        // Fetch id by id
+        given()
+            .pathParam("id",groupId)
+            .header(acceptJson)
+        .expect()
+            .statusCode(200)
+            .body("name",is(X_TEST_GROUP))
+            .body("id",is(groupId))
+            .body("explicitCount",is(0))
+            .log().ifError()
+        .when()
+            .get("/group/{id}");
+
 
         // delete the group again
         given()
                 .pathParam("id",groupId)
         .expect()
-                .statusCode(200)
+                .statusCode(204)
                 .log().ifError()
         .when()
                 .delete("/group/{id}");
@@ -104,8 +145,32 @@ public class GroupTest extends AbstractBase {
     }
 
     @Test
+    public void testGetGroupWithInvalidId() throws Exception {
+        given()
+            .pathParam("gid", 42)
+        .expect()
+            .statusCode(404)
+        .when()
+            .get("/group/{gid}");
+    }
+
+    @Test
+    public void testUpdateGroupWithInvalidId() throws Exception {
+        Group group = new Group(X_TEST_GROUP);
+        given()
+            .pathParam("gid",42)
+            .header(acceptJson)
+            .contentType(ContentType.JSON)
+            .body(group)
+        .expect()
+            .statusCode(404)
+        .when()
+            .put("/group/{gid}");
+    }
+
+    @Test
     public void testUpdateGroup() throws Exception {
-        Group group = new Group("-x-test-group");
+        Group group = new Group(X_TEST_GROUP);
 
         // Generate the group
         Response response =
@@ -140,7 +205,7 @@ public class GroupTest extends AbstractBase {
             given()
                     .pathParam("id", id)
             .expect()
-                    .statusCode(200)
+                    .statusCode(204)
                     .log().ifError()
             .when()
                     .delete("/group/{id}");
@@ -149,7 +214,7 @@ public class GroupTest extends AbstractBase {
 
     @Test
     public void testAddResourceToGroup() throws Exception {
-        Group group = new Group("-x-test-group");
+        Group group = new Group(X_TEST_GROUP);
 
         // Generate the group
         Response response =
@@ -171,7 +236,7 @@ public class GroupTest extends AbstractBase {
                 .header(acceptJson)
                 .contentType(ContentType.JSON)
                 .body(group)
-                .pathParam("id",id)
+                .pathParam("id", id)
                 .pathParam("resourceId",10001)
             .expect()
                 .statusCode(HttpStatus.SC_OK)
@@ -184,7 +249,7 @@ public class GroupTest extends AbstractBase {
             given()
                     .pathParam("id",id)
             .expect()
-                    .statusCode(200)
+                    .statusCode(204)
                     .log().ifError()
             .when()
                     .delete("/group/{id}");
@@ -192,8 +257,72 @@ public class GroupTest extends AbstractBase {
     }
 
     @Test
+    public void testAddResourceToGroupAndGetResources() throws Exception {
+        Group group = new Group(X_TEST_GROUP);
+
+        // Generate the group
+        Response response =
+        given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(group)
+            .expect()
+                .statusCode(HttpStatus.SC_CREATED)
+                .log().ifError()
+            .when()
+                .post("/group");
+
+        String location = response.header("Location");
+        int groupId = Integer.parseInt(location.substring(location.lastIndexOf("/")+1));
+
+        try {
+            given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(group)
+                .pathParam("gid", groupId)
+                .pathParam("resourceId",10001)
+            .expect()
+                .statusCode(HttpStatus.SC_OK)
+                .log().ifError()
+            .when()
+                .put("/group/{gid}/resource/{resourceId}");
+
+            given()
+                .pathParam("groupId",groupId)
+            .expect()
+                .statusCode(200)
+                .log().ifError()
+                .body("", iterableWithSize(1)) // Expect one
+            .when()
+                .get("/group/{groupId}/resources");
+
+        }
+        finally {
+            // delete the group
+            given()
+                    .pathParam("id",groupId)
+            .expect()
+                    .statusCode(204)
+                    .log().ifError()
+            .when()
+                    .delete("/group/{id}");
+        }
+    }
+
+    @Test
+    public void testGetResourcesForGroupWithInvalidId() throws Exception {
+        given()
+            .pathParam("groupId", 14)
+        .expect()
+            .statusCode(404)
+        .when()
+            .get("/group/{groupId}/resources");
+    }
+
+    @Test
     public void testAddNonExistingResourceToGroup() throws Exception {
-        Group group = new Group("-x-test-group");
+        Group group = new Group(X_TEST_GROUP);
 
         // Generate the group
         Response response =
@@ -228,7 +357,7 @@ public class GroupTest extends AbstractBase {
             given()
                     .pathParam("id",id)
             .expect()
-                    .statusCode(200)
+                    .statusCode(204)
                     .log().ifError()
             .when()
                     .delete("/group/{id}");
@@ -237,7 +366,7 @@ public class GroupTest extends AbstractBase {
 
     @Test
     public void testRemoveResourceFromGroup() throws Exception {
-        Group group = new Group("-x-test-group");
+        Group group = new Group(X_TEST_GROUP);
 
         // Generate the group
         Response response =
@@ -285,7 +414,7 @@ public class GroupTest extends AbstractBase {
             given()
                     .pathParam("id",id)
             .expect()
-                    .statusCode(200)
+                    .statusCode(204)
                     .log().ifError()
             .when()
                     .delete("/group/{id}");
@@ -294,7 +423,7 @@ public class GroupTest extends AbstractBase {
 
     @Test
     public void testGetMetricDefinitionsForGroup() throws Exception {
-        Group group = new Group("-x-test-group");
+        Group group = new Group(X_TEST_GROUP);
         group.setCategory("COMPATIBLE");
         group.setResourceTypeId(10001);
 
@@ -315,7 +444,6 @@ public class GroupTest extends AbstractBase {
         int id = Integer.parseInt(location.substring(location.lastIndexOf("/")+1));
 
         try {
-            response =
             given()
                 .header(acceptJson)
                 .pathParam("id",id)
@@ -331,7 +459,7 @@ public class GroupTest extends AbstractBase {
             given()
                     .pathParam("id",id)
             .expect()
-                    .statusCode(200)
+                    .statusCode(204)
                     .log().ifError()
             .when()
                     .delete("/group/{id}");
@@ -346,6 +474,27 @@ public class GroupTest extends AbstractBase {
                 .log().ifError()
         .when()
                 .get("/group/definitions");
+    }
+
+    @Test
+    public void testCreateDefinitionWithoutName() throws Exception {
+
+        GroupDef gd = new GroupDef();
+        gd.setDescription("Just testing");
+        List<String> list = new ArrayList<String>();
+        list.add("groupby resource");
+        list.add("resource.name");
+        gd.setExpression(list);
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Accept","application/json")
+            .body(gd)
+        .expect()
+            .statusCode(406)
+            .log().ifError()
+        .when()
+            .post("/group/definitions");
     }
 
     @Test
@@ -371,19 +520,18 @@ public class GroupTest extends AbstractBase {
 
 
         String location = response.getHeader("Location");
-        int defintionId = Integer.parseInt(location.substring(location.lastIndexOf("/")+1));
+        int definitionId = Integer.parseInt(location.substring(location.lastIndexOf("/")+1));
 
         try {
             // retrieve by id
             given()
-                .pathParam("id", defintionId)
+                .pathParam("id", definitionId)
             .expect()
                 .statusCode(200)
             .when()
                 .get("/group/definition/{id}");
 
             // retrieve by query
-            Response resp =
             given()
                 .queryParam("q", "-x-test-def")
             .expect()
@@ -398,9 +546,47 @@ public class GroupTest extends AbstractBase {
             expect()
                 .statusCode(204)
             .when()
-                .delete("/group/definition/" + defintionId);
+                .delete("/group/definition/" + definitionId);
         }
 
+    }
+
+    @Test
+    public void testGetUnknownGroupDefinition() throws Exception {
+
+        given()
+            .pathParam("id", 44)
+        .expect()
+            .statusCode(404)
+        .when()
+            .get("/group/definition/{id}");
+    }
+
+    @Test
+    public void testUpdateUnknownGroupDefinition() throws Exception {
+
+        GroupDef gd = new GroupDef("-x-test-def");
+        gd.setDescription("Just testing");
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Accept","application/json")
+            .body(gd)
+            .pathParam("id", 44)
+        .expect()
+            .statusCode(404)
+        .when()
+            .put("/group/definition/{id}");
+    }
+
+    @Test
+    public void testDeleteUnknownGroupDefinition() throws Exception {
+            given()
+                .pathParam("id", 44)
+            .expect()
+                .statusCode(204)
+            .when()
+                .delete("/group/definition/{id}");
     }
 
     @Test

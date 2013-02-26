@@ -1016,7 +1016,10 @@
           <c:simple-property name="operationResult"/>
         </results>
       </operation>
-      <operation name="restart-servers" description="Restarts all servers belonging to the server group currently running in the domain.">
+      <operation name="restart-servers" description="Restarts all servers belonging to the server group currently running in the domain." timeout="180">
+        <parameters>
+            <c:simple-property name="responseTimeout" default="120" type="long" description="Amount of time the agent will be waiting for domain host response. Defaults to 120 seconds." />
+        </parameters>
         <results>
           <c:simple-property name="operationResult"/>
         </results>
@@ -8834,6 +8837,7 @@
     <runs-inside>
       <parent-resource-type name="Deployment" plugin="&pluginName;"/>
       <parent-resource-type name="Subdeployment" plugin="&pluginName;"/>
+      <parent-resource-type name="ManagedServerDeployment" plugin="&pluginName;"/>
     </runs-inside>
 
     <plugin-configuration>
@@ -11670,7 +11674,7 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="false" description="Outbound Socket binding to SMTP server">
+          <c:simple-property name="outbound-socket-binding-ref" required="true" type="string" readOnly="false" description="Outbound Socket binding to SMTP server">
             <c:option-source target="configuration" expression="*1/remote-destination-outbound-socket-binding=name:type=SocketBindingGroup"/>
           </c:simple-property>
           <c:simple-property name="password" required="false" type="string" readOnly="false" description="Password to authenticate on server"/>
@@ -11694,7 +11698,7 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="false" description="Outbound Socket binding to IMAP server">
+          <c:simple-property name="outbound-socket-binding-ref" required="true" type="string" readOnly="false" description="Outbound Socket binding to IMAP server">
             <c:option-source target="configuration" expression="*1/remote-destination-outbound-socket-binding=name:type=SocketBindingGroup"/>
           </c:simple-property>
           <c:simple-property name="password" required="false" type="string" readOnly="false" description="Password to authenticate on server"/>
@@ -11718,7 +11722,7 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:simple-property name="outbound-socket-binding-ref" required="false" type="string" readOnly="false" description="Outbound Socket binding to POP3 server">
+          <c:simple-property name="outbound-socket-binding-ref" required="true" type="string" readOnly="false" description="Outbound Socket binding to POP3 server">
             <c:option-source target="configuration" expression="*1/remote-destination-outbound-socket-binding=name:type=SocketBindingGroup"/>
           </c:simple-property>
           <c:simple-property name="password" required="false" type="string" readOnly="false" description="Password to authenticate on server"/>

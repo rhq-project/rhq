@@ -45,6 +45,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
@@ -279,7 +280,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             throw new PermissionException("You do not have permission to uninventory resource [" + resourceId + "]");
         }
 
-        return uninventoryResourceInNewTransaction(resourceId);
+        return resourceManager.uninventoryResourceInNewTransaction(resourceId);
     }
 
     @Override
@@ -499,7 +500,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         // In other words, the implicit resources of a group have no impact on the group type (compatible/mixed).
         Query nativeQuery = entityManager.createNativeQuery(ResourceGroup.QUERY_GET_GROUP_IDS_BY_RESOURCE_IDS);
         nativeQuery.setParameter("resourceIds", resourceIds);
-        List<Integer> groupIds = nativeQuery.getResultList();
+        // Note that different DB vendors return different types for IDs because the representation
+        // is different at the storage layer. This is an em native query so we need to handle the differences.
+        // Postgres will return an Integer, but Oracle returns a BigDecimal, etc.
+        List<?> rs = nativeQuery.getResultList();
 
         String[] nativeQueriesToExecute = new String[] { //
         ResourceGroup.QUERY_DELETE_EXPLICIT_BY_RESOURCE_IDS, // unmap from explicit groups
@@ -514,9 +518,13 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         // update the resource type of affected groups by calling setResouceType()
-        for (int groupId : groupIds) {
+        DatabaseType dbType = DatabaseTypeFactory.getDefaultDatabaseType();
+        Integer groupId = null;
+        for (int i = 0, size = rs.size(); i < size; ++i) {
             try {
+                groupId = dbType.getInteger(rs.get(i));
                 resourceGroupManager.setResourceType(groupId);
+
             } catch (ResourceGroupDeleteException rgde) {
                 log.warn("Unable to change resource type for group with id [" + groupId + "]", rgde);
             }
@@ -2664,11 +2672,38 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @Override
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public List<Integer> disableResources(Subject subject, int[] resourceIds) {
+
         List<Integer> disableResourceIds = new ArrayList<Integer>();
+
+        // one report for each agent, keyed by agent name        
+        Map<Agent, AvailabilityReport> reports = resourceManager.getDisableResourcesReportInNewTransaction(subject,
+            resourceIds, disableResourceIds);
+
+        // Set the resources disabled via the standard mergeInventoryReport mechanism, from the server service
+        // level. We do this for a few reasons:
+        // - The server service uses locking to ensure we don't conflict with an actual report from the agent
+        // - It ensure all necessary db modifications take place, like avail history and current avail
+        // - It ensures that all ancillary avail change logic, like alerting, still happens.
+        DiscoveryServerServiceImpl service = new DiscoveryServerServiceImpl();
+        for (AvailabilityReport report : reports.values()) {
+            service.mergeAvailabilityReport(report);
+        }
+
+        return disableResourceIds;
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public Map<Agent, AvailabilityReport> getDisableResourcesReportInNewTransaction(Subject subject, int[] resourceIds,
+        List<Integer> disableResourceIds) {
+
         // one report for each agent
         Map<Agent, AvailabilityReport> reports = new HashMap<Agent, AvailabilityReport>();
         long now = System.currentTimeMillis();
+
+        boolean isInventoryManager = authorizationManager.isInventoryManager(subject);
 
         for (Integer resourceId : resourceIds) {
             if (disableResourceIds.contains(resourceId)) {
@@ -2678,7 +2713,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             // make sure the user is authorized to disable this resource (which implies you can disable all its children)
             // TODO: this may require its own permission, but until someone needs it we'll piggyback on DELETE, at least
             // that gives a resource-level permission option.
-            if (!authorizationManager.hasResourcePermission(subject, Permission.DELETE_RESOURCE, resourceId)) {
+            if (!isInventoryManager
+                && !authorizationManager.hasResourcePermission(subject, Permission.DELETE_RESOURCE, resourceId)) {
                 throw new PermissionException("You do not have permission to disable resource [" + resourceId + "]");
             }
 
@@ -2717,17 +2753,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             }
         }
 
-        // Set the resources disabled via the standard mergeInventoryReport mechanism, from the server service
-        // level. We do this for a few reasons:
-        // - The server service uses locking to ensure we don't conflict with an actual report from the agent
-        // - It ensure all necessary db modifications take place, like avail history and current avail
-        // - It ensures that all ancillary avail change logic, like alerting, still happens.
-        DiscoveryServerServiceImpl service = new DiscoveryServerServiceImpl();
-        for (AvailabilityReport report : reports.values()) {
-            service.mergeAvailabilityReport(report);
-        }
-
-        return disableResourceIds;
+        return reports;
     }
 
     private List<Integer> getFamily(Resource resource) {
@@ -2742,11 +2768,55 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     @Override
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public List<Integer> enableResources(Subject subject, int[] resourceIds) {
+
         List<Integer> enableResourceIds = new ArrayList<Integer>();
+
+        // one report for each agent, keyed by agent name
+        Map<Agent, AvailabilityReport> reports = resourceManager.getEnableResourcesReportInNewTransaction(subject,
+            resourceIds, enableResourceIds);
+
+        // Set the resources disabled via the standard mergeInventoryReport mechanism, from the server service
+        // level. We do this for a few reasons:
+        // - The server service uses locking to ensure we don't conflict with an actual report from the agent
+        // - It ensure all necessary db modifications take place, like avail history and current avail
+        // - It ensures that all ancillary avail change logic, like alerting, still happens.
+        DiscoveryServerServiceImpl service = new DiscoveryServerServiceImpl();
+        for (AvailabilityReport report : reports.values()) {
+            service.mergeAvailabilityReport(report);
+        }
+
+        // On a best effort basic, ask the relevant agents that their next avail report be full, so that we get
+        // the current avail type for the newly enabled resources.  If we can't contact the agent don't worry about
+        // it; if it's down we'll get a full report when it comes up.
+        // TODO: This may need to be made out of band if perf becomes an issue.
+        for (Agent agent : reports.keySet()) {
+            try {
+                AgentClient agentClient = agentManager.getAgentClient(agent);
+                agentClient.getDiscoveryAgentService().requestFullAvailabilityReport();
+            } catch (Throwable t) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Failed to notify Agent ["
+                        + agent
+                        + "] of enabled resources. The agent is likely down. This is ok, the avails will be updated when the agent is restarted or prompt command 'avail --force is executed'.");
+                }
+            }
+        }
+
+        return enableResourceIds;
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public Map<Agent, AvailabilityReport> getEnableResourcesReportInNewTransaction(Subject subject, int[] resourceIds,
+        List<Integer> enableResourceIds) {
+
         // one report for each agent, keyed by agent name
         Map<Agent, AvailabilityReport> reports = new HashMap<Agent, AvailabilityReport>();
         long now = System.currentTimeMillis();
+
+        boolean isInventoryManager = authorizationManager.isInventoryManager(subject);
 
         for (Integer resourceId : resourceIds) {
             if (enableResourceIds.contains(resourceId)) {
@@ -2756,7 +2826,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             // make sure the user is authorized to enable this resource (which implies you can enable all its children)
             // TODO: this may require its own permission, but until someone needs it we'll piggyback on DELETE, at least
             // that gives a resource-level permission option.
-            if (!authorizationManager.hasResourcePermission(subject, Permission.DELETE_RESOURCE, resourceId)) {
+            if (!isInventoryManager
+                && !authorizationManager.hasResourcePermission(subject, Permission.DELETE_RESOURCE, resourceId)) {
                 throw new PermissionException("You do not have permission to enable resource [" + resourceId + "]");
             }
 
@@ -2794,33 +2865,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             }
         }
 
-        // Set the resources disabled via the standard mergeInventoryReport mechanism, from the server service
-        // level. We do this for a few reasons:
-        // - The server service uses locking to ensure we don't conflict with an actual report from the agent
-        // - It ensure all necessary db modifications take place, like avail history and current avail
-        // - It ensures that all ancillary avail change logic, like alerting, still happens.
-        DiscoveryServerServiceImpl service = new DiscoveryServerServiceImpl();
-        for (AvailabilityReport report : reports.values()) {
-            service.mergeAvailabilityReport(report);
-        }
-
-        // On a best effort basic, ask the relevant agents that their next avail report be full, so that we get
-        // the current avail type for the newly enabled resources.  If we can't contact the agent don't worry about
-        // it; if it's down we'll get a full report when it comes up.
-        // TODO: This may need to be made out of band if perf becomes an issue.
-        for (Agent agent : reports.keySet()) {
-            try {
-                AgentClient agentClient = agentManager.getAgentClient(agent);
-                agentClient.getDiscoveryAgentService().requestFullAvailabilityReport();
-            } catch (Throwable t) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Failed to notify Agent ["
-                        + agent
-                        + "] of enabled resources. The agent is likely down. This is ok, the avails will be updated when the agent is restarted or prompt command 'avail --force is executed'.");
-                }
-            }
-        }
-
-        return enableResourceIds;
+        return reports;
     }
+
 }

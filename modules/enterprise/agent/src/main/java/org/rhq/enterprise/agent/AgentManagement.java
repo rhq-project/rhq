@@ -249,14 +249,10 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
         AvailabilityReport report;
         InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
 
-        // ask for the report and tell the inventory manager to handle it.  We must hand it off to IM
-        // because we need to send the report to the server - otherwise, the "real" availability executor
-        // will not send changed resources thinking someone else did.
         ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
             report = inventoryManager.executeAvailabilityScanImmediately(changes);
-            inventoryManager.handleReport(report);
         } finally {
             Thread.currentThread().setContextClassLoader(originalCL);
         }

@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>4.6.0-SNAPSHOT</version>
+      <version>4.7.0-SNAPSHOT</version>
       <relativePath>../../pom.xml</relativePath>
    </parent>
 
@@ -43,14 +43,6 @@
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-core-plugin-container</artifactId>
          <version>${project.version}</version>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>${rhq.groupId}</groupId>
-         <artifactId>rhq-core-plugin-container</artifactId>
-         <version>${project.version}</version>
-         <type>test-jar</type>
          <scope>test</scope>
       </dependency>
 
@@ -98,6 +90,32 @@
    </modules>
 
   <profiles>
+
+    <profile>
+      <!--
+        This profile has been created to avoid unnecessary resolution of test dependencies during a build that
+        does not run, compile or need tests.
+        More test dependencies are to be moved here if the set of sub-dependencies is complex, references project
+        test jars, or conflicts with changing the container version.
+       -->
+      <id>test.dependencies</id>
+      <activation>
+        <property>
+          <name>maven.test.skip</name>
+          <value>!true</value>
+        </property>
+      </activation>
+
+      <dependencies>
+        <dependency>
+          <groupId>${rhq.groupId}</groupId>
+          <artifactId>rhq-core-plugin-container</artifactId>
+          <version>${project.version}</version>
+          <type>test-jar</type>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
 
     <profile>
         <id>jboss-plugins</id>

@@ -170,6 +170,9 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Failed to determine the server time. Cause: {0}")
     String TIME_UNKNOWN = "AgentMain.time-unknown";
 
+    @I18NMessage("The server thinks this agent is down. Will notify the server of up-to-date information when possible.")
+    String SERVER_THINKS_AGENT_IS_DOWN = "AgentMain.server-thinks-agent-is-down";
+
     @I18NMessage("Timed out waiting for the connectAgent R/W lock to avoid a possible deadlock")
     String TIMEOUT_WAITING_FOR_CONNECT_LOCK = "AgentMain.connect-lock-timeout";
 
@@ -2076,7 +2079,7 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("avail")
     String AVAILABILITY = "PromptCommand.availability";
 
-    @I18NMessage("avail [--changed] [--force] [--verbose]")
+    @I18NMessage("avail [--changed] [--force] [--verbose|--quiet]")
     String AVAILABILITY_SYNTAX = "PromptCommand.availability.syntax";
 
     @I18NMessage("Get availability of inventoried resources")
@@ -2092,7 +2095,8 @@ public interface AgentI18NResourceKeys {
         + "\\                 for only those resources whose status changed.\\n\\\n"
         + "\\ -f, --force   : if specified, the report will force availability\\n\\\n"
         + "\\                 checks for all resources.\\n\\\n"
-        + "\\ -v, --verbose : if true, additional information is displayed.")
+        + "\\ -v, --verbose : if specified, additional resource information is displayed.\\n\\\n"
+        + "\\ -q, --quiet : if specified, don't show individual resource information.")
     String AVAILABILITY_DETAILED_HELP = "PromptCommand.availability.detailed-help";
 
     @I18NMessage("The agent/plugin container must be started to get availability data.\\n\\\n"

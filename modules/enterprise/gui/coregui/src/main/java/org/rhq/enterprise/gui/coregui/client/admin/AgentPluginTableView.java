@@ -223,7 +223,6 @@ public class AgentPluginTableView extends TableSection<AgentPluginDataSource> {
 
         IButton scanForUpdatesButton = new LocatableIButton(extendLocatorId("scanButton"),
             MSG.view_admin_plugins_scan());
-        scanForUpdatesButton.setAutoFit(true);
         scanForUpdatesButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 GWTServiceLookup.getPluginService().scanAndRegister(new AsyncCallback<Void>() {
@@ -246,7 +245,6 @@ public class AgentPluginTableView extends TableSection<AgentPluginDataSource> {
 
         final IButton showDeletedButton = new LocatableIButton(extendLocatorId("showDeletedButton"),
             MSG.view_admin_plugins_showDeleted());
-        showDeletedButton.setAutoFit(true);
         showDeletedButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 showDeleted = !showDeleted;

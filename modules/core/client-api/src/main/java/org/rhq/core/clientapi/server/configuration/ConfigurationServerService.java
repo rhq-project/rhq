@@ -23,6 +23,7 @@
 package org.rhq.core.clientapi.server.configuration;
 
 import org.rhq.core.communications.command.annotation.Asynchronous;
+import org.rhq.core.communications.command.annotation.LimitedConcurrency;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.Property;
@@ -31,6 +32,8 @@ import org.rhq.core.domain.configuration.Property;
  * Interface that allows an agent to provide information about a resource's configuration.
  */
 public interface ConfigurationServerService {
+    String CONCURRENCY_LIMIT_CONFIG_UPDATE = "rhq.server.concurrency-limit.configuration-update";
+
     /**
      * The agent will notify the server when a configuration update request has been completed by calling this method.
      *
@@ -65,6 +68,7 @@ public interface ConfigurationServerService {
      * @param resourceConfiguration the newly detected configuration
      */
     @Asynchronous(guaranteedDelivery = true)
+    @LimitedConcurrency(CONCURRENCY_LIMIT_CONFIG_UPDATE)
     void persistUpdatedResourceConfiguration(int resourceId, Configuration resourceConfiguration);
 
 }

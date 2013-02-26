@@ -159,11 +159,11 @@ public class AvailabilityLineGraphType {
                     .attr("opacity", ".9")
                     .attr("fill", function (d) {
                         if (d.availType === 'DOWN' || d.availType === 'DISABLED') {
-                            return "red";
+                            return "#FF1919";
                         } else if (d.availType === 'UNKNOWN') {
-                            return "#C1BFBF";
+                            return "#C7C5C5";
                         } else {
-                            return "green";
+                            return "#198C19";
                         }
                     });
 

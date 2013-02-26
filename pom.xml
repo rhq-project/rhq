@@ -155,6 +155,7 @@
     <cassandra.version>1.2.1</cassandra.version>
     <cassandra.thrift.version>0.7.0</cassandra.thrift.version>
     <cassandra.driver.version>1.0.0-beta1</cassandra.driver.version>
+    <cassandra.driver.snappy.version>1.0.5-M3-p1</cassandra.driver.snappy.version>
 
     <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
     <rhq.db.admin.password>rhqadmin</rhq.db.admin.password>

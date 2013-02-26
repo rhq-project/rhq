@@ -229,8 +229,7 @@
                               <artifactItem>
                                 <groupId>org.xerial.snappy</groupId>
                                 <artifactId>snappy-java</artifactId>
-                                <version>1.0.4.1</version>
-                                <!--<version>1.0.5-M3</version>-->
+                                <version>${cassandra.driver.snappy.version}</version>
                               </artifactItem>
                               <artifactItem>
                                 <groupId>com.ning</groupId>

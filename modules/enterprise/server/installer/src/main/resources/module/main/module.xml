@@ -33,7 +33,7 @@
         <resource-root path="libthrift-${cassandra.thrift.version}.jar"/>
         <resource-root path="jackson-mapper-asl-1.4.0.jar"/>
         <resource-root path="jackson-core-asl-1.4.0.jar"/>
-        <resource-root path="snappy-java-1.0.4.1.jar"/>
+        <resource-root path="snappy-java-${cassandra.driver.snappy.version}.jar"/>
       <!-- end rhq-cassandra-schema dependencies -->
       <resource-root path="commons-codec-1.2.jar"/>
     </resources>

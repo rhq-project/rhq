@@ -14,6 +14,7 @@
 
   <properties>
     <local.repo>${settings.localRepository}</local.repo>
+    <cassandra.jna.version>3.5.1</cassandra.jna.version>
   </properties>
 
   <dependencies>
@@ -50,11 +51,24 @@
     <dependency>
       <groupId>net.java.dev.jna</groupId>
       <artifactId>jna</artifactId>
-      <version>3.2.7</version>
+      <version>${cassandra.jna.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>net.java.dev.jna</groupId>
+      <artifactId>platform</artifactId>
+      <version>${cassandra.jna.version}</version>
     </dependency>
   </dependencies>
 
   <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -131,10 +145,11 @@
                           value="${project.build.outputDirectory}/${cassandra.distro.filename}"/>
                 <copy file="${settings.localRepository}/org/rhq/rhq-cassandra-auth/${project.version}/rhq-cassandra-auth-${project.version}.jar"
                       todir="${cassandra.dir}/lib"/>
+                <copy file="${settings.localRepository}/net/java/dev/jna/platform/${cassandra.jna.version}/platform-${cassandra.jna.version}.jar"
+                      todir="${cassandra.dir}/lib"/>
+                <copy file="${settings.localRepository}/net/java/dev/jna/jna/${cassandra.jna.version}/jna-${cassandra.jna.version}.jar"
+                      todir="${cassandra.dir}/lib"/>
                 <move file="${project.build.outputDirectory}/cassandra/conf" todir="${cassandra.dir}"/>
-                <move file="${project.build.outputDirectory}/cassandra/lib" todir="${cassandra.dir}"/>
-                <!--<move file="${project.build.outputDirectory}/passwd.properties" todir="${cassandra.dir}/conf"/>-->
-                <!--<move file="${project.build.outputDirectory}/access.properties" todir="${cassandra.dir}/conf"/>-->
                 <zip basedir="${cassandra.dir}" destfile="${cassandra.distro.zip}"/>
                 <delete dir="${cassandra.dir}"/>
                 <zip basedir="${project.build.outputDirectory}"

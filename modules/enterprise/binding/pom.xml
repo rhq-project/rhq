@@ -3,15 +3,16 @@
     <parent>
         <artifactId>rhq-enterprise-parent</artifactId>
         <groupId>org.rhq</groupId>
-        <version>4.6.0-SNAPSHOT</version>
+        <version>4.7.0-SNAPSHOT</version>
     </parent>
     <artifactId>rhq-script-bindings</artifactId>
-    <version>4.6.0-SNAPSHOT</version>
+    <version>4.7.0-SNAPSHOT</version>
     <name>RHQ Script Bindings</name>
     <description>Abstraction of different facilities and default configurations for script bindings</description>
 
     <properties>
         <filtered.location>src/main/java</filtered.location>
+        <rhq.internal>false</rhq.internal>
     </properties>
 
     <dependencies>
@@ -238,6 +239,23 @@
                     <!-- This is important, because some of the tests try to exit the JVM. -->
                     <failIfNoTests>true</failIfNoTests>
                 </configuration>
+            </plugin>
+
+            <plugin>
+               <groupId>org.codehaus.mojo</groupId>
+               <artifactId>clirr-maven-plugin</artifactId>
+               <configuration>
+                  <includes>
+                     <!-- Hand picked stuff that corresponds to what is the script context initialized to
+                     in the org/rhq/bindings/StandardBindings. -->
+                     <include>org/rhq/bindings/client/*</include>
+                     <include>org/rhq/bindings/export/*</include>
+                     <include>org/rhq/bindings/output/*</include>
+                     <include>org/rhq/bindings/util/ScriptAssert</include>
+                     <include>org/rhq/bindings/util/ScriptAssertException</include>
+                     <include>org/rhq/bindings/util/ScriptUtil</include>
+                  </includes>
+               </configuration>
             </plugin>
 
         </plugins>

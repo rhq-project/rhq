@@ -32,10 +32,12 @@ import java.io.Serializable;
 public class ConnectAgentResults implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private long serverTime;
+    private final long serverTime;
+    private final boolean isDown;
 
-    public ConnectAgentResults(long serverTime) {
+    public ConnectAgentResults(long serverTime, boolean isDown) {
         this.serverTime = serverTime;
+        this.isDown = isDown;
     }
 
     /**
@@ -49,10 +51,23 @@ public class ConnectAgentResults implements Serializable {
     }
 
     /**
-     * @see java.lang.Object#toString()
+     * If true, this indicates if the server thinks the agent is down. This happens if the agent
+     * hasn't connected in a long time and the server had "backfilled" the agent's resources
+     * as DOWN/UNKNOWN.
+     *
+     * When an agent connects to a server, and the server thinks that agent was down, the agent needs
+     * to prepare to notify the server of its state - for example, the agent should soon send up
+     * a full availability report so the server can get the up-to-date availability statuses of all
+     * resources.
+     *
+     * @return true if the server had this agent's resources marked as DOWN/UNKNOWN.
      */
+    public boolean isDown() {
+        return isDown;
+    }
+
     @Override
     public String toString() {
-        return "ConnectAgentResults: [server-time=" + this.serverTime + "]";
+        return "ConnectAgentResults: [server-time=" + this.serverTime + ", is-down=" + this.isDown + "]";
     }
 }

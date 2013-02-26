@@ -2146,6 +2146,18 @@ public class AgentMain {
                 ConnectAgentResults results = (ConnectAgentResults) connectResponse.getResults();
                 long serverTime = results.getServerTime();
                 serverClockNotification(serverTime);
+
+                // If the server thinks we are down, we need to do some things to get this agent in sync with the server.
+                // Anything we do in here should be very fast.
+                boolean serverThinksWeAreDown = results.isDown();
+                if (serverThinksWeAreDown) {
+                    LOG.warn(AgentI18NResourceKeys.SERVER_THINKS_AGENT_IS_DOWN);
+                    PluginContainer plugin_container = PluginContainer.getInstance();
+                    if (plugin_container.isStarted()) {
+                        // tell the plugin container to send a full avail report up so the server knows we are UP
+                        plugin_container.getInventoryManager().requestFullAvailabilityReport();
+                    }
+                }
             } catch (Throwable t) {
                 // should never happen, should always cast to non-null ConnectAgentResults
                 LOG.error(AgentI18NResourceKeys.TIME_UNKNOWN, ThrowableUtil.getAllMessages(t));

@@ -1016,7 +1016,10 @@
           <c:simple-property name="operationResult"/>
         </results>
       </operation>
-      <operation name="restart-servers" description="Restarts all servers belonging to the server group currently running in the domain.">
+      <operation name="restart-servers" description="Restarts all servers belonging to the server group currently running in the domain." timeout="180">
+        <parameters>
+            <c:simple-property name="responseTimeout" default="120" type="long" description="Amount of time the agent will be waiting for domain host response. Defaults to 120 seconds." />
+        </parameters>
         <results>
           <c:simple-property name="operationResult"/>
         </results>

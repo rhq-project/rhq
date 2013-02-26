@@ -101,7 +101,7 @@ public enum RhqManager {
         this.beanName = this.name() + "Bean";
         localInterfaceClassName = getLocalInterfaceClassName(remote);
 
-        //defaults and evaluates to TRUE unless the string contains "false". Done to defend against 
+        //defaults and evaluates to TRUE unless the string contains "false". Done to defend against
         //possible errors in string replacement during rhq build.
         this.enabled = true;
         if ((enable != null) && (enable.trim().length() > 0)) {
@@ -121,6 +121,15 @@ public enum RhqManager {
 
     public Class<?> remote() {
         return this.remote;
+    }
+
+    /**
+     * @deprecated since 4.6.0, use the {@link #remote()} method instead
+     * @return the class name of the remote interface
+     */
+    @Deprecated
+    public String remoteName() {
+        return this.remote.getName();
     }
 
     public String localInterfaceClassName() {

@@ -320,6 +320,7 @@ public class CoreServerServiceImpl implements CoreServerService {
 
         Server server = getServerManager().getServer();
         agent.setServer(server);
+        agent.setLastAvailabilityPing(Long.valueOf(System.currentTimeMillis()));
         getAgentManager().updateAgent(agent);
 
         getAlertConditionCacheManager().reloadCachesForAgent(agent.getId());
@@ -328,7 +329,7 @@ public class CoreServerServiceImpl implements CoreServerService {
             PartitionEventType.AGENT_CONNECT, agentName + " - " + server.getName());
 
         log.info("Agent [" + agentName + "] has connected to this server at " + new Date());
-        return new ConnectAgentResults(System.currentTimeMillis());
+        return new ConnectAgentResults(System.currentTimeMillis(), agent.isBackFilled());
     }
 
     /**

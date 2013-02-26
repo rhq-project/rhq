@@ -123,7 +123,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
 
                     yAxis = $wnd.d3.svg.axis()
                             .scale(yScale)
-                            .tickSubdivide(2)
+                            .tickSubdivide(1)
                             .ticks(5)
                             .tickSize(4, 4, 0)
                             .orient("left"),
@@ -144,7 +144,8 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         xLabel = 772,
                         xValue = 820,
                         yBase = 100,
-                        yInc = 25;
+                        yInc = 25,
+                        decimalPlaces = 0;
 
                 // title/header
                 var sidebar = chart.append("g").append("rect")
@@ -156,25 +157,26 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         .attr("opacity", "0.3")
                         .attr("fill", "#E8E8E8");
 
-                // min
+                // high
                 chart.append("text")
-                        .attr("class", "minLabel")
+                        .attr("class", "highLabel")
                         .attr("x", xLabel)
                         .attr("y", yBase)
                         .attr("font-size", fontSize)
                         .attr("font-weight", "bold")
                         .attr("text-anchor", "left")
-                        .text(minLabel + " - ")
+                        .text(highLabel + " - ")
                         .attr("fill", fgColor);
 
                 chart.append("text")
-                        .attr("class", "minText")
+                        .attr("class", "highText")
                         .attr("x", xValue)
                         .attr("y", yBase)
                         .attr("font-size", fontSize)
                         .attr("text-anchor", "left")
-                        .text(minValue.toPrecision(3)+ " "+uom)
+                        .text(highValue.toFixed(decimalPlaces) + " "+ uom)
                         .attr("fill", fgColor);
+
 
                 //avg
                 chart.append("text")
@@ -193,27 +195,29 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         .attr("y", yBase + yInc)
                         .attr("font-size", fontSize)
                         .attr("text-anchor", "left")
-                        .text(avgValue.toPrecision(3) + " "+uom)
+                        .text(avgValue.toFixed(decimalPlaces) + " "+uom)
                         .attr("fill", fgColor);
 
-                // high
+
+
+                // min
                 chart.append("text")
-                        .attr("class", "highLabel")
+                        .attr("class", "minLabel")
                         .attr("x", xLabel)
                         .attr("y", yBase + 2 * yInc)
                         .attr("font-size", fontSize)
                         .attr("font-weight", "bold")
                         .attr("text-anchor", "left")
-                        .text(highLabel + " - ")
+                        .text(minLabel + " - ")
                         .attr("fill", fgColor);
 
                 chart.append("text")
-                        .attr("class", "highText")
+                        .attr("class", "minText")
                         .attr("x", xValue)
                         .attr("y", yBase + 2 * yInc)
                         .attr("font-size", fontSize)
                         .attr("text-anchor", "left")
-                        .text(highValue.toPrecision(3) + " "+ uom)
+                        .text(minValue.toFixed(decimalPlaces)+ " "+uom)
                         .attr("fill", fgColor);
 
 
@@ -417,31 +421,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
 
             function createMinAvgPeakLines() {
 
-                var avgLine = $wnd.d3.svg.line()
-                        .interpolate(interpolation)
-                        .x(function (d) {
-                            return timeScale(d.x);
-                        })
-                        .y(function (d) {
-                            return yScale((avg));
-                        }),
-                peakLine = $wnd.d3.svg.line()
-                        .interpolate(interpolation)
-                        .x(function (d) {
-                            return timeScale(d.x);
-                        })
-                        .y(function (d) {
-                            return yScale((peak));
-                        }),
-                minLine = $wnd.d3.svg.line()
-                        .interpolate(interpolation)
-                        .x(function (d) {
-                            return timeScale(d.x);
-                        })
-                        .y(function (d) {
-                            return yScale(min);
-                        }),
-                minBaselineLine = $wnd.d3.svg.line()
+               var minBaselineLine = $wnd.d3.svg.line()
                         .interpolate(interpolation)
                         .x(function (d) {
                             return timeScale(d.x);
@@ -490,37 +470,6 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                                     }
                                 });
 
-                // peak Line (must be before line.high to look right
-                svg.append("path")
-                        .datum(chartContext.data)
-                        .attr("class", "peakLine")
-                        .attr("fill", "none")
-                        .attr("stroke", "#ff8a9a")
-                        .attr("stroke-width", "1")
-                        .attr("stroke-dasharray", "3,3")
-                        .attr("stroke-opacity", ".7")
-                        .attr("d", peakLine);
-
-                // min Line
-                svg.append("path")
-                        .datum(chartContext.data)
-                        .attr("class", "minLine")
-                        .attr("fill", "none")
-                        .attr("stroke", "#8ad6ff")
-                        .attr("stroke-width", "1.5")
-                        .attr("stroke-dasharray", "3,3")
-                        .attr("stroke-opacity", ".9")
-                        .attr("d", minLine);
-
-                // avg line
-                svg.append("path")
-                        .datum(chartContext.data)
-                        .attr("class", "avgLine")
-                        .attr("fill", "none")
-                        .attr("stroke", "#b0d9b0")
-                        .attr("stroke-width", "1.5")
-                        .attr("stroke-dasharray", "3,3")
-                        .attr("d", avgLine);
 
                 // min baseline Line
                 svg.append("path")
@@ -559,44 +508,15 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                 var hoverString,
                         xValue = (d.x == undefined) ? 0 : +d.x,
                         date = new Date(+xValue),
-                        availStartDate = new Date(+d.availStart),
-                        availEndDate = new Date(+d.availEnd),
-                        availDuration = d.availDuration,
                         barDuration = d.barDuration,
-                        unknownStartDate = new Date(+d.unknownStart),
-                        unknownEndDate = new Date(+d.unknownEnd),
-                        unknownDuration = d.unknownDuration,
                         timeFormatter = $wnd.d3.time.format("%I:%M:%S %p"),
                         dateFormatter = $wnd.d3.time.format("%m/%d/%y"),
                         highValue = (d.high == undefined) ? 0 : d.high.toFixed(2),
                         lowValue = (d.low == undefined) ? 0 : d.low.toFixed(2),
                         avgValue = (d.y == undefined) ? 0 : d.y.toFixed(2);
 
-                if (d.down) {
-                    // down availability
-                    hoverString =
-                            '<div class="chartHoverEnclosingDiv"><span class="chartHoverTimeLabel">' + chartContext.timeLabel + ': </span>' + timeFormatter(date) + '</div>' +
-                                    '<div class="chartHoverAlignLeft"><span class="chartHoverDateLabel">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
-                                    '<hr class="chartHoverDivider"></hr>' +
-                                    '<div class="chartHoverAlignRight"><span class="chartHoverLabelSpan">'+chartContext.hoverStartLabel+": "+ timeFormatter(availStartDate)+ '</span></div>' +
-                                    '<div class="chartHoverAlignRight"><span class="chartHoverLabelSpan">'+chartContext.hoverEndLabel+": "+ timeFormatter(availEndDate) + '</span></div>' +
-                                    '<div class="chartHoverAlignRight"><span class="chartHoverLabelSpan">'+chartContext.hoverPeriodLabel+": "+ availDuration + '</span></div>' +
-                                    '<div class="chartHoverAlignRight"><span id="chartHoverDownValue">'+chartContext.downLabel +'</span></div>' +
-                                    '</div>';
-                } else  if (d.unknown) {
-                    // unknown availability
-                    hoverString =
-                            '<div class="chartHoverEnclosingDiv"><span class="chartHoverTimeLabel">' + chartContext.timeLabel + ': </span>' + timeFormatter(date) + '</div>' +
-                                    '<div class="chartHoverAlignLeft"><span class="chartHoverDateLabel">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
-                                    '<hr class="chartHoverDivider" ></hr>' +
-                                    '<div class="chartHoverAlignRight"><span class="chartHoverLabelSpan" >'+chartContext.hoverStartLabel+": "+ timeFormatter(unknownStartDate)+ '</span></div>' +
-                                    '<div class="chartHoverAlignRight"><span class="chartHoverLabelSpan" >'+chartContext.hoverEndLabel+": "+ timeFormatter(unknownEndDate) + '</span></div>' +
-                                    '<div class="chartHoverAlignRight"><span class="chartHoverLabelSpan">'+chartContext.hoverPeriodLabel+": "+ unknownDuration + '</span></div>' +
-                                    '<div class="chartHoverAlignRight"><span class="chartHoverLabelSpan">'+chartContext.unknownLabel+'</span></div>' +
-                                    '</div>';
-                }
 
-                else if (d.y == undefined) {
+                if (d.y == undefined) {
                     // no data
                     hoverString =
                             '<div class="chartHoverEnclosingDiv"><span class="chartHoverTimeLabel" >' + chartContext.timeLabel + ': </span>' + timeFormatter(date) + '</div>' +

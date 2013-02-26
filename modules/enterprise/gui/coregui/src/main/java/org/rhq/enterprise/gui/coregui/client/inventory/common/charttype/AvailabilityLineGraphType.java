@@ -25,15 +25,13 @@ import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 
 /**
- * Contains the javascript chart definition for an implementation of
- * the d3 availability chart. This implementation is just a line that
- * changes color based on availability type: up=green, down=red, unknown=grey.
+ * Contains the javascript chart definition for an implementation of the d3 availability chart. This implementation is
+ * just a line that changes color based on availability type: up=green, down=red, unknown=grey.
  *
  * @author Mike Thompson
  */
@@ -44,10 +42,10 @@ public class AvailabilityLineGraphType {
     private Integer entityId;
 
     /**
-     * General constructor for stacked bar graph when you have all the data needed to
-     * produce the graph. (This is true for all cases but the dashboard portlet).
+     * General constructor for stacked bar graph when you have all the data needed to produce the graph. (This is true
+     * for all cases but the dashboard portlet).
      */
-    public AvailabilityLineGraphType(Integer entityId){
+    public AvailabilityLineGraphType(Integer entityId) {
         this.entityId = entityId;
     }
 
@@ -61,7 +59,6 @@ public class AvailabilityLineGraphType {
 
     public String getAvailabilityJson() {
         StringBuilder sb = new StringBuilder("[");
-        //Log.debug(" avail records loaded: " + availabilityList.size());
         if (null != metricData) {
 
             for (MeasurementDataNumericHighLowComposite measurement : metricData) {
@@ -69,48 +66,27 @@ public class AvailabilityLineGraphType {
 
                 if (null != availabilityList) {
                     // loop through the avail down intervals
+                    Log.debug(" avail records loaded: " + availabilityList.size());
                     for (Availability availability : availabilityList) {
 
                         // we know we are in an interval
-                        // @todo: when resource is down measurement is null NPE
                         if (measurement.getTimestamp() >= availability.getStartTime()
                                 && measurement.getTimestamp() <= availability.getEndTime()) {
-                            if (availability.getAvailabilityType().equals(AvailabilityType.DOWN)
-                                    || availability.getAvailabilityType().equals(AvailabilityType.DISABLED)) {
-                                sb.append(" \"availStart\":" + availability.getStartTime() + ", ");
-                                sb.append(" \"availEnd\":" + availability.getEndTime() + ", ");
-                                long availDuration = availability.getEndTime() - availability.getStartTime();
-                                String availDurationString = MeasurementConverterClient.format((double) availDuration,
-                                        MeasurementUnits.MILLISECONDS, true);
-                                sb.append(" \"availDuration\": \"" + availDurationString + "\", ");
-                            } else if (availability.getAvailabilityType().equals(AvailabilityType.UNKNOWN)) {
-                                sb.append(" \"unknownStart\":" + availability.getStartTime() + ", ");
-                                sb.append(" \"unknownEnd\":" + availability.getEndTime() + ", ");
-                                long availDuration = availability.getEndTime() - availability.getStartTime();
-                                String availDurationString = MeasurementConverterClient.format((double) availDuration,
-                                        MeasurementUnits.MILLISECONDS, true);
-                                sb.append(" \"unknownDuration\": \"" + availDurationString + "\", ");
 
-                            }
+                            sb.append(" \"availType\":\"" + availability.getAvailabilityType() + "\", ");
+                            sb.append(" \"availStart\":" + availability.getStartTime() + ", ");
+                            sb.append(" \"availEnd\":" + availability.getEndTime() + ", ");
+                            long availDuration = availability.getEndTime() - availability.getStartTime();
+                            String availDurationString = MeasurementConverterClient.format((double)availDuration,
+                                    MeasurementUnits.MILLISECONDS, true);
+                            sb.append(" \"availDuration\": \"" + availDurationString + "\" ");
                             break;
                         }
                     }
                 }
 
-
-                if (isAvailabilityDownOrDisabledForBar(measurement.getTimestamp())) {
-                    sb.append(" \"down\":true ");
-                } else if (isAvailabilityUnknownForBar(measurement.getTimestamp())) {
-                    sb.append(" \"unknown\":true ");
-                } else {
-                    if (Double.isNaN(measurement.getValue())) {
-                        if (!isAvailabilityDownOrDisabledForBar(measurement.getTimestamp())) {
-                            // NaN measure no measurement was collected
-                            sb.append(" \"up\":true },");
-                        } else {
-                            sb.append(" },");
-                        }
-                    }
+                if (sb.toString().endsWith(",")) {
+                    sb.setLength(sb.length() - 1); // delete the last ','
                 }
                 if (!sb.toString().endsWith("},")) {
                     sb.append(" },");
@@ -120,55 +96,7 @@ public class AvailabilityLineGraphType {
         }
         sb.append("]");
         Log.debug(sb.toString());
-//        if (null != availabilityList) {
-//            Log.debug(" avail records loaded: " + availabilityList.size());
-//            //@todo: test for start/end timestamps
-//            for (Availability availability : availabilityList) {
-//                sb.append("{ ");
-//                sb.append(" \"availability\":" + "\"" + availability.getAvailabilityType() + "\",");
-//                sb.append(" \"startTime\":" + availability.getStartTime() + ", ");
-//                sb.append(" \"endTime\":" + availability.getEndTime() + ", ");
-//                long availDuration = availability.getEndTime() - availability.getStartTime();
-//                String availDurationString = MeasurementConverterClient.format((double) availDuration,
-//                    MeasurementUnits.MILLISECONDS, true);
-//                sb.append(" \"duration\": \"" + availDurationString + "\"},");
-//
-//            }
-//            sb.setLength(sb.length() - 1); // delete the last ','
-//            sb.append("]");
-//        }
-
         return sb.toString();
-    }
-
-    private boolean isAvailabilityDownOrDisabledForBar(long timestamp) {
-        Date timestampDate = new Date(timestamp);
-        if (null != availabilityList) {
-            for (Availability availability : availabilityList) {
-                boolean downOrDisabled = (availability.getAvailabilityType().equals(AvailabilityType.DOWN) || availability
-                        .getAvailabilityType().equals(AvailabilityType.DISABLED));
-                if (downOrDisabled
-                        && (timestampDate.after(new Date(availability.getStartTime())) && timestampDate.before(new Date(
-                        availability.getEndTime())))) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean isAvailabilityUnknownForBar(long timestamp) {
-        Date timestampDate = new Date(timestamp);
-        if (null != availabilityList) {
-            for (Availability availability : availabilityList) {
-                if (availability.getAvailabilityType().equals(AvailabilityType.UNKNOWN)
-                        && (timestampDate.after(new Date(availability.getStartTime())) && timestampDate.before(new Date(
-                        availability.getEndTime())))) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     /**
@@ -190,7 +118,6 @@ public class AvailabilityLineGraphType {
             var margin = {top: 5, right: 5, bottom: 5, left: 40},
                     width = 750 - margin.left - margin.right,
                     height = 20 - margin.top - margin.bottom,
-                    interpolation = "basis",
 
                     timeScale = $wnd.d3.time.scale()
                             .range([0, width])
@@ -198,58 +125,51 @@ public class AvailabilityLineGraphType {
                                 return d.x;
                             })),
 
-            yScale = $wnd.d3.scale.linear()
-                    .clamp(true)
-                    .rangeRound([height, 0])
-                    .domain([0,1]),
+                    yScale = $wnd.d3.scale.linear()
+                            .clamp(true)
+                            .rangeRound([height, 0])
+                            .domain([0, 1]),
 
-            xAxis = $wnd.d3.svg.axis()
-                    .scale(timeScale)
-                    .ticks(12)
-                    .tickSubdivide(5)
-                    .tickSize(4, 4, 0)
-                    .orient("top"),
+                    svg = $wnd.d3.select(chartSelection).append("g")
+                            .attr("width", width + margin.left + margin.right)
+                            .attr("height", height + margin.top + margin.bottom)
+                            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-
-            availLine = $wnd.d3.svg.line()
-                            .interpolate(interpolation)
-                            .x(function (d) {
-                                return timeScale(d.x);
-                            })
-                            .y(function (d) {
-                                return yScale(0);
-                            }),
-            svg = $wnd.d3.select(chartSelection).append("g")
-                    .attr("width", width + margin.left + margin.right)
-                    .attr("height", height + margin.top + margin.bottom)
-                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-            svg.append("g")
-                    .attr("class", "x axis")
-                    .attr("transform", "translate(0," + height + ")")
-                    .call(xAxis);
 
             console.log("finished axes");
 
-            svg.append("path")
-                    .datum(data)
-                    .attr("class", "availLine")
-                    .attr("fill", "none")
-                    .attr("stroke", function(d) {
-                        if(d.down){
-                                return "red";
-                        }else if(d.unknown){
-                            return "gray";
-                        }else {
+            // The gray bars at the bottom leading up
+            svg.selectAll("rect.availBar")
+                    .data(data)
+                    .enter().append("rect")
+                    .attr("class", "availBar")
+                    .attr("x", function (d) {
+                        return timeScale(d.x);
+                    })
+                    .attr("y", function (d) {
+                        return yScale(0);
+                    })
+                    .attr("height", function (d) {
+                        return 8;
+                    })
+                    .attr("width", function (d) {
+                        return  (width / data.length);
+                    })
+
+                    .attr("opacity", ".9")
+                    .attr("fill", function (d) {
+                        if (d.availType === 'DOWN' || d.availType === 'DISABLED') {
+                            return "red";
+                        } else if (d.availType === 'UNKNOWN') {
+                            return "#C1BFBF";
+                        } else {
                             return "green";
                         }
+                    });
 
-                    })
-                    .attr("stroke-width", "2")
-                    .attr("d", availLine);
-
-            console.log("finished paths");
+            console.log("finished avail paths");
         }
+
         draw(json);
 
     }-*/;
@@ -257,5 +177,4 @@ public class AvailabilityLineGraphType {
     public String getChartId() {
         return String.valueOf(entityId);
     }
-
 }

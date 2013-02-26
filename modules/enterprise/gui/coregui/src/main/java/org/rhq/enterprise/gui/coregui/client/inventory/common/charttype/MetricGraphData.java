@@ -22,8 +22,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import org.rhq.core.domain.measurement.Availability;
-import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
@@ -67,7 +65,6 @@ public class MetricGraphData implements JsonMetricProducer {
     private MeasurementUnits adjustedMeasurementUnits;
     private MeasurementDefinition definition;
     private List<MeasurementDataNumericHighLowComposite> metricData;
-    private PageList<Availability> availabilityList;
     private PageList<MeasurementOOBComposite> measurementOOBCompositeList;
     private MeasurementOOBComposite lastOOB;
     private Integer chartHeight;
@@ -93,14 +90,12 @@ public class MetricGraphData implements JsonMetricProducer {
     }
 
     public MetricGraphData(int entityId, String entityName, MeasurementDefinition measurementDef,
-        List<MeasurementDataNumericHighLowComposite> metrics, PageList<Availability> downAvailList,
-        PageList<MeasurementOOBComposite> measurementOOBCompositeList) {
+        List<MeasurementDataNumericHighLowComposite> metrics,  PageList<MeasurementOOBComposite> measurementOOBCompositeList) {
         this.entityName = entityName;
         setEntityId(entityId);
         setDefinitionId(measurementDef.getId());
         this.definition = measurementDef;
         this.metricData = metrics;
-        this.availabilityList = downAvailList;
         this.measurementOOBCompositeList = measurementOOBCompositeList;
     }
 
@@ -146,9 +141,6 @@ public class MetricGraphData implements JsonMetricProducer {
         this.metricData = metricData;
     }
 
-    public void setAvailabilityList(PageList<Availability> availabilityList) {
-        this.availabilityList = availabilityList;
-    }
 
     public void setMeasurementOOBCompositeList(PageList<MeasurementOOBComposite> measurementOOBCompositeList) {
         this.measurementOOBCompositeList = measurementOOBCompositeList;
@@ -256,7 +248,6 @@ public class MetricGraphData implements JsonMetricProducer {
     public String getJsonMetrics() {
         StringBuilder sb = new StringBuilder("[");
         boolean gotAdjustedMeasurementUnits = false;
-        //Log.debug(" avail records loaded: " + availabilityList.size());
         if (null != metricData) {
             long firstBarTime = metricData.get(0).getTimestamp();
             long secondBarTime = metricData.get(1).getTimestamp();
@@ -269,45 +260,11 @@ public class MetricGraphData implements JsonMetricProducer {
             for (MeasurementDataNumericHighLowComposite measurement : metricData) {
                 sb.append("{ \"x\":" + measurement.getTimestamp() + ",");
 
-                if (null != availabilityList) {
-                    // loop through the avail down intervals
-                    for (Availability availability : availabilityList) {
-
-                        // we know we are in an interval
-                        // @todo: when resource is down measurement is null NPE
-                        if (measurement.getTimestamp() >= availability.getStartTime()
-                            && measurement.getTimestamp() <= availability.getEndTime()) {
-                            if (availability.getAvailabilityType().equals(AvailabilityType.DOWN)
-                                || availability.getAvailabilityType().equals(AvailabilityType.DISABLED)) {
-                                sb.append(" \"availStart\":" + availability.getStartTime() + ", ");
-                                sb.append(" \"availEnd\":" + availability.getEndTime() + ", ");
-                                long availDuration = availability.getEndTime() - availability.getStartTime();
-                                String availDurationString = MeasurementConverterClient.format((double) availDuration,
-                                    MeasurementUnits.MILLISECONDS, true);
-                                sb.append(" \"availDuration\": \"" + availDurationString + "\", ");
-                            } else if (availability.getAvailabilityType().equals(AvailabilityType.UNKNOWN)) {
-                                sb.append(" \"unknownStart\":" + availability.getStartTime() + ", ");
-                                sb.append(" \"unknownEnd\":" + availability.getEndTime() + ", ");
-                                long availDuration = availability.getEndTime() - availability.getStartTime();
-                                String availDurationString = MeasurementConverterClient.format((double) availDuration,
-                                    MeasurementUnits.MILLISECONDS, true);
-                                sb.append(" \"unknownDuration\": \"" + availDurationString + "\", ");
-
-                            }
-                            break;
-                        }
-                    }
-                }
                 if (null != lastOOB) {
                     sb.append(" \"baselineMin\":" + lastOOB.getBlMin() + ", ");
                     sb.append(" \"baselineMax\":" + lastOOB.getBlMax() + ", ");
                 }
 
-                if (isAvailabilityDownOrDisabledForBar(measurement.getTimestamp())) {
-                    sb.append(" \"down\":true ");
-                } else if (isAvailabilityUnknownForBar(measurement.getTimestamp())) {
-                    sb.append(" \"unknown\":true ");
-                } else {
                     if (!Double.isNaN(measurement.getValue())) {
 
                         MeasurementNumericValueAndUnits newHigh = normalizeUnitsAndValues(measurement.getHighValue(),
@@ -325,13 +282,7 @@ public class MetricGraphData implements JsonMetricProducer {
                         sb.append(" \"low\":" + newLow.getValue() + ",");
                         sb.append(" \"y\":" + newValue.getValue() + "},");
                     } else {
-                        if (!isAvailabilityDownOrDisabledForBar(measurement.getTimestamp())) {
-                            // NaN measure no measurement was collected
-                            sb.append(" \"nodata\":true },");
-                        } else {
-                            sb.append(" },");
-                        }
-                    }
+                        sb.append(" \"nodata\":true },");
                 }
                 if (!sb.toString().endsWith("},")) {
                     sb.append(" },");
@@ -384,35 +335,6 @@ public class MetricGraphData implements JsonMetricProducer {
         }
     }
 
-    private boolean isAvailabilityDownOrDisabledForBar(long timestamp) {
-        Date timestampDate = new Date(timestamp);
-        if (null != availabilityList) {
-            for (Availability availability : availabilityList) {
-                boolean downOrDisabled = (availability.getAvailabilityType().equals(AvailabilityType.DOWN) || availability
-                    .getAvailabilityType().equals(AvailabilityType.DISABLED));
-                if (downOrDisabled
-                    && (timestampDate.after(new Date(availability.getStartTime())) && timestampDate.before(new Date(
-                        availability.getEndTime())))) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean isAvailabilityUnknownForBar(long timestamp) {
-        Date timestampDate = new Date(timestamp);
-        if (null != availabilityList) {
-            for (Availability availability : availabilityList) {
-                if (availability.getAvailabilityType().equals(AvailabilityType.UNKNOWN)
-                    && (timestampDate.after(new Date(availability.getStartTime())) && timestampDate.before(new Date(
-                        availability.getEndTime())))) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
 
     private MeasurementNumericValueAndUnits normalizeUnitsAndValues(double value, MeasurementUnits measurementUnits) {
         MeasurementNumericValueAndUnits newValue = MeasurementConverterClient.fit(value, measurementUnits);

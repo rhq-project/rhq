@@ -348,7 +348,7 @@ public class D3GraphListView extends LocatableVLayout {
                     for (MeasurementDefinition measurementDefinition : measurementDefinitions) {
                         if (summaryIds.contains(measurementDefinition.getId())) {
                             buildSingleGraph(availabilityList, measurementOOBCompositeList, measurementDefinition,
-                                measurementData.get(i), 250);
+                                measurementData.get(i), 225);
                         }
                         i++;
                     }
@@ -368,12 +368,12 @@ public class D3GraphListView extends LocatableVLayout {
                                 // single graph case
                                 if (measurementId == selectedDefinitionId) {
                                     buildSingleGraph(availabilityList, measurementOOBCompositeList, measurementDefinition,
-                                        metric, 300);
+                                        metric, 225);
                                 }
                             } else {
                                 // multiple graph case
                                 buildSingleGraph(availabilityList, measurementOOBCompositeList, measurementDefinition,
-                                    metric, 300);
+                                    metric, 225);
                             }
                         }
                         i++;
@@ -388,7 +388,7 @@ public class D3GraphListView extends LocatableVLayout {
         List<MeasurementDataNumericHighLowComposite> data, int height) {
 
         MetricGraphData metricGraphData = new MetricGraphData(resource.getId(), resource.getName(),
-            measurementDefinition, data, downAvailList, measurementOOBCompositeList);
+            measurementDefinition, data,  measurementOOBCompositeList);
         MetricStackedBarGraph graph = new MetricStackedBarGraph(metricGraphData);
 
         ResourceMetricD3Graph graphView = new ResourceMetricD3Graph(

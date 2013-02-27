@@ -16,6 +16,10 @@
   <name>RHQ Network Services Plugin</name>
   <description>A plugin for monitoring network services.</description>
 
+  <properties>
+    <netservices.itest.http.server.port>31158</netservices.itest.http.server.port>
+  </properties>
+
   <dependencies>
 
     <dependency>
@@ -111,6 +115,9 @@
           </properties>
           <useSystemClassLoader>false</useSystemClassLoader>
           <argLine>${jacoco.integration-test.args}</argLine>
+          <systemPropertyVariables>
+            <netservices.itest.http.server.port>${netservices.itest.http.server.port}</netservices.itest.http.server.port>
+          </systemPropertyVariables>
         </configuration>
         <executions>
           <execution>
@@ -167,11 +174,9 @@
 
       <build>
         <plugins>
-
           <plugin>
             <artifactId>maven-antrun-plugin</artifactId>
             <executions>
-
               <execution>
                 <id>deploy</id>
                 <phase>compile</phase>
@@ -187,7 +192,6 @@
                   <goal>run</goal>
                 </goals>
               </execution>
-
               <execution>
                 <id>deploy-jar-meta-inf</id>
                 <phase>package</phase>
@@ -209,7 +213,6 @@
                   <goal>run</goal>
                 </goals>
               </execution>
-
               <execution>
                 <id>undeploy</id>
                 <phase>clean</phase>
@@ -224,13 +227,13 @@
                   <goal>run</goal>
                 </goals>
               </execution>
-
             </executions>
           </plugin>
-
         </plugins>
       </build>
+
     </profile>
+
   </profiles>
 
 </project>

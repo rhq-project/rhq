@@ -53,6 +53,7 @@ import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.util.StringUtil;
 import org.rhq.plugins.netservices.HTTPNetServiceComponent;
 import org.rhq.plugins.netservices.HTTPNetServiceComponent.ConfigKeys;
 import org.rhq.plugins.netservices.HTTPNetServiceComponent.HttpMethod;
@@ -70,7 +71,11 @@ public class HTTPNetServiceComponentTest extends NetServiceComponentTest {
 
     private static final int HTTP_PORT = 31158;
 
+    private static final String HTTP_PORT_VARIABLE = "netservices.itest.http.server.port";
+
     private static final int SERVLET_SLEEP = 1000;
+
+    private int httpPort;
 
     private Server jettyServer;
 
@@ -79,7 +84,8 @@ public class HTTPNetServiceComponentTest extends NetServiceComponentTest {
     @BeforeClass
     public void startJetty() throws Exception {
         LOG.info("Setting up Jetty test server");
-        jettyServer = new Server(new InetSocketAddress(HTTP_HOST, HTTP_PORT));
+        httpPort = getJettyPort();
+        jettyServer = new Server(new InetSocketAddress(HTTP_HOST, httpPort));
         ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
         context.setContextPath("/");
         jettyServer.setHandler(context);
@@ -101,6 +107,21 @@ public class HTTPNetServiceComponentTest extends NetServiceComponentTest {
         jettyServer.start();
     }
 
+    private static int getJettyPort() {
+        String httpPortVariable = System.getProperty(HTTP_PORT_VARIABLE);
+        if (StringUtil.isNotBlank(httpPortVariable)) {
+            try {
+                int port = Integer.parseInt(httpPortVariable);
+                LOG.info("Using port " + httpPortVariable + " for http server");
+                return port;
+            } catch (NumberFormatException e) {
+                LOG.warn("Invalid port variable: " + httpPortVariable);
+            }
+        }
+        LOG.info("Using default port " + String.valueOf(HTTP_PORT) + " for http server");
+        return HTTP_PORT;
+    }
+
     @AfterClass
     public void stopJetty() {
         LOG.info("Shutting down Jetty test server");
@@ -115,7 +136,7 @@ public class HTTPNetServiceComponentTest extends NetServiceComponentTest {
     @Test(dependsOnMethods = "testPluginLoad")
     public void testManualAdd() throws Exception {
         Configuration configuration = new Configuration();
-        configuration.setSimpleValue(ConfigKeys.URL, "http://" + HTTP_HOST + ":" + HTTP_PORT + "/pipo/molo");
+        configuration.setSimpleValue(ConfigKeys.URL, "http://" + HTTP_HOST + ":" + httpPort + "/pipo/molo");
         configuration.setSimpleValue(ConfigKeys.METHOD, HttpMethod.GET.name());
         configuration.setSimpleValue(ConfigKeys.VALIDATE_RESPONSE_CODE, "true");
         configuration.setSimpleValue(ConfigKeys.VALIDATE_RESPONSE_PATTERN, "success");

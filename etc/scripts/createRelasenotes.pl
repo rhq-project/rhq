@@ -27,7 +27,10 @@ while(<GIT>) {
 
 #   print "IN:  ", $_;
    next if /^$/;
-   s/^[\s\[]*BZ\s([0-9]{5,7})(\]? .*)$/      [BZ $1|https:\/\/bugzilla.redhat.com\/show_bug.cgi\?id\=$1] $2/;
+   s/\${/\$\\{/g;
+   s/^[\s\[]*BZ\s([0-9]{5,7})\s?(\]? .*)$/      [BZ $1|https:\/\/bugzilla.redhat.com\/show_bug.cgi\?id\=$1] $2/;
+   s/^[\s\[]*BZ-([0-9]{5,7})\s?(\]? .*)$/      [BZ $1|https:\/\/bugzilla.redhat.com\/show_bug.cgi\?id\=$1] $2/;
+   s/^[\s\[]*BZ([0-9]{5,7})\s?(\]? .*)$/      [BZ $1|https:\/\/bugzilla.redhat.com\/show_bug.cgi\?id\=$1] $2/;
    s/^[\s\[]*Bug\s([0-9]{5,7})(\]? .*)$/      [BZ $1|https:\/\/bugzilla.redhat.com\/show_bug.cgi\?id\=$1] $2/;
    if (/      .*/) {
        s/^      (.*)/** $1/;

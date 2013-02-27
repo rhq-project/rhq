@@ -36,6 +36,7 @@ import javax.ejb.TransactionAttributeType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.enterprise.server.cassandra.SessionManagerBean;
+import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsServer;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.RawNumericMetric;
@@ -110,6 +111,11 @@ public class MetricsManagerBean implements MetricsManagerLocal {
         MetricsServer metricsServer = new MetricsServer();
         metricsServer.setSession(sessionManager.getSession());
         metricsServer.setConfiguration(sessionManager.getMetricsConfiguration());
+
+        DateTimeService dateTimeService = new DateTimeService();
+        dateTimeService.setConfiguration(sessionManager.getMetricsConfiguration());
+        metricsServer.setDateTimeService(dateTimeService);
+
         return metricsServer;
     }
 }

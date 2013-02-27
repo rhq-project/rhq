@@ -259,6 +259,21 @@ public class PluginContainer {
     }
 
     /**
+     * If the plugin container has been initialized, the plugins have started work, and the container is
+     * not actively shutting down, this returns <code>true</code>.
+     *
+     * @return <code>true</code> if the plugin container was initialized, started and is not shutting down; <code>false</code> otherwise
+     */
+    public boolean isRunning() {
+        Lock lock = obtainReadLock();
+        try {
+            return started && !shuttingDown;
+        } finally {
+            releaseLock(lock);
+        }
+    }
+
+    /**
      * Initializes the plugin container which initializes all internal managers. Once initialized, all plugins will be
      * activated, metrics will begin getting collected and automatic discovery will start.
      *
@@ -360,8 +375,8 @@ public class PluginContainer {
 
             if (configuration.isWaitForShutdownServiceTermination()) {
                 log.info("Plugin container shutdown will wait up to "
-                        + configuration.getShutdownServiceTerminationTimeout()
-                        + " seconds for shut down background threads to terminate.");
+                    + configuration.getShutdownServiceTerminationTimeout()
+                    + " seconds for shut down background threads to terminate.");
             }
 
             driftManager.shutdown();
@@ -389,12 +404,12 @@ public class PluginContainer {
             if (configuration.isWaitForShutdownServiceTermination()) {
                 if (shutdownGracefully) {
                     long elapsedMillis = System.currentTimeMillis() - this.shutdownStartTime;
-                    String elapsedTimeString = (elapsedMillis >= 1000) ?
-                            (elapsedMillis / 1000) + " seconds" : "less than 1 second";
+                    String elapsedTimeString = (elapsedMillis >= 1000) ? (elapsedMillis / 1000) + " seconds"
+                        : "less than 1 second";
                     log.info("All shut down background threads have terminated (" + elapsedTimeString + " elapsed).");
                 } else {
                     log.warn("Timed out after " + configuration.getShutdownServiceTerminationTimeout()
-                            + " seconds while waiting for shut down background threads to terminate.");
+                        + " seconds while waiting for shut down background threads to terminate.");
                 }
             }
 
@@ -770,14 +785,14 @@ public class PluginContainer {
                 try {
                     logWaitingForExecutorServiceTerminationDebugMessage(executorService, remainingShutdownTimeoutMillis);
                     boolean executorTerminated = executorService.awaitTermination(remainingShutdownTimeoutMillis,
-                            TimeUnit.MILLISECONDS);
+                        TimeUnit.MILLISECONDS);
                     if (!executorTerminated) {
                         String poolName = getPoolName(executorService);
                         if (poolName != null) {
                             int activeThreadsInPool = getActiveThreadCount(poolName);
                             log.warn("Timed out after [" + (remainingShutdownTimeoutMillis / 1000)
-                                    + "] seconds while waiting for all threads in pool [" + poolName + "] to terminate - ["
-                                    + activeThreadsInPool + "] threads in the pool are still active.");
+                                + "] seconds while waiting for all threads in pool [" + poolName + "] to terminate - ["
+                                + activeThreadsInPool + "] threads in the pool are still active.");
                         }
                     }
                 } catch (InterruptedException e) {
@@ -795,13 +810,13 @@ public class PluginContainer {
     }
 
     private void logWaitingForExecutorServiceTerminationDebugMessage(ExecutorService executorService,
-                                                                     long remainingShutdownTimeoutMillis) {
+        long remainingShutdownTimeoutMillis) {
         if (log.isDebugEnabled()) {
             String poolName = getPoolName(executorService);
             if (poolName != null) {
                 int activeThreadsInPool = getActiveThreadCount(poolName);
                 log.debug("Waiting up to [" + (remainingShutdownTimeoutMillis / 1000) + "] seconds for ["
-                        + activeThreadsInPool + "] threads in pool [" + poolName + "] to terminate...");
+                    + activeThreadsInPool + "] threads in pool [" + poolName + "] to terminate...");
             }
         }
     }
@@ -812,8 +827,8 @@ public class PluginContainer {
             int activeThreadsInPool = getActiveThreadCount(poolName);
             if (activeThreadsInPool > 0) {
                 log.debug("Not waiting for all threads in pool [" + poolName
-                        + "] to terminate, since the configured plugin container shutdown timeout has already elapsed - ["
-                        + activeThreadsInPool + "] threads in the pool are still active.");
+                    + "] to terminate, since the configured plugin container shutdown timeout has already elapsed - ["
+                    + activeThreadsInPool + "] threads in the pool are still active.");
             }
         }
     }
@@ -822,7 +837,7 @@ public class PluginContainer {
         if (executorService instanceof ThreadPoolExecutor) {
             ThreadFactory threadFactory = ((ThreadPoolExecutor) executorService).getThreadFactory();
             if (threadFactory instanceof LoggingThreadFactory) {
-                return ((LoggingThreadFactory)threadFactory).getPoolName();
+                return ((LoggingThreadFactory) threadFactory).getPoolName();
             }
         }
         return null;

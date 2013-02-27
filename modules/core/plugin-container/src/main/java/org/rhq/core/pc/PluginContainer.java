@@ -260,17 +260,15 @@ public class PluginContainer {
 
     /**
      * If the plugin container has been initialized, the plugins have started work, and the container is
-     * not actively shutting down, this returns <code>true</code>.
+     * not actively shutting down, this returns <code>true</code>.  
+     * 
+     * <p>Note! that there is no locking on this method. Therefore it returns quickly and is likely correct, but if
+     * called outside of locking the return value is not guaranteed. As such, use this only as a lightweight check.</p> 
      *
      * @return <code>true</code> if the plugin container was initialized, started and is not shutting down; <code>false</code> otherwise
      */
     public boolean isRunning() {
-        Lock lock = obtainReadLock();
-        try {
-            return started && !shuttingDown;
-        } finally {
-            releaseLock(lock);
-        }
+        return !shuttingDown && started;
     }
 
     /**
@@ -283,12 +281,18 @@ public class PluginContainer {
      * <p>If the plugin container has already been initialized, this method does nothing and returns.</p>
      */
     public void initialize() {
+        // this quick guard is OK but doesn't prevent several calls to initialize() from stacking up while waiting for the lock        
         if (started) {
             log.info("Plugin container is already initialized.");
         }
 
         Lock lock = obtainWriteLock();
         try {
+            // this guard prevents us from executing initialize logic multiple times in a row            
+            if (started) {
+                return;
+            }
+
             version = PluginContainer.class.getPackage().getImplementationVersion();
             log.info("Initializing Plugin Container" + ((version != null) ? (" v" + version) : "") + "...");
 
@@ -354,7 +358,8 @@ public class PluginContainer {
      * this method does nothing and returns.
      */
     public boolean shutdown() {
-        if (!started) {
+        // this quick guard is OK but doesn't prevent several calls to shutdown() from stacking up while waiting for the lock 
+        if (!isRunning()) {
             log.info("Plugin container is already shut down.");
         }
 
@@ -362,6 +367,11 @@ public class PluginContainer {
         // end up deadlocked.
         Lock lock = (configuration.isWaitForShutdownServiceTermination()) ? obtainReadLock() : obtainWriteLock();
         try {
+            // this guard prevents us from executing shutdown logic multiple times in a row 
+            if (!isRunning()) {
+                return true;
+            }
+
             shuttingDown = true;
             shutdownGracefully = true;
             shutdownStartTime = System.currentTimeMillis();

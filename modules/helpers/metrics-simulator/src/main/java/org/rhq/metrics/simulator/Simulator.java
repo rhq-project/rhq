@@ -179,4 +179,10 @@ public class Simulator {
         return schedules;
     }
 
+    public static void main(String[] args) {
+        System.out.println("Running simulator...");
+        Simulator simulator = new Simulator();
+        simulator.log.info("Testing logging...");
+    }
+
 }

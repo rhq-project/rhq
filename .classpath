@@ -75,8 +75,8 @@
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-email/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-operations/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-cli/src/main/java"/>
-    <classpathentry kind="src" path="modules/enterprise/server/plugins/alert-snmp/src/main/java"/>
-    <classpathentry kind="src" path="modules/enterprise/server/plugins/alert-snmp/src/main/resources"/>
+	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-snmp/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-snmp/src/main/resources"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-irc/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-microblog/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-mobicents/src/main/java"/>
@@ -260,7 +260,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/net/java/dev/jna/jna/3.2.5/jna-3.2.5.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/freemarker/freemarker/2.3.11/freemarker-2.3.11.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jline/jline/0.9.94/jline-0.9.94.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/javassist/javassist/3.12.1.GA/javassist-3.12.1.GA.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/javassist/javassist/3.12.1.GA/javassist-3.12.1.GA.jar" sourcepath="/M2_REPO/javassist/javassist/3.12.1.GA/javassist-3.12.1.GA-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/net/sf/opencsv/opencsv/1.8/opencsv-1.8.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-digester/commons-digester/1.8.1/commons-digester-1.8.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-codec/commons-codec/1.4/commons-codec-1.4.jar"/>

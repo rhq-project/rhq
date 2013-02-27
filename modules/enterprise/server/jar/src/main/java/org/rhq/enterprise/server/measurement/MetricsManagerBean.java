@@ -109,6 +109,7 @@ public class MetricsManagerBean implements MetricsManagerLocal {
     private MetricsServer getMetricsServer() {
         MetricsServer metricsServer = new MetricsServer();
         metricsServer.setSession(sessionManager.getSession());
+        metricsServer.setConfiguration(sessionManager.getMetricsConfiguration());
         return metricsServer;
     }
 }

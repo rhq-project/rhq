@@ -37,6 +37,7 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.rhq.cassandra.CassandraNode;
 import org.rhq.server.metrics.CQLException;
+import org.rhq.server.metrics.MetricsConfiguration;
 
 /**
  * @author John Sanda
@@ -45,6 +46,8 @@ import org.rhq.server.metrics.CQLException;
 public class SessionManagerBean {
 
     private Session session;
+
+    private MetricsConfiguration metricsConfiguration = new MetricsConfiguration();
 
     @PostConstruct
     private void createSession() {
@@ -83,6 +86,10 @@ public class SessionManagerBean {
 
     public Session getSession() {
         return session;
+    }
+
+    public MetricsConfiguration getMetricsConfiguration() {
+        return metricsConfiguration;
     }
 
 }

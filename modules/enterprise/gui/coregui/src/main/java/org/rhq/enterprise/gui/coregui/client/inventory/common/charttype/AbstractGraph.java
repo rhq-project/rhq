@@ -91,9 +91,9 @@ public abstract class AbstractGraph implements HasD3MetricJsniChart {
         metricGraphData.setMetricData(metricData);
     }
 
-    public void setAvailabilityList(PageList<Availability> availabilityDownList) {
-        metricGraphData.setAvailabilityList(availabilityDownList);
-    }
+//    public void setAvailabilityList(PageList<Availability> availabilityDownList) {
+//        metricGraphData.setAvailabilityList(availabilityDownList);
+//    }
 
     public void setMeasurementOOBCompositeList(PageList<MeasurementOOBComposite> measurementOOBCompositeList) {
         metricGraphData.setMeasurementOOBCompositeList(measurementOOBCompositeList);

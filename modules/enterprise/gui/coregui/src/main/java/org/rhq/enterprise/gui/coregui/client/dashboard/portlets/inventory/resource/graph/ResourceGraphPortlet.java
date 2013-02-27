@@ -177,7 +177,7 @@ public class ResourceGraphPortlet extends ResourceMetricD3Graph implements Custo
 
         // setting up a deferred Command to execute after all resource queries have completed (successfully or unsuccessfully)
         // we know there are exactly 2 resources
-        final CountDownLatch countDownLatch = CountDownLatch.create(2, new Command() {
+        final CountDownLatch countDownLatch = CountDownLatch.create(1, new Command() {
             @Override
             /**
              * Satisfied only after ALL of the metric queries AND availability have completed
@@ -189,42 +189,42 @@ public class ResourceGraphPortlet extends ResourceMetricD3Graph implements Custo
         });
 
         queryMeasurementsAndMetricData(entityId, def.getId(), countDownLatch);
-        queryAvailability(entityId, countDownLatch);
+        //queryAvailability(entityId, countDownLatch);
         // now the countDown latch will run sometime asynchronously after BOTH the previous 2 queries have executed
     }
 
-    private void queryAvailability(final Integer entityId, final CountDownLatch countDownLatch) {
-
-        final long startTime = System.currentTimeMillis();
-
-        // now return the availability
-        AvailabilityCriteria c = new AvailabilityCriteria();
-        c.addFilterResourceId(entityId);
-        c.addFilterInitialAvailability(false);
-        c.addSortStartTime(PageOrdering.ASC);
-        GWTServiceLookup.getAvailabilityService().findAvailabilityByCriteria(c,
-            new AsyncCallback<PageList<Availability>>() {
-                @Override
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
-                    countDownLatch.countDown();
-                }
-
-                @Override
-                public void onSuccess(PageList<Availability> availList) {
-                    Log.debug("Dashboard chart availability query for: "+entityId+", in: "
-                        + (System.currentTimeMillis() - startTime) + " ms.");
-                    PageList<Availability> availabilityList = new PageList<Availability>();
-                    for (Availability availability : availList) {
-                        if (!availability.getAvailabilityType().equals(AvailabilityType.UP)){
-                            availabilityList.add(availability);
-                        }
-                    }
-                    graph.getMetricGraphData().setAvailabilityList(availabilityList);
-                    countDownLatch.countDown();
-                }
-            });
-    }
+//    private void queryAvailability(final Integer entityId, final CountDownLatch countDownLatch) {
+//
+//        final long startTime = System.currentTimeMillis();
+//
+//        // now return the availability
+//        AvailabilityCriteria c = new AvailabilityCriteria();
+//        c.addFilterResourceId(entityId);
+//        c.addFilterInitialAvailability(false);
+//        c.addSortStartTime(PageOrdering.ASC);
+//        GWTServiceLookup.getAvailabilityService().findAvailabilityByCriteria(c,
+//            new AsyncCallback<PageList<Availability>>() {
+//                @Override
+//                public void onFailure(Throwable caught) {
+//                    CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
+//                    countDownLatch.countDown();
+//                }
+//
+//                @Override
+//                public void onSuccess(PageList<Availability> availList) {
+//                    Log.debug("Dashboard chart availability query for: "+entityId+", in: "
+//                        + (System.currentTimeMillis() - startTime) + " ms.");
+//                    PageList<Availability> availabilityList = new PageList<Availability>();
+//                    for (Availability availability : availList) {
+//                        if (!availability.getAvailabilityType().equals(AvailabilityType.UP)){
+//                            availabilityList.add(availability);
+//                        }
+//                    }
+//                    //graph.getMetricGraphData().setAvailabilityList(availabilityList);
+//                    countDownLatch.countDown();
+//                }
+//            });
+//    }
 
     private void queryMeasurementsAndMetricData(final Integer entityId, final Integer definitionId, final CountDownLatch countDownLatch) {
         final long startTime = System.currentTimeMillis();

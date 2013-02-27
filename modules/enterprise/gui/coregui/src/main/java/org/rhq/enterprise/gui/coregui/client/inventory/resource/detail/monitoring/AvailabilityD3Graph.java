@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitori
 
 import java.util.List;
 
-import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.HTMLFlow;
 
 import org.rhq.core.domain.measurement.Availability;
@@ -44,7 +43,6 @@ public class AvailabilityD3Graph extends LocatableVLayout implements Availabilit
         setHeight100();
         setWidth100();
     }
-
 
     @Override
     protected void onDraw() {
@@ -70,16 +68,15 @@ public class AvailabilityD3Graph extends LocatableVLayout implements Availabilit
         availabilityGraphType.setAvailabilityList(availabilityList);
     }
 
-
     /**
      * Create the graph marker to be later filled in with a graph from d3.
      */
-    public void createGraphMarker(){
+    public void createGraphMarker() {
         Log.debug(" *** drawGraph marker in AvailabilityD3Graph for: " + availabilityGraphType.getChartId());
 
         StringBuilder divAndSvgDefs = new StringBuilder();
         divAndSvgDefs.append("<div id=\"availChart-" + availabilityGraphType.getChartId()
-                + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:20px;\">");
+            + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:20px;\">");
         divAndSvgDefs.append("</svg></div>");
         HTMLFlow graph = new HTMLFlow(divAndSvgDefs.toString());
         graph.setWidth100();
@@ -87,6 +84,7 @@ public class AvailabilityD3Graph extends LocatableVLayout implements Availabilit
         addMember(graph);
 
     }
+
     /**
      * Setup the page elements especially the div and svg elements that serve as
      * placeholders for the d3 stuff to grab onto and add svg tags to render the chart.
@@ -98,15 +96,7 @@ public class AvailabilityD3Graph extends LocatableVLayout implements Availabilit
 
         Log.debug("*** Draw");
         drawJsniChart();
-//        new Timer() {
-//            @Override
-//            public void run() {
-//                Log.debug("*** Draw");
-//                drawJsniChart();
-//            }
-//        }.schedule(100);
     }
-
 
     @Override
     public void destroy() {
@@ -118,7 +108,6 @@ public class AvailabilityD3Graph extends LocatableVLayout implements Availabilit
         super.hide();
     }
 
-
     /**
      * Delegate the call to rendering the JSNI chart.
      * This way the chart type can be swapped out at any time.
@@ -126,6 +115,5 @@ public class AvailabilityD3Graph extends LocatableVLayout implements Availabilit
     public void drawJsniChart() {
         availabilityGraphType.drawJsniChart();
     }
-
 
 }

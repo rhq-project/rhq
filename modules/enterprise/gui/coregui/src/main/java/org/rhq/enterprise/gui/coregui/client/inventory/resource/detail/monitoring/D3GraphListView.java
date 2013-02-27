@@ -147,9 +147,7 @@ public class D3GraphListView extends LocatableVLayout {
                                 + (System.currentTimeMillis() - startTime) + " ms.");
                         availabilityList = new PageList<Availability>();
                         for (Availability availability : availList) {
-                            if (!availability.getAvailabilityType().equals(AvailabilityType.UP)){
                                 availabilityList.add(availability);
-                            }
                         }
                         Log.debug("avail list size: " + availabilityList.size());
                         if(countDownLatch != null){
@@ -177,7 +175,6 @@ public class D3GraphListView extends LocatableVLayout {
             // create a placeholder for avail graph
             availabilityGraph.createGraphMarker();
             addMember(availabilityGraph);
-            Log.debug("*** added avail chart");
 
         }
 

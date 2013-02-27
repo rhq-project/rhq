@@ -43,4 +43,21 @@ var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, yAxi
     {
         return this.chartId !== undefined && this.data !== undefined;
     };
+},
+AvailChartContext = function (chartId, availData, dateLabel, timeLabel, hoverStartLabel, hoverEndLabel, hoverBarLabel, availabilityLabel) {
+    "use strict";
+    if (!(this instanceof AvailChartContext)) {
+        throw new Error("AvailChartContext function cannot be called as a function.")
+    }
+    this.chartId = chartId;
+    this.chartHandle = "#availChart-" + this.chartId;
+    this.chartSelection = this.chartHandle + " svg";
+    this.data = jQuery.parseJSON(availData); // make into json
+    this.dateLabel = dateLabel;
+    this.timeLabel = timeLabel;
+    this.hoverStartLabel = hoverStartLabel;
+    this.hoverEndLabel = hoverEndLabel;
+    this.hoverBarLabel = hoverBarLabel;
+    this.hoverBarAvailabilityLabel = availabilityLabel;
+
 };

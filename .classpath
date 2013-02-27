@@ -75,7 +75,8 @@
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-email/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-operations/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-cli/src/main/java"/>
-	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-snmp/src/main/java"/>
+    <classpathentry kind="src" path="modules/enterprise/server/plugins/alert-snmp/src/main/java"/>
+    <classpathentry kind="src" path="modules/enterprise/server/plugins/alert-snmp/src/main/resources"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-irc/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-microblog/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-mobicents/src/main/java"/>
@@ -213,7 +214,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/servlet/jsp-api/2.0/jsp-api-2.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-validator/commons-validator/1.1.4/commons-validator-1.1.4.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/testng/testng/6.5.2/testng-6.5.2.jar" sourcepath="/M2_REPO/org/testng/testng/6.5.2/testng-6.5.2-sources.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/snmp4j/snmp4j/1.8.2/snmp4j-1.8.2.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/snmp4j/snmp4j/1.8.2/snmp4j-1.8.2.jar" sourcepath="M2_REPO/org/snmp4j/snmp4j/1.8.2/snmp4j-1.8.2-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/log4j/log4j/1.2.14/log4j-1.2.14.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/tomcat/tomcat-jk/4.1.31/tomcat-jk-4.1.31.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jdom/jdom/1.0/jdom-1.0.jar"/>

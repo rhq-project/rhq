@@ -143,7 +143,6 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         try {
             getTransactionManager().begin();
 
-
             Query q;
             List<?> doomed;
 
@@ -889,17 +888,17 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertNotNull(bv1);
         Set<String> filenames = bundleManager.getBundleVersionFilenames(overlord, bv1.getId(), true);
         assertNotNull(filenames);
-        assertEquals(2, filenames.size());
+        assertEquals(DEFAULT_CRITERIA_PAGE_SIZE + 2, filenames.size());
         BundleFile bf1 = bundleManager.addBundleFileViaByteArray(overlord, bv1.getId(), TEST_PREFIX + "-bundlefile-1",
             "1.0", null, "Test Bundle File # 1".getBytes());
         filenames = bundleManager.getBundleVersionFilenames(overlord, bv1.getId(), true);
         assertNotNull(filenames);
-        assertEquals(1, filenames.size());
+        assertEquals(DEFAULT_CRITERIA_PAGE_SIZE + 1, filenames.size());
         BundleFile bf2 = bundleManager.addBundleFileViaByteArray(overlord, bv1.getId(), TEST_PREFIX + "-bundlefile-2",
             "1.0", null, "Test Bundle File # 2".getBytes());
         filenames = bundleManager.getBundleVersionFilenames(overlord, bv1.getId(), true);
         assertNotNull(filenames);
-        assertEquals(0, filenames.size());
+        assertEquals(DEFAULT_CRITERIA_PAGE_SIZE, filenames.size());
     }
 
     @Test(enabled = TESTS_ENABLED)
@@ -959,6 +958,55 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertNotNull(r);
         assertEquals(b.getName(), r.getName());
     }
+    
+    @Test(enabled = TESTS_ENABLED)
+    public void testFindBundlesByCriteriaPaging() throws Exception {
+        Bundle b = null;
+        for (int i = 0; i < 9; i++) {
+            createBundle("name" + (i + 1));
+        }
+        Bundle b10 = createBundle("name10");
+
+        BundleCriteria c = new BundleCriteria();
+        PageList<Bundle> bs = null;
+
+        // return first 5
+        c.addFilterName(TEST_PREFIX);
+        c.setPaging(0, 5);
+        c.fetchBundleVersions(true);
+        c.fetchDestinations(true);
+        c.fetchPackageType(true);
+        c.fetchRepo(true);
+        bs = bundleManager.findBundlesByCriteria(overlord, c);
+        assertNotNull(bs);
+        assertEquals(5, bs.size());
+        assertFalse(bs.get(0).equals(bs.get(1)));
+
+        // return last 2
+        c.addFilterName(TEST_PREFIX);
+        c.setPaging(4, 2);
+        c.fetchBundleVersions(true);
+        c.fetchDestinations(true);
+        c.fetchPackageType(true);
+        c.fetchRepo(true);
+        bs = bundleManager.findBundlesByCriteria(overlord, c);
+        assertNotNull(bs);
+        assertEquals(2, bs.size());
+        assertEquals(b10, bs.get(1));
+
+        // return last 1
+        c.addFilterName(TEST_PREFIX);
+        c.setCaseSensitive(true);
+        c.setPaging(1, 9);
+        c.fetchBundleVersions(true);
+        c.fetchDestinations(true);
+        c.fetchPackageType(true);
+        c.fetchRepo(true);
+        bs = bundleManager.findBundlesByCriteria(overlord, c);
+        assertNotNull(bs);
+        assertEquals(1, bs.size());
+        assertEquals(b10, bs.get(0));
+    }
 
     @Test(enabled = TESTS_ENABLED)
     public void testFindBundleVersionsByCriteria() throws Exception {
@@ -998,7 +1046,100 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertNotNull(bvOut.getBundleDeployments());
         assertTrue(bvOut.getBundleDeployments().isEmpty());
     }
+    
+    @Test(enabled = TESTS_ENABLED)
+    public void testFindBundleVersionsByCriteriaPaging() throws Exception {
+        Bundle b1 = createBundle("one");
+        for (int i = 0; i < 59; i++) {
+            createBundleVersion(b1.getName(), "1." + String.format("%02d", i + 1), b1);
+        }
+        BundleVersion bv60 = createBundleVersion(b1.getName(), "1.60", b1);
 
+        BundleVersionCriteria c = new BundleVersionCriteria();
+        PageList<BundleVersion> bvs = null;
+        BundleVersion bvOut = null;
+
+        // return first ten
+        c.addFilterName(TEST_PREFIX);
+        c.setPaging(0, 10);
+        bvs = bundleManager.findBundleVersionsByCriteria(overlord, c);
+        assertNotNull(bvs);
+        assertEquals(10, bvs.size());
+        assertFalse(bvs.get(0).equals(bvs.get(1)));
+
+        // return last 3
+        c.addFilterName(TEST_PREFIX);
+        c.setPaging(19, 3);
+        bvs = bundleManager.findBundleVersionsByCriteria(overlord, c);
+        assertNotNull(bvs);
+        assertEquals(3, bvs.size());
+        assertFalse(bvs.get(0).equals(bvs.get(1)));
+        assertEquals(bv60, bvs.get(2));
+    }
+
+    @Test(enabled = TESTS_ENABLED)
+    public void testGetAllBundleVersionFilenames() throws Exception {
+        final Bundle b1 = createBundle("one");
+        assertNotNull(b1);
+        final BundleVersion bv1 = createBundleVersion(b1.getName(), "1.0", b1);
+        assertNotNull(bv1);
+        final HashMap<String, Boolean> files = bundleManager.getAllBundleVersionFilenames(overlord, bv1.getId());
+        assertNotNull(files);
+        assertEquals(DEFAULT_CRITERIA_PAGE_SIZE + 2, files.keySet().size());
+    }
+
+    @Test(enabled = TESTS_ENABLED)
+    public void testCreateBundleAndBundleVersionStrictName1() throws Exception {
+        final Bundle b1 = createBundle("one");
+        final String name = "on";
+        final String fullName = TEST_PREFIX + "-bundle-" + name;
+        final BundleType type = createBundleType(name);
+        final String recipe = "deploy -f " + TEST_PREFIX + ".zip -d @@ test.path @@";
+        final BundleVersion bundleVerison = bundleManager.createBundleAndBundleVersion(overlord, fullName,
+            "description", type.getId(), fullName, fullName + "-desc", "3.0", recipe);
+        assertNotNull(bundleVerison);
+
+        // find the previously created bundle
+        BundleCriteria c = new BundleCriteria();
+        PageList<Bundle> bundles1 = null;
+        c.addFilterName(TEST_PREFIX + "-bundle-one");
+        c.setStrict(true);
+        bundles1 = bundleManager.findBundlesByCriteria(overlord, c);
+        assertNotNull(bundles1);
+        assertEquals(1, bundles1.size());
+        Bundle fetchedBundle1 = bundles1.get(0);
+
+        // find the newly created bundle
+        c = new BundleCriteria();
+        PageList<Bundle> bundles2 = null;
+        c.addFilterName(fullName);
+        c.setStrict(true);
+        bundles2 = bundleManager.findBundlesByCriteria(overlord, c);
+        assertNotNull(bundles2);
+        assertEquals(1, bundles2.size());
+    }
+
+    @Test(enabled = TESTS_ENABLED)
+    public void testCreateBundleAndBundleVersionStrictName2() throws Exception {
+        final String name = "one";
+        final Bundle bundle = createBundle(name);
+        final String fullName = TEST_PREFIX + "-bundle-" + name;
+        final String recipe = "deploy -f " + TEST_PREFIX + ".zip -d @@ test.path @@";
+        final BundleVersion bundleVerison = bundleManager.createBundleAndBundleVersion(overlord, fullName,
+            "description", bundle.getBundleType().getId(), fullName, fullName + "-desc", "3.0", recipe);
+
+        // find the newly created bundle
+        BundleCriteria c = new BundleCriteria();
+        PageList<Bundle> bundles = null;
+        c.addFilterName(fullName);
+        c.setStrict(true);
+        bundles = bundleManager.findBundlesByCriteria(overlord, c);
+        assertNotNull(bundles);
+        assertEquals(1, bundles.size());
+    }
+
+
+    // helper methods
     private BundleType createBundleType(String name) throws Exception {
         final String fullName = TEST_PREFIX + "-type-" + name;
         ResourceType rt = createResourceTypeForBundleType(name);

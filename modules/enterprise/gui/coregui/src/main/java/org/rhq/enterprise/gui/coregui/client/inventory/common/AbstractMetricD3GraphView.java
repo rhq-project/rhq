@@ -111,7 +111,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
 
         StringBuilder divAndSvgDefs = new StringBuilder();
         divAndSvgDefs.append("<div id=\"rChart-" + graph.getMetricGraphData().getChartId()
-            + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:" + getChartHeight()
+            + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" style=\"height:" + getChartHeight()
             + "px;\">");
         divAndSvgDefs.append(getSvgDefs());
         divAndSvgDefs.append("</svg></div>");

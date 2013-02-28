@@ -325,7 +325,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             viewFactory = (!visibleToIE8) ? null : new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new D3GroupGraphListView(monitoringTab.extendLocatorId("NewGraphs"), groupComposite.getResourceGroup());
+                    return new D3GroupGraphListView(monitoringTab.extendLocatorId("NewGraphs"), groupComposite.getResourceGroup(), true);
                 }
             };
 

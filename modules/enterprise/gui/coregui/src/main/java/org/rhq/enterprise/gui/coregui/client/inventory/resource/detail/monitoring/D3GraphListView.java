@@ -28,11 +28,8 @@ import java.util.TreeSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
-import org.rhq.core.domain.criteria.AvailabilityCriteria;
-import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -41,10 +38,10 @@ import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricStackedBarGraph;
@@ -52,7 +49,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.async.Command;
 import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * Build the View that shows the individual graph views for multi-graph
@@ -61,20 +57,16 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  *
  * @author Mike Thompson
  */
-public class D3GraphListView extends LocatableVLayout {
+public class D3GraphListView extends AbstractD3GraphListView {
 
     private static int NUM_ASYNC_CALLS = 2; // wait for X async calls in Latch
 
     private Resource resource;
     private Set<Integer> definitionIds = null;
-    private Label loadingLabel = new Label(MSG.common_msg_loading());
     private UserPreferencesMeasurementRangeEditor measurementRangeEditor;
     private boolean useSummaryData = false;
-    private boolean monitorDetailView = false;
-    private PageList<Availability> availabilityList;
     private PageList<MeasurementOOBComposite> measurementOOBCompositeList;
     private List<List<MeasurementDataNumericHighLowComposite>> metricsDataList;
-    private AvailabilityD3Graph availabilityGraph;
 
     public static D3GraphListView createMultipleGraphs(String locatorId, Resource resource, Set<Integer> definitionIds,
         boolean monitorDetailView) {
@@ -119,41 +111,6 @@ public class D3GraphListView extends LocatableVLayout {
         measurementRangeEditor.getSetButton().addClickHandler(clickHandler);
     }
 
-    private void queryAvailability(final Resource resource, final CountDownLatch countDownLatch) {
-
-        final long startTime = System.currentTimeMillis();
-
-        // now return the availability
-        AvailabilityCriteria c = new AvailabilityCriteria();
-        c.addFilterResourceId(resource.getId());
-        c.addFilterInitialAvailability(false);
-        c.addSortStartTime(PageOrdering.ASC);
-        GWTServiceLookup.getAvailabilityService().findAvailabilityByCriteria(c,
-            new AsyncCallback<PageList<Availability>>() {
-                @Override
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
-                    if (countDownLatch != null) {
-                        countDownLatch.countDown();
-                    }
-                }
-
-                @Override
-                public void onSuccess(PageList<Availability> availList) {
-                    Log.debug("\nSuccessfully queried availability in: " + (System.currentTimeMillis() - startTime)
-                        + " ms.");
-                    availabilityList = new PageList<Availability>();
-                    for (Availability availability : availList) {
-                        availabilityList.add(availability);
-                    }
-                    Log.debug("avail list size: " + availabilityList.size());
-                    if (countDownLatch != null) {
-                        countDownLatch.countDown();
-                    }
-                }
-            });
-    }
-
     @Override
     protected void onDraw() {
         super.onDraw();
@@ -162,7 +119,6 @@ public class D3GraphListView extends LocatableVLayout {
         addMember(measurementRangeEditor);
 
         if (monitorDetailView) {
-            Log.debug("show monitor view");
             availabilityGraph = new AvailabilityD3Graph("avail", new AvailabilityLineGraphType(resource.getId()));
             // first step in 2 step to create d3 chart
             // create a placeholder for avail graph
@@ -191,7 +147,7 @@ public class D3GraphListView extends LocatableVLayout {
         final long startTime = startEndList.get(0);
         final long endTime = startEndList.get(1);
 
-        queryAvailability(resource, null);
+        queryAvailability(resource.getId(), null);
 
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
             EnumSet.of(ResourceTypeRepository.MetadataType.measurements),

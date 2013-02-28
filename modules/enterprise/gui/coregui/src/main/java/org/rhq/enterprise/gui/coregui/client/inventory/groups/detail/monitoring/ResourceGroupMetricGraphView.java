@@ -36,6 +36,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricGraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -66,6 +67,7 @@ public class ResourceGroupMetricGraphView extends AbstractMetricGraphView {
     @Override
     protected void renderGraph() {
         if (null == getDefinition()) {
+            Log.debug(" **** Mike Group Metric Graph");
 
             ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
 

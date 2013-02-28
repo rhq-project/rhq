@@ -37,17 +37,13 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.criteria.AvailabilityCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
-import org.rhq.core.domain.measurement.Availability;
-import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.lookup.ResourceLookupComboBoxItem;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
@@ -92,7 +88,7 @@ public class ResourceGraphPortlet extends ResourceMetricD3Graph implements Custo
 
     @Override
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        Log.debug("\n\n\nPortlet Configure !!");
+        Log.debug("\nPortlet Configure !!");
 
         if (null == this.portletWindow && null != portletWindow) {
             this.portletWindow = portletWindow;
@@ -108,11 +104,10 @@ public class ResourceGraphPortlet extends ResourceMetricD3Graph implements Custo
             if (resourceIdProperty != null && measurementDefIdProperty != null) {
                 final Integer entityId = resourceIdProperty.getIntegerValue();
                 final Integer measurementDefId = measurementDefIdProperty.getIntegerValue();
-                graph.setDefinitionId(measurementDefId);
-                graph.setEntityId(entityId);
-                Log.debug("Metric Graph Data: "+ graph.getMetricGraphData());
-
                 if (entityId != null && measurementDefId != null) {
+                    graph.setDefinitionId(measurementDefId);
+                    graph.setEntityId(entityId);
+                    Log.debug("Metric Graph Data: " + graph.getMetricGraphData());
 
                     queryResource(entityId, measurementDefId);
                 }
@@ -122,8 +117,6 @@ public class ResourceGraphPortlet extends ResourceMetricD3Graph implements Custo
     }
 
     private void queryResource(Integer entityId, final Integer measurementDefId) {
-        //final long startTime = System.currentTimeMillis();
-
         ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
         ResourceCriteria resourceCriteria = new ResourceCriteria();
@@ -176,61 +169,29 @@ public class ResourceGraphPortlet extends ResourceMetricD3Graph implements Custo
         final long startTime = System.currentTimeMillis();
 
         // setting up a deferred Command to execute after all resource queries have completed (successfully or unsuccessfully)
-        // we know there are exactly 2 resources
+        // we know there are exactly 1 resources
         final CountDownLatch countDownLatch = CountDownLatch.create(1, new Command() {
             @Override
             /**
              * Satisfied only after ALL of the metric queries AND availability have completed
              */
             public void execute() {
-                Log.debug("Dashboard chart query total time for entity: "+entityId+", MeasurementDef: "+def.getId() +" in "+ (System.currentTimeMillis() - startTime)+" ms");
+                Log.debug("Dashboard chart query total time for entity: " + entityId + ", MeasurementDef: "
+                    + def.getId() + " in " + (System.currentTimeMillis() - startTime) + " ms");
                 drawGraph();
             }
         });
 
         queryMeasurementsAndMetricData(entityId, def.getId(), countDownLatch);
-        //queryAvailability(entityId, countDownLatch);
         // now the countDown latch will run sometime asynchronously after BOTH the previous 2 queries have executed
     }
 
-//    private void queryAvailability(final Integer entityId, final CountDownLatch countDownLatch) {
-//
-//        final long startTime = System.currentTimeMillis();
-//
-//        // now return the availability
-//        AvailabilityCriteria c = new AvailabilityCriteria();
-//        c.addFilterResourceId(entityId);
-//        c.addFilterInitialAvailability(false);
-//        c.addSortStartTime(PageOrdering.ASC);
-//        GWTServiceLookup.getAvailabilityService().findAvailabilityByCriteria(c,
-//            new AsyncCallback<PageList<Availability>>() {
-//                @Override
-//                public void onFailure(Throwable caught) {
-//                    CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
-//                    countDownLatch.countDown();
-//                }
-//
-//                @Override
-//                public void onSuccess(PageList<Availability> availList) {
-//                    Log.debug("Dashboard chart availability query for: "+entityId+", in: "
-//                        + (System.currentTimeMillis() - startTime) + " ms.");
-//                    PageList<Availability> availabilityList = new PageList<Availability>();
-//                    for (Availability availability : availList) {
-//                        if (!availability.getAvailabilityType().equals(AvailabilityType.UP)){
-//                            availabilityList.add(availability);
-//                        }
-//                    }
-//                    //graph.getMetricGraphData().setAvailabilityList(availabilityList);
-//                    countDownLatch.countDown();
-//                }
-//            });
-//    }
-
-    private void queryMeasurementsAndMetricData(final Integer entityId, final Integer definitionId, final CountDownLatch countDownLatch) {
+    private void queryMeasurementsAndMetricData(final Integer entityId, final Integer definitionId,
+        final CountDownLatch countDownLatch) {
         final long startTime = System.currentTimeMillis();
         //
-        GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(entityId,
-            new int[] { definitionId }, 8, MeasurementUtils.UNIT_HOURS, 60,
+        GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(entityId, new int[] { definitionId },
+            8, MeasurementUtils.UNIT_HOURS, 60,
             new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                 @Override
                 public void onFailure(Throwable caught) {
@@ -240,8 +201,7 @@ public class ResourceGraphPortlet extends ResourceMetricD3Graph implements Custo
 
                 @Override
                 public void onSuccess(final List<List<MeasurementDataNumericHighLowComposite>> measurementData) {
-                    Log.debug("Dashboard Metric data in: "
-                        + (System.currentTimeMillis() - startTime) + " ms.");
+                    Log.debug("Dashboard Metric data in: " + (System.currentTimeMillis() - startTime) + " ms.");
                     graph.getMetricGraphData().setMetricData(measurementData.get(0));
                     countDownLatch.countDown();
                 }
@@ -337,7 +297,7 @@ public class ResourceGraphPortlet extends ResourceMetricD3Graph implements Custo
 
     @Override
     public void redraw() {
-        Log.debug(" *** Redraw Portlet and set data");
+        Log.debug("Redraw Portlet and set data");
         super.redraw();
 
         removeMembers(getMembers());
@@ -350,8 +310,6 @@ public class ResourceGraphPortlet extends ResourceMetricD3Graph implements Custo
         } else {
             graph.getMetricGraphData().setEntityId(simple.getIntegerValue());
             PropertySimple simpleDefId = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
-            Log.debug("EntityId from portal config: " + simple.getIntegerValue());
-            Log.debug("DefintionId from portal config: " + simpleDefId.getIntegerValue());
             graph.getMetricGraphData().setDefinitionId(simpleDefId.getIntegerValue());
             drawGraph();
         }

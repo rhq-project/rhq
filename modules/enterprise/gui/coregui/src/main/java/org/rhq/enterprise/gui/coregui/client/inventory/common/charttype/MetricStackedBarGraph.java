@@ -72,7 +72,6 @@ public final class MetricStackedBarGraph extends AbstractGraph {
             "use strict";
             // privates
 
-            console.log("Chart Height: "+chartContext.height);
             var margin = {top: 10, right: 5, bottom: 5, left: 40},
                     width = 750 - margin.left - margin.right,
                     adjustedChartHeight = chartContext.chartHeight - 50,

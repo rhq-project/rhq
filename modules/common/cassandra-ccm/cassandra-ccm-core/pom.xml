@@ -89,7 +89,7 @@
           <delimiters>
             <delimiter>${*}</delimiter>
           </delimiters>
-          <escapeString>\</escapeString>
+          <escapeString>[escape]</escapeString>
         </configuration>
       </plugin>
 

@@ -25,9 +25,18 @@
 
 package org.rhq.metrics.simulator;
 
+import java.io.File;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.PosixParser;
+
+import org.rhq.metrics.simulator.plan.SimulationPlan;
+import org.rhq.metrics.simulator.plan.SimulationPlanner;
 
 /**
  * @author John Sanda
@@ -51,6 +60,20 @@ public class SimulatorCLI {
             printUsage();
             System.exit(1);
         }
+        try {
+            CommandLineParser parser = new PosixParser();
+            CommandLine cmdLine = parser.parse(options, args);
+
+            if (cmdLine.hasOption("h")) {
+                printUsage();
+            } else if (cmdLine.hasOption("s")) {
+                runSimulator(cmdLine.getOptionValue("s"));
+            } else {
+                printUsage();
+            }
+        } catch (ParseException e) {
+            printUsage();
+        }
     }
 
     public void printUsage() {
@@ -60,6 +83,28 @@ public class SimulatorCLI {
 
         helpFormatter.setOptPrefix("");
         helpFormatter.printHelp(syntax, header, options, null);
+    }
+
+    public void runSimulator(String file) {
+        File planFile = new File(file);
+        if (!planFile.exists()) {
+            throw new RuntimeException("Simulation file [" + file + "] does not exist.");
+        }
+        if (planFile.isDirectory()) {
+            throw new RuntimeException("[" + file + "] is a directory. The --simulation argument must refer to a  " +
+                "file.");
+        }
+
+        SimulationPlanner planner = new SimulationPlanner();
+        SimulationPlan plan = null;
+        try {
+            plan = planner.create(planFile);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create simulation: " + e.getMessage(), e);
+        }
+
+        Simulator simulator = new Simulator();
+        simulator.run(plan);
     }
 
     public static void main(String[] args) {

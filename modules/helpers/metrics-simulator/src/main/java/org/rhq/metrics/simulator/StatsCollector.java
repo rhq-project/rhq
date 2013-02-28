@@ -69,8 +69,4 @@ public class StatsCollector implements Runnable {
             "Standard Deviation: " + insertionTimes.getStandardDeviation());
     }
 
-    public void logSummary() {
-//        log.info("Summary of raw data inserts/minute\n" + stats.getAggregateSummary());
-//        log.info("Summary of raw data insertion times in milliseconds\n" + stats.getRawDataInsertTimes());
-    }
 }

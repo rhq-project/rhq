@@ -55,7 +55,6 @@ import org.rhq.cassandra.schema.SchemaManager;
 import org.rhq.metrics.simulator.plan.ClusterConfig;
 import org.rhq.metrics.simulator.plan.ScheduleGroup;
 import org.rhq.metrics.simulator.plan.SimulationPlan;
-import org.rhq.metrics.simulator.plan.SimulationPlanner;
 import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsServer;
 
@@ -66,15 +65,9 @@ public class Simulator {
 
     private final Log log = LogFactory.getLog(Simulator.class);
 
-    public void run(File jsonFile) throws Exception {
-        SimulationPlanner planner = new SimulationPlanner();
-        SimulationPlan plan = planner.create(jsonFile);
-
-        List<CassandraNode> nodes = deployCluster(plan.getClusterConfig());
-        waitForClusterToInitialize(nodes);
-
+    public void run(SimulationPlan plan) {
+        List<CassandraNode> nodes = initCluster(plan);
         createSchema(nodes);
-
         Session session = createSession();
 
         MetricsServer metricsServer = new MetricsServer();
@@ -95,7 +88,8 @@ public class Simulator {
         Stats stats = new Stats();
         StatsCollector statsCollector = new StatsCollector(stats);
 
-        ScheduledExecutorService executorService = Executors.newScheduledThreadPool(plan.getThreadPoolSize());
+        ScheduledExecutorService executorService = Executors.newScheduledThreadPool(plan.getThreadPoolSize(),
+            new SimulatorThreadFactory());
         log.info("Starting executor service");
         executorService.scheduleAtFixedRate(statsCollector, 0, 1, TimeUnit.MINUTES);
 
@@ -120,7 +114,26 @@ public class Simulator {
         }
         log.info("Shutting down executor service");
         executorService.shutdown();
-        executorService.awaitTermination(5, TimeUnit.SECONDS);
+        try {
+            executorService.awaitTermination(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+        }
+        if (!executorService.isTerminated()) {
+            log.info("Forcing executor service shutdown.");
+            executorService.shutdownNow();
+        }
+        log.info("Shut down complete");
+        System.exit(0);
+    }
+
+    private List<CassandraNode> initCluster(SimulationPlan plan) {
+        try {
+            List<CassandraNode> nodes = deployCluster(plan.getClusterConfig());
+            waitForClusterToInitialize(nodes);
+            return nodes;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to start simulator. Cluster initialization failed.", e);
+        }
     }
 
     private List<CassandraNode> deployCluster(ClusterConfig clusterConfig) throws IOException {
@@ -148,23 +161,31 @@ public class Simulator {
     }
 
     private void createSchema(List<CassandraNode> nodes) {
-        log.info("Creating schema");
-        SchemaManager schemaManager = new SchemaManager("rhqadmin", "rhqadmin", nodes);
-        schemaManager.createSchema();
-        schemaManager.updateSchema();
+        try {
+            log.info("Creating schema");
+            SchemaManager schemaManager = new SchemaManager("rhqadmin", "rhqadmin", nodes);
+            schemaManager.createSchema();
+            schemaManager.updateSchema();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to start simulator. An error occurred during schema creation.", e);
+        }
     }
 
     private Session createSession() throws NoHostAvailableException {
-        SimpleAuthInfoProvider authInfoProvider = new SimpleAuthInfoProvider();
-        authInfoProvider.add("username", "rhqadmin").add("password", "rhqadmin");
+        try {
+            SimpleAuthInfoProvider authInfoProvider = new SimpleAuthInfoProvider();
+            authInfoProvider.add("username", "rhqadmin").add("password", "rhqadmin");
 
-        Cluster cluster = Cluster.builder()
-            .addContactPoints("127.0.0.1", "127.0.0.2")
-            .withAuthInfoProvider(authInfoProvider)
-            .withCompression(SNAPPY)
-            .build();
+            Cluster cluster = Cluster.builder()
+                .addContactPoints("127.0.0.1", "127.0.0.2")
+                .withAuthInfoProvider(authInfoProvider)
+                .withCompression(SNAPPY)
+                .build();
 
-        return cluster.connect("rhq");
+            return cluster.connect("rhq");
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to start simulator. Unable to create " + Session.class, e);
+        }
     }
 
     private Set<Schedule> initSchedules(ScheduleGroup scheduleSet) {

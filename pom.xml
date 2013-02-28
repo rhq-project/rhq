@@ -230,10 +230,6 @@
          part of our public API and is therefore not API-checked. -->
     <rhq.internal>true</rhq.internal>
 
-    <!-- The name of the file in the module's root dir that contains the intentional
-         api changes to be ignored by Clirr api checks -->
-    <intentional-api-changes-file>intentional-api-changes-since-${signature-check-base-version}.xml</intentional-api-changes-file>
-
     <jacoco.version>0.6.0.201210061924</jacoco.version>
     <jacoco-arquillian-extension.version>1.0.0.Alpha5</jacoco-arquillian-extension.version>
   </properties>
@@ -831,7 +827,7 @@
          <plugin>
            <groupId>org.codehaus.mojo</groupId>
            <artifactId>build-helper-maven-plugin</artifactId>
-           <version>1.5</version>
+           <version>1.7</version>
          </plugin>
          <plugin>
            <groupId>org.codehaus.mojo</groupId>
@@ -1689,17 +1685,26 @@
 
   <profile>
      <id>signature-check</id>
-     <activation>
-        <property>
-           <name>signature-check-base-version</name>
-        </property>
-     </activation>
      <build>
         <plugins>
            <plugin>
+               <groupId>org.codehaus.mojo</groupId>
+               <artifactId>build-helper-maven-plugin</artifactId>
+               <executions>
+                   <execution>
+                       <id>version-resolver</id>
+                       <goals>
+                           <goal>released-version</goal>
+                       </goals>
+                       <configuration>
+                           <propertyPrefix>signature-check-base</propertyPrefix>
+                       </configuration>
+                   </execution>
+               </executions>
+           </plugin>
+           <plugin>
               <groupId>org.codehaus.mojo</groupId>
               <artifactId>clirr-maven-plugin</artifactId>
-              <version>${clirr.version}</version>
               <executions>
                  <execution>
                     <id>signature-check</id>
@@ -1711,7 +1716,7 @@
                           <comparisonArtifact>
                              <groupId>${project.groupId}</groupId>
                              <artifactId>${project.artifactId}</artifactId>
-                             <version>${signature-check-base-version}</version>
+                             <version>${signature-check-base.version}</version>
                           </comparisonArtifact>
                        </comparisonArtifacts>
                        <logResults>true</logResults>
@@ -1719,7 +1724,7 @@
                        <failOnError>true</failOnError>
                        <failOnWarning>true</failOnWarning>
                        <skip>${rhq.internal}</skip>
-                       <ignoredDifferencesFile>${intentional-api-changes-file}</ignoredDifferencesFile>
+                       <ignoredDifferencesFile>intentional-api-changes-since-${signature-check-base.version}.xml</ignoredDifferencesFile>
                     </configuration>
                  </execution>
               </executions>

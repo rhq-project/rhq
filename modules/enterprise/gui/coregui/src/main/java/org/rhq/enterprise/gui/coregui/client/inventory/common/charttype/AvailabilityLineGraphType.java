@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
 
+import java.util.Date;
 import java.util.List;
 
 import org.rhq.core.domain.measurement.Availability;
@@ -70,18 +71,29 @@ public class AvailabilityLineGraphType {
                     for (Availability availability : availabilityList) {
 
                         boolean hasValidTimestamps = availability.getStartTime() != null
-                            && availability.getEndTime() != null;
+                                && availability.getEndTime() != null;
                         // we know we are in an interval
                         if (hasValidTimestamps && measurement.getTimestamp() >= availability.getStartTime()
-                            && measurement.getTimestamp() <= availability.getEndTime()) {
+                                && measurement.getTimestamp() <= availability.getEndTime()) {
 
                             sb.append(" \"availType\":\"" + availability.getAvailabilityType() + "\", ");
                             sb.append(" \"availStart\":" + availability.getStartTime() + ", ");
                             sb.append(" \"availEnd\":" + availability.getEndTime() + ", ");
                             long availDuration = availability.getEndTime() - availability.getStartTime();
-                            String availDurationString = MeasurementConverterClient.format((double) availDuration,
-                                MeasurementUnits.MILLISECONDS, true);
+                            String availDurationString = MeasurementConverterClient.format((double)availDuration,
+                                    MeasurementUnits.MILLISECONDS, true);
                             sb.append(" \"availDuration\": \"" + availDurationString + "\" ");
+                            break;
+                        }
+                        else if (availability.getEndTime() == null) {
+                            sb.append(" \"availType\":\"" + availability.getAvailabilityType() + "\", ");
+                            sb.append(" \"availStart\":" + availability.getStartTime() + ", ");
+                            Date now = new Date();
+                            sb.append(" \"availEnd\":" + now.getTime() + ",");
+                            long availDuration = (new Date()).getTime() - availability.getStartTime();
+                            String availDurationString = MeasurementConverterClient.format((double)availDuration,
+                                    MeasurementUnits.MILLISECONDS, true);
+                            sb.append(" \"availDuration\": \"" + availDurationString + " +\" ");
                             break;
                         }
                     }
@@ -211,7 +223,6 @@ public class AvailabilityLineGraphType {
                     availEnd = new Date(+d.availEnd),
                     availDuration = d.availDuration;
 
-            // regular bar hover
             hoverString =
                     '<div class="chartHoverEnclosingDiv"><span class="chartHoverTimeLabel">' + availChartContext.timeLabel + ':  </span><span style="width:50px;">' + timeFormatter(date) + '</span></div>' +
                             '<div class="chartHoverAlignLeft"><span class="chartHoverDateLabel">' + availChartContext.dateLabel + ':  </span><span style="width:50px;">' + dateFormatter(date) + '</span></div>' +

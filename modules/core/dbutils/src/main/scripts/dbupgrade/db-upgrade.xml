@@ -2010,6 +2010,10 @@
                 </schema-directSQL>
             </schemaSpec>
 
+            <!-- BZ 916380 -->
+            <schemaSpec version="2.130">
+                <schema-javaTask className="BundleVersionOrderUpgradeTask" />
+            </schemaSpec>
         	
         </dbupgrade>
     </target>

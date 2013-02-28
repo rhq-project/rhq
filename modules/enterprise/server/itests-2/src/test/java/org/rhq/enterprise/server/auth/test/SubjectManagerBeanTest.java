@@ -25,7 +25,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.persistence.EntityManager;
 import javax.security.auth.login.LoginException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
 
 import org.testng.annotations.Test;
 
@@ -35,6 +38,7 @@ import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.SubjectCriteria;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.auth.SessionManager;
@@ -45,6 +49,7 @@ import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.SessionTestHelper;
 
 /**
  * Tests the subject manager.
@@ -358,6 +363,49 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
         assert !subjectManager.isUserWithPrincipal(new_user.getName());
 
         getTransactionManager().commit();
+    }
+
+    /** 
+     * Tests finding Subjects with Roles.
+     * @throws SystemException 
+     * @throws NotSupportedException 
+     */
+    public void testFindSubjectsWithRoles() throws NotSupportedException, SystemException {
+        getTransactionManager().begin();
+        EntityManager entityMgr = getEntityManager();
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+        RoleManagerLocal roleManager = LookupUtil.getRoleManager();
+        Subject overlord = subjectManager.getOverlord();
+
+        try {
+            //create new subject
+            Subject subject = SessionTestHelper.createNewSubject(entityMgr, "testSubject");
+            //create new role for subject
+            Role roleWithSubject = SessionTestHelper.createNewRoleForSubject(entityMgr, subject, "role with subject");
+            roleWithSubject.addPermission(Permission.VIEW_RESOURCE);
+            Role newRole = new Role("role without subject");
+            Role roleWithoutSubject = roleManager.createRole(overlord, newRole);
+
+            //exercise findAvailableSubjectsForRole
+            Integer[] pendingSubjectIds = new Integer[0];
+            PageList<Subject> subjects = subjectManager.findAvailableSubjectsForRole(subjectManager.getOverlord(),
+                roleWithoutSubject.getId(), pendingSubjectIds, PageControl.getUnlimitedInstance());
+            assert subjects.size() > 0 : "Unable to locate subject(s) available for role with id '"
+                + roleWithSubject.getId() + "'.";//Should be at least one.
+            //            boolean located = false;
+            Subject locatedSubject = null;
+            for (Subject s : subjects) {
+                if (s.getName().equals(subject.getName())) {
+                    locatedSubject = s;
+                }
+            }
+            assert locatedSubject != null : "Unable to located subject with name '" + subject.getName() + "'.";
+            assert locatedSubject.getId() == subject.getId() : "Subject id does not match expected subject identifier '"
+                + subject.getId() + "'";//should match.
+
+        } finally {
+            getTransactionManager().rollback();
+        }
     }
 
     /**

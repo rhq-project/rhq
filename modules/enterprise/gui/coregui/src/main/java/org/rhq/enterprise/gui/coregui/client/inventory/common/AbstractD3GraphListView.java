@@ -33,12 +33,16 @@ import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
+/**
+ * Provide the shared stuff for create GraphListViews like Availability graphs
+ * and User Preferences pickers for the date range.
+ */
 public class AbstractD3GraphListView  extends LocatableVLayout {
     protected PageList<Availability> availabilityList;
     protected AvailabilityD3Graph availabilityGraph;
     protected static  Label loadingLabel = new Label(MSG.common_msg_loading());
     protected UserPreferencesMeasurementRangeEditor measurementRangeEditor;
-    protected boolean monitorDetailView = false;
+    protected boolean showAvailabilityGraph = false;
 
     public AbstractD3GraphListView(String locatorId){
         super(locatorId);

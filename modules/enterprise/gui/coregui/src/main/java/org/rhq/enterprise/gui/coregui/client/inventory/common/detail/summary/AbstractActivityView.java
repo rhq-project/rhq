@@ -629,8 +629,8 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
             } else {
                 setTitle(CHART_TITLE + ": " + title);
             }
-            setShowMinimizeButton(true);
-            setShowMaximizeButton(true);
+            setShowMinimizeButton(false);
+            setShowMaximizeButton(false);
             setShowCloseButton(true);
             setIsModal(true);
             setShowModalMask(true);

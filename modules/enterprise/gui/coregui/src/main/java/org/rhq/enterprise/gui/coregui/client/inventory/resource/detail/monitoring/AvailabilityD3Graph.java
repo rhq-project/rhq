@@ -31,6 +31,9 @@ import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
+ * A special graph implementation just for representing Availability (with hovers) for
+ * a resource or resource group.
+ *
  * @author Mike Thompson
  */
 public class AvailabilityD3Graph extends LocatableVLayout implements AvailabilityGraph {
@@ -40,7 +43,7 @@ public class AvailabilityD3Graph extends LocatableVLayout implements Availabilit
     public AvailabilityD3Graph(String locatorId, AvailabilityLineGraphType graphType) {
         super(locatorId);
         this.availabilityGraphType = graphType;
-        setHeight100();
+        setHeight(25);
         setWidth100();
     }
 
@@ -49,7 +52,6 @@ public class AvailabilityD3Graph extends LocatableVLayout implements Availabilit
         super.onDraw();
         removeMembers(getMembers());
         createGraphMarker();
-        //drawGraph();
     }
 
     @Override
@@ -80,7 +82,7 @@ public class AvailabilityD3Graph extends LocatableVLayout implements Availabilit
         divAndSvgDefs.append("</svg></div>");
         HTMLFlow graph = new HTMLFlow(divAndSvgDefs.toString());
         graph.setWidth100();
-        graph.setHeight100();
+        graph.setHeight(25);
         addMember(graph);
 
     }
@@ -94,7 +96,6 @@ public class AvailabilityD3Graph extends LocatableVLayout implements Availabilit
      */
     public void drawGraph() {
 
-        Log.debug("*** Draw");
         drawJsniChart();
     }
 

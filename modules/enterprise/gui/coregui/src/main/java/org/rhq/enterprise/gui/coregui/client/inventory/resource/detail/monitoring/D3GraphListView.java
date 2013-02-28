@@ -63,15 +63,14 @@ public class D3GraphListView extends AbstractD3GraphListView {
 
     private Resource resource;
     private Set<Integer> definitionIds = null;
-    private UserPreferencesMeasurementRangeEditor measurementRangeEditor;
     private boolean useSummaryData = false;
     private PageList<MeasurementOOBComposite> measurementOOBCompositeList;
     private List<List<MeasurementDataNumericHighLowComposite>> metricsDataList;
 
     public static D3GraphListView createMultipleGraphs(String locatorId, Resource resource, Set<Integer> definitionIds,
-        boolean monitorDetailView) {
+        boolean showAvailabilityGraph) {
 
-        return new D3GraphListView(locatorId, resource, definitionIds, monitorDetailView);
+        return new D3GraphListView(locatorId, resource, definitionIds, showAvailabilityGraph);
     }
 
     public static D3GraphListView createSummaryMultipleGraphs(String locatorId, Resource resource,
@@ -85,18 +84,19 @@ public class D3GraphListView extends AbstractD3GraphListView {
         return new D3GraphListView(locatorId, resource, definitionIds, false);
     }
 
+
     private D3GraphListView(String locatorId, Resource resource, Set<Integer> definitionIds, boolean monitorDetailView) {
         super(locatorId);
         this.resource = resource;
         commonConstructorSettings();
         this.definitionIds = definitionIds;
-        this.monitorDetailView = monitorDetailView;
+        this.showAvailabilityGraph = monitorDetailView;
     }
 
-    private D3GraphListView(String locatorId, Resource resource, boolean monitorDetailView) {
+    private D3GraphListView(String locatorId, Resource resource, boolean showAvailabilityGraph) {
         super(locatorId);
         this.resource = resource;
-        this.monitorDetailView = monitorDetailView;
+        this.showAvailabilityGraph = showAvailabilityGraph;
         commonConstructorSettings();
         useSummaryData = true;
     }
@@ -118,7 +118,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
         destroyMembers();
         addMember(measurementRangeEditor);
 
-        if (monitorDetailView) {
+        if (showAvailabilityGraph) {
             availabilityGraph = new AvailabilityD3Graph("avail", new AvailabilityLineGraphType(resource.getId()));
             // first step in 2 step to create d3 chart
             // create a placeholder for avail graph

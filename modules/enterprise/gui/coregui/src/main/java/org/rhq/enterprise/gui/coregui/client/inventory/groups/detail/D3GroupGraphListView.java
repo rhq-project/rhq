@@ -54,7 +54,7 @@ public class D3GroupGraphListView extends AbstractD3GraphListView {
     public D3GroupGraphListView(String locatorId, ResourceGroup resourceGroup, boolean monitorDetailView) {
         super(locatorId);
         this.resourceGroup = resourceGroup;
-        this.monitorDetailView = monitorDetailView;
+        this.showAvailabilityGraph = monitorDetailView;
         setOverflow(Overflow.AUTO);
     }
 
@@ -65,7 +65,7 @@ public class D3GroupGraphListView extends AbstractD3GraphListView {
         destroyMembers();
 
         addMember(measurementRangeEditor);
-        if (monitorDetailView) {
+        if (showAvailabilityGraph) {
             availabilityGraph = new AvailabilityD3Graph("avail", new AvailabilityLineGraphType(resourceGroup.getId()));
             // first step in 2 step to create d3 chart
             // create a placeholder for avail graph

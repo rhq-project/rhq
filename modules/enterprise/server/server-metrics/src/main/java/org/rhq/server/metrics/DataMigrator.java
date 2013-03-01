@@ -20,17 +20,26 @@
 
 package org.rhq.server.metrics;
 
+import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.ttl;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric1D;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric1H;
@@ -45,14 +54,21 @@ import org.rhq.server.metrics.domain.MetricsTable;
  */
 public class DataMigrator {
 
-    private static final int MAX_RECORDS_TO_MIGRATE = 1000;
+    private final Log log = LogFactory.getLog(DataMigrator.class);
+
+    private static final int MAX_RECORDS_TO_LOAD_FROM_SQL = 30000;
+    private static final int MAX_RECORDS_TO_BATCH_TO_CASSANDRA = 500;
     private static final int MAX_NUMBER_OF_FAILURES = 5;
 
     private final EntityManager entityManager;
+
     private final Session session;
+
+    private boolean telemetry;
 
     private boolean deleteDataImmediatelyAfterMigration;
     private boolean deleteAllDataAtEndOfMigration;
+
     private boolean runRawDataMigration;
     private boolean run1HAggregateDataMigration;
     private boolean run6HAggregateDataMigration;
@@ -68,6 +84,8 @@ public class DataMigrator {
         this.run1HAggregateDataMigration = true;
         this.run6HAggregateDataMigration = true;
         this.run1DAggregateDataMigration = true;
+
+        this.telemetry = false;
     }
 
     public void run1HAggregateDataMigration(boolean value) {
@@ -82,14 +100,28 @@ public class DataMigrator {
         this.run1DAggregateDataMigration = value;
     }
 
-    public void deleteDataImmediatelyAfterMigration(boolean value) {
-        this.deleteDataImmediatelyAfterMigration = value;
-        this.deleteAllDataAtEndOfMigration = !value;
+
+    public void deleteDataImmediatelyAfterMigration() {
+        this.deleteDataImmediatelyAfterMigration = true;
+        this.deleteAllDataAtEndOfMigration = false;
     }
 
-    public void deleteAllDataAtEndOfMigration(boolean value) {
-        this.deleteAllDataAtEndOfMigration = value;
-        this.deleteDataImmediatelyAfterMigration = !value;
+    public void deleteAllDataAtEndOfMigration() {
+        this.deleteAllDataAtEndOfMigration = true;
+        this.deleteDataImmediatelyAfterMigration = false;
+    }
+
+    public void preserveData() {
+        this.deleteAllDataAtEndOfMigration = false;
+        this.deleteDataImmediatelyAfterMigration = false;
+    }
+
+    public void enableTelemetry() {
+        this.telemetry = true;
+    }
+
+    public void disableTelemetry() {
+        this.telemetry = false;
     }
 
     public void migrateData() throws Exception {
@@ -125,11 +157,15 @@ public class DataMigrator {
         int numberOfFailures = 0;
         Exception caughtException = null;
 
+        log.info(migrator.getClass());
+
         while (numberOfFailures < MAX_NUMBER_OF_FAILURES) {
             try {
                 migrator.work();
                 return;
             } catch (Exception e) {
+                log.error("Migrator " + migrator.getClass() + " failed. Retrying!", e);
+
                 caughtException = e;
                 numberOfFailures++;
             }
@@ -202,14 +238,20 @@ public class DataMigrator {
 
             while (true) {
                 Query q = entityManager.createNamedQuery(query);
-                q.setMaxResults(MAX_RECORDS_TO_MIGRATE);
+                q.setMaxResults(MAX_RECORDS_TO_LOAD_FROM_SQL);
                 existingData = (List<MeasurementDataNumericAggregateInterface>) q.getResultList();
 
                 if (existingData.size() == 0) {
                     break;
                 }
 
-                insertDataToCassandra(existingData);
+                try {
+                    insertDataToCassandra(existingData);
+                } catch (Exception e) {
+                    log.error("Failed to insert " + metricsTable.toString()
+                        + " data. Attempting to insert the current batch of data one more time");
+                    insertDataToCassandra(existingData);
+                }
 
                 for (Object entity : existingData) {
                     entityManager.remove(entity);
@@ -220,33 +262,82 @@ public class DataMigrator {
 
         @SuppressWarnings("unchecked")
         private void performFullMigration() throws Exception {
-            Query q = entityManager.createNamedQuery(query);
-            List<MeasurementDataNumericAggregateInterface> existingData = (List<MeasurementDataNumericAggregateInterface>) q
-                .getResultList();
+            List<MeasurementDataNumericAggregateInterface> existingData = null;
+            int lastMigratedRecord = 0;
 
-            insertDataToCassandra(existingData);
+            while (true) {
+                Query q = entityManager.createNamedQuery(query);
+                q.setFirstResult(lastMigratedRecord + 1);
+                q.setMaxResults(MAX_RECORDS_TO_LOAD_FROM_SQL);
+
+                existingData = (List<MeasurementDataNumericAggregateInterface>) q.getResultList();
+
+                if (existingData.size() == 0) {
+                    break;
+                }
+
+                lastMigratedRecord += existingData.size();
+
+                try{
+                    insertDataToCassandra(existingData);
+                } catch (Exception e) {
+                    log.error("Failed to insert " + metricsTable.toString()
+                        + " data. Attempting to insert the current batch of data one more time");
+                    insertDataToCassandra(existingData);
+                }
+            }
         }
 
         private void insertDataToCassandra(List<MeasurementDataNumericAggregateInterface> existingData)
             throws Exception {
-            String cql = "INSERT INTO " + metricsTable
-                + " (schedule_id, time, type, value) VALUES (?, ?, ?, ?) USING TTL " + metricsTable.getTTL();
-            PreparedStatement statement = session.prepare(cql);
+            Statement statement = null;
 
             List<ResultSetFuture> resultSetFutures = new ArrayList<ResultSetFuture>();
+            List<Statement> statementsAccumulator = new ArrayList<Statement>();
+
+            //only need approximate TTL to speed up processing
+            //given that each batch is processed within seconds, getting the
+            //system time once per batch has minimal impact on the record retention
+            long currentTimeMillis = System.currentTimeMillis();
+            long expectedTTLMillis = metricsTable.getTTLinMilliseconds() * 10;
+            long itemTTLSeconds = 0;
 
             for (MeasurementDataNumericAggregateInterface measurement : existingData) {
-                BoundStatement boundStatement = statement.bind(measurement.getScheduleId(),
-                    new Date(measurement.getTimestamp()), AggregateType.MIN.ordinal(), measurement.getMin());
-                resultSetFutures.add(session.executeAsync(boundStatement));
+                itemTTLSeconds = (expectedTTLMillis - currentTimeMillis + measurement.getTimestamp()) / 1000l;
 
-                boundStatement = statement.bind(measurement.getScheduleId(), new Date(measurement.getTimestamp()),
-                    AggregateType.MAX.ordinal(), measurement.getMax());
-                resultSetFutures.add(session.executeAsync(boundStatement));
+                statement = QueryBuilder.insertInto(metricsTable.toString())
+                    .value("schedule_id", measurement.getScheduleId())
+                    .value("time", new Date(measurement.getTimestamp()))
+                    .value("type", AggregateType.MIN.ordinal())
+                    .value("value", measurement.getMin())
+                    .using(ttl((int) itemTTLSeconds));;
+                statementsAccumulator.add(statement);
 
-                boundStatement = statement.bind(measurement.getScheduleId(), new Date(measurement.getTimestamp()),
-                    AggregateType.AVG.ordinal(), Double.parseDouble(measurement.getValue().toString()));
-                resultSetFutures.add(session.executeAsync(boundStatement));
+                statement = insertInto(metricsTable.toString())
+                    .value("schedule_id", measurement.getScheduleId())
+                    .value("time", new Date(measurement.getTimestamp()))
+                    .value("type", AggregateType.MAX.ordinal())
+                    .value("value", measurement.getMax())
+                    .using(ttl((int) itemTTLSeconds));
+                statementsAccumulator.add(statement);
+
+                statement = insertInto(metricsTable.toString()).value("schedule_id", measurement.getScheduleId())
+                    .value("time", new Date(measurement.getTimestamp()))
+                    .value("type", AggregateType.AVG.ordinal())
+                    .value("value", Double.parseDouble(measurement.getValue().toString()))
+                    .using(ttl((int) itemTTLSeconds));
+                statementsAccumulator.add(statement);
+
+                if (statementsAccumulator.size() == MAX_RECORDS_TO_BATCH_TO_CASSANDRA) {
+                    resultSetFutures.add(session.executeAsync(QueryBuilder.batch((Statement[]) statementsAccumulator
+                        .toArray(new Statement[statementsAccumulator.size()]))));
+                    statementsAccumulator.clear();
+                }
+            }
+
+            if (statementsAccumulator.size() != 0) {
+                resultSetFutures.add(session.executeAsync(QueryBuilder.batch((Statement[]) statementsAccumulator
+                    .toArray(new Statement[statementsAccumulator.size()]))));
             }
 
             for (ResultSetFuture future : resultSetFutures) {
@@ -257,6 +348,8 @@ public class DataMigrator {
 
 
     private class RawDataMigrator implements CallableMigrationWorker {
+
+        Queue<String> tablesNotProcessed = new LinkedList<String>(Arrays.asList(getRawDataTables()));
 
         public void work() throws Exception {
             if (deleteDataImmediatelyAfterMigration) {
@@ -270,20 +363,28 @@ public class DataMigrator {
         private void performBatchedMigration() throws Exception {
             List<Object[]> existingData = null;
 
-            for (String table : getRawDataTables()) {
-                String selectQuery = "SELECT schedule_id, value, time_stamp FROM " + table;
+            while (!tablesNotProcessed.isEmpty()) {
+                String table = tablesNotProcessed.peek();
+
+                String selectQuery = "SELECT schedule_id, time_stamp, value FROM " + table;
                 String deleteQuery = "DELETE FROM " + table + " WHERE schedule_id = ?";
 
                 while (true) {
                     Query query = entityManager.createNativeQuery(selectQuery);
-                    query.setMaxResults(MAX_RECORDS_TO_MIGRATE);
+                    query.setMaxResults(MAX_RECORDS_TO_LOAD_FROM_SQL);
                     existingData = query.getResultList();
 
                     if (existingData.size() == 0) {
                         break;
                     }
 
-                    insertDataToCassandra(existingData);
+                    try {
+                        insertDataToCassandra(existingData);
+                    } catch (Exception e) {
+                        log.error("Failed to insert " + MetricsTable.RAW.toString()
+                            + " data. Attempting to insert the current batch of data one more time");
+                        insertDataToCassandra(existingData);
+                    }
 
                     query = entityManager.createNativeQuery(deleteQuery);
 
@@ -292,6 +393,8 @@ public class DataMigrator {
                         query.executeUpdate();
                     }
                 }
+
+                tablesNotProcessed.poll();
             }
         }
 
@@ -299,26 +402,81 @@ public class DataMigrator {
         private void performFullMigration() throws Exception {
             List<Object[]> existingData = null;
 
-            for (String table : getRawDataTables()) {
-                String selectQuery = "SELECT schedule_id, value, time_stamp FROM " + table;
-                Query query = entityManager.createNativeQuery(selectQuery);
-                existingData = query.getResultList();
-                insertDataToCassandra(existingData);
+            while (!tablesNotProcessed.isEmpty()) {
+                String table = tablesNotProcessed.peek();
+
+                log.info("Start migrating raw table: " + table);
+
+                int lastMigratedRecord = 0;
+
+                while (true) {
+                    String selectQuery = "SELECT schedule_id, time_stamp, value FROM " + table;
+                    Query query = entityManager.createNativeQuery(selectQuery);
+                    query.setFirstResult(lastMigratedRecord + 1);
+                    query.setMaxResults(MAX_RECORDS_TO_LOAD_FROM_SQL);
+
+                    existingData = query.getResultList();
+
+                    if (existingData.size() == 0) {
+                        break;
+                    }
+
+                    lastMigratedRecord += existingData.size();
+
+                    try {
+                        insertDataToCassandra(existingData);
+                    } catch (Exception e) {
+                        log.error("Failed to insert " + MetricsTable.RAW.toString()
+                            + " data. Attempting to insert the current batch of data one more time");
+                        insertDataToCassandra(existingData);
+                    }
+
+                    if (lastMigratedRecord % MAX_RECORDS_TO_LOAD_FROM_SQL == 0) {
+                        log.info("------------" + lastMigratedRecord + "---------------------");
+                    }
+                }
+
+                log.info("Done migrating raw table" + table + "---------------------");
+                tablesNotProcessed.poll();
             }
         }
 
         private void insertDataToCassandra(List<Object[]> existingData) throws Exception {
-            String cql = "INSERT INTO " + MetricsTable.RAW + " (schedule_id, time, value) VALUES (?, ?, ?) USING TTL "
-                + MetricsTable.RAW.getTTL();
-            PreparedStatement statement = session.prepare(cql);
-
             List<ResultSetFuture> resultSetFutures = new ArrayList<ResultSetFuture>();
+            List<Statement> statementsAccumulator = new ArrayList<Statement>();
+
+            //only need approximate TTL to speed up processing
+            //given that each batch is processed within seconds, getting the
+            //system time once per batch has minimal impact on the record retention
+            long currentTimeMillis = System.currentTimeMillis();
+            long expectedTTLMillis = MetricsTable.RAW.getTTLinMilliseconds() * 10;
+            long creationTimeMillis = 0;
+            long itemTTLSeconds = 0;
 
             for (Object[] rawDataPoint : existingData) {
-                BoundStatement boundStatement = statement.bind(Integer.parseInt(rawDataPoint[0].toString()),
-                    new Date(Long.parseLong(rawDataPoint[1].toString())),
-                    Double.parseDouble(rawDataPoint[2].toString()));
-                resultSetFutures.add(session.executeAsync(boundStatement));
+                creationTimeMillis = Long.parseLong(rawDataPoint[1].toString());
+                itemTTLSeconds = (expectedTTLMillis - currentTimeMillis + creationTimeMillis) / 1000l;
+
+                if (itemTTLSeconds > 0) {
+                    Statement boundStatement = QueryBuilder.insertInto(MetricsTable.RAW.toString())
+                        .value("schedule_id", Integer.parseInt(rawDataPoint[0].toString()))
+                        .value("time", new Date(creationTimeMillis))
+                        .value("value", Double.parseDouble(rawDataPoint[2].toString()))
+                        .using(ttl((int) itemTTLSeconds));
+
+                    statementsAccumulator.add(boundStatement);
+                }
+
+                if (statementsAccumulator.size() == MAX_RECORDS_TO_BATCH_TO_CASSANDRA) {
+                    resultSetFutures.add(session.executeAsync(QueryBuilder.batch((Statement[]) statementsAccumulator
+                        .toArray(new Statement[statementsAccumulator.size()]))));
+                    statementsAccumulator.clear();
+                }
+            }
+
+            if (statementsAccumulator.size() != 0) {
+                resultSetFutures.add(session.executeAsync(QueryBuilder.batch((Statement[]) statementsAccumulator
+                    .toArray(new Statement[statementsAccumulator.size()]))));
             }
 
             for (ResultSetFuture future : resultSetFutures) {

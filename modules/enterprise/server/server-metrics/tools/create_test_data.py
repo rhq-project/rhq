@@ -33,6 +33,27 @@ import sys
 import random
 import time
 import cStringIO
+import math
+from optparse import OptionParser
+
+
+def parse_arguments():
+   parser = OptionParser()
+
+   #db settings
+   parser.add_option("--host", default="localhost", action="store", type="string", dest="db_host")
+   parser.add_option("--database", default="rhq_db", action="store", type="string", dest="db_database")
+   parser.add_option("--user", default="rhqadmin", action="store", type="string", dest="db_user")
+   parser.add_option("--password", default="rhqadmin", action="store", type="string", dest="db_password")
+
+   #program settings
+   parser.add_option("--agents", default=10, action="store", type="int", dest="number_of_agents")
+
+
+   (options, args) = parser.parse_args()
+   print options
+
+   return options
 
 class MetricType:
    Raw,Aggregate = range(2)
@@ -86,11 +107,14 @@ def generate_random_aggregate_value():
 def insert_data(connection,data,table_name,table_columns):
    #do the postgres insertion using copy_from functionality since it's the fastest method
    #to bulk import data
+   start_time = time.time()
    input_data = cStringIO.StringIO(data)
    cursor = connection.cursor()
    cursor.copy_from(input_data,sep="\t",table = table_name, columns = table_columns)
    cursor.close()
    connection.commit()
+   end_time = time.time()
+   return end_time - start_time
 
 
 def delete_table_data(connection, table):
@@ -99,10 +123,23 @@ def delete_table_data(connection, table):
    connection.commit()
 
 
+def calculate_mean_standard_deviation(numbers):
+   
+   average = reduce(lambda x, y: x + y, numbers) / len(numbers)
+   variance = map(lambda x: (x - average)**2, numbers)
+   average_variance = reduce(lambda x, y: x + y, variance) / len(variance)
+   standard_deviation = math.sqrt(average_variance)
+   return average, standard_deviation
+
+
 
 #Main Script
-
 script_start_time = time.time()
+
+
+#Parse Command Line Arguments
+options = parse_arguments()
+
 
 #General Configuration
 raw_tables = map(lambda x: "RHQ_MEAS_DATA_NUM_R"+str(x).zfill(2),range(15))
@@ -114,14 +151,14 @@ aggregate_table_columns = ["schedule_id","time_stamp","value","minvalue","maxval
  # see the estimation guideline at https://docs.jboss.org/author/display/RHQ/Metrics+Data+Migration+-+Design
 raw_metrics_per_agent = 900000
 aggregate_metrics_per_agent = 700000
-number_of_agents = 10
+
 
 # some constants to be used by the algorithm
 batch_increment = 10000
 data_start_time = int(time.time() - 2*604800)*1000 # now - 2 week, convert to milliseconds
 
 #establish the db connection, update the settings for your local environment
-connection = psycopg2.connect(database="rhq_db",user="rhqadmin",password="rhqadmin")
+connection = psycopg2.connect(host=options.db_host,database=options.db_database,user=options.db_user,password=options.db_password)
 
 
 #Delete all data available
@@ -129,9 +166,14 @@ map(lambda x : delete_table_data(connection, x), raw_tables)
 map(lambda x : delete_table_data(connection, x), aggregate_tables)
 
 
+
+metric_agent_inserting_time = []
+metric_agent_total_time = []
+
 #Generate random raw and aggregate data
-for j in range(number_of_agents) :
-   agent_generation_start_time = time.time()
+for j in range(options.number_of_agents) :
+   agent_start_time = time.time()
+   agent_inserting_time = 0
 
    #generate and insert random metrics
    for i in range(0,raw_metrics_per_agent,batch_increment):
@@ -142,7 +184,7 @@ for j in range(number_of_agents) :
                                               start_of_schedule_id_sequence = j * batch_increment, metricType = MetricType.Raw)
 
       data_to_insert = "\n".join(map(str,map(lambda x: "\t".join((str(s) for s in x)),raw_metrics)))
-      insert_data(connection,data_to_insert,random_raw_table,raw_table_columns)
+      agent_inserting_time  += insert_data(connection,data_to_insert,random_raw_table,raw_table_columns)
 
    #generate and insert aggregate metrics
    for i in range(0,aggregate_metrics_per_agent,batch_increment):
@@ -153,8 +195,19 @@ for j in range(number_of_agents) :
                                                     start_of_schedule_id_sequence = j * batch_increment, metricType = MetricType.Aggregate )
 
       data_to_insert = "\n".join(map(str,map(lambda x: "\t".join((str(s) for s in x)),aggregate_metrics)))
-      insert_data(connection,data_to_insert,random_aggregate_table,aggregate_table_columns)
+      agent_inserting_time  += insert_data(connection,data_to_insert,random_aggregate_table,aggregate_table_columns)
 
-   print "Data inserted for agent #",j, " - total time:", time.time() - agent_generation_start_time, " seconds"
+   metric_agent_inserting_time.append(agent_inserting_time)
+   metric_agent_total_time.append( time.time() - agent_start_time )
+
+   print "Data created for agent #",j, " - total time:", time.time() - agent_start_time, " seconds"
 
 print "Total time: ",time.time() - script_start_time, " seconds"
+
+average_inserting_time, standard_deviation_inserting_time = calculate_mean_standard_deviation(metric_agent_inserting_time)
+print "Time spent inserting data: ", metric_agent_inserting_time, " seconds"
+print "Average time inserting data for 1 agent:", average_inserting_time, " seconds with a standard deviation of ", standard_deviation_inserting_time
+
+average_time, standard_deviation_time = calculate_mean_standard_deviation(metric_agent_total_time)
+print "Time spent for each agent: ", metric_agent_total_time , " seconds"
+print "Average time for 1 agent:", average_time, " seconds with a standard deviation of ", standard_deviation_time

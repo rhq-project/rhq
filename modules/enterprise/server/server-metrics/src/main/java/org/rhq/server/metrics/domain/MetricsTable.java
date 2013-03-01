@@ -53,6 +53,10 @@ public enum MetricsTable {
         return this.ttl;
     }
 
+    public long getTTLinMilliseconds() {
+        return this.ttl * 1000l;
+    }
+
     @Override
     public String toString() {
         return this.tableName;

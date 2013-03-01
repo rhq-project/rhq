@@ -118,6 +118,7 @@ public class ListPagedResult<T> implements Iterable<T> {
             @SuppressWarnings({ "unchecked", "rawtypes" })
             private final List<?> localValuesToBind = new ArrayList(valuesToBind);
             private ResultSet resultSet = retrieveNextResultSet(null, localValuesToBind);
+            private T lastRetrievedItem = null;
 
             public boolean hasNext() {
                 resultSet = retrieveNextResultSet(resultSet, localValuesToBind);
@@ -125,7 +126,8 @@ public class ListPagedResult<T> implements Iterable<T> {
             }
 
             public T next() {
-                return mapper.mapOne(resultSet);
+                lastRetrievedItem = mapper.mapOne(resultSet);
+                return lastRetrievedItem;
             }
 
             public void remove() {

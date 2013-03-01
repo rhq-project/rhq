@@ -960,7 +960,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertNotNull(r);
         assertEquals(b.getName(), r.getName());
     }
-    
+
     @Test(enabled = TESTS_ENABLED)
     public void testFindBundlesByCriteriaPaging() throws Exception {
         Bundle b = null;
@@ -1009,14 +1009,13 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertEquals(1, bs.size());
         assertEquals(b10, bs.get(0));
     }
-    
-    
+
     @Test(enabled = TESTS_ENABLED)
     public void testFindAndDeleteBundlesByCriteriaQuery() throws Exception {
         // verify that all bundle version objects are actually parsed. 
         Map<String, Bundle> bundleNames = new HashMap<String, Bundle>();
-        final int bundleCount = 50; 
-        
+        final int bundleCount = 50;
+
         Bundle b01 = createBundle("name01");
         for (int i = 1; i < bundleCount; i++) {
             createBundle("name" + String.format("%02d", i + 1));
@@ -1030,7 +1029,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         final List<Integer> pagesFlipped = new ArrayList<Integer>();
         pagesFlipped.add(0);
-        
+
         // iterate over the results with CriteriaQuery
         CriteriaQueryExecutor<Bundle, BundleCriteria> queryExecutor = new CriteriaQueryExecutor<Bundle, BundleCriteria>() {
             @Override
@@ -1040,8 +1039,8 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             }
         };
 
-        CriteriaQuery<Bundle, BundleCriteria> bundles = new CriteriaQuery<Bundle, BundleCriteria>(
-            criteria, queryExecutor);
+        CriteriaQuery<Bundle, BundleCriteria> bundles = new CriteriaQuery<Bundle, BundleCriteria>(criteria,
+            queryExecutor);
 
         List<Integer> toRemove = new ArrayList<Integer>(bundleNames.size());
         String prevName = null;
@@ -1053,7 +1052,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             toRemove.add(b.getId());
             bundleNames.remove(String.valueOf(b.getName()));
         }
-        
+
         // remove the bundles
         for (int id : toRemove) {
             bundleManager.deleteBundle(overlord, id);
@@ -1062,14 +1061,14 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         // check if the page was flipped the correct amount of times
         assertTrue("While iterating the bundles, the findBundlesByCriteria should be called " + bundleCount / pageSize
             + " times" + pageSize, pagesFlipped.get(0) == bundleCount / pageSize);
-        
+
         // check if the last name is equal to "name01" 
         assertEquals("The name should be \"name01\"", b01.getName(), prevName);
 
         // test that entire list parsed spanning multiple pages
-        assertTrue("Expected bundleNames to be empty. Still " + bundleNames.size()
-            + " bundle(s).", bundleNames.isEmpty());
-        
+        assertTrue("Expected bundleNames to be empty. Still " + bundleNames.size() + " bundle(s).",
+            bundleNames.isEmpty());
+
         // check if everything is deleted
         PageList<Bundle> bvs = null;
         criteria = new BundleCriteria();
@@ -1118,7 +1117,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertNotNull(bvOut.getBundleDeployments());
         assertTrue(bvOut.getBundleDeployments().isEmpty());
     }
-    
+
     @Test(enabled = TESTS_ENABLED)
     public void testFindBundleVersionsByCriteriaPaging() throws Exception {
         Bundle b1 = createBundle("one");
@@ -1148,16 +1147,12 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertFalse(bvs.get(0).equals(bvs.get(1)));
         assertEquals(bv60, bvs.get(2));
     }
-    
-    // This test is disabled, because it is failing. The sorting by id, defined on the Criteria class does not work
-    // if the sortId field is not defined on the criteria sub-class. This is because of the fact that getPageControl()
-    // defined on class CriteriaQueryGenerator calls CriteriaQueryGenerator.getFields() that ignores fields defined 
-    // on the Criteria class (takes into considerations fields from the sub-classes).
-    @Test(enabled = DISABLED)
+
+    @Test(enabled = ENABLED)
     public void testFindAndDeleteBundleVersionsByCriteriaQuery() throws Exception {
         //verify that all bundle version objects are actually parsed. 
         Map<String, BundleVersion> bundleVersionVersions = new HashMap<String, BundleVersion>();
-        
+
         final int bundleVersionCount = 220;
         Bundle bundle = createBundle("one");
         for (int i = 0; i < bundleVersionCount; i++) {
@@ -1175,7 +1170,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         // the List is used because of the access from the anonymous class
         final List<Integer> pagesFlipped = new ArrayList<Integer>();
         pagesFlipped.add(0);
-        
+
         // iterate over the results with CriteriaQuery
         CriteriaQueryExecutor<BundleVersion, BundleVersionCriteria> queryExecutor = new CriteriaQueryExecutor<BundleVersion, BundleVersionCriteria>() {
             @Override
@@ -1199,24 +1194,24 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             toDelete.add(bv.getId());
             bundleVersionVersions.remove(String.valueOf(bv.getVersion()));
         }
-        
+
         // check if the page was flipped the correct amount of times (this formula works only for this particular case)
-        assertTrue("While iterating the bundle versions, the findBundleVersionsByCriteria() should be called " + bundleVersionCount / pageSize
-            + " times" + pageSize, pagesFlipped.get(0) == bundleVersionCount / pageSize);
-        
+        assertTrue("While iterating the bundle versions, the findBundleVersionsByCriteria() should be called "
+            + bundleVersionCount / pageSize + " times" + pageSize, pagesFlipped.get(0) == bundleVersionCount / pageSize);
+
         // delete all
         for (int id : toDelete) {
             bundleManager.deleteBundleVersion(overlord, id, true);
         }
-        
+
         // check whether every record was processed when iterating over the bundleVersions
-        assertTrue("Expected bundleVersions to be empty. Still " + bundleVersionVersions.size()
-            + " version(s).", bundleVersionVersions.isEmpty());
+        assertTrue("Expected bundleVersions to be empty. Still " + bundleVersionVersions.size() + " version(s).",
+            bundleVersionVersions.isEmpty());
 
         // test that entire list parsed spanning multiple pages
-        assertTrue("Expected bundleVersions to be empty. Still " + bundleVersionVersions.size()
-            + " version(s).", bundleVersionVersions.isEmpty());
-        
+        assertTrue("Expected bundleVersions to be empty. Still " + bundleVersionVersions.size() + " version(s).",
+            bundleVersionVersions.isEmpty());
+
         // check if everything is deleted
         PageList<BundleVersion> bvs = null;
         criteria = new BundleVersionCriteria();
@@ -1287,7 +1282,6 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertNotNull(bundles);
         assertEquals(1, bundles.size());
     }
-
 
     // helper methods
     private BundleType createBundleType(String name) throws Exception {

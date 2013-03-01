@@ -569,15 +569,25 @@ public final class CriteriaQueryGenerator {
         List<Field> results = new ArrayList<Field>();
 
         Class<?> currentLevelClass = criteria.getClass();
-        while (currentLevelClass.equals(Criteria.class) == false) {
+        boolean isCriteriaClass = false;
+
+        do {
+            isCriteriaClass = currentLevelClass.equals(Criteria.class);
+
             for (Field field : currentLevelClass.getDeclaredFields()) {
                 field.setAccessible(true);
-                if (field.getName().startsWith(prefix)) {
+                if (isCriteriaClass) {
+                    if (fieldType.getGlobalFields().contains(field.getName()))
+                        results.add(field);
+
+                } else if (field.getName().startsWith(prefix)) {
                     results.add(field);
                 }
             }
+
             currentLevelClass = currentLevelClass.getSuperclass();
-        }
+
+        } while (!isCriteriaClass);
 
         return results;
     }

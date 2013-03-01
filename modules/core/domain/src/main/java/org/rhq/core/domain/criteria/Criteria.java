@@ -36,6 +36,7 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 
 /**
  * @author Joseph Marques
@@ -43,7 +44,28 @@ import org.rhq.core.domain.util.PageOrdering;
 @XmlAccessorType(XmlAccessType.FIELD)
 public abstract class Criteria implements Serializable, BaseCriteria {
     public enum Type {
-        FILTER, FETCH, SORT;
+        FILTER(), FETCH(), SORT(new String[] { "sortId" });
+
+        private List<String> globalFields;
+
+        /**
+         * Use this to get the global fields for this Criteria field type. Don't use inspection as the field names
+         * for this abstract base class do not conform (for legacy reasons) to the prefix convention help by the
+         * subclasses.  This is likely only relevant to {@link CriteriaQueryGenerator}.
+         *  
+         * @return The set of global fields for this Criteria field type. Meaning, usable by all subclasses.
+         */
+        public List<String> getGlobalFields() {
+            return globalFields;
+        }
+
+        private Type() {
+            this.globalFields = new ArrayList(0);
+        }
+
+        private Type(String[] globalFields) {
+            this.globalFields = Arrays.asList(globalFields);
+        }
     }
 
     /**

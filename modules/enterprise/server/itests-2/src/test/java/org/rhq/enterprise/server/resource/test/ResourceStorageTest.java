@@ -459,8 +459,8 @@ public class ResourceStorageTest extends AbstractEJB3Test {
             ArrayList<String> alreadySeen = new ArrayList<String>();
             int actualCount = 0;
             for (Resource r : resources) {
-                System.out.println(actualCount + " @@@ " + r.getId() + ":"
-                    + ((resourceNames.containsKey(String.valueOf(r.getId()))) ? "NEW" : "DIRTY") + ":" + r.getName());
+                //                System.out.println(actualCount + " @@@ " + r.getId() + ":"
+                //                    + ((resourceNames.containsKey(String.valueOf(r.getId()))) ? "NEW" : "DIRTY") + ":" + r.getName());
                 assert r.getId() > prevId : "Results should be sorted by ID ASC, something is out of order";
                 prevId = r.getId();
                 actualCount++;

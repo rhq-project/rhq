@@ -328,7 +328,7 @@ public class DataMigrator {
                     .using(ttl((int) itemTTLSeconds));
                 statementsAccumulator.add(statement);
 
-                if (statementsAccumulator.size() == MAX_RECORDS_TO_BATCH_TO_CASSANDRA) {
+                if (statementsAccumulator.size() >= MAX_RECORDS_TO_BATCH_TO_CASSANDRA) {
                     resultSetFutures.add(session.executeAsync(QueryBuilder.batch((Statement[]) statementsAccumulator
                         .toArray(new Statement[statementsAccumulator.size()]))));
                     statementsAccumulator.clear();
@@ -467,7 +467,7 @@ public class DataMigrator {
                     statementsAccumulator.add(boundStatement);
                 }
 
-                if (statementsAccumulator.size() == MAX_RECORDS_TO_BATCH_TO_CASSANDRA) {
+                if (statementsAccumulator.size() >= MAX_RECORDS_TO_BATCH_TO_CASSANDRA) {
                     resultSetFutures.add(session.executeAsync(QueryBuilder.batch((Statement[]) statementsAccumulator
                         .toArray(new Statement[statementsAccumulator.size()]))));
                     statementsAccumulator.clear();

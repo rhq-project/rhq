@@ -41,12 +41,12 @@ public final class MetricStackedBarGraph extends AbstractGraph {
     public native void drawJsniChart() /*-{
 
         console.log("Draw Stacked Bar jsni chart");
-        var global = this;
+        var global = this,
 
         // create a chartContext object (from rhq.js) with the data required to render to a chart
         // this same data could be passed to different chart types
         // This way, we are decoupled from the dependency on globals and JSNI and kept all the java interaction right here.
-        var chartContext = new $wnd.ChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartId()(),
+        chartContext = new $wnd.ChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartId()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartHeight()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getJsonMetrics()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getXAxisTitle()(),
@@ -78,16 +78,23 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                     height = adjustedChartHeight - margin.top - margin.bottom,
                     titleHeight = 30, titleSpace = 10,
                     barOffset = 2,
-                    interpolation = "basis";
-
-            var avg = $wnd.d3.mean(chartContext.data.map(function (d) {
+                    interpolation = "basis",
+                    avg = $wnd.d3.mean(chartContext.data.map(function (d) {
                         return d.y;
                     })),
                     peak = $wnd.d3.max(chartContext.data.map(function (d) {
-                        return d.high;
+                        if(d.high != undefined){
+                            return d.high;
+                        }else {
+                            return 0;
+                        }
                     })),
                     min = $wnd.d3.min(chartContext.data.map(function (d) {
-                        return d.low;
+                        if(d.low != undefined){
+                            return d.low;
+                        } else {
+                           return Number.MAX_VALUE;
+                        }
                     })),
                     timeScale = $wnd.d3.time.scale()
                             .range([0, width])
@@ -144,10 +151,10 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         xValue = 820,
                         yBase = 100,
                         yInc = 25,
-                        decimalPlaces = 0;
+                        decimalPlaces = 0,
 
                 // title/header
-                var sidebar = chart.append("g").append("rect")
+                sidebar = chart.append("g").append("rect")
                         .attr("class", "rightSidePanel")
                         .attr("x", xLabel -10)
                         .attr("y", margin.top + 60)

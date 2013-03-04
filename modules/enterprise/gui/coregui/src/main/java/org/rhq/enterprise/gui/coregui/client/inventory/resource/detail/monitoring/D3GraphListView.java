@@ -202,11 +202,14 @@ public class D3GraphListView extends AbstractD3GraphListView {
                                 } else {
                                     determineGraphsToBuild(metricsDataList, measurementDefinitions, definitionIds);
                                 }
-                                // we only need the first metricData since we are only taking the
-                                // availability data set in there for the dropdowns already
-                                availabilityGraph.setMetricData(metricsDataList.get(0));
-                                availabilityGraph.setAvailabilityList(availabilityList);
-                                availabilityGraph.drawGraph();
+                                // There is a weird timing case when availabilityGraph can be null
+                                if(availabilityGraph != null){
+                                    // we only need the first metricData since we are only taking the
+                                    // availability data set in there for the dropdowns already
+                                    availabilityGraph.setMetricData(metricsDataList.get(0));
+                                    availabilityGraph.setAvailabilityList(availabilityList);
+                                    availabilityGraph.drawGraph();
+                                }
                             }
 
                         }

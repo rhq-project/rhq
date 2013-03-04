@@ -78,6 +78,11 @@ public class D3GroupGraphListView extends AbstractD3GraphListView {
         }
     }
 
+
+    public void redrawGraphs(){
+        buildGraphs();
+    }
+
     /**
      * Build whatever graph metrics (MeasurementDefinitions) are defined for the resource.
      */

@@ -428,8 +428,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         };
         updateSubTab(this.monitoringTab, this.monitorGraphs, visible, true, viewFactory);
 
-        //boolean visibleToIE8 = !BrowserUtility.isBrowserIE8();
-        boolean visibleToIE8 = true;
+        boolean visibleToIE8 = !BrowserUtility.isBrowserIE8();
 
 
         viewFactory = (!visibleToIE8) ? null : new ViewFactory() {

@@ -321,11 +321,12 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
             boolean visibleToIE8 = !BrowserUtility.isBrowserIE8();
 
-
             viewFactory = (!visibleToIE8) ? null : new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new D3GroupGraphListView(monitoringTab.extendLocatorId("NewGraphs"), groupComposite.getResourceGroup(), true);
+                    d3GroupGraphListView = new D3GroupGraphListView(monitoringTab.extendLocatorId("NewGraphs"), groupComposite.getResourceGroup(), true);
+                    return d3GroupGraphListView;
+
                 }
             };
 
@@ -598,6 +599,12 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                             group.setResourceType(type);
                             updateTabContent(groupComposite, viewPath.isRefresh());
                             selectTab(getTabName(), getSubTabName(), viewPath);
+                            Log.debug(" **** 1 *****"+d3GroupGraphListView);
+                            if(null != d3GroupGraphListView){
+                                Log.debug(" *** Refreshing Group D3 Graphs");
+                                d3GroupGraphListView.redrawGraphs();
+                                Log.debug(" **** 2 *****");
+                            }
                         } finally {
                             notifyViewRenderedListeners();
                         }
@@ -607,6 +614,10 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             try {
                 updateTabContent(groupComposite, viewPath.isRefresh());
                 selectTab(getTabName(), getSubTabName(), viewPath);
+                Log.debug(" **** 3 *****");
+                if(null != d3GroupGraphListView){
+                    d3GroupGraphListView.redrawGraphs();
+                }
             } finally {
                 notifyViewRenderedListeners();
             }

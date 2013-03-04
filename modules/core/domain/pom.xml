@@ -18,7 +18,7 @@
      <jboss.zip>${settings.localRepository}/org/jboss/as/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip</jboss.zip>
      <jboss.unzip.location>${basedir}/target/jboss-as-${jboss.version}</jboss.unzip.location>
      <rhq.internal>false</rhq.internal>
-     <jboss.vm.args></jboss.vm.args>     
+     <jboss.vm.args>-Xmx700m -XX:MaxPermSize=200m</jboss.vm.args>     
      <jboss.vm.args.debug></jboss.vm.args.debug> <!-- -Ditest.debug can override this, see below -->
      <!-- These properties guide which datasources are used for integration tests. Only one should be true.
           The default is Postgres, specify -Pitest.oracle to use Oracle -->

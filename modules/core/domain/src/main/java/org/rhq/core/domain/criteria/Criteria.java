@@ -36,7 +36,6 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 
 /**
  * @author Joseph Marques

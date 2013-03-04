@@ -36,7 +36,6 @@ import org.rhq.core.domain.util.PageOrdering;
 public class BundleDeploymentCriteria extends TaggedCriteria {
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
     private Boolean filterIsLive;
     private String filterName;
     private String filterDescription;
@@ -63,10 +62,6 @@ public class BundleDeploymentCriteria extends TaggedCriteria {
     @Override
     public Class<BundleDeployment> getPersistentClass() {
         return BundleDeployment.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
     }
 
     public void addFilterIsLive(Boolean filterIsLive) {

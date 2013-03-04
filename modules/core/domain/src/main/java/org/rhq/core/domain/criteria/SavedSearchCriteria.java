@@ -37,7 +37,6 @@ import org.rhq.core.domain.util.PageOrdering;
 public class SavedSearchCriteria extends Criteria {
     public static final long serialVersionUID = 1L;
 
-    private Integer filterId;
     private SearchSubsystem filterSearchSubsystem;
     private String filterName;
     private String filterDescription;
@@ -67,10 +66,6 @@ public class SavedSearchCriteria extends Criteria {
     @Override
     public Class<SavedSearch> getPersistentClass() {
         return SavedSearch.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
     }
 
     public void addFilterSearchSubsystem(SearchSubsystem filterSearchSubsystem) {

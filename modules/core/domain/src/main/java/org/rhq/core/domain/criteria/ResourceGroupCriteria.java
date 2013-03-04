@@ -41,7 +41,6 @@ import org.rhq.core.domain.util.PageOrdering;
 public class ResourceGroupCriteria extends TaggedCriteria {
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
     private String filterName;
     private Boolean filterRecursive;
     private Integer filterResourceTypeId; // requires overrides
@@ -59,7 +58,6 @@ public class ResourceGroupCriteria extends TaggedCriteria {
     private Integer filterGroupDefinitionId; // requires overrides
     private Boolean filterPrivate; /* if true, show only private groups for the calling user */
     private Boolean filterVisible = true; /* only show visible groups by default */
-    private List<Integer> filterIds; // requires overrides
     private NonBindingOverrideFilter filterBundleTargetableOnly; // requires overrides - finds only those that have bundle config - that is, can be targeted for bundle deployment
 
     private boolean fetchExplicitResources;
@@ -116,7 +114,6 @@ public class ResourceGroupCriteria extends TaggedCriteria {
             + "   JOIN res.explicitGroups explicitGroup " //
                     + "   WHERE resourcegroup.id = explicitGroup.id AND NOT res.resourceType.name = ? AND res.inventoryStatus = 'COMMITTED' )");
         filterOverrides.put("groupDefinitionId", "groupDefinition.id = ?");
-        filterOverrides.put("ids", "id IN ( ? )");
         filterOverrides.put("bundleTargetableOnly", "resourceType.bundleConfiguration IS NOT NULL");
 
         sortOverrides.put("resourceTypeName", "resourceType.name");
@@ -126,10 +123,6 @@ public class ResourceGroupCriteria extends TaggedCriteria {
     @Override
     public Class<ResourceGroup> getPersistentClass() {
         return ResourceGroup.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
     }
 
     /**
@@ -234,10 +227,6 @@ public class ResourceGroupCriteria extends TaggedCriteria {
 
     public boolean isFilterVisible() {
         return (Boolean.TRUE.equals(this.filterVisible));
-    }
-
-    public void addFilterIds(Integer... filterIds) {
-        this.filterIds = CriteriaUtils.getListIgnoringNulls(filterIds);
     }
 
     /**

@@ -47,7 +47,6 @@ public class ServerCriteria extends Criteria {
 
     public static final String SORT_FIELD_COMPUTE_POWER = "computePower";
 
-    private Integer filterId;
     private String filterName;
     private String filterAddress;
     private Integer filterPort;
@@ -70,10 +69,6 @@ public class ServerCriteria extends Criteria {
 
     public Class<?> getPersistentClass() {
         return Server.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
     }
 
     public void addFilterName(String filterName) {

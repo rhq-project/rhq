@@ -133,4 +133,19 @@ public class MeasurementDataTraitCriteria extends Criteria {
         addSortField(SORT_FIELD_RESOURCE_NAME);
         this.sortResourceName = sortResourceName;
     }
+
+    @Override
+    public void addSortId(PageOrdering sortId) {
+        throw new UnsupportedOperationException("The id column is not defined on this entity.");
+    }
+
+    @Override
+    public void addFilterId(Integer filterId) {
+        throw new UnsupportedOperationException("The id column is not defined on this entity.");
+    }
+
+    @Override
+    public void addFilterIds(Integer... filterIds) {
+        throw new UnsupportedOperationException("The id column is not defined on this entity.");
+    }
 }

@@ -36,7 +36,6 @@ import org.rhq.core.domain.util.PageOrdering;
 public class ResourceGroupDefinitionCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
     private String filterName;
     private String filterDescription;
     private Boolean filterRecursive;
@@ -56,10 +55,6 @@ public class ResourceGroupDefinitionCriteria extends Criteria {
     @Override
     public Class<GroupDefinition> getPersistentClass() {
         return GroupDefinition.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
     }
 
     public void addFilterName(String filterName) {

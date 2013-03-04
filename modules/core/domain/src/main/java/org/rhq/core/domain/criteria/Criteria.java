@@ -33,6 +33,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.util.CriteriaUtils;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -43,7 +44,7 @@ import org.rhq.core.domain.util.PageOrdering;
 @XmlAccessorType(XmlAccessType.FIELD)
 public abstract class Criteria implements Serializable, BaseCriteria {
     public enum Type {
-        FILTER(), FETCH(), SORT(new String[] { "sortId" });
+        FILTER(new String[] { "filterId", "filterIds" }), FETCH(), SORT(new String[] { "sortId" });
 
         private List<String> globalFields;
 
@@ -59,7 +60,7 @@ public abstract class Criteria implements Serializable, BaseCriteria {
         }
 
         private Type() {
-            this.globalFields = new ArrayList(0);
+            this.globalFields = new ArrayList<String>(0);
         }
 
         private Type(String[] globalFields) {
@@ -120,6 +121,12 @@ public abstract class Criteria implements Serializable, BaseCriteria {
 
     // All Criteria support sorting on ID
     private PageOrdering sortId;
+    
+    // All Criteria support filtering on ID
+    private Integer filterId;
+    
+    // All Criteria support filtering on IDs
+    private List<Integer> filterIds;
 
     /**
      * This default constructor will set default paging to avoid unintended fetch of huge results. The default is:
@@ -127,6 +134,7 @@ public abstract class Criteria implements Serializable, BaseCriteria {
      */
     public Criteria() {
         this.filterOverrides = new HashMap<String, String>();
+        this.filterOverrides.put("ids", "id IN ( ? )");
         this.sortOverrides = new HashMap<String, String>();
 
         this.orderingFieldNames = new ArrayList<String>();
@@ -167,6 +175,14 @@ public abstract class Criteria implements Serializable, BaseCriteria {
     public void addSortId(PageOrdering sortId) {
         addSortField("id");
         this.sortId = sortId;
+    }
+    
+    public void addFilterId(Integer filterId) {
+        this.filterId = filterId;
+    }
+
+    public void addFilterIds(Integer... filterIds) {
+        this.filterIds = CriteriaUtils.getListIgnoringNulls(filterIds);
     }
 
     protected void addSortField(String fieldName) {

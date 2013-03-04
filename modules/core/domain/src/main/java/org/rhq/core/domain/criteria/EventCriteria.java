@@ -43,7 +43,6 @@ import org.rhq.core.domain.util.PageOrdering;
 public class EventCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
     private String filterDetail;
     private String filterSourceName; // requires overrides
     private List<EventSeverity> filterSeverities;
@@ -87,10 +86,6 @@ public class EventCriteria extends Criteria {
     @Override
     public Class<Event> getPersistentClass() {
         return Event.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
     }
 
     public void addFilterDetail(String filterDetail) {

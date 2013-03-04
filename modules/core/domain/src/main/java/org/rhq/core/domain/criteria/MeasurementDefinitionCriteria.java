@@ -41,7 +41,6 @@ import org.rhq.core.domain.util.PageOrdering;
 public class MeasurementDefinitionCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
     private String filterName;
     private String filterDisplayName;
     private String filterDescription;
@@ -78,10 +77,6 @@ public class MeasurementDefinitionCriteria extends Criteria {
     @Override
     public Class<MeasurementDefinition> getPersistentClass() {
         return MeasurementDefinition.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
     }
 
     public void addFilterName(String filterName) {

@@ -78,16 +78,6 @@ public class GenericDriftChangeSetCriteria implements Serializable, DriftChangeS
     private boolean strict;
 
     @Override
-    public void addFilterId(String filterId) {
-        this.filterId = filterId;
-    }
-
-    @Override
-    public String getFilterId() {
-        return filterId;
-    }
-
-    @Override
     public void addFilterVersion(String filterVersion) {
         this.filterVersion = filterVersion;
     }
@@ -262,6 +252,16 @@ public class GenericDriftChangeSetCriteria implements Serializable, DriftChangeS
             result.add("version");
         }
         return result;
+    }
+
+    @Override
+    public void addFilterId(String filterId) {
+        this.filterId = filterId;
+    }
+
+    @Override
+    public String getFilterId() {
+        return filterId;
     }
 
 }

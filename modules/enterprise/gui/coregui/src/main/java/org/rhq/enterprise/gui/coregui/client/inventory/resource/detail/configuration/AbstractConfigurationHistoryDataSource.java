@@ -335,7 +335,7 @@ public abstract class AbstractConfigurationHistoryDataSource<T extends AbstractR
 
         List<Integer> ids = getFilter(request, CriteriaField.IDS, List.class);
         if (ids  != null) {
-            criteria.addFilterIds(ids);
+            criteria.addFilterIds(ids.toArray(new Integer[0]));
         }
 
         Boolean fetchConfiguration = request.getAttributeAsBoolean(RequestProperty.FETCH_CONFIGURATION);

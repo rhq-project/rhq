@@ -101,8 +101,10 @@
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
+          <!-- TODO: Move this test execution to a profile or respect skipTests
           <skipTests>false</skipTests>
           <skipITs>false</skipITs>
+           -->
           <includes>
             <!-- only include integration tests; normal unit tests are handled above by surefire plugin -->
             <include>org/rhq/plugins/netservices/itest/**/*Test.java</include>

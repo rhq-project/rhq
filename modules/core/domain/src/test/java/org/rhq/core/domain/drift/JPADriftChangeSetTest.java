@@ -27,9 +27,6 @@ import static org.rhq.core.domain.resource.ResourceCategory.SERVER;
 
 import java.util.List;
 
-import javax.persistence.EntityManager;
-
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -40,8 +37,9 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.shared.ResourceBuilder;
 import org.rhq.core.domain.shared.ResourceTypeBuilder;
 import org.rhq.core.domain.shared.TransactionCallback;
+import org.rhq.core.domain.test.AbstractEJB3Test;
 
-public class JPADriftChangeSetTest extends DriftDataAccessTest {
+public class JPADriftChangeSetTest extends AbstractEJB3Test {
 
     private final String RESOURCE_TYPE_NAME = JPADriftChangeSetTest.class.getName();
 
@@ -55,20 +53,15 @@ public class JPADriftChangeSetTest extends DriftDataAccessTest {
 
     private DriftDefinition definition;
 
-    @BeforeMethod(groups = {"JPADriftChangeSet", "drift.ejb"})
-    public void init() {
-        if (!inContainer()) {
-            return;
-        }
+    @Override
+    protected void beforeMethod() {
+
+        purgeDB();
 
         executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 try {
-                    purgeDB();
-
-                    EntityManager em = getEntityManager();
-
                     resourceType = createResourceType();
                     em.persist(resourceType);
 
@@ -87,25 +80,45 @@ public class JPADriftChangeSetTest extends DriftDataAccessTest {
         });
     }
 
+    @Override
+    protected void afterMethod() {
+        purgeDB();
+    }
+
     private void purgeDB() {
-        EntityManager em = getEntityManager();
+        executeInTransaction(false, new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                try {
+                    // get rid of mandatory avail records on a resource
+                    List<Availability> avails = (List<Availability>) em
+                        .createQuery("SELECT a FROM Availability a WHERE a.resource.resourceType.name = :name")
+                        .setParameter("name", RESOURCE_TYPE_NAME).getResultList();
+                    for (Availability a : avails) {
+                        em.remove(a);
+                    }
 
-        List<Availability> avails = (List<Availability>) em.createQuery("SELECT a FROM Availability a").getResultList();
-        for (Availability a : avails) {
-            em.remove(a);
-        }
+                    List<Resource> resources = (List<Resource>) em
+                        .createQuery("SELECT r from Resource r where r.resourceType.name = :name")
+                        .setParameter("name", RESOURCE_TYPE_NAME).getResultList();
+                    for (Resource resource : resources) {
+                        em.remove(resource);
+                    }
 
-        List<Resource> resources = (List<Resource>) em.createQuery("from Resource where resourceType.name = :name")
-            .setParameter("name", RESOURCE_TYPE_NAME).getResultList();
-        for (Resource resource : resources) {
-            em.remove(resource);
-        }
+                    List<ResourceType> resourceTypes = (List<ResourceType>) em
+                        .createQuery("Select rt from ResourceType rt where rt.name = :name")
+                        .setParameter("name", RESOURCE_TYPE_NAME).getResultList();
+                    for (ResourceType type : resourceTypes) {
+                        em.remove(type);
+                    }
 
-        List<ResourceType> resourceTypes = (List<ResourceType>) em.createQuery("from ResourceType where name = :name")
-            .setParameter("name", RESOURCE_TYPE_NAME).getResultList();
-        for (ResourceType type : resourceTypes) {
-            em.remove(type);
-        }
+                } catch (Exception e) {
+                    System.out.println("AFTER METHOD FAILURE, TEST DID NOT COMPLETE!!!");
+                    e.printStackTrace();
+                    throw e;
+                }
+            }
+        });
     }
 
     private ResourceType createResourceType() {
@@ -117,9 +130,7 @@ public class JPADriftChangeSetTest extends DriftDataAccessTest {
         return new ResourceBuilder().createResource().withId(0)
             .withName(JPADriftChangeSetTest.class.getSimpleName() + "_" + resourceCount++)
             .withResourceKey(JPADriftChangeSetTest.class.getSimpleName() + "_" + resourceCount)
-            .withUuid(JPADriftChangeSetTest.class.getSimpleName() + "_" + resourceCount)
-            .withResourceType(type)
-            .build();
+            .withUuid(JPADriftChangeSetTest.class.getSimpleName() + "_" + resourceCount).withResourceType(type).build();
     }
 
     private DriftDefinition createDriftDefinition() {
@@ -133,12 +144,11 @@ public class JPADriftChangeSetTest extends DriftDataAccessTest {
         return def;
     }
 
-    @Test(groups = {"JPADriftChangeSet", "drift.ejb"})
+    @Test(groups = { "JPADriftChangeSet", "drift.ejb" })
     public void saveAndLoadInitialChangeSet() {
-        executeInTransaction(false, new TransactionCallback() {
+        executeInTransaction(new TransactionCallback() {
             @Override
             public void execute() throws Exception {
-                EntityManager em = getEntityManager();
 
                 JPADriftChangeSet changeSet = new JPADriftChangeSet(resource, 0, COVERAGE, definition);
                 changeSet.setDriftHandlingMode(DriftHandlingMode.normal);
@@ -155,9 +165,7 @@ public class JPADriftChangeSetTest extends DriftDataAccessTest {
                 em.flush();
                 em.clear();
 
-
-                JPADriftChangeSet savedChangeSet = em
-                    .find(JPADriftChangeSet.class, Integer.parseInt(changeSet.getId()));
+                JPADriftChangeSet savedChangeSet = em.find(JPADriftChangeSet.class, Integer.parseInt(changeSet.getId()));
                 assertNotNull("Failed to persist change set", savedChangeSet);
 
                 JPADriftSet savedDriftSet = savedChangeSet.getInitialDriftSet();

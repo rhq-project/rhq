@@ -50,7 +50,7 @@ public abstract class Criteria implements Serializable, BaseCriteria {
         /**
          * Use this to get the global fields for this Criteria field type. Don't use inspection as the field names
          * for this abstract base class do not conform (for legacy reasons) to the prefix convention help by the
-         * subclasses.  This is likely only relevant to {@link CriteriaQueryGenerator}.
+         * subclasses.
          *  
          * @return The set of global fields for this Criteria field type. Meaning, usable by all subclasses.
          */

@@ -37,7 +37,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * Provide the shared stuff for create GraphListViews like Availability graphs
  * and User Preferences pickers for the date range.
  */
-public class AbstractD3GraphListView  extends LocatableVLayout {
+public abstract  class AbstractD3GraphListView  extends LocatableVLayout {
     protected PageList<Availability> availabilityList;
     protected AvailabilityD3Graph availabilityGraph;
     protected static  Label loadingLabel = new Label(MSG.common_msg_loading());
@@ -48,6 +48,8 @@ public class AbstractD3GraphListView  extends LocatableVLayout {
         super(locatorId);
         measurementRangeEditor = new UserPreferencesMeasurementRangeEditor(this.getLocatorId());
     }
+
+    public abstract void redrawGraphs();
 
     protected void queryAvailability(final int resourceId, final CountDownLatch countDownLatch) {
 

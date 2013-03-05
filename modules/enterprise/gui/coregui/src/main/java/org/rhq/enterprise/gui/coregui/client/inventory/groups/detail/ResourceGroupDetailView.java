@@ -87,7 +87,7 @@ import java.util.Set;
  * @author Jay Shaughnessy
  * @author Ian Springer
  */
-public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<ResourceGroupComposite, ResourceGroupTitleBar> {
+public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<ResourceGroupComposite, ResourceGroupTitleBar,D3GroupGraphListView> {
 
     public static final String AUTO_CLUSTER_VIEW = "ResourceGroup/AutoCluster";
     public static final String AUTO_GROUP_VIEW = "Resource/AutoGroup";
@@ -161,6 +161,12 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     @Override
     protected ResourceGroupTitleBar createTitleBar() {
         return new ResourceGroupTitleBar(getLocatorId(), isAutoGroup(), isAutoCluster());
+    }
+
+    @Override
+    protected D3GroupGraphListView createD3GraphListView() {
+        graphListView = new D3GroupGraphListView(monitoringTab.extendLocatorId("NewGraphs"), groupComposite.getResourceGroup(), true);
+        return graphListView;
     }
 
     @Override
@@ -324,9 +330,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             viewFactory = (!visibleToIE8) ? null : new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    d3GroupGraphListView = new D3GroupGraphListView(monitoringTab.extendLocatorId("NewGraphs"), groupComposite.getResourceGroup(), true);
-                    return d3GroupGraphListView;
-
+                    return  createD3GraphListView();
                 }
             };
 
@@ -599,11 +603,8 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                             group.setResourceType(type);
                             updateTabContent(groupComposite, viewPath.isRefresh());
                             selectTab(getTabName(), getSubTabName(), viewPath);
-                            Log.debug(" **** 1 *****"+d3GroupGraphListView);
-                            if(null != d3GroupGraphListView){
-                                Log.debug(" *** Refreshing Group D3 Graphs");
-                                d3GroupGraphListView.redrawGraphs();
-                                Log.debug(" **** 2 *****");
+                            if(null != graphListView){
+                                graphListView.redrawGraphs();
                             }
                         } finally {
                             notifyViewRenderedListeners();
@@ -614,9 +615,8 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             try {
                 updateTabContent(groupComposite, viewPath.isRefresh());
                 selectTab(getTabName(), getSubTabName(), viewPath);
-                Log.debug(" **** 3 *****");
-                if(null != d3GroupGraphListView){
-                    d3GroupGraphListView.redrawGraphs();
+                if(null != graphListView){
+                    graphListView.redrawGraphs();
                 }
             } finally {
                 notifyViewRenderedListeners();

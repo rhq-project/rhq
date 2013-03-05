@@ -74,19 +74,16 @@ public class D3GroupGraphListView extends AbstractD3GraphListView {
         }
 
         if (resourceGroup != null) {
-            buildGraphs();
+            redrawGraphs();
         }
     }
 
 
-    public void redrawGraphs(){
-        buildGraphs();
-    }
 
     /**
      * Build whatever graph metrics (MeasurementDefinitions) are defined for the resource.
      */
-    private void buildGraphs() {
+    public void redrawGraphs() {
 
         List<Long> startEndList = measurementRangeEditor.getBeginEndTimes();
         final long startTime = startEndList.get(0);

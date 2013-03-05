@@ -292,6 +292,11 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
     }
 
     @Override
+    public void addSortId(PageOrdering pageOrdering) {
+        throw new UnsupportedOperationException("The sort is not supported by DriftChangeSetCriteria.");
+    }
+
+    @Override
     public void addFilterIds(Integer... filterIds) {
         throw new UnsupportedOperationException("The filter is not supported by DriftChangeSetCriteria.");
     }

@@ -107,11 +107,6 @@ public class JPADriftCriteria extends Criteria implements DriftCriteria {
     }
 
     @Override
-    public void addFilterIds(Integer... filterIds) {
-        throw new UnsupportedOperationException("The filter is not supported by DriftCriteria.");
-    }
-
-    @Override
     public String getFilterId() {
         return (null == filterId) ? null : filterId.toString();
     }
@@ -248,4 +243,15 @@ public class JPADriftCriteria extends Criteria implements DriftCriteria {
     public PageOrdering getSortCtime() {
         return sortCtime;
     }
+
+    @Override
+    public void addFilterIds(Integer... filterIds) {
+        throw new UnsupportedOperationException("The filter is not supported by DriftCriteria.");
+    }
+
+    @Override
+    public void addSortId(PageOrdering pageOrdering) {
+        throw new UnsupportedOperationException("The sort is not supported by DriftCriteria.");
+    }
+
 }

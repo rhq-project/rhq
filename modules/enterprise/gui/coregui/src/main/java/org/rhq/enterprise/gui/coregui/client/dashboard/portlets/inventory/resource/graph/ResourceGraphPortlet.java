@@ -154,6 +154,7 @@ public class ResourceGraphPortlet extends ResourceMetricD3Graph implements Custo
                                     Log.debug("Found portlet measurement definition !" + def);
 
                                     getJsniChart().setEntityId(resource.getId());
+                                    getJsniChart().setEntityName(resource.getName());
                                     getJsniChart().setDefinition(def);
                                     queryMetricsDataForDashboardGraphs(resource.getId(), def);
                                     break;
@@ -196,14 +197,18 @@ public class ResourceGraphPortlet extends ResourceMetricD3Graph implements Custo
                 @Override
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_loadFailed(), caught);
-                    countDownLatch.countDown();
+                    if(countDownLatch != null){
+                        countDownLatch.countDown();
+                    }
                 }
 
                 @Override
                 public void onSuccess(final List<List<MeasurementDataNumericHighLowComposite>> measurementData) {
                     Log.debug("Dashboard Metric data in: " + (System.currentTimeMillis() - startTime) + " ms.");
                     graph.getMetricGraphData().setMetricData(measurementData.get(0));
-                    countDownLatch.countDown();
+                    if(countDownLatch != null){
+                        countDownLatch.countDown();
+                    }
                 }
             });
     }

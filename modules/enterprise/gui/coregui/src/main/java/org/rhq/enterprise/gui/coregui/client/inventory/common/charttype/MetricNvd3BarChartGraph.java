@@ -44,7 +44,7 @@ public final class MetricNvd3BarChartGraph extends AbstractGraph
             chartHandle = "#rChart-"+chartId,
             chartSelection = chartHandle + " svg",
             json = $wnd.jQuery.parseJSON(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getJsonMetrics()()),
-            yAxisLabel = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getYAxisTitle()(),
+            yAxisLabel = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartTitle()(),
             yAxisUnits = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getYAxisUnits()(),
             xAxisLabel = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getXAxisTitle()(),
             displayDayOfWeek = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::shouldDisplayDayOfWeekInXAxisLabel()(),

@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
 
 import java.util.List;
 
-import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
@@ -59,6 +58,10 @@ public abstract class AbstractGraph implements HasD3MetricJsniChart {
 
     public String getEntityName() {
         return metricGraphData.getEntityName();
+    }
+    @Override
+    public void setEntityName(String  entityName) {
+        metricGraphData.setEntityName(entityName);
     }
 
     public int getDefinitionId() {
@@ -159,8 +162,8 @@ public abstract class AbstractGraph implements HasD3MetricJsniChart {
         metricGraphData.setChartHeight(chartHeight);
     }
 
-    public String getYAxisTitle() {
-        return metricGraphData != null ? metricGraphData.getYAxisTitle() : "";
+    public String getChartTitle() {
+        return metricGraphData != null ? metricGraphData.getChartTitle() : "";
     }
 
     public String getYAxisUnits() {

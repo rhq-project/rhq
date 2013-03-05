@@ -50,7 +50,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartHeight()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getJsonMetrics()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getXAxisTitle()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getYAxisTitle()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartTitle()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getYAxisUnits()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartTitleMinLabel()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartTitleAvgLabel()(),
@@ -573,7 +573,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                     console.log("chart id: " + chartContext.chartSelection);
                     //console.log("Json Data:\n"+chartContext.data);
 
-                    createHeader(chartContext.yAxisLabel);
+                    createHeader(chartContext.chartTitle);
                     createMinAvgPeakSidePanel(chartContext.minChartTitle, min, chartContext.avgChartTitle, avg, chartContext.peakChartTitle, peak, chartContext.yAxisUnits );
                     createYAxisGridLines();
                     createStackedBars();

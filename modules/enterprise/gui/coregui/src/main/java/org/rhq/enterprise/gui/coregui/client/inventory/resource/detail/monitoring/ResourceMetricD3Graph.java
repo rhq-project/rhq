@@ -23,7 +23,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.Abstract
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.HasD3MetricJsniChart;
 
 /**
- * A D3 graph representation for graphing metrics.
+ * A D3 graph implementation for graphing metrics.
  */
 public class ResourceMetricD3Graph extends AbstractMetricD3GraphView {
 
@@ -34,13 +34,11 @@ public class ResourceMetricD3Graph extends AbstractMetricD3GraphView {
      */
     public ResourceMetricD3Graph(String locatorId) {
         super(locatorId);
-        //setChartHeight("150px");
     }
 
     public ResourceMetricD3Graph(String locatorId, AbstractGraph graph) {
 
         super(locatorId, graph);
-        //setChartHeight("150px");
     }
 
 

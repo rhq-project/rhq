@@ -112,6 +112,11 @@ public class MetricGraphData implements JsonMetricProducer {
         return entityName;
     }
 
+    public void setEntityName(String entityName) {
+        this.entityName = entityName;
+        //this.definition = null;
+    }
+
     public int getDefinitionId() {
         return definitionId;
     }
@@ -207,18 +212,10 @@ public class MetricGraphData implements JsonMetricProducer {
         this.chartHeight = chartHeight;
     }
 
-    public String getYAxisTitle() {
+    public String getChartTitle() {
 
-        //Log.debug("** Definition: " + definition + ", id: " + definitionId);
-        if (null != definition.getDisplayName() && definition.getDisplayName().length() > 55) {
-            return definition.getDisplayName().substring(0, 55) + "...";
-        } else {
-            if (definition == null) {
-                return "";
-            } else {
-                return definition.getDisplayName();
-            }
-        }
+        return entityName + " - "+definition.getDisplayName();
+
     }
 
     /**
@@ -229,7 +226,7 @@ public class MetricGraphData implements JsonMetricProducer {
      */
     public String getYAxisUnits() {
         if (adjustedMeasurementUnits == null) {
-            Log.error("AbstractMetricD3GraphView.adjustedMeasurementUnits is populated by getJsonMetrics. Make sure it is called first.");
+            Log.warn("AbstractMetricD3GraphView.adjustedMeasurementUnits is populated by getJsonMetrics. Make sure it is called first.");
             return "";
         } else {
             return adjustedMeasurementUnits.toString();

@@ -569,6 +569,7 @@ public final class CriteriaQueryGenerator {
         List<Field> results = new ArrayList<Field>();
 
         Class<?> currentLevelClass = criteria.getClass();
+        List<String> globalFields = fieldType.getGlobalFields();
         boolean isCriteriaClass = false;
 
         do {
@@ -577,7 +578,7 @@ public final class CriteriaQueryGenerator {
             for (Field field : currentLevelClass.getDeclaredFields()) {
                 field.setAccessible(true);
                 if (isCriteriaClass) {
-                    if (fieldType.getGlobalFields().contains(field.getName()))
+                    if (globalFields.contains(field.getName()))
                         results.add(field);
 
                 } else if (field.getName().startsWith(prefix)) {

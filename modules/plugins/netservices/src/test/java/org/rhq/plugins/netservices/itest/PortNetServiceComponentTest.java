@@ -60,7 +60,7 @@ public class PortNetServiceComponentTest extends NetServiceComponentTest {
 
     private static final String SERVICE_NAME = "PortService";
 
-    private static final String LOOPBACK = "127.0.0.1";
+    private static final InetAddress LOOPBACK_ADDRESS = InetAddress.getLoopbackAddress();
 
     private PortNetServiceComponent portNetServiceComponent;
 
@@ -76,10 +76,11 @@ public class PortNetServiceComponentTest extends NetServiceComponentTest {
     public void startSocketServer() throws Exception {
         LOG.info("Setting up a socket server");
         // Let's bind a server socket to any available port
-        serverSocket = new ServerSocket(0, 50, InetAddress.getLocalHost());
+        serverSocket = new ServerSocket(0, 50, LOOPBACK_ADDRESS);
         // Do not block indefinitely on call to #accept
         serverSocket.setSoTimeout(1000);
         serverSocketLocalPort = serverSocket.getLocalPort();
+        LOG.info("Using port " + serverSocketLocalPort + " for socket server");
         acceptorThread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -109,7 +110,7 @@ public class PortNetServiceComponentTest extends NetServiceComponentTest {
     @Test(dependsOnMethods = "testPluginLoad")
     public void testManualAdd() throws Exception {
         Configuration configuration = new Configuration();
-        configuration.setSimpleValue(ConfigKeys.ADDRESS, LOOPBACK);
+        configuration.setSimpleValue(ConfigKeys.ADDRESS, LOOPBACK_ADDRESS.getHostAddress());
         configuration.setSimpleValue(ConfigKeys.PORT, String.valueOf(serverSocketLocalPort));
         MergeResourceResponse response = getInventoryManager().manuallyAddResource(
             getPluginManager().getMetadataManager().getType(SERVICE_NAME, PLUGIN_NAME), getPlatform().getId(),
@@ -143,7 +144,7 @@ public class PortNetServiceComponentTest extends NetServiceComponentTest {
         for (MeasurementData data : report.getTraitData()) {
             datas.put(data.getName(), data.getValue());
         }
-        assertEquals(getTrait(datas, "ipAddress"), LOOPBACK);
+        assertEquals(getTrait(datas, "ipAddress"), LOOPBACK_ADDRESS.getHostAddress());
         assertTrue(StringUtil.isNotBlank(getTrait(datas, "hostName")));
         assertTrue(getMetric(datas, "connectTime") >= 0);
     }

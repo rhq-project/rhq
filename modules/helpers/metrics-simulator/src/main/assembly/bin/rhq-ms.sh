@@ -12,7 +12,7 @@ popd
 prepare_java()
 {
   if [ -z "$JAVA_HOME" ]; then
-    echo "$JAVA_HOME must be set"
+    echo "JAVA_HOME must be set"
     exit 1
   fi
   RHQ_MS_JAVA_EXE=$JAVA_HOME/bin/java

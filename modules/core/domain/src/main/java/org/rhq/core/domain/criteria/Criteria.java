@@ -120,13 +120,13 @@ public abstract class Criteria implements Serializable, BaseCriteria {
     private String searchExpression;
 
     // All Criteria support sorting on ID
-    private PageOrdering sortId;
+    protected PageOrdering sortId;
     
     // All Criteria support filtering on ID
-    private Integer filterId;
+    protected Integer filterId;
     
     // All Criteria support filtering on IDs
-    private List<Integer> filterIds;
+    protected List<Integer> filterIds;
 
     /**
      * This default constructor will set default paging to avoid unintended fetch of huge results. The default is:

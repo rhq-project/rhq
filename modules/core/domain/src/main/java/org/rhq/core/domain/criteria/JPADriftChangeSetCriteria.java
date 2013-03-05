@@ -43,7 +43,6 @@ import org.rhq.core.domain.util.PageOrdering;
 public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSetCriteria {
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
     private Integer filterInitial; // needs override
     private Integer filterResourceId; // needs override
     private Integer filterDriftDefinitionId; // needs override
@@ -91,6 +90,7 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
             + "         WHERE drift.path like ? )"); // note, this uses 'like' on purpose, it is always substring
 
         if (null != changeSetCriteria) {
+            this.addFilterId(changeSetCriteria.getFilterId());
             this.addFilterCategory(changeSetCriteria.getFilterCategory());
             this.addFilterCreatedAfter(changeSetCriteria.getFilterCreatedAfter());
             this.addFilterCreatedBefore(changeSetCriteria.getFilterCreatedBefore());
@@ -283,13 +283,12 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
 
     @Override
     public void addFilterId(String filterId) {
-        if (filterId != null) {
-            this.filterId = Integer.parseInt(filterId);
-        }
+        this.filterId = (filterId == null) ? null : Integer.parseInt(filterId);
     }
 
     @Override
     public String getFilterId() {
-        return filterId == null ? null : filterId.toString();
+        return (filterId == null) ? null : filterId.toString();
     }
+
 }

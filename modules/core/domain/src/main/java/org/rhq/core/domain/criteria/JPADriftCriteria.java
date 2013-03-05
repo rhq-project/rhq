@@ -26,8 +26,8 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.drift.DriftCategory;
-import org.rhq.core.domain.drift.JPADrift;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
+import org.rhq.core.domain.drift.JPADrift;
 import org.rhq.core.domain.util.CriteriaUtils;
 import org.rhq.core.domain.util.PageOrdering;
 
@@ -41,7 +41,6 @@ import org.rhq.core.domain.util.PageOrdering;
 public class JPADriftCriteria extends Criteria implements DriftCriteria {
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
     private List<DriftCategory> filterCategories = new ArrayList<DriftCategory>();
     private Integer filterChangeSetId; // needs override
     private Integer filterChangeSetStartVersion; // needs override
@@ -77,6 +76,7 @@ public class JPADriftCriteria extends Criteria implements DriftCriteria {
         if (null != driftCriteria) {
             this.fetchChangeSet(driftCriteria.isFetchChangeSet());
 
+            this.addFilterId(driftCriteria.getFilterId());
             this.addFilterCategories(driftCriteria.getFilterCategories());
             this.addFilterChangeSetId(driftCriteria.getFilterChangeSetId());
             this.addFilterChangeSetStartVersion(driftCriteria.getFilterChangeSetStartVersion());
@@ -103,14 +103,12 @@ public class JPADriftCriteria extends Criteria implements DriftCriteria {
 
     @Override
     public void addFilterId(String filterId) {
-        if (filterId != null) {
-            this.filterId = Integer.parseInt(filterId);
-        }
+        this.filterId = (null == filterId) ? null : Integer.parseInt(filterId);
     }
 
     @Override
     public String getFilterId() {
-        return filterId == null ? null : filterId.toString();
+        return (null == filterId) ? null : filterId.toString();
     }
 
     @Override

@@ -58,7 +58,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.AvailabilityD3Graph;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3Graph;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.D3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
@@ -279,21 +279,15 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                             ChartViewWindow window = new ChartViewWindow(
                                                                 recentMeasurementsContent
                                                                     .extendLocatorId("ChartWindow"), title);
-                                                            final AvailabilityD3Graph availabilityGraph = new AvailabilityD3Graph("avail", new AvailabilityLineGraphType(resource.getId()));
-                                                            // first step in 2 step to create d3 chart
-                                                            // create a placeholder for avail graph
-                                                            availabilityGraph.createGraphMarker();
 
                                                             final D3GraphListView graphView = D3GraphListView.createSingleGraph(extendLocatorId("D3Graphs"),
-                                                                    resourceComposite.getResource(), md.getId());
+                                                                    resourceComposite.getResource(), md.getId(),true);
                                                             graphView.addSetButtonClickHandler(new ClickHandler()
                                                             {
                                                                 @Override
                                                                 public void onClick(ClickEvent event)
                                                                 {
-                                                                    availabilityGraph.drawGraph();
                                                                     graphView.redrawGraphs();
-
                                                                 }
                                                             });
 

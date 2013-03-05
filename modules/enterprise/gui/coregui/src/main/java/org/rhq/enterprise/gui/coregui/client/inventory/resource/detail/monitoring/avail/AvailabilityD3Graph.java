@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring;
+package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail;
 
 import java.util.List;
 
@@ -74,7 +74,7 @@ public class AvailabilityD3Graph extends LocatableVLayout implements Availabilit
      * Create the graph marker to be later filled in with a graph from d3.
      */
     public void createGraphMarker() {
-        Log.debug(" *** drawGraph marker in AvailabilityD3Graph for: " + availabilityGraphType.getChartId());
+        Log.debug("drawGraph marker in AvailabilityD3Graph for: " + availabilityGraphType.getChartId());
 
         StringBuilder divAndSvgDefs = new StringBuilder();
         divAndSvgDefs.append("<div id=\"availChart-" + availabilityGraphType.getChartId()

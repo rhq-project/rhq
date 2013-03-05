@@ -45,6 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphLis
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricStackedBarGraph;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3Graph;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.async.Command;
@@ -78,19 +79,25 @@ public class D3GraphListView extends AbstractD3GraphListView {
         return new D3GraphListView(locatorId, resource, monitorDetailView);
     }
 
-    public static D3GraphListView createSingleGraph(String locatorId, Resource resource, Integer measurementId) {
+    public static D3GraphListView createSingleGraph(String locatorId, Resource resource,
+                                                    Integer measurementId, boolean showAvailabilityGraph) {
         TreeSet<Integer> definitionIds = new TreeSet<Integer>();
         definitionIds.add(measurementId);
-        return new D3GraphListView(locatorId, resource, definitionIds, false);
+        return new D3GraphListView(locatorId, resource, definitionIds, showAvailabilityGraph);
+
+    }
+
+    public static D3GraphListView createSingleGraph(String locatorId, Resource resource, Integer measurementId) {
+        return D3GraphListView.createSingleGraph(locatorId,resource,measurementId,false);
     }
 
 
-    private D3GraphListView(String locatorId, Resource resource, Set<Integer> definitionIds, boolean monitorDetailView) {
+    private D3GraphListView(String locatorId, Resource resource, Set<Integer> definitionIds, boolean showAvailabilityGraph) {
         super(locatorId);
         this.resource = resource;
         commonConstructorSettings();
         this.definitionIds = definitionIds;
-        this.showAvailabilityGraph = monitorDetailView;
+        this.showAvailabilityGraph = showAvailabilityGraph;
     }
 
     private D3GraphListView(String locatorId, Resource resource, boolean showAvailabilityGraph) {

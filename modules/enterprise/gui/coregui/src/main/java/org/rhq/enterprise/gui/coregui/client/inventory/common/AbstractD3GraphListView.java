@@ -28,7 +28,7 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.AvailabilityD3Graph;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3Graph;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -78,7 +78,6 @@ public abstract  class AbstractD3GraphListView  extends LocatableVLayout {
                         for (Availability availability : availList) {
                             availabilityList.add(availability);
                         }
-                        Log.debug("avail list size: " + availabilityList.size());
                         if (countDownLatch != null) {
                             countDownLatch.countDown();
                         }

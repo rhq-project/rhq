@@ -86,9 +86,10 @@ public class AvailabilityLineGraphType {
                             break;
                         }
                         else if (availability.getEndTime() == null) {
+                            // we are in the last, unbounded avail interval so assume that the end is now
+                            Date now = new Date();
                             sb.append(" \"availType\":\"" + availability.getAvailabilityType() + "\", ");
                             sb.append(" \"availStart\":" + availability.getStartTime() + ", ");
-                            Date now = new Date();
                             sb.append(" \"availEnd\":" + now.getTime() + ",");
                             long availDuration = (new Date()).getTime() - availability.getStartTime();
                             String availDurationString = MeasurementConverterClient.format((double)availDuration,

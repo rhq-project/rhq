@@ -141,7 +141,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
 
     public void redrawGraphs() {
         this.onDraw();
-        availabilityGraph.drawGraph();
+        availabilityGraph.drawJsniChart();
     }
 
     /**
@@ -215,7 +215,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
                                     // availability data set in there for the dropdowns already
                                     availabilityGraph.setMetricData(metricsDataList.get(0));
                                     availabilityGraph.setAvailabilityList(availabilityList);
-                                    availabilityGraph.drawGraph();
+                                    availabilityGraph.drawJsniChart();
                                 }
                             }
 

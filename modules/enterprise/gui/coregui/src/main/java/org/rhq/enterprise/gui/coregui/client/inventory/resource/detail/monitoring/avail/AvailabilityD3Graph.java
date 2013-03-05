@@ -59,7 +59,7 @@ public class AvailabilityD3Graph extends LocatableVLayout implements Availabilit
         super.parentResized();
         removeMembers(getMembers());
         createGraphMarker();
-        drawGraph();
+        drawJsniChart();
     }
 
     public void setMetricData(List<MeasurementDataNumericHighLowComposite> metricData) {
@@ -71,8 +71,13 @@ public class AvailabilityD3Graph extends LocatableVLayout implements Availabilit
     }
 
     /**
-     * Create the graph marker to be later filled in with a graph from d3.
+     * Setup the page elements especially the div and svg elements that serve as
+     * placeholders for the d3 stuff to grab onto and add svg tags to render the chart.
+     * Later the drawJsniGraph() is called to actually fill in the div/svg element
+     * created here with the actual svg element.
+     *
      */
+
     public void createGraphMarker() {
         Log.debug("drawGraph marker in AvailabilityD3Graph for: " + availabilityGraphType.getChartId());
 
@@ -87,17 +92,6 @@ public class AvailabilityD3Graph extends LocatableVLayout implements Availabilit
 
     }
 
-    /**
-     * Setup the page elements especially the div and svg elements that serve as
-     * placeholders for the d3 stuff to grab onto and add svg tags to render the chart.
-     * Later the drawJsniGraph() is called to actually fill in the div/svg element
-     * created here with the actual svg element.
-     *
-     */
-    public void drawGraph() {
-
-        drawJsniChart();
-    }
 
     @Override
     public void destroy() {
@@ -108,6 +102,8 @@ public class AvailabilityD3Graph extends LocatableVLayout implements Availabilit
     public void hide() {
         super.hide();
     }
+
+
 
     /**
      * Delegate the call to rendering the JSNI chart.

@@ -137,7 +137,7 @@ public class D3GroupGraphListView extends AbstractD3GraphListView {
                                     }
                                     availabilityGraph.setMetricData(result.get(0));
                                     availabilityGraph.setAvailabilityList(availabilityList);
-                                    availabilityGraph.drawGraph();
+                                    availabilityGraph.drawJsniChart();
                                 }
                             }
                         });

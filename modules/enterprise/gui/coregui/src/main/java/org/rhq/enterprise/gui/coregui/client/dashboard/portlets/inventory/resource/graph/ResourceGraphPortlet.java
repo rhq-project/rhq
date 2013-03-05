@@ -215,6 +215,8 @@ public class ResourceGraphPortlet extends ResourceMetricD3Graph implements Custo
 
     @Override
     protected void onDraw() {
+        Log.debug("ResourceGraphPortlet.onDraw()");
+
         DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
 
         PropertySimple simple = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID);
@@ -297,7 +299,7 @@ public class ResourceGraphPortlet extends ResourceMetricD3Graph implements Custo
 
     @Override
     public void redraw() {
-        Log.debug("Redraw Portlet and set data");
+        Log.debug("Redraw Portlet Graph and set data");
         super.redraw();
 
         removeMembers(getMembers());
@@ -311,7 +313,8 @@ public class ResourceGraphPortlet extends ResourceMetricD3Graph implements Custo
             graph.getMetricGraphData().setEntityId(simple.getIntegerValue());
             PropertySimple simpleDefId = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
             graph.getMetricGraphData().setDefinitionId(simpleDefId.getIntegerValue());
-            drawGraph();
+            drawJsniChart();
+            markForRedraw();
         }
     }
 

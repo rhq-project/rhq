@@ -291,4 +291,9 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
         return (filterId == null) ? null : filterId.toString();
     }
 
+    @Override
+    public void addFilterIds(Integer... filterIds) {
+        throw new UnsupportedOperationException("The filter is not supported by DriftChangeSetCriteria.");
+    }
+
 }

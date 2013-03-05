@@ -107,6 +107,11 @@ public class JPADriftCriteria extends Criteria implements DriftCriteria {
     }
 
     @Override
+    public void addFilterIds(Integer... filterIds) {
+        throw new UnsupportedOperationException("The filter is not supported by DriftCriteria.");
+    }
+
+    @Override
     public String getFilterId() {
         return (null == filterId) ? null : filterId.toString();
     }

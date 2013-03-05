@@ -58,6 +58,14 @@ public abstract class AbstractConfigurationUpdateCriteria extends Criteria {
         filterOverrides.put("endTime", "createdTime <= ?");
         filterOverrides.put("statuses", "status IN ( ? )");
     }
+    
+    /**
+     * @param filterIds list of ids to filter
+     * @deprecated since 4.7.0 use {@link Criteria#addFilterIds(Integer... filterIds)} instead
+     */
+    public void addFilterIds(List<Integer> filterIds) {
+        super.addFilterIds(filterIds != null ? filterIds.toArray(new Integer[filterIds.size()]) : null);
+    }
 
     public void addFilterStartTime(Long filterStartTime) {
         this.filterStartTime = filterStartTime;

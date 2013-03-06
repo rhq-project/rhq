@@ -39,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Host;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleAuthInfoProvider;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
@@ -61,9 +62,11 @@ import org.rhq.server.metrics.MetricsServer;
 /**
  * @author John Sanda
  */
-public class Simulator {
+public class Simulator implements ShutdownManager {
 
     private final Log log = LogFactory.getLog(Simulator.class);
+
+    private boolean shutdown = false;
 
     public void run(SimulationPlan plan) {
         List<CassandraNode> nodes = initCluster(plan);
@@ -84,6 +87,7 @@ public class Simulator {
 
         MeasurementAggregator measurementAggregator = new MeasurementAggregator();
         measurementAggregator.setMetricsServer(metricsServer);
+        measurementAggregator.setShutdownManager(this);
 
         Stats stats = new Stats();
         StatsCollector statsCollector = new StatsCollector(stats);
@@ -106,6 +110,7 @@ public class Simulator {
             measurementCollector.setQueue(queue);
             measurementCollector.setQueueLock(queueLock);
             measurementCollector.setStats(stats);
+            measurementCollector.setShutdownManager(this);
 
             executorService.scheduleAtFixedRate(measurementCollector, 0, plan.getCollectionInterval(),
                 TimeUnit.MILLISECONDS);
@@ -118,9 +123,18 @@ public class Simulator {
             Thread.sleep(Minutes.minutes(plan.getSimulationTime()).toStandardDuration().getMillis());
         } catch (InterruptedException e) {
         }
-//        shutdown(executorService);
         log.info("Simulation has completed. Initiating shutdown...");
-        System.exit(0);
+        shutdown(0);
+    }
+
+    @Override
+    public synchronized void shutdown(int status) {
+        if (shutdown) {
+            return;
+        }
+        shutdown = true;
+        log.info("Preparing to shutdown simulator...");
+        System.exit(status);
     }
 
     private void shutdown(ScheduledExecutorService executorService) {
@@ -135,7 +149,6 @@ public class Simulator {
             executorService.shutdownNow();
         }
         log.info("Shut down complete");
-        //System.exit(0);
     }
 
     private List<CassandraNode> initCluster(SimulationPlan plan) {
@@ -196,6 +209,11 @@ public class Simulator {
                 .withCompression(SNAPPY)
                 .build();
 
+            NodeFailureListener listener = new NodeFailureListener();
+            for (Host host : cluster.getMetadata().getAllHosts()) {
+                host.getMonitor().register(listener);
+            }
+
             return cluster.connect("rhq");
         } catch (Exception e) {
             throw new RuntimeException("Failed to start simulator. Unable to create " + Session.class, e);
@@ -214,10 +232,28 @@ public class Simulator {
         return schedules;
     }
 
-    public static void main(String[] args) {
-        System.out.println("Running simulator...");
-        Simulator simulator = new Simulator();
-        simulator.log.info("Testing logging...");
+    private static class NodeFailureListener implements Host.StateListener {
+
+        private Log log = LogFactory.getLog(NodeFailureListener.class);
+
+        @Override
+        public void onAdd(Host host) {
+        }
+
+        @Override
+        public void onUp(Host host) {
+        }
+
+        @Override
+        public void onDown(Host host) {
+            log.warn("Node " + host + " has gone down.");
+            log.warn("Preparing to shutdown simulator...");
+            System.exit(1);
+        }
+
+        @Override
+        public void onRemove(Host host) {
+        }
     }
 
 }

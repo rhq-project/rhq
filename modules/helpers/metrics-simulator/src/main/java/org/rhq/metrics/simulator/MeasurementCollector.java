@@ -51,6 +51,8 @@ public class MeasurementCollector implements Runnable {
 
     private Stats stats;
 
+    private ShutdownManager shutdownManager;
+
     private int batchSize = 500;
 
     public void setQueue(PriorityQueue<Schedule> queue) {
@@ -67,6 +69,10 @@ public class MeasurementCollector implements Runnable {
 
     public void setStats(Stats stats) {
         this.stats = stats;
+    }
+
+    public void setShutdownManager(ShutdownManager shutdownManager) {
+        this.shutdownManager = shutdownManager;
     }
 
     @Override
@@ -105,7 +111,13 @@ public class MeasurementCollector implements Runnable {
                 schedule.updateCollection();
             }
             metricsCollected = data.size();
-            metricsServer.addNumericData(data);
+            try {
+                metricsServer.addNumericData(data);
+            } catch (Exception e) {
+                log.error("An error occurred while trying to store raw metrics", e);
+                log.error("Requesting simulation shutdown...");
+                shutdownManager.shutdown(1);
+            }
             stats.addRawInserts(metricsCollected);
             try {
                 queueLock.lock();

@@ -39,8 +39,14 @@ public class MeasurementAggregator implements Runnable {
 
     private MetricsServer metricsServer;
 
+    private ShutdownManager shutdownManager;
+
     public void setMetricsServer(MetricsServer metricsServer) {
         this.metricsServer = metricsServer;
+    }
+
+    public void setShutdownManager(ShutdownManager shutdownManager) {
+        this.shutdownManager = shutdownManager;
     }
 
     @Override
@@ -49,6 +55,10 @@ public class MeasurementAggregator implements Runnable {
         long startTime = System.currentTimeMillis();
         try {
             metricsServer.calculateAggregates();
+        } catch (Exception e) {
+            log.error("An error occurred while trying to perform aggregation", e);
+            log.error("Requesting simulation shutdown...");
+            shutdownManager.shutdown(1);
         } finally {
             long endTime = System.currentTimeMillis();
             log.info("Finished metrics aggregation in " + (endTime - startTime) + " ms");

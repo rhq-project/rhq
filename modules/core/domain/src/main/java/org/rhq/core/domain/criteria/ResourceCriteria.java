@@ -45,7 +45,6 @@ import org.rhq.core.domain.util.PageOrdering;
 public class ResourceCriteria extends TaggedCriteria {
     private static final long serialVersionUID = 2L;
 
-    private Integer filterId;
     private String filterName;
     private String filterResourceKey;
     private InventoryStatus filterInventoryStatus = InventoryStatus.COMMITTED; // default
@@ -66,7 +65,6 @@ public class ResourceCriteria extends TaggedCriteria {
     private AvailabilityType filterCurrentAvailability; // needs overrides
     private Long filterStartItime;
     private Long filterEndItime;
-    private List<Integer> filterIds; // needs overrides
     private List<Integer> filterExplicitGroupIds; // requires overrides
     private List<Integer> filterImplicitGroupIds; // requires overrides
     private Integer filterRootResourceId; // requires overrides    
@@ -129,7 +127,6 @@ public class ResourceCriteria extends TaggedCriteria {
         filterOverrides.put("currentAvailability", "currentAvailability.availabilityType = ?");
         filterOverrides.put("startItime", "itime >= ?");
         filterOverrides.put("endItime", "itime <= ?");
-        filterOverrides.put("ids", "id IN ( ? )");
         filterOverrides.put("explicitGroupIds", "" //
             + "id IN ( SELECT ires.id " //
             + "          FROM Resource ires " //
@@ -156,10 +153,6 @@ public class ResourceCriteria extends TaggedCriteria {
     @Override
     public Class<Resource> getPersistentClass() {
         return Resource.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
     }
 
     public void addFilterName(String filterName) {
@@ -252,10 +245,6 @@ public class ResourceCriteria extends TaggedCriteria {
 
     public void addFilterEndItime(long itime) {
         filterEndItime = itime;
-    }
-
-    public void addFilterIds(Integer... filterIds) {
-        this.filterIds = CriteriaUtils.getListIgnoringNulls(filterIds);
     }
 
     public void addFilterExplicitGroupIds(Integer... filterExplicitGroupIds) {

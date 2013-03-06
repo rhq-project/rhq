@@ -45,8 +45,6 @@ public class AlertDefinitionCriteria extends Criteria {
     public static final String SORT_FIELD_RESOURCE_ID = "resourceId";
     public static final String SORT_FIELD_RESOURCE_NAME = "resourceName";
 
-    private Integer filterId;
-    private List<Integer> filterIds;
     private String filterName;
     private String filterDescription;
     private AlertPriority filterPriority;
@@ -85,7 +83,6 @@ public class AlertDefinitionCriteria extends Criteria {
         filterOverrides.put("resourceOnly", "resource IS NOT NULL");
         filterOverrides.put("notificationSenderNames", "id IN ("
             + "SELECT notif.alertDefinition.id FROM AlertNotification notif " + "WHERE notif.senderName IN ( ? ))");
-        filterOverrides.put("filterIds", "id IN ( ? )");
 
         sortOverrides.put(SORT_FIELD_RESOURCE_ID, "resource.id");
         sortOverrides.put(SORT_FIELD_RESOURCE_NAME, "resource.name");
@@ -96,14 +93,6 @@ public class AlertDefinitionCriteria extends Criteria {
     @Override
     public Class<AlertDefinition> getPersistentClass() {
         return AlertDefinition.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
-    }
-
-    public void addFilterIds(Integer... filterIds) {
-        this.filterIds = Arrays.asList(filterIds);
     }
 
     public void addFilterName(String filterName) {

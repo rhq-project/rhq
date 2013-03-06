@@ -849,6 +849,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 ResourceCriteria criteria = new ResourceCriteria();
                 criteria.addFilterParentResourceId(ancestor.getResource().getId());
                 criteria.addSortName(PageOrdering.ASC);
+                criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
                 List<Resource> children = findResourcesByCriteriaBounded(subject, criteria, 0, 0);
                 // Remove any that are in the lineage to avoid repeated handling.
                 children.removeAll(rawResourceLineage);

@@ -1,7 +1,5 @@
 package org.rhq.enterprise.server.resource.metadata;
 
-import java.util.List;
-
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -21,11 +19,14 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationDefinitionUpdateReport;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.util.CriteriaQuery;
+import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
 @Stateless
 public class PluginConfigurationMetadataManagerBean implements PluginConfigurationMetadataManagerLocal {
@@ -73,10 +74,20 @@ public class PluginConfigurationMetadataManagerBean implements PluginConfigurati
 
                 if (updateReport.getNewPropertyDefinitions().size() > 0
                     || updateReport.getUpdatedPropertyDefinitions().size() > 0) {
-                    Subject overlord = subjectMgr.getOverlord();
+                    final Subject overlord = subjectMgr.getOverlord();
                     ResourceCriteria criteria = new ResourceCriteria();
                     criteria.addFilterResourceTypeId(existingType.getId());
-                    List<Resource> resources = resourceMgr.findResourcesByCriteria(overlord, criteria);
+
+                    //Use CriteriaQuery to automatically chunk/page through criteria query results
+                    CriteriaQueryExecutor<Resource, ResourceCriteria> queryExecutor = new CriteriaQueryExecutor<Resource, ResourceCriteria>() {
+                        @Override
+                        public PageList<Resource> execute(ResourceCriteria criteria) {
+                            return resourceMgr.findResourcesByCriteria(overlord, criteria);
+                        }
+                    };
+
+                    CriteriaQuery<Resource, ResourceCriteria> resources = new CriteriaQuery<Resource, ResourceCriteria>(
+                        criteria, queryExecutor);
 
                     for (Resource resource : resources) {
                         updateResourcePluginConfiguration(resource, updateReport);

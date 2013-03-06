@@ -424,7 +424,14 @@ public class ComparableVersion
 
     private static Item parseItem( boolean isDigit, String buf )
     {
-        return isDigit ? new IntegerItem( new Integer( buf ) ) : new StringItem( buf, false );
+        if (isDigit) {
+            try {
+                return new IntegerItem(new Integer(buf));
+            } catch (Exception e) {
+                // fall through - just use it as a string - its probably too long, like a timestamp. e.g. 201302281030
+            }
+        }
+        return new StringItem(buf, false);
     }
 
     public int compareTo( Object o )

@@ -55,29 +55,30 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * Component dealing with server group specific things
  * @author Heiko W. Rupp
  */
-@SuppressWarnings("unused")
 public class ServerGroupComponent extends BaseComponent implements ContentFacet, CreateChildResourceFacet,
     OperationFacet {
 
-    private static final String SUCCESS = "success";
     private static final String OUTCOME = "outcome";
+    private static final String RESTART_SERVERS = "restart-servers";
 
     @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
         Exception {
-
         Operation op = new Operation(name, getAddress());
-        Result res = getASConnection().execute(op);
-
+        Result res = null;
+        if (RESTART_SERVERS.equals(name)) {
+            // This operation as a timeout parameter as it can run for quite a long time
+            res = getASConnection().execute(op, parameters.getSimple("responseTimeout").getIntegerValue());
+        } else {
+            res = getASConnection().execute(op);
+        }
         OperationResult result = new OperationResult();
-
         if (res.isSuccess()) {
-            result.setSimpleResult(SUCCESS);
+            result.setSimpleResult(Result.SUCCESS);
         } else {
             result.setErrorMessage(res.getFailureDescription());
         }
         return result;
-
     }
 
     @Override
@@ -119,7 +120,7 @@ public class ServerGroupComponent extends BaseComponent implements ContentFacet,
 
             if (uploadResult.has(OUTCOME)) {
                 String outcome = uploadResult.get(OUTCOME).getTextValue();
-                if (outcome.equals(SUCCESS)) { // Upload was successful, so now add the file to the server group
+                if (outcome.equals(Result.SUCCESS)) { // Upload was successful, so now add the file to the server group
                     JsonNode resultNode = uploadResult.get("result");
                     String hash = resultNode.get("BYTES_VALUE").getTextValue();
                     ASConnection connection = getASConnection();
@@ -202,6 +203,7 @@ public class ServerGroupComponent extends BaseComponent implements ContentFacet,
         return null; // TODO: Customise this generated block
     }
 
+    @SuppressWarnings("unused")
     private String serverGroupFromKey() {
         String key1 = context.getResourceKey();
         return key1.substring(key1.lastIndexOf("/") + 1);

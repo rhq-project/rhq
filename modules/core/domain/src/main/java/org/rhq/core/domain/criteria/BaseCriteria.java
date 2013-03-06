@@ -18,7 +18,10 @@
  */
 package org.rhq.core.domain.criteria;
 
+import java.util.List;
+
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageOrdering;
 
 /**
  * All criteria, regardless of the backend storage that will be queried with this criteria, needs
@@ -27,6 +30,10 @@ import org.rhq.core.domain.util.PageControl;
  * @author John Sanda
  */
 public interface BaseCriteria {
+
+    void addSortId(PageOrdering sortId);
+
+    List<String> getOrderingFieldNames();
 
     PageControl getPageControlOverrides();
 

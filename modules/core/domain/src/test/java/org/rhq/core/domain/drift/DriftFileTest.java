@@ -13,22 +13,22 @@ import java.sql.Blob;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.persistence.EntityManager;
-
 import org.apache.commons.io.IOUtils;
+import org.hibernate.LobHelper;
 import org.hibernate.Session;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.shared.TransactionCallback;
+import org.rhq.core.domain.test.AbstractEJB3Test;
 import org.rhq.core.util.MessageDigestGenerator;
 
-public class DriftFileTest extends DriftDataAccessTest {
+public class DriftFileTest extends AbstractEJB3Test {
 
     static private final MessageDigestGenerator digestGen = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
 
     // Note, this test is more of a general Blob handling test. A real JPADriftFile never has its content updated.
     // But this is a useful test to just ensure Blob handling is working as expected.
-    @Test(groups = {"driftFile", "drift.ejb"})
+    @Test(groups = { "driftFile", "drift.ejb" })
     public void updateDriftFileData() throws Exception {
         String content = "driftFile data";
         String hashId = digestGen.calcDigestString(content);
@@ -36,36 +36,24 @@ public class DriftFileTest extends DriftDataAccessTest {
         // Create the initial driftFile
         final JPADriftFileBits df1 = new JPADriftFileBits(hashId);
         df1.setDataSize((long) content.length());
-        EntityManager em = getEntityManager();
         Session session = (Session) em.getDelegate();
         df1.setData(session.getLobHelper().createBlob(toInputStream(content), content.length()));
 
-        executeInTransaction(false, new TransactionCallback() {
+        executeInTransaction(new TransactionCallback() {
             @Override
             public void execute() {
-                getEntityManager().persist(df1);
-            }
-        });
+                em.persist(df1);
 
-        // Make the update
-        final String newContent = "driftFile data updated...";
-        executeInTransaction(false, new TransactionCallback() {
-            @Override
-            public void execute() {
-                EntityManager em = getEntityManager();
+                // Make the update
+                final String newContent = "driftFile data updated...";
+
                 Session session = (Session) em.getDelegate();
                 JPADriftFileBits df2 = em.find(JPADriftFileBits.class, df1.getHashId());
                 df2.setData(session.getLobHelper().createBlob(toInputStream(newContent), newContent.length()));
-                getEntityManager().merge(df2);
-            }
-        });
+                em.merge(df2);
 
-        // Fetch the driftFile to verify that the update was persisted
-        executeInTransaction(false, new TransactionCallback() {
-            @Override
-            public void execute() {
                 try {
-                    JPADriftFileBits df3 = getEntityManager().find(JPADriftFileBits.class, df1.getHashId());
+                    JPADriftFileBits df3 = em.find(JPADriftFileBits.class, df1.getHashId());
                     String expected = newContent;
                     String actual = IOUtils.toString(df3.getData());
 
@@ -73,6 +61,7 @@ public class DriftFileTest extends DriftDataAccessTest {
                 } catch (Exception e) {
                     fail("Failed to load driftFile data: " + e.getMessage());
                 }
+
             }
         });
     }
@@ -82,100 +71,105 @@ public class DriftFileTest extends DriftDataAccessTest {
     // In other words, to ensure LazyLoad semantics are working for Blobs
     // Because of the amount data involved is very large the test is long
     // running and should be moved to an integration test suite.
-    @Test(groups = {"driftFile", "drift.ejb"})
+    @Test(groups = { "driftFile", "drift.ejb" })
     public void loadMultipleDriftFilesWithoutLoadingData() throws Exception {
-        int numDriftFiles = 3;
-        final List<String> driftFileHashIds = new ArrayList<String>();
 
-        for (int i = 0; i < numDriftFiles; ++i) {
-            File dataFile = createDataFile("test_data.txt", 1, (char) ('a' + i));
-            String hashId = digestGen.calcDigestString(dataFile);
-            final JPADriftFileBits driftFile = new JPADriftFileBits(hashId);
-            driftFile.setDataSize(dataFile.length());
-            EntityManager em = getEntityManager();
-            Session session = (Session) em.getDelegate();            
-            driftFile.setData(session.getLobHelper().createBlob(new BufferedInputStream(new FileInputStream(dataFile)),
-                dataFile.length()));
-            dataFile.delete();
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
 
-            executeInTransaction(false, new TransactionCallback() {
-                @Override
-                public void execute() {
-                    getEntityManager().persist(driftFile);
+                int numDriftFiles = 3;
+                final List<String> driftFileHashIds = new ArrayList<String>();
+
+                for (int i = 0; i < numDriftFiles; ++i) {
+                    File dataFile = createDataFile("test_data.txt", 1, (char) ('a' + i));
+                    String hashId = digestGen.calcDigestString(dataFile);
+                    final JPADriftFileBits driftFile = new JPADriftFileBits(hashId);
+                    driftFile.setDataSize(dataFile.length());
+
+                    Session session = (Session) em.getDelegate();
+                    driftFile.setData(session.getLobHelper().createBlob(
+                        new BufferedInputStream(new FileInputStream(dataFile)), dataFile.length()));
+                    dataFile.delete();
+
+                    em.persist(driftFile);
                     driftFileHashIds.add(driftFile.getHashId());
                 }
-            });
-        }
 
-        final List<Blob> blobs = new ArrayList<Blob>();
-        final List<JPADriftFileBits> driftFiles = new ArrayList<JPADriftFileBits>();
-        for (final String hashId : driftFileHashIds) {
-            executeInTransaction(false, new TransactionCallback() {
-                @Override
-                public void execute() {
-                    EntityManager em = getEntityManager();
+                final List<Blob> blobs = new ArrayList<Blob>();
+                final List<JPADriftFileBits> driftFiles = new ArrayList<JPADriftFileBits>();
+                for (final String hashId : driftFileHashIds) {
+
                     JPADriftFileBits driftFileBits = em.find(JPADriftFileBits.class, hashId);
                     blobs.add(driftFileBits.getBlob());
                     driftFiles.add(driftFileBits);
                 }
-            });
-        }
 
-        assertEquals("Failed to save or load " + numDriftFiles + " driftFiles", numDriftFiles, driftFiles.size());
+                assertEquals("Failed to save or load " + numDriftFiles + " driftFiles", numDriftFiles,
+                    driftFiles.size());
+            }
+        });
     }
 
     // The purpose of this test is to ensure we won't store two drift files for
     // the same content.
-    @Test(groups = {"driftFile", "drift.ejb"})
+    @Test(groups = { "driftFile", "drift.ejb" })
     public void loadSameFile() throws Exception {
+
         int numDriftFiles = 2;
+        final List<JPADriftFileBits> driftFiles = new ArrayList<JPADriftFileBits>();
         final List<String> driftFileHashIds = new ArrayList<String>();
+        Session session = (Session) em.getDelegate();
+        LobHelper lobHelper = session.getLobHelper();
 
         for (int driftFileNum = 0; driftFileNum < numDriftFiles; ++driftFileNum) {
             File dataFile = createDataFile("test_data.txt", 10, 'X');
             String hashId = digestGen.calcDigestString(dataFile);
             final JPADriftFileBits driftFile = new JPADriftFileBits(hashId);
             driftFile.setDataSize(dataFile.length());
-            EntityManager em = getEntityManager();
-            Session session = (Session) em.getDelegate();
-            driftFile.setData(session.getLobHelper().createBlob(new BufferedInputStream(new FileInputStream(dataFile)),
+
+            driftFile.setData(lobHelper.createBlob(new BufferedInputStream(new FileInputStream(dataFile)),
                 dataFile.length()));
+            driftFiles.add(driftFile);
             dataFile.delete();
-
-            try {
-                executeInTransaction(false, new TransactionCallback() {
-                    @Override
-                    public void execute() {
-                        getEntityManager().persist(driftFile);
-                        driftFileHashIds.add(driftFile.getHashId());
-                    }
-                });
-                if (driftFileNum >= 1) {
-                    fail("Should not be able to store JPADriftFile with same hashId more than once.");
-                }
-
-            } catch (Exception e) {
-                // expected for second file
-                if (driftFileNum == 0) {
-                    fail("Should be able to store JPADriftFile with unique hashId - cause: " + e);
-                }
-            }
         }
 
-        final List<Blob> blobs = new ArrayList<Blob>();
-        final List<JPADriftFileBits> driftFiles = new ArrayList<JPADriftFileBits>();
-        for (final String hashId : driftFileHashIds) {
-            executeInTransaction(false, new TransactionCallback() {
+        try {
+            executeInTransaction(new TransactionCallback() {
                 @Override
-                public void execute() {
-                    JPADriftFileBits driftFileBits = getEntityManager().find(JPADriftFileBits.class, hashId);
-                    blobs.add(driftFileBits.getBlob());
-                    driftFiles.add(driftFileBits);
+                public void execute() throws Exception {
+
+                    for (JPADriftFileBits driftFile : driftFiles) {
+                        try {
+                            em.persist(driftFile);
+                            driftFileHashIds.add(driftFile.getHashId());
+
+                            if (driftFileHashIds.size() > 1) {
+                                fail("Should not be able to store JPADriftFile with same hashId more than once.");
+                            }
+
+                        } catch (Exception e) {
+                            // expected for second file
+                            if (driftFileHashIds.size() != 1) {
+                                fail("Should be able to store JPADriftFile with unique hashId - cause: " + e);
+                            }
+                        }
+                    }
+
+                    final List<Blob> blobs = new ArrayList<Blob>();
+                    final List<JPADriftFileBits> driftFiles = new ArrayList<JPADriftFileBits>();
+                    for (final String hashId : driftFileHashIds) {
+                        JPADriftFileBits driftFileBits = em.find(JPADriftFileBits.class, hashId);
+                        blobs.add(driftFileBits.getBlob());
+                        driftFiles.add(driftFileBits);
+                    }
                 }
             });
+        } catch (Exception e) {
+            // expected because the rollback will fail as the transaction has already terminated
         }
 
-        assertEquals("Failed to save or load " + numDriftFiles + " driftFiles", numDriftFiles, driftFiles.size());
+        assertEquals("Failed to save or load " + driftFiles.size() + " driftFiles", 2, driftFiles.size());
     }
 
     File workDir() throws URISyntaxException {

@@ -130,7 +130,6 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
                         Message message = new Message(MSG.view_configurationDetails_noConfigurationFetched(),
                             Message.Severity.Info);
                         CoreGUI.getMessageCenter().notify(message);
-                        saveButton.disable();
                         refreshing = false;
                         return;
                     }

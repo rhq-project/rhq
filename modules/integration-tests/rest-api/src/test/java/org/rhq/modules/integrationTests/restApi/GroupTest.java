@@ -46,7 +46,6 @@ public class GroupTest extends AbstractBase {
 
     private static final String X_TEST_GROUP = "-x-test-group";
 
-    @Override
     @Before
     public void setUp() throws Exception {
         super.setUp();
@@ -214,6 +213,9 @@ public class GroupTest extends AbstractBase {
 
     @Test
     public void testAddResourceToGroup() throws Exception {
+
+        assert _platformId !=0 : "Set up did not run or was not successful";
+
         Group group = new Group(X_TEST_GROUP);
 
         // Generate the group
@@ -237,7 +239,7 @@ public class GroupTest extends AbstractBase {
                 .contentType(ContentType.JSON)
                 .body(group)
                 .pathParam("id", id)
-                .pathParam("resourceId",10001)
+                .pathParam("resourceId",_platformId)
             .expect()
                 .statusCode(HttpStatus.SC_OK)
                 .log().ifError()
@@ -281,7 +283,7 @@ public class GroupTest extends AbstractBase {
                 .contentType(ContentType.JSON)
                 .body(group)
                 .pathParam("gid", groupId)
-                .pathParam("resourceId",10001)
+                .pathParam("resourceId",_platformId)
             .expect()
                 .statusCode(HttpStatus.SC_OK)
                 .log().ifError()
@@ -390,7 +392,7 @@ public class GroupTest extends AbstractBase {
                 .contentType(ContentType.JSON)
                 .body(group)
                 .pathParam("id",id)
-                .pathParam("resourceId",10001)
+                .pathParam("resourceId",_platformId)
             .expect()
                 .statusCode(HttpStatus.SC_OK)
                 .log().ifError()
@@ -401,7 +403,7 @@ public class GroupTest extends AbstractBase {
             given()
                 .header(acceptJson)
                 .pathParam("id",id)
-                .pathParam("resourceId",10001)
+                .pathParam("resourceId",_platformId)
             .expect()
                 .statusCode(HttpStatus.SC_OK)
                 .log().ifError()
@@ -425,7 +427,7 @@ public class GroupTest extends AbstractBase {
     public void testGetMetricDefinitionsForGroup() throws Exception {
         Group group = new Group(X_TEST_GROUP);
         group.setCategory("COMPATIBLE");
-        group.setResourceTypeId(10001);
+        group.setResourceTypeId(_platformTypeId);
 
         // Generate the group
         Response response =

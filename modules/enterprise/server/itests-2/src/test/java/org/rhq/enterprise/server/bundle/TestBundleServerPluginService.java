@@ -50,6 +50,7 @@ import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginManager;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginManager;
 import org.rhq.enterprise.server.plugin.pc.content.PackageTypeServerPluginContainer;
+import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorMetadataParser;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
@@ -226,8 +227,9 @@ public class TestBundleServerPluginService extends ServerPluginService implement
                 "Test property for BundleVersion Config Def testing", true, PropertySimpleType.STRING));
 
             bundleFileNames = new HashSet<String>();
-            bundleFileNames.add("bundletest-bundlefile-1");
-            bundleFileNames.add("bundletest-bundlefile-2");
+            for (int i = 0; i < AbstractEJB3Test.DEFAULT_CRITERIA_PAGE_SIZE + 2; i++) {
+                bundleFileNames.add("bundletest-bundlefile-" + i);
+            }
 
             return new RecipeParseResults(metadata, configDef, bundleFileNames);
         }

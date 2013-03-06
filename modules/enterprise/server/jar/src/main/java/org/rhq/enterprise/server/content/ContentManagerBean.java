@@ -1593,15 +1593,17 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return runner.execute();
     }
     
-    public PageList<PackageAndLatestVersionComposite> findPackagesWithLatestVersion(Subject subject, PackageCriteria criteria) {
+    public PageList<PackageAndLatestVersionComposite> findPackagesWithLatestVersion(Subject subject,
+        PackageCriteria criteria) {
         if (criteria.getFilterRepoId() == null) {
             throw new IllegalArgumentException("The criteria query has to have a filter for a specific repo.");
         }
         
-        criteria.fetchVersions(true);        
+        criteria.fetchVersions(true);
         PageList<Package> packages = findPackagesByCriteria(subject, criteria);
-        
-        PageList<PackageAndLatestVersionComposite> ret = new PageList<PackageAndLatestVersionComposite>(packages.getTotalSize(), packages.getPageControl());
+
+        PageList<PackageAndLatestVersionComposite> ret = new PageList<PackageAndLatestVersionComposite>(
+            packages.getTotalSize(), packages.getPageControl());
                 
         for(Package p : packages) {
             PackageVersion latest = repoManager.getLatestPackageVersion(subject, p.getId(), criteria.getFilterRepoId());

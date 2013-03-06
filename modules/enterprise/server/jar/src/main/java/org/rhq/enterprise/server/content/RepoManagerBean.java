@@ -582,6 +582,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         RepoCriteria candidateReposCriteria = new RepoCriteria();
         candidateReposCriteria.addFilterContentSourceIds(contentSourceId);
         candidateReposCriteria.addFilterCandidate(true);
+        candidateReposCriteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
         PageList<Repo> candidatesForThisProvider = findReposByCriteria(subject, candidateReposCriteria);
 

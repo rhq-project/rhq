@@ -25,7 +25,6 @@ import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 public class DriftDefinitionTemplateCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
     private String filterName;
     private Integer filterResourceTypeId;
 
@@ -39,10 +38,6 @@ public class DriftDefinitionTemplateCriteria extends Criteria {
     @Override
     public Class<DriftDefinitionTemplate> getPersistentClass() {
         return DriftDefinitionTemplate.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
     }
 
     public void addFilterName(String filterName) {

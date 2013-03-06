@@ -52,7 +52,7 @@ public class PluginContainerConfiguration {
     private static final String CREATE_RESOURCE_CLASSLOADERS = PROP_PREFIX + "create-resource-classloaders";
     private static final String START_MANAGEMENT_BEAN_PROP = PROP_PREFIX + "start-management-bean";
     private static final String WAIT_FOR_SHUTDOWN_SERVICE_TERMINATION = PROP_PREFIX + "wait-for-shutdown-service-termination";
-    public static final boolean WAIT_FOR_SHUTDOWN_SERVICE_TERMINATION_DEFAULT = false;
+    public static final boolean WAIT_FOR_SHUTDOWN_SERVICE_TERMINATION_DEFAULT = true;
     private static final String SHUTDOWN_SERVICE_TERMINATION_TIMEOUT = PROP_PREFIX + "shutdown-service-termination-timeout";
     public static final long SHUTDOWN_SERVICE_TERMINATION_TIMEOUT_DEFAULT = 5 * 60L; // in seconds
     

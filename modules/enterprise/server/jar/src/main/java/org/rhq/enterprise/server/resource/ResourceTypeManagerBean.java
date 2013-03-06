@@ -525,6 +525,8 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         if (sawTopLevelServer) {
             ResourceTypeCriteria criteria = new ResourceTypeCriteria();
             criteria.addFilterCategory(ResourceCategory.PLATFORM);
+            criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
             List<ResourceType> platforms = findResourceTypesByCriteria(subject, criteria);
             results.addAll(platforms);
         }
@@ -539,6 +541,8 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
 
         if (first.getCategory() == ResourceCategory.PLATFORM) {
             ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+            criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
             List<ResourceType> allResourceTypes = findResourceTypesByCriteria(subject, criteria);
 
             List<ResourceType> results = new ArrayList<ResourceType>();

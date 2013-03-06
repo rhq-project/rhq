@@ -40,12 +40,10 @@ public class RoleCriteria extends Criteria {
 
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
     private String filterDescription;
     private String filterName;
     private Integer filterSubjectId;     // needs overrides
     private Integer filterLdapSubjectId; // needs overrides
-    private List<Integer> filterIds;     // needs overrides
 
     private boolean fetchPermissions;
     private boolean fetchResourceGroups;
@@ -67,17 +65,11 @@ public class RoleCriteria extends Criteria {
             + "          FROM Role innerRole " //
             + "          JOIN innerRole.ldapSubjects innerSubject " //
             + "         WHERE innerSubject.id = ? )");
-
-        filterOverrides.put("ids", "id IN ( ? )");
     }
 
     @Override
     public Class<Role> getPersistentClass() {
         return Role.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
     }
 
     public void addFilterName(String filterName) {
@@ -94,10 +86,6 @@ public class RoleCriteria extends Criteria {
 
     public void addFilterLdapSubjectId(Integer filterLdapSubjectId) {
         this.filterLdapSubjectId = filterLdapSubjectId;
-    }
-
-    public void addFilterIds(Integer... filterIds) {
-        this.filterIds = CriteriaUtils.getListIgnoringNulls(filterIds);
     }
 
     /**

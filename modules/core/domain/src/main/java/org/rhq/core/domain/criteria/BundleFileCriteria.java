@@ -34,7 +34,6 @@ import org.rhq.core.domain.bundle.BundleFile;
 public class BundleFileCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
     private Integer filterBundleVersionId; // needs override
     private Integer filterPackageVersionId; // needs override    
 
@@ -49,10 +48,6 @@ public class BundleFileCriteria extends Criteria {
     @Override
     public Class<BundleFile> getPersistentClass() {
         return BundleFile.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
     }
 
     public void addFilterBundleVersionId(Integer filterBundleVersionId) {

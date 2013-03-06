@@ -56,6 +56,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
@@ -66,6 +67,8 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.AsyncResourceDeleteJob;
 import org.rhq.enterprise.server.scheduler.jobs.PurgeResourceTypesJob;
+import org.rhq.enterprise.server.util.CriteriaQuery;
+import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
 /**
  * This class manages the metadata for resources. Plugins are registered against this bean so that their metadata can be
@@ -292,7 +295,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         c.addFilterInventoryStatus(null);
         List<Resource> resources = resourceManager.findResourcesByCriteria(subject, c);
         //Chunk through the results in 200(default) page element batches to avoid excessive 
-        //memory usage for large deployments
+        //memory usage for large deployments. No need to use CriteriaQuery here as this loop is more efficient at catching stragglers
         while ((resources != null) && (!resources.isEmpty())) {
             Iterator<Resource> resIter = resources.iterator();
             while (resIter.hasNext()) {
@@ -701,11 +704,22 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
     private void moveResourcesToNewParent(ResourceType existingType, ResourceType obsoleteParentType,
         Set<ResourceType> newParentTypes) {
-        Subject overlord = subjectManager.getOverlord();
+        final Subject overlord = subjectManager.getOverlord();
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterResourceTypeId(existingType.getId());
         criteria.addFilterParentResourceTypeId(obsoleteParentType.getId());
-        List<Resource> resources = resourceManager.findResourcesByCriteria(overlord, criteria);
+
+        //Use CriteriaQuery to automatically chunk/page through criteria query results
+        CriteriaQueryExecutor<Resource, ResourceCriteria> queryExecutor = new CriteriaQueryExecutor<Resource, ResourceCriteria>() {
+            @Override
+            public PageList<Resource> execute(ResourceCriteria criteria) {
+                return resourceManager.findResourcesByCriteria(overlord, criteria);
+            }
+        };
+
+        CriteriaQuery<Resource, ResourceCriteria> resources = new CriteriaQuery<Resource, ResourceCriteria>(criteria,
+            queryExecutor);
+
         for (Resource resource : resources) {
             Resource newParent = null;
             newParentTypes: for (ResourceType newParentType : newParentTypes) {

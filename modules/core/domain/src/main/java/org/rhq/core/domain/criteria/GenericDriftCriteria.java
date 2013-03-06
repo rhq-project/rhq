@@ -18,16 +18,16 @@
  */
 package org.rhq.core.domain.criteria;
 
-import org.rhq.core.domain.drift.DriftCategory;
-import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageOrdering;
+import static org.rhq.core.domain.util.CriteriaUtils.getListIgnoringNulls;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.rhq.core.domain.util.CriteriaUtils.getListIgnoringNulls;
+import org.rhq.core.domain.drift.DriftCategory;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageOrdering;
 
 /**
  * The generic implementation of DriftCriteria makes no assumptions about the actual drift server
@@ -70,6 +70,8 @@ public class GenericDriftCriteria implements Serializable, DriftCriteria {
     private Long filterEndTime;
 
     private PageControl pageControl;
+
+    private PageOrdering sortId;
 
     private PageOrdering sortCtime;
 
@@ -206,6 +208,11 @@ public class GenericDriftCriteria implements Serializable, DriftCriteria {
     }
 
     @Override
+    public void addSortId(PageOrdering sortId) {
+        this.sortId = sortId;
+    }
+
+    @Override
     public void addSortCtime(PageOrdering sortCtime) {
         this.sortCtime = sortCtime;
     }
@@ -239,6 +246,18 @@ public class GenericDriftCriteria implements Serializable, DriftCriteria {
     public void setPaging(int pageNumber, int pageSize) {
         pageControl.setPageNumber(pageNumber);
         pageControl.setPageSize(pageSize);
+    }
+
+    @Override
+    public List<String> getOrderingFieldNames() {
+        List<String> result = new ArrayList<String>(2);
+        if (null != sortId) {
+            result.add("id");
+        }
+        if (null != sortCtime) {
+            result.add("ctime");
+        }
+        return result;
     }
 
 }

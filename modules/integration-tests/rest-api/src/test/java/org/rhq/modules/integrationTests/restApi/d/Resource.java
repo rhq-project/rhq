@@ -19,6 +19,9 @@
 
 package org.rhq.modules.integrationTests.restApi.d;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * A resource for testing purposes
  * @author Heiko W. Rupp
@@ -30,6 +33,9 @@ public class Resource {
     String typeName;
     String pluginName;
     Integer parentId;
+    int typeId;
+    List<Map> links;
+    String ancestry;
 
     public Resource() {
     }
@@ -72,5 +78,29 @@ public class Resource {
 
     public void setTypeName(String typeName) {
         this.typeName = typeName;
+    }
+
+    public int getTypeId() {
+        return typeId;
+    }
+
+    public void setTypeId(int typeId) {
+        this.typeId = typeId;
+    }
+
+    public List<Map> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<Map> links) {
+        this.links = links;
+    }
+
+    public String getAncestry() {
+        return ancestry;
+    }
+
+    public void setAncestry(String ancestry) {
+        this.ancestry = ancestry;
     }
 }

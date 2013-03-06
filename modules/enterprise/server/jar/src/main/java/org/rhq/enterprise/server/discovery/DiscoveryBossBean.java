@@ -1079,7 +1079,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         if (null == resourceType) {
             try {
                 resourceType = this.resourceTypeManager.getResourceTypeByNameAndPlugin(name, plugin);
-
             } catch (RuntimeException e) {
                 resourceType = null;
             }
@@ -1257,6 +1256,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             ResourceCriteria resourceCriteria = new ResourceCriteria();
             resourceCriteria.addFilterParentResourceId(parentResource.getId());
             resourceCriteria.addFilterResourceTypeId(resourceType.getId());
+            resourceCriteria.clearPaging();//Doc: disable paging as the code assumes all the results will be returned.
+
             PageList<Resource> childResourcesOfType = resourceManager.findResourcesByCriteria(
                 subjectManager.getOverlord(), resourceCriteria);
             if (childResourcesOfType.size() >= 1) {

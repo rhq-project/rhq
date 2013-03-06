@@ -122,6 +122,8 @@ import org.rhq.enterprise.server.plugin.pc.content.InitializationException;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
 import org.rhq.enterprise.server.resource.ProductVersionManagerLocal;
+import org.rhq.enterprise.server.util.CriteriaQuery;
+import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -746,14 +748,25 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             // Following same sort of workaround done in ContentProviderManager for synchronizeContentProvider
             // Assume this will need to be updated when we place syncing in repo layer
             //
-            RepoCriteria reposForContentSource = new RepoCriteria();
+            final RepoCriteria reposForContentSource = new RepoCriteria();
             reposForContentSource.addFilterContentSourceIds(contentSourceId);
             reposForContentSource.addFilterCandidate(false); // Don't sync distributions for candidates
-            Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-            List<Repo> repos = repoManager.findReposByCriteria(overlord, reposForContentSource);
-            log.debug("downloadDistributionBits found " + repos.size() + " repos associated with this contentSourceId "
-                + contentSourceId);
+
+            final Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+            //Use CriteriaQuery to automatically chunk/page through criteria query results
+            CriteriaQueryExecutor<Repo, RepoCriteria> queryExecutor = new CriteriaQueryExecutor<Repo, RepoCriteria>() {
+                @Override
+                public PageList<Repo> execute(RepoCriteria criteria) {
+                    return repoManager.findReposByCriteria(overlord, reposForContentSource);
+                }
+            };
+
+            CriteriaQuery<Repo, RepoCriteria> repos = new CriteriaQuery<Repo, RepoCriteria>(reposForContentSource,
+                queryExecutor);
+
+            int repoCount = 0;
             for (Repo repo : repos) {
+                repoCount++;
                 log.debug("downloadDistributionBits operating on repo: " + repo.getName() + " id = " + repo.getId());
                 // Look up Distributions associated with this ContentSource.
                 PageControl pageControl = PageControl.getUnlimitedInstance();
@@ -796,6 +809,9 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                     }
                 }
             }
+            log.debug("downloadDistributionBits found and processed " + repoCount
+                + " repos associated with this contentSourceId "
+                + contentSourceId);
         } catch (Throwable t) {
             log.error(t);
             throw new RuntimeException(t);

@@ -64,7 +64,21 @@
 
     </service>
 
+    <service name="PortService"
+             discovery="PortNetServiceDiscoveryComponent"
+             class="PortNetServiceComponent"
+             supportsManualAdd="true"
+             description="Remote Port monitoring service">
+
+        <plugin-configuration>
+            <c:simple-property name="address" description="Remote IP address" />
+            <c:simple-property name="port" description="Remote port" type="integer" />
+        </plugin-configuration>
+
+        <metric property="ipAddress" displayType="summary" dataType="trait" description="The ip address of the host"/>
+        <metric property="hostName" displayType="summary" dataType="trait" description="The hostname of the host"/>
+        <metric property="connectTime" units="milliseconds" displayType="summary" description="Time to establish connection"/>
+
+    </service>
 
 </plugin>
-
-        

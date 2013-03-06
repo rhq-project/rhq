@@ -43,7 +43,7 @@ public class EventTest extends AbstractBase {
 
         given()
             .header(acceptJson)
-            .pathParam("id",10001)
+            .pathParam("id",_platformId)
         .expect()
             .statusCode(200)
             .log().ifError()
@@ -57,7 +57,7 @@ public class EventTest extends AbstractBase {
 
         given()
             .header(acceptJson)
-            .pathParam("id",10001)
+            .pathParam("id",_platformId)
         .expect()
             .statusCode(200)
             .log().ifError()
@@ -89,14 +89,14 @@ public class EventTest extends AbstractBase {
     public void testAddEventSourceForUnknownDefinition() throws Exception {
 
         EventSource es = new EventSource();
-        es.setResourceId(10001);
+        es.setResourceId(_platformId);
         es.setName("Frobnitz"); // Name of the event definition
         es.setLocation("-x-test-location");
 
         given()
             .header(acceptJson)
             .contentType(ContentType.JSON)
-            .pathParam("id", 10001)
+            .pathParam("id", _platformId)
             .body(es)
         .expect()
             .statusCode(404)
@@ -108,7 +108,7 @@ public class EventTest extends AbstractBase {
     public void testAddGetDeleteEventSource() throws Exception {
 
         EventSource es = new EventSource();
-        es.setResourceId(10001);
+        es.setResourceId(_platformId);
         es.setName("Event Log"); // Name of the event definition
         es.setLocation("-x-test-location");
 
@@ -116,7 +116,7 @@ public class EventTest extends AbstractBase {
         given()
             .header(acceptJson)
             .contentType(ContentType.JSON)
-            .pathParam("id",10001)
+            .pathParam("id",_platformId)
             .body(es)
         .expect()
             .statusCode(200)
@@ -148,7 +148,7 @@ public class EventTest extends AbstractBase {
             response =
             given()
                 .header(acceptJson)
-                .pathParam("id",10001)
+                .pathParam("id",_platformId)
             .expect()
                 .statusCode(200)
             .when()
@@ -178,7 +178,7 @@ public class EventTest extends AbstractBase {
     public void testAddGetEventOnSource() throws Exception {
 
         EventSource es = new EventSource();
-        es.setResourceId(10001);
+        es.setResourceId(_platformId);
         es.setName("Event Log"); // Name of the event definition
         es.setLocation("-x-test-location");
 
@@ -186,7 +186,7 @@ public class EventTest extends AbstractBase {
         given()
             .header(acceptJson)
             .contentType(ContentType.JSON)
-            .pathParam("id",10001)
+            .pathParam("id",_platformId)
             .body(es)
         .expect()
             .statusCode(200)
@@ -235,7 +235,7 @@ public class EventTest extends AbstractBase {
             response =
             given()
                 .header(acceptJson)
-                .pathParam("id", 10001)
+                .pathParam("id", _platformId)
                 .queryParam("startTime",now - 10)
                 .queryParam("endTime",now + 10)
             .expect()

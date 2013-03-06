@@ -46,9 +46,7 @@ import org.rhq.core.domain.util.PageOrdering;
 public class ResourceTypeCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
     private Integer filterParentId; // required overrides
-    private List<Integer> filterIds; // requires overrides
 
     private String filterName;
     private String filterDescription;
@@ -92,7 +90,6 @@ public class ResourceTypeCriteria extends Criteria {
             + "          JOIN innerRt.parentResourceTypes innerParentRt " //
             + "         WHERE innerParentRt.id IN ( ? ) )");
         filterOverrides.put("pluginName", "plugin like ?");
-        filterOverrides.put("ids", "id in ( ? )");
         filterOverrides.put("bundleTypeId", "bundleType.id = ?");
         filterOverrides.put("categories", "category in ( ? )");
         filterOverrides.put("parentResourceTypesEmpty", "" //
@@ -109,16 +106,8 @@ public class ResourceTypeCriteria extends Criteria {
         return ResourceType.class;
     }
 
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
-    }
-
     public void addFilterParentId(Integer filterParentId) {
         this.filterParentId = filterParentId;
-    }
-
-    public void addFilterIds(Integer... filterIds) {
-        this.filterIds = Arrays.asList(filterIds);
     }
 
     public void addFilterName(String filterName) {
@@ -253,5 +242,4 @@ public class ResourceTypeCriteria extends Criteria {
         addSortField("pluginName");
         this.sortPluginName = sortPluginName;
     }
-
 }

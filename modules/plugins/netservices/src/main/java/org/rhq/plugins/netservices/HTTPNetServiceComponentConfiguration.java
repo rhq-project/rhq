@@ -35,8 +35,7 @@ class HTTPNetServiceComponentConfiguration {
 
     private Pattern responseValidationPattern;
 
-    public HTTPNetServiceComponentConfiguration(URL endPointUrl, HttpMethod httpMethod,
-        Pattern responseValidationPattern) {
+    HTTPNetServiceComponentConfiguration(URL endPointUrl, HttpMethod httpMethod, Pattern responseValidationPattern) {
         this.endPointUrl = endPointUrl;
         this.httpMethod = httpMethod;
         this.responseValidationPattern = responseValidationPattern;

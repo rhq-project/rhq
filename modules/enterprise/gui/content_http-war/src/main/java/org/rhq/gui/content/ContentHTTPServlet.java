@@ -563,6 +563,7 @@ public class ContentHTTPServlet extends DefaultServlet {
         criteria.addFilterFileName(fileName);
         criteria.addFilterRepoId(repo.getId());
         criteria.setStrict(true);
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
         log.debug("Created criteria for repoId = " + repo.getId() + ", fileName = " + fileName);
         List<PackageVersion> pkgVers = contentMgr.findPackageVersionsByCriteria(LookupUtil.getSubjectManager()
             .getOverlord(), criteria);

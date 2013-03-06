@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<differences>
+    <difference>
+        <className>org/rhq/core/domain/criteria/BaseCriteria</className>
+        <differenceType>7012</differenceType><!-- method added -->
+        <method>void addSortId(org.rhq.core.domain.util.PageOrdering)</method>
+        <justification>
+            We are adding a default addSortId operation to all criteria to support paging through
+            large result sets.
+        </justification>
+    </difference>
+    <difference>
+        <className>org/rhq/core/domain/criteria/BaseCriteria</className>
+        <differenceType>7012</differenceType><!-- method added -->
+        <method>java.util.List getOrderingFieldNames()</method>
+        <justification>
+            We are adding an operation to return FieldOrdering to support paging through
+            large result sets.
+        </justification>
+    </difference>
+</differences>

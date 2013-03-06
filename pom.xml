@@ -129,7 +129,7 @@
     <jtds.version>1.2.2</jtds.version>
     <richfaces.version>3.3.3.Final</richfaces.version>
     <jline.version>0.9.94</jline.version>
-    <sigar.version>1.6.5.132-3</sigar.version>
+    <sigar.version>1.6.5.132-5</sigar.version>
     <sigar.zip.version>1.6.5</sigar.zip.version>
     <quartz.version>1.6.5</quartz.version>
     <jna.version>3.2.5</jna.version>

@@ -253,6 +253,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
             }
 
             function createStackedBars() {
+                console.time("stackedBars");
 
                 var pixelsOffHeight = 0;
 
@@ -383,6 +384,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                                     return  "#70c4e2";
                                 }
                         });
+                console.timeEnd("stackedBars");
             }
 
             function createYAxisGridLines() {
@@ -425,7 +427,8 @@ public final class MetricStackedBarGraph extends AbstractGraph {
 
             }
 
-            function createMinAvgPeakLines() {
+            function createAvgLines() {
+                console.time("drawLines");
 
                var minBaselineLine = $wnd.d3.svg.line()
                         .interpolate(interpolation)
@@ -508,6 +511,8 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         .attr("stroke-width", "1.5")
                         .attr("stroke-opacity", ".7")
                         .attr("d", barAvgLine);
+
+                console.timeEnd("drawLines");
             }
 
             function formatHovers(chartContext, d) {
@@ -571,7 +576,8 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                 // Public API
                 draw: function (chartContext) {
                     "use strict";
-                    console.log("chart id: " + chartContext.chartSelection);
+                    console.group("Creating Chart: %s",chartContext.chartSelection);
+                    console.time("chart");
                     //console.log("Json Data:\n"+chartContext.data);
 
                     createHeader(chartContext.chartTitle);
@@ -579,9 +585,10 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                     createYAxisGridLines();
                     createStackedBars();
                     createXandYAxes();
-                    createMinAvgPeakLines();
+                    createAvgLines();
                     createHovers(chartContext);
-                    console.log("finished drawing paths");
+                    console.timeEnd("chart");
+                    console.groupEnd();
                 }
             }; // end public closure
         }();

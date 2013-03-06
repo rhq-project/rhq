@@ -119,12 +119,13 @@ public class AvailabilityLineGraphType {
      */
     public native void drawJsniChart() /*-{
 
-        console.log("Draw Availability Line chart");
-        var global = this;
+        console.groupCollapsed("AvailabilityChart");
+        console.time("availabilityChart");
+        var global = this,
 
         // tidy up all of our interactions with java (via JSNI) thru AvailChartContext class
         // NOTE: rhq.js has the javascript object constructors in it.
-        var availChartContext = new $wnd.AvailChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType::getChartId()(),
+        availChartContext = new $wnd.AvailChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType::getChartId()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType::getAvailabilityJson()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType::getChartDateLabel()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType::getChartTimeLabel()(),
@@ -159,8 +160,6 @@ public class AvailabilityLineGraphType {
                             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 
-            console.log("finished axes");
-
             // The gray bars at the bottom leading up
             svg.selectAll("rect.availBar")
                     .data(availChartContext.data)
@@ -194,7 +193,6 @@ public class AvailabilityLineGraphType {
 
             createHovers();
 
-            console.log("finished avail paths");
         }
 
         function createHovers() {
@@ -239,6 +237,8 @@ public class AvailabilityLineGraphType {
 
         draw(availChartContext);
 
+        console.timeEnd("availabilityChart");
+        console.groupEnd("AvailabilityChart");
     }-*/;
 
     public String getChartId() {

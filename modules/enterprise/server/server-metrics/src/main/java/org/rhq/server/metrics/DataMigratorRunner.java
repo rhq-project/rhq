@@ -44,6 +44,7 @@ import org.hibernate.ejb.Ejb3Configuration;
 
 import org.rhq.cassandra.CassandraNode;
 
+
 /**
  * @author Stefan Negrea
  *
@@ -90,18 +91,31 @@ public class DataMigratorRunner {
     private String sqlDB;
     private Option sqlDBOption = OptionBuilder.withLongOpt("sql-db").hasArg().create();
 
+    //Migration
+    private boolean disableRaw;
+    private Option disableRawOption = OptionBuilder.withLongOpt("disable-raw-migration").create();
+
+    private boolean disable1H;
+    private Option disable1HOption = OptionBuilder.withLongOpt("disable-1h-migration").create();
+
+    private boolean disable6H;
+    private Option disable6HOption = OptionBuilder.withLongOpt("disable-6h-migration").create();
+
+    private boolean disable1D;
+    private Option disable1DOption = OptionBuilder.withLongOpt("disable-1d-migration").create();
+
     /**
      * @param args
      * @throws ParseException
      */
     public static void main(String[] args) throws Exception {
-
         try{
             DataMigratorRunner runner = new DataMigratorRunner();
             runner.configure(args);
             runner.run();
         } catch (Exception e) {
             System.out.println(e);
+            e.printStackTrace();
         }
 
         System.exit(0);
@@ -120,11 +134,17 @@ public class DataMigratorRunner {
         options.addOption(sqlPortOption);
         options.addOption(sqlDBOption);
 
+        options.addOption(disableRawOption);
+        options.addOption(disable1HOption);
+        options.addOption(disable6HOption);
+        options.addOption(disable1DOption);
+
         CommandLineParser parser = new PosixParser();
         CommandLine commandLine = parser.parse(options, args);
 
         parseCassandraOptionsWithDefault(commandLine);
         parseSQLOptionsWithDefault(commandLine);
+        parseMigrationOptionsWithDefault(commandLine);
     }
 
     private void run() throws Exception {
@@ -139,9 +159,10 @@ public class DataMigratorRunner {
         DataMigrator migrator = new DataMigrator(entityManager, session);
 
         migrator.preserveData();
-        migrator.run1DAggregateDataMigration(false);
-        migrator.run6HAggregateDataMigration(false);
-        migrator.run1HAggregateDataMigration(false);
+        migrator.runRawDataMigration(!disableRaw);
+        migrator.run1HAggregateDataMigration(!disable1H);
+        migrator.run6HAggregateDataMigration(!disable6H);
+        migrator.run1DAggregateDataMigration(!disable1D);
 
         migrator.migrateData();
     }
@@ -240,4 +261,31 @@ public class DataMigratorRunner {
             sqlDB = "rhq_db";
         }
     }
+
+    private void parseMigrationOptionsWithDefault(CommandLine commandLine) {
+        if (commandLine.hasOption(disableRawOption.getLongOpt())) {
+            disableRaw = true;
+        } else {
+            disableRaw = false;
+        }
+
+        if (commandLine.hasOption(disable1HOption.getLongOpt())) {
+            disable1H = true;
+        } else {
+            disable1H = false;
+        }
+
+        if (commandLine.hasOption(disable6HOption.getLongOpt())) {
+            disable6H = true;
+        } else {
+            disable6H = false;
+        }
+
+        if (commandLine.hasOption(disable1DOption.getLongOpt())) {
+            disable1D = true;
+        } else {
+            disable1D = false;
+        }
+    }
 }
+

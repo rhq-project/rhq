@@ -88,8 +88,14 @@ public class Simulator {
         Stats stats = new Stats();
         StatsCollector statsCollector = new StatsCollector(stats);
 
-        ScheduledExecutorService executorService = Executors.newScheduledThreadPool(plan.getThreadPoolSize(),
+        final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(plan.getThreadPoolSize(),
             new SimulatorThreadFactory());
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                shutdown(executorService);
+            }
+        });
         log.info("Starting executor service");
         executorService.scheduleAtFixedRate(statsCollector, 0, 1, TimeUnit.MINUTES);
 
@@ -112,6 +118,12 @@ public class Simulator {
             Thread.sleep(Minutes.minutes(plan.getSimulationTime()).toStandardDuration().getMillis());
         } catch (InterruptedException e) {
         }
+//        shutdown(executorService);
+        log.info("Simulation has completed. Initiating shutdown...");
+        System.exit(0);
+    }
+
+    private void shutdown(ScheduledExecutorService executorService) {
         log.info("Shutting down executor service");
         executorService.shutdown();
         try {
@@ -123,7 +135,7 @@ public class Simulator {
             executorService.shutdownNow();
         }
         log.info("Shut down complete");
-        System.exit(0);
+        //System.exit(0);
     }
 
     private List<CassandraNode> initCluster(SimulationPlan plan) {
@@ -139,6 +151,8 @@ public class Simulator {
     private List<CassandraNode> deployCluster(ClusterConfig clusterConfig) throws IOException {
         File clusterDir = new File(clusterConfig.getClusterDir(), "cassandra");
         log.info("Deploying cluster to " + clusterDir);
+        clusterDir.mkdirs();
+
         DeploymentOptions deploymentOptions = new DeploymentOptions();
         deploymentOptions.setClusterDir(clusterDir.getAbsolutePath());
         deploymentOptions.setNumNodes(clusterConfig.getNumNodes());

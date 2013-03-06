@@ -36,7 +36,9 @@ prepare_java_opts()
 
 launch_simulator()
 {
-  $RHQ_MS_JAVA_EXE $JAVA_OPTS $RHQ_MS_ADDITIONAL_JAVA_OPTS -cp "$RHQ_MS_CLASSPATH" org.rhq.metrics.simulator.SimulatorCLI "$@" &
+  cmd="$RHQ_MS_JAVA_EXE $JAVA_OPTS $RHQ_MS_ADDITIONAL_JAVA_OPTS -cp $RHQ_MS_CLASSPATH org.rhq.metrics.simulator.SimulatorCLI $@"
+  eval $cmd
+  return $?
 }
 
 source "$RHQ_MS_HOME/bin/rhq-ms-env.sh"

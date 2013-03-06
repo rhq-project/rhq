@@ -49,43 +49,104 @@ public class SimulationPlanner {
         JsonNode root = mapper.readTree(jsonFile);
         SimulationPlan simulation = new SimulationPlan();
 
-        simulation.setCollectionInterval(root.get("collectionInterval").asLong());
-        simulation.setAggregationInterval(root.get("aggregationInterval").asLong());
-        simulation.setThreadPoolSize(root.get("threadPoolSize").asInt());
-        simulation.setNumMeasurementCollectors(root.get("numMeasurementCollectors").asInt());
-        simulation.setSimulationTime(root.get("simulationTime").asInt());
+        simulation.setCollectionInterval(getLong(root.get("collectionInterval"), 500L));
+        simulation.setAggregationInterval(getLong(root.get("aggregationInterval"), 1000L));
+        simulation.setThreadPoolSize(getInt(root.get("threadPoolSize"), 7));
+        simulation.setNumMeasurementCollectors(getInt(root.get("numMeasurementCollectors"), 5));
+        simulation.setSimulationTime(getInt(root.get("simulationTime"), 10));
 
-        for (JsonNode node : root.get("schedules")) {
-            simulation.addScheduleSet(new ScheduleGroup(node.get("count").asInt(), node.get("interval").asLong()));
+        JsonNode schedules = root.get("schedules");
+        if (schedules.isArray()) {
+            for (JsonNode node : schedules) {
+                simulation.addScheduleSet(new ScheduleGroup(getInt(node.get("count"), 2500),
+                    getLong(node.get("interval"), 500L)));
+            }
+        } else {
+            simulation.addScheduleSet(new ScheduleGroup(getInt(schedules.get("count"), 2500),
+                getLong(schedules.get("interval"), 500L)));
         }
 
-        MetricsConfiguration serverConfiguration = new MetricsConfiguration();
+        MetricsConfiguration serverConfiguration = createDefaultMetricsConfiguration();
         simulation.setMetricsServerConfiguration(serverConfiguration);
 
-        for (JsonNode node : root.get("ttl")) {
-            MetricsTable table = getTable(node.get("table").asText());
-            int ttl = node.get("value").asInt();
-            setTTLAndRetention(table, ttl, serverConfiguration);
+        JsonNode ttlNodes = root.get("ttl");
+        if (ttlNodes != null) {
+            for (JsonNode node : ttlNodes) {
+                String tableName = node.get("table").asText();
+                if (!tableName.isEmpty()) {
+                    MetricsTable table = getTable(tableName);
+                    JsonNode ttlNode = node.get("value");
+                    if (ttlNode != null) {
+                        setTTLAndRetention(table, ttlNode.asInt(), serverConfiguration);
+                    }
+                }
+            }
         }
 
         JsonNode timeSliceNode = root.get("timeSliceDuration");
-        String units = timeSliceNode.get("units").asText();
-        for (JsonNode node : timeSliceNode.get("values")) {
-            Duration duration = getDuration(units, node.get("value").asInt());
-            MetricsTable table = getTable(node.get("table").asText());
-            setTimeSliceDuration(table, duration, serverConfiguration);
+        if (timeSliceNode != null) {
+            String units = timeSliceNode.get("units").asText();
+            if (units.isEmpty()) {
+                units = "minutes";
+            }
+            for (JsonNode node : timeSliceNode.get("values")) {
+                JsonNode valueNode = node.get("value");
+                JsonNode tableNode = node.get("table");
+                if (!(tableNode == null || valueNode == null)) {
+                    Duration duration = getDuration(units, valueNode.asInt());
+                    MetricsTable table = getTable(tableNode.asText());
+                    setTimeSliceDuration(table, duration, serverConfiguration);
+                }
+            }
         }
 
         ClusterConfig clusterConfig = new ClusterConfig();
         JsonNode clusterConfigNode = root.get("cluster");
-        clusterConfig.setEmbedded(clusterConfigNode.get("embedded").asBoolean());
-        clusterConfig.setClusterDir(clusterConfigNode.get("clusterDir").asText());
-        clusterConfig.setHeapSize(clusterConfigNode.get("heapSize").asText());
-        clusterConfig.setHeapNewSize(clusterConfigNode.get("heapNewSize").asText());
-        clusterConfig.setNumNodes(clusterConfigNode.get("numNodes").asInt());
+        if (clusterConfigNode != null) {
+            clusterConfig.setEmbedded(clusterConfigNode.get("embedded").asBoolean(true));
+
+            String clusterDir = clusterConfigNode.get("clusterDir").asText();
+            if (clusterDir.isEmpty()) {
+                clusterConfig.setClusterDir("target");
+            } else {
+                clusterConfig.setClusterDir(clusterDir);
+            }
+
+            JsonNode heapSizeNode = clusterConfigNode.get("heapSize");
+            if (heapSizeNode != null) {
+                clusterConfig.setHeapSize(heapSizeNode.asText());
+            }
+
+            JsonNode heapNewSizeNode = clusterConfigNode.get("heapNewSize");
+            if (heapNewSizeNode != null) {
+                clusterConfig.setHeapNewSize(heapNewSizeNode.asText());
+            }
+
+            clusterConfig.setNumNodes(getInt(clusterConfigNode.get("numNodes"), 2));
+        }
         simulation.setClusterConfig(clusterConfig);
 
         return simulation;
+    }
+
+    private MetricsConfiguration createDefaultMetricsConfiguration() {
+        MetricsConfiguration configuration = new MetricsConfiguration();
+        configuration.setRawTTL(180);
+        configuration.setRawRetention(Seconds.seconds(180).toStandardDuration());
+        configuration.setRawTimeSliceDuration(Minutes.ONE.toStandardDuration());
+
+        configuration.setOneHourTTL(360);
+        configuration.setOneHourRetention(Seconds.seconds(360).toStandardDuration());
+        configuration.setOneHourTimeSliceDuration(Minutes.minutes(6).toStandardDuration());
+
+        configuration.setSixHourTTL(540);
+        configuration.setSixHourRetention(Seconds.seconds(540).toStandardDuration());
+        configuration.setSixHourTimeSliceDuration(Minutes.minutes(24).toStandardDuration());
+
+        configuration.setTwentyFourHourTTL(720);
+        configuration.setTwentyFourHourRetention(Seconds.seconds(720).toStandardDuration());
+
+        return configuration;
     }
 
     private MetricsTable getTable(String name) {
@@ -152,6 +213,20 @@ public class SimulationPlanner {
             default:
                 // do nothing
         }
+    }
+
+    private long getLong(JsonNode node, long defaultValue) {
+        if (node == null) {
+            return defaultValue;
+        }
+        return node.longValue();
+    }
+
+    private int getInt(JsonNode node, int defaultValue) {
+        if (node == null) {
+            return defaultValue;
+        }
+        return node.intValue();
     }
 
 }

@@ -30,15 +30,15 @@ package org.rhq.metrics.simulator.plan;
  */
 public class ClusterConfig {
 
-    private boolean embedded;
+    private boolean embedded = true;
 
-    private String clusterDir;
+    private String clusterDir = "target";
 
-    private int numNodes;
+    private int numNodes = 2;
 
-    private String heapSize;
+    private String heapSize = "256M";
 
-    private String heapNewSize;
+    private String heapNewSize = "64M";
 
     public boolean isEmbedded() {
         return embedded;

@@ -49,7 +49,7 @@ public class SimulatorThreadFactory implements ThreadFactory, Thread.UncaughtExc
     @Override
     public Thread newThread(Runnable r) {
         Thread t = new Thread(r, poolName + "-" + threadNumber.getAndIncrement());
-        t.setDaemon(true);
+        t.setDaemon(false);
         t.setUncaughtExceptionHandler(this);
 
         return t;

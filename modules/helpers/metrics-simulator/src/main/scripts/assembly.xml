@@ -20,7 +20,7 @@
         <include>**/*</include>
       </includes>
       <excludes>
-        <exclude>bin/rhq-ms</exclude>
+        <exclude>bin/rhq-ms.sh</exclude>
       </excludes>
     </fileSet>
 
@@ -28,7 +28,7 @@
       <directory>src/main/assembly</directory>
       <outputDirectory>/</outputDirectory>
       <includes>
-        <include>bin/rhq-ms</include>
+        <include>bin/rhq-ms.sh</include>
       </includes>
       <fileMode>0755</fileMode>
     </fileSet>

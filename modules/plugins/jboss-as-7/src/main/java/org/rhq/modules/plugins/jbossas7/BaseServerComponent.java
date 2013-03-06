@@ -330,8 +330,9 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         logExecutionResults(results);
         if (results.getError() != null) {
             operationResult.setErrorMessage(results.getError().getMessage());
-        } else if (results.getExitCode() != null) {
-            operationResult.setErrorMessage("Start failed with error code " + results.getExitCode() + ":\n" + results.getCapturedOutput());
+        } else if (results.getExitCode() != null && results.getExitCode() != 0) {
+            operationResult.setErrorMessage("Start failed with error code " + results.getExitCode() + ":\n"
+                + results.getCapturedOutput());
         } else {
             // Try to connect to the server - ping once per second, timing out after 20s.
             boolean up = waitForServerToStart();

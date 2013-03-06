@@ -517,12 +517,13 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         barDuration = d.barDuration,
                         timeFormatter = $wnd.d3.time.format("%I:%M:%S %p"),
                         dateFormatter = $wnd.d3.time.format("%m/%d/%y"),
-                        highValue = (d.high == undefined) ? 0 : d.high.toFixed(2),
-                        lowValue = (d.low == undefined) ? 0 : d.low.toFixed(2),
-                        avgValue = (d.y == undefined) ? 0 : d.y.toFixed(2);
+                        highValue =  d.high.toFixed(2),
+                        lowValue =  d.low.toFixed(2),
+                        avgValue =  d.y.toFixed(2);
 
 
-                if (d.y == undefined) {
+                // our special condition to indicate no data because avg lines dont like discontinuous data
+                if (d.y === 0 && d.high === 0 && d.low === 0 ) {
                     // no data
                     hoverString =
                             '<div class="chartHoverEnclosingDiv"><span class="chartHoverTimeLabel" >' + chartContext.timeLabel + ': </span>' + timeFormatter(date) + '</div>' +

@@ -801,6 +801,49 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
     }
 
     @Test(enabled = ENABLE_TESTS)
+    public void testAgentCurrentAvailability() throws Exception {
+        beginTx();
+
+        try {
+            setupResource(); // inserts initial UNKNOWN Availability at epoch
+            commitAndClose();
+
+            Availability avail;
+            long now = System.currentTimeMillis();
+
+            // add a report that says the resource is down
+            avail = new Availability(theResource, DOWN);
+            AvailabilityReport report = new AvailabilityReport(false, theAgent.getName());
+            report.addAvailability(avail);
+            availabilityManager.mergeAvailabilityReport(report);
+
+            // now pretend the agent sent us a report from a previous time period - should insert this in the past
+            avail = new Availability(theResource, (now - 600000), UP);
+            report = new AvailabilityReport(false, theAgent.getName());
+            report.addAvailability(avail);
+            availabilityManager.mergeAvailabilityReport(report);
+            assert getPointInTime(new Date(avail.getStartTime() - 2)) == UNKNOWN;
+
+            //check for current availability.
+            Date unknownTime = new Date(avail.getStartTime() - 2);
+            //make request for avail again but this time requesting most up to date status: should be DOWN
+            List<AvailabilityPoint> list = availabilityManager.findAvailabilitiesForResource(overlord,
+                theResource.getId(), unknownTime.getTime(), unknownTime.getTime() + 1, 1, true);
+            AvailabilityType returnedAvail = list.get(0).getAvailabilityType();
+            assert returnedAvail == DOWN : "Expected current avail to be '" + DOWN + "' but was '" + returnedAvail
+                + "'.";
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        } finally {
+            if (Status.STATUS_ACTIVE == getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+        }
+    }
+
+    @Test(enabled = ENABLE_TESTS)
     public void testAgentOldReport2() throws Exception {
         beginTx();
 
@@ -1431,8 +1474,9 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
      * @return A Resource ready to use
      */
     private Resource setupResource() {
-        String prefix = this.getClass().getSimpleName() + "_";
-        theAgent = new Agent(prefix + "agent", "localhost", 1234, "", "randomToken");
+        String tuid = "" + new Random().nextInt();
+        String prefix = this.getClass().getSimpleName() + "_" + tuid + "_";
+        theAgent = new Agent(prefix + "agent", "localhost" + tuid, 1234, "", "randomToken" + tuid);
         em.persist(theAgent);
 
         theResourceType = new ResourceType(prefix + "type", prefix + "plugin", ResourceCategory.PLATFORM, null);

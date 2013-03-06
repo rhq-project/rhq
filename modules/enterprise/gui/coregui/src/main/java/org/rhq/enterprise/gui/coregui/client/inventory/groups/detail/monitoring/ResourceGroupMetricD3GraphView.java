@@ -43,7 +43,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
-@Deprecated
 public class ResourceGroupMetricD3GraphView extends AbstractMetricD3GraphView {
 
     /**

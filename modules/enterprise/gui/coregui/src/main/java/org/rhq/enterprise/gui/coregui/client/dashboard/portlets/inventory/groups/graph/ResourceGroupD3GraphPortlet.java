@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,9 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.groups.graph;
+
+import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.ResourceGroupMetricGraphView;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Overflow;
@@ -47,16 +50,16 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitorin
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.SingleResourceGroupSelector;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
+
 /**
  * @author Greg Hinkle
  * @author Jay Shaughnessy
- * @deprecated see ResourceGroupD3GraphPortlet
+ * @author Mike Thompson
  */
-@Deprecated
-public class ResourceGroupGraphPortlet extends ResourceGroupMetricGraphView implements CustomSettingsPortlet {
+public class ResourceGroupD3GraphPortlet extends ResourceGroupMetricGraphView implements CustomSettingsPortlet {
 
     // A non-displayed, persisted identifier for the portlet
-    public static final String KEY = "ResourceGroupMetric";
+    public static final String KEY = "ResourceGroupMetricD3";
     // A default displayed, persisted name for the portlet
     public static final String NAME = MSG.view_portlet_defaultName_groupMetric();
 
@@ -66,7 +69,7 @@ public class ResourceGroupGraphPortlet extends ResourceGroupMetricGraphView impl
     public static final String CFG_RESOURCE_GROUP_ID = "resourceGroupId";
     public static final String CFG_DEFINITION_ID = "definitionId";
 
-    public ResourceGroupGraphPortlet(String locatorId) {
+    public ResourceGroupD3GraphPortlet(String locatorId) {
         super(locatorId);
         setOverflow(Overflow.HIDDEN);
     }
@@ -119,7 +122,7 @@ public class ResourceGroupGraphPortlet extends ResourceGroupMetricGraphView impl
         selectorItem.setShowTitle(false);
 
         final SingleResourceGroupSelector resourceGroupSelector = new SingleResourceGroupSelector(form
-            .extendLocatorId("Selector"), GroupCategory.COMPATIBLE, false);
+                .extendLocatorId("Selector"), GroupCategory.COMPATIBLE, false);
         resourceGroupSelector.setWidth(700);
         resourceGroupSelector.setHeight(300);
         //TODO, would probaby be nice to find a way to seed assigned with the current group
@@ -177,9 +180,9 @@ public class ResourceGroupGraphPortlet extends ResourceGroupMetricGraphView impl
         form.addSubmitValuesHandler(new SubmitValuesHandler() {
             public void onSubmitValues(SubmitValuesEvent submitValuesEvent) {
                 storedPortlet.getConfiguration().put(
-                    new PropertySimple(CFG_RESOURCE_GROUP_ID, form.getValue(CFG_RESOURCE_GROUP_ID)));
+                        new PropertySimple(CFG_RESOURCE_GROUP_ID, form.getValue(CFG_RESOURCE_GROUP_ID)));
                 storedPortlet.getConfiguration().put(
-                    new PropertySimple(CFG_DEFINITION_ID, form.getValue(CFG_DEFINITION_ID)));
+                        new PropertySimple(CFG_DEFINITION_ID, form.getValue(CFG_DEFINITION_ID)));
 
                 configure(portletWindow, storedPortlet);
 

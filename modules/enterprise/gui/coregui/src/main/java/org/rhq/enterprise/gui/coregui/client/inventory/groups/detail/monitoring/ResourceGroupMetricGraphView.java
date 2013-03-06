@@ -43,7 +43,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 /**
  * @author Greg Hinkle
  * @author Jay Shaughnessy
+ * @deprecated see ResourceGroupD3MetricGraphView
  */
+@Deprecated
 public class ResourceGroupMetricGraphView extends AbstractMetricGraphView {
 
     private HTMLFlow resourceGroupTitle;

@@ -105,7 +105,14 @@ public class SimulationPlanner {
         if (clusterConfigNode != null) {
             clusterConfig.setEmbedded(clusterConfigNode.get("embedded").asBoolean(true));
 
-            String clusterDir = clusterConfigNode.get("clusterDir").asText();
+            JsonNode clusterDirNode = clusterConfigNode.get("clusterDir");
+            String clusterDir;
+            if (clusterDirNode == null) {
+                File basedir = new File(System.getProperty("rhq.metrics.simulator.basedir"));
+                clusterDir = basedir.getAbsolutePath();
+            } else {
+                clusterDir = clusterDirNode.asText();
+            }
             if (clusterDir.isEmpty()) {
                 clusterConfig.setClusterDir("target");
             } else {

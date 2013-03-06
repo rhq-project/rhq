@@ -3,11 +3,13 @@
 _DOLLARZERO=`readlink "$0" 2>/dev/null || echo "$0"`
 RHQ_MS_BIN_DIR_PATH=`dirname "$_DOLLARZERO"`
 
+dir=`pwd`
+
 if [ -z "$RHQ_MS_HOME" ]; then
-  pushd $RHQ_MS_BIN_DIR_PATH/..
+  cd $RHQ_MS_BIN_DIR_PATH/..
 fi
 RHQ_MS_HOME=`pwd`
-popd
+cd $dir
 
 prepare_java()
 {
@@ -30,13 +32,13 @@ prepare_classpath()
 prepare_java_opts()
 {
   if [ -z "$RHQ_MS_JAVA_OPTS" ]; then
-    RHQ_MS_JAVA_OPTS="-Xms64M -Xmx64M -Djava.net.preferIPv4Stack=true"
+    RHQ_MS_JAVA_OPTS="-Xms64M -Xmx64M -Djava.net.preferIPv4Stack=true -Drhq.metrics.simulator.basedir=$RHQ_MS_HOME"
   fi
 }
 
 launch_simulator()
 {
-  cmd="$RHQ_MS_JAVA_EXE $JAVA_OPTS $RHQ_MS_ADDITIONAL_JAVA_OPTS -cp $RHQ_MS_CLASSPATH org.rhq.metrics.simulator.SimulatorCLI $@"
+  cmd="$RHQ_MS_JAVA_EXE $RHQ_MS_JAVA_OPTS $RHQ_MS_ADDITIONAL_JAVA_OPTS -cp $RHQ_MS_CLASSPATH org.rhq.metrics.simulator.SimulatorCLI $@"
   eval $cmd
   return $?
 }

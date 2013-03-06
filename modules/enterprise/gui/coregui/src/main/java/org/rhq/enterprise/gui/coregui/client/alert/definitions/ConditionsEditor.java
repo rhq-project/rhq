@@ -156,7 +156,7 @@ public class ConditionsEditor extends LocatableVLayout {
 
         @Override
         protected void configureTable() {
-            addTableAction(this.extendLocatorId("add"), "Add", null, new AbstractTableAction() {
+            addTableAction(this.extendLocatorId("add"), MSG.common_button_add(), null, new AbstractTableAction() {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
 
                     // we need the drift definition templates (if there are any) so we know if we should offer drift conditions as an option

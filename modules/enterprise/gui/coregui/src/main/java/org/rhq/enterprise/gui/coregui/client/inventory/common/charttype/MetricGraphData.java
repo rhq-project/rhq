@@ -214,7 +214,7 @@ public class MetricGraphData implements JsonMetricProducer {
 
     public String getChartTitle() {
 
-        return entityName + " - "+definition.getDisplayName();
+        return (entityName == null) ? definition.getDisplayName() : entityName + " - "+definition.getDisplayName();
 
     }
 
@@ -279,6 +279,10 @@ public class MetricGraphData implements JsonMetricProducer {
                         sb.append(" \"low\":" + newLow.getValue() + ",");
                         sb.append(" \"y\":" + newValue.getValue() + "},");
                     } else {
+                        // give it some values so that we dont have NaN
+                        sb.append(" \"high\":0,");
+                        sb.append(" \"low\":0,");
+                        sb.append(" \"y\":0,");
                         sb.append(" \"nodata\":true },");
                 }
                 if (!sb.toString().endsWith("},")) {

@@ -67,8 +67,6 @@ public class ResourceGroupMetricGraphView extends AbstractMetricGraphView {
     @Override
     protected void renderGraph() {
         if (null == getDefinition()) {
-            Log.debug(" **** Mike Group Metric Graph");
-
             ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
 
             ResourceGroupCriteria criteria = new ResourceGroupCriteria();

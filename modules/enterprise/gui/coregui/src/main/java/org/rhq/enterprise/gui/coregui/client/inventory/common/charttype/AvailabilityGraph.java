@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,21 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
 
-import org.rhq.core.domain.measurement.MeasurementDefinition;
-
 /**
- * Defines GWT JSNI charting capability. Indicator of a class producing
- * d3 (javascript) charts. Allows us to quickly find, in a standard
- * way JSNI charts like d3. Finding implementations of this class
- * will reveal all the d3 charting implementations.
- *
  * @author Mike Thompson
  */
-public interface HasD3JsniChart
-{
+public interface AvailabilityGraph {
+
     void drawJsniChart();
-    void setEntityId(int entityId) ;
-    void setDefinitionId(int definitionId) ;
-    void setDefinition(MeasurementDefinition measurementDefinition) ;
+
 
 }

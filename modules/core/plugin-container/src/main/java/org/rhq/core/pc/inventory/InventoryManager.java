@@ -2614,8 +2614,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
         } catch (Throwable e) {
             // TODO GH: Add server/parent - up/down semantics so this won't happen just because a server is not up
             long elapsedTime = System.currentTimeMillis() - startTime;
-            log.warn("Failure during discovery for [" + resourceType.getName() + "] Resources - failed after "
-                + elapsedTime + " ms.", e);
+            if (!PluginContainer.getInstance().isRunning()) {
+                log.warn("Could not complete discovery, plugin container was shut down.");
+            } else {
+                log.warn("Failure during discovery for [" + resourceType.getName() + "] Resources - failed after "
+                    + elapsedTime + " ms.", e);
+            }
             return Collections.EMPTY_SET;
         }
 

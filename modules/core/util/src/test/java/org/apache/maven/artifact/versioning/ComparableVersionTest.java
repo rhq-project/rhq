@@ -131,6 +131,12 @@ public class ComparableVersionTest {
         compareVersions("4.0.0.Beta1", "4.0.0.GA");
     }
 
+    public void testBZ916790() {
+        new ComparableVersion("3.13.1.201302221022"); // a bug caused this to throw an exception before
+        compareVersions("3.13.1.201302221022", "3.13.1.201302221023");
+        compareVersions("3.13.1.201202221022", "3.13.1.201302221022");
+    }
+
     private void compareVersions(String ver1String, String ver2String) {
         //System.out.println("Testing: " + ver1String + "\t" + ver2String);
 

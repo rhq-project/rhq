@@ -49,7 +49,9 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.Single
 /**
  * @author Greg Hinkle
  * @author Jay Shaughnessy
+ * @deprecated see ResourceGroupD3GraphPortlet
  */
+@Deprecated
 public class ResourceGroupGraphPortlet extends ResourceGroupMetricGraphView implements CustomSettingsPortlet {
 
     // A non-displayed, persisted identifier for the portlet

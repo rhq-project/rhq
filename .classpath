@@ -76,6 +76,7 @@
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-operations/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-cli/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-snmp/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-snmp/src/main/resources"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-irc/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-microblog/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-mobicents/src/main/java"/>
@@ -213,11 +214,11 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/servlet/jsp-api/2.0/jsp-api-2.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-validator/commons-validator/1.1.4/commons-validator-1.1.4.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/testng/testng/6.5.2/testng-6.5.2.jar" sourcepath="/M2_REPO/org/testng/testng/6.5.2/testng-6.5.2-sources.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/snmp4j/snmp4j/1.8.2/snmp4j-1.8.2.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/snmp4j/snmp4j/1.8.2/snmp4j-1.8.2.jar" sourcepath="M2_REPO/org/snmp4j/snmp4j/1.8.2/snmp4j-1.8.2-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/log4j/log4j/1.2.14/log4j-1.2.14.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/tomcat/tomcat-jk/4.1.31/tomcat-jk-4.1.31.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jdom/jdom/1.0/jdom-1.0.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/commons-collections/commons-collections/3.2/commons-collections-3.2.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/commons-collections/commons-collections/3.2/commons-collections-3.2.jar" sourcepath="/M2_REPO/commons-collections/commons-collections/3.2/commons-collections-3.2-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/persistence/persistence-api/1.0/persistence-api-1.0.jar" sourcepath="/M2_REPO/javax/persistence/persistence-api/1.0/persistence-api-1.0-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jboss/jboss-jmx/4.2.3.GA/jboss-jmx-4.2.3.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/tomcat/catalina/5.5.20/catalina-5.5.20.jar"/>
@@ -248,7 +249,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/richfaces/ui/richfaces-ui/3.3.3.Final/richfaces-ui-3.3.3.Final.jar" sourcepath="/M2_REPO/org/richfaces/ui/richfaces-ui/3.3.0.GA/richfaces-ui-3.3.0.GA-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/postgresql/postgresql/9.2-1002.jdbc4/postgresql-9.2-1002.jdbc4.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jboss/jboss-cache/1.4.1.SP9/jboss-cache-1.4.1.SP9.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/hyperic/sigar/1.6.5.132-3/sigar-1.6.5.132-3.jar" sourcepath="/M2_REPO/org/hyperic/sigar/1.6.5.132-3/sigar-1.6.5.132-3-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/hyperic/sigar/1.6.5.132-5/sigar-1.6.5.132-5.jar" sourcepath="/M2_REPO/org/hyperic/sigar/1.6.5.132-5/sigar-1.6.5.132-5-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/jbossts/jbossjts/4.16.2.Final/jbossjts-4.16.2.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/maven/maven-project/2.0.8/maven-project-2.0.8.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/maven/maven-plugin-api/2.0.8/maven-plugin-api-2.0.8.jar"/>
@@ -259,7 +260,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/net/java/dev/jna/jna/3.2.5/jna-3.2.5.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/freemarker/freemarker/2.3.11/freemarker-2.3.11.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jline/jline/0.9.94/jline-0.9.94.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/javassist/javassist/3.12.1.GA/javassist-3.12.1.GA.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/javassist/javassist/3.12.1.GA/javassist-3.12.1.GA.jar" sourcepath="/M2_REPO/javassist/javassist/3.12.1.GA/javassist-3.12.1.GA-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/net/sf/opencsv/opencsv/1.8/opencsv-1.8.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-digester/commons-digester/1.8.1/commons-digester-1.8.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-codec/commons-codec/1.4/commons-codec-1.4.jar"/>
@@ -343,7 +344,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/enterprise/cdi-api/1.0-SP4/cdi-api-1.0-SP4.jar" sourcepath="M2_REPO/javax/enterprise/cdi-api/1.0-SP4/cdi-api-1.0-SP4-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/inject/javax.inject/1/javax.inject-1.jar" sourcepath="M2_REPO/javax/inject/javax.inject/1/javax.inject-1-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/mozilla/rhino/1.7R4/rhino-1.7R4.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/picketbox/picketbox/4.0.7.Final/picketbox-4.0.7.Final.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/picketbox/picketbox/4.0.7.Final/picketbox-4.0.7.Final.jar" sourcepath="/M2_REPO/org/picketbox/picketbox/4.0.7.Final/picketbox-4.0.7.Final-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/python/jython-standalone/2.5.2/jython-standalone-2.5.2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/wordnik/swagger-annotations_2.9.1/1.1.1-SNAPSHOT/swagger-annotations_2.9.1-1.1.1-20121031.024335-6.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/joda-time/joda-time/2.1/joda-time-2.1.jar"/>

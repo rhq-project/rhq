@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.widgets.HTMLFlow;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -33,7 +32,6 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView;
@@ -42,27 +40,13 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
-@Deprecated
 public class ResourceGroupMetricD3GraphView extends AbstractMetricD3GraphView {
 
-    /**
-     * Defines the jsniChart type like area, line, etc...
-     *
-     */
-    //private HasD3JsniChart jsniChart;
-
-    //    public ResourceGroupMetricD3GraphView(String locatorId){
-    //        super(locatorId);
-    //        //setChartHeight("150px");
-    //    }
-
     public ResourceGroupMetricD3GraphView(AbstractGraph graph) {
-
         super(graph);
-        //setChartHeight("150px");
     }
 
-    protected void renderGraph() {
+    protected void drawGraph() {
         if (null == graph.getMetricGraphData().getDefinition()) {
 
             ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
@@ -96,10 +80,6 @@ public class ResourceGroupMetricD3GraphView extends AbstractMetricD3GraphView {
 
                             @Override
                             public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                                String url = LinkManager.getResourceLink(resource.getId());
-                                resourceTitle = new HTMLFlow(LinkManager.getHref(url, resource.getName()));
-                                resourceTitle.setTooltip(AncestryUtil.getAncestryHoverHTMLForResource(resource, types,
-                                    0));
 
                                 ResourceType type = types.get(resource.getResourceType().getId());
                                 for (MeasurementDefinition def : type.getMetricDefinitions()) {

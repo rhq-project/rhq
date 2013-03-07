@@ -74,8 +74,8 @@ public class DiscoveryComponentProxyFactory {
      */
     @SuppressWarnings("unchecked")
     public <T> T getDiscoveryComponentProxy(ResourceType type, ResourceDiscoveryComponent component, long timeout,
-                                            Class<T> componentInterface, ResourceContainer parentResourceContainer)
-            throws PluginContainerException, BlacklistedException {
+        Class<T> componentInterface, ResourceContainer parentResourceContainer) throws PluginContainerException,
+        BlacklistedException {
 
         if (isResourceTypeBlacklisted(type)) {
             throw new BlacklistedException("Discovery component for resource type [" + type + "] has been blacklisted");
@@ -84,8 +84,8 @@ public class DiscoveryComponentProxyFactory {
         try {
             PluginComponentFactory pluginComponentFactory = PluginContainer.getInstance().getPluginComponentFactory();
 
-            ClassLoader pluginClassLoader =
-                    pluginComponentFactory.getDiscoveryComponentClassLoader(parentResourceContainer, type.getPlugin());
+            ClassLoader pluginClassLoader = pluginComponentFactory.getDiscoveryComponentClassLoader(
+                parentResourceContainer, type.getPlugin());
 
             // This is the handler that will actually invoke the method calls.
             ResourceDiscoveryComponentInvocationHandler handler = new ResourceDiscoveryComponentInvocationHandler(type,
@@ -120,11 +120,10 @@ public class DiscoveryComponentProxyFactory {
      */
     @SuppressWarnings("unchecked")
     public ResourceDiscoveryComponent getDiscoveryComponentProxy(ResourceType type,
-                                                                 ResourceDiscoveryComponent component, long timeout,
-                                                                 ResourceContainer parentResourceContainer)
-            throws PluginContainerException, BlacklistedException {
+        ResourceDiscoveryComponent component, long timeout, ResourceContainer parentResourceContainer)
+        throws PluginContainerException, BlacklistedException {
         return getDiscoveryComponentProxy(type, component, timeout, ResourceDiscoveryComponent.class,
-                parentResourceContainer);
+            parentResourceContainer);
     }
 
     public void initialize() {
@@ -181,7 +180,7 @@ public class DiscoveryComponentProxyFactory {
         private final ResourceType resourceType;
         private final ClassLoader pluginClassLoader;
         private Class<?> componentInterface;
-        
+
         public ResourceDiscoveryComponentInvocationHandler(ResourceType type, ResourceDiscoveryComponent component,
             long timeout, ClassLoader pluginClassLoader, Class<?> componentInterface) {
             if (timeout <= 0) {
@@ -220,7 +219,9 @@ public class DiscoveryComponentProxyFactory {
             try {
                 return future.get(this.timeout, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
-                log.error("Thread [" + Thread.currentThread().getName() + "] was interrupted.");
+                if (log.isDebugEnabled()) {
+                    log.debug("Thread [" + Thread.currentThread().getName() + "] was interrupted.");
+                }
                 future.cancel(true); // this is a daemon thread, let's try to cancel it
                 throw new RuntimeException(invokedMethodString(method, args, "was interrupted."), e);
             } catch (ExecutionException e) {
@@ -236,7 +237,7 @@ public class DiscoveryComponentProxyFactory {
                 if (thread != null) {
                     StackTraceElement[] stackTrace = thread.getStackTrace();
                     cause = new Exception(thread + " with id [" + thread.getId()
-                            + "] is hung. This exception contains its stack trace.");
+                        + "] is hung. This exception contains its stack trace.");
                     cause.setStackTrace(stackTrace);
                 } else {
                     cause = null;

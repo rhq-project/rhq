@@ -25,8 +25,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.ejb.EJBException;
+import javax.persistence.EntityManager;
 import javax.security.auth.login.LoginException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -35,6 +41,7 @@ import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.SubjectCriteria;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.auth.SessionManager;
@@ -44,7 +51,9 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
+import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.SessionTestHelper;
 
 /**
  * Tests the subject manager.
@@ -52,18 +61,27 @@ import org.rhq.enterprise.server.util.LookupUtil;
 @Test
 public class SubjectManagerBeanTest extends AbstractEJB3Test {
 
+    private static final Log LOG = LogFactory.getLog(SubjectManagerBeanTest.class);
+
+    private static final String RHQADMIN = "rhqadmin";
+
+    private static final String ITEST_USER = "smb_itest_user";
+
     private SubjectManagerLocal subjectManager;
     private AuthorizationManagerLocal authorizationManager;
     private RoleManagerLocal roleManager;
 
-    /**
-     * Prepares things for the entire test class.
-     */
     @Override
     protected void beforeMethod() {
         subjectManager = LookupUtil.getSubjectManager();
         authorizationManager = LookupUtil.getAuthorizationManager();
         roleManager = LookupUtil.getRoleManager();
+        createITestSubject();
+    }
+
+    private Subject createITestSubject() {
+        Subject subjectToCreate = new Subject(ITEST_USER, true, false);
+        return subjectManager.createSubject(subjectManager.getOverlord(), subjectToCreate, ITEST_USER);
     }
 
     /**
@@ -71,11 +89,14 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
      */
     @Override
     protected void afterMethod() {
+        deleteITestSubject();
+
         // create a list of all users we know our tests have used
         List<String> usernames = new ArrayList<String>();
         usernames.add("admin");
-        usernames.add("rhqadmin");
+        usernames.add(RHQADMIN);
         usernames.add("new_user");
+        usernames.add(ITEST_USER);
 
         SessionManager session_manager = SessionManager.getInstance();
 
@@ -87,6 +108,13 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
             } finally {
                 usernames.remove(0);
             }
+        }
+    }
+
+    private void deleteITestSubject() {
+        Subject subject = subjectManager.getSubjectByName(ITEST_USER);
+        if (subject != null) {
+            subjectManager.deleteSubjects(subjectManager.getOverlord(), new int[] { subject.getId() });
         }
     }
 
@@ -168,7 +196,7 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
         getTransactionManager().begin();
         try {
             superuser = subjectManager.getOverlord();
-            rhqadmin = subjectManager.getSubjectByName("rhqadmin");
+            rhqadmin = subjectManager.getSubjectByName(RHQADMIN);
             rhqadmin = createSession(rhqadmin);
 
             try {
@@ -209,7 +237,7 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
         try {
             superuser = subjectManager.getOverlord();
             superuser = createSession(superuser);
-            rhqadmin = subjectManager.getSubjectByName("rhqadmin");
+            rhqadmin = subjectManager.getSubjectByName(RHQADMIN);
             rhqadmin = createSession(rhqadmin);
 
             try {
@@ -263,9 +291,9 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
         assert authorizationManager.getExplicitGlobalPermissions(superuser).containsAll(all_global_perms);
 
         // get the rhqadmin subject
-        Subject rhqadmin = subjectManager.getSubjectByName("rhqadmin");
+        Subject rhqadmin = subjectManager.getSubjectByName(RHQADMIN);
         assert rhqadmin.getId() == 2;
-        assert rhqadmin.getName().equals("rhqadmin");
+        assert rhqadmin.getName().equals(RHQADMIN);
         assert authorizationManager.getExplicitGlobalPermissions(rhqadmin).containsAll(all_global_perms);
 
         rhqadmin = createSession(rhqadmin); // our test needs to ensure the rhqadmin user has a session
@@ -281,7 +309,7 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
         Subject subject = null;
         try {
-            subject = subjectManager.loginUnauthenticated("rhqadmin");
+            subject = subjectManager.loginUnauthenticated(RHQADMIN);
         } catch (Exception e) {
             assert false : "There must be at least rhqadmin user";
         }
@@ -360,6 +388,49 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
         getTransactionManager().commit();
     }
 
+    /** 
+     * Tests finding Subjects with Roles.
+     * @throws SystemException 
+     * @throws NotSupportedException 
+     */
+    public void testFindSubjectsWithRoles() throws NotSupportedException, SystemException {
+        getTransactionManager().begin();
+        EntityManager entityMgr = getEntityManager();
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+        RoleManagerLocal roleManager = LookupUtil.getRoleManager();
+        Subject overlord = subjectManager.getOverlord();
+
+        try {
+            //create new subject
+            Subject subject = SessionTestHelper.createNewSubject(entityMgr, "testSubject");
+            //create new role for subject
+            Role roleWithSubject = SessionTestHelper.createNewRoleForSubject(entityMgr, subject, "role with subject");
+            roleWithSubject.addPermission(Permission.VIEW_RESOURCE);
+            Role newRole = new Role("role without subject");
+            Role roleWithoutSubject = roleManager.createRole(overlord, newRole);
+
+            //exercise findAvailableSubjectsForRole
+            Integer[] pendingSubjectIds = new Integer[0];
+            PageList<Subject> subjects = subjectManager.findAvailableSubjectsForRole(subjectManager.getOverlord(),
+                roleWithoutSubject.getId(), pendingSubjectIds, PageControl.getUnlimitedInstance());
+            assert subjects.size() > 0 : "Unable to locate subject(s) available for role with id '"
+                + roleWithSubject.getId() + "'.";//Should be at least one.
+            //            boolean located = false;
+            Subject locatedSubject = null;
+            for (Subject s : subjects) {
+                if (s.getName().equals(subject.getName())) {
+                    locatedSubject = s;
+                }
+            }
+            assert locatedSubject != null : "Unable to located subject with name '" + subject.getName() + "'.";
+            assert locatedSubject.getId() == subject.getId() : "Subject id does not match expected subject identifier '"
+                + subject.getId() + "'";//should match.
+
+        } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
     /**
      * Tests getting a super user subject.
      *
@@ -393,30 +464,30 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
         getTransactionManager().begin();
 
         try {
-            Subject subject1 = subjectManager.loginUnauthenticated("rhqadmin");
+            Subject subject1 = subjectManager.loginUnauthenticated(RHQADMIN);
             int session1 = subject1.getSessionId();
 
             Thread.sleep(500); // just wait a bit
 
-            Subject subject2 = subjectManager.loginUnauthenticated("rhqadmin");
+            Subject subject2 = subjectManager.loginUnauthenticated(RHQADMIN);
             int session2 = subject2.getSessionId();
 
             assert session1 != session2 : "The same sessionId should never be assigned when logging in twice";
             assert subject1.equals(subject2);
 
-            Subject s = subjectManager.getSubjectByNameAndSessionId("rhqadmin", subject1.getSessionId());
+            Subject s = subjectManager.getSubjectByNameAndSessionId(RHQADMIN, subject1.getSessionId());
             assert s.getSessionId() == session1;
-            s = subjectManager.getSubjectByNameAndSessionId("rhqadmin", subject2.getSessionId());
+            s = subjectManager.getSubjectByNameAndSessionId(RHQADMIN, subject2.getSessionId());
             assert s.getSessionId() == session2;
 
             subjectManager.logout(session1);
             try {
-                s = subjectManager.getSubjectByNameAndSessionId("rhqadmin", subject1.getSessionId());
+                s = subjectManager.getSubjectByNameAndSessionId(RHQADMIN, subject1.getSessionId());
                 assert false : "Session should be invalid";
             } catch (SessionNotFoundException ok) {
             }
 
-            s = subjectManager.getSubjectByNameAndSessionId("rhqadmin", subject2.getSessionId());
+            s = subjectManager.getSubjectByNameAndSessionId(RHQADMIN, subject2.getSessionId());
             assert s.getSessionId() == session2;
 
             // this should ne a no-op, no exception
@@ -424,7 +495,7 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
 
             subjectManager.logout(session2);
             try {
-                s = subjectManager.getSubjectByNameAndSessionId("rhqadmin", subject2.getSessionId());
+                s = subjectManager.getSubjectByNameAndSessionId(RHQADMIN, subject2.getSessionId());
                 fail("Session should be invalid");
             } catch (SessionNotFoundException e) {
                 // expected
@@ -473,7 +544,7 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
 
         try {
             Subject overlord = subjectManager.getOverlord();
-            Subject rhqadmin = subjectManager.getSubjectByName("rhqadmin");
+            Subject rhqadmin = subjectManager.getSubjectByName(RHQADMIN);
 
             Role roleWithViewUsersPerm = new Role("role" + UUID.randomUUID());
             roleWithViewUsersPerm.addPermission(Permission.VIEW_USERS);
@@ -504,7 +575,7 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
         try {
             Subject overlord = subjectManager.getOverlord();
 
-            Subject rhqadmin = subjectManager.getSubjectByName("rhqadmin");
+            Subject rhqadmin = subjectManager.getSubjectByName(RHQADMIN);
             rhqadmin = subjectManager.loginUnauthenticated(rhqadmin.getName());
 
             Subject anotherSubject = new Subject("subject" + UUID.randomUUID(), true, false);
@@ -570,4 +641,119 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
         }
     }
 
+    public void subjectCannotUpdateAnotherSubjectWithoutPermission() throws LoginException {
+        executeInTransaction(new TransactionCallback() {
+
+            @Override
+            public void execute() throws Exception {
+                Subject fakeSubject = new Subject("fakeUser", true, false);
+                Subject itestSubject = subjectManager.loginUnauthenticated(ITEST_USER);
+                try {
+                    subjectManager.updateSubject(itestSubject, fakeSubject, "newPassword");
+                    fail("Subject without permission should not be able to update another subject");
+                } catch (PermissionException e) {
+                    assertTrue(e.getMessage().contains("do not have permission to update user"));
+                }
+            }
+        });
+    }
+
+    public void nobodyCanDisableASystemSubject() {
+        executeInTransaction(new TransactionCallback() {
+
+            @Override
+            public void execute() throws Exception {
+                Subject rhqAdminSubject = subjectManager.getSubjectByName(RHQADMIN);
+                try {
+                    Subject changedSubject = new Subject(rhqAdminSubject.getName(), false, rhqAdminSubject.getFsystem());
+                    changedSubject.setId(rhqAdminSubject.getId());
+                    subjectManager.updateSubject(subjectManager.getOverlord(), changedSubject, "newPassword");
+                    fail("Nobody should be able to disable a system subject");
+                } catch (PermissionException e) {
+                    assertTrue(e.getMessage().startsWith("You cannot disable the system user"));
+                }
+            }
+        });
+    }
+
+    public void nobodyCanChangeASubjectName() {
+        executeInTransaction(new TransactionCallback() {
+
+            @Override
+            public void execute() throws Exception {
+                Subject itestSubject = subjectManager.getSubjectByName(ITEST_USER);
+                Subject changedSubject = new Subject("pipo", itestSubject.getFactive(), itestSubject.getFsystem());
+                changedSubject.setId(itestSubject.getId());
+                try {
+                    subjectManager.updateSubject(subjectManager.getOverlord(), changedSubject, "newPassword");
+                    fail("Nobody should be able to change a subject name");
+                } catch (EJBException e) {
+                    Exception cause = e.getCausedByException();
+                    assertEquals(IllegalArgumentException.class, cause.getClass());
+                    assertTrue(cause.getMessage().equals("You cannot change a user's username."));
+                }
+            }
+        });
+    }
+
+    public void nobodyCanChangeAnUnknowSubject() {
+        executeInTransaction(new TransactionCallback() {
+
+            @Override
+            public void execute() throws Exception {
+                try {
+                    Subject fakeSubject = new Subject("fakeUser", true, false);
+                    subjectManager.updateSubject(subjectManager.getOverlord(), fakeSubject, "newPassword");
+                    fail("Nobody should be able to change an unknown subject");
+                } catch (EJBException e) {
+                    Exception cause = e.getCausedByException();
+                    assertEquals(IllegalArgumentException.class, cause.getClass());
+                    assertTrue(cause.getMessage().startsWith("No user exists with id"));
+                }
+            }
+        });
+    }
+
+    public void subjectCanUpdateItself() {
+        executeInTransaction(new TransactionCallback() {
+
+            @Override
+            public void execute() throws Exception {
+                Subject itestSubject = subjectManager.loginUnauthenticated(ITEST_USER);
+                Subject changedSubject = new Subject(itestSubject.getName(), itestSubject.getFactive(),
+                    itestSubject.getFsystem());
+                changedSubject.setId(itestSubject.getId());
+                changedSubject.setEmailAddress("pipo@molo.com");
+                try {
+                    changedSubject = subjectManager.updateSubject(itestSubject, changedSubject, "newPassword");
+                    assertEquals("pipo@molo.com", changedSubject.getEmailAddress());
+                } catch (Exception e) {
+                    LOG.error(e);
+                    fail("Subject should be able to update itself");
+                }
+            }
+        });
+    }
+
+    public void subjectWhitoutManageSecurityPermissionCannotUpdateItsRoles() throws LoginException {
+        executeInTransaction(new TransactionCallback() {
+
+            @Override
+            public void execute() throws Exception {
+                Subject itestSubject = subjectManager.loginUnauthenticated(ITEST_USER);
+                final PageList<Role> allRoles = roleManager.findRoles(PageControl.getUnlimitedInstance());
+                Subject changedSubject = new Subject(itestSubject.getName(), itestSubject.getFactive(),
+                    itestSubject.getFsystem());
+                changedSubject.setId(itestSubject.getId());
+                changedSubject.getRoles().addAll(allRoles);
+                try {
+                    subjectManager.updateSubject(itestSubject, changedSubject, "newPassword");
+                    fail("Subject whitout " + Permission.MANAGE_SECURITY
+                        + " permission should not be able to update its roles");
+                } catch (PermissionException e) {
+                    assertTrue(e.getMessage().contains("is not authorized for"));
+                }
+            }
+        });
+    }
 }

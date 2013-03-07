@@ -41,7 +41,6 @@ import org.rhq.core.domain.util.PageOrdering;
 public class SubjectCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
     private String filterName;
     private String filterFirstName;
     private String filterLastName;
@@ -52,7 +51,6 @@ public class SubjectCriteria extends Criteria {
     private Boolean filterFactive;
     private Boolean filterFsystem;
     private Integer filterRoleId; // needs overrides
-    private List<Integer> filterIds; // needs overrides
 
     private boolean fetchConfiguration;
     private boolean fetchRoles;
@@ -72,16 +70,11 @@ public class SubjectCriteria extends Criteria {
             + "          JOIN innerSubject.roles innerRole " // 
             + "         WHERE innerRole.id = ? )");
 
-        filterOverrides.put("ids", "id IN ( ? )");
     }
 
     @Override
     public Class<Subject> getPersistentClass() {
         return Subject.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
     }
 
     public void addFilterName(String filterName) {
@@ -122,10 +115,6 @@ public class SubjectCriteria extends Criteria {
 
     public void addFilterRoleId(Integer filterRoleId) {
         this.filterRoleId = filterRoleId;
-    }
-
-    public void addFilterIds(Integer... filterIds) {
-        this.filterIds = CriteriaUtils.getListIgnoringNulls(filterIds);
     }
 
     public void fetchConfiguration(boolean fetchConfiguration) {

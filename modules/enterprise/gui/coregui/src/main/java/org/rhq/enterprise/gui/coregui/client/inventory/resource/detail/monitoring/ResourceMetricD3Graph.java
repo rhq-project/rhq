@@ -20,17 +20,12 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitori
 
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.HasD3JsniChart;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.HasD3MetricJsniChart;
 
+/**
+ * A D3 graph implementation for graphing metrics.
+ */
 public class ResourceMetricD3Graph extends AbstractMetricD3GraphView {
-
-    protected boolean isPortalGraph = false;
-
-    /**
-     * Defines the jsniChart type like area, line, etc...
-     *
-     */
-    //private HasD3JsniChart jsniChart;
 
     /**
      * This constructor is for the use case in the Dashboard where we dont actually
@@ -38,14 +33,11 @@ public class ResourceMetricD3Graph extends AbstractMetricD3GraphView {
      */
     public ResourceMetricD3Graph() {
         super();
-        //setChartHeight("150px");
     }
 
     public ResourceMetricD3Graph(AbstractGraph graph) {
 
         super(graph);
-        //this.jsniChart = jsniChart;
-        //setChartHeight("150px");
     }
 
     @Override
@@ -62,13 +54,9 @@ public class ResourceMetricD3Graph extends AbstractMetricD3GraphView {
         graph.drawJsniChart();
     }
 
-    public HasD3JsniChart getJsniChart() {
+    public HasD3MetricJsniChart getJsniChart() {
         return graph;
     }
-
-    //    public void setJsniChart(HasD3JsniChart jsniChart) {
-    //        this.graph = jsniChart;
-    //    }
 
     @Override
     protected void displayLiveGraphViewDialog() {

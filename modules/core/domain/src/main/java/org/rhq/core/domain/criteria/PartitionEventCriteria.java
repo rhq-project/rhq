@@ -44,7 +44,6 @@ public class PartitionEventCriteria extends Criteria {
     
     public static final String SORT_FIELD_CTIME = "ctime";
 
-    private Integer filterId;
     private List<PartitionEventType> filterEventType; // requires override
     private List<ExecutionStatus> filterExecutionStatus; // requires override
     private String filterEventDetail;
@@ -60,10 +59,6 @@ public class PartitionEventCriteria extends Criteria {
         return PartitionEvent.class;
     }
 
-    public void addFilterId(Integer id) {
-        this.filterId = id;
-    }
-    
     public void addFilterEventType(PartitionEventType... filterEventType) {
         if (filterEventType != null && filterEventType.length > 0) {
             this.filterEventType = Arrays.asList(filterEventType);

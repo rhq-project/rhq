@@ -28,12 +28,8 @@ import java.util.TreeSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
-import org.rhq.core.domain.criteria.AvailabilityCriteria;
-import org.rhq.core.domain.measurement.Availability;
-import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -42,17 +38,18 @@ import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricStackedBarGraph;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3Graph;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.async.Command;
 import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * Build the View that shows the individual graph views for multi-graph
@@ -61,44 +58,50 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
  *
  * @author Mike Thompson
  */
-public class D3GraphListView extends EnhancedVLayout {
+public class D3GraphListView extends AbstractD3GraphListView {
 
-    private static int NUM_ASYNC_CALLS = 3; // wait for X async calls in Latch
+    private static int NUM_ASYNC_CALLS = 2; // wait for X async calls in Latch
 
     private Resource resource;
     private Set<Integer> definitionIds = null;
-    private Label loadingLabel = new Label(MSG.common_msg_loading());
-    private UserPreferencesMeasurementRangeEditor measurementRangeEditor;
     private boolean useSummaryData = false;
-    private PageList<Availability> availabilityList;
     private PageList<MeasurementOOBComposite> measurementOOBCompositeList;
     private List<List<MeasurementDataNumericHighLowComposite>> metricsDataList;
 
-    public static D3GraphListView createMultipleGraphs(Resource resource, Set<Integer> definitionIds) {
+    public static D3GraphListView createMultipleGraphs(Resource resource, Set<Integer> definitionIds,
+        boolean showAvailabilityGraph) {
 
-        return new D3GraphListView(resource, definitionIds);
+        return new D3GraphListView(resource, definitionIds, showAvailabilityGraph);
     }
 
-    public static D3GraphListView createSummaryMultipleGraphs(Resource resource) {
-        return new D3GraphListView(resource);
+    public static D3GraphListView createSummaryMultipleGraphs(Resource resource, boolean monitorDetailView) {
+        return new D3GraphListView(resource, monitorDetailView);
+    }
+
+    public static D3GraphListView createSingleGraph(Resource resource, Integer measurementId,
+        boolean showAvailabilityGraph) {
+        TreeSet<Integer> definitionIds = new TreeSet<Integer>();
+        definitionIds.add(measurementId);
+        return new D3GraphListView(resource, definitionIds, showAvailabilityGraph);
+
     }
 
     public static D3GraphListView createSingleGraph(Resource resource, Integer measurementId) {
-        TreeSet<Integer> definitionIds = new TreeSet<Integer>();
-        definitionIds.add(measurementId);
-        return new D3GraphListView(resource, definitionIds);
+        return D3GraphListView.createSingleGraph(resource, measurementId, false);
     }
 
-    private D3GraphListView(Resource resource, Set<Integer> definitionIds) {
+    private D3GraphListView(Resource resource, Set<Integer> definitionIds, boolean showAvailabilityGraph) {
         super();
         this.resource = resource;
         commonConstructorSettings();
         this.definitionIds = definitionIds;
+        this.showAvailabilityGraph = showAvailabilityGraph;
     }
 
-    private D3GraphListView(Resource resource) {
+    private D3GraphListView(Resource resource, boolean showAvailabilityGraph) {
         super();
         this.resource = resource;
+        this.showAvailabilityGraph = showAvailabilityGraph;
         commonConstructorSettings();
         useSummaryData = true;
     }
@@ -116,9 +119,18 @@ public class D3GraphListView extends EnhancedVLayout {
     @Override
     protected void onDraw() {
         super.onDraw();
+        Log.debug("D3GraphListView.onDraw() for: " + resource.getName());
         destroyMembers();
-
         addMember(measurementRangeEditor);
+
+        if (showAvailabilityGraph) {
+            availabilityGraph = new AvailabilityD3Graph(new AvailabilityLineGraphType(resource.getId()));
+            // first step in 2 step to create d3 chart
+            // create a placeholder for avail graph
+            availabilityGraph.createGraphMarker();
+            addMember(availabilityGraph);
+
+        }
 
         if (resource != null) {
             buildGraphs();
@@ -127,6 +139,7 @@ public class D3GraphListView extends EnhancedVLayout {
 
     public void redrawGraphs() {
         this.onDraw();
+        availabilityGraph.drawJsniChart();
     }
 
     /**
@@ -138,6 +151,8 @@ public class D3GraphListView extends EnhancedVLayout {
         List<Long> startEndList = measurementRangeEditor.getBeginEndTimes();
         final long startTime = startEndList.get(0);
         final long endTime = startEndList.get(1);
+
+        queryAvailability(resource.getId(), null);
 
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
             EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
@@ -192,12 +207,20 @@ public class D3GraphListView extends EnhancedVLayout {
                                 } else {
                                     determineGraphsToBuild(metricsDataList, measurementDefinitions, definitionIds);
                                 }
+                                // There is a weird timing case when availabilityGraph can be null
+                                if (availabilityGraph != null) {
+                                    // we only need the first metricData since we are only taking the
+                                    // availability data set in there for the dropdowns already
+                                    availabilityGraph.setMetricData(metricsDataList.get(0));
+                                    availabilityGraph.setAvailabilityList(availabilityList);
+                                    availabilityGraph.drawJsniChart();
+                                }
                             }
+
                         }
                     });
 
                     queryMetricData(measDefIdArray, countDownLatch);
-                    queryAvailability(resource, countDownLatch);
                     queryOOBMetrics(resource, countDownLatch);
                     // now the countDown latch will run sometime asynchronously
 
@@ -226,45 +249,10 @@ public class D3GraphListView extends EnhancedVLayout {
                         });
                 }
 
-                private void queryAvailability(final Resource resource, final CountDownLatch countDownLatch) {
-
-                    final long startTime = System.currentTimeMillis();
-
-                    // now return the availability
-                    AvailabilityCriteria c = new AvailabilityCriteria();
-                    c.addFilterResourceId(resource.getId());
-                    c.addFilterInitialAvailability(false);
-                    c.addSortStartTime(PageOrdering.ASC);
-                    GWTServiceLookup.getAvailabilityService().findAvailabilityByCriteria(c,
-                        new AsyncCallback<PageList<Availability>>() {
-                            @Override
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(
-                                    MSG.view_resource_monitor_availability_loadFailed(), caught);
-                                countDownLatch.countDown();
-                            }
-
-                            @Override
-                            public void onSuccess(PageList<Availability> availList) {
-                                Log.debug("\nSuccessfully queried availability in: "
-                                    + (System.currentTimeMillis() - startTime) + " ms.");
-                                availabilityList = new PageList<Availability>();
-                                for (Availability availability : availList) {
-                                    if (!availability.getAvailabilityType().equals(AvailabilityType.UP)) {
-                                        availabilityList.add(availability);
-                                    }
-                                }
-                                Log.debug("avail list size: " + availabilityList.size());
-                                countDownLatch.countDown();
-                            }
-                        });
-                }
-
                 private void queryOOBMetrics(final Resource resource, final CountDownLatch countDownLatch) {
 
                     final long startTime = System.currentTimeMillis();
 
-                    // now return the availability
                     GWTServiceLookup.getMeasurementDataService().getHighestNOOBsForResource(resource.getId(), 60,
 
                     new AsyncCallback<PageList<MeasurementOOBComposite>>() {
@@ -311,8 +299,8 @@ public class D3GraphListView extends EnhancedVLayout {
                     int i = 0;
                     for (MeasurementDefinition measurementDefinition : measurementDefinitions) {
                         if (summaryIds.contains(measurementDefinition.getId())) {
-                            buildSingleGraph(availabilityList, measurementOOBCompositeList, measurementDefinition,
-                                measurementData.get(i), 250);
+                            buildSingleGraph(measurementOOBCompositeList, measurementDefinition,
+                                measurementData.get(i), 225);
                         }
                         i++;
                     }
@@ -331,13 +319,11 @@ public class D3GraphListView extends EnhancedVLayout {
                             if (null != selectedDefinitionId) {
                                 // single graph case
                                 if (measurementId == selectedDefinitionId) {
-                                    buildSingleGraph(availabilityList, measurementOOBCompositeList,
-                                        measurementDefinition, metric, 300);
+                                    buildSingleGraph(measurementOOBCompositeList, measurementDefinition, metric, 225);
                                 }
                             } else {
                                 // multiple graph case
-                                buildSingleGraph(availabilityList, measurementOOBCompositeList, measurementDefinition,
-                                    metric, 300);
+                                buildSingleGraph(measurementOOBCompositeList, measurementDefinition, metric, 225);
                             }
                         }
                         i++;
@@ -347,12 +333,11 @@ public class D3GraphListView extends EnhancedVLayout {
 
     }
 
-    private void buildSingleGraph(PageList<Availability> downAvailList,
-        PageList<MeasurementOOBComposite> measurementOOBCompositeList, MeasurementDefinition measurementDefinition,
-        List<MeasurementDataNumericHighLowComposite> data, int height) {
+    private void buildSingleGraph(PageList<MeasurementOOBComposite> measurementOOBCompositeList,
+        MeasurementDefinition measurementDefinition, List<MeasurementDataNumericHighLowComposite> data, int height) {
 
         MetricGraphData metricGraphData = new MetricGraphData(resource.getId(), resource.getName(),
-            measurementDefinition, data, downAvailList, measurementOOBCompositeList);
+            measurementDefinition, data, measurementOOBCompositeList);
         MetricStackedBarGraph graph = new MetricStackedBarGraph(metricGraphData);
 
         ResourceMetricD3Graph graphView = new ResourceMetricD3Graph(graph);

@@ -628,12 +628,12 @@ public abstract class AbstractActivityView extends EnhancedVLayout implements Re
             } else {
                 setTitle(CHART_TITLE + ": " + title);
             }
-            setShowMinimizeButton(true);
-            setShowMaximizeButton(true);
+            setShowMinimizeButton(false);
+            setShowMaximizeButton(false);
             setShowCloseButton(true);
             setIsModal(true);
             setShowModalMask(true);
-            setWidth(900);
+            setWidth(950);
             setHeight(350);
             setShowResizer(true);
             setCanDragResize(true);

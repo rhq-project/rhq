@@ -18,15 +18,16 @@
  */
 package org.rhq.core.domain.criteria;
 
+import static org.rhq.core.domain.util.CriteriaUtils.getListIgnoringNulls;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
-
-import java.io.Serializable;
-import java.util.List;
-
-import static org.rhq.core.domain.util.CriteriaUtils.getListIgnoringNulls;
 
 /**
  * The generic implementation of DriftChangeSetCriteria makes no assumptions about the actual drift server
@@ -68,21 +69,13 @@ public class GenericDriftChangeSetCriteria implements Serializable, DriftChangeS
 
     private boolean fetchDrifts;
 
+    private PageOrdering sortId;
+
     private PageOrdering sortVersion;
 
     private PageControl pageControl;
 
     private boolean strict;
-
-    @Override
-    public void addFilterId(String filterId) {
-        this.filterId = filterId;
-    }
-
-    @Override
-    public String getFilterId() {
-        return filterId;
-    }
 
     @Override
     public void addFilterVersion(String filterVersion) {
@@ -209,6 +202,11 @@ public class GenericDriftChangeSetCriteria implements Serializable, DriftChangeS
     }
 
     @Override
+    public void addSortId(PageOrdering sortId) {
+        this.sortId = sortId;
+    }
+
+    @Override
     public void addSortVersion(PageOrdering sortVersion) {
         this.sortVersion = sortVersion;
     }
@@ -242,6 +240,28 @@ public class GenericDriftChangeSetCriteria implements Serializable, DriftChangeS
     public void setPaging(int pageNumber, int pageSize) {
         pageControl.setPageNumber(pageNumber);
         pageControl.setPageSize(pageSize);
+    }
+
+    @Override
+    public List<String> getOrderingFieldNames() {
+        List<String> result = new ArrayList<String>(2);
+        if (null != sortId) {
+            result.add("id");
+        }
+        if (null != sortVersion) {
+            result.add("version");
+        }
+        return result;
+    }
+
+    @Override
+    public void addFilterId(String filterId) {
+        this.filterId = filterId;
+    }
+
+    @Override
+    public String getFilterId() {
+        return filterId;
     }
 
 }

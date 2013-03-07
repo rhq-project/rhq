@@ -305,7 +305,7 @@ public class EventHandlerBean extends AbstractRestBean {
 
 
     private Response.ResponseBuilder getEventsAsBuilderForCriteria(HttpHeaders headers, EventCriteria criteria) {
-        List<Event> eventList = eventManager.findEventsByCriteria(caller,criteria);
+        List<Event> eventList = eventManager.findEventsByCriteria(caller, criteria);
         List<EventRest> restEvents = new ArrayList<EventRest>(eventList.size());
         for (Event event : eventList) {
             restEvents.add(convertEvent(event));

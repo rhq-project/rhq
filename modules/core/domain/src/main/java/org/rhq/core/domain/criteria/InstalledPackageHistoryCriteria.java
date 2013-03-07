@@ -14,7 +14,6 @@ import org.rhq.core.domain.util.PageOrdering;
 public class InstalledPackageHistoryCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
     private Long filterInstallationTimeMinimum; // requires overrides
     private Long filterInstallationTimeMaximum; // requires overrides
     private Integer filterPackageVersionId; // requires overrides
@@ -47,10 +46,6 @@ public class InstalledPackageHistoryCriteria extends Criteria {
     @Override
     public Class<InstalledPackageHistory> getPersistentClass() {
         return InstalledPackageHistory.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
     }
 
     public void addFilterPackageVersionId(Integer filterPackageVersionId) {

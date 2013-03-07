@@ -33,8 +33,10 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.util.CriteriaUtils;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 
 /**
  * @author Joseph Marques
@@ -42,7 +44,28 @@ import org.rhq.core.domain.util.PageList;
 @XmlAccessorType(XmlAccessType.FIELD)
 public abstract class Criteria implements Serializable, BaseCriteria {
     public enum Type {
-        FILTER, FETCH, SORT;
+        FILTER(new String[] { "filterId", "filterIds" }), FETCH(), SORT(new String[] { "sortId" });
+
+        private List<String> globalFields;
+
+        /**
+         * Use this to get the global fields for this Criteria field type. Don't use inspection as the field names
+         * for this abstract base class do not conform (for legacy reasons) to the prefix convention help by the
+         * subclasses.
+         *  
+         * @return The set of global fields for this Criteria field type. Meaning, usable by all subclasses.
+         */
+        public List<String> getGlobalFields() {
+            return globalFields;
+        }
+
+        private Type() {
+            this.globalFields = new ArrayList<String>(0);
+        }
+
+        private Type(String[] globalFields) {
+            this.globalFields = Arrays.asList(globalFields);
+        }
     }
 
     /**
@@ -96,12 +119,22 @@ public abstract class Criteria implements Serializable, BaseCriteria {
 
     private String searchExpression;
 
+    // All Criteria support sorting on ID
+    protected PageOrdering sortId;
+    
+    // All Criteria support filtering on ID
+    protected Integer filterId;
+    
+    // All Criteria support filtering on IDs
+    protected List<Integer> filterIds;
+
     /**
      * This default constructor will set default paging to avoid unintended fetch of huge results. The default is:
      * <pre>setPaging(0, 200);</pre>
      */
     public Criteria() {
         this.filterOverrides = new HashMap<String, String>();
+        this.filterOverrides.put("ids", "id IN ( ? )");
         this.sortOverrides = new HashMap<String, String>();
 
         this.orderingFieldNames = new ArrayList<String>();
@@ -137,6 +170,19 @@ public abstract class Criteria implements Serializable, BaseCriteria {
 
     public PageControl getPageControlOverrides() {
         return pageControlOverrides;
+    }
+
+    public void addSortId(PageOrdering sortId) {
+        addSortField("id");
+        this.sortId = sortId;
+    }
+    
+    public void addFilterId(Integer filterId) {
+        this.filterId = filterId;
+    }
+
+    public void addFilterIds(Integer... filterIds) {
+        this.filterIds = CriteriaUtils.getListIgnoringNulls(filterIds);
     }
 
     protected void addSortField(String fieldName) {

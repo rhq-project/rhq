@@ -52,7 +52,6 @@ public class MeasurementScheduleCriteria extends Criteria {
     public static final String FILTER_FIELD_AUTO_GROUP_RESOURCE_TYPE_ID = "autoGroupResourceTypeId";
     public static final String FILTER_FIELD_AUTO_GROUP_PARENT_RESOURCE_ID = "autoGroupParentResourceId";
 
-    private Integer filterId;
     private Boolean filterEnabled;
     private List<Integer> filterDefinitionIds; // requires overrides
     private Integer filterResourceId; // requires overrides
@@ -97,10 +96,6 @@ public class MeasurementScheduleCriteria extends Criteria {
     @Override
     public Class<MeasurementSchedule> getPersistentClass() {
         return MeasurementSchedule.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
     }
 
     public void addFilterEnabled(Boolean filterEnabled) {

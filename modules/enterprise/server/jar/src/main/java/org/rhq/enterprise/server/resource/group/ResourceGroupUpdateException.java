@@ -18,6 +18,14 @@
  */
 package org.rhq.enterprise.server.resource.group;
 
+import javax.ejb.ApplicationException;
+
+/**
+ * Declare this an {@link ApplicationException} because we don't want these to be wrapped. But, this is a general
+ * exception, so do allow the Tx to be marked for rollback. Only certain specific exceptions should allow the Tx to
+ * continue.
+ */
+@ApplicationException(rollback = true, inherited = true)
 public class ResourceGroupUpdateException extends RuntimeException {
     private static final long serialVersionUID = 9079807311008826697L;
 

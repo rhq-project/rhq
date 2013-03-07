@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -33,6 +33,7 @@ import org.apache.http.HttpStatus;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
+import org.rhq.modules.integrationTests.restApi.d.Availability;
 import org.rhq.modules.integrationTests.restApi.d.Resource;
 
 import static com.jayway.restassured.RestAssured.expect;
@@ -61,12 +62,14 @@ public class ResourcesTest extends AbstractBase {
 
         given()
             .header("Accept","application/json")
+            .pathParam("id",_platformId)
         .expect()
             .statusCode(200)
             .contentType(ContentType.JSON)
+            .log().ifError()
             .body("links.rel", CoreMatchers.hasItem("self"))
         .when()
-            .get("/resource/10001");
+            .get("/resource/{id}");
 
     }
 
@@ -132,33 +135,40 @@ public class ResourcesTest extends AbstractBase {
 
     @Test
     public void testGetPlatformXml() {
+
+        assert _platformId!=0 : "Setup did not run or was no success";
+
         given()
             .header("Accept", "application/xml")
+            .pathParam("id",_platformId)
         .expect()
             .statusCode(200)
             .contentType(ContentType.XML)
         .when()
-            .get("/resource/10001");
+            .get("/resource/{id}");
     }
 
     @Test
     public void testGetPlatformSchedules() {
         given()
             .header("Accept", "application/json")
+            .pathParam("id", _platformId)
         .expect()
             .statusCode(200)
+            .log().ifError()
         .when()
-            .get("/resource/10001/schedules");
+            .get("/resource/{id}/schedules");
     }
 
     @Test
     public void testGetPlatformChildren() {
         given()
-            .header("Accept","application/json")
+            .header("Accept", "application/json")
+            .pathParam("id", _platformId)
         .expect()
             .statusCode(200)
         .when()
-            .get("/resource/10001/children");
+            .get("/resource/{id}/children");
     }
 
     @Test
@@ -421,60 +431,81 @@ public class ResourcesTest extends AbstractBase {
     @Test
     public void testAlertsForResource() throws Exception {
         given()
-                .header("Accept","application/json")
-            .expect().statusCode(200)
-            .when().get("/resource/10001/alerts");
+            .header("Accept", "application/json")
+            .pathParam("id", _platformId)
+        .expect()
+            .statusCode(200)
+        .when()
+            .get("/resource/{id}/alerts");
     }
 
     @Test
     public void testSchedulesForResource() throws Exception {
         given()
-                .header("Accept","application/json")
-            .expect().statusCode(200)
-            .when().get("/resource/10001/schedules");
+            .header("Accept", "application/json")
+            .pathParam("id", _platformId)
+        .expect()
+            .statusCode(200)
+        .when()
+            .get("/resource/{id}/schedules");
     }
 
     @Test
     public void testAvailabilityForResource() throws Exception {
         given()
-                .header("Accept", "application/json")
-            .expect().statusCode(200)
-            .when().get("/resource/10001/availability");
+            .header("Accept", "application/json")
+            .pathParam("id", _platformId)
+        .expect()
+            .statusCode(200)
+        .when()
+            .get("/resource/{id}/availability");
     }
 
     @Test
     public void testAvailabilityHistoryForResource() throws Exception {
         given()
-                .header("Accept", "application/json")
-            .expect().statusCode(200)
-            .when().get("/resource/10001/availability/history");
+            .header("Accept", "application/json")
+            .pathParam("id", _platformId)
+        .expect()
+            .statusCode(200)
+        .when()
+            .get("/resource/{id}/availability/history");
     }
 
     @Test
     public void testUpdateAvailability() throws Exception {
 
-        Response response = given()
+        Response response =
+        given()
             .header("Accept", "application/json")
-            .expect().statusCode(200)
-            .when().get("/resource/10001/availability");
+            .pathParam("id", _platformId)
+        .expect()
+            .statusCode(200)
+        .when()
+            .get("/resource/{id}/availability");
 
         String oldType = response.jsonPath().get("type");
 
         try {
             long now = System.currentTimeMillis()-100;
-            given().body("{\"since\":" + now + ",\"type\":\"DOWN\",\"resourceId\":10001}")
-                    .header("Content-Type","application/json")
-                    .header("Accept","application/json")
-                    .pathParam("id",10001)
+            given()
+                .body("{\"since\":" + now + ",\"type\":\"DOWN\",\"resourceId\":" + _platformId + "}")
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
+                .pathParam("id", _platformId)
             .expect()
-                    .statusCode(HttpStatus.SC_NO_CONTENT)
-                    .log().ifError()
-            .when().put("/resource/{id}/availability");
+                .statusCode(HttpStatus.SC_NO_CONTENT)
+                .log().ifError()
+            .when()
+                .put("/resource/{id}/availability");
 
             response = given()
                 .header("Accept", "application/json")
-                .expect().statusCode(200)
-                .when().get("/resource/10001/availability");
+                .pathParam("id", _platformId)
+            .expect()
+                .statusCode(200)
+            .when()
+                .get("/resource/{id}/availability");
 
             String currentType = response.jsonPath().get("type");
             assert currentType.equals("DOWN"); // TODO small window where an agent may have sent an update
@@ -482,13 +513,14 @@ public class ResourcesTest extends AbstractBase {
 
             // Set back to original value
             long now = System.currentTimeMillis()-100;
-            given().body("{\"since\":" + now + ",\"type\":\""+oldType+"\",\"resourceId\":10001}")
-                    .header("Content-Type","application/json")
-                    .header("Accept","application/json")
-                    .pathParam("id",10001)
+            given()
+                .body("{\"since\":" + now + ",\"type\":\"" + oldType + "\",\"resourceId\":" + _platformId + "}")
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
+                .pathParam("id", _platformId)
             .expect()
-                    .statusCode(HttpStatus.SC_NO_CONTENT)
-                    .log().ifError()
+                .statusCode(HttpStatus.SC_NO_CONTENT)
+                .log().ifError()
             .when().put("/resource/{id}/availability");
 
         }
@@ -500,14 +532,18 @@ public class ResourcesTest extends AbstractBase {
         // Platforms should not be set to DISABLED according ot JSHAUGHN
 
         long now = System.currentTimeMillis()-100;
-        given().body("{\"since\":" + now + ",\"type\":\"DISABLED\",\"resourceId\":10001}")
-              .header("Content-Type","application/json")
-              .header("Accept","application/json")
-              .pathParam("id",10001)
+        Availability avail = new Availability(_platformId,now,"DISABLED");
+
+        given()
+            .body(avail)
+            .header("Content-Type", "application/json")
+            .header("Accept", "application/json")
+            .pathParam("id", _platformId)
         .expect()
-              .statusCode(HttpStatus.SC_NOT_ACCEPTABLE)
-              .log().ifError()
-        .when().put("/resource/{id}/availability");
+            .statusCode(HttpStatus.SC_NOT_ACCEPTABLE)
+            .log().ifError()
+        .when()
+            .put("/resource/{id}/availability");
 
     }
 }

@@ -1,20 +1,19 @@
 package org.rhq.enterprise.server.resource.metadata;
 
+import java.util.List;
+
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import java.util.List;
 
 @Stateless
 public class AlertMetadataManagerBean implements AlertMetadataManagerLocal {
@@ -33,6 +32,8 @@ public class AlertMetadataManagerBean implements AlertMetadataManagerLocal {
 
         AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
         criteria.addFilterAlertTemplateResourceTypeId(resourceType.getId());
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
         List<AlertDefinition> templates = alertDefinitionMgr.findAlertDefinitionsByCriteria(subject, criteria);
 
         Integer[] templateIds = new Integer[templates.size()];

@@ -360,7 +360,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         logExecutionResults(results);
         if (results.getError() != null) {
             operationResult.setErrorMessage(results.getError().getMessage());
-        } else if (results.getExitCode() != null) {
+        } else if (results.getExitCode() != null && results.getExitCode() != 0) {
             operationResult.setErrorMessage("Start failed with error code " + results.getExitCode() + ":\n"
                 + results.getCapturedOutput());
         } else {

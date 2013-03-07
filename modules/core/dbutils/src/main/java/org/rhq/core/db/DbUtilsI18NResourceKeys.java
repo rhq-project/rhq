@@ -32,6 +32,11 @@ import mazz.i18n.annotation.I18NResourceBundle;
  */
 @I18NResourceBundle(baseName = "dbutils-messages", defaultLocale = "en")
 public interface DbUtilsI18NResourceKeys {
+    @I18NMessages({ @I18NMessage("Error: {0}"), @I18NMessage(value = "Fehler: {0}", locale = "de") })
+    String ERROR = "DatabaseType.generic-error";
+
+    @I18NMessages({ @I18NMessage("Message: {0}"), @I18NMessage(value = "Nachricht: {0}", locale = "de") })
+    String MESSAGE = "DatabaseType.generic-message";
 
     @I18NMessages( { @I18NMessage("Executing the following SQL: {0}"),
         @I18NMessage(value = "Führe das nachfolgnde SQL aus: {0}", locale = "de") })

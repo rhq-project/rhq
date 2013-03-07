@@ -71,6 +71,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MashupPortl
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
@@ -216,6 +217,7 @@ public class DashboardsView extends EnhancedVLayout implements DashboardContaine
                  * which would require the user to hit the back button twice to return to the previous page.
                  */
                 if (selectedDashboardView != null) {
+                    Log.debug(" ***** selectedTab: " + selectedTab.getName() + ", " + selectedTab.getTitle());
                     CoreGUI.goToView(LinkManager.getDashboardLink(Integer.valueOf(selectedTab.getName())), true);
                 }
 

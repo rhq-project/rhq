@@ -86,6 +86,7 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.ResourceD3GraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.ResourceGraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
@@ -755,7 +756,7 @@ public class ResourceTreeView extends EnhancedVLayout {
                             defItem.setSubmenu(defSubItem);
 
                             for (final Dashboard d : result) {
-                                MenuItem addToDBItem = new MenuItem(MSG
+                                MenuItem addToDBItem = new MenuItem("d3-"+MSG
                                     .view_tree_common_contextMenu_addChartToDashboard(d.getName()));
                                 defSubItem.addItem(addToDBItem);
 
@@ -763,12 +764,12 @@ public class ResourceTreeView extends EnhancedVLayout {
 
                                     public void onClick(MenuItemClickEvent menuItemClickEvent) {
                                         DashboardPortlet p = new DashboardPortlet(MSG
-                                            .view_tree_common_contextMenu_resourceGraph(), ResourceGraphPortlet.KEY,
+                                            .view_tree_common_contextMenu_resourceGraph(), ResourceD3GraphPortlet.KEY,
                                             250);
                                         p.getConfiguration().put(
-                                            new PropertySimple(ResourceGraphPortlet.CFG_RESOURCE_ID, resource.getId()));
+                                            new PropertySimple(ResourceD3GraphPortlet.CFG_RESOURCE_ID, resource.getId()));
                                         p.getConfiguration().put(
-                                            new PropertySimple(ResourceGraphPortlet.CFG_DEFINITION_ID, def.getId()));
+                                            new PropertySimple(ResourceD3GraphPortlet.CFG_DEFINITION_ID, def.getId()));
 
                                         d.addPortlet(p);
 
@@ -792,7 +793,49 @@ public class ResourceTreeView extends EnhancedVLayout {
                                             });
 
                                     }
+
                                 });
+                                //@todo: Remove once we have verified the charts
+                                // now add the old menu items
+                                MenuItem addOldItemToDBItem = new MenuItem(MSG
+                                        .view_tree_common_contextMenu_addChartToDashboard(d.getName()));
+                                defSubItem.addItem(addOldItemToDBItem);
+
+                                addOldItemToDBItem.addClickHandler(new ClickHandler() {
+
+                                    public void onClick(MenuItemClickEvent menuItemClickEvent) {
+                                        DashboardPortlet p = new DashboardPortlet(MSG
+                                                .view_tree_common_contextMenu_resourceGraph(), ResourceGraphPortlet.KEY,
+                                                250);
+                                        p.getConfiguration().put(
+                                                new PropertySimple(ResourceGraphPortlet.CFG_RESOURCE_ID, resource.getId()));
+                                        p.getConfiguration().put(
+                                                new PropertySimple(ResourceGraphPortlet.CFG_DEFINITION_ID, def.getId()));
+
+                                        d.addPortlet(p);
+
+                                        GWTServiceLookup.getDashboardService().storeDashboard(d,
+                                                new AsyncCallback<Dashboard>() {
+
+                                                    public void onFailure(Throwable caught) {
+                                                        CoreGUI.getErrorHandler().handleError(
+                                                                MSG.view_tree_common_contextMenu_saveChartToDashboardFailure(),
+                                                                caught);
+                                                    }
+
+                                                    public void onSuccess(Dashboard result) {
+                                                        CoreGUI
+                                                                .getMessageCenter()
+                                                                .notify(
+                                                                        new Message(
+                                                                                MSG.view_tree_common_contextMenu_saveChartToDashboardSuccessful(result
+                                                                                        .getName()), Message.Severity.Info));
+                                                    }
+                                                });
+
+                                    }
+                                });
+
                             }//end dashboard iteration
 
                             //add new menu item for adding current graphable element to view if on Monitor/Graphs tab

@@ -121,9 +121,10 @@ public class GroupHandlerBean extends AbstractRestBean  {
         if (q!=null) {
             criteria.addFilterName(q);
         }
-        List<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(caller, criteria);
 
-        List<GroupRest> list = new ArrayList<GroupRest>(groups.size());
+        PageList<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(caller, criteria);
+
+        List<GroupRest> list = new ArrayList<GroupRest>();
         for (ResourceGroup group : groups) {
             list.add(fillGroup(group, uriInfo));
         }
@@ -402,8 +403,10 @@ public class GroupHandlerBean extends AbstractRestBean  {
         if (q!=null) {
             criteria.addFilterName(q);
         }
-        PageList<GroupDefinition> gdlist =  definitionManager.findGroupDefinitionsByCriteria(caller, criteria);
-        List<GroupDefinitionRest> list = new ArrayList<GroupDefinitionRest>(gdlist.getTotalSize());
+
+        PageList<GroupDefinition> gdlist = definitionManager.findGroupDefinitionsByCriteria(caller, criteria);
+
+        List<GroupDefinitionRest> list = new ArrayList<GroupDefinitionRest>();
         for (GroupDefinition def: gdlist) {
             GroupDefinitionRest definitionRest = buildGDRestFromDefinition(def);
             createLinksForGDRest(uriInfo,definitionRest);

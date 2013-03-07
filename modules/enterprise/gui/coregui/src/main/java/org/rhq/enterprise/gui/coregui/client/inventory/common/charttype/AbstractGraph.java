@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
 
 import java.util.List;
 
-import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
@@ -36,7 +35,7 @@ import org.rhq.core.domain.util.PageList;
  *
  * @author Mike Thompson
  */
-public abstract class AbstractGraph implements HasD3JsniChart {
+public abstract class AbstractGraph implements HasD3MetricJsniChart {
 
     private MetricGraphData metricGraphData;
 
@@ -59,6 +58,10 @@ public abstract class AbstractGraph implements HasD3JsniChart {
 
     public String getEntityName() {
         return metricGraphData.getEntityName();
+    }
+    @Override
+    public void setEntityName(String  entityName) {
+        metricGraphData.setEntityName(entityName);
     }
 
     public int getDefinitionId() {
@@ -89,10 +92,6 @@ public abstract class AbstractGraph implements HasD3JsniChart {
 
     public void setMetricData(List<MeasurementDataNumericHighLowComposite> metricData) {
         metricGraphData.setMetricData(metricData);
-    }
-
-    public void setAvailabilityList(PageList<Availability> availabilityDownList) {
-        metricGraphData.setAvailabilityList(availabilityDownList);
     }
 
     public void setMeasurementOOBCompositeList(PageList<MeasurementOOBComposite> measurementOOBCompositeList) {
@@ -151,6 +150,15 @@ public abstract class AbstractGraph implements HasD3JsniChart {
         return metricGraphData.getChartHoverBarLabel();
     }
 
+    public String getChartHoverTimeFormat() {
+        return metricGraphData.getChartHoverTimeFormat();
+    }
+
+    public String getChartHoverDateFormat() {
+        return metricGraphData.getChartHoverDateFormat();
+    }
+
+
     public Integer getChartHeight() {
         return metricGraphData.getChartHeight();
     }
@@ -159,8 +167,8 @@ public abstract class AbstractGraph implements HasD3JsniChart {
         metricGraphData.setChartHeight(chartHeight);
     }
 
-    public String getYAxisTitle() {
-        return metricGraphData != null ? metricGraphData.getYAxisTitle() : "";
+    public String getChartTitle() {
+        return metricGraphData != null ? metricGraphData.getChartTitle() : "";
     }
 
     public String getYAxisUnits() {

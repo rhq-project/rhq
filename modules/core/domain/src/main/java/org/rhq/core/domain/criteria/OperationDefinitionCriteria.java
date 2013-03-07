@@ -39,7 +39,6 @@ import org.rhq.core.domain.util.PageOrdering;
 public class OperationDefinitionCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
     private String filterName;
     private String filterDisplayName;
     private String filterDescription;
@@ -74,10 +73,6 @@ public class OperationDefinitionCriteria extends Criteria {
     @Override
     public Class<OperationDefinition> getPersistentClass() {
         return OperationDefinition.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
     }
 
     public void addFilterName(String filterName) {

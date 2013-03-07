@@ -43,8 +43,6 @@ public abstract class AbstractConfigurationUpdateCriteria extends Criteria {
 
     public static final String FETCH_FIELD_CONFIGURATION = "configuration";
 
-    private Integer filterId;
-    private List<Integer> filterIds; // requires overrides
     private Long filterStartTime; // requires overrides
     private Long filterEndTime; // requires overrides
     private ConfigurationUpdateStatus filterStatus;
@@ -56,18 +54,17 @@ public abstract class AbstractConfigurationUpdateCriteria extends Criteria {
     private PageOrdering sortStatus; // requires sort override
 
     public AbstractConfigurationUpdateCriteria() {
-        filterOverrides.put("ids", "id IN ( ? )");
         filterOverrides.put("startTime", "createdTime >= ?");
         filterOverrides.put("endTime", "createdTime <= ?");
         filterOverrides.put("statuses", "status IN ( ? )");
     }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
-    }
-
+    
+    /**
+     * @param filterIds list of ids to filter
+     * @deprecated since 4.7.0 use {@link Criteria#addFilterIds(Integer... filterIds)} instead
+     */
     public void addFilterIds(List<Integer> filterIds) {
-        this.filterIds = filterIds;
+        super.addFilterIds(filterIds != null ? filterIds.toArray(new Integer[filterIds.size()]) : null);
     }
 
     public void addFilterStartTime(Long filterStartTime) {

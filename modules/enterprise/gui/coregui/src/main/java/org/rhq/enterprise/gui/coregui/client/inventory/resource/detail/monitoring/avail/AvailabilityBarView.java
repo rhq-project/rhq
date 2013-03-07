@@ -45,6 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
  * 
  * @author Greg Hinkle
  */
+@Deprecated
 public class AvailabilityBarView extends HLayout {
 
     Messages MSG = CoreGUI.getMessages();
@@ -72,7 +73,6 @@ public class AvailabilityBarView extends HLayout {
                 }
 
                 public void onSuccess(PageList<Availability> result) {
-                    Log.info("\n\n******Dude avail I have: "+result.size());
                     update(result);
                 }
             });
@@ -132,32 +132,6 @@ public class AvailabilityBarView extends HLayout {
         }
         Img rightCap = new Img("availBar/rightCap.png", 8, 28);
         addMember(rightCap);
-
-        /* StringBuffer buf = new StringBuffer("<table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\"><tr height=\"28\">");
-
-         buf.append("<td width=\"8px\" class=\"availBarLeftCap\">&nbsp;</td>");
-
-
-         for (Availability a : result) {
-
-             long endTime = a.getEndTime() != null ? a.getEndTime().getTime() : System.currentTimeMillis();
-
-
-             double width = (((double) (endTime - a.getStartTime().getTime()) / diff) * 100);
-             String widthString = width + "%";
-             if (width == 0) {
-                 widthString = "2px";
-             }
-
-             buf.append("<td width=\"" + widthString + "\" class=\"" + (a.getAvailabilityType() == AvailabilityType.UP ? "availBarUp" : "availBarDown") + "\">&nbsp;</td>");
-         }
-         buf.append("<td width=\"8px\" class=\"availBarRightCap\">&nbsp;</td>");
-         buf.append("</tr></table>");
-
-
-         HTMLFlow bar = new HTMLFlow(buf.toString());
-
-         addMember(bar);*/
 
     }
 }

@@ -61,6 +61,7 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 /**
  * @author Greg Hinkle
  * @author Jay Shaughnessy
+ * @deprecated see AbstractMetricD3GraphView
  */
 @Deprecated
 public abstract class AbstractMetricGraphView extends EnhancedVLayout {

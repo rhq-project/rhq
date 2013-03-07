@@ -36,7 +36,6 @@ public class PackageCriteria extends Criteria {
 
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
     private String filterName;
     private String filterClassification;
     private Integer filterPackageTypeId;
@@ -55,10 +54,6 @@ public class PackageCriteria extends Criteria {
     
     public Class<?> getPersistentClass() {
         return Package.class;
-    }
-
-    public void addFilterId(Integer id) {
-        this.filterId = id;
     }
     
     public void addFilterName(String name) {

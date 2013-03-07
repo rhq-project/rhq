@@ -40,7 +40,6 @@ import org.rhq.core.domain.util.PageOrdering;
 public class DriftDefinitionCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
     private String filterName;
     private List<Integer> filterResourceIds; // needs override
     private Integer filterTemplateId;
@@ -59,10 +58,6 @@ public class DriftDefinitionCriteria extends Criteria {
     @Override
     public Class<DriftDefinition> getPersistentClass() {
         return DriftDefinition.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
     }
 
     public void addFilterName(String name) {

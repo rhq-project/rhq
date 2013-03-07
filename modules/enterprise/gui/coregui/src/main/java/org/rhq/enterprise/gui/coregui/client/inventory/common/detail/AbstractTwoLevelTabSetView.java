@@ -42,7 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedE
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedHandler;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.D3GraphListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
@@ -50,7 +50,8 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends EnhancedVLayout implements
+public abstract class AbstractTwoLevelTabSetView<T, U extends Layout, V extends AbstractD3GraphListView> extends
+    EnhancedVLayout implements
     BookmarkableView, TwoLevelTabSelectedHandler {
 
     private String baseViewPath;
@@ -59,7 +60,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends En
     private String subTabName;
     private U titleBar;
     protected Set<Permission> globalPermissions;
-    protected D3GraphListView d3GraphListView;
+    protected V graphListView;
 
     public AbstractTwoLevelTabSetView(String baseViewPath) {
         super();
@@ -90,11 +91,11 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends En
     public abstract Integer getSelectedItemId();
 
     protected abstract U createTitleBar();
+    protected abstract V createD3GraphListView();
 
     protected abstract List<TwoLevelTab> createTabs();
 
     /**
-     * TODO
      *
      * @param itemId
      * @param viewPath
@@ -234,8 +235,8 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends En
             // safely rendered.  Make sure to notify even on failure.            
             try {
                 this.selectTab(this.tabName, this.subTabName, viewPath);
-                if(null != d3GraphListView){
-                    d3GraphListView.redrawGraphs();
+                if(null != graphListView){
+                    graphListView.redrawGraphs();
                 }
             } finally {
                 notifyViewRenderedListeners();

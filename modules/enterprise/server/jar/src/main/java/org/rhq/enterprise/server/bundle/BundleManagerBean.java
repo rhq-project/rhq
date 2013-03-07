@@ -84,7 +84,6 @@ import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.StringUtils;
 import org.rhq.core.util.NumberUtil;
@@ -105,6 +104,8 @@ import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
 import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility.SerializationType;
+import org.rhq.enterprise.server.util.CriteriaQuery;
+import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
@@ -376,6 +377,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         criteria.addFilterDestinationId(bundleDestination.getId());
         criteria.addFilterIsLive(true);
         criteria.fetchBundleVersion(true);
+
         List<BundleDeployment> liveDeployments = bundleManager.findBundleDeploymentsByCriteria(subject, criteria);
         BundleDeployment liveDeployment = (liveDeployments.isEmpty()) ? null : liveDeployments.get(0);
 
@@ -451,6 +453,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         criteria.setStrict(true);
         criteria.addFilterBundleTypeId(Integer.valueOf(bundleTypeId));
         criteria.addFilterName(bundleName);
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
         PageList<Bundle> bundles = findBundlesByCriteria(subject, criteria);
         Bundle bundle;
         if (bundles.getTotalSize() == 0) {
@@ -631,6 +635,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         criteria.setStrict(true);
         criteria.addFilterBundleTypeId(bundleType.getId());
         criteria.addFilterName(bundleName);
+
         PageList<Bundle> bundles = bundleManager.findBundlesByCriteria(subject, criteria);
         Bundle bundle;
         if (bundles.getTotalSize() == 0) {
@@ -697,13 +702,25 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             bundleVersion = bundleVersions.get(0);
             List<BundleFile> bundleFiles = bundleVersion.getBundleFiles();
             if (bundleFiles != null && bundleFiles.size() > 0) {
-                BundleFileCriteria bfCriteria = new BundleFileCriteria();
+                final BundleFileCriteria bfCriteria = new BundleFileCriteria();
                 bfCriteria.addFilterBundleVersionId(bundleVersion.getId());
                 bfCriteria.fetchPackageVersion(true);
-                PageList<BundleFile> bfs = bundleManager.findBundleFilesByCriteria(subjectManager.getOverlord(),
-                    bfCriteria);
+
+                //Use CriteriaQuery to automatically chunk/page through criteria query results
+                CriteriaQueryExecutor<BundleFile, BundleFileCriteria> queryExecutor = new CriteriaQueryExecutor<BundleFile, BundleFileCriteria>() {
+                    @Override
+                    public PageList<BundleFile> execute(BundleFileCriteria criteria) {
+                        return bundleManager.findBundleFilesByCriteria(subjectManager.getOverlord(), bfCriteria);
+                    }
+                };
+
+                CriteriaQuery<BundleFile, BundleFileCriteria> bfs = new CriteriaQuery<BundleFile, BundleFileCriteria>(
+                    bfCriteria, queryExecutor);
+
                 bundleFiles.clear();
-                bundleFiles.addAll(bfs);
+                for (BundleFile bf : bfs) {
+                    bundleFiles.add(bf);
+                }
             }
             bundleVersion.setBundleDeployments(new ArrayList<BundleDeployment>());
         } else {
@@ -847,7 +864,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     @TransactionAttribute(TransactionAttributeType.NEVER)
-    public void purgeBundleDestination(Subject subject, int bundleDestinationId) throws Exception {
+    public void purgeBundleDestination(final Subject subject, int bundleDestinationId) throws Exception {
         // find the live bundle deployment for this destination, and get all the resource deployments for that live deployment
         BundleDeploymentCriteria bdc = new BundleDeploymentCriteria();
         bdc.addFilterDestinationId(bundleDestinationId);
@@ -883,16 +900,28 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         for (BundleResourceDeployment resourceDeploy : resourceDeploys) {
             resourceDeployIds.add(resourceDeploy.getId());
         }
-        BundleResourceDeploymentCriteria brdc = new BundleResourceDeploymentCriteria();
+        final BundleResourceDeploymentCriteria brdc = new BundleResourceDeploymentCriteria();
         brdc.addFilterIds(resourceDeployIds.toArray(new Integer[resourceDeployIds.size()]));
         brdc.fetchResource(true);
-        brdc.setPageControl(PageControl.getUnlimitedInstance());
-        PageList<BundleResourceDeployment> brdResults = bundleManager.findBundleResourceDeploymentsByCriteria(subject,
-            brdc);
+
+        //Use CriteriaQuery to automatically chunk/page through criteria query results
+        CriteriaQueryExecutor<BundleResourceDeployment, BundleResourceDeploymentCriteria> queryExecutor = new CriteriaQueryExecutor<BundleResourceDeployment, BundleResourceDeploymentCriteria>() {
+            @Override
+            public PageList<BundleResourceDeployment> execute(BundleResourceDeploymentCriteria criteria) {
+                return bundleManager.findBundleResourceDeploymentsByCriteria(subject, brdc);
+            }
+        };
+
+        CriteriaQuery<BundleResourceDeployment, BundleResourceDeploymentCriteria> brdResults = new CriteriaQuery<BundleResourceDeployment, BundleResourceDeploymentCriteria>(
+            brdc, queryExecutor);
+
+        //        PageList<BundleResourceDeployment> brdResults = bundleManager.findBundleResourceDeploymentsByCriteria(subject,
+        //            brdc);
         resourceDeploys.clear();
-        resourceDeploys.addAll(brdResults);
+        //        resourceDeploys.addAll(brdResults);
         // need to wire the live bundle deployment back in - no need for another query or fetch it above because we have it already
         for (BundleResourceDeployment brd : brdResults) {
+            resourceDeploys.add(brd);
             brd.setBundleDeployment(liveDeployment);
         }
 
@@ -1478,6 +1507,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             Bundle bundle = version.getBundle();
             BundleDestinationCriteria destinationCriteria = new BundleDestinationCriteria();
             destinationCriteria.addFilterBundleId(bundle.getId());
+            destinationCriteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
             List<BundleDestination> destinations = findBundleDestinationsByCriteria(subject,destinationCriteria);
             List<BundleDeployment> resultingDeployments = new ArrayList<BundleDeployment>(version.getBundleDeployments().size());
             // We now have visible destinations - go over the resultingDeployments and only include the ones with vis. destinations
@@ -1535,6 +1566,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         for (Bundle bundle : bundles.getValues()) { // TODO clone the bundle and return the modified clones
             BundleDestinationCriteria destinationCriteria = new BundleDestinationCriteria();
             destinationCriteria.addFilterBundleId(bundle.getId());
+            destinationCriteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
             List<BundleDestination> destinations = findBundleDestinationsByCriteria(subject,destinationCriteria);
             bundle.setDestinations(destinations);
         }

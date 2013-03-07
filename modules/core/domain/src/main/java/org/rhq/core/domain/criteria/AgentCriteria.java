@@ -42,7 +42,6 @@ public class AgentCriteria extends Criteria {
 
     public static final String SORT_FIELD_NAME = "name";
 
-    private Integer filterId;
     private String filterName;
     private String filterAddress;
     private Integer filterPort;
@@ -63,10 +62,6 @@ public class AgentCriteria extends Criteria {
 
     public Class<?> getPersistentClass() {
         return Agent.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
     }
 
     public void addFilterName(String filterName) {

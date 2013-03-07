@@ -38,9 +38,11 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupMetr
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOobsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupPkgHistoryPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.groups.graph.ResourceGroupD3GraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.groups.graph.ResourceGroupGraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.queue.AutodiscoveryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.FavoriteResourcesPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.ResourceD3GraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.ResourceGraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
@@ -99,7 +101,9 @@ public class PortletFactory {
         globalPortletFactoryMap.put(AutodiscoveryPortlet.KEY, AutodiscoveryPortlet.Factory.INSTANCE);
         globalPortletFactoryMap.put(RecentAlertsPortlet.KEY, RecentAlertsPortlet.Factory.INSTANCE);
         globalPortletFactoryMap.put(ResourceGraphPortlet.KEY, ResourceGraphPortlet.Factory.INSTANCE);
+        globalPortletFactoryMap.put(ResourceD3GraphPortlet.KEY, ResourceD3GraphPortlet.Factory.INSTANCE);
         globalPortletFactoryMap.put(ResourceGroupGraphPortlet.KEY, ResourceGroupGraphPortlet.Factory.INSTANCE);
+        globalPortletFactoryMap.put(ResourceGroupD3GraphPortlet.KEY, ResourceGroupD3GraphPortlet.Factory.INSTANCE);
         //conditionally add tags. Defaults to true, not available in JON builds.
         if (CoreGUI.isTagsEnabledForUI()) {
             globalPortletFactoryMap.put(TagCloudPortlet.KEY, TagCloudPortlet.Factory.INSTANCE);
@@ -120,7 +124,9 @@ public class PortletFactory {
         globalPortletNameMap.put(AutodiscoveryPortlet.NAME, AutodiscoveryPortlet.KEY);
         globalPortletNameMap.put(RecentAlertsPortlet.NAME, RecentAlertsPortlet.KEY);
         globalPortletNameMap.put(ResourceGraphPortlet.NAME, ResourceGraphPortlet.KEY);
+        globalPortletNameMap.put(ResourceD3GraphPortlet.NAME, ResourceD3GraphPortlet.KEY);
         globalPortletNameMap.put(ResourceGroupGraphPortlet.NAME, ResourceGroupGraphPortlet.KEY);
+        globalPortletNameMap.put(ResourceGroupD3GraphPortlet.NAME, ResourceGroupD3GraphPortlet.KEY);
         //conditionally add tags. Defaults to true, not available in JON builds.
         if (CoreGUI.isTagsEnabledForUI()) {
             globalPortletNameMap.put(TagCloudPortlet.NAME, TagCloudPortlet.KEY);

@@ -84,6 +84,7 @@ public class TagManagerBean implements TagManagerLocal, TagManagerRemote {
             criteria.addFilterSemantic(tag.getSemantic());
             criteria.addFilterName(tag.getName());
             criteria.setStrict(true);
+
             List<Tag> found = findTagsByCriteria(subject, criteria);
             if (!found.isEmpty()) {
                 assert found.size() == 1; // should never be more than one

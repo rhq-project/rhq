@@ -42,7 +42,6 @@ import org.rhq.core.domain.util.PageOrdering;
 public class AvailabilityCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
     // this is used to perform an interval check, see below for more, or to filter out the initial avail record
     private Long filterStartTime;
     private Integer filterResourceId; // requires overrides
@@ -60,10 +59,6 @@ public class AvailabilityCriteria extends Criteria {
     @Override
     public Class<Availability> getPersistentClass() {
         return Availability.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
     }
 
     /**

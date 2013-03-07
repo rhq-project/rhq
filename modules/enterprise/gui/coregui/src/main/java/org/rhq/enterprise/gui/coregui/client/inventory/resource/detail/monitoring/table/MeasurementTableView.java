@@ -192,10 +192,6 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
             }
         });
 
-
-
-
-
         // new d3 chart selection
         //@todo: i18n when we remove gflot graphs
         addTableAction("d3 Chart Selection", new TableAction() {
@@ -214,47 +210,46 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
                     Integer defId = record.getAttributeAsInt(MeasurementTableDataSource.FIELD_METRIC_DEF_ID);
                     definitionIds.add(defId);
                 }
-                
+
                 ResourceCriteria criteria = new ResourceCriteria();
                 criteria.addFilterId(resourceId);
                 criteria.fetchSchedules(true);
                 GWTServiceLookup.getResourceService().findResourceCompositesByCriteria(criteria,
-                        new AsyncCallback<PageList<ResourceComposite>>() {
+                    new AsyncCallback<PageList<ResourceComposite>>() {
 
-                            @Override
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getMessageCenter().notify(
-                                        new Message(MSG.view_inventory_resource_loadFailed(String.valueOf(resourceId)),
-                                                Message.Severity.Warning));
+                        @Override
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message(MSG.view_inventory_resource_loadFailed(String.valueOf(resourceId)),
+                                    Message.Severity.Warning));
 
-                                CoreGUI.goToView(InventoryView.VIEW_ID.getName());
-                            }
+                            CoreGUI.goToView(InventoryView.VIEW_ID.getName());
+                        }
 
-                            @Override
-                            public void onSuccess(PageList<ResourceComposite> result) {
-                                if (result.isEmpty()) {
-                                    onFailure(new Exception(MSG.view_inventory_resource_loadFailed(String.valueOf(resourceId))));
-                                } else {
-                                    final ResourceComposite resourceComposite = result.get(0);
+                        @Override
+                        public void onSuccess(PageList<ResourceComposite> result) {
+                            if (result.isEmpty()) {
+                                onFailure(new Exception(MSG.view_inventory_resource_loadFailed(String
+                                    .valueOf(resourceId))));
+                            } else {
+                                final ResourceComposite resourceComposite = result.get(0);
 
                                 ChartViewWindow window = new ChartViewWindow("");
                                 final D3GraphListView graphListView = D3GraphListView.createMultipleGraphs(
-                                    resourceComposite.getResource(), definitionIds);
-                                    graphListView.addSetButtonClickHandler(new ClickHandler()
-                                    {
-                                        @Override
-                                        public void onClick(ClickEvent event)
-                                        {
-                                            graphListView.redrawGraphs();
-                                        }
-                                    });
-                                    window.addItem(graphListView);
-                                    window.show();
-                                    refreshTableInfo();
+                                    resourceComposite.getResource(), definitionIds, true);
+                                graphListView.addSetButtonClickHandler(new ClickHandler() {
+                                    @Override
+                                    public void onClick(ClickEvent event) {
+                                        graphListView.redrawGraphs();
+                                    }
+                                });
+                                window.addItem(graphListView);
+                                window.show();
+                                refreshTableInfo();
 
-                                }
                             }
-                        });
+                        }
+                    });
 
             }
         });

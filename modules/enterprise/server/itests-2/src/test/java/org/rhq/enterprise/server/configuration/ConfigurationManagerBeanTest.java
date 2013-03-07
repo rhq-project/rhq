@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.configuration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -41,6 +42,10 @@ import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.discovery.AvailabilityReport;
@@ -733,6 +738,67 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
             configUpdatesPageControl);
 
         assert requests.size() == 1; // it will create one for us from the "live" configuration
+    }
+
+    /** Exercise the ConfigurationManagerBean getOptionsForConfigurationDefinition.
+     * 
+     * @throws Exception
+     */
+    @Test(enabled = ENABLE_TESTS)
+    public void testResourceConfigurationDefinitionsOptions() throws Exception {
+        Resource resource = newResource1;
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
+        getTransactionManager().begin();
+
+        try {
+            // this is simulating what the UI would be doing, build the config and call the server-side API
+            // we'll pretend the user is the overlord - another test will check a real user to see permission errors
+            ResourceType newResource1Type = resource.getResourceType();
+            ConfigurationDefinition initialDefinition = newResource1Type.getResourceConfigurationDefinition();
+            int loadCount = 300;
+            HashSet<String> parsedNames = new HashSet<String>();
+            for (int i = 0; i < loadCount; i++) {
+                String name = "fake property" + i;
+                initialDefinition
+                    .put(new PropertyDefinitionSimple(name, "fake" + i, false, PropertySimpleType.BOOLEAN));
+                parsedNames.add(name);
+            }
+            newResource1Type.setResourceConfigurationDefinition(initialDefinition);
+            em.merge(newResource1Type);
+            em.flush();
+
+            Configuration configuration = new Configuration();
+            configuration.put(new PropertySimple("myboolean", "true"));
+
+            ConfigurationDefinition configurationDefinition = newResource1.getResourceType()
+                .getResourceConfigurationDefinition();
+            assert configurationDefinition != null : "Configuration Definition could not be located.";
+            //retrieve the options for ConfigurationDefinition
+            ConfigurationDefinition options = configurationManager.getOptionsForConfigurationDefinition(overlord,
+                newResource1.getId(), configurationDefinition);
+            assert options != null : "Unable able to retrieve options for resource with id [" + newResource1.getId()
+                + "].";
+            assert !options.getPropertyDefinitions().entrySet().isEmpty() : "No PropertyDefinitionSimple instances found.";
+
+            PropertyDefinitionSimple locatedPropertyDefSimple = null;
+            int locatedCount = 0;
+            for (Map.Entry<String, PropertyDefinition> entry : options.getPropertyDefinitions().entrySet()) {
+                PropertyDefinition pd = entry.getValue();
+                if (pd instanceof PropertyDefinitionSimple) {
+                    PropertyDefinitionSimple pds = (PropertyDefinitionSimple) pd;
+                    locatedPropertyDefSimple = pds;
+                    locatedCount++;
+                    parsedNames.remove(pds.getName());
+                }
+            }
+            assert locatedPropertyDefSimple != null : "PropertyDefinitionSimple was not located!";
+            assert locatedCount >= loadCount : "All expected properties were not loaded. Found '" + locatedCount + "'.";
+            assert parsedNames.size() == 0 : "Not all loaded options were parsed.";
+
+        } finally {
+            getTransactionManager().rollback();
+        }
     }
 
     @Test(enabled = ENABLE_TESTS)

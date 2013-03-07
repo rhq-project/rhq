@@ -26,7 +26,6 @@ import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.Label;
 
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
@@ -35,28 +34,27 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricStackedBarGraph;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceMetricD3Graph;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3Graph;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * Build the Group version of the View that shows the individual graph views.
  * @author Mike Thompson
  */
-public class D3GroupGraphListView extends EnhancedVLayout {
+public class D3GroupGraphListView extends AbstractD3GraphListView {
 
     private ResourceGroup resourceGroup;
-    private Label loadingLabel = new Label(MSG.common_msg_loading());
-    private UserPreferencesMeasurementRangeEditor measurementRangeEditor;
 
-    public D3GroupGraphListView(ResourceGroup resourceGroup) {
+    public D3GroupGraphListView(ResourceGroup resourceGroup, boolean monitorDetailView) {
         super();
-        measurementRangeEditor = new UserPreferencesMeasurementRangeEditor();
         this.resourceGroup = resourceGroup;
+        this.showAvailabilityGraph = monitorDetailView;
         setOverflow(Overflow.AUTO);
     }
 
@@ -67,20 +65,29 @@ public class D3GroupGraphListView extends EnhancedVLayout {
         destroyMembers();
 
         addMember(measurementRangeEditor);
+        if (showAvailabilityGraph) {
+            availabilityGraph = new AvailabilityD3Graph(new AvailabilityLineGraphType(resourceGroup.getId()));
+            // first step in 2 step to create d3 chart
+            // create a placeholder for avail graph
+            availabilityGraph.createGraphMarker();
+            addMember(availabilityGraph);
+        }
 
         if (resourceGroup != null) {
-            buildGraphs();
+            redrawGraphs();
         }
     }
 
     /**
      * Build whatever graph metrics (MeasurementDefinitions) are defined for the resource.
      */
-    private void buildGraphs() {
+    public void redrawGraphs() {
 
         List<Long> startEndList = measurementRangeEditor.getBeginEndTimes();
         final long startTime = startEndList.get(0);
         final long endTime = startEndList.get(1);
+
+        queryAvailability(resourceGroup.getId(), null);
 
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(resourceGroup.getResourceType().getId(),
             EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
@@ -126,6 +133,9 @@ public class D3GroupGraphListView extends EnhancedVLayout {
                                     for (List<MeasurementDataNumericHighLowComposite> data : result) {
                                         buildIndividualGraph(measurementDefinitions.get(i++), data);
                                     }
+                                    availabilityGraph.setMetricData(result.get(0));
+                                    availabilityGraph.setAvailabilityList(availabilityList);
+                                    availabilityGraph.drawJsniChart();
                                 }
                             }
                         });
@@ -143,9 +153,8 @@ public class D3GroupGraphListView extends EnhancedVLayout {
         ResourceMetricD3Graph graphView = new ResourceMetricD3Graph(graph);
 
         graphView.setWidth("95%");
-        graphView.setHeight(250);
+        graphView.setHeight(225);
 
         addMember(graphView);
     }
-
 }

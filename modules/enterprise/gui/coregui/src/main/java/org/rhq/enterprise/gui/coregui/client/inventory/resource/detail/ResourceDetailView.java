@@ -74,6 +74,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.ActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.TimelineView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
@@ -84,7 +85,8 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Jay Shaughnessy
  * @author Greg Hinkle
  */
-public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceComposite, ResourceTitleBar> {
+public class ResourceDetailView extends
+    AbstractTwoLevelTabSetView<ResourceComposite, ResourceTitleBar, D3GraphListView> {
 
     private static final String BASE_VIEW_PATH = "Resource";
 
@@ -262,6 +264,12 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     }
 
     @Override
+    protected D3GraphListView createD3GraphListView() {
+        graphListView = D3GraphListView.createSummaryMultipleGraphs(resourceComposite.getResource(), true);
+        return graphListView;
+    }
+
+    @Override
     protected void updateTabContent(ResourceComposite resourceComposite, boolean isRefresh) {
         super.updateTabContent(resourceComposite, isRefresh);
 
@@ -401,14 +409,14 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         };
         updateSubTab(this.monitoringTab, this.monitorGraphs, visible, true, viewFactory);
 
-        //boolean visibleToIE8 = !BrowserUtility.isBrowserIE8();
-        boolean visibleToIE8 = true;
+        boolean visibleToIE8 = !BrowserUtility.isBrowserIE8();
 
         viewFactory = (!visibleToIE8) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                d3GraphListView = D3GraphListView.createSummaryMultipleGraphs(resourceComposite.getResource());
-                return d3GraphListView;
+                //d3GraphListView = D3GraphListView.createSummaryMultipleGraphs(monitoringTab.extendLocatorId("NewGraphs"), resourceComposite.getResource(), true);
+                //return d3GraphListView;
+                return createD3GraphListView();
             }
         };
         updateSubTab(this.monitoringTab, this.monitorNewGraphs, visible, visibleToIE8, viewFactory);
@@ -614,10 +622,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
 
                                 @Override
                                 public void onSuccess(Subject result) {
-                                    if (Log.isDebugEnabled()) {
-                                        Log.debug("Updated recently viewed resources for " + result
-                                            + " with resourceId [" + resourceId + "]");
-                                    }
+                                    Log.debug("Updated recently viewed resources for " + result + " with resourceId ["
+                                        + resourceId + "]");
                                 }
                             });
                     }

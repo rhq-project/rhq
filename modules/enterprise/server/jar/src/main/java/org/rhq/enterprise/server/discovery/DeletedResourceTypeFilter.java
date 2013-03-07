@@ -9,11 +9,12 @@ import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
+import org.rhq.enterprise.server.util.CriteriaQuery;
+import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
 public class DeletedResourceTypeFilter {
 
@@ -41,9 +42,17 @@ public class DeletedResourceTypeFilter {
     private void loadDeletedTypes() {
         ResourceTypeCriteria criteria = new ResourceTypeCriteria();
         criteria.addFilterDeleted(true);
-        criteria.setPageControl(PageControl.getUnlimitedInstance());
-        PageList<ResourceType> results = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(),
-            criteria);
+
+        //Use CriteriaQuery to automatically chunk/page through criteria query results
+        CriteriaQueryExecutor<ResourceType, ResourceTypeCriteria> queryExecutor = new CriteriaQueryExecutor<ResourceType, ResourceTypeCriteria>() {
+            @Override
+            public PageList<ResourceType> execute(ResourceTypeCriteria criteria) {
+                return resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(), criteria);
+            }
+        };
+
+        CriteriaQuery<ResourceType, ResourceTypeCriteria> results = new CriteriaQuery<ResourceType, ResourceTypeCriteria>(
+            criteria, queryExecutor);
         for (ResourceType type : results) {
             deletedTypes.add(type.getName() + "::" + type.getPlugin());
         }

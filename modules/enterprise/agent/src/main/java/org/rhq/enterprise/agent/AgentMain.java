@@ -3314,15 +3314,23 @@ public class AgentMain {
             }
 
             if (nextToken == java.io.StreamTokenizer.TT_WORD) {
-                args.add(strtok.sval);
+                args.add(safeArg(strtok.sval));
             } else if (nextToken == '\"') {
-                args.add(strtok.sval);
+                args.add(safeArg(strtok.sval));
             } else if ((nextToken == java.io.StreamTokenizer.TT_EOF) || (nextToken == java.io.StreamTokenizer.TT_EOL)) {
                 keep_going = false;
             }
         }
 
         return args.toArray(new String[args.size()]);
+    }
+
+    // perform any other massaging 
+    private String safeArg(String arg) {
+        // remove trailing '=' from long option args. For example --plugin= should just be --plugin for
+        // downstream processing.
+        String result = (arg.startsWith("--") && arg.endsWith("=")) ? arg.substring(0, arg.length() - 1) : arg;
+        return result;
     }
 
     /**

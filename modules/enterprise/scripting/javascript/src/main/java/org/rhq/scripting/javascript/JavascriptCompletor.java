@@ -191,9 +191,20 @@ public class JavascriptCompletor implements CodeCompletion {
                 Object rootObject = nextList.get(0);
                 if (rootObject instanceof PropertyDescriptor && !(baseObject instanceof Class)) {
                     try {
-                        rootObject = invoke(baseObject, ((PropertyDescriptor) rootObject).getReadMethod());
+                        Method readMethod = ((PropertyDescriptor) rootObject).getReadMethod();
+                        //the read method might be null for for example indexed bean properties.
+                        //Rhino doesn't interpret any more complex bean properties.
+                        if (readMethod != null) {
+                            rootObject = invoke(baseObject, readMethod);
+                        } else {
+                            return -1;
+                        }
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Exception while reading a java bean property.", e);
+                        }
+
+                        return -1;
                     }
                 } else if (rootObject instanceof Method) {
                     rootObject = ((Method) rootObject).getReturnType();

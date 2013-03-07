@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- *  Copyright (C) 2005-2012 Red Hat, Inc.
+ *  Copyright (C) 2005-2013 Red Hat, Inc.
  *  All rights reserved.
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -43,14 +43,14 @@ public class OperationsTest extends AbstractBase {
 
     private int definitionId;
 
-    @Override
     @Before
     public void setUp() throws Exception {
-        super.setUp();    // Junit does not call that for us
+        super.setUp();
+
         Response r =
         given()
             .header(acceptJson)
-            .queryParam("resourceId",10001)
+            .queryParam("resourceId",_platformId)
         .expect()
             .statusCode(200)
             .log().ifError()
@@ -90,7 +90,7 @@ public class OperationsTest extends AbstractBase {
         given()
             .header(acceptJson)
             .pathParam("definitionId",definitionId)
-            .queryParam("resourceId",10001)
+            .queryParam("resourceId",_platformId)
         .expect()
             .statusCode(200)
             .log().ifError()
@@ -118,7 +118,7 @@ public class OperationsTest extends AbstractBase {
         given()
             .header(acceptJson)
             .pathParam("definitionId",definitionId)
-            .queryParam("resourceId",10001)
+            .queryParam("resourceId",_platformId)
         .expect()
             .statusCode(200)
             .log().ifError()
@@ -156,11 +156,13 @@ public class OperationsTest extends AbstractBase {
     @Test
     public void testCreateDraftOperationAndScheduleExecution() throws Exception {
 
+        int platformId = findIdOfARealPlatform();
+
         Operation draft =
         given()
             .header(acceptJson)
             .pathParam("definitionId",definitionId)
-            .queryParam("resourceId",10001)
+            .queryParam("resourceId",platformId)
         .expect()
             .statusCode(200)
             .log().ifError()
@@ -174,7 +176,7 @@ public class OperationsTest extends AbstractBase {
         int draftId = draft.getId();
 
         draft.setReadyToSubmit(true);
-        draft.getParams().put("detailed", true);
+        draft.getParams().put("detailedDiscovery", false);
 
         // update to schedule
         Operation scheduled =
@@ -213,7 +215,7 @@ public class OperationsTest extends AbstractBase {
             // See if we also find it when we are looking for histories on the resource
             Response response =
             given()
-                .queryParam("resourceId",10001)
+                .queryParam("resourceId",platformId)
                 .header(acceptJson)
             .expect()
                 .statusCode(200)
@@ -269,7 +271,6 @@ public class OperationsTest extends AbstractBase {
                 .delete("/operation/history/{hid}");
 
         }
-
     }
 
 }

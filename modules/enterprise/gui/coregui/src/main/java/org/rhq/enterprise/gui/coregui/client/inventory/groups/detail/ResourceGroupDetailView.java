@@ -80,7 +80,8 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Jay Shaughnessy
  * @author Ian Springer
  */
-public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<ResourceGroupComposite, ResourceGroupTitleBar> {
+public class ResourceGroupDetailView extends
+    AbstractTwoLevelTabSetView<ResourceGroupComposite, ResourceGroupTitleBar, D3GroupGraphListView> {
 
     public static final String AUTO_CLUSTER_VIEW = "ResourceGroup/AutoCluster";
     public static final String AUTO_GROUP_VIEW = "Resource/AutoGroup";
@@ -154,6 +155,12 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     @Override
     protected ResourceGroupTitleBar createTitleBar() {
         return new ResourceGroupTitleBar(isAutoGroup(), isAutoCluster());
+    }
+
+    @Override
+    protected D3GroupGraphListView createD3GraphListView() {
+        graphListView = new D3GroupGraphListView(groupComposite.getResourceGroup(), true);
+        return graphListView;
     }
 
     @Override
@@ -300,7 +307,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             viewFactory = (!visibleToIE8) ? null : new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new D3GroupGraphListView(groupComposite.getResourceGroup());
+                    return createD3GraphListView();
                 }
             };
 
@@ -568,6 +575,9 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                             group.setResourceType(type);
                             updateTabContent(groupComposite, viewPath.isRefresh());
                             selectTab(getTabName(), getSubTabName(), viewPath);
+                            if (null != graphListView) {
+                                graphListView.redrawGraphs();
+                            }
                         } finally {
                             notifyViewRenderedListeners();
                         }
@@ -577,6 +587,9 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             try {
                 updateTabContent(groupComposite, viewPath.isRefresh());
                 selectTab(getTabName(), getSubTabName(), viewPath);
+                if (null != graphListView) {
+                    graphListView.redrawGraphs();
+                }
             } finally {
                 notifyViewRenderedListeners();
             }

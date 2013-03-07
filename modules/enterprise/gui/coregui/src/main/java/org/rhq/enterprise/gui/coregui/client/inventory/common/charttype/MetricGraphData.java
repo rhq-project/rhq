@@ -19,7 +19,6 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -59,6 +58,8 @@ public class MetricGraphData implements JsonMetricProducer {
     private final String chartHoverEndLabel = MSG.chart_hover_end_label();
     private final String chartHoverPeriodLabel = MSG.chart_hover_period_label();
     private final String chartHoverBarLabel = MSG.chart_hover_bar_label();
+    private final String chartHoverTimeFormat = MSG.chart_hover_time_format();
+    private final String chartHoverDateFormat = MSG.chart_hover_date_format();
     private int entityId = 0;
     private String entityName;
     private int definitionId;
@@ -197,6 +198,14 @@ public class MetricGraphData implements JsonMetricProducer {
 
     public String getChartHoverBarLabel() {
         return chartHoverBarLabel;
+    }
+
+    public String getChartHoverTimeFormat() {
+        return chartHoverTimeFormat;
+    }
+
+    public String getChartHoverDateFormat() {
+        return chartHoverDateFormat;
     }
 
     public Integer getChartHeight() {

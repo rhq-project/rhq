@@ -9,7 +9,7 @@
  * A ChartContext can be passed to multiple chart renders to display different chart types
  * of that data.
  */
-var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, chartTitle, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, noDataLabel, hoverStartLabel,hoverEndLabel, hoverPeriodLabel, hoverBarLabel)
+var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, chartTitle, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, noDataLabel, hoverStartLabel,hoverEndLabel, hoverPeriodLabel, hoverBarLabel, chartHoverTimeFormat, chartHoverDateFormat)
 {
     "use strict";
     if(!(this instanceof ChartContext)){
@@ -35,9 +35,11 @@ var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, char
     this.hoverEndLabel = hoverEndLabel;
     this.hoverPeriodLabel = hoverPeriodLabel;
     this.hoverBarLabel = hoverBarLabel;
+    this.chartHoverTimeFormat = chartHoverTimeFormat;
+    this.chartHoverDateFormat = chartHoverDateFormat;
 
 },
-AvailChartContext = function (chartId, availData, dateLabel, timeLabel, hoverStartLabel, hoverEndLabel, hoverBarLabel, availabilityLabel) {
+AvailChartContext = function (chartId, availData, dateLabel, timeLabel, hoverStartLabel, hoverEndLabel, hoverBarLabel, availabilityLabel, chartHoverTimeFormat, chartHoverDateFormat) {
     "use strict";
     if (!(this instanceof AvailChartContext)) {
         throw new Error("AvailChartContext function cannot be called as a function.")
@@ -52,5 +54,7 @@ AvailChartContext = function (chartId, availData, dateLabel, timeLabel, hoverSta
     this.hoverEndLabel = hoverEndLabel;
     this.hoverBarLabel = hoverBarLabel;
     this.hoverBarAvailabilityLabel = availabilityLabel;
+    this.chartHoverTimeFormat = chartHoverTimeFormat;
+    this.chartHoverDateFormat = chartHoverDateFormat;
 
 };

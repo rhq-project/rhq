@@ -150,6 +150,15 @@ public abstract class AbstractGraph implements HasD3MetricJsniChart {
         return metricGraphData.getChartHoverBarLabel();
     }
 
+    public String getChartHoverTimeFormat() {
+        return metricGraphData.getChartHoverTimeFormat();
+    }
+
+    public String getChartHoverDateFormat() {
+        return metricGraphData.getChartHoverDateFormat();
+    }
+
+
     public Integer getChartHeight() {
         return metricGraphData.getChartHeight();
     }

@@ -132,7 +132,9 @@ public class AvailabilityLineGraphType {
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType::getChartHoverStartLabel()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType::getChartHoverEndLabel()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType::getChartHoverBarLabel()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType::getChartHoverAvailabilityLabel()()
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType::getChartHoverAvailabilityLabel()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType::getChartHoverTimeFormat()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType::getChartHoverDateFormat()()
         );
 
 
@@ -215,8 +217,10 @@ public class AvailabilityLineGraphType {
             var hoverString,
                     xValue = (d.x == undefined) ? 0 : +d.x,
                     date = new Date(+xValue),
-                    timeFormatter = $wnd.d3.time.format("%I:%M:%S %p"),
-                    dateFormatter = $wnd.d3.time.format("%m/%d/%y"),
+                    //timeFormatter = $wnd.d3.time.format("%I:%M:%S %p"),
+                    //dateFormatter = $wnd.d3.time.format("%m/%d/%y"),
+                    timeFormatter = $wnd.d3.time.format(availChartContext.chartHoverTimeFormat),
+                    dateFormatter = $wnd.d3.time.format(availChartContext.chartHoverDateFormat),
                     availType = d.availType,
                     availStart = new Date(+d.availStart),
                     availEnd = new Date(+d.availEnd),
@@ -228,7 +232,9 @@ public class AvailabilityLineGraphType {
                             '<hr  class="chartHoverDivider"></hr>' +
                             '<div class="chartHoverAlignRight"><span >' + availChartContext.hoverBarAvailabilityLabel + ': </span><span style="width:50px;">' + availType + '</span></div>' +
                             '<div class="chartHoverAlignRight"><span >' + availChartContext.hoverStartLabel + ': </span><span style="width:50px;">' + timeFormatter(availStart) + '</span></div>' +
+                            '<div class="chartHoverAlignRight"><span >' +  ' </span><span style="width:50px;">' + dateFormatter(availStart) + '</span></div>' +
                             '<div class="chartHoverAlignRight"><span >' + availChartContext.hoverEndLabel + ': </span><span style="width:50px;">' + timeFormatter(availEnd) + '</span></div>' +
+                            '<div class="chartHoverAlignRight"><span >' +  ' </span><span style="width:50px;">' + dateFormatter(availEnd) + '</span></div>' +
                             '<div class="chartHoverAlignRight"><span >' + availChartContext.hoverBarLabel + ': </span><span style="width:50px;">' + availDuration + '</span></div>' +
                             '</div>';
             return hoverString;
@@ -267,5 +273,12 @@ public class AvailabilityLineGraphType {
 
     public String getChartHoverBarLabel() {
         return MSG.chart_hover_bar_label();
+    }
+
+    public String getChartHoverTimeFormat() {
+        return MSG.chart_hover_time_format();
+    }
+    public String getChartHoverDateFormat() {
+        return MSG.chart_hover_date_format();
     }
 }

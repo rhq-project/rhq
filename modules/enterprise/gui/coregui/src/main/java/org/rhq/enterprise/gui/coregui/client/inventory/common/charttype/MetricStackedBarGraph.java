@@ -63,7 +63,9 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartHoverStartLabel()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartHoverEndLabel()(),
                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartHoverPeriodLabel()(),
-                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartHoverBarLabel()()
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartHoverBarLabel()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartHoverTimeFormat()(),
+                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartHoverDateFormat()()
         );
 
 
@@ -576,7 +578,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                 // Public API
                 draw: function (chartContext) {
                     "use strict";
-                    console.group("Creating Chart: %s",chartContext.chartSelection);
+                    console.group("Creating Chart: %s --> %s",chartContext.chartSelection, chartContext.chartTitle);
                     console.time("chart");
                     //console.log("Json Data:\n"+chartContext.data);
 

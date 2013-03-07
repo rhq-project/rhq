@@ -126,7 +126,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
                 //@todo: this is a hack around timing issue of jsni not seeing the DOM
                 drawJsniChart();
             }
-        }.schedule(300);
+        }.schedule(900);
     }
 
 

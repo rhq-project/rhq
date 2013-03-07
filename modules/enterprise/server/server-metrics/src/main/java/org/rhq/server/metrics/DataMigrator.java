@@ -273,7 +273,8 @@ public class DataMigrator {
 
     private class AggregateDataMigrator implements CallableMigrationWorker {
 
-        private final String query;
+        private final String selectQuery;
+        private final String deleteQuery;
         private final MetricsTable metricsTable;
 
         /**
@@ -284,11 +285,14 @@ public class DataMigrator {
             this.metricsTable = metricsTable;
 
             if (MetricsTable.ONE_HOUR.equals(this.metricsTable)) {
-                this.query = MigrationQuery.SELECT_1H_DATA.toString();
+                this.selectQuery = MigrationQuery.SELECT_1H_DATA.toString();
+                this.deleteQuery = MigrationQuery.DELETE_1H_ENTRY.toString();
             } else if (MetricsTable.SIX_HOUR.equals(this.metricsTable)) {
-                this.query = MigrationQuery.SELECT_6H_DATA.toString();
+                this.selectQuery = MigrationQuery.SELECT_6H_DATA.toString();
+                this.deleteQuery = MigrationQuery.DELETE_6H_ENTRY.toString();
             } else if (MetricsTable.TWENTY_FOUR_HOUR.equals(this.metricsTable)) {
-                this.query = MigrationQuery.SELECT_1D_DATA.toString();
+                this.selectQuery = MigrationQuery.SELECT_1D_DATA.toString();
+                this.deleteQuery = MigrationQuery.DELETE_1D_ENTRY.toString();
             } else {
                 throw new Exception("MetricsTable " + metricsTable.toString() + " not supported by this migrator.");
             }
@@ -307,7 +311,7 @@ public class DataMigrator {
             List<Object[]> existingData;
 
             while (true) {
-                Query nativeQuery = entityManager.createNativeQuery(query);
+                Query nativeQuery = entityManager.createNativeQuery(this.selectQuery);
                 nativeQuery.setMaxResults(MAX_RECORDS_TO_LOAD_FROM_SQL);
                 existingData = nativeQuery.getResultList();
 
@@ -323,8 +327,10 @@ public class DataMigrator {
                     insertDataToCassandra(existingData);
                 }
 
-                for (Object entity : existingData) {
-                    entityManager.remove(entity);
+                nativeQuery = entityManager.createNativeQuery(this.deleteQuery);
+                for (Object[] entity : existingData) {
+                    nativeQuery.setParameter(1, entity[0].toString());
+                    nativeQuery.executeUpdate();
                 }
                 entityManager.flush();
             }
@@ -332,12 +338,14 @@ public class DataMigrator {
 
         @SuppressWarnings("unchecked")
         private void performFullMigration() throws Exception {
-            List<Object[]> existingData = null;
+            List<Object[]> existingData;
+            int failureCount;
+            Query nativeQuery;
+
             int lastMigratedRecord = 0;
 
-            Query nativeQuery;
             while (true) {
-                nativeQuery = entityManager.createNativeQuery(query);
+                nativeQuery = entityManager.createNativeQuery(this.selectQuery);
                 nativeQuery.setFirstResult(lastMigratedRecord + 1);
                 nativeQuery.setMaxResults(MAX_RECORDS_TO_LOAD_FROM_SQL);
 
@@ -349,12 +357,20 @@ public class DataMigrator {
 
                 lastMigratedRecord += existingData.size();
 
-                try{
-                    insertDataToCassandra(existingData);
-                } catch (Exception e) {
-                    log.error("Failed to insert " + metricsTable.toString()
-                        + " data. Attempting to insert the current batch of data one more time");
-                    insertDataToCassandra(existingData);
+                failureCount = 0;
+                while (failureCount < MAX_NUMBER_OF_FAILURES) {
+                    try {
+                        insertDataToCassandra(existingData);
+                        break;
+                    } catch (Exception e) {
+                        log.error("Failed to insert " + metricsTable.toString()
+                            + " data. Attempting to insert the current batch of data one more time");
+
+                        failureCount++;
+                        if (failureCount == MAX_NUMBER_OF_FAILURES) {
+                            throw e;
+                        }
+                    }
                 }
 
                 log.info("- " + metricsTable + " - " + lastMigratedRecord + " -");
@@ -463,11 +479,17 @@ public class DataMigrator {
                         insertDataToCassandra(existingData);
                     }
 
+                    log.info("- " + table + " - " + existingData.size() + " -");
+                    entityManager.getTransaction().begin();
                     nativeQuery = entityManager.createNativeQuery(deleteQuery);
+                    log.info("transaction started- " + table + " - " + existingData.size() + " -");
                     for (Object[] rawDataPoint : existingData) {
-                        nativeQuery.setParameter(0, Integer.parseInt(rawDataPoint[0].toString()));
+                        nativeQuery.setParameter(1, Integer.parseInt(rawDataPoint[0].toString()));
                         nativeQuery.executeUpdate();
                     }
+                    entityManager.getTransaction().commit();
+                    log.info("transaction committed- " + table + " - " + existingData.size() + " -");
+                    log.info("- " + table + " - " + existingData.size() + " -");
                 }
 
                 tablesNotProcessed.poll();
@@ -476,7 +498,8 @@ public class DataMigrator {
 
         @SuppressWarnings("unchecked")
         private void performFullMigration() throws Exception {
-            List<Object[]> existingData = null;
+            List<Object[]> existingData;
+            int failureCount;
 
             while (!tablesNotProcessed.isEmpty()) {
                 String table = tablesNotProcessed.peek();
@@ -499,12 +522,20 @@ public class DataMigrator {
 
                     lastMigratedRecord += existingData.size();
 
-                    try {
-                        insertDataToCassandra(existingData);
-                    } catch (Exception e) {
-                        log.error("Failed to insert " + MetricsTable.RAW.toString()
-                            + " data. Attempting to insert the current batch of data one more time");
-                        insertDataToCassandra(existingData);
+                    failureCount = 0;
+                    while (failureCount < MAX_NUMBER_OF_FAILURES) {
+                        try {
+                            insertDataToCassandra(existingData);
+                            break;
+                        } catch (Exception e) {
+                            log.error("Failed to insert " + MetricsTable.RAW.toString()
+                                + " data. Attempting to insert the current batch of data one more time");
+
+                            failureCount++;
+                            if (failureCount == MAX_AGGREGATE_BATCH_TO_CASSANDRA) {
+                                throw e;
+                            }
+                        }
                     }
 
                     log.info("- " + table + " - " + lastMigratedRecord + " -");
@@ -563,19 +594,41 @@ public class DataMigrator {
     private class DeleteAllData implements CallableMigrationWorker {
 
         public void work() {
-            Query nativeQuery = entityManager.createNativeQuery(MigrationQuery.DELETE_1H_ALL_DATA.toString());
-            nativeQuery.executeUpdate();
+            Query nativeQuery;
 
-            nativeQuery = entityManager.createNativeQuery(MigrationQuery.DELETE_6H_ALL_DATA.toString());
-            nativeQuery.executeUpdate();
-
-            nativeQuery = entityManager.createNativeQuery(MigrationQuery.DELETE_1D_ALL_DATA.toString());
-            nativeQuery.executeUpdate();
-
-            for (String table : getRawDataTables()) {
-                String deleteAllData = String.format(MigrationQuery.DELETE_RAW_ALL_DATA.toString(), table);
-                nativeQuery = entityManager.createNativeQuery(deleteAllData);
+            if (run1HAggregateDataMigration) {
+                entityManager.getTransaction().begin();
+                nativeQuery = entityManager.createNativeQuery(MigrationQuery.DELETE_1H_ALL_DATA.toString());
                 nativeQuery.executeUpdate();
+                entityManager.getTransaction().commit();
+                log.info("- RHQ_MEASUREMENT_DATA_NUM_1H - Cleaned -");
+            }
+
+            if (run6HAggregateDataMigration) {
+                entityManager.getTransaction().begin();
+                nativeQuery = entityManager.createNativeQuery(MigrationQuery.DELETE_6H_ALL_DATA.toString());
+                nativeQuery.executeUpdate();
+                entityManager.getTransaction().commit();
+                log.info("- RHQ_MEASUREMENT_DATA_NUM_6H - Cleaned -");
+            }
+
+            if (run1DAggregateDataMigration) {
+                entityManager.getTransaction().begin();
+                nativeQuery = entityManager.createNativeQuery(MigrationQuery.DELETE_1D_ALL_DATA.toString());
+                nativeQuery.executeUpdate();
+                entityManager.getTransaction().commit();
+                log.info("- RHQ_MEASUREMENT_DATA_NUM_1D - Cleaned -");
+            }
+
+            if (runRawDataMigration) {
+                for (String table : getRawDataTables()) {
+                    entityManager.getTransaction().begin();
+                    String deleteAllData = String.format(MigrationQuery.DELETE_RAW_ALL_DATA.toString(), table);
+                    nativeQuery = entityManager.createNativeQuery(deleteAllData);
+                    nativeQuery.executeUpdate();
+                    entityManager.getTransaction().commit();
+                    log.info("- " + table + " - Cleaned -");
+                }
             }
         }
     }

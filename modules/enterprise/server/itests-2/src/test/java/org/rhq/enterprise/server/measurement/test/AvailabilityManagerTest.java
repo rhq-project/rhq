@@ -847,7 +847,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         }
     }
 
-    @Test(enabled = FALSE)
+    @Test(enabled = false)
     public void testAgentCurrentGroupAvailability() throws Exception {
         beginTx();
 

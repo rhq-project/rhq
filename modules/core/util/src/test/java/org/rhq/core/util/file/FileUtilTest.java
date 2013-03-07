@@ -42,6 +42,47 @@ import org.rhq.core.util.stream.StreamUtil;
 
 @Test
 public class FileUtilTest {
+    public void testIsNewer() throws Exception {
+        // make sure isNewer doesn't check for null or non-existent Files
+        File fileDoesNotExist = new File("blah/blah/blah.txt");
+        assert null == FileUtil.isNewer(null, null);
+        assert null == FileUtil.isNewer(fileDoesNotExist, null);
+        assert null == FileUtil.isNewer(null, fileDoesNotExist);
+        assert null == FileUtil.isNewer(fileDoesNotExist, fileDoesNotExist);
+
+        // create a test directory to put some files in
+        File testDir = FileUtil.createTempDirectory("fileUtilTestIsNewer", ".dest", null);
+        try {
+            // make sure isNewer doesn't check directories
+            assert null == FileUtil.isNewer(testDir, testDir) : "should not have tested directories";
+
+            // create some test files to check
+            File file1 = new File(testDir, "file1.txt");
+            File file2 = new File(testDir, "file2.txt");
+            FileUtil.writeFile(new ByteArrayInputStream("test1".getBytes()), file1);
+            Thread.sleep(2000L); // ensure our last modified time will be different - all platforms support precision in seconds
+            FileUtil.writeFile(new ByteArrayInputStream("test2".getBytes()), file2);
+
+            // make sure isNewer works with normal files
+            assert Boolean.TRUE.equals(FileUtil.isNewer(file2, file1));
+            assert Boolean.FALSE.equals(FileUtil.isNewer(file1, file2));
+
+            // checking against the same file should return false
+            assert Boolean.FALSE.equals(FileUtil.isNewer(file1, file1));
+            assert Boolean.FALSE.equals(FileUtil.isNewer(file2, file2));
+
+            // if both files have the same last modified date, then isNewer should return false
+            long now = System.currentTimeMillis();
+            file1.setLastModified(now);
+            file2.setLastModified(now);
+            assert Boolean.FALSE.equals(FileUtil.isNewer(file1, file2));
+            assert Boolean.FALSE.equals(FileUtil.isNewer(file2, file1));
+
+        } finally {
+            FileUtil.purge(testDir, true);
+        }
+    }
+
     public void testCopyDirectory() throws Exception {
         try {
             FileUtil.copyDirectory(new File("this.does.not.exist"), new File("dummy"));

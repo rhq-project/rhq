@@ -301,6 +301,7 @@ public class MetricGraphData implements JsonMetricProducer {
             sb.setLength(sb.length() - 1); // delete the last ','
         }
         sb.append("]");
+        Log.debug("Json data for: "+getChartTitle());
         Log.debug(sb.toString());
         return sb.toString();
     }

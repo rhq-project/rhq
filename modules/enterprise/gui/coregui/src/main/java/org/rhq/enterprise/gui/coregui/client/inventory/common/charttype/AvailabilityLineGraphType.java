@@ -217,8 +217,6 @@ public class AvailabilityLineGraphType {
             var hoverString,
                     xValue = (d.x == undefined) ? 0 : +d.x,
                     date = new Date(+xValue),
-                    //timeFormatter = $wnd.d3.time.format("%I:%M:%S %p"),
-                    //dateFormatter = $wnd.d3.time.format("%m/%d/%y"),
                     timeFormatter = $wnd.d3.time.format(availChartContext.chartHoverTimeFormat),
                     dateFormatter = $wnd.d3.time.format(availChartContext.chartHoverDateFormat),
                     availType = d.availType,

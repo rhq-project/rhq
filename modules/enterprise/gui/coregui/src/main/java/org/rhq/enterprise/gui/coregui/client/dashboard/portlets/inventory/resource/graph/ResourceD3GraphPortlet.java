@@ -335,7 +335,7 @@ public class ResourceD3GraphPortlet extends ResourceMetricD3Graph implements Cus
             graph.getMetricGraphData().setEntityId(simple.getIntegerValue());
             PropertySimple simpleDefId = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
             graph.getMetricGraphData().setDefinitionId(simpleDefId.getIntegerValue());
-            Log.debug(" *** Redraw Portlet");
+            Log.debug(" *** Redraw Portlet for entityId: "+simple.getIntegerValue());
             drawJsniChart();
             markForRedraw();
         }

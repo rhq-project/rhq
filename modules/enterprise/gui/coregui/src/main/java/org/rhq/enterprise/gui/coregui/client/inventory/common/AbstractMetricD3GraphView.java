@@ -107,7 +107,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
      *
      */
     protected void drawGraph() {
-        Log.debug("drawGraph marker in AbstractMetricD3GraphView for: " + graph.getMetricGraphData().getChartId());
+        Log.debug("drawGraph marker in AbstractMetricD3GraphView for: " + graph.getMetricGraphData().getChartId()+ " " + graph.getChartTitle());
 
         StringBuilder divAndSvgDefs = new StringBuilder();
         divAndSvgDefs.append("<div id=\"rChart-" + graph.getMetricGraphData().getChartId()

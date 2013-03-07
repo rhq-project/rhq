@@ -121,7 +121,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
     @Override
     protected void onDraw() {
         super.onDraw();
-        Log.debug("D3GraphListView.onDraw()");
+        Log.debug("D3GraphListView.onDraw() for: "+resource.getName());
         destroyMembers();
         addMember(measurementRangeEditor);
 

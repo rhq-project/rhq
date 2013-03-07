@@ -1,10 +1,15 @@
 package org.rhq.enterprise.server.rest.domain;
 
+import javax.ws.rs.Produces;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import com.wordnik.swagger.annotations.ApiClass;
 import com.wordnik.swagger.annotations.ApiProperty;
+
+import org.codehaus.jackson.map.annotate.JsonSerialize;
+
+import org.rhq.enterprise.server.rest.helper.LinkSerializer;
 
 /**
  * A link between two resources
@@ -12,6 +17,8 @@ import com.wordnik.swagger.annotations.ApiProperty;
  */
 @ApiClass("Link between two resources")
 @XmlRootElement
+@JsonSerialize(using = LinkSerializer.class)
+@Produces({"application/json","application/xml"})
 public class Link {
 
     private String rel;

@@ -315,11 +315,12 @@ public class AlertHandlerBean extends AbstractRestBean {
     @Cache(maxAge = 300)
     @Path("/{id}/definition")
     @ApiOperation("Get the alert definition (basics) for the alert")
-    public AlertDefinitionRest getDefinitionForAlert(@ApiParam("Id of the alert to show the definition") @PathParam("id") int alertId) {
+    public AlertDefinitionRest getDefinitionForAlert(@ApiParam("Id of the alert to show the definition") @PathParam("id") int alertId,
+                                                     @Context UriInfo uriInfo) {
         Alert al = findAlertWithId(alertId);
         AlertDefinition def = al.getAlertDefinition();
         AlertDefinitionHandlerBean adhb = new AlertDefinitionHandlerBean();
-        AlertDefinitionRest ret = adhb.definitionToDomain(def, false); // TODO allow 'full' parameter?
+        AlertDefinitionRest ret = adhb.definitionToDomain(def, false, uriInfo); // TODO allow 'full' parameter?
         return ret;
     }
 
@@ -350,7 +351,7 @@ public class AlertHandlerBean extends AbstractRestBean {
             alertDefinitionRest = new AlertDefinitionRest(alertDefinition.getId());
         } else {
             AlertDefinitionHandlerBean adhb = new AlertDefinitionHandlerBean();
-            alertDefinitionRest = adhb.definitionToDomain(alertDefinition, false);
+            alertDefinitionRest = adhb.definitionToDomain(alertDefinition, false, uriInfo);
         }
         ret.setAlertDefinition(alertDefinitionRest);
         ret.setDefinitionEnabled(alertDefinition.getEnabled());
@@ -387,6 +388,8 @@ public class AlertHandlerBean extends AbstractRestBean {
         link = new Link("definition",uri.toString());
         ret.addLink(link);
 
+        int resourceId = alertDefinition.getResource().getId();
+        ret.addLink(createUILink(uriInfo,UILinkTemplate.RESOURCE_ALERT,resourceId,al.getId()));
 
         return ret;
     }

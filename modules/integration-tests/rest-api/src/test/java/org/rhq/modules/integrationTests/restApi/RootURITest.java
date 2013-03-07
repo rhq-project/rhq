@@ -78,15 +78,17 @@ public class RootURITest extends AbstractBase {
     public void testLinksInRoot() throws Exception {
 
         String json = get("/index.json").asString();
-        List<Map<String,String>> links = JsonPath.with(json).getList(""); // with() already returns the list
+        List<Map<String,Map<String,String>>> links = JsonPath.with(json).getList(""); // with() already returns the list
 
         assert links != null;
         assert links.size()>0;
 
         String[] mediaTypes = {"text/html","application/xml","application/json"};
 
-        for (Map<String,String> link : links) {
-            String href= link.get("href");
+        for (Map<String,Map<String,String>> link : links) {
+            String key = link.keySet().iterator().next();
+            Map<String,String> map = link.get(key);
+            String href= map.get("href");
 
             for (String mediaType : mediaTypes) {
                 given().header("Accept",mediaType)

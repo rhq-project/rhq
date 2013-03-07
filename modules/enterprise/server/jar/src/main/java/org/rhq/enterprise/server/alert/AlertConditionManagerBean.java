@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.alert;
 
+import java.util.Iterator;
 import java.util.List;
 
 import javax.ejb.EJB;
@@ -28,6 +29,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.ws.rs.core.Response;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -37,6 +39,8 @@ import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.composite.AbstractAlertConditionCategoryComposite;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.domain.util.PageControl;
@@ -44,6 +48,8 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.rest.StuffNotFoundException;
 
 /**
  * @author Joseph Marques
@@ -58,6 +64,9 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
 
     @EJB
     private AuthorizationManagerLocal authorizationManager;
+    
+    @EJB
+    private AlertDefinitionManagerLocal alertDefinitionManager;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @Override
@@ -166,6 +175,38 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
             // the resource was already deleted asynchronously, tell the caller as much
             return InventoryStatus.UNINVENTORIED;
         }
+    }
+    
+    @RequiredPermission(Permission.MANAGE_ALERTS)
+    public AlertCondition updateAlertCondition(Subject subject, AlertCondition condition) { 
+        int conditionId = condition.getId();
+        Integer alertDefinitionId = getAlertDefinitionByConditionIdInNewTransaction(conditionId);
+        
+        AlertDefinition definition = entityManager.find(AlertDefinition.class, alertDefinitionId);
+        AlertCondition newCondition = null;
+
+        for (Iterator<AlertCondition> iterator = definition.getConditions().iterator(); iterator.hasNext(); ) {
+            AlertCondition oldCondition = iterator.next();
+            if (oldCondition.getId() == conditionId) {
+                newCondition = new AlertCondition(oldCondition);
+                oldCondition.setAlertDefinition(null);
+                iterator.remove();
+                entityManager.remove(oldCondition);
+            }
+        }
+        
+        newCondition.setOption(condition.getOption());
+        newCondition.setComparator(condition.getComparator());
+        newCondition.setMeasurementDefinition(condition.getMeasurementDefinition());
+        newCondition.setThreshold(condition.getThreshold());
+        newCondition.setTriggerId(condition.getTriggerId());
+        definition.getConditions().add(newCondition);
+
+        alertDefinitionManager.updateAlertDefinitionInternal(subject, alertDefinitionId, definition, true, true, true);
+
+        entityManager.flush();
+
+        return newCondition;
     }
 
     @Override

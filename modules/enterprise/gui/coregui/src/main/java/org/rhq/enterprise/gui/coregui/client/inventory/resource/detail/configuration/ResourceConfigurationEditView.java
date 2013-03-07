@@ -47,10 +47,10 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceD
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.MetadataType;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypeLoadedCallback;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 
 /**
  * A view for editing a Resource's configuration.
@@ -130,7 +130,6 @@ public class ResourceConfigurationEditView extends EnhancedVLayout implements Pr
                         Message message = new Message(MSG.view_configurationDetails_noConfigurationFetched(),
                             Message.Severity.Info);
                         CoreGUI.getMessageCenter().notify(message);
-                        saveButton.disable();
                         refreshing = false;
                         return;
                     }

@@ -41,11 +41,12 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
 
-    @Deprecated
-    protected HTMLFlow resourceTitle;
+    //protected HTMLFlow resourceTitle;
     protected AbstractGraph graph;
     private Integer chartHeight;
     protected boolean isPortalGraph = false;
+    private int entityId;
+    private int definitionId;
 
     public AbstractMetricD3GraphView(String locatorId) {
         super(locatorId);
@@ -99,6 +100,23 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
         drawGraph();
     }
 
+    public void setEntityId(int entityId) {
+        this.entityId = entityId;
+    }
+
+    public void setDefinitionId(int definitionId) {
+        this.definitionId = definitionId;
+    }
+
+    public int getEntityId() {
+        return entityId;
+    }
+
+    public int getDefinitionId() {
+        return definitionId;
+    }
+
+
     /**
      * Setup the page elements especially the div and svg elements that serve as
      * placeholders for the d3 stuff to grab onto and add svg tags to render the chart.
@@ -123,6 +141,7 @@ public abstract class AbstractMetricD3GraphView extends LocatableVLayout {
         new Timer() {
             @Override
             public void run() {
+                Log.debug("Scheduling Graph Rendering");
                 //@todo: this is a hack around timing issue of jsni not seeing the DOM
                 drawJsniChart();
             }

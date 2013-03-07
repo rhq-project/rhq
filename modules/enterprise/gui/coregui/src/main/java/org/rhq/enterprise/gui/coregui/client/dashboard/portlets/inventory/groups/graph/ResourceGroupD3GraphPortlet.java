@@ -19,7 +19,6 @@
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.groups.graph;
 
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.ResourceGroupMetricGraphView;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Overflow;
@@ -45,7 +44,9 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.ResourceGroupMetricGraphView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricStackedBarGraph;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.ResourceGroupMetricD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceScheduledMetricDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.SingleResourceGroupSelector;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -56,7 +57,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
  * @author Jay Shaughnessy
  * @author Mike Thompson
  */
-public class ResourceGroupD3GraphPortlet extends ResourceGroupMetricGraphView implements CustomSettingsPortlet {
+public class ResourceGroupD3GraphPortlet extends ResourceGroupMetricD3GraphView implements CustomSettingsPortlet {
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "ResourceGroupMetricD3";
@@ -70,7 +71,7 @@ public class ResourceGroupD3GraphPortlet extends ResourceGroupMetricGraphView im
     public static final String CFG_DEFINITION_ID = "definitionId";
 
     public ResourceGroupD3GraphPortlet(String locatorId) {
-        super(locatorId);
+        super(locatorId, new MetricStackedBarGraph(new MetricGraphData()));
         setOverflow(Overflow.HIDDEN);
     }
 
@@ -204,7 +205,7 @@ public class ResourceGroupD3GraphPortlet extends ResourceGroupMetricGraphView im
         if (simple == null | simple.getIntegerValue()==null) {
             addMember(new Label("<i>" + MSG.view_portlet_configure_needed() + "</i>"));
         } else {
-            renderGraph();
+            drawGraph();
         }
     }
 

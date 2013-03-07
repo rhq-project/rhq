@@ -78,8 +78,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitorin
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceScheduledMetricDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.async.Command;
-import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
 /**
@@ -173,7 +171,23 @@ public class ResourceD3GraphPortlet extends ResourceMetricD3Graph implements Cus
                                         getJsniChart().setEntityId(resource.getId());
                                         getJsniChart().setEntityName(resource.getName());
                                         getJsniChart().setDefinition(def);
-                                        queryMetricsDataForDashboardGraphs(resource.getId(), def);
+                                        final long startTime = System.currentTimeMillis();
+                                        //
+                                        GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(resource.getId(), new int[] { def.getId() },
+                                                8, MeasurementUtils.UNIT_HOURS, 60,
+                                                new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
+                                                    @Override
+                                                    public void onFailure(Throwable caught) {
+                                                        CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_loadFailed(), caught);
+                                                    }
+
+                                                    @Override
+                                                    public void onSuccess(final List<List<MeasurementDataNumericHighLowComposite>> measurementData) {
+                                                        Log.debug("Dashboard Metric data in: " + (System.currentTimeMillis() - startTime) + " ms.");
+                                                        graph.getMetricGraphData().setMetricData(measurementData.get(0));
+                                                        drawGraph();
+                                                    }
+                                                });
                                         break;
                                     }
                                 }
@@ -183,52 +197,6 @@ public class ResourceD3GraphPortlet extends ResourceMetricD3Graph implements Cus
         });
     }
 
-    private void queryMetricsDataForDashboardGraphs(final Integer entityId, final MeasurementDefinition def) {
-        final long startTime = System.currentTimeMillis();
-
-        // setting up a deferred Command to execute after all resource queries have completed (successfully or unsuccessfully)
-        // we know there are exactly 1 resources
-        final CountDownLatch countDownLatch = CountDownLatch.create(1, new Command() {
-            @Override
-            /**
-             * Satisfied only after ALL of the metric queries AND availability have completed
-             */
-            public void execute() {
-                Log.debug("Dashboard chart query total time for entity: " + entityId + ", MeasurementDef: "
-                        + def.getId() + " in " + (System.currentTimeMillis() - startTime) + " ms");
-                drawGraph();
-            }
-        });
-
-        queryMeasurementsAndMetricData(entityId, def.getId(), countDownLatch);
-        // now the countDown latch will run sometime asynchronously after BOTH the previous 2 queries have executed
-    }
-
-    private void queryMeasurementsAndMetricData(final Integer entityId, final Integer definitionId,
-                                                final CountDownLatch countDownLatch) {
-        final long startTime = System.currentTimeMillis();
-        //
-        GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(entityId, new int[] { definitionId },
-                8, MeasurementUtils.UNIT_HOURS, 60,
-                new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_loadFailed(), caught);
-                        if(countDownLatch != null){
-                            countDownLatch.countDown();
-                        }
-                    }
-
-                    @Override
-                    public void onSuccess(final List<List<MeasurementDataNumericHighLowComposite>> measurementData) {
-                        Log.debug("Dashboard Metric data in: " + (System.currentTimeMillis() - startTime) + " ms.");
-                        graph.getMetricGraphData().setMetricData(measurementData.get(0));
-                        if(countDownLatch != null){
-                            countDownLatch.countDown();
-                        }
-                    }
-                });
-    }
 
     @Override
     public Canvas getHelpCanvas() {

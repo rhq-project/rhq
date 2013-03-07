@@ -172,10 +172,14 @@ public abstract class AbstractMeasurementRangeEditor extends DynamicForm impleme
                         if (validate()) {
                             prefs.begin = advancedStartItem.getValueAsDate().getTime();
                             prefs.end = advancedEndItem.getValueAsDate().getTime();
-                            setMetricRangeProperties(prefs);
+                            if (null != prefs.begin && null != prefs.end && prefs.begin > prefs.end) {
+                                CoreGUI.getMessageCenter().notify(new Message(MSG.view_measureTable_startBeforeEnd()));
+                            } else {
+                                setMetricRangeProperties(prefs);
+                            }
                         }
                     } catch (Exception ex) {
-                        // some of the digints are not filled correctly
+                        // some of the digits are not filled correctly
                         Map<String, String> errors = new HashMap<String, String>();
                         errors.put(ADVANCED_END_ITEM, "MM/DD/YYYY HH:MM");
                         errors.put(ADVANCED_START_ITEM, "MM/DD/YYYY HH:MM");
@@ -338,7 +342,7 @@ public abstract class AbstractMeasurementRangeEditor extends DynamicForm impleme
      * Returns the SetButton so you can set a click handler from a dialog box
      * @return ButtonItem setButton
      */
-    public ButtonItem getSetButton(){
+    public ButtonItem getSetButton() {
         return setButton;
     }
 

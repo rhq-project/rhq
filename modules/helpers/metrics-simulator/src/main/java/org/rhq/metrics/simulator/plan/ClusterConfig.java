@@ -25,6 +25,8 @@
 
 package org.rhq.metrics.simulator.plan;
 
+import java.io.File;
+
 /**
  * @author John Sanda
  */
@@ -32,7 +34,7 @@ public class ClusterConfig {
 
     private boolean embedded = true;
 
-    private String clusterDir = "target";
+    private String clusterDir = new File(System.getProperty("rhq.metrics.simulator.basedir")).getAbsolutePath();
 
     private int numNodes = 2;
 

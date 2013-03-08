@@ -23,8 +23,10 @@
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.smartgwt.client.data.DSRequest;
@@ -61,6 +63,7 @@ public class ConditionsEditor extends LocatableVLayout {
 
     private final ResourceType resourceType;
     private HashSet<AlertCondition> conditions;
+    private Map<Integer, AlertCondition> modifiedConditions;
     private Table<ConditionDataSource> table;
     private final SelectItem conditionExpression;
     private boolean updated;
@@ -72,20 +75,35 @@ public class ConditionsEditor extends LocatableVLayout {
         this.resourceType = resourceType;
         this.updated = false;
         setConditions(conditions);
+        modifiedConditions = new HashMap<Integer, AlertCondition>(conditions.size());
     }
 
     /**
      * Returns the conditions that this editor currently has in memory.
-     * This will never be <code>null</code>.
+     * This will never be <code>null</code>. This collection serves for new
+     * or deleted conditions.
      * 
      * @return conditions set that was possibly edited by the user
      */
     public HashSet<AlertCondition> getConditions() {
         return conditions;
     }
+    
+    
+    /**
+     * Returns the conditions that this editor currently has in memory.
+     * This will never be <code>null</code>. This collection holds modified
+     * existing conditions.
+     * 
+     * @return modifiedConditions map of modified conditions that exist in the db, key is id
+     */
+    public Map<Integer, AlertCondition> getModifiedConditions() {
+        return modifiedConditions;
+    }
 
     public void setConditions(Set<AlertCondition> set) {
         conditions = new HashSet<AlertCondition>(); // make our own copy
+        modifiedConditions = new HashMap<Integer, AlertCondition>(conditions.size()); //reset changes
         if (set != null) {
 
             // we need to make sure we have the full measurement definition, including the units.
@@ -143,6 +161,10 @@ public class ConditionsEditor extends LocatableVLayout {
     public void setUpdated(boolean updated) {
         this.updated = updated;
     }
+    
+    public boolean isConditionInternallyUpdated() {
+        return !modifiedConditions.isEmpty();
+    }
 
     private class ConditionsTable extends Table<ConditionDataSource> {
         private ConditionsTable(String locatorId) {
@@ -169,6 +191,7 @@ public class ConditionsEditor extends LocatableVLayout {
                     for (ListGridRecord record : selection) {
                         AlertCondition condition = getDataSource().copyValues(record);
                         conditions.remove(condition);
+                        modifiedConditions.remove(condition);
                         updated = true;
                     }
                     refresh();
@@ -232,7 +255,7 @@ public class ConditionsEditor extends LocatableVLayout {
 
                         final int numConditions = conditions.size();
                         ConditionEditor newConditionEditor = new ConditionEditor(
-                            extendLocatorId("newConditionEditor"), conditions,
+                            extendLocatorId("newConditionEditor"), conditions, modifiedConditions,
                             ConditionsEditor.this.conditionExpression, ConditionsEditor.this.resourceType,
                             new Runnable() {
                                 @Override

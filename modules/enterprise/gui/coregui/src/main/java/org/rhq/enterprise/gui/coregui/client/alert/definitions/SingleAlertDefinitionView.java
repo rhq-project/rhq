@@ -142,12 +142,21 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
 
                     alertDefView.commitAlertDefinition(getAlertDefinition(), resetMatching, new AsyncCallback<AlertDefinition>() {
                         @Override
-                        public void onSuccess(AlertDefinition result) {
-                            setAlertDefinition(result);
+                        public void onSuccess(final AlertDefinition alertDef) {
+                            alertDefView.commitAlertConditions(conditions.getModifiedConditions(), new AsyncCallback<Void>() {
+                                public void onSuccess(Void result) {
+                                    setAlertDefinition(alertDef);
+                                }
+
+                                public void onFailure(Throwable caught) {
+                                    //TODO
+                                }
+                            });
                         }
                         
                         @Override
                         public void onFailure(Throwable caught) {
+                          //TODO
                         }
                     });
                 } else {

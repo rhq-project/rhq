@@ -25,11 +25,13 @@ package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -231,5 +233,12 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
                     }
                 });
         }
+    }
+
+    @Override
+    protected void commitAlertConditions(Map<Integer, AlertCondition> updatedConditions,
+        AsyncCallback<Void> resultReceiver) {
+        // TODO Auto-generated method stub
+        
     }
 }

@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
+import java.util.Map;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
@@ -25,6 +27,7 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
@@ -200,4 +203,6 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
     protected abstract void disableButtonPressed(ListGridRecord[] selection);
 
     protected abstract void commitAlertDefinition(AlertDefinition alertDefinition, boolean isPurgeInternals, AsyncCallback<AlertDefinition> resultReceiver);
+    
+    protected abstract void commitAlertConditions(Map<Integer, AlertCondition> updatedConditions, AsyncCallback<Void> resultReceiver);
 }

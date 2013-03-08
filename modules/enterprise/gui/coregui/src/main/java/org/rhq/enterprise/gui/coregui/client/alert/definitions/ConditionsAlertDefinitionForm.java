@@ -86,7 +86,11 @@ public class ConditionsAlertDefinitionForm extends LocatableVLayout implements E
     public AlertDefinition getAlertDefinition() {
         return alertDefinition;
     }
-
+    
+    public Map<Integer, AlertCondition> getModifiedConditions() {
+        return conditionsEditor.getModifiedConditions();
+    }
+    
     @Override
     public boolean isResetMatching() {
         return updated || conditionsEditor.isUpdated();

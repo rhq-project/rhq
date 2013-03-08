@@ -121,7 +121,11 @@ public class ConditionEditor extends LocatableVLayout {
 
     private LocatableDynamicForm form;
     private SelectItem conditionTypeSelectItem;
-    private HashSet<AlertCondition> conditions; // the new condition we create goes into this set
+    // the new condition we create goes into this set
+    private HashSet<AlertCondition> conditions;
+
+    // the new conditions that already exist in db and are modified
+    private Map<Integer, AlertCondition> modifiedConditions; 
     private final SelectItem conditionExpression; // this is the GWT menu where the user selects ALL or ANY conjunction
     private boolean supportsMetrics = false;
     private boolean supportsCalltimeMetrics = false;
@@ -135,12 +139,13 @@ public class ConditionEditor extends LocatableVLayout {
     private boolean editMode = false;
     private AlertCondition existingCondition;
 
-    public ConditionEditor(final String locatorId, HashSet<AlertCondition> conditions, SelectItem conditionExpression,
+    public ConditionEditor(final String locatorId, HashSet<AlertCondition> conditions, Map<Integer, AlertCondition> modifiedConditions, SelectItem conditionExpression,
         ResourceType rtype, Runnable closeFunc, AlertCondition existingCondition) {
         super(locatorId);
         this.editMode = existingCondition != null;
         this.existingCondition = existingCondition;
         this.conditions = conditions;
+        this.modifiedConditions = modifiedConditions;
         this.conditionExpression = conditionExpression;
         this.closeFunction = closeFunc;
         this.resourceType = rtype;
@@ -560,8 +565,20 @@ public class ConditionEditor extends LocatableVLayout {
                 break;
             }
             }
-
-            this.conditions.add(newCondition);
+            if (editMode) {
+                if (existingCondition.getId() != 0) {
+                    // get rid of the id, because of the equals method
+                    AlertCondition conditionWithoutId = new AlertCondition(existingCondition);
+                    if (!conditionWithoutId.equals(newCondition)) {
+                        this.modifiedConditions.put(existingCondition.getId(), newCondition);
+                    }
+                } else {
+                    this.conditions.remove(existingCondition);
+                    this.conditions.add(newCondition);
+                }
+            } else {
+                this.conditions.add(newCondition);
+            }
 
             return true;
         } catch (Exception e) {
@@ -759,7 +776,7 @@ public class ConditionEditor extends LocatableVLayout {
             .setTooltip(MSG.view_alert_definition_condition_editor_metric_calltime_common_limit_tooltip());
         minMaxAvgSelection.setHoverWidth(200);
         minMaxAvgSelection.setValueMap(limits);
-        minMaxAvgSelection.setDefaultValue("AVG");
+        minMaxAvgSelection.setDefaultValue(editMode ? existingCondition.getOption() : "AVG");
         minMaxAvgSelection.setWrapTitle(false);
         minMaxAvgSelection.setWidth("*");
         minMaxAvgSelection.setRedrawOnChange(true);
@@ -777,7 +794,6 @@ public class ConditionEditor extends LocatableVLayout {
         absoluteValue.setValidateOnChange(true);
         absoluteValue.setValidators(new NumberWithUnitsValidator(this.resourceType.getMetricDefinitions(),
             metricDropDownMenu));
-        formItems.add(absoluteValue);
 
         TextItem regex = new TextItem(CALLTIME_THRESHOLD_REGEX_ITEMNAME,
             MSG.view_alert_definition_condition_editor_metric_calltime_common_regex());
@@ -786,8 +802,13 @@ public class ConditionEditor extends LocatableVLayout {
         regex.setHoverWidth(200);
         regex.setWrapTitle(false);
         regex.setShowIfCondition(ifFunc);
+        if (editMode) {
+            absoluteValue.setDefaultValue(String.valueOf(existingCondition.getThreshold()));
+            regex.setDefaultValue(existingCondition.getName());
+        }
+        
+        formItems.add(absoluteValue);
         formItems.add(regex);
-
         return formItems;
     }
 
@@ -812,7 +833,7 @@ public class ConditionEditor extends LocatableVLayout {
             .setTooltip(MSG.view_alert_definition_condition_editor_metric_calltime_common_limit_tooltip());
         minMaxAvgSelection.setHoverWidth(200);
         minMaxAvgSelection.setValueMap(limits);
-        minMaxAvgSelection.setDefaultValue("AVG");
+        minMaxAvgSelection.setDefaultValue(editMode ? existingCondition.getOption() : "AVG");
         minMaxAvgSelection.setWrapTitle(false);
         minMaxAvgSelection.setWidth("*");
         minMaxAvgSelection.setRedrawOnChange(true);
@@ -830,7 +851,7 @@ public class ConditionEditor extends LocatableVLayout {
         percentage.setShowIfCondition(ifFunc);
         percentage.setValidateOnChange(true);
         percentage.setValidators(new NumberWithUnitsValidator(MeasurementUnits.PERCENTAGE));
-        formItems.add(percentage);
+        
 
         TextItem regex = new TextItem(CALLTIME_CHANGE_REGEX_ITEMNAME,
             MSG.view_alert_definition_condition_editor_metric_calltime_common_regex());
@@ -839,8 +860,13 @@ public class ConditionEditor extends LocatableVLayout {
         regex.setHoverWidth(200);
         regex.setWrapTitle(false);
         regex.setShowIfCondition(ifFunc);
+        if (editMode) {
+            percentage.setDefaultValue(String.valueOf(existingCondition.getThreshold()));
+            regex.setDefaultValue(existingCondition.getName());
+        }
+        
+        formItems.add(percentage);
         formItems.add(regex);
-
         return formItems;
     }
 
@@ -863,7 +889,8 @@ public class ConditionEditor extends LocatableVLayout {
         SelectItem traitSelection = new SortedSelectItem(TRAIT_METRIC_ITEMNAME,
             MSG.view_alert_definition_condition_editor_metric_trait_change_value());
         traitSelection.setValueMap(traitsMap);
-        traitSelection.setDefaultValue(traitsMap.keySet().iterator().next()); // just use the first one
+        traitSelection.setDefaultValue(editMode ? String.valueOf(existingCondition.getMeasurementDefinition().getId())
+            : traitsMap.keySet().iterator().next()); // just use the first one if it is not in edit mode
         traitSelection.setWidth("*");
         traitSelection.setRedrawOnChange(true);
         traitSelection.setShowIfCondition(ifFunc);
@@ -961,7 +988,9 @@ public class ConditionEditor extends LocatableVLayout {
 
         SelectItem opSelection = new SortedSelectItem(OPERATION_NAME_ITEMNAME, MSG.common_title_value());
         opSelection.setValueMap(ops);
-        opSelection.setDefaultValue(ops.keySet().iterator().next()); // just use the first one
+        opSelection.setDefaultValue(editMode ? existingCondition.getName() : ops.keySet().iterator().next());
+        // just use the first one if it is not in edit mode
+        
         opSelection.setWidth("*");
         opSelection.setRedrawOnChange(true);
         opSelection.setShowIfCondition(ifFunc);
@@ -974,7 +1003,8 @@ public class ConditionEditor extends LocatableVLayout {
         operationStatuses.put(OperationRequestStatus.FAILURE.name(), MSG.common_status_failed());
         operationStatuses.put(OperationRequestStatus.CANCELED.name(), MSG.common_status_canceled());
         opResultsSelection.setValueMap(operationStatuses);
-        opResultsSelection.setDefaultValue(OperationRequestStatus.FAILURE.name());
+        opResultsSelection.setDefaultValue(editMode ? existingCondition.getOption() : OperationRequestStatus.FAILURE
+            .name());
         opResultsSelection.setWrapTitle(false);
         opResultsSelection.setShowIfCondition(ifFunc);
         formItems.add(opResultsSelection);
@@ -1000,7 +1030,7 @@ public class ConditionEditor extends LocatableVLayout {
         severities.put(EventSeverity.ERROR.name(), MSG.common_severity_error());
         severities.put(EventSeverity.FATAL.name(), MSG.common_severity_fatal());
         eventSeveritySelection.setValueMap(severities);
-        eventSeveritySelection.setDefaultValue(EventSeverity.ERROR.name());
+        eventSeveritySelection.setDefaultValue(editMode ? existingCondition.getName() : EventSeverity.ERROR.name());
         eventSeveritySelection.setWrapTitle(false);
         eventSeveritySelection.setShowIfCondition(ifFunc);
         formItems.add(eventSeveritySelection);
@@ -1012,6 +1042,9 @@ public class ConditionEditor extends LocatableVLayout {
         eventRegex.setHoverWidth(200);
         eventRegex.setWrapTitle(false);
         eventRegex.setShowIfCondition(ifFunc);
+        if (editMode) {
+            eventRegex.setDefaultValue(existingCondition.getOption());
+        }
         formItems.add(eventRegex);
 
         return formItems;
@@ -1045,7 +1078,7 @@ public class ConditionEditor extends LocatableVLayout {
         driftDefNameRegex.setHoverWidth(200);
         driftDefNameRegex.setWrapTitle(false);
         driftDefNameRegex.setShowIfCondition(ifFunc);
-        formItems.add(driftDefNameRegex);
+        
 
         TextItem driftPathNameRegex = new TextItem(DRIFT_PATHNAME_REGEX_ITEMNAME,
             MSG.view_alert_definition_condition_editor_drift_pathname_regex());
@@ -1054,8 +1087,13 @@ public class ConditionEditor extends LocatableVLayout {
         driftPathNameRegex.setHoverWidth(200);
         driftPathNameRegex.setWrapTitle(false);
         driftPathNameRegex.setShowIfCondition(ifFunc);
+        if (editMode) {
+            driftDefNameRegex.setDefaultValue(existingCondition.getName());
+            driftPathNameRegex.setDefaultValue(existingCondition.getOption());
+        }
+        
+        formItems.add(driftDefNameRegex);
         formItems.add(driftPathNameRegex);
-
         return formItems;
     }
 

@@ -75,8 +75,8 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.Resourc
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceOperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourcePkgHistoryPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Jay Shaughnessy
@@ -916,5 +916,16 @@ public class DashboardView extends EnhancedVLayout {
 
         maximizedPortlet = null;
         portalLayout.markForRedraw();
+    }
+
+    // If we redraw the dashboard then also redraw the portlets so that everything is up to date
+    @Override
+    public void redraw() {
+        super.redraw();
+
+        for (PortletWindow pw : portletWindows) {
+            // I think this should work with markForRedraw but for some reason it does not
+            ((Canvas) pw.getView()).redraw();
+        }
     }
 }

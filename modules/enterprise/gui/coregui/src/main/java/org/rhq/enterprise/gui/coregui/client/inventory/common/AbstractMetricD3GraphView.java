@@ -43,9 +43,9 @@ public abstract class AbstractMetricD3GraphView extends EnhancedVLayout {
     //protected HTMLFlow resourceTitle;
     protected AbstractGraph graph;
     private Integer chartHeight;
-    protected boolean isPortalGraph = false;
     private int entityId;
     private int definitionId;
+    private HTMLFlow graphDiv = null;
 
     public AbstractMetricD3GraphView() {
         super();
@@ -82,11 +82,9 @@ public abstract class AbstractMetricD3GraphView extends EnhancedVLayout {
             + "               </pattern>" + "</defs>";
     }
 
-
     @Override
     protected void onDraw() {
         super.onDraw();
-        removeMembers(getMembers());
         if (graph.getDefinition() != null) {
             drawGraph();
         }
@@ -115,7 +113,6 @@ public abstract class AbstractMetricD3GraphView extends EnhancedVLayout {
         return definitionId;
     }
 
-
     /**
      * Setup the page elements especially the div and svg elements that serve as
      * placeholders for the d3 stuff to grab onto and add svg tags to render the chart.
@@ -124,18 +121,26 @@ public abstract class AbstractMetricD3GraphView extends EnhancedVLayout {
      *
      */
     protected void drawGraph() {
-        Log.debug("drawGraph marker in AbstractMetricD3GraphView for: " + graph.getMetricGraphData().getChartId()+ " " + graph.getChartTitle());
+        Log.debug("drawGraph marker in AbstractMetricD3GraphView for: " + graph.getMetricGraphData().getChartId() + " "
+            + graph.getChartTitle());
 
         StringBuilder divAndSvgDefs = new StringBuilder();
-        divAndSvgDefs.append("<div id=\"rChart-" + graph.getMetricGraphData().getChartId()
-            + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" style=\"height:" + getChartHeight()
-            + "px;\">");
+        divAndSvgDefs
+            .append("<div id=\"rChart-"
+                + graph.getMetricGraphData().getChartId()
+                + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" style=\"height:"
+                + getChartHeight() + "px;\">");
         divAndSvgDefs.append(getSvgDefs());
         divAndSvgDefs.append("</svg></div>");
-        HTMLFlow graph = new HTMLFlow(divAndSvgDefs.toString());
-        graph.setWidth100();
-        graph.setHeight100();
-        addMember(graph);
+
+        if (null != graphDiv) {
+            removeMember(graphDiv);
+        }
+
+        graphDiv = new HTMLFlow(divAndSvgDefs.toString());
+        graphDiv.setWidth100();
+        graphDiv.setHeight100();
+        addMember(graphDiv);
 
         new Timer() {
             @Override
@@ -144,7 +149,7 @@ public abstract class AbstractMetricD3GraphView extends EnhancedVLayout {
                 //@todo: this is a hack around timing issue of jsni not seeing the DOM
                 drawJsniChart();
             }
-        }.schedule(900);
+        }.schedule(200);
     }
 
     public void setGraph(AbstractGraph graph) {

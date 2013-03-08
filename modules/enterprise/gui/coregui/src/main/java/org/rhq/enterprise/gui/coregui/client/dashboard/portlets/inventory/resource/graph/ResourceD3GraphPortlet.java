@@ -18,30 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph;
 
-/*
- * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
- * All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation version 2 of the License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Overflow;
@@ -65,6 +47,8 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.lookup.ResourceLookupComboBoxItem;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -85,7 +69,7 @@ import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
  * @author Jay Shaughnessy
  * @author Mike Thompson
  */
-public class ResourceD3GraphPortlet extends ResourceMetricD3Graph implements CustomSettingsPortlet {
+public class ResourceD3GraphPortlet extends ResourceMetricD3Graph implements AutoRefreshPortlet, CustomSettingsPortlet {
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "ResourceMetricD3";
@@ -95,10 +79,10 @@ public class ResourceD3GraphPortlet extends ResourceMetricD3Graph implements Cus
     public static final String CFG_DEFINITION_ID = "definitionId";
     // set on initial configuration, the window for this portlet view.
     private PortletWindow portletWindow;
+    private Timer refreshTimer;
 
     public ResourceD3GraphPortlet() {
         super();
-        isPortalGraph = true;
         setOverflow(Overflow.HIDDEN);
         setGraph(new MetricStackedBarGraph(new MetricGraphData()));
     }
@@ -280,9 +264,8 @@ public class ResourceD3GraphPortlet extends ResourceMetricD3Graph implements Cus
                 storedPortlet.getConfiguration().put(
                     new PropertySimple(CFG_DEFINITION_ID, form.getValue(CFG_DEFINITION_ID)));
 
+                // this will cause the graph to draw
                 configure(portletWindow, storedPortlet);
-
-                redraw();
             }
         });
 
@@ -292,22 +275,23 @@ public class ResourceD3GraphPortlet extends ResourceMetricD3Graph implements Cus
     @Override
     public void redraw() {
         Log.debug("Redraw Portlet Graph and set data");
-        super.redraw();
-
-        removeMembers(getMembers());
 
         DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
         PropertySimple simple = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID);
 
         if (simple == null || simple.getIntegerValue() == null) {
+            removeMembers(getMembers());
             addMember(new Label("<i>" + MSG.view_portlet_configure_needed() + "</i>"));
         } else {
             graph.getMetricGraphData().setEntityId(simple.getIntegerValue());
             PropertySimple simpleDefId = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
             graph.getMetricGraphData().setDefinitionId(simpleDefId.getIntegerValue());
-            Log.debug(" *** Redraw Portlet for entityId: "+simple.getIntegerValue()+"-"+simpleDefId.getIntegerValue());
+            Log.debug(" *** Redraw Portlet for entityId: " + simple.getIntegerValue() + "-"
+                + simpleDefId.getIntegerValue());
             drawGraph();
         }
+
+        super.redraw();
     }
 
     public static final class Factory implements PortletViewFactory {
@@ -319,4 +303,28 @@ public class ResourceD3GraphPortlet extends ResourceMetricD3Graph implements Cus
             return new ResourceD3GraphPortlet();
         }
     }
+
+    public void startRefreshCycle() {
+        refreshTimer = AutoRefreshPortletUtil.startRefreshCycle(this, this, refreshTimer);
+    }
+
+    @Override
+    protected void onDestroy() {
+        AutoRefreshPortletUtil.onDestroy(this, refreshTimer);
+
+        super.onDestroy();
+    }
+
+    public boolean isRefreshing() {
+        return false;
+    }
+
+    //Custom refresh operation as we are not directly extending Table
+    @Override
+    public void refresh() {
+        if (isVisible() && !isRefreshing()) {
+            drawGraph();
+        }
+    }
+
 }

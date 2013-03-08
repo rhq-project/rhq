@@ -176,37 +176,6 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
             return InventoryStatus.UNINVENTORIED;
         }
     }
-    
-    @RequiredPermission(Permission.MANAGE_ALERTS)
-    public AlertCondition updateAlertCondition(Subject subject, int conditionId, AlertCondition condition) { 
-        Integer alertDefinitionId = getAlertDefinitionByConditionIdInNewTransaction(conditionId);
-        
-        AlertDefinition definition = entityManager.find(AlertDefinition.class, alertDefinitionId);
-        AlertCondition newCondition = null;
-
-        for (Iterator<AlertCondition> iterator = definition.getConditions().iterator(); iterator.hasNext(); ) {
-            AlertCondition oldCondition = iterator.next();
-            if (oldCondition.getId() == conditionId) {
-                newCondition = new AlertCondition(oldCondition);
-                oldCondition.setAlertDefinition(null);
-                iterator.remove();
-                entityManager.remove(oldCondition);
-            }
-        }
-        
-        newCondition.setOption(condition.getOption());
-        newCondition.setComparator(condition.getComparator());
-        newCondition.setMeasurementDefinition(condition.getMeasurementDefinition());
-        newCondition.setThreshold(condition.getThreshold());
-        newCondition.setTriggerId(condition.getTriggerId());
-        definition.getConditions().add(newCondition);
-
-        alertDefinitionManager.updateAlertDefinitionInternal(subject, alertDefinitionId, definition, true, true, true);
-
-        entityManager.flush();
-
-        return newCondition;
-    }
 
     @Override
     public int purgeOrphanedAlertConditions() {

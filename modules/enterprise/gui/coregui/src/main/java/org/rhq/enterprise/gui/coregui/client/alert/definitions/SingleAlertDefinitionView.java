@@ -23,9 +23,6 @@
 
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Button;
 import com.smartgwt.client.widgets.events.ClickEvent;
@@ -35,7 +32,6 @@ import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.events.TabDeselectedEvent;
 import com.smartgwt.client.widgets.tab.events.TabDeselectedHandler;
 
-import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
@@ -139,34 +135,35 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
             @Override
             public void onClick(ClickEvent event) {
                 if (generalProperties.validate()) {
-                    final Map<Integer, AlertCondition> modifiedConditions = conditions.getModifiedConditions();
+                    //                    final Map<Integer, AlertCondition> modifiedConditions = conditions.getModifiedConditions();
                     boolean resetMatching = isResetMatching();
                     saveAlertDefinition();
                     setAlertDefinition(getAlertDefinition()); // loads data into static fields
                     makeViewOnly();
 
-                    alertDefView.commitAlertDefinition(getAlertDefinition(), resetMatching, new AsyncCallback<AlertDefinition>() {
-                        @Override
-                        public void onSuccess(final AlertDefinition alertDef) {
-                                if (!modifiedConditions.isEmpty()) {
-                                    alertDefView.commitAlertConditions(new HashMap<Integer, AlertCondition>(), new AsyncCallback<Void>() {
-                                        public void onSuccess(Void result) {
-                                            setAlertDefinition(alertDef);
-                                        }
-
-                                        public void onFailure(Throwable caught) {
-                                            //TODO
-                                        }
-                                    });
-                                } else
-                                    setAlertDefinition(alertDef);
+                    alertDefView.commitAlertDefinition(getAlertDefinition(), resetMatching,
+                        new AsyncCallback<AlertDefinition>() {
+                            @Override
+                            public void onSuccess(final AlertDefinition alertDef) {
+                                //                                if (!modifiedConditions.isEmpty()) {
+                                //                                    alertDefView.commitAlertConditions(new HashMap<Integer, AlertCondition>(), new AsyncCallback<Void>() {
+                                //                                        public void onSuccess(Void result) {
+                                //                                            setAlertDefinition(alertDef);
+                                //                                        }
+                                //
+                                //                                        public void onFailure(Throwable caught) {
+                                //                                            //TODO
+                                //                                        }
+                                //                                    });
+                                //                                } else
+                                setAlertDefinition(alertDef);
                             }
-                        
-                        @Override
-                        public void onFailure(Throwable caught) {
-                          //TODO
-                        }
-                    });
+
+                            @Override
+                            public void onFailure(Throwable caught) {
+                                //TODO
+                            }
+                        });
                 } else {
                     tabSet.selectTab(generalPropertiesTab);
                 }

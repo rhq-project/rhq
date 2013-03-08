@@ -193,26 +193,6 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
     
     
     protected abstract void commitAlertDefinition(final AlertDefinition alertDefinition, boolean resetMatching, final AsyncCallback<AlertDefinition> resultReceiver);
-    
-    protected void commitAlertConditions(Map<Integer, AlertCondition> updatedConditions,
-        final AsyncCallback<Void> resultReceiver) {
-        GWTServiceLookup.getAlertDefinitionService().updateAlertConditions(updatedConditions,
-            new AsyncCallback<Void>() {
-                @Override
-                public void onSuccess(Void result) {
-                    CoreGUI.getMessageCenter().notify(
-                        new Message(MSG.view_alert_definitions_update_success(), Severity.Info));
-                    AbstractAlertDefinitionsView.this.refresh();
-                    resultReceiver.onSuccess(result);
-                }
-
-                @Override
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_update_failure(), caught);
-                    resultReceiver.onFailure(caught);
-                }
-            });
-    }
 
     protected abstract ResourceType getResourceType();
 

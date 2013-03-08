@@ -231,6 +231,12 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
                 selectedDashboard = selectedDashboardView.getDashboard();
                 editButton.setTitle(editMode ? MSG.common_title_view_mode() : MSG.common_title_edit_mode());
                 selectedDashboardView.setEditMode(editMode);
+
+                // If re-selecting a Dashboard, make sure it, and its portlets, are up to date
+                if (selectedDashboardView.isDrawn()) {
+                    // I think this should work with markForRedraw but for some reason it does not                    
+                    selectedDashboardView.redraw();
+                }
             }
         });
 

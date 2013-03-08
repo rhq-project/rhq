@@ -968,4 +968,15 @@ public class DashboardView extends LocatableVLayout {
         maximizedPortlet = null;
         portalLayout.markForRedraw();
     }
+
+    // If we redraw the dashboard then also redraw the portlets so that everything is up to date
+    @Override
+    public void redraw() {
+        super.redraw();
+
+        for (PortletWindow pw : portletWindows) {
+            // I think this should work with markForRedraw but for some reason it does not
+            ((Canvas) pw.getView()).redraw();
+        }
+    }
 }

@@ -519,7 +519,7 @@ public class AgentManagerBean implements AgentManagerLocal {
             // second, get the agent version info (by peeking into the agent update binary jar)
             JarFile binaryJarFile = new JarFile(binaryFile);
             try {
-                JarEntry binaryJarFileEntry = binaryJarFile.getJarEntry("/rhq-agent-update-version.properties");
+                JarEntry binaryJarFileEntry = binaryJarFile.getJarEntry("rhq-agent-update-version.properties");
                 InputStream binaryJarFileEntryStream = binaryJarFile.getInputStream(binaryJarFileEntry);
 
                 // now write the server and agent version info in our internal version file our servlet will use

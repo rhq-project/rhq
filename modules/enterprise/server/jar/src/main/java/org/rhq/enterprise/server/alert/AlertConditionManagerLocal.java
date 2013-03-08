@@ -46,6 +46,6 @@ public interface AlertConditionManagerLocal {
 
     int purgeOrphanedAlertConditions();
     
-    AlertCondition updateAlertCondition(Subject subject, AlertCondition condition);
+    AlertCondition updateAlertCondition(Subject subject, int conditionId, AlertCondition condition);
 
 }

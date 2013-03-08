@@ -20,7 +20,9 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -29,6 +31,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.AlertDefinitionGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
+import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -36,6 +39,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implements AlertDefinitionGWTService {
     private static final long serialVersionUID = 1L;
 
+    private AlertConditionManagerLocal alertCondManager = LookupUtil.getAlertConditionManager();
     private AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
     private AlertNotificationManagerLocal alertNotifManager = LookupUtil.getAlertNotificationManager();
 
@@ -79,6 +83,19 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
             AlertDefinition results = alertDefManager.updateAlertDefinition(getSessionSubject(), alertDefinitionId,
                 alertDefinition, resetMatching);
             return SerialUtility.prepare(results, "updateAlertDefinition");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
+    
+    
+    @Override
+    public void updateAlertConditions(Map<Integer, AlertCondition> conditions) throws RuntimeException {
+        try {
+            for (Map.Entry<Integer, AlertCondition> conditionAndId : conditions.entrySet()) {
+                alertCondManager.updateAlertCondition(getSessionSubject(), conditionAndId.getKey(), conditionAndId.getValue());
+            }
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

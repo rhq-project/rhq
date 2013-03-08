@@ -93,7 +93,7 @@ public class ConditionsAlertDefinitionForm extends LocatableVLayout implements E
     
     @Override
     public boolean isResetMatching() {
-        return updated || conditionsEditor.isUpdated();
+        return updated || conditionsEditor.isUpdated() || conditionsEditor.isConditionInternallyUpdated();
     }
 
     @Override

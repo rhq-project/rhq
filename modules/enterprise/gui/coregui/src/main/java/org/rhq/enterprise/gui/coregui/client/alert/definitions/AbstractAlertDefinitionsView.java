@@ -41,6 +41,8 @@ import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFor
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 /**
  * Superclass to the different alert definition views. This should be subclassed
@@ -187,6 +189,30 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
     protected AlertDefinitionCriteria getDetailCriteria() {
         return new AlertDefinitionCriteria();
     }
+    
+    
+    
+    protected abstract void commitAlertDefinition(final AlertDefinition alertDefinition, boolean resetMatching, final AsyncCallback<AlertDefinition> resultReceiver);
+    
+    protected void commitAlertConditions(Map<Integer, AlertCondition> updatedConditions,
+        final AsyncCallback<Void> resultReceiver) {
+        GWTServiceLookup.getAlertDefinitionService().updateAlertConditions(updatedConditions,
+            new AsyncCallback<Void>() {
+                @Override
+                public void onSuccess(Void result) {
+                    CoreGUI.getMessageCenter().notify(
+                        new Message(MSG.view_alert_definitions_update_success(), Severity.Info));
+                    AbstractAlertDefinitionsView.this.refresh();
+                    resultReceiver.onSuccess(result);
+                }
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_alert_definitions_update_failure(), caught);
+                    resultReceiver.onFailure(caught);
+                }
+            });
+    }
 
     protected abstract ResourceType getResourceType();
 
@@ -201,8 +227,4 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
     protected abstract void enableButtonPressed(ListGridRecord[] selection);
 
     protected abstract void disableButtonPressed(ListGridRecord[] selection);
-
-    protected abstract void commitAlertDefinition(AlertDefinition alertDefinition, boolean isPurgeInternals, AsyncCallback<AlertDefinition> resultReceiver);
-    
-    protected abstract void commitAlertConditions(Map<Integer, AlertCondition> updatedConditions, AsyncCallback<Void> resultReceiver);
 }

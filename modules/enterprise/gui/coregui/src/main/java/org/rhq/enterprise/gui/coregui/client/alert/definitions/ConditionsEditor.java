@@ -75,7 +75,7 @@ public class ConditionsEditor extends LocatableVLayout {
         this.resourceType = resourceType;
         this.updated = false;
         setConditions(conditions);
-        modifiedConditions = new HashMap<Integer, AlertCondition>(conditions.size());
+        modifiedConditions = new HashMap<Integer, AlertCondition>();
     }
 
     /**
@@ -254,13 +254,14 @@ public class ConditionsEditor extends LocatableVLayout {
                         });
 
                         final int numConditions = conditions.size();
-                        ConditionEditor newConditionEditor = new ConditionEditor(
+                        final ConditionEditor newConditionEditor = new ConditionEditor(
                             extendLocatorId("newConditionEditor"), conditions, modifiedConditions,
                             ConditionsEditor.this.conditionExpression, ConditionsEditor.this.resourceType,
                             new Runnable() {
                                 @Override
                                 public void run() {
-                                    updated = updated || numConditions != conditions.size();
+                                    updated = updated || numConditions != conditions.size()
+                                        || isConditionInternallyUpdated();
                                     winModal.markForDestroy();
                                     refresh();
                                 }

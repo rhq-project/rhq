@@ -18,8 +18,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
+import java.util.Map;
+
 import com.google.gwt.user.client.rpc.RemoteService;
 
+import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -46,5 +49,7 @@ public interface AlertDefinitionGWTService extends RemoteService {
     String[] getAllAlertSenders() throws RuntimeException;
 
     ConfigurationDefinition getConfigurationDefinitionForSender(String sender) throws RuntimeException;
+    
+    void updateAlertConditions(Map<Integer, AlertCondition> conditions) throws RuntimeException;
 
 }

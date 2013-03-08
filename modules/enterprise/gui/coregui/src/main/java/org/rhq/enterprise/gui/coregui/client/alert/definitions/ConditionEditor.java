@@ -379,10 +379,10 @@ public class ConditionEditor extends LocatableVLayout {
         footer.setPadding(5);
         footer.setWidth100();
         footer.setMembersMargin(15);
-        footer.addSpacer(50);
+        footer.addSpacer(60);
         footer.addMember(ok);
         footer.addMember(cancel);
-        footer.addSpacer(50);
+        footer.addSpacer(60);
         footer.addFill();
         return footer;
     }
@@ -570,7 +570,14 @@ public class ConditionEditor extends LocatableVLayout {
                     // get rid of the id, because of the equals method
                     AlertCondition conditionWithoutId = new AlertCondition(existingCondition);
                     if (!conditionWithoutId.equals(newCondition)) {
+                        // there was a change
                         this.modifiedConditions.put(existingCondition.getId(), newCondition);
+                        existingCondition.setMeasurementDefinition(newCondition.getMeasurementDefinition());
+                        existingCondition.setName(newCondition.getName());
+                        existingCondition.setComparator(newCondition.getComparator());
+                        existingCondition.setThreshold(newCondition.getThreshold());
+                        existingCondition.setOption(newCondition.getOption());
+                        existingCondition.setTriggerId(newCondition.getTriggerId());
                     }
                 } else {
                     this.conditions.remove(existingCondition);

@@ -178,8 +178,7 @@ public class AlertConditionManagerBean implements AlertConditionManagerLocal {
     }
     
     @RequiredPermission(Permission.MANAGE_ALERTS)
-    public AlertCondition updateAlertCondition(Subject subject, AlertCondition condition) { 
-        int conditionId = condition.getId();
+    public AlertCondition updateAlertCondition(Subject subject, int conditionId, AlertCondition condition) { 
         Integer alertDefinitionId = getAlertDefinitionByConditionIdInNewTransaction(conditionId);
         
         AlertDefinition definition = entityManager.find(AlertDefinition.class, alertDefinitionId);

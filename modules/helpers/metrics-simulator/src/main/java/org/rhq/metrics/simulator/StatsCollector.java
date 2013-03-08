@@ -25,10 +25,14 @@
 
 package org.rhq.metrics.simulator;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.joda.time.Duration;
+
+import org.rhq.metrics.simulator.stats.Stats;
 
 /**
  * @author John Sanda
@@ -39,34 +43,52 @@ public class StatsCollector implements Runnable {
 
     private Stats stats;
 
+    private long previousRawInsertTotal;
+
+    private long lastRunTimestamp;
+
+    private SimpleDateFormat dateFormat;
+
     public StatsCollector(Stats stats) {
         this.stats = stats;
+        dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
     }
 
     @Override
     public void run() {
-        long totalRawInserts = stats.getTotalRawInserts();
         long now = System.currentTimeMillis();
-        stats.startNewInterval(now);
-        RawInserts inserts = stats.getRawInsertsForLastInterval();
+        long totalRawInserts = stats.getTotalRawInserts();
 
         // inserts will be null on the first run
-        if (inserts == null) {
+        if (lastRunTimestamp == 0) {
+            lastRunTimestamp = now;
+            previousRawInsertTotal = totalRawInserts;
             return;
         }
 
-        log.info("Inserted " + totalRawInserts + " raw metrics in total.");
-        log.info("Inserted " + inserts.getCount() + " for interval starting at " + new Date(inserts.getTimestamp()));
-        logInsertionTimeStats();
+        long lastRawInsertsCount = totalRawInserts - previousRawInsertTotal;
+        Duration duration = new Duration(lastRunTimestamp, now);
+        stats.addRawInsertsPerMinute(lastRawInsertsCount);
+
+        StringBuilder data = new StringBuilder("Statistics Report\n")
+            .append("------------------------------------------------------------------------------------\n")
+            .append("Sampling period start time: " + dateFormat.format(new Date(lastRunTimestamp))).append("\n")
+            .append("Sampling period length: " + duration.toStandardSeconds().getSeconds()).append(" seconds\n")
+            .append("Total raw metrics inserted: ").append(totalRawInserts).append("\n")
+            .append("Raw inserts this sampling period: ").append(lastRawInsertsCount).append("\n")
+            .append(stats.getRawInsertsPerMinute()).append("\n")
+            .append(stats.getRawInsertTimes()).append("\n")
+            .append("------------------------------------------------------------------------------------");
+
+        log.info(data);
+
+        lastRunTimestamp = now;
+        previousRawInsertTotal = totalRawInserts;
     }
 
-    private void logInsertionTimeStats() {
-        InsertionTimes insertionTimes = stats.getInsertionTimes();
-        log.info("Summary of raw insertion time stats (milliseconds):\n" +
-            "Min: " + insertionTimes.getMin() + "\n" +
-            "Mean: " + insertionTimes.getMean() + "\n" +
-            "Max: " + insertionTimes.getMax() + "\n" +
-            "Standard Deviation: " + insertionTimes.getStandardDeviation());
+    public void reportSummaryStats() {
+        log.info("Reporting statistics for entire simulation run.");
+        log.info(stats.getRawInsertsPerMinute());
     }
 
 }

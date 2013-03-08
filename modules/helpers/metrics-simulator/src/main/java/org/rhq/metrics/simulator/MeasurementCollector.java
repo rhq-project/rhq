@@ -34,6 +34,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.metrics.simulator.stats.Stats;
 import org.rhq.server.metrics.MetricsServer;
 
 /**
@@ -130,7 +131,7 @@ public class MeasurementCollector implements Runnable {
         } finally {
             long endTime = System.currentTimeMillis();
             long totalTime = endTime - startTime;
-            stats.addRawDataInsertTime(totalTime);
+            stats.addRawInsertTime(totalTime);
             log.info("Finished collecting and storing " + metricsCollected + " raw metric in " +totalTime + " ms.");
         }
     }

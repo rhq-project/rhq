@@ -9,7 +9,7 @@
     <format>zip</format>
   </formats>
   <includeBaseDirectory>true</includeBaseDirectory>
-  <baseDirectory>rhq-metrics-simulator-${project.version}</baseDirectory> <!-- matches the zip when it is renamed in rhq-container.build.xml -->
+  <baseDirectory>rhq-metrics-simulator-${project.version}</baseDirectory>
 
   <fileSets>
 

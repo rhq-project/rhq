@@ -91,6 +91,8 @@
         <artifactId>maven-assembly-plugin</artifactId>
         <version>2.4</version>
         <configuration>
+          <finalName>rhq-metrics-simulator</finalName>
+          <appendAssemblyId>false</appendAssemblyId>
           <descriptors>
             <descriptor>src/main/scripts/assembly.xml</descriptor>
           </descriptors>

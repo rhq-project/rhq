@@ -23,19 +23,22 @@
  *
  */
 
-package org.rhq.metrics.simulator;
+package org.rhq.metrics.simulator.stats;
 
 /**
  * @author John Sanda
  */
-public class InsertionTimes {
+public class Aggregate {
 
+    private String name;
     private double max;
     private double min;
     private double mean;
     private double standardDeviation;
 
-    public InsertionTimes(double max, double min, double mean, double standardDeviation) {
+
+    public Aggregate(String name, double max, double min, double mean, double standardDeviation) {
+        this.name = name;
         this.max = max;
         this.min = min;
         this.mean = mean;
@@ -56,5 +59,11 @@ public class InsertionTimes {
 
     public double getStandardDeviation() {
         return standardDeviation;
+    }
+
+    @Override
+    public String toString() {
+        return name + ": {min: " + getMin() + ", mean: " + getMean() + ", max: " + getMax() + ", standardDeviation: " +
+            getStandardDeviation() + "}";
     }
 }

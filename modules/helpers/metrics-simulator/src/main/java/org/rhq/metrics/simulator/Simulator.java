@@ -56,6 +56,7 @@ import org.rhq.cassandra.schema.SchemaManager;
 import org.rhq.metrics.simulator.plan.ClusterConfig;
 import org.rhq.metrics.simulator.plan.ScheduleGroup;
 import org.rhq.metrics.simulator.plan.SimulationPlan;
+import org.rhq.metrics.simulator.stats.Stats;
 import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsServer;
 
@@ -123,6 +124,7 @@ public class Simulator implements ShutdownManager {
             Thread.sleep(Minutes.minutes(plan.getSimulationTime()).toStandardDuration().getMillis());
         } catch (InterruptedException e) {
         }
+        statsCollector.reportSummaryStats();
         log.info("Simulation has completed. Initiating shutdown...");
         shutdown(0);
     }

@@ -106,8 +106,6 @@ public class ResourceD3GraphPortlet extends ResourceMetricD3Graph implements Aut
                 final Integer entityId = resourceIdProperty.getIntegerValue();
                 final Integer measurementDefId = measurementDefIdProperty.getIntegerValue();
                 if (entityId != null && measurementDefId != null) {
-                    graph.setDefinitionId(measurementDefId);
-                    graph.setEntityId(entityId);
                     queryResource(entityId, measurementDefId);
                 }
 

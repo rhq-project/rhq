@@ -221,121 +221,78 @@ public class ConditionEditor extends LocatableVLayout {
         allMessages.put(AlertConditionCategory.EVENT.name(), MSG.view_alert_definition_condition_editor_option_event());
         allMessages.put(AlertConditionCategory.DRIFT.name(), MSG.view_alert_definition_condition_editor_option_drift());
 
-
         List<FormItem> formItems = new ArrayList<FormItem>();
-        if (!editMode) {
-            condTypes.put(AlertConditionCategory.AVAILABILITY.name(),
-                allMessages.get(AlertConditionCategory.AVAILABILITY.name()));
-            condTypes.put(AlertConditionCategory.AVAIL_DURATION.name(),
-                allMessages.get(AlertConditionCategory.AVAIL_DURATION.name()));
-            formItems.addAll(buildAvailabilityChangeFormItems());
-            formItems.addAll(buildAvailabilityDurationFormItems());
-            if (supportsMetrics) {
-                condTypes.put(AlertConditionCategory.THRESHOLD.name(),
-                    allMessages.get(AlertConditionCategory.THRESHOLD.name()));
-                condTypes.put(AlertConditionCategory.BASELINE.name(),
-                    allMessages.get(AlertConditionCategory.BASELINE.name()));
-                condTypes.put(AlertConditionCategory.CHANGE.name(),
-                    allMessages.get(AlertConditionCategory.CHANGE.name()));
-                condTypes
-                    .put(AlertConditionCategory.RANGE.name(), allMessages.get(AlertConditionCategory.RANGE.name()));
-                formItems.addAll(buildMetricThresholdFormItems());
-                formItems.addAll(buildMetricRangeFormItems());
-                formItems.addAll(buildMetricBaselineFormItems());
-                formItems.addAll(buildMetricChangeFormItems());
-            }
-            if (supportsCalltimeMetrics) {
-                condTypes.put(ALERT_CONDITION_CATEGORY_CALLTIME_THRESHOLD,
-                    allMessages.get(ALERT_CONDITION_CATEGORY_CALLTIME_THRESHOLD));
-                condTypes.put(ALERT_CONDITION_CATEGORY_CALLTIME_CHANGE,
-                    allMessages.get(ALERT_CONDITION_CATEGORY_CALLTIME_CHANGE));
-                formItems.addAll(buildCalltimeThresholdFormItems());
-                formItems.addAll(buildCalltimeChangeFormItems());
-            }
-            if (supportsTraits) {
-                condTypes
-                    .put(AlertConditionCategory.TRAIT.name(), allMessages.get(AlertConditionCategory.TRAIT.name()));
-                formItems.addAll(buildTraitChangeFormItems());
-            }
-            if (supportsOperations) {
-                condTypes.put(AlertConditionCategory.CONTROL.name(),
-                    allMessages.get(AlertConditionCategory.CONTROL.name()));
-                formItems.addAll(buildOperationFormItems());
-            }
-            if (supportsResourceConfig) {
-                condTypes.put(AlertConditionCategory.RESOURCE_CONFIG.name(),
-                    allMessages.get(AlertConditionCategory.RESOURCE_CONFIG.name()));
-                formItems.addAll(buildResourceConfigChangeFormItems());
-            }
-            if (supportsEvents) {
-                condTypes
-                    .put(AlertConditionCategory.EVENT.name(), allMessages.get(AlertConditionCategory.EVENT.name()));
-                formItems.addAll(buildEventFormItems());
-            }
-            if (supportsDrift) {
-                condTypes
-                    .put(AlertConditionCategory.DRIFT.name(), allMessages.get(AlertConditionCategory.DRIFT.name()));
-                formItems.addAll(buildDriftFormItems());
-            }
-        } else if (AlertConditionCategory.CHANGE == existingCondition.getCategory()
-            && existingCondition.getOption() != null) {
-            // was created using ALERT_CONDITION_CATEGORY_CALLTIME_CHANGE
-            formItems.addAll(buildCalltimeChangeFormItems());
-        } else if (AlertConditionCategory.THRESHOLD == existingCondition.getCategory()
-            && existingCondition.getOption() != null) {
-            // was created using ALERT_CONDITION_CATEGORY_CALLTIME_THRESHOLD
-            formItems.addAll(buildCalltimeThresholdFormItems());
-        } else {
-            condTypes.put(existingCondition.getCategory().name(),
-                allMessages.get(existingCondition.getCategory().name()));
-            switch (existingCondition.getCategory()) {
-            case ALERT:
-                break;
-            case AVAIL_DURATION:
-                formItems.addAll(buildAvailabilityDurationFormItems());
-                break;
-            case AVAILABILITY:
-                formItems.addAll(buildAvailabilityChangeFormItems());
-                break;
-            case BASELINE:
-                formItems.addAll(buildMetricBaselineFormItems());
-                break;
-            case CHANGE:
-                formItems.addAll(buildMetricChangeFormItems());
-                break;
-            case CONTROL:
-                formItems.addAll(buildOperationFormItems());
-                break;
-            case DRIFT:
-                formItems.addAll(buildDriftFormItems());
-                break;
-            case EVENT:
-                formItems.addAll(buildEventFormItems());
-                break;
-            case RANGE:
-                formItems.addAll(buildMetricRangeFormItems());
-                break;
-            case RESOURCE_CONFIG:
-                formItems.addAll(buildResourceConfigChangeFormItems());
-                break;
-            case THRESHOLD:
-                formItems.addAll(buildMetricThresholdFormItems());
-                break;
-            case TRAIT:
-                formItems.addAll(buildTraitChangeFormItems());
-                break;
-            default:
-                throw new IllegalStateException("Unsupported enum value: " + existingCondition.getCategory());
-            }
+        condTypes.put(AlertConditionCategory.AVAILABILITY.name(),
+            allMessages.get(AlertConditionCategory.AVAILABILITY.name()));
+        condTypes.put(AlertConditionCategory.AVAIL_DURATION.name(),
+            allMessages.get(AlertConditionCategory.AVAIL_DURATION.name()));
+        formItems.addAll(buildAvailabilityChangeFormItems(editMode
+            && AlertConditionCategory.AVAILABILITY == existingCondition.getCategory()));
+        formItems.addAll(buildAvailabilityDurationFormItems(editMode
+            && AlertConditionCategory.AVAIL_DURATION == existingCondition.getCategory()));
+        if (supportsMetrics) {
+            condTypes.put(AlertConditionCategory.THRESHOLD.name(),
+                allMessages.get(AlertConditionCategory.THRESHOLD.name()));
+            condTypes.put(AlertConditionCategory.BASELINE.name(),
+                allMessages.get(AlertConditionCategory.BASELINE.name()));
+            condTypes.put(AlertConditionCategory.CHANGE.name(), allMessages.get(AlertConditionCategory.CHANGE.name()));
+            condTypes.put(AlertConditionCategory.RANGE.name(), allMessages.get(AlertConditionCategory.RANGE.name()));
+            formItems.addAll(buildMetricThresholdFormItems(editMode
+                && AlertConditionCategory.THRESHOLD == existingCondition.getCategory()
+                && existingCondition.getOption() == null));
+            formItems.addAll(buildMetricRangeFormItems(editMode
+                && AlertConditionCategory.BASELINE == existingCondition.getCategory()));
+            formItems.addAll(buildMetricBaselineFormItems(editMode
+                && AlertConditionCategory.CHANGE == existingCondition.getCategory()
+                && existingCondition.getOption() == null));
+            formItems.addAll(buildMetricChangeFormItems(editMode
+                && AlertConditionCategory.RANGE == existingCondition.getCategory()));
         }
-
+        if (supportsCalltimeMetrics) {
+            condTypes.put(ALERT_CONDITION_CATEGORY_CALLTIME_THRESHOLD,
+                allMessages.get(ALERT_CONDITION_CATEGORY_CALLTIME_THRESHOLD));
+            condTypes.put(ALERT_CONDITION_CATEGORY_CALLTIME_CHANGE,
+                allMessages.get(ALERT_CONDITION_CATEGORY_CALLTIME_CHANGE));
+            formItems.addAll(buildCalltimeThresholdFormItems(editMode
+                && AlertConditionCategory.THRESHOLD == existingCondition.getCategory()
+                && existingCondition.getOption() != null));
+            formItems.addAll(buildCalltimeChangeFormItems(editMode
+                && AlertConditionCategory.CHANGE == existingCondition.getCategory()
+                && existingCondition.getOption() != null));
+        }
+        if (supportsTraits) {
+            condTypes.put(AlertConditionCategory.TRAIT.name(), allMessages.get(AlertConditionCategory.TRAIT.name()));
+            formItems.addAll(buildTraitChangeFormItems(editMode
+                && AlertConditionCategory.TRAIT == existingCondition.getCategory()));
+        }
+        if (supportsOperations) {
+            condTypes
+                .put(AlertConditionCategory.CONTROL.name(), allMessages.get(AlertConditionCategory.CONTROL.name()));
+            formItems.addAll(buildOperationFormItems(editMode
+                && AlertConditionCategory.CONTROL == existingCondition.getCategory()));
+        }
+        if (supportsResourceConfig) {
+            condTypes.put(AlertConditionCategory.RESOURCE_CONFIG.name(),
+                allMessages.get(AlertConditionCategory.RESOURCE_CONFIG.name()));
+            formItems.addAll(buildResourceConfigChangeFormItems(editMode
+                && AlertConditionCategory.RESOURCE_CONFIG == existingCondition.getCategory()));
+        }
+        if (supportsEvents) {
+            condTypes.put(AlertConditionCategory.EVENT.name(), allMessages.get(AlertConditionCategory.EVENT.name()));
+            formItems.addAll(buildEventFormItems(editMode
+                && AlertConditionCategory.EVENT == existingCondition.getCategory()));
+        }
+        if (supportsDrift) {
+            condTypes.put(AlertConditionCategory.DRIFT.name(), allMessages.get(AlertConditionCategory.DRIFT.name()));
+            formItems.addAll(buildDriftFormItems(editMode
+                && AlertConditionCategory.DRIFT == existingCondition.getCategory()));
+        }
         conditionTypeSelectItem.setValueMap(condTypes);
         
         conditionTypeSelectItem.setWrapTitle(false);
         conditionTypeSelectItem.setRedrawOnChange(true);
         conditionTypeSelectItem.setWidth("*");
         if (editMode) {
-            conditionTypeSelectItem.setDisabled(true);
             conditionTypeSelectItem.setDefaultValue(existingCondition.getCategory().name());
         } else {
             conditionTypeSelectItem.setDefaultValue(AlertConditionCategory.AVAILABILITY.name());
@@ -354,7 +311,7 @@ public class ConditionEditor extends LocatableVLayout {
         formItems.add(spacer2);
         
         form.setFields(formItems.toArray(new FormItem[formItems.size()]));
-    };
+    }
     
     private ToolStrip buildToolStrip() {
         IButton ok = new IButton(MSG.common_button_ok());
@@ -578,6 +535,7 @@ public class ConditionEditor extends LocatableVLayout {
                         existingCondition.setThreshold(newCondition.getThreshold());
                         existingCondition.setOption(newCondition.getOption());
                         existingCondition.setTriggerId(newCondition.getTriggerId());
+                        existingCondition.setCategory(newCondition.getCategory());
                     }
                 } else {
                     this.conditions.remove(existingCondition);
@@ -602,7 +560,7 @@ public class ConditionEditor extends LocatableVLayout {
         return MeasurementParser.parse(userEnteredValue, units).getValue();
     }
 
-    private ArrayList<FormItem> buildMetricThresholdFormItems() {
+    private ArrayList<FormItem> buildMetricThresholdFormItems(boolean editMode) {
         ArrayList<FormItem> formItems = new ArrayList<FormItem>();
 
         ShowIfCategoryFunction ifFunc = new ShowIfCategoryFunction(AlertConditionCategory.THRESHOLD);
@@ -611,10 +569,10 @@ public class ConditionEditor extends LocatableVLayout {
         StaticTextItem helpItem = buildHelpTextItem("thresholdHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
-        SelectItem metricDropDownMenu = buildMetricDropDownMenu(THRESHOLD_METRIC_ITEMNAME, false, ifFunc);
+        SelectItem metricDropDownMenu = buildMetricDropDownMenu(THRESHOLD_METRIC_ITEMNAME, false, ifFunc, editMode);
         if (metricDropDownMenu != null) {
             formItems.add(metricDropDownMenu);
-            formItems.add(buildComparatorDropDownMenu(THRESHOLD_COMPARATOR_ITEMNAME, ifFunc));
+            formItems.add(buildComparatorDropDownMenu(THRESHOLD_COMPARATOR_ITEMNAME, ifFunc, editMode));
             TextItem absoluteValue = new TextItem(THRESHOLD_ABSVALUE_ITEMNAME,
                 MSG.view_alert_definition_condition_editor_metric_threshold_value());
             absoluteValue.setWrapTitle(false);
@@ -638,7 +596,7 @@ public class ConditionEditor extends LocatableVLayout {
         return formItems;
     }
 
-    private ArrayList<FormItem> buildMetricRangeFormItems() {
+    private ArrayList<FormItem> buildMetricRangeFormItems(boolean editMode) {
         ArrayList<FormItem> formItems = new ArrayList<FormItem>();
 
         ShowIfCategoryFunction ifFunc = new ShowIfCategoryFunction(AlertConditionCategory.RANGE);
@@ -647,10 +605,10 @@ public class ConditionEditor extends LocatableVLayout {
         StaticTextItem helpItem = buildHelpTextItem("rangeHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
-        SelectItem metricDropDownMenu = buildMetricDropDownMenu(RANGE_METRIC_ITEMNAME, false, ifFunc);
+        SelectItem metricDropDownMenu = buildMetricDropDownMenu(RANGE_METRIC_ITEMNAME, false, ifFunc, editMode);
         if (metricDropDownMenu != null) {
             formItems.add(metricDropDownMenu);
-            formItems.add(buildRangeComparatorDropDownMenu(RANGE_COMPARATOR_ITEMNAME, ifFunc));
+            formItems.add(buildRangeComparatorDropDownMenu(RANGE_COMPARATOR_ITEMNAME, ifFunc, editMode));
             TextItem absoluteLowValue = new TextItem(RANGE_LO_ABSVALUE_ITEMNAME,
                 MSG.view_alert_definition_condition_editor_metric_range_lovalue());
             absoluteLowValue.setWrapTitle(false);
@@ -688,7 +646,7 @@ public class ConditionEditor extends LocatableVLayout {
         return formItems;
     }
 
-    private ArrayList<FormItem> buildMetricBaselineFormItems() {
+    private ArrayList<FormItem> buildMetricBaselineFormItems(boolean editMode) {
         ArrayList<FormItem> formItems = new ArrayList<FormItem>();
 
         ShowIfCategoryFunction ifFunc = new ShowIfCategoryFunction(AlertConditionCategory.BASELINE);
@@ -698,10 +656,10 @@ public class ConditionEditor extends LocatableVLayout {
         formItems.add(helpItem);
 
         // if a metric is trending (up or down), it will never have baselines calculated for it so only show dynamic metrics
-        SelectItem metricDropDownMenu = buildMetricDropDownMenu(BASELINE_METRIC_ITEMNAME, true, ifFunc);
+        SelectItem metricDropDownMenu = buildMetricDropDownMenu(BASELINE_METRIC_ITEMNAME, true, ifFunc, editMode);
         if (metricDropDownMenu != null) {
             formItems.add(metricDropDownMenu);
-            formItems.add(buildComparatorDropDownMenu(BASELINE_COMPARATOR_ITEMNAME, ifFunc));
+            formItems.add(buildComparatorDropDownMenu(BASELINE_COMPARATOR_ITEMNAME, ifFunc, editMode));
 
             TextItem baselinePercentage = new TextItem(BASELINE_PERCENTAGE_ITEMNAME,
                 MSG.view_alert_definition_condition_editor_metric_baseline_percentage());
@@ -740,7 +698,7 @@ public class ConditionEditor extends LocatableVLayout {
         return formItems;
     }
 
-    private ArrayList<FormItem> buildMetricChangeFormItems() {
+    private ArrayList<FormItem> buildMetricChangeFormItems(boolean editMode) {
         ArrayList<FormItem> formItems = new ArrayList<FormItem>();
 
         ShowIfCategoryFunction ifFunc = new ShowIfCategoryFunction(AlertConditionCategory.CHANGE);
@@ -749,7 +707,7 @@ public class ConditionEditor extends LocatableVLayout {
         StaticTextItem helpItem = buildHelpTextItem("changeMetricHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
-        SelectItem metricDropDownMenu = buildMetricDropDownMenu(CHANGE_METRIC_ITEMNAME, false, ifFunc);
+        SelectItem metricDropDownMenu = buildMetricDropDownMenu(CHANGE_METRIC_ITEMNAME, false, ifFunc, editMode);
         if (metricDropDownMenu != null) {
             formItems.add(metricDropDownMenu);
         } else {
@@ -761,7 +719,7 @@ public class ConditionEditor extends LocatableVLayout {
         return formItems;
     }
 
-    private ArrayList<FormItem> buildCalltimeThresholdFormItems() {
+    private ArrayList<FormItem> buildCalltimeThresholdFormItems(boolean editMode) {
         ArrayList<FormItem> formItems = new ArrayList<FormItem>();
 
         ShowIfCategoryFunction ifFunc = new ShowIfCategoryFunction(ALERT_CONDITION_CATEGORY_CALLTIME_THRESHOLD);
@@ -770,7 +728,8 @@ public class ConditionEditor extends LocatableVLayout {
         StaticTextItem helpItem = buildHelpTextItem("calltimeThresholdHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
-        SelectItem metricDropDownMenu = buildCalltimeMetricDropDownMenu(CALLTIME_THRESHOLD_METRIC_ITEMNAME, ifFunc);
+        SelectItem metricDropDownMenu = buildCalltimeMetricDropDownMenu(CALLTIME_THRESHOLD_METRIC_ITEMNAME, ifFunc,
+            editMode);
         formItems.add(metricDropDownMenu);
 
         SelectItem minMaxAvgSelection = new SelectItem(CALLTIME_THRESHOLD_MINMAXAVG_ITEMNAME,
@@ -790,7 +749,7 @@ public class ConditionEditor extends LocatableVLayout {
         minMaxAvgSelection.setShowIfCondition(ifFunc);
         formItems.add(minMaxAvgSelection);
 
-        formItems.add(buildComparatorDropDownMenu(CALLTIME_THRESHOLD_COMPARATOR_ITEMNAME, ifFunc));
+        formItems.add(buildComparatorDropDownMenu(CALLTIME_THRESHOLD_COMPARATOR_ITEMNAME, ifFunc, editMode));
         TextItem absoluteValue = new TextItem(CALLTIME_THRESHOLD_ABSVALUE_ITEMNAME,
             MSG.view_alert_definition_condition_editor_metric_calltime_threshold_value());
         absoluteValue.setWrapTitle(false);
@@ -819,7 +778,7 @@ public class ConditionEditor extends LocatableVLayout {
         return formItems;
     }
 
-    private ArrayList<FormItem> buildCalltimeChangeFormItems() {
+    private ArrayList<FormItem> buildCalltimeChangeFormItems(boolean editMode) {
         ArrayList<FormItem> formItems = new ArrayList<FormItem>();
 
         ShowIfCategoryFunction ifFunc = new ShowIfCategoryFunction(ALERT_CONDITION_CATEGORY_CALLTIME_CHANGE);
@@ -828,7 +787,7 @@ public class ConditionEditor extends LocatableVLayout {
         StaticTextItem helpItem = buildHelpTextItem("calltimeChangeHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
-        formItems.add(buildCalltimeMetricDropDownMenu(CALLTIME_CHANGE_METRIC_ITEMNAME, ifFunc));
+        formItems.add(buildCalltimeMetricDropDownMenu(CALLTIME_CHANGE_METRIC_ITEMNAME, ifFunc, editMode));
 
         SelectItem minMaxAvgSelection = new SelectItem(CALLTIME_CHANGE_MINMAXAVG_ITEMNAME,
             MSG.view_alert_definition_condition_editor_metric_calltime_common_limit());
@@ -847,7 +806,7 @@ public class ConditionEditor extends LocatableVLayout {
         minMaxAvgSelection.setShowIfCondition(ifFunc);
         formItems.add(minMaxAvgSelection);
 
-        formItems.add(buildCalltimeComparatorDropDownMenu(CALLTIME_CHANGE_COMPARATOR_ITEMNAME, ifFunc));
+        formItems.add(buildCalltimeComparatorDropDownMenu(CALLTIME_CHANGE_COMPARATOR_ITEMNAME, ifFunc, editMode));
 
         TextItem percentage = new TextItem(CALLTIME_CHANGE_PERCENTAGE_ITEMNAME,
             MSG.view_alert_definition_condition_editor_metric_calltime_change_percentage());
@@ -877,7 +836,7 @@ public class ConditionEditor extends LocatableVLayout {
         return formItems;
     }
 
-    private ArrayList<FormItem> buildTraitChangeFormItems() {
+    private ArrayList<FormItem> buildTraitChangeFormItems(boolean editMode) {
         ArrayList<FormItem> formItems = new ArrayList<FormItem>();
 
         ShowIfCategoryFunction ifFunc = new ShowIfCategoryFunction(AlertConditionCategory.TRAIT);
@@ -906,7 +865,7 @@ public class ConditionEditor extends LocatableVLayout {
         return formItems;
     }
 
-    private ArrayList<FormItem> buildAvailabilityChangeFormItems() {
+    private ArrayList<FormItem> buildAvailabilityChangeFormItems(boolean editMode) {
         ArrayList<FormItem> formItems = new ArrayList<FormItem>();
 
         ShowIfCategoryFunction ifFunc = new ShowIfCategoryFunction(AlertConditionCategory.AVAILABILITY);
@@ -940,7 +899,7 @@ public class ConditionEditor extends LocatableVLayout {
         return formItems;
     }
 
-    private ArrayList<FormItem> buildAvailabilityDurationFormItems() {
+    private ArrayList<FormItem> buildAvailabilityDurationFormItems(boolean editMode) {
         ArrayList<FormItem> formItems = new ArrayList<FormItem>();
 
         ShowIfCategoryFunction ifFunc = new ShowIfCategoryFunction(AlertConditionCategory.AVAIL_DURATION);
@@ -979,7 +938,7 @@ public class ConditionEditor extends LocatableVLayout {
         return formItems;
     }
 
-    private ArrayList<FormItem> buildOperationFormItems() {
+    private ArrayList<FormItem> buildOperationFormItems(boolean editMode) {
         ArrayList<FormItem> formItems = new ArrayList<FormItem>();
 
         ShowIfCategoryFunction ifFunc = new ShowIfCategoryFunction(AlertConditionCategory.CONTROL);
@@ -1019,7 +978,7 @@ public class ConditionEditor extends LocatableVLayout {
         return formItems;
     }
 
-    private ArrayList<FormItem> buildEventFormItems() {
+    private ArrayList<FormItem> buildEventFormItems(boolean editMode) {
         ArrayList<FormItem> formItems = new ArrayList<FormItem>();
 
         ShowIfCategoryFunction ifFunc = new ShowIfCategoryFunction(AlertConditionCategory.EVENT);
@@ -1057,7 +1016,7 @@ public class ConditionEditor extends LocatableVLayout {
         return formItems;
     }
 
-    private ArrayList<FormItem> buildResourceConfigChangeFormItems() {
+    private ArrayList<FormItem> buildResourceConfigChangeFormItems(boolean editMode) {
         ArrayList<FormItem> formItems = new ArrayList<FormItem>();
 
         ShowIfCategoryFunction ifFunc = new ShowIfCategoryFunction(AlertConditionCategory.RESOURCE_CONFIG);
@@ -1069,7 +1028,7 @@ public class ConditionEditor extends LocatableVLayout {
         return formItems;
     }
 
-    private ArrayList<FormItem> buildDriftFormItems() {
+    private ArrayList<FormItem> buildDriftFormItems(boolean editMode) {
         ArrayList<FormItem> formItems = new ArrayList<FormItem>();
 
         ShowIfCategoryFunction ifFunc = new ShowIfCategoryFunction(AlertConditionCategory.DRIFT);
@@ -1104,7 +1063,7 @@ public class ConditionEditor extends LocatableVLayout {
         return formItems;
     }
 
-    private SelectItem buildMetricDropDownMenu(String itemName, boolean dynamicOnly, FormItemIfFunction ifFunc) {
+    private SelectItem buildMetricDropDownMenu(String itemName, boolean dynamicOnly, FormItemIfFunction ifFunc, boolean editMode) {
 
         // find out if this is the ALL - if it is, we can't have more than one conditional use the same metric (BZ 737565)
         Set<String> metricIdsToHide = new HashSet<String>();
@@ -1145,7 +1104,7 @@ public class ConditionEditor extends LocatableVLayout {
         return metricSelection;
     }
 
-    private SelectItem buildCalltimeMetricDropDownMenu(String itemName, FormItemIfFunction ifFunc) {
+    private SelectItem buildCalltimeMetricDropDownMenu(String itemName, FormItemIfFunction ifFunc, boolean editMode) {
 
         LinkedHashMap<String, String> metricsMap = new LinkedHashMap<String, String>();
         for (MeasurementDefinition def : this.resourceType.getMetricDefinitions()) {
@@ -1165,7 +1124,7 @@ public class ConditionEditor extends LocatableVLayout {
         return metricSelection;
     }
 
-    private SelectItem buildComparatorDropDownMenu(String itemName, FormItemIfFunction ifFunc) {
+    private SelectItem buildComparatorDropDownMenu(String itemName, FormItemIfFunction ifFunc, boolean editMode) {
 
         LinkedHashMap<String, String> comparators = new LinkedHashMap<String, String>(3);
         comparators.put("<", "< (" + MSG.view_alert_definition_condition_editor_metric_threshold_comparator_less()
@@ -1186,7 +1145,7 @@ public class ConditionEditor extends LocatableVLayout {
         return comparatorSelection;
     }
 
-    private SelectItem buildCalltimeComparatorDropDownMenu(String itemName, FormItemIfFunction ifFunc) {
+    private SelectItem buildCalltimeComparatorDropDownMenu(String itemName, FormItemIfFunction ifFunc, boolean editMode) {
 
         LinkedHashMap<String, String> comparators = new LinkedHashMap<String, String>(3);
         comparators.put("LO", MSG.view_alert_definition_condition_editor_metric_calltime_common_comparator_shrinks());
@@ -1204,7 +1163,7 @@ public class ConditionEditor extends LocatableVLayout {
         return comparatorSelection;
     }
 
-    private SelectItem buildRangeComparatorDropDownMenu(String itemName, FormItemIfFunction ifFunc) {
+    private SelectItem buildRangeComparatorDropDownMenu(String itemName, FormItemIfFunction ifFunc, boolean editMode) {
 
         LinkedHashMap<String, String> comparators = new LinkedHashMap<String, String>(2);
         comparators.put("<", MSG.view_alert_definition_condition_editor_metric_range_comparator_inside_exclusive());

@@ -169,8 +169,9 @@ public class CoreServerServiceImpl implements CoreServerService {
                         + request.getPort()
                         + "] that is already registered under a different name ["
                         + agentByAddressPort.getName()
-                        + "]; if this new agent is actually the same as the original, then re-register with the same name"
-                        + " and same security token.";
+                        + "]. If this new agent is actually the same as the original, then re-register with the same name"
+                        + " and same security token. Otherwise, you should uninventory the Platform resource for agent ["
+                        + agentByAddressPort.getName() + "] and re-register this new agent.";
                     throw new AgentRegistrationException(msg);
                 } else {
                     String msg = "The agent [" + request.getName()

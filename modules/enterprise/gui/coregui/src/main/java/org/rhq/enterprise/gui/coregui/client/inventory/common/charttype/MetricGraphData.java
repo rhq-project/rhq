@@ -109,9 +109,6 @@ public class MetricGraphData implements JsonMetricProducer {
         //this.definition = null;
     }
 
-    public String getEntityName() {
-        return entityName;
-    }
 
     public void setEntityName(String entityName) {
         this.entityName = entityName;
@@ -139,18 +136,11 @@ public class MetricGraphData implements JsonMetricProducer {
         return entityId + "-" + definitionId;
     }
 
-    public List<MeasurementDataNumericHighLowComposite> getMetricData() {
-        return metricData;
-    }
 
     public void setMetricData(List<MeasurementDataNumericHighLowComposite> metricData) {
         this.metricData = metricData;
     }
 
-
-    public void setMeasurementOOBCompositeList(PageList<MeasurementOOBComposite> measurementOOBCompositeList) {
-        this.measurementOOBCompositeList = measurementOOBCompositeList;
-    }
 
     public String getChartTitleMinLabel() {
         return chartTitleMinLabel;

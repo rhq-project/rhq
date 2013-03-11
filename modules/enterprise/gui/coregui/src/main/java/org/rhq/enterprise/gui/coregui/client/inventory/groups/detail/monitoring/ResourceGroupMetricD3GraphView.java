@@ -87,7 +87,7 @@ public class ResourceGroupMetricD3GraphView extends AbstractMetricD3GraphView {
                                         graph.getMetricGraphData().setDefinition(def);
 
                                         GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(
-                                            graph.getMetricGraphData().getEntityId(),
+                                            graph.getEntityId(),
                                             new int[] { graph.getMetricGraphData().getDefinitionId() }, 8,
                                             MeasurementUtils.UNIT_HOURS, 60,
                                             new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
@@ -131,9 +131,4 @@ public class ResourceGroupMetricD3GraphView extends AbstractMetricD3GraphView {
         return false;
     }
 
-    //    public AbstractMetricD3GraphView getInstance(String locatorId, int entityId, String entityName, MeasurementDefinition def,
-    //                                                 List<MeasurementDataNumericHighLowComposite> data, HasD3JsniChart jsniChart) {
-    //
-    //        return new ResourceGroupMetricD3GraphView(locatorId, entityId, entityName, def, data, jsniChart);
-    //    }
 }

@@ -56,9 +56,7 @@ public abstract class AbstractGraph implements HasD3MetricJsniChart {
         metricGraphData.setEntityId(entityId);
     }
 
-    public String getEntityName() {
-        return metricGraphData.getEntityName();
-    }
+
     @Override
     public void setEntityName(String  entityName) {
         metricGraphData.setEntityName(entityName);
@@ -66,11 +64,6 @@ public abstract class AbstractGraph implements HasD3MetricJsniChart {
 
     public int getDefinitionId() {
         return metricGraphData.getDefinitionId();
-    }
-
-    @Override
-    public void setDefinitionId(int definitionId) {
-        metricGraphData.setDefinitionId(definitionId);
     }
 
     public MeasurementDefinition getDefinition() {
@@ -84,18 +77,6 @@ public abstract class AbstractGraph implements HasD3MetricJsniChart {
 
     public String getChartId() {
         return metricGraphData.getChartId();
-    }
-
-    public List<MeasurementDataNumericHighLowComposite> getMetricData() {
-        return metricGraphData.getMetricData();
-    }
-
-    public void setMetricData(List<MeasurementDataNumericHighLowComposite> metricData) {
-        metricGraphData.setMetricData(metricData);
-    }
-
-    public void setMeasurementOOBCompositeList(PageList<MeasurementOOBComposite> measurementOOBCompositeList) {
-        metricGraphData.setMeasurementOOBCompositeList(measurementOOBCompositeList);
     }
 
     public boolean showBarAvgTrendLine(){
@@ -181,10 +162,6 @@ public abstract class AbstractGraph implements HasD3MetricJsniChart {
 
     public String getJsonMetrics() {
         return metricGraphData.getJsonMetrics();
-    }
-
-    public boolean shouldDisplayDayOfWeekInXAxisLabel() {
-        return metricGraphData.shouldDisplayDayOfWeekInXAxisLabel();
     }
 
 

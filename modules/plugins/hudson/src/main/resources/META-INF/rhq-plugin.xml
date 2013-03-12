@@ -22,17 +22,13 @@
             class="HudsonProjectComponent">
             
             <metric property="lastSuccessfulBuildNumber" dataType="trait" displayType="summary"/>
-
             <metric property="lastSuccessfulBuildTime" dataType="trait" units="epoch_milliseconds"/>
-
+            <metric property="lastSuccessfulBuildElapsedTime" units="seconds"/>
             <metric property="lastBuildNumber" dataType="trait"/>
             <metric property="lastBuildTime" dataType="trait" units="epoch_milliseconds"/>
-
-
+            <metric property="lastBuildElapsedTime" units="seconds"/>
             <metric property="lastBuildResult" dataType="trait" displayType="summary"/>
-
             <metric property="healthScore" units="percentage" displayType="summary"/>
-
             <metric property="lastBuildDuration" units="milliseconds" displayType="summary"/>
 
         </service>

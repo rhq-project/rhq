@@ -676,7 +676,7 @@ public class GroupTest extends AbstractBase {
         group.setResourceTypeId(10001);
 
         given()
-            .contentType(ContentType.XML)
+            .contentType(ContentType.JSON)
             .header(acceptJson)
             .body(group)
         .expect()

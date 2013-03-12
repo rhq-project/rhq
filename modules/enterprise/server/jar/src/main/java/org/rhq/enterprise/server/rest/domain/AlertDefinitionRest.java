@@ -45,6 +45,7 @@ public class AlertDefinitionRest {
     String dampeningCategory;
     String dampeningCount;
     String dampeningPeriod;
+    List<Link> links = new ArrayList<Link>();
 
     @SuppressWarnings("unused")
     public AlertDefinitionRest() {
@@ -153,5 +154,13 @@ public class AlertDefinitionRest {
 
     public void setDampeningPeriod(String dampeningPeriod) {
         this.dampeningPeriod = dampeningPeriod;
+    }
+
+    public List<Link> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<Link> links) {
+        this.links = links;
     }
 }

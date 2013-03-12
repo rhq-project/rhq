@@ -31,6 +31,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.util.MessageDigestGenerator;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -51,8 +52,10 @@ public class RemoteClientManagerBean implements RemoteClientManagerLocal {
     @Override
     public File getRemoteClientVersionFile() throws Exception {
         File versionFile = new File(getDataDownloadDir(), "rhq-client-version.properties");
-        if (!versionFile.exists()) {
-            // we do not have the version properties file yet, let's extract some info and create one
+        File zip = getRemoteClientBinaryFile();
+        Boolean needVersionFile = FileUtil.isNewer(zip, versionFile);
+        if (needVersionFile == null || needVersionFile.booleanValue()) {
+            // we do not have the version properties file yet or it must be regenerated, let's extract some info and create one
             StringBuilder serverVersionInfo = new StringBuilder();
 
             CoreServerMBean coreServer = LookupUtil.getCoreServer();
@@ -60,7 +63,6 @@ public class RemoteClientManagerBean implements RemoteClientManagerLocal {
             serverVersionInfo.append(RHQ_SERVER_BUILD_NUMBER + '=').append(coreServer.getBuildNumber()).append('\n');
 
             // calculate the MD5 of the client zip
-            File zip = getRemoteClientBinaryFile();
             log.info("Remote Client Binary File: " + zip.getAbsolutePath());
 
             String md5Property = RHQ_CLIENT_MD5 + '=' + MessageDigestGenerator.getDigestString(zip) + '\n';

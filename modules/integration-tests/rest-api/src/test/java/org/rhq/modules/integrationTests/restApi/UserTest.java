@@ -48,6 +48,16 @@ public class UserTest extends AbstractBase {
     }
 
     @Test
+    public void testGetFavoritesResourcesHtml() throws Exception {
+
+        expect()
+            .statusCode(200)
+            .log().ifError()
+        .when()
+            .get("/user/favorites/resource.html");
+    }
+
+    @Test
     public void testGetFavoriteGroups() throws Exception {
 
         expect()
@@ -56,9 +66,55 @@ public class UserTest extends AbstractBase {
         .when()
             .get("/user/favorites/group");
     }
+    @Test
+    public void testGetFavoriteGroupsHtml() throws Exception {
+
+        expect()
+            .statusCode(200)
+            .log().ifError()
+        .when()
+            .get("/user/favorites/group.html");
+    }
 
     @Test
     public void testAddRemoveFavoriteResources() throws Exception {
+
+        given()
+            .pathParam("rid",_platformId)
+        .expect()
+            .statusCode(204)
+        .when()
+            .put("/user/favorites/resource/{rid}");
+
+        try {
+            Response r =
+            expect()
+                .statusCode(200)
+                .log().everything()
+            .when()
+                .get("/user/favorites/resource");
+            JsonPath jp = r.jsonPath();
+            assert jp.getList("resourceId").contains(String.valueOf(_platformId));
+        }
+        finally {
+            given()
+                .pathParam("rid",_platformId)
+            .expect()
+                .statusCode(204)
+            .when()
+                .delete("/user/favorites/resource/{rid}");
+        }
+    }
+
+    @Test
+    public void testAddTwiceRemoveFavoriteResources() throws Exception {
+
+        given()
+            .pathParam("rid",_platformId)
+        .expect()
+            .statusCode(204)
+        .when()
+            .put("/user/favorites/resource/{rid}");
 
         given()
             .pathParam("rid",_platformId)
@@ -148,6 +204,15 @@ public class UserTest extends AbstractBase {
     }
 
     @Test
+    public void testRemoveNonExistingResource() throws Exception {
+
+        expect()
+            .statusCode(204)
+        .when()
+            .delete("/user/favorites/resource/1"); // RHQ resource ids are > 10k
+    }
+
+    @Test
     public void testAddNonExistingGroup() throws Exception {
 
         expect()
@@ -158,13 +223,63 @@ public class UserTest extends AbstractBase {
     }
 
     @Test
+    public void testRemoveNonExistingGroup() throws Exception {
+
+        expect()
+            .statusCode(204)
+            .log().everything()
+        .when()
+            .delete("/user/favorites/group/1"); // RHQ group ids are > 10k
+    }
+
+    @Test
     public void testGetUserInfo() throws Exception {
         given()
-                .pathParam("id","rhqadmin")
+            .pathParam("id","rhqadmin")
         .expect()
-                .statusCode(200)
+            .statusCode(200)
         .when()
-                .get("/user/{id}");
+            .get("/user/{id}");
 
     }
+
+    @Test
+    public void testGetInfoForUnknownUser() throws Exception {
+        given()
+            .pathParam("id","JoeDoe")
+        .expect()
+            .statusCode(404)
+        .when()
+            .get("/user/{id}");
+
+    }
+
+    @Test
+    public void testGetUserInfoEtag() throws Exception {
+        Response response =
+        given()
+            .pathParam("id","rhqadmin")
+        .expect()
+            .statusCode(200)
+        .when()
+            .get("/user/{id}");
+
+        String etag = response.getHeader("ETag");
+
+        assert etag != null;
+        assert !etag.isEmpty();
+
+        given()
+            .pathParam("id","rhqadmin")
+            .header("If-none-match",etag)
+        .expect()
+            .statusCode(304)
+        .when()
+            .get("/user/{id}");
+
+
+
+    }
+
+
 }

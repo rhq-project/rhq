@@ -1058,7 +1058,12 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     }
 
     private boolean initResourceTypes(Resource resource) {
-        return initResourceTypes(resource, new HashMap<String, ResourceType>());
+        final HashMap<String, ResourceType> types = new HashMap<String, ResourceType>();
+        try {
+            return initResourceTypes(resource, types);
+        } finally {
+            types.clear(); // help GC
+        }
     }
 
     /**
@@ -1088,6 +1093,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                     + "]. The Agent most likely has a plugin named '" + plugin
                     + "' installed that is not installed on the Server. Resource will be ignored...");
                 return false;
+            } else {
+                loadedTypeMap.put(key.toString(), resourceType);
             }
         }
 

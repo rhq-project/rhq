@@ -23,6 +23,9 @@
 package org.rhq.modules.integrationTests.restApi;
 
 
+import java.util.List;
+import java.util.Map;
+
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.path.json.JsonPath;
 import com.jayway.restassured.path.xml.XmlPath;
@@ -41,6 +44,9 @@ import static com.jayway.restassured.RestAssured.get;
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.RestAssured.with;
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.notNullValue;
 
 /**
  * Test the resources part
@@ -52,7 +58,7 @@ public class ResourcesTest extends AbstractBase {
     public void testPlatformsPresent() {
         expect()
             .statusCode(200)
-            .body("links[0].rel", CoreMatchers.hasItem("self"))
+            .body("links.self", notNullValue())
         .when()
             .get("/resource/platforms.json");
     }
@@ -67,7 +73,24 @@ public class ResourcesTest extends AbstractBase {
             .statusCode(200)
             .contentType(ContentType.JSON)
             .log().ifError()
-            .body("links.rel", CoreMatchers.hasItem("self"))
+            .body("links.self", notNullValue())
+        .when()
+            .get("/resource/{id}");
+
+    }
+
+    @Test
+    public void testGetPlatformUILink() {
+
+        Response response =
+        given()
+            .header(acceptJson)
+            .pathParam("id", _platformId)
+        .expect()
+            .statusCode(200)
+            .contentType(ContentType.JSON)
+            .log().ifError()
+            .body("links.coregui.href[0]", containsString("coregui/#Resource/" + _platformId))
         .when()
             .get("/resource/{id}");
 
@@ -79,13 +102,13 @@ public class ResourcesTest extends AbstractBase {
         String platformName = JsonPath.with(json).get("[0].resourceName");
 
         given()
-            .header("Accept","application/json")
+            .header("Accept", "application/json")
         .with()
-            .queryParam("q",platformName)
-            .queryParam("category","platform")
+            .queryParam("q", platformName)
+            .queryParam("category", "platform")
         .expect()
             .statusCode(200)
-            .body("links[0].rel", CoreMatchers.hasItem("self"))
+            .body("links.self", notNullValue())
         .when()
             .get("/resource");
     }
@@ -129,7 +152,7 @@ public class ResourcesTest extends AbstractBase {
         .expect()
             .statusCode(200)
             .header("Link", containsString("page=2"))
-            .body("links[0].rel", CoreMatchers.hasItem("self"))
+            .body("links.self", notNullValue())
         .when().get("/resource");
     }
 
@@ -508,7 +531,7 @@ public class ResourcesTest extends AbstractBase {
                 .get("/resource/{id}/availability");
 
             String currentType = response.jsonPath().get("type");
-            assert currentType.equals("DOWN"); // TODO small window where an agent may have sent an update
+            assert currentType.equals("DOWN");
         } finally {
 
             // Set back to original value

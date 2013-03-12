@@ -47,6 +47,35 @@ public class FileUtil {
     private static IntHashMap invalidChars = null;
 
     /**
+     * This will check to see if file1 is newer than file2. If file1's last modified date
+     * is <strong>after</strong> file2's last modified date, then <code>true</code> is returned.
+     * <code>false</code> is returned if file1's date is the same or older than file2's date.
+     * <p>
+     * <code>null</code> is returned if any of these conditions are true:
+     * <ul>
+     * <li>If either file is null</li>
+     * <li>If either file does not exist</li>
+     * <li>If either file is not a normal file (but, say, a directory)</li>
+     * </ul>
+     * </p>
+     *
+     * @param file1
+     * @param file2
+     * @return indication if file1 is newer than file2
+     */
+    public static Boolean isNewer(File file1, File file2) {
+        if (file1 == null || file2 == null) {
+            return null;
+        }
+        if (!file1.isFile() || !file2.isFile()) {
+            return null;
+        }
+        long file1Date = file1.lastModified();
+        long file2Date = file2.lastModified();
+        return file1Date > file2Date;
+    }
+
+    /**
      * Creates a temporary directory using the same algorithm as JDK's File.createTempFile.
      */
     public static File createTempDirectory(String prefix, String suffix, File parentDirectory) throws IOException {

@@ -267,16 +267,16 @@ public class MetricGraphData implements JsonMetricProducer {
                             definition.getUnits());
                         MeasurementNumericValueAndUnits newLow = normalizeUnitsAndValues(measurement.getLowValue(),
                             definition.getUnits());
-                        MeasurementNumericValueAndUnits newValue = normalizeUnitsAndValues(measurement.getValue(),
+                        MeasurementNumericValueAndUnits newAvg = normalizeUnitsAndValues(measurement.getValue(),
                             definition.getUnits());
                         if (!gotAdjustedMeasurementUnits) {
-                            adjustedMeasurementUnits = newValue.getUnits();
+                            adjustedMeasurementUnits = newAvg.getUnits();
                             gotAdjustedMeasurementUnits = true;
                         }
                         sb.append(" \"barDuration\": \"" + barDurationString + "\", ");
-                        sb.append(" \"high\":" + newHigh.getValue() + ",");
-                        sb.append(" \"low\":" + newLow.getValue() + ",");
-                        sb.append(" \"y\":" + newValue.getValue() + "},");
+                        sb.append(" \"high\":" + cleanseHigh(newLow.getValue(), newAvg.getValue(),newHigh.getValue()) + ",");
+                        sb.append(" \"low\":" + cleanseLow(newLow.getValue(), newAvg.getValue(), newHigh.getValue()) + ",");
+                        sb.append(" \"y\":" + newAvg.getValue() + "},");
                     } else {
                         // give it some values so that we dont have NaN
                         sb.append(" \"high\":0,");
@@ -294,6 +294,26 @@ public class MetricGraphData implements JsonMetricProducer {
         Log.debug("Json data for: "+getChartTitle());
         Log.debug(sb.toString());
         return sb.toString();
+    }
+
+    /**
+     * This is cleaning the data as sometimes the data coming from the metric query
+     * is erroneous: for instance the low is greater than the high. This causes the
+     * geometries to get weird. We normally should not have to do this!
+     * @todo: Remove this data cleansing once we have fixed it at the metric query.
+     *
+     * @param low supposed low value
+     * @param high supposed high value
+     * @return the real high value
+     */
+    private Double cleanseHigh(Double low, Double avg, Double high){
+        double highLowMax =  Math.max(low, high);
+        return Math.max(highLowMax, avg);
+    }
+
+    private Double cleanseLow(Double low, Double avg,  Double high){
+        double highLowMin = Math.min(low, high);
+        return Math.min(highLowMin, avg);
     }
 
     /**

@@ -47,6 +47,7 @@ import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 /**
  * @author Greg Hinkle
  */
+@Deprecated
 public class GraphListView extends LocatableVLayout implements ResourceSelectListener {
 
     private Resource resource;

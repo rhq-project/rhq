@@ -19,7 +19,6 @@
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.TreeMap;
 
@@ -39,9 +38,11 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupMetr
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOobsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupPkgHistoryPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.groups.graph.ResourceGroupD3GraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.groups.graph.ResourceGroupGraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.queue.AutodiscoveryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.FavoriteResourcesPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.ResourceD3GraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.ResourceGraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
@@ -100,7 +101,9 @@ public class PortletFactory {
         globalPortletFactoryMap.put(AutodiscoveryPortlet.KEY, AutodiscoveryPortlet.Factory.INSTANCE);
         globalPortletFactoryMap.put(RecentAlertsPortlet.KEY, RecentAlertsPortlet.Factory.INSTANCE);
         globalPortletFactoryMap.put(ResourceGraphPortlet.KEY, ResourceGraphPortlet.Factory.INSTANCE);
+        globalPortletFactoryMap.put(ResourceD3GraphPortlet.KEY, ResourceD3GraphPortlet.Factory.INSTANCE);
         globalPortletFactoryMap.put(ResourceGroupGraphPortlet.KEY, ResourceGroupGraphPortlet.Factory.INSTANCE);
+        globalPortletFactoryMap.put(ResourceGroupD3GraphPortlet.KEY, ResourceGroupD3GraphPortlet.Factory.INSTANCE);
         //conditionally add tags. Defaults to true, not available in JON builds.
         if (CoreGUI.isTagsEnabledForUI()) {
             globalPortletFactoryMap.put(TagCloudPortlet.KEY, TagCloudPortlet.Factory.INSTANCE);
@@ -121,7 +124,9 @@ public class PortletFactory {
         globalPortletNameMap.put(AutodiscoveryPortlet.NAME, AutodiscoveryPortlet.KEY);
         globalPortletNameMap.put(RecentAlertsPortlet.NAME, RecentAlertsPortlet.KEY);
         globalPortletNameMap.put(ResourceGraphPortlet.NAME, ResourceGraphPortlet.KEY);
+        globalPortletNameMap.put(ResourceD3GraphPortlet.NAME, ResourceD3GraphPortlet.KEY);
         globalPortletNameMap.put(ResourceGroupGraphPortlet.NAME, ResourceGroupGraphPortlet.KEY);
+        globalPortletNameMap.put(ResourceGroupD3GraphPortlet.NAME, ResourceGroupD3GraphPortlet.KEY);
         //conditionally add tags. Defaults to true, not available in JON builds.
         if (CoreGUI.isTagsEnabledForUI()) {
             globalPortletNameMap.put(TagCloudPortlet.NAME, TagCloudPortlet.KEY);
@@ -135,8 +140,7 @@ public class PortletFactory {
         globalPortletNameMap.put(OperationSchedulePortlet.NAME, OperationSchedulePortlet.KEY);
 
         globalPortletMenuMap = new LinkedHashMap<String, String>(globalPortletNameMap.size());
-        for (Iterator<String> i = globalPortletNameMap.keySet().iterator(); i.hasNext();) {
-            String portletName = i.next();
+        for (String portletName : globalPortletNameMap.keySet()) {
             globalPortletMenuMap.put(globalPortletNameMap.get(portletName), portletName);
         }
 
@@ -166,8 +170,7 @@ public class PortletFactory {
         groupPortletNameMap.put(GroupConfigurationUpdatesPortlet.NAME, GroupConfigurationUpdatesPortlet.KEY);
 
         groupPortletMenuMap = new LinkedHashMap<String, String>(groupPortletNameMap.size());
-        for (Iterator<String> i = groupPortletNameMap.keySet().iterator(); i.hasNext();) {
-            String portletName = i.next();
+        for (String portletName : groupPortletNameMap.keySet()) {
             groupPortletMenuMap.put(groupPortletNameMap.get(portletName), portletName);
         }
 
@@ -198,8 +201,7 @@ public class PortletFactory {
         resourcePortletNameMap.put(ResourceConfigurationUpdatesPortlet.NAME, ResourceConfigurationUpdatesPortlet.KEY);
 
         resourcePortletMenuMap = new LinkedHashMap<String, String>(resourcePortletNameMap.size());
-        for (Iterator<String> i = resourcePortletNameMap.keySet().iterator(); i.hasNext();) {
-            String portletName = i.next();
+        for (String portletName : resourcePortletNameMap.keySet()) {
             resourcePortletMenuMap.put(resourcePortletNameMap.get(portletName), portletName);
         }
 
@@ -222,6 +224,10 @@ public class PortletFactory {
         portletIconMap.put(ResourceBundleDeploymentsPortlet.KEY, ImageManager.getBundleIcon());
         portletIconMap.put(GroupConfigurationUpdatesPortlet.KEY, ImageManager.getConfigureIcon());
         portletIconMap.put(ResourceConfigurationUpdatesPortlet.KEY, ImageManager.getConfigureIcon());
+    }
+
+    private PortletFactory(){
+        // static utility class
     }
 
     public static Portlet buildPortlet(String locatorId, PortletWindow portletWindow, DashboardPortlet storedPortlet,

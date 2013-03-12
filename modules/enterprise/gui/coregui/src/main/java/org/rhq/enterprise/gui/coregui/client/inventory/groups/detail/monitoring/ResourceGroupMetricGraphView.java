@@ -36,13 +36,16 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricGraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
  * @author Jay Shaughnessy
+ * @deprecated see ResourceGroupD3MetricGraphView
  */
+@Deprecated
 public class ResourceGroupMetricGraphView extends AbstractMetricGraphView {
 
     private HTMLFlow resourceGroupTitle;
@@ -51,9 +54,6 @@ public class ResourceGroupMetricGraphView extends AbstractMetricGraphView {
         super(locatorId);
     }
 
-    public ResourceGroupMetricGraphView(String locatorId, int groupId, int definitionId) {
-        super(locatorId, groupId, definitionId);
-    }
 
     public ResourceGroupMetricGraphView(String locatorId, int groupId, MeasurementDefinition def,
         List<MeasurementDataNumericHighLowComposite> data) {
@@ -61,23 +61,26 @@ public class ResourceGroupMetricGraphView extends AbstractMetricGraphView {
         super(locatorId, groupId, def, data);
     }
 
+    @Override
     protected HTMLFlow getEntityTitle() {
         return resourceGroupTitle;
     }
 
+    @Override
     protected void renderGraph() {
         if (null == getDefinition()) {
-
             ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
 
             ResourceGroupCriteria criteria = new ResourceGroupCriteria();
             criteria.addFilterId(getEntityId());
             criteria.fetchResourceType(true);
             groupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
+                @Override
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_lookupFailed(), caught);
                 }
 
+                @Override
                 public void onSuccess(PageList<ResourceGroup> result) {
                     if (result.isEmpty()) {
                         return;
@@ -100,11 +103,13 @@ public class ResourceGroupMetricGraphView extends AbstractMetricGraphView {
                                             getEntityId(), new int[] { getDefinitionId() }, 8,
                                             MeasurementUtility.UNIT_HOURS, 60,
                                             new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
+                                                @Override
                                                 public void onFailure(Throwable caught) {
                                                     CoreGUI.getErrorHandler().handleError(
                                                         MSG.view_resource_monitor_graphs_loadFailed(), caught);
                                                 }
 
+                                                @Override
                                                 public void onSuccess(
                                                     List<List<MeasurementDataNumericHighLowComposite>> result) {
                                                     setData(result.get(0));

@@ -42,6 +42,9 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedE
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedHandler;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.D3GroupGraphListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.D3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -49,7 +52,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends LocatableVLayout implements
+public abstract class AbstractTwoLevelTabSetView<T, U extends Layout, V extends AbstractD3GraphListView> extends LocatableVLayout implements
     BookmarkableView, TwoLevelTabSelectedHandler {
 
     private String baseViewPath;
@@ -58,6 +61,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
     private String subTabName;
     private U titleBar;
     protected Set<Permission> globalPermissions;
+    protected V graphListView;
 
     public AbstractTwoLevelTabSetView(String locatorId, String baseViewPath) {
         super(locatorId);
@@ -88,11 +92,11 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
     public abstract Integer getSelectedItemId();
 
     protected abstract U createTitleBar();
+    protected abstract V createD3GraphListView();
 
     protected abstract List<TwoLevelTab> createTabs();
 
     /**
-     * TODO
      *
      * @param itemId
      * @param viewPath
@@ -232,6 +236,9 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
             // safely rendered.  Make sure to notify even on failure.            
             try {
                 this.selectTab(this.tabName, this.subTabName, viewPath);
+                if(null != graphListView){
+                    graphListView.redrawGraphs();
+                }
             } finally {
                 notifyViewRenderedListeners();
             }

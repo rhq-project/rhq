@@ -113,7 +113,6 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         LocatableVLayout vLayout = new LocatableVLayout(this.extendLocatorId("Default"));
         vLayout.setWidth100();
 
-        // TODO: Admin icon.
         TitleBar titleBar = new TitleBar(this, MSG.common_title_inventory(), IconEnum.INVENTORY.getIcon24x24Path());
         vLayout.addMember(titleBar);
 
@@ -261,10 +260,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
             this.viewName = viewName;
         }
 
-        public ResourceSearchViewWrapper(ViewName viewName, Criteria criteria) {
-            super(viewName.getName(), criteria);
-            this.viewName = viewName;
-        }
+
 
         @Override
         public ViewName getViewName() {

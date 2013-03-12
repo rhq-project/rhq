@@ -98,19 +98,13 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
     public static String RECENT_MEASUREMENTS_NONE = MSG.view_resource_inventory_activity_no_recent_metrics();
     public static String RECENT_MEASUREMENTS_GROUP_NONE = MSG.view_group_inventory_activity_no_recent_metrics();
     public static String RECENT_ALERTS = MSG.common_title_recent_alerts();
-    public static String RECENT_ALERTS_NONE = MSG.view_resource_inventory_activity_no_recent_alerts();
     public static String RECENT_OOB = MSG.common_title_recent_oob_metrics();
     public static String RECENT_OOB_NONE = MSG.view_resource_inventory_activity_no_recent_oob();
     public static String RECENT_CONFIGURATIONS = MSG.common_title_recent_configuration_updates();
-    public static String RECENT_CONFIGURATIONS_NONE = MSG.view_resource_inventory_activity_no_recent_config_history();
     public static String RECENT_OPERATIONS = MSG.common_title_recent_operations();
-    public static String RECENT_OPERATIONS_NONE = MSG.view_resource_inventory_activity_no_recent_operations();
     public static String RECENT_EVENTS = MSG.common_title_recent_event_counts();
-    public static String RECENT_EVENTS_NONE = MSG.view_resource_inventory_activity_no_recent_events();
     public static String RECENT_PKG_HISTORY = MSG.common_title_recent_pkg_history();
-    public static String RECENT_PKG_HISTORY_NONE = MSG.view_resource_inventory_activity_no_recent_pkg_history();
     public static String RECENT_BUNDLE_DEPLOY = MSG.common_title_recent_bundle_deployments();
-    public static String RECENT_BUNDLE_DEPLOY_NONE = MSG.view_resource_inventory_activity_no_recent_bundle_deploy();
     public static String SEE_MORE = MSG.common_msg_see_more();
     public static String RECENT_CRITERIA_EVENTS_NONE = MSG.view_resource_inventory_activity_criteria_no_recent_events();
     public static final String CHART_TITLE = MSG.common_title_metric_chart();
@@ -397,7 +391,6 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
      * @param md MeasurementDefinition
      * @return formatted String representation of the last value retrieved.
      */
-    //    protected String convertLastValueForDisplay(double lastValue, MeasurementDefinition md) {
     public static String convertLastValueForDisplay(double lastValue, MeasurementDefinition md) {
         String convertedValue = "";
         String[] convertedValues = GwtMonitorUtils.formatSimpleMetrics(new double[] { lastValue }, md);
@@ -636,13 +629,13 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
             } else {
                 setTitle(CHART_TITLE + ": " + title);
             }
-            setShowMinimizeButton(true);
-            setShowMaximizeButton(true);
+            setShowMinimizeButton(false);
+            setShowMaximizeButton(false);
             setShowCloseButton(true);
             setIsModal(true);
             setShowModalMask(true);
-            setWidth(900);
-            setHeight(650);
+            setWidth(950);
+            setHeight(350);
             setShowResizer(true);
             setCanDragResize(true);
             centerInPage();
@@ -661,11 +654,4 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         }
     }
 
-    public static String iframeLink(String destination) {
-        String link = destination;
-        if (destination != null) {
-            link += "&iframe=true";
-        }
-        return link;
-    }
 }

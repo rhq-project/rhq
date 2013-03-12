@@ -43,7 +43,9 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitorin
 /**
  * @author Greg Hinkle
  * @author Jay Shaughnessy
+ * @deprecated see ResourceD3GraphPortlet
  */
+@Deprecated
 public class ResourceGraphPortlet extends ResourceMetricGraphView implements CustomSettingsPortlet {
 
     // A non-displayed, persisted identifier for the portlet
@@ -110,7 +112,7 @@ public class ResourceGraphPortlet extends ResourceMetricGraphView implements Cus
         final DynamicForm form = new DynamicForm();
 
         final ResourceLookupComboBoxItem resourceLookupComboBoxItem = new ResourceLookupComboBoxItem(CFG_RESOURCE_ID,
-            MSG.common_title_resource());
+                MSG.common_title_resource());
         resourceLookupComboBoxItem.setWidth(300);
 
         final SelectItem metric = new SelectItem(CFG_DEFINITION_ID, MSG.common_title_metric()) {
@@ -134,15 +136,15 @@ public class ResourceGraphPortlet extends ResourceMetricGraphView implements Cus
         metric.setOptionDataSource(new ResourceScheduledMetricDatasource());
 
         resourceLookupComboBoxItem
-            .addChangedHandler(new com.smartgwt.client.widgets.form.fields.events.ChangedHandler() {
-                public void onChanged(ChangedEvent event) {
+                .addChangedHandler(new com.smartgwt.client.widgets.form.fields.events.ChangedHandler() {
+                    public void onChanged(ChangedEvent event) {
 
-                    if (form.getValue(CFG_RESOURCE_ID) instanceof Integer) {
-                        metric.fetchData();
-                        form.clearValue(CFG_DEFINITION_ID);
+                        if (form.getValue(CFG_RESOURCE_ID) instanceof Integer) {
+                            metric.fetchData();
+                            form.clearValue(CFG_DEFINITION_ID);
+                        }
                     }
-                }
-            });
+                });
 
         if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID) != null) {
             Integer integerValue = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID).getIntegerValue();
@@ -161,9 +163,9 @@ public class ResourceGraphPortlet extends ResourceMetricGraphView implements Cus
         form.addSubmitValuesHandler(new SubmitValuesHandler() {
             public void onSubmitValues(SubmitValuesEvent submitValuesEvent) {
                 storedPortlet.getConfiguration().put(
-                    new PropertySimple(CFG_RESOURCE_ID, form.getValue(CFG_RESOURCE_ID)));
+                        new PropertySimple(CFG_RESOURCE_ID, form.getValue(CFG_RESOURCE_ID)));
                 storedPortlet.getConfiguration().put(
-                    new PropertySimple(CFG_DEFINITION_ID, form.getValue(CFG_DEFINITION_ID)));
+                        new PropertySimple(CFG_DEFINITION_ID, form.getValue(CFG_DEFINITION_ID)));
 
                 configure(portletWindow, storedPortlet);
 

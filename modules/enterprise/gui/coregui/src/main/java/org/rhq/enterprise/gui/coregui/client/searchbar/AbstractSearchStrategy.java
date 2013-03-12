@@ -66,9 +66,8 @@ public abstract  class AbstractSearchStrategy implements RecordClickHandler, Cel
 
     /**
      * Handle the focus event in the search bar. Must be overridden in subclass.
-     * @param focusEvent
      */
-    public abstract void searchFocusHandler(FocusEvent focusEvent);
+    public abstract void searchFocusHandler();
 
     /**
      * Search results can have different heights (i.e. 1 row or 2 rows). Must be overridden

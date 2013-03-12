@@ -182,14 +182,25 @@ public class AvailabilityLineGraphType {
 
                     .attr("opacity", ".9")
                     .attr("fill", function (d) {
-                        if (d.availType === 'DOWN' || d.availType === 'DISABLED') {
-                            return "#FF1919";
+                        if (d.availType === 'DOWN') {
+                            return "#FF1919"; // red
+                        }
+                        else if (d.availType === 'WARN') {
+                            return "#FFFF00"; // yellow
+                        }
+                        else if (d.availType === 'DISABLED') {
+                            return "#FF9933"; // orange
                         }
                         else if (d.availType === 'UNKNOWN') {
-                            return "#C7C5C5";
+                            return "#CCC"; // gray
+                        }
+                        else if (d.availType === 'UP') {
+                            return "#198C19"; // green
                         }
                         else {
-                            return "#198C19";
+                            // should not ever happen, but...
+                            console.warn("AvailabilityType not valid.");
+                            return "#000"; //black
                         }
                     });
 

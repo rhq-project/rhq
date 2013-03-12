@@ -245,7 +245,6 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>gwt-maven-plugin</artifactId>
-        <!-- Cant upgrade to 2.5.0 plugin because gwt dev mode doesnt autorefresh -->
         <version>2.5.0</version>
         <configuration>
           <noServer>true</noServer>
@@ -332,48 +331,7 @@
         </executions>
       </plugin>
 
-            <!--
-               <plugin>
-                  <artifactId>maven-antrun-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>Generate I18N Resource Bundles</id>
-                        <phase>process-classes</phase>
-                        <configuration>
-                           <target>
-                              <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
-                              <i18n outputdir="${project.buildNodes.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">
-                                 <classpath refid="maven.runtime.classpath" />
-                                 <classfileset dir="${project.buildNodes.outputDirectory}">
-                                    <include name="**/*I18NResourceKeys.class" />
-                                 </classfileset>
-                              </i18n>
-                           </target>
-                        </configuration>
-                        <goals>
-                           <goal>run</goal>
-                        </goals>
-                     </execution>
-                     <execution>
-                        <id>Maintain an unfiltered copy of i18n properties files</id>
-                        <phase>process-classes</phase>
-                        <configuration>
-                           <target>
-                              <copy todir="${project.buildNodes.outputDirectory}">
-                                 <fileset dir="src/main/webapp-filtered/WEB-INF/classes">
-                                    <include name="ApplicationResources.properties" />
-                                 </fileset>
-                                 <mapper type="glob" from="*" to="*.unfiltered" />
-                              </copy>
-                           </target>
-                        </configuration>
-                        <goals>
-                           <goal>run</goal>
-                        </goals>
-                     </execution>
-                  </executions>
-               </plugin>
-            -->
+
     </plugins>
 
   </build>
@@ -402,13 +360,6 @@
                 <phase>compile</phase>
                 <configuration>
                   <target>
-                                        <!--
-                                        <property name="classes.dir" location="${rhq.deploymentDir}/WEB-INF/classes" />
-                                        <echo>*** Copying updated files from target/${project.buildNodes.finalName}/WEB-INF/classes to ${classes.dir}...</echo>
-                                        <copy todir="${classes.dir}" verbose="${rhq.verbose}">
-                                           <fileset dir="war/WEB-INF/classes" />
-                                        </copy>
-                                        -->
                     <property name="deployment.dir" location="${rhq.deploymentDir}"/>
                     <echo>*** Copying updated files from
                       src${file.separator}main${file.separator}webapp${file.separator} to

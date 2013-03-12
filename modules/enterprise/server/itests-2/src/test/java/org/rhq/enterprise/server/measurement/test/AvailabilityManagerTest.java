@@ -24,12 +24,15 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
+import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.transaction.Status;
 
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.AvailabilityCriteria;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
@@ -40,6 +43,7 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityPoint;
@@ -49,6 +53,7 @@ import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerPluginService;
 import org.rhq.enterprise.server.test.TransactionCallbackReturnable;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.SessionTestHelper;
 
 /**
  * Test the functionality of the AvailabilityManager
@@ -801,6 +806,110 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
     }
 
     @Test(enabled = ENABLE_TESTS)
+    public void testAgentCurrentAvailability() throws Exception {
+        beginTx();
+
+        try {
+            setupResource(); // inserts initial UNKNOWN Availability at epoch
+            commitAndClose();
+
+            Availability avail;
+            long now = System.currentTimeMillis();
+
+            // add a report that says the resource is down
+            avail = new Availability(theResource, DOWN);
+            AvailabilityReport report = new AvailabilityReport(false, theAgent.getName());
+            report.addAvailability(avail);
+            availabilityManager.mergeAvailabilityReport(report);
+
+            // now pretend the agent sent us a report from a previous time period - should insert this in the past
+            avail = new Availability(theResource, (now - 600000), UP);
+            report = new AvailabilityReport(false, theAgent.getName());
+            report.addAvailability(avail);
+            availabilityManager.mergeAvailabilityReport(report);
+            assert getPointInTime(new Date(avail.getStartTime() - 2)) == UNKNOWN;
+
+            //check for current availability.
+            Date unknownTime = new Date(avail.getStartTime() - 2);
+            //make request for avail again but this time requesting most up to date status: should be DOWN
+            List<AvailabilityPoint> list = availabilityManager.findAvailabilitiesForResource(overlord,
+                theResource.getId(), unknownTime.getTime(), unknownTime.getTime() + 1, 1, true);
+            AvailabilityType returnedAvail = list.get(0).getAvailabilityType();
+            assert returnedAvail == DOWN : "Expected current avail to be '" + DOWN + "' but was '" + returnedAvail
+                + "'.";
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        } finally {
+            if (Status.STATUS_ACTIVE == getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+        }
+    }
+
+    @Test(enabled = false)
+    public void testAgentCurrentGroupAvailability() throws Exception {
+        beginTx();
+
+        try {
+            setupResource(); // inserts initial UNKNOWN Availability at epoch
+            commitAndClose();
+
+            Availability avail;
+            long now = System.currentTimeMillis();
+
+            //initialize availabilty to up
+            avail = new Availability(theResource, UP);
+            AvailabilityReport report = new AvailabilityReport(false, theAgent.getName());
+            report.addAvailability(avail);
+            availabilityManager.mergeAvailabilityReport(report);
+
+            //verify resource's availabilty is up.
+            List<AvailabilityPoint> list = availabilityManager.findAvailabilitiesForResource(overlord,
+                theResource.getId(), 0, now, 1, true);
+            AvailabilityType returnedAvail = list.get(0).getAvailabilityType();
+            assert returnedAvail == UP : "Expected current avail to be '" + UP + "' but was '" + returnedAvail + "'.";
+
+            //add this resource to a group 
+            getTransactionManager().begin();
+            EntityManager entityMgr = getEntityManager();
+            final Subject subject = SessionTestHelper.createNewSubject(entityMgr, "testSubject");
+
+            Role roleWithSubject = SessionTestHelper.createNewRoleForSubject(entityMgr, subject, "role with subject");
+            roleWithSubject.addPermission(Permission.VIEW_RESOURCE);
+
+            ResourceGroup theGroup = SessionTestHelper.createNewCompatibleGroupForRole(entityMgr, roleWithSubject,
+                "accessible group");
+
+            //explicitly add resource to group
+            theGroup.addExplicitResource(theResource);
+            entityMgr.merge(theGroup);
+
+            //test that group member size is one
+            int groupSize = theGroup.getExplicitResources().size();
+            assert groupSize == 1 : "Group membership count incorrect. Expected '1' but was '" + groupSize + "'";
+            Resource theGroupMember = null;
+            for (Resource r : theGroup.getExplicitResources()) {
+                theGroupMember = r;
+            }
+
+            //test group avail
+            long rightNow = System.currentTimeMillis();
+            list = availabilityManager.findAvailabilitiesForResourceGroup(overlord, theGroup.getId(), 0, rightNow, 1,
+                true);
+            returnedAvail = list.get(0).getAvailabilityType();
+            assert returnedAvail == UP : "Expected current avail to be '" + UP + "' but was '" + returnedAvail + "'.";
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        } finally {
+            if (Status.STATUS_ACTIVE == getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+        }
+    }
+
+    @Test(enabled = ENABLE_TESTS)
     public void testAgentOldReport2() throws Exception {
         beginTx();
 
@@ -1431,8 +1540,9 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
      * @return A Resource ready to use
      */
     private Resource setupResource() {
-        String prefix = this.getClass().getSimpleName() + "_";
-        theAgent = new Agent(prefix + "agent", "localhost", 1234, "", "randomToken");
+        String tuid = "" + new Random().nextInt();
+        String prefix = this.getClass().getSimpleName() + "_" + tuid + "_";
+        theAgent = new Agent(prefix + "agent", "localhost" + tuid, 1234, "", "randomToken" + tuid);
         em.persist(theAgent);
 
         theResourceType = new ResourceType(prefix + "type", prefix + "plugin", ResourceCategory.PLATFORM, null);

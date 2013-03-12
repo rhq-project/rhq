@@ -23,10 +23,15 @@
 
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.util.BooleanCallback;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Button;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.events.VisibilityChangedEvent;
+import com.smartgwt.client.widgets.events.VisibilityChangedHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
@@ -38,10 +43,12 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author John Mazzitelli
+ * @author Jirka Kremser
  */
 public class SingleAlertDefinitionView extends EnhancedVLayout {
 
     private AlertDefinition alertDefinition;
+    private AbstractAlertDefinitionsView alertDefView;
 
     private GeneralPropertiesAlertDefinitionForm generalProperties;
     private ConditionsAlertDefinitionForm conditions;
@@ -52,6 +59,10 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
     private Button editButton;
     private Button saveButton;
     private Button cancelButton;
+
+    private TabSet tabSet;
+    private Tab generalPropertiesTab;
+    private HandlerRegistration handlerRegistration;
 
     private boolean isAuthorizedToModifyAlertDefinitions;
 
@@ -64,11 +75,12 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
 
         this.alertDefinition = alertDefinition;
         this.isAuthorizedToModifyAlertDefinitions = alertDefView.isAuthorizedToModifyAlertDefinitions();
+        this.alertDefView = alertDefView;
 
-        final TabSet tabSet = new TabSet();
+        tabSet = new TabSet();
         tabSet.setHeight100();
 
-        final Tab generalPropertiesTab = new Tab(MSG.view_alert_common_tab_general());
+        generalPropertiesTab = new Tab(MSG.view_alert_common_tab_general());
         generalProperties = new GeneralPropertiesAlertDefinitionForm(alertDefinition);
         generalPropertiesTab.setPane(generalProperties);
         generalPropertiesTab.addTabDeselectedHandler(new TabDeselectedHandler() {
@@ -126,32 +138,14 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
         saveButton.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
-                if (generalProperties.validate()) {
-                    boolean resetMatching = isResetMatching();
-                    saveAlertDefinition();
-                    setAlertDefinition(getAlertDefinition()); // loads data into static fields
-                    makeViewOnly();
-
-                    alertDefView.commitAlertDefinition(getAlertDefinition(), resetMatching,
-                        new AsyncCallback<AlertDefinition>() {
-                            @Override
-                            public void onSuccess(AlertDefinition result) {
-                                setAlertDefinition(result);
-                            }
-
-                            @Override
-                            public void onFailure(Throwable caught) {
-                            }
-                        });
-                } else {
-                    tabSet.selectTab(generalPropertiesTab);
-                }
+                save();
             }
         });
 
         cancelButton.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
+                handlerRegistration.removeHandler();
                 setAlertDefinition(getAlertDefinition()); // reverts data back to original
                 makeViewOnly();
             }
@@ -198,6 +192,21 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
         notifications.makeEditable();
         recovery.makeEditable();
         dampening.makeEditable();
+
+        handlerRegistration = addVisibilityChangedHandler(new VisibilityChangedHandler() {
+            public void onVisibilityChanged(VisibilityChangedEvent event) {
+                if (!event.getIsVisible()) {
+                    SC.ask(MSG.view_alert_definitions_leaveUnsaved(), new BooleanCallback() {
+                        public void execute(Boolean value) {
+                            if (value) {
+                                save();
+                            }
+                            handlerRegistration.removeHandler();
+                        }
+                    });
+                }
+            }
+        });
     }
 
     public void makeViewOnly() {
@@ -218,5 +227,30 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
         notifications.saveAlertDefinition();
         recovery.saveAlertDefinition();
         dampening.saveAlertDefinition();
+    }
+
+    private void save() {
+        if (generalProperties.validate()) {
+            boolean resetMatching = isResetMatching();
+            saveAlertDefinition();
+            setAlertDefinition(getAlertDefinition()); // loads data into static fields
+            makeViewOnly();
+
+            alertDefView.commitAlertDefinition(getAlertDefinition(), resetMatching,
+                new AsyncCallback<AlertDefinition>() {
+                    @Override
+                    public void onSuccess(final AlertDefinition alertDef) {
+                        handlerRegistration.removeHandler();
+                        setAlertDefinition(alertDef);
+                    }
+
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        // nothing, the notification is done in the subclasses of AbstractAlertDefinitionsView
+                    }
+                });
+        } else {
+            tabSet.selectTab(generalPropertiesTab);
+        }
     }
 }

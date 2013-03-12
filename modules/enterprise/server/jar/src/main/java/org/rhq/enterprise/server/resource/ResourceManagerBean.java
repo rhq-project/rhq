@@ -899,6 +899,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         ResourceCriteria resourceCriteria = new ResourceCriteria();
         resourceCriteria.addFilterIds(resourceIds);
         resourceCriteria.fetchResourceType(true);
+        resourceCriteria.clearPaging();//disable paging as the code assumes all the results will be returned.
         List<Resource> resources = findResourcesByCriteria(subject, resourceCriteria);
 
         if (ResourceAncestryFormat.RAW == format) {

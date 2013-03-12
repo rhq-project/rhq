@@ -51,6 +51,9 @@ import org.infinispan.Cache;
 import org.infinispan.manager.CacheContainer;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
@@ -59,6 +62,7 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.rest.domain.GroupRest;
 import org.rhq.enterprise.server.rest.domain.Link;
+import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 
 /**
@@ -383,6 +387,7 @@ public class AbstractRestBean {
             link = new Link("parent", uri.toString());
             rwt.addLink(link);
         }
+        rwt.addLink(createUILink(uriInfo,UILinkTemplate.RESOURCE,res.getId()));
 
         return rwt;
     }
@@ -449,7 +454,69 @@ public class AbstractRestBean {
         link = new Link("metricDefinitions",uri.toASCIIString());
         gr.getLinks().add(link);
 
+        gr.getLinks().add(createUILink(uriInfo,UILinkTemplate.GROUP,group.getId()));
+
         return gr;
+    }
+
+    /**
+     * Creates a link to the respective entry in coregui
+     * @param uriInfo The uriInfo object to build the final url from
+     * @param template Template to use
+     * @param entityId Ids of the various entities used in the template
+     * @return A Link object
+     */
+    protected Link createUILink(UriInfo uriInfo, UILinkTemplate template, Integer... entityId) {
+
+        String urlBase = template.getUrl();
+        String replaced = String.format(urlBase,entityId);
+
+        UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.fragment(replaced);
+        uriBuilder.replacePath("coregui/"); // trailing / is needed
+
+        URI uri = uriBuilder.build();
+
+        String href = uri.toString();
+        href = href.replaceAll("%2F","/");
+        Link link = new Link("coregui", href);
+
+        return link;
+
+    }
+
+    protected MetricSchedule getMetricScheduleInternal(UriInfo uriInfo, MeasurementSchedule schedule,
+                                                       MeasurementDefinition definition) {
+        MetricSchedule ms = new MetricSchedule(schedule.getId(), definition.getName(),
+            definition.getDisplayName(), schedule.isEnabled(), schedule.getInterval(), definition
+                .getUnits().toString(), definition.getDataType().toString());
+        ms.setDefinitionId(definition.getId());
+
+        if (schedule.getMtime()!=null)
+            ms.setMtime(schedule.getMtime());
+
+
+        UriBuilder uriBuilder;
+        URI uri;
+        if (definition.getDataType() == DataType.MEASUREMENT) {
+            uriBuilder = uriInfo.getBaseUriBuilder();
+            uriBuilder.path("/metric/data/{id}");
+            uri = uriBuilder.build(schedule.getId());
+            Link metricLink = new Link("metric", uri.toString());
+            ms.addLink(metricLink);
+            uriBuilder = uriInfo.getBaseUriBuilder();
+            uriBuilder.path("/metric/data/{id}/raw");
+            uri = uriBuilder.build(schedule.getId());
+            metricLink = new Link("metric-raw", uri.toString());
+            ms.addLink(metricLink);
+        }
+        // create link to the resource
+        uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.path("resource/" + schedule.getResource().getId());
+        uri = uriBuilder.build();
+        Link link = new Link("resource", uri.toString());
+        ms.addLink(link);
+        return ms;
     }
 
     protected static class CacheKey {

@@ -29,6 +29,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ContentsType;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -55,6 +56,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
@@ -371,7 +373,11 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                                                             }
                                                         }
                                                         DynamicForm row = new DynamicForm();
-                                                        row.setNumCols(3);
+                                                        row.setNumCols(4);
+                                                        row.setColWidths(65, "*", 20, 100);
+                                                        row.setWidth100();
+                                                        row.setAutoHeight();
+                                                        row.setOverflow(Overflow.VISIBLE);
                                                         HTMLFlow graph = new HTMLFlow();
                                                         //                        String contents = "<span id='sparkline_" + index + "' class='dynamicsparkline' width='0'>"
                                                         //                            + commaDelimitedList + "</span>";
@@ -397,7 +403,6 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                                                         link.setClipValue(true);
                                                         link.setWrap(true);
                                                         link.setHeight(26);
-                                                        link.setWidth("150px");
                                                         link.addClickHandler(new ClickHandler() {
                                                             @Override
                                                             public void onClick(ClickEvent event) {
@@ -410,13 +415,31 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                                                             }
                                                         });
 
+                                                        //@todo: this goes away once we have validated the new d3 charts
+                                                        final String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricMultiResource&groupId="
+                                                            + groupId + "&m=" + md.getId();
+                                                        LinkItem oldLink = AbstractActivityView.newLinkItem("*",
+                                                            destination);
+                                                        oldLink.setTooltip("Link to Old Charts");
+                                                        oldLink.addClickHandler(new ClickHandler() {
+                                                            @Override
+                                                            public void onClick(ClickEvent event) {
+                                                                ChartViewWindow window = new ChartViewWindow(title);
+                                                                //generate and include iframed content
+                                                                FullHTMLPane iframe = new FullHTMLPane(destination);
+                                                                //                                                                            .extendLocatorId("View"),
+                                                                //                                                                        AbstractActivityView.iframeLink(destination));
+                                                                window.addItem(iframe);
+                                                                window.show();
+                                                            }
+                                                        });
                                                         //Value
                                                         String convertedValue = AbstractActivityView
                                                             .convertLastValueForDisplay(lastValue, md);
                                                         StaticTextItem value = AbstractActivityView
                                                             .newTextItem(convertedValue);
 
-                                                        row.setItems(graphContainer, link, value);
+                                                        row.setItems(graphContainer, link, oldLink, value);
                                                         //if graph content returned
                                                         if ((md.getName().trim().indexOf("Trait.") == -1)
                                                             && (lastValue != -1)) {

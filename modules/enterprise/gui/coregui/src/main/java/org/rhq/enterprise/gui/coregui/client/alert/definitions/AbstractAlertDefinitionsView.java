@@ -182,6 +182,10 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
     protected AlertDefinitionCriteria getDetailCriteria() {
         return new AlertDefinitionCriteria();
     }
+    
+    
+    
+    protected abstract void commitAlertDefinition(final AlertDefinition alertDefinition, boolean resetMatching, final AsyncCallback<AlertDefinition> resultReceiver);
 
     protected abstract ResourceType getResourceType();
 
@@ -196,7 +200,4 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
     protected abstract void enableButtonPressed(ListGridRecord[] selection);
 
     protected abstract void disableButtonPressed(ListGridRecord[] selection);
-
-    protected abstract void commitAlertDefinition(AlertDefinition alertDefinition, boolean isPurgeInternals,
-        AsyncCallback<AlertDefinition> resultReceiver);
 }

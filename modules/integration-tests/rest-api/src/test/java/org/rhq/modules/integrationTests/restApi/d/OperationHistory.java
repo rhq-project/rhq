@@ -37,7 +37,7 @@ public class OperationHistory {
     String jobId;
 
     Map<String,Object> result = new HashMap<String, Object>();
-    List<Object> links;
+    List<Link> links;
 
     public OperationHistory() {
     }
@@ -98,11 +98,11 @@ public class OperationHistory {
         this.result = result;
     }
 
-    public List<Object> getLinks() {
+    public List<Link> getLinks() {
         return links;
     }
 
-    public void setLinks(List<Object> links) {
+    public void setLinks(List<Link> links) {
         this.links = links;
     }
 }

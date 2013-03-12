@@ -22,6 +22,8 @@
  */
 package org.rhq.modules.integrationTests.restApi.d;
 
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -34,12 +36,28 @@ public class Group {
     String name;
     String category = "MIXED";
     Integer resourceTypeId;
+    int id;
+    boolean recursive;
+    int dynaGroupDefinitionId;
+    private int explicitCount;
+    private int implicitCount;
+
+    List<Link> links;
+
 
     public Group() {
     }
 
     public Group(String name) {
         this.name = name;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getName() {
@@ -64,5 +82,45 @@ public class Group {
 
     public void setResourceTypeId(Integer resourceTypeId) {
         this.resourceTypeId = resourceTypeId;
+    }
+
+    public List<Link> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<Link> links) {
+        this.links = links;
+    }
+
+    public boolean isRecursive() {
+        return recursive;
+    }
+
+    public void setRecursive(boolean recursive) {
+        this.recursive = recursive;
+    }
+
+    public int getDynaGroupDefinitionId() {
+        return dynaGroupDefinitionId;
+    }
+
+    public void setDynaGroupDefinitionId(int dynaGroupDefinitionId) {
+        this.dynaGroupDefinitionId = dynaGroupDefinitionId;
+    }
+
+    public int getExplicitCount() {
+        return explicitCount;
+    }
+
+    public void setExplicitCount(int explicitCount) {
+        this.explicitCount = explicitCount;
+    }
+
+    public int getImplicitCount() {
+        return implicitCount;
+    }
+
+    public void setImplicitCount(int implicitCount) {
+        this.implicitCount = implicitCount;
     }
 }

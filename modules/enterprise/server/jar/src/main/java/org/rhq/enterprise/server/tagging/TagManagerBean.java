@@ -32,9 +32,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.bundle.Bundle;
@@ -59,8 +56,6 @@ import org.rhq.enterprise.server.util.CriteriaQueryRunner;
  */
 @Stateless
 public class TagManagerBean implements TagManagerLocal, TagManagerRemote {
-
-    private final Log log = LogFactory.getLog(TagManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;

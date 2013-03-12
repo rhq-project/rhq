@@ -42,6 +42,11 @@
       <module name="org.jboss.as.naming" export="true" />
       <!-- Currently Quartz actually does some direct manipulation with Oracle classes -->
       <module name="org.rhq.oracle" export="true" optional="true" />
+
+      <!-- for REST -->
+      <module name="org.codehaus.jackson.jackson-core-asl" export="true"/>
+      <module name="org.codehaus.jackson.jackson-jaxrs" export="true"/>
+      <module name="org.codehaus.jackson.jackson-mapper-asl" export="true"/>
     </dependencies>
   </sub-deployment>
 

@@ -147,18 +147,6 @@
       <scope>provided</scope>
     </dependency>
 
-      <!-- Needed to convert the SVG charts to PNG images via Batik transcoding -->
-    <dependency>
-      <groupId>batik</groupId>
-      <artifactId>batik-transcoder</artifactId>
-      <version>1.7</version>
-    </dependency>
-    <dependency>
-      <groupId>batik</groupId>
-      <artifactId>batik-codec</artifactId>
-      <version>1.7</version>
-    </dependency>
-
         <!-- for file uploads -->
     <dependency>
       <groupId>commons-fileupload</groupId>

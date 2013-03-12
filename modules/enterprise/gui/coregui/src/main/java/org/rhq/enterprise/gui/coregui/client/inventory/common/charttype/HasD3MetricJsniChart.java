@@ -33,8 +33,6 @@ public interface HasD3MetricJsniChart
     void drawJsniChart();
     void setEntityId(int entityId) ;
     void setEntityName(String entityName) ;
-    //@todo: defId is redundant to MD
-    void setDefinitionId(int definitionId) ;
     void setDefinition(MeasurementDefinition measurementDefinition) ;
 
 }

@@ -60,7 +60,6 @@ public class ResourceMetricD3Graph extends AbstractMetricD3GraphView {
 
     @Override
     protected void displayLiveGraphViewDialog() {
-        LiveGraphD3View.displayAsDialog(graph.getMetricGraphData().getEntityId(), graph.getMetricGraphData()
-            .getDefinition());
+        LiveGraphD3View.displayAsDialog(graph.getEntityId(), graph.getDefinition());
     }
 }

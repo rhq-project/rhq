@@ -31,6 +31,7 @@ public class Schedule {
     private int scheduleId;
     private boolean enabled;
     private long collectionInterval;
+    private int definitionId;
 
     public Schedule() {
     }
@@ -57,5 +58,13 @@ public class Schedule {
 
     public void setCollectionInterval(long collectionInterval) {
         this.collectionInterval = collectionInterval;
+    }
+
+    public int getDefinitionId() {
+        return definitionId;
+    }
+
+    public void setDefinitionId(int definitionId) {
+        this.definitionId = definitionId;
     }
 }

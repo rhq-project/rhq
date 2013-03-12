@@ -20,11 +20,20 @@
 
 package org.rhq.enterprise.server.core;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
+import java.util.Random;
+import java.util.jar.Attributes;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 
 import javax.persistence.Query;
 
@@ -39,6 +48,7 @@ import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -102,6 +112,16 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
     private static final String A_HOST = "hostA";
     private static final int B_PORT = 22222;
     private static final String B_HOST = "hostB";
+    private static final String VERSION = "1.2.3";
+    private static final String BUILD = "12345";
+    private static final String AGENT_VERSION = "rhq-agent.latest.version";
+    private static final String AGENT_BUILD = "rhq-agent.latest.build-number";
+    private static final String AGENT_MD5 = "rhq-agent.latest.md5";
+    //lives on the server/gui in agent/downloads folder
+    private static final String SERVER_AGENT_PROPERTIES = "rhq-server-agent-versions.properties";
+    //lives in the agent jar root
+    private static final String AGENT_UPDATE_PROPERTIES = "rhq-agent-update-version.properties";
+    private static final String DOWNLOADS_AGENT = "rhq-downloads/rhq-agent";
 
     // README
     // Arquillian (1.0.2) does not honor Testng's lifecycle, Before/AfterClass are invoked on
@@ -144,20 +164,32 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
 
         // in order to register, we need to mock out the agent version file used by the server
         // to determine the agent version it supports.
-        agentVersion = new AgentVersion("1.2.3", "12345");
-        File agentVersionFile = new File(mbean.getJBossServerDataDir(),
-            "rhq-downloads/rhq-agent/rhq-server-agent-versions.properties");
+        agentVersion = new AgentVersion(VERSION, BUILD);
+        File agentVersionFile = new File(mbean.getJBossServerDataDir(), DOWNLOADS_AGENT + "/" + SERVER_AGENT_PROPERTIES);
         agentVersionFile.getParentFile().mkdirs();
         agentVersionFile.delete();
         Properties agentVersionProps = new Properties();
-        agentVersionProps.put("rhq-agent.latest.version", agentVersion.getVersion());
-        agentVersionProps.put("rhq-agent.latest.build-number", agentVersion.getBuild());
+        agentVersionProps.put(AGENT_VERSION, agentVersion.getVersion());
+        agentVersionProps.put(AGENT_BUILD, agentVersion.getBuild());
         FileOutputStream fos = new FileOutputStream(agentVersionFile);
         try {
             agentVersionProps.store(fos, "This file was created by " + CoreServerServiceImplTest.class.getName());
         } finally {
             fos.close();
         }
+
+        //#now build a fake agent.jar file as well for the tests.
+        File testLocation = new File(getTempDir(), this.getClass().getSimpleName());
+        File serverVersionFile = new File(testLocation, DOWNLOADS_AGENT + "/" + SERVER_AGENT_PROPERTIES);
+        File agentPropertiesFile = new File(testLocation, DOWNLOADS_AGENT + "/" + AGENT_UPDATE_PROPERTIES);
+        FileInputStream fin = new FileInputStream(serverVersionFile);
+        FileOutputStream fout = new FileOutputStream(agentPropertiesFile);
+        //build out the version for the agent jar
+        StreamUtil.copy(fin, fout, false);
+
+        //generate fake agent file.
+        File agentBinaryFile = new File(testLocation, DOWNLOADS_AGENT + "/agent.jar");
+        buildFakeAgentJar(agentVersionFile, agentBinaryFile);
 
         // this mocks out the endpoint ping - the server will think the agent that is registering is up and pingable
         prepareForTestAgents();
@@ -216,7 +248,9 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
         AgentRegistrationRequest request;
         AgentRegistrationResults results;
 
-        String zName = prefixName("Z");
+        String tuid = "" + new Random().nextInt();
+        //let's make this unique per run to support repeated individual runs.
+        String zName = prefixName("Z" + "-" + tuid);
 
         // create a new agent Z with host/port of hostZ/55550
         request = createRequest(zName, "hostZ", 55550, null);
@@ -242,21 +276,21 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
         assert agent.getPort() == 55551;
 
         // now change Z's host/port to hostZdoubleprime/55552
-        request = createRequest(zName, "hostZdoubleprime", 55552, results.getAgentToken());
+        request = createRequest(zName, "hostZdoubleprime" + tuid, 55552, results.getAgentToken());
         results = service.registerAgent(request);
         assert results != null;
         agent = LookupUtil.getAgentManager().getAgentByAgentToken(results.getAgentToken());
         assert agent.getName().equals(zName);
-        assert agent.getAddress().equals("hostZdoubleprime");
+        assert agent.getAddress().equals("hostZdoubleprime" + tuid);
         assert agent.getPort() == 55552;
 
         // now don't change Z's host/port but re-register everything the same with its token
-        request = createRequest(zName, "hostZdoubleprime", 55552, results.getAgentToken());
+        request = createRequest(zName, "hostZdoubleprime" + tuid, 55552, results.getAgentToken());
         results = service.registerAgent(request);
         assert results != null;
         agent = LookupUtil.getAgentManager().getAgentByAgentToken(results.getAgentToken());
         assert agent.getName().equals(zName);
-        assert agent.getAddress().equals("hostZdoubleprime");
+        assert agent.getAddress().equals("hostZdoubleprime" + tuid);
         assert agent.getPort() == 55552;
 
         // remember this agent so our later tests can use it
@@ -487,6 +521,150 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
             assert false : "An agent should not be able to change its name";
         } catch (AgentRegistrationException ok) {
             debugPrintThrowable(ok);
+        }
+    }
+
+    /** Exercises the agentUpdateVersionFile mechanism.
+     *  verify that one is created if none exists before.
+     */
+    @Test
+    public void testAgentUpateVersionFile() {
+        AgentManagerLocal agentManager = LookupUtil.getAgentManager();
+        String AGENT_VERSION = CoreServerServiceImplTest.AGENT_VERSION;
+        String AGENT_BUILD = CoreServerServiceImplTest.AGENT_BUILD;
+        String RHQ_AGENT_LATEST_MD5 = CoreServerServiceImplTest.AGENT_MD5;
+        String version = VERSION;
+        String build = BUILD;
+
+        try {
+            File updateFile = agentManager.getAgentUpdateVersionFile();
+            assert updateFile != null : "GetAgentUpdateVersionFile returned null.";
+            Properties props = new Properties();
+            FileInputStream inStream = new FileInputStream(updateFile);
+            try {
+                props.load(inStream);
+            } finally {
+                inStream.close();
+            }
+            //check that properties present
+            boolean locatedAgentVersion = false;
+            boolean locatedAgentBuild = false;
+            for (Object property : props.keySet()) {
+                if (property.toString().equals(AGENT_VERSION)) {
+                    locatedAgentVersion = true;
+                } else if (property.toString().equals(AGENT_BUILD)) {
+                    locatedAgentBuild = true;
+                }
+            }
+            assert locatedAgentVersion : AGENT_VERSION + " was not found.";
+            assert locatedAgentBuild : AGENT_BUILD + " was not found.";
+
+            //Now delete the file and test that it's recreated properly
+            File testLocation = new File(getTempDir(), "CoreServerServiceImplTest");
+            File serverVersionFile = new File(testLocation,
+ DOWNLOADS_AGENT + "/" + SERVER_AGENT_PROPERTIES);
+            File agentVersionFile = new File(testLocation,
+ DOWNLOADS_AGENT + "/" + AGENT_UPDATE_PROPERTIES);
+            FileInputStream fin = new FileInputStream(serverVersionFile);
+            FileOutputStream fout = new FileOutputStream(agentVersionFile);
+            StreamUtil.copy(fin, fout, false);
+            serverVersionFile.delete();
+            assert !serverVersionFile.exists() : "The default test file location still exists. Unable to proceed.";
+            assert agentVersionFile.exists() : "The agent properties file was not created. Unable to proceed.";
+
+            //update the mocked components necessary for regeneration
+            DummyCoreServerTweaked mbean = new DummyCoreServerTweaked(version, build);
+            prepareCustomServerService(mbean, CoreServerMBean.OBJECT_NAME);
+
+            //generate fake agent file.
+            File agentBinaryFile = new File(testLocation, DOWNLOADS_AGENT + "/agent.jar");
+            assert agentBinaryFile.exists() : "A fake agent binary file should already exist.";
+            assert agentBinaryFile.delete() : "Unable to delete default binary file.";
+            buildFakeAgentJar(agentVersionFile, agentBinaryFile);
+            assert agentBinaryFile.exists() : "Failed to build fake agent file:" + agentBinaryFile.getCanonicalPath();
+
+            //trigger the file regeneration
+            updateFile = agentManager.getAgentUpdateVersionFile();
+
+            //check values
+            props = new Properties();
+            inStream = new FileInputStream(updateFile);
+            try {
+                props.load(inStream);
+            } finally {
+                inStream.close();
+            }
+
+            locatedAgentVersion = false;
+            locatedAgentBuild = false;
+            for (Object property : props.keySet()) {
+                if (property.toString().equals(AGENT_VERSION)) {
+                    locatedAgentVersion = true;
+                } else if (property.toString().equals(AGENT_BUILD)) {
+                    locatedAgentBuild = true;
+                }
+            }
+            //Verify regenerated bits. It's more than we deliver with a release
+            assert locatedAgentVersion : AGENT_VERSION + " was not found.";
+            assert props.getProperty(AGENT_VERSION).equals(version) : "Version field did not match. Expected '"
+                + version + "' but got '" + props.getProperty(AGENT_VERSION) + "'.";
+            assert locatedAgentBuild : AGENT_BUILD + " was not found.";
+            assert props.getProperty(AGENT_BUILD).equals(build) : "Version field did not match. Expected '" + version
+                + "' but got '" + props.getProperty(AGENT_BUILD) + "'.";
+            assert props.getProperty(RHQ_AGENT_LATEST_MD5) != null : "MD5 value not located.";
+            assert props.getProperty(RHQ_AGENT_LATEST_MD5).trim().length() > 0 : "No checksum value was located.";
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void buildFakeAgentJar(File binaryContents, File agentBinaryFile) throws FileNotFoundException, IOException {
+        Manifest manifest = new Manifest();
+        manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "54321");
+        JarOutputStream target = new JarOutputStream(new FileOutputStream(agentBinaryFile), manifest);
+
+        //include the file passed in as contents of the jar.
+        BufferedInputStream in = null;
+        try {
+            JarEntry entry = new JarEntry(binaryContents.getName());
+
+            entry.setTime(binaryContents.lastModified());
+            target.putNextEntry(entry);
+            in = new BufferedInputStream(new FileInputStream(binaryContents));
+
+            byte[] buffer = new byte[1024];
+            while (true) {
+                int count = in.read(buffer);
+                if (count == -1)
+                    break;
+                target.write(buffer, 0, count);
+            }
+            target.closeEntry();
+        } finally {
+            if (in != null)
+                in.close();
+        }
+        target.close();
+    }
+
+    private class DummyCoreServerTweaked extends DummyCoreServer {
+        private String version;
+        private String build;
+
+        @Override
+        public String getVersion() {
+            return this.version;
+        }
+
+        @Override
+        public String getBuildNumber() {
+            return this.build;
+        }
+
+        public DummyCoreServerTweaked(String version, String build) {
+            this.version = version;
+            this.build = build;
         }
     }
 

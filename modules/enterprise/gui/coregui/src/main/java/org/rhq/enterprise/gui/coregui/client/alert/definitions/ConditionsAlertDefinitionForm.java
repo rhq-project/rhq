@@ -86,10 +86,14 @@ public class ConditionsAlertDefinitionForm extends EnhancedVLayout implements Ed
     public AlertDefinition getAlertDefinition() {
         return alertDefinition;
     }
-
+    
+    public Map<Integer, AlertCondition> getModifiedConditions() {
+        return conditionsEditor.getModifiedConditions();
+    }
+    
     @Override
     public boolean isResetMatching() {
-        return updated || conditionsEditor.isUpdated();
+        return updated || conditionsEditor.isUpdated() || conditionsEditor.isConditionInternallyUpdated();
     }
 
     @Override

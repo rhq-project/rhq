@@ -28,6 +28,7 @@ import com.jayway.restassured.response.Response;
 import org.junit.Before;
 import org.junit.Test;
 
+import org.rhq.modules.integrationTests.restApi.d.Link;
 import org.rhq.modules.integrationTests.restApi.d.Operation;
 
 import static com.jayway.restassured.RestAssured.expect;
@@ -186,17 +187,17 @@ public class OperationsTest extends AbstractBase {
             .body(draft)
         .expect()
             .statusCode(200)
-            .log().everything()
+            .log().ifError()
         .when()
             .put("/operation/{id}")
         .as(Operation.class);
 
         System.out.println(scheduled.getId());
         String history = null;
-        List<Map<String,Object>> links = scheduled.getLinks();
-        for (Map<String,Object> link : links) {
-            if (link.get("rel").equals("history"))
-                history = (String) link.get("href");
+        List<Link> links = scheduled.getLinks();
+        for (Link link : links) {
+            if (link.getRel().equals("history"))
+                history = (String) link.getHref();
         }
         assert history != null;
 
@@ -208,7 +209,7 @@ public class OperationsTest extends AbstractBase {
                 .pathParam("hid",historyId)
             .expect()
                 .statusCode(200)
-                .log().everything()
+                .log().ifError()
             .when()
                 .get("/operation/history/{hid}");
 
@@ -258,8 +259,6 @@ public class OperationsTest extends AbstractBase {
                 count ++;
                 assert count < 10 :"Waited for 20sec -- something is wrong";
             }
-
-
 
             // Delete the history item
             given()

@@ -37,7 +37,7 @@ import org.jboss.resteasy.spi.touri.URITemplate;
  * @author Heiko W. Rupp
  */
 @ApiClass(value = "A single metrics schedule",
-    description = "A scheudle represents the collection interval for a metric and if the collection is enabled")
+    description = "A schedule represents the collection interval for a metric and if the collection is enabled")
 @XmlRootElement
 @URITemplate("/metric/schedule/{id}")
 public class MetricSchedule {
@@ -49,6 +49,7 @@ public class MetricSchedule {
     String displayName;
     String unit;
     String type;
+    int definitionId;
     transient long mtime;
     List<Link> links = new ArrayList<Link>();
 
@@ -131,9 +132,13 @@ public class MetricSchedule {
         this.type = type;
     }
 
-//    public String getEnabled() {
-//        return String.valueOf(enabled);
-//    }
+    public int getDefinitionId() {
+        return definitionId;
+    }
+
+    public void setDefinitionId(int definitionId) {
+        this.definitionId = definitionId;
+    }
 
     @ApiProperty("Last modification timestamp of the schedule")
     @XmlTransient

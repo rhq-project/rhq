@@ -113,7 +113,8 @@ public class AffinityGroupAgentsSelector extends AbstractSelector<Agent, AgentCr
     @Override
     protected RPCDataSource<Agent, AgentCriteria> getDataSource() {
         if (datasource == null) {
-            datasource = new AgentDatasource(affinityGroupId, false);
+            // fetch all available agents by default
+            datasource = new AgentDatasource(null, false);
         }
         return datasource;
     }

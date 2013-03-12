@@ -21,6 +21,7 @@ package org.rhq.modules.integrationTests.restApi.d;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -42,6 +43,7 @@ public class AlertDefinition {
     String dampeningCategory = "NONE";
     String dampeningCount;
     String dampeningPeriod;
+    List<Link> links;
 
 
     public AlertDefinition() {
@@ -133,5 +135,13 @@ public class AlertDefinition {
 
     public void setDampeningPeriod(String dampeningPeriod) {
         this.dampeningPeriod = dampeningPeriod;
+    }
+
+    public List<Link> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<Link> links) {
+        this.links = links;
     }
 }

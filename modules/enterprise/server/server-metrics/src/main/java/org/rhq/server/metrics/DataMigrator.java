@@ -63,14 +63,16 @@ public class DataMigrator {
         SELECT_6H_DATA("SELECT  schedule_id, time_stamp, value, minvalue, maxvalue FROM RHQ_MEASUREMENT_DATA_NUM_6H"),
         SELECT_1D_DATA("SELECT  schedule_id, time_stamp, value, minvalue, maxvalue FROM RHQ_MEASUREMENT_DATA_NUM_1D"),
 
-        DELETE_1H_ALL_DATA("DELETE FROM RHQ_MEASUREMENT_DATA_NUM_1H"),
-        DELETE_6H_ALL_DATA("DELETE FROM RHQ_MEASUREMENT_DATA_NUM_6H"),
-        DELETE_1D_ALL_DATA("DELETE FROM RHQ_MEASUREMENT_DATA_NUM_1D"),
+        DELETE_1H_DATA("DELETE FROM RHQ_MEASUREMENT_DATA_NUM_1H"),
+        DELETE_6H_DATA("DELETE FROM RHQ_MEASUREMENT_DATA_NUM_6H"),
+        DELETE_1D_DATA("DELETE FROM RHQ_MEASUREMENT_DATA_NUM_1D"),
 
-        DELETE_1H_ENTRY("DELETE FROM RHQ_MEASUREMENT_DATA_NUM_1H WHERE schedule_id = ?"),
-        DELETE_6H_ENTRY("DELETE FROM RHQ_MEASUREMENT_DATA_NUM_6H WHERE schedule_id = ?"),
-        DELETE_1D_ENTRY("DELETE FROM RHQ_MEASUREMENT_DATA_NUM_1D WHERE schedule_id = ?"),
 
+        COUNT_1H_DATA("SELECT COUNT(*) FROM RHQ_MEASUREMENT_DATA_NUM_1H"),
+        COUNT_6H_DATA("SELECT COUNT(*) FROM RHQ_MEASUREMENT_DATA_NUM_6H"),
+        COUNT_1D_DATA("SELECT COUNT(*) FROM RHQ_MEASUREMENT_DATA_NUM_1D"),
+
+        COUNT_RAW("SELECT COUNT(*) FROM %s"),
         SELECT_RAW_DATA("SELECT schedule_id, time_stamp, value FROM %s"),
         DELETE_RAW_ALL_DATA("DELETE FROM %s"),
         DELETE_RAW_ENTRY("DELETE FROM %s WHERE schedule_id = ?");
@@ -114,11 +116,13 @@ public class DataMigrator {
     private boolean run6HAggregateDataMigration;
     private boolean run1DAggregateDataMigration;
 
+    private long estimation;
+
     public DataMigrator(EntityManager entityManager, Session session) {
         this.entityManager = entityManager;
         this.session = session;
 
-        this.deleteDataImmediatelyAfterMigration = true;
+        this.deleteDataImmediatelyAfterMigration = false;
         this.deleteAllDataAtEndOfMigration = false;
         this.runRawDataMigration = true;
         this.run1HAggregateDataMigration = true;
@@ -168,25 +172,50 @@ public class DataMigrator {
         this.telemetry = false;
     }
 
-    public void migrateData() throws Exception {
+    public void estimate() throws Exception {
+        this.estimation = 0;
         if (runRawDataMigration) {
-            retryOnFailure(new RawDataMigrator());
+            retryOnFailure(new RawDataMigrator(), true);
         }
 
         if (run1HAggregateDataMigration) {
-            retryOnFailure(new AggregateDataMigrator(MetricsTable.ONE_HOUR));
+            retryOnFailure(new AggregateDataMigrator(MetricsTable.ONE_HOUR), true);
         }
 
         if (run6HAggregateDataMigration) {
-            retryOnFailure(new AggregateDataMigrator(MetricsTable.SIX_HOUR));
+            retryOnFailure(new AggregateDataMigrator(MetricsTable.SIX_HOUR), true);
         }
 
         if (run1DAggregateDataMigration) {
-            retryOnFailure(new AggregateDataMigrator(MetricsTable.TWENTY_FOUR_HOUR));
+            retryOnFailure(new AggregateDataMigrator(MetricsTable.TWENTY_FOUR_HOUR), true);
         }
 
         if (deleteAllDataAtEndOfMigration) {
-            retryOnFailure(new DeleteAllData());
+            retryOnFailure(new DeleteAllData(), true);
+        }
+
+        log.info("Total estimated time for migration:" + estimation);
+    }
+
+    public void migrateData() throws Exception {
+        if (runRawDataMigration) {
+            retryOnFailure(new RawDataMigrator(), false);
+        }
+
+        if (run1HAggregateDataMigration) {
+            retryOnFailure(new AggregateDataMigrator(MetricsTable.ONE_HOUR), false);
+        }
+
+        if (run6HAggregateDataMigration) {
+            retryOnFailure(new AggregateDataMigrator(MetricsTable.SIX_HOUR), false);
+        }
+
+        if (run1DAggregateDataMigration) {
+            retryOnFailure(new AggregateDataMigrator(MetricsTable.TWENTY_FOUR_HOUR), false);
+        }
+
+        if (deleteAllDataAtEndOfMigration) {
+            retryOnFailure(new DeleteAllData(), false);
         }
     }
 
@@ -197,7 +226,7 @@ public class DataMigrator {
      * @param migrator
      * @throws Exception
      */
-    private Thread retryOnFailure(final CallableMigrationWorker migrator) throws Exception {
+    private Thread retryOnFailure(final CallableMigrationWorker migrator, final boolean estimate) throws Exception {
 
         RunnableWithException runnable = new RunnableWithException() {
             private Exception exception;
@@ -211,7 +240,11 @@ public class DataMigrator {
 
                 while (numberOfFailures < MAX_NUMBER_OF_FAILURES) {
                     try {
-                        migrator.work();
+                        if (estimate) {
+                            estimation += migrator.estimate();
+                        } else {
+                            migrator.migrate();
+                        }
                         return;
                     } catch (Exception e) {
                         log.error("Migrator " + migrator.getClass() + " failed. Retrying!", e);
@@ -264,7 +297,9 @@ public class DataMigrator {
     }
 
     private interface CallableMigrationWorker {
-        void work() throws Exception;
+        long estimate() throws Exception;
+
+        void migrate() throws Exception;
     }
 
     private interface RunnableWithException extends Runnable {
@@ -275,6 +310,7 @@ public class DataMigrator {
 
         private final String selectQuery;
         private final String deleteQuery;
+        private final String countQuery;
         private final MetricsTable metricsTable;
 
         /**
@@ -286,58 +322,64 @@ public class DataMigrator {
 
             if (MetricsTable.ONE_HOUR.equals(this.metricsTable)) {
                 this.selectQuery = MigrationQuery.SELECT_1H_DATA.toString();
-                this.deleteQuery = MigrationQuery.DELETE_1H_ENTRY.toString();
+                this.deleteQuery = MigrationQuery.DELETE_1H_DATA.toString();
+                this.countQuery = MigrationQuery.COUNT_1H_DATA.toString();
             } else if (MetricsTable.SIX_HOUR.equals(this.metricsTable)) {
                 this.selectQuery = MigrationQuery.SELECT_6H_DATA.toString();
-                this.deleteQuery = MigrationQuery.DELETE_6H_ENTRY.toString();
+                this.deleteQuery = MigrationQuery.DELETE_6H_DATA.toString();
+                this.countQuery = MigrationQuery.COUNT_6H_DATA.toString();
             } else if (MetricsTable.TWENTY_FOUR_HOUR.equals(this.metricsTable)) {
                 this.selectQuery = MigrationQuery.SELECT_1D_DATA.toString();
-                this.deleteQuery = MigrationQuery.DELETE_1D_ENTRY.toString();
+                this.deleteQuery = MigrationQuery.DELETE_1D_DATA.toString();
+                this.countQuery = MigrationQuery.COUNT_1D_DATA.toString();
             } else {
                 throw new Exception("MetricsTable " + metricsTable.toString() + " not supported by this migrator.");
             }
         }
 
-        public void work() throws Exception {
+        @Override
+        public long estimate() throws Exception {
+            Query nativeQuery = entityManager.createNativeQuery(this.countQuery);
+            long count = Long.parseLong(nativeQuery.getSingleResult().toString());
+            long estimateTimeToMigrate = this.performMigration(5);
+
+            long estimation = (count / MAX_RECORDS_TO_LOAD_FROM_SQL / 5L) * estimateTimeToMigrate;
+            return estimation;
+        }
+
+        public void migrate() throws Exception {
+            performMigration(-1);
             if (deleteDataImmediatelyAfterMigration) {
-                performedBatchedMigration();
-            } else {
-                performFullMigration();
+                deleteTableData();
             }
         }
 
-        @SuppressWarnings("unchecked")
-        private void performedBatchedMigration() throws Exception {
-            List<Object[]> existingData;
-
-            while (true) {
-                Query nativeQuery = entityManager.createNativeQuery(this.selectQuery);
-                nativeQuery.setMaxResults(MAX_RECORDS_TO_LOAD_FROM_SQL);
-                existingData = nativeQuery.getResultList();
-
-                if (existingData.size() == 0) {
-                    break;
-                }
-
+        private void deleteTableData() throws Exception {
+            int failureCount = 0;
+            while (failureCount < MAX_NUMBER_OF_FAILURES) {
                 try {
-                    insertDataToCassandra(existingData);
-                } catch (Exception e) {
-                    log.error("Failed to insert " + metricsTable.toString()
-                        + " data. Attempting to insert the current batch of data one more time");
-                    insertDataToCassandra(existingData);
-                }
-
-                nativeQuery = entityManager.createNativeQuery(this.deleteQuery);
-                for (Object[] entity : existingData) {
-                    nativeQuery.setParameter(1, entity[0].toString());
+                    entityManager.getTransaction().begin();
+                    Query nativeQuery = entityManager.createNativeQuery(this.deleteQuery);
                     nativeQuery.executeUpdate();
+                    entityManager.getTransaction().commit();
+                    log.info("- " + metricsTable.toString() + " - Cleaned -");
+                } catch (Exception e) {
+                    log.error("Failed to delete " + metricsTable.toString()
+                        + " data. Attempting to delete data one more time...");
+
+                    failureCount++;
+                    if (failureCount == MAX_NUMBER_OF_FAILURES) {
+                        throw e;
+                    }
                 }
-                entityManager.flush();
             }
         }
 
         @SuppressWarnings("unchecked")
-        private void performFullMigration() throws Exception {
+        private long performMigration(int numberOfBatchesToMigrate) throws Exception {
+            long migrationStartTime = System.currentTimeMillis();
+            long numberOfBatchesMigrated = 0;
+
             List<Object[]> existingData;
             int failureCount;
             Query nativeQuery;
@@ -373,8 +415,15 @@ public class DataMigrator {
                     }
                 }
 
+                numberOfBatchesMigrated++;
+                if (numberOfBatchesToMigrate > 0 && numberOfBatchesMigrated >= numberOfBatchesToMigrate) {
+                    break;
+                }
+
                 log.info("- " + metricsTable + " - " + lastMigratedRecord + " -");
             }
+
+            return System.currentTimeMillis() - migrationStartTime;
         }
 
         private void insertDataToCassandra(List<Object[]> existingData)
@@ -443,61 +492,28 @@ public class DataMigrator {
 
         Queue<String> tablesNotProcessed = new LinkedList<String>(Arrays.asList(getRawDataTables()));
 
-        public void work() throws Exception {
-            if (deleteDataImmediatelyAfterMigration) {
-                performBatchedMigration();
-            } else {
-                performFullMigration();
+        public long estimate() throws Exception {
+            long count = 0;
+            for (String table : getRawDataTables()) {
+                String countQuery = String.format(MigrationQuery.COUNT_RAW.toString(), table);
+                Query nativeQuery = entityManager.createNativeQuery(countQuery);
+                count += Long.parseLong(nativeQuery.getSingleResult().toString());
             }
+
+            long estimateTimeToMigrate = this.performMigration(5);
+            long estimation = (count / MAX_RECORDS_TO_LOAD_FROM_SQL / 5L) * estimateTimeToMigrate;
+            return estimation;
+        }
+
+        public void migrate() throws Exception {
+            performMigration(-1);
         }
 
         @SuppressWarnings("unchecked")
-        private void performBatchedMigration() throws Exception {
-            List<Object[]> existingData = null;
+        private long performMigration(int numberOfBatchesToMigrate) throws Exception {
+            long migrationStartTime = System.currentTimeMillis();
+            long numberOfBatchesMigrated = 0;
 
-            while (!tablesNotProcessed.isEmpty()) {
-                String table = tablesNotProcessed.peek();
-
-                String selectQuery = String.format(MigrationQuery.SELECT_RAW_DATA.toString(), table);
-                String deleteQuery = String.format(MigrationQuery.DELETE_RAW_ENTRY.toString(), table);
-
-                Query nativeQuery;
-                while (true) {
-                    nativeQuery = entityManager.createNativeQuery(selectQuery);
-                    nativeQuery.setMaxResults(MAX_RECORDS_TO_LOAD_FROM_SQL);
-                    existingData = nativeQuery.getResultList();
-
-                    if (existingData.size() == 0) {
-                        break;
-                    }
-
-                    try {
-                        insertDataToCassandra(existingData);
-                    } catch (Exception e) {
-                        log.error("Failed to insert " + MetricsTable.RAW.toString()
-                            + " data. Attempting to insert the current batch of data one more time");
-                        insertDataToCassandra(existingData);
-                    }
-
-                    log.info("- " + table + " - " + existingData.size() + " -");
-                    entityManager.getTransaction().begin();
-                    nativeQuery = entityManager.createNativeQuery(deleteQuery);
-                    log.info("transaction started- " + table + " - " + existingData.size() + " -");
-                    for (Object[] rawDataPoint : existingData) {
-                        nativeQuery.setParameter(1, Integer.parseInt(rawDataPoint[0].toString()));
-                        nativeQuery.executeUpdate();
-                    }
-                    entityManager.getTransaction().commit();
-                    log.info("transaction committed- " + table + " - " + existingData.size() + " -");
-                    log.info("- " + table + " - " + existingData.size() + " -");
-                }
-
-                tablesNotProcessed.poll();
-            }
-        }
-
-        @SuppressWarnings("unchecked")
-        private void performFullMigration() throws Exception {
             List<Object[]> existingData;
             int failureCount;
 
@@ -539,10 +555,47 @@ public class DataMigrator {
                     }
 
                     log.info("- " + table + " - " + lastMigratedRecord + " -");
+
+                    numberOfBatchesMigrated++;
+                    if (numberOfBatchesToMigrate > 0 && numberOfBatchesMigrated >= numberOfBatchesToMigrate) {
+                        break;
+                    }
                 }
 
-                log.info("Done migrating raw table" + table + "---------------------");
+                if (numberOfBatchesToMigrate <= 0) {
+                    log.info("Done migrating raw table" + table + "---------------------");
+
+                    if (deleteDataImmediatelyAfterMigration) {
+                        deleteTableData(table);
+                    }
+                } else if (numberOfBatchesMigrated >= numberOfBatchesToMigrate) {
+                    break;
+                }
+
                 tablesNotProcessed.poll();
+            }
+
+            return System.currentTimeMillis() - migrationStartTime;
+        }
+
+        private void deleteTableData(String table) throws Exception {
+            String deleteQuery = String.format(MigrationQuery.DELETE_RAW_ENTRY.toString(), table);
+            int failureCount = 0;
+            while (failureCount < MAX_NUMBER_OF_FAILURES) {
+                try {
+                    entityManager.getTransaction().begin();
+                    Query nativeQuery = entityManager.createNativeQuery(deleteQuery);
+                    nativeQuery.executeUpdate();
+                    entityManager.getTransaction().commit();
+                    log.info("- " + table + " - Cleaned -");
+                } catch (Exception e) {
+                    log.error("Failed to delete " + table + " data. Attempting to delete data one more time...");
+
+                    failureCount++;
+                    if (failureCount == MAX_NUMBER_OF_FAILURES) {
+                        throw e;
+                    }
+                }
             }
         }
 
@@ -593,12 +646,12 @@ public class DataMigrator {
 
     private class DeleteAllData implements CallableMigrationWorker {
 
-        public void work() {
+        public void migrate() {
             Query nativeQuery;
 
             if (run1HAggregateDataMigration) {
                 entityManager.getTransaction().begin();
-                nativeQuery = entityManager.createNativeQuery(MigrationQuery.DELETE_1H_ALL_DATA.toString());
+                nativeQuery = entityManager.createNativeQuery(MigrationQuery.DELETE_1H_DATA.toString());
                 nativeQuery.executeUpdate();
                 entityManager.getTransaction().commit();
                 log.info("- RHQ_MEASUREMENT_DATA_NUM_1H - Cleaned -");
@@ -606,7 +659,7 @@ public class DataMigrator {
 
             if (run6HAggregateDataMigration) {
                 entityManager.getTransaction().begin();
-                nativeQuery = entityManager.createNativeQuery(MigrationQuery.DELETE_6H_ALL_DATA.toString());
+                nativeQuery = entityManager.createNativeQuery(MigrationQuery.DELETE_6H_DATA.toString());
                 nativeQuery.executeUpdate();
                 entityManager.getTransaction().commit();
                 log.info("- RHQ_MEASUREMENT_DATA_NUM_6H - Cleaned -");
@@ -614,7 +667,7 @@ public class DataMigrator {
 
             if (run1DAggregateDataMigration) {
                 entityManager.getTransaction().begin();
-                nativeQuery = entityManager.createNativeQuery(MigrationQuery.DELETE_1D_ALL_DATA.toString());
+                nativeQuery = entityManager.createNativeQuery(MigrationQuery.DELETE_1D_DATA.toString());
                 nativeQuery.executeUpdate();
                 entityManager.getTransaction().commit();
                 log.info("- RHQ_MEASUREMENT_DATA_NUM_1D - Cleaned -");
@@ -630,6 +683,11 @@ public class DataMigrator {
                     log.info("- " + table + " - Cleaned -");
                 }
             }
+        }
+
+        @Override
+        public long estimate() throws Exception {
+            return 300000; // return return 5 minutes for now without any database side checks.
         }
     }
 }

@@ -33,6 +33,7 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
@@ -104,6 +105,16 @@ public class DataMigratorRunner {
     private boolean disable1D;
     private Option disable1DOption = OptionBuilder.withLongOpt("disable-1d-migration").create();
 
+    private boolean preserveData;
+    private Option preserveDataOption = OptionBuilder.withLongOpt("preserve-data").create();
+    private Option deleteDataOption = OptionBuilder.withLongOpt("delete-data").create();
+
+    private boolean estimateOnly;
+    private Option estimateOnlyOption = OptionBuilder.withLongOpt("estimate-only").create();
+
+    //Help
+    private Option helpOption = OptionBuilder.withLongOpt("help").create("h");
+
     /**
      * @param args
      * @throws ParseException
@@ -113,6 +124,8 @@ public class DataMigratorRunner {
             DataMigratorRunner runner = new DataMigratorRunner();
             runner.configure(args);
             runner.run();
+        } catch (HelpRequestedException h) {
+            //do nothing
         } catch (Exception e) {
             System.out.println(e);
             e.printStackTrace();
@@ -138,9 +151,27 @@ public class DataMigratorRunner {
         options.addOption(disable1HOption);
         options.addOption(disable6HOption);
         options.addOption(disable1DOption);
+        options.addOption(preserveDataOption);
+        options.addOption(deleteDataOption);
+        options.addOption(estimateOnlyOption);
 
-        CommandLineParser parser = new PosixParser();
-        CommandLine commandLine = parser.parse(options, args);
+        options.addOption(helpOption);
+
+        CommandLine commandLine;
+        try {
+            CommandLineParser parser = new PosixParser();
+            commandLine = parser.parse(options, args);
+        } catch (Exception e) {
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.printHelp("DataMigrationRunner", options);
+            throw new Exception("Error parsing command line arguments");
+        }
+
+        if (commandLine.hasOption(helpOption.getLongOpt()) || commandLine.hasOption(helpOption.getOpt())) {
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.printHelp("DataMigrationRunner", options);
+            throw new HelpRequestedException();
+        }
 
         parseCassandraOptionsWithDefault(commandLine);
         parseSQLOptionsWithDefault(commandLine);
@@ -158,13 +189,21 @@ public class DataMigratorRunner {
 
         DataMigrator migrator = new DataMigrator(entityManager, session);
 
-        migrator.preserveData();
+        if (preserveData) {
+            migrator.preserveData();
+        } else {
+            migrator.deleteAllDataAtEndOfMigration();
+        }
+
         migrator.runRawDataMigration(!disableRaw);
         migrator.run1HAggregateDataMigration(!disable1H);
         migrator.run6HAggregateDataMigration(!disable6H);
         migrator.run1DAggregateDataMigration(!disable1D);
 
-        migrator.migrateData();
+        migrator.estimate();
+        if (!estimateOnly) {
+            migrator.migrateData();
+        }
     }
 
     private Session createCassandraSession() throws Exception {
@@ -285,6 +324,26 @@ public class DataMigratorRunner {
             disable1D = true;
         } else {
             disable1D = false;
+        }
+
+        if (commandLine.hasOption(preserveDataOption.getLongOpt())) {
+            preserveData = true;
+        } else if (commandLine.hasOption(deleteDataOption.getLongOpt())) {
+            preserveData = false;
+        } else {
+            preserveData = true;
+        }
+
+        if (commandLine.hasOption(estimateOnlyOption.getLongOpt())) {
+            estimateOnly = true;
+        } else {
+            estimateOnly = false;
+        }
+    }
+
+    private class HelpRequestedException extends Exception {
+        public HelpRequestedException() {
+            super("Help Requested");
         }
     }
 }

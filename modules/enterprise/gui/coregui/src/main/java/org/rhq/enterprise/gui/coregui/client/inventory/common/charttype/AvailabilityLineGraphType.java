@@ -32,7 +32,7 @@ import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 
 /**
  * Contains the javascript chart definition for an implementation of the d3 availability chart. This implementation is
- * just a line that changes color based on availability type: up=green, down=red, unknown=grey.
+ * just a line that changes color based on availability type: up=green, down=red, orange=disabled, yellow=warn, unknown=grey.
  *
  * @author Mike Thompson
  */
@@ -144,23 +144,29 @@ public class AvailabilityLineGraphType {
             var margin = {top: 5, right: 5, bottom: 5, left: 40},
                     width = 750 - margin.left - margin.right,
                     height = 20 - margin.top - margin.bottom,
+                    xAxisMin = $wnd.d3.min(availChartContext.data, function(d){
+                        return +d.x;
+                    }),
+                    xAxisMax = $wnd.d3.max(availChartContext.data,function(d){
+                                return +d.x;
+                            }),
 
                     timeScale = $wnd.d3.time.scale()
                             .range([0, width])
-                            .domain($wnd.d3.extent(availChartContext.data, function (d) {
-                                return d.x;
-                            })),
+                            .domain($wnd.d3.extent(availChartContext.data, function(d){
+                              return +d.x;
+                            }));
 
-                    yScale = $wnd.d3.scale.linear()
+                    var yScale = $wnd.d3.scale.linear()
                             .clamp(true)
                             .rangeRound([height, 0])
-                            .domain([0, 1]),
+                            .domain([0, 1]);
 
-                    svg = $wnd.d3.select(availChartContext.chartSelection).append("g")
+
+                    var svg = $wnd.d3.select(availChartContext.chartSelection).append("g")
                             .attr("width", width + margin.left + margin.right)
                             .attr("height", height + margin.top + margin.bottom)
                             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
 
             // The gray bars at the bottom leading up
             svg.selectAll("rect.availBar")
@@ -250,7 +256,9 @@ public class AvailabilityLineGraphType {
 
         }
 
-        draw(availChartContext);
+        if(availChartContext.data.length > 0){
+            draw(availChartContext);
+        }
 
         console.timeEnd("availabilityChart");
         console.groupEnd("AvailabilityChart");

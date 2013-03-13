@@ -19,11 +19,23 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
 
 /**
+ * Interface for AvailabilityGraphs. Implementations of this interface
+ * always need to define the capability of creating a graph marker
+ * - some kind of div with an id that d3 can bind to and able to
+ * drawJsniChart to actually draw(render) the d3 graph.
+ *
  * @author Mike Thompson
  */
 public interface AvailabilityGraph {
 
-    void drawJsniChart();
+    /**
+     * Step 1 create the graph marker to allow d3 to bind.
+     */
+    void createGraphMarker();
 
+    /**
+     * Step 2 bind to the above div#id and render the chart.
+     */
+    void drawJsniChart();
 
 }

@@ -52,7 +52,7 @@ import org.rhq.core.domain.resource.ResourceType;
 @NamedQueries( { @NamedQuery(name = BundleType.QUERY_FIND_ALL, query = "SELECT bt FROM BundleType bt"), //
     @NamedQuery(name = BundleType.QUERY_FIND_BY_NAME, query = "SELECT bt FROM BundleType bt WHERE bt.name = :name") //
 })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_BUNDLE_TYPE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_BUNDLE_TYPE_ID_SEQ", sequenceName = "RHQ_BUNDLE_TYPE_ID_SEQ")
 @Table(name = "RHQ_BUNDLE_TYPE")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class BundleType implements Serializable {
@@ -62,7 +62,7 @@ public class BundleType implements Serializable {
     public static final String QUERY_FIND_BY_NAME = "BundleType.findByName";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_BUNDLE_TYPE_ID_SEQ")
     @Id
     private int id;
 

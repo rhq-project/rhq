@@ -34,11 +34,11 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
 
 /**
  * A RepoRelationship represents relationship with a {@link Repo} 
@@ -52,7 +52,7 @@ import javax.persistence.NamedQuery;
 @NamedQueries({
     @NamedQuery(name = RepoRelationship.DELETE_BY_RELATED_REPO_ID, query = "DELETE RepoRelationship rr WHERE rr.relatedRepo.id = :relatedRepoId")
 })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_REPO_RELATION_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_REPO_RELATION_ID_SEQ", sequenceName = "RHQ_REPO_RELATION_ID_SEQ")
 @Table(name = "RHQ_REPO_RELATION")
 public class RepoRelationship implements Serializable {
     // Constants  --------------------------------------------
@@ -64,7 +64,7 @@ public class RepoRelationship implements Serializable {
     // Attributes  --------------------------------------------
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_REPO_RELATION_ID_SEQ")
     @Id
     private int id;
 

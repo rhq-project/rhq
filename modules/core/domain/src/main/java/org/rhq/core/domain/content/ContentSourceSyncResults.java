@@ -53,7 +53,7 @@ import javax.persistence.Table;
         + "   AND status = 'INPROGRESS' " + " ORDER BY cssr.startTime DESC "),
     @NamedQuery(name = ContentSourceSyncResults.QUERY_GET_ALL_BY_CONTENT_SOURCE_ID, query = "SELECT cssr "
         + "  FROM ContentSourceSyncResults cssr " + " WHERE cssr.contentSource.id = :contentSourceId ") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_CONTENT_SRC_SYNC_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_CONTENT_SRC_SYNC_ID_SEQ", sequenceName = "RHQ_CONTENT_SRC_SYNC_ID_SEQ")
 @Table(name = "RHQ_CONTENT_SRC_SYNC")
 public class ContentSourceSyncResults implements ContentSyncResults, Serializable {
     public static final String QUERY_GET_INPROGRESS_BY_CONTENT_SOURCE_ID = "ContentSourceSyncResults.getInProgressByCSId";
@@ -62,7 +62,7 @@ public class ContentSourceSyncResults implements ContentSyncResults, Serializabl
     private static final long serialVersionUID = 1L;
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_CONTENT_SRC_SYNC_ID_SEQ")
     @Id
     private int id;
 

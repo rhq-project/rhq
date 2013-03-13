@@ -72,7 +72,7 @@ import org.rhq.core.domain.resource.ResourceType;
         + "LEFT JOIN FETCH pt.deploymentConfigurationDefinition cd "
         + "LEFT JOIN FETCH cd.templates cts " + "WHERE rt.id = :typeId AND pt.isCreationData = true"),
     @NamedQuery(name = PackageType.QUERY_DYNAMIC_CONFIG_VALUES, query = "SELECT pt.resourceType.plugin || ' - ' || pt.resourceType.name || ' - ' || pt.displayName, pt.name FROM PackageType AS pt") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_PACKAGE_TYPE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_PACKAGE_TYPE_ID_SEQ", sequenceName = "RHQ_PACKAGE_TYPE_ID_SEQ")
 @Table(name = "RHQ_PACKAGE_TYPE")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class PackageType implements Serializable {
@@ -92,7 +92,7 @@ public class PackageType implements Serializable {
     // Attributes  --------------------------------------------
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_PACKAGE_TYPE_ID_SEQ")
     @Id
     private int id;
 

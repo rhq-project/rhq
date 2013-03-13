@@ -126,7 +126,7 @@ import org.jetbrains.annotations.Nullable;
     @NamedQuery(name = Configuration.QUERY_DELETE_CONFIGURATIONS_BY_CONFIGURATION_IDs, query = "" //
         + "DELETE FROM Configuration c " //
         + " WHERE c.id IN ( :configurationIds )") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_CONFIG_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_CONFIG_ID_SEQ", sequenceName = "RHQ_CONFIG_ID_SEQ")
 @Table(name = "RHQ_CONFIG")
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
@@ -144,7 +144,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
     public static final String QUERY_DELETE_RAW_CONFIGURATIONS_CONFIGURATION_IDS = "Configuration.deleteRawByConfigurationIds";
     public static final String QUERY_DELETE_CONFIGURATIONS_BY_CONFIGURATION_IDs = "Configuration.deleteByConfigurationIdS";
 
-    @GeneratedValue(generator = "SEQ", strategy = GenerationType.AUTO)
+    @GeneratedValue(generator = "RHQ_CONFIG_ID_SEQ", strategy = GenerationType.AUTO)
     @Id
     private int id;
 

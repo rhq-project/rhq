@@ -56,7 +56,7 @@ import org.jetbrains.annotations.Nullable;
     @NamedQuery(name = ResourceError.QUERY_DELETE_BY_RESOURCES, query = "DELETE From ResourceError re WHERE re.resource.id IN ( :resourceIds )"),
     @NamedQuery(name = ResourceError.QUERY_FIND_BY_RESOURCE_ID, query = "SELECT re FROM ResourceError re WHERE re.resource.id = :resourceId"),
     @NamedQuery(name = ResourceError.QUERY_FIND_BY_RESOURCE_ID_AND_ERROR_TYPE, query = "SELECT re FROM ResourceError re WHERE re.resource.id = :resourceId AND re.errorType = :errorType") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_RESOURCE_ERROR_SEQ", sequenceName = "RHQ_RESOURCE_ERROR_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_RESOURCE_ERROR_ID_SEQ", sequenceName = "RHQ_RESOURCE_ERROR_ID_SEQ")
 @Table(name = "RHQ_RESOURCE_ERROR")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class ResourceError implements Serializable {
@@ -69,7 +69,7 @@ public class ResourceError implements Serializable {
     private static final int MAX_SUMMARY_LENGTH = 1000;
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_RESOURCE_ERROR_SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_RESOURCE_ERROR_ID_SEQ")
     @Id
     private int id;
 

@@ -81,7 +81,7 @@ import org.rhq.core.domain.resource.Resource;
         + "   AND res.parentResource IS NULL " // we only want platforms
         + "   AND avail.availabilityType <> 1") // get all NOT UP
 })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_RESOURCE_AVAIL_SEQ", sequenceName = "RHQ_RESOURCE_AVAIL_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_RESOURCE_AVAIL_ID_SEQ", sequenceName = "RHQ_RESOURCE_AVAIL_ID_SEQ")
 public class ResourceAvailability implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -94,7 +94,7 @@ public class ResourceAvailability implements Serializable {
 
     @SuppressWarnings("unused")
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_RESOURCE_AVAIL_SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_RESOURCE_AVAIL_ID_SEQ")
     @Id
     private int id;
 

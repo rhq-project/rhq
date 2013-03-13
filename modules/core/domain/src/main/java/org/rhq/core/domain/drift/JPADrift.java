@@ -57,7 +57,7 @@ import javax.persistence.Table;
         + "          FROM JPADriftChangeSet dcs " //
         + "         WHERE dcs.driftDefinition.name = :driftDefinitionName AND dcs.resource.id = :resourceId)") })
 @Table(name = "RHQ_DRIFT")
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_DRIFT_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_DRIFT_ID_SEQ", sequenceName = "RHQ_DRIFT_ID_SEQ")
 public class JPADrift implements Serializable, Drift<JPADriftChangeSet, JPADriftFile> {
     private static final long serialVersionUID = 1L;
 
@@ -65,7 +65,7 @@ public class JPADrift implements Serializable, Drift<JPADriftChangeSet, JPADrift
     public static final String QUERY_DELETE_BY_DRIFTDEF_RESOURCE = "JPADrift.deleteByDriftDefResource";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_DRIFT_ID_SEQ")
     @Id
     private int id;
 

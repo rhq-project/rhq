@@ -32,11 +32,11 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
 
 /**
  * Defines a type of (@link RepoRelationship) e.g. Clone, Parent-child are types of 
@@ -49,7 +49,7 @@ import javax.persistence.NamedQuery;
     @NamedQuery(name = RepoRelationshipType.QUERY_FIND_BY_NAME, query = "SELECT r FROM RepoRelationshipType r WHERE r.name = :name")
 })
 
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_REPO_RELATION_TYPE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_REPO_RELATION_TYPE_ID_SEQ", sequenceName = "RHQ_REPO_RELATION_TYPE_ID_SEQ")
 @Table(name = "RHQ_REPO_RELATION_TYPE")
 public class RepoRelationshipType implements Serializable {
 
@@ -60,7 +60,7 @@ public class RepoRelationshipType implements Serializable {
     // Attributes  --------------------------------------------
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_REPO_RELATION_TYPE_ID_SEQ")
     @Id
     private int id;
 

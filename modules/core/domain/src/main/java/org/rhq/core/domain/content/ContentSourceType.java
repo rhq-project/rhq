@@ -63,7 +63,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
         + "       LEFT JOIN FETCH d.templates t " + " WHERE cst.name = :name"),
     @NamedQuery(name = ContentSourceType.QUERY_FIND_BY_NAME, query = "SELECT cst " + "  FROM ContentSourceType cst "
         + " WHERE cst.name = :name") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_CONTENT_SOURCE_TYPE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_CONTENT_SOURCE_TYPE_ID_SEQ", sequenceName = "RHQ_CONTENT_SOURCE_TYPE_ID_SEQ")
 @Table(name = "RHQ_CONTENT_SOURCE_TYPE")
 public class ContentSourceType implements Serializable {
 
@@ -74,7 +74,7 @@ public class ContentSourceType implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_CONTENT_SOURCE_TYPE_ID_SEQ")
     @Id
     private int id;
 

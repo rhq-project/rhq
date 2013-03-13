@@ -64,13 +64,13 @@ import org.rhq.core.domain.resource.ResourceType;
  */
 @Entity
 @Table(name = "RHQ_DRIFT_DEF_TEMPLATE")
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_DRIFT_DEF_TEMPLATE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_DRIFT_DEF_TEMPLATE_ID_SEQ", sequenceName = "RHQ_DRIFT_DEF_TEMPLATE_ID_SEQ")
 public class DriftDefinitionTemplate implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_DRIFT_DEF_TEMPLATE_ID_SEQ")
     private int id;
 
     @Column(name = "CTIME", nullable = false)

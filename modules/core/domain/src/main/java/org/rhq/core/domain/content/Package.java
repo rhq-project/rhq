@@ -62,7 +62,7 @@ import org.hibernate.annotations.NamedQuery;
     @NamedQuery(name = Package.QUERY_FIND_BY_NAME_PKG_TYPE_RESOURCE_TYPE, query = "SELECT p FROM Package AS p "
         + "WHERE p.name = :name " + "AND p.packageType.name = :packageTypeName "
         + "AND p.packageType.resourceType.id = :resourceTypeId") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_PACKAGE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_PACKAGE_ID_SEQ", sequenceName = "RHQ_PACKAGE_ID_SEQ")
 @Table(name = "RHQ_PACKAGE")
 public class Package implements Serializable {
     // Constants  --------------------------------------------
@@ -75,7 +75,7 @@ public class Package implements Serializable {
     // Attributes  --------------------------------------------
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_PACKAGE_ID_SEQ")
     @Id
     private int id;
 

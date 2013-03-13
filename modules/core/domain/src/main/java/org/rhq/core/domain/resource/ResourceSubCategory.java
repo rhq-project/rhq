@@ -53,7 +53,7 @@ import org.jetbrains.annotations.NotNull;
  * Class representing a sub category, where a sub category is meant to group similar Resource types together.
  */
 @Entity
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_RESOURCE_SUBCAT_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_RESOURCE_SUBCAT_ID_SEQ", sequenceName = "RHQ_RESOURCE_SUBCAT_ID_SEQ")
 @Table(name = "RHQ_RESOURCE_SUBCAT")
 @NamedQueries( { @NamedQuery(name = ResourceSubCategory.QUERY_FIND_BY_NAME_AND_PLUGIN, query = "SELECT rsc FROM ResourceSubCategory AS rsc WHERE rsc.name = :name AND rsc.resourceType.plugin = :plugin") })
 public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Serializable {
@@ -62,7 +62,7 @@ public class ResourceSubCategory implements Comparable<ResourceSubCategory>, Ser
     public static final String QUERY_FIND_BY_NAME_AND_PLUGIN = "ResourceSubCategory.findByNameAndPlugin";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_RESOURCE_SUBCAT_ID_SEQ")
     @Id
     private int id;
 

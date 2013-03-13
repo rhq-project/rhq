@@ -52,13 +52,13 @@ import javax.persistence.Transient;
  * the virtual host config files.
  */
 @Entity
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_RAW_CONFIG_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_RAW_CONFIG_ID_SEQ", sequenceName = "RHQ_RAW_CONFIG_ID_SEQ")
 @Table(name = "RHQ_RAW_CONFIG")
 public class RawConfiguration implements Serializable, DeepCopyable<RawConfiguration> {
 
     private static final long serialVersionUID = 1L;
 
-    @GeneratedValue(generator = "SEQ", strategy = GenerationType.AUTO)
+    @GeneratedValue(generator = "RHQ_RAW_CONFIG_ID_SEQ", strategy = GenerationType.AUTO)
     @Id
     @Column(name = "ID")
     private int id;

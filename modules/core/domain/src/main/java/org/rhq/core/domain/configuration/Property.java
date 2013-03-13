@@ -80,7 +80,7 @@ import org.jetbrains.annotations.Nullable;
 @NamedQuery(name = Property.QUERY_DELETE_BY_PROPERTY_IDS, query = "" //
     + "DELETE FROM Property p WHERE p.id IN ( :propertyIds ) ") })
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_CONFIG_PROPERTY_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_CONFIG_PROPERTY_ID_SEQ", sequenceName = "RHQ_CONFIG_PROPERTY_ID_SEQ")
 @Table(name = "RHQ_CONFIG_PROPERTY")
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
@@ -91,7 +91,7 @@ public class Property implements Serializable, DeepCopyable<Property>, Comparabl
     public static final String QUERY_DELETE_BY_PROPERTY_IDS = "Property.deleteByPropertyIds";
 
     @Column(name = "ID")
-    @GeneratedValue(generator = "SEQ", strategy = GenerationType.AUTO)
+    @GeneratedValue(generator = "RHQ_CONFIG_PROPERTY_ID_SEQ", strategy = GenerationType.AUTO)
     @Id
     private int id;
 

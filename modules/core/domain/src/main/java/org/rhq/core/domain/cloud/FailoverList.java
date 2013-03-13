@@ -60,7 +60,7 @@ import org.rhq.core.domain.resource.Agent;
     @NamedQuery(name = FailoverList.QUERY_DELETE_VIA_PARTITION_EVENT, query = "DELETE FROM FailoverList fl WHERE fl.partitionEvent = :partitionEvent"),
     @NamedQuery(name = FailoverList.QUERY_GET_VIA_AGENT, query = "SELECT fl FROM FailoverList fl WHERE fl.agent = :agent"),
     @NamedQuery(name = FailoverList.QUERY_TRUNCATE, query = "DELETE FROM FailoverList") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "id", sequenceName = "RHQ_FAILOVER_LIST_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_FAILOVER_LIST_ID_SEQ", sequenceName = "RHQ_FAILOVER_LIST_ID_SEQ")
 @Table(name = "RHQ_FAILOVER_LIST")
 public class FailoverList implements Serializable {
 
@@ -72,7 +72,7 @@ public class FailoverList implements Serializable {
     public static final String QUERY_TRUNCATE = "FailoverList.truncate";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "id")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_FAILOVER_LIST_ID_SEQ")
     @Id
     private int id;
 

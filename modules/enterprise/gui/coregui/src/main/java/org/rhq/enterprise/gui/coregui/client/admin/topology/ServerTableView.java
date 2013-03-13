@@ -55,7 +55,12 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * Shows the table of all servers.
- * 
+ *
+ * This component is used from three various contexts:
+ * 1) simple list of all available servers (url fragment - #Administration/Topology/Servers)
+ * 2) list of servers in the agent's failover list (#Administration/Topology/Agents/{agentId})
+ * 3) list of servers assigned to a affinity group (#Administration/Topology/AffinityGroups/{aGroupId})
+ *
  * @author Jirka Kremser
  */
 public class ServerTableView extends

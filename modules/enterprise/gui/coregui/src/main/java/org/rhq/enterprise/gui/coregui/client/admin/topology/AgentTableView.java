@@ -51,7 +51,12 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * Shows the table of all agents.
- * 
+ *
+ * This component is used from three various contexts:
+ * 1) simple list of all available agents (url fragment - #Administration/Topology/Agents)
+ * 2) list of agents connected to the server on server detail page (#Administration/Topology/Servers/{serverId})
+ * 3) list of agents assigned to a affinity group (#Administration/Topology/AffinityGroups/{aGroupId})
+ *
  * @author Jirka Kremser
  */
 public class AgentTableView extends TableSection<AgentDatasource> implements HasViewName {
@@ -127,8 +132,12 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
             }
         }
 
-        setupDeleteButton();
+        // list of all agents (context #1 see the class JavaDoc)
+        if (id == null) {
+            setupDeleteButton();
+        }
 
+        // list of agents assigned to affinity group (context #3)
         if (isAffinityGroupId) {
             showUpdateMembersAction();
         }

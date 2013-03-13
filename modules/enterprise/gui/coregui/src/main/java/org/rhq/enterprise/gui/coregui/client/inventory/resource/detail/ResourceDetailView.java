@@ -414,8 +414,6 @@ public class ResourceDetailView extends
         viewFactory = (!visibleToIE8) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                //d3GraphListView = D3GraphListView.createSummaryMultipleGraphs(monitoringTab.extendLocatorId("NewGraphs"), resourceComposite.getResource(), true);
-                //return d3GraphListView;
                 return createD3GraphListView();
             }
         };

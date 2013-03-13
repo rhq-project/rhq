@@ -317,8 +317,6 @@ public class ResourceGroupDetailView extends
             viewFactory = (!visible) ? null : new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    //                    return new FullHTMLPane(
-                    //                        "/rhq/group/monitor/tables-plain.xhtml?groupId=" + groupId);
                     //gwt version of group table view.
                     return new GroupMonitoringTablesView(groupComposite);
                 }

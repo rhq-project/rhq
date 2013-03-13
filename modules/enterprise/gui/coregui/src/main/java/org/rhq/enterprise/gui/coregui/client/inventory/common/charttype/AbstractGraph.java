@@ -18,12 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
 
-import java.util.List;
 
 import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
-import org.rhq.core.domain.util.PageList;
 
 /**
  * Common Graph capability used across multiple graphs.

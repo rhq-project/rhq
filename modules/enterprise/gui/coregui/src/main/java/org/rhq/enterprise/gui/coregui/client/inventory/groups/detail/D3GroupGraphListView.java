@@ -47,7 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
  * Build the Group version of the View that shows the individual graph views.
  * @author Mike Thompson
  */
-public class D3GroupGraphListView extends AbstractD3GraphListView {
+public final class D3GroupGraphListView extends AbstractD3GraphListView {
 
     private ResourceGroup resourceGroup;
 

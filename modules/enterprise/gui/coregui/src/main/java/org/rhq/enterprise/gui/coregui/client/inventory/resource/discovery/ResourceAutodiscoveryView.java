@@ -48,8 +48,10 @@ import com.smartgwt.client.widgets.tree.TreeGridField;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.resource.InventoryStatus;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
@@ -57,9 +59,9 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
@@ -111,6 +113,8 @@ public class ResourceAutodiscoveryView extends EnhancedVLayout implements Refres
         treeGrid.setAutoFitData(Autofit.HORIZONTAL);
         treeGrid.setWrapCells(true);
         treeGrid.setFixedRecordHeights(false);
+        treeGrid.setFolderIcon(ImageManager.getDiscoveryQueuePlatformIconBase());
+        treeGrid.setNodeIcon(ImageManager.getResourceIcon(ResourceCategory.SERVER));
 
         final TreeGridField name, key, type, description, status, ctime;
         name = new TreeGridField("name");

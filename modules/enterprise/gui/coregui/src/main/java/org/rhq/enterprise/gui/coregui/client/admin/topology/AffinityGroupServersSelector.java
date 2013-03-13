@@ -25,10 +25,13 @@ package org.rhq.enterprise.gui.coregui.client.admin.topology;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.ServerDatasourceField.FIELD_NAME;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Window;
@@ -45,6 +48,7 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.criteria.ServerCriteria;
+import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
@@ -118,7 +122,36 @@ public class AffinityGroupServersSelector extends AbstractSelector<Server, Serve
     @Override
     protected RPCDataSource<Server, ServerCriteria> getDataSource() {
         if (datasource == null) {
-            datasource = new ServerDatasource(null);
+            // fetch all available servers without an affinity group
+            datasource = new ServerDatasource(null) {
+                @Override
+                protected void executeFetch(final DSRequest request, final DSResponse response, ServerCriteria criteria) {
+                    criteria.fetchAffinityGroup(true);
+                    GWTServiceLookup.getTopologyService().findServersByCriteria(criteria,
+                        new AsyncCallback<PageList<Server>>() {
+                            public void onSuccess(PageList<Server> result) {
+                                Iterator<Server> it = result.iterator();
+                                while (it.hasNext()) {
+                                    Server agent = it.next();
+                                    if (agent.getAffinityGroup() != null) {
+                                        it.remove();
+                                    }
+                                }
+                                response.setData(buildRecords(result));
+                                response.setTotalRows(result.size());
+                                processResponse(request.getRequestId(), response);
+                            }
+
+                            @Override
+                            public void onFailure(Throwable t) {
+                                CoreGUI.getErrorHandler().handleError(
+                                    MSG.view_adminTopology_message_fetchAgents2Fail(), t);
+                                response.setStatus(DSResponse.STATUS_FAILURE);
+                                processResponse(request.getRequestId(), response);
+                            }
+                        });
+                }
+            };
         }
         return datasource;
     }

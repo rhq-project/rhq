@@ -25,10 +25,13 @@ package org.rhq.enterprise.gui.coregui.client.admin.topology;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_NAME;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Window;
@@ -113,8 +116,36 @@ public class AffinityGroupAgentsSelector extends AbstractSelector<Agent, AgentCr
     @Override
     protected RPCDataSource<Agent, AgentCriteria> getDataSource() {
         if (datasource == null) {
-            // fetch all available agents by default
-            datasource = new AgentDatasource(null, false);
+            // fetch all available agents without an affinity group
+            datasource = new AgentDatasource(null, false) {
+                @Override
+                protected void executeFetch(final DSRequest request, final DSResponse response, AgentCriteria criteria) {
+                    criteria.fetchAffinityGroup(true);
+                    GWTServiceLookup.getTopologyService().findAgentsByCriteria(criteria,
+                        new AsyncCallback<PageList<Agent>>() {
+                            public void onSuccess(PageList<Agent> result) {
+                                Iterator<Agent> it = result.iterator();
+                                while (it.hasNext()) {
+                                    Agent agent = it.next();
+                                    if (agent.getAffinityGroup() != null) {
+                                        it.remove();
+                                    }
+                                }
+                                response.setData(buildRecords(result));
+                                response.setTotalRows(result.size());
+                                processResponse(request.getRequestId(), response);
+                            }
+
+                            @Override
+                            public void onFailure(Throwable t) {
+                                CoreGUI.getErrorHandler().handleError(
+                                    MSG.view_adminTopology_message_fetchAgents2Fail(), t);
+                                response.setStatus(DSResponse.STATUS_FAILURE);
+                                processResponse(request.getRequestId(), response);
+                            }
+                        });
+                }
+            };
         }
         return datasource;
     }

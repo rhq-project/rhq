@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,6 +27,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.sql.Connection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -58,8 +59,10 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
@@ -127,6 +130,8 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
                 return response;
             }
         });
+
+        prepareScheduler();
     }
 
     @Override
@@ -135,6 +140,7 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
             cleanDB();
         } finally {
             unprepareForTestAgents();
+            unprepareScheduler();
         }
     }
 
@@ -150,10 +156,10 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         server.addChildResource(service1);
         server.addChildResource(service2);
 
-        platform.setUuid("" + new Random().nextInt());
-        server.setUuid("" + new Random().nextInt());
-        service1.setUuid("" + new Random().nextInt());
-        service2.setUuid("" + new Random().nextInt());
+        platform.setUuid(String.valueOf(new Random().nextInt()));
+        server.setUuid(String.valueOf(new Random().nextInt()));
+        service1.setUuid(String.valueOf(new Random().nextInt()));
+        service2.setUuid(String.valueOf(new Random().nextInt()));
 
         inventoryReport.addAddedRoot(platform);
 
@@ -166,7 +172,7 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         // First just submit the platform
         InventoryReport inventoryReport = new InventoryReport(agent);
         Resource platform = new Resource("alpha", "platform", platformType);
-        platform.setUuid("" + new Random().nextInt());
+        platform.setUuid(String.valueOf(new Random().nextInt()));
         inventoryReport.addAddedRoot(platform);
         ResourceSyncInfo syncInfo = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
         assert syncInfo != null;
@@ -182,9 +188,9 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         server.addChildResource(service1);
         server.addChildResource(service2);
 
-        server.setUuid("" + new Random().nextInt());
-        service1.setUuid("" + new Random().nextInt());
-        service2.setUuid("" + new Random().nextInt());
+        server.setUuid(String.valueOf(new Random().nextInt()));
+        service1.setUuid(String.valueOf(new Random().nextInt()));
+        service2.setUuid(String.valueOf(new Random().nextInt()));
 
         inventoryReport.addAddedRoot(server);
 
@@ -202,9 +208,9 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         Resource service2 = new Resource("delta", "service 2", serviceType2);
         server.addChildResource(service2);
 
-        platform.setUuid("" + new Random().nextInt());
-        server.setUuid("" + new Random().nextInt());
-        service2.setUuid("" + new Random().nextInt());
+        platform.setUuid(String.valueOf(new Random().nextInt()));
+        server.setUuid(String.valueOf(new Random().nextInt()));
+        service2.setUuid(String.valueOf(new Random().nextInt()));
 
         inventoryReport.addAddedRoot(platform);
 
@@ -223,6 +229,63 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
             assertEquals(String.valueOf(e.getCause()), RuntimeException.class, e.getCause().getClass());
             assertTrue(String.valueOf(e.getCause()), e.getCause().getMessage().contains("singleton"));
         }
+    }
+
+    @Test(groups = "integration.ejb3")
+    public void testIgnoreUnignoreAndImportResources() throws Exception {
+
+        // First create an inventory report for a new platform with servers
+
+        InventoryReport inventoryReport = new InventoryReport(agent);
+
+        Resource platform = new Resource("platform", "platform", platformType);
+        platform.setUuid(String.valueOf(new Random().nextInt()));
+        for (int i = 0; i < 17; i++) {
+            String serverString = "server " + String.valueOf(i);
+            Resource server = new Resource(serverString, serverString, serverType);
+            server.setUuid(String.valueOf(new Random().nextInt()));
+            platform.addChildResource(server);
+        }
+
+        inventoryReport.addAddedRoot(platform);
+
+        // Merge this inventory report
+        ResourceSyncInfo platformSyncInfo = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
+
+        // Check merge result
+        assertEquals(InventoryStatus.NEW, platformSyncInfo.getInventoryStatus());
+        assertEquals(platform.getChildResources().size(), platformSyncInfo.getChildSyncInfos().size());
+
+        // Collect the resource ids generated for the platform and the servers
+
+        int platformId = platformSyncInfo.getId();
+        List<Integer> serverIds = new LinkedList<Integer>();
+        for (ResourceSyncInfo serverSyncInfo : platformSyncInfo.getChildSyncInfos()) {
+            serverIds.add(serverSyncInfo.getId());
+        }
+        int[] arrayOfServerIds = ArrayUtils.unwrapCollection(serverIds);
+
+        // Now test ignore, unignore and import behavior
+
+        try {
+            discoveryBoss.ignoreResources(subjectManager.getOverlord(), arrayOfServerIds);
+            fail("Ignore resources should fail as platform resource has not yet been comitted");
+        } catch (EJBException e) {
+            assertEquals(String.valueOf(e.getCause()), IllegalStateException.class, e.getCause().getClass());
+            assertTrue(String.valueOf(e.getCause()), e.getCause().getMessage().contains("has not yet been committed"));
+        }
+        discoveryBoss.importResources(subjectManager.getOverlord(), new int[] { platformId });
+        discoveryBoss.ignoreResources(subjectManager.getOverlord(), arrayOfServerIds);
+        try {
+            discoveryBoss.importResources(subjectManager.getOverlord(), arrayOfServerIds);
+            fail("Import resources should fail for ignored resources");
+        } catch (EJBException e) {
+            assertEquals(String.valueOf(e.getCause()), IllegalArgumentException.class, e.getCause().getClass());
+            assertTrue(String.valueOf(e.getCause()),
+                e.getCause().getMessage().startsWith("Can only set inventory status to"));
+        }
+        discoveryBoss.unignoreResources(subjectManager.getOverlord(), arrayOfServerIds);
+        discoveryBoss.importResources(subjectManager.getOverlord(), arrayOfServerIds);
     }
 
     /**

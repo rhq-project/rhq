@@ -322,98 +322,25 @@ public class TopologyManagerBeanTest extends AbstractEJB3Test {
     
     
     @Test(groups = "integration.ejb3")
-    public void testParsingAllCriteriaQueryResults() throws Exception {
-
-        final int serverCount = 605;
-        executeInTransaction(new TransactionCallback() {
-            public void execute() throws Exception {
-                // verify that all server objects are actually parsed. 
-                final Set<String> serverNames = new HashSet<String>(serverCount);
-                final String namePrefix = "server";
-                final String addressPrefix = "address";
-                int shouldBeFoundCount = 0;
-                
-                for (int i = 0; i < serverCount; i++) {
-                    String name = namePrefix + String.format(" %03d", i + 1);
-                    Server server = new Server();
-                    server.setName(name);
-                    switch (i % 2) {
-                    case 0:
-                        server.setOperationMode(OperationMode.NORMAL);
-                        break;
-                    case 1:
-                        server.setOperationMode(OperationMode.MAINTENANCE);
-                        if (i % 20 == 9) {
-                            shouldBeFoundCount++;
-                            serverNames.add(name);
-                        }
-                        break;
-                    }
-                    server.setAddress(addressPrefix + i);
-                    server.setPort(7080 + (i % 20));
-                    server.setSecurePort(7443 + (i % 20));
-
-                    em.persist(server);
-                    em.flush();
-                }
-                em.flush();
-
-                // query the results and delete the servers
-                final int pageSize = 3;
-                final int startPage = 0;
-                ServerCriteria criteria = new ServerCriteria();
-                criteria.addFilterOperationMode(OperationMode.MAINTENANCE);
-                criteria.addFilterPort(7089);
-                criteria.addFilterSecurePort(7452);
-                criteria.addFilterName(namePrefix);
-                criteria.addFilterAddress(addressPrefix);
-                criteria.addSortName(PageOrdering.DESC); // use DESC just to make sure sorting on name is different than insert order
-                criteria.setPaging(startPage, pageSize);
-
-                // the List is used because of the access from the anonymous class
-                final List<Integer> pagesFlipped = new ArrayList<Integer>();
-                pagesFlipped.add(0);
-
-                // iterate over the results with CriteriaQuery
-                CriteriaQueryExecutor<Server, ServerCriteria> queryExecutor = new CriteriaQueryExecutor<Server, ServerCriteria>() {
-                    @Override
-                    public PageList<Server> execute(ServerCriteria criteria) {
-                        pagesFlipped.set(0, pagesFlipped.get(0) + 1);
-                        PageList<Server> list = topologyManager.findServersByCriteria(overlord, criteria);
-                        return list;
-                    }
-                };
-
-                // initiate first/(total depending on page size) request.
-                CriteriaQuery<Server, ServerCriteria> servers = new CriteriaQuery<Server, ServerCriteria>(criteria,
-                    queryExecutor);
-
-                String prevName = null;
-                // iterate over the entire result set efficiently
-                int actualCount = 0;
-                for (Server s : servers) {
-                    assert null == prevName || s.getName().compareTo(prevName) < 0 : "Results should be sorted by name DESC, something is out of order";
-                    prevName = s.getName();
-                    actualCount++;
-                    serverNames.remove(s.getName());
-                }
-
-                final int finderCallCounter = (int) Math.ceil((double) shouldBeFoundCount / pageSize) - startPage;
-                // check if the page was flipped the correct amount of times (this formula works only for this particular case)
-                assertTrue("While iterating the servers, the findServersByCriteria() should be called "
-                    + finderCallCounter + " times. It was called " + pagesFlipped.get(0) + " times.",
-                    pagesFlipped.get(0) == finderCallCounter);
-
-                // test that entire list parsed spanning multiple pages
-                assertTrue("Expected resourceNames to be empty. Still " + serverNames.size() + " name(s).",
-                    serverNames.size() == 0);
-
-                assertTrue("Expected " + shouldBeFoundCount + " to be parsed, but there were parsed " + actualCount
-                    + " servers", actualCount == shouldBeFoundCount);
-            }
-        });
+    public void testParsingAllCriteriaQueryResults1() throws Exception {
+        testParsingHelperStartingPageEqualTo(0);
     }
     
+    /**
+     * This test should pass if enabled, but doesn't :(
+     */
+    @Test(groups = "integration.ejb3", enabled = false)
+    public void testParsingAllCriteriaQueryResults2() throws Exception {
+        testParsingHelperStartingPageEqualTo(1);
+    }
+    
+    /**
+     * This test should pass if enabled, but doesn't :(
+     */
+    @Test(groups = "integration.ejb3", enabled = false)
+    public void testParsingAllCriteriaQueryResults3() throws Exception {
+        testParsingHelperStartingPageEqualTo(5);
+    }
     
     @Test(groups = "integration.ejb3")
     public void testFindNonExistentServer() throws Exception {
@@ -458,6 +385,98 @@ public class TopologyManagerBeanTest extends AbstractEJB3Test {
                 servers = topologyManager.findServersByCriteria(overlord, criteria);
                 assertNotNull("The result of topologyManager.findServersByCriteria() is null", servers);
                 assertTrue("Some servers have been found, even if they shouldn't", servers.isEmpty());
+            }
+        });
+    }
+    
+    
+    private void testParsingHelperStartingPageEqualTo(final int startPage) throws Exception {
+
+        final int serverCount = 605;
+        final int pageSize = 3;
+        executeInTransaction(new TransactionCallback() {
+            public void execute() throws Exception {
+                // verify that all server objects are actually parsed. 
+                final Set<String> serverNames = new HashSet<String>(serverCount);
+                final String namePrefix = "server";
+                final String addressPrefix = "address";
+                int shouldBeFoundCount = 0;
+                int shouldBeSkipped = pageSize * startPage;
+                
+                for (int i = 0; i < serverCount; i++) {
+                    String name = namePrefix + String.format(" %03d", i + 1);
+                    Server server = new Server();
+                    server.setName(name);
+                    switch (i % 2) {
+                    case 0:
+                        server.setOperationMode(OperationMode.NORMAL);
+                        break;
+                    case 1:
+                        server.setOperationMode(OperationMode.MAINTENANCE);
+                        if (i % 20 == 9 && shouldBeSkipped-- <= 0) {
+                            shouldBeFoundCount++;
+                            serverNames.add(name);
+                        }
+                        break;
+                    }
+                    server.setAddress(addressPrefix + i);
+                    server.setPort(7080 + (i % 20));
+                    server.setSecurePort(7443 + (i % 20));
+
+                    em.persist(server);
+                    em.flush();
+                }
+                em.flush();
+
+                // query the results and delete the servers
+                ServerCriteria criteria = new ServerCriteria();
+                criteria.addFilterOperationMode(OperationMode.MAINTENANCE);
+                criteria.addFilterPort(7089);
+                criteria.addFilterSecurePort(7452);
+                criteria.addFilterName(namePrefix);
+                criteria.addFilterAddress(addressPrefix);
+                criteria.addSortName(PageOrdering.DESC); // use DESC just to make sure sorting on name is different than insert order
+                criteria.setPaging(startPage, pageSize);
+
+                // the List is used because of the access from the anonymous class
+                final List<Integer> pagesFlipped = new ArrayList<Integer>();
+                pagesFlipped.add(0);
+
+                // iterate over the results with CriteriaQuery
+                CriteriaQueryExecutor<Server, ServerCriteria> queryExecutor = new CriteriaQueryExecutor<Server, ServerCriteria>() {
+                    @Override
+                    public PageList<Server> execute(ServerCriteria criteria) {
+                        pagesFlipped.set(0, pagesFlipped.get(0) + 1);
+                        PageList<Server> list = topologyManager.findServersByCriteria(overlord, criteria);
+                        return list;
+                    }
+                };
+
+                // initiate first/(total depending on page size) request.
+                CriteriaQuery<Server, ServerCriteria> servers = new CriteriaQuery<Server, ServerCriteria>(criteria,
+                    queryExecutor);
+
+                String prevName = null;
+                // iterate over the entire result set efficiently
+                int actualCount = 0;
+                for (Server s : servers) {
+                    assert null == prevName || s.getName().compareTo(prevName) < 0 : "Results should be sorted by name DESC, something is out of order";
+                    prevName = s.getName();
+                    actualCount++;
+                    serverNames.remove(s.getName());
+                }
+
+                final int finderCallCounter = (int) Math.ceil((double) shouldBeFoundCount / pageSize) - startPage;
+                assertTrue("While iterating the servers, the findServersByCriteria() should be called "
+                    + finderCallCounter + " times. It was called " + pagesFlipped.get(0) + " times.",
+                    pagesFlipped.get(0) == finderCallCounter);
+
+                // test that entire list parsed spanning multiple pages
+                assertTrue("Expected resourceNames to be empty. Still " + serverNames.size() + " name(s).",
+                    serverNames.size() == 0);
+
+                assertTrue("Expected " + shouldBeFoundCount + " to be parsed, but there were parsed " + actualCount
+                    + " servers", actualCount == shouldBeFoundCount);
             }
         });
     }

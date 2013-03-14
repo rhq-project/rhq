@@ -72,7 +72,7 @@ public class Simulator implements ShutdownManager {
     public void run(SimulationPlan plan) {
         List<CassandraNode> nodes = initCluster(plan);
         createSchema(nodes);
-        Session session = createSession();
+        Session session = createSession(nodes);
 
         MetricsServer metricsServer = new MetricsServer();
         metricsServer.setSession(session);
@@ -200,13 +200,13 @@ public class Simulator implements ShutdownManager {
         }
     }
 
-    private Session createSession() throws NoHostAvailableException {
+    private Session createSession(List<CassandraNode> nodes) throws NoHostAvailableException {
         try {
             SimpleAuthInfoProvider authInfoProvider = new SimpleAuthInfoProvider();
             authInfoProvider.add("username", "rhqadmin").add("password", "rhqadmin");
 
             Cluster cluster = Cluster.builder()
-                .addContactPoints("127.0.0.1", "127.0.0.2")
+                .addContactPoints(getHostNames(nodes))
                 .withAuthInfoProvider(authInfoProvider)
                 .withCompression(SNAPPY)
                 .build();
@@ -220,6 +220,14 @@ public class Simulator implements ShutdownManager {
         } catch (Exception e) {
             throw new RuntimeException("Failed to start simulator. Unable to create " + Session.class, e);
         }
+    }
+
+    private String[] getHostNames(List<CassandraNode> nodes) {
+        String[] hostnames = new String[nodes.size()];
+        for (int i = 0; i < hostnames.length; ++i) {
+            hostnames[i] = nodes.get(i).getHostName();
+        }
+        return hostnames;
     }
 
     private Set<Schedule> initSchedules(ScheduleGroup scheduleSet) {

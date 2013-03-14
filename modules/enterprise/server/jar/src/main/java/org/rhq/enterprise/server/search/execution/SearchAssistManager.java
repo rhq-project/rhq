@@ -33,10 +33,13 @@ import org.rhq.core.domain.search.SavedSearch;
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.core.domain.search.SearchSuggestion;
 import org.rhq.core.domain.search.SearchSuggestion.Kind;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.search.SavedSearchManagerLocal;
 import org.rhq.enterprise.server.search.assist.SearchAssistant;
 import org.rhq.enterprise.server.search.assist.SearchAssistantFactory;
+import org.rhq.enterprise.server.util.CriteriaQuery;
+import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -607,7 +610,16 @@ public class SearchAssistManager {
         criteria.setCaseSensitive(false);
         criteria.addSortName(PageOrdering.ASC);
 
-        List<SavedSearch> savedSearchResults = savedSearchManager.findSavedSearchesByCriteria(subject, criteria);
+        //Use CriteriaQuery to automatically chunk/page through criteria query results
+        CriteriaQueryExecutor<SavedSearch, SavedSearchCriteria> queryExecutor = new CriteriaQueryExecutor<SavedSearch, SavedSearchCriteria>() {
+            @Override
+            public PageList<SavedSearch> execute(SavedSearchCriteria criteria) {
+                return savedSearchManager.findSavedSearchesByCriteria(subject, criteria);
+            }
+        };
+
+        CriteriaQuery<SavedSearch, SavedSearchCriteria> savedSearchResults = new CriteriaQuery<SavedSearch, SavedSearchCriteria>(
+            criteria, queryExecutor);
 
         List<SearchSuggestion> results = new ArrayList<SearchSuggestion>();
         for (SavedSearch next : savedSearchResults) {
@@ -637,7 +649,16 @@ public class SearchAssistManager {
         criteria.setCaseSensitive(false);
         criteria.addSortName(PageOrdering.ASC);
 
-        List<SavedSearch> savedSearchResults = savedSearchManager.findSavedSearchesByCriteria(subject, criteria);
+        //Use CriteriaQuery to automatically chunk/page through criteria query results
+        CriteriaQueryExecutor<SavedSearch, SavedSearchCriteria> queryExecutor = new CriteriaQueryExecutor<SavedSearch, SavedSearchCriteria>() {
+            @Override
+            public PageList<SavedSearch> execute(SavedSearchCriteria criteria) {
+                return savedSearchManager.findSavedSearchesByCriteria(subject, criteria);
+            }
+        };
+
+        CriteriaQuery<SavedSearch, SavedSearchCriteria> savedSearchResults = new CriteriaQuery<SavedSearch, SavedSearchCriteria>(
+            criteria, queryExecutor);
 
         List<SearchSuggestion> results = new ArrayList<SearchSuggestion>();
         for (SavedSearch next : savedSearchResults) {

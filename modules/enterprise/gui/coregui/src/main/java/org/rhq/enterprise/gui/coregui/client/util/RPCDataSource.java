@@ -66,7 +66,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.util.effects.ColoringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.rpc.DataSourceResponseStatistics;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 
 /**
  * Base GWT-RPC oriented DataSource class.
@@ -92,7 +92,7 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
     public RPCDataSource(String name) {
         if (name != null) {
             Log.info("Trying to build DataSource: " + name);
-            setID(SeleniumUtility.getSafeId(name));
+            setID(EnhancedUtility.getSafeId(name));
         }
         // TODO until http://code.google.com/p/smartgwt/issues/detail?id=490 is fixed always go to the server for data
         setClientOnly(false);

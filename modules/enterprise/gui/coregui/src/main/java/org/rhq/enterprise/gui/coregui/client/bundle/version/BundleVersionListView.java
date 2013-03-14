@@ -41,12 +41,12 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
  */
 public class BundleVersionListView extends Table<BundleVersionDataSource> {
 
-    public BundleVersionListView(String locatorId) {
-        this(locatorId, null);
+    public BundleVersionListView() {
+        this(null);
     }
 
-    public BundleVersionListView(String locatorId, Criteria criteria) {
-        super(locatorId, MSG.view_bundle_bundleVersions(), criteria);
+    public BundleVersionListView(Criteria criteria) {
+        super(MSG.view_bundle_bundleVersions(), criteria);
         setHeaderIcon("subsystems/bundle/BundleVersion_24.png");
         setDataSource(new BundleVersionDataSource());
     }
@@ -60,8 +60,8 @@ public class BundleVersionListView extends Table<BundleVersionDataSource> {
     protected void configureTable() {
         ListGridField idField = new ListGridField(FIELD_ID, MSG.common_title_id());
 
-        ListGridField versionField = new ListGridField(BundleVersionDataSource.FIELD_VERSION, MSG
-            .common_title_version());
+        ListGridField versionField = new ListGridField(BundleVersionDataSource.FIELD_VERSION,
+            MSG.common_title_version());
         versionField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 Integer _bundleId = listGridRecord.getAttributeAsInt("bundleId");
@@ -72,11 +72,11 @@ public class BundleVersionListView extends Table<BundleVersionDataSource> {
 
         ListGridField nameField = new ListGridField(BundleVersionDataSource.FIELD_NAME, MSG.common_title_name());
 
-        ListGridField descriptionField = new ListGridField(BundleVersionDataSource.FIELD_DESCRIPTION, MSG
-            .common_title_description());
+        ListGridField descriptionField = new ListGridField(BundleVersionDataSource.FIELD_DESCRIPTION,
+            MSG.common_title_description());
 
-        ListGridField fileCountField = new ListGridField(BundleVersionDataSource.FIELD_FILECOUNT, MSG
-            .view_bundle_bundleFiles());
+        ListGridField fileCountField = new ListGridField(BundleVersionDataSource.FIELD_FILECOUNT,
+            MSG.view_bundle_bundleFiles());
 
         idField.setWidth(50);
         versionField.setWidth("20%");
@@ -94,8 +94,8 @@ public class BundleVersionListView extends Table<BundleVersionDataSource> {
                 if (selectedRows != null && selectedRows.length == 1) {
                     String selectedId = selectedRows[0].getAttribute(BundleVersionDataSource.FIELD_BUNDLE_ID);
                     String selectedVersionId = selectedRows[0].getAttribute(BundleVersionDataSource.FIELD_ID);
-                    CoreGUI.goToView(LinkManager.getBundleVersionLink(Integer.valueOf(selectedId), Integer
-                        .valueOf(selectedVersionId)));
+                    CoreGUI.goToView(LinkManager.getBundleVersionLink(Integer.valueOf(selectedId),
+                        Integer.valueOf(selectedVersionId)));
                 }
             }
         });

@@ -87,7 +87,7 @@ public class InstallerServiceImpl implements InstallerService {
             return;
         }
         if (allServerDetails.size() == 0) {
-            log.info("There are no known servers currently registered");
+            log("There are no known servers currently registered");
             return;
         }
 
@@ -109,7 +109,7 @@ public class InstallerServiceImpl implements InstallerService {
             info.append(serverDetails.getEndpointSecurePortString());
             info.append("\n");
         }
-        log.info(info.toString());
+        log(info.toString());
         return;
     }
 
@@ -137,15 +137,21 @@ public class InstallerServiceImpl implements InstallerService {
         ServerDetails detailsFromProps = getServerDetailsFromPropertiesOnly(serverProperties);
         ServerDetails detailsFromDb = getServerDetails(dbUrl, dbUsername, clearTextDbPassword,
             detailsFromProps.getName());
+        ExistingSchemaOption existingSchemaOption = getAutoinstallExistingSchemaOption(serverProperties);
+
         if (detailsFromDb == null) {
-            log.info("This will be considered a new server: " + detailsFromProps);
+            log("This will be considered a new server: " + detailsFromProps);
         } else {
-            log.info("This [" + detailsFromProps + "] will be considered a reinstallation of an existing server ["
-                + detailsFromDb + "]");
+            if (existingSchemaOption == ExistingSchemaOption.OVERWRITE) {
+                log("This [" + detailsFromProps + "] will OVERWRITE the existing server [" + detailsFromDb
+                    + "] that already exists in the database.");
+            } else {
+                log("This [" + detailsFromProps + "] will be considered a reinstallation of an existing server ["
+                    + detailsFromDb + "]");
+            }
         }
 
         // just warns if the schema will be overwritten
-        ExistingSchemaOption existingSchemaOption = getAutoinstallExistingSchemaOption(serverProperties);
         if (existingSchemaOption == ExistingSchemaOption.OVERWRITE) {
             log.warn("The installer has been configured to OVERWRITE any existing data in the database. "
                 + "If you do install with this configuration, realize that all existing data in the database "
@@ -154,10 +160,10 @@ public class InstallerServiceImpl implements InstallerService {
 
         // just logs the location of the AS instance where RHQ will be installed
         String appServerHomeDir = getAppServerHomeDir();
-        log.info("The app server where the installation will go is found at: " + appServerHomeDir);
+        log("The app server where the installation will go is found at: " + appServerHomeDir);
 
         // give some message to indicate everything looks OK and the user can start the real install
-        log.info("It looks like everything is OK and you can start the installation.");
+        log("It looks like everything is OK and you can start the installation.");
     }
 
     @Override
@@ -178,8 +184,12 @@ public class InstallerServiceImpl implements InstallerService {
         if (autoInstallMode) {
             log("The server is preconfigured and ready for auto-install.");
         } else {
-            throw new AutoInstallDisabledException(
-                "Auto-installation is disabled. Please fully configure rhq-server.properties");
+            if (this.installerConfiguration.isForceInstall()) {
+                log("Auto-installation would have been disabled, but installer was asked to force the install... continuing.");
+            } else {
+                throw new AutoInstallDisabledException(
+                    "Auto-installation is disabled. Please fully configure rhq-server.properties");
+            }
         }
 
         // make an attempt to connect to the app server - we must make sure its running and we can connect to it
@@ -190,11 +200,21 @@ public class InstallerServiceImpl implements InstallerService {
         final String installationResults = getInstallationResults();
         if (installationResults != null) {
             if (installationResults.length() == 0) {
-                throw new AlreadyInstalledException(
-                    "The installer has already been told to perform its work. The server should be ready soon.");
+                if (this.installerConfiguration.isForceInstall()) {
+                    log("The installer appears to have already been told to perform its work, but the installer was asked for force the install... continuing.");
+                } else {
+                    throw new AlreadyInstalledException(
+                        "The installer has already been told to perform its work. The server should be ready soon.");
+                }
             } else {
-                throw new Exception("The installer has already attempted to install the server but errors occurred:\n"
-                    + installationResults);
+                if (this.installerConfiguration.isForceInstall()) {
+                    log("The installer is going to force another installation attempt, even though a previous attempt encountered errors:\n"
+                        + installationResults);
+                } else {
+                    throw new Exception(
+                        "The installer has already attempted to install the server but errors occurred:\n"
+                            + installationResults);
+                }
             }
         }
 
@@ -226,8 +246,12 @@ public class InstallerServiceImpl implements InstallerService {
         String existingSchemaOption) throws AutoInstallDisabledException, AlreadyInstalledException, Exception {
 
         if (isEarDeployed()) {
-            throw new AlreadyInstalledException(
-                "It looks like the installation has already been completed - there is nothing for the installer to do.");
+            if (this.installerConfiguration.isForceInstall()) {
+                log("It looks like the installation has already been completed, but the installer was asked for force the install... continuing.");
+            } else {
+                throw new AlreadyInstalledException(
+                    "It looks like the installation has already been completed - there is nothing for the installer to do.");
+            }
         }
 
         prepareDatabase(serverProperties, serverDetails, existingSchemaOption);
@@ -963,7 +987,8 @@ public class InstallerServiceImpl implements InstallerService {
                 // Not only do we want to make sure we can connect, but we also want to wait for the subsystems to initialize.
                 // Let's wait for one of the subsystems to exist; once we know this is up, the rest are probably ready too.
                 if (!(new WebJBossASClient(getModelControllerClient()).isWebSubsystem())) {
-                    throw new IllegalStateException("The server does not appear to be fully started yet");
+                    throw new IllegalStateException(
+                        "The server does not appear to be fully started yet (the web subsystem did not start)");
                 }
 
                 return retVal;
@@ -1129,8 +1154,13 @@ public class InstallerServiceImpl implements InstallerService {
         try {
             mcc = getModelControllerClient();
             CoreJBossASClient client = new CoreJBossASClient(mcc);
-            log("Installing RHQ EAR startup subsystem extension");
-            client.addExtension(RHQ_EXTENSION_NAME);
+            boolean isDeployed = client.isExtension(RHQ_EXTENSION_NAME);
+            if (!isDeployed) {
+                log("Installing RHQ EAR startup subsystem extension");
+                client.addExtension(RHQ_EXTENSION_NAME);
+            } else {
+                log("RHQ EAR startup subsystem extension is already deployed");
+            }
         } finally {
             safeClose(mcc);
         }
@@ -1141,8 +1171,13 @@ public class InstallerServiceImpl implements InstallerService {
         try {
             mcc = getModelControllerClient();
             CoreJBossASClient client = new CoreJBossASClient(mcc);
-            log("Installing RHQ EAR subsystem");
-            client.addSubsystem(RHQ_SUBSYSTEM_NAME);
+            boolean isDeployed = client.isSubsystem(RHQ_SUBSYSTEM_NAME);
+            if (!isDeployed) {
+                log("Installing RHQ EAR subsystem");
+                client.addSubsystem(RHQ_SUBSYSTEM_NAME);
+            } else {
+                log("RHQ EAR subsystem is already deployed");
+            }
         } finally {
             safeClose(mcc);
         }

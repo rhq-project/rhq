@@ -146,14 +146,15 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @ApiOperation("List all Alert Definition")
     public List<AlertDefinitionRest> listAlertDefinitions(
             @ApiParam(value = "Page number", defaultValue = "0") @QueryParam("page") int page,
-            @ApiParam(value = "Limit to status, UNUSED AT THE MOMENT ") @QueryParam("status") String status) {
+            @ApiParam(value = "Limit to status, UNUSED AT THE MOMENT ") @QueryParam("status") String status,
+            @Context UriInfo uriInfo) {
 
         AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
         criteria.setPaging(page,20); // TODO add link to next page
         List<AlertDefinition> defs = alertDefinitionManager.findAlertDefinitionsByCriteria(caller, criteria);
         List<AlertDefinitionRest> ret = new ArrayList<AlertDefinitionRest>(defs.size());
         for (AlertDefinition def : defs) {
-            AlertDefinitionRest adr = definitionToDomain(def, false);
+            AlertDefinitionRest adr = definitionToDomain(def, false, uriInfo);
             ret.add(adr);
         }
         return ret;
@@ -165,7 +166,7 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @ApiError(code = 404, reason = "No definition found with the passed id.")
     public Response getAlertDefinition(@ApiParam("Id of the alert definition to retrieve") @PathParam("id") int definitionId,
                                        @ApiParam("Should conditions be returned too?") @QueryParam("full") @DefaultValue("false") boolean full,
-            @Context Request request) {
+            @Context Request request, @Context UriInfo uriInfo) {
 
         AlertDefinition def = alertDefinitionManager.getAlertDefinition(caller, definitionId);
         if (def==null)
@@ -174,7 +175,7 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
         EntityTag eTag = new EntityTag(Integer.toHexString(def.hashCode()));
         Response.ResponseBuilder builder = request.evaluatePreconditions(eTag);
         if (builder==null) {
-            AlertDefinitionRest adr = definitionToDomain(def, full);
+            AlertDefinitionRest adr = definitionToDomain(def, full, uriInfo);
             builder = Response.ok(adr);
         }
         builder.tag(eTag);
@@ -187,7 +188,8 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @ApiOperation("Create an AlertDefinition for the resource/group/resource type passed as query param. One and only one of the three params must be given at any time.")
     @ApiErrors({
         @ApiError(code = 406, reason = "There was not exactly one of 'resourceId','groupId' or 'resourceTypeId' given"),
-        @ApiError(code = 404, reason = "A non existing alert notification sender was requested.")
+        @ApiError(code = 404, reason = "A non existing alert notification sender was requested."),
+        @ApiError(code = 404, reason = "A referenced alert to recover does not exist")
     })
     public Response createAlertDefinition(@ApiParam("The id of the resource to attach the definition to") @QueryParam("resourceId") Integer resourceId,
                                           @ApiParam("The id of the group to attach the definition to") @QueryParam("groupId") Integer groupId,
@@ -252,12 +254,14 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
             AlertDefinition recoveryDef = alertDefinitionManager.getAlertDefinition(caller,adr.getRecoveryId());
             if (recoveryDef!=null)
                 alertDefinition.setRecoveryId(adr.getRecoveryId());
+            else
+                throw new StuffNotFoundException("Recovery alert with id " + adr.getRecoveryId());
         }
 
         int definitionId = alertDefinitionManager.createAlertDefinition(caller, alertDefinition, resourceId, false);
 
         AlertDefinition updatedDefinition = alertDefinitionManager.getAlertDefinition(caller,definitionId);
-        AlertDefinitionRest uadr = definitionToDomain(updatedDefinition,true) ; // TODO param 'full' ?
+        AlertDefinitionRest uadr = definitionToDomain(updatedDefinition,true, uriInfo) ; // TODO param 'full' ?
 
         uadr.setId(definitionId);
 
@@ -277,7 +281,8 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @ApiError(code = 404, reason = "No AlertDefinition with the passed id exists")
     public Response updateDefinition(
             @ApiParam("Id of the alert definition to update") @PathParam("id") int definitionId,
-            @ApiParam("Data for the update") AlertDefinitionRest definitionRest) {
+            @ApiParam("Data for the update") AlertDefinitionRest definitionRest,
+            @Context UriInfo uriInfo) {
 
         AlertDefinition definition = alertDefinitionManager.getAlertDefinition(caller,definitionId);
         if (definition==null)
@@ -299,6 +304,8 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
             AlertDefinition recoveryDef = alertDefinitionManager.getAlertDefinition(caller,definitionRest.getRecoveryId());
             if (recoveryDef!=null)
                 definition.setRecoveryId(definitionRest.getRecoveryId());
+            else
+                throw new StuffNotFoundException("Alert to recover with id " + definitionRest.getRecoveryId());
         }
 
 
@@ -307,7 +314,7 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
         entityManager.flush();
 
         EntityTag eTag = new EntityTag(Integer.toHexString(definition.hashCode()));
-        AlertDefinitionRest adr = definitionToDomain(definition, false);
+        AlertDefinitionRest adr = definitionToDomain(definition, false, uriInfo);
 
         Response.ResponseBuilder builder = Response.ok(adr);
         builder.tag(eTag);
@@ -776,7 +783,7 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     }
 
 
-    AlertDefinitionRest definitionToDomain(AlertDefinition def, boolean full) {
+    AlertDefinitionRest definitionToDomain(AlertDefinition def, boolean full, UriInfo uriInfo) {
         AlertDefinitionRest adr = new AlertDefinitionRest(def.getId());
         adr.setName(def.getName());
         adr.setEnabled(def.getEnabled());
@@ -813,6 +820,14 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
         units = dampening.getPeriodUnits();
         s = units != null ? " " + units.name() : "";
         adr.setDampeningPeriod(dampening.getPeriod() + s);
+
+        if (def.getResource()!=null) {
+            adr.getLinks().add(createUILink(uriInfo,UILinkTemplate.RESOURCE_ALERT_DEF,def.getResource().getId(),adr.getId()));
+        } else if (def.getResourceGroup()!=null) {
+            adr.getLinks().add(createUILink(uriInfo,UILinkTemplate.GROUP_ALERT_DEF,def.getResourceGroup().getId(),adr.getId()));
+        } else {
+            adr.getLinks().add(createUILink(uriInfo,UILinkTemplate.TEMPLATE_ALERT_DEF,def.getResourceType().getId(),adr.getId()));
+        }
 
         return adr;
     }

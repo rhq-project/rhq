@@ -18,26 +18,34 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.wizard;
 
-import com.smartgwt.client.widgets.*;
-import com.smartgwt.client.widgets.events.*;
-import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.LayoutSpacer;
-import com.smartgwt.client.widgets.toolbar.ToolStrip;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLFlow;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.IButton;
+import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.Window;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.events.CloseClickEvent;
+import com.smartgwt.client.widgets.events.CloseClickHandler;
+import com.smartgwt.client.widgets.events.DrawEvent;
+import com.smartgwt.client.widgets.events.DrawHandler;
+import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.LayoutSpacer;
+import com.smartgwt.client.widgets.toolbar.ToolStrip;
+
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+
 /**
  * @author Greg Hinkle
  */
-public class WizardView extends LocatableVLayout {
+public class WizardView extends EnhancedVLayout {
 
     static private final Messages MSG = CoreGUI.getMessages();
 
@@ -71,7 +79,7 @@ public class WizardView extends LocatableVLayout {
     HashSet<Canvas> createdCanvases = new HashSet<Canvas>();
 
     public WizardView(Wizard wizard) {
-        super("WizardView", 10);
+        super(10);
 
         this.wizard = wizard;
     }
@@ -114,7 +122,7 @@ public class WizardView extends LocatableVLayout {
         messageBar.setHeight(20);
         messageBar.setPadding(2);
         messageBar.setBackgroundColor("#F0F0F0");
-        messageLabel = new LocatableHTMLFlow(extendLocatorId("Message"));
+        messageLabel = new HTMLFlow();
         messageLabel.setWidth("*");
         messageLabel.setLeft(20);
         messageBar.addMember(messageLabel);
@@ -157,7 +165,7 @@ public class WizardView extends LocatableVLayout {
     }
 
     private void setupButtons() {
-        cancelButton = new LocatableIButton(extendLocatorId("Cancel"), CANCEL);
+        cancelButton = new EnhancedIButton(CANCEL);
         cancelButton.setDisabled(false);
         cancelButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -169,7 +177,7 @@ public class WizardView extends LocatableVLayout {
 
         buttonBar.addMember(new LayoutSpacer());
 
-        previousButton = new LocatableIButton(extendLocatorId("Previous"), PREVIOUS);
+        previousButton = new EnhancedIButton(PREVIOUS);
         previousButton.setDisabled(true);
         previousButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -185,7 +193,7 @@ public class WizardView extends LocatableVLayout {
         }
         buttonBar.addMember(previousButton);
 
-        nextButton = new LocatableIButton(extendLocatorId("Next"), NEXT);
+        nextButton = new EnhancedIButton(NEXT);
         nextButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
 
@@ -244,7 +252,7 @@ public class WizardView extends LocatableVLayout {
         if (currentCanvas != null) {
             contentLayout.removeMember(currentCanvas);
         }
-        currentCanvas = wizardSteps.get(currentStep).getCanvas(this);
+        currentCanvas = wizardSteps.get(currentStep).getCanvas();
 
         // if null, advance to the next step by automatically "clicking" the Next button
         if (null == currentCanvas) {
@@ -294,7 +302,7 @@ public class WizardView extends LocatableVLayout {
     }
 
     public void displayDialog() {
-        wizardWindow = new LocatableWindow(extendLocatorId("Wizard"));
+        wizardWindow = new Window();
         wizardWindow.setTitle(wizard.getWindowTitle());
         wizardWindow.setWidth(800);
         wizardWindow.setHeight(600);

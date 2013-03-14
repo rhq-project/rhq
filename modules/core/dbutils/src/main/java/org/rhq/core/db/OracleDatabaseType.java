@@ -18,6 +18,7 @@
  */
 package org.rhq.core.db;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -46,6 +47,7 @@ public abstract class OracleDatabaseType extends DatabaseType {
      *
      * @see DatabaseType#getVendor()
      */
+    @Override
     public String getVendor() {
         return VENDOR;
     }
@@ -55,8 +57,21 @@ public abstract class OracleDatabaseType extends DatabaseType {
      *
      * @see DatabaseType#getBooleanValue(boolean)
      */
+    @Override
     public String getBooleanValue(boolean bool) {
         return bool ? "1" : "0";
+    }
+
+    /* (non-Javadoc)
+     * @see org.rhq.core.db.DatabaseType#getInteger(java.lang.Object)
+     * 
+     * Oracle stores integer fields as Numbers and returns a BigDecimal.  It is assumed <code>number</code> is actually
+     * an integer value, otherwise precision will be lost in this conversion. 
+     */
+    @Override
+    public Integer getInteger(Object number) {
+        BigDecimal intField = (BigDecimal) number;
+        return intField.intValue();
     }
 
     /**

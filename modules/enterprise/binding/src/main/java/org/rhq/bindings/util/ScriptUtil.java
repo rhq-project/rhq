@@ -70,6 +70,25 @@ public class ScriptUtil {
         this.scriptEngine = scriptEngine;
     }
     
+    /** This convenience method has been deprecated as it was not designed to support paging
+     *  which is a requirement to efficiently handle large results sets.  This methods returns
+     *  all inexact matches to the String parameter passed in.  Clients may have difficulty 
+     *  retrieving all results.
+     *  
+     *  Instead to page through large/small result sets you should create
+     *  i)ResourceCriteria instances to be passed into 
+     *  ii)ResourceManager.findResourcesByCriteria(ResourceCriteria criteria)
+     *  
+     *  NOTE: ResourceCriteria by default has a page size of 200 and starts on page 0. Ex. criteria.setPaging(0,200);
+     *    
+     *  To iterate over a larger result set you can 
+     *  i)get access to the total number of resources, as the PageList<Resource> return includes a getTotalSize() method
+     *  ii)iterate through the pages of results by using Ex. criteria.setPaging(1,200), criteria.setPaging(2,200), [N,PageSize] 
+     * 
+     * @param string
+     * @return PageList<Resource> Resources with inexact name matches to the string passed in.
+     */
+    @Deprecated
     public PageList<Resource> findResources(String string) {
         if (remoteClient == null) {
             throw new IllegalStateException("The findResources() method requires a connection to the RHQ server.");
@@ -79,6 +98,8 @@ public class ScriptUtil {
 
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterName(string);
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
         return resourceManager.findResourcesByCriteria(getSubjectFromEngine(), criteria);
     }
 

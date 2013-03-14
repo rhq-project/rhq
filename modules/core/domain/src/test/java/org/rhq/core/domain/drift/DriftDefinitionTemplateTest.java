@@ -28,32 +28,29 @@ import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import java.util.List;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.shared.ResourceTypeBuilder;
 import org.rhq.core.domain.shared.TransactionCallback;
+import org.rhq.core.domain.test.AbstractEJB3Test;
 
-public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
+public class DriftDefinitionTemplateTest extends AbstractEJB3Test {
 
     private final String RESOURCE_TYPE_NAME = DriftDefinitionTemplateTest.class.getName();
 
     private ResourceType resourceType;
 
-    @BeforeMethod(groups = { "DriftDefinitionTemplate", "drift.ejb" })
-    public void init() {
-        if (!inContainer()) {
-            return;
-        }
+    @Override
+    protected void beforeMethod() {
+
+        purgeDB();
 
         executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 try {
-                    purgeDB();
                     createResourceType();
                     em.persist(resourceType);
 
@@ -66,31 +63,28 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         });
     }
 
-    @AfterClass(groups = { "DriftDefinitionTemplate", "drift.ejb" })
-    public void cleanUp() {
-        if (!inContainer()) {
-            return;
-        }
-
-        executeInTransaction(false, new TransactionCallback() {
-            @Override
-            public void execute() throws Exception {
-                purgeDB();
-            }
-        });
+    @Override
+    protected void afterMethod() {
+        purgeDB();
     }
 
     private void purgeDB() {
-        List<?> results = em.createQuery("select t from ResourceType t where t.name = :name")
-            .setParameter("name", RESOURCE_TYPE_NAME).getResultList();
-        if (results.isEmpty()) {
-            return;
-        }
-        ResourceType type = (ResourceType) results.get(0);
-        for (DriftDefinitionTemplate template : type.getDriftDefinitionTemplates()) {
-            em.remove(template);
-        }
-        em.remove(type);
+        executeInTransaction(false, new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                List<?> results = em.createQuery("select t from ResourceType t where t.name = :name")
+                    .setParameter("name", RESOURCE_TYPE_NAME).getResultList();
+                if (results.isEmpty()) {
+                    return;
+                }
+
+                ResourceType type = (ResourceType) results.get(0);
+                for (DriftDefinitionTemplate template : type.getDriftDefinitionTemplates()) {
+                    em.remove(template);
+                }
+                em.remove(type);
+            }
+        });
     }
 
     private void createResourceType() {
@@ -114,7 +108,7 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         driftDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
         template.setTemplateDefinition(driftDef);
 
-        executeInTransaction(false, new TransactionCallback() {
+        executeInTransaction(new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 em.persist(template);
@@ -145,7 +139,7 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         driftDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
         template.setTemplateDefinition(driftDef);
 
-        executeInTransaction(false, new TransactionCallback() {
+        executeInTransaction(new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 em.persist(template);
@@ -184,7 +178,7 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         driftDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
         template.setTemplateDefinition(driftDef);
 
-        executeInTransaction(false, new TransactionCallback() {
+        executeInTransaction(new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 resourceType.addDriftDefinitionTemplate(template);
@@ -217,7 +211,7 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         driftDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
         template.setTemplateDefinition(driftDef);
 
-        executeInTransaction(false, new TransactionCallback() {
+        executeInTransaction(new TransactionCallback() {
             @Override
             public void execute() throws Exception {
 
@@ -252,7 +246,7 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         template.setChangeSetId("1");
         template.setTemplateDefinition(driftDef);
 
-        executeInTransaction(false, new TransactionCallback() {
+        executeInTransaction(new TransactionCallback() {
             @Override
             public void execute() throws Exception {
 
@@ -289,7 +283,7 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         template.setChangeSetId("1");
         template.setTemplateDefinition(driftDef);
 
-        executeInTransaction(false, new TransactionCallback() {
+        executeInTransaction(new TransactionCallback() {
             @Override
             public void execute() throws Exception {
 

@@ -19,21 +19,21 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.ResourceTreeNode;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.SubCategoryTreeNode;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 
 /**
  * @author Greg Hinkle
  */
-public class CustomResourceTreeGrid extends LocatableTreeGrid {
+public class CustomResourceTreeGrid extends TreeGrid {
 
-    public CustomResourceTreeGrid(String locatorId) {
-        super(locatorId);
+    public CustomResourceTreeGrid() {
+        super();
     }
 
     @Override

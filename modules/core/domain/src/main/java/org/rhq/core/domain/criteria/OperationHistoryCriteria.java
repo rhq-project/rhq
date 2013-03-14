@@ -41,7 +41,6 @@ import org.rhq.core.domain.util.PageOrdering;
 public abstract class OperationHistoryCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
     private String filterJobName;
     private String filterJobGroup;
     private OperationRequestStatus filterStatus;
@@ -81,10 +80,6 @@ public abstract class OperationHistoryCriteria extends Criteria {
     @Override
     public Class<? extends OperationHistory> getPersistentClass() {
         return OperationHistory.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
     }
 
     public void addFilterJobId(JobId filterJobId) {

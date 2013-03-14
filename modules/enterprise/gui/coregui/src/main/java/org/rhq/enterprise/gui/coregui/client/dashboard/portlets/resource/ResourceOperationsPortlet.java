@@ -34,24 +34,24 @@ public class ResourceOperationsPortlet extends AbstractOperationHistoryPortlet {
     // A default displayed, persisted name for the portlet
     public static final String NAME = MSG.view_portlet_defaultName_resource_operations();
 
-    public ResourceOperationsPortlet(String locatorId, int resourceId) {
-        super(locatorId, EntityContext.forResource(resourceId));
+    public ResourceOperationsPortlet(int resourceId) {
+        super(EntityContext.forResource(resourceId));
     }
 
-    public ResourceOperationsPortlet(String locatorId, EntityContext context) {
-        super(locatorId, context);
+    public ResourceOperationsPortlet(EntityContext context) {
+        super(context);
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
             if (EntityContext.Type.Resource != context.getType()) {
                 throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
             }
 
-            return new ResourceOperationsPortlet(locatorId, context);
+            return new ResourceOperationsPortlet(context);
         }
 
     }

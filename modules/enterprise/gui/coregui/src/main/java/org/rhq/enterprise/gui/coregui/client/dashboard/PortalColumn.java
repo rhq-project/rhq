@@ -22,7 +22,7 @@ import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.VStack;
 
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 
 /**
  * @author Greg Hinkle
@@ -79,7 +79,7 @@ public class PortalColumn extends VStack {
     @Override
     public void destroy() {
         removeFromParent();
-        SeleniumUtility.destroyMembers(this);
+        EnhancedUtility.destroyMembers(this);
 
         super.destroy();
     }

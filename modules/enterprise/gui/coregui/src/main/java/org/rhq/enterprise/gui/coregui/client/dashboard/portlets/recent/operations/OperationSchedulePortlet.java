@@ -32,6 +32,7 @@ import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VStack;
@@ -53,18 +54,15 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.operation.ScheduledOperationsDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A view that displays a live table of completed Operations and scheduled operations. 
  *
  * @author Simeon Pinder
  */
-public class OperationSchedulePortlet extends LocatableVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
+public class OperationSchedulePortlet extends EnhancedVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "OperationSchedule";
@@ -85,7 +83,7 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
     private PortletWindow portletWindow;
 
     //ListGrids for operations
-    private LocatableListGrid scheduledOperationsGrid = null;
+    private ListGrid scheduledOperationsGrid = null;
 
     private ScheduledOperationsDataSource dataSourceScheduled;
     public static String unlimited = "-1";
@@ -95,13 +93,8 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
 
     private Timer refreshTimer;
 
-    //default no-args constructor for serialization.
-    private OperationSchedulePortlet() {
-        super("(uninitialized)");
-    }
-
-    public OperationSchedulePortlet(String locatorId) {
-        super(locatorId);
+    public OperationSchedulePortlet() {
+        super();
         this.dataSourceScheduled = new ScheduledOperationsDataSource(this);
     }
 
@@ -109,7 +102,7 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
     protected void onInit() {
         super.onInit();
 
-        this.scheduledOperationsGrid = new LocatableListGrid(extendLocatorId("Scheduled"));
+        this.scheduledOperationsGrid = new ListGrid();
         scheduledOperationsGrid.setDataSource(getDataSourceScheduled());
         scheduledOperationsGrid.setAutoFetchData(true);
         scheduledOperationsGrid.setWidth100();
@@ -137,7 +130,7 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
                     } else {
                         url = LinkManager.getSubsystemResourceOperationScheduleLink(id, opScheduleId);
                     }
-                    return SeleniumUtility.getLocatableHref(url, timestamp, null);
+                    return LinkManager.getHref(url, timestamp);
                 } else {
                     return "<i>" + MSG.common_label_none() + "</i>";
                 }
@@ -150,7 +143,8 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
         ListGridField operationNext = new ListGridField(ScheduledOperationsDataSource.Field.OPERATION.propertyName(),
             ScheduledOperationsDataSource.Field.OPERATION.title());
 
-        ListGridField resourceNext = new ListGridField(ScheduledOperationsDataSource.Field.RESOURCE_OR_GROUP.propertyName(),
+        ListGridField resourceNext = new ListGridField(
+            ScheduledOperationsDataSource.Field.RESOURCE_OR_GROUP.propertyName(),
             ScheduledOperationsDataSource.Field.RESOURCE_OR_GROUP.title());
         resourceNext.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
@@ -162,7 +156,7 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
                 } else {
                     url = LinkManager.getResourceLink(id);
                 }
-                return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                return LinkManager.getHref(url, o.toString());
             }
         });
         resourceNext.setShowHover(true);
@@ -181,8 +175,8 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
             }
         });
 
-        
-        ListGridField ancestryNext = new ListGridField(AncestryUtil.RESOURCE_ANCESTRY, CoreGUI.getMessages().common_title_ancestry());
+        ListGridField ancestryNext = new ListGridField(AncestryUtil.RESOURCE_ANCESTRY, CoreGUI.getMessages()
+            .common_title_ancestry());
         ancestryNext.setAlign(Alignment.LEFT);
         ancestryNext.setCellAlign(Alignment.LEFT);
         AncestryUtil.setupAncestryListGridFieldCellFormatter(ancestryNext);
@@ -197,7 +191,7 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
                 }
             }
         });
-        
+
         scheduledOperationsGrid.setFields(timeNext, operationNext, resourceNext, ancestryNext);
     }
 
@@ -251,7 +245,7 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
     public DynamicForm getCustomSettingsForm() {
 
         //root dynamic form instance
-        final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("CustomSettings"));
+        final DynamicForm form = new DynamicForm();
 
         final DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
 
@@ -259,7 +253,7 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
         VStack column = new VStack();
 
         //horizontal layout
-        LocatableHLayout sheduledOperationsLayout = new LocatableHLayout(extendLocatorId("EnableScheduledOperations"));
+        EnhancedHLayout sheduledOperationsLayout = new EnhancedHLayout();
 
         final CheckboxItem enableScheduledOperationsGrouping = new CheckboxItem();
         enableScheduledOperationsGrouping.setName(OPERATIONS_RANGE_SCHEDULED_ENABLED);
@@ -356,9 +350,9 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
-            return new OperationSchedulePortlet(locatorId);
+            return new OperationSchedulePortlet();
         }
     }
 
@@ -378,7 +372,7 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
         return this.dataSourceScheduled;
     }
 
-    public LocatableListGrid getScheduledOperationsGrid() {
+    public ListGrid getScheduledOperationsGrid() {
         return this.scheduledOperationsGrid;
     }
 

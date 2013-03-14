@@ -45,7 +45,7 @@ import javax.persistence.Table;
 @NamedQueries({
     @NamedQuery(name = DistributionType.QUERY_FIND_BY_NAME, query = "SELECT dt FROM DistributionType dt WHERE dt.name = :name"),
     @NamedQuery(name = DistributionType.QUERY_DELETE_BY_NAME, query = "DELETE FROM DistributionType dt where dt.name = :name") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_DISTRIBUTION_TYPE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_DISTRIBUTION_TYPE_ID_SEQ", sequenceName = "RHQ_DISTRIBUTION_TYPE_ID_SEQ")
 @Table(name = "RHQ_DISTRIBUTION_TYPE")
 public class DistributionType implements Serializable {
 
@@ -55,7 +55,7 @@ public class DistributionType implements Serializable {
     public static final String QUERY_DELETE_BY_NAME = "DistributionType.deleteByName";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_DISTRIBUTION_TYPE_ID_SEQ")
     @Id
     private int id;
 

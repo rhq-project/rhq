@@ -31,6 +31,7 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
@@ -58,7 +59,6 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellForma
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author John Mazzitelli
@@ -72,8 +72,8 @@ public class ChildHistoryView extends Table<ChildHistoryView.DataSource> {
     private final ResourceComposite resourceComposite;
     private FormItem dateRangeItem;
 
-    public ChildHistoryView(String locatorId, ResourceComposite resourceComposite) {
-        super(locatorId, VIEW_ID.getTitle());
+    public ChildHistoryView(ResourceComposite resourceComposite) {
+        super(VIEW_ID.getTitle());
         this.resourceComposite = resourceComposite;
         setDataSource(new DataSource());
     }
@@ -124,8 +124,8 @@ public class ChildHistoryView extends Table<ChildHistoryView.DataSource> {
         ListGridField createdField = new ListGridField(DataSource.Field.CREATED_DATE, MSG.common_title_dateCreated());
         TimestampCellFormatter.prepareDateField(createdField);
 
-        ListGridField modifiedField = new ListGridField(DataSource.Field.LAST_MODIFIED_TIME, MSG
-            .common_title_lastUpdated());
+        ListGridField modifiedField = new ListGridField(DataSource.Field.LAST_MODIFIED_TIME,
+            MSG.common_title_lastUpdated());
         TimestampCellFormatter.prepareDateField(modifiedField);
 
         ListGridField subjectField = new ListGridField(DataSource.Field.SUBJECT_NAME, MSG.common_title_user());
@@ -183,13 +183,13 @@ public class ChildHistoryView extends Table<ChildHistoryView.DataSource> {
                     if (DataSource.TYPE_CREATE.equals(typeString)) {
                         CreateResourceHistory history = (CreateResourceHistory) selectedRows[0]
                             .getAttributeAsObject(DataSource.Field.OBJECT);
-                        detailsView = new ChildHistoryDetails(extendLocatorId("details"), history);
+                        detailsView = new ChildHistoryDetails(history);
                     } else if (DataSource.TYPE_DELETE.equals(typeString)) {
                         DeleteResourceHistory history = (DeleteResourceHistory) selectedRows[0]
                             .getAttributeAsObject(DataSource.Field.OBJECT);
-                        detailsView = new ChildHistoryDetails(extendLocatorId("details"), history);
+                        detailsView = new ChildHistoryDetails(history);
                     }
-                    new DetailsWindow(extendLocatorId("detailsWin"), detailsView).show();
+                    new DetailsWindow(detailsView).show();
                 }
             }
         });
@@ -316,9 +316,9 @@ public class ChildHistoryView extends Table<ChildHistoryView.DataSource> {
         }
     }
 
-    class DetailsWindow extends LocatableWindow {
-        public DetailsWindow(String locatorId, Canvas canvas) {
-            super(locatorId);
+    class DetailsWindow extends Window {
+        public DetailsWindow(Canvas canvas) {
+            super();
             setTitle(MSG.common_title_details());
             setShowMinimizeButton(false);
             setShowMaximizeButton(true);

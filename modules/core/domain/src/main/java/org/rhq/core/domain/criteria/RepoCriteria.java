@@ -39,7 +39,6 @@ import org.rhq.core.domain.util.PageOrdering;
 public class RepoCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
     private String filterName;
     private String filterDescription;
     private List<Integer> filterResourceIds; // needs overrides
@@ -69,10 +68,6 @@ public class RepoCriteria extends Criteria {
     @Override
     public Class<Repo> getPersistentClass() {
         return Repo.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
     }
 
     public void addFilterName(String filterName) {

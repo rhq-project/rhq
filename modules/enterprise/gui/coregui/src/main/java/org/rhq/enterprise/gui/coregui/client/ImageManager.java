@@ -8,7 +8,11 @@ import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.operation.OperationRequestStatus;
-import org.rhq.core.domain.resource.*;
+import org.rhq.core.domain.resource.CreateResourceStatus;
+import org.rhq.core.domain.resource.DeleteResourceStatus;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite.GroupAvailabilityType;
 
@@ -24,6 +28,15 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite.Group
 public class ImageManager {
 
     public static final String IMAGES_DIR = "images/";
+
+    /**
+     * Returns the base icon name for the discovery queue's platform folder nodes.
+     * There are actually two icons, open and closed - the returned string is just
+     * the base icon name.
+     */
+    public static String getDiscoveryQueuePlatformIconBase() {
+        return "global/DiscoveryQueue_Platform_16.png";
+    }
 
     /**
      * Returns a generic "help" icon. This will also have a peer "disabled" help icon.

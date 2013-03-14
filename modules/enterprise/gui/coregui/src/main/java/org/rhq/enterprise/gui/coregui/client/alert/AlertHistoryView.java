@@ -19,6 +19,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client.alert;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.ResultSet;
@@ -30,6 +34,7 @@ import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
@@ -47,10 +52,6 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-
 /**
  * A view that displays a paginated table of fired {@link org.rhq.core.domain.alert.Alert alert}s, along with the
  * ability to filter those alerts, sort those alerts, double-click a row to view full details an alert, and perform
@@ -66,7 +67,8 @@ import java.util.LinkedHashMap;
  */
 public class AlertHistoryView extends TableSection<AlertDataSource> implements HasViewName {
 
-    public static final ViewName SUBSYSTEM_VIEW_ID = new ViewName("RecentAlerts", MSG.common_title_recent_alerts(), IconEnum.RECENT_ALERTS);
+    public static final ViewName SUBSYSTEM_VIEW_ID = new ViewName("RecentAlerts", MSG.common_title_recent_alerts(),
+        IconEnum.RECENT_ALERTS);
 
     private static SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(AlertCriteria.SORT_FIELD_CTIME,
         SortDirection.DESCENDING);
@@ -90,16 +92,16 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
     }
 
     // for subsystem views
-    public AlertHistoryView(String locatorId) {
-        this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), EntityContext.forSubsystemView(), false);
+    public AlertHistoryView() {
+        this(SUBSYSTEM_VIEW_ID.getTitle(), EntityContext.forSubsystemView(), false);
     }
 
-    public AlertHistoryView(String locatorId, String tableTitle, EntityContext entityContext) {
-        this(locatorId, tableTitle, entityContext, false);
+    public AlertHistoryView(String tableTitle, EntityContext entityContext) {
+        this(tableTitle, entityContext, false);
     }
 
-    protected AlertHistoryView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess) {
-        super(locatorId, tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
+    protected AlertHistoryView(String tableTitle, EntityContext context, boolean hasWriteAccess) {
+        super(tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
 
         this.context = context;
         this.hasWriteAccess = hasWriteAccess;
@@ -118,8 +120,8 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
         priorityIcons.put(AlertPriority.HIGH.name(), ImageManager.getAlertIcon(AlertPriority.HIGH));
         priorityIcons.put(AlertPriority.MEDIUM.name(), ImageManager.getAlertIcon(AlertPriority.MEDIUM));
         priorityIcons.put(AlertPriority.LOW.name(), ImageManager.getAlertIcon(AlertPriority.LOW));
-        priorityFilter = new EnumSelectItem(AlertDataSource.FILTER_PRIORITIES, MSG
-            .view_alerts_table_filter_priority(), AlertPriority.class, priorities, priorityIcons);
+        priorityFilter = new EnumSelectItem(AlertDataSource.FILTER_PRIORITIES, MSG.view_alerts_table_filter_priority(),
+            AlertPriority.class, priorities, priorityIcons);
 
         startDateFilter = new DateFilterItem(DateFilterItem.START_DATE_FILTER, MSG.filter_from_date());
         endDateFilter = new DateFilterItem(DateFilterItem.END_DATE_FILTER, MSG.filter_to_date());
@@ -128,7 +130,7 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
         spacerItem.setColSpan(2);
 
         if (isShowFilterForm()) {
-            setFilterFormItems(priorityFilter,   startDateFilter, spacerItem, endDateFilter );
+            setFilterFormItems(priorityFilter, startDateFilter, spacerItem, endDateFilter);
         }
     }
 
@@ -163,44 +165,42 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
         TableActionEnablement singleTargetEnablement = hasWriteAccess ? TableActionEnablement.ANY
             : TableActionEnablement.NEVER;
 
-        addTableAction("DeleteAlert", MSG.common_button_delete(), MSG.view_alerts_delete_confirm(),
-            new AbstractTableAction(singleTargetEnablement) {
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    delete(selection);
-                }
-            });
-        addTableAction("AcknowledgeAlert", MSG.common_button_ack(), MSG.view_alerts_ack_confirm(),
-            new AbstractTableAction(singleTargetEnablement) {
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    acknowledge(selection);
-                }
-            });
+        addTableAction(MSG.common_button_delete(), MSG.view_alerts_delete_confirm(), new AbstractTableAction(
+            singleTargetEnablement) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                delete(selection);
+            }
+        });
+        addTableAction(MSG.common_button_ack(), MSG.view_alerts_ack_confirm(), new AbstractTableAction(
+            singleTargetEnablement) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                acknowledge(selection);
+            }
+        });
 
         if (canSupportDeleteAndAcknowledgeAll()) {
-            addTableAction("DeleteAll", MSG.common_button_delete_all(), MSG.view_alerts_delete_confirm_all(),
-                new TableAction() {
-                    public boolean isEnabled(ListGridRecord[] selection) {
-                        ListGrid grid = getListGrid();
-                        ResultSet resultSet = (null != grid) ? grid.getResultSet() : null;
-                        return (hasWriteAccess && grid != null && resultSet != null && !resultSet.isEmpty());
-                    }
+            addTableAction(MSG.common_button_delete_all(), MSG.view_alerts_delete_confirm_all(), new TableAction() {
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    ListGrid grid = getListGrid();
+                    ResultSet resultSet = (null != grid) ? grid.getResultSet() : null;
+                    return (hasWriteAccess && grid != null && resultSet != null && !resultSet.isEmpty());
+                }
 
-                    public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                        deleteAll();
-                    }
-                });
-            addTableAction("AcknowledgeAll", MSG.common_button_ack_all(), MSG.view_alerts_ack_confirm_all(),
-                new TableAction() {
-                    public boolean isEnabled(ListGridRecord[] selection) {
-                        ListGrid grid = getListGrid();
-                        ResultSet resultSet = (null != grid) ? grid.getResultSet() : null;
-                        return (hasWriteAccess && grid != null && resultSet != null && !resultSet.isEmpty());
-                    }
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    deleteAll();
+                }
+            });
+            addTableAction(MSG.common_button_ack_all(), MSG.view_alerts_ack_confirm_all(), new TableAction() {
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    ListGrid grid = getListGrid();
+                    ResultSet resultSet = (null != grid) ? grid.getResultSet() : null;
+                    return (hasWriteAccess && grid != null && resultSet != null && !resultSet.isEmpty());
+                }
 
-                    public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                        acknowledgeAll();
-                    }
-                });
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    acknowledgeAll();
+                }
+            });
         }
     }
 

@@ -64,8 +64,8 @@ public class OverviewForm extends EnhancedDynamicForm {
     private boolean displayCondensed = false;
     private final ResourceTitleBar titleBar;
 
-    public OverviewForm(String locatorId, ResourceComposite resourceComposite, ResourceTitleBar titleBar) {
-        super(locatorId);
+    public OverviewForm(ResourceComposite resourceComposite, ResourceTitleBar titleBar) {
+        super();
         this.resourceComposite = resourceComposite;
         this.titleBar = titleBar;
     }
@@ -143,8 +143,8 @@ public class OverviewForm extends EnhancedDynamicForm {
 
         // Type
         StaticTextItem typeItem = new StaticTextItem("type", MSG.view_summaryOverviewForm_field_type());
-        typeItem.setTooltip(MSG.common_title_plugin() + ": " + type.getPlugin() + "\n<br>"
-           + MSG.common_title_type() + ": " + type.getName());
+        typeItem.setTooltip(MSG.common_title_plugin() + ": " + type.getPlugin() + "\n<br>" + MSG.common_title_type()
+            + ": " + type.getName());
         typeItem.setValue(AncestryUtil.getFormattedType(type));
         formItems.add(typeItem);
 
@@ -248,7 +248,7 @@ public class OverviewForm extends EnhancedDynamicForm {
             EditableFormItem togglableLocationItem = (EditableFormItem) locationItem;
             togglableLocationItem.setValueEditedHandler(new ValueEditedHandler() {
                 public void editedValue(Object newValue) {
-                    final String newLocation = newValue != null ?  newValue.toString() : "";
+                    final String newLocation = newValue != null ? newValue.toString() : "";
                     final String oldLocation = resource.getLocation();
                     if (newLocation.equals(oldLocation)) {
                         return;

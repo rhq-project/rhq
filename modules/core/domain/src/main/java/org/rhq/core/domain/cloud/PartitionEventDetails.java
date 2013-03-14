@@ -53,7 +53,7 @@ import org.rhq.core.domain.resource.Agent;
     + "SELECT ped " //
     + "  FROM PartitionEventDetails ped " //
     + " WHERE ped.partitionEvent.id = :eventId ") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "id", sequenceName = "RHQ_PARTITION_DETAILS_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_PARTITION_DETAILS_ID_SEQ", sequenceName = "RHQ_PARTITION_DETAILS_ID_SEQ")
 @Table(name = "RHQ_PARTITION_DETAILS")
 public class PartitionEventDetails implements Serializable {
 
@@ -62,7 +62,7 @@ public class PartitionEventDetails implements Serializable {
     public static final String QUERY_FIND_BY_EVENT_ID = "PartitionEventDetails.findByEventId";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "id")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_PARTITION_DETAILS_ID_SEQ")
     @Id
     private int id;
 

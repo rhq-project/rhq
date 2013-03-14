@@ -57,6 +57,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
@@ -192,7 +193,7 @@ public class AgentManagerBean implements AgentManagerLocal {
         server_bootstrap.removeDownedAgent(downedAgent.getRemoteEndpoint());
         log.info("Agent with name [" + agentName + "] just went down");
 
-        agentManager.backfillAgent(subjectManager.getOverlord(), agentName, downedAgent.getId());
+        agentManager.backfillAgentInNewTransaction(subjectManager.getOverlord(), agentName, downedAgent.getId());
         return;
     }
 
@@ -272,7 +273,8 @@ public class AgentManagerBean implements AgentManagerLocal {
                 log.info("Have not heard from agent [" + record.getAgentName() + "] since ["
                     + new Date(record.getLastAvailabilityPing()) + "]. Will be backfilled since we suspect it is down");
 
-                agentManager.backfillAgent(subjectManager.getOverlord(), record.getAgentName(), record.getAgentId());
+                agentManager.backfillAgentInNewTransaction(subjectManager.getOverlord(), record.getAgentName(),
+                    record.getAgentId());
             }
         }
 
@@ -281,7 +283,8 @@ public class AgentManagerBean implements AgentManagerLocal {
         return;
     }
 
-    public void backfillAgent(Subject subject, String agentName, int agentId) {
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void backfillAgentInNewTransaction(Subject subject, String agentName, int agentId) {
         // make sure we lock out all processing of any availability reports that might come our way to avoid concurrency
         // problems
         AvailabilityReportSerializer.getSingleton().lock(agentName);
@@ -299,7 +302,6 @@ public class AgentManagerBean implements AgentManagerLocal {
         }
     }
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void setAgentBackfilled(int agentId, boolean backfilled) {
         Query query = entityManager.createNamedQuery(Agent.QUERY_SET_AGENT_BACKFILLED);
         query.setParameter("agentId", agentId);
@@ -500,8 +502,10 @@ public class AgentManagerBean implements AgentManagerLocal {
     public File getAgentUpdateVersionFile() throws Exception {
         File agentDownloadDir = getAgentDataDownloadDir();
         File versionFile = new File(agentDownloadDir, "rhq-server-agent-versions.properties");
-        if (!versionFile.exists()) {
-            // we do not have the version properties file yet, let's extract some info and create one
+        File binaryFile = getAgentUpdateBinaryFile();
+        Boolean needVersionFile = FileUtil.isNewer(binaryFile, versionFile);
+        if (needVersionFile == null || needVersionFile.booleanValue()) {
+            // we do not have the version properties file yet or it must be regenerated; let's extract some info and create it
             StringBuilder serverVersionInfo = new StringBuilder();
 
             // first, get the server version info (by asking our server for the info)
@@ -510,7 +514,6 @@ public class AgentManagerBean implements AgentManagerLocal {
             serverVersionInfo.append(RHQ_SERVER_BUILD_NUMBER + '=').append(coreServer.getBuildNumber()).append('\n');
 
             // calculate the MD5 of the agent update binary file
-            File binaryFile = getAgentUpdateBinaryFile();
             String md5Property = RHQ_AGENT_LATEST_MD5 + '=' + MessageDigestGenerator.getDigestString(binaryFile) + '\n';
 
             // second, get the agent version info (by peeking into the agent update binary jar)

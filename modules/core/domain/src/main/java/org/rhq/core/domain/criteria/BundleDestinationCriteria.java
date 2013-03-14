@@ -35,7 +35,6 @@ import org.rhq.core.domain.bundle.BundleDestination;
 public class BundleDestinationCriteria extends TaggedCriteria {
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
     private String filterName;
     private String filterDescription;
     private Integer filterBundleId; // needs override
@@ -58,10 +57,6 @@ public class BundleDestinationCriteria extends TaggedCriteria {
     @Override
     public Class<BundleDestination> getPersistentClass() {
         return BundleDestination.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
     }
 
     public void addFilterName(String filterName) {

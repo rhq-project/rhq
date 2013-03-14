@@ -45,6 +45,8 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiError;
+import com.wordnik.swagger.annotations.ApiErrors;
 import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
 
@@ -86,24 +88,49 @@ public class AlertHandlerBean extends AbstractRestBean {
     @GZIP
     @GET
     @Path("/")
-    @ApiOperation(value = "List all alerts", multiValueResponse = true, responseClass = "List<AlertRest>")
+    @ApiOperation(value = "List all alerts, possibly limiting by resource or alert definition, priority and start time", multiValueResponse = true, responseClass = "List<AlertRest>")
+    @ApiErrors({
+        @ApiError(code = 406, reason = "There are 'resourceId' and 'definitionId' passed as query parameters"),
+        @ApiError(code = 406, reason = "Page size was 0"),
+        @ApiError(code = 406, reason = "Page number was < 1")
+    })
     public Response listAlerts(
-        @ApiParam(value = "Page number", defaultValue = "1") @QueryParam("page") int page,
+        @ApiParam(value = "Page number") @QueryParam("page") @DefaultValue("1") int page,
+        @ApiParam(value = "Page size; use -1 for 'unlimited'") @QueryParam("size") @DefaultValue("100")int size,
         @ApiParam(value = "Limit to priority", allowableValues = "High, Medium, Low, All") @DefaultValue("All") @QueryParam("prio") String prio,
         @ApiParam(value = "Should full resources and definitions be sent") @QueryParam("slim") @DefaultValue("false") boolean slim,
-        @ApiParam( value = "If non-null only send alerts that have fired after this time, time is millisecond since epoch") @QueryParam("since") Long since,
+        @ApiParam(value = "If non-null only send alerts that have fired after this time, time is millisecond since epoch") @QueryParam("since") Long since,
         @ApiParam(value = "Id of a resource to limit search for") @QueryParam("resourceId") Integer resourceId,
+        @ApiParam(value = "If of an alert definition to search for") @QueryParam("definitionId") Integer definitionId,
         @Context UriInfo uriInfo, @Context HttpHeaders headers) {
 
+        if (resourceId!=null && definitionId!=null) {
+            throw new BadArgumentException("At most one of 'resourceId' and 'definitionId' may be given");
+        }
+        if (size==0)
+            throw new BadArgumentException("size","Must not be 0");
+        if (page<1)
+            throw new BadArgumentException("page","Must be >=1");
 
         AlertCriteria criteria = new AlertCriteria();
-        criteria.setPaging(page,20); // TODO implement linking to next page
+
+        if (size==-1) {
+            PageControl pageControl = PageControl.getUnlimitedInstance();
+            pageControl.setPageNumber(page);
+            criteria.setPageControl(pageControl);
+        }
+        else
+            criteria.setPaging(page-1, size); // TODO implement linking to next page
+
         if (since!=null) {
             criteria.addFilterStartTime(since);
         }
 
         if (resourceId!=null) {
             criteria.addFilterResourceIds(resourceId);
+        }
+        if (definitionId!=null) {
+            criteria.addFilterAlertDefinitionIds(definitionId);
         }
 
         if (!prio.equals("All")) {
@@ -288,11 +315,12 @@ public class AlertHandlerBean extends AbstractRestBean {
     @Cache(maxAge = 300)
     @Path("/{id}/definition")
     @ApiOperation("Get the alert definition (basics) for the alert")
-    public AlertDefinitionRest getDefinitionForAlert(@ApiParam("Id of the alert to show the definition") @PathParam("id") int alertId) {
+    public AlertDefinitionRest getDefinitionForAlert(@ApiParam("Id of the alert to show the definition") @PathParam("id") int alertId,
+                                                     @Context UriInfo uriInfo) {
         Alert al = findAlertWithId(alertId);
         AlertDefinition def = al.getAlertDefinition();
         AlertDefinitionHandlerBean adhb = new AlertDefinitionHandlerBean();
-        AlertDefinitionRest ret = adhb.definitionToDomain(def, false); // TODO allow 'full' parameter?
+        AlertDefinitionRest ret = adhb.definitionToDomain(def, false, uriInfo); // TODO allow 'full' parameter?
         return ret;
     }
 
@@ -323,7 +351,7 @@ public class AlertHandlerBean extends AbstractRestBean {
             alertDefinitionRest = new AlertDefinitionRest(alertDefinition.getId());
         } else {
             AlertDefinitionHandlerBean adhb = new AlertDefinitionHandlerBean();
-            alertDefinitionRest = adhb.definitionToDomain(alertDefinition, false);
+            alertDefinitionRest = adhb.definitionToDomain(alertDefinition, false, uriInfo);
         }
         ret.setAlertDefinition(alertDefinitionRest);
         ret.setDefinitionEnabled(alertDefinition.getEnabled());
@@ -360,6 +388,8 @@ public class AlertHandlerBean extends AbstractRestBean {
         link = new Link("definition",uri.toString());
         ret.addLink(link);
 
+        int resourceId = alertDefinition.getResource().getId();
+        ret.addLink(createUILink(uriInfo,UILinkTemplate.RESOURCE_ALERT,resourceId,al.getId()));
 
         return ret;
     }

@@ -67,6 +67,7 @@ import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -387,9 +388,9 @@ public class OperationsHandlerBean extends AbstractRestBean  {
 
         criteria.addSortEndTime(PageOrdering.DESC);
 
-        List<ResourceOperationHistory> list = opsManager.findResourceOperationHistoriesByCriteria(caller,criteria);
+        PageList<ResourceOperationHistory> list = opsManager.findResourceOperationHistoriesByCriteria(caller, criteria);
 
-        List<OperationHistoryRest> result = new ArrayList<OperationHistoryRest>(list.size());
+        List<OperationHistoryRest> result = new ArrayList<OperationHistoryRest>();
         for (ResourceOperationHistory roh : list) {
             OperationHistoryRest historyRest = historyToHistoryRest(roh,uriInfo);
             result.add(historyRest);
@@ -413,6 +414,8 @@ public class OperationsHandlerBean extends AbstractRestBean  {
 
         ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
         criteria.addFilterJobId(new JobId(jobName));
+        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
         List<ResourceOperationHistory> list = opsManager.findResourceOperationHistoriesByCriteria(caller,criteria);
         if ((list != null && !list.isEmpty())) {
 

@@ -38,7 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.test.configuration.TestGroupConfigu
 import org.rhq.enterprise.gui.coregui.client.test.configuration.TestReadOnlyConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.test.configuration.TestReadOnlyGroupConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.test.inventory.TestSearchBarView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * The Test top-level view. This view is "hidden", i.e. there are no links to it, so the user must go to the URL
@@ -80,16 +80,15 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     private static final ViewName PAGE_NUMBER_FORMAT_TEST = new ViewName("NumberFormatTest");
 
     public TestTopView() {
-        // This is a top level view, so our locator id can simply be our view id.
         super(VIEW_ID.getName());
     }
 
     protected Canvas defaultView() {
-        LocatableVLayout vLayout = new LocatableVLayout(this.extendLocatorId("Default"));
+        EnhancedVLayout vLayout = new EnhancedVLayout();
         vLayout.setWidth100();
 
         // TODO: Help icon.
-        TitleBar titleBar = new TitleBar(this, MSG.view_testTop_title());
+        TitleBar titleBar = new TitleBar(MSG.view_testTop_title());
         vLayout.addMember(titleBar);
 
         Label label = new Label(MSG.view_testTop_description());
@@ -121,19 +120,19 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     private NavigationSection buildInventorySection() {
         NavigationItem resourceSelectorItem = new NavigationItem(PAGE_RESOURCE_SELECTOR, null, new ViewFactory() {
             public Canvas createView() {
-                return new ResourceSelector(extendLocatorId(PAGE_RESOURCE_SELECTOR.getName()));
+                return new ResourceSelector();
             }
         });
 
         NavigationItem typeTreeItem = new NavigationItem(PAGE_TYPE_TREE, null, new ViewFactory() {
             public Canvas createView() {
-                return new ResourceTypeTreeView(extendLocatorId(PAGE_TYPE_TREE.getName()));
+                return new ResourceTypeTreeView();
             }
         });
 
         NavigationItem searchBarItem = new NavigationItem(PAGE_SEARCH_BAR, null, new ViewFactory() {
             public Canvas createView() {
-                return new TestSearchBarView(extendLocatorId(PAGE_SEARCH_BAR.getName()));
+                return new TestSearchBarView();
             }
         });
 
@@ -143,28 +142,27 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     private NavigationSection buildConfigurationSection() {
         NavigationItem configEditorItem = new NavigationItem(PAGE_CONFIG_EDITOR, null, new ViewFactory() {
             public Canvas createView() {
-                return new TestConfigurationView(extendLocatorId(PAGE_CONFIG_EDITOR.getName()));
+                return new TestConfigurationView();
             }
         });
 
         NavigationItem readOnlyConfigEditorItem = new NavigationItem(PAGE_READONLY_CONFIG_EDITOR, null,
             new ViewFactory() {
                 public Canvas createView() {
-                    return new TestReadOnlyConfigurationView(extendLocatorId(PAGE_READONLY_CONFIG_EDITOR.getName()));
+                    return new TestReadOnlyConfigurationView();
                 }
             });
 
         NavigationItem groupConfigEditorItem = new NavigationItem(PAGE_GROUP_CONFIG_EDITOR, null, new ViewFactory() {
             public Canvas createView() {
-                return new TestGroupConfigurationView(extendLocatorId(PAGE_GROUP_CONFIG_EDITOR.getName()));
+                return new TestGroupConfigurationView();
             }
         });
 
         NavigationItem readOnlyGroupConfigEditorItem = new NavigationItem(PAGE_READONLY_GROUP_CONFIG_EDITOR, null,
             new ViewFactory() {
                 public Canvas createView() {
-                    return new TestReadOnlyGroupConfigurationView(extendLocatorId(PAGE_READONLY_GROUP_CONFIG_EDITOR
-                        .getName()));
+                    return new TestReadOnlyGroupConfigurationView();
                 }
             });
 
@@ -175,51 +173,50 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     private NavigationSection buildServerAccessSection() {
         NavigationItem userPrefsItem = new NavigationItem(PAGE_USER_PREFERENCES, null, new ViewFactory() {
             public Canvas createView() {
-                return new TestUserPreferencesView(extendLocatorId(PAGE_USER_PREFERENCES.getName()));
+                return new TestUserPreferencesView();
             }
         });
 
         NavigationItem remoteServiceStatisticsItem = new NavigationItem(PAGE_REMOTE_SERVICE_STATISTICS, null,
             new ViewFactory() {
                 public Canvas createView() {
-                    return new TestRemoteServiceStatisticsView(
-                        extendLocatorId(PAGE_REMOTE_SERVICE_STATISTICS.getName()));
+                    return new TestRemoteServiceStatisticsView();
                 }
             });
 
         NavigationItem sqlItem = new NavigationItem(PAGE_SQL, null, new ViewFactory() {
             public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId(PAGE_SQL.getName()), "/admin/test/sql.jsp");
+                return new FullHTMLPane("/admin/test/sql.jsp");
             }
         });
 
         NavigationItem hibernateItem = new NavigationItem(PAGE_HIBERNATE, null, new ViewFactory() {
             public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId(PAGE_HIBERNATE.getName()), "/admin/test/hibernate.jsp");
+                return new FullHTMLPane("/admin/test/hibernate.jsp");
             }
         });
 
         NavigationItem entityBrowserItem = new NavigationItem(PAGE_ENTITY_BROWSER, null, new ViewFactory() {
             public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId(PAGE_ENTITY_BROWSER.getName()), "/admin/test/browser.jsp");
+                return new FullHTMLPane("/admin/test/browser.jsp");
             }
         });
 
         NavigationItem adminControlItem = new NavigationItem(PAGE_ADMIN_CONTROL, null, new ViewFactory() {
             public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId(PAGE_ADMIN_CONTROL.getName()), "/admin/test/control.jsp");
+                return new FullHTMLPane("/admin/test/control.jsp");
             }
         });
 
         NavigationItem emailItem = new NavigationItem(PAGE_EMAIL, null, new ViewFactory() {
             public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId(PAGE_EMAIL.getName()), "/admin/test/email.jsp");
+                return new FullHTMLPane("/admin/test/email.jsp");
             }
         });
 
         NavigationItem agentItem = new NavigationItem(PAGE_AGENT, null, new ViewFactory() {
             public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId(PAGE_AGENT.getName()), "/admin/test/agent.jsp");
+                return new FullHTMLPane("/admin/test/agent.jsp");
             }
         });
 
@@ -230,13 +227,13 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     private NavigationSection buildMiscSection() {
         NavigationItem messageCenterItem = new NavigationItem(PAGE_MESSAGE_CENTER_TEST, null, new ViewFactory() {
             public Canvas createView() {
-                return new TestMessageCenterView(extendLocatorId(PAGE_MESSAGE_CENTER_TEST.getName()));
+                return new TestMessageCenterView();
             }
         });
 
         NavigationItem numberFormatItem = new NavigationItem(PAGE_NUMBER_FORMAT_TEST, null, new ViewFactory() {
             public Canvas createView() {
-                return new TestNumberFormatView(extendLocatorId(PAGE_NUMBER_FORMAT_TEST.getName()));
+                return new TestNumberFormatView();
             }
         });
 

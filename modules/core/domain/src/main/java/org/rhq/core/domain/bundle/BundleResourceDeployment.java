@@ -62,7 +62,7 @@ import org.rhq.core.domain.resource.Resource;
         + " WHERE brd.resource.id IN ( :resourceIds ) )"),
     @NamedQuery(name = BundleResourceDeployment.QUERY_FIND_BY_DEPLOYMENT_ID_NO_FETCH, query = "SELECT brd FROM BundleResourceDeployment brd WHERE brd.bundleDeployment.id = :id "),
     @NamedQuery(name = BundleResourceDeployment.QUERY_FIND_BY_RESOURCE_ID_NO_FETCH, query = "SELECT brd FROM BundleResourceDeployment brd WHERE brd.resource.id = :id ") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_BUNDLE_RES_DEPLOY_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_BUNDLE_RES_DEPLOY_ID_SEQ", sequenceName = "RHQ_BUNDLE_RES_DEPLOY_ID_SEQ")
 @Table(name = "RHQ_BUNDLE_RES_DEPLOY")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class BundleResourceDeployment implements Serializable {
@@ -73,7 +73,7 @@ public class BundleResourceDeployment implements Serializable {
     public static final String QUERY_FIND_BY_RESOURCE_ID_NO_FETCH = "BundleResourceDeployment.findByResourceIdNoFetch";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_BUNDLE_RES_DEPLOY_ID_SEQ")
     @Id
     private int id;
 

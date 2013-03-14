@@ -83,13 +83,11 @@ import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -121,6 +119,8 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
+import org.rhq.enterprise.server.util.CriteriaQuery;
+import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.QuartzUtil;
@@ -487,9 +487,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         * is triggering save based on the semantics that we want to provide for configuration updates.
         * For the same reason, we pass null as the subject.
         */
-        ResourceConfigurationUpdate update = this.configurationManager.persistNewResourceConfigurationUpdateHistory(
-            this.subjectManager.getOverlord(), resource.getId(), liveConfig, ConfigurationUpdateStatus.SUCCESS, null,
-            false);
+        ResourceConfigurationUpdate update = this.configurationManager
+            .persistResourceConfigurationUpdateInNewTransaction(this.subjectManager.getOverlord(), resource.getId(),
+                liveConfig, ConfigurationUpdateStatus.SUCCESS, null, false);
 
         // resource.setResourceConfiguration(liveConfig.deepCopy(false));
         resource.setResourceConfiguration(liveConfig.deepCopyWithoutProxies());
@@ -1248,8 +1248,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             return resourceConfigurationUpdate;
         }
 
-        ResourceConfigurationUpdate newUpdate = configurationManager.persistNewResourceConfigurationUpdateHistory(
-            subject, resourceId, configToUpdate, ConfigurationUpdateStatus.INPROGRESS, subject.getName(), false);
+        ResourceConfigurationUpdate newUpdate = configurationManager
+            .persistResourceConfigurationUpdateInNewTransaction(subject, resourceId, configToUpdate,
+                ConfigurationUpdateStatus.INPROGRESS, subject.getName(), false);
         executeResourceConfigurationUpdate(newUpdate);
         return newUpdate;
     }
@@ -1307,9 +1308,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         // configuration.
         // TODO: Consider synchronizing to avoid the condition where someone calls this method twice quickly in two
         // different tx's, which would put two updates in INPROGRESS and cause havoc.
-        ResourceConfigurationUpdate newUpdate = configurationManager.persistNewResourceConfigurationUpdateHistory(
-            subject, resourceId, newResourceConfiguration, ConfigurationUpdateStatus.INPROGRESS, subject.getName(),
-            false);
+        ResourceConfigurationUpdate newUpdate = configurationManager
+            .persistResourceConfigurationUpdateInNewTransaction(subject, resourceId, newResourceConfiguration,
+                ConfigurationUpdateStatus.INPROGRESS, subject.getName(), false);
 
         executeResourceConfigurationUpdate(newUpdate);
 
@@ -1382,91 +1383,83 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public ResourceConfigurationUpdate persistNewResourceConfigurationUpdateHistory(Subject subject, int resourceId,
-        Configuration newConfiguration, ConfigurationUpdateStatus newStatus, String newSubject,
+    public ResourceConfigurationUpdate persistResourceConfigurationUpdateInNewTransaction(Subject subject,
+        int resourceId, Configuration newConfiguration, ConfigurationUpdateStatus newStatus, String newSubject,
         boolean isPartofGroupUpdate) throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException {
-        // get the resource that we will be updating
-        Resource resource = resourceManager.getResourceById(subject, resourceId);
 
-        // make sure the user has the proper permissions to do this
-        if (!authorizationManager.hasResourcePermission(subject, Permission.CONFIGURE_WRITE, resource.getId())) {
-            throw new PermissionException("User [" + subject.getName()
-                + "] does not have permission to modify configuration for resource [" + resource + "]");
-        }
-
-        // see if there was a previous update request and make sure it isn't still in progress
-        List<ResourceConfigurationUpdate> previousRequests = resource.getResourceConfigurationUpdates();
-
+        ResourceConfigurationUpdate current = null;
         String errorMessage = null;
-        if (previousRequests != null) {
-            for (ResourceConfigurationUpdate previousRequest : previousRequests) {
-                if (previousRequest.getStatus() == ConfigurationUpdateStatus.INPROGRESS) {
-                    // A previous update is still in progresss for this Resource. If this update is part of a group
-                    // update, persist it with FAILURE status, so it is still listed as part of the group history.
-                    // Otherwise, throw an exception that can bubble up to the GUI.
-                    if (isPartofGroupUpdate) {
-                        newStatus = ConfigurationUpdateStatus.FAILURE;
-                        errorMessage = "Resource configuration Update was aborted because an update request for the Resource was already in progress.";
-                    } else {
-                        // NOTE: If you change this to another exception, make sure you change getLatestResourceConfigurationUpdate().
-                        throw new ConfigurationUpdateStillInProgressException(
-                            "Resource ["
-                                + resource
-                                + "] has a resource configuration update request already in progress - please wait for it to finish: "
-                                + previousRequest);
-                    }
+
+        // for efficiency, in one query fetch IN_PROGRESS and/or the current update
+        Query query = entityManager
+            .createNamedQuery(ResourceConfigurationUpdate.QUERY_FIND_CURRENT_AND_IN_PROGRESS_CONFIGS);
+        query.setParameter("resourceId", resourceId);
+        List<?> updates = query.getResultList();
+        for (Object result : updates) {
+            current = (ResourceConfigurationUpdate) result;
+
+            if (ConfigurationUpdateStatus.INPROGRESS == current.getStatus()) {
+                // A previous update is still in progress for this Resource. If this update is part of a group
+                // update, persist it with FAILURE status, so it is still listed as part of the group history.
+                // Otherwise, throw an exception that can bubble up to the GUI.
+                if (isPartofGroupUpdate) {
+                    newStatus = ConfigurationUpdateStatus.FAILURE;
+                    errorMessage = "Resource configuration Update was aborted because an update request for the Resource was already in progress.";
+
+                } else {
+                    // NOTE: If you change this to another exception, make sure you change getLatestResourceConfigurationUpdate().
+                    throw new ConfigurationUpdateStillInProgressException(
+                        "Resource ["
+                            + resourceId
+                            + "] has a resource configuration update request already in progress - please wait for it to finish: "
+                            + current);
                 }
             }
         }
 
-        ResourceConfigurationUpdate current;
+        Resource resource = null;
 
-        // Get the latest configuration as known to the server (i.e. persisted in the DB).
-        try {
-            Query query = entityManager
-                .createNamedQuery(ResourceConfigurationUpdate.QUERY_FIND_CURRENTLY_ACTIVE_CONFIG);
-            query.setParameter("resourceId", resourceId);
-            current = (ResourceConfigurationUpdate) query.getSingleResult();
-            resource = current.getResource();
-        } catch (NoResultException nre) {
-            current = null; // The resource hasn't been successfully configured yet.
-        }
-
-        // If this update is not part of an group update, don't bother persisting a new entry if the Configuration
-        // hasn't changed. If it's part of an group update, persist a new entry no matter what, so the group
-        // update isn't missing any member updates.
-        if (!isPartofGroupUpdate && current != null) {
-            Configuration currentConfiguration = current.getConfiguration();
-            Hibernate.initialize(currentConfiguration.getMap());
-            if (currentConfiguration.equals(newConfiguration)) {
-                return null;
+        if (null != current) {
+            // Always persist a group update because each member must have an update. Otherwise, only persist a
+            // single resource update if it has changed.
+            if (!isPartofGroupUpdate) {
+                Configuration currentConfiguration = current.getConfiguration();
+                Hibernate.initialize(currentConfiguration.getMap());
+                if (currentConfiguration.equals(newConfiguration)) {
+                    return null;
+                }
             }
+
+            resource = current.getResource();
+
+        } else {
+            // make sure the resource exists
+            resource = resourceManager.getResourceById(subject, resourceId);
         }
 
-        //Configuration zeroedConfiguration = newConfiguration.deepCopy(false);
         Configuration zeroedConfiguration = newConfiguration.deepCopyWithoutProxies();
 
-        // create our new update request and assign it to our resource - its status will initially be "in progress"
+        // create our new update request and assign it to our resource - its status will initially be INPROGRESS
         ResourceConfigurationUpdate newUpdateRequest = new ResourceConfigurationUpdate(resource, zeroedConfiguration,
             newSubject);
-
         newUpdateRequest.setStatus(newStatus);
-        if (newStatus == ConfigurationUpdateStatus.FAILURE) {
+
+        if (ConfigurationUpdateStatus.FAILURE == newStatus) {
             newUpdateRequest.setErrorMessage(errorMessage);
         }
 
         entityManager.persist(newUpdateRequest);
-        if (current != null) {
-            if (newStatus == ConfigurationUpdateStatus.SUCCESS) {
-                // If this is the first configuration update since the resource was imported, don't alert
+
+        // No need to alert on the first configuration update, only on subsequent change
+        if (null != current) {
+            if (ConfigurationUpdateStatus.SUCCESS == newStatus) {
                 notifyAlertConditionCacheManager("persistNewResourceConfigurationUpdateHistory", newUpdateRequest);
             }
         }
 
         resource.addResourceConfigurationUpdates(newUpdateRequest);
 
-        // agent and childResources fields are LAZY - force them to load, because the caller will need them.
-        Hibernate.initialize(resource.getChildResources());
+        // provide the agent while we have the entity, it's typically needed by the caller
         Hibernate.initialize(resource.getAgent());
 
         return newUpdateRequest;
@@ -2561,7 +2554,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
      * @param subject Subject of the caller - may limit search results
      * @param pds the PropertyDefinitionSimple to work on
      */
-    private void handlePDS(Subject subject, int resourceId, PropertyDefinitionSimple pds) {
+    private void handlePDS(final Subject subject, int resourceId, PropertyDefinitionSimple pds) {
 
         if (pds.getOptionsSource() != null) {
             // evaluate the source parameters
@@ -2575,7 +2568,16 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
             if (tt == PropertyOptionsSource.TargetType.RESOURCE || tt == PropertyOptionsSource.TargetType.CONFIGURATION) {
                 List<Resource> resources = null;
+                CriteriaQuery<Resource, ResourceCriteria> resourcesPaged = null;
                 ResourceCriteria criteria = new ResourceCriteria();
+
+                //Use CriteriaQuery to automatically chunk/page through criteria query results
+                CriteriaQueryExecutor<Resource, ResourceCriteria> queryExecutor = new CriteriaQueryExecutor<Resource, ResourceCriteria>() {
+                    @Override
+                    public PageList<Resource> execute(ResourceCriteria criteria) {
+                        return resourceManager.findResourcesByCriteria(subject, criteria);
+                    }
+                };
 
                 if (tt == PropertyOptionsSource.TargetType.CONFIGURATION) {
                     // split out expression part for target=configuration
@@ -2586,7 +2588,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
                         if (!"self".equals(expr)) {
                             criteria.setSearchExpression(expr);
-                            resources = resourceManager.findResourcesByCriteria(subject, criteria);
+                            resourcesPaged = new CriteriaQuery<Resource, ResourceCriteria>(criteria, queryExecutor);
                         } else if (resourceId >= 0) {
                             resources = new ArrayList<Resource>();
                             resources.add(resourceManager.getResourceById(subject, resourceId));
@@ -2602,41 +2604,53 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                     }
                 } else {
                     criteria.setSearchExpression(expression);
-                    resources = resourceManager.findResourcesByCriteria(subject, criteria);
+                    resourcesPaged = new CriteriaQuery<Resource, ResourceCriteria>(criteria, queryExecutor);
                 }
 
+                if (resources != null) {//process resources
                 for (Resource resource : resources) {
-                    if (tt == PropertyOptionsSource.TargetType.RESOURCE) {
-                        String name = resource.getName();
-
-                        // filter if the user provided a filter
-                        if (filterPattern != null) {
-                            Matcher m = filterPattern.matcher(name);
-                            if (m.matches()) {
-                                PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(name, "" + name);
-                                pds.getEnumeratedValues().add(pde);
-                            }
-                        } else { // Filter is null -> none provided -> do not filter
-                            PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(name, "" + name);
-                            pds.getEnumeratedValues().add(pde);
-                        }
-                    } else if (tt == PropertyOptionsSource.TargetType.CONFIGURATION) {
-                        //  for configuration we need to drill down into the resource configuration
-                        if (!handleConfigurationTarget(pds, expression, resource))
-                            return;
-
+                        processPropertyOptionsSource(pds, tt, expression, filterPattern, resource);
+                    }
+                } else {// process resourcesPaged(CriteriaQuery parsing)
+                    for (Resource resource : resourcesPaged) {
+                        processPropertyOptionsSource(pds, tt, expression, filterPattern, resource);
                     }
                 }
             } else if (tt == PropertyOptionsSource.TargetType.GROUP) {
-                // for groups we need to talk to the group manager
-                ResourceGroupCriteria criteria = new ResourceGroupCriteria();
-                criteria.setSearchExpression(expression);
-
-                resourceGroupManager.findResourceGroupCompositesByCriteria(subject, criteria);
+                // spinder 2-15-13: commenting out this code below as we don't appear to be using any of it. Half done.                
+                //                // for groups we need to talk to the group manager
+                //                ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+                //                criteria.setSearchExpression(expression);
+                //
+                //                resourceGroupManager.findResourceGroupCompositesByCriteria(subject, criteria);
             }
             // TODO plugin and resourceType
         }
 
+    }
+
+    private void processPropertyOptionsSource(PropertyDefinitionSimple pds, PropertyOptionsSource.TargetType tt,
+        String expression, Pattern filterPattern, Resource resource) {
+        if (tt == PropertyOptionsSource.TargetType.RESOURCE) {
+            String name = resource.getName();
+
+            // filter if the user provided a filter
+            if (filterPattern != null) {
+                Matcher m = filterPattern.matcher(name);
+                if (m.matches()) {
+                    PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(name, "" + name);
+                    pds.getEnumeratedValues().add(pde);
+                }
+            } else { // Filter is null -> none provided -> do not filter
+                PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(name, "" + name);
+                pds.getEnumeratedValues().add(pde);
+            }
+        } else if (tt == PropertyOptionsSource.TargetType.CONFIGURATION) {
+            //  for configuration we need to drill down into the resource configuration
+            if (!handleConfigurationTarget(pds, expression, resource))
+                return;
+
+        }
     }
 
     /**

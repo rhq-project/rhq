@@ -181,10 +181,7 @@ public class AvailabilityPromptCommand implements AgentPromptCommand {
             }
         }
 
-        // we need to send the report to the server - otherwise, the "real" availability executor
-        // will not send changed resources thinking someone else did
-        out.println(MSG.getMsg(AgentI18NResourceKeys.AVAILABILITY_REPORT_SENDING));
-        inventoryManager.handleReport(report);
+        // out.println(MSG.getMsg(AgentI18NResourceKeys.AVAILABILITY_REPORT_SENDING));
         out.println(MSG.getMsg(AgentI18NResourceKeys.AVAILABILITY_REPORT_SENT));
 
         return;

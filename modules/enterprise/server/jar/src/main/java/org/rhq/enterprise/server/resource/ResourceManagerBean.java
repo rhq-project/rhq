@@ -45,6 +45,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
@@ -248,6 +249,18 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return entityManager.merge(persistedResource);
     }
 
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public void uninventoryAllResourcesByAgent(Subject user, Agent doomedAgent) {
+        Resource platform = resourceManager.getPlatform(doomedAgent);
+        if (platform == null) {
+            // there is no platform resource - just delete the agent itself
+            agentManager.deleteAgent(doomedAgent);
+        } else {
+            resourceManager.uninventoryResources(user, new int[] { platform.getId() });
+        }
+    }
+
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public List<Integer> uninventoryResources(Subject user, int[] resourceIds) {
 
         List<Integer> result = new ArrayList<Integer>();
@@ -499,7 +512,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         // In other words, the implicit resources of a group have no impact on the group type (compatible/mixed).
         Query nativeQuery = entityManager.createNativeQuery(ResourceGroup.QUERY_GET_GROUP_IDS_BY_RESOURCE_IDS);
         nativeQuery.setParameter("resourceIds", resourceIds);
-        List<Integer> groupIds = nativeQuery.getResultList();
+        // Note that different DB vendors return different types for IDs because the representation
+        // is different at the storage layer. This is an em native query so we need to handle the differences.
+        // Postgres will return an Integer, but Oracle returns a BigDecimal, etc.
+        List<?> rs = nativeQuery.getResultList();
 
         String[] nativeQueriesToExecute = new String[] { //
         ResourceGroup.QUERY_DELETE_EXPLICIT_BY_RESOURCE_IDS, // unmap from explicit groups
@@ -514,9 +530,13 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         // update the resource type of affected groups by calling setResouceType()
-        for (int groupId : groupIds) {
+        DatabaseType dbType = DatabaseTypeFactory.getDefaultDatabaseType();
+        Integer groupId = null;
+        for (int i = 0, size = rs.size(); i < size; ++i) {
             try {
+                groupId = dbType.getInteger(rs.get(i));
                 resourceGroupManager.setResourceType(groupId);
+
             } catch (ResourceGroupDeleteException rgde) {
                 log.warn("Unable to change resource type for group with id [" + groupId + "]", rgde);
             }
@@ -841,6 +861,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 ResourceCriteria criteria = new ResourceCriteria();
                 criteria.addFilterParentResourceId(ancestor.getResource().getId());
                 criteria.addSortName(PageOrdering.ASC);
+                criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
                 List<Resource> children = findResourcesByCriteriaBounded(subject, criteria, 0, 0);
                 // Remove any that are in the lineage to avoid repeated handling.
                 children.removeAll(rawResourceLineage);
@@ -889,6 +911,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         ResourceCriteria resourceCriteria = new ResourceCriteria();
         resourceCriteria.addFilterIds(resourceIds);
         resourceCriteria.fetchResourceType(true);
+        resourceCriteria.clearPaging();//disable paging as the code assumes all the results will be returned.
         List<Resource> resources = findResourcesByCriteria(subject, resourceCriteria);
 
         if (ResourceAncestryFormat.RAW == format) {

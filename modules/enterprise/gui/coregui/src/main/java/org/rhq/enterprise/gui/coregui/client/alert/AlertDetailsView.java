@@ -24,7 +24,6 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import java.util.logging.Logger;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.core.DataClass;
 import com.smartgwt.client.data.Record;
@@ -56,26 +55,25 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellForma
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Joseph Marques
  * @author Ian Springer
  */
-public class AlertDetailsView extends LocatableVLayout implements BookmarkableView {
+public class AlertDetailsView extends EnhancedVLayout implements BookmarkableView {
 
     private int alertId;
 
-    private static AlertDetailsView INSTANCE = new AlertDetailsView("alertDetailsView");
+    private static AlertDetailsView INSTANCE = new AlertDetailsView();
 
     public static AlertDetailsView getInstance() {
         return INSTANCE;
     }
 
-    private AlertDetailsView(String locatorId) {
+    private AlertDetailsView() {
         // access through the static singleton only
-        super(locatorId);
+        super();
     }
 
     private void show(int alertId) {
@@ -105,18 +103,15 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
     }
 
     private TabSet getDetailsTabSet(Record record) {
-        TabSet tabset = new NamedTabSet(extendLocatorId("detailsTabSet"));
+        TabSet tabset = new NamedTabSet();
 
-        Tab generalTab = new NamedTab(extendLocatorId("general"), new ViewName("general", MSG
-            .view_alert_common_tab_general()));
+        Tab generalTab = new NamedTab(new ViewName("general", MSG.view_alert_common_tab_general()));
         generalTab.setPane(getDetailsTableForAlert(record));
 
-        Tab conditionsTab = new NamedTab(extendLocatorId("conditions"), new ViewName("conditions", MSG
-            .view_alert_common_tab_conditions()));
+        Tab conditionsTab = new NamedTab(new ViewName("conditions", MSG.view_alert_common_tab_conditions()));
         conditionsTab.setPane(getConditionsForAlert(record));
 
-        Tab notificationsTab = new NamedTab(extendLocatorId("notifications"), new ViewName("notifications", MSG
-            .view_alert_common_tab_notifications()));
+        Tab notificationsTab = new NamedTab(new ViewName("notifications", MSG.view_alert_common_tab_notifications()));
         notificationsTab.setPane(getNotificationsForAlert(record));
 
         tabset.addTab(generalTab);
@@ -127,7 +122,7 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
     }
 
     private DynamicForm getDetailsTableForAlert(Record record) {
-        DynamicForm form = new LocatableDynamicForm(extendLocatorId("detailsForm"));
+        DynamicForm form = new DynamicForm();
         form.setNumCols(4);
         form.setHeight("15%");
         form.setWrapItemTitles(false);
@@ -183,12 +178,14 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
         StaticTextItem recoveryItem = new StaticTextItem("recovery", MSG.view_alert_details_field_recovery_info());
         recoveryItem.setValue(record.getAttribute("recoveryInfo"));
         items.add(recoveryItem);
-        
-        StaticTextItem resourceItem = new StaticTextItem("resourceName", MSG.view_alert_details_field_watched_resource());
+
+        StaticTextItem resourceItem = new StaticTextItem("resourceName",
+            MSG.view_alert_details_field_watched_resource());
         resourceItem.setValue(record.getAttribute("resourceName"));
         items.add(resourceItem);
-        
-        StaticTextItem resourceAncestryItem = new StaticTextItem("resourceAncestry", MSG.view_alert_details_field_resource_ancestry());
+
+        StaticTextItem resourceAncestryItem = new StaticTextItem("resourceAncestry",
+            MSG.view_alert_details_field_resource_ancestry());
         resourceAncestryItem.setValue(record.getAttribute("resourceAncestry"));
         items.add(resourceAncestryItem);
 
@@ -201,8 +198,8 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
     private class NotificationLogsTable extends Table {
         private final Record record;
 
-        public NotificationLogsTable(String locatorId, String tableTitle, Record record) {
-            super(locatorId, tableTitle, false);
+        public NotificationLogsTable(String tableTitle, Record record) {
+            super(tableTitle, false);
             this.record = record;
             setHeight("35%");
             setWidth100();
@@ -259,8 +256,7 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
 
     @SuppressWarnings("unchecked")
     private Table getNotificationsForAlert(Record record) {
-        Table notifTable = new NotificationLogsTable("AlertDetailsNotifications", MSG
-            .view_alert_common_tab_notifications(), record);
+        Table notifTable = new NotificationLogsTable(MSG.view_alert_common_tab_notifications(), record);
         return notifTable;
     }
 
@@ -268,8 +264,8 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
     private class ConditionLogsTable extends Table {
         private final Record record;
 
-        public ConditionLogsTable(String locatorId, String tableTitle, Record record) {
-            super(locatorId, tableTitle, false);
+        public ConditionLogsTable(String tableTitle, Record record) {
+            super(tableTitle, false);
             this.record = record;
             setHeight("35%");
             setWidth100();
@@ -292,8 +288,7 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
     @SuppressWarnings("unchecked")
     private Table getConditionsForAlert(Record record) {
         String mode = record.getAttribute("conditionExpression");
-        Table table = new ConditionLogsTable("AlertDetailsConditionLog", MSG.view_alert_common_tab_conditions()
-            + ": match = " + mode, record);
+        Table table = new ConditionLogsTable(MSG.view_alert_common_tab_conditions() + ": match = " + mode, record);
         return table;
     }
 

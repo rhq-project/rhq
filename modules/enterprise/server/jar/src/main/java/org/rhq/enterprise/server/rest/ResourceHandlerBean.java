@@ -31,6 +31,8 @@ import java.util.UUID;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.interceptor.Interceptors;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -88,7 +90,12 @@ import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceAlreadyExistsException;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
-import org.rhq.enterprise.server.rest.domain.*;
+import org.rhq.enterprise.server.rest.domain.AvailabilityRest;
+import org.rhq.enterprise.server.rest.domain.Link;
+import org.rhq.enterprise.server.rest.domain.MetricSchedule;
+import org.rhq.enterprise.server.rest.domain.ResourceWithChildren;
+import org.rhq.enterprise.server.rest.domain.ResourceWithType;
+import org.rhq.enterprise.server.rest.domain.StringValue;
 
 /**
  * Class that deals with getting data about resources
@@ -324,6 +331,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
         criteria.addFilterInterval(start,end);
         criteria.addFilterResourceId(resourceId);
         criteria.addSortStartTime(PageOrdering.DESC);
+
         List<Availability> points = availMgr.findAvailabilityByCriteria(caller,criteria);
         List<AvailabilityRest> ret = new ArrayList<AvailabilityRest>(points.size());
         for (Availability avail : points) {
@@ -356,6 +364,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
     @PUT
     @Path("/{id}/availability")
     @ApiOperation("Set the current availability of the passed resource")
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public void reportAvailability(@ApiParam("Id of the resource to update") @PathParam("id") int resourceId,
                 @ApiParam(value= "New Availability setting", required = true) AvailabilityRest avail) {
         if (avail.getResourceId() != resourceId)
@@ -368,11 +377,12 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
         // According to jshaughn, plaforms must not be set to DISABLED, so catch this case here.
         if (resource.getResourceType().getCategory()==ResourceCategory.PLATFORM && at==AvailabilityType.DISABLED) {
-            throw new BadArgumentException("Availabilty","Platforms must not be set to DISABLED");
+            throw new BadArgumentException("Availability","Platforms must not be set to DISABLED");
         }
 
+        Agent agent = agentMgr.getAgentByResourceId(caller,resourceId);
 
-        AvailabilityReport report = new AvailabilityReport(true, resource.getAgent().getName());
+        AvailabilityReport report = new AvailabilityReport(true, agent.getName());
         Availability availability = new Availability(resource, avail.getSince(), at);
         report.addAvailability(availability);
 
@@ -415,29 +425,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
                 || scheduleType.toLowerCase().equals(definition.getDataType().toString().toLowerCase())) {
                 if (!enabledOnly || (enabledOnly && schedule.isEnabled())) {
                     if (name == null || (name != null && name.equals(definition.getName()))) {
-                        MetricSchedule ms = new MetricSchedule(schedule.getId(), definition.getName(),
-                            definition.getDisplayName(), schedule.isEnabled(), schedule.getInterval(), definition
-                                .getUnits().toString(), definition.getDataType().toString());
-                        UriBuilder uriBuilder;
-                        URI uri;
-                        if (definition.getDataType() == DataType.MEASUREMENT) {
-                            uriBuilder = uriInfo.getBaseUriBuilder();
-                            uriBuilder.path("/metric/data/{id}");
-                            uri = uriBuilder.build(schedule.getId());
-                            Link metricLink = new Link("metric", uri.toString());
-                            ms.addLink(metricLink);
-                            uriBuilder = uriInfo.getBaseUriBuilder();
-                            uriBuilder.path("/metric/data/{id}/raw");
-                            uri = uriBuilder.build(schedule.getId());
-                            metricLink = new Link("metric-raw", uri.toString());
-                            ms.addLink(metricLink);
-                        }
-                        // create link to the resource
-                        uriBuilder = uriInfo.getBaseUriBuilder();
-                        uriBuilder.path("resource/" + schedule.getResource().getId());
-                        uri = uriBuilder.build();
-                        Link link = new Link("resource", uri.toString());
-                        ms.addLink(link);
+                        MetricSchedule ms = getMetricScheduleInternal(uriInfo, schedule, definition);
 
                         ret.add(ms);
                     }
@@ -517,6 +505,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
     public List<Link> getAlertsForResource(@ApiParam("Id of the resource to query") @PathParam("id") int resourceId) {
         AlertCriteria criteria = new AlertCriteria();
         criteria.addFilterResourceIds(resourceId);
+
         List<Alert> alerts = alertManager.findAlertsByCriteria(caller, criteria);
         List<Link> links = new ArrayList<Link>(alerts.size());
         for (Alert al : alerts) {
@@ -638,9 +627,9 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
     @POST
     @Path("/")
-    @ApiOperation("Create a new resource as a child of an existing resource¡")
+    @ApiOperation("Create a new resource as a child of an existing resource<A1>")
     public Response createResource(
-        @ApiParam("THe info about the resource. You need to supply resource name, resource type name, plugin name, id of the parent") ResourceWithType resource,
+        @ApiParam("The info about the resource. You need to supply resource name, resource type name, plugin name, id of the parent") ResourceWithType resource,
         @Context UriInfo uriInfo)
     {
         return createResourceInternal(resource.getResourceName(),resource.getPluginName(),resource.getParentId(),resource.getTypeName(),uriInfo);

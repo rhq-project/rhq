@@ -32,16 +32,16 @@ public class RecentAlertsPortlet extends AbstractRecentAlertsPortlet {
     // A default displayed, persisted name for the portlet    
     public static final String NAME = MSG.view_portlet_defaultName_recentAlerts();
 
-    public RecentAlertsPortlet(String locatorId) {
-        super(locatorId, EntityContext.forSubsystemView());
+    public RecentAlertsPortlet() {
+        super(EntityContext.forSubsystemView());
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
-            return new RecentAlertsPortlet(locatorId);
+            return new RecentAlertsPortlet();
         }
     }
 

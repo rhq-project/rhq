@@ -40,6 +40,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
@@ -50,7 +51,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configura
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**This portlet allows the end user to customize the Package History display
  *
@@ -68,21 +68,21 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
 
     private ResourceConfigurationHistoryCriteriaView resourceHistoryTable;
 
-    public ResourceConfigurationUpdatesPortlet(String locatorId, int resourceId) {
-        super(locatorId, null);
+    public ResourceConfigurationUpdatesPortlet(int resourceId) {
+        super(null);
         this.resourceId = resourceId;
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
             if (EntityContext.Type.Resource != context.getType()) {
                 throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
             }
 
-            return new ResourceConfigurationUpdatesPortlet(locatorId, context.getResourceId());
+            return new ResourceConfigurationUpdatesPortlet(context.getResourceId());
         }
     }
 
@@ -120,11 +120,11 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
                         criteria.addSortStatus(PageOrdering.DESC);
                         criteria.addFilterResourceIds(resourceId);
 
-                        resourceHistoryTable = new ResourceConfigurationHistoryCriteriaView(extendLocatorId("Table"),
-                            resourceComposite.getResourcePermission().isConfigureWrite(), resourceId);
+                        resourceHistoryTable = new ResourceConfigurationHistoryCriteriaView(resourceComposite
+                            .getResourcePermission().isConfigureWrite(), resourceId);
                     } else {
-                        resourceHistoryTable = new ResourceConfigurationHistoryCriteriaView(extendLocatorId("Table"),
-                            resourceComposite.getResourcePermission().isConfigureWrite(), -1);
+                        resourceHistoryTable = new ResourceConfigurationHistoryCriteriaView(resourceComposite
+                            .getResourcePermission().isConfigureWrite(), -1);
                     }
                     resourceHistoryTable.setDataSource(new ConfigurationUdpatesCriteriaDataSource(portletConfig));
                     resourceHistoryTable.setShowHeader(false);
@@ -143,8 +143,8 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
 
     class ResourceConfigurationHistoryCriteriaView extends ResourceConfigurationHistoryListView {
 
-        public ResourceConfigurationHistoryCriteriaView(String locatorId, boolean hasWritePerm, int resourceId) {
-            super(locatorId, hasWritePerm, resourceId);
+        public ResourceConfigurationHistoryCriteriaView(boolean hasWritePerm, int resourceId) {
+            super(hasWritePerm, resourceId);
         }
 
         @Override
@@ -166,7 +166,7 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
                 public String format(Object value, ListGridRecord record, int i, int i1) {
                     Integer recordId = getId(record);
                     String detailsUrl = "#" + getBasePath() + "/" + recordId;
-                    return SeleniumUtility.getLocatableHref(detailsUrl, value.toString(), null);
+                    return LinkManager.getHref(detailsUrl, value.toString());
                 }
             };
         }

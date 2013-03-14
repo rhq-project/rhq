@@ -48,6 +48,7 @@ import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.WidgetCanvas;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -63,14 +64,13 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWidgetCanvas;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class LiveGraphView extends LocatableVLayout {
+@Deprecated
+public class LiveGraphView extends EnhancedVLayout {
 
     private static final String INSTRUCTIONS = MSG.view_resource_monitor_graph_instructions();
 
@@ -87,12 +87,12 @@ public class LiveGraphView extends LocatableVLayout {
     @SuppressWarnings("unused")
     private long min, max;
 
-    public LiveGraphView(String locatorId) {
-        super(locatorId);
+    public LiveGraphView() {
+        super();
     }
 
-    public LiveGraphView(String locatorId, int resourceId, MeasurementDefinition def) {
-        super(locatorId);
+    public LiveGraphView(int resourceId, MeasurementDefinition def) {
+        super();
         this.resourceId = resourceId;
         this.definition = def;
         setHeight100();
@@ -206,7 +206,7 @@ public class LiveGraphView extends LocatableVLayout {
             addMember(title);
         }
 
-        addMember(new LocatableWidgetCanvas(this.getLocatorId(), plot));
+        addMember(new WidgetCanvas(plot));
     }
 
     private String getHover(PlotItem item) {
@@ -269,9 +269,9 @@ public class LiveGraphView extends LocatableVLayout {
 
     }
 
-    public static void displayAsDialog(String locatorId, int resourceId, MeasurementDefinition def) {
-        final LiveGraphView graph = new LiveGraphView(locatorId, resourceId, def);
-        final Window graphPopup = new LocatableWindow(locatorId);
+    public static void displayAsDialog(int resourceId, MeasurementDefinition def) {
+        final LiveGraphView graph = new LiveGraphView(resourceId, def);
+        final Window graphPopup = new Window();
         graphPopup.setTitle(MSG.view_resource_monitor_detailed_graph_label());
         graphPopup.setWidth(800);
         graphPopup.setHeight(400);

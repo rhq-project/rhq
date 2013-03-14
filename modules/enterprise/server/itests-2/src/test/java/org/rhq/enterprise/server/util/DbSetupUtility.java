@@ -79,7 +79,7 @@ public class DbSetupUtility {
         //       objects in the DB, which has no such requirement.
         String dbDriver = DatabaseFactory.getInstance().findDefaultDriver(testDs.connectionUrl);
         Database database = CommandLineUtils.createDatabaseObject(DbSetupUtility.class.getClassLoader(),
-            testDs.connectionUrl, testDs.userName, testDs.password, dbDriver, null, null, null, null);
+            testDs.connectionUrl, testDs.userName, testDs.password, dbDriver, null, null, null);
         //Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(
         //    new JdbcConnection(AbstractEJB3Test.getConnection()));
         Liquibase liquibase = new Liquibase(null, new ClassLoaderResourceAccessor(), database);

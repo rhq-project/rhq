@@ -46,5 +46,4 @@ public interface AlertDefinitionGWTService extends RemoteService {
     String[] getAllAlertSenders() throws RuntimeException;
 
     ConfigurationDefinition getConfigurationDefinitionForSender(String sender) throws RuntimeException;
-
 }

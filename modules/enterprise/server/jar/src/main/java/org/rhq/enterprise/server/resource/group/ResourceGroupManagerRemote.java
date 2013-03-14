@@ -35,6 +35,12 @@ public interface ResourceGroupManagerRemote {
 
     void addResourcesToGroup(Subject subject, int groupId, int[] resourceIds);
 
+    /**
+     * @param subject
+     * @param resourceGroup
+     * @return The new ResourceGroup
+     * @throws ResourceGroupAlreadyExistsException
+     */
     ResourceGroup createResourceGroup(Subject subject, ResourceGroup resourceGroup);
 
     void deleteResourceGroup(Subject subject, int groupId) throws ResourceGroupNotFoundException,

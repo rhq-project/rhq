@@ -27,6 +27,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
@@ -40,8 +41,6 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author Jay Shaughnessy
@@ -49,7 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
  */
 public class ResourceFactoryInfoStep extends AbstractWizardStep {
 
-    private LocatableDynamicForm form;
+    private DynamicForm form;
     private AbstractResourceFactoryWizard wizard;
     private Map<String, ConfigurationTemplate> templates;
     private String namePrompt;
@@ -76,14 +75,10 @@ public class ResourceFactoryInfoStep extends AbstractWizardStep {
         this.templates = templates;
     }
 
-    public Canvas getCanvas(Locatable parent) {
+    public Canvas getCanvas() {
         if (form == null) {
 
-            if (parent != null) {
-                form = new LocatableDynamicForm(parent.extendLocatorId("ResFactInfo"));
-            } else {
-                form = new LocatableDynamicForm("ResFactInfo");
-            }
+            form = new DynamicForm();
             form.setNumCols(1);
             List<FormItem> formItems = new ArrayList<FormItem>(2);
 

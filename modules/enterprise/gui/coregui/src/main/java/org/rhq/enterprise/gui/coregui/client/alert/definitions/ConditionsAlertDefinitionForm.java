@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
@@ -41,13 +42,12 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author John Mazzitelli
  */
-public class ConditionsAlertDefinitionForm extends LocatableVLayout implements EditAlertDefinitionForm {
+public class ConditionsAlertDefinitionForm extends EnhancedVLayout implements EditAlertDefinitionForm {
 
     private final ResourceType resourceType;
     private AlertDefinition alertDefinition;
@@ -60,12 +60,12 @@ public class ConditionsAlertDefinitionForm extends LocatableVLayout implements E
     private boolean formBuilt = false;
     private boolean updated;
 
-    public ConditionsAlertDefinitionForm(String locatorId, ResourceType resourceType) {
-        this(locatorId, resourceType, null);
+    public ConditionsAlertDefinitionForm(ResourceType resourceType) {
+        this(resourceType, null);
     }
 
-    public ConditionsAlertDefinitionForm(String locatorId, ResourceType resourceType, AlertDefinition alertDefinition) {
-        super(locatorId);
+    public ConditionsAlertDefinitionForm(ResourceType resourceType, AlertDefinition alertDefinition) {
+        super();
         this.resourceType = resourceType;
         this.alertDefinition = alertDefinition;
         this.updated = false;
@@ -86,10 +86,14 @@ public class ConditionsAlertDefinitionForm extends LocatableVLayout implements E
     public AlertDefinition getAlertDefinition() {
         return alertDefinition;
     }
-
+    
+    public Map<Integer, AlertCondition> getModifiedConditions() {
+        return conditionsEditor.getModifiedConditions();
+    }
+    
     @Override
     public boolean isResetMatching() {
-        return updated || conditionsEditor.isUpdated();
+        return updated || conditionsEditor.isUpdated() || conditionsEditor.isConditionInternallyUpdated();
     }
 
     @Override
@@ -157,10 +161,10 @@ public class ConditionsAlertDefinitionForm extends LocatableVLayout implements E
     private void buildForm() {
         if (!formBuilt) {
 
-            LocatableDynamicForm conditionExpressionForm;
-            conditionExpressionForm = new LocatableDynamicForm(this.extendLocatorId("conditionExpressionForm"));
-            conditionExpression = new SelectItem("conditionExpression", MSG
-                .view_alert_common_tab_conditions_expression());
+            DynamicForm conditionExpressionForm;
+            conditionExpressionForm = new DynamicForm();
+            conditionExpression = new SelectItem("conditionExpression",
+                MSG.view_alert_common_tab_conditions_expression());
             LinkedHashMap<String, String> condExprs = new LinkedHashMap<String, String>(2);
             condExprs.put(BooleanExpression.ANY.name(), BooleanExpression.ANY.toString());
             condExprs.put(BooleanExpression.ALL.name(), BooleanExpression.ALL.toString());
@@ -170,14 +174,13 @@ public class ConditionsAlertDefinitionForm extends LocatableVLayout implements E
             conditionExpression.setHoverWidth(300);
             conditionExpression.setTooltip(MSG.view_alert_common_tab_conditions_expression_tooltip());
 
-            conditionExpressionStatic = new StaticTextItem("conditionExpressionStatic", MSG
-                .view_alert_common_tab_conditions_expression());
+            conditionExpressionStatic = new StaticTextItem("conditionExpressionStatic",
+                MSG.view_alert_common_tab_conditions_expression());
             conditionExpressionStatic.setWrapTitle(false);
 
             conditionExpressionForm.setFields(conditionExpression, conditionExpressionStatic);
 
-            conditionsEditor = new ConditionsEditor(this.extendLocatorId("conditionsEditor"), conditionExpression,
-                resourceType, null);
+            conditionsEditor = new ConditionsEditor(conditionExpression, resourceType, null);
 
             conditionExpression.addChangeHandler(new ChangeHandler() {
                 @Override

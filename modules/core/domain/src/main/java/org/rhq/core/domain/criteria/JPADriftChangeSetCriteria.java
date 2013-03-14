@@ -43,7 +43,6 @@ import org.rhq.core.domain.util.PageOrdering;
 public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSetCriteria {
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
     private Integer filterInitial; // needs override
     private Integer filterResourceId; // needs override
     private Integer filterDriftDefinitionId; // needs override
@@ -91,12 +90,12 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
             + "         WHERE drift.path like ? )"); // note, this uses 'like' on purpose, it is always substring
 
         if (null != changeSetCriteria) {
+            this.addFilterId(changeSetCriteria.getFilterId());
             this.addFilterCategory(changeSetCriteria.getFilterCategory());
             this.addFilterCreatedAfter(changeSetCriteria.getFilterCreatedAfter());
             this.addFilterCreatedBefore(changeSetCriteria.getFilterCreatedBefore());
             this.addFilterDriftDefinitionId(changeSetCriteria.getFilterDriftDefinitionId());
             this.addFilterEndVersion(changeSetCriteria.getFilterEndVersion());
-            this.addFilterId(changeSetCriteria.getFilterId());
             this.addFilterResourceId(changeSetCriteria.getFilterResourceId());
             this.addFilterStartVersion(changeSetCriteria.getFilterStartVersion());
             this.addFilterVersion(changeSetCriteria.getFilterVersion());
@@ -115,18 +114,6 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
     @Override
     public Class<JPADriftChangeSet> getPersistentClass() {
         return JPADriftChangeSet.class;
-    }
-
-    @Override
-    public void addFilterId(String filterId) {
-        if (filterId != null) {
-            this.filterId = Integer.parseInt(filterId);
-        }
-    }
-
-    @Override
-    public String getFilterId() {
-        return filterId == null ? null : filterId.toString();
     }
 
     public void addFilterVersion(Integer filterVersion) {
@@ -293,4 +280,25 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
     public PageOrdering getSortVersion() {
         return sortVersion;
     }
+
+    @Override
+    public void addFilterId(String filterId) {
+        this.filterId = (filterId == null) ? null : Integer.parseInt(filterId);
+    }
+
+    @Override
+    public String getFilterId() {
+        return (filterId == null) ? null : filterId.toString();
+    }
+
+    @Override
+    public void addSortId(PageOrdering pageOrdering) {
+        throw new UnsupportedOperationException("The sort is not supported by DriftChangeSetCriteria.");
+    }
+
+    @Override
+    public void addFilterIds(Integer... filterIds) {
+        throw new UnsupportedOperationException("The filter is not supported by DriftChangeSetCriteria.");
+    }
+
 }

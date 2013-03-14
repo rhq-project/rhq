@@ -38,25 +38,24 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Joseph Marques
  */
-public class EventCompositeDetailsView extends LocatableVLayout implements BookmarkableView {
+public class EventCompositeDetailsView extends EnhancedVLayout implements BookmarkableView {
 
     private int eventId;
 
-    private static EventCompositeDetailsView INSTANCE = new EventCompositeDetailsView("eventCompositeDetailsView");
+    private static EventCompositeDetailsView INSTANCE = new EventCompositeDetailsView();
 
     public static EventCompositeDetailsView getInstance() {
         return INSTANCE;
     }
 
-    private EventCompositeDetailsView(String id) {
+    private EventCompositeDetailsView() {
         // access through the static singleton only
-        super(id);
+        super();
     }
 
     private void show(int eventId) {
@@ -82,7 +81,7 @@ public class EventCompositeDetailsView extends LocatableVLayout implements Bookm
             removeChild(child);
         }
 
-        DynamicForm form = new LocatableDynamicForm(extendLocatorId("form"));
+        DynamicForm form = new DynamicForm();
         form.setWidth100();
         form.setHeight100();
         form.setWrapItemTitles(false);

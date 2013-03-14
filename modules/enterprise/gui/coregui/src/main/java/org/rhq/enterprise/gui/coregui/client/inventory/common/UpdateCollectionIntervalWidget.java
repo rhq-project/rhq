@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common;
 import java.util.LinkedHashMap;
 
 import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.widgets.Button;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -32,9 +33,7 @@ import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import com.smartgwt.client.widgets.grid.ListGrid;
 
 import org.rhq.enterprise.gui.coregui.client.components.table.TableWidget;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
 
 /**
  * Widget for updating the collection intervals for the selected metrics. It displays two form fields for
@@ -43,7 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
  *
  * @author Ian Springer
  */
-public class UpdateCollectionIntervalWidget extends LocatableHLayout implements TableWidget {
+public class UpdateCollectionIntervalWidget extends EnhancedHLayout implements TableWidget {
 
     private static final String ITEM_INTERVAL = "interval";
     private static final String ITEM_UNITS = "units";
@@ -62,10 +61,10 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
 
     private AbstractSchedulesView schedulesView;
     private DynamicForm form;
-    private LocatableButton setButton;
+    private Button setButton;
 
-    public UpdateCollectionIntervalWidget(String locatorId, AbstractSchedulesView schedulesView) {
-        super(locatorId);
+    public UpdateCollectionIntervalWidget(AbstractSchedulesView schedulesView) {
+        super();
         this.schedulesView = schedulesView;
     }
 
@@ -73,7 +72,7 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
     protected void onDraw() {
         super.onDraw();
 
-        this.form = new LocatableDynamicForm(this.getLocatorId());
+        this.form = new DynamicForm();
         this.form.setNumCols(3);
 
         final IntegerItem intervalItem = new IntegerItem();
@@ -118,7 +117,7 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
         this.form.setFields(intervalItem, unitsItem);
         addMember(this.form);
 
-        this.setButton = new LocatableButton(this.extendLocatorId("Set"), MSG.common_button_set());
+        this.setButton = new Button(MSG.common_button_set());
         this.setButton.setDisabled(true);
         this.setButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {

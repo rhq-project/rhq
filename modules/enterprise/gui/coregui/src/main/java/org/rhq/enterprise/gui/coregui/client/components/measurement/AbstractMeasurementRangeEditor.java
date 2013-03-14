@@ -28,6 +28,7 @@ import java.util.Map;
 
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.DateDisplayFormat;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.DateTimeItem;
@@ -41,17 +42,19 @@ import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.grid.ListGrid;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableWidget;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author Simeon Pinder
  * @author Greg Hinkle
  */
-public abstract class AbstractMeasurementRangeEditor extends LocatableDynamicForm implements TableWidget {
+public abstract class AbstractMeasurementRangeEditor extends DynamicForm implements TableWidget {
+
+    protected Messages MSG = CoreGUI.getMessages();
 
     //keyed map of translated date units Ex. minutes,hours,days
     protected static LinkedHashMap<String, String> lastUnits;
@@ -80,6 +83,8 @@ public abstract class AbstractMeasurementRangeEditor extends LocatableDynamicFor
     public static String SET_ITEM = "set";
 
     static {
+        Messages MSG = CoreGUI.getMessages();
+
         lastUnits = new LinkedHashMap<String, String>(3);
         lastUnits.put(String.valueOf(MeasurementUtility.UNIT_MINUTES), MSG.common_unit_minutes());
         lastUnits.put(String.valueOf(MeasurementUtility.UNIT_HOURS), MSG.common_unit_hours());
@@ -88,8 +93,8 @@ public abstract class AbstractMeasurementRangeEditor extends LocatableDynamicFor
         lastValues = new String[] { "4", "8", "12", "24", "30", "36", "48", "60", "90", "120" };
     }
 
-    public AbstractMeasurementRangeEditor(String locatorId) {
-        super(locatorId);
+    public AbstractMeasurementRangeEditor() {
+        super();
         setNumCols(10);
         setWrapItemTitles(false);
         setAlign(Alignment.LEFT);
@@ -167,10 +172,14 @@ public abstract class AbstractMeasurementRangeEditor extends LocatableDynamicFor
                         if (validate()) {
                             prefs.begin = advancedStartItem.getValueAsDate().getTime();
                             prefs.end = advancedEndItem.getValueAsDate().getTime();
-                            setMetricRangeProperties(prefs);
+                            if (null != prefs.begin && null != prefs.end && prefs.begin > prefs.end) {
+                                CoreGUI.getMessageCenter().notify(new Message(MSG.view_measureTable_startBeforeEnd()));
+                            } else {
+                                setMetricRangeProperties(prefs);
+                            }
                         }
                     } catch (Exception ex) {
-                        // some of the digints are not filled correctly
+                        // some of the digits are not filled correctly
                         Map<String, String> errors = new HashMap<String, String>();
                         errors.put(ADVANCED_END_ITEM, "MM/DD/YYYY HH:MM");
                         errors.put(ADVANCED_START_ITEM, "MM/DD/YYYY HH:MM");
@@ -248,16 +257,16 @@ public abstract class AbstractMeasurementRangeEditor extends LocatableDynamicFor
     protected void update() {
         if (advanced) {
             advancedSimpleButton.setTitle(MSG.view_measureRange_simple());
-            showItem("start");
-            showItem("end");
-            hideItem("lastValues");
-            hideItem("lastUnits");
+            showItem(ADVANCED_END_ITEM);
+            showItem(ADVANCED_END_ITEM);
+            hideItem(SIMPLE_VALUE_ITEM);
+            hideItem(SIMPLE_UNIT_ITEM);
         } else {
             advancedSimpleButton.setTitle(MSG.common_button_advanced());
-            hideItem("start");
-            hideItem("end");
-            showItem("lastValues");
-            showItem("lastUnits");
+            hideItem(ADVANCED_START_ITEM);
+            hideItem(ADVANCED_END_ITEM);
+            showItem(SIMPLE_VALUE_ITEM);
+            showItem(SIMPLE_UNIT_ITEM);
         }
 
         // populate the fields - first with defaults in case we have no prefs, then with the appropriate prefs
@@ -327,6 +336,14 @@ public abstract class AbstractMeasurementRangeEditor extends LocatableDynamicFor
             return (explicitBeginEnd) ? "[begin=" + begin + end + ",end=" + end + "]" : "[lastN=" + lastN + ",unit="
                 + unit + "]";
         }
+    }
+
+    /**
+     * Returns the SetButton so you can set a click handler from a dialog box
+     * @return ButtonItem setButton
+     */
+    public ButtonItem getSetButton() {
+        return setButton;
     }
 
     public boolean isDisplaySetButton() {

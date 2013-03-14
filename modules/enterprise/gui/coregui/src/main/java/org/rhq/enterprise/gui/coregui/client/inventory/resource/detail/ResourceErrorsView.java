@@ -18,9 +18,16 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
+import java.util.Set;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.types.*;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.AutoFitWidthApproach;
+import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.types.SelectionStyle;
+import com.smartgwt.client.widgets.HTMLPane;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
@@ -32,6 +39,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
+
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -43,10 +51,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceErrorsDataSource.Field;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
-
-import java.util.Set;
 
 public class ResourceErrorsView extends Table<ResourceErrorsDataSource> {
 
@@ -54,8 +58,8 @@ public class ResourceErrorsView extends Table<ResourceErrorsDataSource> {
 
     private ResourceTitleBar titleBar;
 
-    public ResourceErrorsView(String locatorId, Criteria criteria, ResourceTitleBar titleBar) {
-        super(locatorId, MSG.common_title_component_errors(), criteria);
+    public ResourceErrorsView(Criteria criteria, ResourceTitleBar titleBar) {
+        super(MSG.common_title_component_errors(), criteria);
 
         this.titleBar = titleBar;
 
@@ -71,14 +75,14 @@ public class ResourceErrorsView extends Table<ResourceErrorsDataSource> {
 
     @Override
     protected void configureTable() {
-        ListGridField errorTypeField = new ListGridField(Field.ERROR_TYPE, MSG
-            .dataSource_resourceErrors_field_errorType());
+        ListGridField errorTypeField = new ListGridField(Field.ERROR_TYPE,
+            MSG.dataSource_resourceErrors_field_errorType());
         errorTypeField.setAlign(Alignment.CENTER);
         errorTypeField.setAutoFitWidth(true);
         errorTypeField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
 
-        ListGridField timeField = new ListGridField(Field.TIME_OCCURED, MSG
-            .dataSource_resourceErrors_field_timeOccured());
+        ListGridField timeField = new ListGridField(Field.TIME_OCCURED,
+            MSG.dataSource_resourceErrors_field_timeOccured());
         timeField.setType(ListGridFieldType.DATE);
         timeField.setAlign(Alignment.CENTER);
         timeField.setWidth("20%");
@@ -134,34 +138,32 @@ public class ResourceErrorsView extends Table<ResourceErrorsDataSource> {
         ResourceComposite resourceComposite = titleBar.getResource();
         Set<Permission> resourcePermissions = resourceComposite.getResourcePermission().getPermissions();
         final boolean canModifyResource = resourcePermissions.contains(Permission.MODIFY_RESOURCE);
-        addTableAction(extendLocatorId("delete"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
-            new AbstractTableAction(canModifyResource ? TableActionEnablement.ANY : TableActionEnablement.NEVER) {
-                public void executeAction(final ListGridRecord[] selection, Object actionValue) {
-                    if (selection == null || selection.length == 0) {
-                        return;
-                    }
-                    int[] resourceErrorIds = new int[selection.length];
-                    int i = 0;
-                    for (ListGridRecord record : selection) {
-                        resourceErrorIds[i++] = record.getAttributeAsInt(Field.ID);
-                    }
-
-                    GWTServiceLookup.getResourceService().deleteResourceErrors(resourceErrorIds,
-                        new AsyncCallback<Void>() {
-                            public void onSuccess(Void result) {
-                                Message msg = new Message(MSG.dataSource_resourceErrors_deleteSuccess(String
-                                    .valueOf(selection.length)), Severity.Info);
-                                CoreGUI.getMessageCenter().notify(msg);
-                                refresh();
-                            }
-
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(MSG.dataSource_resourceErrors_deleteFailure(),
-                                    caught);
-                            }
-                        });
+        addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(), new AbstractTableAction(
+            canModifyResource ? TableActionEnablement.ANY : TableActionEnablement.NEVER) {
+            public void executeAction(final ListGridRecord[] selection, Object actionValue) {
+                if (selection == null || selection.length == 0) {
+                    return;
                 }
-            });
+                int[] resourceErrorIds = new int[selection.length];
+                int i = 0;
+                for (ListGridRecord record : selection) {
+                    resourceErrorIds[i++] = record.getAttributeAsInt(Field.ID);
+                }
+
+                GWTServiceLookup.getResourceService().deleteResourceErrors(resourceErrorIds, new AsyncCallback<Void>() {
+                    public void onSuccess(Void result) {
+                        Message msg = new Message(MSG.dataSource_resourceErrors_deleteSuccess(String
+                            .valueOf(selection.length)), Severity.Info);
+                        CoreGUI.getMessageCenter().notify(msg);
+                        refresh();
+                    }
+
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(MSG.dataSource_resourceErrors_deleteFailure(), caught);
+                    }
+                });
+            }
+        });
     }
 
     @Override
@@ -171,7 +173,7 @@ public class ResourceErrorsView extends Table<ResourceErrorsDataSource> {
     }
 
     private void popupDetails(String details) {
-        final Window winModal = new LocatableWindow(extendLocatorId("errorDetailsWin"));
+        final Window winModal = new Window();
         winModal.setTitle(MSG.common_title_component_errors());
         winModal.setOverflow(Overflow.VISIBLE);
         winModal.setShowMinimizeButton(false);
@@ -190,7 +192,7 @@ public class ResourceErrorsView extends Table<ResourceErrorsDataSource> {
             }
         });
 
-        LocatableHTMLPane htmlPane = new LocatableHTMLPane(extendLocatorId("errorDetailsPane"));
+        HTMLPane htmlPane = new HTMLPane();
         htmlPane.setMargin(10);
         htmlPane.setDefaultWidth(700);
         htmlPane.setDefaultHeight(500);

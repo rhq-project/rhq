@@ -41,8 +41,8 @@ public class TemplateSchedulesView extends AbstractSchedulesView {
     private boolean updateExistingSchedules = true;
     private String typeId;
 
-    public TemplateSchedulesView(String locatorId, ResourceType type, Set<Permission> globalPermissions) {
-        super(locatorId, getTitle(type), EntityContext.forTemplate(type.getId()), globalPermissions
+    public TemplateSchedulesView(ResourceType type, Set<Permission> globalPermissions) {
+        super(getTitle(type), EntityContext.forTemplate(type.getId()), globalPermissions
             .contains(Permission.MANAGE_INVENTORY));
 
         this.typeId = String.valueOf(type.getId());

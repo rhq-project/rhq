@@ -80,7 +80,6 @@ public interface DiscoveryServerService {
      *         in sync. <code>true</code> should always be returned if the given availability report is already a full
      *         report.
      */
-    // GH: Disabled temporarily (JBNADM-2385) @Asynchronous( guaranteedDelivery = true )
     @LimitedConcurrency(CONCURRENCY_LIMIT_AVAILABILITY_REPORT)
     boolean mergeAvailabilityReport(AvailabilityReport availabilityReport);
 

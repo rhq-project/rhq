@@ -29,15 +29,14 @@ import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Jay Shaughnessy
  */
 public class DriftAddDefinitionWizardConfigStep extends AbstractWizardStep {
 
-    private LocatableVLayout vLayout;
+    private EnhancedVLayout vLayout;
     private ConfigurationEditor editor;
     AbstractDriftAddDefinitionWizard wizard;
     private Configuration startingConfig;
@@ -46,20 +45,19 @@ public class DriftAddDefinitionWizardConfigStep extends AbstractWizardStep {
         this.wizard = wizard;
     }
 
-    public Canvas getCanvas(Locatable parent) {
+    public Canvas getCanvas() {
         // This VLayout allows us to set overflow on it and be able to scroll the config editor but always
         // be able to see the wizard's next/cancel buttons. This vlayout also provides for easier expansion if we add more items.
         if (vLayout == null || !wizard.getNewStartingConfiguration().equals(startingConfig)) {
 
-            String locatorId = (null == parent) ? "DriftDefConfig" : parent.extendLocatorId("DriftDefConfig");
-            vLayout = new LocatableVLayout(locatorId);
+            vLayout = new EnhancedVLayout();
 
             vLayout.setOverflow(Overflow.AUTO);
 
             // keep a reference to the startingConfig in case the user navs back and changes it
             startingConfig = wizard.getNewStartingConfiguration();
             ConfigurationDefinition def = getDriftConfigDef();
-            editor = new ConfigurationEditor(vLayout.extendLocatorId("Editor"), def, startingConfig);
+            editor = new ConfigurationEditor(def, startingConfig);
             vLayout.addMember(editor);
         }
 

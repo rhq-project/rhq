@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- *  Copyright (C) 2005-2012 Red Hat, Inc.
+ *  Copyright (C) 2005-2013 Red Hat, Inc.
  *  All rights reserved.
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,7 @@ import com.jayway.restassured.response.Response;
 import org.junit.Before;
 import org.junit.Test;
 
+import org.rhq.modules.integrationTests.restApi.d.Link;
 import org.rhq.modules.integrationTests.restApi.d.Operation;
 
 import static com.jayway.restassured.RestAssured.expect;
@@ -43,14 +44,14 @@ public class OperationsTest extends AbstractBase {
 
     private int definitionId;
 
-    @Override
     @Before
     public void setUp() throws Exception {
-        super.setUp();    // Junit does not call that for us
+        super.setUp();
+
         Response r =
         given()
             .header(acceptJson)
-            .queryParam("resourceId",10001)
+            .queryParam("resourceId",_platformId)
         .expect()
             .statusCode(200)
             .log().ifError()
@@ -90,7 +91,7 @@ public class OperationsTest extends AbstractBase {
         given()
             .header(acceptJson)
             .pathParam("definitionId",definitionId)
-            .queryParam("resourceId",10001)
+            .queryParam("resourceId",_platformId)
         .expect()
             .statusCode(200)
             .log().ifError()
@@ -118,7 +119,7 @@ public class OperationsTest extends AbstractBase {
         given()
             .header(acceptJson)
             .pathParam("definitionId",definitionId)
-            .queryParam("resourceId",10001)
+            .queryParam("resourceId",_platformId)
         .expect()
             .statusCode(200)
             .log().ifError()
@@ -156,11 +157,13 @@ public class OperationsTest extends AbstractBase {
     @Test
     public void testCreateDraftOperationAndScheduleExecution() throws Exception {
 
+        int platformId = findIdOfARealPlatform();
+
         Operation draft =
         given()
             .header(acceptJson)
             .pathParam("definitionId",definitionId)
-            .queryParam("resourceId",10001)
+            .queryParam("resourceId",platformId)
         .expect()
             .statusCode(200)
             .log().ifError()
@@ -174,7 +177,7 @@ public class OperationsTest extends AbstractBase {
         int draftId = draft.getId();
 
         draft.setReadyToSubmit(true);
-        draft.getParams().put("detailed", true);
+        draft.getParams().put("detailedDiscovery", false);
 
         // update to schedule
         Operation scheduled =
@@ -184,17 +187,17 @@ public class OperationsTest extends AbstractBase {
             .body(draft)
         .expect()
             .statusCode(200)
-            .log().everything()
+            .log().ifError()
         .when()
             .put("/operation/{id}")
         .as(Operation.class);
 
         System.out.println(scheduled.getId());
         String history = null;
-        List<Map<String,Object>> links = scheduled.getLinks();
-        for (Map<String,Object> link : links) {
-            if (link.get("rel").equals("history"))
-                history = (String) link.get("href");
+        List<Link> links = scheduled.getLinks();
+        for (Link link : links) {
+            if (link.getRel().equals("history"))
+                history = (String) link.getHref();
         }
         assert history != null;
 
@@ -206,14 +209,14 @@ public class OperationsTest extends AbstractBase {
                 .pathParam("hid",historyId)
             .expect()
                 .statusCode(200)
-                .log().everything()
+                .log().ifError()
             .when()
                 .get("/operation/history/{hid}");
 
             // See if we also find it when we are looking for histories on the resource
             Response response =
             given()
-                .queryParam("resourceId",10001)
+                .queryParam("resourceId",platformId)
                 .header(acceptJson)
             .expect()
                 .statusCode(200)
@@ -257,8 +260,6 @@ public class OperationsTest extends AbstractBase {
                 assert count < 10 :"Waited for 20sec -- something is wrong";
             }
 
-
-
             // Delete the history item
             given()
                 .pathParam("hid",historyId)
@@ -269,7 +270,6 @@ public class OperationsTest extends AbstractBase {
                 .delete("/operation/history/{hid}");
 
         }
-
     }
 
 }

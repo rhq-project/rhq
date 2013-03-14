@@ -63,8 +63,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A list view that displays a paginated table of {@link org.rhq.core.domain.drift.DriftDefinitionTemplate}s. It 
@@ -98,13 +96,12 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
     }
 
     // for subsystem views
-    public DriftDefinitionTemplatesView(String locatorId, ResourceType type, boolean hasWriteAccess) {
-        this(locatorId, getTitle(type), type, hasWriteAccess);
+    public DriftDefinitionTemplatesView(ResourceType type, boolean hasWriteAccess) {
+        this(getTitle(type), type, hasWriteAccess);
     }
 
-    protected DriftDefinitionTemplatesView(String locatorId, String tableTitle, ResourceType type,
-        boolean hasWriteAccess) {
-        super(locatorId, tableTitle, null, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
+    protected DriftDefinitionTemplatesView(String tableTitle, ResourceType type, boolean hasWriteAccess) {
+        super(tableTitle, null, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
 
         this.type = type;
         this.hasWriteAccess = hasWriteAccess;
@@ -121,8 +118,8 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
     }
 
     @Override
-    protected LocatableListGrid createListGrid(String locatorId) {
-        return new DriftDefinitionTemplatesListGrid(locatorId);
+    protected ListGrid createListGrid() {
+        return new DriftDefinitionTemplatesListGrid();
     }
 
     public static String getTitle(ResourceType type) {
@@ -150,36 +147,36 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
         TableActionEnablement deleteEnablement = hasWriteAccess ? TableActionEnablement.ANY
             : TableActionEnablement.NEVER;
 
-        addTableAction("New", MSG.common_button_new(), new AbstractTableAction(addEnablement) {
+        addTableAction(MSG.common_button_new(), new AbstractTableAction(addEnablement) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 add();
             }
         });
 
-        addTableAction("Delete", MSG.common_button_delete(), MSG.view_drift_confirm_deleteTemplate(),
-            new AbstractTableAction(deleteEnablement) {
+        addTableAction(MSG.common_button_delete(), MSG.view_drift_confirm_deleteTemplate(), new AbstractTableAction(
+            deleteEnablement) {
 
-                boolean result = false;
+            boolean result = false;
 
-                @Override
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    if (super.isEnabled(selection)) {
-                        for (ListGridRecord record : selection) {
-                            if (!record.getAttributeAsBoolean(DriftDefinitionTemplateDataSource.ATTR_IS_USER_DEFINED)
-                                .booleanValue()) {
-                                return false;
-                            }
+            @Override
+            public boolean isEnabled(ListGridRecord[] selection) {
+                if (super.isEnabled(selection)) {
+                    for (ListGridRecord record : selection) {
+                        if (!record.getAttributeAsBoolean(DriftDefinitionTemplateDataSource.ATTR_IS_USER_DEFINED)
+                            .booleanValue()) {
+                            return false;
                         }
-                        result = true;
                     }
-
-                    return result;
+                    result = true;
                 }
 
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    delete(selection);
-                }
-            });
+                return result;
+            }
+
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                delete(selection);
+            }
+        });
     }
 
     private void add() {
@@ -232,21 +229,21 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
     public Canvas getDetailsView(Integer driftTemplateId) {
         if (this.useSnapshotDetailsView) {
             if (null == snapshotDriftDetailsId) {
-                return new DriftDefinitionTemplateSnapshotView(extendLocatorId("TemplateSnapshot"), driftTemplateId);
+                return new DriftDefinitionTemplateSnapshotView(driftTemplateId);
             }
-            return new DriftDetailsView(extendLocatorId("TemplateSnapshotDrift"), snapshotDriftDetailsId);
+            return new DriftDetailsView(snapshotDriftDetailsId);
         }
 
-        return new DriftDefinitionTemplateEditView(extendLocatorId("TemplateEdit"), driftTemplateId, hasWriteAccess);
+        return new DriftDefinitionTemplateEditView(driftTemplateId, hasWriteAccess);
     }
 
     /**
      * The expandable list grid     
      */
-    private class DriftDefinitionTemplatesListGrid extends LocatableListGrid {
+    private class DriftDefinitionTemplatesListGrid extends ListGrid {
 
-        public DriftDefinitionTemplatesListGrid(String locatorId) {
-            super(locatorId);
+        public DriftDefinitionTemplatesListGrid() {
+            super();
 
             setCanExpandRecords(true);
             setCanExpandMultipleRecords(true);
@@ -258,7 +255,7 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
             int templateId = record.getAttributeAsInt(DriftDefinitionTemplateDataSource.ATTR_ID);
             String templateName = record.getAttribute(DriftDefinitionTemplateDataSource.ATTR_NAME);
 
-            return new TemplateDefinitionsView(extendLocatorId(templateName), templateId);
+            return new TemplateDefinitionsView(templateId);
         }
     }
 
@@ -269,8 +266,8 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
         private int templateId;
         private TemplateDefinitionsDataSource dataSource;
 
-        public TemplateDefinitionsView(String locatorId, int templateId) {
-            super(locatorId, null, true);
+        public TemplateDefinitionsView(int templateId) {
+            super(null, true);
 
             this.templateId = templateId;
 
@@ -306,8 +303,8 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
         }
 
         @Override
-        protected LocatableListGrid createListGrid(String locatorId) {
-            return new TemplateDefinitionsListGrid(locatorId);
+        protected ListGrid createListGrid() {
+            return new TemplateDefinitionsListGrid();
         }
 
         @Override
@@ -319,10 +316,10 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
         /**
          * The definitions list grid     
          */
-        private class TemplateDefinitionsListGrid extends LocatableListGrid {
+        private class TemplateDefinitionsListGrid extends ListGrid {
 
-            public TemplateDefinitionsListGrid(String locatorId) {
-                super(locatorId);
+            public TemplateDefinitionsListGrid() {
+                super();
             }
         }
 
@@ -342,7 +339,7 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
                         Integer resourceId = listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
                         Integer driftDefId = listGridRecord.getAttributeAsInt("id");
                         String url = LinkManager.getDriftDefinitionCarouselLink(resourceId, driftDefId);
-                        return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                        return LinkManager.getHref(url, o.toString());
                     }
                 });
                 fields.add(nameField);
@@ -389,7 +386,7 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
                     public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                         Integer resourceId = listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
                         String url = LinkManager.getResourceLink(resourceId);
-                        return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                        return LinkManager.getHref(url, o.toString());
                     }
                 });
                 resourceNameField.setShowHover(true);

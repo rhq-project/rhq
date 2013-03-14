@@ -169,8 +169,9 @@ public class CoreServerServiceImpl implements CoreServerService {
                         + request.getPort()
                         + "] that is already registered under a different name ["
                         + agentByAddressPort.getName()
-                        + "]; if this new agent is actually the same as the original, then re-register with the same name"
-                        + " and same security token.";
+                        + "]. If this new agent is actually the same as the original, then re-register with the same name"
+                        + " and same security token. Otherwise, you should uninventory the Platform resource for agent ["
+                        + agentByAddressPort.getName() + "] and re-register this new agent.";
                     throw new AgentRegistrationException(msg);
                 } else {
                     String msg = "The agent [" + request.getName()
@@ -320,6 +321,7 @@ public class CoreServerServiceImpl implements CoreServerService {
 
         Server server = getServerManager().getServer();
         agent.setServer(server);
+        agent.setLastAvailabilityPing(Long.valueOf(System.currentTimeMillis()));
         getAgentManager().updateAgent(agent);
 
         getAlertConditionCacheManager().reloadCachesForAgent(agent.getId());
@@ -328,7 +330,7 @@ public class CoreServerServiceImpl implements CoreServerService {
             PartitionEventType.AGENT_CONNECT, agentName + " - " + server.getName());
 
         log.info("Agent [" + agentName + "] has connected to this server at " + new Date());
-        return new ConnectAgentResults(System.currentTimeMillis());
+        return new ConnectAgentResults(System.currentTimeMillis(), agent.isBackFilled());
     }
 
     /**

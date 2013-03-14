@@ -64,7 +64,6 @@ import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * The GWT {@link EntryPoint entry point} to the RHQ GUI.
@@ -124,16 +123,12 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
     private int rpcTimeout;
     private ProductInfo productInfo;
 
+    @Override
     public void onModuleLoad() {
         String hostPageBaseURL = GWT.getHostPageBaseURL();
-        if (hostPageBaseURL.indexOf("/coregui/") == -1) {
+        if (!hostPageBaseURL.contains("/coregui/")) {
             Log.info("Suppressing load of CoreGUI module");
             return; // suppress loading this module if not using the new GWT app
-        }
-
-        String enableLocators = Location.getParameter("enableLocators");
-        if ((null != enableLocators) && Boolean.parseBoolean(enableLocators)) {
-            SeleniumUtility.setUseDefaultIds(false);
         }
 
         rpcTimeout = -1;
@@ -187,6 +182,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         return rpcTimeout;
     }
 
+    @Override
     public void onPreviewNativeEvent(Event.NativePreviewEvent event) {
         if (SC.isIE() && event.getTypeInt() == Event.ONCLICK) {
             NativeEvent nativeEvent = event.getNativeEvent();
@@ -286,11 +282,13 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
     public void init() {
         if (productInfo == null) {
             GWTServiceLookup.getSystemService().getProductInfo(new AsyncCallback<ProductInfo>() {
+                @Override
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_aboutBox_failedToLoad(), caught);
                     buildCoreUI();
                 }
 
+                @Override
                 public void onSuccess(ProductInfo result) {
                     productInfo = result;
                     Window.setTitle(productInfo.getName());
@@ -309,7 +307,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
     public void buildCoreUI() {
         // If the core gui is already built (eg. from previous login) skip the build and just refire event
         if (rootCanvas == null) {
-            menuBarView = new MenuBarView("TopMenu");
+            menuBarView = new MenuBarView();
             menuBarView.setWidth("100%");
             footer = new Footer();
 
@@ -350,6 +348,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         }
     }
 
+    @Override
     public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
         currentView = URL.decodeQueryString(stringValueChangeEvent.getValue());
         Log.debug("Handling history event for view: " + currentView);
@@ -367,17 +366,17 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         Canvas canvas;
 
         if (viewName.equals(DashboardsView.VIEW_ID.getName())) {
-            canvas = new DashboardsView(viewName);
+            canvas = new DashboardsView();
         } else if (viewName.equals(InventoryView.VIEW_ID.getName())) {
             canvas = new InventoryView();
         } else if (viewName.equals(ResourceTopView.VIEW_ID.getName())) {
-            canvas = new ResourceTopView(viewName);
+            canvas = new ResourceTopView();
         } else if (viewName.equals(ResourceGroupTopView.VIEW_ID.getName())) {
-            canvas = new ResourceGroupTopView(viewName);
+            canvas = new ResourceGroupTopView();
         } else if (viewName.equals(ReportTopView.VIEW_ID.getName())) {
             canvas = new ReportTopView();
         } else if (viewName.equals(BundleTopView.VIEW_ID.getName())) {
-            canvas = new BundleTopView(viewName);
+            canvas = new BundleTopView();
         } else if (viewName.equals(AdministrationView.VIEW_ID.getName())) {
             canvas = new AdministrationView();
         } else if (viewName.equals(HelpView.VIEW_ID.getName())) {
@@ -386,13 +385,13 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
             UserSessionManager.logout();
             rootCanvas.hide();
 
-            LoginView logoutView = new LoginView("Login");
+            LoginView logoutView = new LoginView();
             canvas = logoutView;
             logoutView.showLoginDialog();
         } else if (viewName.equals(TaggedView.VIEW_ID.getName())) {
-            canvas = new TaggedView(viewName);
+            canvas = new TaggedView();
         } else if (viewName.equals("Subsystems")) {
-            canvas = new AlertHistoryView("Alert");
+            canvas = new AlertHistoryView();
         } else if (viewName.equals(TestTopView.VIEW_ID.getName())) {
             canvas = new TestTopView();
         } else {
@@ -519,6 +518,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
             this.currentViewId = null;
         }
 
+        @Override
         public void renderView(ViewPath viewPath) {
             // If the session is logged out ensure that we only navigate to the log out view, otherwise keep 
             // our CoreGUI session alive by refreshing the session timer each time the user performs navigation
@@ -581,6 +581,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
                     new Timer() {
                         final long startTime = System.currentTimeMillis();
 
+                        @Override
                         public void run() {
                             if (initializableView.isInitialized()) {
                                 if (RootCanvas.this.currentCanvas instanceof BookmarkableView) {

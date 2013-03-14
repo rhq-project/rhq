@@ -18,6 +18,13 @@
  */
 package org.rhq.enterprise.server.resource;
 
+import javax.ejb.ApplicationException;
+
+/**
+ * Declare this an {@link ApplicationException} because we don't want these to be wrapped or to rollback an ongoing
+ * transaction.
+ */
+@ApplicationException(rollback = false, inherited = true)
 public class ResourceTypeAlreadyExistsException extends RuntimeException {
     private static final long serialVersionUID = 1169791095984659926L;
 

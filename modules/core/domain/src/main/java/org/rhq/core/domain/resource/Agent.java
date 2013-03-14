@@ -139,7 +139,7 @@ import org.rhq.core.domain.cloud.Server;
         + "    SET a.status = -1 " // negative numbers so that bitmask strategy does not conflict with this one
         + "  WHERE a.status = 0 ") //
 })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "id", sequenceName = "RHQ_AGENT_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_AGENT_ID_SEQ", sequenceName = "RHQ_AGENT_ID_SEQ")
 @Table(name = "RHQ_AGENT")
 public class Agent implements Serializable {
     public static final long serialVersionUID = 1L;
@@ -177,7 +177,7 @@ public class Agent implements Serializable {
     public static final String SECURITY_TOKEN_RESET = "@#$reset$#@";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "id")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_AGENT_ID_SEQ")
     @Id
     private int id;
 

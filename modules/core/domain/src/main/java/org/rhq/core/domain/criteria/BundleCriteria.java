@@ -37,7 +37,6 @@ import org.rhq.core.domain.util.PageOrdering;
 public class BundleCriteria extends TaggedCriteria {
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
     private List<Integer> filterBundleVersionIds; // needs overrides    
     private Integer filterBundleTypeId; // needs override
     private String filterBundleTypeName; // needs override    
@@ -73,10 +72,6 @@ public class BundleCriteria extends TaggedCriteria {
     @Override
     public Class<Bundle> getPersistentClass() {
         return Bundle.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
     }
 
     /** Convenience routine calls addFilterBundleVersionIds */

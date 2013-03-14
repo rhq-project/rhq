@@ -55,13 +55,17 @@ public class SystemManagerBeanTest extends AbstractEJB3Test {
         unprepareServerPluginService();
     }
 
-    @SuppressWarnings("deprecation")
-    public void testGetSystemConfiguration() {
-        assert null != systemManager.getSystemConfiguration(overlord);
+    public void testVacuum() {
+        System.out.println("Starting Vacuum");
+        systemManager.vacuum(overlord);
+        System.out.println("Done with Vacuum");
     }
 
+    @Test(dependsOnMethods = { "testVacuum" })
     public void testAnalyze() {
+        System.out.println("Starting Analyze");
         systemManager.analyze(overlord);
+        System.out.println("Done with Analyze");
     }
 
     public void testEnableHibernateStatistics() {
@@ -76,12 +80,13 @@ public class SystemManagerBeanTest extends AbstractEJB3Test {
         systemManager.reindex(overlord);
     }
 
-    public void testVacuum() {
-        systemManager.vacuum(overlord);
-    }
-
     public void testVacuumAppdef() {
         systemManager.vacuumAppdef(overlord);
+    }
+
+    @SuppressWarnings("deprecation")
+    public void testGetSystemConfiguration() {
+        assert null != systemManager.getSystemConfiguration(overlord);
     }
 
     @SuppressWarnings("deprecation")

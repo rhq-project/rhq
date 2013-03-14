@@ -70,7 +70,7 @@ import org.rhq.core.domain.resource.Resource;
         + "WHERE res.id = :resourceId " + "  AND gp.id = :generalPackageId"),
     @NamedQuery(name = InstalledPackage.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM InstalledPackage ip "
         + " WHERE ip.resource.id IN ( :resourceIds )") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_INSTALLED_PACKAGE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_INSTALLED_PACKAGE_ID_SEQ", sequenceName = "RHQ_INSTALLED_PACKAGE_ID_SEQ")
 @Table(name = "RHQ_INSTALLED_PACKAGE")
 public class InstalledPackage implements Serializable {
     // Constants  --------------------------------------------
@@ -90,7 +90,7 @@ public class InstalledPackage implements Serializable {
     public static final String QUERY_DELETE_BY_RESOURCES = "InstalledPackage.deleteByResources";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_INSTALLED_PACKAGE_ID_SEQ")
     @Id
     private int id;
 

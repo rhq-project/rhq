@@ -33,15 +33,15 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author John Mazzitelli
  */
-public class PluginConfigurationHistoryDetailView extends LocatableVLayout implements BookmarkableView {
+public class PluginConfigurationHistoryDetailView extends EnhancedVLayout implements BookmarkableView {
 
-    public PluginConfigurationHistoryDetailView(String locatorId) {
-        super(locatorId);
+    public PluginConfigurationHistoryDetailView() {
+        super();
 
         setWidth100();
         setHeight100();
@@ -55,8 +55,7 @@ public class PluginConfigurationHistoryDetailView extends LocatableVLayout imple
 
                 public void onTypesLoaded(ResourceType type) {
                     ConfigurationDefinition definition = type.getPluginConfigurationDefinition();
-                    ConfigurationEditor editor = new ConfigurationEditor("PluginConfigHist-"
-                        + update.getResource().getName(), definition, update.getConfiguration());
+                    ConfigurationEditor editor = new ConfigurationEditor(definition, update.getConfiguration());
                     editor.setReadOnly(true);
                     editor.setEditorTitle(MSG.common_title_version() + " - " + update.getId());
                     addMember(editor);

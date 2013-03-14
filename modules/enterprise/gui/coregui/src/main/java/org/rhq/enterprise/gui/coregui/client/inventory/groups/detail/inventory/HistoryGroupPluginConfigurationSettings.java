@@ -43,7 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * Read only view that shows group plugin configuration properties. These are properties
@@ -51,7 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  *
  * @author John Mazzitelli
  */
-public class HistoryGroupPluginConfigurationSettings extends LocatableVLayout {
+public class HistoryGroupPluginConfigurationSettings extends EnhancedVLayout {
     private final ResourceGroup group;
     private final ResourcePermission groupPerms;
     private final int groupUpdateId;
@@ -59,17 +59,17 @@ public class HistoryGroupPluginConfigurationSettings extends LocatableVLayout {
     private List<GroupMemberConfiguration> memberConfigurations;
     private GroupConfigurationEditor editor;
 
-    public HistoryGroupPluginConfigurationSettings(String locatorId, ResourceGroupComposite groupComposite, int updateId) {
-        super(locatorId);
+    public HistoryGroupPluginConfigurationSettings(ResourceGroupComposite groupComposite, int updateId) {
+        super();
         this.group = groupComposite.getResourceGroup();
         this.groupPerms = groupComposite.getResourcePermission();
         this.groupUpdateId = updateId;
 
         setMargin(5);
         setMembersMargin(5);
-        String backPath = LinkManager.getGroupPluginConfigurationUpdateHistoryLink(EntityContext.forGroup(this.group), null);
-        BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
-            backPath);
+        String backPath = LinkManager.getGroupPluginConfigurationUpdateHistoryLink(EntityContext.forGroup(this.group),
+            null);
+        BackButton backButton = new BackButton(MSG.view_tableSection_backButton(), backPath);
         addMember(backButton);
     }
 
@@ -86,8 +86,7 @@ public class HistoryGroupPluginConfigurationSettings extends LocatableVLayout {
 
     private void initEditor() {
         if (this.configurationDefinition != null && this.memberConfigurations != null) {
-            this.editor = new GroupConfigurationEditor(this.extendLocatorId("Editor"), this.configurationDefinition,
-                this.memberConfigurations);
+            this.editor = new GroupConfigurationEditor(this.configurationDefinition, this.memberConfigurations);
             this.editor.setEditorTitle(MSG.view_group_pluginConfig_view_groupProperties() + " - " + this.groupUpdateId);
             this.editor.setOverflow(Overflow.AUTO);
             this.editor.setReadOnly(true);

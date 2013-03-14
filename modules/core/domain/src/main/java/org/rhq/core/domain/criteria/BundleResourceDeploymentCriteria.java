@@ -37,8 +37,6 @@ import org.rhq.core.domain.util.CriteriaUtils;
 public class BundleResourceDeploymentCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
-    private List<Integer> filterIds; // needs overrides
     private Integer filterBundleDeploymentId; // requires override   
     private String filterBundleDeploymentName; // requires override    
     private Integer filterResourceId; // requires override
@@ -50,7 +48,6 @@ public class BundleResourceDeploymentCriteria extends Criteria {
     private boolean fetchHistories;
 
     public BundleResourceDeploymentCriteria() {
-        filterOverrides.put("ids", "id IN ( ? )");
         filterOverrides.put("bundleDeploymentId", "bundleDeployment.id = ?");
         filterOverrides.put("bundleDeploymentName", "bundleDeployment.name like ?");
         filterOverrides.put("resourceId", "resource.id = ?");
@@ -60,14 +57,6 @@ public class BundleResourceDeploymentCriteria extends Criteria {
     @Override
     public Class<BundleResourceDeployment> getPersistentClass() {
         return BundleResourceDeployment.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
-    }
-
-    public void addFilterIds(Integer... filterIds) {
-        this.filterIds = CriteriaUtils.getListIgnoringNulls(filterIds);
     }
 
     public void addFilterBundleDeploymentId(Integer filterBundleDeploymentId) {

@@ -42,8 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 public class BundleUploadDataStep extends AbstractWizardStep {
 
@@ -56,14 +55,8 @@ public class BundleUploadDataStep extends AbstractWizardStep {
         this.wizard = bundleCreationWizard;
     }
 
-    public Canvas getCanvas(Locatable parent) {
-        final LocatableVLayout mainLayout;
-        if (parent != null) {
-            mainLayout = new LocatableVLayout(parent.extendLocatorId("BundleCreateUploadData"));
-        } else {
-            mainLayout = new LocatableVLayout("BundleCreateUploadData");
-        }
-
+    public Canvas getCanvas() {
+        final EnhancedVLayout mainLayout = new EnhancedVLayout();
         mainLayout.setMargin(20);
         mainLayout.setWidth100();
         mainLayout.setHeight(10);
@@ -108,8 +101,8 @@ public class BundleUploadDataStep extends AbstractWizardStep {
         if (this.uploadForms != null) {
             for (BundleFileUploadForm uploadForm : this.uploadForms) {
                 if (uploadForm.isUploadInProgress()) {
-                    handleUploadError("[" + uploadForm.getName() + "] "
-                        + MSG.view_bundle_createWizard_uploadInProgress(), false);
+                    handleUploadError(
+                        "[" + uploadForm.getName() + "] " + MSG.view_bundle_createWizard_uploadInProgress(), false);
                     return false;
                 }
             }
@@ -193,8 +186,8 @@ public class BundleUploadDataStep extends AbstractWizardStep {
             nameLabel.setLayoutAlign(VerticalAlignment.CENTER);
             indivLayout.addMember(nameLabel);
 
-            final BundleFileUploadForm uploadForm = new BundleFileUploadForm("BundleFile-" + fileToBeUploaded,
-                this.wizard.getBundleVersion(), fileToBeUploaded, false, (isAlreadyUploaded) ? Boolean.TRUE : null);
+            final BundleFileUploadForm uploadForm = new BundleFileUploadForm(this.wizard.getBundleVersion(),
+                fileToBeUploaded, false, (isAlreadyUploaded) ? Boolean.TRUE : null);
             uploadForm.setWidth("75%");
             indivLayout.addMember(uploadForm);
 

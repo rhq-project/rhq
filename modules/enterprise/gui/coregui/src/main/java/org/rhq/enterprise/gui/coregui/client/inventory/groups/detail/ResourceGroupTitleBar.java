@@ -45,15 +45,14 @@ import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class ResourceGroupTitleBar extends LocatableVLayout {
+public class ResourceGroupTitleBar extends EnhancedVLayout {
     private static final String FAV_ICON = "Favorite_24_Selected.png";
     private static final String NOT_FAV_ICON = "Favorite_24.png";
 
@@ -73,8 +72,8 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
     private boolean supportsFavorite;
     private GeneralProperties generalProperties;
 
-    public ResourceGroupTitleBar(String locatorId, boolean isAutoGroup, boolean isAutoCluster) {
-        super(locatorId);
+    public ResourceGroupTitleBar(boolean isAutoGroup, boolean isAutoCluster) {
+        super();
 
         this.isAutoGroup = isAutoGroup;
         this.isAutoCluster = isAutoCluster;
@@ -91,7 +90,7 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
             child.destroy();
         }
 
-        final LocatableHLayout hlayout = new LocatableHLayout(extendLocatorId("hlayout"));
+        final EnhancedHLayout hlayout = new EnhancedHLayout();
         addMember(hlayout);
 
         this.title = new HTMLFlow();
@@ -100,7 +99,7 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
         this.availabilityImage = new Img(ImageManager.getAvailabilityLargeIcon(null), 24, 24);
 
         if (this.supportsFavorite) {
-            this.favoriteButton = new LocatableImg(this.extendLocatorId("Favorite"), NOT_FAV_ICON, 24, 24);
+            this.favoriteButton = new Img(NOT_FAV_ICON, 24, 24);
 
             this.favoriteButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
@@ -143,8 +142,8 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
                         resultComposite.getResourceGroup().setName(group.getName());
                     }
 
-                    generalProperties = new GeneralProperties(extendLocatorId("genProps"), resultComposite,
-                        ResourceGroupTitleBar.this, (!(isAutoGroup || isAutoCluster)));
+                    generalProperties = new GeneralProperties(resultComposite, ResourceGroupTitleBar.this,
+                        (!(isAutoGroup || isAutoCluster)));
                     generalProperties.setVisible(false);
                     ResourceGroupTitleBar.this.addMember(generalProperties);
                     expandCollapseArrow.addClickHandler(new ClickHandler() {
@@ -177,26 +176,25 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
 
         badge = new Img(ImageManager.getGroupLargeIcon(GroupCategory.MIXED), 24, 24);
 
-        TagEditorView tagEditorView = new TagEditorView(extendLocatorId("Editor"), group.getTags(), false,
-            new TagsChangedCallback() {
-                public void tagsChanged(final HashSet<Tag> tags) {
-                    GWTServiceLookup.getTagService().updateResourceGroupTags(group.getId(), tags,
-                        new AsyncCallback<Void>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(
-                                    MSG.view_titleBar_common_updateTagsFailure(group.getName()), caught);
-                            }
+        TagEditorView tagEditorView = new TagEditorView(group.getTags(), false, new TagsChangedCallback() {
+            public void tagsChanged(final HashSet<Tag> tags) {
+                GWTServiceLookup.getTagService().updateResourceGroupTags(group.getId(), tags,
+                    new AsyncCallback<Void>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError(
+                                MSG.view_titleBar_common_updateTagsFailure(group.getName()), caught);
+                        }
 
-                            public void onSuccess(Void result) {
-                                CoreGUI.getMessageCenter().notify(
-                                    new Message(MSG.view_titleBar_common_updateTagsSuccessful(group.getName()),
-                                        Message.Severity.Info));
-                                // update what is essentially our local cache
-                                group.setTags(tags);
-                            }
-                        });
-                }
-            });
+                        public void onSuccess(Void result) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message(MSG.view_titleBar_common_updateTagsSuccessful(group.getName()),
+                                    Message.Severity.Info));
+                            // update what is essentially our local cache
+                            group.setTags(tags);
+                        }
+                    });
+            }
+        });
 
         loadTags(tagEditorView);
 

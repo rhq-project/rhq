@@ -32,6 +32,7 @@ import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.tab.Tab;
+import com.smartgwt.client.widgets.tab.TabSet;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -51,9 +52,7 @@ import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsCh
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedHandler;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceGroupSelector;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTabSet;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A form for viewing and/or editing an RHQ {@link Role role}.
@@ -64,24 +63,24 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
 
     private static final String HEADER_ICON = "global/Role_24.png";
 
-    private LocatableTab permissionsTab;
+    private Tab permissionsTab;
     private PermissionsEditor permissionsEditor;
 
-    private LocatableTab resourceGroupsTab;
+    private Tab resourceGroupsTab;
     private ResourceGroupSelector resourceGroupSelector;
 
-    private LocatableTab subjectsTab;
+    private Tab subjectsTab;
     private RoleSubjectSelector subjectSelector;
 
-    private LocatableTab ldapGroupsTab;
+    private Tab ldapGroupsTab;
     private RoleLdapGroupSelector ldapGroupSelector;
 
     private boolean hasManageSecurityPermission;
     private boolean isLdapConfigured;
     private boolean isSystemRole;
 
-    public RoleEditView(String locatorId, int roleId) {
-        super(locatorId, new RolesDataSource(), roleId, MSG.common_label_role(), HEADER_ICON);
+    public RoleEditView(int roleId) {
+        super(new RolesDataSource(), roleId, MSG.common_label_role(), HEADER_ICON);
     }
 
     @Override
@@ -134,8 +133,8 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
     }
 
     @Override
-    protected LocatableVLayout buildContentPane() {
-        LocatableVLayout contentPane = new LocatableVLayout(extendLocatorId("Content"));
+    protected EnhancedVLayout buildContentPane() {
+        EnhancedVLayout contentPane = new EnhancedVLayout();
         contentPane.setWidth100();
         contentPane.setHeight100();
         contentPane.setOverflow(Overflow.AUTO);
@@ -143,14 +142,14 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
         EnhancedDynamicForm form = buildForm();
         setForm(form);
 
-        LocatableVLayout topPane = new LocatableVLayout(extendLocatorId("Top"));
+        EnhancedVLayout topPane = new EnhancedVLayout();
         topPane.setWidth100();
         topPane.setHeight(80);
         topPane.addMember(form);
 
         contentPane.addMember(topPane);
 
-        LocatableTabSet tabSet = new LocatableTabSet(contentPane.extendLocatorId("TabSet"));
+        TabSet tabSet = new TabSet();
         tabSet.setWidth100();
         tabSet.setHeight100();
 
@@ -176,33 +175,29 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
         return contentPane;
     }
 
-    private LocatableTab buildPermissionsTab(LocatableTabSet tabSet) {
-        LocatableTab tab = new LocatableTab(tabSet.extendLocatorId("Permissions"), MSG.common_title_permissions(),
-            "global/Locked_16.png");
+    private Tab buildPermissionsTab(TabSet tabSet) {
+        Tab tab = new Tab(MSG.common_title_permissions(), "global/Locked_16.png");
         // NOTE: We will set the tab content to the permissions editor later once the Role has been fetched.
 
         return tab;
     }
 
-    private LocatableTab buildResourceGroupsTab(LocatableTabSet tabSet) {
-        LocatableTab tab = new LocatableTab(tabSet.extendLocatorId("ResourceGroups"),
-            MSG.common_title_resourceGroups(), ImageManager.getGroupIcon(GroupCategory.MIXED));
+    private Tab buildResourceGroupsTab(TabSet tabSet) {
+        Tab tab = new Tab(MSG.common_title_resourceGroups(), ImageManager.getGroupIcon(GroupCategory.MIXED));
         // NOTE: We will set the tab content to the resource group selector later once the Role has been fetched.
 
         return tab;
     }
 
-    private LocatableTab buildSubjectsTab(LocatableTabSet tabSet) {
-        LocatableTab tab = new LocatableTab(tabSet.extendLocatorId("Users"), MSG.common_title_users(),
-            "global/User_16.png");
+    private Tab buildSubjectsTab(TabSet tabSet) {
+        Tab tab = new Tab(MSG.common_title_users(), "global/User_16.png");
         // NOTE: We will set the tab content to the subject selector later once the Role has been fetched.
 
         return tab;
     }
 
-    private LocatableTab buildLdapGroupsTab(LocatableTabSet tabSet) {
-        LocatableTab tab = new LocatableTab(tabSet.extendLocatorId("LdapGroups"), MSG.common_title_ldapGroups(),
-            "global/Role_16.png");
+    private Tab buildLdapGroupsTab(TabSet tabSet) {
+        Tab tab = new Tab(MSG.common_title_ldapGroups(), "global/Role_16.png");
         // NOTE: We will set the tab content to the LDAP group selector later once the Role has been fetched.
 
         return tab;
@@ -241,8 +236,8 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
             if (!this.isSystemRole) {
                 Record[] groupRecords = record.getAttributeAsRecordArray(RolesDataSource.Field.RESOURCE_GROUPS);
                 ListGridRecord[] groupListGridRecords = toListGridRecordArray(groupRecords);
-                this.resourceGroupSelector = new RoleResourceGroupSelector(this.extendLocatorId("Groups"),
-                    groupListGridRecords, !this.hasManageSecurityPermission);
+                this.resourceGroupSelector = new RoleResourceGroupSelector(groupListGridRecords,
+                    !this.hasManageSecurityPermission);
                 this.resourceGroupSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
                     public void onSelectionChanged(AssignedItemsChangedEvent event) {
                         onItemChanged();
@@ -268,8 +263,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
                 subjectListGridRecords = filteredSubjectRecords.toArray(new ListGridRecord[filteredSubjectRecords
                     .size()]);
             }
-            this.subjectSelector = new RoleSubjectSelector(this.extendLocatorId("Subjects"), subjectListGridRecords,
-                !this.hasManageSecurityPermission);
+            this.subjectSelector = new RoleSubjectSelector(subjectListGridRecords, !this.hasManageSecurityPermission);
             this.subjectSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
                 public void onSelectionChanged(AssignedItemsChangedEvent event) {
                     onItemChanged();
@@ -280,8 +274,8 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
             if (this.isLdapConfigured) {
                 Record[] ldapGroupRecords = record.getAttributeAsRecordArray(RolesDataSource.Field.LDAP_GROUPS);
                 ListGridRecord[] ldapGroupListGridRecords = toListGridRecordArray(ldapGroupRecords);
-                this.ldapGroupSelector = new RoleLdapGroupSelector(this.extendLocatorId("LdapGroups"),
-                    ldapGroupListGridRecords, !this.hasManageSecurityPermission);
+                this.ldapGroupSelector = new RoleLdapGroupSelector(ldapGroupListGridRecords,
+                    !this.hasManageSecurityPermission);
                 this.ldapGroupSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
                     public void onSelectionChanged(AssignedItemsChangedEvent event) {
                         onItemChanged();

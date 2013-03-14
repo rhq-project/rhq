@@ -40,8 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.AutodiscoveryQueueDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
 
 /**
  * @author Simeon Pinder
@@ -67,8 +66,8 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
     private AutodiscoveryQueueDataSource dataSource;
     private Timer refreshTimer;
 
-    public AutodiscoveryPortlet(String locatorId) {
-        super(locatorId, true);
+    public AutodiscoveryPortlet() {
+        super(true);
 
         //initialize the datasource to include Portlet instance
         this.dataSource = new AutodiscoveryQueueDataSource(getTreeGrid());
@@ -117,13 +116,13 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
     /** Build custom settings form.
     */
     public DynamicForm getCustomSettingsForm() {
-        final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("Settings"));
+        final DynamicForm form = new DynamicForm();
         form.setLayoutAlign(VerticalAlignment.CENTER);
 
         final DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
 
         //horizontal display component
-        LocatableHLayout row = new LocatableHLayout(extendLocatorId("auto-discovery.configuration"));
+        EnhancedHLayout row = new EnhancedHLayout();
 
         //-------------combobox for number of platforms to display on the dashboard
         final SelectItem maximumPlatformsComboBox = new SelectItem(AUTODISCOVERY_PLATFORM_MAX);
@@ -194,9 +193,9 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
-            return new AutodiscoveryPortlet(locatorId);
+            return new AutodiscoveryPortlet();
         }
     }
 

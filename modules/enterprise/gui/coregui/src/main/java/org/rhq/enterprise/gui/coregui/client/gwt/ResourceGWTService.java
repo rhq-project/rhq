@@ -26,6 +26,7 @@ import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -105,6 +106,8 @@ public interface ResourceGWTService extends RemoteService {
     void updateResource(Resource resource) throws RuntimeException;
 
     void unignoreResources(int[] resourceIds) throws RuntimeException;
+
+    void uninventoryAllResourcesByAgent(Agent[] agents) throws RuntimeException;
 
     List<Integer> uninventoryResources(int[] resourceIds) throws RuntimeException;
 

@@ -71,17 +71,17 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
     private boolean hasImportableTypes;
     private boolean canCreate;
 
-    public ResourceCompositeSearchView(String locatorId, ResourceComposite parentResourceComposite, Criteria criteria,
-        String title, SortSpecifier[] sortSpecifier, String[] excludeFields, String... headerIcons) {
-        super(locatorId, criteria, title, sortSpecifier, excludeFields, headerIcons);
+    public ResourceCompositeSearchView(ResourceComposite parentResourceComposite, Criteria criteria, String title,
+        SortSpecifier[] sortSpecifier, String[] excludeFields, String... headerIcons) {
+        super(criteria, title, sortSpecifier, excludeFields, headerIcons);
         this.parentResourceComposite = parentResourceComposite;
         this.canCreate = this.parentResourceComposite.getResourcePermission().isCreateChildResources();
         setInitialCriteriaFixed(true);
     }
 
-    public ResourceCompositeSearchView(String locatorId, ResourceComposite parentResourceComposite, Criteria criteria,
-        String title, String... headerIcons) {
-        this(locatorId, parentResourceComposite, criteria, title, null, null, headerIcons);
+    public ResourceCompositeSearchView(ResourceComposite parentResourceComposite, Criteria criteria, String title,
+        String... headerIcons) {
+        this(parentResourceComposite, criteria, title, null, null, headerIcons);
     }
 
     @Override
@@ -111,9 +111,9 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
             }
 
         });
-        
+
     }
-    
+
     private void refreshSingletons(final Resource parentResource, final AsyncCallback<PageList<Resource>> callback) {
         singletonChildren = new ArrayList<Resource>(); // initialize to non-null
 
@@ -123,24 +123,25 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
             ResourceCriteria criteria = new ResourceCriteria();
             criteria.addFilterParentResourceId(parentResource.getId());
             criteria.addFilterResourceTypeIds(singletonChildTypes);
-            GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
+            GWTServiceLookup.getResourceService().findResourcesByCriteria(criteria,
+                new AsyncCallback<PageList<Resource>>() {
 
-                @Override
-                public void onSuccess(PageList<Resource> result) {
-                    singletonChildren = result;
-                    if (callback != null) {
-                        callback.onSuccess(result);
+                    @Override
+                    public void onSuccess(PageList<Resource> result) {
+                        singletonChildren = result;
+                        if (callback != null) {
+                            callback.onSuccess(result);
+                        }
                     }
-                }
 
-                @Override
-                public void onFailure(Throwable caught) {
-                    Log.error("Failed to load child resources for [" + parentResource + "]", caught);
-                    if (callback != null) {
-                        callback.onFailure(caught);
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        Log.error("Failed to load child resources for [" + parentResource + "]", caught);
+                        if (callback != null) {
+                            callback.onFailure(caught);
+                        }
                     }
-                }
-            });
+                });
         } else {
             if (callback != null) {
                 callback.onSuccess(new PageList<Resource>());
@@ -162,8 +163,8 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
 
     @Override
     protected void configureTable() {
-        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(),
-            MSG.view_inventory_resources_deleteConfirm(), new AbstractTableAction(TableActionEnablement.ANY) {
+        addTableAction(MSG.common_button_delete(), MSG.view_inventory_resources_deleteConfirm(),
+            new AbstractTableAction(TableActionEnablement.ANY) {
 
                 // only enabled if all selected are a deletable type and if the user has delete permission
                 // on the resources. 
@@ -243,8 +244,7 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
                 if (override) {
                     updateTableAction(MSG.common_button_create_child(), createTypeValueMap, createAction);
                 } else {
-                    addTableAction(extendLocatorId("CreateChild"), MSG.common_button_create_child(), null,
-                        createTypeValueMap, createAction);
+                    addTableAction(MSG.common_button_create_child(), null, createTypeValueMap, createAction);
                 }
             }
 
@@ -264,23 +264,20 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
                 if (override) {
                     updateTableAction(MSG.common_button_import(), importTypeValueMap, importAction);
                 } else {
-                    addTableAction(extendLocatorId("Import"), MSG.common_button_import(), null, importTypeValueMap,
-                        importAction);
+                    addTableAction(MSG.common_button_import(), null, importTypeValueMap, importAction);
                 }
             }
 
         } else if (!override) {
             if (!canCreate && hasCreatableTypes) {
-                addTableAction(extendLocatorId("CreateChild"), MSG.common_button_create_child(),
-                    new AbstractTableAction(TableActionEnablement.NEVER) {
-                        public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                            // never called
-                        }
-                    });
+                addTableAction(MSG.common_button_create_child(), new AbstractTableAction(TableActionEnablement.NEVER) {
+                    public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                        // never called
+                    }
+                });
             }
             if (!canCreate && hasImportableTypes) {
-                addTableAction(extendLocatorId("Import"), MSG.common_button_import(), new AbstractTableAction(
-                    TableActionEnablement.NEVER) {
+                addTableAction(MSG.common_button_import(), new AbstractTableAction(TableActionEnablement.NEVER) {
                     public void executeAction(ListGridRecord[] selection, Object actionValue) {
                         // never called
                     }
@@ -288,7 +285,6 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
             }
         }
     }
-   
 
     private void removeExistingSingletons(List<Resource> singletonChildren, Map<String, ResourceType> displayNameMap) {
 
@@ -383,11 +379,11 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
 
     // -------- Static Utility loaders ------------
 
-    public static ResourceCompositeSearchView getChildrenOf(String locatorId, ResourceComposite parentResourceComposite) {
-        return new ResourceCompositeSearchView(locatorId, parentResourceComposite, new Criteria("parentId",
+    public static ResourceCompositeSearchView getChildrenOf(ResourceComposite parentResourceComposite) {
+        return new ResourceCompositeSearchView(parentResourceComposite, new Criteria("parentId",
             String.valueOf(parentResourceComposite.getResource().getId())), MSG.view_tabs_common_child_resources());
     }
-    
+
     @Override
     public void refresh() {
         refreshSingletons(parentResourceComposite.getResource(), new AsyncCallback<PageList<Resource>>() {

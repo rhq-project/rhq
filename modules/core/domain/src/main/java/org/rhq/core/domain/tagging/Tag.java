@@ -62,7 +62,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
                         "GROUP BY t.id, t.namespace, t.semantic, t.name\n" +
                         "ORDER BY (count(r) + count(g) + count(b) + count(bv) + count(bd)) desc")
 })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_TAGGING_SEQ", sequenceName = "RHQ_TAGGING_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_TAGGING_ID_SEQ", sequenceName = "RHQ_TAGGING_ID_SEQ")
 @Table(name = "RHQ_TAGGING")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Tag implements Serializable {
@@ -72,7 +72,7 @@ public class Tag implements Serializable {
     public static final String QUERY_TAG_COMPOSITE_REPORT = "Tag.compositeReport";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_TAGGING_SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_TAGGING_ID_SEQ")
     @Id
     private int id;
 

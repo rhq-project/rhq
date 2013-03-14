@@ -52,8 +52,8 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
     private Resource resource;
     private ResourcePermission permissions;
 
-    public ResourceAlertDefinitionsView(String locatorId, ResourceComposite resourceComposite) {
-        super(locatorId, "Alert Definitions", getCriteria(resourceComposite));
+    public ResourceAlertDefinitionsView(ResourceComposite resourceComposite) {
+        super("Alert Definitions", getCriteria(resourceComposite));
         this.resource = resourceComposite.getResource();
         this.permissions = resourceComposite.getResourcePermission();
 
@@ -194,7 +194,8 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
     }
 
     @Override
-    protected void commitAlertDefinition(final AlertDefinition alertDefinition, boolean purgeInternals, final AsyncCallback<AlertDefinition> resultReceiver) {
+    protected void commitAlertDefinition(final AlertDefinition alertDefinition, boolean purgeInternals,
+        final AsyncCallback<AlertDefinition> resultReceiver) {
         if (alertDefinition.getId() == 0) {
             GWTServiceLookup.getAlertDefinitionService().createAlertDefinition(alertDefinition,
                 Integer.valueOf(resource.getId()), new AsyncCallback<Integer>() {

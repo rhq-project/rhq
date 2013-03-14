@@ -31,6 +31,7 @@ import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
@@ -60,10 +61,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.resource.ProblemResourcesDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
 
 /**
  * A view that displays a paginated table of Resources with alerts,
@@ -97,8 +95,8 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
 
     private Timer refreshTimer;
 
-    public ProblemResourcesPortlet(String locatorId) {
-        super(locatorId, NAME, true);
+    public ProblemResourcesPortlet() {
+        super(NAME, true);
 
         setShowHeader(false);
         setShowFooter(true);
@@ -120,14 +118,14 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
     protected void configureTable() {
         ListGrid listGrid = getListGrid();
         if (listGrid != null) {
-            addExtraWidget(new TimeRange(extendLocatorId("TimeRange"), this), false);
+            addExtraWidget(new TimeRange(this), false);
         }
 
         ListGridField resourceField = new ListGridField(RESOURCE.propertyName(), RESOURCE.title());
         resourceField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("id"));
-                return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                return LinkManager.getHref(url, o.toString());
             }
         });
         resourceField.setShowHover(true);
@@ -216,7 +214,7 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
      */
     public DynamicForm getCustomSettingsForm() {
 
-        final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("customSettings"));
+        final DynamicForm form = new DynamicForm();
 
         final DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
 
@@ -292,9 +290,9 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
-            return new ProblemResourcesPortlet(locatorId);
+            return new ProblemResourcesPortlet();
         }
     }
 
@@ -365,12 +363,12 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
  *
  * @author spinder
  */
-class TimeRange extends LocatableHLayout implements TableWidget {
-    private LocatableLabel label = new LocatableLabel(extendLocatorId("timeRange"));
+class TimeRange extends EnhancedHLayout implements TableWidget {
+    private Label label = new Label();
     private ProblemResourcesPortlet portlet = null;
 
-    public TimeRange(String locatorId, ProblemResourcesPortlet problemResourcesPortlet) {
-        super(locatorId);
+    public TimeRange(ProblemResourcesPortlet problemResourcesPortlet) {
+        super();
         this.portlet = problemResourcesPortlet;
     }
 

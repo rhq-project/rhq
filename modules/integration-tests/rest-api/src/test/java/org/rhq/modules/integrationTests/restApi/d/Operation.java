@@ -36,7 +36,7 @@ public class Operation {
     int resourceId;
     int definitionId;
     Map<String,Object> params = new HashMap<String, Object>();
-    List<Map<String,Object>> links;
+    List<Link> links;
 
     public Operation() {
     }
@@ -89,11 +89,11 @@ public class Operation {
         this.params = params;
     }
 
-    public List<Map<String, Object>> getLinks() {
+    public List<Link> getLinks() {
         return links;
     }
 
-    public void setLinks(List<Map<String, Object>> links) {
+    public void setLinks(List<Link> links) {
         this.links = links;
     }
 
@@ -108,7 +108,7 @@ public class Operation {
         if (id != operation.id) return false;
         if (readyToSubmit != operation.readyToSubmit) return false;
         if (resourceId != operation.resourceId) return false;
-        if (links != null ? !links.equals(operation.links) : operation.links != null) return false;
+//        if (links != null ? !links.equals(operation.links) : operation.links != null) return false;
         if (!name.equals(operation.name)) return false;
         if (params != null ? !params.equals(operation.params) : operation.params != null) return false;
 
@@ -123,7 +123,7 @@ public class Operation {
         result = 31 * result + resourceId;
         result = 31 * result + definitionId;
         result = 31 * result + (params != null ? params.hashCode() : 0);
-        result = 31 * result + (links != null ? links.hashCode() : 0);
+//        result = 31 * result + (links != null ? links.hashCode() : 0);
         return result;
     }
 }

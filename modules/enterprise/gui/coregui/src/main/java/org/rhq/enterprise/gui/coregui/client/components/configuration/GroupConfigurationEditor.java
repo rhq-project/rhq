@@ -73,8 +73,8 @@ import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A SmartGWT widget for editing a group of RHQ {@link Configuration}s that conform to the same
@@ -96,10 +96,9 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
 
     private List<GroupMemberConfiguration> memberConfigurations;
 
-    public GroupConfigurationEditor(String locatorId, ConfigurationDefinition configurationDefinition,
+    public GroupConfigurationEditor(ConfigurationDefinition configurationDefinition,
         List<GroupMemberConfiguration> memberConfigurations) {
-        super(locatorId, configurationDefinition, buildAggregateConfiguration(memberConfigurations,
-            configurationDefinition));
+        super(configurationDefinition, buildAggregateConfiguration(memberConfigurations, configurationDefinition));
         this.memberConfigurations = memberConfigurations;
     }
 
@@ -141,9 +140,8 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
     }
 
     @Override
-    protected List<FormItem> buildFieldsForPropertyList(String locatorId, PropertyDefinition propertyDefinition,
-        boolean oddRow, PropertyDefinitionList propertyDefinitionList, PropertyDefinition memberDefinition,
-        PropertyList propertyList) {
+    protected List<FormItem> buildFieldsForPropertyList(PropertyDefinition propertyDefinition, boolean oddRow,
+        PropertyDefinitionList propertyDefinitionList, PropertyDefinition memberDefinition, PropertyList propertyList) {
         List<FormItem> fields = new ArrayList<FormItem>();
 
         StaticTextItem nameItem = buildNameItem(propertyDefinition);
@@ -195,8 +193,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         icon.addFormItemClickHandler(new FormItemClickHandler() {
             public void onFormItemClick(FormItemIconClickEvent event) {
                 // TODO: Pass the actual index, rather than null, if the prop is inside a list.
-                displayMemberValuesEditor(extendLocatorId("MemberValuesEditor"), propertyDefinitionSimple,
-                    propertySimple, null, dynamicItem);
+                displayMemberValuesEditor(propertyDefinitionSimple, propertySimple, null, dynamicItem);
             }
         });
 
@@ -226,36 +223,36 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         return unsetItem;
     }
 
-    private void displayMemberValuesEditor(String locatorId, final PropertyDefinitionSimple propertyDefinitionSimple,
+    private void displayMemberValuesEditor(final PropertyDefinitionSimple propertyDefinitionSimple,
         final PropertySimple aggregatePropertySimple, Integer index, final FormItem aggregateValueItem) {
 
-        final PopupWindow popup = new PopupWindow(extendLocatorId("memberValuesEditor"), null);
+        final PopupWindow popup = new PopupWindow(null);
         popup.setTitle(MSG.view_groupConfigEdit_valsDiffForProp(propertyDefinitionSimple.getName()));
         popup.setWidth(800);
         popup.setHeight(600);
 
-        LocatableVLayout layout = buildMemberEditor(locatorId, propertyDefinitionSimple, aggregatePropertySimple,
-            index, aggregateValueItem, popup);
+        EnhancedVLayout layout = buildMemberEditor(propertyDefinitionSimple, aggregatePropertySimple, index,
+            aggregateValueItem, popup);
 
         popup.addItem(layout);
         popup.show();
     }
 
-    private LocatableVLayout buildMemberEditor(String locatorId,
-        final PropertyDefinitionSimple propertyDefinitionSimple, final PropertySimple aggregatePropertySimple,
-        final Integer index, final FormItem aggregateValueItem, final PopupWindow popup) {
+    private EnhancedVLayout buildMemberEditor(final PropertyDefinitionSimple propertyDefinitionSimple,
+        final PropertySimple aggregatePropertySimple, final Integer index, final FormItem aggregateValueItem,
+        final PopupWindow popup) {
 
         final boolean propertyIsReadOnly = isReadOnly(propertyDefinitionSimple, aggregatePropertySimple);
 
-        LocatableVLayout layout = new LocatableVLayout(extendLocatorId(locatorId));
+        EnhancedVLayout layout = new EnhancedVLayout();
         layout.setHeight100();
         layout.setWidth100();
         layout.setMargin(11);
 
         // create the header strip - will contain "set all values to" form
-        LocatableToolStrip headerStrip = null;
+        EnhancedToolStrip headerStrip = null;
         if (!propertyIsReadOnly) {
-            headerStrip = new LocatableToolStrip(extendLocatorId("headerStrip"));
+            headerStrip = new EnhancedToolStrip();
             headerStrip.setWidth100();
             headerStrip.setPadding(5);
             headerStrip.setMembersMargin(10);
@@ -358,7 +355,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         layout.addMember(memberValuesGrid);
 
         // create the footer strip - will contain ok and cancel buttons
-        LocatableToolStrip footerStrip = new LocatableToolStrip(extendLocatorId("footerStrip"));
+        EnhancedToolStrip footerStrip = new EnhancedToolStrip();
         footerStrip.setWidth100();
         footerStrip.setPadding(5);
         footerStrip.setMembersMargin(10);

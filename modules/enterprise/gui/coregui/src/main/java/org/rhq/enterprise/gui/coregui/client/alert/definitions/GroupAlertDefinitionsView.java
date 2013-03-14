@@ -52,8 +52,8 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
     private ResourceGroup group;
     private ResourcePermission permissions;
 
-    public GroupAlertDefinitionsView(String locatorId, ResourceGroupComposite groupComposite) {
-        super(locatorId, MSG.view_alert_definitions_table_title_group(), getCriteria(groupComposite));
+    public GroupAlertDefinitionsView(ResourceGroupComposite groupComposite) {
+        super(MSG.view_alert_definitions_table_title_group(), getCriteria(groupComposite));
         this.group = groupComposite.getResourceGroup();
         this.permissions = groupComposite.getResourcePermission();
 
@@ -198,7 +198,8 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
     }
 
     @Override
-    protected void commitAlertDefinition(final AlertDefinition alertDefinition, boolean purgeInternals, final AsyncCallback<AlertDefinition> resultReceiver) {
+    protected void commitAlertDefinition(final AlertDefinition alertDefinition, boolean purgeInternals,
+        final AsyncCallback<AlertDefinition> resultReceiver) {
         if (alertDefinition.getId() == 0) {
             GWTServiceLookup.getGroupAlertDefinitionService().createGroupAlertDefinitions(alertDefinition,
                 Integer.valueOf(this.group.getId()), new AsyncCallback<Integer>() {
@@ -219,8 +220,7 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
                 });
         } else {
             GWTServiceLookup.getGroupAlertDefinitionService().updateGroupAlertDefinitions(alertDefinition,
-                purgeInternals,
-                new AsyncCallback<AlertDefinition>() {
+                purgeInternals, new AsyncCallback<AlertDefinition>() {
                     @Override
                     public void onSuccess(AlertDefinition result) {
                         CoreGUI.getMessageCenter().notify(

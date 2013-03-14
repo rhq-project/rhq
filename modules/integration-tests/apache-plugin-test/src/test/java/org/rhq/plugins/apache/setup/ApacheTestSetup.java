@@ -41,6 +41,7 @@ import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.upgrade.FakeServerInventory;
 import org.rhq.core.system.SystemInfoFactory;
@@ -74,14 +75,14 @@ public class ApacheTestSetup {
     private Mockery context;
     private ResourceTypes apacheResourceTypes;
     private String testId;
-    
+
     public class ApacheSetup {
         private String serverRoot;
         private String exePath;
         private Collection<String> configurationFiles;
         private ApacheExecutionUtil execution;
         private boolean deploy = true;
-        
+
         private ApacheSetup() {
 
         }
@@ -162,16 +163,16 @@ public class ApacheTestSetup {
                 + serverRootDir + "'.");
 
             File logsDir = new File(serverRootDir, "logs");
-            
+
             assertTrue(logsDir.exists(), "The configured server root denotes a directory that doesn't have a 'logs' subdirectory. This is unexpected.");
-            
+
             File confDir = new File(serverRootDir, "conf");
 
             assertTrue(confDir.exists(),
                 "The configured server root denotes a directory that doesn't have a 'conf' subdirectory. This is unexpected.");
-            
+
             String confFilePath = confDir.getAbsolutePath() + File.separatorChar + "httpd.conf";
-            
+
             String snmpHost = null;
             int snmpPort = 0;
             String pingUrl = null;
@@ -185,11 +186,11 @@ public class ApacheTestSetup {
                         new File(binDir, "envvars-std"));
                     ApacheDeploymentUtil.deployConfiguration(confDir, configurationFiles, additionalFilesToProcess, deploymentConfig);
                 }
-                
+
                 //ok, now try to find the ping URL. The best thing is to actually invoke
-                //the same code the apache server discovery does.                              
+                //the same code the apache server discovery does.
                 ApacheDirectiveTree tree = ApacheServerDiscoveryComponent.parseRuntimeConfiguration(confFilePath, null, ApacheBinaryInfo.getInfo(exePath, SystemInfoFactory.createSystemInfo()));
-                
+
                 //XXX this hardcodes apache2 as the only option we have...
                 HttpdAddressUtility.Address addrToUse = HttpdAddressUtility.APACHE_2_x.getMainServerSampleAddress(tree, null, -1);
                 pingUrl = addrToUse.toString();
@@ -205,7 +206,7 @@ public class ApacheTestSetup {
         }
 
         private void doSetup() throws Exception {
-            init();                
+            init();
             startApache();
         }
 
@@ -228,12 +229,12 @@ public class ApacheTestSetup {
         return this;
     }
 
-    public ApacheTestSetup withDefaultOverrides(Map<String, String> defaultOverrides) {            
+    public ApacheTestSetup withDefaultOverrides(Map<String, String> defaultOverrides) {
         this.defaultOverrides = defaultOverrides == null ? new HashMap<String, String>() : defaultOverrides;
         deploymentConfig = ApacheDeploymentUtil.getDeploymentConfigurationFromSystemProperties(configurationName, this.defaultOverrides);
         return this;
     }
-    
+
     public ApacheTestSetup withPlatformResource(Resource platform) {
         this.platform = platform;
         return this;
@@ -257,9 +258,23 @@ public class ApacheTestSetup {
     public void addDefaultExceptations(Expectations expectations) throws Exception {
         ServerServices ss = PluginContainerTest.getCurrentPluginContainerConfiguration().getServerServices();
 
+        //only import the apache servers we actually care about - we can't assume another apache won't be present
+        //on the machine running the test...
+        final ResourceType serverResourceType = apacheResourceTypes.findByName("Apache HTTP Server");
         expectations.allowing(ss.getDiscoveryServerService()).mergeInventoryReport(
             expectations.with(Expectations.any(InventoryReport.class)));
-        expectations.will(fakeInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
+        expectations.will(fakeInventory.mergeInventoryReport(new FakeServerInventory.InventoryStatusJudge() {
+            @Override
+            public InventoryStatus judge(Resource resource) {
+                if (serverResourceType.equals(resource.getResourceType())) {
+                    return deploymentConfig.serverRoot.equals(resource.getPluginConfiguration().getSimpleValue(
+                        ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT)) ? InventoryStatus.COMMITTED
+                        : InventoryStatus.IGNORED;
+                } else {
+                    return InventoryStatus.COMMITTED;
+                }
+            }
+        }));
 
         expectations.allowing(ss.getDiscoveryServerService()).upgradeResources(
             expectations.with(Expectations.any(Set.class)));
@@ -271,7 +286,7 @@ public class ApacheTestSetup {
 
         expectations.allowing(ss.getDiscoveryServerService()).setResourceError(expectations.with(Expectations.any(ResourceError.class)));
         expectations.will(fakeInventory.setResourceError());
-        
+
         expectations.allowing(ss.getDiscoveryServerService()).mergeAvailabilityReport(
             expectations.with(Expectations.any(AvailabilityReport.class)));
 
@@ -280,7 +295,7 @@ public class ApacheTestSetup {
 
         expectations.allowing(ss.getDiscoveryServerService()).clearResourceConfigError(
             expectations.with(Expectations.any(int.class)));
-        
+
         expectations.allowing(ss.getDiscoveryServerService()).setResourceEnablement(
             expectations.with(Expectations.any(int.class)), expectations.with(Expectations.any(boolean.class)));
 
@@ -289,7 +304,10 @@ public class ApacheTestSetup {
 
         expectations.allowing(ss.getDriftServerService()).getDriftDefinitions(expectations.with(Expectations.any(Set.class)));
         expectations.will(Expectations.returnValue(Collections.emptyMap()));
-        
+
+        expectations.allowing(ss.getDiscoveryServerService()).getResourcesAsList(expectations.with(Expectations.any(Integer[].class)));
+        expectations.will(fakeInventory.getResourcesAsList());
+
         expectations.ignoring(ss.getBundleServerService());
         expectations.ignoring(ss.getConfigurationServerService());
         expectations.ignoring(ss.getContentServerService());
@@ -307,14 +325,14 @@ public class ApacheTestSetup {
     public DeploymentConfig getDeploymentConfig() {
         return deploymentConfig;
     }
-    
+
     public ApacheTestSetup setup() throws Exception {
         apacheSetup.doSetup();
 
-        Map<String, String> replacements = deploymentConfig.getTokenReplacements();                  
+        Map<String, String> replacements = deploymentConfig.getTokenReplacements();
         replacements.put("server.root", apacheSetup.serverRoot);
         replacements.put("exe.path", apacheSetup.exePath);
-        
+
         ApacheDeploymentUtil.addDefaultVariables(replacements, null);
 
         HttpdAddressUtility addressUtility = apacheSetup.getServerComponent()
@@ -325,18 +343,18 @@ public class ApacheTestSetup {
             addressUtility.getHttpdInternalMainServerAddressRepresentation(runtimeConfig).toString(false, false));
 
         replacements.put("main.rhq4.resource.key", ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY);
-        
+
         VHostSpec vhost1 = deploymentConfig.vhost1 == null ? null : deploymentConfig.vhost1.getVHostSpec(replacements);
         VHostSpec vhost2 = deploymentConfig.vhost2 == null ? null : deploymentConfig.vhost2.getVHostSpec(replacements);
         VHostSpec vhost3 = deploymentConfig.vhost3 == null ? null : deploymentConfig.vhost3.getVHostSpec(replacements);
         VHostSpec vhost4 = deploymentConfig.vhost4 == null ? null : deploymentConfig.vhost4.getVHostSpec(replacements);
-        
+
         if (vhost1 != null) {
             replacements.put(
                 "vhost1.snmp.identifier",
                 addressUtility.getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, vhost1.hosts.get(0),
                     vhost1.serverName).toString(false, false));
-            
+
             replacements.put(
                 "vhost1.rhq4.resource.key",
                 ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
@@ -348,7 +366,7 @@ public class ApacheTestSetup {
                 "vhost2.snmp.identifier",
                 addressUtility.getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, vhost2.hosts.get(0),
                     vhost2.serverName).toString(false, false));
-            
+
             replacements.put(
                 "vhost2.rhq4.resource.key",
                 ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
@@ -360,7 +378,7 @@ public class ApacheTestSetup {
                 "vhost3.snmp.identifier",
                 addressUtility.getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, vhost3.hosts.get(0),
                     vhost3.serverName).toString(false, false));
-            
+
             replacements.put(
                 "vhost3.rhq4.resource.key",
                 ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
@@ -372,7 +390,7 @@ public class ApacheTestSetup {
                 "vhost4.snmp.identifier",
                 addressUtility.getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, vhost4.hosts.get(0),
                     vhost4.serverName).toString(false, false));
-            
+
             replacements.put(
                 "vhost4.rhq4.resource.key",
                 ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
@@ -381,35 +399,35 @@ public class ApacheTestSetup {
 
         //let the user override everything we just did
         replacements.putAll(defaultOverrides);
-        
+
         inventoryFileReplacements = replacements;
-        
+
         if (inventoryFile != null) {
             InputStream dataStream = getClass().getResourceAsStream(inventoryFile);
-    
+
             Reader rdr = new TokenReplacingReader(new InputStreamReader(dataStream), replacements);
-    
+
             @SuppressWarnings("unchecked")
             List<Resource> inventory = (List<Resource>) new ObjectCollectionSerializer().deserialize(rdr);
-    
-            //fix up the parent relationships, because they might not be reconstructed correctly by 
+
+            //fix up the parent relationships, because they might not be reconstructed correctly by
             //JAXB - we're missing XmlID and XmlIDRef annotations in our model
             fixupParent(null, inventory);
-    
+
             fakeInventory.prepopulateInventory(platform, inventory);
         }
         return this;
     }
 
     /**
-     * After the setup, this returns all the variables used to update the tokens in the inventory file. 
-     * 
+     * After the setup, this returns all the variables used to update the tokens in the inventory file.
+     *
      * @return
      */
     public Map<String, String> getInventoryFileReplacements() {
         return inventoryFileReplacements;
     }
-    
+
     private void fixupParent(Resource parent, Collection<Resource> children) {
         for (Resource child : children) {
             child.setParentResource(parent);

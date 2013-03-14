@@ -38,12 +38,12 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name = "RHQ_DRIFT_SET")
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_DRIFT_SET_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_DRIFT_SET_ID_SEQ", sequenceName = "RHQ_DRIFT_SET_ID_SEQ")
 public class JPADriftSet implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_DRIFT_SET_ID_SEQ")
     @Id
     private int id;
 

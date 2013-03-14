@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
@@ -37,14 +38,16 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author John Mazzitelli
  */
-public class RecoveryAlertDefinitionForm extends LocatableDynamicForm implements EditAlertDefinitionForm {
+public class RecoveryAlertDefinitionForm extends DynamicForm implements EditAlertDefinitionForm {
+
+    protected Messages MSG = CoreGUI.getMessages();
 
     private AlertDefinition alertDefinition;
     private AbstractAlertDefinitionsDataSource alertDataSource;
@@ -58,13 +61,12 @@ public class RecoveryAlertDefinitionForm extends LocatableDynamicForm implements
 
     private boolean formBuilt = false;
 
-    public RecoveryAlertDefinitionForm(String locatorId, AbstractAlertDefinitionsDataSource dataSource) {
-        this(locatorId, dataSource, null);
+    public RecoveryAlertDefinitionForm(AbstractAlertDefinitionsDataSource dataSource) {
+        this(dataSource, null);
     }
 
-    public RecoveryAlertDefinitionForm(String locatorId, AbstractAlertDefinitionsDataSource dataSource,
-        AlertDefinition alertDefinition) {
-        super(locatorId);
+    public RecoveryAlertDefinitionForm(AbstractAlertDefinitionsDataSource dataSource, AlertDefinition alertDefinition) {
+        super();
         this.alertDataSource = dataSource;
         this.alertDefinition = alertDefinition;
     }
@@ -156,8 +158,8 @@ public class RecoveryAlertDefinitionForm extends LocatableDynamicForm implements
 
     private void buildForm() {
         if (!formBuilt) {
-            disableWhenFiredSelection = new RadioGroupItem("disableWhenFired", MSG
-                .view_alert_definition_recovery_editor_disable_when_fired());
+            disableWhenFiredSelection = new RadioGroupItem("disableWhenFired",
+                MSG.view_alert_definition_recovery_editor_disable_when_fired());
             LinkedHashMap<String, String> yesNo = new LinkedHashMap<String, String>(2);
             yesNo.put("yes", MSG.common_val_yes());
             yesNo.put("no", MSG.common_val_no());
@@ -168,19 +170,19 @@ public class RecoveryAlertDefinitionForm extends LocatableDynamicForm implements
             disableWhenFiredSelection.setHoverWidth(300);
             disableWhenFiredSelection
                 .setTooltip(MSG.view_alert_definition_recovery_editor_disable_when_fired_tooltip());
-            disableWhenFiredStatic = new StaticTextItem("disableWhenFiredStatic", MSG
-                .view_alert_definition_recovery_editor_disable_when_fired());
+            disableWhenFiredStatic = new StaticTextItem("disableWhenFiredStatic",
+                MSG.view_alert_definition_recovery_editor_disable_when_fired());
             disableWhenFiredStatic.setWrapTitle(false);
 
-            recoverAlertSelection = new SortedSelectItem("recoveryAlert", MSG
-                .view_alert_definition_recovery_editor_recovery_alert());
+            recoverAlertSelection = new SortedSelectItem("recoveryAlert",
+                MSG.view_alert_definition_recovery_editor_recovery_alert());
             recoverAlertSelection.setDefaultValue("0");
             recoverAlertSelection.setWrapTitle(false);
             recoverAlertSelection.setHoverWidth(300);
             recoverAlertSelection.setTooltip(MSG.view_alert_definition_recovery_editor_recovery_alert_tooltip());
 
-            recoverAlertStatic = new StaticTextItem("recoveryAlertStatic", MSG
-                .view_alert_definition_recovery_editor_recovery_alert());
+            recoverAlertStatic = new StaticTextItem("recoveryAlertStatic",
+                MSG.view_alert_definition_recovery_editor_recovery_alert());
             recoverAlertStatic.setDefaultValue(getNoRecoveryMenuItemTitle());
             recoverAlertStatic.setWrapTitle(false);
             recoverAlertStatic.setWidth(300);

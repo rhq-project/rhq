@@ -62,14 +62,12 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.h
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.history.GroupOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Simeon Pinder
  */
-public class GroupOperationsPortlet extends LocatableVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
+public class GroupOperationsPortlet extends EnhancedVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "GroupOperations";
@@ -105,15 +103,13 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
     protected int groupId;
     protected boolean portletConfigInitialized = false;
     private ResourceGroupComposite groupComposite;
-    protected LocatableCanvas recentOperationsContent = new LocatableCanvas(extendLocatorId("RecentOperations"));
-    protected String locatorId;
+    protected Canvas recentOperationsContent = new Canvas();
 
     private boolean isAutoGroup;
     private boolean isAutoCluster;
 
-    public GroupOperationsPortlet(String locatorId, EntityContext context) {
-        super(locatorId);
-        this.locatorId = locatorId;
+    public GroupOperationsPortlet(EntityContext context) {
+        super();
         this.groupId = context.getGroupId();
         this.isAutoGroup = context.isAutoGroup();
         this.isAutoCluster = context.isAutoCluster();
@@ -170,7 +166,7 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
                         Criteria criteria = new Criteria(GroupOperationHistoryDataSource.CriteriaField.GROUP_ID, String
                             .valueOf(groupComposite.getResourceGroup().getId()));
 
-                        groupOperations = new GroupOperationsCriteriaHistoryListView(locatorId,
+                        groupOperations = new GroupOperationsCriteriaHistoryListView(
                             new GroupOperationsCriteriaDataSource(portletConfig), null, criteria, groupComposite);
                     } else {
                         Criteria criteria = new Criteria();
@@ -179,7 +175,7 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
                         Long zero = new Long(0);
                         groupComposite = new ResourceGroupComposite(zero, zero, zero, zero, zero, zero, zero, zero,
                             emptyGroup);
-                        groupOperations = new GroupOperationsCriteriaHistoryListView(locatorId,
+                        groupOperations = new GroupOperationsCriteriaHistoryListView(
                             new GroupOperationsCriteriaDataSource(portletConfig), null, criteria, groupComposite);
                     }
 
@@ -238,10 +234,10 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
         final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
         final Configuration portletConfig = storedPortlet.getConfiguration();
 
-        LocatableDynamicForm customSettings = new LocatableDynamicForm(extendLocatorId("customSettings"));
-        LocatableVLayout page = new LocatableVLayout(customSettings.extendLocatorId("page"));
+        DynamicForm customSettings = new DynamicForm();
+        EnhancedVLayout page = new EnhancedVLayout();
         //build editor form container
-        final LocatableDynamicForm form = new LocatableDynamicForm(page.extendLocatorId("alert-filter"));
+        final DynamicForm form = new DynamicForm();
         form.setMargin(5);
 
         //add label about what configuration affects? redundant?
@@ -297,13 +293,13 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
             if (EntityContext.Type.ResourceGroup != context.getType()) {
                 throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
             }
 
-            return new GroupOperationsPortlet(locatorId, context);
+            return new GroupOperationsPortlet(context);
         }
     }
 
@@ -353,9 +349,9 @@ class GroupOperationsCriteriaHistoryListView extends GroupOperationHistoryListVi
 
     private ResourceGroupComposite composite;
 
-    public GroupOperationsCriteriaHistoryListView(String locatorId, GroupOperationsCriteriaDataSource dataSource,
-        String title, Criteria criteria, ResourceGroupComposite composite) {
-        super(locatorId, composite);
+    public GroupOperationsCriteriaHistoryListView(GroupOperationsCriteriaDataSource dataSource, String title,
+        Criteria criteria, ResourceGroupComposite composite) {
+        super(composite);
         super.setDataSource(dataSource);
         this.composite = composite;
         setShowFooterRefresh(false); //disable footer refresh

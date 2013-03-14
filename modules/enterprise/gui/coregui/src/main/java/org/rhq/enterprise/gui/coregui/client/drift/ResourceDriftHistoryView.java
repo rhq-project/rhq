@@ -26,14 +26,14 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
  * @author Jay Shaughnessy
  */
 public class ResourceDriftHistoryView extends DriftHistoryView {
-    public static ResourceDriftHistoryView get(String locatorId, ResourceComposite composite) {
+    public static ResourceDriftHistoryView get(ResourceComposite composite) {
         String tableTitle = MSG.view_drift_table_resourceHistory();
         EntityContext context = EntityContext.forResource(composite.getResource().getId());
         boolean hasWriteAccess = composite.getResourcePermission().isDrift();
-        return new ResourceDriftHistoryView(locatorId, tableTitle, context, hasWriteAccess);
+        return new ResourceDriftHistoryView(tableTitle, context, hasWriteAccess);
     }
 
-    private ResourceDriftHistoryView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess) {
-        super(locatorId, tableTitle, context, hasWriteAccess);
+    private ResourceDriftHistoryView(String tableTitle, EntityContext context, boolean hasWriteAccess) {
+        super(tableTitle, context, hasWriteAccess);
     }
 }

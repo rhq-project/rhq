@@ -26,9 +26,9 @@ public class BundleDistributionFileUploadForm extends FileUploadForm {
 
     private int bundleVersionId;
 
-    public BundleDistributionFileUploadForm(String locatorId, boolean showUploadButton) {
+    public BundleDistributionFileUploadForm(boolean showUploadButton) {
 
-        super(locatorId, MSG.view_upload_bundleDistFile(), "0", true, showUploadButton, null);
+        super(CoreGUI.getMessages().view_upload_bundleDistFile(), "0", true, showUploadButton, null);
 
         setAction(GWT.getModuleBaseURL() + "BundleDistributionFileUploadServlet");
     }

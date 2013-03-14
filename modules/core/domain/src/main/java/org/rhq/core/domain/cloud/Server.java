@@ -90,7 +90,7 @@ import org.rhq.core.domain.resource.Agent;
         + " UPDATE Server s " //
         + "    SET s.status = -1 " // negative numbers so that bitmask strat does not conflict with this one
         + "  WHERE s.status = 0 ") })
-@SequenceGenerator(name = "id", sequenceName = "RHQ_SERVER_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_SERVER_ID_SEQ", sequenceName = "RHQ_SERVER_ID_SEQ")
 @Table(name = "RHQ_SERVER")
 public class Server implements Serializable {
 
@@ -108,7 +108,7 @@ public class Server implements Serializable {
     public static final String QUERY_UPDATE_STATUS_BY_NAME = "Server.updateStatusByName";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "id")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_SERVER_ID_SEQ")
     @Id
     private int id;
 

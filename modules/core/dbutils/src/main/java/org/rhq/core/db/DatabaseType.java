@@ -274,6 +274,19 @@ public abstract class DatabaseType {
     }
 
     /**
+     * Get the Integer representation of the number type supplied by the db vendor for an integer field value.
+     * The default implementation simply applies a cast to the passed in number and is appropriate for DB types
+     * that support a native integer field type (like Postgres).  Other db types should override this method
+     * (like Oracle).  
+     * 
+     * @param number
+     * @return
+     */
+    public Integer getInteger(Object number) {
+        return (Integer) number;
+    }
+
+    /**
      * Fill out a <code>PreparedStatement</code> correctly with a boolean.
      *
      * @param  bool the boolean you want

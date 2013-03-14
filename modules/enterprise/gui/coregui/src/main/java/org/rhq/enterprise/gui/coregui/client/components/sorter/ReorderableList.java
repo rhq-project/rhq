@@ -27,6 +27,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordDropEvent;
@@ -35,17 +36,16 @@ import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Ian Springer
  */
-public class ReorderableList extends LocatableVLayout {
+public class ReorderableList extends EnhancedVLayout {
 
     protected ListGridRecord[] initialSelection;
     protected HLayout hlayout;
-    protected LocatableListGrid listGrid;
+    protected ListGrid listGrid;
     /** an icon displayed next to each item in the list grids, or null if no icon should be displayed */
     private String itemIcon;
     /** the item title (i.e. display name), which should be plural and capitalized, e.g. "Resource Groups", "Roles". */
@@ -58,18 +58,18 @@ public class ReorderableList extends LocatableVLayout {
 
     private HoverCustomizer nameHoverCustomizer;
 
-    public ReorderableList(String locatorId, ListGridRecord[] records, String itemTitle, String itemIcon) {
-        this(locatorId, false, records, itemTitle, itemIcon, null);
+    public ReorderableList(ListGridRecord[] records, String itemTitle, String itemIcon) {
+        this(false, records, itemTitle, itemIcon, null);
     }
 
-    public ReorderableList(String locatorId, ListGridRecord[] records, String itemTitle, String itemIcon,
+    public ReorderableList(ListGridRecord[] records, String itemTitle, String itemIcon,
         HoverCustomizer nameHoverCustomizer) {
-        this(locatorId, false, records, itemTitle, itemIcon, nameHoverCustomizer);
+        this(false, records, itemTitle, itemIcon, nameHoverCustomizer);
     }
 
-    public ReorderableList(String locatorId, boolean isReadOnly, ListGridRecord[] records, String itemTitle,
-        String itemIcon, HoverCustomizer nameHoverCustomizer) {
-        super(locatorId);
+    public ReorderableList(boolean isReadOnly, ListGridRecord[] records, String itemTitle, String itemIcon,
+        HoverCustomizer nameHoverCustomizer) {
+        super();
 
         this.isReadOnly = isReadOnly;
 
@@ -77,7 +77,7 @@ public class ReorderableList extends LocatableVLayout {
         setMargin(7);
 
         this.hlayout = new HLayout();
-        this.listGrid = new LocatableListGrid(extendLocatorId("listGrid"));
+        this.listGrid = new ListGrid();
         this.initialSelection = records;
         this.listGrid.setRecords(records);
 

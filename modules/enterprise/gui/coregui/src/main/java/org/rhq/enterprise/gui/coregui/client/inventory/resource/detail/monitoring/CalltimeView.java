@@ -45,12 +45,12 @@ public class CalltimeView extends TableSection<CalltimeDataSource> implements Ha
     private TextItem destinationFilter;
 
     // for subsystem views
-    public CalltimeView(String locatorId) {
-        this(locatorId, EntityContext.forSubsystemView());
+    public CalltimeView() {
+        this(EntityContext.forSubsystemView());
     }
 
-    public CalltimeView(String locatorId, EntityContext context) {
-        super(locatorId, SUBSYSTEM_VIEW_ID.getTitle());
+    public CalltimeView(EntityContext context) {
+        super(SUBSYSTEM_VIEW_ID.getTitle());
         setDataSource(new CalltimeDataSource(context));
         destinationFilter = new TextItem(CalltimeDataSource.FILTER_DESTINATION,
             MSG.view_resource_monitor_calltime_destinationFilter());
@@ -75,7 +75,7 @@ public class CalltimeView extends TableSection<CalltimeDataSource> implements Ha
     protected void configureTable() {
         ArrayList<ListGridField> dataSourceFields = getDataSource().getListGridFields();
         getListGrid().setFields(dataSourceFields.toArray(new ListGridField[dataSourceFields.size()]));
-        addExtraWidget(new UserPreferencesMeasurementRangeEditor(extendLocatorId("range")), true);
+        addExtraWidget(new UserPreferencesMeasurementRangeEditor(), true);
 
         super.configureTable();
     }

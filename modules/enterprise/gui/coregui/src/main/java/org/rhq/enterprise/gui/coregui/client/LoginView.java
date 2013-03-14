@@ -26,7 +26,6 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.http.client.Request;
@@ -38,10 +37,12 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.FormErrorOrientation;
 import com.smartgwt.client.types.VerticalAlignment;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -66,32 +67,27 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
  * @author Joseph Marques
  */
-public class LoginView extends LocatableCanvas {
+public class LoginView extends Canvas {
 
-    private static final Logger log = Logger.getLogger("");
     private static boolean loginShowing = false;
 
-    private LocatableWindow window;
-    private LocatableDynamicForm form;
-    private LocatableDynamicForm inputForm;
+    private Messages MSG = CoreGUI.getMessages();
+
+    private Window window;
+    private DynamicForm form;
+    private DynamicForm inputForm;
 
     private SubmitItem loginButton;
-
-    public LoginView(String locatorId) {
-        super(locatorId);
-    }
 
     //registration fields
     private TextItem first;
@@ -119,7 +115,7 @@ public class LoginView extends LocatableCanvas {
             loginShowing = true;
             UserSessionManager.logout();
 
-            form = new LocatableDynamicForm(extendLocatorId("LoginView"));
+            form = new DynamicForm();
             form.setMargin(25);
             form.setAutoFocus(true);
             form.setShowErrorText(true);
@@ -167,12 +163,7 @@ public class LoginView extends LocatableCanvas {
 
             form.setFields(logo, header, new RowSpacerItem(), user, password, loginButton);
 
-            // we ant the login window to have the same locator regardless of its parent.  It can be
-            // created from at least two different paths (LoginView, UserSessionManager) but for test purposes
-            // we want a single login script. There will only be one login dialog at any time, so it is safe
-            // to use a non-extended locator.
-            // is parented by the Login 
-            window = new LocatableWindow("Login");
+            window = new Window();
             window.setWidth(400);
             window.setHeight(275);
             window.setTitle(MSG.common_title_welcome());
@@ -248,7 +239,7 @@ public class LoginView extends LocatableCanvas {
         int fieldWidth = 120;
 
         //Build registration window.
-        LocatableVLayout column = new LocatableVLayout(extendLocatorId("NewLdapRegistration"));
+        EnhancedVLayout column = new EnhancedVLayout();
         column.setMargin(25);
         HeaderItem header = new HeaderItem();
         //Locate product info for registration screen.
@@ -289,7 +280,7 @@ public class LoginView extends LocatableCanvas {
         SpacerItem space = new SpacerItem();
         space.setColSpan(1);
 
-        inputForm = new LocatableDynamicForm(extendLocatorId("LdapUserRegistrationInput"));
+        inputForm = new DynamicForm();
         inputForm.setAutoFocus(true);
         inputForm.setErrorOrientation(FormErrorOrientation.LEFT);
         inputForm.setNumCols(4);
@@ -310,7 +301,7 @@ public class LoginView extends LocatableCanvas {
         HStack row = new HStack();
         row.setMembersMargin(5);
         row.setAlign(VerticalAlignment.CENTER);
-        IButton okButton = new LocatableIButton(inputForm.extendLocatorId("OK"), MSG.common_button_ok());
+        IButton okButton = new EnhancedIButton(MSG.common_button_ok());
         okButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
 
@@ -319,7 +310,7 @@ public class LoginView extends LocatableCanvas {
                     .trim().isEmpty()));
                 //check for session timeout
                 if (UserSessionManager.isLoggedOut() || (credentialsEmpty)) {
-                    resetLogin(LoginView.this.extendLocatorId("Register"));
+                    resetLogin();
                     return;
                 }
 
@@ -340,7 +331,7 @@ public class LoginView extends LocatableCanvas {
                         inputForm.setValue(DEPARTMENT, String.valueOf(department.getValue()));
                     inputForm.setValue(SESSIONID, sessionId);
                     inputForm.setValue(PASSWORD, password);
-                    registerLdapUser(LoginView.this.extendLocatorId("RegisterLdap"), inputForm, callback);
+                    registerLdapUser(inputForm, callback);
                 }
             }
 
@@ -355,14 +346,14 @@ public class LoginView extends LocatableCanvas {
         phone.setValue(subject.getPhoneNumber());
         department.setValue(subject.getDepartment());
 
-        IButton resetButton = new LocatableIButton(inputForm.extendLocatorId("Reset"), MSG.common_button_reset());
+        IButton resetButton = new EnhancedIButton(MSG.common_button_reset());
         resetButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 //F5 refresh check? If they've reloaded the form for some reason then bail.
                 boolean credentialsEmpty = ((user == null) || (user.trim().isEmpty()) || (password == null) || (password
                     .trim().isEmpty()));
                 if (UserSessionManager.isLoggedOut() || credentialsEmpty) {
-                    resetLogin(LoginView.this.extendLocatorId("Reset"));
+                    resetLogin();
                     return;
                 }
 
@@ -383,11 +374,11 @@ public class LoginView extends LocatableCanvas {
         });
         row.addMember(resetButton);
 
-        IButton cancelButton = new LocatableIButton(inputForm.extendLocatorId("Cancel"), MSG.common_button_cancel());
+        IButton cancelButton = new EnhancedIButton(MSG.common_button_cancel());
         cancelButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 UserSessionManager.logout();
-                resetLogin(LoginView.this.extendLocatorId("Reset"));
+                resetLogin();
             }
         });
         row.addMember(cancelButton);
@@ -396,7 +387,7 @@ public class LoginView extends LocatableCanvas {
         row.addMember(logoutLabel);
         column.addMember(row);
 
-        window = new LocatableWindow(extendLocatorId("RegistrationWindow"));
+        window = new Window();
         window.setWidth(670);
         window.setHeight(330);
         window.setTitle(MSG.view_login_registerUser());
@@ -416,11 +407,11 @@ public class LoginView extends LocatableCanvas {
 
     /** Go through steps of invalidating this login and piping them back to CoreGUI Login.
      */
-    private void resetLogin(String locatorId) {
+    private void resetLogin() {
         window.destroy();
         loginShowing = false;
         UserSessionManager.logout();
-        new LoginView(locatorId).showLoginDialog();
+        new LoginView().showLoginDialog();
     }
 
     /**Uses the information from the populated form to create the Subject for the new LDAP user.
@@ -428,7 +419,7 @@ public class LoginView extends LocatableCanvas {
      * @param populatedForm - validated data
      * @param callback
      */
-    protected void registerLdapUser(final String locatorId, final DynamicForm populatedForm,
+    protected void registerLdapUser(final DynamicForm populatedForm,
         final AsyncCallback<Subject> callback) {
 
         final Subject newSubject = UserSessionManager.getSessionSubject();
@@ -491,7 +482,7 @@ public class LoginView extends LocatableCanvas {
                     Log.error("Failed to register LDAP subject '" + newSubject.getName() + "' " + caught.getMessage(),
                         caught);
                     //TODO: pass in warning message to Login Dialog.
-                    new LoginView(locatorId).showLoginDialog();
+                        new LoginView().showLoginDialog();
                 }
 
                 public void onSuccess(Subject checked) {
@@ -513,7 +504,7 @@ public class LoginView extends LocatableCanvas {
             window.destroy();
             loginShowing = false;
             //TODO: pass informative message to login.
-            new LoginView(locatorId).showLoginDialog();
+            new LoginView().showLoginDialog();
         }
     }
 

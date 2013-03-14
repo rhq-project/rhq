@@ -38,8 +38,8 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 public class SubjectRoleSelector extends AbstractSelector<Role, RoleCriteria> {
     private static final String ITEM_ICON = "global/Role_16.png";
 
-    public SubjectRoleSelector(String locatorId, ListGridRecord[] roleRecords, boolean isReadOnly) {
-        super(locatorId, isReadOnly);
+    public SubjectRoleSelector(ListGridRecord[] roleRecords, boolean isReadOnly) {
+        super(isReadOnly);
         setAssigned(roleRecords);
     }
 

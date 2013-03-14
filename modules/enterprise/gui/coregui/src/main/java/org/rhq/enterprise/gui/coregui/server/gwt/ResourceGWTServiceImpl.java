@@ -33,6 +33,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.CannotConnectToAgentException;
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
@@ -254,6 +255,21 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
             }
 
             return SerialUtility.prepare(platforms, "ResourceService.findRecentlyAddedResources");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    public void uninventoryAllResourcesByAgent(Agent[] agents) throws RuntimeException {
+        try {
+            if (agents != null && agents.length > 0) {
+                // we want to uninventory them one at a time to ensure our server-side doesn't do too much in a single SLSB method/tx
+                // If one fails and throws an exception, we abort the whole thing. This may or may not be a good thing.
+                for (Agent agent : agents) {
+                    resourceManager.uninventoryAllResourcesByAgent(getSessionSubject(), agent);
+                }
+            }
+            return;
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

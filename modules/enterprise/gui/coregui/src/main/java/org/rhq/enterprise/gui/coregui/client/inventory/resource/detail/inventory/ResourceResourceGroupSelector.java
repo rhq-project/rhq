@@ -36,9 +36,9 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.Resour
  */
 public class ResourceResourceGroupSelector extends ResourceGroupSelector {
 
-    public ResourceResourceGroupSelector(String locatorId, Collection<ResourceGroup> resourceGroups) {
+    public ResourceResourceGroupSelector(Collection<ResourceGroup> resourceGroups) {
 
-        super(locatorId);
+        super();
 
         if (null != resourceGroups) {
             ListGridRecord[] data = (new ResourceGroupsDataSource()).buildRecords(resourceGroups);
@@ -47,5 +47,5 @@ public class ResourceResourceGroupSelector extends ResourceGroupSelector {
 
         this.setOverflow(Overflow.AUTO);
     }
-    
+
 }

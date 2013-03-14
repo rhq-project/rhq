@@ -34,7 +34,6 @@ import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelecto
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author Greg Hinkle
@@ -51,22 +50,22 @@ public class ResourceGroupSelector extends AbstractSelector<ResourceGroup, Resou
 
     }
 
-    public ResourceGroupSelector(String locatorId) {
-        this(locatorId, false);
+    public ResourceGroupSelector() {
+        this(false);
     }
 
-    public ResourceGroupSelector(String locatorId, boolean isReadOnly) {
-        this(locatorId, null, isReadOnly);
+    public ResourceGroupSelector(boolean isReadOnly) {
+        this(null, isReadOnly);
     }
 
-    public ResourceGroupSelector(String locatorId, GroupCategory categoryFilter, boolean isReadOnly) {
-        super(locatorId, isReadOnly);
+    public ResourceGroupSelector(GroupCategory categoryFilter, boolean isReadOnly) {
+        super(isReadOnly);
 
         this.categoryFilter = categoryFilter;
     }
 
     protected DynamicForm getAvailableFilterForm() {
-        DynamicForm availableFilterForm = new LocatableDynamicForm(this.getLocatorId());
+        DynamicForm availableFilterForm = new DynamicForm();
         availableFilterForm.setWidth100();
         availableFilterForm.setNumCols(4);
 

@@ -188,7 +188,7 @@ public interface ConfigurationManagerLocal extends ConfigurationManagerRemote {
      * {@link #getLatestResourceConfigurationUpdate(Subject, int)} and
      * {@link #scheduleGroupResourceConfigurationUpdate}.
      *
-     * @param  subject
+     * @param  subject ASSUMES CONFIGURE_WRITE perm for resource in question, no authz checks in this method.
      * @param  resourceId
      * @param  newConfiguration
      * @param  newStatus
@@ -196,10 +196,11 @@ public interface ConfigurationManagerLocal extends ConfigurationManagerRemote {
      *
      * @param isPartofGroupUpdate
      * @return the persisted Resource Configuration update, or null if the specified Configuration is identical to the
-     *         currently persisted Configuration
+     *         currently persisted Configuration. Note, on success the normally lazy-loaded
+     *         ResourceConfigurationUpdate.resource.agent will be provided.
      */
     @Nullable
-    ResourceConfigurationUpdate persistNewResourceConfigurationUpdateHistory(Subject subject, int resourceId,
+    ResourceConfigurationUpdate persistResourceConfigurationUpdateInNewTransaction(Subject subject, int resourceId,
         Configuration newConfiguration, ConfigurationUpdateStatus newStatus, String newSubject,
         boolean isPartofGroupUpdate) throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
 

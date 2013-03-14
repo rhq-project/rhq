@@ -25,30 +25,34 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util;
 import com.smartgwt.client.types.ContentsType;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.HTMLPane;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.dashboard.ConfigurablePortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 
 /**
  * @author Greg Hinkle
  */
-public class MashupPortlet extends LocatableHTMLPane implements ConfigurablePortlet {
+public class MashupPortlet extends HTMLPane implements ConfigurablePortlet {
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "Mashup";
     // A default displayed, persisted name for the portlet    
-    public static final String NAME = MSG.view_portlet_defaultName_mashup();
+    public static final String NAME = CoreGUI.getMessages().view_portlet_defaultName_mashup();
 
-    public MashupPortlet(String locatorId) {
-        super(locatorId);
+    protected Messages MSG = CoreGUI.getMessages();
+
+    public MashupPortlet() {
+        super();
         setContentsType(ContentsType.PAGE);
     }
 
@@ -83,9 +87,9 @@ public class MashupPortlet extends LocatableHTMLPane implements ConfigurablePort
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
-            return new MashupPortlet(locatorId);
+            return new MashupPortlet();
         }
     }
 }

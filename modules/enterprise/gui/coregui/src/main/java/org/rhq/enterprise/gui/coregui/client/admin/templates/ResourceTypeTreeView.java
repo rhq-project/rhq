@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.templates;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumSet;
+
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
@@ -35,6 +39,7 @@ import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeGridField;
 import com.smartgwt.client.widgets.tree.TreeNode;
+
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
@@ -45,11 +50,8 @@ import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.*;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.EnumSet;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 
 /**
  * A tree view of all known ResourceTypes, which includes summaries of metric schedule and alert definition templates
@@ -58,15 +60,15 @@ import java.util.EnumSet;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public abstract class ResourceTypeTreeView extends LocatableVLayout implements BookmarkableView {
+public abstract class ResourceTypeTreeView extends EnhancedVLayout implements BookmarkableView {
 
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_CONFIGURATION_VIEW_ID + "/";
 
     private Layout gridCanvas;
 
-    public ResourceTypeTreeView(String locatorId) {
-        super(locatorId);
+    public ResourceTypeTreeView() {
+        super();
 
         setWidth100();
         setHeight100();
@@ -116,26 +118,26 @@ public abstract class ResourceTypeTreeView extends LocatableVLayout implements B
 
     private Canvas getGridCanvas() {
         if (this.gridCanvas == null) {
-            LocatableVLayout layout = new LocatableVLayout(extendLocatorId("gridLayout"));
+            EnhancedVLayout layout = new EnhancedVLayout();
 
             TitleBar titleBar = getTitleBar();
             titleBar.setExtraSpace(10);
             layout.addMember(titleBar);
 
-            SectionStack sectionStack = new LocatableSectionStack(extendLocatorId("TypeStack"));
+            SectionStack sectionStack = new SectionStack();
             sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
 
-            ListGrid platformsList = new CustomResourceTypeListGrid(extendLocatorId("platformsList"));
+            ListGrid platformsList = new CustomResourceTypeListGrid();
             SectionStackSection platforms = new SectionStackSection(MSG.view_adminTemplates_platforms());
             platforms.setExpanded(true);
             platforms.addItem(platformsList);
 
-            ListGrid platformServicesList = new CustomResourceTypeListGrid(extendLocatorId("platformServicesList"));
+            ListGrid platformServicesList = new CustomResourceTypeListGrid();
             SectionStackSection platformServices = new SectionStackSection(MSG.view_adminTemplates_platformServices());
             platformServices.setExpanded(true);
             platformServices.addItem(platformServicesList);
 
-            TreeGrid serversTreeGrid = new CustomResourceTypeTreeGrid(extendLocatorId("serversTree"));
+            TreeGrid serversTreeGrid = new CustomResourceTypeTreeGrid();
             SectionStackSection servers = new SectionStackSection(MSG.view_adminTemplates_servers());
             servers.setExpanded(true);
             servers.addItem(serversTreeGrid);
@@ -162,19 +164,18 @@ public abstract class ResourceTypeTreeView extends LocatableVLayout implements B
      * @param canvasToShow the canvas to show in the parent
      */
     protected void switchToCanvas(Layout parentCanvas, Canvas canvasToShow) {
-        SeleniumUtility.destroyMembers(parentCanvas);
+        EnhancedUtility.destroyMembers(parentCanvas);
 
         parentCanvas.addMember(canvasToShow);
         parentCanvas.markForRedraw();
     }
 
     protected void prepareSubCanvas(Layout parentCanvas, Canvas canvasToShow, boolean showBackButton) {
-        SeleniumUtility.destroyMembers(parentCanvas);
+        EnhancedUtility.destroyMembers(parentCanvas);
 
         if (showBackButton) {
             String backLink = getEditLink(null).substring(1); // strip the #
-            BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
-                backLink);
+            BackButton backButton = new BackButton(MSG.view_tableSection_backButton(), backLink);
             parentCanvas.addMember(backButton);
         }
 
@@ -182,10 +183,10 @@ public abstract class ResourceTypeTreeView extends LocatableVLayout implements B
         parentCanvas.markForRedraw();
     }
 
-    public class CustomResourceTypeListGrid extends LocatableListGrid {
+    public class CustomResourceTypeListGrid extends ListGrid {
 
-        public CustomResourceTypeListGrid(String locatorId) {
-            super(locatorId);
+        public CustomResourceTypeListGrid() {
+            super();
 
             setWrapCells(true);
             setFixedRecordHeights(false);
@@ -194,20 +195,20 @@ public abstract class ResourceTypeTreeView extends LocatableVLayout implements B
 
             ArrayList<ListGridField> fields = new ArrayList<ListGridField>(7);
 
-            final ListGridField nameField = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_NAME, MSG
-                .common_title_name());
+            final ListGridField nameField = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_NAME,
+                MSG.common_title_name());
             nameField.setShowValueIconOnly(false);
             fields.add(nameField);
 
-            final ListGridField pluginField = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_PLUGIN, MSG
-                .common_title_plugin());
+            final ListGridField pluginField = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_PLUGIN,
+                MSG.common_title_plugin());
             fields.add(pluginField);
             pluginField.setHidden(true);
 
             fields.addAll(getAdditionalListGridFields(false));
 
-            ListGridField editField = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_EDIT, MSG
-                .common_title_edit());
+            ListGridField editField = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_EDIT,
+                MSG.common_title_edit());
             editField.setType(ListGridFieldType.IMAGE);
             editField.setAlign(Alignment.CENTER);
             editField.setCanGroupBy(false);
@@ -243,10 +244,10 @@ public abstract class ResourceTypeTreeView extends LocatableVLayout implements B
         }
     }
 
-    public class CustomResourceTypeTreeGrid extends LocatableTreeGrid {
+    public class CustomResourceTypeTreeGrid extends TreeGrid {
 
-        public CustomResourceTypeTreeGrid(String locatorId) {
-            super(locatorId);
+        public CustomResourceTypeTreeGrid() {
+            super();
 
             setWrapCells(true);
             setFixedRecordHeights(false);
@@ -256,18 +257,18 @@ public abstract class ResourceTypeTreeView extends LocatableVLayout implements B
 
             ArrayList<ListGridField> fields = new ArrayList<ListGridField>(7);
 
-            final TreeGridField nameField = new TreeGridField(ResourceTypeTreeNodeBuilder.ATTRIB_NAME, MSG
-                .common_title_name());
+            final TreeGridField nameField = new TreeGridField(ResourceTypeTreeNodeBuilder.ATTRIB_NAME,
+                MSG.common_title_name());
             fields.add(nameField);
 
-            final TreeGridField pluginField = new TreeGridField(ResourceTypeTreeNodeBuilder.ATTRIB_PLUGIN, MSG
-                .common_title_plugin());
+            final TreeGridField pluginField = new TreeGridField(ResourceTypeTreeNodeBuilder.ATTRIB_PLUGIN,
+                MSG.common_title_plugin());
             fields.add(pluginField);
 
             fields.addAll(getAdditionalListGridFields(true));
 
-            ListGridField editField = new TreeGridField(ResourceTypeTreeNodeBuilder.ATTRIB_EDIT, MSG
-                .common_title_edit());
+            ListGridField editField = new TreeGridField(ResourceTypeTreeNodeBuilder.ATTRIB_EDIT,
+                MSG.common_title_edit());
             editField.setType(ListGridFieldType.IMAGE);
             editField.setAlign(Alignment.CENTER);
             editField.addRecordClickHandler(new RecordClickHandler() {

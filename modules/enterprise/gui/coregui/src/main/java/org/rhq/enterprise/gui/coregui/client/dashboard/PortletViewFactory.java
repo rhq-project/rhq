@@ -25,5 +25,5 @@ import org.rhq.core.domain.common.EntityContext;
  */
 public interface PortletViewFactory {
 
-    Portlet getInstance(String locatorId, EntityContext context);
+    Portlet getInstance(EntityContext context);
 }

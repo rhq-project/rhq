@@ -57,19 +57,25 @@ public class CriteriaQueryTest {
 
     private static class FakeCriteriaQueryExecutor implements CriteriaQueryExecutor<FakeEntity, FakeEntityCriteria> {
 
+        //list of pagelists
         private List<PageList<FakeEntity>> pages = new ArrayList<PageList<FakeEntity>>();
 
+        //total size
         private int totalSize;
 
+        // the pageControl instance to use
         private PageControl pc;
 
+        //
         public FakeCriteriaQueryExecutor(int totalSize, PageControl pc) {
             this.totalSize = totalSize;
             this.pc = pc;
         }
 
         public void addPage(List<FakeEntity> entities) {
-            pages.add(new PageList<FakeEntity>(entities, totalSize, pc));
+            int pageNumber = pages.size();
+            pages
+                .add(new PageList<FakeEntity>(entities, totalSize, new PageControl(pageNumber, this.pc.getPageSize())));
         }
 
         @Override
@@ -87,8 +93,8 @@ public class CriteriaQueryTest {
 
         FakeEntityCriteria criteria = new FakeEntityCriteria();
 
-        CriteriaQuery<FakeEntity, FakeEntityCriteria> query =
-            new CriteriaQuery<FakeEntity, FakeEntityCriteria>(criteria, queryExecutor);
+        CriteriaQuery<FakeEntity, FakeEntityCriteria> query = new CriteriaQuery<FakeEntity, FakeEntityCriteria>(
+            criteria, queryExecutor);
 
         List<FakeEntity> actual = new ArrayList<FakeEntity>();
         for (FakeEntity entity : query) {
@@ -109,10 +115,11 @@ public class CriteriaQueryTest {
         queryExecutor.addPage(expected.subList(2, 4));
 
         FakeEntityCriteria criteria = new FakeEntityCriteria();
-        criteria.setPageControl(pc);
+        //spinder 2-20-13: DO NOT use criteria.setPageControl(pc) here as it causes ignore of pageNumber/pageSize
+        criteria.setPaging(pc.getPageNumber(), pc.getPageSize());
 
-        CriteriaQuery<FakeEntity, FakeEntityCriteria> query =
-            new CriteriaQuery<FakeEntity, FakeEntityCriteria>(criteria, queryExecutor);
+        CriteriaQuery<FakeEntity, FakeEntityCriteria> query = new CriteriaQuery<FakeEntity, FakeEntityCriteria>(
+            criteria, queryExecutor);
 
         List<FakeEntity> actual = new ArrayList<FakeEntity>();
         for (FakeEntity entity : query) {
@@ -122,4 +129,104 @@ public class CriteriaQueryTest {
         assertEquals(actual, expected);
     }
 
+    /** This is like executeQueryThatReturnsMultiplePagesOfResults(), creates more
+     *  that two pages of ordered entries and iterates over them.  This is to test
+     *  a nasty bug in CriteriaQuery where results beyond the first two pages were 
+     *  not being parsed.
+     */
+    @Test
+    public void executeQueryThatReturnsTotalPagesOfResults() {
+        //create page control to browse entries 100 at a time and start at page 0
+        int pageSize = 100;
+        PageControl pc = new PageControl(0, pageSize);
+
+        //Total size of result set is 500.
+        int totalSize = 500;
+
+        //Create list and populate with all entries.
+        List<FakeEntity> total = new ArrayList<FakeEntity>();
+        for (int i = 0; i < totalSize; i++) {
+            total.add(new FakeEntity(i));
+        }
+
+        //build executor to parse a given list with using PageControl passed in
+        FakeCriteriaQueryExecutor queryExecutor = new FakeCriteriaQueryExecutor(totalSize, pc);
+
+        //add pages of results to simulate PageList results as returned by db queries
+        //todo: spinder, modify to support fractional results below and add last page.
+        int bucketCount = totalSize / pageSize;//number of full pages to list
+        int start = 0;
+        int end = pageSize;
+        //add bucketCount pages of data to read from.
+        for (int i = 0; i < bucketCount; i++) {
+            //Ex. first two pages (0, 100), (100,200), etc. 
+            queryExecutor.addPage(total.subList(start, end));
+            start += pageSize;
+            end += pageSize;
+        }
+
+        //build criteria and attach pageControl
+        FakeEntityCriteria criteria = new FakeEntityCriteria();
+        //spinder 2-20-13:DO NOT use criteria.setPageControl(pc) here as it causes ignore of pageNumber/pageSize
+        criteria.setPaging(pc.getPageNumber(), pc.getPageSize());
+
+        //?? So which pageControl has the right details? Criteria.pageControl? OR PageControl passed into the QueryExecutor.
+
+        //Start off the initial query to page through the items in chunks defined by the pageControl instance
+        CriteriaQuery<FakeEntity, FakeEntityCriteria> query = new CriteriaQuery<FakeEntity, FakeEntityCriteria>(
+            criteria, queryExecutor);
+
+        //Now iterate over the list and make sure that iteration happens in order as expected
+        //monotonically increasing.
+        int last = -1;
+        for (FakeEntity entity : query) {
+            //this fails with earlier bug in CriteriaQuery
+            assertEquals(true, (last < entity.getId()));
+            last = entity.getId();
+        }
+    }
+
+    @Test
+    public void singleResultTest() {
+        // This test doesn't really fit here but I;m adding it for convenience
+        List<FakeEntity> result = null;
+
+        try {
+            FakeEntityCriteria.getSingleResult(result);
+            assert false : "Should have thrown Runtime Exception";
+
+        } catch (RuntimeException e) {
+            assert e.getMessage().contains("NoResultException");
+        }
+
+        result = new ArrayList<FakeEntity>(2);
+
+        try {
+            FakeEntityCriteria.getSingleResult(result);
+            assert false : "Should have thrown Runtime Exception";
+
+        } catch (RuntimeException e) {
+            assert e.getMessage().contains("NoResultException");
+        }
+
+        result.add(new FakeEntity(1));
+
+        try {
+            FakeEntity r = FakeEntityCriteria.getSingleResult(result);
+            assert r.getId() == 1 : "Should have retuned expected entity but returned: " + r;
+
+        } catch (Throwable t) {
+            assert false : "Should have returned single result";
+        }
+
+        result.add(new FakeEntity(2));
+
+        try {
+            FakeEntityCriteria.getSingleResult(result);
+            assert false : "Should have thrown Runtime Exception";
+
+        } catch (RuntimeException e) {
+            assert e.getMessage().contains("NonUniqueResultException");
+        }
+    }
 }

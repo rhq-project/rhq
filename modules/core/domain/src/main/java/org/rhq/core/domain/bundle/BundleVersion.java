@@ -82,7 +82,7 @@ import org.rhq.core.domain.tagging.Tag;
     @NamedQuery(name = BundleVersion.QUERY_FIND_BY_NAME, query = "SELECT bv FROM BundleVersion bv WHERE bv.name = :name "), //
     @NamedQuery(name = BundleVersion.QUERY_FIND_BY_BUNDLE_ID, query = "SELECT bv FROM BundleVersion bv WHERE bv.bundle.id = :bundleId ") //
 })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_BUNDLE_VERSION_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_BUNDLE_VERSION_ID_SEQ", sequenceName = "RHQ_BUNDLE_VERSION_ID_SEQ")
 @Table(name = "RHQ_BUNDLE_VERSION")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class BundleVersion implements Serializable {
@@ -97,7 +97,7 @@ public class BundleVersion implements Serializable {
     public static final String QUERY_FIND_BY_BUNDLE_ID = "BundleVersion.findByBundleId";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_BUNDLE_VERSION_ID_SEQ")
     @Id
     private int id;
 

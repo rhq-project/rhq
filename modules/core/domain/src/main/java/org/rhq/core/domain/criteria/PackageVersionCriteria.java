@@ -11,7 +11,6 @@ import org.rhq.core.domain.util.PageOrdering;
 public class PackageVersionCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
     private Integer filterPackageId; // requires override    
     private Integer filterRepoId; // requires overrides
     private Integer filterResourceId; // requires overrides
@@ -53,10 +52,6 @@ public class PackageVersionCriteria extends Criteria {
     @Override
     public Class<PackageVersion> getPersistentClass() {
         return PackageVersion.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
     }
 
     public void addFilterRepoId(Integer filterRepoId) {

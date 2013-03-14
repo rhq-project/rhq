@@ -47,7 +47,7 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = Architecture.QUERY_FIND_BY_NAME, query = "SELECT arch FROM Architecture arch WHERE arch.name = :name"),
     @NamedQuery(name = Architecture.QUERY_FIND_ALL, query = "SELECT arch FROM Architecture arch"),
     @NamedQuery(name = Architecture.QUERY_DYNAMIC_CONFIG_VALUES, query = "SELECT arch.name, arch.name FROM Architecture arch") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_ARCHITECTURE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_ARCHITECTURE_ID_SEQ", sequenceName = "RHQ_ARCHITECTURE_ID_SEQ")
 @Table(name = "RHQ_ARCHITECTURE")
 public class Architecture implements Serializable {
 
@@ -59,7 +59,7 @@ public class Architecture implements Serializable {
     public static final String QUERY_DYNAMIC_CONFIG_VALUES = "Architecture.dynamicConfigValues";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_ARCHITECTURE_ID_SEQ")
     @Id
     private int id;
 

@@ -52,8 +52,8 @@ public class RolesView extends TableSection<RolesDataSource> implements HasViewN
 
     private boolean hasManageSecurity;
 
-    public RolesView(String locatorId, boolean hasManageSecurity) {
-        super(locatorId, null);
+    public RolesView(boolean hasManageSecurity) {
+        super(null);
 
         final RolesDataSource datasource = RolesDataSource.getInstance();
         setDataSource(datasource);
@@ -74,9 +74,8 @@ public class RolesView extends TableSection<RolesDataSource> implements HasViewN
         List<ListGridField> fields = createFields();
         setListGridFields(fields.toArray(new ListGridField[fields.size()]));
 
-        addTableAction(extendLocatorId("New"), MSG.common_button_new(), createNewAction());
-        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), getDeleteConfirmMessage(),
-            createDeleteAction());
+        addTableAction(MSG.common_button_new(), createNewAction());
+        addTableAction(MSG.common_button_delete(), getDeleteConfirmMessage(), createDeleteAction());
 
         super.configureTable();
     }
@@ -157,7 +156,7 @@ public class RolesView extends TableSection<RolesDataSource> implements HasViewN
 
     @Override
     public Canvas getDetailsView(Integer roleId) {
-        return new RoleEditView(extendLocatorId("Detail"), roleId);
+        return new RoleEditView(roleId);
     }
 
     @Override

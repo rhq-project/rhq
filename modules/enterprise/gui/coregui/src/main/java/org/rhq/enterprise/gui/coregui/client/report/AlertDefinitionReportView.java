@@ -22,6 +22,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client.report;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -30,9 +35,14 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.grid.*;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.grid.ListGridField;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
+
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
@@ -56,12 +66,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 
 /**
  * A tabular report that shows alert definitions on all resources in inventory.
@@ -70,12 +74,11 @@ import java.util.Map;
  */
 public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.DataSource> implements HasViewName {
 
-    public static final ViewName VIEW_ID = new ViewName("AlertDefinitions",
-        MSG.view_reports_alertDefinitions(), IconEnum.ALERT_DEFINITIONS);
+    public static final ViewName VIEW_ID = new ViewName("AlertDefinitions", MSG.view_reports_alertDefinitions(),
+        IconEnum.ALERT_DEFINITIONS);
 
-
-    public AlertDefinitionReportView(String locatorId ) {
-        super(locatorId);
+    public AlertDefinitionReportView() {
+        super();
         setDataSource(new DataSource());
     }
 
@@ -106,7 +109,7 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
     }
 
     private void addExportAction() {
-        addTableAction("Export",  MSG.common_button_reports_export(), new AbstractTableAction() {
+        addTableAction("Export", MSG.common_button_reports_export(), new AbstractTableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
                 return enableIfRecordsExist(getListGrid());
@@ -225,7 +228,8 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                                         int typeId = result.get(0).getResourceType().getId();
                                         CoreGUI.goToView(LinkManager.getAdminTemplatesEditLink(
                                             AlertDefinitionTemplateTypeView.VIEW_ID.getName(), typeId)
-                                            + "/" + templateId);
+                                            + "/"
+                                            + templateId);
                                     }
                                 }
 
@@ -236,7 +240,6 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                                 }
                             });
 
-
                     } else if (alertDef.getParentId() != null && alertDef.getParentId() == 0) {
                         // handle "View Group Definition"
                         int resourceId = alertDef.getResource().getId();
@@ -244,8 +247,8 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                         CoreGUI.goToView(LinkManager.getSubsystemAlertDefinitionLink(resourceId, alertDefId));
                     } else if (alertDef.getGroupAlertDefinition() != null) {
                         AlertDefinition groupAlertDef = alertDef.getGroupAlertDefinition();
-                        CoreGUI.goToView(LinkManager.getEntityTabLink(EntityContext.forGroup(groupAlertDef
-                            .getResourceGroup()), "Alert", "Definitions")
+                        CoreGUI.goToView(LinkManager.getEntityTabLink(
+                            EntityContext.forGroup(groupAlertDef.getResourceGroup()), "Alert", "Definitions")
                             + "/" + groupAlertDef.getId());
                     }
 
@@ -256,9 +259,8 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
             ListGridField resourceField = new ListGridField(FIELD_RESOURCE, MSG.common_title_resource());
             resourceField.setCellFormatter(new CellFormatter() {
                 public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
-                    String url = LinkManager
-                        .getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
-                    return SeleniumUtility.getLocatableHref(url, StringUtility.escapeHtml(value.toString()), null);
+                    String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                    return LinkManager.getHref(url, StringUtility.escapeHtml(value.toString()));
                 }
             });
             resourceField.setShowHover(true);
@@ -359,8 +361,7 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                         record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
 
                         // Build the decoded ancestry Strings now for display
-                        record
-                            .setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
+                        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
                     }
                     response.setData(records);
                     response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set

@@ -27,6 +27,7 @@ import java.util.Set;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.MenuItemSeparator;
@@ -42,22 +43,24 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
 
 /**
  * @author Greg Hinkle
  * @author Ian Springer
  * @author John Mazzitelli
  */
-public class FavoritesButton extends LocatableIMenuButton {
+public class FavoritesButton extends IMenuButton {
 
-    public FavoritesButton(String locatorId) {
-        super(locatorId, MSG.favorites());
+    private Messages MSG = CoreGUI.getMessages();
+
+    public FavoritesButton() {
+        super(CoreGUI.getMessages().favorites());
 
         // this is the main menu - the "favorites" button shown in the UI the user initially clicks 
         final Menu favoritesMenu = new Menu();

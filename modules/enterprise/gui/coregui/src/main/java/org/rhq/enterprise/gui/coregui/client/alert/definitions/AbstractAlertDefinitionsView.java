@@ -47,8 +47,8 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
  */
 public abstract class AbstractAlertDefinitionsView extends TableSection<AbstractAlertDefinitionsDataSource> {
 
-    public AbstractAlertDefinitionsView(String locatorId, String tableTitle, Criteria initialCriteria) {
-        super(locatorId, tableTitle, initialCriteria);
+    public AbstractAlertDefinitionsView(String tableTitle, Criteria initialCriteria) {
+        super(tableTitle, initialCriteria);
 
         setEscapeHtmlInDetailsLinkColumn(true);
     }
@@ -75,7 +75,7 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
 
         final boolean isAuthorized = isAuthorizedToModifyAlertDefinitions();
 
-        addTableAction(extendLocatorId("New"), MSG.common_button_new(), null, new AbstractTableAction() {
+        addTableAction(MSG.common_button_new(), null, new AbstractTableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
                 return super.isEnabled(selection) && isAuthorized;
             }
@@ -85,38 +85,38 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
             }
         });
 
-        addTableAction(extendLocatorId("Enable"), MSG.common_button_enable(), MSG
-            .view_alert_definitions_enable_confirm(), new AbstractTableAction(TableActionEnablement.ANY) {
-            public boolean isEnabled(ListGridRecord[] selection) {
-                return super.isEnabled(selection) && isAuthorized;
-            }
+        addTableAction(MSG.common_button_enable(), MSG.view_alert_definitions_enable_confirm(),
+            new AbstractTableAction(TableActionEnablement.ANY) {
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    return super.isEnabled(selection) && isAuthorized;
+                }
 
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                enableButtonPressed(selection);
-                refresh();
-            }
-        });
-        addTableAction(extendLocatorId("Disable"), MSG.common_button_disable(), MSG
-            .view_alert_definitions_disable_confirm(), new AbstractTableAction(TableActionEnablement.ANY) {
-            public boolean isEnabled(ListGridRecord[] selection) {
-                return super.isEnabled(selection) && isAuthorized;
-            }
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    enableButtonPressed(selection);
+                    refresh();
+                }
+            });
+        addTableAction(MSG.common_button_disable(), MSG.view_alert_definitions_disable_confirm(),
+            new AbstractTableAction(TableActionEnablement.ANY) {
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    return super.isEnabled(selection) && isAuthorized;
+                }
 
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                disableButtonPressed(selection);
-                refresh();
-            }
-        });
-        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG
-            .view_alert_definitions_delete_confirm(), new AbstractTableAction(TableActionEnablement.ANY) {
-            public boolean isEnabled(ListGridRecord[] selection) {
-                return super.isEnabled(selection) && isAuthorized;
-            }
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    disableButtonPressed(selection);
+                    refresh();
+                }
+            });
+        addTableAction(MSG.common_button_delete(), MSG.view_alert_definitions_delete_confirm(),
+            new AbstractTableAction(TableActionEnablement.ANY) {
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    return super.isEnabled(selection) && isAuthorized;
+                }
 
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                deleteButtonPressed(selection);
-            }
-        });
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    deleteButtonPressed(selection);
+                }
+            });
 
         super.configureTable();
     }
@@ -128,15 +128,13 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
         }
 
         AlertDefinition alertDef = getAlertDefinitionDataSource().copyValues(record);
-        SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView(this
-            .extendLocatorId(alertDef.getName()), this, alertDef);
+        SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView(this, alertDef);
         return singleAlertDefinitionView;
     }
 
     @Override
     public SingleAlertDefinitionView getDetailsView(final Integer id) {
-        final SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView(this
-            .extendLocatorId("singleAlertDefinitionView"), this);
+        final SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView(this);
 
         if (id == 0) {
             // create an empty one with all defaults
@@ -184,6 +182,10 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
     protected AlertDefinitionCriteria getDetailCriteria() {
         return new AlertDefinitionCriteria();
     }
+    
+    
+    
+    protected abstract void commitAlertDefinition(final AlertDefinition alertDefinition, boolean resetMatching, final AsyncCallback<AlertDefinition> resultReceiver);
 
     protected abstract ResourceType getResourceType();
 
@@ -198,6 +200,4 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
     protected abstract void enableButtonPressed(ListGridRecord[] selection);
 
     protected abstract void disableButtonPressed(ListGridRecord[] selection);
-
-    protected abstract void commitAlertDefinition(AlertDefinition alertDefinition, boolean isPurgeInternals, AsyncCallback<AlertDefinition> resultReceiver);
 }

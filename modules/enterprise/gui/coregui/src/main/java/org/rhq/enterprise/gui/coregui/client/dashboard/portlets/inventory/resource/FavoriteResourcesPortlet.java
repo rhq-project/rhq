@@ -62,8 +62,8 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Auto
 
     private Timer refreshTimer;
 
-    public FavoriteResourcesPortlet(String locatorId) {
-        super(locatorId, createInitialCriteria());
+    public FavoriteResourcesPortlet() {
+        super(createInitialCriteria());
         setOverflow(Overflow.VISIBLE);
 
         setShowHeader(false);
@@ -123,9 +123,9 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Auto
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
-            return new FavoriteResourcesPortlet(locatorId);
+            return new FavoriteResourcesPortlet();
         }
     }
 

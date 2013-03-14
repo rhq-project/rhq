@@ -22,6 +22,7 @@ package org.rhq.enterprise.gui.coregui.client.test;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
@@ -32,13 +33,12 @@ import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.enterprise.gui.coregui.client.util.measurement.MeasurementParser;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
-public class TestNumberFormatView extends LocatableVLayout {
+public class TestNumberFormatView extends EnhancedVLayout {
 
-    public TestNumberFormatView(String locatorId) {
-        super(locatorId);
+    public TestNumberFormatView() {
+        super();
     }
 
     @Override
@@ -70,7 +70,7 @@ public class TestNumberFormatView extends LocatableVLayout {
             }
         });
 
-        LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("form"));
+        DynamicForm form = new DynamicForm();
         form.setItems(unitsMenu, textItem, button, resultsValueItem, resultsUnitItem);
 
         addMember(form);

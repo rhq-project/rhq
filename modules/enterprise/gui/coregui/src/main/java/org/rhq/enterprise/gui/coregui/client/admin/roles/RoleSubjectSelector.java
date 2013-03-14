@@ -43,8 +43,8 @@ public class RoleSubjectSelector extends AbstractSelector<Subject, SubjectCriter
 
     private static final String ITEM_ICON = "global/User_16.png";
 
-    public RoleSubjectSelector(String id, ListGridRecord[] subjectRecords, boolean isReadOnly) {
-        super(id, isReadOnly);
+    public RoleSubjectSelector(ListGridRecord[] subjectRecords, boolean isReadOnly) {
+        super(isReadOnly);
 
         setAssigned(subjectRecords);
     }

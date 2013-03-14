@@ -35,8 +35,8 @@ public class GroupOperationScheduleListView extends AbstractOperationScheduleLis
 
     private ResourceGroupComposite groupComposite;
 
-    public GroupOperationScheduleListView(String locatorId, ResourceGroupComposite groupComposite) {
-        super(locatorId, new GroupOperationScheduleDataSource(groupComposite), TITLE);
+    public GroupOperationScheduleListView(ResourceGroupComposite groupComposite) {
+        super(new GroupOperationScheduleDataSource(groupComposite), TITLE);
         this.groupComposite = groupComposite;
     }
 
@@ -47,7 +47,7 @@ public class GroupOperationScheduleListView extends AbstractOperationScheduleLis
 
     @Override
     public Canvas getDetailsView(Integer scheduleId) {
-        return new GroupOperationScheduleDetailsView(extendLocatorId("DetailsView"), this.groupComposite, scheduleId);
+        return new GroupOperationScheduleDetailsView(this.groupComposite, scheduleId);
     }
 
 }

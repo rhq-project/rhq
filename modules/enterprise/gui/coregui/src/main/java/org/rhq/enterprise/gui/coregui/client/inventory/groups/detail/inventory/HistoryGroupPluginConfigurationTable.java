@@ -66,8 +66,8 @@ public class HistoryGroupPluginConfigurationTable extends Table<HistoryGroupPlug
     private final ResourceGroup group;
     private final ResourcePermission groupPerms;
 
-    public HistoryGroupPluginConfigurationTable(String locatorId, ResourceGroupComposite groupComposite) {
-        super(locatorId, MSG.view_group_pluginConfig_table_title());
+    public HistoryGroupPluginConfigurationTable(ResourceGroupComposite groupComposite) {
+        super(MSG.view_group_pluginConfig_table_title());
         this.group = groupComposite.getResourceGroup();
         this.groupPerms = groupComposite.getResourcePermission();
 
@@ -93,20 +93,19 @@ public class HistoryGroupPluginConfigurationTable extends Table<HistoryGroupPlug
 
         fieldStatus.setType(ListGridFieldType.ICON);
         HashMap<String, String> statusIcons = new HashMap<String, String>(4);
-        statusIcons.put(ConfigurationUpdateStatus.SUCCESS.name(), ImageManager
-            .getPluginConfigurationIcon(ConfigurationUpdateStatus.SUCCESS));
-        statusIcons.put(ConfigurationUpdateStatus.FAILURE.name(), ImageManager
-            .getPluginConfigurationIcon(ConfigurationUpdateStatus.FAILURE));
-        statusIcons.put(ConfigurationUpdateStatus.INPROGRESS.name(), ImageManager
-            .getPluginConfigurationIcon(ConfigurationUpdateStatus.INPROGRESS));
-        statusIcons.put(ConfigurationUpdateStatus.NOCHANGE.name(), ImageManager
-            .getPluginConfigurationIcon(ConfigurationUpdateStatus.NOCHANGE));
+        statusIcons.put(ConfigurationUpdateStatus.SUCCESS.name(),
+            ImageManager.getPluginConfigurationIcon(ConfigurationUpdateStatus.SUCCESS));
+        statusIcons.put(ConfigurationUpdateStatus.FAILURE.name(),
+            ImageManager.getPluginConfigurationIcon(ConfigurationUpdateStatus.FAILURE));
+        statusIcons.put(ConfigurationUpdateStatus.INPROGRESS.name(),
+            ImageManager.getPluginConfigurationIcon(ConfigurationUpdateStatus.INPROGRESS));
+        statusIcons.put(ConfigurationUpdateStatus.NOCHANGE.name(),
+            ImageManager.getPluginConfigurationIcon(ConfigurationUpdateStatus.NOCHANGE));
         fieldStatus.setValueIcons(statusIcons);
         fieldStatus.addRecordClickHandler(new RecordClickHandler() {
             @Override
             public void onRecordClick(RecordClickEvent event) {
-                new ErrorMessageWindow("errWin", MSG.common_severity_error(), getStatusHtmlString(event.getRecord()))
-                    .show();
+                new ErrorMessageWindow(MSG.common_severity_error(), getStatusHtmlString(event.getRecord())).show();
             }
         });
         fieldStatus.setShowHover(true);
@@ -121,7 +120,7 @@ public class HistoryGroupPluginConfigurationTable extends Table<HistoryGroupPlug
         ListGrid listGrid = getListGrid();
         listGrid.setFields(fieldId, fieldDateCreated, fieldLastUpdated, fieldStatus, fieldUser);
 
-        addTableAction(extendLocatorId("deleteAction"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
+        addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(),
             new AbstractTableAction(this.groupPerms.isInventory() ? TableActionEnablement.ANY
                 : TableActionEnablement.NEVER) {
 
@@ -144,8 +143,8 @@ public class HistoryGroupPluginConfigurationTable extends Table<HistoryGroupPlug
                         public void onSuccess(Void result) {
                             refresh();
                             Message message = new Message(MSG.view_group_pluginConfig_table_deleteSuccessful(String
-                                .valueOf(selection.length)), Message.Severity.Info, EnumSet.of(
-                                Message.Option.Transient));
+                                .valueOf(selection.length)), Message.Severity.Info, EnumSet
+                                .of(Message.Option.Transient));
                             CoreGUI.getMessageCenter().notify(message);
                         }
 
@@ -159,21 +158,23 @@ public class HistoryGroupPluginConfigurationTable extends Table<HistoryGroupPlug
                 }
             });
 
-        addTableAction(extendLocatorId("viewSettingsAction"), MSG.view_group_pluginConfig_table_viewSettings(),
-            new AbstractTableAction(TableActionEnablement.SINGLE) {
-                @Override
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    CoreGUI.goToView(LinkManager.getGroupPluginConfigurationUpdateHistoryLink(EntityContext.forGroup(HistoryGroupPluginConfigurationTable.this.group), null)
-                        + "/" + selection[0].getAttribute(DataSource.Field.ID) + "/Settings");
-                    refreshTableInfo();
-                }
-            });
-
-        addTableAction(extendLocatorId("viewMemberHistoryAction"), MSG
-            .view_group_pluginConfig_table_viewMemberHistory(), new AbstractTableAction(TableActionEnablement.SINGLE) {
+        addTableAction(MSG.view_group_pluginConfig_table_viewSettings(), new AbstractTableAction(
+            TableActionEnablement.SINGLE) {
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                CoreGUI.goToView(LinkManager.getGroupPluginConfigurationUpdateHistoryLink(EntityContext.forGroup(HistoryGroupPluginConfigurationTable.this.group), null)
+                CoreGUI.goToView(LinkManager.getGroupPluginConfigurationUpdateHistoryLink(
+                    EntityContext.forGroup(HistoryGroupPluginConfigurationTable.this.group), null)
+                    + "/" + selection[0].getAttribute(DataSource.Field.ID) + "/Settings");
+                refreshTableInfo();
+            }
+        });
+
+        addTableAction(MSG.view_group_pluginConfig_table_viewMemberHistory(), new AbstractTableAction(
+            TableActionEnablement.SINGLE) {
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                CoreGUI.goToView(LinkManager.getGroupPluginConfigurationUpdateHistoryLink(
+                    EntityContext.forGroup(HistoryGroupPluginConfigurationTable.this.group), null)
                     + "/" + selection[0].getAttribute(DataSource.Field.ID) + "/Members");
                 refreshTableInfo();
             }

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,6 +23,9 @@
 package org.rhq.modules.integrationTests.restApi;
 
 
+import java.util.List;
+import java.util.Map;
+
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.path.json.JsonPath;
 import com.jayway.restassured.path.xml.XmlPath;
@@ -33,6 +36,7 @@ import org.apache.http.HttpStatus;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
+import org.rhq.modules.integrationTests.restApi.d.Availability;
 import org.rhq.modules.integrationTests.restApi.d.Resource;
 
 import static com.jayway.restassured.RestAssured.expect;
@@ -40,6 +44,9 @@ import static com.jayway.restassured.RestAssured.get;
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.RestAssured.with;
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.notNullValue;
 
 /**
  * Test the resources part
@@ -51,7 +58,7 @@ public class ResourcesTest extends AbstractBase {
     public void testPlatformsPresent() {
         expect()
             .statusCode(200)
-            .body("links[0].rel", CoreMatchers.hasItem("self"))
+            .body("links.self", notNullValue())
         .when()
             .get("/resource/platforms.json");
     }
@@ -61,12 +68,31 @@ public class ResourcesTest extends AbstractBase {
 
         given()
             .header("Accept","application/json")
+            .pathParam("id",_platformId)
         .expect()
             .statusCode(200)
             .contentType(ContentType.JSON)
-            .body("links.rel", CoreMatchers.hasItem("self"))
+            .log().ifError()
+            .body("links.self", notNullValue())
         .when()
-            .get("/resource/10001");
+            .get("/resource/{id}");
+
+    }
+
+    @Test
+    public void testGetPlatformUILink() {
+
+        Response response =
+        given()
+            .header(acceptJson)
+            .pathParam("id", _platformId)
+        .expect()
+            .statusCode(200)
+            .contentType(ContentType.JSON)
+            .log().ifError()
+            .body("links.coregui.href[0]", containsString("coregui/#Resource/" + _platformId))
+        .when()
+            .get("/resource/{id}");
 
     }
 
@@ -76,13 +102,13 @@ public class ResourcesTest extends AbstractBase {
         String platformName = JsonPath.with(json).get("[0].resourceName");
 
         given()
-            .header("Accept","application/json")
+            .header("Accept", "application/json")
         .with()
-            .queryParam("q",platformName)
-            .queryParam("category","platform")
+            .queryParam("q", platformName)
+            .queryParam("category", "platform")
         .expect()
             .statusCode(200)
-            .body("links[0].rel", CoreMatchers.hasItem("self"))
+            .body("links.self", notNullValue())
         .when()
             .get("/resource");
     }
@@ -126,39 +152,46 @@ public class ResourcesTest extends AbstractBase {
         .expect()
             .statusCode(200)
             .header("Link", containsString("page=2"))
-            .body("links[0].rel", CoreMatchers.hasItem("self"))
+            .body("links.self", notNullValue())
         .when().get("/resource");
     }
 
     @Test
     public void testGetPlatformXml() {
+
+        assert _platformId!=0 : "Setup did not run or was no success";
+
         given()
             .header("Accept", "application/xml")
+            .pathParam("id",_platformId)
         .expect()
             .statusCode(200)
             .contentType(ContentType.XML)
         .when()
-            .get("/resource/10001");
+            .get("/resource/{id}");
     }
 
     @Test
     public void testGetPlatformSchedules() {
         given()
             .header("Accept", "application/json")
+            .pathParam("id", _platformId)
         .expect()
             .statusCode(200)
+            .log().ifError()
         .when()
-            .get("/resource/10001/schedules");
+            .get("/resource/{id}/schedules");
     }
 
     @Test
     public void testGetPlatformChildren() {
         given()
-            .header("Accept","application/json")
+            .header("Accept", "application/json")
+            .pathParam("id", _platformId)
         .expect()
             .statusCode(200)
         .when()
-            .get("/resource/10001/children");
+            .get("/resource/{id}/children");
     }
 
     @Test
@@ -216,6 +249,61 @@ public class ResourcesTest extends AbstractBase {
         given().pathParam("id", platformId)
             .expect().statusCode(HttpStatus.SC_NO_CONTENT)
             .when().delete("/resource/{id}");
+
+    }
+
+    @Test
+    public void testCreatePlatformUpdateAvailabilityAndRemove() throws Exception {
+
+        Resource resource = new Resource();
+        resource.setResourceName("dummy-test");
+        resource.setTypeName("Linux");
+
+        Response response =
+        given()
+            .header(acceptXml)
+            .contentType(ContentType.JSON)
+            .body(resource)
+        .expect()
+            .statusCode(201)
+            .log().ifError()
+        .when()
+            .post("/resource/platforms");
+
+        XmlPath xmlPath = response.xmlPath();
+        Node resource1 = xmlPath.get("resource");
+        Node platformIdNode =  resource1.get("resourceId");
+        String platformId = platformIdNode.value();
+
+        try {
+            long now = System.currentTimeMillis()-100;
+            given().body("{\"since\":" + now + ",\"type\":\"DOWN\",\"resourceId\":" + platformId + "}")
+                    .header("Content-Type","application/json")
+                    .header("Accept","application/json")
+                    .pathParam("id",platformId)
+            .expect()
+                    .statusCode(HttpStatus.SC_NO_CONTENT)
+                    .log().ifError()
+            .when().put("/resource/{id}/availability");
+
+            now += 50;
+            given().body("{\"since\":" + now + ",\"type\":\"UP\",\"resourceId\":" + platformId + "}")
+                    .header("Content-Type","application/json")
+                    .header("Accept","application/json")
+                    .pathParam("id",platformId)
+            .expect()
+                    .statusCode(HttpStatus.SC_NO_CONTENT)
+                    .log().ifError()
+            .when().put("/resource/{id}/availability");
+
+
+        }
+
+        finally {
+            given().pathParam("id", platformId)
+                .expect().statusCode(HttpStatus.SC_NO_CONTENT)
+                .when().delete("/resource/{id}");
+        }
 
     }
 
@@ -366,74 +454,96 @@ public class ResourcesTest extends AbstractBase {
     @Test
     public void testAlertsForResource() throws Exception {
         given()
-                .header("Accept","application/json")
-            .expect().statusCode(200)
-            .when().get("/resource/10001/alerts");
+            .header("Accept", "application/json")
+            .pathParam("id", _platformId)
+        .expect()
+            .statusCode(200)
+        .when()
+            .get("/resource/{id}/alerts");
     }
 
     @Test
     public void testSchedulesForResource() throws Exception {
         given()
-                .header("Accept","application/json")
-            .expect().statusCode(200)
-            .when().get("/resource/10001/schedules");
+            .header("Accept", "application/json")
+            .pathParam("id", _platformId)
+        .expect()
+            .statusCode(200)
+        .when()
+            .get("/resource/{id}/schedules");
     }
 
     @Test
     public void testAvailabilityForResource() throws Exception {
         given()
-                .header("Accept", "application/json")
-            .expect().statusCode(200)
-            .when().get("/resource/10001/availability");
+            .header("Accept", "application/json")
+            .pathParam("id", _platformId)
+        .expect()
+            .statusCode(200)
+        .when()
+            .get("/resource/{id}/availability");
     }
 
     @Test
     public void testAvailabilityHistoryForResource() throws Exception {
         given()
-                .header("Accept", "application/json")
-            .expect().statusCode(200)
-            .when().get("/resource/10001/availability/history");
+            .header("Accept", "application/json")
+            .pathParam("id", _platformId)
+        .expect()
+            .statusCode(200)
+        .when()
+            .get("/resource/{id}/availability/history");
     }
 
     @Test
     public void testUpdateAvailability() throws Exception {
 
-        Response response = given()
+        Response response =
+        given()
             .header("Accept", "application/json")
-            .expect().statusCode(200)
-            .when().get("/resource/10001/availability");
+            .pathParam("id", _platformId)
+        .expect()
+            .statusCode(200)
+        .when()
+            .get("/resource/{id}/availability");
 
         String oldType = response.jsonPath().get("type");
 
         try {
             long now = System.currentTimeMillis()-100;
-            given().body("{\"since\":" + now + ",\"type\":\"DOWN\",\"resourceId\":10001}")
-                    .header("Content-Type","application/json")
-                    .header("Accept","application/json")
-                    .pathParam("id",10001)
+            given()
+                .body("{\"since\":" + now + ",\"type\":\"DOWN\",\"resourceId\":" + _platformId + "}")
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
+                .pathParam("id", _platformId)
             .expect()
-                    .statusCode(HttpStatus.SC_NO_CONTENT)
-                    .log().ifError()
-            .when().put("/resource/{id}/availability");
+                .statusCode(HttpStatus.SC_NO_CONTENT)
+                .log().ifError()
+            .when()
+                .put("/resource/{id}/availability");
 
             response = given()
                 .header("Accept", "application/json")
-                .expect().statusCode(200)
-                .when().get("/resource/10001/availability");
+                .pathParam("id", _platformId)
+            .expect()
+                .statusCode(200)
+            .when()
+                .get("/resource/{id}/availability");
 
             String currentType = response.jsonPath().get("type");
-            assert currentType.equals("DOWN"); // TODO small window where an agent may have sent an update
+            assert currentType.equals("DOWN");
         } finally {
 
             // Set back to original value
             long now = System.currentTimeMillis()-100;
-            given().body("{\"since\":" + now + ",\"type\":\""+oldType+"\",\"resourceId\":10001}")
-                    .header("Content-Type","application/json")
-                    .header("Accept","application/json")
-                    .pathParam("id",10001)
+            given()
+                .body("{\"since\":" + now + ",\"type\":\"" + oldType + "\",\"resourceId\":" + _platformId + "}")
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
+                .pathParam("id", _platformId)
             .expect()
-                    .statusCode(HttpStatus.SC_NO_CONTENT)
-                    .log().ifError()
+                .statusCode(HttpStatus.SC_NO_CONTENT)
+                .log().ifError()
             .when().put("/resource/{id}/availability");
 
         }
@@ -445,14 +555,18 @@ public class ResourcesTest extends AbstractBase {
         // Platforms should not be set to DISABLED according ot JSHAUGHN
 
         long now = System.currentTimeMillis()-100;
-        given().body("{\"since\":" + now + ",\"type\":\"DISABLED\",\"resourceId\":10001}")
-              .header("Content-Type","application/json")
-              .header("Accept","application/json")
-              .pathParam("id",10001)
+        Availability avail = new Availability(_platformId,now,"DISABLED");
+
+        given()
+            .body(avail)
+            .header("Content-Type", "application/json")
+            .header("Accept", "application/json")
+            .pathParam("id", _platformId)
         .expect()
-              .statusCode(HttpStatus.SC_NOT_ACCEPTABLE)
-              .log().ifError()
-        .when().put("/resource/{id}/availability");
+            .statusCode(HttpStatus.SC_NOT_ACCEPTABLE)
+            .log().ifError()
+        .when()
+            .put("/resource/{id}/availability");
 
     }
 }

@@ -54,32 +54,32 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A simple form to view and edit the server system settings.
  *
  * @author John Mazzitelli
  */
-public class SystemSettingsView extends LocatableVLayout implements PropertyValueChangeListener {
+public class SystemSettingsView extends EnhancedVLayout implements PropertyValueChangeListener {
 
-    public static final ViewName VIEW_ID = new ViewName("SystemSettings", MSG.view_adminConfig_systemSettings(), IconEnum.CONFIGURE);
+    public static final ViewName VIEW_ID = new ViewName("SystemSettings", MSG.view_adminConfig_systemSettings(),
+        IconEnum.CONFIGURE);
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_CONFIGURATION_VIEW_ID + "/" + VIEW_ID;
 
-    private LocatableVLayout canvas;
+    private EnhancedVLayout canvas;
     private ConfigurationEditor editor;
     private IButton saveButton;
     private IButton dumpToLogButton;
 
-    public SystemSettingsView(String locatorId) {
-        super(locatorId);
+    public SystemSettingsView() {
+        super();
         setHeight100();
         setWidth100();
 
-        canvas = new LocatableVLayout("innerLayout");
+        canvas = new EnhancedVLayout();
         canvas.setHeight100();
         canvas.setWidth100();
         canvas.setMargin(15);
@@ -130,8 +130,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 prop.setStringValue(convertMillisToDays(prop.getStringValue()));
 
                 // build our config definition and populate our config editor
-                editor = new ConfigurationEditor(extendLocatorId("configEditor"), getSystemSettingsDefinition(config,
-                    result.getDriftPlugins()), config);
+                editor = new ConfigurationEditor(getSystemSettingsDefinition(config, result.getDriftPlugins()), config);
                 editor.addPropertyValueChangeListener(SystemSettingsView.this);
                 canvas.addMember(editor);
 
@@ -140,7 +139,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 toolStrip.setMembersMargin(5);
                 toolStrip.setLayoutMargin(5);
 
-                saveButton = new LocatableIButton(extendLocatorId("Save"), MSG.common_button_save());
+                saveButton = new EnhancedIButton(MSG.common_button_save());
                 saveButton.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent clickEvent) {
                         save();
@@ -148,8 +147,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 });
                 toolStrip.addMember(saveButton);
 
-                dumpToLogButton = new LocatableIButton(extendLocatorId("Dummp"), MSG
-                    .common_button_dump_sysInfo_to_log());
+                dumpToLogButton = new EnhancedIButton(MSG.common_button_dump_sysInfo_to_log());
                 dumpToLogButton.addClickHandler(new ClickHandler() {
                     @Override
                     public void onClick(ClickEvent clickEvent) {
@@ -562,7 +560,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
     }
 
     private DynamicForm getServerDetails() {
-        final DynamicForm form = new LocatableDynamicForm(extendLocatorId("serverDetails"));
+        final DynamicForm form = new DynamicForm();
         form.setWidth100();
         form.setExtraSpace(15);
         form.setIsGroup(true);

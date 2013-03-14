@@ -46,6 +46,10 @@ import org.rhq.core.domain.util.PageControl;
  * is available for all the users of this class. The user is however able to later modify these defaults to provide
  * use-case specific overrides (for example the CLI might want to supply impls that hook into the console to provide
  * interactivity with user in some workflows, which, generically, is not possible in a common case).
+ * <p>
+ * *NOTE*: any change in what is exposed to the scripting clients needs to be reflected in the API check configuration
+ * in the pom.xml of the corresponding modules, because any class that gets exposed in the script context essentially
+ * becomes a public API.
  *
  * @author Lukas Krejci
  */
@@ -118,10 +122,10 @@ public class StandardBindings extends HashMap<String, Object> {
 
     /**
      * If you want to preserve non-client-dependent bindings when the facade changes, call this as opposed to
-     * constructing new StandardBindings. 
+     * constructing new StandardBindings.
      */
     public void setFacade(PrintWriter output, RhqFacade rhqFacade) {
-        // remove any existing managers    
+        // remove any existing managers
         if (null != managers) {
             for (RhqManager manager : managers.keySet()) {
                 remove(manager.name());
@@ -204,7 +208,7 @@ public class StandardBindings extends HashMap<String, Object> {
     }
 
     public Map<RhqManager, Object> getManagers() {
-        //XXX ideally this should be a projection into our map          
+        //XXX ideally this should be a projection into our map
         return (null == managers) ? managers = Collections.emptyMap() : managers;
     }
 

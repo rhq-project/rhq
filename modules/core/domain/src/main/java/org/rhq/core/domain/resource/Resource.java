@@ -765,7 +765,7 @@ import org.rhq.core.domain.util.Summary;
         + "      0 < ( SELECT COUNT(defs) FROM r.driftDefinitions defs WHERE defs.complianceStatus <> 0) "
         + "GROUP BY rt.name, rt.plugin, rt.category, rt.id, r.version "
         + "ORDER BY rt.category, rt.plugin, rt.name, r.version ") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_RESOURCE_SEQ", sequenceName = "RHQ_RESOURCE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_RESOURCE_ID_SEQ", sequenceName = "RHQ_RESOURCE_ID_SEQ")
 @Table(name = Resource.TABLE_NAME)
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
@@ -915,7 +915,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     public static final int ROOT_ID = -1;
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_RESOURCE_SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_RESOURCE_ID_SEQ")
     @Id
     @Summary(index = 0)
     private int id;

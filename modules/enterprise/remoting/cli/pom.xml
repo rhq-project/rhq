@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>4.6.0-SNAPSHOT</version>
+      <version>4.7.0-SNAPSHOT</version>
       <relativePath>../../../../pom.xml</relativePath>
    </parent>
 
@@ -32,14 +32,6 @@
          <artifactId>rhq-scripting-javascript</artifactId>
          <version>${project.version}</version>
          <scope>runtime</scope>
-      </dependency>
-            
-      <dependency>
-          <groupId>${project.groupId}</groupId>
-          <artifactId>rhq-core-domain</artifactId>
-          <version>${project.version}</version>
-          <type>test-jar</type>
-          <scope>test</scope>
       </dependency>
 
       <dependency>
@@ -184,6 +176,32 @@
 
 
    <profiles>
+
+      <profile>
+         <!--
+           This profile has been created to avoid unnecessary resolution of test dependencies during a build that
+           does not run, compile or need tests.
+           More test dependencies are to be moved here if the set of sub-dependencies is complex, references project
+           test jars, or conflicts with changing the container version.
+          -->
+         <id>test.dependencies</id>
+         <activation>
+           <property>
+             <name>maven.test.skip</name>
+             <value>!true</value>
+           </property>
+         </activation>
+
+         <dependencies>
+           <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>rhq-core-domain</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+           </dependency>
+         </dependencies>
+       </profile>
 
       <!-- NOTE: this profile HAS TO have the same activation policy as the profile with the same name in the root pom.xml of RHQ -->
       <profile>

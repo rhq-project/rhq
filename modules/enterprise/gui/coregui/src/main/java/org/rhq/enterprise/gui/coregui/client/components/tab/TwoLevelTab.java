@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.components.tab;
 
 import com.smartgwt.client.widgets.Canvas;
+
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 
@@ -28,28 +29,27 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
  */
 public class TwoLevelTab extends NamedTab {
     private SubTabLayout layout;
-    
+
     private TwoLevelTab actualNext;
     private TwoLevelTab visibleNext;
 
     /**
      * Use the more type safe version instead.<br/>
-     * <code>TwoLevelTab(String locatorId, ViewName viewName, String icon)</code>
-     * @param locatorId
+     * <code>TwoLevelTab(ViewName viewName, String icon)</code>
      * @param viewName
      * @param icon String representation of Icon not as typesafe as IconEnum.
      */
     @Deprecated
-    public TwoLevelTab(String locatorId, ViewName viewName, String icon) {
-        super(locatorId, viewName, icon);
+    public TwoLevelTab(ViewName viewName, String icon) {
+        super(viewName, icon);
 
-        layout = new SubTabLayout(locatorId);
+        layout = new SubTabLayout();
     }
 
-    public TwoLevelTab(String locatorId, ViewName viewName, IconEnum iconEnum) {
-        super(locatorId, viewName, iconEnum.getIcon16x16DisabledPath());
+    public TwoLevelTab(ViewName viewName, IconEnum iconEnum) {
+        super(viewName, iconEnum.getIcon16x16DisabledPath());
 
-        layout = new SubTabLayout(locatorId);
+        layout = new SubTabLayout();
     }
 
     public void registerSubTabs(SubTab... subTabs) {
@@ -74,10 +74,6 @@ public class TwoLevelTab extends NamedTab {
 
     public SubTab getSubTabByName(String name) {
         return this.layout.getSubTabByName(name);
-    }
-
-    public SubTab getSubTabByLocatorId(String locatorId) {
-        return this.layout.getSubTabByLocatorId(locatorId);
     }
 
     public SubTab getDefaultSubTab() {
@@ -137,6 +133,6 @@ public class TwoLevelTab extends NamedTab {
 
     @Override
     public String toString() {
-        return "TwoLevelTab[title=" + getTitle() + ", locatorId=" + getLocatorId() + "]";
+        return "TwoLevelTab[title=" + getTitle() + ", viewName=" + getViewName() + "]";
     }
 }

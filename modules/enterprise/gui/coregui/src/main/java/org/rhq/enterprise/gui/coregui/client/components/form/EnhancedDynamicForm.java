@@ -22,21 +22,31 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.form;
 
-import com.smartgwt.client.types.DSOperationType;
-import com.smartgwt.client.widgets.form.fields.*;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+
+import com.smartgwt.client.types.DSOperationType;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.BooleanItem;
+import com.smartgwt.client.widgets.form.fields.CanvasItem;
+import com.smartgwt.client.widgets.form.fields.CheckboxItem;
+import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.HiddenItem;
+import com.smartgwt.client.widgets.form.fields.SpacerItem;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 
 /**
  * A subclass of SmartGWT's DynamicForm widget that can provides additional layout settings and features.
  *
  * @author Ian Springer
  */
-public class EnhancedDynamicForm extends LocatableDynamicForm {
+public class EnhancedDynamicForm extends DynamicForm {
+
+    protected Messages MSG = CoreGUI.getMessages();
 
     public static final String OUTPUT_AS_HTML_ATTRIBUTE = "outputAsHTML";
 
@@ -44,16 +54,16 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
 
     private boolean isReadOnly;
 
-    public EnhancedDynamicForm(String locatorId) {
-        this(locatorId, false);
+    public EnhancedDynamicForm() {
+        this(false);
     }
 
-    public EnhancedDynamicForm(String locatorId, boolean readOnly) {
-        this(locatorId, readOnly, false);
+    public EnhancedDynamicForm(boolean readOnly) {
+        this(readOnly, false);
     }
 
-    public EnhancedDynamicForm(String locatorId, boolean readOnly, boolean isNewRecord) {
-        super(locatorId);
+    public EnhancedDynamicForm(boolean readOnly, boolean isNewRecord) {
+        super();
 
         this.isReadOnly = readOnly;
         if (isNewRecord) {

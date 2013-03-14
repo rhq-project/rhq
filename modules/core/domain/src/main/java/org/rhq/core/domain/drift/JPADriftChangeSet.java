@@ -100,7 +100,7 @@ import org.rhq.core.domain.resource.Resource;
         + "         WHERE dc.resource.id = :resourceId AND dc.name = :driftDefinitionName)" //
     ) })
 @Table(name = "RHQ_DRIFT_CHANGE_SET")
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_DRIFT_CHANGE_SET_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_DRIFT_CHANGE_SET_ID_SEQ", sequenceName = "RHQ_DRIFT_CHANGE_SET_ID_SEQ")
 public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift> {
     private static final long serialVersionUID = 1L;
 
@@ -108,7 +108,7 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
     public static final String QUERY_DELETE_BY_DRIFTDEF_RESOURCE = "JPADriftChangeSet.deleteByDriftDefResource";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_DRIFT_CHANGE_SET_ID_SEQ")
     @Id
     private int id;
 

@@ -98,7 +98,7 @@ import org.rhq.core.domain.resource.ResourceType;
         + "      AND rg.id = :groupId " //
         + "      AND ( od.name = :operationName or :operationName IS NULL )" //
         + " ORDER BY od.displayName") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "id", sequenceName = "RHQ_OPERATION_DEF_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_OPERATION_DEF_ID_SEQ", sequenceName = "RHQ_OPERATION_DEF_ID_SEQ")
 @Table(name = "RHQ_OPERATION_DEF")
 public class OperationDefinition implements Serializable {
     public static final String QUERY_FIND_BY_TYPE_AND_NAME = "OperationDefinition.findByTypeAndName";
@@ -122,7 +122,7 @@ public class OperationDefinition implements Serializable {
     public static final String TIMEOUT_PARAM_NAME = "rhq.timeout";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "id")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_OPERATION_DEF_ID_SEQ")
     @Id
     private int id;
 

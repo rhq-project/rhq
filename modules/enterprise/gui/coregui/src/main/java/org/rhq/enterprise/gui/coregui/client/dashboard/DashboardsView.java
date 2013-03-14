@@ -71,20 +71,17 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MashupPortl
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MessagePortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Jay Shaughnessy
  * @author Greg Hinkle
  */
-public class DashboardsView extends LocatableVLayout implements DashboardContainer, BookmarkableView, InitializableView {
+public class DashboardsView extends EnhancedVLayout implements DashboardContainer, BookmarkableView, InitializableView {
 
     public static final ViewName VIEW_ID = new ViewName("Dashboards", MSG.view_dashboards_title());
-
-    // for repeatable locators we need to use repeatable naming for localizable tab names
-    private static final ViewName NAME_CUSTOM_DASH = new ViewName("CustomDashboard", MSG.common_title_custom());
-    private static final ViewName NAME_DEFAULT_DASH = new ViewName("DefaultDashboard", MSG.common_title_default());
 
     // Each NamedTab is a Dashboard, name=Dashboard.id, title=Dashboard.name
     private NamedTabSet tabSet;
@@ -108,8 +105,8 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
 
     private boolean initialized = false;
 
-    public DashboardsView(String locatorId) {
-        super(locatorId);
+    public DashboardsView() {
+        super();
         setOverflow(Overflow.AUTO);
         setPadding(5);
         setWidth100();
@@ -178,13 +175,12 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
             this.dashboardsByName.put(dashboard.getName(), dashboard);
         }
 
-        tabSet = new NamedTabSet(getLocatorId());
+        tabSet = new NamedTabSet();
 
         tabSet.setWidth100();
         tabSet.setHeight100();
 
-        editButton = new LocatableIButton(extendLocatorId("Mode"), editMode ? MSG.common_title_view_mode()
-            : MSG.common_title_edit_mode());
+        editButton = new EnhancedIButton(editMode ? MSG.common_title_view_mode() : MSG.common_title_edit_mode());
         editButton.setAutoFit(true);
         editButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -197,8 +193,7 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
             }
         });
 
-        final IButton newDashboardButton = new LocatableIButton(extendLocatorId("New"),
-            MSG.common_title_new_dashboard());
+        final IButton newDashboardButton = new EnhancedIButton(MSG.common_title_new_dashboard());
         newDashboardButton.setAutoFit(true);
         newDashboardButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -222,6 +217,7 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
                  * which would require the user to hit the back button twice to return to the previous page.
                  */
                 if (selectedDashboardView != null) {
+                    Log.debug(" ***** selectedTab: " + selectedTab.getName() + ", " + selectedTab.getTitle());
                     CoreGUI.goToView(LinkManager.getDashboardLink(Integer.valueOf(selectedTab.getName())), true);
                 }
 
@@ -229,16 +225,20 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
                 selectedDashboard = selectedDashboardView.getDashboard();
                 editButton.setTitle(editMode ? MSG.common_title_view_mode() : MSG.common_title_edit_mode());
                 selectedDashboardView.setEditMode(editMode);
+
+                // If re-selecting a Dashboard, make sure it, and its portlets, are up to date
+                if (selectedDashboardView.isDrawn()) {
+                    // I think this should work with markForRedraw but for some reason it does not                    
+                    selectedDashboardView.redraw();
+                }
             }
         });
 
         for (Dashboard dashboard : dashboards) {
             String dashboardName = String.valueOf(dashboard.getId());
             String dashboardTitle = dashboard.getName();
-            String dashboardLocatorId = getDashboardLocatorId(dashboardTitle);
-            String locatorId = extendLocatorId(dashboardLocatorId);
-            DashboardView dashboardView = new DashboardView(locatorId, this, dashboard);
-            Tab tab = new NamedTab(locatorId, new ViewName(dashboardName, dashboardTitle), null);
+            DashboardView dashboardView = new DashboardView(this, dashboard);
+            Tab tab = new NamedTab(new ViewName(dashboardName, dashboardTitle), null);
             tab.setPane(dashboardView);
             tab.setCanClose(true);
 
@@ -274,30 +274,6 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
         addMember(tabSet);
     }
 
-    /**
-     * The stored name for a dashboard is initially set to a generated, localizable name. It can later be edited
-     * by the user. Automation tests must be valid independent of localization so we must use repeatable locators.
-     * This method checks for generated dash names and returns a repeatable locator for them.
-     * 
-     * @return a repeatable locatorId for a generated dash name, otherwise just return the passed in name. 
-     */
-    private String getDashboardLocatorId(String dashboardName) {
-        if (null == dashboardName) {
-            return dashboardName;
-        }
-
-        if (dashboardName.equals(NAME_DEFAULT_DASH.getTitle())) {
-            return NAME_DEFAULT_DASH.getName();
-        }
-
-        if (dashboardName.startsWith(NAME_CUSTOM_DASH.getTitle())) {
-            return NAME_CUSTOM_DASH.getName() + dashboardName.substring(NAME_CUSTOM_DASH.getTitle().length());
-
-        }
-
-        return dashboardName;
-    }
-
     protected Dashboard getDefaultDashboard() {
 
         Dashboard dashboard = new Dashboard();
@@ -325,8 +301,8 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
 
         DashboardPortlet news = new DashboardPortlet(MashupPortlet.NAME, MashupPortlet.KEY, 300);
         if (isRHQ) {
-            news.getConfiguration()
-                .put(new PropertySimple("address", "https://docs.jboss.org/author/display/RHQ/User+Documentation"));
+            news.getConfiguration().put(
+                new PropertySimple("address", "https://docs.jboss.org/author/display/RHQ/User+Documentation"));
         } else {
             news.getConfiguration().put(
                 new PropertySimple("address",
@@ -392,11 +368,8 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
                 String dashboardName = String.valueOf(result.getId());
                 String dashboardTitle = result.getName();
                 dashboardsByName.put(dashboardTitle, result); // update map so name can not be reused
-                String dashboardLocatorId = getDashboardLocatorId(dashboardTitle);
-                DashboardView dashboardView = new DashboardView(extendLocatorId(dashboardLocatorId),
-                    DashboardsView.this, result);
-                NamedTab tab = new NamedTab(extendLocatorId(dashboardLocatorId), new ViewName(dashboardName,
-                    dashboardTitle), null);
+                DashboardView dashboardView = new DashboardView(DashboardsView.this, result);
+                NamedTab tab = new NamedTab(new ViewName(dashboardName, dashboardTitle), null);
                 tab.setPane(dashboardView);
                 tab.setCanClose(true);
 

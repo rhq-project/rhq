@@ -41,7 +41,6 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.TypeConversionUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 
 /**
  * A form item for entering a duration - consists of an IntegerItem for entering the amount of time and a
@@ -55,7 +54,7 @@ public class DurationItem extends CanvasItem {
 
     private static final String FIELD_VALUE = "value";
     private static final String FIELD_UNITS = "units";
-    
+
     private static final long SECOND_IN_MILLIS = 1000L;
     private static final long MINUTE_IN_MILLIS = 60 * SECOND_IN_MILLIS;
     private static final long HOUR_IN_MILLIS = 60 * MINUTE_IN_MILLIS;
@@ -80,10 +79,10 @@ public class DurationItem extends CanvasItem {
      * @param parentWidget
      */
     public DurationItem(String name, String title, TreeSet<TimeUnit> supportedUnits, boolean supportsIterations,
-        boolean isReadOnly, Locatable parentWidget) {
+        boolean isReadOnly) {
 
         this(name, title, (null != supportedUnits && !supportedUnits.isEmpty()) ? supportedUnits.iterator().next()
-            : null, supportedUnits, supportsIterations, isReadOnly, parentWidget);
+            : null, supportedUnits, supportsIterations, isReadOnly);
     }
 
     /**
@@ -97,7 +96,7 @@ public class DurationItem extends CanvasItem {
      * @param parentWidget
      */
     public DurationItem(String name, String title, TimeUnit valueUnit, TreeSet<TimeUnit> supportedUnits,
-        boolean supportsIterations, boolean isReadOnly, Locatable parentWidget) {
+        boolean supportsIterations, boolean isReadOnly) {
         super(name, title);
 
         this.valueUnit = valueUnit;
@@ -114,7 +113,7 @@ public class DurationItem extends CanvasItem {
 
         this.isReadOnly = isReadOnly;
 
-        this.form = new EnhancedDynamicForm(parentWidget.extendLocatorId(name), false, false);
+        this.form = new EnhancedDynamicForm(false, false);
 
         if (this.isReadOnly) {
             this.form.setNumCols(2);

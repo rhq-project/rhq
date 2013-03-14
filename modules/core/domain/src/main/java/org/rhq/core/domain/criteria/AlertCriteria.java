@@ -52,7 +52,6 @@ public class AlertCriteria extends Criteria {
     public static final String SORT_FIELD_RESOURCE_ID = "resourceId";
     public static final String SORT_FIELD_RESOURCE_NAME = "resourceName";
 
-    private Integer filterId;
     private String filterTriggeredOperationName; // requires overrides
     private Long filterStartTime; // requires overrides
     private Long filterEndTime; // requires overrides
@@ -108,10 +107,6 @@ public class AlertCriteria extends Criteria {
     @Override
     public Class<Alert> getPersistentClass() {
         return Alert.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
     }
 
     public void addFilterTriggeredOperationName(String filterTriggeredOperationName) {

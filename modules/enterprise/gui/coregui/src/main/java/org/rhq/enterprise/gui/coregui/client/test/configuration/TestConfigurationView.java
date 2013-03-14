@@ -39,24 +39,23 @@ import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyVa
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeListener;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Ian Springer
  */
-public class TestConfigurationView
-    extends LocatableVLayout implements PropertyValueChangeListener {
+public class TestConfigurationView extends EnhancedVLayout implements PropertyValueChangeListener {
 
     private ConfigurationEditor editor;
-    private LocatableIButton saveButton;
-    private LocatableToolStrip buttonBar;
+    private EnhancedIButton saveButton;
+    private EnhancedToolStrip buttonBar;
     private ConfigurationDefinition configurationDefinition;
     private Configuration configuration;
 
-    public TestConfigurationView(String locatorId) {
-        super(locatorId);
+    public TestConfigurationView() {
+        super();
     }
 
     @Override
@@ -77,13 +76,13 @@ public class TestConfigurationView
         reloadConfiguration();
     }
 
-    private LocatableToolStrip createButtonBar() {
-        LocatableToolStrip toolStrip = new LocatableToolStrip(extendLocatorId("ToolStrip"));
+    private EnhancedToolStrip createButtonBar() {
+        EnhancedToolStrip toolStrip = new EnhancedToolStrip();
         toolStrip.setWidth100();
 
         toolStrip.addMember(new LayoutSpacer());
 
-        this.saveButton = new LocatableIButton(toolStrip.extendLocatorId("Save"), MSG.common_button_save());
+        this.saveButton = new EnhancedIButton(MSG.common_button_save());
         this.saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();
@@ -105,17 +104,14 @@ public class TestConfigurationView
                 this.saveButton.enable();
                 message = new Message("All properties now have valid values, so the configuration can now be saved.",
                     Message.Severity.Info, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
-            }
-            else {
+            } else {
                 this.saveButton.disable();
-                message = new Message(
-                    "The following properties have invalid values: " + invalidPropertyNames.values()
-                        + " - the values must be corrected before the configuration can be saved.",
-                    Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
+                message = new Message("The following properties have invalid values: " + invalidPropertyNames.values()
+                    + " - the values must be corrected before the configuration can be saved.", Message.Severity.Error,
+                    EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             }
             messageCenter.notify(message);
-        }
-        else {
+        } else {
             this.saveButton.enable();
         }
     }
@@ -136,8 +132,7 @@ public class TestConfigurationView
     }
 
     protected ConfigurationEditor createConfigurationEditor() {
-        ConfigurationEditor editor = new ConfigurationEditor(extendLocatorId("Editor"), this.configurationDefinition,
-                this.configuration);
+        ConfigurationEditor editor = new ConfigurationEditor(this.configurationDefinition, this.configuration);
         editor.setEditorTitle("Test Configuration");
         editor.setOverflow(Overflow.AUTO);
         editor.addPropertyValueChangeListener(this);

@@ -22,24 +22,24 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.buttons;
 
+import com.smartgwt.client.widgets.StretchImgButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableStretchImgButton;
 
 /**
  * @author Greg Hinkle
  */
-public class BackButton extends LocatableStretchImgButton {
+public class BackButton extends StretchImgButton {
 
-    public BackButton(String locatorId) {
-        super(locatorId);
+    public BackButton() {
+        super();
         setSrc("buttons/back/back.png");
     }
 
-    public BackButton(String locatorId, String title, final String anchor) {
-        this(locatorId);
+    public BackButton(String title, final String anchor) {
+        this();
         setTitle("<b>" + title + "</b>");
         addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {

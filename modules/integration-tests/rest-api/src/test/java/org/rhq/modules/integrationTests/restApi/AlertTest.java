@@ -21,17 +21,20 @@ package org.rhq.modules.integrationTests.restApi;
 
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.path.xml.XmlPath;
+import com.jayway.restassured.response.Response;
 
 import org.junit.Test;
 
 import org.rhq.modules.integrationTests.restApi.d.AlertCondition;
 import org.rhq.modules.integrationTests.restApi.d.AlertDefinition;
 import org.rhq.modules.integrationTests.restApi.d.AlertNotification;
+import org.rhq.modules.integrationTests.restApi.d.Availability;
 import org.rhq.modules.integrationTests.restApi.d.Group;
 
 import static com.jayway.restassured.RestAssured.delete;
 import static com.jayway.restassured.RestAssured.expect;
 import static com.jayway.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.iterableWithSize;
@@ -115,7 +118,43 @@ public class AlertTest extends AbstractBase {
             .get("/alert/count")
         .xmlPath();
 
-        int count = xmlPath.getInt("value.@value");
+        xmlPath.getInt("value.@value");
+    }
+
+    @Test
+    public void testGetAlertByBadId() throws Exception {
+        given()
+            .header(acceptJson)
+            .pathParam("id",123)
+        .expect()
+            .statusCode(404)
+            .log().ifError()
+        .when()
+            .get("/alert/{id}");
+    }
+
+    @Test
+    public void testGetAlertConditionLogsByBadId() throws Exception {
+        given()
+            .header(acceptJson)
+            .pathParam("id",123)
+        .expect()
+            .statusCode(404)
+            .log().ifError()
+        .when()
+            .get("/alert/{id}/conditions");
+    }
+
+    @Test
+    public void testGetAlertNotificationLogsByBadId() throws Exception {
+        given()
+            .header(acceptJson)
+            .pathParam("id",123)
+        .expect()
+            .statusCode(404)
+            .log().everything()
+        .when()
+            .get("/alert/{id}/notifications");
     }
 
     @Test
@@ -200,7 +239,7 @@ public class AlertTest extends AbstractBase {
     @Test
     public void testCreateDeleteBasicAlertDefinition() throws Exception {
 
-        int definitionId = createEmptyAlertDefinition();
+        int definitionId = createEmptyAlertDefinition(false);
 
         cleanupDefinition(definitionId);
     }
@@ -221,7 +260,7 @@ public class AlertTest extends AbstractBase {
                 .header(acceptJson)
                 .contentType(ContentType.JSON)
                 .body(alertDefinition)
-                .queryParam("resourceId",10001)
+                .queryParam("resourceId",_platformId)
             .expect()
                 .statusCode(201)
                 .body("dampeningCategory",is("NONE"))
@@ -232,6 +271,64 @@ public class AlertTest extends AbstractBase {
             .as(AlertDefinition.class);
 
             definitionId = result.getId();
+
+        } finally {
+            cleanupDefinition(definitionId);
+        }
+    }
+
+    @Test
+    public void testCreateDeleteBasicAlertDefinitionWithBadSender() throws Exception {
+
+        int definitionId=0;
+        try {
+            AlertDefinition alertDefinition = new AlertDefinition();
+            alertDefinition.setName("-x-test-definition");
+            alertDefinition.setEnabled(false);
+            alertDefinition.setPriority("LOW");
+            alertDefinition.setDampeningCategory("NONE");
+
+            AlertNotification notification = new AlertNotification("Invalid sender name");
+            alertDefinition.getNotifications().add(notification);
+
+            given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(alertDefinition)
+                .queryParam("resourceId",_platformId)
+            .expect()
+                .statusCode(404)
+                .log().everything()
+            .when()
+                .post("/alert/definitions");
+
+        } finally {
+            cleanupDefinition(definitionId);
+        }
+    }
+
+    @Test
+    public void testCreateDeleteBasicAlertDefinitionWithBadRecoveryId() throws Exception {
+
+        int definitionId=0;
+        try {
+            AlertDefinition alertDefinition = new AlertDefinition();
+            alertDefinition.setName("-x-test-definition");
+            alertDefinition.setEnabled(false);
+            alertDefinition.setPriority("LOW");
+            alertDefinition.setDampeningCategory("NONE");
+            alertDefinition.setRecoveryId(13);
+
+            given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(alertDefinition)
+                .queryParam("resourceId",_platformId)
+            .expect()
+                .statusCode(404)
+                .log().everything()
+            .when()
+                .post("/alert/definitions");
 
         } finally {
             cleanupDefinition(definitionId);
@@ -251,7 +348,7 @@ public class AlertTest extends AbstractBase {
             .header(acceptJson)
             .contentType(ContentType.JSON)
             .body(alertDefinition)
-            .queryParam("resourceId",10001)
+            .queryParam("resourceId",_platformId)
         .expect()
             .statusCode(406)
             .log().everything()
@@ -278,7 +375,7 @@ public class AlertTest extends AbstractBase {
                 .header(acceptJson)
                 .contentType(ContentType.JSON)
                 .body(alertDefinition)
-                .queryParam("resourceId",10001)
+                .queryParam("resourceId",_platformId)
             .expect()
                 .statusCode(201)
                 .body("dampeningCategory",is("PARTIAL_COUNT"))
@@ -313,7 +410,7 @@ public class AlertTest extends AbstractBase {
                 .header(acceptJson)
                 .contentType(ContentType.JSON)
                 .body(alertDefinition)
-                .queryParam("resourceId", 10001)
+                .queryParam("resourceId", _platformId)
             .expect()
                 .statusCode(201)
                 .body("dampeningCategory",is("DURATION_COUNT"))
@@ -333,7 +430,7 @@ public class AlertTest extends AbstractBase {
     @Test
     public void testCreateDeleteAlertDefinitionWith1Condition() throws Exception {
 
-        int definitionId = createEmptyAlertDefinition();
+        int definitionId = createEmptyAlertDefinition(false);
 
         // Now add a condition
         try {
@@ -376,7 +473,7 @@ public class AlertTest extends AbstractBase {
     @Test
     public void testCreateDeleteAlertDefinitionWith2Conditions() throws Exception {
 
-        int definitionId = createEmptyAlertDefinition();
+        int definitionId = createEmptyAlertDefinition(false);
 
 
         try {
@@ -386,7 +483,7 @@ public class AlertTest extends AbstractBase {
                 .header(acceptJson)
                 .contentType(ContentType.JSON)
                 .body(alertCondition)
-                .pathParam("defId",definitionId)
+                .pathParam("defId", definitionId)
             .expect()
                 .statusCode(201)
                 .log().ifError()
@@ -446,7 +543,7 @@ public class AlertTest extends AbstractBase {
     @Test
     public void testCreateDeleteAlertDefinitionWith1Notification() throws Exception {
 
-        int definitionId = createEmptyAlertDefinition();
+        int definitionId = createEmptyAlertDefinition(false);
 
         // Now add a condition
         try {
@@ -491,9 +588,9 @@ public class AlertTest extends AbstractBase {
     @Test
     public void testCRUDNotification() throws Exception {
 
-        int definitionId = createEmptyAlertDefinition();
+        int definitionId = createEmptyAlertDefinition(false);
 
-        // Now add a condition
+        // Now add a notification
         try {
 
             AlertNotification notification = new AlertNotification("Direct Emails"); // short-name from server plugin descriptor
@@ -563,7 +660,7 @@ public class AlertTest extends AbstractBase {
     @Test
     public void testCRUDCondition() throws Exception {
 
-        int definitionId = createEmptyAlertDefinition();
+        int definitionId = createEmptyAlertDefinition(false);
 
         // Now add a condition
         try {
@@ -636,6 +733,51 @@ public class AlertTest extends AbstractBase {
             // delete the definition again
             cleanupDefinition(definitionId);
         }
+    }
+
+    @Test
+    public void testGetNonExistingDefinition() throws Exception {
+
+        given()
+            .header(acceptJson)
+            .pathParam("did",14)
+        .expect()
+            .statusCode(404)
+            .log().ifError()
+        .when()
+            .get("/alert/definition/{did}");
+
+    }
+
+    @Test
+    public void testGetCachedDefinition() throws Exception {
+
+        int definitionId = createEmptyAlertDefinition(false);
+
+        Response response =
+        given()
+            .header(acceptJson)
+            .pathParam("did",definitionId)
+        .expect()
+            .statusCode(200)
+            .log().everything()
+        .when()
+            .get("/alert/definition/{did}");
+
+        String etag = response.getHeader("ETag");
+        System.out.println(etag);
+
+        // now pass the etag in to get a "no change" back
+        given()
+            .header(acceptJson)
+            .header("If-none-match",etag)
+            .pathParam("did",definitionId)
+        .expect()
+            .statusCode(304) // Not modified
+            .log().everything()
+        .when()
+            .get("/alert/definition/{did}");
+
     }
 
     @Test
@@ -723,7 +865,7 @@ public class AlertTest extends AbstractBase {
     @Test
     public void testCreateDeleteAlertDefinitionWithUnknwonSender() throws Exception {
 
-        int definitionId = createEmptyAlertDefinition();
+        int definitionId = createEmptyAlertDefinition(false);
 
         // Now add a condition
         try {
@@ -762,7 +904,7 @@ public class AlertTest extends AbstractBase {
             .header(acceptJson)
             .contentType(ContentType.JSON)
             .body(alertDefinition)
-            .queryParam("resourceId",10001)
+            .queryParam("resourceId",_platformId)
         .expect()
             .statusCode(201)
             .log().ifError()
@@ -802,7 +944,7 @@ public class AlertTest extends AbstractBase {
     @Test
     public void testCreateDeleteAlertDefinitionWith2Notifications() throws Exception {
 
-        int definitionId = createEmptyAlertDefinition();
+        int definitionId = createEmptyAlertDefinition(false);
 
         // Now add a condition
         try {
@@ -895,7 +1037,7 @@ public class AlertTest extends AbstractBase {
                 .header(acceptJson)
                 .body(alertDefinition)
                 .log().everything()
-                .queryParam("resourceId", 10001)
+                .queryParam("resourceId", _platformId)
             .expect()
                 .statusCode(201)
                 .log().ifError()
@@ -961,7 +1103,7 @@ public class AlertTest extends AbstractBase {
                 .contentType(ContentType.JSON)
                 .header(acceptJson)
                 .body(alertDefinition)
-                .queryParam("resourceId", 10001)
+                .queryParam("resourceId", _platformId)
             .expect()
                 .statusCode(201)
                 .body("priority", is("HIGH"))
@@ -1049,11 +1191,11 @@ public class AlertTest extends AbstractBase {
     @Test
     public void testUpdateDefinition() throws Exception {
 
-        int definitionId = createEmptyAlertDefinition();
+        int definitionId = createEmptyAlertDefinition(false);
         try {
             AlertDefinition definition =
             given()
-                .header(acceptXml)
+                .header(acceptJson)
                 .pathParam("did",definitionId)
             .expect()
                 .statusCode(200)
@@ -1065,15 +1207,64 @@ public class AlertTest extends AbstractBase {
             definition.setDampeningCategory("ONCE");
 
             given()
-                .contentType(ContentType.XML)
+                .contentType(ContentType.JSON)
                 .header(acceptJson)
                 .body(definition)
-                .pathParam("did",definitionId)
+                .pathParam("did", definitionId)
             .expect()
                 .statusCode(200)
                 .log().ifError()
                 .body("enabled", is(true))
                 .body("dampeningCategory",is("ONCE"))
+            .when()
+                .put("/alert/definition/{did}");
+
+        }
+        finally {
+            cleanupDefinition(definitionId);
+        }
+    }
+
+    @Test
+    public void testUpdateNonExistingDefinition() throws Exception {
+
+        given()
+            .contentType(ContentType.JSON)
+            .header(acceptJson)
+            .pathParam("did",123)
+        .expect()
+            .statusCode(404)
+            .log().ifError()
+        .when()
+            .put("/alert/definition/{did}");
+
+    }
+
+    @Test
+    public void testUpdateDefinitionWithBadRecoveryId() throws Exception {
+
+        int definitionId = createEmptyAlertDefinition(false);
+        try {
+            AlertDefinition definition =
+            given()
+                .header(acceptJson)
+                .pathParam("did",definitionId)
+            .expect()
+                .statusCode(200)
+            .when()
+                .get("/alert/definition/{did}")
+            .as(AlertDefinition.class);
+
+            definition.setRecoveryId(43);
+
+            given()
+                .contentType(ContentType.XML)
+                .header(acceptJson)
+                .body(definition)
+                .pathParam("did",definitionId)
+            .expect()
+                .statusCode(404)
+                .log().ifError()
             .when()
                 .put("/alert/definition/{did}");
 
@@ -1108,10 +1299,12 @@ public class AlertTest extends AbstractBase {
     @Test
     public void testCreateDefinitionForGroup() throws Exception {
 
+        assert _platformTypeId!=0 : "Set up did not run or failed";
+
         // Create a group
         Group group = new Group("test-group-" + System.currentTimeMillis()/1000);
         group.setCategory("COMPATIBLE");
-        group.setResourceTypeId(10001);
+        group.setResourceTypeId(_platformTypeId);
 
         String groupUri =
         given()
@@ -1166,7 +1359,7 @@ public class AlertTest extends AbstractBase {
             .header(acceptJson)
             .contentType(ContentType.JSON)
             .body(alertDefinition)
-            .queryParam("resourceTypeId",10001)
+            .queryParam("resourceTypeId",_platformTypeId)
         .expect()
             .statusCode(201)
             .log().ifError()
@@ -1176,6 +1369,245 @@ public class AlertTest extends AbstractBase {
 
         cleanupDefinition(result.getId());
     }
+
+    @Test
+    public void testCreateDeleteAlertDefinitionWith1ConditionAndFire() throws Exception {
+
+        int definitionId = createEmptyAlertDefinition(true);
+
+        // Now add a condition
+        try {
+
+            AlertCondition alertCondition = new AlertCondition("AVAIL_GOES_UP","AVAILABILITY");
+            given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(alertCondition)
+                .pathParam("defId",definitionId)
+            .expect()
+                .statusCode(201)
+                .log().ifError()
+            .when()
+                .post("/alert/definition/{defId}/conditions");
+
+            System.out.println("Definition created, waiting 60s for it to become active");
+
+            // Wait a while - see https://bugzilla.redhat.com/show_bug.cgi?id=830299
+            Thread.sleep(60*1000);
+
+            // Send a avail down/up sequence -> alert definition should fire
+            long now = System.currentTimeMillis();
+            Availability a = new Availability(_platformId,now-2000,"DOWN");
+            given()
+                .contentType(ContentType.JSON)
+                .pathParam("id", _platformId)
+                .body(a)
+            .expect()
+                .statusCode(204)
+                .log().ifError()
+            .when()
+                .put("/resource/{id}/availability");
+
+            a = new Availability(_platformId,now-1000,"UP");
+            given()
+                .contentType(ContentType.JSON)
+                .pathParam("id", _platformId)
+                .body(a)
+            .expect()
+                .statusCode(204)
+                .log().ifError()
+            .when()
+                .put("/resource/{id}/availability");
+
+            // wait a little
+            Thread.sleep(5000);
+
+            int alertId =
+            given()
+                .header(acceptJson)
+                .queryParam("definitionId",definitionId)
+                .queryParam("since", now - 3000)
+            .expect()
+                .statusCode(200)
+                .log().ifError()
+                .body("alertDefinition.name",contains("-x-test-definition"))
+                .body("",iterableWithSize(1))
+            .when()
+                .get("/alert")
+            .body().jsonPath().getInt("id[0]");
+
+            System.out.println(alertId);
+
+            // Find this alert by id and then its condition logs and notification logs
+            given()
+                .header(acceptJson)
+                .pathParam("id",alertId)
+                .log().everything()
+            .expect()
+                .statusCode(200)
+                .log().ifError()
+                .body("id",is(alertId))
+            .when()
+                .get("/alert/{id}");
+
+
+            given()
+                .header(acceptJson)
+                .pathParam("id", alertId)
+                .log().everything()
+            .expect()
+                .statusCode(200)
+                .log().ifError()
+                .body("",iterableWithSize(1))
+            .when()
+                .get("/alert/{id}/conditions");
+
+            given()
+                .header(acceptJson)
+                .pathParam("id", alertId)
+            .expect()
+                .statusCode(200)
+                .log().ifError()
+                .body("",iterableWithSize(0))
+            .when()
+                .get("/alert/{id}/notifications");
+
+
+        }
+
+        finally {
+            // delete the definition again
+            cleanupDefinition(definitionId);
+        }
+    }
+
+
+    @Test
+    public void testCreateDeleteAlertDefinitionWith1ConditionAndNotificationAndFire() throws Exception {
+
+        int definitionId = createEmptyAlertDefinition(true);
+
+        // Now add a condition
+        try {
+
+            AlertCondition alertCondition = new AlertCondition("AVAIL_GOES_UP","AVAILABILITY");
+            given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(alertCondition)
+                .pathParam("defId",definitionId)
+            .expect()
+                .statusCode(201)
+                .log().ifError()
+            .when()
+                .post("/alert/definition/{defId}/conditions");
+
+            AlertNotification notification = new AlertNotification("Direct Emails"); // short-name from server plugin descriptor
+            notification.getConfig().put("emailAddress", "root@eruditorium.org");
+
+            given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(notification)
+                .pathParam("defId", definitionId)
+                .log().everything()
+            .expect()
+                .statusCode(201)
+                .log().ifError()
+            .when()
+                .post("/alert/definition/{defId}/notifications");
+
+
+            System.out.println("Definition created, waiting 60s for it to become active");
+
+            // Wait a while - see https://bugzilla.redhat.com/show_bug.cgi?id=830299
+            Thread.sleep(60*1000);
+
+            // Send a avail down/up sequence -> alert definition should fire
+            long now = System.currentTimeMillis();
+            Availability a = new Availability(_platformId,now-2000,"DOWN");
+            given()
+                .contentType(ContentType.JSON)
+                .pathParam("id", _platformId)
+                .body(a)
+            .expect()
+                .statusCode(204)
+                .log().ifError()
+            .when()
+                .put("/resource/{id}/availability");
+
+            a = new Availability(_platformId,now-1000,"UP");
+            given()
+                .contentType(ContentType.JSON)
+                .pathParam("id", _platformId)
+                .body(a)
+            .expect()
+                .statusCode(204)
+                .log().ifError()
+            .when()
+                .put("/resource/{id}/availability");
+
+            // wait a little
+            Thread.sleep(5000);
+
+            int alertId =
+            given()
+                .header(acceptJson)
+                .queryParam("definitionId",definitionId)
+                .queryParam("since", now - 3000)
+            .expect()
+                .statusCode(200)
+                .log().ifError()
+                .body("alertDefinition.name",contains("-x-test-definition"))
+                .body("",iterableWithSize(1))
+            .when()
+                .get("/alert")
+            .body().jsonPath().getInt("id[0]");
+
+            System.out.println(alertId);
+
+            // Find this alert by id and then its condition logs and notification logs
+            given()
+                .header(acceptJson)
+                .pathParam("id",alertId)
+            .expect()
+                .statusCode(200)
+                .log().ifError()
+                .body("id",is(alertId))
+            .when()
+                .get("/alert/{id}");
+
+
+            given()
+                .header(acceptJson)
+                .pathParam("id", alertId)
+                .log().everything()
+            .expect()
+                .statusCode(200)
+                .log().ifError()
+                .body("",iterableWithSize(1))
+            .when()
+                .get("/alert/{id}/conditions");
+
+            given()
+                .header(acceptJson)
+                .pathParam("id", alertId)
+            .expect()
+                .statusCode(200)
+                .log().ifError()
+                .body("",iterableWithSize(1))
+            .when()
+                .get("/alert/{id}/notifications");
+
+
+        }
+
+        finally {
+            // delete the definition again
+            cleanupDefinition(definitionId);
+        }
+    }
+
 
     private void cleanupDefinition(int definitionId) {
 
@@ -1190,25 +1622,26 @@ public class AlertTest extends AbstractBase {
             .delete("/alert/definition/{id}");
     }
 
-    private int createEmptyAlertDefinition() {
+    private int createEmptyAlertDefinition(boolean enabled) {
         AlertDefinition alertDefinition = new AlertDefinition();
         alertDefinition.setName("-x-test-definition");
-        alertDefinition.setEnabled(false);
+        alertDefinition.setEnabled(enabled);
         alertDefinition.setPriority("LOW");
         alertDefinition.setDampeningCategory("NONE");
 
-        AlertDefinition result =
+        Response response =
         given()
             .header(acceptJson)
             .contentType(ContentType.JSON)
             .body(alertDefinition)
-            .queryParam("resourceId",10001)
+            .queryParam("resourceId", _platformId)
         .expect()
             .statusCode(201)
             .log().ifError()
         .when()
-            .post("/alert/definitions")
-        .as(AlertDefinition.class);
+            .post("/alert/definitions");
+
+        AlertDefinition result = response.as(AlertDefinition.class);
 
         assert result.getConditions()==null || result.getConditions().size()==0;
 

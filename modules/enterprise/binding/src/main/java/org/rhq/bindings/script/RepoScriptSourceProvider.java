@@ -25,7 +25,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URI;
 import java.nio.charset.Charset;
-import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,8 +35,11 @@ import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
 import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.RepoCriteria;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.content.RepoManagerRemote;
+import org.rhq.enterprise.server.util.CriteriaQuery;
+import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
 /**
  * The implementation of script source provider that is able to locate the script files
@@ -86,28 +88,46 @@ public class RepoScriptSourceProvider extends BaseRhqSchemeScriptSourceProvider 
         String scriptName = path.substring(slashIdx + 1);
 
         try {
-            RepoManagerRemote repoManager = rhqFacade.getProxy(RepoManagerRemote.class);
+            final RepoManagerRemote repoManager = rhqFacade.getProxy(RepoManagerRemote.class);
 
-            RepoCriteria repoCrit = new RepoCriteria();
+            final RepoCriteria repoCrit = new RepoCriteria();
             repoCrit.addFilterName(repoName);
-            List<Repo> repos = repoManager.findReposByCriteria(rhqFacade.getSubject(), repoCrit);
 
-            if (repos.isEmpty()) {
+            //Use CriteriaQuery to automatically chunk/page through criteria query results
+            CriteriaQueryExecutor<Repo, RepoCriteria> queryExecutor = new CriteriaQueryExecutor<Repo, RepoCriteria>() {
+                @Override
+                public PageList<Repo> execute(RepoCriteria criteria) {
+                    return repoManager.findReposByCriteria(rhqFacade.getSubject(), repoCrit);
+                }
+            };
+
+            CriteriaQuery<Repo, RepoCriteria> repos = new CriteriaQuery<Repo, RepoCriteria>(repoCrit, queryExecutor);
+
+            if (!repos.iterator().hasNext()) {
                 return null;
             }
 
-            ContentManagerRemote contentManager = rhqFacade.getProxy(ContentManagerRemote.class);
+            final ContentManagerRemote contentManager = rhqFacade.getProxy(ContentManagerRemote.class);
 
             for (Repo repo : repos) {
-                PackageCriteria pCrit = new PackageCriteria();
+                final PackageCriteria pCrit = new PackageCriteria();
                 pCrit.addFilterName(scriptName);
                 pCrit.addFilterRepoId(repo.getId());
 
-                List<PackageAndLatestVersionComposite> pvs = contentManager.findPackagesWithLatestVersion(
-                    rhqFacade.getSubject(), pCrit);
+                //Use CriteriaQuery to automatically chunk/page through criteria query results
+                CriteriaQueryExecutor<PackageAndLatestVersionComposite, PackageCriteria> pQueryExecutor = new CriteriaQueryExecutor<PackageAndLatestVersionComposite, PackageCriteria>() {
+                    @Override
+                    public PageList<PackageAndLatestVersionComposite> execute(PackageCriteria criteria) {
+                        return contentManager.findPackagesWithLatestVersion(rhqFacade.getSubject(), pCrit);
+                    }
+                };
 
-                if (!pvs.isEmpty()) {
-                    PackageAndLatestVersionComposite pv = pvs.get(0);
+                CriteriaQuery<PackageAndLatestVersionComposite, PackageCriteria> pvs = new CriteriaQuery<PackageAndLatestVersionComposite, PackageCriteria>(
+                    pCrit, pQueryExecutor);
+
+                //                if (!pvs.iterator().hasNext()) {
+                if (pvs.iterator().hasNext()) {
+                    PackageAndLatestVersionComposite pv = pvs.iterator().next();
 
                     byte[] bytes = repoManager.getPackageVersionBytes(rhqFacade.getSubject(), repo.getId(), pv
                         .getLatestPackageVersion().getId());

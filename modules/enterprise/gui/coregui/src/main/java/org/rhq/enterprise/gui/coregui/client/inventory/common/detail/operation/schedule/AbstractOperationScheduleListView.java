@@ -32,9 +32,8 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellForma
  */
 public abstract class AbstractOperationScheduleListView extends TableSection<AbstractOperationScheduleDataSource> {
 
-    public AbstractOperationScheduleListView(String locatorId, AbstractOperationScheduleDataSource dataSource,
-        String title) {
-        super(locatorId, title);
+    public AbstractOperationScheduleListView(AbstractOperationScheduleDataSource dataSource, String title) {
+        super(title);
 
         setDataSource(dataSource);
     }
@@ -59,7 +58,7 @@ public abstract class AbstractOperationScheduleListView extends TableSection<Abs
 
         setListGridFields(true, idField, operationField, subjectField, nextFireTimeField, descriptionField);
 
-        addTableAction(extendLocatorId("New"), MSG.common_button_new(), new TableAction() {
+        addTableAction(MSG.common_button_new(), new TableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
                 return hasControlPermission();
             }
@@ -69,17 +68,16 @@ public abstract class AbstractOperationScheduleListView extends TableSection<Abs
             }
         });
 
-        addTableAction(extendLocatorId("Unschedule"), MSG.common_button_delete(), getDeleteConfirmMessage(),
-            new TableAction() {
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    int count = selection.length;
-                    return ((count >= 1) && hasControlPermission());
-                }
+        addTableAction(MSG.common_button_delete(), getDeleteConfirmMessage(), new TableAction() {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                int count = selection.length;
+                return ((count >= 1) && hasControlPermission());
+            }
 
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    deleteSelectedRecords();
-                }
-            });
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                deleteSelectedRecords();
+            }
+        });
 
         super.configureTable();
     }

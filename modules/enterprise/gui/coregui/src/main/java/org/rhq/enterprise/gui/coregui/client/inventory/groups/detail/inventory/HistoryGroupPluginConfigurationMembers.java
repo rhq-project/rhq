@@ -60,22 +60,21 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * Shows a table of individual resource members that belonged to the group when the group configuration was updated.
  *
  * @author John Mazzitelli
  */
-public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
+public class HistoryGroupPluginConfigurationMembers extends EnhancedVLayout {
     private final ResourceGroup group;
     @SuppressWarnings("unused")
     private final ResourcePermission groupPerms;
     private final int groupUpdateId;
 
-    public HistoryGroupPluginConfigurationMembers(String locatorId, ResourceGroupComposite groupComposite, int updateId) {
-        super(locatorId);
+    public HistoryGroupPluginConfigurationMembers(ResourceGroupComposite groupComposite, int updateId) {
+        super();
         this.group = groupComposite.getResourceGroup();
         this.groupPerms = groupComposite.getResourcePermission();
         this.groupUpdateId = updateId;
@@ -84,11 +83,10 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
         setMembersMargin(5);
         String backPath = LinkManager.getGroupPluginConfigurationUpdateHistoryLink(EntityContext.forGroup(this.group),
             null);
-        BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
-            backPath);
+        BackButton backButton = new BackButton(MSG.view_tableSection_backButton(), backPath);
         addMember(backButton);
 
-        MembersTable table = new MembersTable(extendLocatorId("Table"));
+        MembersTable table = new MembersTable();
         addMember(table);
     }
 
@@ -98,8 +96,8 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
     }
 
     private class MembersTable extends Table<MembersTable.DataSource> {
-        public MembersTable(String locatorId) {
-            super(locatorId, MSG.view_group_pluginConfig_members_title());
+        public MembersTable() {
+            super(MSG.view_group_pluginConfig_members_title());
             setDataSource(new DataSource());
         }
 
@@ -109,7 +107,7 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
             fieldResource.setCellFormatter(new CellFormatter() {
                 public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                     String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
-                    return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                    return LinkManager.getHref(url, o.toString());
                 }
             });
             fieldResource.setShowHover(true);
@@ -154,8 +152,8 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
             fieldStatus.addRecordClickHandler(new RecordClickHandler() {
                 @Override
                 public void onRecordClick(RecordClickEvent event) {
-                    new ErrorMessageWindow("statusDetailsWin", MSG.view_group_pluginConfig_members_statusDetails(),
-                        "<pre>" + getStatusHtmlString(event.getRecord()) + "</pre>").show();
+                    new ErrorMessageWindow(MSG.view_group_pluginConfig_members_statusDetails(), "<pre>"
+                        + getStatusHtmlString(event.getRecord()) + "</pre>").show();
                 }
             });
             fieldStatus.setShowHover(true);

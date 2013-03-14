@@ -30,7 +30,7 @@ import org.rhq.enterprise.gui.coregui.client.components.sorter.ReorderableList;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDetailsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * The details view of the Group Operations>Schedules subtab.
@@ -49,9 +49,9 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
     private EnhancedDynamicForm executionModeForm;
     private ReorderableList memberExecutionOrderer;
 
-    public GroupOperationScheduleDetailsView(String locatorId, ResourceGroupComposite groupComposite, int scheduleId) {
-        super(locatorId, new GroupOperationScheduleDataSource(groupComposite), groupComposite.getResourceGroup()
-            .getResourceType(), scheduleId);
+    public GroupOperationScheduleDetailsView(ResourceGroupComposite groupComposite, int scheduleId) {
+        super(new GroupOperationScheduleDataSource(groupComposite),
+            groupComposite.getResourceGroup().getResourceType(), scheduleId);
         this.groupComposite = groupComposite;
     }
 
@@ -92,18 +92,18 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
     }
 
     @Override
-    protected LocatableVLayout buildContentPane() {
-        LocatableVLayout contentPane = super.buildContentPane();
+    protected EnhancedVLayout buildContentPane() {
+        EnhancedVLayout contentPane = super.buildContentPane();
 
         HTMLFlow hr = new HTMLFlow("<hr/>");
         contentPane.addMember(hr);
 
-        this.executionModeForm = new EnhancedDynamicForm(extendLocatorId("ExecutionModeForm"), isReadOnly());
+        this.executionModeForm = new EnhancedDynamicForm(isReadOnly());
         this.executionModeForm.setNumCols(2);
         this.executionModeForm.setColWidths(FIRST_COLUMN_WIDTH, "*");
 
-        RadioGroupItem executionModeItem = new RadioGroupItem(FIELD_EXECUTION_MODE, MSG
-            .view_group_operationScheduleDetails_field_execute());
+        RadioGroupItem executionModeItem = new RadioGroupItem(FIELD_EXECUTION_MODE,
+            MSG.view_group_operationScheduleDetails_field_execute());
         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>(2);
         valueMap.put(EXECUTION_ORDER_PARALLEL, MSG.view_group_operationScheduleDetails_value_parallel());
         valueMap.put(EXECUTION_ORDER_SEQUENTIAL, MSG.view_group_operationScheduleDetails_value_sequential());
@@ -133,8 +133,8 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
                 return AncestryUtil.getAncestryHoverHTML(listGridRecord, 0);
             }
         };
-        this.memberExecutionOrderer = new ReorderableList(extendLocatorId("MemberExecutionOrderer"),
-            this.memberResourceRecords, null, memberIcon, nameHoverCustomizer);
+        this.memberExecutionOrderer = new ReorderableList(this.memberResourceRecords, null, memberIcon,
+            nameHoverCustomizer);
         this.memberExecutionOrderer.setVisible(false);
         this.memberExecutionOrderer.setNameFieldTitle(MSG.view_group_operationScheduleDetails_memberResource());
         hLayout.addMember(this.memberExecutionOrderer);

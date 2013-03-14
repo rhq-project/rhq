@@ -55,20 +55,17 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**This portlet allows the end user to customize the Bundle Deployment display
  *
  * @author Simeon Pinder
  */
-public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements CustomSettingsPortlet,
+public class GroupBundleDeploymentsPortlet extends EnhancedVLayout implements CustomSettingsPortlet,
     AutoRefreshPortlet {
 
     private int groupId = -1;
-    protected LocatableCanvas recentBundleDeployContent = new LocatableCanvas(
-        extendLocatorId("RecentBundleDeployments"));
+    protected Canvas recentBundleDeployContent = new Canvas();
     protected boolean currentlyLoading = false;
 
     // A non-displayed, persisted identifier for the portlet
@@ -88,8 +85,8 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
         CONFIG_INCLUDE.add(Constant.RESULT_COUNT);
     }
 
-    public GroupBundleDeploymentsPortlet(String locatorId, int groupId) {
-        super(locatorId);
+    public GroupBundleDeploymentsPortlet(int groupId) {
+        super();
 
         this.groupId = groupId;
     }
@@ -138,13 +135,13 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
             if (EntityContext.Type.ResourceGroup != context.getType()) {
                 throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
             }
 
-            return new GroupBundleDeploymentsPortlet(locatorId, context.getGroupId());
+            return new GroupBundleDeploymentsPortlet(context.getGroupId());
         }
     }
 
@@ -158,10 +155,10 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
         final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
         final Configuration portletConfig = storedPortlet.getConfiguration();
 
-        LocatableDynamicForm customSettings = new LocatableDynamicForm(extendLocatorId("customSettings"));
-        LocatableVLayout page = new LocatableVLayout(customSettings.extendLocatorId("page"));
+        DynamicForm customSettings = new DynamicForm();
+        EnhancedVLayout page = new EnhancedVLayout();
         //build editor form container
-        final LocatableDynamicForm form = new LocatableDynamicForm(page.extendLocatorId("bundle-deps"));
+        final DynamicForm form = new DynamicForm();
         form.setMargin(5);
         //add result count selector
         final SelectItem resultCountSelector = PortletConfigurationEditorComponent.getResultCountEditor(portletConfig);
@@ -219,7 +216,7 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
                 @Override
                 public void onFailure(Throwable caught) {
                     Log.debug("Error retrieving installed bundle deployments for group [" + groupId + "]:"
-                            + caught.getMessage());
+                        + caught.getMessage());
                     currentlyLoading = false;
                 }
 
@@ -229,9 +226,7 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
                     column.setHeight(10);
                     if (!result.isEmpty()) {
                         for (BundleDeployment deployment : result) {
-                            LocatableDynamicForm row = new LocatableDynamicForm(recentBundleDeployContent
-                                .extendLocatorId(deployment.getBundleVersion().getName()
-                                    + deployment.getBundleVersion().getVersion()));
+                            DynamicForm row = new DynamicForm();
                             row.setNumCols(3);
 
                             StaticTextItem iconItem = AbstractActivityView.newTextItemIcon(
@@ -249,11 +244,10 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
                         }
                         //insert see more link
                         //TODO: spinder:2/25/11 (add this later) no current view for seeing all bundle deployments
-                        //                        LocatableDynamicForm row = new LocatableDynamicForm(recentBundleDeployContent.extendLocatorId("RecentBundleContentSeeMore"));
+                        //                        DynamicForm row = new DynamicForm();
                         //                        addSeeMoreLink(row, LinkManager.getResourceGroupLink(groupId) + "/Events/History/", column);
                     } else {
-                        LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(recentBundleDeployContent
-                            .extendLocatorId("None"), MSG.view_portlet_results_empty());
+                        DynamicForm row = AbstractActivityView.createEmptyDisplayRow(MSG.view_portlet_results_empty());
                         column.addMember(row);
                     }
                     //cleanup

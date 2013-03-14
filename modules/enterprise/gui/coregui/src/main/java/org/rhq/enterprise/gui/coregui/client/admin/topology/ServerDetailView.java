@@ -35,6 +35,7 @@ import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
@@ -49,42 +50,40 @@ import org.rhq.core.domain.criteria.ServerCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * Shows details of a server.
  * 
  * @author Jirka Kremser
  */
-public class ServerDetailView extends LocatableVLayout implements BookmarkableView {
+public class ServerDetailView extends EnhancedVLayout implements BookmarkableView {
 
     private final int serverId;
 
     private static final int SECTION_COUNT = 2;
-    private final LocatableSectionStack sectionStack;
+    private final SectionStack sectionStack;
     private SectionStackSection detailsSection = null;
     private SectionStackSection agentSection = null;
 
     private volatile int initSectionCount = 0;
 
-    public ServerDetailView(String locatorId, int serverId) {
-        super(locatorId);
+    public ServerDetailView(int serverId) {
+        super();
         this.serverId = serverId;
         setHeight100();
         setWidth100();
         setOverflow(Overflow.AUTO);
 
-        sectionStack = new LocatableSectionStack(extendLocatorId("stack"));
+        sectionStack = new SectionStack();
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
         sectionStack.setWidth100();
         sectionStack.setHeight100();
@@ -158,8 +157,7 @@ public class ServerDetailView extends LocatableVLayout implements BookmarkableVi
     private void prepareAgentSection(SectionStack stack, Server server) {
         SectionStackSection section = new SectionStackSection(MSG.view_adminTopology_serverDetail_connectedAgents());
         section.setExpanded(true);
-        AgentTableView agentsTable = new AgentTableView(extendLocatorId(AgentTableView.VIEW_ID.getName()), serverId,
-            false);
+        AgentTableView agentsTable = new AgentTableView(serverId, false);
         section.setItems(agentsTable);
 
         agentSection = section;
@@ -168,7 +166,7 @@ public class ServerDetailView extends LocatableVLayout implements BookmarkableVi
     }
 
     private void prepareDetailsSection(SectionStack stack, final Server server) {
-        final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("detailsForm"));
+        final DynamicForm form = new DynamicForm();
         form.setMargin(10);
         form.setWidth100();
         form.setWrapItemTitles(false);
@@ -207,7 +205,7 @@ public class ServerDetailView extends LocatableVLayout implements BookmarkableVi
         if (ag != null && ag.getName() != null && !ag.getName().isEmpty()) {
             String detailsUrl = "#" + AffinityGroupTableView.VIEW_PATH + "/" + ag.getId();
             String formattedValue = StringUtility.escapeHtml(ag.getName());
-            affinityGroupItemText = SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
+            affinityGroupItemText = LinkManager.getHref(detailsUrl, formattedValue);
         }
         affinityGroupItem.setValue(affinityGroupItemText);
 
@@ -250,7 +248,7 @@ public class ServerDetailView extends LocatableVLayout implements BookmarkableVi
         form.setItems(nameItem, addressItem, portItem, securePortItem, operationModeItem, affinityGroupItem,
             installationDateItem, lastUpdatetem);
 
-        LocatableToolStrip footer = new LocatableToolStrip(extendLocatorId("detailsFooter"));
+        EnhancedToolStrip footer = new EnhancedToolStrip();
         footer.setPadding(5);
         footer.setWidth100();
         footer.setMembersMargin(15);

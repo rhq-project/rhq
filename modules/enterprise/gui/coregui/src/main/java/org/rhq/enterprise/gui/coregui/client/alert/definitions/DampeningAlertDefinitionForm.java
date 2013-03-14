@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.LinkedHashMap;
 
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpinnerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
@@ -37,12 +38,15 @@ import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDampening.Category;
 import org.rhq.core.domain.alert.AlertDampening.TimeUnits;
 import org.rhq.core.domain.alert.AlertDefinition;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 
 /**
  * @author John Mazzitelli
  */
-public class DampeningAlertDefinitionForm extends LocatableDynamicForm implements EditAlertDefinitionForm {
+public class DampeningAlertDefinitionForm extends DynamicForm implements EditAlertDefinitionForm {
+
+    protected Messages MSG = CoreGUI.getMessages();
 
     private AlertDefinition alertDefinition;
 
@@ -71,12 +75,12 @@ public class DampeningAlertDefinitionForm extends LocatableDynamicForm implement
 
     private boolean updated;
 
-    public DampeningAlertDefinitionForm(String locatorId) {
-        this(locatorId, null);
+    public DampeningAlertDefinitionForm() {
+        this(null);
     }
 
-    public DampeningAlertDefinitionForm(String locatorId, AlertDefinition alertDefinition) {
-        super(locatorId);
+    public DampeningAlertDefinitionForm(AlertDefinition alertDefinition) {
+        super();
         this.alertDefinition = alertDefinition;
         this.updated = false;
     }

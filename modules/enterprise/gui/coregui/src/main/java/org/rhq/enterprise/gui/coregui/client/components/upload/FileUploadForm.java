@@ -67,10 +67,10 @@ public class FileUploadForm extends DynamicCallbackForm {
 
     private List<String> uploadedFilePaths;
 
-    public FileUploadForm(String locatorId, String name, String version, boolean showNameLabel,
-        boolean showUploadButton, Boolean isAlreadyUploaded) {
+    public FileUploadForm(String name, String version, boolean showNameLabel, boolean showUploadButton,
+        Boolean isAlreadyUploaded) {
 
-        super(locatorId, name);
+        super(name);
         this.name = name;
         this.version = version;
         this.showNameLabel = showNameLabel;
@@ -115,16 +115,16 @@ public class FileUploadForm extends DynamicCallbackForm {
         this.name = name;
         onDraw();
     }
-    
+
     public String getVersion() {
         return version;
     }
-    
+
     public void setVersion(String version) {
         this.version = version;
         onDraw();
     }
-    
+
     /**
      * Returns true if the file was successfully uploaded, false if an error occurred.
      * Returns null if this upload form has not be submitted yet (see {@link #submitForm()}).

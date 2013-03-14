@@ -91,6 +91,7 @@ import org.rhq.enterprise.server.rest.domain.Baseline;
 import org.rhq.enterprise.server.rest.domain.Datapoint;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.MetricAggregate;
+import org.rhq.enterprise.server.rest.domain.MetricDefinitionAggregate;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.NumericDataPoint;
 import org.rhq.enterprise.server.rest.domain.StringValue;
@@ -175,7 +176,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
 
         if (!listList.isEmpty()) {
             List<MeasurementDataNumericHighLowComposite> list = listList.get(0);
-            fill(res, list,scheduleId,hideEmpty, isHtml);
+            fillInDatapoints(res, list, scheduleId, hideEmpty, isHtml);
         }
 
         CacheControl cc = new CacheControl();
@@ -241,7 +242,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         }
         List<MeasurementDataNumericHighLowComposite> list = listList.get(0);
         if (!listList.isEmpty()) {
-            fill(res, list,definitionId,hideEmpty,isHtml);
+            fillInDatapoints(res, list, definitionId, hideEmpty, isHtml);
         }
 
         CacheControl cc = new CacheControl();
@@ -288,8 +289,9 @@ public class MetricHandlerBean  extends AbstractRestBean  {
             throw new BadArgumentException("Schedule [" + scheduleId + "]","it is not a ("+ type + ") metric");
         return schedule;
     }
-    private MetricAggregate fill(MetricAggregate res, List<MeasurementDataNumericHighLowComposite> list, int scheduleId,
-                                 boolean hideEmpty, boolean isHtmlOutput) {
+    private MetricAggregate fillInDatapoints(MetricAggregate res, List<MeasurementDataNumericHighLowComposite> list,
+                                             int scheduleId,
+                                             boolean hideEmpty, boolean isHtmlOutput) {
         long minTime=Long.MAX_VALUE;
         long maxTime=0;
         res.setScheduleId(scheduleId);
@@ -378,7 +380,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
                 List<MeasurementDataNumericHighLowComposite> list = listList.get(0);
                 MetricAggregate res = new MetricAggregate();
                 boolean isHtml = mediaType.equals(MediaType.TEXT_HTML_TYPE);
-                fill(res, list,scheduleId,hideEmpty, isHtml);
+                fillInDatapoints(res, list, scheduleId, hideEmpty, isHtml);
                 resList.add(res);
             }
             else
@@ -442,10 +444,12 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         }
 
         MeasurementDefinition definition = schedule.getDefinition();
+//        MetricSchedule metricSchedule = getMetricScheduleInternal(uriInfo,schedule,definition); todo
         MetricSchedule metricSchedule = new MetricSchedule(schedule.getId(), definition.getName(),
                 definition.getDisplayName(),
                 schedule.isEnabled(), schedule.getInterval(), definition.getUnits().toString(),
                 definition.getDataType().toString());
+        metricSchedule.setDefinitionId(definition.getId());
         if (schedule.getMtime()!=null)
             metricSchedule.setMtime(schedule.getMtime());
 
@@ -485,6 +489,10 @@ public class MetricHandlerBean  extends AbstractRestBean  {
             uri = uriBuilder.build();
             Link updateLink = new Link("edit",uri.toString());
             metricSchedule.addLink(updateLink);
+            updateLink = new Link("self",uri.toString());
+            metricSchedule.addLink(updateLink);
+
+            metricSchedule.addLink(createUILink(uriInfo, UILinkTemplate.METRIC_SCHEDULE, schedule.getResource().getId()));
 
             if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
                 builder = Response.ok(renderTemplate("metricSchedule", metricSchedule), mediaType);
@@ -509,7 +517,11 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     public List<MetricAggregate> getAggregatesForResource(
             @ApiParam("Id of the resource to query") @PathParam("resourceId") int resourceId,
             @ApiParam(value = "Start time since epoch.", defaultValue="End time - 8h") @QueryParam("startTime") long startTime,
-            @ApiParam(value = "End time since epoch.", defaultValue = "Now") @QueryParam("endTime") long endTime) {
+            @ApiParam(value = "End time since epoch.", defaultValue = "Now") @QueryParam("endTime") long endTime,
+            @ApiParam(value = "Include data points") @DefaultValue("false") @QueryParam("includeDataPoints") boolean includeDataPoints,
+            @ApiParam(value = "Hide rows that are NaN only", defaultValue = "false") @QueryParam( "hideEmpty") boolean hideEmpty,
+                        @Context HttpHeaders headers)
+    {
 
         long now = System.currentTimeMillis();
         if (endTime==0)
@@ -518,6 +530,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
             startTime = endTime - EIGHT_HOURS;
         }
 
+        fetchResource(resourceId); // Check if the resource exists at all
 
         List<MeasurementSchedule> schedules = scheduleManager.findSchedulesForResourceAndType(caller,
                 resourceId, DataType.MEASUREMENT, null,false);
@@ -529,6 +542,18 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         for (MeasurementSchedule schedule: schedules) {
             MeasurementAggregate aggr = dataManager.getAggregate(caller,schedule.getId(),startTime,endTime);
             MetricAggregate res = new MetricAggregate(schedule.getId(), aggr.getMin(),aggr.getAvg(),aggr.getMax());
+
+            if (includeDataPoints) {
+                int definitionId = schedule.getDefinition().getId();
+                List<List<MeasurementDataNumericHighLowComposite>> listList = dataManager.findDataForResource(caller,
+                        schedule.getResource().getId(), new int[]{definitionId}, startTime, endTime, 60); // TODO number data points
+
+                if (!listList.isEmpty()) {
+                    List<MeasurementDataNumericHighLowComposite> list = listList.get(0);
+                    fillInDatapoints(res, list, schedule.getId(), hideEmpty, false);
+                }
+            }
+
             ret.add(res);
         }
         return ret;
@@ -539,7 +564,8 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     @GET
     @Path("data/group/{groupId}")
     @ApiOperation("Retrieve a list of high/low/average/data aggregate for the group")
-    public List<MetricAggregate> getAggregatesForGroup(
+    @ApiError(code = 404, reason = "There is no group with the passed id")
+    public List<MetricDefinitionAggregate> getAggregatesForGroup(
             @ApiParam("Id of the group to query") @PathParam("groupId") int groupId,
             @ApiParam(value = "Start time since epoch.", defaultValue="End time - 8h") @QueryParam("startTime") long startTime,
             @ApiParam(value = "End time since epoch.", defaultValue = "Now") @QueryParam("endTime") long endTime) {
@@ -553,12 +579,11 @@ public class MetricHandlerBean  extends AbstractRestBean  {
 
         Set<MeasurementDefinition> definitions = group.getResourceType().getMetricDefinitions();
 
-        List<MetricAggregate> ret = new ArrayList<MetricAggregate>(definitions.size());
+        List<MetricDefinitionAggregate> ret = new ArrayList<MetricDefinitionAggregate>(definitions.size());
         for (MeasurementDefinition def : definitions) {
             if (def.getDataType()==DataType.MEASUREMENT) {
                 MeasurementAggregate aggregate = dataManager.getAggregate(caller, groupId, def.getId(), startTime, endTime);
-                MetricAggregate res = new MetricAggregate(def.getId(), aggregate.getMin(),aggregate.getAvg(),aggregate.getMax());
-                res.setGroup(true);
+                MetricDefinitionAggregate res = new MetricDefinitionAggregate(def.getId(), aggregate.getMin(),aggregate.getAvg(),aggregate.getMax());
                 ret.add(res);
             }
         }
@@ -574,10 +599,6 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     public Response updateSchedule(@ApiParam("Id of the schedule to query") @PathParam("id") int scheduleId,
                                 @ApiParam(value = "New schedule data", required = true) MetricSchedule in,
                                 @Context HttpHeaders headers) {
-        if (in==null)
-            throw new StuffNotFoundException("Input is null"); // TODO other type of exception
-        if (in.getScheduleId()==null)
-            throw new StuffNotFoundException("Invalid input data");
 
         MeasurementSchedule schedule = scheduleManager.getScheduleById(caller, scheduleId);
         if (schedule==null)
@@ -594,6 +615,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
 
         MetricSchedule ret = new MetricSchedule(scheduleId,def.getName(),def.getDisplayName(),
                 schedule.isEnabled(),schedule.getInterval(),def.getUnits().toString(),def.getDataType().toString());
+        ret.setDefinitionId(def.getId());
 
         return Response.ok(ret,headers.getAcceptableMediaTypes().get(0)).build();
     }

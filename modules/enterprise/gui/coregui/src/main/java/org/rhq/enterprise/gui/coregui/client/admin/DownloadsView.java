@@ -25,9 +25,11 @@ import java.util.Map;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 
 import org.rhq.core.domain.common.ProductInfo;
@@ -36,9 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SystemGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A simple page to view the downloads the server provides (like
@@ -46,32 +46,33 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * 
  * @author John Mazzitelli
  */
-public class DownloadsView extends LocatableVLayout {
+public class DownloadsView extends EnhancedVLayout {
 
-    public static final ViewName VIEW_ID = new ViewName("Downloads", MSG.view_adminConfig_downloads(), IconEnum.DOWNLOAD);
+    public static final ViewName VIEW_ID = new ViewName("Downloads", MSG.view_adminConfig_downloads(),
+        IconEnum.DOWNLOAD);
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_CONFIGURATION_VIEW_ID + "/" + VIEW_ID;
 
     private final SystemGWTServiceAsync systemManager = GWTServiceLookup.getSystemService();
 
-    private LocatableSectionStack sectionStack;
+    private SectionStack sectionStack;
     private SectionStackSection agentSection;
     private SectionStackSection cliSection;
     private SectionStackSection bundleSection;
     private SectionStackSection connectorsSection;
     private SectionStackSection cliAlertScriptsSection;
     private SectionStackSection scriptModulesSection;
-    
+
     private ProductInfo productInfo;
 
-    public DownloadsView(String locatorId) {
-        super(locatorId);
+    public DownloadsView() {
+        super();
         productInfo = CoreGUI.get().getProductInfo();
 
         setHeight100();
         setWidth100();
 
-        sectionStack = new LocatableSectionStack(extendLocatorId("stack"));
+        sectionStack = new SectionStack();
         sectionStack.setShowResizeBar(true);
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
         sectionStack.setWidth100();
@@ -84,21 +85,21 @@ public class DownloadsView extends LocatableVLayout {
         connectorsSection = new SectionStackSection(MSG.view_admin_downloads_connectorsDownload());
         cliAlertScriptsSection = new SectionStackSection(MSG.view_admin_downloads_cliAlertScriptsDownload());
         scriptModulesSection = new SectionStackSection(MSG.view_admin_downloads_scriptModulesDownload());
-        
+
         agentSection.setExpanded(false);
         cliSection.setExpanded(false);
         bundleSection.setExpanded(false);
         connectorsSection.setExpanded(false);
         cliAlertScriptsSection.setExpanded(false);
         scriptModulesSection.setExpanded(false);
-        
+
         sectionStack.addSection(agentSection);
         sectionStack.addSection(cliSection);
         sectionStack.addSection(bundleSection);
         sectionStack.addSection(connectorsSection);
         sectionStack.addSection(cliAlertScriptsSection);
         sectionStack.addSection(scriptModulesSection);
-        
+
         addMember(sectionStack);
     }
 
@@ -122,7 +123,7 @@ public class DownloadsView extends LocatableVLayout {
                 String build = result.get("rhq-agent.latest.build-number");
                 String md5 = result.get("rhq-agent.latest.md5");
 
-                LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("agentForm"));
+                DynamicForm form = new DynamicForm();
                 form.setMargin(10);
                 form.setWidth100();
 
@@ -175,7 +176,7 @@ public class DownloadsView extends LocatableVLayout {
                 String build = result.get("rhq-server.build-number");
                 String md5 = result.get("rhq-client.md5");
 
-                LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("cliForm"));
+                DynamicForm form = new DynamicForm();
                 form.setMargin(10);
                 form.setWidth100();
 
@@ -222,7 +223,7 @@ public class DownloadsView extends LocatableVLayout {
         systemManager.getBundleDeployerDownload(new AsyncCallback<HashMap<String, String>>() {
             @Override
             public void onSuccess(HashMap<String, String> result) {
-                LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("bundleForm"));
+                DynamicForm form = new DynamicForm();
                 form.setMargin(10);
                 form.setWidth100();
 
@@ -262,7 +263,7 @@ public class DownloadsView extends LocatableVLayout {
         systemManager.getConnectorDownloads(new AsyncCallback<HashMap<String, String>>() {
             @Override
             public void onSuccess(HashMap<String, String> result) {
-                LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("connectors"));
+                DynamicForm form = new DynamicForm();
                 form.setMargin(10);
                 form.setWidth100();
 
@@ -307,13 +308,13 @@ public class DownloadsView extends LocatableVLayout {
             }
         });
     }
-    
+
     private void prepareCliAlertScriptsSection() {
         systemManager.getCliAlertScriptDownloads(new AsyncCallback<HashMap<String, String>>() {
 
             @Override
             public void onSuccess(HashMap<String, String> result) {
-                LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("cliAlertScripts"));
+                DynamicForm form = new DynamicForm();
                 form.setMargin(10);
                 form.setWidth100();
 
@@ -351,7 +352,7 @@ public class DownloadsView extends LocatableVLayout {
                 cliAlertScriptsSection.setExpanded(true);
                 sectionStack.markForRedraw();
             }
-            
+
             @Override
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_admin_downloads_cliAlertScripts_loadError(), caught);
@@ -364,7 +365,7 @@ public class DownloadsView extends LocatableVLayout {
 
             @Override
             public void onSuccess(HashMap<String, String> result) {
-                LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("scriptModules"));
+                DynamicForm form = new DynamicForm();
                 form.setMargin(10);
                 form.setWidth100();
 
@@ -402,7 +403,7 @@ public class DownloadsView extends LocatableVLayout {
                 scriptModulesSection.setExpanded(true);
                 sectionStack.markForRedraw();
             }
-            
+
             @Override
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_admin_downloads_scriptModules_loadError(), caught);

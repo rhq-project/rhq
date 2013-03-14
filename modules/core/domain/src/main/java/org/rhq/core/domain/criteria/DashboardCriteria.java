@@ -39,7 +39,6 @@ import org.rhq.core.domain.util.PageOrdering;
 public class DashboardCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
     private DashboardCategory filterCategory = DashboardCategory.INVENTORY;
     private Integer filterGroupId; // needs overrides
     private String filterName;
@@ -66,10 +65,6 @@ public class DashboardCriteria extends Criteria {
     @Override
     public Class<Dashboard> getPersistentClass() {
         return Dashboard.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
     }
 
     /**

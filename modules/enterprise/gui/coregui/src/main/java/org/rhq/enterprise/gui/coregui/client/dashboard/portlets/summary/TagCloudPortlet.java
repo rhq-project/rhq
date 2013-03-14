@@ -42,8 +42,8 @@ public class TagCloudPortlet extends TagCloudView implements Portlet {
     // A default displayed, persisted name for the portlet    
     public static final String NAME = MSG.common_title_tag_cloud();
 
-    public TagCloudPortlet(String locatorId) {
-        super(locatorId);
+    public TagCloudPortlet() {
+        super();
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
@@ -57,9 +57,9 @@ public class TagCloudPortlet extends TagCloudView implements Portlet {
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
-            return new TagCloudPortlet(locatorId);
+            return new TagCloudPortlet();
         }
     }
 

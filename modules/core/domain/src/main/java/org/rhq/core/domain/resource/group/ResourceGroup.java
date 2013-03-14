@@ -199,7 +199,7 @@ import org.rhq.core.domain.tagging.Tag;
         + "                          JOIN rg.explicitResources explicitRes " //
         + "                         WHERE rg.id = :groupId ) " //
         + "    AND res.inventoryStatus = 'COMMITTED' ") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "id", sequenceName = "RHQ_RESOURCE_GROUP_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_RESOURCE_GROUP_ID_SEQ", sequenceName = "RHQ_RESOURCE_GROUP_ID_SEQ")
 @Table(name = "RHQ_RESOURCE_GROUP")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class ResourceGroup extends Group {
@@ -442,7 +442,7 @@ public class ResourceGroup extends Group {
         + "                          g6parent.ID = alreadyMember.RESOURCE_ID ) ) ";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "id")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_RESOURCE_GROUP_ID_SEQ")
     @Id
     private int id;
 

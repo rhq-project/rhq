@@ -51,7 +51,7 @@ import javax.xml.bind.annotation.XmlTransient;
     @NamedQuery(name = AdvisoryBuglist.DELETE_BY_ADV_ID, query = "DELETE AdvisoryBuglist ab WHERE ab.advisory.id = :advId"),
     @NamedQuery(name = AdvisoryBuglist.FIND_ADVISORY_BUGLIST, query = "SELECT ab FROM AdvisoryBuglist AS ab "
         + "WHERE ab.advisory.id = :advId AND ab.bugid = :buginfo") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_ADVISORY_BUGLIST_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_ADVISORY_BUGLIST_ID_SEQ", sequenceName = "RHQ_ADVISORY_BUGLIST_ID_SEQ")
 @Table(name = "RHQ_ADVISORY_BUGLIST")
 public class AdvisoryBuglist implements Serializable {
 
@@ -65,7 +65,7 @@ public class AdvisoryBuglist implements Serializable {
      * @IdClass.
      */
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_ADVISORY_BUGLIST_ID_SEQ")
     @Id
     private int id;
 

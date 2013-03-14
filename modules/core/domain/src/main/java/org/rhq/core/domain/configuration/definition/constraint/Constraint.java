@@ -49,7 +49,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 @DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_CONFIG_PROP_CONSTR_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_CONFIG_PROP_CONSTR_ID_SEQ", sequenceName = "RHQ_CONFIG_PROP_CONSTR_ID_SEQ")
 @Table(name = "RHQ_CONFIG_PROP_CONSTR")
 public abstract class Constraint implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -57,7 +57,7 @@ public abstract class Constraint implements Serializable {
     protected static final String DELIMITER = "#";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_CONFIG_PROP_CONSTR_ID_SEQ")
     @Id
     private int id;
 

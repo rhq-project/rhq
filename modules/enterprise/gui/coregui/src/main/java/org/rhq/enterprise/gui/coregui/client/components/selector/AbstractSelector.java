@@ -65,18 +65,15 @@ import com.smartgwt.client.widgets.layout.VStack;
 
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTransferImgButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVStack;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVStack;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 
 /**
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria.Criteria> extends LocatableVLayout {
+public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria.Criteria> extends EnhancedVLayout {
 
     private static final String SELECTOR_KEY = "id";
 
@@ -89,8 +86,8 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
     protected List<Record> availableRecords;
     protected DynamicForm availableFilterForm;
     protected HLayout hlayout;
-    protected LocatableListGrid availableGrid;
-    protected LocatableListGrid assignedGrid;
+    protected ListGrid availableGrid;
+    protected ListGrid assignedGrid;
     protected RPCDataSource<T, C> datasource;
 
     private Set<AssignedItemsChangedHandler> assignedItemsChangedHandlers = new HashSet<AssignedItemsChangedHandler>();
@@ -105,12 +102,12 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
     private boolean isReadOnly;
     private Label messageLayout;
 
-    public AbstractSelector(String locatorId) {
-        this(locatorId, false);
+    public AbstractSelector() {
+        this(false);
     }
 
-    public AbstractSelector(String locatorId, boolean isReadOnly) {
-        super(locatorId);
+    public AbstractSelector(boolean isReadOnly) {
+        super();
 
         this.isReadOnly = isReadOnly;
 
@@ -118,12 +115,12 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
         setMargin(7);
 
         this.hlayout = new HLayout();
-        this.assignedGrid = new LocatableListGrid(extendLocatorId("assignedGrid"));
+        this.assignedGrid = new ListGrid();
 
         if (this.isReadOnly) {
             this.assignedGrid.setSelectionType(SelectionStyle.NONE);
         } else {
-            this.availableGrid = new LocatableListGrid(extendLocatorId("availableGrid"));
+            this.availableGrid = new ListGrid();
         }
     }
 
@@ -220,8 +217,8 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
 
     @Override
     public void destroy() {
-        // explicitly destroy non-locatable member layouts
-        SeleniumUtility.destroyMembers(hlayout);
+        // explicitly destroy non-enhanced member layouts
+        EnhancedUtility.destroyMembers(hlayout);
         super.destroy();
 
         // For reasons unknown, possibly issues in smartgwt's cleanup of VStack and SectionStack, these
@@ -254,7 +251,7 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
     }
 
     private SectionStack buildAvailableItemsStack() {
-        SectionStack availableSectionStack = new LocatableSectionStack(extendLocatorId("Available"));
+        SectionStack availableSectionStack = new SectionStack();
         availableSectionStack.setWidth("*");
         availableSectionStack.setHeight100();
 
@@ -397,12 +394,12 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
     }
 
     private VStack buildButtonStack() {
-        VStack moveButtonStack = new LocatableVStack(extendLocatorId("MoveButtons"), 6);
+        VStack moveButtonStack = new EnhancedVStack(6);
         moveButtonStack.setWidth(42);
         moveButtonStack.setHeight(250);
         moveButtonStack.setAlign(VerticalAlignment.CENTER);
 
-        this.addButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.RIGHT);
+        this.addButton = new TransferImgButton(TransferImgButton.RIGHT);
         this.addButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 addSelectedRows();
@@ -410,7 +407,7 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
         });
         moveButtonStack.addMember(this.addButton);
 
-        this.removeButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.LEFT);
+        this.removeButton = new TransferImgButton(TransferImgButton.LEFT);
         this.removeButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 removeSelectedRows();
@@ -419,7 +416,7 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
         });
         moveButtonStack.addMember(this.removeButton);
 
-        this.addAllButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.RIGHT_ALL);
+        this.addAllButton = new TransferImgButton(TransferImgButton.RIGHT_ALL);
         this.addAllButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 availableGrid.selectAllRecords();
@@ -428,7 +425,7 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
         });
         moveButtonStack.addMember(this.addAllButton);
 
-        this.removeAllButton = new LocatableTransferImgButton(this.getLocatorId(), TransferImgButton.LEFT_ALL);
+        this.removeAllButton = new TransferImgButton(TransferImgButton.LEFT_ALL);
         this.removeAllButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 assignedGrid.selectAllRecords();
@@ -441,7 +438,7 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
     }
 
     private SectionStack buildAssignedItemsStack() {
-        SectionStack assignedSectionStack = new LocatableSectionStack(extendLocatorId("Assigned"));
+        SectionStack assignedSectionStack = new SectionStack();
         assignedSectionStack.setWidth("*");
         assignedSectionStack.setHeight100();
         assignedSectionStack.setAlign(Alignment.LEFT);
@@ -610,12 +607,12 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
     }
 
     @Deprecated
-    public LocatableListGrid getAvailableGrid() {
+    public ListGrid getAvailableGrid() {
         return availableGrid;
     }
 
     @Deprecated
-    public LocatableListGrid getAssignedGrid() {
+    public ListGrid getAssignedGrid() {
         return assignedGrid;
     }
 

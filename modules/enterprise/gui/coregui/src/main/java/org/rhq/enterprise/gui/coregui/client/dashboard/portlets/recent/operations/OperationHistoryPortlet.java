@@ -33,16 +33,16 @@ public class OperationHistoryPortlet extends AbstractOperationHistoryPortlet {
     // A default displayed, persisted name for the portlet    
     public static final String NAME = MSG.view_portlet_defaultName_operations();
 
-    public OperationHistoryPortlet(String locatorId) {
-        super(locatorId, EntityContext.forSubsystemView());
+    public OperationHistoryPortlet() {
+        super(EntityContext.forSubsystemView());
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
-            return new OperationHistoryPortlet(locatorId);
+            return new OperationHistoryPortlet();
         }
     }
 }

@@ -26,6 +26,7 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -34,12 +35,11 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.CascadeType;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
 
 /**
  * A RepoGroup represents a set of related {@link Repo}s. Repos can be tied together
@@ -52,7 +52,7 @@ import javax.persistence.NamedQuery;
 @NamedQueries(
     @NamedQuery(name = RepoGroup.QUERY_FIND_BY_NAME, query = "SELECT g FROM RepoGroup g WHERE g.name = :name")
 )
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_REPO_GROUP_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_REPO_GROUP_ID_SEQ", sequenceName = "RHQ_REPO_GROUP_ID_SEQ")
 @Table(name = "RHQ_REPO_GROUP")
 public class RepoGroup implements Serializable {
     // Constants  --------------------------------------------
@@ -64,7 +64,7 @@ public class RepoGroup implements Serializable {
     // Attributes  --------------------------------------------
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_REPO_GROUP_ID_SEQ")
     @Id
     private int id;
 

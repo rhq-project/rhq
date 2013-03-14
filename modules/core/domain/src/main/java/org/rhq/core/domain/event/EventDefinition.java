@@ -46,7 +46,8 @@ import org.rhq.core.domain.resource.ResourceType;
  */
 @Entity
 @Table(name = EventDefinition.TABLE_NAME)
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "idGenerator", sequenceName = EventDefinition.TABLE_NAME + "_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = EventDefinition.TABLE_NAME
+    + "_ID_SEQ", sequenceName = EventDefinition.TABLE_NAME + "_ID_SEQ")
 public class EventDefinition implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -54,7 +55,7 @@ public class EventDefinition implements Serializable {
 
     @Id
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "idGenerator")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = EventDefinition.TABLE_NAME + "_ID_SEQ")
     private int id;
 
     @JoinColumn(name = "RESOURCE_TYPE_ID", referencedColumnName = "ID", nullable = false)

@@ -1058,7 +1058,12 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     }
 
     private boolean initResourceTypes(Resource resource) {
-        return initResourceTypes(resource, new HashMap<String, ResourceType>());
+        final HashMap<String, ResourceType> types = new HashMap<String, ResourceType>();
+        try {
+            return initResourceTypes(resource, types);
+        } finally {
+            types.clear(); // help GC
+        }
     }
 
     /**
@@ -1079,7 +1084,6 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         if (null == resourceType) {
             try {
                 resourceType = this.resourceTypeManager.getResourceTypeByNameAndPlugin(name, plugin);
-
             } catch (RuntimeException e) {
                 resourceType = null;
             }
@@ -1089,6 +1093,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                     + "]. The Agent most likely has a plugin named '" + plugin
                     + "' installed that is not installed on the Server. Resource will be ignored...");
                 return false;
+            } else {
+                loadedTypeMap.put(key.toString(), resourceType);
             }
         }
 
@@ -1257,6 +1263,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             ResourceCriteria resourceCriteria = new ResourceCriteria();
             resourceCriteria.addFilterParentResourceId(parentResource.getId());
             resourceCriteria.addFilterResourceTypeId(resourceType.getId());
+            resourceCriteria.clearPaging();//Doc: disable paging as the code assumes all the results will be returned.
+
             PageList<Resource> childResourcesOfType = resourceManager.findResourcesByCriteria(
                 subjectManager.getOverlord(), resourceCriteria);
             if (childResourcesOfType.size() >= 1) {

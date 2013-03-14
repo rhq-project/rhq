@@ -58,17 +58,16 @@ public class UsersView extends TableSection<UsersDataSource> implements HasViewN
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_SECURITY_VIEW_ID + "/" + VIEW_ID;
 
-
     private boolean hasManageSecurity;
 
-    public UsersView(String locatorId, boolean hasManageSecurity) {
-        super(locatorId, null);
+    public UsersView(boolean hasManageSecurity) {
+        super(null);
 
         final UsersDataSource dataSource = UsersDataSource.getInstance();
 
         setDataSource(dataSource);
         setEscapeHtmlInDetailsLinkColumn(true);
-       
+
         this.hasManageSecurity = hasManageSecurity;
     }
 
@@ -84,9 +83,8 @@ public class UsersView extends TableSection<UsersDataSource> implements HasViewN
         List<ListGridField> fields = createFields();
         setListGridFields(fields.toArray(new ListGridField[fields.size()]));
 
-        addTableAction(extendLocatorId("New"), MSG.common_button_new(), createNewAction());
-        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), getDeleteConfirmMessage(),
-            createDeleteAction());
+        addTableAction(MSG.common_button_new(), createNewAction());
+        addTableAction(MSG.common_button_delete(), getDeleteConfirmMessage(), createDeleteAction());
 
         super.configureTable();
     }
@@ -224,7 +222,7 @@ public class UsersView extends TableSection<UsersDataSource> implements HasViewN
 
     @Override
     public Canvas getDetailsView(Integer subjectId) {
-        return new UserEditView(extendLocatorId("Detail"), subjectId);
+        return new UserEditView(subjectId);
     }
 
     @Override

@@ -37,13 +37,11 @@ public class MeasurementUserPreferences {
     public static final String PREF_METRIC_RANGE_LASTN = UserPreferenceNames.MONITOR_VISIBILITY_METRIC_RANGE_LAST_N;
     public static final String PREF_METRIC_RANGE_UNIT = UserPreferenceNames.MONITOR_VISIBILITY_METRIC_RANGE_UNIT;
     public static final String PREF_METRIC_RANGE_BEGIN_END_FLAG = UserPreferenceNames.MONITOR_VISIBILITY_METRIC_RANGE_RO;
-    public static final String PREF_METRIC_THRESHOLD = UserPreferenceNames.MONITOR_VISIBILITY_THRESHOLD;
 
     /**
      * key values for indicator views
      */
     public static final String PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX = "monitor.visibility.indicator.views.";
-    public static final String PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT = "resource.common.monitor.visibility.defaultview";
     public static final String PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT_NAME = "Default";
 
     public static final String DEFAULT_VALUE_RANGE_RO = Boolean.FALSE.toString();

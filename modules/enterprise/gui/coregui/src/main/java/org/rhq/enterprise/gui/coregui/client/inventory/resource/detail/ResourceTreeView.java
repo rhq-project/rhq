@@ -86,6 +86,7 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.ResourceD3GraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.ResourceGraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
@@ -102,14 +103,13 @@ import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Jay Shaughnessy
  * @author Greg Hinkle
  */
-public class ResourceTreeView extends LocatableVLayout {
+public class ResourceTreeView extends EnhancedVLayout {
 
     private TreeGrid treeGrid;
     private String selectedNodeId;
@@ -123,8 +123,8 @@ public class ResourceTreeView extends LocatableVLayout {
     // Maps autogroup/type backing group ids to the corresponding autogroup/type nodes.
     private Map<Integer, AutoGroupTreeNode> autoGroupNodeMap = new HashMap<Integer, AutoGroupTreeNode>();
 
-    public ResourceTreeView(String locatorId) {
-        super(locatorId);
+    public ResourceTreeView() {
+        super();
 
         setWidth("250");
         setHeight100();
@@ -145,7 +145,7 @@ public class ResourceTreeView extends LocatableVLayout {
     }
 
     private void buildTree() {
-        treeGrid = new CustomResourceTreeGrid(getLocatorId());
+        treeGrid = new CustomResourceTreeGrid();
 
         treeGrid.setOpenerImage("resources/dir.png");
         treeGrid.setOpenerIconSize(16);
@@ -163,8 +163,8 @@ public class ResourceTreeView extends LocatableVLayout {
 
         treeGrid.setLeaveScrollbarGap(false);
 
-        resourceContextMenu = new LocatableMenu(extendLocatorId("resourceContextMenu"));
-        autoGroupContextMenu = new ResourceGroupContextMenu(extendLocatorId("autoGroupContextMenu"));
+        resourceContextMenu = new Menu();
+        autoGroupContextMenu = new ResourceGroupContextMenu();
 
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
 
@@ -573,7 +573,7 @@ public class ResourceTreeView extends LocatableVLayout {
         Integer[] singletonChildTypes = getSingletonChildTypes(resourceType);
 
         // To properly filter Create Child and Import menus we need existing singleton child resources. If the
-        // user has creat permission and the parent type has singleton child types and creatable or importable child
+        // user has created permission and the parent type has singleton child types and creatable or importable child
         // types, perform an async call to fetch the singleton children.
         if (canCreate && singletonChildTypes.length > 0 && (hasCreatableTypes || hasImportableTypes)) {
 
@@ -587,12 +587,14 @@ public class ResourceTreeView extends LocatableVLayout {
                     public void onSuccess(PageList<Resource> singletonChildren) {
                         if (hasCreatableTypes) {
                             Map<String, ResourceType> displayNameMap = getDisplayNames(creatableChildTypes);
-                            addMenu(MSG.common_button_create_child(), true, singletonChildren, resource, displayNameMap);
+                            addMenu(MSG.common_button_create_child(), true, singletonChildren, resource,
+                                displayNameMap, true);
                         }
 
                         if (hasImportableTypes) {
                             Map<String, ResourceType> displayNameMap = getDisplayNames(importableChildTypes);
-                            addMenu(MSG.common_button_import(), true, singletonChildren, resource, displayNameMap);
+                            addMenu(MSG.common_button_import(), true, singletonChildren, resource, displayNameMap,
+                                false);
                         }
 
                         resourceContextMenu.showContextMenu();
@@ -607,22 +609,22 @@ public class ResourceTreeView extends LocatableVLayout {
         } else if (canCreate && singletonChildTypes.length == 0 && (hasCreatableTypes || hasImportableTypes)) {
             if (hasCreatableTypes) {
                 Map<String, ResourceType> displayNameMap = getDisplayNames(creatableChildTypes);
-                addMenu(MSG.common_button_create_child(), true, null, resource, displayNameMap);
+                addMenu(MSG.common_button_create_child(), true, null, resource, displayNameMap, true);
             }
 
             if (hasImportableTypes) {
                 Map<String, ResourceType> displayNameMap = getDisplayNames(importableChildTypes);
-                addMenu(MSG.common_button_import(), true, null, resource, displayNameMap);
+                addMenu(MSG.common_button_import(), true, null, resource, displayNameMap, false);
             }
 
             resourceContextMenu.showContextMenu();
 
         } else {
             if (!canCreate && hasCreatableTypes) {
-                addMenu(MSG.common_button_create_child(), false, null, null, null);
+                addMenu(MSG.common_button_create_child(), false, null, null, null, true);
             }
             if (!canCreate && hasImportableTypes) {
-                addMenu(MSG.common_button_import(), false, null, null, null);
+                addMenu(MSG.common_button_import(), false, null, null, null, false);
             }
 
             resourceContextMenu.showContextMenu();
@@ -630,12 +632,12 @@ public class ResourceTreeView extends LocatableVLayout {
     }
 
     private void addMenu(String name, boolean enabled, List<Resource> singletonChildren, Resource resource,
-        Map<String, ResourceType> displayNameMap) {
+        Map<String, ResourceType> displayNameMap, boolean isCreate) {
         MenuItem menu = new MenuItem(name);
         if (enabled) {
             Menu subMenu = new Menu();
-            singletonChildren = (null == singletonChildren) ? new ArrayList() : singletonChildren;
-            Menu filteredSubMenu = checkForSingletons(singletonChildren, resource, displayNameMap, subMenu, true);
+            singletonChildren = (null == singletonChildren) ? new ArrayList<Resource>() : singletonChildren;
+            Menu filteredSubMenu = checkForSingletons(singletonChildren, resource, displayNameMap, subMenu, isCreate);
             menu.setSubmenu(filteredSubMenu);
         } else {
             menu.setEnabled(false);
@@ -676,7 +678,7 @@ public class ResourceTreeView extends LocatableVLayout {
 
             // omit the type's menu item if the singleton already exists, otherwise add the necessary click handler.
             // note: we omit as opposed to disable the menu item to match the behavior of the buttons in the Inventory
-            // -> Child Resources view, which has no facility to do the anologous disabling.
+            // -> Child Resources view, which has no facility to do the analogous disabling.
             if (!exists) {
                 itemToAdd.addClickHandler(new ClickHandler() {
                     public void onClick(MenuItemClickEvent event) {
@@ -754,7 +756,7 @@ public class ResourceTreeView extends LocatableVLayout {
                             defItem.setSubmenu(defSubItem);
 
                             for (final Dashboard d : result) {
-                                MenuItem addToDBItem = new MenuItem(MSG
+                                MenuItem addToDBItem = new MenuItem("d3-"+MSG
                                     .view_tree_common_contextMenu_addChartToDashboard(d.getName()));
                                 defSubItem.addItem(addToDBItem);
 
@@ -762,12 +764,12 @@ public class ResourceTreeView extends LocatableVLayout {
 
                                     public void onClick(MenuItemClickEvent menuItemClickEvent) {
                                         DashboardPortlet p = new DashboardPortlet(MSG
-                                            .view_tree_common_contextMenu_resourceGraph(), ResourceGraphPortlet.KEY,
+                                            .view_tree_common_contextMenu_resourceGraph(), ResourceD3GraphPortlet.KEY,
                                             250);
                                         p.getConfiguration().put(
-                                            new PropertySimple(ResourceGraphPortlet.CFG_RESOURCE_ID, resource.getId()));
+                                            new PropertySimple(ResourceD3GraphPortlet.CFG_RESOURCE_ID, resource.getId()));
                                         p.getConfiguration().put(
-                                            new PropertySimple(ResourceGraphPortlet.CFG_DEFINITION_ID, def.getId()));
+                                            new PropertySimple(ResourceD3GraphPortlet.CFG_DEFINITION_ID, def.getId()));
 
                                         d.addPortlet(p);
 
@@ -791,7 +793,49 @@ public class ResourceTreeView extends LocatableVLayout {
                                             });
 
                                     }
+
                                 });
+                                //@todo: Remove once we have verified the charts
+                                // now add the old menu items
+                                MenuItem addOldItemToDBItem = new MenuItem(MSG
+                                        .view_tree_common_contextMenu_addChartToDashboard(d.getName()));
+                                defSubItem.addItem(addOldItemToDBItem);
+
+                                addOldItemToDBItem.addClickHandler(new ClickHandler() {
+
+                                    public void onClick(MenuItemClickEvent menuItemClickEvent) {
+                                        DashboardPortlet p = new DashboardPortlet(MSG
+                                                .view_tree_common_contextMenu_resourceGraph(), ResourceGraphPortlet.KEY,
+                                                250);
+                                        p.getConfiguration().put(
+                                                new PropertySimple(ResourceGraphPortlet.CFG_RESOURCE_ID, resource.getId()));
+                                        p.getConfiguration().put(
+                                                new PropertySimple(ResourceGraphPortlet.CFG_DEFINITION_ID, def.getId()));
+
+                                        d.addPortlet(p);
+
+                                        GWTServiceLookup.getDashboardService().storeDashboard(d,
+                                                new AsyncCallback<Dashboard>() {
+
+                                                    public void onFailure(Throwable caught) {
+                                                        CoreGUI.getErrorHandler().handleError(
+                                                                MSG.view_tree_common_contextMenu_saveChartToDashboardFailure(),
+                                                                caught);
+                                                    }
+
+                                                    public void onSuccess(Dashboard result) {
+                                                        CoreGUI
+                                                                .getMessageCenter()
+                                                                .notify(
+                                                                        new Message(
+                                                                                MSG.view_tree_common_contextMenu_saveChartToDashboardSuccessful(result
+                                                                                        .getName()), Message.Severity.Info));
+                                                    }
+                                                });
+
+                                    }
+                                });
+
                             }//end dashboard iteration
 
                             //add new menu item for adding current graphable element to view if on Monitor/Graphs tab

@@ -34,13 +34,13 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Jay Shaughnessy
  */
-public class ResourceGroupMembershipView extends LocatableVLayout {
+public class ResourceGroupMembershipView extends EnhancedVLayout {
 
     private int resourceGroupId;
     private ResourceGroup resourceGroup;
@@ -48,8 +48,8 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
     private ClickHandler saveButtonHandler;
     private ClickHandler cancelButtonHandler;
 
-    public ResourceGroupMembershipView(String locatorId, int resourceGroupId) {
-        super(locatorId);
+    public ResourceGroupMembershipView(int resourceGroupId) {
+        super();
 
         this.resourceGroupId = resourceGroupId;
     }
@@ -92,8 +92,7 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
         toolStrip.setLayoutMargin(5);
         toolStrip.setAlign(Alignment.RIGHT);
 
-
-        IButton cancelButton = new LocatableIButton(this.extendLocatorId("Cancel"), MSG.common_button_cancel());
+        IButton cancelButton = new EnhancedIButton(MSG.common_button_cancel());
         cancelButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 if (ResourceGroupMembershipView.this.cancelButtonHandler != null) {
@@ -104,7 +103,7 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
         });
         toolStrip.addMember(cancelButton);
 
-        IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
+        IButton saveButton = new EnhancedIButton(MSG.common_button_save());
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();
@@ -129,11 +128,9 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
                     ResourceGroup group = result.get(0);
                     ResourceGroupMembershipView.this.resourceGroup = group;
                     ResourceGroupMembershipView.this.selector = new ResourceGroupResourceSelector(
-                        ResourceGroupMembershipView.this.getLocatorId(),
                         group.getExplicitResources(),
                         (GroupCategory.COMPATIBLE == ResourceGroupMembershipView.this.resourceGroup.getGroupCategory()) ? group
-                            .getResourceType()
-                            : null, false);
+                            .getResourceType() : null, false);
 
                     addMember(ResourceGroupMembershipView.this.selector);
 

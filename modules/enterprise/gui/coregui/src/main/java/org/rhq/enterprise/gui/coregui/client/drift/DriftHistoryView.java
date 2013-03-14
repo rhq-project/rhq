@@ -19,6 +19,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.drift;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
@@ -28,6 +31,7 @@ import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
@@ -39,10 +43,6 @@ import org.rhq.enterprise.gui.coregui.client.components.table.StringIDTableSecti
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 
 /**
  * A view that displays a paginated table of {@link org.rhq.core.domain.drift.JPADrift}s, along with the
@@ -56,7 +56,8 @@ import java.util.LinkedHashMap;
  */
 public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
 
-    public static final ViewName SUBSYSTEM_VIEW_ID = new ViewName("RecentDrifts", MSG.common_title_recent_drifts(), IconEnum.RECENT_DRIFT);
+    public static final ViewName SUBSYSTEM_VIEW_ID = new ViewName("RecentDrifts", MSG.common_title_recent_drifts(),
+        IconEnum.RECENT_DRIFT);
 
     private static SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(DriftDataSource.ATTR_CTIME,
         SortDirection.DESCENDING);
@@ -69,7 +70,6 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
     protected TextItem pathFilter;
     protected DateFilterItem startDateFilter;
     protected DateFilterItem endDateFilter;
-
 
     private EntityContext context;
     private boolean hasWriteAccess;
@@ -88,25 +88,25 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
     }
 
     // for subsystem views
-    public DriftHistoryView(String locatorId) {
-        this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), EntityContext.forSubsystemView(), false, INITIAL_CRITERIA);
+    public DriftHistoryView() {
+        this(SUBSYSTEM_VIEW_ID.getTitle(), EntityContext.forSubsystemView(), false, INITIAL_CRITERIA);
     }
 
-    public DriftHistoryView(String locatorId, EntityContext entityContext) {
-        this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), entityContext, false, INITIAL_CRITERIA);
+    public DriftHistoryView(EntityContext entityContext) {
+        this(SUBSYSTEM_VIEW_ID.getTitle(), entityContext, false, INITIAL_CRITERIA);
     }
 
-    public DriftHistoryView(String locatorId, String tableTitle, EntityContext entityContext) {
-        this(locatorId, tableTitle, entityContext, false, INITIAL_CRITERIA);
+    public DriftHistoryView(String tableTitle, EntityContext entityContext) {
+        this(tableTitle, entityContext, false, INITIAL_CRITERIA);
     }
 
-    protected DriftHistoryView(String locatorId, String tableTitle, EntityContext entityContext, boolean hasWriteAccess) {
-        this(locatorId, tableTitle, entityContext, hasWriteAccess, INITIAL_CRITERIA);
+    protected DriftHistoryView(String tableTitle, EntityContext entityContext, boolean hasWriteAccess) {
+        this(tableTitle, entityContext, hasWriteAccess, INITIAL_CRITERIA);
     }
 
-    protected DriftHistoryView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess,
+    protected DriftHistoryView(String tableTitle, EntityContext context, boolean hasWriteAccess,
         Criteria initialCriteria) {
-        super(locatorId, tableTitle, initialCriteria, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
+        super(tableTitle, initialCriteria, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
         this.context = context;
         this.hasWriteAccess = hasWriteAccess;
 
@@ -130,10 +130,10 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
         categories.put(DriftCategory.FILE_REMOVED.name(), MSG.view_drift_category_fileRemoved());
         LinkedHashMap<String, String> categoryIcons = new LinkedHashMap<String, String>(3);
         categoryIcons.put(DriftCategory.FILE_ADDED.name(), ImageManager.getDriftCategoryIcon(DriftCategory.FILE_ADDED));
-        categoryIcons.put(DriftCategory.FILE_CHANGED.name(), ImageManager
-            .getDriftCategoryIcon(DriftCategory.FILE_CHANGED));
-        categoryIcons.put(DriftCategory.FILE_REMOVED.name(), ImageManager
-            .getDriftCategoryIcon(DriftCategory.FILE_REMOVED));
+        categoryIcons.put(DriftCategory.FILE_CHANGED.name(),
+            ImageManager.getDriftCategoryIcon(DriftCategory.FILE_CHANGED));
+        categoryIcons.put(DriftCategory.FILE_REMOVED.name(),
+            ImageManager.getDriftCategoryIcon(DriftCategory.FILE_REMOVED));
         categoryFilter = new EnumSelectItem(DriftDataSource.FILTER_CATEGORIES, MSG.common_title_category(),
             DriftCategory.class, categories, categoryIcons);
 
@@ -141,12 +141,12 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
         changeSetFilter = new TextItem(DriftDataSource.FILTER_SNAPSHOT, MSG.view_drift_table_snapshot());
         pathFilter = new TextItem(DriftDataSource.FILTER_PATH, MSG.common_title_path());
 
-        startDateFilter = new DateFilterItem(DateFilterItem.START_DATE_FILTER, MSG.filter_from_date() );
+        startDateFilter = new DateFilterItem(DateFilterItem.START_DATE_FILTER, MSG.filter_from_date());
         endDateFilter = new DateFilterItem(DateFilterItem.END_DATE_FILTER, MSG.filter_to_date());
 
-
         if (isShowFilterForm()) {
-            setFilterFormItems(definitionFilter, changeSetFilter, categoryFilter, startDateFilter, pathFilter, endDateFilter );
+            setFilterFormItems(definitionFilter, changeSetFilter, categoryFilter, startDateFilter, pathFilter,
+                endDateFilter);
         }
     }
 
@@ -173,7 +173,7 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
                 String driftId = getId(record);
                 String url = LinkManager.getDriftCarouselDriftLink(resourceId, driftDefId, driftId);
                 String formattedValue = TimestampCellFormatter.format(value);
-                return SeleniumUtility.getLocatableHref(url, formattedValue, null);
+                return LinkManager.getHref(url, formattedValue);
             }
         };
     }
@@ -184,7 +184,7 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
 
     @Override
     public Canvas getDetailsView(String driftId) {
-        return new DriftDetailsView(extendLocatorId("Details"), driftId);
+        return new DriftDetailsView(driftId);
     }
 
     public EntityContext getContext() {

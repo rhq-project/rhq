@@ -19,6 +19,11 @@
 
 package org.rhq.enterprise.gui.coregui.client.operation;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Map;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -27,6 +32,7 @@ import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLPane;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
@@ -36,6 +42,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
+
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
@@ -57,14 +64,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Map;
 
 /**
  * @author Jay Shaughnessy
@@ -128,7 +127,7 @@ public class OperationHistoryDataSource extends
             resourceNameField.setCellFormatter(new CellFormatter() {
                 public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                     String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
-                    return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                    return LinkManager.getHref(url, o.toString());
                 }
             });
             resourceNameField.setShowHover(true);
@@ -171,7 +170,7 @@ public class OperationHistoryDataSource extends
                     Integer opHistoryId = record.getAttributeAsInt("id");
                     String url = LinkManager.getEntityTabLink(entityContext, "Operations", "History") + "/"
                         + opHistoryId;
-                    return SeleniumUtility.getLocatableHref(url, timestamp, null);
+                    return LinkManager.getHref(url, timestamp);
                 } else {
                     return "<i>" + MSG.view_operationHistoryList_notYetStarted() + "</i>";
                 }
@@ -225,7 +224,7 @@ public class OperationHistoryDataSource extends
                 String statusStr = record.getAttribute(Field.STATUS);
                 OperationRequestStatus status = OperationRequestStatus.valueOf(statusStr);
                 if (status == OperationRequestStatus.FAILURE) {
-                    final Window winModal = new LocatableWindow("StatusDetailsWin");
+                    final Window winModal = new Window();
                     winModal.setTitle(MSG.common_title_details());
                     winModal.setOverflow(Overflow.VISIBLE);
                     winModal.setShowMinimizeButton(false);
@@ -244,7 +243,7 @@ public class OperationHistoryDataSource extends
                         }
                     });
 
-                    LocatableHTMLPane htmlPane = new LocatableHTMLPane("StatusDetailsPane");
+                    HTMLPane htmlPane = new HTMLPane();
                     htmlPane.setMargin(10);
                     htmlPane.setDefaultWidth(500);
                     htmlPane.setDefaultHeight(400);

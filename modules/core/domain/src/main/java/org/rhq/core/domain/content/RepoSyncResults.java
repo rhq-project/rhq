@@ -52,7 +52,7 @@ import javax.persistence.Table;
         + " ORDER BY rssr.startTime DESC "),
     @NamedQuery(name = RepoSyncResults.QUERY_GET_ALL_BY_REPO_ID, query = "SELECT rssr "
         + "  FROM RepoSyncResults rssr " + " WHERE rssr.repo.id = :repoId ") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_REPO_SYNC_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_REPO_SYNC_ID_SEQ", sequenceName = "RHQ_REPO_SYNC_ID_SEQ")
 @Table(name = "RHQ_REPO_SYNC")
 public class RepoSyncResults implements Serializable, ContentSyncResults {
     public static final String QUERY_GET_INPROGRESS_BY_REPO_ID = "RepoSyncResults.getInProgressByRepoId";
@@ -61,7 +61,7 @@ public class RepoSyncResults implements Serializable, ContentSyncResults {
     private static final long serialVersionUID = 1L;
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_REPO_SYNC_ID_SEQ")
     @Id
     private int id;
 

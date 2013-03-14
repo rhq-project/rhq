@@ -74,11 +74,10 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
     protected SelectItem statusFilter;
     protected DateFilterItem startDateFilter;
     protected DateFilterItem endDateFilter;
-    
+
     EntityContext context;
     boolean hasControlPermission;
     OperationHistoryDataSource dataSource;
-
 
     static {
         OperationRequestStatus[] statusValues = OperationRequestStatus.values();
@@ -92,21 +91,20 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
     }
 
     // for subsystem views
-    public OperationHistoryView(String locatorId) {
-        this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), EntityContext.forSubsystemView(), false);
+    public OperationHistoryView() {
+        this(SUBSYSTEM_VIEW_ID.getTitle(), EntityContext.forSubsystemView(), false);
     }
 
-    public OperationHistoryView(String locatorId, EntityContext entityContext) {
-        this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), entityContext, false);
+    public OperationHistoryView(EntityContext entityContext) {
+        this(SUBSYSTEM_VIEW_ID.getTitle(), entityContext, false);
     }
 
-    public OperationHistoryView(String locatorId, String tableTitle, EntityContext entityContext) {
-        this(locatorId, tableTitle, entityContext, false);
+    public OperationHistoryView(String tableTitle, EntityContext entityContext) {
+        this(tableTitle, entityContext, false);
     }
 
-    protected OperationHistoryView(String locatorId, String tableTitle, EntityContext context,
-        boolean hasControlPermission) {
-        super(locatorId, tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
+    protected OperationHistoryView(String tableTitle, EntityContext context, boolean hasControlPermission) {
+        super(tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
         this.context = context;
         this.hasControlPermission = hasControlPermission;
 
@@ -139,17 +137,17 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
         statusIcons.put(OperationRequestStatus.FAILURE.name(),
             ImageManager.getOperationResultsIcon(OperationRequestStatus.FAILURE));
 
-        statusFilter = new EnumSelectItem(OperationHistoryDataSource.Field.STATUS,
-            MSG.common_title_operation_status(), OperationRequestStatus.class, statusValues, statusIcons);
+        statusFilter = new EnumSelectItem(OperationHistoryDataSource.Field.STATUS, MSG.common_title_operation_status(),
+            OperationRequestStatus.class, statusValues, statusIcons);
 
-        startDateFilter = new DateFilterItem(DateFilterItem.START_DATE_FILTER, MSG.filter_from_date() );
+        startDateFilter = new DateFilterItem(DateFilterItem.START_DATE_FILTER, MSG.filter_from_date());
         endDateFilter = new DateFilterItem(DateFilterItem.END_DATE_FILTER, MSG.filter_to_date());
 
         SpacerItem spacerItem = new SpacerItem();
         spacerItem.setColSpan(2);
 
         if (isShowFilterForm()) {
-            setFilterFormItems(statusFilter, startDateFilter, spacerItem, endDateFilter );
+            setFilterFormItems(statusFilter, startDateFilter, spacerItem, endDateFilter);
         }
     }
 
@@ -169,66 +167,63 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
 
     protected void setupTableInteractions() {
 
-        addTableAction(extendLocatorId("Cancel"), MSG.common_button_cancel(),
-            MSG.view_operationHistoryList_cancelConfirm(),
-            new TableAction() {
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    int count = selection.length;
-                    for (ListGridRecord item : selection) {
-                        if (!OperationRequestStatus.INPROGRESS.name().equals(
-                            item.getAttribute(OperationHistoryDataSource.Field.STATUS))) {
-                            count--; // one selected item was not in-progress, it doesn't count
-                        }
+        addTableAction(MSG.common_button_cancel(), MSG.view_operationHistoryList_cancelConfirm(), new TableAction() {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                int count = selection.length;
+                for (ListGridRecord item : selection) {
+                    if (!OperationRequestStatus.INPROGRESS.name().equals(
+                        item.getAttribute(OperationHistoryDataSource.Field.STATUS))) {
+                        count--; // one selected item was not in-progress, it doesn't count
                     }
-                    return (count >= 1 && hasControlPermission());
                 }
+                return (count >= 1 && hasControlPermission());
+            }
 
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    int numCancelRequestsSubmitted = 0;
-                    OperationGWTServiceAsync opService = GWTServiceLookup.getOperationService();
-                    for (ListGridRecord toBeCanceled : selection) {
-                        // only cancel those selected operations that are currently in progress
-                        if (OperationRequestStatus.INPROGRESS.name().equals(
-                            toBeCanceled.getAttribute(OperationHistoryDataSource.Field.STATUS))) {
-                            numCancelRequestsSubmitted++;
-                            final int historyId = toBeCanceled.getAttributeAsInt(OperationHistoryDataSource.Field.ID);
-                            opService.cancelOperationHistory(historyId, false, new AsyncCallback<Void>() {
-                                public void onSuccess(Void result) {
-                                    Message msg = new Message(MSG.view_operationHistoryList_cancelSuccess(String
-                                        .valueOf(historyId)), Severity.Info, EnumSet.of(Option.BackgroundJobResult));
-                                    CoreGUI.getMessageCenter().notify(msg);
-                                };
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                int numCancelRequestsSubmitted = 0;
+                OperationGWTServiceAsync opService = GWTServiceLookup.getOperationService();
+                for (ListGridRecord toBeCanceled : selection) {
+                    // only cancel those selected operations that are currently in progress
+                    if (OperationRequestStatus.INPROGRESS.name().equals(
+                        toBeCanceled.getAttribute(OperationHistoryDataSource.Field.STATUS))) {
+                        numCancelRequestsSubmitted++;
+                        final int historyId = toBeCanceled.getAttributeAsInt(OperationHistoryDataSource.Field.ID);
+                        opService.cancelOperationHistory(historyId, false, new AsyncCallback<Void>() {
+                            public void onSuccess(Void result) {
+                                Message msg = new Message(MSG.view_operationHistoryList_cancelSuccess(String
+                                    .valueOf(historyId)), Severity.Info, EnumSet.of(Option.BackgroundJobResult));
+                                CoreGUI.getMessageCenter().notify(msg);
+                            };
 
-                                public void onFailure(Throwable caught) {
-                                    Message msg = new Message(MSG.view_operationHistoryList_cancelFailure(String
-                                        .valueOf(historyId)), caught, Severity.Error, EnumSet
-                                        .of(Option.BackgroundJobResult));
-                                    CoreGUI.getMessageCenter().notify(msg);
-                                };
-                            });
-                        }
+                            public void onFailure(Throwable caught) {
+                                Message msg = new Message(MSG.view_operationHistoryList_cancelFailure(String
+                                    .valueOf(historyId)), caught, Severity.Error, EnumSet
+                                    .of(Option.BackgroundJobResult));
+                                CoreGUI.getMessageCenter().notify(msg);
+                            };
+                        });
                     }
-                    CoreGUI.getMessageCenter().notify(
-                        new Message(MSG.view_operationHistoryList_cancelSubmitted(String
-                            .valueOf(numCancelRequestsSubmitted)), Severity.Info));
-                    refreshTableInfo();
                 }
-            });
+                CoreGUI.getMessageCenter().notify(
+                    new Message(MSG.view_operationHistoryList_cancelSubmitted(String
+                        .valueOf(numCancelRequestsSubmitted)), Severity.Info));
+                refreshTableInfo();
+            }
+        });
 
-        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), getDeleteConfirmMessage(),
+        addTableAction(MSG.common_button_delete(), getDeleteConfirmMessage(), new TableAction() {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                int count = selection.length;
+                return (count >= 1 && hasControlPermission());
+            }
+
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                deleteSelectedRecords();
+            }
+        });
+
+        addTableAction(MSG.view_operationHistoryList_button_forceDelete(), getDeleteConfirmMessage(),
             new TableAction() {
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    int count = selection.length;
-                    return (count >= 1 && hasControlPermission());
-                }
-
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    deleteSelectedRecords();
-                }
-            });
-
-        addTableAction(extendLocatorId("ForceDelete"), MSG.view_operationHistoryList_button_forceDelete(),
-            getDeleteConfirmMessage(), new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
                     int count = selection.length;
                     return (count >= 1 && hasControlPermission());
@@ -262,8 +257,7 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
 
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(
-                            MSG.view_operationHistoryList_deleteFailure(operationHistoryToRemove.toString()),
-                            caught);
+                            MSG.view_operationHistoryList_deleteFailure(operationHistoryToRemove.toString()), caught);
                         failureIds.add(operationHistoryToRemove.getId());
                         handleCompletion(successIds, failureIds, numberOfRecordsToBeDeleted);
                     }
@@ -274,8 +268,10 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
     private void handleCompletion(List<Integer> successIds, List<Integer> failureIds, int numberOfRecordsToBeDeleted) {
         if ((successIds.size() + failureIds.size()) == numberOfRecordsToBeDeleted) {
             if (successIds.size() == numberOfRecordsToBeDeleted) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message(MSG.view_operationHistoryList_deleteSuccess(String.valueOf(numberOfRecordsToBeDeleted))));
+                CoreGUI.getMessageCenter()
+                    .notify(
+                        new Message(MSG.view_operationHistoryList_deleteSuccess(String
+                            .valueOf(numberOfRecordsToBeDeleted))));
             } else {
                 CoreGUI.getMessageCenter().notify(
                     new Message(MSG.view_operationHistoryList_deletePartialSuccess(String.valueOf(successIds.size()),
@@ -291,7 +287,7 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
 
     @Override
     public Canvas getDetailsView(Integer id) {
-        return new ResourceOperationHistoryDetailsView(extendLocatorId("Detail"));
+        return new ResourceOperationHistoryDetailsView();
     }
 
     @Override
@@ -301,6 +297,6 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
 
     @Override
     public ViewName getViewName() {
-        return  SUBSYSTEM_VIEW_ID;
+        return SUBSYSTEM_VIEW_ID;
     }
 }

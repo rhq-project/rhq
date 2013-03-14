@@ -47,10 +47,10 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceD
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.MetadataType;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypeLoadedCallback;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * A view for editing a Resource's configuration.
@@ -58,7 +58,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class ResourceConfigurationEditView extends LocatableVLayout implements PropertyValueChangeListener,
+public class ResourceConfigurationEditView extends EnhancedVLayout implements PropertyValueChangeListener,
     RefreshableView {
 
     private Resource resource;
@@ -68,8 +68,8 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
     private IButton saveButton;
     private boolean refreshing = false;
 
-    public ResourceConfigurationEditView(String locatorId, ResourceComposite resourceComposite) {
-        super(locatorId);
+    public ResourceConfigurationEditView(ResourceComposite resourceComposite) {
+        super();
 
         this.resource = resourceComposite.getResource();
         this.resourcePermission = resourceComposite.getResourcePermission();
@@ -83,7 +83,7 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
 
         if (!this.resourcePermission.isConfigureWrite()) {
             Message message = new Message(MSG.view_configurationDetails_noPermission(), Message.Severity.Info,
-                    EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
+                EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             CoreGUI.getMessageCenter().notify(message);
         }
     }
@@ -95,7 +95,7 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
         buttonbar.setMembersMargin(5);
         buttonbar.setLayoutMargin(5);
 
-        this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
+        this.saveButton = new EnhancedIButton(MSG.common_button_save());
         this.saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();
@@ -130,7 +130,6 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
                         Message message = new Message(MSG.view_configurationDetails_noConfigurationFetched(),
                             Message.Severity.Info);
                         CoreGUI.getMessageCenter().notify(message);
-                        saveButton.disable();
                         refreshing = false;
                         return;
                     }
@@ -139,35 +138,36 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
                         EnumSet.of(MetadataType.resourceConfigurationDefinition), new TypeLoadedCallback() {
                             @Override
                             public void onTypesLoaded(ResourceType type) {
-                                ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
+                                ConfigurationGWTServiceAsync configurationService = GWTServiceLookup
+                                    .getConfigurationService();
                                 configurationService.getOptionValuesForConfigDefinition(resource.getId(),
                                     type.getResourceConfigurationDefinition(),
                                     new AsyncCallback<ConfigurationDefinition>() {
-                                    @Override
-                                    public void onFailure(Throwable throwable) {
-                                        refreshing = false;
-                                        CoreGUI.getErrorHandler().handleError("Failed to load configuration.", throwable);
-                                    }
+                                        @Override
+                                        public void onFailure(Throwable throwable) {
+                                            refreshing = false;
+                                            CoreGUI.getErrorHandler().handleError("Failed to load configuration.",
+                                                throwable);
+                                        }
 
-                                    @Override
-                                    public void onSuccess(ConfigurationDefinition configurationDefinition) {
-                                        Configuration configuration = configurationUpdate.getConfiguration();
-                                        editor = new ConfigurationEditor(extendLocatorId("Editor"),
-                                            configurationDefinition, configuration);
-                                        editor.setOverflow(Overflow.AUTO);
-                                        editor.addPropertyValueChangeListener(ResourceConfigurationEditView.this);
-                                        editor.setReadOnly(!resourcePermission.isConfigureWrite());
-                                        addMember(editor);
-                                        addMember(createButtonBar());
+                                        @Override
+                                        public void onSuccess(ConfigurationDefinition configurationDefinition) {
+                                            Configuration configuration = configurationUpdate.getConfiguration();
+                                            editor = new ConfigurationEditor(configurationDefinition, configuration);
+                                            editor.setOverflow(Overflow.AUTO);
+                                            editor.addPropertyValueChangeListener(ResourceConfigurationEditView.this);
+                                            editor.setReadOnly(!resourcePermission.isConfigureWrite());
+                                            addMember(editor);
+                                            addMember(createButtonBar());
 
-                                        saveButton.disable();
-                                        buttonbar.setVisible(true);
-                                        markForRedraw();
-                                        refreshing = false;
-                                    }
-                                });
+                                            saveButton.disable();
+                                            buttonbar.setVisible(true);
+                                            markForRedraw();
+                                            refreshing = false;
+                                        }
+                                    });
                             }
-                    });
+                        });
                 }
 
                 @Override
@@ -200,7 +200,7 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
                     }
                     String configHistoryUrl = LinkManager.getResourceTabLink(resource.getId(),
                         ResourceDetailView.Tab.CONFIGURATION, ResourceDetailView.ConfigurationSubTab.HISTORY);
-                    String configHistoryView = configHistoryUrl.substring(1);  // chop off the leading '#'
+                    String configHistoryView = configHistoryUrl.substring(1); // chop off the leading '#'
                     CoreGUI.goToView(configHistoryView, message);
                 }
             });

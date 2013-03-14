@@ -1,6 +1,7 @@
 package org.rhq.enterprise.gui.coregui.client.report.configuration;
 
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
@@ -8,8 +9,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configura
 public class SubsystemConfigurationHistoryListView extends ResourceConfigurationHistoryListView {
 
 
-    public SubsystemConfigurationHistoryListView(String locatorId, boolean hasWritePerm ) {
-        super(locatorId, hasWritePerm);
+    public SubsystemConfigurationHistoryListView(boolean hasWritePerm) {
+        super(hasWritePerm);
     }
 
     @Override

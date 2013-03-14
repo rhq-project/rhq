@@ -70,8 +70,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.TypeConversionUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A view for viewing or editing an RHQ {@link org.rhq.core.domain.operation.bean.OperationSchedule operation schedule}.
@@ -92,7 +92,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
     private Map<String, ConfigurationDefinition> operationNameToParametersDefinitionMap = new HashMap<String, ConfigurationDefinition>();
     private StaticTextItem operationDescriptionItem;
     private StaticTextItem operationParametersItem;
-    private LocatableHLayout operationParametersConfigurationHolder;
+    private EnhancedHLayout operationParametersConfigurationHolder;
     private ConfigurationEditor operationParametersConfigurationEditor;
     private Configuration operationParameters;
     private JobTriggerEditor triggerEditor;
@@ -101,9 +101,9 @@ public abstract class AbstractOperationScheduleDetailsView extends
     private ViewPath viewPath;
     private boolean isImmediateExecution;
 
-    public AbstractOperationScheduleDetailsView(String locatorId, AbstractOperationScheduleDataSource dataSource,
+    public AbstractOperationScheduleDetailsView(AbstractOperationScheduleDataSource dataSource,
         ResourceType resourceType, int scheduleId) {
-        super(locatorId, dataSource, scheduleId, MSG.view_operationScheduleDetails_operationSchedule(), null);
+        super(dataSource, scheduleId, MSG.view_operationScheduleDetails_operationSchedule(), null);
 
         this.setMembersMargin(5);
 
@@ -117,6 +117,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
     }
 
     protected abstract boolean hasControlPermission();
+
     protected abstract int getResourceId();
 
     @Override
@@ -232,23 +233,23 @@ public abstract class AbstractOperationScheduleDetailsView extends
     }
 
     @Override
-    protected LocatableVLayout buildContentPane() {
-        LocatableVLayout contentPane = super.buildContentPane();
+    protected EnhancedVLayout buildContentPane() {
+        EnhancedVLayout contentPane = super.buildContentPane();
 
-        this.operationParametersConfigurationHolder = new LocatableHLayout(extendLocatorId("ConfigHolder"));
+        this.operationParametersConfigurationHolder = new EnhancedHLayout();
         this.operationParametersConfigurationHolder.setVisible(false);
         contentPane.addMember(this.operationParametersConfigurationHolder);
 
         HTMLFlow hr = new HTMLFlow("<hr/>");
         contentPane.addMember(hr);
 
-        this.triggerEditor = new JobTriggerEditor(extendLocatorId("TriggerEditor"), isReadOnly());
+        this.triggerEditor = new JobTriggerEditor(isReadOnly());
         contentPane.addMember(this.triggerEditor);
 
         hr = new HTMLFlow("<hr/>");
         contentPane.addMember(hr);
 
-        this.notesForm = new EnhancedDynamicForm(extendLocatorId("NotesForm"), isReadOnly(), isNewRecord());
+        this.notesForm = new EnhancedDynamicForm(isReadOnly(), isNewRecord());
         this.notesForm.setColWidths(FIRST_COLUMN_WIDTH, "50%", "140", "50%");
 
         this.notesForm.addItemChangedHandler(new ItemChangedHandler() {
@@ -264,7 +265,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
         supportedUnits.add(TimeUnit.MINUTES);
         supportedUnits.add(TimeUnit.HOURS);
         DurationItem timeoutItem = new DurationItem(AbstractOperationScheduleDataSource.Field.TIMEOUT,
-            MSG.view_operationScheduleDetails_field_timeout(), supportedUnits, false, isReadOnly(), this.notesForm);
+            MSG.view_operationScheduleDetails_field_timeout(), supportedUnits, false, isReadOnly());
         ProductInfo productInfo = CoreGUI.get().getProductInfo();
         timeoutItem.setContextualHelp(MSG.view_operationScheduleDetails_fieldHelp_timeout(productInfo.getShortName()));
         notesFields.add(timeoutItem);
@@ -355,7 +356,6 @@ public abstract class AbstractOperationScheduleDetailsView extends
 
         this.operationParameters = (Configuration) record
             .getAttributeAsObject(AbstractOperationScheduleDataSource.Field.PARAMETERS);
-
         super.editExistingRecord(record);
     }
 
@@ -426,11 +426,14 @@ public abstract class AbstractOperationScheduleDetailsView extends
     private void refreshOperationParametersItem() {
         String operationName = getSelectedOperationName();
         String value;
-        operationParameters = null; // reset params between dropdown selects
-        // make sure we wipe out anything left by the previous op def
-        for (Canvas child : this.operationParametersConfigurationHolder.getChildren()) {
-            child.destroy();
+        if (isNewRecord()) { // BZ 909157: do it only for new schedule
+            operationParameters = null; // reset params between dropdown selects
+            // make sure we wipe out anything left by the previous op def
+            for (Canvas child : this.operationParametersConfigurationHolder.getChildren()) {
+                child.destroy();
+            }
         }
+
         if (operationName == null) {
             value = "<i>" + MSG.view_operationScheduleDetails_fieldDefault_parameters() + "</i>";
             this.operationParametersConfigurationHolder.hide();
@@ -453,8 +456,6 @@ public abstract class AbstractOperationScheduleDetailsView extends
                     ConfigurationTemplate defaultTemplate = parametersDefinition.getDefaultTemplate();
                     this.operationParameters = (defaultTemplate != null) ? defaultTemplate.createConfiguration()
                         : new Configuration();
-                } else {
-                    this.operationParameters = new Configuration();
                 }
 
                 ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
@@ -463,8 +464,8 @@ public abstract class AbstractOperationScheduleDetailsView extends
 
                         @Override
                         public void onFailure(Throwable throwable) {
-                            operationParametersConfigurationEditor = new ConfigurationEditor("ParametersEditor",
-                                parametersDefinition, operationParameters);
+                            operationParametersConfigurationEditor = new ConfigurationEditor(parametersDefinition,
+                                operationParameters);
                             operationParametersConfigurationEditor.setReadOnly(isReadOnly());
                             operationParametersConfigurationHolder.addMember(operationParametersConfigurationEditor);
                             operationParametersConfigurationHolder.show();
@@ -473,8 +474,8 @@ public abstract class AbstractOperationScheduleDetailsView extends
 
                         @Override
                         public void onSuccess(ConfigurationDefinition result) {
-                            operationParametersConfigurationEditor = new ConfigurationEditor("ParametersEditor",
-                                result, operationParameters);
+                            operationParametersConfigurationEditor = new ConfigurationEditor(result,
+                                operationParameters);
                             operationParametersConfigurationEditor.setReadOnly(isReadOnly());
                             operationParametersConfigurationHolder.addMember(operationParametersConfigurationEditor);
                             operationParametersConfigurationHolder.show();

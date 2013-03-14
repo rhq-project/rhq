@@ -23,8 +23,10 @@
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.smartgwt.client.data.DSRequest;
@@ -51,32 +53,34 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablem
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.MetadataType;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author John Mazzitelli
  */
-public class ConditionsEditor extends LocatableVLayout {
+public class ConditionsEditor extends EnhancedVLayout {
 
     private final ResourceType resourceType;
     private HashSet<AlertCondition> conditions;
+    private Map<Integer, AlertCondition> modifiedConditions;
     private Table<ConditionDataSource> table;
     private final SelectItem conditionExpression;
     private boolean updated;
 
-    public ConditionsEditor(String locatorId, SelectItem conditionExpression, ResourceType resourceType,
+    public ConditionsEditor(SelectItem conditionExpression, ResourceType resourceType,
         HashSet<AlertCondition> conditions) {
-        super(locatorId);
+        super();
         this.conditionExpression = conditionExpression;
         this.resourceType = resourceType;
         this.updated = false;
         setConditions(conditions);
+        modifiedConditions = new HashMap<Integer, AlertCondition>();
     }
 
     /**
      * Returns the conditions that this editor currently has in memory.
-     * This will never be <code>null</code>.
+     * This will never be <code>null</code>. This collection serves for new
+     * or deleted conditions.
      * 
      * @return conditions set that was possibly edited by the user
      */
@@ -84,8 +88,20 @@ public class ConditionsEditor extends LocatableVLayout {
         return conditions;
     }
 
+    /**
+     * Returns the conditions that this editor currently has in memory.
+     * This will never be <code>null</code>. This collection holds modified
+     * existing conditions.
+     * 
+     * @return modifiedConditions map of modified conditions that exist in the db, key is id
+     */
+    public Map<Integer, AlertCondition> getModifiedConditions() {
+        return modifiedConditions;
+    }
+
     public void setConditions(Set<AlertCondition> set) {
         conditions = new HashSet<AlertCondition>(); // make our own copy
+        modifiedConditions = new HashMap<Integer, AlertCondition>(conditions.size()); //reset changes
         if (set != null) {
 
             // we need to make sure we have the full measurement definition, including the units.
@@ -127,7 +143,7 @@ public class ConditionsEditor extends LocatableVLayout {
     protected void onInit() {
         super.onInit();
 
-        table = new ConditionsTable(extendLocatorId("conditionsTable"));
+        table = new ConditionsTable();
 
         addMember(table);
     }
@@ -144,9 +160,13 @@ public class ConditionsEditor extends LocatableVLayout {
         this.updated = updated;
     }
 
+    public boolean isConditionInternallyUpdated() {
+        return !modifiedConditions.isEmpty();
+    }
+
     private class ConditionsTable extends Table<ConditionDataSource> {
-        private ConditionsTable(String locatorId) {
-            super(locatorId);
+        private ConditionsTable() {
+            super();
 
             setShowHeader(false);
 
@@ -156,84 +176,95 @@ public class ConditionsEditor extends LocatableVLayout {
 
         @Override
         protected void configureTable() {
-            addTableAction(this.extendLocatorId("add"), "Add", null, new AbstractTableAction() {
+            addTableAction(MSG.common_button_add(), null, new AbstractTableAction() {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
-
-                    // we need the drift definition templates (if there are any) so we know if we should offer drift conditions as an option
-                    ResourceTypeRepository.Cache.getInstance().getResourceTypes(resourceType.getId(),
-                        EnumSet.of(MetadataType.driftDefinitionTemplates),
-                        new ResourceTypeRepository.TypeLoadedCallback() {
-                            @Override
-                            public void onTypesLoaded(ResourceType type) {
-                                // the resource type repo caches types - so if this resource type was already cached prior
-                                // to the conditions editor component created (which it probably was) then we are getting the same
-                                // exact instance that we had before (resourceType). When this happens, great! Our resourceType
-                                // instance will have its drift definition templates populated. But, I'm being paranoid. If somehow
-                                // we have a resourceType that is different than the type being passed to us, we need to copy
-                                // the drift definition.
-                                if (type != resourceType) {
-                                    // paranoia, unsure if this is needed but clear out any old drift definition still hanging around
-                                    if (resourceType.getDriftDefinitionTemplates() != null) {
-                                        resourceType.getDriftDefinitionTemplates().clear();
-                                    }
-                                    // if the newly loaded resource type supports drift, put it in our type object
-                                    if (type.getDriftDefinitionTemplates() != null) {
-                                        for (DriftDefinitionTemplate template : type.getDriftDefinitionTemplates()) {
-                                            resourceType.addDriftDefinitionTemplate(template);
-                                        }
-                                    }
-                                }
-                                final Window winModal = new LocatableWindow(ConditionsEditor.this
-                                    .extendLocatorId("newConditionEditorWindow"));
-                                winModal.setTitle(MSG.view_alert_common_tab_conditions_modal_title());
-                                winModal.setOverflow(Overflow.VISIBLE);
-                                winModal.setShowMinimizeButton(false);
-                                winModal.setIsModal(true);
-                                winModal.setShowModalMask(true);
-                                winModal.setAutoSize(true);
-                                winModal.setAutoCenter(true);
-                                //winModal.setShowResizer(true);
-                                //winModal.setCanDragResize(true);
-                                winModal.centerInPage();
-                                winModal.addCloseClickHandler(new CloseClickHandler() {
-                                    @Override
-                                    public void onCloseClick(CloseClickEvent event) {
-                                        winModal.markForDestroy();
-                                    }
-                                });
-
-                                final int numConditions = conditions.size();
-                                NewConditionEditor newConditionEditor = new NewConditionEditor(
-                                    extendLocatorId("newConditionEditor"), conditions,
-                                    ConditionsEditor.this.conditionExpression, ConditionsEditor.this.resourceType,
-                                    new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            updated = updated || numConditions != conditions.size();
-                                            winModal.markForDestroy();
-                                            refresh();
-                                        }
-                                    });
-                                winModal.addItem(newConditionEditor);
-                                winModal.show();
-                            }
-                        });
+                    showConditionEditor(null);
                 }
             });
 
-            table.addTableAction(this.extendLocatorId("delete"), MSG.common_button_delete(), MSG
+            table.addTableAction(MSG.common_button_delete(), MSG
                 .view_alert_definition_condition_editor_delete_confirm(), new AbstractTableAction(
                 TableActionEnablement.ANY) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     for (ListGridRecord record : selection) {
-                        AlertCondition cond = getDataSource().copyValues(record);
-                        conditions.remove(cond);
+                        AlertCondition condition = getDataSource().copyValues(record);
+                        conditions.remove(condition);
+                        modifiedConditions.remove(condition);
                         updated = true;
                     }
                     refresh();
                 }
             });
 
+            table.addTableAction(MSG.common_button_edit(), null, new AbstractTableAction(TableActionEnablement.SINGLE) {
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    AlertCondition condition = getDataSource().copyValues(selection[0]);
+                    showConditionEditor(condition);
+                }
+            });
+
+        }
+
+        private void showConditionEditor(final AlertCondition existingCondition) {
+
+            // we need the drift definition templates (if there are any) so we know if we should offer drift conditions as an option
+            ResourceTypeRepository.Cache.getInstance().getResourceTypes(resourceType.getId(),
+                EnumSet.of(MetadataType.driftDefinitionTemplates), new ResourceTypeRepository.TypeLoadedCallback() {
+                    @Override
+                    public void onTypesLoaded(ResourceType type) {
+                        // the resource type repo caches types - so if this resource type was already cached prior
+                        // to the conditions editor component created (which it probably was) then we are getting the same
+                        // exact instance that we had before (resourceType). When this happens, great! Our resourceType
+                        // instance will have its drift definition templates populated. But, I'm being paranoid. If somehow
+                        // we have a resourceType that is different than the type being passed to us, we need to copy
+                        // the drift definition.
+                        if (type != resourceType) {
+                            // paranoia, unsure if this is needed but clear out any old drift definition still hanging around
+                            if (resourceType.getDriftDefinitionTemplates() != null) {
+                                resourceType.getDriftDefinitionTemplates().clear();
+                            }
+                            // if the newly loaded resource type supports drift, put it in our type object
+                            if (type.getDriftDefinitionTemplates() != null) {
+                                for (DriftDefinitionTemplate template : type.getDriftDefinitionTemplates()) {
+                                    resourceType.addDriftDefinitionTemplate(template);
+                                }
+                            }
+                        }
+                        final Window winModal = new Window();
+                        winModal.setTitle(existingCondition == null ? MSG
+                            .view_alert_common_tab_conditions_modal_title() : MSG
+                            .view_alert_common_tab_conditions_modalEdit_title());
+                        winModal.setOverflow(Overflow.VISIBLE);
+                        winModal.setShowMinimizeButton(false);
+                        winModal.setIsModal(true);
+                        winModal.setShowModalMask(true);
+                        winModal.setAutoSize(true);
+                        winModal.setAutoCenter(true);
+                        winModal.centerInPage();
+                        winModal.addCloseClickHandler(new CloseClickHandler() {
+                            @Override
+                            public void onCloseClick(CloseClickEvent event) {
+                                winModal.markForDestroy();
+                                refreshTableInfo();
+                            }
+                        });
+
+                        final int numConditions = conditions.size();
+                        final ConditionEditor newConditionEditor = new ConditionEditor(conditions, modifiedConditions,
+                            ConditionsEditor.this.conditionExpression, ConditionsEditor.this.resourceType,
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    updated = updated || numConditions != conditions.size()
+                                        || isConditionInternallyUpdated();
+                                    winModal.markForDestroy();
+                                    refresh();
+                                }
+                            }, existingCondition);
+                        winModal.addItem(newConditionEditor);
+                        winModal.show();
+                    }
+                });
         }
     }
 

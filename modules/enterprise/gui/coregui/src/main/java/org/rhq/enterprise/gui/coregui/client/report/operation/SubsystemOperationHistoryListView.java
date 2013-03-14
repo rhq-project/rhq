@@ -20,6 +20,7 @@
 package org.rhq.enterprise.gui.coregui.client.report.operation;
 
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
@@ -31,10 +32,8 @@ import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryView;
  */
 public class SubsystemOperationHistoryListView extends OperationHistoryView {
 
-
-    public SubsystemOperationHistoryListView(String locatorId, boolean hasControlPermission ) {
-        super(locatorId, OperationHistoryView.SUBSYSTEM_VIEW_ID.getTitle(), EntityContext.forSubsystemView(),
-            hasControlPermission);
+    public SubsystemOperationHistoryListView(boolean hasControlPermission) {
+        super(OperationHistoryView.SUBSYSTEM_VIEW_ID.getTitle(), EntityContext.forSubsystemView(), hasControlPermission);
     }
 
     @Override
@@ -44,7 +43,7 @@ public class SubsystemOperationHistoryListView extends OperationHistoryView {
     }
 
     private void addExportAction() {
-        addTableAction("Export",  MSG.common_button_reports_export(), new AbstractTableAction() {
+        addTableAction("Export", MSG.common_button_reports_export(), new AbstractTableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
                 return enableIfRecordsExist(getListGrid());
@@ -61,6 +60,5 @@ public class SubsystemOperationHistoryListView extends OperationHistoryView {
 
         });
     }
-
 
 }

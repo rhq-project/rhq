@@ -42,8 +42,8 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * Shows the tags in a large HTML block, where the most used tags are shown in bigger fonts.
@@ -51,7 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  * @author John  Mazzitelli
  */
-public class TagCloudView extends LocatableVLayout {
+public class TagCloudView extends EnhancedVLayout {
 
     private static final String REMOVE_ICON = "[skin]/images/actions/remove.png";
     private static final int MIN_FONTSIZE = 8;
@@ -61,8 +61,8 @@ public class TagCloudView extends LocatableVLayout {
     private String selectedTag;
     private IButton deleteButton;
 
-    public TagCloudView(String locatorId) {
-        super(locatorId);
+    public TagCloudView() {
+        super();
     }
 
     @Override
@@ -161,7 +161,7 @@ public class TagCloudView extends LocatableVLayout {
      */
     public IButton getDeleteButton() {
         if (this.deleteButton == null) {
-            final IButton button = new DeleteButton(extendLocatorId("deleteButton"));
+            final IButton button = new DeleteButton();
             button.setIcon(REMOVE_ICON);
             button.setIconWidth(16);
             button.setIconHeight(16);
@@ -209,9 +209,9 @@ public class TagCloudView extends LocatableVLayout {
         return null;
     }
 
-    class DeleteButton extends LocatableIButton {
-        public DeleteButton(String locatorId) {
-            super(locatorId);
+    class DeleteButton extends EnhancedIButton {
+        public DeleteButton() {
+            super();
         }
 
         @Override

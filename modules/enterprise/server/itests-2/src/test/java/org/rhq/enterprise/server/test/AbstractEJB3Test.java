@@ -76,6 +76,10 @@ import org.rhq.test.PropertyMatcher;
 
 public abstract class AbstractEJB3Test extends Arquillian {
 
+    // this value should correspond with the value passed in the default constructor in
+    // org.rhq.core.domain.criteria.Criteria class
+    public static final int DEFAULT_CRITERIA_PAGE_SIZE = 200;
+
     protected static final String JNDI_RHQDS = "java:jboss/datasources/RHQDS";
 
     protected static File tmpdirRoot = new File("./target/test-tmpdir");

@@ -39,12 +39,12 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class FileListView extends LocatableVLayout {
+public class FileListView extends EnhancedVLayout {
 
     private static final String ID = "id";
     private static final String NAME = "name";
@@ -55,14 +55,14 @@ public class FileListView extends LocatableVLayout {
 
     private int bundleVersionId;
 
-    public FileListView(String locatorId, int bundleVersionId) {
-        super(locatorId);
+    public FileListView(int bundleVersionId) {
+        super();
         this.bundleVersionId = bundleVersionId;
     }
 
     private void viewFiles(PageList<BundleFile> files) {
 
-        Table table = new Table(extendLocatorId("BundleFiles"), MSG.view_bundle_bundleFiles());
+        Table table = new Table(MSG.view_bundle_bundleFiles());
         table.setShowFooterRefresh(false);
 
         ListGridField id = new ListGridField(ID, MSG.common_title_id());
@@ -129,8 +129,8 @@ public class FileListView extends LocatableVLayout {
 
             Long size = packageVersion.getFileSize();
             if (size != null) {
-                record.setAttribute(FILESIZE, MeasurementConverterClient.format(size.doubleValue(),
-                    MeasurementUnits.BYTES, true));
+                record.setAttribute(FILESIZE,
+                    MeasurementConverterClient.format(size.doubleValue(), MeasurementUnits.BYTES, true));
             } else {
                 record.setAttribute(FILESIZE, MSG.common_val_na());
             }

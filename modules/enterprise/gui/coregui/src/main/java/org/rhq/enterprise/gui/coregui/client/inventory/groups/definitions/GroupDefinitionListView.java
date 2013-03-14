@@ -31,6 +31,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.resource.group.DuplicateExpressionTypeException;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
@@ -45,7 +46,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.core.domain.resource.group.DuplicateExpressionTypeException;
 
 /**
  * @author Greg Hinkle
@@ -53,9 +53,8 @@ import org.rhq.core.domain.resource.group.DuplicateExpressionTypeException;
  */
 public class GroupDefinitionListView extends TableSection<GroupDefinitionDataSource> {
 
-
-    public GroupDefinitionListView(String locatorId) {
-        super(locatorId, null );
+    public GroupDefinitionListView() {
+        super(null);
 
         setDataSource(GroupDefinitionDataSource.getInstance());
         setEscapeHtmlInDetailsLinkColumn(true);
@@ -78,8 +77,8 @@ public class GroupDefinitionListView extends TableSection<GroupDefinitionDataSou
             }
         });
 
-        ListGridField lastCalculationTimeField = new ListGridField("lastCalculationTime", MSG
-            .view_dynagroup_lastCalculationTime(), 175);
+        ListGridField lastCalculationTimeField = new ListGridField("lastCalculationTime",
+            MSG.view_dynagroup_lastCalculationTime(), 175);
         //lastCalculationTimeField.setAlign(Alignment.CENTER);
         lastCalculationTimeField.setCellFormatter(new TimestampCellFormatter() {
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
@@ -101,8 +100,8 @@ public class GroupDefinitionListView extends TableSection<GroupDefinitionDataSou
             }
         });
 
-        ListGridField nextCalculationTimeField = new ListGridField("nextCalculationTime", MSG
-            .view_dynagroup_nextCalculationTime(), 175);
+        ListGridField nextCalculationTimeField = new ListGridField("nextCalculationTime",
+            MSG.view_dynagroup_nextCalculationTime(), 175);
         nextCalculationTimeField.setCellFormatter(new TimestampCellFormatter() {
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
                 if (value == null || "0".equals(value.toString())) {
@@ -126,36 +125,35 @@ public class GroupDefinitionListView extends TableSection<GroupDefinitionDataSou
         setListGridFields(idField, nameField, descriptionField, expressionField, lastCalculationTimeField,
             nextCalculationTimeField);
 
-        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
-            new AbstractTableAction(TableActionEnablement.ANY) {
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    final int[] groupDefinitionIds = TableUtility.getIds(selection);
-                    ResourceGroupGWTServiceAsync groupManager = GWTServiceLookup.getResourceGroupService(60000);
-                    groupManager.deleteGroupDefinitions(groupDefinitionIds, new AsyncCallback<Void>() {
-                        @Override
-                        public void onSuccess(Void result) {
-                            CoreGUI.getMessageCenter().notify(
-                                new Message(MSG.view_dynagroup_deleteSuccessfulSelection(String
-                                    .valueOf(groupDefinitionIds.length)), Severity.Info));
-                            GroupDefinitionListView.this.refresh();
-                        }
+        addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(), new AbstractTableAction(
+            TableActionEnablement.ANY) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                final int[] groupDefinitionIds = TableUtility.getIds(selection);
+                ResourceGroupGWTServiceAsync groupManager = GWTServiceLookup.getResourceGroupService(60000);
+                groupManager.deleteGroupDefinitions(groupDefinitionIds, new AsyncCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void result) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.view_dynagroup_deleteSuccessfulSelection(String
+                                .valueOf(groupDefinitionIds.length)), Severity.Info));
+                        GroupDefinitionListView.this.refresh();
+                    }
 
-                        @Override
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_deleteFailureSelection(), caught);
-                        }
-                    });
-                }
-            });
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_deleteFailureSelection(), caught);
+                    }
+                });
+            }
+        });
 
-        addTableAction(extendLocatorId("New"), MSG.common_button_new(), null, new AbstractTableAction() {
+        addTableAction(MSG.common_button_new(), null, new AbstractTableAction() {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newDetails();
             }
         });
 
-        addTableAction(extendLocatorId("Recalculate"), MSG.view_dynagroup_recalculate(), null, new AbstractTableAction(
-            TableActionEnablement.ANY) {
+        addTableAction(MSG.view_dynagroup_recalculate(), null, new AbstractTableAction(TableActionEnablement.ANY) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 final int[] groupDefinitionIds = TableUtility.getIds(selection);
                 ResourceGroupGWTServiceAsync resourceGroupManager = GWTServiceLookup.getResourceGroupService();
@@ -163,8 +161,8 @@ public class GroupDefinitionListView extends TableSection<GroupDefinitionDataSou
                 resourceGroupManager.recalculateGroupDefinitions(groupDefinitionIds, new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
                         if (caught instanceof DuplicateExpressionTypeException) {
-                            CoreGUI.getMessageCenter().notify(new Message(caught.getMessage(),
-                                Message.Severity.Warning));
+                            CoreGUI.getMessageCenter().notify(
+                                new Message(caught.getMessage(), Message.Severity.Warning));
                         } else {
                             CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_recalcFailureSelection(), caught);
                         }
@@ -185,8 +183,7 @@ public class GroupDefinitionListView extends TableSection<GroupDefinitionDataSou
 
     @Override
     public Canvas getDetailsView(Integer id) {
-        final SingleGroupDefinitionView singleGroupDefinitionView = new SingleGroupDefinitionView(this
-            .extendLocatorId("Details"));
+        final SingleGroupDefinitionView singleGroupDefinitionView = new SingleGroupDefinitionView();
         return singleGroupDefinitionView;
     }
 

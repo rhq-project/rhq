@@ -72,6 +72,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
+import org.rhq.enterprise.server.resource.group.ResourceGroupAlreadyExistsException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionAlreadyExistsException;
@@ -121,9 +122,10 @@ public class GroupHandlerBean extends AbstractRestBean  {
         if (q!=null) {
             criteria.addFilterName(q);
         }
-        List<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(caller, criteria);
 
-        List<GroupRest> list = new ArrayList<GroupRest>(groups.size());
+        PageList<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(caller, criteria);
+
+        List<GroupRest> list = new ArrayList<GroupRest>();
         for (ResourceGroup group : groups) {
             list.add(fillGroup(group, uriInfo));
         }
@@ -203,20 +205,36 @@ public class GroupHandlerBean extends AbstractRestBean  {
 
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
         Response.ResponseBuilder builder;
+        UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.path("/group/{id}");
+
         try {
             newGroup = resourceGroupManager.createResourceGroup(caller, newGroup);
-            UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
-            uriBuilder.path("/group/{id}");
             URI uri = uriBuilder.build(newGroup.getId());
 
             builder=Response.created(uri);
-            builder.type(mediaType);
-            putToCache(newGroup.getId(),ResourceGroup.class,newGroup);
+        } catch (ResourceGroupAlreadyExistsException e) {
+
+            ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+            criteria.setStrict(true);
+            criteria.addFilterName(newGroup.getName());
+            // TODO also case sensitive?
+            List<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(caller,criteria);
+            newGroup = groups.get(0);
+
+            URI uri = uriBuilder.build(newGroup.getId());
+
+            builder=Response.ok(uri);
         } catch (Exception e) {
             builder=Response.status(Response.Status.NOT_ACCEPTABLE);
             builder.type(mediaType);
             builder.entity(e.getCause());
         }
+
+        builder.type(mediaType);
+        builder.entity(fillGroup(newGroup,uriInfo));
+        putToCache(newGroup.getId(),ResourceGroup.class,newGroup);
+
         return builder.build();
     }
 
@@ -366,6 +384,7 @@ public class GroupHandlerBean extends AbstractRestBean  {
         for (MeasurementDefinition def : definitions) {
             MetricSchedule schedule = new MetricSchedule(def.getId(),def.getName(),def.getDisplayName(),false,def.getDefaultInterval(),
                     def.getUnits().getName(),def.getDataType().toString());
+            schedule.setDefinitionId(def.getId());
             if (def.getDataType()== DataType.MEASUREMENT) {
                 UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
                 uriBuilder.path("/metric/data/group/{groupId}/{definitionId}");
@@ -402,8 +421,10 @@ public class GroupHandlerBean extends AbstractRestBean  {
         if (q!=null) {
             criteria.addFilterName(q);
         }
-        PageList<GroupDefinition> gdlist =  definitionManager.findGroupDefinitionsByCriteria(caller, criteria);
-        List<GroupDefinitionRest> list = new ArrayList<GroupDefinitionRest>(gdlist.getTotalSize());
+
+        PageList<GroupDefinition> gdlist = definitionManager.findGroupDefinitionsByCriteria(caller, criteria);
+
+        List<GroupDefinitionRest> list = new ArrayList<GroupDefinitionRest>();
         for (GroupDefinition def: gdlist) {
             GroupDefinitionRest definitionRest = buildGDRestFromDefinition(def);
             createLinksForGDRest(uriInfo,definitionRest);

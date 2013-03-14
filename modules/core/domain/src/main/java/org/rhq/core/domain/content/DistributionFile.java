@@ -49,7 +49,7 @@ import javax.xml.bind.annotation.XmlTransient;
 @NamedQueries({
     @NamedQuery(name = DistributionFile.SELECT_BY_DIST_ID, query = "SELECT df from DistributionFile df WHERE df.distribution.id = :distId"),
     @NamedQuery(name = DistributionFile.DELETE_BY_DIST_ID, query = "DELETE DistributionFile df WHERE df.distribution.id = :distId") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_DISTRIBUTION_FILE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_DISTRIBUTION_FILE_ID_SEQ", sequenceName = "RHQ_DISTRIBUTION_FILE_ID_SEQ")
 @Table(name = "RHQ_DISTRIBUTION_FILE")
 public class DistributionFile {
     public static final String SELECT_BY_DIST_ID = "DistributionFile.selectByDistId";
@@ -63,7 +63,7 @@ public class DistributionFile {
      * @IdClass.
      */
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_DISTRIBUTION_FILE_ID_SEQ")
     @Id
     private int id;
 

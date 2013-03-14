@@ -32,7 +32,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.report.DriftComplianceReportResourceSearchView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A tweaked version of the InventorySummary report that narrows the relevant types to those that support Drift
@@ -40,15 +40,15 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * 
  * @author Jay Shaughnessy
  */
-public class DriftComplianceReport extends LocatableVLayout implements BookmarkableView, HasViewName {
+public class DriftComplianceReport extends EnhancedVLayout implements BookmarkableView, HasViewName {
 
     public static final ViewName VIEW_ID = new ViewName("DriftCompliance", MSG.view_reports_driftCompliance(),
         IconEnum.DRIFT_COMPLIANCE);
 
     private ResourceSearchView resourceList;
 
-    public DriftComplianceReport(String locatorId ) {
-        super(locatorId);
+    public DriftComplianceReport() {
+        super();
         setHeight100();
         setWidth100();
     }
@@ -74,7 +74,7 @@ public class DriftComplianceReport extends LocatableVLayout implements Bookmarka
     @Override
     protected void onInit() {
         super.onInit();
-        addMember(new DriftComplianceReportTable(extendLocatorId("table")));
+        addMember(new DriftComplianceReportTable());
     }
 
     protected Criteria createResourceSearchViewCriteria(int resourceTypeId) {
@@ -92,7 +92,7 @@ public class DriftComplianceReport extends LocatableVLayout implements Bookmarka
 
     private void showResourceList(Criteria criteria) {
         hideResourceList();
-        resourceList = new DriftComplianceReportResourceSearchView(extendLocatorId("resourceList"), criteria, true);
+        resourceList = new DriftComplianceReportResourceSearchView(criteria, true);
         addMember(resourceList);
         markForRedraw();
     }

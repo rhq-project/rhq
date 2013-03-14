@@ -19,26 +19,31 @@
 
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.selection;
 
+import java.util.Set;
+
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
-import java.util.Set;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A window dialog box that lets you pick one or more resources.
  * 
  * @author John Mazzitelli
  */
-public class ResourcePicker extends LocatableWindow {
+public class ResourcePicker extends Window {
+
+    protected Messages MSG = CoreGUI.getMessages();
 
     private final OkHandler okHandler;
     private final CancelHandler cancelHandler;
@@ -46,8 +51,8 @@ public class ResourcePicker extends LocatableWindow {
     private ResourceSelector selector;
     private Label warningLabel;
 
-    public ResourcePicker(String locatorId, OkHandler okHandler, CancelHandler cancelHandler) {
-        super(locatorId);
+    public ResourcePicker(OkHandler okHandler, CancelHandler cancelHandler) {
+        super();
 
         if (okHandler == null) {
             throw new IllegalArgumentException("okHandler == null");
@@ -75,7 +80,7 @@ public class ResourcePicker extends LocatableWindow {
             }
         });
 
-        LocatableVLayout layout = new LocatableVLayout(extendLocatorId("layout"));
+        EnhancedVLayout layout = new EnhancedVLayout();
         layout.setLayoutAlign(Alignment.CENTER);
         layout.setLayoutMargin(10);
 
@@ -90,7 +95,7 @@ public class ResourcePicker extends LocatableWindow {
 
         selector = getResourceSelector();
 
-        LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("buttons"));
+        DynamicForm form = new DynamicForm();
         form.setLayoutAlign(Alignment.CENTER);
         form.setAutoWidth();
         form.setAutoHeight();
@@ -142,7 +147,7 @@ public class ResourcePicker extends LocatableWindow {
     }
 
     protected ResourceSelector createResourceSelector() {
-        return new ResourceSelector(extendLocatorId("resourceSelector"));
+        return new ResourceSelector();
     }
 
     protected void ok() {

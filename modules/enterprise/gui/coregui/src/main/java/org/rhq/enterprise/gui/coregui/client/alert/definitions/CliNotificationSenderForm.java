@@ -64,7 +64,6 @@ import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormHandle
 import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicFormSubmitCompleteEvent;
 import org.rhq.enterprise.gui.coregui.client.components.upload.PackageVersionFileUploadForm;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * A form to configure the CLI script alert notification.
@@ -128,12 +127,8 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
 
     private static class PackageVersionFileUploadFormWithVersion extends PackageVersionFileUploadForm {
 
-        /**
-         * @param locatorId
-         * @param packageTypeId
-         */
-        public PackageVersionFileUploadFormWithVersion(String locatorId, int packageTypeId) {
-            super(locatorId, packageTypeId, null, null, null, null, true, false, false);
+        public PackageVersionFileUploadFormWithVersion(int packageTypeId) {
+            super(packageTypeId, null, null, null, null, true, false, false);
             setName("File");
         }
 
@@ -198,8 +193,8 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
 
     private Config config;
 
-    public CliNotificationSenderForm(String locatorId, AlertNotification notif, String sender) {
-        super(locatorId, notif, sender);
+    public CliNotificationSenderForm(AlertNotification notif, String sender) {
+        super(notif, sender);
     }
 
     @Override
@@ -216,7 +211,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
                 public void onSuccess(PackageTypeAndVersionFormatComposite result) {
                     cliScriptPackageType = result;
 
-                    LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("form"));
+                    DynamicForm form = new DynamicForm();
                     form.setTitleOrientation(TitleOrientation.TOP);
                     form.setWidth(500);
 
@@ -228,7 +223,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
                     SectionItem userSection = new SectionItem("userSection");
                     userSection.setDefaultValue(MSG.view_alert_definition_notification_cliScript_editor_whichUser());
 
-                    repoSelector = new SortedSelectItem(extendLocatorId("repoSelector"),
+                    repoSelector = new SortedSelectItem("repoSelector",
                         MSG.view_alert_definition_notification_cliScript_editor_selectRepo());
                     repoSelector.setDefaultToFirstOption(true);
                     repoSelector.setWrapTitle(false);
@@ -241,22 +236,20 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
                         createExistingPackageForm());
                     packageSelectItems.put(MSG.view_alert_definition_notification_cliScript_editor_uploadNewScript(),
                         createUploadNewScriptForm());
-                    packageSelector = new RadioGroupWithComponentsItem(extendLocatorId("packageSelector"), "",
-                        packageSelectItems, form);
+                    packageSelector = new RadioGroupWithComponentsItem("packageSelector", "", packageSelectItems, form);
                     packageSelector.setWidth("100%");
 
                     LinkedHashMap<String, DynamicForm> userSelectItems = new LinkedHashMap<String, DynamicForm>();
                     userSelectItems.put(MSG.view_alert_definition_notification_cliScript_editor_thisUser(), null);
                     userSelectItems.put(MSG.view_alert_definition_notification_cliScript_editor_anotherUser(),
                         createAnotherUserForm());
-                    userSelector = new RadioGroupWithComponentsItem(extendLocatorId("userSelector"), "",
-                        userSelectItems, form);
+                    userSelector = new RadioGroupWithComponentsItem("userSelector", "", userSelectItems, form);
                     userSelector.setWidth("100%");
                     userSelector.setShowTitle(false);
 
-                    repoSection.setItemIds(extendLocatorId("repoSelector"));
-                    packageSection.setItemIds(extendLocatorId("packageSelector"));
-                    userSection.setItemIds(extendLocatorId("userSelector"));
+                    repoSection.setItemIds("repoSelector");
+                    packageSection.setItemIds("packageSelector");
+                    userSection.setItemIds("userSelector");
 
                     form.setFields(userSection, userSelector, repoSection, repoSelector, packageSection,
                         packageSelector);
@@ -288,7 +281,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
     private void setupUserSelector() {
         if (config.selectedSubject != null && !UserSessionManager.getSessionSubject().equals(config.selectedSubject)) {
             userSelector.setSelected(MSG.view_alert_definition_notification_cliScript_editor_anotherUser());
-            LocatableDynamicForm anotherUserForm = (LocatableDynamicForm) userSelector.getSelectedComponent();
+            DynamicForm anotherUserForm = (DynamicForm) userSelector.getSelectedComponent();
             anotherUserForm.getItem("userName").setValue(config.selectedSubject.getName());
         } else {
             userSelector.setSelected(MSG.view_alert_definition_notification_cliScript_editor_thisUser());
@@ -429,7 +422,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
                 String versionRegex = cliScriptPackageType.getVersionFormat().getFullFormatRegex();
                 if (versionRegex != null) {
                     Object version = uploadForm.getField("version").getValue();
-                    if (version == null ||!matches(version.toString(), versionRegex)) {
+                    if (version == null || !matches(version.toString(), versionRegex)) {
                         uploadForm.getItem("editableVersion").setIcons(failureIcon);
                         callback.onFailure(null);
                         return;
@@ -537,7 +530,7 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
     }
 
     private DynamicForm createAnotherUserForm() {
-        LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("anotherUserForm"));
+        DynamicForm form = new DynamicForm();
         form.setTitleOrientation(TitleOrientation.TOP);
         anotherUserName = new TextItem("userName", MSG.dataSource_users_field_name());
         anotherUserPassword = new PasswordItem("password", MSG.common_title_password());
@@ -572,9 +565,9 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
     }
 
     private DynamicForm createExistingPackageForm() {
-        LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("existingPackageForm"));
+        DynamicForm form = new DynamicForm();
         form.setTitleOrientation(TitleOrientation.TOP);
-        existingPackageSelector = new SortedSelectItem(extendLocatorId("existingPackageSelector"), "");
+        existingPackageSelector = new SortedSelectItem("existingPackageSelector", "");
         existingPackageSelector.setDefaultToFirstOption(true);
         existingPackageSelector.setWrapTitle(false);
         existingPackageSelector.setRedrawOnChange(true);
@@ -587,8 +580,8 @@ public class CliNotificationSenderForm extends AbstractNotificationSenderForm {
     }
 
     private DynamicForm createUploadNewScriptForm() {
-        uploadForm = new PackageVersionFileUploadFormWithVersion(extendLocatorId("uploadForm"), cliScriptPackageType
-            .getPackageType().getId());
+        uploadForm = new PackageVersionFileUploadFormWithVersion(cliScriptPackageType.getPackageType()
+            .getId());
         uploadForm.setTitleOrientation(TitleOrientation.TOP);
         uploadForm.setPackageTypeId(cliScriptPackageType.getPackageType().getId());
 

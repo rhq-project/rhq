@@ -32,6 +32,7 @@ import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SortDirection;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -54,8 +55,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.AvailabilityGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * This shows the availability history for a resource.
@@ -63,7 +63,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Jay Shaughnessy
  * @author John Mazzitelli
  */
-public class ResourceAvailabilityView extends LocatableVLayout {
+public class ResourceAvailabilityView extends EnhancedVLayout {
 
     private ResourceComposite resourceComposite;
     private StaticTextItem currentField;
@@ -80,8 +80,8 @@ public class ResourceAvailabilityView extends LocatableVLayout {
     private StaticTextItem unknownField;
     private StaticTextItem currentTimeField;
 
-    public ResourceAvailabilityView(String locatorId, ResourceComposite resourceComposite) {
-        super(locatorId);
+    public ResourceAvailabilityView(ResourceComposite resourceComposite) {
+        super();
 
         this.resourceComposite = resourceComposite;
 
@@ -97,8 +97,8 @@ public class ResourceAvailabilityView extends LocatableVLayout {
         addMember(createListView());
     }
 
-    private LocatableDynamicForm createSummaryForm() {
-        LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("Summary"));
+    private DynamicForm createSummaryForm() {
+        DynamicForm form = new DynamicForm();
         form.setWidth100();
         form.setAutoHeight();
         form.setMargin(10);
@@ -229,7 +229,7 @@ public class ResourceAvailabilityView extends LocatableVLayout {
     }
 
     private Table<ListView.DS> createListView() {
-        ListView listView = new ListView(extendLocatorId("AvailList"), resourceComposite.getResource().getId());
+        ListView listView = new ListView(resourceComposite.getResource().getId());
         return listView;
     }
 
@@ -238,8 +238,8 @@ public class ResourceAvailabilityView extends LocatableVLayout {
         private DS dataSource;
         private int resourceId;
 
-        public ListView(String locatorId, int resourceId) {
-            super(locatorId, null, new SortSpecifier[] { new SortSpecifier("startTime", SortDirection.DESCENDING) });
+        public ListView(int resourceId) {
+            super(null, new SortSpecifier[] { new SortSpecifier("startTime", SortDirection.DESCENDING) });
 
             this.resourceId = resourceId;
 

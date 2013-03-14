@@ -45,26 +45,25 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardsView;
 import org.rhq.enterprise.gui.coregui.client.help.HelpView;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHStack;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHStack;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
  * @author Joseph Marques
  * @author Ian Springer
  */
-public class MenuBarView extends LocatableVLayout {
+public class MenuBarView extends EnhancedVLayout {
 
     public static final ViewName[] SECTIONS = { DashboardsView.VIEW_ID, InventoryView.VIEW_ID, ReportTopView.VIEW_ID,
         BundleTopView.VIEW_ID, AdministrationView.VIEW_ID, HelpView.VIEW_ID };
     public static final ViewName LOGOUT_VIEW_ID = new ViewName("LogOut", MSG.view_menuBar_logout());
 
     private String currentlySelectedSection = DashboardsView.VIEW_ID.getName();
-    private LocatableLabel userLabel;
+    private Label userLabel;
 
-    public MenuBarView(String locatorId) {
-        super(locatorId);
+    public MenuBarView() {
+        super();
     }
 
     protected void onDraw() {
@@ -81,7 +80,7 @@ public class MenuBarView extends LocatableVLayout {
         topStrip.addMember(getActionsSection());
 
         addMember(topStrip);
-        //addMember(new SearchBarPane(this.extendLocatorId("Search")));
+        //addMember(new SearchBarPane());
 
         markForRedraw();
     }
@@ -99,7 +98,7 @@ public class MenuBarView extends LocatableVLayout {
     }
 
     private Canvas getLogoSection() {
-        final AboutModalWindow aboutModalWindow = new AboutModalWindow(extendLocatorId("AboutModalWindow"));
+        final AboutModalWindow aboutModalWindow = new AboutModalWindow();
         HLayout logoSection = new HLayout();
         logoSection.setOverflow(Overflow.VISIBLE);
 
@@ -124,7 +123,7 @@ public class MenuBarView extends LocatableVLayout {
         layout.setMargin(10);
         layout.setAlign(Alignment.RIGHT);
 
-        userLabel = new LocatableLabel(this.extendLocatorId("User"), UserSessionManager.getSessionSubject().getName());
+        userLabel = new Label(UserSessionManager.getSessionSubject().getName());
         userLabel.setAutoWidth();
 
         Label lineLabel = new Label(" | ");
@@ -133,7 +132,7 @@ public class MenuBarView extends LocatableVLayout {
 
         String contents = "<a href='#" + LOGOUT_VIEW_ID.getName() + "' style='white-space: nowrap'>"
             + LOGOUT_VIEW_ID.getTitle() + "</a>";
-        LocatableLabel logoutLink = new LocatableLabel(this.extendLocatorId("LogoutLink"), contents);
+        Label logoutLink = new Label(contents);
         logoutLink.setAutoWidth();
 
         layout.addMember(userLabel);
@@ -143,11 +142,11 @@ public class MenuBarView extends LocatableVLayout {
         return layout;
     }
 
-    class LinkBar extends LocatableHStack implements ValueChangeHandler<String> {
+    class LinkBar extends EnhancedHStack implements ValueChangeHandler<String> {
         private final Map<String, VLayout> sectionNameToLinkVLayoutMap = new HashMap<String, VLayout>();
 
         LinkBar() {
-            super(MenuBarView.this.extendLocatorId("LinkBar"));
+            super();
 
             setWidth100();
             setHeight100();
@@ -164,7 +163,7 @@ public class MenuBarView extends LocatableVLayout {
 
                 String contents = "<a class='menuBar' href='#" + sectionName.getName() + "'>" + sectionName.getTitle()
                     + "</a>";
-                LocatableLabel link = new LocatableLabel(extendLocatorId(sectionName.getName()), contents);
+                Label link = new Label(contents);
                 link.setAutoHeight();
                 link.setAlign(Alignment.CENTER);
                 link.setStyleName("inheritColor");

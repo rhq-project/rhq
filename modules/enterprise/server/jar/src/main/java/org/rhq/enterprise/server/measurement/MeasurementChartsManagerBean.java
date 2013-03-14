@@ -461,6 +461,8 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
                 criteria.addFilterAutoGroupResourceTypeId(context.resourceTypeId);
             }
             criteria.addFilterDefinitionIds(definitionId);
+            criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+
             PageList<MeasurementSchedule> theSchedules = scheduleManager.findSchedulesByCriteria(subject, criteria);
             int totalScheduleCount = theSchedules.getTotalSize();
 

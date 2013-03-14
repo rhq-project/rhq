@@ -27,7 +27,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import java.util.logging.Logger;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
@@ -47,7 +46,6 @@ import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelecto
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author Simeon Pinder
@@ -63,8 +61,8 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup, org.rhq.c
         return "name";
     }
 
-    public RoleLdapGroupSelector(String locatorId, ListGridRecord[] assignedRecords, boolean isReadOnly) {
-        super(locatorId, isReadOnly);
+    public RoleLdapGroupSelector(ListGridRecord[] assignedRecords, boolean isReadOnly) {
+        super(isReadOnly);
 
         setAssigned(assignedRecords);
     }
@@ -73,7 +71,7 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup, org.rhq.c
      */
     @Override
     protected DynamicForm getAvailableFilterForm() {
-        DynamicForm availableFilterForm = new LocatableDynamicForm(this.getLocatorId());
+        DynamicForm availableFilterForm = new DynamicForm();
         availableFilterForm.setWidth100();
         availableFilterForm.setNumCols(2);
 

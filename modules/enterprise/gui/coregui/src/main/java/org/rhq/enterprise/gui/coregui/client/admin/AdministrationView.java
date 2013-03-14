@@ -47,7 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * The Administration top-level view.
@@ -82,7 +82,6 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         IconEnum.CONTENT);
 
     public AdministrationView() {
-        // This is a top level view, so our locator id can simply be our view id.
         super(VIEW_ID.getName());
     }
 
@@ -106,11 +105,11 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     }
 
     protected VLayout defaultView() {
-        LocatableVLayout vLayout = new LocatableVLayout(this.extendLocatorId("Default"));
+        EnhancedVLayout vLayout = new EnhancedVLayout();
         vLayout.setWidth100();
 
         // TODO: Admin icon.
-        TitleBar titleBar = new TitleBar(this, MSG.view_admin_administration(), IconEnum.ADMIN.getIcon24x24Path());
+        TitleBar titleBar = new TitleBar(MSG.view_admin_administration(), IconEnum.ADMIN.getIcon24x24Path());
         vLayout.addMember(titleBar);
 
         ProductInfo productInfo = CoreGUI.get().getProductInfo();
@@ -125,15 +124,13 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     private NavigationSection buildSecuritySection() {
         NavigationItem usersItem = new NavigationItem(UsersView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
-                return new UsersView(extendLocatorId("Users"), getGlobalPermissions().contains(
-                    Permission.MANAGE_SECURITY));
+                return new UsersView(getGlobalPermissions().contains(Permission.MANAGE_SECURITY));
             }
         });
 
         NavigationItem rolesItem = new NavigationItem(RolesView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
-                return new RolesView(extendLocatorId("Roles"), getGlobalPermissions().contains(
-                    Permission.MANAGE_SECURITY));
+                return new RolesView(getGlobalPermissions().contains(Permission.MANAGE_SECURITY));
             }
         });
 
@@ -146,32 +143,31 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
 
         NavigationItem remoteAgentInstallItem = new NavigationItem(RemoteAgentInstallView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
-                return new RemoteAgentInstallView(extendLocatorId("RemoteAgentInstall"));
+                return new RemoteAgentInstallView();
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
 
         NavigationItem serversItem = new NavigationItem(ServerTableView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
-                return new ServerTableView(extendLocatorId(ServerTableView.VIEW_ID.getName()), null, false);
+                return new ServerTableView(null, false);
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
 
         NavigationItem agentsItem = new NavigationItem(AgentTableView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
-                return new AgentTableView(extendLocatorId(AgentTableView.VIEW_ID.getName()), null, false);
+                return new AgentTableView(null, false);
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
 
         NavigationItem affinityGroupsItem = new NavigationItem(AffinityGroupTableView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
-                return new AffinityGroupTableView(extendLocatorId(AffinityGroupTableView.VIEW_ID.getName()));
+                return new AffinityGroupTableView();
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
 
         NavigationItem partitionEventsItem = new NavigationItem(PartitionEventTableView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
-                return new PartitionEventTableView(extendLocatorId(PartitionEventTableView.VIEW_ID.getName()),
-                    PartitionEventTableView.VIEW_ID.getTitle());
+                return new PartitionEventTableView(PartitionEventTableView.VIEW_ID.getTitle());
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
 
@@ -189,7 +185,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     private NavigationSection buildConfigurationSection() {
         NavigationItem systemSettingsItem = new NavigationItem(SystemSettingsView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
-                return new SystemSettingsView(extendLocatorId(SystemSettingsView.VIEW_ID.getName()));
+                return new SystemSettingsView();
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
         systemSettingsItem.setRefreshRequired(true); // refresh so it always reloads the latest settings
@@ -197,8 +193,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         NavigationItem alertTemplatesItem = new NavigationItem(AlertDefinitionTemplateTypeView.VIEW_ID,
             new ViewFactory() {
                 public Canvas createView() {
-                    return new AlertDefinitionTemplateTypeView(
-                        extendLocatorId(AlertDefinitionTemplateTypeView.VIEW_ID.getName()));
+                    return new AlertDefinitionTemplateTypeView();
                 }
             });
         alertTemplatesItem.setRefreshRequired(true); // we always need a new page
@@ -206,34 +201,33 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         NavigationItem driftTemplatesItem = new NavigationItem(DriftDefinitionTemplateTypeView.VIEW_ID,
             new ViewFactory() {
                 public Canvas createView() {
-                    return new DriftDefinitionTemplateTypeView(
-                        extendLocatorId(DriftDefinitionTemplateTypeView.VIEW_ID.getName()));
+                    return new DriftDefinitionTemplateTypeView();
                 }
             });
         driftTemplatesItem.setRefreshRequired(true); // we always need a new page        
 
         NavigationItem metricTemplatesItem = new NavigationItem(MetricTemplateTypeView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
-                return new MetricTemplateTypeView(extendLocatorId(MetricTemplateTypeView.VIEW_ID.getName()));
+                return new MetricTemplateTypeView();
             }
         });
         metricTemplatesItem.setRefreshRequired(true); // we always need a new page        
 
         NavigationItem downloadsItem = new NavigationItem(DownloadsView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
-                return new DownloadsView(extendLocatorId(DownloadsView.VIEW_ID.getName()));
+                return new DownloadsView();
             }
         });
 
         NavigationItem agentPluginsItem = new NavigationItem(AgentPluginTableView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
-                return new AgentPluginTableView(extendLocatorId(AgentPluginTableView.VIEW_ID.getName()));
+                return new AgentPluginTableView();
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
 
         NavigationItem serverPluginsItem = new NavigationItem(ServerPluginTableView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
-                return new ServerPluginTableView(extendLocatorId(ServerPluginTableView.VIEW_ID.getName()));
+                return new ServerPluginTableView();
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
 
@@ -244,15 +238,13 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     private NavigationSection buildContentSection() {
         NavigationItem contentSourcesItem = new NavigationItem(PAGE_CONTENT_SOURCES_VIEW_ID, new ViewFactory() {
             public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId(PAGE_CONTENT_SOURCES_VIEW_ID.getName()),
-                    "/rhq/content/listContentProviders-plain.xhtml");
+                return new FullHTMLPane("/rhq/content/listContentProviders-plain.xhtml");
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_REPOSITORIES));
 
         NavigationItem reposItem = new NavigationItem(PAGE_REPOS_VIEW_ID, new ViewFactory() {
             public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId(PAGE_REPOS_VIEW_ID.getName()),
-                    "/rhq/content/listRepos-plain.xhtml");
+                return new FullHTMLPane("/rhq/content/listRepos-plain.xhtml");
             }
         });
 

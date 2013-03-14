@@ -54,7 +54,7 @@ import javax.xml.bind.annotation.XmlTransient;
  * @author Jay Shaughnessy
  */
 @Entity
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_PACKAGE_BITS_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_PACKAGE_BITS_ID_SEQ", sequenceName = "RHQ_PACKAGE_BITS_ID_SEQ")
 @Table(name = PackageBits.TABLE_NAME)
 public class PackageBitsBlob implements Serializable {
     public static final String TABLE_NAME = "RHQ_PACKAGE_BITS";
@@ -62,7 +62,7 @@ public class PackageBitsBlob implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_PACKAGE_BITS_ID_SEQ")
     @Id
     private int id;
 

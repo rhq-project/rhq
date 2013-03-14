@@ -35,8 +35,8 @@ public class ResourceOperationHistoryListView extends OperationHistoryView {
 
     private ResourceComposite resourceComposite;
 
-    public ResourceOperationHistoryListView(String locatorId, ResourceComposite resourceComposite) {
-        super(locatorId, null, EntityContext.forResource(resourceComposite.getResource().getId()));
+    public ResourceOperationHistoryListView(ResourceComposite resourceComposite) {
+        super(null, EntityContext.forResource(resourceComposite.getResource().getId()));
 
         this.resourceComposite = resourceComposite;
     }
@@ -48,7 +48,7 @@ public class ResourceOperationHistoryListView extends OperationHistoryView {
 
     @Override
     public Canvas getDetailsView(Integer id) {
-        return new ResourceOperationHistoryDetailsView(this.extendLocatorId("DetailsView"));
+        return new ResourceOperationHistoryDetailsView();
     }
 
 }

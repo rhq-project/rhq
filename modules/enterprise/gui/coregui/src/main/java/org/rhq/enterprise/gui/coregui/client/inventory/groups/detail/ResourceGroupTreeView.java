@@ -66,8 +66,8 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 
 /**
  * This is the view that renders the left hand tree for groups.
@@ -89,7 +89,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Ian Springer
  * @author John Mazzitelli
  */
-public class ResourceGroupTreeView extends LocatableVLayout implements BookmarkableView {
+public class ResourceGroupTreeView extends EnhancedVLayout implements BookmarkableView {
 
     private static final String FAKE_ROOT_ID = "__fakeRoot__"; // id of the parent node of our real root node
 
@@ -134,8 +134,8 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
         }
     };
 
-    public ResourceGroupTreeView(String locatorId) {
-        super(locatorId);
+    public ResourceGroupTreeView() {
+        super();
 
         setWidth(250);
         setHeight100();
@@ -147,7 +147,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
     protected void onInit() {
         super.onInit();
 
-        treeGrid = new CustomResourceGroupTreeGrid(extendLocatorId("groupTree"));
+        treeGrid = new CustomResourceGroupTreeGrid();
         treeGrid.setWidth100();
         treeGrid.setHeight100();
         treeGrid.setAnimateFolders(false);
@@ -169,7 +169,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
             }
         });
 
-        contextMenu = new ResourceGroupTreeContextMenu(extendLocatorId("contextMenu"));
+        contextMenu = new ResourceGroupTreeContextMenu();
         treeGrid.setContextMenu(contextMenu);
 
         treeGrid.addNodeContextClickHandler(new NodeContextClickHandler() {
@@ -573,8 +573,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
             // label the tree node so the user knows this cluster node is not representative of the entire group membership
             double percentage = (double) memberCount / (double) clusterSize;
             String percentageStr = NumberFormat.getFormat("0%").format(percentage);
-            String title = childName + " <span style=\"color: red; font-style: italic\">(" + percentageStr
-                + ")</span>";
+            String title = childName + " <span style=\"color: red; font-style: italic\">(" + percentageStr + ")</span>";
             node.setTitle(title);
 
             // "1 out of 2 group members have "foo" child resources"
@@ -663,12 +662,12 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
 
         @Override
         public void setID(String id) {
-            super.setID(SeleniumUtility.getSafeId(id));
+            super.setID(EnhancedUtility.getSafeId(id));
         }
 
         @Override
         public void setParentID(String parentID) {
-            super.setParentID(SeleniumUtility.getSafeId(parentID));
+            super.setParentID(EnhancedUtility.getSafeId(parentID));
         }
 
         public ResourceType getResourceType() {

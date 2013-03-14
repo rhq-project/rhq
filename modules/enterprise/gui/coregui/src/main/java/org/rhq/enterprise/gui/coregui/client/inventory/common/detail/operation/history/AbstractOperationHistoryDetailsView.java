@@ -18,11 +18,16 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.FormErrorOrientation;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLPane;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
@@ -32,6 +37,7 @@ import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
+
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationHistory;
@@ -41,27 +47,21 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVStack;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVStack;
 
 /**
  * @author Greg Hinkle
  */
-public abstract class AbstractOperationHistoryDetailsView<T extends OperationHistory> extends LocatableVStack implements
+public abstract class AbstractOperationHistoryDetailsView<T extends OperationHistory> extends EnhancedVStack implements
     BookmarkableView {
 
     private T operationHistory;
 
     private DynamicForm form;
 
-    public AbstractOperationHistoryDetailsView(String locatorId) {
-        super(locatorId);
+    public AbstractOperationHistoryDetailsView() {
+        super();
 
         setWidth100();
         setHeight100();
@@ -104,7 +104,7 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
 
         // Parameters (if applicable)
         if (operationHistory.getParameters() != null) {
-            LocatableVLayout parametersSection = new LocatableVLayout(extendLocatorId("ParametersSection"));
+            EnhancedVLayout parametersSection = new EnhancedVLayout();
 
             Label title = new Label("<h4>" + MSG.view_operationHistoryDetails_parameters() + "</h4>");
             title.setHeight(27);
@@ -115,8 +115,8 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
                 .getParametersConfigurationDefinition();
             if (parametersConfigurationDefinition != null
                 && !parametersConfigurationDefinition.getPropertyDefinitions().isEmpty()) {
-                ConfigurationEditor editor = new ConfigurationEditor(extendLocatorId("params"),
-                    parametersConfigurationDefinition, operationHistory.getParameters());
+                ConfigurationEditor editor = new ConfigurationEditor(parametersConfigurationDefinition,
+                    operationHistory.getParameters());
                 editor.setReadOnly(true);
                 parametersSection.addMember(editor);
             } else {
@@ -144,14 +144,14 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
         idItem.setValue(operationHistory.getId());
         items.add(idItem);
 
-        StaticTextItem operationItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.OPERATION_NAME, MSG
-            .view_operationHistoryDetails_operation());
+        StaticTextItem operationItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.OPERATION_NAME,
+            MSG.view_operationHistoryDetails_operation());
         OperationDefinition operationDefinition = operationHistory.getOperationDefinition();
         operationItem.setValue(operationDefinition.getDisplayName());
         items.add(operationItem);
 
-        StaticTextItem submittedItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.STARTED_TIME, MSG
-            .view_operationHistoryDetails_dateSubmitted());
+        StaticTextItem submittedItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.STARTED_TIME,
+            MSG.view_operationHistoryDetails_dateSubmitted());
         if (operationHistory.getStartedTime() == 0) {
             // must have executed serially, halt-on-error was true and a previous resource op failed, thus this never even got submitted to the agent for invocation
             submittedItem.setValue(MSG.common_val_never());
@@ -171,15 +171,15 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
         }
         items.add(completedItem);
 
-        StaticTextItem requesterItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.SUBJECT, MSG
-            .view_operationHistoryDetails_requestor());
+        StaticTextItem requesterItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.SUBJECT,
+            MSG.view_operationHistoryDetails_requestor());
 
         requesterItem.setEscapeHTML(true);
         requesterItem.setValue(operationHistory.getSubjectName());
         items.add(requesterItem);
 
-        StaticTextItem statusItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.STATUS, MSG
-            .view_operationHistoryDetails_status());
+        StaticTextItem statusItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.STATUS,
+            MSG.view_operationHistoryDetails_status());
         String icon = ImageManager.getFullImagePath(ImageManager.getOperationResultsIcon(status));
         statusItem.setValue("<img src='" + icon + "'/>");
         items.add(statusItem);
@@ -200,12 +200,12 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
             errorLinkItem.setVAlign(VerticalAlignment.BOTTOM);
             errorLinkItem.setErrorOrientation(FormErrorOrientation.LEFT);
             errorLinkItem.setTitle(MSG.common_severity_error());
-            errorLinkItem.setValue("<span style=\"text-decoration:underline;\">"+getShortErrorMessage(operationHistory)+"<span>");
+            errorLinkItem.setValue("<span style=\"text-decoration:underline;\">"
+                + getShortErrorMessage(operationHistory) + "<span>");
             errorLinkItem.addClickHandler(new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent event) {
-                    final Window winModal = new LocatableWindow(AbstractOperationHistoryDetailsView.this
-                        .extendLocatorId("errorWin"));
+                    final Window winModal = new Window();
                     winModal.setTitle(MSG.common_title_details());
                     winModal.setOverflow(Overflow.VISIBLE);
                     winModal.setShowMinimizeButton(false);
@@ -224,8 +224,7 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
                         }
                     });
 
-                    LocatableHTMLPane htmlPane = new LocatableHTMLPane(AbstractOperationHistoryDetailsView.this
-                        .extendLocatorId("statusDetailsPane"));
+                    HTMLPane htmlPane = new HTMLPane();
                     htmlPane.setMargin(10);
                     htmlPane.setDefaultWidth(500);
                     htmlPane.setDefaultHeight(400);

@@ -39,16 +39,16 @@ public class PackageVersionFileUploadForm extends FileUploadForm {
     private Integer repoId;
     private int packageVersionId;
     private int packageId;
-    
-    public PackageVersionFileUploadForm(String locatorId, int packageTypeId, String packageName, String version,
-        Integer archId, Integer repoId, boolean showNameLabel, boolean showUploadButton, Boolean isAlreadyUploaded) {
 
-        super(locatorId, packageName, version, showNameLabel, showUploadButton, isAlreadyUploaded);
+    public PackageVersionFileUploadForm(int packageTypeId, String packageName, String version, Integer archId,
+        Integer repoId, boolean showNameLabel, boolean showUploadButton, Boolean isAlreadyUploaded) {
+
+        super(packageName, version, showNameLabel, showUploadButton, isAlreadyUploaded);
 
         this.packageTypeId = packageTypeId;
         this.archId = archId;
         this.repoId = repoId;
-        
+
         setAction(GWT.getModuleBaseURL() + "PackageVersionFileUploadServlet");
     }
 
@@ -72,34 +72,34 @@ public class PackageVersionFileUploadForm extends FileUploadForm {
     public int getPackageId() {
         return packageId;
     }
-    
+
     public int getPackageTypeId() {
         return packageTypeId;
     }
-    
+
     public void setPackageTypeId(int value) {
         packageTypeId = value;
         onDraw();
     }
-    
+
     public Integer getArchitectureId() {
         return archId;
     }
-    
+
     public void setArchitectureId(Integer value) {
-        archId = value; 
+        archId = value;
         onDraw();
     }
-    
+
     public Integer getRepoId() {
         return repoId;
     }
-    
+
     public void setRepoId(Integer value) {
         repoId = value;
         onDraw();
     }
-    
+
     @Override
     protected List<FormItem> getOnDrawItems() {
         List<FormItem> onDrawItems = super.getOnDrawItems();
@@ -119,7 +119,7 @@ public class PackageVersionFileUploadForm extends FileUploadForm {
             repoIdField.setDefaultValue(repoId);
             onDrawItems.add(repoIdField);
         }
-        
+
         return onDrawItems;
     }
 
@@ -131,10 +131,10 @@ public class PackageVersionFileUploadForm extends FileUploadForm {
     private void parseIdsFromResponse(String results) {
         packageVersionId = 0;
         packageId = 0;
-        
+
         // the upload servlet will respond with "success [packageVersionId=x,packageId=y]" on success
-        
-        String successMsgPrefix = "success ["; 
+
+        String successMsgPrefix = "success [";
         int startSuccessMsgPrefix = results.indexOf(successMsgPrefix);
         if (startSuccessMsgPrefix < 0) {
             CoreGUI.getErrorHandler().handleError(MSG.view_upload_error_packageVersionFile());
@@ -146,16 +146,16 @@ public class PackageVersionFileUploadForm extends FileUploadForm {
             CoreGUI.getErrorHandler().handleError(MSG.view_upload_error_packageVersionFile());
             return; // this should never happen, if we have "success [" we should always have the ending "]" bracket
         }
-        
+
         String[] ids = results.substring(endSuccessMsgPrefix, startSuccessMsgPostfix).split(",");
         if (ids.length != 2) {
             CoreGUI.getErrorHandler().handleError(MSG.view_upload_error_packageVersionFile());
             return;
         }
-        
+
         String packageVersionIdString = ids[0];
         String packageIdString = ids[1];
-        
+
         try {
             int equalsIdx = packageVersionIdString.indexOf('=');
             if (equalsIdx < 0) {
@@ -163,7 +163,7 @@ public class PackageVersionFileUploadForm extends FileUploadForm {
                 return;
             }
             packageVersionId = Integer.parseInt(packageVersionIdString.substring(equalsIdx + 1));
-            
+
             equalsIdx = packageIdString.indexOf('=');
             if (equalsIdx < 0) {
                 packageVersionId = 0;

@@ -41,7 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * The Help top-level view.
@@ -59,7 +59,6 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
     private boolean contentFromProductInfo;
 
     public HelpView() {
-        // This is a top level view, so our locator id can simply be our view id.
         super(VIEW_ID.getName());
     }
 
@@ -76,12 +75,12 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
     }
 
     @Override
-    protected LocatableVLayout defaultView() {
-        LocatableVLayout vLayout = new LocatableVLayout(this.extendLocatorId("Default"));
+    protected EnhancedVLayout defaultView() {
+        EnhancedVLayout vLayout = new EnhancedVLayout();
         vLayout.setWidth100();
 
         // TODO: Help icon.
-        TitleBar titleBar = new TitleBar(this, MSG.common_title_help(),VIEW_ID.getIcon().getIcon24x24Path());
+        TitleBar titleBar = new TitleBar(MSG.common_title_help(), VIEW_ID.getIcon().getIcon24x24Path());
         vLayout.addMember(titleBar);
 
         Label label = new Label(MSG.view_helpTop_description());
@@ -96,7 +95,7 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
         NavigationItem aboutItem = new NavigationItem(new ViewName("AboutBox", MSG.view_help_section_product_about()),
             "[SKIN]/../actions/help.png", new ViewFactory() {
                 public Canvas createView() {
-                    final AboutModalWindow aboutModalWindow = new AboutModalWindow(extendLocatorId("AboutModalWindow"));
+                    final AboutModalWindow aboutModalWindow = new AboutModalWindow();
                     aboutModalWindow.setTitle(MSG.view_aboutBox_title(productInfo.getFullName()));
                     aboutModalWindow.show();
                     return aboutModalWindow;
@@ -133,7 +132,7 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
                 final String itemName = "Section" + i + "Item" + j;
                 NavigationItem item = new NavigationItem(new ViewName(itemName, title), icon, new ViewFactory() {
                     public Canvas createView() {
-                        return new FullHTMLPane(extendLocatorId(itemName), url);
+                        return new FullHTMLPane(url);
                     }
                 });
                 items[j - 1] = item;

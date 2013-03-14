@@ -49,15 +49,14 @@ import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVStack;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVStack;
 
 /**
  * An editor for editing the set of RHQ {@link Permission permission}s associated with an RHQ {@link Role role}.
  *
  * @author Ian Springer
  */
-public class PermissionsEditor extends LocatableVStack {
+public class PermissionsEditor extends EnhancedVStack {
 
     private static Messages MSG = CoreGUI.getMessages();
 
@@ -69,7 +68,7 @@ public class PermissionsEditor extends LocatableVStack {
     private Object originalValue;
 
     public PermissionsEditor(RoleEditView roleEditView, boolean isReadOnly) {
-        super(roleEditView.extendLocatorId("Permissions"));
+        super();
 
         this.roleEditView = roleEditView;
         this.isReadOnly = isReadOnly;
@@ -146,7 +145,7 @@ public class PermissionsEditor extends LocatableVStack {
     private ListGrid createGlobalPermissionsGrid() {
         ProductInfo productInfo = CoreGUI.get().getProductInfo();
 
-        ListGrid grid = createPermissionsGrid("GlobalPermissions");
+        ListGrid grid = createPermissionsGrid();
 
         // TODO: Add table title.
 
@@ -187,9 +186,8 @@ public class PermissionsEditor extends LocatableVStack {
             MSG.view_adminRoles_permissions_permDesc_manageRepositories());
         records.add(record);
 
-        record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_viewUsers(),
-            "global/User", Permission.VIEW_USERS,
-            MSG.view_adminRoles_permissions_permDesc_viewUsers());
+        record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_viewUsers(), "global/User",
+            Permission.VIEW_USERS, MSG.view_adminRoles_permissions_permDesc_viewUsers());
         records.add(record);
 
         grid.setData(records.toArray(new ListGridRecord[records.size()]));
@@ -198,7 +196,7 @@ public class PermissionsEditor extends LocatableVStack {
     }
 
     private ListGrid createResourcePermissionsGrid() {
-        ListGrid grid = createPermissionsGrid("ResourcePermissions");
+        ListGrid grid = createPermissionsGrid();
         // TODO: Add table title.
 
         ListGridField iconField = createIconField();
@@ -294,8 +292,8 @@ public class PermissionsEditor extends LocatableVStack {
         return iconField;
     }
 
-    private LocatableListGrid createPermissionsGrid(String id) {
-        LocatableListGrid grid = new LocatableListGrid(extendLocatorId(id));
+    private ListGrid createPermissionsGrid() {
+        ListGrid grid = new ListGrid();
 
         grid.setAutoFitData(Autofit.BOTH);
         grid.setWrapCells(true);
@@ -304,7 +302,8 @@ public class PermissionsEditor extends LocatableVStack {
         return grid;
     }
 
-    private ListGridField createAuthorizedField(String name, String title, final String nameField, final ListGrid grid, boolean  readOnlyColumn) {
+    private ListGridField createAuthorizedField(String name, String title, final String nameField, final ListGrid grid,
+        boolean readOnlyColumn) {
         final ListGridField authorizedField = new ListGridField(name, title, 65);
 
         // Show images rather than true/false.
@@ -313,10 +312,10 @@ public class PermissionsEditor extends LocatableVStack {
 
         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>(2);
         // set the proper images different for read-only column
-        if(readOnlyColumn){
+        if (readOnlyColumn) {
             valueMap.put(Boolean.TRUE.toString(), "global/permission_checked_disabled_11.png");
             valueMap.put(Boolean.FALSE.toString(), "global/permission_disabled_11.png");
-        }else {
+        } else {
             valueMap.put(Boolean.TRUE.toString(), "global/permission_enabled_11.png");
             valueMap.put(Boolean.FALSE.toString(), "global/permission_disabled_11.png");
         }

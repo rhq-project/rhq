@@ -27,7 +27,6 @@ import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
 import org.rhq.core.domain.drift.DriftDetails;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * Similar to {@link DriftDetailsView} but omits information already present from the context of the
@@ -37,8 +36,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
  */
 public class DriftSnapshotDriftDetailsView extends DriftDetailsView {
 
-    public DriftSnapshotDriftDetailsView(String locatorId, String driftId) {
-        super(locatorId, driftId);
+    public DriftSnapshotDriftDetailsView(String driftId) {
+        super(driftId);
     }
 
     @Override
@@ -48,7 +47,7 @@ public class DriftSnapshotDriftDetailsView extends DriftDetailsView {
             child.destroy();
         }
 
-        DynamicForm driftForm = new LocatableDynamicForm(extendLocatorId("form"));
+        DynamicForm driftForm = new DynamicForm();
         //driftForm.setIsGroup(true);
         //driftForm.setGroupTitle(MSG.view_tabs_common_drift());
         driftForm.setWrapItemTitles(false);

@@ -44,6 +44,7 @@ import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.WidgetCanvas;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -54,16 +55,16 @@ import com.smartgwt.client.widgets.layout.HLayout;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWidgetCanvas;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
  * @author Jay Shaughnessy
+ * @deprecated see AbstractMetricD3GraphView
  */
-public abstract class AbstractMetricGraphView extends LocatableVLayout {
+@Deprecated
+public abstract class AbstractMetricGraphView extends EnhancedVLayout {
 
     private static final String INSTRUCTIONS = MSG.view_resource_monitor_graph_instructions();
 
@@ -79,26 +80,27 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
     private final Label positionLabel = new Label();
     private final Label hoverLabel = new Label();
 
+    private HTMLFlow resourceTitle;
+
     private int entityId;
     private int definitionId;
 
     private MeasurementDefinition definition;
     private List<MeasurementDataNumericHighLowComposite> data;
 
-    public AbstractMetricGraphView(String locatorId) {
-        super(locatorId);
+    public AbstractMetricGraphView() {
+        super();
     }
 
-    public AbstractMetricGraphView(String locatorId, int entityId, int definitionId) {
-        this(locatorId);
-
+    public AbstractMetricGraphView(int entityId, int definitionId) {
         this.entityId = entityId;
         this.definitionId = definitionId;
+
+        // Should this not also set H+W=100?
     }
 
-    public AbstractMetricGraphView(String locatorId, int entityId, MeasurementDefinition def,
+    public AbstractMetricGraphView(int entityId, MeasurementDefinition def,
         List<MeasurementDataNumericHighLowComposite> data) {
-        this(locatorId);
 
         this.entityId = entityId;
         this.definition = def;
@@ -107,12 +109,14 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
         setWidth100();
     }
 
-    public abstract AbstractMetricGraphView getInstance(String locatorId, int entityId, MeasurementDefinition def,
+    public abstract AbstractMetricGraphView getInstance(int entityId, MeasurementDefinition def,
         List<MeasurementDataNumericHighLowComposite> data);
 
     protected abstract void renderGraph();
 
-    protected abstract HTMLFlow getEntityTitle();
+    protected HTMLFlow getEntityTitle(){
+        return resourceTitle;
+    }
 
     public int getEntityId() {
         return this.entityId;
@@ -164,7 +168,7 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
 
     protected void drawGraph() {
 
-        HLayout titleHLayout = new LocatableHLayout(extendLocatorId("HTitle"));
+        HLayout titleHLayout = new EnhancedHLayout();
 
         if (definition != null) {
             titleHLayout.setAutoHeight();
@@ -177,7 +181,7 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
             }
 
             if (supportsLiveGraphViewDialog()) {
-                Img liveGraph = new LocatableImg(extendLocatorId("Live"), "subsystems/monitor/Monitor_16.png", 16, 16);
+                Img liveGraph = new Img("subsystems/monitor/Monitor_16.png", 16, 16);
                 liveGraph.setTooltip(MSG.view_resource_monitor_graph_live_tooltip());
 
                 liveGraph.addClickHandler(new ClickHandler() {
@@ -194,7 +198,7 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
             title.setWidth100();
             title.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
-                    displayAsDialog(extendLocatorId("Dialog"));
+                    displayAsDialog();
                 }
             });
             addMember(title);
@@ -269,7 +273,7 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
 
         // put it on a panel
 
-        addMember(new LocatableWidgetCanvas(extendLocatorId("Plot"), plot));
+        addMember(new WidgetCanvas(plot));
 
         plot.setSize(String.valueOf(getInnerContentWidth()),
             String.valueOf(getInnerContentHeight() - titleHLayout.getHeight() - 50));
@@ -325,21 +329,20 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
 
         int xTicks = getDefaultWidth() / 140;
 
-        plotOptions.addXAxisOptions(new AxisOptions().setTicks(xTicks)
-            .setTickFormatter(new TickFormatter() {
-                public String formatTickValue(double tickValue, Axis axis) {
-                    com.google.gwt.i18n.client.DateTimeFormat dateFormat = DateTimeFormat
-                        .getFormat(PredefinedFormat.DATE_TIME_SHORT);
-                    return dateFormat.format(new Date((long) tickValue));
-                    //                return String.valueOf(new Date((long) tickValue));
-                    //                return MONTH_NAMES[(int) (tickValue - 1)];
-                }
-            }));
+        plotOptions.addXAxisOptions(new AxisOptions().setTicks(xTicks).setTickFormatter(new TickFormatter() {
+            public String formatTickValue(double tickValue, Axis axis) {
+                com.google.gwt.i18n.client.DateTimeFormat dateFormat = DateTimeFormat
+                    .getFormat(PredefinedFormat.DATE_TIME_SHORT);
+                return dateFormat.format(new Date((long) tickValue));
+                //                return String.valueOf(new Date((long) tickValue));
+                //                return MONTH_NAMES[(int) (tickValue - 1)];
+            }
+        }));
 
     }
 
-    private void displayAsDialog(String locatorId) {
-        AbstractMetricGraphView graph = getInstance(locatorId, entityId, definition, data);
+    private void displayAsDialog() {
+        AbstractMetricGraphView graph = getInstance(entityId, definition, data);
         Window graphPopup = new Window();
         graphPopup.setTitle(MSG.view_resource_monitor_detailed_graph_label());
         graphPopup.setWidth(800);

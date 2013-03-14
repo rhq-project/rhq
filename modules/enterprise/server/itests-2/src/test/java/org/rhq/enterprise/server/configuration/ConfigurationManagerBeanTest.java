@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.configuration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -41,6 +42,10 @@ import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.discovery.AvailabilityReport;
@@ -78,11 +83,8 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
     private Agent agent;
     private Subject overlord;
 
-    /**
-     * Prepares things for the entire test class.
-     */
-    //@BeforeClass don't use BeforeClass as Arquillian 1.0.2 invokes it on every test method
-    protected void beforeClass() {
+    @Override
+    protected void beforeMethod() throws Exception {
         // Make sure page control sorts so the latest config update is last (the default is for the latest to be first).
         configUpdatesPageControl = PageControl.getUnlimitedInstance();
         // (ips, 04/01/10): Use createdTime, rather than id, to order by, since the id's are not guaranteed to be
@@ -92,12 +94,6 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
 
         configurationManager = LookupUtil.getConfigurationManager();
         resourceManager = LookupUtil.getResourceManager();
-        overlord = LookupUtil.getSubjectManager().getOverlord();
-    }
-
-    @Override
-    protected void beforeMethod() throws Exception {
-        beforeClass();
 
         prepareScheduler();
 
@@ -105,6 +101,8 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         TestServices testServices = new TestServices();
         agentServiceContainer.configurationService = testServices;
         agentServiceContainer.discoveryService = testServices;
+
+        overlord = LookupUtil.getSubjectManager().getOverlord();
 
         getTransactionManager().begin();
 
@@ -254,6 +252,87 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         } while (inProgress);
 
         assertTrue(inProgressTested);
+    }
+
+    @Test(enabled = ENABLE_TESTS)
+    public void testInProgressConfiguration() throws Exception {
+        int resourceId = newResource1.getId();
+
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+
+        // create 3 configs: config1 will be stored as current. config2 will be in progress, config3 should get
+        // blocked from updating by the inprogress update
+        Configuration configuration1 = new Configuration();
+        configuration1.put(new PropertySimple("myboolean", "true"));
+
+        Configuration configuration2 = new Configuration();
+        configuration2.put(new PropertySimple("myboolean", "false"));
+        configuration2.put(new PropertySimple("mysleep", "7000"));
+
+        Configuration configuration3 = new Configuration();
+        configuration3.put(new PropertySimple("mysleep", "10000"));
+
+        // make config1 the current
+        configurationManager.updateResourceConfiguration(overlord, resourceId, configuration1);
+        Thread.sleep(2000); // wait for the test agent to complete the request
+
+        ResourceConfigurationUpdate history1;
+        history1 = configurationManager.getLatestResourceConfigurationUpdate(overlord, resourceId);
+        assert history1 != null;
+        PropertySimple myprop = history1.getConfiguration().getSimple("myboolean");
+        assert myprop != null;
+        assert "true".equals(myprop.getStringValue());
+
+        // now update to config2 - the "agent" will sleep for a bit before it completes
+        // so we will have an INPROGRESS configuration for a few seconds before it goes to SUCCESS                
+        configurationManager.updateResourceConfiguration(overlord, resourceId, configuration2);
+
+        // now update to config3 - this should fail as you can't update while there is one in progress
+        try {
+            configurationManager.updateResourceConfiguration(overlord, resourceId, configuration3);
+            assert false : "Should have thrown an in progress exception";
+
+        } catch (ConfigurationUpdateStillInProgressException e) {
+            System.out.println("======> " + e);
+
+            // make sure everything works as expected (like the above test)
+
+            boolean inProgress = false;
+            boolean inProgressTested = false;
+
+            do {
+                ResourceConfigurationUpdate history2 = configurationManager.getLatestResourceConfigurationUpdate(
+                    overlord, resourceId);
+                inProgress = configurationManager.isResourceConfigurationUpdateInProgress(overlord, resourceId);
+
+                if (inProgress) {
+                    // history2 should be history1 since the update is not complete                
+                    assert history2 != null;
+                    assert history2.getId() == history1.getId();
+                    myprop = history2.getConfiguration().getSimple("myboolean");
+                    assert myprop != null;
+                    assert "true".equals(myprop.getStringValue());
+                    myprop = history2.getConfiguration().getSimple("mysleep"); // this wasn't in the first config
+                    assert myprop == null;
+                    // record that this test case ran, we expect it will if the agent delay is there 
+                    inProgressTested = true;
+                } else {
+                    // update is complete, history 2 should be different
+                    history2 = configurationManager.getLatestResourceConfigurationUpdate(overlord, resourceId);
+                    assert history2 != null;
+                    assert history2.getId() != history1.getId();
+                    myprop = history2.getConfiguration().getSimple("myboolean");
+                    assert myprop != null;
+                    assert "false".equals(myprop.getStringValue());
+                    myprop = history2.getConfiguration().getSimple("mysleep");
+                    assert myprop.getLongValue() != null;
+                    assert myprop.getLongValue().longValue() == 7000L;
+                }
+            } while (inProgress);
+
+        } catch (Throwable t) {
+            assert false : "Should have thrown an in progress exception, not: " + t;
+        }
     }
 
     @Test(enabled = ENABLE_TESTS)
@@ -659,6 +738,67 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
             configUpdatesPageControl);
 
         assert requests.size() == 1; // it will create one for us from the "live" configuration
+    }
+
+    /** Exercise the ConfigurationManagerBean getOptionsForConfigurationDefinition.
+     * 
+     * @throws Exception
+     */
+    @Test(enabled = ENABLE_TESTS)
+    public void testResourceConfigurationDefinitionsOptions() throws Exception {
+        Resource resource = newResource1;
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
+        getTransactionManager().begin();
+
+        try {
+            // this is simulating what the UI would be doing, build the config and call the server-side API
+            // we'll pretend the user is the overlord - another test will check a real user to see permission errors
+            ResourceType newResource1Type = resource.getResourceType();
+            ConfigurationDefinition initialDefinition = newResource1Type.getResourceConfigurationDefinition();
+            int loadCount = 300;
+            HashSet<String> parsedNames = new HashSet<String>();
+            for (int i = 0; i < loadCount; i++) {
+                String name = "fake property" + i;
+                initialDefinition
+                    .put(new PropertyDefinitionSimple(name, "fake" + i, false, PropertySimpleType.BOOLEAN));
+                parsedNames.add(name);
+            }
+            newResource1Type.setResourceConfigurationDefinition(initialDefinition);
+            em.merge(newResource1Type);
+            em.flush();
+
+            Configuration configuration = new Configuration();
+            configuration.put(new PropertySimple("myboolean", "true"));
+
+            ConfigurationDefinition configurationDefinition = newResource1.getResourceType()
+                .getResourceConfigurationDefinition();
+            assert configurationDefinition != null : "Configuration Definition could not be located.";
+            //retrieve the options for ConfigurationDefinition
+            ConfigurationDefinition options = configurationManager.getOptionsForConfigurationDefinition(overlord,
+                newResource1.getId(), configurationDefinition);
+            assert options != null : "Unable able to retrieve options for resource with id [" + newResource1.getId()
+                + "].";
+            assert !options.getPropertyDefinitions().entrySet().isEmpty() : "No PropertyDefinitionSimple instances found.";
+
+            PropertyDefinitionSimple locatedPropertyDefSimple = null;
+            int locatedCount = 0;
+            for (Map.Entry<String, PropertyDefinition> entry : options.getPropertyDefinitions().entrySet()) {
+                PropertyDefinition pd = entry.getValue();
+                if (pd instanceof PropertyDefinitionSimple) {
+                    PropertyDefinitionSimple pds = (PropertyDefinitionSimple) pd;
+                    locatedPropertyDefSimple = pds;
+                    locatedCount++;
+                    parsedNames.remove(pds.getName());
+                }
+            }
+            assert locatedPropertyDefSimple != null : "PropertyDefinitionSimple was not located!";
+            assert locatedCount >= loadCount : "All expected properties were not loaded. Found '" + locatedCount + "'.";
+            assert parsedNames.size() == 0 : "Not all loaded options were parsed.";
+
+        } finally {
+            getTransactionManager().rollback();
+        }
     }
 
     @Test(enabled = ENABLE_TESTS)

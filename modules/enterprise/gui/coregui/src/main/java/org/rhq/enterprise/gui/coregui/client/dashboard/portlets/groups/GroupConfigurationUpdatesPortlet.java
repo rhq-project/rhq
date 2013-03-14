@@ -64,14 +64,12 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configurati
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.HistoryGroupResourceConfigurationTable;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Simeon Pinder
  */
-public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implements CustomSettingsPortlet,
+public class GroupConfigurationUpdatesPortlet extends EnhancedVLayout implements CustomSettingsPortlet,
     AutoRefreshPortlet {
 
     // A non-displayed, persisted identifier for the portlet
@@ -82,8 +80,7 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
     // context provides whether this is a standard group, autocluster or autogroup
     private EntityContext context;
 
-    protected LocatableCanvas recentConfigurationContent = new LocatableCanvas(
-        extendLocatorId("RecentConfigurationUpdates"));
+    protected Canvas recentConfigurationContent = new Canvas();
 
     public static final String ID = "id";
 
@@ -117,8 +114,8 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
         updatedMapping.putAll(PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION);
     }
 
-    public GroupConfigurationUpdatesPortlet(String locatorId, EntityContext context) {
-        super(locatorId);
+    public GroupConfigurationUpdatesPortlet(EntityContext context) {
+        super();
         this.context = context;
     }
 
@@ -165,10 +162,10 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
     public DynamicForm getCustomSettingsForm() {
         final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
         final Configuration portletConfig = storedPortlet.getConfiguration();
-        LocatableDynamicForm customSettings = new LocatableDynamicForm(extendLocatorId("customSettings"));
-        LocatableVLayout page = new LocatableVLayout(customSettings.extendLocatorId("page"));
+        DynamicForm customSettings = new DynamicForm();
+        EnhancedVLayout page = new EnhancedVLayout();
         //build editor form container
-        final LocatableDynamicForm form = new LocatableDynamicForm(page.extendLocatorId("alert-filter"));
+        final DynamicForm form = new DynamicForm();
         form.setMargin(5);
 
         //add sort priority selector
@@ -227,13 +224,13 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
             if (EntityContext.Type.ResourceGroup != context.getType()) {
                 throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
             }
 
-            return new GroupConfigurationUpdatesPortlet(locatorId, context);
+            return new GroupConfigurationUpdatesPortlet(context);
         }
     }
 
@@ -319,16 +316,14 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
                         filterResourceGroupIds.add(context.getGroupId());
                         criteria.addFilterResourceGroupIds(filterResourceGroupIds);
 
-                        groupHistoryTable = new GroupConfigurationHistoryCriteriaTable(extendLocatorId("Table"),
-                            groupComposite);
+                        groupHistoryTable = new GroupConfigurationHistoryCriteriaTable(groupComposite);
                     } else {
                         ResourceGroup emptyGroup = new ResourceGroup("");
                         emptyGroup.setId(-1);
                         Long zero = new Long(0);
                         groupComposite = new ResourceGroupComposite(zero, zero, zero, zero, zero, zero, zero, zero,
                             emptyGroup);
-                        groupHistoryTable = new GroupConfigurationHistoryCriteriaTable(extendLocatorId("Table"),
-                            groupComposite);
+                        groupHistoryTable = new GroupConfigurationHistoryCriteriaTable(groupComposite);
                     }
 
                     //update table for portlet display.                    
@@ -350,8 +345,8 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
 
     class GroupConfigurationHistoryCriteriaTable extends HistoryGroupResourceConfigurationTable {
 
-        public GroupConfigurationHistoryCriteriaTable(String locatorId, ResourceGroupComposite groupComposite) {
-            super(locatorId, groupComposite);
+        public GroupConfigurationHistoryCriteriaTable(ResourceGroupComposite groupComposite) {
+            super(groupComposite);
         }
 
         @Override

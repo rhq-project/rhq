@@ -43,11 +43,6 @@ import org.joda.time.field.DividedDateTimeField;
  */
 public class DateTimeService {
 
-    static final int SEVEN_DAYS = Duration.standardDays(7).toStandardSeconds().getSeconds();
-    static final int TWO_WEEKS = Duration.standardDays(14).toStandardSeconds().getSeconds();
-    static final int ONE_MONTH = Duration.standardDays(31).toStandardSeconds().getSeconds();
-    static final int ONE_YEAR = Duration.standardDays(365).toStandardSeconds().getSeconds();
-
     private DateTimeComparator dateTimeComparator = DateTimeComparator.getInstance();
 
     private MetricsConfiguration configuration;
@@ -64,7 +59,6 @@ public class DateTimeService {
         long timestamp = dividedField.roundFloor(dateTime.getMillis());
 
         return new DateTime(timestamp);
-        //return dateTimeFloor(dateTime, interval.toPeriod());
     }
 
     public DateTime getTimeSlice(DateTime dt, Duration duration) {

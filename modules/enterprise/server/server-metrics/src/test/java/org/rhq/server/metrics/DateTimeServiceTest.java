@@ -118,7 +118,7 @@ public class DateTimeServiceTest {
 
     @Test
     public void timestampAfter2WeeksShouldNotBeIn1HourDataRange() {
-        assertFalse(dateTimeService.isIn1HourDataRange(now().minusDays(14)),
+        assertFalse(dateTimeService.isIn1HourDataRange(now().minusDays(14).minusSeconds(1)),
             "2 weeks ago should not be in 1 hour data range");
         assertFalse(dateTimeService.isIn1HourDataRange(now().minusDays(15)),
             "15 days ago should not be in 1 hour data range");

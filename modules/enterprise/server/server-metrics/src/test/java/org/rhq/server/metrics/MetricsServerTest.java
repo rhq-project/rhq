@@ -312,7 +312,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             new AggregateNumericMetric(scheduleId, avg1, min1, max1, hour6.getMillis()),
             new AggregateNumericMetric(scheduleId, avg2, min2, max2, hour12.getMillis())
         );
-        dao.insertAggregates(MetricsTable.SIX_HOUR, sixHourMetrics, DateTimeService.ONE_MONTH);
+        dao.insertAggregates(MetricsTable.SIX_HOUR, sixHourMetrics, MetricsTable.SIX_HOUR.getTTL());
 
         // update the 24 queue
         Map<Integer, Long> indexUpdates = new HashMap<Integer, Long>();
@@ -690,7 +690,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             new AggregateNumericMetric(scheduleId, 5.0, 4.0, 6.0, bucket59Time.plusHours(1).getMillis()),
             new AggregateNumericMetric(scheduleId, 3.0, 3.0, 3.0, bucket59Time.plusHours(2).getMillis())
         );
-        dao.insertAggregates(MetricsTable.SIX_HOUR, metrics, DateTimeService.ONE_MONTH);
+        dao.insertAggregates(MetricsTable.SIX_HOUR, metrics, MetricsTable.SIX_HOUR.getTTL());
 
         List<MeasurementDataNumericHighLowComposite> actualData = Lists.newArrayList(metricsServer.findDataForResource(
             scheduleId, beginTime.getMillis(), endTime.getMillis()));

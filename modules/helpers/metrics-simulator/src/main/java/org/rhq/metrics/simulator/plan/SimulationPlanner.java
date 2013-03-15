@@ -134,15 +134,15 @@ public class SimulationPlanner {
         configuration.setRawTimeSliceDuration(Minutes.ONE.toStandardDuration());
 
         configuration.setOneHourTTL(360);
-        configuration.setOneHourRetention(Seconds.seconds(360).toStandardDuration());
+        configuration.setOneHourRetention(Seconds.seconds(360));
         configuration.setOneHourTimeSliceDuration(Minutes.minutes(6).toStandardDuration());
 
         configuration.setSixHourTTL(540);
-        configuration.setSixHourRetention(Seconds.seconds(540).toStandardDuration());
+        configuration.setSixHourRetention(Seconds.seconds(540));
         configuration.setSixHourTimeSliceDuration(Minutes.minutes(24).toStandardDuration());
 
         configuration.setTwentyFourHourTTL(720);
-        configuration.setTwentyFourHourRetention(Seconds.seconds(720).toStandardDuration());
+        configuration.setTwentyFourHourRetention(Seconds.seconds(720));
 
         return configuration;
     }
@@ -169,15 +169,15 @@ public class SimulationPlanner {
                 break;
             case ONE_HOUR:
                 configuration.setOneHourTTL(ttl);
-                configuration.setOneHourRetention(Seconds.seconds(ttl).toStandardDuration());
+                configuration.setOneHourRetention(Seconds.seconds(ttl));
                 break;
             case SIX_HOUR:
                 configuration.setSixHourTTL(ttl);
-                configuration.setSixHourRetention(Seconds.seconds(ttl).toStandardDuration());
+                configuration.setSixHourRetention(Seconds.seconds(ttl));
                 break;
             default:
                 configuration.setTwentyFourHourTTL(ttl);
-                configuration.setTwentyFourHourRetention(Seconds.seconds(ttl).toStandardDuration());
+                configuration.setTwentyFourHourRetention(Seconds.seconds(ttl));
                 break;
         }
     }

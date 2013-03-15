@@ -25,7 +25,9 @@
 
 package org.rhq.server.metrics;
 
+import org.joda.time.Days;
 import org.joda.time.Duration;
+import org.joda.time.ReadablePeriod;
 
 import org.rhq.server.metrics.domain.MetricsTable;
 
@@ -34,13 +36,18 @@ import org.rhq.server.metrics.domain.MetricsTable;
  */
 public class MetricsConfiguration {
 
-    private Duration rawRetention = Duration.standardDays(7);
+//    private Duration rawRetention = Duration.standardDays(7);
+    private ReadablePeriod rawRetention = Days.days(7);
 
-    private Duration oneHourRetention = Duration.standardDays(14);
+    private ReadablePeriod oneHourRetention = Days.days(14);
+//    private Duration oneHourRetention = Duration.standardDays(14);
+//    private Duration oneHourRetention = Days.days(14).toStandardDuration();
 
-    private Duration sixHourRetention = Duration.standardDays(31);
+//    private Duration sixHourRetention = Duration.standardDays(31);
+    private ReadablePeriod sixHourRetention = Days.days(31);
 
-    private Duration twentyFourHourRetention = Duration.standardDays(365);
+//    private Duration twentyFourHourRetention = Duration.standardDays(365);
+    private ReadablePeriod twentyFourHourRetention = Days.days(365);
 
     private int rawTTL = MetricsTable.RAW.getTTL();
 
@@ -88,7 +95,7 @@ public class MetricsConfiguration {
         this.twentyFourHourTTL = twentyFourHourTTL;
     }
 
-    public Duration getRawRetention() {
+    public ReadablePeriod getRawRetention() {
         return rawRetention;
     }
 
@@ -96,27 +103,27 @@ public class MetricsConfiguration {
         rawRetention = rawRetention;
     }
 
-    public Duration getOneHourRetention() {
+    public ReadablePeriod getOneHourRetention() {
         return oneHourRetention;
     }
 
-    public void setOneHourRetention(Duration retention) {
+    public void setOneHourRetention(ReadablePeriod retention) {
         oneHourRetention = retention;
     }
 
-    public Duration getSixHourRetention() {
+    public ReadablePeriod getSixHourRetention() {
         return sixHourRetention;
     }
 
-    public void setSixHourRetention(Duration retention) {
+    public void setSixHourRetention(ReadablePeriod retention) {
         sixHourRetention = retention;
     }
 
-    public Duration getTwentyFourHourRetention() {
+    public ReadablePeriod getTwentyFourHourRetention() {
         return twentyFourHourRetention;
     }
 
-    public void setTwentyFourHourRetention(Duration retention) {
+    public void setTwentyFourHourRetention(ReadablePeriod retention) {
         twentyFourHourRetention = retention;
     }
 

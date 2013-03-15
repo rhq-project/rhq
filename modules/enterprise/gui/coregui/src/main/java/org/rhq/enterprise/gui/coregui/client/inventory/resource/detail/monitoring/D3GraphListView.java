@@ -28,7 +28,9 @@ import java.util.TreeSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
+import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
@@ -67,6 +69,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
     private boolean useSummaryData = false;
     private PageList<MeasurementOOBComposite> measurementOOBCompositeList;
     private List<List<MeasurementDataNumericHighLowComposite>> metricsDataList;
+    private VLayout vLayout;
 
     public static D3GraphListView createMultipleGraphs(Resource resource, Set<Integer> definitionIds,
         boolean showAvailabilityGraph) {
@@ -108,7 +111,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
 
     private void commonConstructorSettings() {
         measurementRangeEditor = new UserPreferencesMeasurementRangeEditor();
-        setOverflow(Overflow.AUTO);
+        setOverflow(Overflow.HIDDEN);
     }
 
     public void addSetButtonClickHandler(ClickHandler clickHandler) {
@@ -121,6 +124,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
         super.onDraw();
         Log.debug("D3GraphListView.onDraw() for: " + resource.getName());
         destroyMembers();
+
         addMember(measurementRangeEditor);
 
         if (showAvailabilityGraph) {
@@ -132,9 +136,15 @@ public class D3GraphListView extends AbstractD3GraphListView {
 
         }
 
+        vLayout = new VLayout();
+        vLayout.setOverflow(Overflow.AUTO);
+        vLayout.setWidth100();
+        vLayout.setHeight100();
+
         if (resource != null) {
             buildGraphs();
         }
+        addMember(vLayout);
     }
 
     public void redrawGraphs() {
@@ -342,7 +352,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
         graphView.setWidth("95%");
         graphView.setHeight(height);
 
-        addMember(graphView);
+        vLayout.addMember(graphView);
     }
 
 }

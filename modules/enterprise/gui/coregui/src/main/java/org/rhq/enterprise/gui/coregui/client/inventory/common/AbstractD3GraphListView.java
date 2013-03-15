@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
-import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Label;

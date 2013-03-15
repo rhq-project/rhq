@@ -25,8 +25,8 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
 
 public class UserPreferencesMeasurementRangeEditor extends AbstractMeasurementRangeEditor {
-    private int START_TIME_INDEX = 0;
-    private int END_TIME_INDEX = 1;
+    private static final int START_TIME_INDEX = 0;
+    private static final int END_TIME_INDEX = 1;
 
     private MeasurementUserPreferences measurementUserPrefs;
     public UserPreferencesMeasurementRangeEditor() {

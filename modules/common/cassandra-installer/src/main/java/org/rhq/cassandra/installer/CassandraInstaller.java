@@ -230,17 +230,6 @@ public class CassandraInstaller {
         return options;
     }
 
-    public String getInstallationSummary(DeploymentOptions options) {
-        return "\n" +
-            "Installation Summary:\n" +
-            "Finished installing Cassandra in " + options.getBasedir() + "\n\n" +
-            "IMPORTANT - remember to update the rhq.cassandra.seeds property in rhq-server.properties with the " +
-            "following:\n" +
-            "\thostname: " + options.getListenAddress() + "\n" +
-            "\tthrift port: " + options.getRpcPort() + "\n" +
-            "\tcql port: " + options.getNativeTransportPort();
-    }
-
     public static void main(String[] args) throws Exception {
         CassandraInstaller installer = new CassandraInstaller();
         installer.log.info("Running RHQ Storage Node installer...");

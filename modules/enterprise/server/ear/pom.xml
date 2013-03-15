@@ -69,6 +69,13 @@
 
         <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>rhq-remoting-war</artifactId>
+            <version>${project.version}</version>
+            <type>war</type>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>rhq-content_http</artifactId>
             <version>${project.version}</version>
             <type>war</type>
@@ -155,12 +162,8 @@
         <!-- 3rd Party Deps -->
 
         <!-- ** WARs -->
-        <dependency>
-            <groupId>jboss</groupId>
-            <artifactId>jboss-remoting-servlet-invoker</artifactId>
-            <version>2x.r3040.jon</version>
-            <type>war</type>
-        </dependency>
+
+        <!-- none -->
 
         <!-- ** JARs -->
         <dependency>
@@ -278,6 +281,13 @@
                             <artifactId>rhq-rest-examples</artifactId>
                             <bundleFileName>rhq-rest-examples.war</bundleFileName>
                             <contextRoot>/rest-examples</contextRoot>
+                        </webModule>
+
+                        <webModule>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-remoting-war</artifactId>
+                            <bundleFileName>rhq-remoting.war</bundleFileName>
+                            <contextRoot>/jboss-remoting-servlet-invoker</contextRoot>
                         </webModule>
 
                         <!-- ** EJB-JARs -->

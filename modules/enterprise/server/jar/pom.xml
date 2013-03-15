@@ -31,13 +31,16 @@
        (xnio e.g.) that require the up to date logging impl.  Since server jar depends on
        rhq-enterprise-comm to run, and arquillian to test, place the current version jboss-logging
        as a dependency before the rhq-comm dependency. This ensure the classpath is set up to use the
-       newer package impl.  -->
-  <dependency>
+       newer package impl.
+       NOTE 3/14/2013 - comm module has been upgraded to use jboss-common-core now so I commented below out -->
+<!--
+<dependency>
     <groupId>org.jboss.logging</groupId>
     <artifactId>jboss-logging</artifactId>
     <version>${jboss-logging.version}</version>
     <scope>test</scope>
   </dependency>
+-->
   <dependency>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-enterprise-comm</artifactId>

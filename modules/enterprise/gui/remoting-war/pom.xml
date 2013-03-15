@@ -1,0 +1,147 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.rhq</groupId>
+        <artifactId>rhq-parent</artifactId>
+        <version>4.7.0-SNAPSHOT</version>
+        <relativePath>../../../../pom.xml</relativePath>
+    </parent>
+
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-remoting-war</artifactId>
+    <packaging>war</packaging>
+
+    <name>RHQ Remoting WAR</name>
+    <description>Provides the ServerInvokerServlet that receives requests via HTTP protocol from within
+    a web container and passes it onto the ServletServerInvoker for processing.</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-enterprise-comm</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope> <!-- by rhq.ear -->
+        </dependency>
+
+        <!-- 3rd Party Deps -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>3.0.1</version>
+            <scope>provided</scope> <!-- by JBossAS -->
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>rhq-remoting</finalName>
+        <plugins>
+            <plugin>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>2.1-alpha-1</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                        <manifestEntries>
+                            <Build-Number>${buildNumber}</Build-Number>
+                        </manifestEntries>
+                    </archive>
+                    <webResources>
+                        <resource>
+                            <filtering>false</filtering>
+                            <directory>${basedir}/src/main/webapp</directory>
+                        </resource>
+                    </webResources>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>dev</id>
+            <properties>
+                <rhq.rootDir>../../../..</rhq.rootDir>
+                <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+                <rhq.deploymentName>${project.build.finalName}.war</rhq.deploymentName>
+                <rhq.deploymentDir>${rhq.containerDir}/${rhq.earDeployDir}/${rhq.deploymentName}</rhq.deploymentDir>
+            </properties>
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>deploy-classes</id>
+                                <phase>compile</phase>
+                                <configuration>
+                                    <target>
+                                        <property name="classes.dir" location="${rhq.deploymentDir}/WEB-INF/classes" />
+                                        <echo>*** Copying updated files from target/classes to ${classes.dir}...</echo>
+                                        <copy todir="${classes.dir}" verbose="${rhq.verbose}">
+                                            <fileset dir="target/classes" />
+                                        </copy>
+                                        <property name="deployment.dir" location="${rhq.deploymentDir}" />
+                                        <echo>*** Copying updated files from
+                                            src${file.separator}main${file.separator}webapp${file.separator}
+                                            to
+                                            ${deployment.dir}${file.separator}...</echo>
+                                        <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
+                                            <fileset dir="${basedir}/src/main/webapp" />
+                                        </copy>
+                                    </target>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+
+                            <execution>
+                                <id>deploy</id>
+                                <phase>package</phase>
+                                <configuration>
+                                    <target>
+                                        <property name="deployment.dir"
+                                            location="${rhq.deploymentDir}" />
+                                        <echo>*** Copying updated files from
+                                            target${file.separator}${project.build.finalName}${file.separator}
+                                            to
+                                            ${deployment.dir}${file.separator}...</echo>
+                                        <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
+                                            <fileset dir="${basedir}/target/${project.build.finalName}" />
+                                        </copy>
+                                    </target>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+
+                            <execution>
+                                <id>undeploy</id>
+                                <phase>clean</phase>
+                                <configuration>
+                                    <target>
+                                        <property name="deployment.dir" location="${rhq.deploymentDir}" />
+                                        <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
+                                        <delete dir="${deployment.dir}" />
+                                    </target>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+
+        </profile>
+    </profiles>
+
+</project>

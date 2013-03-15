@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE web-app PUBLIC
+   "-//Sun Microsystems, Inc.//DTD Web Application 3.0//EN"
+   "http://java.sun.com/dtd/web-app_3_0.dtd">
+
+<web-app version="3.0" xmlns="http://java.sun.com/xml/ns/javaee"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd">
+
+    <servlet>
+        <servlet-name>ServerInvokerServlet</servlet-name>
+        <description>The ServerInvokerServlet receives requests via HTTP
+            protocol from within a web container and passes it onto the
+            ServletServerInvoker for processing.
+        </description>
+        <servlet-class>org.rhq.enterprise.communications.servlet.ServerInvokerServlet</servlet-class>
+        <init-param>
+            <param-name>mbeanServer</param-name>
+            <param-value>*platform*</param-value>
+        </init-param>
+        <init-param>
+            <param-name>invokerName</param-name>
+            <param-value>jboss.remoting:service=invoker,transport=servlet,rhq.communications.connector.rhqtype=server,*</param-value>
+            <description>The servlet server invoker - in RHQ's impl of the servlet, this is a query ObjectName that must find 1 bean</description>
+        </init-param>
+        <load-on-startup>-1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ServerInvokerServlet</servlet-name>
+        <url-pattern>/ServerInvokerServlet/*</url-pattern>
+    </servlet-mapping>
+</web-app>
+
+         

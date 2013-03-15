@@ -171,6 +171,10 @@
         <unzip src="${settings.localRepository}/org/rhq/rhq-installer-util/${project.version}/rhq-installer-util-${project.version}.zip"
                dest="${jboss.modules.dir}" />
 
+        <echo>Adding Cassandra installer module to ${jboss.modules.dir}...</echo>
+        <unzip src="${settings.localRepository}/org/rhq/rhq-cassandra-installer/${project.version}/rhq-cassandra-installer-${project.version}.zip"
+               dest="${jboss.modules.dir}"/>
+
         <echo>Adding JDBC modules to ${jboss.modules.dir} ...</echo>
     	<!-- make sure we have an oracle driver jar so the AS7 module is valid and loadable, this is empty -->
         <copy file="src/main/module-resources/ojdbc6-readme.jar"

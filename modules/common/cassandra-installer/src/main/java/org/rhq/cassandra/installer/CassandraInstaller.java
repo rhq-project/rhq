@@ -25,8 +25,13 @@
 
 package org.rhq.cassandra.installer;
 
+import static java.util.Arrays.asList;
+
 import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -35,29 +40,57 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.rhq.cassandra.DeploymentOptions;
 import org.rhq.cassandra.UnmanagedDeployer;
+import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
+import org.rhq.core.system.OperatingSystemType;
+import org.rhq.core.system.ProcessExecution;
+import org.rhq.core.system.ProcessExecutionResults;
+import org.rhq.core.system.SystemInfo;
+import org.rhq.core.system.SystemInfoFactory;
+import org.rhq.core.util.PropertiesFileUpdate;
+import org.rhq.core.util.StringUtil;
 
 /**
  * @author John Sanda
  */
 public class CassandraInstaller {
 
+    static {
+        SystemInfoFactory.disableNativeSystemInfo();
+    }
+
+    private final Log log = LogFactory.getLog(CassandraInstaller.class);
+
     private Options options;
 
+    private File rhqBaseDir;
+
+    private File defaultDir;
+
+    private int rpcPort = 9160;
+
+    private int nativeTransportPort = 9042;
+
     public CassandraInstaller() {
+        String basedir = System.getProperty("rhq.server.basedir");
+        rhqBaseDir = new File(basedir);
+        defaultDir = new File(basedir, "storage");
+
         Option hostname = new Option("n", "hostname", true, "The hostname or IP address on which the node will listen for " +
             "requests. If not specified, defaults to the value returned by InetAddress.getLocalHost().getHostName().");
          hostname.setArgName("HOSTNAME");
 
-        Option dir =  new Option("d", "dir", true, "The directory in which to install Cassandra. Defaults to " +
-            "./rhq-metrics-node and will be created if it does not already exist.");
+        Option dir =  new Option("d", "dir", true, "The directory in which to install the RHQ Storage Node. Defaults " +
+            "to " + defaultDir);
         dir.setArgName("INSTALL_DIR");
 
         Option seeds = new Option("s", "seeds", true, "A comma-delimited list of hostnames or IP addresses that " +
             "serve as contact points. Nodes use this list to find each other and to learn the cluster topology. " +
-            "It does not need to specify all nodes in the cluster. Defaults to this nodes hostname.");
+            "It does not need to specify all nodes in the cluster. Defaults to this node's hostname.");
         seeds.setArgName("SEEDS");
 
         Option jmxPort = new Option("j", "jmx-port", true, "The port on which to listen for JMX connections. " +
@@ -76,16 +109,15 @@ public class CassandraInstaller {
         if (cmdLine.hasOption("h")) {
             printUsage();
         } else {
-            DeploymentOptions options = new DeploymentOptions();
+            DeploymentOptions deploymentOptions = new DeploymentOptions();
 
             File basedir;
             if (cmdLine.hasOption("d")) {
                 basedir = new File(cmdLine.getOptionValue("d"));
             } else {
-                File currentDir = new File(System.getProperty("user.dir"));
-                basedir = new File(currentDir, "rhq-metrics-node");
+                basedir = defaultDir;
             }
-            options.setBasedir(basedir.getAbsolutePath());
+            deploymentOptions.setBasedir(basedir.getAbsolutePath());
 
             String hostname;
             if (cmdLine.hasOption("n")) {
@@ -93,8 +125,8 @@ public class CassandraInstaller {
             } else {
                 hostname = InetAddress.getLocalHost().getHostName();
             }
-            options.setListenAddress(hostname);
-            options.setRpcAddress(hostname);
+            deploymentOptions.setListenAddress(hostname);
+            deploymentOptions.setRpcAddress(hostname);
 
             String seeds;
             if (cmdLine.hasOption("s")) {
@@ -102,7 +134,7 @@ public class CassandraInstaller {
             } else {
                 seeds = hostname;
             }
-            options.setSeeds(seeds);
+            deploymentOptions.setSeeds(seeds);
 
             Integer jmxPort;
             if (cmdLine.hasOption("j")) {
@@ -110,29 +142,87 @@ public class CassandraInstaller {
             } else {
                 jmxPort = 7200;
             }
-            options.setJmxPort(jmxPort);
+            deploymentOptions.setJmxPort(jmxPort);
 
-            options.setCommitLogDir(new File(basedir, "commit_log").getAbsolutePath());
-            options.setSavedCachesDir(new File(basedir, "saved_caches").getAbsolutePath());
-            options.setDataDir(new File(basedir, "data").getAbsolutePath());
-            options.setLogDir(new File(basedir, "logs").getAbsolutePath());
-            options.load();
+            deploymentOptions.setCommitLogDir(new File(basedir, "commit_log").getAbsolutePath());
+            deploymentOptions.setSavedCachesDir(new File(basedir, "saved_caches").getAbsolutePath());
+            deploymentOptions.setDataDir(new File(basedir, "data").getAbsolutePath());
+            deploymentOptions.setLogDir(new File(basedir, "logs").getAbsolutePath());
+            deploymentOptions.setRpcPort(rpcPort);
+            deploymentOptions.setNativeTransportPort(nativeTransportPort);
+            deploymentOptions.load();
 
             UnmanagedDeployer deployer = new UnmanagedDeployer();
             deployer.unpackBundle();
-            deployer.deploy(options, 1);
-            System.out.println(getInstallationSummary(options));
+            deployer.deploy(deploymentOptions, 1);
+            log.info("Finished installing RHQ Storage Node. Performing post-install clean up...");
             deployer.cleanUpBundle();
+
+            log.info("Updating rhq-server.properties...");
+            PropertiesFileUpdate serverPropertiesUpdater = getServerProperties();
+            try {
+                serverPropertiesUpdater.update("rhq.cassandra.seeds", getSeedsProperty(seeds));
+            }  catch (IOException e) {
+                throw new RuntimeException("An error occurred while trying to update RHQ server properties", e);
+            }
+
+            log.info("Starting RHQ Storage Node");
+            startNode(deploymentOptions);
+        }
+    }
+
+    private PropertiesFileUpdate getServerProperties() {
+        String sysprop = System.getProperty("rhq.server.properties-file");
+        if (sysprop == null) {
+            throw new RuntimeException("The required system property [rhq.server.properties] is not defined.");
+        }
+
+        File file = new File(sysprop);
+        if (!(file.exists() && file.isFile())) {
+            throw new RuntimeException("System property [" + sysprop + "] points to in invalid file.");
+        }
+
+        return new PropertiesFileUpdate(file.getAbsolutePath());
+    }
+
+    private String getSeedsProperty(String seeds) {
+        String[] hosts = seeds.split(",");
+        List<String> list = new ArrayList<String>(hosts.length);
+        for (String host : hosts) {
+            list.add(host + "|" + rpcPort + "|" + nativeTransportPort);
+        }
+        return StringUtil.collectionToString(list);
+    }
+
+    private void startNode(DeploymentOptions deploymentOptions) {
+        File basedir = new File(deploymentOptions.getBasedir());
+        File binDir = new File(basedir, "bin");
+
+        File startScript;
+        SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
+
+        if (systemInfo.getOperatingSystemType() == OperatingSystemType.WINDOWS) {
+            startScript = new File(binDir, "cassandra.bat");
+        } else {
+            startScript = new File(binDir, "cassandra");
+        }
+
+        ProcessExecution startScriptExe = ProcessExecutionUtility.createProcessExecution(startScript);
+        startScriptExe.setArguments(asList("-p", "cassandra.pid"));
+
+        ProcessExecutionResults results = systemInfo.executeProcess(startScriptExe);
+        if (log.isDebugEnabled()) {
+            log.debug(startScript + " returned with exit code [" + results.getExitCode() + "]");
         }
     }
 
     public void printUsage() {
         Options options = getOptions();
         HelpFormatter helpFormatter = new HelpFormatter();
-        String header = "\nInstalls RHQ metrics database.\n\n";
-        String syntax = "java -jar rhq-cassandra-installer.jar [options]";
+        String syntax = "rhq-storage-installer.sh [options]";
+        String header = "";
 
-        helpFormatter.setNewLine("\n");
+//        helpFormatter.setNewLine("\n");
         helpFormatter.printHelp(syntax, header, options, null);
     }
 
@@ -152,8 +242,8 @@ public class CassandraInstaller {
     }
 
     public static void main(String[] args) throws Exception {
-        System.out.println("Running Cassandra installer...");
         CassandraInstaller installer = new CassandraInstaller();
+        installer.log.info("Running RHQ Storage Node installer...");
         try {
             CommandLineParser parser = new PosixParser();
             CommandLine cmdLine = parser.parse(installer.getOptions(), args);

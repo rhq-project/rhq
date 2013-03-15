@@ -83,11 +83,8 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView {
      */
     public void redrawGraphs() {
 
-        List<Long> startEndList = measurementRangeEditor.getBeginEndTimes();
-        final long startTime = startEndList.get(0);
-        final long endTime = startEndList.get(1);
-
-        queryAvailability(resourceGroup.getId(), null);
+        queryAvailability(resourceGroup.getId(), measurementRangeEditor.getStartTime(),
+                measurementRangeEditor.getEndTime(), null);
 
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(resourceGroup.getResourceType().getId(),
             EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
@@ -114,7 +111,7 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView {
                     }
 
                     GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroup(resourceGroup.getId(),
-                        measDefIdArray, startTime, endTime, 60,
+                        measDefIdArray, measurementRangeEditor.getStartTime(), measurementRangeEditor.getEndTime(), 60,
                         new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                             @Override
                             public void onFailure(Throwable caught) {
@@ -133,7 +130,6 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView {
                                     for (List<MeasurementDataNumericHighLowComposite> data : result) {
                                         buildIndividualGraph(measurementDefinitions.get(i++), data);
                                     }
-                                    availabilityGraph.setMetricData(result.get(0));
                                     availabilityGraph.setAvailabilityList(availabilityList);
                                     availabilityGraph.drawJsniChart();
                                 }

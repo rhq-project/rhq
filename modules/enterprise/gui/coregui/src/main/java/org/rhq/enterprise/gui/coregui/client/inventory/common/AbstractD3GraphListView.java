@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Label;
 
@@ -51,14 +53,14 @@ public abstract class AbstractD3GraphListView extends EnhancedVLayout {
 
     public abstract void redrawGraphs();
 
-    protected void queryAvailability(final int resourceId, final CountDownLatch countDownLatch) {
+    protected void queryAvailability(final int resourceId, Long startTime, Long endTime, final CountDownLatch countDownLatch) {
 
-        final long startTime = System.currentTimeMillis();
+        final long timerStart = System.currentTimeMillis();
 
         // now return the availability
         AvailabilityCriteria c = new AvailabilityCriteria();
         c.addFilterResourceId(resourceId);
-        c.addFilterInitialAvailability(false);
+        c.addFilterInterval(startTime, endTime);
         c.addSortStartTime(PageOrdering.ASC);
         GWTServiceLookup.getAvailabilityService().findAvailabilityByCriteria(c,
                 new AsyncCallback<PageList<Availability>>() {
@@ -72,7 +74,7 @@ public abstract class AbstractD3GraphListView extends EnhancedVLayout {
 
                     @Override
                     public void onSuccess(PageList<Availability> availList) {
-                        Log.debug("\nSuccessfully queried availability in: " + (System.currentTimeMillis() - startTime)
+                        Log.debug("\nSuccessfully queried availability in: " + (System.currentTimeMillis() - timerStart)
                                 + " ms.");
                         availabilityList = new PageList<Availability>();
                         for (Availability availability : availList) {

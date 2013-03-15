@@ -148,11 +148,9 @@ public class D3GraphListView extends AbstractD3GraphListView {
      */
     private void buildGraphs() {
         final long startTimer = System.currentTimeMillis();
-        List<Long> startEndList = measurementRangeEditor.getBeginEndTimes();
-        final long startTime = startEndList.get(0);
-        final long endTime = startEndList.get(1);
 
-        queryAvailability(resource.getId(), null);
+        queryAvailability(resource.getId(), measurementRangeEditor.getStartTime(),
+                measurementRangeEditor.getEndTime(), null);
 
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
             EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
@@ -211,7 +209,6 @@ public class D3GraphListView extends AbstractD3GraphListView {
                                 if (availabilityGraph != null) {
                                     // we only need the first metricData since we are only taking the
                                     // availability data set in there for the dropdowns already
-                                    availabilityGraph.setMetricData(metricsDataList.get(0));
                                     availabilityGraph.setAvailabilityList(availabilityList);
                                     availabilityGraph.drawJsniChart();
                                 }
@@ -228,7 +225,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
 
                 private void queryMetricData(final int[] measDefIdArray, final CountDownLatch countDownLatch) {
                     GWTServiceLookup.getMeasurementDataService().findDataForResource(resource.getId(), measDefIdArray,
-                        startTime, endTime, 60,
+                        measurementRangeEditor.getStartTime(),measurementRangeEditor.getEndTime(), 60,
                         new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                             @Override
                             public void onFailure(Throwable caught) {
@@ -265,7 +262,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
                             Log.debug("OOB Data size: " + measurementOOBCompositeList.size());
                             if (null != measurementOOBCompositeList) {
                                 for (MeasurementOOBComposite measurementOOBComposite : measurementOOBComposites) {
-                                    Log.debug("measurementOOBComposite = " + measurementOOBComposite);
+                                    //Log.debug("measurementOOBComposite = " + measurementOOBComposite);
                                 }
                             }
                             countDownLatch.countDown();

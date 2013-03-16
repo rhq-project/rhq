@@ -19,18 +19,12 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Label;
 
-import org.rhq.core.domain.criteria.AvailabilityCriteria;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3Graph;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
@@ -52,39 +46,6 @@ public abstract class AbstractD3GraphListView extends EnhancedVLayout {
 
     public abstract void redrawGraphs();
 
-    protected void queryAvailability(final int resourceId, Long startTime, Long endTime, final CountDownLatch countDownLatch) {
-
-        final long timerStart = System.currentTimeMillis();
-
-        // now return the availability
-        AvailabilityCriteria c = new AvailabilityCriteria();
-        c.addFilterResourceId(resourceId);
-        c.addFilterInterval(startTime, endTime);
-        c.addSortStartTime(PageOrdering.ASC);
-        GWTServiceLookup.getAvailabilityService().findAvailabilityByCriteria(c,
-                new AsyncCallback<PageList<Availability>>() {
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
-                        if (countDownLatch != null) {
-                            countDownLatch.countDown();
-                        }
-                    }
-
-                    @Override
-                    public void onSuccess(PageList<Availability> availList) {
-                        Log.debug("\nSuccessfully queried availability in: " + (System.currentTimeMillis() - timerStart)
-                                + " ms.");
-                        availabilityList = new PageList<Availability>();
-                        for (Availability availability : availList) {
-                            availabilityList.add(availability);
-                        }
-                        if (countDownLatch != null) {
-                            countDownLatch.countDown();
-                        }
-                    }
-                });
-    }
-
+    protected abstract void queryAvailability(final int resourceId, Long startTime, Long endTime, final CountDownLatch countDownLatch);
 
 }

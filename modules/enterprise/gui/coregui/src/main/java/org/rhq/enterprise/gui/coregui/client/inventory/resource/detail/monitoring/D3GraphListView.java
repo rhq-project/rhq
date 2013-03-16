@@ -28,10 +28,11 @@ import java.util.TreeSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.criteria.AvailabilityCriteria;
+import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -40,6 +41,7 @@ import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -150,6 +152,40 @@ public class D3GraphListView extends AbstractD3GraphListView {
     public void redrawGraphs() {
         this.onDraw();
         availabilityGraph.drawJsniChart();
+    }
+
+    protected void queryAvailability(final int resourceId, Long startTime, Long endTime, final CountDownLatch countDownLatch) {
+
+        final long timerStart = System.currentTimeMillis();
+
+        // now return the availability
+        AvailabilityCriteria c = new AvailabilityCriteria();
+        c.addFilterResourceId(resourceId);
+        c.addFilterInterval(startTime, endTime);
+        c.addSortStartTime(PageOrdering.ASC);
+        GWTServiceLookup.getAvailabilityService().findAvailabilityByCriteria(c,
+                new AsyncCallback<PageList<Availability>>() {
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
+                        if (countDownLatch != null) {
+                            countDownLatch.countDown();
+                        }
+                    }
+
+                    @Override
+                    public void onSuccess(PageList<Availability> availList) {
+                        Log.debug("\nSuccessfully queried availability in: " + (System.currentTimeMillis() - timerStart)
+                                + " ms.");
+                        availabilityList = new PageList<Availability>();
+                        for (Availability availability : availList) {
+                            availabilityList.add(availability);
+                        }
+                        if (countDownLatch != null) {
+                            countDownLatch.countDown();
+                        }
+                    }
+                });
     }
 
     /**

@@ -72,7 +72,7 @@ import org.rhq.core.domain.resource.Resource;
         + "WHERE iph.id = :id"),
     @NamedQuery(name = InstalledPackageHistory.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM InstalledPackageHistory iph "
         + " WHERE iph.resource.id IN ( :resourceIds ) )") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_INSTALLED_PKG_HIST_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_INSTALLED_PKG_HIST_ID_SEQ", sequenceName = "RHQ_INSTALLED_PKG_HIST_ID_SEQ")
 @Table(name = "RHQ_INSTALLED_PKG_HIST")
 public class InstalledPackageHistory implements Serializable {
 
@@ -87,7 +87,7 @@ public class InstalledPackageHistory implements Serializable {
     public static final String QUERY_DELETE_BY_RESOURCES = "InstalledPackageHistory.deleteByResources";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_INSTALLED_PKG_HIST_ID_SEQ")
     @Id
     private int id;
 

@@ -49,7 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSour
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * The Inventory top-level view.
@@ -70,8 +70,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         IconEnum.PLATFORMS);
     private static final ViewName PAGE_SERVERS_TOP = new ViewName("ServersTop", MSG.view_inventory_serversTop(),
         IconEnum.SERVERS);
-    private static final ViewName PAGE_SERVERS = new ViewName("Servers", MSG.view_inventory_servers(),
-        IconEnum.SERVERS);
+    private static final ViewName PAGE_SERVERS = new ViewName("Servers", MSG.view_inventory_servers(), IconEnum.SERVERS);
     private static final ViewName PAGE_SERVICES = new ViewName("Services", MSG.view_inventory_services(),
         IconEnum.SERVICES);
     private static final ViewName PAGE_UNAVAIL_SERVERS = new ViewName("UnavailableServers",
@@ -94,7 +93,6 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
     private Set<Permission> globalPermissions;
 
     public InventoryView() {
-        // This is a top level view, so our locator id can simply be our view id.
         super(VIEW_ID.getName());
     }
 
@@ -110,11 +108,10 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
     }
 
     protected Canvas defaultView() {
-        LocatableVLayout vLayout = new LocatableVLayout(this.extendLocatorId("Default"));
+        EnhancedVLayout vLayout = new EnhancedVLayout();
         vLayout.setWidth100();
 
-        // TODO: Admin icon.
-        TitleBar titleBar = new TitleBar(this, MSG.common_title_inventory(), IconEnum.INVENTORY.getIcon24x24Path());
+        TitleBar titleBar = new TitleBar(MSG.common_title_inventory(), IconEnum.INVENTORY.getIcon24x24Path());
         vLayout.addMember(titleBar);
 
         Label label = new Label(MSG.view_inventory_sectionHelp());
@@ -145,8 +142,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         NavigationItem autodiscoveryQueueItem = new NavigationItem(ResourceAutodiscoveryView.VIEW_ID,
             new ViewFactory() {
                 public Canvas createView() {
-                    return new ResourceAutodiscoveryView(extendLocatorId(
-                        ResourceAutodiscoveryView.VIEW_ID.getName()));
+                    return new ResourceAutodiscoveryView();
                 }
             }, this.globalPermissions.contains(Permission.MANAGE_INVENTORY));
         autodiscoveryQueueItem.setRefreshRequired(true);
@@ -212,37 +208,35 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
     private NavigationSection buildGroupsSection() {
         NavigationItem dynagroupDefinitionsItem = new NavigationItem(PAGE_DYNAGROUP_DEFINITIONS, new ViewFactory() {
             public Canvas createView() {
-                return new GroupDefinitionListView(extendLocatorId(PAGE_DYNAGROUP_DEFINITIONS.getName()));
+                return new GroupDefinitionListView();
             }
         }, this.globalPermissions.contains(Permission.MANAGE_INVENTORY));
 
         NavigationItem allGroupsItem = new NavigationItem(PAGE_ALL_GROUPS, new ViewFactory() {
             public Canvas createView() {
-                return new ResourceGroupListView(extendLocatorId(PAGE_ALL_GROUPS.getName()));
+                return new ResourceGroupListView();
             }
         });
 
         NavigationItem compatibleGroupsItem = new NavigationItem(PAGE_COMPATIBLE_GROUPS, new ViewFactory() {
             public Canvas createView() {
-                ResourceGroupListView view = new ResourceGroupListView(
-                    extendLocatorId(PAGE_COMPATIBLE_GROUPS.getName()), new Criteria(
-                        ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.COMPATIBLE.name()));
+                ResourceGroupListView view = new ResourceGroupListView(new Criteria(
+                    ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.COMPATIBLE.name()));
                 return view;
             }
         });
 
         NavigationItem mixedGroupsItem = new NavigationItem(PAGE_MIXED_GROUPS, new ViewFactory() {
             public Canvas createView() {
-                ResourceGroupListView view = new ResourceGroupListView(extendLocatorId(PAGE_MIXED_GROUPS.getName()),
-                    new Criteria(ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.MIXED.name()));
+                ResourceGroupListView view = new ResourceGroupListView(new Criteria(
+                    ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.MIXED.name()));
                 return view;
             }
         });
 
         NavigationItem problemGroupsItem = new NavigationItem(PAGE_PROBLEM_GROUPS, new ViewFactory() {
             public Canvas createView() {
-                ResourceGroupListView view = new ResourceGroupListView(extendLocatorId(PAGE_PROBLEM_GROUPS.getName()),
-                    new Criteria("downMemberCount", "1"));
+                ResourceGroupListView view = new ResourceGroupListView(new Criteria("downMemberCount", "1"));
                 view.setShowNewButton(false);
                 return view;
             }
@@ -257,12 +251,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         private ViewName viewName;
 
         public ResourceSearchViewWrapper(ViewName viewName, Criteria criteria, String... headerIcons) {
-            super(viewName.getName(), criteria, viewName.getTitle(), headerIcons);
-            this.viewName = viewName;
-        }
-
-        public ResourceSearchViewWrapper(ViewName viewName, Criteria criteria) {
-            super(viewName.getName(), criteria);
+            super(criteria, viewName.getTitle(), headerIcons);
             this.viewName = viewName;
         }
 

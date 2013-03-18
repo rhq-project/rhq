@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.test;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.History;
@@ -30,22 +33,20 @@ import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.SortDirection;
+import com.smartgwt.client.widgets.HTMLPane;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.rpc.DataSourceResponseStatistics;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 
 /**
  * A view that gives a display of statistics for datasource responses.
@@ -57,7 +58,7 @@ import java.util.LinkedHashMap;
 public class TestDataSourceResponseStatisticsView extends Table {
 
     public static void showInWindow() {
-        new StatisticsWindow("DataSourceResponseStatisticsWindow").show();
+        new StatisticsWindow().show();
     }
 
     private static final String TABLE_TITLE_PREFIX = "DataSource Response Statistics";
@@ -87,8 +88,8 @@ public class TestDataSourceResponseStatisticsView extends Table {
     private Timer refreshTimer = null;
     private boolean refreshOnPageChange = false;
 
-    public TestDataSourceResponseStatisticsView(String locatorId) {
-        super(locatorId, getTableTitle(), null, defaultSorts, null, false);
+    public TestDataSourceResponseStatisticsView() {
+        super(getTableTitle(), null, defaultSorts, null, false);
 
         refreshTimer = new Timer() {
             @Override
@@ -147,69 +148,66 @@ public class TestDataSourceResponseStatisticsView extends Table {
         getListGrid().setFields(timestamp, reqId, status, totalRows, startRow, endRow);
         refresh();
 
-        addTableAction(extendLocatorId("toggleCollection"), "Toggle On/Off", MSG.common_msg_areYouSure(),
-            new AbstractTableAction(TableActionEnablement.ALWAYS) {
-                @Override
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    boolean toBeEnabled = !DataSourceResponseStatistics.isEnableCollection();
-                    DataSourceResponseStatistics.setEnableCollection(toBeEnabled);
-
-                    if (!toBeEnabled) {
-                        // disabling collection - no need to periodically refresh anymore so cancel timers
-                        refreshTimer.cancel();
-                        refreshOnPageChange = false;
-                        timerTitleString = null;
-                    }
-
-                    updateTitleCanvas(getTableTitle());
-                    if (window != null) {
-                        window.setTitle(getTableTitle());
-                    }
-                    refresh();
-                }
-            });
-
-        addTableAction(extendLocatorId("deleteAll"), MSG.common_button_delete_all(), MSG.common_msg_areYouSure(),
-            new AbstractTableAction(TableActionEnablement.ALWAYS) {
-                @Override
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    DataSourceResponseStatistics.clearAll();
-                    refresh();
-                }
-            });
-
-        addTableAction(extendLocatorId("export"), "Export To CSV",
-            new AbstractTableAction(TableActionEnablement.ALWAYS) {
-                @Override
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    StringBuilder csv = new StringBuilder();
-                    csv.append(FIELD_TIMESTAMP).append(',') //
-                        .append(FIELD_REQUEST_ID).append(',') //
-                        .append(FIELD_STATUS).append(',') //
-                        .append(FIELD_TOTAL_ROWS).append(',') //
-                        .append(FIELD_START_ROW).append(',') //
-                        .append(FIELD_END_ROW).append('\n');
-
-                    RecordList records = getListGrid().getDataAsRecordList();
-                    int recordsSize = records.getLength();
-                    for (int i = 0; i < recordsSize; i++) {
-                        Record record = records.get(i);
-                        csv.append(record.getAttributeAsDate(FIELD_TIMESTAMP)).append(',') //
-                            .append(record.getAttribute(FIELD_REQUEST_ID)).append(',') //
-                            .append(record.getAttribute(FIELD_STATUS)).append(',') //
-                            .append(record.getAttribute(FIELD_TOTAL_ROWS)).append(',') //
-                            .append(record.getAttribute(FIELD_START_ROW)).append(',') //
-                            .append(record.getAttribute(FIELD_END_ROW)).append('\n');
-                    }
-
-                    new MessageWindow(extendLocatorId("csv"), "Export To CSV", "<pre>" + csv.toString() + "</pre>")
-                        .show();
-                    refresh();
-                }
-            });
-
-        addTableAction(extendLocatorId("refresh"), MSG.common_button_refresh(), new AbstractTableAction(
+        addTableAction("Toggle On/Off", MSG.common_msg_areYouSure(), new AbstractTableAction(
             TableActionEnablement.ALWAYS) {
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                boolean toBeEnabled = !DataSourceResponseStatistics.isEnableCollection();
+                DataSourceResponseStatistics.setEnableCollection(toBeEnabled);
+
+                if (!toBeEnabled) {
+                    // disabling collection - no need to periodically refresh anymore so cancel timers
+                    refreshTimer.cancel();
+                    refreshOnPageChange = false;
+                    timerTitleString = null;
+                }
+
+                updateTitleCanvas(getTableTitle());
+                if (window != null) {
+                    window.setTitle(getTableTitle());
+                }
+                refresh();
+            }
+        });
+
+        addTableAction(MSG.common_button_delete_all(), MSG.common_msg_areYouSure(), new AbstractTableAction(
+            TableActionEnablement.ALWAYS) {
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                DataSourceResponseStatistics.clearAll();
+                refresh();
+            }
+        });
+
+        addTableAction("Export To CSV", new AbstractTableAction(TableActionEnablement.ALWAYS) {
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                StringBuilder csv = new StringBuilder();
+                csv.append(FIELD_TIMESTAMP).append(',') //
+                    .append(FIELD_REQUEST_ID).append(',') //
+                    .append(FIELD_STATUS).append(',') //
+                    .append(FIELD_TOTAL_ROWS).append(',') //
+                    .append(FIELD_START_ROW).append(',') //
+                    .append(FIELD_END_ROW).append('\n');
+
+                RecordList records = getListGrid().getDataAsRecordList();
+                int recordsSize = records.getLength();
+                for (int i = 0; i < recordsSize; i++) {
+                    Record record = records.get(i);
+                    csv.append(record.getAttributeAsDate(FIELD_TIMESTAMP)).append(',') //
+                        .append(record.getAttribute(FIELD_REQUEST_ID)).append(',') //
+                        .append(record.getAttribute(FIELD_STATUS)).append(',') //
+                        .append(record.getAttribute(FIELD_TOTAL_ROWS)).append(',') //
+                        .append(record.getAttribute(FIELD_START_ROW)).append(',') //
+                        .append(record.getAttribute(FIELD_END_ROW)).append('\n');
+                }
+
+                new MessageWindow("Export To CSV", "<pre>" + csv.toString() + "</pre>").show();
+                refresh();
+            }
+        });
+
+        addTableAction(MSG.common_button_refresh(), new AbstractTableAction(TableActionEnablement.ALWAYS) {
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 refresh();
@@ -235,46 +233,44 @@ public class TestDataSourceResponseStatisticsView extends Table {
                 }
             });
 
-            addTableAction(extendLocatorId("refreshTimer"), "Refresh Timer", null, timerValues,
-                new AbstractTableAction(TableActionEnablement.ALWAYS) {
-                    @Override
-                    public void executeAction(ListGridRecord[] selection, Object actionValue) {
-
-                        Integer timeout = (Integer) actionValue;
-
-                        // if being asked to refresh now, just refresh but don't touch our schedules
-                        if (timeout == null || timeout.intValue() == -2) {
-                            refresh();
-                            return;
-                        }
-
-                        // cancel everything - will reinstate if user elected to do one of these
-                        refreshTimer.cancel();
-                        refreshOnPageChange = false;
-
-                        if (timeout.intValue() == -1) {
-                            timerTitleString = null;
-                        } else if (timeout.intValue() == 0) {
-                            refreshOnPageChange = true;
-                            timerTitleString = " (refresh on page change)";
-                        } else {
-                            refreshTimer.scheduleRepeating(timeout.intValue() * 1000);
-                            timerTitleString = " (refresh every " + timeout + "s)";
-                        }
-
-                        updateTitleCanvas(getTableTitle());
-                        if (window != null) {
-                            window.setTitle(getTableTitle());
-                        }
-                        refreshTableInfo();
-                    }
-                });
-        } else { // not in the standalone window
-            addTableAction(extendLocatorId("responseShowInWin"), "Show In Window", new AbstractTableAction(
-                TableActionEnablement.ALWAYS) {
+            addTableAction("Refresh Timer", null, timerValues, new AbstractTableAction(TableActionEnablement.ALWAYS) {
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    new StatisticsWindow(extendLocatorId("responseStatsWin")).show();
+
+                    Integer timeout = (Integer) actionValue;
+
+                    // if being asked to refresh now, just refresh but don't touch our schedules
+                    if (timeout == null || timeout.intValue() == -2) {
+                        refresh();
+                        return;
+                    }
+
+                    // cancel everything - will reinstate if user elected to do one of these
+                    refreshTimer.cancel();
+                    refreshOnPageChange = false;
+
+                    if (timeout.intValue() == -1) {
+                        timerTitleString = null;
+                    } else if (timeout.intValue() == 0) {
+                        refreshOnPageChange = true;
+                        timerTitleString = " (refresh on page change)";
+                    } else {
+                        refreshTimer.scheduleRepeating(timeout.intValue() * 1000);
+                        timerTitleString = " (refresh every " + timeout + "s)";
+                    }
+
+                    updateTitleCanvas(getTableTitle());
+                    if (window != null) {
+                        window.setTitle(getTableTitle());
+                    }
+                    refreshTableInfo();
+                }
+            });
+        } else { // not in the standalone window
+            addTableAction("Show In Window", new AbstractTableAction(TableActionEnablement.ALWAYS) {
+                @Override
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    new StatisticsWindow().show();
                     refresh();
                 }
             });
@@ -321,11 +317,11 @@ public class TestDataSourceResponseStatisticsView extends Table {
         return record;
     }
 
-    class MessageWindow extends LocatableWindow {
-        public MessageWindow(String locatorId, String title, String message) {
-            super(locatorId);
+    class MessageWindow extends Window {
+        public MessageWindow(String title, String message) {
+            super();
 
-            LocatableHTMLPane htmlPane = new LocatableHTMLPane(extendLocatorId("responseStatsWinDetailsPane"));
+            HTMLPane htmlPane = new HTMLPane();
             htmlPane.setMargin(10);
             htmlPane.setDefaultWidth(600);
             htmlPane.setDefaultHeight(400);
@@ -353,14 +349,14 @@ public class TestDataSourceResponseStatisticsView extends Table {
         }
     }
 
-    static class StatisticsWindow extends LocatableWindow {
+    static class StatisticsWindow extends Window {
         private Timer blinkTimer;
 
-        public StatisticsWindow(String locatorId) {
-            super(locatorId);
+        public StatisticsWindow() {
+            super();
 
             final TestDataSourceResponseStatisticsView view;
-            view = new TestDataSourceResponseStatisticsView(extendLocatorId("ResponseStatsViewInWin"));
+            view = new TestDataSourceResponseStatisticsView();
             view.window = this;
 
             setTitle(getTableTitle());

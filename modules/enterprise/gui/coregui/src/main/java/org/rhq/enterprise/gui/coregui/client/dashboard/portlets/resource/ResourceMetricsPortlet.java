@@ -31,6 +31,7 @@ import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
@@ -58,11 +59,11 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupMetr
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.D3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**This portlet allows the end user to customize the metric display
  *
@@ -77,21 +78,21 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
 
     private int resourceId = -1;
 
-    public ResourceMetricsPortlet(String locatorId, int resourceId) {
-        super(locatorId, EntityContext.forResource(-1));
+    public ResourceMetricsPortlet(int resourceId) {
+        super(EntityContext.forResource(-1));
         this.resourceId = resourceId;
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
             if (EntityContext.Type.Resource != context.getType()) {
                 throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
             }
 
-            return new ResourceMetricsPortlet(locatorId, context.getResourceId());
+            return new ResourceMetricsPortlet(context.getResourceId());
         }
     }
 
@@ -193,7 +194,7 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                         definitionArrayIds[index++] = measurementDefMap.get(definitionToDisplay)
                                             .getId();
                                     }
-                                    
+
                                     AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>> callback = new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                                         @Override
                                         public void onFailure(Throwable caught) {
@@ -203,14 +204,13 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                         }
 
                                         @Override
-                                        public void onSuccess(
-                                            List<List<MeasurementDataNumericHighLowComposite>> results) {
+                                        public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> results) {
                                             if (!results.isEmpty()) {
                                                 boolean someChartedData = false;
                                                 //iterate over the retrieved charting data
                                                 for (int index = 0; index < displayOrder.length; index++) {
                                                     //retrieve the correct measurement definition
-                                                    MeasurementDefinition md = measurementDefMap
+                                                    final MeasurementDefinition md = measurementDefMap
                                                         .get(displayOrder[index]);
 
                                                     //load the data results for the given metric definition
@@ -222,7 +222,7 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                     double minValue = Double.MAX_VALUE;//
                                                     for (MeasurementDataNumericHighLowComposite d : data) {
                                                         if ((!Double.isNaN(d.getValue()))
-                                                            && (String.valueOf(d.getValue()).indexOf("NaN") == -1)) {
+                                                            && (!String.valueOf(d.getValue()).contains("NaN"))) {
                                                             if (d.getValue() < minValue) {
                                                                 minValue = d.getValue();
                                                             }
@@ -235,40 +235,34 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
 
                                                     for (MeasurementDataNumericHighLowComposite d : data) {
                                                         if ((!Double.isNaN(d.getValue()))
-                                                            && (String.valueOf(d.getValue()).indexOf("NaN") == -1)) {
+                                                            && (!String.valueOf(d.getValue()).contains("NaN"))) {
                                                             commaDelimitedList += d.getValue() + ",";
                                                         }
                                                     }
-                                                    LocatableDynamicForm row = new LocatableDynamicForm(
-                                                        recentMeasurementsContent.extendLocatorId(md.getName()));
-                                                    row.setNumCols(3);
-                                                    row.setColWidths(65,"*",100);
+                                                    DynamicForm row = new DynamicForm();
+                                                    row.setNumCols(4);
+                                                    row.setColWidths(65, "*", 20, 100);
                                                     row.setWidth100();
                                                     row.setAutoHeight();
                                                     row.setOverflow(Overflow.VISIBLE);
-                                                    HTMLFlow graph = new HTMLFlow();
+                                                    HTMLFlow sparklineGraph = new HTMLFlow();
                                                     String contents = "<span id='sparkline_" + index
                                                         + "' class='dynamicsparkline' width='0' " + "values='"
                                                         + commaDelimitedList + "'>...</span>";
-                                                    graph.setContents(contents);
-                                                    graph.setContentsType(ContentsType.PAGE);
+                                                    sparklineGraph.setContents(contents);
+                                                    sparklineGraph.setContentsType(ContentsType.PAGE);
                                                     //disable scrollbars on span
-                                                    graph.setScrollbarSize(0);
+                                                    sparklineGraph.setScrollbarSize(0);
 
-                                                    CanvasItem graphContainer = new CanvasItem();
-                                                    graphContainer.setShowTitle(false);
-                                                    graphContainer.setHeight(16);
-                                                    graphContainer.setWidth(60);
-                                                    graphContainer.setCanvas(graph);
+                                                    CanvasItem sparklineContainer = new CanvasItem();
+                                                    sparklineContainer.setShowTitle(false);
+                                                    sparklineContainer.setHeight(16);
+                                                    sparklineContainer.setWidth(60);
+                                                    sparklineContainer.setCanvas(sparklineGraph);
 
                                                     //Link/title element
                                                     final String title = md.getDisplayName();
-                                                    final String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricSingleResource&id="
-                                                        + resourceId + "&m=" + md.getId();
-
-                                                    //have link launch modal window on click
-                                                    LinkItem link = AbstractActivityView.newLinkItem(title,
-                                                        destination);
+                                                    LinkItem link = AbstractActivityView.newLinkItem(title, null);
                                                     link.setTooltip(title);
                                                     link.setTitleVAlign(VerticalAlignment.TOP);
                                                     link.setAlign(Alignment.LEFT);
@@ -279,13 +273,44 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                     link.addClickHandler(new ClickHandler() {
                                                         @Override
                                                         public void onClick(ClickEvent event) {
-                                                            ChartViewWindow window = new ChartViewWindow(
-                                                                recentMeasurementsContent
-                                                                    .extendLocatorId("ChartWindow"), title);
+                                                            ChartViewWindow window = new ChartViewWindow(title);
+
+                                                            final D3GraphListView graphView = D3GraphListView
+                                                                .createSingleGraph(resourceComposite.getResource(),
+                                                                    md.getId(), true);
+                                                            graphView.addSetButtonClickHandler(new ClickHandler() {
+                                                                @Override
+                                                                public void onClick(ClickEvent event) {
+                                                                    graphView.redrawGraphs();
+                                                                }
+                                                            });
+
+                                                            window.addItem(graphView);
+                                                            window.show();
+                                                        }
+                                                    });
+
+                                                    //@todo: this goes away once we have validated charts
+                                                    final String chartTitle = md.getDisplayName();
+                                                    final String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricSingleResource&id="
+                                                        + resourceId + "&m=" + md.getId();
+
+                                                    //have link launch modal window on click
+                                                    LinkItem oldLink = AbstractActivityView.newLinkItem("*",
+                                                        destination);
+                                                    oldLink.setTooltip("Link to test Old Chart");
+                                                    oldLink.setTitleVAlign(VerticalAlignment.TOP);
+                                                    oldLink.setAlign(Alignment.LEFT);
+                                                    oldLink.setClipValue(true);
+                                                    oldLink.setWrap(true);
+                                                    oldLink.setHeight(26);
+                                                    oldLink.setWidth("100%");
+                                                    oldLink.addClickHandler(new ClickHandler() {
+                                                        @Override
+                                                        public void onClick(ClickEvent event) {
+                                                            ChartViewWindow window = new ChartViewWindow(chartTitle);
                                                             //generate and include iframed content
-                                                            FullHTMLPane iframe = new FullHTMLPane(
-                                                                recentMeasurementsContent.extendLocatorId("View"),
-                                                                destination);
+                                                            FullHTMLPane iframe = new FullHTMLPane(destination);
                                                             window.addItem(iframe);
                                                             window.show();
                                                         }
@@ -293,34 +318,30 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
 
                                                     //Value
                                                     String convertedValue;
-                                                    convertedValue = AbstractActivityView
-                                                        .convertLastValueForDisplay(lastValue, md);
+                                                    convertedValue = AbstractActivityView.convertLastValueForDisplay(
+                                                        lastValue, md);
                                                     StaticTextItem value = AbstractActivityView
                                                         .newTextItem(convertedValue);
                                                     value.setVAlign(VerticalAlignment.TOP);
                                                     value.setAlign(Alignment.RIGHT);
 
-                                                    row.setItems(graphContainer, link, value);
+                                                    row.setItems(sparklineContainer, link, oldLink, value);
                                                     row.setWidth100();
 
                                                     //if graph content returned
-                                                    if ((md.getName().trim().indexOf("Trait.") == -1)
-                                                        && (lastValue != -1)) {
+                                                    if ((!md.getName().trim().contains("Trait.")) && (lastValue != -1)) {
                                                         column.addMember(row);
                                                         someChartedData = true;
                                                     }
                                                 }
                                                 if (!someChartedData) {// when there are results but no chartable entries.
-                                                    LocatableDynamicForm row = AbstractActivityView
-                                                        .createEmptyDisplayRow(
-                                                            recentMeasurementsContent.extendLocatorId("None"),
-                                                            AbstractActivityView.RECENT_MEASUREMENTS_NONE);
+                                                    DynamicForm row = AbstractActivityView.createEmptyDisplayRow(
+
+                                                    AbstractActivityView.RECENT_MEASUREMENTS_NONE);
                                                     column.addMember(row);
                                                 } else {
                                                     //insert see more link
-                                                    LocatableDynamicForm row = new LocatableDynamicForm(
-                                                        recentMeasurementsContent
-                                                            .extendLocatorId("RecentMeasurementsContentSeeMore"));
+                                                    DynamicForm row = new DynamicForm();
                                                     String link = LinkManager
                                                         .getResourceMonitoringGraphsLink(resourceId);
                                                     AbstractActivityView.addSeeMoreLink(row, link, column);
@@ -328,10 +349,8 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                 //call out to 3rd party javascript lib
                                                 BrowserUtility.graphSparkLines();
                                             } else {
-                                                LocatableDynamicForm row = AbstractActivityView
-                                                    .createEmptyDisplayRow(
-                                                        recentMeasurementsContent.extendLocatorId("None"),
-                                                        AbstractActivityView.RECENT_MEASUREMENTS_NONE);
+                                                DynamicForm row = AbstractActivityView
+                                                    .createEmptyDisplayRow(AbstractActivityView.RECENT_MEASUREMENTS_NONE);
                                                 column.addMember(row);
                                             }
                                             setRefreshing(false);
@@ -340,14 +359,15 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
 
                                     //make the asynchronous call for all the measurement data
                                     if (end != -1 && start != -1) {
-                                        GWTServiceLookup.getMeasurementDataService().findDataForResource(
-                                            resourceId, definitionArrayIds, start, end, 60, callback);
+                                        GWTServiceLookup.getMeasurementDataService().findDataForResource(resourceId,
+                                            definitionArrayIds, start, end, 60, callback);
                                     } else if (lastN != -1 && units != -1) {
                                         GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(
                                             resourceId, definitionArrayIds, lastN, units, 60, callback);
                                     } else {
                                         GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(
-                                            resourceId, definitionArrayIds, 8, MeasurementUtility.UNIT_HOURS, 60, callback);
+                                            resourceId, definitionArrayIds, 8, MeasurementUtility.UNIT_HOURS, 60,
+                                            callback);
                                     }
                                 }
                             });

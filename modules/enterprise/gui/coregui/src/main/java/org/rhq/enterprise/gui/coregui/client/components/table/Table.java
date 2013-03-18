@@ -49,6 +49,7 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.HiddenItem;
@@ -67,6 +68,7 @@ import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.menu.IMenuButton;
+import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 
@@ -81,15 +83,11 @@ import org.rhq.enterprise.gui.coregui.client.util.CriteriaUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 
 /**
  * A tabular view of set of data records from an {@link RPCDataSource}.
@@ -104,18 +102,18 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Ian Springer
  */
 @SuppressWarnings("rawtypes")
-public class Table<DS extends RPCDataSource> extends LocatableHLayout implements RefreshableView, InitializableView {
+public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements RefreshableView, InitializableView {
 
     private static final int DATA_PAGE_SIZE = 50;
 
     protected static final String FIELD_ID = "id";
     protected static final String FIELD_NAME = "name";
 
-    private LocatableVLayout contents;
+    private EnhancedVLayout contents;
 
     private HTMLFlow titleCanvas;
 
-    private LocatableVLayout titleLayout;
+    private EnhancedVLayout titleLayout;
 
     private TitleBar titleBar;
     private String titleIcon;
@@ -148,57 +146,56 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     private boolean tableActionDisableOverride = false;
     protected List<Canvas> extraWidgetsAboveFooter = new ArrayList<Canvas>();
     protected List<Canvas> extraWidgetsInMainFooter = new ArrayList<Canvas>();
-    private LocatableToolStrip footer;
-    private LocatableToolStrip footerExtraWidgets;
-    private LocatableIButton refreshButton;
+    private EnhancedToolStrip footer;
+    private EnhancedToolStrip footerExtraWidgets;
+    private EnhancedIButton refreshButton;
     private boolean initialized;
 
-    public Table(String locatorId) {
-        this(locatorId, null, null, null, null, true);
+    public Table() {
+        this(null, null, null, null, true);
     }
 
-    public Table(String locatorId, String tableTitle) {
-        this(locatorId, tableTitle, null, null, null, true);
+    public Table(String tableTitle) {
+        this(tableTitle, null, null, null, true);
     }
 
-    public Table(String locatorId, String tableTitle, String icon) {
-        this(locatorId, tableTitle, null, null, null, true);
+    public Table(String tableTitle, String icon) {
+        this(tableTitle, null, null, null, true);
         setTitleIcon(icon);
     }
 
-    public Table(String locatorId, String tableTitle, Criteria criteria, String icon) {
-        this(locatorId, tableTitle, criteria, null, null, (criteria == null));
+    public Table(String tableTitle, Criteria criteria, String icon) {
+        this(tableTitle, criteria, null, null, (criteria == null));
         setTitleIcon(icon);
     }
 
-    public Table(String locatorId, String tableTitle, Criteria criteria) {
-        this(locatorId, tableTitle, criteria, null, null, (criteria == null));
+    public Table(String tableTitle, Criteria criteria) {
+        this(tableTitle, criteria, null, null, (criteria == null));
     }
 
-    public Table(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers) {
-        this(locatorId, tableTitle, null, sortSpecifiers, null, true);
+    public Table(String tableTitle, SortSpecifier[] sortSpecifiers) {
+        this(tableTitle, null, sortSpecifiers, null, true);
     }
 
-    protected Table(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers, Criteria criteria) {
-        this(locatorId, tableTitle, criteria, sortSpecifiers, null, (criteria == null));
+    protected Table(String tableTitle, SortSpecifier[] sortSpecifiers, Criteria criteria) {
+        this(tableTitle, criteria, sortSpecifiers, null, (criteria == null));
     }
 
-    public Table(String locatorId, String tableTitle, boolean autoFetchData) {
-        this(locatorId, tableTitle, null, null, null, autoFetchData);
+    public Table(String tableTitle, boolean autoFetchData) {
+        this(tableTitle, null, null, null, autoFetchData);
     }
 
-    public Table(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames) {
-        this(locatorId, tableTitle, null, sortSpecifiers, excludedFieldNames, true);
+    public Table(String tableTitle, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames) {
+        this(tableTitle, null, sortSpecifiers, excludedFieldNames, true);
     }
 
-    public Table(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
-        String[] excludedFieldNames) {
-        this(locatorId, tableTitle, criteria, sortSpecifiers, excludedFieldNames, (criteria == null));
+    public Table(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames) {
+        this(tableTitle, criteria, sortSpecifiers, excludedFieldNames, (criteria == null));
     }
 
-    public Table(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
-        String[] excludedFieldNames, boolean autoFetchData) {
-        super(locatorId);
+    public Table(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames,
+        boolean autoFetchData) {
+        super();
 
         if (criteria != null && autoFetchData) {
             throw new IllegalArgumentException(
@@ -248,9 +245,9 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
      * @return the Layout for all of the Table contents
      * @see #configureTableContents(Layout)
      */
-    protected LocatableVLayout createTableContents() {
+    protected EnhancedVLayout createTableContents() {
         if (null == contents) {
-            contents = new LocatableVLayout(extendLocatorId("Contents"));
+            contents = new EnhancedVLayout();
         }
 
         return contents;
@@ -273,7 +270,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         contents.setOverflow(Overflow.AUTO);
     }
 
-    public LocatableVLayout getTableContents() {
+    public EnhancedVLayout getTableContents() {
         return contents;
     }
 
@@ -316,7 +313,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             }
         }
 
-        listGrid = createListGrid(contents.extendLocatorId("ListGrid"));
+        listGrid = createListGrid();
         configureListGrid(listGrid);
 
         listGrid.setAutoFetchData(autoFetchData);
@@ -424,8 +421,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             updateTitleCanvas(this.titleString);
 
             if (showHeader) {
-                // titleLayout not really needed now as TitleBar has a LocatableVLayout
-                titleLayout = new LocatableVLayout(contents.extendLocatorId("Title"));
+                // titleLayout not really needed now as TitleBar has a VLayout
+                titleLayout = new EnhancedVLayout();
                 titleLayout.setAutoHeight();
                 titleLayout.setAlign(VerticalAlignment.BOTTOM);
                 contents.addMember(titleLayout, 0);
@@ -441,14 +438,14 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
             // A second toolstrip that optionally appears before the main footer - it will contain extra widgets.
             // This is hidden from view unless extra widgets are actually added to the table above the main footer.
-            this.footerExtraWidgets = new LocatableToolStrip(contents.extendLocatorId("FooterExtraWidgets"));
+            this.footerExtraWidgets = new EnhancedToolStrip();
             footerExtraWidgets.setPadding(5);
             footerExtraWidgets.setWidth100();
             footerExtraWidgets.setMembersMargin(15);
             footerExtraWidgets.hide();
             contents.addMember(footerExtraWidgets);
 
-            this.footer = new LocatableToolStrip(contents.extendLocatorId("Footer"));
+            this.footer = new EnhancedToolStrip();
             footer.setPadding(5);
             footer.setWidth100();
             footer.setMembersMargin(15);
@@ -536,13 +533,13 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         // logic. This happens in selenium testing or when a user navs away prior to the refresh.
         this.listGrid = null;
 
-        SeleniumUtility.destroyMembers(createTableContents());
+        EnhancedUtility.destroyMembers(createTableContents());
         super.destroy();
     }
 
     private void drawHeader() {
         // just use the first icon (not sure use case for multiple icons in title)
-        titleBar = new TitleBar(titleLayout, titleString);
+        titleBar = new TitleBar(titleString);
         if (titleIcon != null) {
             titleBar.setIcon(titleIcon);
         }
@@ -566,7 +563,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
             if (null == tableAction.getValueMap()) {
                 // button action
-                IButton button = new LocatableIButton(tableAction.getLocatorId(), tableAction.getTitle());
+                IButton button = new EnhancedIButton(tableAction.getTitle());
                 button.setDisabled(true);
                 button.setOverflow(Overflow.VISIBLE);
                 button.addClickHandler(new ClickHandler() {
@@ -596,7 +593,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
             } else {
                 // menu action
-                LocatableMenu menu = new LocatableMenu(tableAction.getLocatorId() + "Menu");
+                Menu menu = new Menu();
                 final Map<String, Object> menuEntries = tableAction.getValueMap();
                 for (final String key : menuEntries.keySet()) {
                     MenuItem item = new MenuItem(key);
@@ -609,7 +606,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                     menu.addItem(item);
                 }
 
-                IMenuButton menuButton = new LocatableIMenuButton(tableAction.getLocatorId(), tableAction.getTitle());
+                IMenuButton menuButton = new IMenuButton(tableAction.getTitle());
                 menuButton.setMenu(menu);
                 menuButton.setDisabled(true);
                 menuButton.setAutoFit(true); // this makes it pretty tight, but maybe better than the default, which is pretty wide
@@ -628,7 +625,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         footer.addMember(new LayoutSpacer());
 
         if (isShowFooterRefresh()) {
-            this.refreshButton = new LocatableIButton(extendLocatorId("Refresh"), MSG.common_button_refresh());
+            this.refreshButton = new EnhancedIButton(MSG.common_button_refresh());
             refreshButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     disableAllFooterControls();
@@ -853,14 +850,12 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     /**
      * Creates this Table's list grid (called by onInit()). Subclasses can override this if they require a custom
-     * subclass of LocatableListGrid.
+     * subclass of ListGrid.
      *
-     * @param locatorId the locatorId that should be set on the returned LocatableListGrid
-     *
-     * @return this Table's list grid (must be an instance of LocatableListGrid)
+     * @return this Table's list grid (must be an instance of ListGrid)
      */
-    protected LocatableListGrid createListGrid(String locatorId) {
-        return new LocatableListGrid(locatorId);
+    protected ListGrid createListGrid() {
+        return new ListGrid();
     }
 
     /**
@@ -959,8 +954,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
      * (via refresh() or CoreGUI.refresh()) or footer (via refreshTableActions) are refreshed as needed at action
      * completion. Failure to do so may leave the widgets disabled.
      */
-    public void addTableAction(String locatorId, String title, TableAction tableAction) {
-        this.addTableAction(locatorId, title, null, null, tableAction);
+    public void addTableAction(String title, TableAction tableAction) {
+        this.addTableAction(title, null, null, tableAction);
     }
 
     /**
@@ -969,8 +964,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
      * (via refresh() or CoreGUI.refresh()) or footer (via refreshTableActions) are refreshed as needed at action
      * completion. Failure to do so may leave the widgets disabled.
      */
-    public void addTableAction(String locatorId, String title, String confirmation, TableAction tableAction) {
-        this.addTableAction(locatorId, title, confirmation, null, tableAction);
+    public void addTableAction(String title, String confirmation, TableAction tableAction) {
+        this.addTableAction(title, confirmation, null, tableAction);
     }
 
     /**
@@ -979,19 +974,9 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
      * (via refresh() or CoreGUI.refresh()) or footer (via refreshTableActions) are refreshed as needed at action
      * completion. Failure to do so may leave the widgets disabled.
      */
-    public void addTableAction(String locatorId, String title, String confirmation,
-        Map<String, Object> valueMap, TableAction tableAction) {
-        // If the specified locator ID is qualified, strip off the ancestry prefix, so we can make sure its locator ID
-        // extends the footer's locator ID as it should.
-        int underscoreIndex = locatorId.lastIndexOf('_');
-        String unqualifiedLocatorId;
-        if (underscoreIndex >= 0 && underscoreIndex != (locatorId.length() - 1)) {
-            unqualifiedLocatorId = locatorId.substring(underscoreIndex + 1);
-        } else {
-            unqualifiedLocatorId = locatorId;
-        }
-        TableActionInfo info = new TableActionInfo(this.footer.extendLocatorId(unqualifiedLocatorId), title,
-            confirmation, valueMap, tableAction);
+    public void addTableAction(String title, String confirmation, Map<String, Object> valueMap, TableAction tableAction) {
+
+        TableActionInfo info = new TableActionInfo(title, confirmation, valueMap, tableAction);
         tableActions.add(info);
     }
 
@@ -1010,17 +995,19 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
      * preserve the order of map items
      * @param tableAction the tableAction object (on this object the <code>executeAction()</code> is actually invoked)
      */
-    public void updateTableAction(String title, Map<String, Object> valueMap,
-        TableAction tableAction) {
+    public void updateTableAction(String title, Map<String, Object> valueMap, TableAction tableAction) {
         if (title == null) {
             return;
         }
         for (TableActionInfo info : tableActions) {
             if (title.equals(info.getTitle())) {
-                if (valueMap != null) info.setValueMap(valueMap);
-                if (tableAction != null) info.setAction(tableAction);
+                if (valueMap != null)
+                    info.setValueMap(valueMap);
+                if (tableAction != null)
+                    info.setAction(tableAction);
                 // the action listeners have to be re-added
-                if (isInitialized()) drawFooter();
+                if (isInitialized())
+                    drawFooter();
                 break;
             }
         }
@@ -1178,14 +1165,14 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
      *
      * @author Joseph Marques 
      */
-    private static class TableFilter extends LocatableDynamicForm implements KeyPressHandler, ChangedHandler {
+    private static class TableFilter extends DynamicForm implements KeyPressHandler, ChangedHandler {
 
         private Table<?> table;
         private EnhancedSearchBarItem searchBarItem;
         private HiddenItem hiddenItem;
 
         public TableFilter(Table<?> table) {
-            super(table.extendLocatorId("TableFilter"));
+            super();
             setWidth100();
             setPadding(5);
             this.table = table;
@@ -1204,13 +1191,13 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                     nextFormItem.addChangedHandler(this);
                 } else if (nextFormItem instanceof EnhancedSearchBarItem) {
                     searchBarItem = (EnhancedSearchBarItem) nextFormItem;
-                    searchBarItem.getSearchBar().getSearchComboboxItem().addKeyPressHandler(this);
+                    searchBarItem.getSearchBar().getSearchTextItem().addKeyPressHandler(this);
                     String name = searchBarItem.getName();
                     // postfix the name of the item so it is not processed by the filters and that the
                     // hidden item is used instead.
                     searchBarItem.setName(name + "_hidden");
                     hiddenItem = new HiddenItem(name);
-                    hiddenItem.setValue(searchBarItem.getSearchBar().getSearchComboboxItem().getValueAsString());
+                    hiddenItem.setValue(searchBarItem.getSearchBar().getSearchTextItem().getValueAsString());
                 }
             }
 
@@ -1239,8 +1226,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 Log.debug("Table.TableFilter Pressed Enter key");
 
                 if (null != searchBarItem) {
-                    ComboBoxItem comboBoxItem = searchBarItem.getSearchBar().getSearchComboboxItem();
-                    String searchBarValue = comboBoxItem.getValueAsString();
+                    TextItem searchTextItem = searchBarItem.getSearchBar().getSearchTextItem();
+                    String searchBarValue = searchTextItem.getValueAsString();
                     String hiddenValue = (String) hiddenItem.getValue();
                     Log.debug("Table.TableFilter searchBarValue :" + searchBarValue + ", hiddenValue" + hiddenValue);
 
@@ -1275,24 +1262,17 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     public static class TableActionInfo {
-        private String locatorId;
         private String title;
         private String confirmMessage;
         private Map<String, Object> valueMap;
         private TableAction action;
         private Canvas actionCanvas;
 
-        protected TableActionInfo(String locatorId, String title, String confirmMessage,
-            Map<String, Object> valueMap, TableAction action) {
-            this.locatorId = locatorId;
+        protected TableActionInfo(String title, String confirmMessage, Map<String, Object> valueMap, TableAction action) {
             this.title = title;
             this.confirmMessage = confirmMessage;
             this.valueMap = valueMap;
             this.action = action;
-        }
-
-        public String getLocatorId() {
-            return locatorId;
         }
 
         public String getTitle() {
@@ -1306,7 +1286,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         public Map<String, Object> getValueMap() {
             return valueMap;
         }
-        
+
         public void setValueMap(Map<String, Object> valueMap) {
             this.valueMap = valueMap;
         }

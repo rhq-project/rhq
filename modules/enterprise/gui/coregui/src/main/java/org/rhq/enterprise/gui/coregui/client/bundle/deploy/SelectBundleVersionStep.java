@@ -38,8 +38,6 @@ import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author Jay Shaughnessy
@@ -71,13 +69,9 @@ public class SelectBundleVersionStep extends AbstractWizardStep {
         return MSG.view_bundle_deployWizard_selectVersionStep();
     }
 
-    public Canvas getCanvas(Locatable parent) {
+    public Canvas getCanvas() {
         if (form == null) {
-            if (parent != null) {
-                form = new LocatableDynamicForm(parent.extendLocatorId("BundleDeploySelectBundleVersion"));
-            } else {
-                form = new LocatableDynamicForm("BundleDeploySelectBundleVersion");
-            }
+            form = new DynamicForm();
             form.setWidth100();
             form.setNumCols(2);
             form.setColWidths("50%", "*");
@@ -153,8 +147,8 @@ public class SelectBundleVersionStep extends AbstractWizardStep {
                         new AsyncCallback<PageList<BundleDeployment>>() {
 
                             public void onSuccess(PageList<BundleDeployment> result) {
-                                radioGroupValues.put(LATEST_VERSION, MSG
-                                    .view_bundle_deployWizard_selectVersion_latest(latestVersion.getVersion()));
+                                radioGroupValues.put(LATEST_VERSION,
+                                    MSG.view_bundle_deployWizard_selectVersion_latest(latestVersion.getVersion()));
 
                                 if (!result.isEmpty()) {
                                     BundleDeployment liveDeployment = result.get(0);
@@ -164,12 +158,12 @@ public class SelectBundleVersionStep extends AbstractWizardStep {
                                     liveDeployment.setBundleVersion(bundleVersions.get(i));
                                     wizard.setLiveDeployment(liveDeployment);
                                     liveVersion = liveDeployment.getBundleVersion();
-                                    radioGroupValues.put(LIVE_VERSION, MSG
-                                        .view_bundle_deployWizard_selectVersion_live(liveVersion.getVersion()));
+                                    radioGroupValues.put(LIVE_VERSION,
+                                        MSG.view_bundle_deployWizard_selectVersion_live(liveVersion.getVersion()));
                                 }
 
-                                radioGroupValues.put(SELECT_VERSION, MSG
-                                    .view_bundle_deployWizard_selectVersion_select());
+                                radioGroupValues.put(SELECT_VERSION,
+                                    MSG.view_bundle_deployWizard_selectVersion_select());
                                 selectVersionItem.setValueMap(selectVersionValues);
                                 selectVersionItem.setValue(latestVersion.getVersion());
                                 selectVersionItem.redraw();

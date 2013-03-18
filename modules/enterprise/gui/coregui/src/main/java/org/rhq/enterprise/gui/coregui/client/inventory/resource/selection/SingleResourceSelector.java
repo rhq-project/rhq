@@ -30,12 +30,12 @@ import org.rhq.core.domain.resource.ResourceType;
  */
 public class SingleResourceSelector extends ResourceSelector {
 
-    public SingleResourceSelector(String locatorId) {
-        super(locatorId);
+    public SingleResourceSelector() {
+        super();
     }
 
-    public SingleResourceSelector(String locatorId, ResourceType resourceTypeFilter, boolean forceResourceTypeFilter) {
-        super(locatorId, resourceTypeFilter, forceResourceTypeFilter);
+    public SingleResourceSelector(ResourceType resourceTypeFilter, boolean forceResourceTypeFilter) {
+        super(resourceTypeFilter, forceResourceTypeFilter);
     }
 
     @Override

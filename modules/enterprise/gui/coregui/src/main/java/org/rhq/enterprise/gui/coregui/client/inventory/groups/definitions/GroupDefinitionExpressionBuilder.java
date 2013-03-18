@@ -29,8 +29,10 @@ import java.util.HashMap;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
@@ -50,19 +52,20 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.GroupDefinitionExpressionBuilderGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A dialog window that lets you build custom dynagroup expressions.
  * 
  * @author John Mazzitelli
  */
-public class GroupDefinitionExpressionBuilder extends LocatableWindow {
+public class GroupDefinitionExpressionBuilder extends Window {
+
+    protected Messages MSG = CoreGUI.getMessages();
 
     private AddExpressionHandler addExpressionHandler;
 
@@ -85,14 +88,13 @@ public class GroupDefinitionExpressionBuilder extends LocatableWindow {
      * the form field whose value will be set to the expression string
      * when the user finishes building it.
      * 
-     * @param locatorId
      * @param expressionItem form item whose value will be the expression that is built
      * @param templateItem this is the template drop down item that will be cleared if an expression
      *                     is added - this is so the user isn't confused thinking the new expression
      *                     is now the value of the template text 
      */
-    public GroupDefinitionExpressionBuilder(String locatorId, AddExpressionHandler addExpressionHandler) {
-        super(locatorId);
+    public GroupDefinitionExpressionBuilder(AddExpressionHandler addExpressionHandler) {
+        super();
 
         this.addExpressionHandler = addExpressionHandler;
 
@@ -234,7 +236,8 @@ public class GroupDefinitionExpressionBuilder extends LocatableWindow {
             }
         });
 
-        this.expressionTypeItem = new SortedSelectItem("expressionType", MSG.view_dynagroup_exprBuilder_expressionType());
+        this.expressionTypeItem = new SortedSelectItem("expressionType",
+            MSG.view_dynagroup_exprBuilder_expressionType());
         this.expressionTypeItem.setTooltip(MSG.view_dynagroup_exprBuilder_expressionType_tooltip());
         this.expressionTypeItem.setHoverWidth(250);
         this.expressionTypeItem.setRedrawOnChange(true);
@@ -324,7 +327,7 @@ public class GroupDefinitionExpressionBuilder extends LocatableWindow {
         closeButton.setEndRow(true);
 
         // stitch together the UI
-        LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("buttons"));
+        DynamicForm form = new DynamicForm();
         form.setWrapItemTitles(false);
         form.setAutoWidth();
         form.setAutoHeight();
@@ -333,7 +336,7 @@ public class GroupDefinitionExpressionBuilder extends LocatableWindow {
             this.pluginItem, this.resourceTypeItem, this.propertyNameItem, this.unsetItem, this.compareTypeItem,
             this.valueItem, addButton, closeButton);
 
-        LocatableVLayout layout = new LocatableVLayout(extendLocatorId("layout"));
+        EnhancedVLayout layout = new EnhancedVLayout();
         layout.setLayoutMargin(5);
         layout.setAutoHeight();
         layout.setAutoWidth();

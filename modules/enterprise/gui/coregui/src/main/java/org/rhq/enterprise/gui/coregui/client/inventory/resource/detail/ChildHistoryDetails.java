@@ -28,26 +28,25 @@ import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * Details view for a single child history entity.
  * 
  * @author John Mazzitelli
  */
-public class ChildHistoryDetails extends LocatableVLayout {
+public class ChildHistoryDetails extends EnhancedVLayout {
     private CreateResourceHistory createHistory;
     private DeleteResourceHistory deleteHistory;
 
-    public ChildHistoryDetails(String locatorId, CreateResourceHistory history) {
-        super(locatorId);
+    public ChildHistoryDetails(CreateResourceHistory history) {
+        super();
         createHistory = history;
         deleteHistory = null;
     }
 
-    public ChildHistoryDetails(String locatorId, DeleteResourceHistory history) {
-        super(locatorId);
+    public ChildHistoryDetails(DeleteResourceHistory history) {
+        super();
         createHistory = null;
         deleteHistory = history;
     }
@@ -65,7 +64,7 @@ public class ChildHistoryDetails extends LocatableVLayout {
     }
 
     private DynamicForm buildForCreate(CreateResourceHistory history) {
-        DynamicForm form = new LocatableDynamicForm(extendLocatorId("createForm"));
+        DynamicForm form = new DynamicForm();
         form.setWidth100();
         form.setHeight100();
         form.setWrapItemTitles(false);
@@ -145,7 +144,7 @@ public class ChildHistoryDetails extends LocatableVLayout {
     }
 
     private DynamicForm buildForDelete(DeleteResourceHistory history) {
-        DynamicForm form = new LocatableDynamicForm(extendLocatorId("deleteForm"));
+        DynamicForm form = new DynamicForm();
         form.setWidth100();
         form.setHeight100();
         form.setWrapItemTitles(false);

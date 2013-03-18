@@ -23,23 +23,23 @@ import com.smartgwt.client.widgets.Canvas;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A view for group plugin configuration history.
  *
  * @author John Mazzitelli
  */
-public class HistoryGroupPluginConfigurationView extends LocatableVLayout implements BookmarkableView {
+public class HistoryGroupPluginConfigurationView extends EnhancedVLayout implements BookmarkableView {
     private final ResourceGroupComposite groupComposite;
     private HistoryGroupPluginConfigurationTable groupHistoryTable;
     private Canvas detailsCanvas = null;
 
-    public HistoryGroupPluginConfigurationView(String locatorId, ResourceGroupComposite groupComposite) {
-        super(locatorId);
+    public HistoryGroupPluginConfigurationView(ResourceGroupComposite groupComposite) {
+        super();
         this.groupComposite = groupComposite;
 
-        groupHistoryTable = new HistoryGroupPluginConfigurationTable(extendLocatorId("Table"), groupComposite);
+        groupHistoryTable = new HistoryGroupPluginConfigurationTable(groupComposite);
         addMember(groupHistoryTable);
     }
 
@@ -73,11 +73,9 @@ public class HistoryGroupPluginConfigurationView extends LocatableVLayout implem
             }
 
             if (configView) {
-                detailsCanvas = new HistoryGroupPluginConfigurationSettings(extendLocatorId("SettingsView"),
-                    this.groupComposite, groupHistoryId);
+                detailsCanvas = new HistoryGroupPluginConfigurationSettings(this.groupComposite, groupHistoryId);
             } else {
-                detailsCanvas = new HistoryGroupPluginConfigurationMembers(extendLocatorId("MembersView"),
-                    this.groupComposite, groupHistoryId);
+                detailsCanvas = new HistoryGroupPluginConfigurationMembers(this.groupComposite, groupHistoryId);
             }
             addMember(detailsCanvas);
             setVisibleMember(detailsCanvas);

@@ -25,12 +25,17 @@ import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
+
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.domain.resource.composite.PlatformMetricsSummary.CPUMetric;
+import org.rhq.core.domain.resource.composite.PlatformMetricsSummary.MemoryMetric;
+import org.rhq.core.domain.resource.composite.PlatformMetricsSummary.SwapMetric;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
@@ -43,9 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 
-import static org.rhq.core.domain.resource.composite.PlatformMetricsSummary.*;
 
 public class PlatformSummaryPortlet extends Table<PlatformMetricDataSource> implements Portlet, HasViewName {
 
@@ -63,12 +66,12 @@ public class PlatformSummaryPortlet extends Table<PlatformMetricDataSource> impl
 
     private boolean exportable;
 
-    public PlatformSummaryPortlet(String locatorId) {
-        this(locatorId, false);
+    public PlatformSummaryPortlet() {
+        this(false);
     }
 
-    public PlatformSummaryPortlet(String locatorId, boolean isExportable) {
-        super(locatorId);
+    public PlatformSummaryPortlet(boolean isExportable) {
+        super();
         setDataSource(new PlatformMetricDataSource(this));
         exportable = isExportable;
     }
@@ -113,7 +116,7 @@ public class PlatformSummaryPortlet extends Table<PlatformMetricDataSource> impl
     }
 
     private void addExportAction() {
-        addTableAction("Export",  MSG.common_button_reports_export(), new AbstractTableAction() {
+        addTableAction("Export", MSG.common_button_reports_export(), new AbstractTableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
                 return enableIfRecordsExist(getListGrid());
@@ -129,8 +132,8 @@ public class PlatformSummaryPortlet extends Table<PlatformMetricDataSource> impl
     }
 
     @Override
-    protected LocatableListGrid createListGrid(String locatorId) {
-        return new LocatableListGrid(locatorId) {
+    protected ListGrid createListGrid() {
+        return new ListGrid() {
             {
                 setShowRecordComponents(true);
                 setShowRecordComponentsByCell(true);
@@ -157,7 +160,8 @@ public class PlatformSummaryPortlet extends Table<PlatformMetricDataSource> impl
                             Label text = new Label();
                             text.setWrap(false);
                             text.setAutoFit(true);
-                            text.setContents(MeasurementConverterClient.format(value, MeasurementUnits.PERCENTAGE, true));
+                            text.setContents(MeasurementConverterClient
+                                .format(value, MeasurementUnits.PERCENTAGE, true));
                             bar.addMember(text);
 
                             Img first = new Img("availBar/up.png");
@@ -185,8 +189,8 @@ public class PlatformSummaryPortlet extends Table<PlatformMetricDataSource> impl
                             Label text = new Label();
                             text.setWrap(false);
                             text.setAutoFit(true);
-                            text.setContents(MeasurementConverterClient.format(percent,
-                                    MeasurementUnits.PERCENTAGE, true));
+                            text.setContents(MeasurementConverterClient.format(percent, MeasurementUnits.PERCENTAGE,
+                                true));
                             bar.addMember(text);
 
                             Img first = new Img("availBar/up.png");
@@ -214,8 +218,8 @@ public class PlatformSummaryPortlet extends Table<PlatformMetricDataSource> impl
                             Label text = new Label();
                             text.setWrap(false);
                             text.setAutoFit(true);
-                            text.setContents(MeasurementConverterClient.format(percent,
-                                    MeasurementUnits.PERCENTAGE, true));
+                            text.setContents(MeasurementConverterClient.format(percent, MeasurementUnits.PERCENTAGE,
+                                true));
                             bar.addMember(text);
 
                             Img first = new Img("availBar/up.png");
@@ -258,8 +262,8 @@ public class PlatformSummaryPortlet extends Table<PlatformMetricDataSource> impl
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
-            return new PlatformSummaryPortlet(locatorId);
+        public final Portlet getInstance(EntityContext context) {
+            return new PlatformSummaryPortlet();
         }
     }
 

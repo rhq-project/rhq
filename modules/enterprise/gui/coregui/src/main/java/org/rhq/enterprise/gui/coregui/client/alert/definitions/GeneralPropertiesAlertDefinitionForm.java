@@ -25,22 +25,26 @@ package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.LinkedHashMap;
 
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.components.form.SimpleEditableFormItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.SimpleEditableTextAreaFormItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.StringLengthValidator;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author John Mazzitelli
  */
-public class GeneralPropertiesAlertDefinitionForm extends LocatableDynamicForm implements EditAlertDefinitionForm {
+public class GeneralPropertiesAlertDefinitionForm extends DynamicForm implements EditAlertDefinitionForm {
+
+    protected Messages MSG = CoreGUI.getMessages();
 
     private AlertDefinition alertDefinition;
 
@@ -56,12 +60,12 @@ public class GeneralPropertiesAlertDefinitionForm extends LocatableDynamicForm i
 
     private boolean formBuilt = false;
 
-    public GeneralPropertiesAlertDefinitionForm(String locatorId) {
-        this(locatorId, null);
+    public GeneralPropertiesAlertDefinitionForm() {
+        this(null);
     }
 
-    public GeneralPropertiesAlertDefinitionForm(String locatorId, AlertDefinition alertDefinition) {
-        super(locatorId);
+    public GeneralPropertiesAlertDefinitionForm(AlertDefinition alertDefinition) {
+        super();
         this.alertDefinition = alertDefinition;
     }
 

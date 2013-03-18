@@ -32,11 +32,11 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
 
 /**
  * Defines a type of (@link RepoGroup) e.g. Channel families in RHN map to a type of 
@@ -48,7 +48,7 @@ import javax.persistence.NamedQuery;
 @NamedQueries(
     @NamedQuery(name = RepoGroupType.QUERY_FIND_BY_NAME, query = "SELECT t FROM RepoGroupType t WHERE t.name = :name")
 )
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_REPO_GROUP_TYPE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_REPO_GROUP_TYPE_ID_SEQ", sequenceName = "RHQ_REPO_GROUP_TYPE_ID_SEQ")
 @Table(name = "RHQ_REPO_GROUP_TYPE")
 public class RepoGroupType implements Serializable {
 
@@ -59,7 +59,7 @@ public class RepoGroupType implements Serializable {
     // Attributes  --------------------------------------------
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_REPO_GROUP_TYPE_ID_SEQ")
     @Id
     private int id;
 

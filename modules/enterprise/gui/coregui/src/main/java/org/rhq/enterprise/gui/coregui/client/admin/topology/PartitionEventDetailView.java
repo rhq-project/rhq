@@ -30,6 +30,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -46,37 +47,35 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.gwt.TopologyGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.TopologyGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * Shows details of a partition event.
  * 
  * @author Jirka Kremser
  */
-public class PartitionEventDetailView extends LocatableVLayout implements BookmarkableView {
+public class PartitionEventDetailView extends EnhancedVLayout implements BookmarkableView {
 
     private final int partitionEventId;
 
     private static final int SECTION_COUNT = 2;
-    private final LocatableSectionStack sectionStack;
+    private final SectionStack sectionStack;
     private SectionStackSection detailsSection = null;
     private SectionStackSection agentSection = null;
 
     private volatile int initSectionCount = 0;
 
-    public PartitionEventDetailView(String locatorId, int partitionEventId) {
-        super(locatorId);
+    public PartitionEventDetailView(int partitionEventId) {
+        super();
         this.partitionEventId = partitionEventId;
         setHeight100();
         setWidth100();
         setOverflow(Overflow.AUTO);
 
-        sectionStack = new LocatableSectionStack(extendLocatorId("stack"));
+        sectionStack = new SectionStack();
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
         sectionStack.setWidth100();
         sectionStack.setHeight100();
@@ -191,7 +190,7 @@ public class PartitionEventDetailView extends LocatableVLayout implements Bookma
     }
 
     private void prepareDetailsSection(SectionStack stack, PartitionEvent partitionEvent) {
-        final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("detailsForm"));
+        final DynamicForm form = new DynamicForm();
         form.setMargin(10);
         form.setWidth100();
         form.setWrapItemTitles(false);

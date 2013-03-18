@@ -28,7 +28,6 @@ import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.enterprise.gui.coregui.client.bundle.BundleSelector;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 
 /**
  * @author Jay Shaughnessy
@@ -44,19 +43,18 @@ public class SelectBundleStep extends AbstractWizardStep {
         this.wizard = wizard;
     }
 
+    @Override
     public String getName() {
         return MSG.view_bundle_deployWizard_selectBundleStep();
     }
 
-    public Canvas getCanvas(Locatable parent) {
-        if (parent != null) {
-            this.selector = new BundleSelector(parent.extendLocatorId("BundleDeploySelectBundle"));
-        } else {
-            this.selector = new BundleSelector("BundleDeploySelectBundle");
-        }
+    @Override
+    public Canvas getCanvas() {
+        this.selector = new BundleSelector();
         return this.selector;
     }
 
+    @Override
     public boolean nextPage() {
         Set<Integer> selection = this.selector.getSelection();
         if (selection.size() != 1) {
@@ -67,4 +65,5 @@ public class SelectBundleStep extends AbstractWizardStep {
         this.wizard.setBundleId(selection.iterator().next());
         return true;
     }
+
 }

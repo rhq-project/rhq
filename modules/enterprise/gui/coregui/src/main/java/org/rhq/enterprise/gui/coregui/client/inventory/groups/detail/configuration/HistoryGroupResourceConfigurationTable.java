@@ -58,8 +58,8 @@ public class HistoryGroupResourceConfigurationTable extends Table<GroupResourceC
     private final ResourceGroup group;
     private final ResourcePermission groupPerms;
 
-    public HistoryGroupResourceConfigurationTable(String locatorId, ResourceGroupComposite groupComposite) {
-        super(locatorId, MSG.view_group_resConfig_table_title());
+    public HistoryGroupResourceConfigurationTable(ResourceGroupComposite groupComposite) {
+        super(MSG.view_group_resConfig_table_title());
         this.group = groupComposite.getResourceGroup();
         this.groupPerms = groupComposite.getResourcePermission();
 
@@ -68,16 +68,16 @@ public class HistoryGroupResourceConfigurationTable extends Table<GroupResourceC
 
     @Override
     protected void configureTable() {
-        ListGridField fieldId = new ListGridField(GroupResourceConfigurationDataSource.Field.ID, MSG
-            .common_title_version());
-        ListGridField fieldDateCreated = new ListGridField(GroupResourceConfigurationDataSource.Field.DATECREATED, MSG
-            .common_title_dateCreated());
-        ListGridField fieldLastUpdated = new ListGridField(GroupResourceConfigurationDataSource.Field.LASTUPDATED, MSG
-            .common_title_lastUpdated());
-        ListGridField fieldStatus = new ListGridField(GroupResourceConfigurationDataSource.Field.STATUS, MSG
-            .common_title_status());
-        ListGridField fieldUser = new ListGridField(GroupResourceConfigurationDataSource.Field.USER, MSG
-            .common_title_user());
+        ListGridField fieldId = new ListGridField(GroupResourceConfigurationDataSource.Field.ID,
+            MSG.common_title_version());
+        ListGridField fieldDateCreated = new ListGridField(GroupResourceConfigurationDataSource.Field.DATECREATED,
+            MSG.common_title_dateCreated());
+        ListGridField fieldLastUpdated = new ListGridField(GroupResourceConfigurationDataSource.Field.LASTUPDATED,
+            MSG.common_title_lastUpdated());
+        ListGridField fieldStatus = new ListGridField(GroupResourceConfigurationDataSource.Field.STATUS,
+            MSG.common_title_status());
+        ListGridField fieldUser = new ListGridField(GroupResourceConfigurationDataSource.Field.USER,
+            MSG.common_title_user());
 
         TimestampCellFormatter.prepareDateField(fieldDateCreated);
         TimestampCellFormatter.prepareDateField(fieldLastUpdated);
@@ -90,20 +90,19 @@ public class HistoryGroupResourceConfigurationTable extends Table<GroupResourceC
 
         fieldStatus.setType(ListGridFieldType.ICON);
         HashMap<String, String> statusIcons = new HashMap<String, String>(4);
-        statusIcons.put(ConfigurationUpdateStatus.SUCCESS.name(), ImageManager
-            .getResourceConfigurationIcon(ConfigurationUpdateStatus.SUCCESS));
-        statusIcons.put(ConfigurationUpdateStatus.FAILURE.name(), ImageManager
-            .getResourceConfigurationIcon(ConfigurationUpdateStatus.FAILURE));
-        statusIcons.put(ConfigurationUpdateStatus.INPROGRESS.name(), ImageManager
-            .getResourceConfigurationIcon(ConfigurationUpdateStatus.INPROGRESS));
-        statusIcons.put(ConfigurationUpdateStatus.NOCHANGE.name(), ImageManager
-            .getResourceConfigurationIcon(ConfigurationUpdateStatus.NOCHANGE));
+        statusIcons.put(ConfigurationUpdateStatus.SUCCESS.name(),
+            ImageManager.getResourceConfigurationIcon(ConfigurationUpdateStatus.SUCCESS));
+        statusIcons.put(ConfigurationUpdateStatus.FAILURE.name(),
+            ImageManager.getResourceConfigurationIcon(ConfigurationUpdateStatus.FAILURE));
+        statusIcons.put(ConfigurationUpdateStatus.INPROGRESS.name(),
+            ImageManager.getResourceConfigurationIcon(ConfigurationUpdateStatus.INPROGRESS));
+        statusIcons.put(ConfigurationUpdateStatus.NOCHANGE.name(),
+            ImageManager.getResourceConfigurationIcon(ConfigurationUpdateStatus.NOCHANGE));
         fieldStatus.setValueIcons(statusIcons);
         fieldStatus.addRecordClickHandler(new RecordClickHandler() {
             @Override
             public void onRecordClick(RecordClickEvent event) {
-                new ErrorMessageWindow("errWin", MSG.common_severity_error(), getStatusHtmlString(event.getRecord()))
-                    .show();
+                new ErrorMessageWindow(MSG.common_severity_error(), getStatusHtmlString(event.getRecord())).show();
             }
         });
         fieldStatus.setShowHover(true);
@@ -118,7 +117,7 @@ public class HistoryGroupResourceConfigurationTable extends Table<GroupResourceC
         ListGrid listGrid = getListGrid();
         listGrid.setFields(fieldId, fieldDateCreated, fieldLastUpdated, fieldStatus, fieldUser);
 
-        addTableAction(extendLocatorId("deleteAction"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
+        addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(),
             new AbstractTableAction(this.groupPerms.isInventory() ? TableActionEnablement.ANY
                 : TableActionEnablement.NEVER) {
 
@@ -141,8 +140,8 @@ public class HistoryGroupResourceConfigurationTable extends Table<GroupResourceC
                         public void onSuccess(Void result) {
                             refresh();
                             Message message = new Message(MSG.view_group_resConfig_table_deleteSuccessful(String
-                                .valueOf(selection.length)), Message.Severity.Info, EnumSet.of(
-                                Message.Option.Transient));
+                                .valueOf(selection.length)), Message.Severity.Info, EnumSet
+                                .of(Message.Option.Transient));
                             CoreGUI.getMessageCenter().notify(message);
                         }
 
@@ -156,25 +155,27 @@ public class HistoryGroupResourceConfigurationTable extends Table<GroupResourceC
                 }
             });
 
-        addTableAction(extendLocatorId("viewSettingsAction"), MSG.view_group_resConfig_table_viewSettings(),
-            new AbstractTableAction(TableActionEnablement.SINGLE) {
-                @Override
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    CoreGUI.goToView(LinkManager.getGroupResourceConfigurationUpdateHistoryLink(EntityContext.forGroup(HistoryGroupResourceConfigurationTable.this.group), null)
-                        + "/" + selection[0].getAttribute(GroupResourceConfigurationDataSource.Field.ID) + "/Settings");
-                    refreshTableInfo();
-                }
-            });
+        addTableAction(MSG.view_group_resConfig_table_viewSettings(), new AbstractTableAction(
+            TableActionEnablement.SINGLE) {
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                CoreGUI.goToView(LinkManager.getGroupResourceConfigurationUpdateHistoryLink(
+                    EntityContext.forGroup(HistoryGroupResourceConfigurationTable.this.group), null)
+                    + "/" + selection[0].getAttribute(GroupResourceConfigurationDataSource.Field.ID) + "/Settings");
+                refreshTableInfo();
+            }
+        });
 
-        addTableAction(extendLocatorId("viewMemberHistoryAction"), MSG.view_group_resConfig_table_viewMemberHistory(),
-            new AbstractTableAction(TableActionEnablement.SINGLE) {
-                @Override
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    CoreGUI.goToView(LinkManager.getGroupResourceConfigurationUpdateHistoryLink(EntityContext.forGroup(HistoryGroupResourceConfigurationTable.this.group), null)
-                        + "/" + selection[0].getAttribute(GroupResourceConfigurationDataSource.Field.ID) + "/Members");
-                    refreshTableInfo();
-                }
-            });
+        addTableAction(MSG.view_group_resConfig_table_viewMemberHistory(), new AbstractTableAction(
+            TableActionEnablement.SINGLE) {
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                CoreGUI.goToView(LinkManager.getGroupResourceConfigurationUpdateHistoryLink(
+                    EntityContext.forGroup(HistoryGroupResourceConfigurationTable.this.group), null)
+                    + "/" + selection[0].getAttribute(GroupResourceConfigurationDataSource.Field.ID) + "/Members");
+                refreshTableInfo();
+            }
+        });
 
     }
 

@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client;
 
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -27,23 +28,21 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.enterprise.gui.coregui.client.footer.FavoritesButton;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageBar;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenterView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
  * @author Joseph Marques
  */
-public class Footer extends LocatableHLayout {
-    private static final String LOCATOR_ID = "CoreFooter";
+public class Footer extends EnhancedHLayout {
 
     private MessageBar messageBar;
     private MessageCenterView messageCenter;
 
     public Footer() {
-        super(LOCATOR_ID);
+        super();
         setHeight(30);
         setAlign(Alignment.LEFT);
         setWidth100();
@@ -55,8 +54,8 @@ public class Footer extends LocatableHLayout {
     protected void onDraw() {
         super.onDraw();
 
-        messageCenter = new MessageCenterView(extendLocatorId(MessageCenterView.LOCATOR_ID));
-        final FavoritesButton favoritesButton = new FavoritesButton(extendLocatorId("Favorites"));
+        messageCenter = new MessageCenterView();
+        final FavoritesButton favoritesButton = new FavoritesButton();
         messageBar = new MessageBar();
 
         // leave space for the RPC Activity Spinner (I think this has been removed, giving back the space) 
@@ -76,14 +75,14 @@ public class Footer extends LocatableHLayout {
         addMember(createHSpacer(0));
     }
 
-    private LocatableVLayout getMessageCenterButton() {
-        LocatableVLayout layout = new LocatableVLayout(extendLocatorId("layout"));
+    private EnhancedVLayout getMessageCenterButton() {
+        EnhancedVLayout layout = new EnhancedVLayout();
         layout.setMembersMargin(5);
         layout.setHeight100();
         layout.setAlign(Alignment.CENTER);
         layout.setAutoWidth();
 
-        LocatableIButton button = new LocatableIButton(extendLocatorId("button"), MSG.view_messageCenter_messageTitle());
+        EnhancedIButton button = new EnhancedIButton(MSG.view_messageCenter_messageTitle());
         button.setAlign(Alignment.CENTER);
         button.setAutoFit(true);
         button.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
@@ -99,9 +98,9 @@ public class Footer extends LocatableHLayout {
 
     // Leaving this although it's unused. It used to be the subclass for the alert count mechanism, which is now
     // gone, but this may be useful in the future for something else.
-    public abstract static class RefreshableLabel extends LocatableLabel {
-        public RefreshableLabel(String locatorId) {
-            super(locatorId);
+    public abstract static class RefreshableLabel extends Label {
+        public RefreshableLabel() {
+            super();
         }
 
         // scheduling refreshes is sub-optimal, really need to move to a message bus architecture

@@ -47,9 +47,9 @@ Ant Script that provides ways to package the Agent.
          <include name="commons-httpclient/commons-httpclient/2.0.2/commons-httpclient-2.0.2.jar" />
          <include name="dom4j/dom4j/1.6/dom4j-1.6.jar" />
          <include name="oswego-concurrent/concurrent/${concurrent.version}/concurrent-${concurrent.version}.jar" />
-         <include name="jboss/jboss-common/${jboss-common.version}/jboss-common-${jboss-common.version}.jar" />
+         <include name="org/jboss/jboss-common-core/${jboss-common-core.version}/jboss-common-core-${jboss-common-core.version}.jar" />
          <include name="jboss/jboss-jmx/${jboss-jmx.version}/jboss-jmx-${jboss-jmx.version}.jar" />
-         <include name="jboss/jboss-remoting/${jboss-remoting.version}/jboss-remoting-${jboss-remoting.version}.jar" />
+         <include name="org/jboss/remoting/jboss-remoting/${jboss-remoting.version}/jboss-remoting-${jboss-remoting.version}.jar" />
          <include name="org/jboss/logging/jboss-logging/${jboss-logging.version}/jboss-logging-${jboss-logging.version}.jar" />
          <include name="jboss/jboss-serialization/${jboss-serialization.version}/jboss-serialization-${jboss-serialization.version}.jar" />
          <include name="org/rhq/rhq-enterprise-comm/${project.version}/rhq-enterprise-comm-${project.version}.jar" />

@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<differences>
+  <difference>
+    <className>org/rhq/enterprise/server/resource/ResourceManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added to an interface -->
+     <method>void uninventoryAllResourcesByAgent(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.resource.Agent)</method>
+    <justification>Adding a method to a remote API interface is safe. This class is never to be implemented by users.</justification>
+  </difference>
+</differences>

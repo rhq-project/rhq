@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -36,6 +40,7 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.plugin.PluginStatusType;
@@ -52,20 +57,17 @@ import org.rhq.enterprise.gui.coregui.client.components.upload.PluginFileUploadF
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 
 /**
  * @author John Mazzitelli
  */
 public class ServerPluginTableView extends TableSection<ServerPluginDataSource> {
 
-    public static final ViewName VIEW_ID = new ViewName("ServerPlugins", MSG.view_adminConfig_serverPlugins(), IconEnum.PLUGIN);
+    public static final ViewName VIEW_ID = new ViewName("ServerPlugins", MSG.view_adminConfig_serverPlugins(),
+        IconEnum.PLUGIN);
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_CONFIGURATION_VIEW_ID + "/" + VIEW_ID;
 
@@ -79,8 +81,8 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
 
     private boolean showUndeployed = false;
 
-    public ServerPluginTableView(String locatorId) {
-        super(locatorId, null);
+    public ServerPluginTableView() {
+        super(null);
         setHeight100();
         setWidth100();
         setDataSource(new ServerPluginDataSource());
@@ -93,33 +95,33 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
         listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
         listGrid.sort(FIELD_NAME, SortDirection.ASCENDING);
 
-        addTableAction(extendLocatorId("enable"), MSG.common_button_enable(), MSG.common_msg_areYouSure(),
-            new AuthorizedTableAction(this, TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
-                public void executeAction(ListGridRecord[] selections, Object actionValue) {
-                    int[] selectedIds = getSelectedIds(selections);
-                    GWTServiceLookup.getPluginService().enableServerPlugins(selectedIds,
-                        new AsyncCallback<ArrayList<String>>() {
-                            @Override
-                            public void onSuccess(ArrayList<String> result) {
-                                Message msg = new Message(
-                                    MSG.view_admin_plugins_enabledServerPlugins(result.toString()), Severity.Info);
-                                CoreGUI.getMessageCenter().notify(msg);
-                                refresh();
-                            }
-
-                            @Override
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(
-                                    MSG.view_admin_plugins_enabledServerPluginsFailure() + " " + caught.getMessage(),
-                                    caught);
-                                refreshTableInfo();
-                            }
-                        });
-                }
-            });
-
-        addTableAction(extendLocatorId("disable"), MSG.common_button_disable(), new AuthorizedTableAction(this,
+        addTableAction(MSG.common_button_enable(), MSG.common_msg_areYouSure(), new AuthorizedTableAction(this,
             TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
+            public void executeAction(ListGridRecord[] selections, Object actionValue) {
+                int[] selectedIds = getSelectedIds(selections);
+                GWTServiceLookup.getPluginService().enableServerPlugins(selectedIds,
+                    new AsyncCallback<ArrayList<String>>() {
+                        @Override
+                        public void onSuccess(ArrayList<String> result) {
+                            Message msg = new Message(MSG.view_admin_plugins_enabledServerPlugins(result.toString()),
+                                Severity.Info);
+                            CoreGUI.getMessageCenter().notify(msg);
+                            refresh();
+                        }
+
+                        @Override
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError(
+                                MSG.view_admin_plugins_enabledServerPluginsFailure() + " " + caught.getMessage(),
+                                caught);
+                            refreshTableInfo();
+                        }
+                    });
+            }
+        });
+
+        addTableAction(MSG.common_button_disable(), new AuthorizedTableAction(this, TableActionEnablement.ANY,
+            Permission.MANAGE_SETTINGS) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                 ArrayList<String> selectedNames = getSelectedNames(selections);
                 String message = MSG.view_admin_plugins_serverDisableConfirm(selectedNames.toString());
@@ -153,8 +155,8 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
             }
         });
 
-        addTableAction(extendLocatorId("undeploy"), MSG.view_admin_plugins_undeploy(), new AuthorizedTableAction(this,
-            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
+        addTableAction(MSG.view_admin_plugins_undeploy(), new AuthorizedTableAction(this, TableActionEnablement.ANY,
+            Permission.MANAGE_SETTINGS) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                 ArrayList<String> selectedNames = getSelectedNames(selections);
                 String message = MSG.view_admin_plugins_serverUndeployConfirm(selectedNames.toString());
@@ -188,41 +190,41 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
             }
         });
 
-        addTableAction(extendLocatorId("purge"), MSG.common_button_purge(), MSG.common_msg_areYouSure(),
-            new AuthorizedTableAction(this, TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    if (showUndeployed) {
-                        return super.isEnabled(selection);
-                    } else {
-                        return false; // we aren't showing undeployed plugins, so there is no plugin shown that can be purged anyway
-                    }
+        addTableAction(MSG.common_button_purge(), MSG.common_msg_areYouSure(), new AuthorizedTableAction(this,
+            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                if (showUndeployed) {
+                    return super.isEnabled(selection);
+                } else {
+                    return false; // we aren't showing undeployed plugins, so there is no plugin shown that can be purged anyway
                 }
+            }
 
-                public void executeAction(ListGridRecord[] selections, Object actionValue) {
-                    int[] selectedIds = getSelectedIds(selections);
-                    GWTServiceLookup.getPluginService().purgeServerPlugins(selectedIds,
-                        new AsyncCallback<ArrayList<String>>() {
-                            @Override
-                            public void onSuccess(ArrayList<String> result) {
-                                Message msg = new Message(
-                                    MSG.view_admin_plugins_purgedServerPlugins(result.toString()), Severity.Info);
-                                CoreGUI.getMessageCenter().notify(msg);
-                                refresh();
-                            }
+            public void executeAction(ListGridRecord[] selections, Object actionValue) {
+                int[] selectedIds = getSelectedIds(selections);
+                GWTServiceLookup.getPluginService().purgeServerPlugins(selectedIds,
+                    new AsyncCallback<ArrayList<String>>() {
+                        @Override
+                        public void onSuccess(ArrayList<String> result) {
+                            Message msg = new Message(MSG.view_admin_plugins_purgedServerPlugins(result.toString()),
+                                Severity.Info);
+                            CoreGUI.getMessageCenter().notify(msg);
+                            refresh();
+                        }
 
-                            @Override
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(
+                        @Override
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler()
+                                .handleError(
                                     MSG.view_admin_plugins_purgedServerPluginsFailure() + " " + caught.getMessage(),
                                     caught);
-                                refreshTableInfo();
-                            }
-                        });
-                }
-            });
+                            refreshTableInfo();
+                        }
+                    });
+            }
+        });
 
-        IButton scanForUpdatesButton = new LocatableIButton(extendLocatorId("scanButton"),
-            MSG.view_admin_plugins_scan());
+        IButton scanForUpdatesButton = new EnhancedIButton(MSG.view_admin_plugins_scan());
         scanForUpdatesButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 GWTServiceLookup.getPluginService().scanAndRegister(new AsyncCallback<Void>() {
@@ -243,8 +245,7 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
             }
         });
 
-        IButton restartMasterPCButton = new LocatableIButton(extendLocatorId("restartMasterPCButton"),
-            MSG.view_admin_plugins_restartMasterPC());
+        IButton restartMasterPCButton = new EnhancedIButton(MSG.view_admin_plugins_restartMasterPC());
         restartMasterPCButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 Message msg = new Message(MSG.view_admin_plugins_restartMasterPCStarted(), Severity.Info);
@@ -268,8 +269,7 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
             }
         });
 
-        final IButton showUndeployedButton = new LocatableIButton(extendLocatorId("showUndeployedButton"),
-            MSG.view_admin_plugins_showUndeployed());
+        final IButton showUndeployedButton = new EnhancedIButton(MSG.view_admin_plugins_showUndeployed());
         showUndeployedButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 showUndeployed = !showUndeployed;
@@ -284,8 +284,7 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
             }
         });
 
-        PluginFileUploadForm pluginUploadForm = new PluginFileUploadForm(extendLocatorId("upload"),
-            MSG.view_admin_plugins_upload(), true);
+        PluginFileUploadForm pluginUploadForm = new PluginFileUploadForm(MSG.view_admin_plugins_upload(), true);
 
         addExtraWidget(scanForUpdatesButton, true);
         addExtraWidget(restartMasterPCButton, true);
@@ -297,7 +296,7 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
 
     @Override
     public Canvas getDetailsView(Integer id) {
-        return new ServerPluginDetailView(extendLocatorId("detailsView"), id);
+        return new ServerPluginDetailView(id);
     }
 
     private int[] getSelectedIds(ListGridRecord[] selections) {

@@ -41,8 +41,8 @@ public class CustomConfigMeasurementRangeEditor extends AbstractMeasurementRange
 
     private ConfigurationMeasurementPreferences measurementPrefs;
 
-    public CustomConfigMeasurementRangeEditor(String locatorId, Configuration config) {
-        super(locatorId);
+    public CustomConfigMeasurementRangeEditor(Configuration config) {
+        super();
         measurementPrefs = new ConfigurationMeasurementPreferences(config);
         setDisplaySetButton(false);
         setDisplayEnableButton(true);

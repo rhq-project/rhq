@@ -32,6 +32,7 @@ import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.SectionStack;
@@ -53,22 +54,20 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.PluginGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * Shows details of a server plugin.
  * 
  * @author John Mazzitelli
  */
-public class ServerPluginDetailView extends LocatableVLayout {
+public class ServerPluginDetailView extends EnhancedVLayout {
 
     private final PluginGWTServiceAsync pluginManager = GWTServiceLookup.getPluginService();
     private final int pluginId;
 
-    private final LocatableSectionStack sectionStack;
+    private final SectionStack sectionStack;
     private SectionStackSection detailsSection = null;
     private SectionStackSection helpSection = null;
     private SectionStackSection controlsSection = null;
@@ -76,14 +75,14 @@ public class ServerPluginDetailView extends LocatableVLayout {
     private SectionStackSection scheduledJobsSection = null;
     private int initSectionCount = 0;
 
-    public ServerPluginDetailView(String locatorId, int pluginId) {
-        super(locatorId);
+    public ServerPluginDetailView(int pluginId) {
+        super();
         this.pluginId = pluginId;
         setHeight100();
         setWidth100();
         setOverflow(Overflow.AUTO);
 
-        sectionStack = new LocatableSectionStack(extendLocatorId("stack"));
+        sectionStack = new SectionStack();
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
         sectionStack.setWidth100();
         sectionStack.setHeight100();
@@ -165,7 +164,7 @@ public class ServerPluginDetailView extends LocatableVLayout {
                     if (result != null && !result.isEmpty()) {
                         SectionStackSection section = new SectionStackSection(MSG.view_admin_plugins_serverControls());
                         section.setExpanded(false);
-                        section.addItem(new ServerPluginControlView(extendLocatorId("controlView"), plugin, result));
+                        section.addItem(new ServerPluginControlView(plugin, result));
 
                         controlsSection = section;
                     }
@@ -184,7 +183,7 @@ public class ServerPluginDetailView extends LocatableVLayout {
         pluginManager.getServerPluginConfigurationDefinition(pluginKey, new AsyncCallback<ConfigurationDefinition>() {
             public void onSuccess(ConfigurationDefinition def) {
                 if (def != null) {
-                    LocatableVLayout layout = new LocatableVLayout(extendLocatorId("pcEditorLayout"));
+                    EnhancedVLayout layout = new EnhancedVLayout();
 
                     ToolStrip buttons = new ToolStrip();
                     buttons.setWidth100();
@@ -192,14 +191,12 @@ public class ServerPluginDetailView extends LocatableVLayout {
                     buttons.setMembersMargin(5);
                     buttons.setLayoutMargin(5);
 
-                    final IButton saveButtonPC = new LocatableIButton(extendLocatorId("pcSave"), MSG
-                        .common_button_save());
+                    final IButton saveButtonPC = new EnhancedIButton(MSG.common_button_save());
 
-                    final IButton resetButtonPC = new LocatableIButton(extendLocatorId("pcRest"), MSG
-                        .common_button_reset());
+                    final IButton resetButtonPC = new EnhancedIButton(MSG.common_button_reset());
 
                     Configuration config = plugin.getPluginConfiguration();
-                    final ConfigurationEditor editorPC = new ConfigurationEditor(extendLocatorId("pcEdit"), def, config);
+                    final ConfigurationEditor editorPC = new ConfigurationEditor(def, config);
                     editorPC.setOverflow(Overflow.AUTO);
                     editorPC.addPropertyValueChangeListener(new PropertyValueChangeListener() {
                         public void propertyValueChanged(PropertyValueChangeEvent event) {
@@ -272,7 +269,7 @@ public class ServerPluginDetailView extends LocatableVLayout {
         pluginManager.getServerPluginScheduledJobsDefinition(pluginKey, new AsyncCallback<ConfigurationDefinition>() {
             public void onSuccess(ConfigurationDefinition def) {
                 if (def != null) {
-                    LocatableVLayout layout = new LocatableVLayout(extendLocatorId("sjEditorLayout"));
+                    EnhancedVLayout layout = new EnhancedVLayout();
 
                     ToolStrip buttons = new ToolStrip();
                     buttons.setWidth100();
@@ -280,16 +277,14 @@ public class ServerPluginDetailView extends LocatableVLayout {
                     buttons.setMembersMargin(5);
                     buttons.setLayoutMargin(5);
 
-                    final IButton saveButtonSJ = new LocatableIButton(extendLocatorId("sjSave"), MSG
-                        .common_button_save());
+                    final IButton saveButtonSJ = new EnhancedIButton(MSG.common_button_save());
                     buttons.addMember(saveButtonSJ);
 
-                    final IButton resetButtonSJ = new LocatableIButton(extendLocatorId("sjRest"), MSG
-                        .common_button_reset());
+                    final IButton resetButtonSJ = new EnhancedIButton(MSG.common_button_reset());
                     buttons.addMember(resetButtonSJ);
 
                     Configuration config = plugin.getScheduledJobsConfiguration();
-                    final ConfigurationEditor editorSJ = new ConfigurationEditor(extendLocatorId("sjEdit"), def, config);
+                    final ConfigurationEditor editorSJ = new ConfigurationEditor(def, config);
                     editorSJ.setOverflow(Overflow.AUTO);
                     editorSJ.addPropertyValueChangeListener(new PropertyValueChangeListener() {
                         public void propertyValueChanged(PropertyValueChangeEvent event) {
@@ -369,7 +364,7 @@ public class ServerPluginDetailView extends LocatableVLayout {
     }
 
     private void prepareDetailsSection(SectionStack stack, ServerPlugin plugin) {
-        LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("detailsForm"));
+        DynamicForm form = new DynamicForm();
         form.setMargin(10);
         form.setWidth100();
         form.setWrapItemTitles(false);

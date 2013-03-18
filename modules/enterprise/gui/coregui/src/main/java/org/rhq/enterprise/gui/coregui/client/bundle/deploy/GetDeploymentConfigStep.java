@@ -29,7 +29,6 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 
 /**
  * @author Jay Shaughnessy
@@ -48,7 +47,7 @@ public class GetDeploymentConfigStep extends AbstractWizardStep {
         return MSG.view_bundle_deployWizard_getConfigStep();
     }
 
-    public Canvas getCanvas(Locatable parent) {
+    public Canvas getCanvas() {
         if (null == editor) {
             ConfigurationDefinition configDef = wizard.getBundleVersion().getConfigurationDefinition();
 
@@ -86,12 +85,12 @@ public class GetDeploymentConfigStep extends AbstractWizardStep {
 
                 if (useLiveConfig == false) {
                     ConfigurationTemplate defaultTemplate = configDef.getDefaultTemplate();
-                    startingConfig = (defaultTemplate != null) ? defaultTemplate.createConfiguration() :
-                            new Configuration();
+                    startingConfig = (defaultTemplate != null) ? defaultTemplate.createConfiguration()
+                        : new Configuration();
                 } else {
                     startingConfig = getNormalizedLiveConfig(configDef);
                 }
-                editor = new ConfigurationEditor("BundleDeploymentConfig", configDef, startingConfig);
+                editor = new ConfigurationEditor(configDef, startingConfig);
             }
         }
 

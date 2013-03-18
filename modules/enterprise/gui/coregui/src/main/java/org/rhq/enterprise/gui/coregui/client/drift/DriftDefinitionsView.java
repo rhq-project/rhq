@@ -86,20 +86,20 @@ public class DriftDefinitionsView extends TableSection<DriftDefinitionDataSource
     }
 
     // for subsystem views
-    public DriftDefinitionsView(String locatorId) {
-        this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), EntityContext.forSubsystemView(), false);
+    public DriftDefinitionsView() {
+        this(SUBSYSTEM_VIEW_ID.getTitle(), EntityContext.forSubsystemView(), false);
     }
 
-    public DriftDefinitionsView(String locatorId, EntityContext entityContext) {
-        this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), entityContext, false);
+    public DriftDefinitionsView(EntityContext entityContext) {
+        this(SUBSYSTEM_VIEW_ID.getTitle(), entityContext, false);
     }
 
-    public DriftDefinitionsView(String locatorId, String tableTitle, EntityContext entityContext) {
-        this(locatorId, tableTitle, entityContext, false);
+    public DriftDefinitionsView(String tableTitle, EntityContext entityContext) {
+        this(tableTitle, entityContext, false);
     }
 
-    protected DriftDefinitionsView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess) {
-        super(locatorId, tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
+    protected DriftDefinitionsView(String tableTitle, EntityContext context, boolean hasWriteAccess) {
+        super(tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
         this.context = context;
         this.hasWriteAccess = hasWriteAccess;
 
@@ -145,25 +145,24 @@ public class DriftDefinitionsView extends TableSection<DriftDefinitionDataSource
             }
         });
 
-        addTableAction("Delete", MSG.common_button_delete(), MSG.view_drift_confirm_deleteDefs(),
-            new AbstractTableAction(deleteEnablement) {
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    delete(selection);
-                }
-            });
+        addTableAction(MSG.common_button_delete(), MSG.view_drift_confirm_deleteDefs(), new AbstractTableAction(
+            deleteEnablement) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                delete(selection);
+            }
+        });
 
-        addTableAction("DeleteAll", MSG.common_button_delete_all(), MSG.view_drift_confirm_deleteAllDefs(),
-            new TableAction() {
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    ListGrid grid = getListGrid();
-                    ResultSet resultSet = (null != grid) ? grid.getResultSet() : null;
-                    return (hasWriteAccess && grid != null && resultSet != null && !resultSet.isEmpty());
-                }
+        addTableAction(MSG.common_button_delete_all(), MSG.view_drift_confirm_deleteAllDefs(), new TableAction() {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                ListGrid grid = getListGrid();
+                ResultSet resultSet = (null != grid) ? grid.getResultSet() : null;
+                return (hasWriteAccess && grid != null && resultSet != null && !resultSet.isEmpty());
+            }
 
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    deleteAll();
-                }
-            });
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                deleteAll();
+            }
+        });
 
         addTableAction("DetectNow", MSG.view_drift_button_detectNow(), null, new AbstractTableAction(
             detectNowEnablement) {
@@ -267,14 +266,13 @@ public class DriftDefinitionsView extends TableSection<DriftDefinitionDataSource
     public Canvas getDetailsView(Integer driftDefId) {
         switch (detailsView) {
         case Edit:
-            return new DriftDefinitionEditView(extendLocatorId("Edit"), context, driftDefId, hasWriteAccess);
+            return new DriftDefinitionEditView(context, driftDefId, hasWriteAccess);
 
         case InitialSnapshot:
-            return new DriftSnapshotView(extendLocatorId("InitialSnapshot"), null, context.getResourceId(), driftDefId,
-                0, hasWriteAccess);
+            return new DriftSnapshotView(null, context.getResourceId(), driftDefId, 0, hasWriteAccess);
 
         default:
-            return new DriftCarouselView(extendLocatorId("Carousel"), context, driftDefId, hasWriteAccess);
+            return new DriftCarouselView(context, driftDefId, hasWriteAccess);
         }
     }
 

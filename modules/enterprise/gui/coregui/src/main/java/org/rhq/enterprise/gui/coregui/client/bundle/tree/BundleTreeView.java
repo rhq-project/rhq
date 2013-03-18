@@ -28,6 +28,7 @@ import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
 import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
 import com.smartgwt.client.widgets.tree.Tree;
+import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 import com.smartgwt.client.widgets.tree.events.NodeClickEvent;
 import com.smartgwt.client.widgets.tree.events.NodeClickHandler;
@@ -35,19 +36,18 @@ import com.smartgwt.client.widgets.tree.events.NodeClickHandler;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 
 /**
  * @author Greg Hinkle
  */
-public class BundleTreeView extends LocatableTreeGrid {
+public class BundleTreeView extends TreeGrid {
 
     // We may need to wait for tree data to be fetched before we can complete processing the selected path.
     // If so, hold it here and retry after the datasource pulls the data.
     private ViewPath pendingPath = null;
 
-    public BundleTreeView(String locatorId, boolean canManageBundles) {
-        super(locatorId);
+    public BundleTreeView(boolean canManageBundles) {
+        super();
         setWidth100();
         setHeight100();
         setLeaveScrollbarGap(false);

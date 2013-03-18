@@ -29,6 +29,7 @@ import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
@@ -43,9 +44,7 @@ import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Jay Shaughnessy
@@ -55,30 +54,25 @@ public class DriftPinTemplateWizardInfoStep extends AbstractWizardStep {
     static private final String CREATE_TEMPLATE = "create";
     static private final String SELECT_TEMPLATE = "select";
 
-    private LocatableVLayout canvas;
-    private LocatableDynamicForm radioForm;
+    private EnhancedVLayout canvas;
+    private DynamicForm radioForm;
     private AbstractDriftPinTemplateWizard wizard;
 
-    private LocatableDynamicForm selectTemplateForm;
+    private DynamicForm selectTemplateForm;
     SelectItem selectTemplateItem = new SortedSelectItem("Template", MSG.view_drift_wizard_addDef_templatePrompt());
 
     public DriftPinTemplateWizardInfoStep(AbstractDriftPinTemplateWizard wizard) {
         this.wizard = wizard;
     }
 
-    public Canvas getCanvas(Locatable parent) {
+    public Canvas getCanvas() {
         if (null == canvas) {
-            if (parent != null) {
-                canvas = new LocatableVLayout(parent.extendLocatorId("DriftPinTemplateInfo"));
-            } else {
-                canvas = new LocatableVLayout("DriftPinTemplateInfo");
-            }
-
+            canvas = new EnhancedVLayout();
             canvas.setWidth100();
 
-            radioForm = new LocatableDynamicForm(canvas.extendLocatorId("Radio"));
+            radioForm = new DynamicForm();
             radioForm.setNumCols(1);
-            // These settings (as opposed to setWidth100()) allow for contentual help to be better placed
+            // These settings (as opposed to setWidth100()) allow for contextual help to be better placed
             radioForm.setAutoWidth();
             radioForm.setOverflow(Overflow.VISIBLE);
 
@@ -145,7 +139,7 @@ public class DriftPinTemplateWizardInfoStep extends AbstractWizardStep {
             radioForm.setItems(formItems.toArray(new FormItem[formItems.size()]));
             canvas.addMember(radioForm);
 
-            selectTemplateForm = new LocatableDynamicForm(radioForm.extendLocatorId("SelectForm"));
+            selectTemplateForm = new DynamicForm();
             selectTemplateForm.setNumCols(1);
             selectTemplateForm.setIsGroup(true);
             selectTemplateForm.setGroupTitle(MSG.view_drift_wizard_pinTemplate_infoStepSelectTitle());
@@ -154,8 +148,8 @@ public class DriftPinTemplateWizardInfoStep extends AbstractWizardStep {
 
             formItems.clear();
 
-            StaticTextItem selectTemplateDescriptionItem = new StaticTextItem("Description", MSG
-                .common_title_description());
+            StaticTextItem selectTemplateDescriptionItem = new StaticTextItem("Description",
+                MSG.common_title_description());
             selectTemplateDescriptionItem.setTitleOrientation(TitleOrientation.TOP);
             selectTemplateDescriptionItem.setAlign(Alignment.LEFT);
             selectTemplateDescriptionItem.setWidth(300);

@@ -51,7 +51,7 @@ import javax.xml.bind.annotation.XmlTransient;
     @NamedQuery(name = AdvisoryPackage.DELETE_PACKAGES_BY_ADV_ID, query = "DELETE AdvisoryPackage ap WHERE ap.advisory.id = :advId"),
     @NamedQuery(name = AdvisoryPackage.FIND_ADVISORY_PACKAGE, query = "SELECT ap FROM AdvisoryPackage AS ap "
         + "WHERE ap.advisory.id = :advId AND ap.pkg.id = :pkgVerId") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_ADVISORY_PACKAGE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_ADVISORY_PACKAGE_ID_SEQ", sequenceName = "RHQ_ADVISORY_PACKAGE_ID_SEQ")
 @Table(name = "RHQ_ADVISORY_PACKAGE")
 public class AdvisoryPackage implements Serializable {
 
@@ -66,7 +66,7 @@ public class AdvisoryPackage implements Serializable {
      * @IdClass.
      */
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_ADVISORY_PACKAGE_ID_SEQ")
     @Id
     private int id;
 

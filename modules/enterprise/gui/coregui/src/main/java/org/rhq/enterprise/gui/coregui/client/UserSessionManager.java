@@ -36,7 +36,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
 
@@ -100,8 +99,6 @@ public class UserSessionManager {
     // HTTP Header indicating to SessionAccessServlet to update the HTTP session access time
     private static final String HEADER_LAST_ACCESS_UPDATE = "rhq_last_access_update";
 
-    private static final String LOCATOR_ID = "SessionManagerLogin";
-
     private static Subject sessionSubject;
     private static UserPreferences userPreferences;
 
@@ -116,7 +113,7 @@ public class UserSessionManager {
         @Override
         public void run() {
             Log.info("Session timer expired.");
-            new LoginView(LOCATOR_ID).showLoginDialog();
+            new LoginView().showLoginDialog();
         }
     };
 
@@ -178,7 +175,7 @@ public class UserSessionManager {
                             sessionState = State.IS_LOGGED_OUT;
                             scheduleLogoutServerSide(sessionId);
 
-                            new LoginView(LOCATOR_ID).showLoginDialog();
+                            new LoginView().showLoginDialog();
                             return;
                         }
 
@@ -249,7 +246,7 @@ public class UserSessionManager {
                                 //we've lost crucial information, probably in a browser refresh. Send them back through login
                                 Log.trace("Unable to locate information critical to ldap registration/account lookup. Log back in.");
                                 sessionState = State.IS_LOGGED_OUT;
-                                new LoginView(LOCATOR_ID).showLoginDialog();
+                                new LoginView().showLoginDialog();
                                 return;
                             }
 
@@ -263,7 +260,7 @@ public class UserSessionManager {
                                         Log.debug("Failed to complete ldap processing for subject: "
                                             + caught.getMessage());
                                         //TODO: pass message to login dialog.
-                                        new LoginView(LOCATOR_ID).showLoginDialog();
+                                        new LoginView().showLoginDialog();
                                         return;
                                     }
 
@@ -285,7 +282,7 @@ public class UserSessionManager {
                                             sessionState = State.IS_REGISTERING;
                                             sessionSubject = processedSubject;
 
-                                            new LoginView(LOCATOR_ID).showRegistrationDialog(subject.getName(),
+                                            new LoginView().showRegistrationDialog(subject.getName(),
                                                 String.valueOf(processedSubject.getSessionId()), password, callback);
                                         }
 
@@ -305,7 +302,7 @@ public class UserSessionManager {
                                             caught);
                                         Log.info("Failed to load user's subject");
                                         //TODO: pass message to login ui.
-                                        new LoginView(LOCATOR_ID).showLoginDialog();
+                                        new LoginView().showLoginDialog();
                                         return;
                                     }
 
@@ -342,7 +339,7 @@ public class UserSessionManager {
                     } else {
                         //invalid client session. Back to login
                         sessionState = State.IS_LOGGED_OUT;
-                        new LoginView(LOCATOR_ID).showLoginDialog();
+                        new LoginView().showLoginDialog();
                         return;
                     }
                 }

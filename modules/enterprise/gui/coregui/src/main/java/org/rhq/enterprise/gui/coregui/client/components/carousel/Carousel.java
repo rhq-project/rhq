@@ -18,6 +18,15 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.carousel;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Overflow;
@@ -33,6 +42,7 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.HiddenItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
@@ -45,30 +55,20 @@ import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.menu.IMenuButton;
+import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
+
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedSearchBarItem;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 
 /**
  * Similar to (i.e. originally a copy of) Table but instead of encapsulating a ListGrid, it manages a list of 
@@ -78,12 +78,12 @@ import java.util.Set;
  * @author Jay Shaughnessy
  */
 @SuppressWarnings("unchecked")
-public abstract class Carousel extends LocatableHLayout implements RefreshableView {
+public abstract class Carousel extends EnhancedHLayout implements RefreshableView {
 
     private static final String FILTER_CAROUSEL_START = "CarouselStart";
     private static final String FILTER_CAROUSEL_SIZE = "CarouselSize";
 
-    private LocatableVLayout contents;
+    private EnhancedVLayout contents;
 
     private HLayout titleLayout;
     private Canvas titleComponent;
@@ -96,7 +96,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
 
     private CarouselFilter filterForm;
 
-    private LocatableHLayout carouselHolder;
+    private EnhancedHLayout carouselHolder;
 
     private Label carouselInfo;
 
@@ -114,12 +114,12 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
     private boolean carouselActionDisableOverride = false;
     protected List<Canvas> extraWidgetsAboveFooter = new ArrayList<Canvas>();
     protected List<Canvas> extraWidgetsInMainFooter = new ArrayList<Canvas>();
-    private LocatableToolStrip footer;
-    private LocatableToolStrip footerExtraWidgets;
-    private LocatableIButton refreshButton;
-    private LocatableIButton nextButton;
-    private LocatableIButton previousButton;
-    private LocatableIButton widthButton;
+    private EnhancedToolStrip footer;
+    private EnhancedToolStrip footerExtraWidgets;
+    private EnhancedIButton refreshButton;
+    private EnhancedIButton nextButton;
+    private EnhancedIButton previousButton;
+    private EnhancedIButton widthButton;
 
     // null means no start filter, start with highest 
     private Integer carouselStartFilter = null;
@@ -130,16 +130,16 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
     private Integer carouselSizeFilter = getDefaultCarouselSize();
     private boolean carouselUsingFixedWidths = false;
 
-    public Carousel(String locatorId) {
-        this(locatorId, null, null);
+    public Carousel() {
+        this(null, null);
     }
 
-    public Carousel(String locatorId, String titleString) {
-        this(locatorId, titleString, null);
+    public Carousel(String titleString) {
+        this(titleString, null);
     }
 
-    public Carousel(String locatorId, String titleString, Criteria criteria) {
-        super(locatorId);
+    public Carousel(String titleString, Criteria criteria) {
+        super();
 
         setWidth100();
         setHeight100();
@@ -175,7 +175,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
     protected void onInit() {
         super.onInit();
 
-        contents = new LocatableVLayout(extendLocatorId("Contents"));
+        contents = new EnhancedVLayout();
         contents.setWidth100();
         contents.setHeight100();
 
@@ -192,12 +192,13 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
 
         } else {
             if (!this.hideSearchBar) {
-                final EnhancedSearchBarItem searchFilter = new EnhancedSearchBarItem("search",  getSearchSubsystem(), getInitialSearchBarSearchText());
+                final EnhancedSearchBarItem searchFilter = new EnhancedSearchBarItem("search", getSearchSubsystem(),
+                    getInitialSearchBarSearchText());
                 setFilterFormItems(searchFilter);
             }
         }
 
-        carouselHolder = new LocatableHLayout(extendLocatorId("Holder"));
+        carouselHolder = new EnhancedHLayout();
         carouselHolder.setOverflow(Overflow.AUTO);
         carouselHolder.setWidth100();
         contents.addMember(carouselHolder);
@@ -221,7 +222,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
             setTitleString(this.titleString);
 
             if (showTitle) {
-                titleLayout = new LocatableHLayout(contents.extendLocatorId("Title"));
+                titleLayout = new EnhancedHLayout();
                 titleLayout.setAutoHeight();
                 titleLayout.setAlign(VerticalAlignment.BOTTOM);
                 titleLayout.setMembersMargin(4);
@@ -242,14 +243,14 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
 
             // A second toolstrip that optionally appears before the main footer - it will contain extra widgets.
             // This is hidden from view unless extra widgets are actually added to the carousel above the main footer.
-            this.footerExtraWidgets = new LocatableToolStrip(contents.extendLocatorId("FooterExtraWidgets"));
+            this.footerExtraWidgets = new EnhancedToolStrip();
             footerExtraWidgets.setPadding(5);
             footerExtraWidgets.setWidth100();
             footerExtraWidgets.setMembersMargin(15);
             footerExtraWidgets.hide();
             contents.addMember(footerExtraWidgets);
 
-            this.footer = new LocatableToolStrip(contents.extendLocatorId("Footer"));
+            this.footer = new EnhancedToolStrip();
             footer.setPadding(5);
             footer.setWidth100();
             footer.setMembersMargin(15);
@@ -277,7 +278,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
 
     @Override
     public void destroy() {
-        SeleniumUtility.destroyMembers(contents);
+        EnhancedUtility.destroyMembers(contents);
         super.destroy();
     }
 
@@ -316,7 +317,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
 
             if (null == carouselAction.getValueMap()) {
                 // button action
-                IButton button = new LocatableIButton(carouselAction.getLocatorId(), carouselAction.getTitle());
+                IButton button = new EnhancedIButton(carouselAction.getTitle());
                 button.setDisabled(true);
                 button.setOverflow(Overflow.VISIBLE);
                 button.addClickHandler(new ClickHandler() {
@@ -345,7 +346,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
 
             } else {
                 // menu action
-                LocatableMenu menu = new LocatableMenu(carouselAction.getLocatorId() + "Menu");
+                Menu menu = new Menu();
                 final Map<String, ? extends Object> menuEntries = carouselAction.getValueMap();
                 for (final String key : menuEntries.keySet()) {
                     MenuItem item = new MenuItem(key);
@@ -358,8 +359,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
                     menu.addItem(item);
                 }
 
-                IMenuButton menuButton = new LocatableIMenuButton(carouselAction.getLocatorId(), carouselAction
-                    .getTitle());
+                IMenuButton menuButton = new IMenuButton(carouselAction.getTitle());
                 menuButton.setMenu(menu);
                 menuButton.setDisabled(true);
                 menuButton.setOverflow(Overflow.VISIBLE);
@@ -376,7 +376,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
 
         footer.addMember(new LayoutSpacer());
 
-        widthButton = new LocatableIButton(extendLocatorId("Width"), MSG.common_button_fixedWidth());
+        widthButton = new EnhancedIButton(MSG.common_button_fixedWidth());
         widthButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 carouselUsingFixedWidths = !carouselUsingFixedWidths;
@@ -388,7 +388,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
         footer.addMember(widthButton);
 
         if (isShowFooterRefresh()) {
-            this.refreshButton = new LocatableIButton(extendLocatorId("Refresh"), MSG.common_button_refresh());
+            this.refreshButton = new EnhancedIButton(MSG.common_button_refresh());
             refreshButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     disableAllFooterControls();
@@ -398,7 +398,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
             footer.addMember(refreshButton);
         }
 
-        previousButton = new LocatableIButton(extendLocatorId("Previous"), MSG.common_button_previous());
+        previousButton = new EnhancedIButton(MSG.common_button_previous());
         previousButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 disableAllFooterControls();
@@ -407,7 +407,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
         });
         footer.addMember(previousButton);
 
-        nextButton = new LocatableIButton(extendLocatorId("Next"), MSG.common_button_next());
+        nextButton = new EnhancedIButton(MSG.common_button_next());
         nextButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 disableAllFooterControls();
@@ -683,8 +683,8 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
      * (via refresh() or CoreGUI.refresh()) or footer (via refreshCarouselActions) are refreshed as needed at action
      * completion. Failure to do so may leave the widgets disabled.
      */
-    public void addCarouselAction(String locatorId, String title, CarouselAction action) {
-        this.addCarouselAction(locatorId, title, null, null, action);
+    public void addCarouselAction(String title, CarouselAction action) {
+        this.addCarouselAction(title, null, null, action);
     }
 
     /**
@@ -693,8 +693,8 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
      * (via refresh() or CoreGUI.refresh()) or footer (via refreshCarouselActions) are refreshed as needed at action
      * completion. Failure to do so may leave the widgets disabled.
      */
-    public void addCarouselAction(String locatorId, String title, String confirmation, CarouselAction action) {
-        this.addCarouselAction(locatorId, title, confirmation, null, action);
+    public void addCarouselAction(String title, String confirmation, CarouselAction action) {
+        this.addCarouselAction(title, confirmation, null, action);
     }
 
     /**
@@ -703,19 +703,9 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
      * (via refresh() or CoreGUI.refresh()) or footer (via refreshCarouselActions) are refreshed as needed at action
      * completion. Failure to do so may leave the widgets disabled.
      */
-    public void addCarouselAction(String locatorId, String title, String confirmation,
-        LinkedHashMap<String, ? extends Object> valueMap, CarouselAction action) {
-        // If the specified locator ID is qualified, strip off the ancestry prefix, so we can make sure its locator ID
-        // extends the footer's locator ID as it should.
-        int underscoreIndex = locatorId.lastIndexOf('_');
-        String unqualifiedLocatorId;
-        if (underscoreIndex >= 0 && underscoreIndex != (locatorId.length() - 1)) {
-            unqualifiedLocatorId = locatorId.substring(underscoreIndex + 1);
-        } else {
-            unqualifiedLocatorId = locatorId;
-        }
-        CarouselActionInfo info = new CarouselActionInfo(this.footer.extendLocatorId(unqualifiedLocatorId), title,
-            confirmation, valueMap, action);
+    public void addCarouselAction(String title, String confirmation, LinkedHashMap<String, ? extends Object> valueMap,
+        CarouselAction action) {
+        CarouselActionInfo info = new CarouselActionInfo(title, confirmation, valueMap, action);
         carouselActions.add(info);
     }
 
@@ -861,7 +851,6 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
         }
     }
 
-
     // -------------- Inner utility classes ------------- //
 
     /**
@@ -870,7 +859,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
      *
      * @author Joseph Marques 
      */
-    private static class CarouselFilter extends LocatableDynamicForm implements KeyPressHandler, ChangedHandler,
+    private static class CarouselFilter extends DynamicForm implements KeyPressHandler, ChangedHandler,
         com.google.gwt.event.dom.client.KeyPressHandler {
 
         private Carousel carousel;
@@ -878,7 +867,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
         private HiddenItem hiddenItem;
 
         public CarouselFilter(Carousel carousel) {
-            super(carousel.extendLocatorId("CarouselFilter"));
+            super();
             setIsGroup(true);
             setGroupTitle(MSG.common_label_filters());
             setWidth100();
@@ -946,24 +935,19 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
     }
 
     public static class CarouselActionInfo {
-        private String locatorId;
         private String title;
         private String confirmMessage;
         private LinkedHashMap<String, ? extends Object> valueMap;
         private CarouselAction action;
         private Canvas actionCanvas;
 
-        protected CarouselActionInfo(String locatorId, String title, String confirmMessage,
+        protected CarouselActionInfo(String title, String confirmMessage,
             LinkedHashMap<String, ? extends Object> valueMap, CarouselAction action) {
-            this.locatorId = locatorId;
+
             this.title = title;
             this.confirmMessage = confirmMessage;
             this.valueMap = valueMap;
             this.action = action;
-        }
-
-        public String getLocatorId() {
-            return locatorId;
         }
 
         public String getTitle() {

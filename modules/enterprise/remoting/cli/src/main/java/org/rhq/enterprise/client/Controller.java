@@ -40,8 +40,12 @@ public class Controller {
     }
 
     public Subject login(String username, String password, String host, int port) throws Exception {
+        return login(username, password, host, port, null);
+    }
+
+    public Subject login(String username, String password, String host, int port, String transport) throws Exception {
         LoginCommand cmd = (LoginCommand) client.getCommands().get("login");
-        return cmd.execute(client, username, password, host, port, null);
+        return cmd.execute(client, username, password, host, port, transport);
     }
 
     public void logout() {

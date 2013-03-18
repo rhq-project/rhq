@@ -33,8 +33,6 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardSte
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author Jay Shaughnessy
@@ -54,14 +52,9 @@ public class GetRevertInfoStep extends AbstractWizardStep {
         return MSG.view_bundle_revertWizard_getInfoStep_name();
     }
 
-    public Canvas getCanvas(Locatable parent) {
+    public Canvas getCanvas() {
         if (form == null) {
-            if (parent != null) {
-                form = new LocatableDynamicForm(parent.extendLocatorId("BundleRevertGetRevertInfo"));
-            } else {
-                form = new LocatableDynamicForm("BundleRevertGetRevertInfo");
-            }
-
+            form = new DynamicForm();
             form.setWidth100();
             form.setNumCols(2);
             form.setColWidths("50%", "*");

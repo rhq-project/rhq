@@ -22,17 +22,26 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.agent.install;
 
+import java.util.ArrayList;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.ExpansionMode;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.*;
+import com.smartgwt.client.widgets.form.fields.ButtonItem;
+import com.smartgwt.client.widgets.form.fields.CanvasItem;
+import com.smartgwt.client.widgets.form.fields.HeaderItem;
+import com.smartgwt.client.widgets.form.fields.PasswordItem;
+import com.smartgwt.client.widgets.form.fields.SpacerItem;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
+
 import org.rhq.core.domain.install.remote.AgentInstallInfo;
 import org.rhq.core.domain.install.remote.AgentInstallStep;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
@@ -44,17 +53,14 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.RemoteInstallGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-
-import java.util.ArrayList;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class RemoteAgentInstallView extends LocatableVLayout {
-    public static final ViewName VIEW_ID = new ViewName("RemoteAgentInstall", MSG
-        .view_adminTopology_remoteAgentInstall(), IconEnum.AGENT);
+public class RemoteAgentInstallView extends EnhancedVLayout {
+    public static final ViewName VIEW_ID = new ViewName("RemoteAgentInstall",
+        MSG.view_adminTopology_remoteAgentInstall(), IconEnum.AGENT);
 
     private RemoteInstallGWTServiceAsync remoteInstallService = GWTServiceLookup.getRemoteInstallService(600000);
 
@@ -65,8 +71,8 @@ public class RemoteAgentInstallView extends LocatableVLayout {
     private ButtonItem stopButton;
     private VLayout agentInfoLayout;
 
-    public RemoteAgentInstallView(String locatorId) {
-        super(locatorId);
+    public RemoteAgentInstallView() {
+        super();
         setMembersMargin(1);
         setWidth100();
         setHeight100();
@@ -88,7 +94,7 @@ public class RemoteAgentInstallView extends LocatableVLayout {
     }
 
     private DynamicForm getConnectionForm() {
-        connectionForm = new LocatableDynamicForm(this.extendLocatorId("Connection"));
+        connectionForm = new DynamicForm();
         connectionForm.setWidth100();
         connectionForm.setNumCols(3);
         connectionForm.setWrapItemTitles(false);
@@ -134,8 +140,8 @@ public class RemoteAgentInstallView extends LocatableVLayout {
         agentInstallPath.setStartRow(true);
         agentInstallPath.setEndRow(false);
 
-        ButtonItem findAgentInstallPathButton = new ButtonItem("findAgentInstallPathButton", MSG
-            .view_remoteAgentInstall_buttonFindAgent());
+        ButtonItem findAgentInstallPathButton = new ButtonItem("findAgentInstallPathButton",
+            MSG.view_remoteAgentInstall_buttonFindAgent());
         findAgentInstallPathButton.setStartRow(false);
         findAgentInstallPathButton.setEndRow(true);
         findAgentInstallPathButton.addClickHandler(new ClickHandler() {
@@ -172,7 +178,7 @@ public class RemoteAgentInstallView extends LocatableVLayout {
     }
 
     private DynamicForm getButtons() {
-        buttonsForm = new LocatableDynamicForm(this.extendLocatorId("ButtonForm"));
+        buttonsForm = new DynamicForm();
         buttonsForm.setWidth("75%");
         buttonsForm.setNumCols(4);
         buttonsForm.setMargin(10);
@@ -345,7 +351,7 @@ public class RemoteAgentInstallView extends LocatableVLayout {
     }
 
     private void buildInstallInfoCanvas(VLayout installInfo, AgentInstallInfo info) {
-        DynamicForm infoForm = new LocatableDynamicForm(extendLocatorId("infoForm"));
+        DynamicForm infoForm = new DynamicForm();
         infoForm.setMargin(20);
         infoForm.setWidth100();
         infoForm.setHeight100();
@@ -414,8 +420,8 @@ public class RemoteAgentInstallView extends LocatableVLayout {
             }
             rec.setAttribute("result", result);
             rec.setAttribute("resultCode", "" + step.getResultCode());
-            rec.setAttribute("duration", MeasurementConverterClient.format((double) step.getDuration(),
-                MeasurementUnits.MILLISECONDS, true));
+            rec.setAttribute("duration",
+                MeasurementConverterClient.format((double) step.getDuration(), MeasurementUnits.MILLISECONDS, true));
             steps.add(rec);
         }
 

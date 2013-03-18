@@ -61,7 +61,7 @@ import javax.persistence.Table;
         + "   AND (UPPER(pe.eventDetail) LIKE :details ESCAPE :escapeChar OR :details is null) "),
     @NamedQuery(name = PartitionEvent.QUERY_FIND_BY_EXECUTION_STATUS, query = "SELECT pe FROM PartitionEvent pe WHERE pe.executionStatus = :executionStatus") //
 })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "id", sequenceName = "RHQ_PARTITION_EVENT_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_PARTITION_EVENT_ID_SEQ", sequenceName = "RHQ_PARTITION_EVENT_ID_SEQ")
 @Table(name = "RHQ_PARTITION_EVENT")
 public class PartitionEvent implements Serializable {
 
@@ -71,7 +71,7 @@ public class PartitionEvent implements Serializable {
     public static final String QUERY_FIND_BY_EXECUTION_STATUS = "PartitionEvent.findByExecutionStatus";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "id")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_PARTITION_EVENT_ID_SEQ")
     @Id
     private int id;
 

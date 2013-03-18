@@ -22,38 +22,37 @@ package org.rhq.enterprise.gui.coregui.client.components;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Label;
 
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A title bar to be displayed at the top of a content view - contains a label and/or an icon.
  *
  * @author Ian Springer
  */
-public class TitleBar extends LocatableToolStrip {
+public class TitleBar extends EnhancedToolStrip {
     private Label label;
 
-    public TitleBar(Locatable parent) {
-        this(parent, null, null);
+    public TitleBar() {
+        this(null, null);
     }
 
-    public TitleBar(Locatable parent, String title) {
-        this(parent, title, null);
+    public TitleBar(String title) {
+        this(title, null);
     }
 
-    public TitleBar(Locatable parent, String title, String icon) {
-        super(parent.extendLocatorId("TitleBar"));
+    public TitleBar(String title, String icon) {
+        super();
 
         setWidth100();
         setHeight(30);
 
-        LocatableVLayout vLayout = new LocatableVLayout(extendLocatorId("VLayout"));
+        EnhancedVLayout vLayout = new EnhancedVLayout();
         vLayout.setAlign(VerticalAlignment.CENTER);
         vLayout.setLayoutMargin(6);
 
-        LocatableHLayout hLayout = new LocatableHLayout(vLayout.extendLocatorId("HLayout"));
+        EnhancedHLayout hLayout = new EnhancedHLayout();
         vLayout.addMember(hLayout);
 
         this.label = new Label();

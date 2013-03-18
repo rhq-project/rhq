@@ -37,9 +37,7 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardSte
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Jay Shaughnessy
@@ -60,13 +58,9 @@ public class ConfirmationStep extends AbstractWizardStep {
         return MSG.view_bundle_revertWizard_confirmStep_name();
     }
 
-    public Canvas getCanvas(Locatable parent) {
+    public Canvas getCanvas() {
         if (layout == null) {
-            if (parent != null) {
-                layout = new LocatableVLayout(parent.extendLocatorId("BundleRevertConfirmation"));
-            } else {
-                layout = new LocatableVLayout("BundleRevertConfirmation");
-            }
+            layout = new EnhancedVLayout();
             layout.setMembersMargin(15);
 
             // Get the Live Deployment
@@ -156,7 +150,7 @@ public class ConfirmationStep extends AbstractWizardStep {
         final BundleDeployment live = this.wizard.getLiveDeployment();
         final BundleDeployment prev = this.wizard.getPreviousDeployment();
 
-        DynamicForm liveForm = new LocatableDynamicForm(this.wizard.getView().extendLocatorId("liveForm"));
+        DynamicForm liveForm = new DynamicForm();
         liveForm.setNumCols(2);
         liveForm.setIsGroup(true);
         liveForm.setGroupTitle("<b>" + MSG.view_bundle_revertWizard_confirmStep_liveDeployment() + "<b>");
@@ -189,7 +183,7 @@ public class ConfirmationStep extends AbstractWizardStep {
         layout.addMember(liveForm);
 
         if (prev != null) {
-            final DynamicForm prevForm = new LocatableDynamicForm(this.wizard.getView().extendLocatorId("previousForm"));
+            final DynamicForm prevForm = new DynamicForm();
             prevForm.setNumCols(2);
             prevForm.setIsGroup(true);
             prevForm.setGroupTitle("<b>" + MSG.view_bundle_revertWizard_confirmStep_prevDeployment() + "<b>");

@@ -59,7 +59,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Jay Shaughnessy
@@ -207,7 +206,7 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
                     int typeId = def.getResource().getResourceType().getId();
                     int templateId = def.getTemplate().getId();
                     String link = LinkManager.getDriftTemplateLink(typeId, templateId);
-                    return SeleniumUtility.getLocatableHref(link, o.toString(), null);
+                    return LinkManager.getHref(link, o.toString());
 
                 } else {
                     return o.toString();
@@ -250,7 +249,7 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
                 public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                     Integer resourceId = listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
                     String url = LinkManager.getResourceLink(resourceId);
-                    return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                    return LinkManager.getHref(url, o.toString());
                 }
             });
             resourceNameField.setShowHover(true);

@@ -58,6 +58,7 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.groups.graph.ResourceGroupGraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceDetailView;
@@ -66,13 +67,14 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceT
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
 
 /**
  * @author Jay Shaughnessy
  * @author Greg Hinkle
  */
-public class ResourceGroupContextMenu extends LocatableMenu {
+public class ResourceGroupContextMenu extends Menu {
+
+    protected Messages MSG = CoreGUI.getMessages();
 
     private ResourceGroupComposite groupComposite;
     private ResourceGroup group;
@@ -80,10 +82,6 @@ public class ResourceGroupContextMenu extends LocatableMenu {
 
     private boolean isAutoCluster = false;
     private boolean isAutoGroup = false;
-
-    public ResourceGroupContextMenu(String locatorId) {
-        super(locatorId);
-    }
 
     public void showContextMenu(final TreeGrid treeGrid, final TreeNode node, final ResourceGroup group) {
         // we need the group composite to access permissions for context menu authz, so get it now

@@ -33,6 +33,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
@@ -42,38 +43,36 @@ import org.rhq.core.domain.criteria.AgentCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * Shows details of an agent.
  * 
  * @author Jirka Kremser
  */
-public class AgentDetailView extends LocatableVLayout {
+public class AgentDetailView extends EnhancedVLayout {
 
     private final int agentId;
 
     private static final int SECTION_COUNT = 2;
-    private final LocatableSectionStack sectionStack;
+    private final SectionStack sectionStack;
     private SectionStackSection detailsSection = null;
     private SectionStackSection failoverListSection = null;
 
     private volatile int initSectionCount = 0;
 
-    public AgentDetailView(String locatorId, int agentId) {
-        super(locatorId);
+    public AgentDetailView(int agentId) {
+        super();
         this.agentId = agentId;
         setHeight100();
         setWidth100();
         setOverflow(Overflow.AUTO);
 
-        sectionStack = new LocatableSectionStack(extendLocatorId("stack"));
+        sectionStack = new SectionStack();
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
         sectionStack.setWidth100();
         sectionStack.setHeight100();
@@ -147,8 +146,7 @@ public class AgentDetailView extends LocatableVLayout {
     private void prepareFailoverListSection(SectionStack stack, Agent agent) {
         SectionStackSection section = new SectionStackSection(MSG.view_adminTopology_agentDetail_agentFailoverList());
         section.setExpanded(true);
-        ServerTableView agentsTable = new ServerTableView(extendLocatorId(ServerTableView.VIEW_ID.getName()),
-            agent.getId(), false);
+        ServerTableView agentsTable = new ServerTableView(agent.getId(), false);
         section.setItems(agentsTable);
 
         failoverListSection = section;
@@ -157,7 +155,7 @@ public class AgentDetailView extends LocatableVLayout {
     }
 
     private void prepareDetailsSection(SectionStack stack, Agent agent) {
-        final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("detailsForm"));
+        final DynamicForm form = new DynamicForm();
         form.setMargin(10);
         form.setWidth100();
         form.setWrapItemTitles(false);
@@ -168,8 +166,9 @@ public class AgentDetailView extends LocatableVLayout {
 
         StaticTextItem addressItem = new StaticTextItem(FIELD_ADDRESS.propertyName(), FIELD_ADDRESS.title());
         addressItem.setValue(agent.getAddress());
-        
-        StaticTextItem remoteEndpointItem = new StaticTextItem(FIELD_REMOTE_ENDPOINT.propertyName(), FIELD_REMOTE_ENDPOINT.title());
+
+        StaticTextItem remoteEndpointItem = new StaticTextItem(FIELD_REMOTE_ENDPOINT.propertyName(),
+            FIELD_REMOTE_ENDPOINT.title());
         remoteEndpointItem.setValue(agent.getRemoteEndpoint());
 
         StaticTextItem portItem = new StaticTextItem(FIELD_PORT.propertyName(), FIELD_PORT.title());
@@ -183,7 +182,7 @@ public class AgentDetailView extends LocatableVLayout {
         String lastReport = agent.getLastAvailabilityReport() == null ? "unknown" : TimestampCellFormatter.format(
             Long.valueOf(agent.getLastAvailabilityReport()), TimestampCellFormatter.DATE_TIME_FORMAT_LONG);
         lastAvailabilityReportItem.setValue(lastReport);
-        
+
         StaticTextItem lastAvailabilityPingItem = new StaticTextItem(FIELD_LAST_AVAILABILITY_PING.propertyName(),
             FIELD_LAST_AVAILABILITY_PING.title());
         String lastPing = agent.getLastAvailabilityPing() == null ? "unknown" : TimestampCellFormatter.format(
@@ -198,7 +197,7 @@ public class AgentDetailView extends LocatableVLayout {
         if (ag != null && ag.getName() != null && !ag.getName().isEmpty()) {
             String detailsUrl = "#" + AffinityGroupTableView.VIEW_PATH + "/" + ag.getId();
             String formattedValue = StringUtility.escapeHtml(ag.getName());
-            affinityGroupItemText = SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
+            affinityGroupItemText = LinkManager.getHref(detailsUrl, formattedValue);
         }
         affinityGroupItem.setValue(affinityGroupItemText);
 
@@ -209,7 +208,7 @@ public class AgentDetailView extends LocatableVLayout {
         } else {
             String detailsUrl = "#" + ServerTableView.VIEW_PATH + "/" + agent.getServer().getId();
             String formattedValue = StringUtility.escapeHtml(agent.getServer().getName());
-            serverValue = SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
+            serverValue = LinkManager.getHref(detailsUrl, formattedValue);
         }
         currentServerItem.setValue(serverValue);
 

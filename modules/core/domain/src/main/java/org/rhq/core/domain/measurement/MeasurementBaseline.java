@@ -101,7 +101,7 @@ import javax.persistence.Table;
         + "DELETE MeasurementBaseline bl " //
         + " WHERE bl.computeTime < :timestamp "),
     @NamedQuery(name = MeasurementBaseline.QUERY_DELETE_BY_RESOURCES, query = "DELETE MeasurementBaseline bl WHERE bl.schedule IN ( SELECT ms FROM MeasurementSchedule ms WHERE ms.resource.id IN ( :resourceIds ) )") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "MEAS_BL_GEN", sequenceName = "RHQ_MEASUREMENT_BLINE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_MEASUREMENT_BLINE_ID_SEQ", sequenceName = "RHQ_MEASUREMENT_BLINE_ID_SEQ")
 @SuppressWarnings("unused")
 @Table(name = "RHQ_MEASUREMENT_BLINE")
 public class MeasurementBaseline implements Serializable {
@@ -195,7 +195,7 @@ public class MeasurementBaseline implements Serializable {
             + "                                         WHERE mdata.TIME_STAMP <= ? ) "; // ?4=startTime
     }
     private static final long serialVersionUID = 1L;
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "MEAS_BL_GEN")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_MEASUREMENT_BLINE_ID_SEQ")
     @Id
     private int id;
 

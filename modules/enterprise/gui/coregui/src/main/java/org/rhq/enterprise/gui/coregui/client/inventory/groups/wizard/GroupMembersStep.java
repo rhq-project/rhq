@@ -29,10 +29,8 @@ import java.util.Set;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceSelector;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 
 /**
  * @author Greg Hinkle
@@ -46,13 +44,9 @@ public class GroupMembersStep extends AbstractWizardStep {
         this.wizard = wizard;
     }
 
-    public Canvas getCanvas(Locatable parent) {
+    public Canvas getCanvas() {
         if (selector == null) {
-            if (parent != null) {
-                selector = new ResourceSelector(parent.extendLocatorId("GroupMembers"));
-            } else {
-                selector = new ResourceSelector("GroupMembers");
-            }
+            selector = new ResourceSelector();
         }
         return selector;
     }
@@ -75,7 +69,7 @@ public class GroupMembersStep extends AbstractWizardStep {
         }
         return selection;
     }
-    
+
     public Integer[] getSelecterResourceTypeIds() {
         ListGridRecord[] selectedRecords = selector.getSelectedRecords();
         Integer[] selection = new Integer[selectedRecords.length];

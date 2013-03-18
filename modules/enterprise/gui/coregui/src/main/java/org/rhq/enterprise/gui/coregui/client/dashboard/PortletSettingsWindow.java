@@ -28,6 +28,7 @@ import com.smartgwt.client.types.LayoutPolicy;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -37,9 +38,10 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
 
 /**
  * This is a window for displaying portlet settings. The window contains a form which in turn will contain the
@@ -51,15 +53,17 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
  *
  * @author John Sanda
  */
-public class PortletSettingsWindow extends LocatableWindow {
+public class PortletSettingsWindow extends Window {
+
+    private Messages MSG = CoreGUI.getMessages();
 
     private PortletWindow parentWindow;
     private DashboardPortlet storedPortlet;
     private Portlet view;
 
-    public PortletSettingsWindow(String locatorId, PortletWindow parentWindow, DashboardPortlet storedPortlet,
+    public PortletSettingsWindow(PortletWindow parentWindow, DashboardPortlet storedPortlet,
         Portlet view) {
-        super(locatorId);
+        super();
         this.parentWindow = parentWindow;
         this.storedPortlet = storedPortlet;
         this.view = view;
@@ -93,13 +97,13 @@ public class PortletSettingsWindow extends LocatableWindow {
             spacer.setHeight(10);
             layout.addMember(spacer);
 
-            IButton cancel = new LocatableIButton(this.extendLocatorId("Cancel"), MSG.common_button_cancel());
+            IButton cancel = new EnhancedIButton(MSG.common_button_cancel());
             cancel.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     PortletSettingsWindow.this.destroy();
                 }
             });
-            IButton save = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
+            IButton save = new EnhancedIButton(MSG.common_button_save());
             save.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     if (form.validate()) {
@@ -127,18 +131,18 @@ public class PortletSettingsWindow extends LocatableWindow {
             ConfigurationDefinition definition = ((ConfigurablePortlet) view).getConfigurationDefinition();
             Configuration configuration = storedPortlet.getConfiguration();
 
-            final ConfigurationEditor editor = new ConfigurationEditor(getLocatorId(), definition, configuration);
+            final ConfigurationEditor editor = new ConfigurationEditor(definition, configuration);
             editor.setWidth(400);
             editor.setHeight(400);
             layout.addMember(editor);
 
-            IButton cancel = new LocatableIButton(this.extendLocatorId("Cancel"), MSG.common_button_cancel());
+            IButton cancel = new EnhancedIButton(MSG.common_button_cancel());
             cancel.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     PortletSettingsWindow.this.destroy();
                 }
             });
-            IButton save = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
+            IButton save = new EnhancedIButton(MSG.common_button_save());
             save.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     if (editor.validate()) {

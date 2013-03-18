@@ -33,8 +33,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Jay Shaughnessy
@@ -55,13 +54,9 @@ public class RevertStep extends AbstractWizardStep {
         return MSG.view_bundle_revertWizard_revertStep_name();
     }
 
-    public Canvas getCanvas(Locatable parent) {
+    public Canvas getCanvas() {
         if (canvas == null) {
-            if (parent != null) {
-                canvas = new LocatableVLayout(parent.extendLocatorId("BundleRevertRevert"));
-            } else {
-                canvas = new LocatableVLayout("BundleRevertRevert");
-            }
+            canvas = new EnhancedVLayout();
             canvas.setWidth100();
             canvas.setHeight100();
             canvas.setAlign(Alignment.CENTER);
@@ -77,8 +72,8 @@ public class RevertStep extends AbstractWizardStep {
             canvas.addMember(deployingImage);
             canvas.addMember(deployingMessage);
 
-            bundleServer.scheduleRevertBundleDeployment(this.wizard.getDestination().getId(), this.wizard
-                .getDeploymentDescription(), this.wizard.isCleanDeployment(), //
+            bundleServer.scheduleRevertBundleDeployment(this.wizard.getDestination().getId(),
+                this.wizard.getDeploymentDescription(), this.wizard.isCleanDeployment(), //
                 new AsyncCallback<BundleDeployment>() {
                     public void onSuccess(BundleDeployment result) {
                         deployingImage.setSrc("/images/status_complete.gif");

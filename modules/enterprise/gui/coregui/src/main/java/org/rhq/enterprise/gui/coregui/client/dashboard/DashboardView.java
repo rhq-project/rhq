@@ -75,19 +75,15 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.Resourc
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceOperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourcePkgHistoryPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Jay Shaughnessy
  * @author Greg Hinkle
  * @author Simeon Pinder
  */
-public class DashboardView extends LocatableVLayout {
+public class DashboardView extends EnhancedVLayout {
 
     private DashboardContainer dashboardContainer;
     private Dashboard storedDashboard;
@@ -95,7 +91,7 @@ public class DashboardView extends LocatableVLayout {
     private boolean editMode = false;
 
     PortalLayout portalLayout;
-    LocatableDynamicForm editForm;
+    DynamicForm editForm;
     IMenuButton addPortlet;
 
     HashSet<PortletWindow> portletWindows = new HashSet<PortletWindow>();
@@ -112,7 +108,7 @@ public class DashboardView extends LocatableVLayout {
     private HashMap<Integer, String> refreshMenuMappings;
     private MenuItem[] refreshMenuItems;
     private int refreshInterval = 0;
-    private LocatableIMenuButton refreshMenuButton;
+    private IMenuButton refreshMenuButton;
 
     private EntityContext context;
     private ResourceGroupComposite groupComposite = null;
@@ -127,26 +123,24 @@ public class DashboardView extends LocatableVLayout {
     /**
      * Convenience constructor for subsystem context.
      * 
-     * @param locatorId
      * @param dashboardContainer
      * @param storedDashboard
      */
-    public DashboardView(String locatorId, DashboardContainer dashboardContainer, Dashboard storedDashboard) {
+    public DashboardView(DashboardContainer dashboardContainer, Dashboard storedDashboard) {
 
-        this(locatorId, dashboardContainer, storedDashboard, EntityContext.forSubsystemView(), null);
+        this(dashboardContainer, storedDashboard, EntityContext.forSubsystemView(), null);
     }
 
     /**
-     * @param locatorId
      * @param dashboardContainer
      * @param storedDashboard
      * @param context
      * @param composite ResourceComposite, ResourceGroupComposite or null depending on context
      */
-    public DashboardView(String locatorId, DashboardContainer dashboardContainer, Dashboard storedDashboard,
-        EntityContext context, Object composite) {
+    public DashboardView(DashboardContainer dashboardContainer, Dashboard storedDashboard, EntityContext context,
+        Object composite) {
 
-        super(locatorId);
+        super();
 
         this.dashboardContainer = dashboardContainer;
         this.storedDashboard = storedDashboard;
@@ -211,8 +205,7 @@ public class DashboardView extends LocatableVLayout {
     public void buildPortlets() {
         this.setBackgroundColor(storedDashboard.getConfiguration().getSimpleValue(Dashboard.CFG_BACKGROUND, "white"));
 
-        portalLayout = new PortalLayout(extendLocatorId("PortalLayout"), this, storedDashboard.getColumns(),
-            storedDashboard.getColumnWidths());
+        portalLayout = new PortalLayout(this, storedDashboard.getColumns(), storedDashboard.getColumnWidths());
 
         portalLayout.setOverflow(Overflow.AUTO);
         portalLayout.setWidth100();
@@ -228,7 +221,7 @@ public class DashboardView extends LocatableVLayout {
     }
 
     private DynamicForm buildEditForm() {
-        editForm = new LocatableDynamicForm(extendLocatorId("Editor"));
+        editForm = new DynamicForm();
         editForm.setMargin(5);
         editForm.setAutoWidth();
         editForm.setNumCols(canEditName() ? 12 : 10);
@@ -306,7 +299,7 @@ public class DashboardView extends LocatableVLayout {
         });
 
         // build the menu of valid portlets for this context, sorted by portlet name
-        final Menu addPortletMenu = new LocatableMenu(editForm.extendLocatorId("PortletMenu"));
+        final Menu addPortletMenu = new Menu();
         LinkedHashMap<String, String> valueMap;
 
         switch (context.getType()) {
@@ -337,8 +330,7 @@ public class DashboardView extends LocatableVLayout {
             addPortletMenu.addItem(menuItem);
         }
 
-        addPortlet = new LocatableIMenuButton(editForm.extendLocatorId("AddPortlet"), MSG.common_title_add_portlet(),
-            addPortletMenu);
+        addPortlet = new IMenuButton(MSG.common_title_add_portlet(), addPortletMenu);
         addPortlet.setIcon("[skin]/images/actions/add.png");
         addPortlet.setAutoFit(true);
 
@@ -373,7 +365,7 @@ public class DashboardView extends LocatableVLayout {
         });
 
         //refresh interval
-        LocatableMenu refreshMenu = new LocatableMenu("AutoRefreshMenu");
+        Menu refreshMenu = new Menu();
         refreshMenu.setShowShadow(true);
         refreshMenu.setShadowDepth(10);
         refreshMenu.setAutoWidth();
@@ -420,8 +412,7 @@ public class DashboardView extends LocatableVLayout {
         }
 
         refreshMenu.setItems(refreshMenuItems);
-        refreshMenuButton = new LocatableIMenuButton("AutoRefreshButton", MSG.common_title_change_refresh_time(),
-            refreshMenu);
+        refreshMenuButton = new IMenuButton(MSG.common_title_change_refresh_time(), refreshMenu);
         refreshMenu.setAutoHeight();
         refreshMenuButton.getMenu().setItems(refreshMenuItems);
         refreshMenuButton.setWidth(140);
@@ -552,9 +543,8 @@ public class DashboardView extends LocatableVLayout {
     private void loadPortletWindows() {
         for (int i = 0; i < storedDashboard.getColumns(); i++) {
             for (DashboardPortlet storedPortlet : storedDashboard.getPortlets(i)) {
-                String locatorId = getPortletLocatorId(portalLayout, storedPortlet);
 
-                PortletWindow portletWindow = new PortletWindow(locatorId, this, storedPortlet, context);
+                PortletWindow portletWindow = new PortletWindow(this, storedPortlet, context);
                 portletWindow.setTitle(storedPortlet.getName());
                 portletWindow.setHeight(storedPortlet.getHeight());
                 portletWindow.setVisible(true);
@@ -565,38 +555,11 @@ public class DashboardView extends LocatableVLayout {
         }
     }
 
-    /**
-     * LocatorIds need to be repeatable and non-duplicated.  The natural key for a portlet is the Id but the Id
-     * is not a good locatorId as it may change (it's a sequence generated id) on subsequent test runs.  A portlet has
-     * an internal identifier (portletKey) and a name, but the key-name tuple is not guaranteed to be unique as
-     * multiple instances of the same portlet type may be present on the same, or across multiple dashboards. There
-     * is one tuple that is guaranteed unique and useful for a repeatable locator Id: DashBoard-Position.  This
-     * means that the on a single dashboard each portlet has a unique column-columnIndex pair.  Although portlets
-     * can move, and the positions can change at runtime, it's still valid for a locatorId because it is
-     * unique and repeatable for test purposes. We also add the portletKey for an easier visual cue.
-     * The portalLayout's locatorId already incorporates the dashboardName, so we need only extend it with the
-     * positioning information. 
-     * 
-     * @param portalLayout
-     * @param dashboardPortlet
-     * @return The locatorId for the portlet. Form PortleyKey_DashboardId_Column_ColumnIndex
-     */
-    private String getPortletLocatorId(PortalLayout portalLayout, DashboardPortlet dashboardPortlet) {
-        StringBuilder locatorId = new StringBuilder(dashboardPortlet.getPortletKey());
-        locatorId.append("_");
-        locatorId.append(dashboardPortlet.getColumn());
-        locatorId.append("_");
-        locatorId.append(dashboardPortlet.getIndex());
-
-        return portalLayout.extendLocatorId(locatorId.toString());
-    }
-
     protected void addPortlet(String portletKey, String portletName) {
         DashboardPortlet storedPortlet = new DashboardPortlet(portletName, portletKey, 250);
         storedDashboard.addPortlet(storedPortlet);
 
-        String locatorId = getPortletLocatorId(portalLayout, storedPortlet);
-        final PortletWindow newPortletWindow = new PortletWindow(locatorId, this, storedPortlet, context);
+        final PortletWindow newPortletWindow = new PortletWindow(this, storedPortlet, context);
         newPortletWindow.setTitle(portletName);
         newPortletWindow.setHeight(350);
         newPortletWindow.setVisible(false);
@@ -637,21 +600,7 @@ public class DashboardView extends LocatableVLayout {
         storedDashboard.removePortlet(portletWindow.getStoredPortlet());
         this.portletWindows.remove(portletWindow);
 
-        // portlet remove means the portlet locations may have changed. The selenium testing locators include
-        // positioning info. So, in this case we have to take the hit and completely refresh the dash.
-        AsyncCallback<Dashboard> callback = SeleniumUtility.getUseDefaultIds() ? null : new AsyncCallback<Dashboard>() {
-
-            @Override
-            public void onFailure(Throwable caught) {
-                rebuild();
-            }
-
-            @Override
-            public void onSuccess(Dashboard result) {
-                rebuild();
-            }
-        };
-        save(callback);
+        save();
     }
 
     public void save(Dashboard dashboard) {
@@ -967,5 +916,16 @@ public class DashboardView extends LocatableVLayout {
 
         maximizedPortlet = null;
         portalLayout.markForRedraw();
+    }
+
+    // If we redraw the dashboard then also redraw the portlets so that everything is up to date
+    @Override
+    public void redraw() {
+        super.redraw();
+
+        for (PortletWindow pw : portletWindows) {
+            // I think this should work with markForRedraw but for some reason it does not
+            ((Canvas) pw.getView()).redraw();
+        }
     }
 }

@@ -39,8 +39,8 @@ public class MeasurementOOBView extends Table<MeasurementOOBDataSource> implemen
 
     public static final ViewName VIEW_ID = new ViewName("SuspectMetrics", MSG.view_measurementOob_title(), IconEnum.SUSPECT_METRICS);
 
-    public MeasurementOOBView(String locatorId) {
-        super(locatorId);
+    public MeasurementOOBView() {
+        super();
         setDataSource(new MeasurementOOBDataSource());
     }
 

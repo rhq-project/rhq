@@ -27,6 +27,7 @@ import java.util.Set;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
@@ -41,15 +42,13 @@ import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author Jay Shaughnessy
  */
 public class DriftAddDefinitionWizardInfoStep extends AbstractWizardStep {
 
-    private LocatableDynamicForm form;
+    private DynamicForm form;
     private AbstractDriftAddDefinitionWizard wizard;
     private Map<String, ConfigurationTemplate> templates;
 
@@ -57,14 +56,10 @@ public class DriftAddDefinitionWizardInfoStep extends AbstractWizardStep {
         this.wizard = wizard;
     }
 
-    public Canvas getCanvas(Locatable parent) {
+    public Canvas getCanvas() {
         if (form == null) {
 
-            if (parent != null) {
-                form = new LocatableDynamicForm(parent.extendLocatorId("DriftAddDefInfo"));
-            } else {
-                form = new LocatableDynamicForm("DriftAddDefInfo");
-            }
+            form = new DynamicForm();
             form.setNumCols(1);
             List<FormItem> formItems = new ArrayList<FormItem>(2);
 
@@ -77,7 +72,8 @@ public class DriftAddDefinitionWizardInfoStep extends AbstractWizardStep {
             SpacerItem spacerItem = new SpacerItem("Spacer");
             formItems.add(spacerItem);
 
-            SelectItem templateSelectItem = new SortedSelectItem("Template", MSG.view_drift_wizard_addDef_templatePrompt());
+            SelectItem templateSelectItem = new SortedSelectItem("Template",
+                MSG.view_drift_wizard_addDef_templatePrompt());
             templateSelectItem.setTitleOrientation(TitleOrientation.TOP);
             templateSelectItem.setAlign(Alignment.LEFT);
             templateSelectItem.setWidth(300);

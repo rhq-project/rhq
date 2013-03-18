@@ -80,7 +80,7 @@
     </dependency>
 
     <dependency>
-      <groupId>jboss</groupId>
+      <groupId>org.jboss.remoting</groupId>
       <artifactId>jboss-remoting</artifactId>
     </dependency>
 
@@ -157,7 +157,7 @@ Build-Number=${buildNumber}
                    <property name="concurrent.version" value="${concurrent.version}" />
                    <property name="getopt.version" value="${getopt.version}" />
                    <property name="jboss-jmx.version" value="${jboss-jmx.version}" />
-                   <property name="jboss-common.version" value="${jboss-common.version}" />
+                   <property name="jboss-common-core.version" value="${jboss-common-core.version}" />
                    <property name="jboss-remoting.version" value="${jboss-remoting.version}" />
                    <property name="jboss-logging.version" value="${jboss-logging.version}" />
                    <property name="jboss-serialization.version" value="${jboss-serialization.version}" />

@@ -41,8 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryDetailsView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Ian Springer
@@ -54,17 +53,17 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
     @SuppressWarnings("unused")
     private ResourceComposite resourceComposite;
 
-    public ResourceOperationHistoryDetailsView(String locatorId) {
-        this(locatorId, false);
+    public ResourceOperationHistoryDetailsView() {
+        this(false);
     }
 
-    public ResourceOperationHistoryDetailsView(String locatorId, ResourceComposite resourceComposite) {
-        this(locatorId);
+    public ResourceOperationHistoryDetailsView(ResourceComposite resourceComposite) {
+        this(false);
         this.resourceComposite = resourceComposite;
     }
 
-    public ResourceOperationHistoryDetailsView(String locatorId, boolean showResourceField) {
-        super(locatorId);
+    public ResourceOperationHistoryDetailsView(boolean showResourceField) {
+        super();
 
         this.showResourceField = showResourceField;
     }
@@ -117,8 +116,7 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
                     if (showResourceField) {
                         Resource resource = resourceOperationHistory.getResource();
                         String url = LinkManager.getResourceLink(resource.getId());
-                        disambiguatedResourceName = SeleniumUtility.getLocatableHref(url, resource.getName(),
-                            String.valueOf(resource.getId()));
+                        disambiguatedResourceName = LinkManager.getHref(url, resource.getName());
                     }
 
                     displayDetails(resourceOperationHistory);
@@ -130,7 +128,7 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
     protected Canvas buildResultsSection(ResourceOperationHistory operationHistory) {
         OperationRequestStatus status = operationHistory.getStatus();
         if (status == OperationRequestStatus.SUCCESS) {
-            LocatableVLayout resultsSection = new LocatableVLayout(extendLocatorId("ResultsSection"));
+            EnhancedVLayout resultsSection = new EnhancedVLayout();
 
             Label title = new Label("<h4>" + MSG.view_operationHistoryDetails_results() + "</h4>");
             title.setHeight(27);
@@ -141,7 +139,7 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
                 .getResultsConfigurationDefinition();
             if (resultsConfigurationDefinition != null
                 && !resultsConfigurationDefinition.getPropertyDefinitions().isEmpty()) {
-                ConfigurationEditor editor = new ConfigurationEditor(extendLocatorId("results"),
+                ConfigurationEditor editor = new ConfigurationEditor(
                     operationDefinition.getResultsConfigurationDefinition(), operationHistory.getResults());
                 editor.setPreserveTextFormatting(true);
                 editor.setReadOnly(true);

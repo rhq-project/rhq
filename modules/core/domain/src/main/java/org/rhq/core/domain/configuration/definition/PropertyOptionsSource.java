@@ -33,8 +33,6 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -46,12 +44,12 @@ import javax.xml.bind.annotation.XmlAccessorType;
  */
 @Entity
 @Table(name="RHQ_CONFIG_PD_OSRC")
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_CONFIG_PD_OSRC_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_CONFIG_PD_OSRC_ID_SEQ", sequenceName = "RHQ_CONFIG_PD_OSRC_ID_SEQ")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class PropertyOptionsSource implements Serializable{
 
     @Id
-    @GeneratedValue(generator = "SEQ", strategy = GenerationType.AUTO)
+    @GeneratedValue(generator = "RHQ_CONFIG_PD_OSRC_ID_SEQ", strategy = GenerationType.AUTO)
     private int id;
 
     @Column(name="LINK_TO_TARGET")

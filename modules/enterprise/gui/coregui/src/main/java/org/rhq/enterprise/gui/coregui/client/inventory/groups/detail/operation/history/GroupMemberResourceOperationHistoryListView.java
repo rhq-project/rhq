@@ -18,7 +18,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.h
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDetailsView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Ian Springer
@@ -28,11 +27,11 @@ public class GroupMemberResourceOperationHistoryListView extends
 
     private ResourceGroupComposite groupComposite;
 
-    public GroupMemberResourceOperationHistoryListView(String locatorId, ResourceGroupComposite groupComposite,
+    public GroupMemberResourceOperationHistoryListView(ResourceGroupComposite groupComposite,
         int groupOperationHistoryId) {
-        super(locatorId, new ResourceOperationHistoryDataSource(), null, new Criteria(
-            ResourceOperationHistoryDataSource.CriteriaField.GROUP_OPERATION_HISTORY_ID, String
-                .valueOf(groupOperationHistoryId)));
+        super(new ResourceOperationHistoryDataSource(), null, new Criteria(
+            ResourceOperationHistoryDataSource.CriteriaField.GROUP_OPERATION_HISTORY_ID,
+            String.valueOf(groupOperationHistoryId)));
         this.groupComposite = groupComposite;
     }
 
@@ -49,7 +48,7 @@ public class GroupMemberResourceOperationHistoryListView extends
         resourceField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
-                return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                return LinkManager.getHref(url, o.toString());
             }
         });
         resourceField.setShowHover(true);
@@ -81,7 +80,7 @@ public class GroupMemberResourceOperationHistoryListView extends
 
     @Override
     public Canvas getDetailsView(Integer id) {
-        return new ResourceOperationHistoryDetailsView(extendLocatorId("DetailsView"), true);
+        return new ResourceOperationHistoryDetailsView(true);
     }
 
     @Override

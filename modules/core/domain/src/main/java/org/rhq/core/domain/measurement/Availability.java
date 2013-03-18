@@ -132,7 +132,7 @@ import org.rhq.core.domain.resource.Resource;
         + "   ( SELECT res.id FROM Resource res " //
         + "      WHERE res.agent.id = :agentId " //
         + "        AND res.parentResource.id IS NULL )") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "Generator", sequenceName = "RHQ_AVAILABILITY_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_AVAILABILITY_ID_SEQ", sequenceName = "RHQ_AVAILABILITY_ID_SEQ")
 @Table(name = "RHQ_AVAILABILITY")
 @XmlRootElement
 public class Availability implements Serializable {
@@ -153,7 +153,7 @@ public class Availability implements Serializable {
     public static final String NATIVE_QUERY_PURGE = "DELETE FROM RHQ_AVAILABILITY WHERE END_TIME < ?";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "Generator")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_AVAILABILITY_ID_SEQ")
     @Id
     private int id;
 

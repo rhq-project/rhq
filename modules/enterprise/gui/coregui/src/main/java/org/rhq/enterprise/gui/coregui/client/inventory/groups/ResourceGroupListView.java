@@ -59,7 +59,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.wizard.GroupCreate
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceResourceGroupsView;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
@@ -75,16 +74,16 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
     private boolean showDeleteButton = true;
     private boolean showNewButton = true;
 
-    public ResourceGroupListView(String locatorId) {
-        this(locatorId, DEFAULT_TITLE);
+    public ResourceGroupListView() {
+        this(DEFAULT_TITLE);
     }
 
-    public ResourceGroupListView(String locatorId, String title) {
-        this(locatorId, null, title);
+    public ResourceGroupListView(String title) {
+        this(null, title);
     }
 
-    public ResourceGroupListView(String locatorId, Criteria criteria, String title, String... headerIcons) {
-        super(locatorId, title, criteria);
+    public ResourceGroupListView(Criteria criteria, String title, String... headerIcons) {
+        super(title, criteria);
 
         for (String headerIcon : headerIcons) {
             addHeaderIcon(headerIcon);
@@ -94,8 +93,8 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         setDataSource(datasource);
     }
 
-    public ResourceGroupListView(String locatorId, Criteria criteria) {
-        super(locatorId, null, criteria);
+    public ResourceGroupListView(Criteria criteria) {
+        super(null, criteria);
 
         final ResourceGroupCompositeDataSource datasource = ResourceGroupCompositeDataSource.getInstance();
         setDataSource(datasource);
@@ -150,7 +149,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
             public String format(Object value, ListGridRecord record, int i, int i1) {
                 String groupId = record.getAttribute("id");
                 String groupUrl = LinkManager.getResourceGroupLink(Integer.valueOf(groupId));
-                return SeleniumUtility.getLocatableHref(groupUrl, value.toString(), null);
+                return LinkManager.getHref(groupUrl, value.toString());
             }
         });
 
@@ -181,43 +180,43 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
             availabilityChildrenField, availabilityDescendantsField);
 
         if (this.showDeleteButton) {
-            addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
-                new AuthorizedTableAction(this, TableActionEnablement.ANY, Permission.MANAGE_INVENTORY) {
-                    public void executeAction(ListGridRecord[] selections, Object actionValue) {
-                        int[] groupIds = new int[selections.length];
-                        int index = 0;
-                        for (ListGridRecord selection : selections) {
-                            groupIds[index++] = selection.getAttributeAsInt("id");
-                        }
-                        ResourceGroupGWTServiceAsync resourceGroupManager = GWTServiceLookup.getResourceGroupService();
-
-                        resourceGroupManager.deleteResourceGroups(groupIds, new AsyncCallback<Void>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(MSG.view_inventory_groups_deleteFailed(), caught);
-                                refreshTableInfo();
-                            }
-
-                            public void onSuccess(Void result) {
-                                CoreGUI.getMessageCenter().notify(
-                                    new Message(MSG.view_inventory_groups_deleteSuccessful(), Severity.Info));
-                                refresh(true);
-                            }
-                        });
+            addTableAction(MSG.common_button_delete(), MSG.common_msg_areYouSure(), new AuthorizedTableAction(this,
+                TableActionEnablement.ANY, Permission.MANAGE_INVENTORY) {
+                public void executeAction(ListGridRecord[] selections, Object actionValue) {
+                    int[] groupIds = new int[selections.length];
+                    int index = 0;
+                    for (ListGridRecord selection : selections) {
+                        groupIds[index++] = selection.getAttributeAsInt("id");
                     }
-                });
+                    ResourceGroupGWTServiceAsync resourceGroupManager = GWTServiceLookup.getResourceGroupService();
+
+                    resourceGroupManager.deleteResourceGroups(groupIds, new AsyncCallback<Void>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError(MSG.view_inventory_groups_deleteFailed(), caught);
+                            refreshTableInfo();
+                        }
+
+                        public void onSuccess(Void result) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message(MSG.view_inventory_groups_deleteSuccessful(), Severity.Info));
+                            refresh(true);
+                        }
+                    });
+                }
+            });
         }
 
         if (this.showNewButton) {
-            addTableAction(extendLocatorId("New"), MSG.common_button_new(), new AuthorizedTableAction(this,
-                Permission.MANAGE_INVENTORY) {
+            addTableAction(MSG.common_button_new(), new AuthorizedTableAction(this, Permission.MANAGE_INVENTORY) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     GroupCategory category = null;
                     String categoryString = getInitialCriteria() == null ? null : getInitialCriteria().getAttribute(
                         ResourceGroupDataSourceField.CATEGORY.propertyName());
                     if (categoryString != null) {
-                        category = GroupCategory.COMPATIBLE.name().equals(categoryString) ? GroupCategory.COMPATIBLE : GroupCategory.MIXED;
+                        category = GroupCategory.COMPATIBLE.name().equals(categoryString) ? GroupCategory.COMPATIBLE
+                            : GroupCategory.MIXED;
                     }
-                    
+
                     new GroupCreateWizard(ResourceGroupListView.this, category).startWizard();
                     // we can refresh the table buttons immediately since the wizard is a dialog, the
                     // user can't access enabled buttons anyway.
@@ -227,36 +226,34 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         }
 
         if (this.resourceIdToModify != null) {
-            addTableAction(extendLocatorId("Membership"), MSG.view_tabs_common_group_membership() + "...",
-                new AbstractTableAction(TableActionEnablement.ALWAYS) {
-                    @Override
-                    public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                        ResourceResourceGroupsView membershipView = new ResourceResourceGroupsView(
-                            ResourceGroupListView.this.extendLocatorId("MembershipView"),
-                            ResourceGroupListView.this.resourceIdToModify.intValue());
+            addTableAction(MSG.view_tabs_common_group_membership() + "...", new AbstractTableAction(
+                TableActionEnablement.ALWAYS) {
+                @Override
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    ResourceResourceGroupsView membershipView = new ResourceResourceGroupsView(
+                        ResourceGroupListView.this.resourceIdToModify.intValue());
 
-                        final PopupWindow winModal = new PopupWindow(extendLocatorId("MembershipWindow"),
-                            membershipView);
-                        winModal.setTitle(MSG.view_tabs_common_group_membership());
-                        winModal.setWidth(700);
-                        winModal.setHeight(450);
-                        winModal.addCloseClickHandler(new CloseClickHandler() {
-                            public void onCloseClick(CloseClickEvent event) {
-                                refreshTableInfo(); // make sure we re-enable the footer buttons in case user canceled
-                            }
-                        });
+                    final PopupWindow winModal = new PopupWindow(membershipView);
+                    winModal.setTitle(MSG.view_tabs_common_group_membership());
+                    winModal.setWidth(700);
+                    winModal.setHeight(450);
+                    winModal.addCloseClickHandler(new CloseClickHandler() {
+                        public void onCloseClick(CloseClickEvent event) {
+                            refreshTableInfo(); // make sure we re-enable the footer buttons in case user canceled
+                        }
+                    });
 
-                        membershipView.setSaveButtonHandler(new ClickHandler() {
-                            @Override
-                            public void onClick(ClickEvent event) {
-                                winModal.markForDestroy();
-                                CoreGUI.refresh();
-                            }
-                        });
+                    membershipView.setSaveButtonHandler(new ClickHandler() {
+                        @Override
+                        public void onClick(ClickEvent event) {
+                            winModal.markForDestroy();
+                            CoreGUI.refresh();
+                        }
+                    });
 
-                        winModal.show();
-                    }
-                });
+                    winModal.show();
+                }
+            });
         }
 
         setListGridDoubleClickHandler(new DoubleClickHandler() {
@@ -273,10 +270,9 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
 
     // -------- Static Utility loaders ------------
 
-    public static ResourceGroupListView getGroupsOf(String locatorId, int explicitResourceId,
-        boolean canModifyMembership) {
+    public static ResourceGroupListView getGroupsOf(int explicitResourceId, boolean canModifyMembership) {
 
-        ResourceGroupListView view = new ResourceGroupListView(locatorId, new Criteria("explicitResourceId",
+        ResourceGroupListView view = new ResourceGroupListView(new Criteria("explicitResourceId",
             String.valueOf(explicitResourceId)), MSG.common_title_resourceGroups());
         if (canModifyMembership) {
             view.resourceIdToModify = Integer.valueOf(explicitResourceId);

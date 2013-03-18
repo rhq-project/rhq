@@ -32,16 +32,16 @@ public class RecentDriftsPortlet extends AbstractRecentDriftsPortlet {
     // A default displayed, persisted name for the portlet    
     public static final String NAME = MSG.common_title_recent_drifts();
 
-    public RecentDriftsPortlet(String locatorId) {
-        super(locatorId, EntityContext.forSubsystemView());
+    public RecentDriftsPortlet() {
+        super(EntityContext.forSubsystemView());
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
-            return new RecentDriftsPortlet(locatorId);
+            return new RecentDriftsPortlet();
         }
     }
 

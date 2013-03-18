@@ -27,7 +27,10 @@ import java.util.Set;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ContentsType;
+import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -66,24 +69,24 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigura
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupMultiLineGraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**This portlet allows the end user to customize the metric display
  *
  * @author Simeon Pinder
  */
-public class GroupMetricsPortlet extends LocatableVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
+public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
 
     private int groupId = -1;
     private boolean isAutoCluster;
     private boolean isAutoGroup;
-    protected LocatableCanvas recentMeasurementsContent = new LocatableCanvas(extendLocatorId("RecentMetrics"));
+    protected Canvas recentMeasurementsContent = new Canvas();
     protected boolean currentlyLoading = false;
     protected long start = -1;
     protected long end = -1;
@@ -112,8 +115,8 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
         CONFIG_INCLUDE.add(Constant.METRIC_RANGE_UNIT);
     }
 
-    public GroupMetricsPortlet(String locatorId, EntityContext context) {
-        super(locatorId);
+    public GroupMetricsPortlet(EntityContext context) {
+        super();
         this.groupId = context.getGroupId();
         this.isAutoGroup = context.isAutoGroup();
         this.isAutoCluster = context.isAutoCluster();
@@ -164,13 +167,13 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
             if (EntityContext.Type.ResourceGroup != context.getType()) {
                 throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
             }
 
-            return new GroupMetricsPortlet(locatorId, context);
+            return new GroupMetricsPortlet(context);
         }
     }
 
@@ -184,9 +187,9 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
     @Override
     public DynamicForm getCustomSettingsForm() {
         //root form.
-        LocatableDynamicForm customSettings = new LocatableDynamicForm(extendLocatorId("customSettings"));
+        DynamicForm customSettings = new DynamicForm();
         //embed range editor in it own container
-        LocatableVLayout page = new LocatableVLayout(customSettings.extendLocatorId("page"));
+        EnhancedVLayout page = new EnhancedVLayout();
         final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
         final Configuration portletConfig = storedPortlet.getConfiguration();
         final CustomConfigMeasurementRangeEditor measurementRangeEditor = PortletConfigurationEditorComponent
@@ -340,7 +343,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                                     //iterate over the retrieved charting data
                                                     for (int index = 0; index < displayOrder.length; index++) {
                                                         //retrieve the correct measurement definition
-                                                        MeasurementDefinition md = measurementDefMap
+                                                        final MeasurementDefinition md = measurementDefMap
                                                             .get(displayOrder[index]);
 
                                                         //load the data results for the given metric definition
@@ -369,9 +372,12 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                                                 commaDelimitedList += d.getValue() + ",";
                                                             }
                                                         }
-                                                        LocatableDynamicForm row = new LocatableDynamicForm(
-                                                            recentMeasurementsContent.extendLocatorId(md.getName()));
-                                                        row.setNumCols(3);
+                                                        DynamicForm row = new DynamicForm();
+                                                        row.setNumCols(4);
+                                                        row.setColWidths(65, "*", 20, 100);
+                                                        row.setWidth100();
+                                                        row.setAutoHeight();
+                                                        row.setOverflow(Overflow.VISIBLE);
                                                         HTMLFlow graph = new HTMLFlow();
                                                         //                        String contents = "<span id='sparkline_" + index + "' class='dynamicsparkline' width='0'>"
                                                         //                            + commaDelimitedList + "</span>";
@@ -380,7 +386,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                                             + commaDelimitedList + "'>...</span>";
                                                         graph.setContents(contents);
                                                         graph.setContentsType(ContentsType.PAGE);
-                                                        //diable scrollbars on span
+                                                        //disable scrollbars on span
                                                         graph.setScrollbarSize(0);
 
                                                         CanvasItem graphContainer = new CanvasItem();
@@ -389,56 +395,76 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                                         graphContainer.setWidth(60);
                                                         graphContainer.setCanvas(graph);
 
-                                                        //Link/title element
                                                         final String title = md.getDisplayName();
-                                                        //                            String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricSingleResource&id="
-                                                        //                                + resourceId + "&m=" + md.getId();
-                                                        final String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricMultiResource&groupId="
-                                                            + groupId + "&m=" + md.getId();
-                                                        LinkItem link = AbstractActivityView.newLinkItem(title,
-                                                            destination);
+                                                        LinkItem link = AbstractActivityView.newLinkItem(title, null);
+                                                        link.setTooltip(title);
+                                                        link.setTitleVAlign(VerticalAlignment.TOP);
+                                                        link.setAlign(Alignment.LEFT);
+                                                        link.setClipValue(true);
+                                                        link.setWrap(true);
+                                                        link.setHeight(26);
                                                         link.addClickHandler(new ClickHandler() {
                                                             @Override
                                                             public void onClick(ClickEvent event) {
-                                                                ChartViewWindow window = new ChartViewWindow(
-                                                                    recentMeasurementsContent
-                                                                        .extendLocatorId("ChartWindow"), title);
+                                                                ChartViewWindow window = new ChartViewWindow(title);
+                                                                CompositeGroupD3GraphListView graph = new CompositeGroupMultiLineGraphListView(
+                                                                    groupId, md.getId());
+                                                                window.addItem(graph);
+                                                                graph.populateData();
+                                                                window.show();
+                                                            }
+                                                        });
+
+                                                        //@todo: this goes away once we have validated the new d3 charts
+                                                        final String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricMultiResource&groupId="
+                                                            + groupId + "&m=" + md.getId();
+                                                        LinkItem oldLink = AbstractActivityView.newLinkItem("*",
+                                                            destination);
+                                                        oldLink.setTooltip("Link to Old Charts");
+                                                        oldLink.setTitleVAlign(VerticalAlignment.TOP);
+                                                        oldLink.setAlign(Alignment.LEFT);
+                                                        oldLink.setClipValue(true);
+                                                        oldLink.setWrap(true);
+                                                        oldLink.setHeight(26);
+                                                        oldLink.setWidth("100%");
+
+                                                        oldLink.addClickHandler(new ClickHandler() {
+                                                            @Override
+                                                            public void onClick(ClickEvent event) {
+                                                                ChartViewWindow window = new ChartViewWindow(title);
                                                                 //generate and include iframed content
-                                                                FullHTMLPane iframe = new FullHTMLPane(
-                                                                    recentMeasurementsContent
-                                                                        .extendLocatorId("View"), destination);
+                                                                FullHTMLPane iframe = new FullHTMLPane(destination);
                                                                 //                                                                            .extendLocatorId("View"),
                                                                 //                                                                        AbstractActivityView.iframeLink(destination));
                                                                 window.addItem(iframe);
                                                                 window.show();
                                                             }
                                                         });
-
                                                         //Value
-                                                        String convertedValue = lastValue + " " + md.getUnits();
-                                                        convertedValue = AbstractActivityView
+                                                        String convertedValue = AbstractActivityView
                                                             .convertLastValueForDisplay(lastValue, md);
                                                         StaticTextItem value = AbstractActivityView
                                                             .newTextItem(convertedValue);
+                                                        value.setVAlign(VerticalAlignment.TOP);
+                                                        value.setAlign(Alignment.RIGHT);
+                                                        value.setWidth("100%");
 
-                                                        row.setItems(graphContainer, link, value);
+                                                        row.setItems(graphContainer, link, oldLink, value);
+                                                        row.setWidth100();
                                                         //if graph content returned
-                                                        if ((md.getName().trim().indexOf("Trait.") == -1)
+                                                        if ((!md.getName().trim().contains("Trait."))
                                                             && (lastValue != -1)) {
                                                             column.addMember(row);
                                                             someChartedData = true;
                                                         }
                                                     }
                                                     if (!someChartedData) {// when there are results but no chartable entries.
-                                                        LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(
-                                                            recentMeasurementsContent.extendLocatorId("None"),
-                                                            AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
+                                                        DynamicForm row = AbstractActivityView
+                                                            .createEmptyDisplayRow(AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
                                                         column.addMember(row);
                                                     } else {
                                                         //insert see more link
-                                                        LocatableDynamicForm row = new LocatableDynamicForm(
-                                                            recentMeasurementsContent
-                                                                .extendLocatorId("RecentMeasurementsContentSeeMore"));
+                                                        DynamicForm row = new DynamicForm();
                                                         String link = LinkManager
                                                             .getGroupMonitoringGraphsLink(EntityContext
                                                                 .forGroup(groupId));
@@ -447,34 +473,34 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                                     //call out to 3rd party javascript lib
                                                     BrowserUtility.graphSparkLines();
                                                 } else {
-                                                    LocatableDynamicForm row = AbstractActivityView
-                                                        .createEmptyDisplayRow(
-                                                            recentMeasurementsContent.extendLocatorId("None"),
-                                                            AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
+                                                    DynamicForm row = AbstractActivityView.createEmptyDisplayRow(
+
+                                                    AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
                                                     column.addMember(row);
                                                 }
                                                 setRefreshing(false);
                                             }
                                         };
-                                        
+
                                         //make the asynchronous call for all the measurement data
                                         if (end != -1 && start != -1) {
                                             GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroup(
                                                 groupId, definitionArrayIds, start, end, 60, callback);
                                         } else if (lastN != -1 && units != -1) {
-                                            GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroupForLast(
-                                                groupId, definitionArrayIds, lastN, units, 60, callback);
+                                            GWTServiceLookup.getMeasurementDataService()
+                                                .findDataForCompatibleGroupForLast(groupId, definitionArrayIds, lastN,
+                                                    units, 60, callback);
                                         } else {
-                                            GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroupForLast(
-                                                groupId, definitionArrayIds, 8, MeasurementUtility.UNIT_HOURS, 60, callback);
+                                            GWTServiceLookup.getMeasurementDataService()
+                                                .findDataForCompatibleGroupForLast(groupId, definitionArrayIds, 8,
+                                                    MeasurementUtility.UNIT_HOURS, 60, callback);
                                         }
                                     }
                                 });
                         }
                     } else {
-                        LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(
-                            recentMeasurementsContent.extendLocatorId("None"),
-                            AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
+                        DynamicForm row = AbstractActivityView
+                            .createEmptyDisplayRow(AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
                         column.addMember(row);
                         setRefreshing(false);
                     }

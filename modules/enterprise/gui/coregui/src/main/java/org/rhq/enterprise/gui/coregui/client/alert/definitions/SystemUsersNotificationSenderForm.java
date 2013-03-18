@@ -58,8 +58,8 @@ public class SystemUsersNotificationSenderForm extends AbstractNotificationSende
 
     private boolean isInitialized = false;
 
-    public SystemUsersNotificationSenderForm(String locatorId, AlertNotification notif, String sender) {
-        super(locatorId, notif, sender);
+    public SystemUsersNotificationSenderForm(AlertNotification notif, String sender) {
+        super(notif, sender);
     }
 
     @Override
@@ -105,8 +105,7 @@ public class SystemUsersNotificationSenderForm extends AbstractNotificationSende
     }
 
     private void createNewSelector(Collection<Subject> preselectedSubjects) {
-        String selectorLocatorId = extendLocatorId("userSelector");
-        selector = new SubjectSelector(selectorLocatorId, preselectedSubjects);
+        selector = new SubjectSelector(preselectedSubjects);
         selector.setWidth(400);
         selector.setHeight(300);
         addMember(selector);
@@ -173,8 +172,8 @@ public class SystemUsersNotificationSenderForm extends AbstractNotificationSende
     }
 
     private class SubjectSelector extends AbstractSelector<Subject, SubjectCriteria> {
-        public SubjectSelector(String id, Collection<Subject> subjects) {
-            super(id);
+        public SubjectSelector(Collection<Subject> subjects) {
+            super();
             if (subjects != null) {
                 ListGridRecord[] data = (new UsersDataSource()).buildRecords(subjects);
                 setAssigned(data);

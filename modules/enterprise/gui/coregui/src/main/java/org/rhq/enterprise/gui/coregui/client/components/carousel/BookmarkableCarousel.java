@@ -19,7 +19,6 @@
 
 package org.rhq.enterprise.gui.coregui.client.components.carousel;
 
-import java.util.logging.Logger;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.types.VerticalAlignment;
@@ -33,8 +32,8 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableSection;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 
 /**
  * Provides the typical carousel view with the additional ability of traversing to "details" views - a masters/detail 
@@ -49,16 +48,16 @@ public abstract class BookmarkableCarousel extends Carousel implements Bookmarka
     private Canvas detailsView;
     private String basePath;
 
-    public BookmarkableCarousel(String locatorId) {
-        super(locatorId);
+    public BookmarkableCarousel() {
+        super();
     }
 
-    public BookmarkableCarousel(String locatorId, String titleString) {
-        super(locatorId, titleString);
+    public BookmarkableCarousel(String titleString) {
+        super(titleString);
     }
 
-    public BookmarkableCarousel(String locatorId, String titleString, Criteria criteria) {
-        super(locatorId, titleString, criteria);
+    public BookmarkableCarousel(String titleString, Criteria criteria) {
+        super(titleString, criteria);
     }
 
     @Override
@@ -67,7 +66,7 @@ public abstract class BookmarkableCarousel extends Carousel implements Bookmarka
 
         this.initialDisplay = true;
 
-        detailsHolder = new LocatableVLayout(extendLocatorId("carousel"));
+        detailsHolder = new EnhancedVLayout();
         detailsHolder.setAlign(VerticalAlignment.TOP);
         detailsHolder.setMargin(4);
         detailsHolder.hide();
@@ -153,7 +152,7 @@ public abstract class BookmarkableCarousel extends Carousel implements Bookmarka
                  * therefore, we need to explicitly destroy what's already there (presumably the detailsView
                  * in create-mode), and then rebuild it (presumably the detailsView in edit-mode).
                  */
-                SeleniumUtility.destroyMembers(detailsHolder);
+                EnhancedUtility.destroyMembers(detailsHolder);
 
                 buildDetailsView();
             }
@@ -168,10 +167,9 @@ public abstract class BookmarkableCarousel extends Carousel implements Bookmarka
         if (!isEditable) {
             // Only add the "Back to List" button if the details are definitely not editable, because if they are
             // editable, a Cancel button should already be provided by the details view.
-            BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
-                basePath);
+            BackButton backButton = new BackButton(MSG.view_tableSection_backButton(), basePath);
             detailsHolder.addMember(backButton);
-            VLayout verticalSpacer = new LocatableVLayout(extendLocatorId("verticalSpacer"));
+            VLayout verticalSpacer = new EnhancedVLayout();
             verticalSpacer.setHeight(8);
             detailsHolder.addMember(verticalSpacer);
         }
@@ -200,14 +198,14 @@ public abstract class BookmarkableCarousel extends Carousel implements Bookmarka
                 detailsHolder.animateHide(AnimationEffect.WIPE, new AnimationCallback() {
                     @Override
                     public void execute(boolean b) {
-                        SeleniumUtility.destroyMembers(detailsHolder);
+                        EnhancedUtility.destroyMembers(detailsHolder);
 
                         contents.animateShow(AnimationEffect.WIPE);
                     }
                 });
             } else {
                 if (detailsHolder != null) {
-                    SeleniumUtility.destroyMembers(detailsHolder);
+                    EnhancedUtility.destroyMembers(detailsHolder);
                 }
                 contents.animateShow(AnimationEffect.WIPE);
             }

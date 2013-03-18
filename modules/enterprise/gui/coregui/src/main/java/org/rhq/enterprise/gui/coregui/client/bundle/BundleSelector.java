@@ -38,7 +38,6 @@ import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelecto
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author Jay Shaughnessy
@@ -47,12 +46,12 @@ public class BundleSelector extends AbstractSelector<Bundle, BundleCriteria> {
 
     private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
 
-    public BundleSelector(String id) {
-        super(id);
+    public BundleSelector() {
+        super();
     }
 
     protected DynamicForm getAvailableFilterForm() {
-        DynamicForm availableFilterForm = new LocatableDynamicForm(extendLocatorId("availableForm"));
+        DynamicForm availableFilterForm = new DynamicForm();
         availableFilterForm.setNumCols(4);
         final TextItem search = new TextItem("search", MSG.common_title_search());
 
@@ -95,7 +94,7 @@ public class BundleSelector extends AbstractSelector<Bundle, BundleCriteria> {
     protected String getItemTitle() {
         return MSG.common_title_bundles();
     }
-    
+
     public class SelectedBundlesDataSource extends BundlesDataSource {
         @Override
         protected BundleCriteria getFetchCriteria(final DSRequest request) {

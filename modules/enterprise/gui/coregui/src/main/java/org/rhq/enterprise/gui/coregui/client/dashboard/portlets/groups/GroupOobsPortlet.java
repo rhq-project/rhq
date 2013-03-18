@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.util.logging.Logger;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
@@ -56,15 +55,13 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.Abs
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**This portlet allows the end user to customize the OOB display
  *
  * @author Simeon Pinder
  */
-public class GroupOobsPortlet extends LocatableVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
+public class GroupOobsPortlet extends EnhancedVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "GroupOobs";
@@ -73,7 +70,7 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
     public static final String ID = "id";
 
     private int groupId = -1;
-    protected LocatableCanvas recentOobContent = new LocatableCanvas(extendLocatorId("RecentOobs"));
+    protected Canvas recentOobContent = new Canvas();
     protected boolean currentlyLoading = false;
 
     // set on initial configuration, the window for this portlet view.
@@ -88,8 +85,8 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
         CONFIG_INCLUDE.add(Constant.RESULT_COUNT);
     }
 
-    public GroupOobsPortlet(String locatorId, int groupId) {
-        super(locatorId);
+    public GroupOobsPortlet(int groupId) {
+        super();
         this.groupId = groupId;
     }
 
@@ -137,13 +134,13 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
             if (EntityContext.Type.ResourceGroup != context.getType()) {
                 throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
             }
 
-            return new GroupOobsPortlet(locatorId, context.getGroupId());
+            return new GroupOobsPortlet(context.getGroupId());
         }
     }
 
@@ -157,10 +154,10 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
         final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
         final Configuration portletConfig = storedPortlet.getConfiguration();
 
-        LocatableDynamicForm customSettings = new LocatableDynamicForm(extendLocatorId("customSettings"));
-        LocatableVLayout page = new LocatableVLayout(customSettings.extendLocatorId("page"));
+        DynamicForm customSettings = new DynamicForm();
+        EnhancedVLayout page = new EnhancedVLayout();
         //build editor form container
-        final LocatableDynamicForm form = new LocatableDynamicForm(page.extendLocatorId("alert-filter"));
+        final DynamicForm form = new DynamicForm();
         form.setMargin(5);
         //add result count selector
         final SelectItem resultCountSelector = PortletConfigurationEditorComponent.getResultCountEditor(portletConfig);
@@ -214,7 +211,7 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
                 @Override
                 public void onFailure(Throwable caught) {
                     Log.debug("Error retrieving recent out of bound metrics for group [" + groupId + "]:"
-                            + caught.getMessage());
+                        + caught.getMessage());
                     currentlyLoading = false;
                 }
 
@@ -224,8 +221,7 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
                     column.setHeight(10);
                     if (!result.isEmpty()) {
                         for (MeasurementOOBComposite oob : result) {
-                            LocatableDynamicForm row = new LocatableDynamicForm(recentOobContent.extendLocatorId(oob
-                                .getScheduleName()));
+                            DynamicForm row = new DynamicForm();
                             row.setNumCols(2);
 
                             final String title = oob.getScheduleName();
@@ -237,11 +233,9 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
                             link.addClickHandler(new ClickHandler() {
                                 @Override
                                 public void onClick(ClickEvent event) {
-                                    ChartViewWindow window = new ChartViewWindow(recentOobContent
-                                        .extendLocatorId("ChartWindow"), title);
+                                    ChartViewWindow window = new ChartViewWindow(title);
                                     //generate and include iframed content
-                                    FullHTMLPane iframe = new FullHTMLPane(recentOobContent.extendLocatorId("View"),
-                                        destination);
+                                    FullHTMLPane iframe = new FullHTMLPane(destination);
                                     window.addItem(iframe);
                                     window.show();
                                 }
@@ -255,8 +249,8 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
                         }
                         //insert see more link spinder(2/24/11): no page that displays all oobs... See More not possible.
                     } else {
-                        LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(recentOobContent
-                            .extendLocatorId("None"), AbstractActivityView.RECENT_OOB_NONE);
+                        DynamicForm row = AbstractActivityView
+                            .createEmptyDisplayRow(AbstractActivityView.RECENT_OOB_NONE);
                         column.addMember(row);
                     }
                     recentOobContent.setContents("");

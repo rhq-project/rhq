@@ -31,7 +31,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
@@ -44,7 +43,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.resource.ResourceType;
 
 /**
  * This object represents a single template of configuration values for a given definition. Definitions may have many
@@ -54,7 +52,7 @@ import org.rhq.core.domain.resource.ResourceType;
  * @author Greg Hinkle
  */
 @Entity
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_CONFIG_TEMPLATE_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_CONFIG_TEMPLATE_ID_SEQ", sequenceName = "RHQ_CONFIG_TEMPLATE_ID_SEQ")
 @Table(name = "RHQ_CONFIG_TEMPLATE")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class ConfigurationTemplate implements Serializable {
@@ -62,7 +60,7 @@ public class ConfigurationTemplate implements Serializable {
 
     public static final String DEFAULT_TEMPLATE_NAME = "default";
 
-    @GeneratedValue(generator = "SEQ", strategy = GenerationType.AUTO)
+    @GeneratedValue(generator = "RHQ_CONFIG_TEMPLATE_ID_SEQ", strategy = GenerationType.AUTO)
     @Id
     private int id;
 

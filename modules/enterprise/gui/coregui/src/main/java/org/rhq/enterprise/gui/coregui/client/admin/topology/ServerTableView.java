@@ -42,6 +42,7 @@ import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.criteria.BaseCriteria;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.components.table.AuthorizedTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
@@ -51,11 +52,15 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * Shows the table of all servers.
- * 
+ *
+ * This component is used from three various contexts:
+ * 1) simple list of all available servers (url fragment - #Administration/Topology/Servers)
+ * 2) list of servers in the agent's failover list (#Administration/Topology/Agents/{agentId})
+ * 3) list of servers assigned to a affinity group (#Administration/Topology/AffinityGroups/{aGroupId})
+ *
  * @author Jirka Kremser
  */
 public class ServerTableView extends
@@ -70,8 +75,8 @@ public class ServerTableView extends
     private final boolean isAffinityGroupId;
     private final Integer id;
 
-    public ServerTableView(String locatorId, Integer id, boolean isAffinityGroupId) {
-        super(locatorId, null);
+    public ServerTableView(Integer id, boolean isAffinityGroupId) {
+        super(null);
         this.showActions = id == null && !isAffinityGroupId;
         this.isAffinityGroupId = isAffinityGroupId;
         this.id = id;
@@ -121,7 +126,7 @@ public class ServerTableView extends
                         }
                         String detailsUrl = "#" + VIEW_PATH + "/" + getId(record);
                         String formattedValue = StringUtility.escapeHtml(value.toString());
-                        return SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
+                        return LinkManager.getHref(detailsUrl, formattedValue);
 
                     }
                 });
@@ -136,7 +141,7 @@ public class ServerTableView extends
                         String detailsUrl = "#" + AffinityGroupTableView.VIEW_PATH + "/"
                             + record.getAttributeAsString(FIELD_AFFINITY_GROUP_ID.propertyName());
                         String formattedValue = StringUtility.escapeHtml(value.toString());
-                        return SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
+                        return LinkManager.getHref(detailsUrl, formattedValue);
                     }
                 });
             }
@@ -145,55 +150,53 @@ public class ServerTableView extends
 
     @Override
     public Canvas getDetailsView(Integer id) {
-        return new ServerDetailView(extendLocatorId("detailsView"), id);
+        return new ServerDetailView(id);
     }
-    
-//    @Override
-//    public abstract void showDetails(ID id) {
-//        
-//    }
+
+    //    @Override
+    //    public abstract void showDetails(ID id) {
+    //        
+    //    }
 
     private void showCommonActions() {
         addChangeOperationModeAction(OperationMode.NORMAL, MSG.view_adminTopology_server_setNormal());
         addChangeOperationModeAction(OperationMode.MAINTENANCE, MSG.view_adminTopology_server_setMaintenance());
 
-        addTableAction(extendLocatorId("removeSelected"), MSG.view_adminTopology_server_removeSelected(), null,
-            new AuthorizedTableAction(this, TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
-                public void executeAction(final ListGridRecord[] selections, Object actionValue) {
-                    List<String> selectedNames = getSelectedNames(selections);
-                    String message = MSG.view_adminTopology_message_removeServerConfirm(selectedNames.toString());
-                    SC.ask(message, new BooleanCallback() {
-                        public void execute(Boolean confirmed) {
-                            if (confirmed) {
-                                int[] selectedIds = getSelectedIds(selections);
-                                GWTServiceLookup.getTopologyService().deleteServers(selectedIds,
-                                    new AsyncCallback<Void>() {
-                                        public void onSuccess(Void arg0) {
-                                            Message msg = new Message(MSG
-                                                .view_adminTopology_message_removedServer(String
-                                                    .valueOf(selections.length)), Message.Severity.Info);
-                                            CoreGUI.getMessageCenter().notify(msg);
-                                            refresh();
-                                        }
+        addTableAction(MSG.view_adminTopology_server_removeSelected(), null, new AuthorizedTableAction(this,
+            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
+            public void executeAction(final ListGridRecord[] selections, Object actionValue) {
+                List<String> selectedNames = getSelectedNames(selections);
+                String message = MSG.view_adminTopology_message_removeServerConfirm(selectedNames.toString());
+                SC.ask(message, new BooleanCallback() {
+                    public void execute(Boolean confirmed) {
+                        if (confirmed) {
+                            int[] selectedIds = getSelectedIds(selections);
+                            GWTServiceLookup.getTopologyService().deleteServers(selectedIds, new AsyncCallback<Void>() {
+                                public void onSuccess(Void arg0) {
+                                    Message msg = new Message(MSG.view_adminTopology_message_removedServer(String
+                                        .valueOf(selections.length)), Message.Severity.Info);
+                                    CoreGUI.getMessageCenter().notify(msg);
+                                    refresh();
+                                }
 
-                                        public void onFailure(Throwable caught) {
-                                            CoreGUI.getErrorHandler().handleError(
-                                                MSG.view_adminTopology_message_removeServerFail(String
-                                                    .valueOf(selections.length)) + " " + caught.getMessage(), caught);
-                                            refreshTableInfo();
-                                        }
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler().handleError(
+                                        MSG.view_adminTopology_message_removeServerFail(String
+                                            .valueOf(selections.length)) + " " + caught.getMessage(), caught);
+                                    refreshTableInfo();
+                                }
 
-                                    });
-                            }
+                            });
                         }
-                    });
-                }
-            });
+                    }
+                });
+            }
+        });
     }
 
     private void addChangeOperationModeAction(final OperationMode mode, String label) {
-        addTableAction(extendLocatorId("set" + mode), label, null, new AuthorizedTableAction(this,
-            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
+        addTableAction(label, null, new AuthorizedTableAction(this, TableActionEnablement.ANY,
+            Permission.MANAGE_SETTINGS) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                 List<String> selectedNames = getSelectedNames(selections);
                 String message = MSG.view_adminTopology_message_setModeConfirm(selectedNames.toString(), mode.name());
@@ -229,7 +232,7 @@ public class ServerTableView extends
     }
 
     private void showUpdateMembersAction() {
-        addTableAction(extendLocatorId("editGroupServers"), MSG.view_groupInventoryMembers_button_updateMembership(),
+        addTableAction(MSG.view_groupInventoryMembers_button_updateMembership(),
             new AuthorizedTableAction(this, TableActionEnablement.ALWAYS, Permission.MANAGE_SETTINGS) {
                 public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                     AffinityGroupServersSelector.show(id, ServerTableView.this);
@@ -264,7 +267,7 @@ public class ServerTableView extends
     public ViewName getViewName() {
         return VIEW_ID;
     }
-    
+
     @Override
     protected String getBasePath() {
         return VIEW_PATH;

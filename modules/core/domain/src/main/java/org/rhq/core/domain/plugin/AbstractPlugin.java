@@ -48,7 +48,7 @@ import javax.persistence.Transient;
 @DiscriminatorColumn(name = "DEPLOYMENT")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @Entity
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_PLUGIN_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_PLUGIN_ID_SEQ", sequenceName = "RHQ_PLUGIN_ID_SEQ")
 @Table(name = Plugin.TABLE_NAME)
 public class AbstractPlugin implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -56,7 +56,7 @@ public class AbstractPlugin implements Serializable {
     public static final String TABLE_NAME = "RHQ_PLUGIN";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_PLUGIN_ID_SEQ")
     @Id
     private int id;
 

@@ -28,6 +28,7 @@ import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
@@ -39,36 +40,34 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * Shows details of a affinity group.
  * 
  * @author Jirka Kremser
  */
-public class AffinityGroupDetailView extends LocatableVLayout implements BookmarkableView {
+public class AffinityGroupDetailView extends EnhancedVLayout implements BookmarkableView {
 
     private final int affinityGroupId;
 
     private static final int SECTION_COUNT = 3;
-    private final LocatableSectionStack sectionStack;
+    private final SectionStack sectionStack;
     private SectionStackSection detailsSection = null;
     private SectionStackSection agentSection = null;
     private SectionStackSection serverSection = null;
 
     private volatile int initSectionCount = 0;
 
-    public AffinityGroupDetailView(String locatorId, int affinityGroupId) {
-        super(locatorId);
+    public AffinityGroupDetailView(int affinityGroupId) {
+        super();
         this.affinityGroupId = affinityGroupId;
         setHeight100();
         setWidth100();
         setOverflow(Overflow.AUTO);
 
-        sectionStack = new LocatableSectionStack(extendLocatorId("stack"));
+        sectionStack = new SectionStack();
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
         sectionStack.setWidth100();
         sectionStack.setHeight100();
@@ -138,8 +137,7 @@ public class AffinityGroupDetailView extends LocatableVLayout implements Bookmar
     private void prepareAgentSection(SectionStack stack) {
         SectionStackSection section = new SectionStackSection(MSG.view_adminTopology_affinityGroups_agetnMembers());
         section.setExpanded(true);
-        AgentTableView agentsTable = new AgentTableView(extendLocatorId(AgentTableView.VIEW_ID.getName()),
-            affinityGroupId, true);
+        AgentTableView agentsTable = new AgentTableView(affinityGroupId, true);
         section.setItems(agentsTable);
 
         agentSection = section;
@@ -150,8 +148,7 @@ public class AffinityGroupDetailView extends LocatableVLayout implements Bookmar
     private void prepareServerSection(SectionStack stack) {
         SectionStackSection section = new SectionStackSection(MSG.view_adminTopology_affinityGroups_serverMembers());
         section.setExpanded(true);
-        ServerTableView serverTable = new ServerTableView(extendLocatorId(AgentTableView.VIEW_ID.getName()),
-            affinityGroupId, true);
+        ServerTableView serverTable = new ServerTableView(affinityGroupId, true);
         section.setItems(serverTable);
 
         serverSection = section;
@@ -160,7 +157,7 @@ public class AffinityGroupDetailView extends LocatableVLayout implements Bookmar
     }
 
     private void prepareDetailsSection(SectionStack stack, final AffinityGroup affinityGroup) {
-        final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("detailsForm"));
+        final DynamicForm form = new DynamicForm();
         form.setMargin(10);
         form.setWidth100();
         form.setWrapItemTitles(false);
@@ -169,7 +166,7 @@ public class AffinityGroupDetailView extends LocatableVLayout implements Bookmar
         final TextItem nameItem = new TextItem(FIELD_NAME.propertyName(), FIELD_NAME.title());
         nameItem.setValue(affinityGroup.getName());
 
-        LocatableToolStrip footer = new LocatableToolStrip(extendLocatorId("detailsFooter"));
+        EnhancedToolStrip footer = new EnhancedToolStrip();
         footer.setPadding(5);
         footer.setWidth100();
         footer.setMembersMargin(15);

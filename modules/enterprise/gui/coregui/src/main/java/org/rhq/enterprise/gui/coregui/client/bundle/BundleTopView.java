@@ -28,16 +28,19 @@ import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.enterprise.gui.coregui.client.*;
+import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
+import org.rhq.enterprise.gui.coregui.client.ViewId;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundleView;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.tree.BundleTreeView;
-import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.content.repository.tree.ContentRepositoryTreeView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 
 
 /**
@@ -46,7 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public class BundleTopView extends LocatableHLayout implements BookmarkableView {
+public class BundleTopView extends EnhancedHLayout implements BookmarkableView {
 
     public static final ViewName VIEW_ID = new ViewName("Bundles", MSG.view_bundle_bundles(), IconEnum.BUNDLE);
 
@@ -57,8 +60,8 @@ public class BundleTopView extends LocatableHLayout implements BookmarkableView 
     private BundleView bundleView; // if the user is viewing an individual bundle, this is that right-side view
     private BundlesListView bundlesListView; // if the user is not viewing an indiv. bundle, this is the right-side list
 
-    public BundleTopView(String locatorId) {
-        super(locatorId);
+    public BundleTopView() {
+        super();
         setOverflow(Overflow.AUTO);
         setWidth100();
         setHeight100();
@@ -74,14 +77,14 @@ public class BundleTopView extends LocatableHLayout implements BookmarkableView 
                         && permissions.contains(Permission.MANAGE_INVENTORY);
                     boolean canManageBundles = permissions != null && permissions.contains(Permission.MANAGE_BUNDLE);
 
-                    SectionStack sectionStack = new LocatableSectionStack(getLocatorId());
+                    SectionStack sectionStack = new SectionStack();
                     sectionStack.setShowResizeBar(true);
                     sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
                     sectionStack.setWidth(250);
                     sectionStack.setHeight100();
 
                     SectionStackSection bundlesSection = new SectionStackSection(MSG.view_bundle_bundles());
-                    bundleTreeView = new BundleTreeView(extendLocatorId("BundleTree"), canManageBundles);
+                    bundleTreeView = new BundleTreeView(canManageBundles);
                     bundlesSection.addItem(bundleTreeView);
                     sectionStack.addSection(bundlesSection);
 
@@ -89,7 +92,7 @@ public class BundleTopView extends LocatableHLayout implements BookmarkableView 
                     if (canManageInventory) {
                         SectionStackSection repositoriesSection = new SectionStackSection(MSG
                             .common_title_repositories());
-                        ContentRepositoryTreeView repoTree = new ContentRepositoryTreeView(extendLocatorId("RepoTree"));
+                        ContentRepositoryTreeView repoTree = new ContentRepositoryTreeView();
                         repositoriesSection.addItem(repoTree);
                         sectionStack.addSection(repositoriesSection);
                     }
@@ -117,13 +120,13 @@ public class BundleTopView extends LocatableHLayout implements BookmarkableView 
                         bundlesListView.refresh();
                     } else {
                         currentNextPath = null;
-                        bundlesListView = new BundlesListView(extendLocatorId("BundleList"), permissions);
+                        bundlesListView = new BundlesListView(permissions);
                         setContent(bundlesListView);
                     }
                 } else {
                     if (!viewPath.getNext().equals(currentNextPath)) {
                         currentNextPath = viewPath.getNext();
-                        bundleView = new BundleView(extendLocatorId("Bundle"), permissions);
+                        bundleView = new BundleView(permissions);
                         setContent(bundleView);
                         bundleView.renderView(viewPath.next());
                     } else {
@@ -135,7 +138,7 @@ public class BundleTopView extends LocatableHLayout implements BookmarkableView 
     }
 
     private void setContent(Canvas newContent) {
-        SeleniumUtility.destroyMembers(contentCanvas);
+        EnhancedUtility.destroyMembers(contentCanvas);
 
         contentCanvas.addMember(newContent);
         contentCanvas.markForRedraw();

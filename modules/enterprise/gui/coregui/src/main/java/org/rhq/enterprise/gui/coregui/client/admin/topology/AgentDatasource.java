@@ -53,7 +53,7 @@ import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
- * Datasource for @see FailoverListDetails.
+ * Datasource for @see Agent.
  * 
  * @author Jirka Kremser
  */

@@ -37,27 +37,25 @@ import com.smartgwt.client.widgets.events.ResizedHandler;
 import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
 
 /**
  * @author Greg Hinkle
  * @author Jay Shaughnessy
  */
-public class PortalLayout extends LocatableHLayout {
+public class PortalLayout extends EnhancedHLayout {
 
     private DashboardView dashboardView;
     private Integer dragResizeColumnCount;
 
     /**
-     * @param locatorId
      * @param dashboardView
      * @param numColumns
      * @param columnWidths Currently only the first column width is set, others are ignored and share the remaining space
      * evenly. If null column 0 defaults to 30%.
      */
-    public PortalLayout(String locatorId, DashboardView dashboardView, int numColumns, String[] columnWidths) {
-        super(locatorId);
+    public PortalLayout(DashboardView dashboardView, int numColumns, String[] columnWidths) {
+        super();
 
         if (numColumns < 1) {
             throw new IllegalArgumentException("Invalid number of columns [" + numColumns + "]");
@@ -110,29 +108,7 @@ public class PortalLayout extends LocatableHLayout {
                         colNum++;
                     }
 
-                    // drop means the portlet location has changed. The selenium testing locators include positioning
-                    // info. So, in this case we have to take the hit and completely rebuild the dash.
-                    AsyncCallback<Dashboard> callback = SeleniumUtility.getUseDefaultIds() ? null
-                        : new AsyncCallback<Dashboard>() {
-
-                            @Override
-                            public void onFailure(Throwable caught) {
-                                rebuild();
-                            }
-
-                            @Override
-                            public void onSuccess(Dashboard result) {
-                                // for some reason the drag drop operation is leaving the target widget (the
-                                // portlet window) in the DOM, detached from its original parent (the PortalLayout),
-                                // and therefore not destroyed in the redraw().  So, kill it off manually to
-                                // avoid ID conflicts if the portlet is again dragged back its original position. 
-                                target.removeFromParent();
-                                target.destroy();
-
-                                rebuild();
-                            }
-                        };
-                    save(callback);
+                    save();
 
                     Log.info("Rearranged column indexes");
                 }

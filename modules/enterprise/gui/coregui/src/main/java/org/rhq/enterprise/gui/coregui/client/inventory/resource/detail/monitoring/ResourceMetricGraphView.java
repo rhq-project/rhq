@@ -39,35 +39,34 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricGraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
 /**
+ * @deprecated should be replaced with new d3 graph views
  * @author Greg Hinkle
  * @author Jay Shaughnessy
  */
+@Deprecated
 public class ResourceMetricGraphView extends AbstractMetricGraphView {
 
     private HTMLFlow resourceTitle;
 
-    public ResourceMetricGraphView(String locatorId) {
-        super(locatorId);
+    public ResourceMetricGraphView() {
+        super();
     }
 
-    public ResourceMetricGraphView(String locatorId, int resourceId, int definitionId) {
-        super(locatorId, resourceId, definitionId);
-    }
-
-    public ResourceMetricGraphView(String locatorId, int resourceId, MeasurementDefinition def,
+    public ResourceMetricGraphView(int resourceId, MeasurementDefinition def,
         List<MeasurementDataNumericHighLowComposite> data) {
 
-        super(locatorId, resourceId, def, data);
+        super(resourceId, def, data);
     }
 
+    @Override
     protected HTMLFlow getEntityTitle() {
         return resourceTitle;
     }
 
+    @Override
     protected void renderGraph() {
         if (null == getDefinition()) {
 
@@ -76,10 +75,12 @@ public class ResourceMetricGraphView extends AbstractMetricGraphView {
             ResourceCriteria resourceCriteria = new ResourceCriteria();
             resourceCriteria.addFilterId(getEntityId());
             resourceService.findResourcesByCriteria(resourceCriteria, new AsyncCallback<PageList<Resource>>() {
+                @Override
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_lookupFailed(), caught);
                 }
 
+                @Override
                 public void onSuccess(PageList<Resource> result) {
                     if (result.isEmpty()) {
                         return;
@@ -100,8 +101,7 @@ public class ResourceMetricGraphView extends AbstractMetricGraphView {
 
                             public void onTypesLoaded(Map<Integer, ResourceType> types) {
                                 String url = LinkManager.getResourceLink(resource.getId());
-                                resourceTitle = new HTMLFlow(SeleniumUtility.getLocatableHref(url, resource.getName(),
-                                    null));
+                                resourceTitle = new HTMLFlow(LinkManager.getHref(url, resource.getName()));
                                 resourceTitle.setTooltip(AncestryUtil.getAncestryHoverHTMLForResource(resource, types,
                                     0));
 
@@ -110,14 +110,17 @@ public class ResourceMetricGraphView extends AbstractMetricGraphView {
                                     if (def.getId() == getDefinitionId()) {
                                         setDefinition(def);
 
-                                        GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(getEntityId(),
-                                            new int[] { getDefinitionId() }, 8, MeasurementUtils.UNIT_HOURS, 60,
+                                        GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(
+                                            getEntityId(), new int[] { getDefinitionId() }, 8,
+                                            MeasurementUtils.UNIT_HOURS, 60,
                                             new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
+                                                @Override
                                                 public void onFailure(Throwable caught) {
                                                     CoreGUI.getErrorHandler().handleError(
                                                         MSG.view_resource_monitor_graphs_loadFailed(), caught);
                                                 }
 
+                                                @Override
                                                 public void onSuccess(
                                                     List<List<MeasurementDataNumericHighLowComposite>> result) {
                                                     setData(result.get(0));
@@ -133,23 +136,24 @@ public class ResourceMetricGraphView extends AbstractMetricGraphView {
             });
 
         } else {
-
             drawGraph();
         }
     }
 
+    @Override
     protected boolean supportsLiveGraphViewDialog() {
         return true;
     }
 
+    @Override
     protected void displayLiveGraphViewDialog() {
-        LiveGraphView.displayAsDialog(getLocatorId(), getEntityId(), getDefinition());
+        LiveGraphView.displayAsDialog(getEntityId(), getDefinition());
     }
 
     @Override
-    public AbstractMetricGraphView getInstance(String locatorId, int entityId, MeasurementDefinition def,
+    public AbstractMetricGraphView getInstance(int entityId, MeasurementDefinition def,
         List<MeasurementDataNumericHighLowComposite> data) {
 
-        return new ResourceMetricGraphView(locatorId, entityId, def, data);
+        return new ResourceMetricGraphView(entityId, def, data);
     }
 }

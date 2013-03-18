@@ -23,6 +23,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
+
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -30,7 +31,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryDetailsView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Ian Springer
@@ -39,8 +40,8 @@ public class GroupOperationHistoryDetailsView extends AbstractOperationHistoryDe
 
     private ResourceGroupComposite groupComposite;
 
-    public GroupOperationHistoryDetailsView(String locatorId, ResourceGroupComposite groupComposite) {
-        super(locatorId);
+    public GroupOperationHistoryDetailsView(ResourceGroupComposite groupComposite) {
+        super();
 
         this.groupComposite = groupComposite;
     }
@@ -54,30 +55,29 @@ public class GroupOperationHistoryDetailsView extends AbstractOperationHistoryDe
         criteria.fetchParameters(true);
 
         GWTServiceLookup.getOperationService().findGroupOperationHistoriesByCriteria(criteria,
-                new AsyncCallback<PageList<GroupOperationHistory>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler()
-                                .handleError(MSG.view_operationHistoryDetails_error_fetchFailure(), caught);
-                    }
+            new AsyncCallback<PageList<GroupOperationHistory>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler()
+                        .handleError(MSG.view_operationHistoryDetails_error_fetchFailure(), caught);
+                }
 
-                    public void onSuccess(PageList<GroupOperationHistory> result) {
-                        GroupOperationHistory groupOperationHistory = result.get(0);
-                        displayDetails(groupOperationHistory);
-                    }
-                });
+                public void onSuccess(PageList<GroupOperationHistory> result) {
+                    GroupOperationHistory groupOperationHistory = result.get(0);
+                    displayDetails(groupOperationHistory);
+                }
+            });
     }
 
     @Override
     protected Canvas buildResultsSection(GroupOperationHistory operationHistory) {
-        LocatableVLayout resultsSection = new LocatableVLayout(extendLocatorId("ResultsSection"));
+        EnhancedVLayout resultsSection = new EnhancedVLayout();
 
         Label title = new Label("<h4>" + MSG.view_operationHistoryDetails_results() + "</h4>");
         title.setHeight(27);
         resultsSection.addMember(title);
 
-        GroupMemberResourceOperationHistoryListView memberHistoryListView =
-                new GroupMemberResourceOperationHistoryListView(extendLocatorId("MembersListView"), this.groupComposite,
-                        getOperationHistory().getId());
+        GroupMemberResourceOperationHistoryListView memberHistoryListView = new GroupMemberResourceOperationHistoryListView(
+            this.groupComposite, getOperationHistory().getId());
         memberHistoryListView.setOverflow(Overflow.VISIBLE);
         memberHistoryListView.setHeight(200);
         resultsSection.addMember(memberHistoryListView);

@@ -22,13 +22,16 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Img;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
@@ -64,53 +67,43 @@ import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.measurement.GwtMonitorUtils;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 
 /**
  * @author Simeon Pinder
  */
-public abstract class AbstractActivityView extends LocatableVLayout implements RefreshableView {
+public abstract class AbstractActivityView extends EnhancedVLayout implements RefreshableView {
 
     //contains the activity display region
-    private LocatableHLayout columnSection = new LocatableHLayout("ActivityRegion");
+    private EnhancedHLayout columnSection = new EnhancedHLayout();
 
-    //Locatable ui references
     protected VLayout leftPane = new VLayout();
     protected VLayout rightPane = new VLayout();
 
-    protected LocatableCanvas recentMeasurementsContent = new LocatableCanvas(extendLocatorId("RecentMetrics"));
-    protected LocatableCanvas recentAlertsContent = new LocatableCanvas(extendLocatorId("RecentAlerts"));
-    protected LocatableCanvas recentOobContent = new LocatableCanvas(extendLocatorId("RecentOobs"));
-    protected LocatableCanvas recentConfigurationContent = new LocatableCanvas(extendLocatorId("RecentConfig"));
-    protected LocatableCanvas recentOperationsContent = new LocatableCanvas(extendLocatorId("RecentOperations"));
-    protected LocatableCanvas recentEventsContent = new LocatableCanvas(extendLocatorId("RecentEvents"));
-    protected LocatableCanvas recentPkgHistoryContent = new LocatableCanvas(extendLocatorId("RecentPkgHistory"));
-    protected LocatableCanvas recentBundleDeployContent = new LocatableCanvas(extendLocatorId("RecentBundleDeploy"));
+    protected Canvas recentMeasurementsContent = new Canvas();
+    protected Canvas recentAlertsContent = new Canvas();
+    protected Canvas recentOobContent = new Canvas();
+    protected Canvas recentConfigurationContent = new Canvas();
+    protected Canvas recentOperationsContent = new Canvas();
+    protected Canvas recentEventsContent = new Canvas();
+    protected Canvas recentPkgHistoryContent = new Canvas();
+    protected Canvas recentBundleDeployContent = new Canvas();
 
     //retrieve localized text
     public static String RECENT_MEASUREMENTS = MSG.common_title_recent_measurements();
     public static String RECENT_MEASUREMENTS_NONE = MSG.view_resource_inventory_activity_no_recent_metrics();
     public static String RECENT_MEASUREMENTS_GROUP_NONE = MSG.view_group_inventory_activity_no_recent_metrics();
     public static String RECENT_ALERTS = MSG.common_title_recent_alerts();
-    public static String RECENT_ALERTS_NONE = MSG.view_resource_inventory_activity_no_recent_alerts();
     public static String RECENT_OOB = MSG.common_title_recent_oob_metrics();
     public static String RECENT_OOB_NONE = MSG.view_resource_inventory_activity_no_recent_oob();
     public static String RECENT_CONFIGURATIONS = MSG.common_title_recent_configuration_updates();
-    public static String RECENT_CONFIGURATIONS_NONE = MSG.view_resource_inventory_activity_no_recent_config_history();
     public static String RECENT_OPERATIONS = MSG.common_title_recent_operations();
-    public static String RECENT_OPERATIONS_NONE = MSG.view_resource_inventory_activity_no_recent_operations();
     public static String RECENT_EVENTS = MSG.common_title_recent_event_counts();
-    public static String RECENT_EVENTS_NONE = MSG.view_resource_inventory_activity_no_recent_events();
     public static String RECENT_PKG_HISTORY = MSG.common_title_recent_pkg_history();
-    public static String RECENT_PKG_HISTORY_NONE = MSG.view_resource_inventory_activity_no_recent_pkg_history();
     public static String RECENT_BUNDLE_DEPLOY = MSG.common_title_recent_bundle_deployments();
-    public static String RECENT_BUNDLE_DEPLOY_NONE = MSG.view_resource_inventory_activity_no_recent_bundle_deploy();
     public static String SEE_MORE = MSG.common_msg_see_more();
     public static String RECENT_CRITERIA_EVENTS_NONE = MSG.view_resource_inventory_activity_criteria_no_recent_events();
     public static final String CHART_TITLE = MSG.common_title_metric_chart();
@@ -121,9 +114,8 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
     private ToolStrip footer;
     private boolean firstRightPanePortletLoaded = false;
 
-    public AbstractActivityView(String locatorId, ResourceGroupComposite groupComposite,
-        ResourceComposite resourceComposite) {
-        super(locatorId);
+    public AbstractActivityView(ResourceGroupComposite groupComposite, ResourceComposite resourceComposite) {
+        super();
         if (groupComposite != null) {
             this.groupComposite = groupComposite;
         }
@@ -173,7 +165,8 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         }
 
         //recentMetrics.xhtml
-        HLayout recentMetricsTitle = new TitleWithIcon(IconEnum.RECENT_MEASUREMENTS.getIcon24x24Path(), RECENT_MEASUREMENTS);
+        HLayout recentMetricsTitle = new TitleWithIcon(IconEnum.RECENT_MEASUREMENTS.getIcon24x24Path(),
+            RECENT_MEASUREMENTS);
         if ((resource != null) || ((group != null) && (groupCategory.equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
             leftPane.addMember(recentMetricsTitle);
             leftPane.addMember(recentMeasurementsContent);
@@ -211,7 +204,8 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         }
 
         //recentOperations.xhtml
-        HLayout recentOperationsTitle = new TitleWithIcon(IconEnum.RECENT_OPERATIONS.getIcon24x24Path(), RECENT_OPERATIONS);
+        HLayout recentOperationsTitle = new TitleWithIcon(IconEnum.RECENT_OPERATIONS.getIcon24x24Path(),
+            RECENT_OPERATIONS);
         recentOperationsContent.setHeight(20);
         if (((resource != null) && (resourceFacets.contains(ResourceTypeFacet.OPERATION)))
             || (displayGroupOperations(groupCategory, facets))) {//resource
@@ -235,7 +229,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
             firstRightPanePortletLoaded = true;
         }
         //recentPackageHistory.xhtml
-        HLayout recentPkgHistoryTitle = new TitleWithIcon(IconEnum.CONTENT.getIcon24x24Path(),RECENT_PKG_HISTORY);
+        HLayout recentPkgHistoryTitle = new TitleWithIcon(IconEnum.CONTENT.getIcon24x24Path(), RECENT_PKG_HISTORY);
         recentPkgHistoryContent.setHeight(20);
         if ((resource != null) || ((group != null) && (groupCategory.equals(GroupCategory.COMPATIBLE)))) {//resource,CompatibleGroup
             if (firstRightPanePortletLoaded) {
@@ -259,7 +253,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         footer.setWidth100();
         footer.setMembersMargin(15);
         footer.addMember(new LayoutSpacer());
-        IButton refreshButton = new LocatableIButton(extendLocatorId("Refresh"), MSG.common_button_refresh());
+        IButton refreshButton = new EnhancedIButton(MSG.common_button_refresh());
         refreshButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 loadData();
@@ -339,9 +333,9 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
 
     @Override
     public void destroy() {
-        // destroy members of non-locatable layouts
-        SeleniumUtility.destroyMembers(leftPane);
-        SeleniumUtility.destroyMembers(rightPane);
+        // destroy members of non-enhanced layouts
+        EnhancedUtility.destroyMembers(leftPane);
+        EnhancedUtility.destroyMembers(rightPane);
 
         super.destroy();
     }
@@ -383,7 +377,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
 
         @Override
         public void destroy() {
-            SeleniumUtility.destroyMembers(this);
+            EnhancedUtility.destroyMembers(this);
             super.destroy();
         }
     }
@@ -397,7 +391,6 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
      * @param md MeasurementDefinition
      * @return formatted String representation of the last value retrieved.
      */
-    //    protected String convertLastValueForDisplay(double lastValue, MeasurementDefinition md) {
     public static String convertLastValueForDisplay(double lastValue, MeasurementDefinition md) {
         String convertedValue = "";
         String[] convertedValues = GwtMonitorUtils.formatSimpleMetrics(new double[] { lastValue }, md);
@@ -406,15 +399,14 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         return convertedValue;
     }
 
-    /** Create empty display row(LocatableDynamicForm) that is constently defined and displayed.
+    /** Create empty display row(DynamicForm) that is constantly defined and displayed.
      *
-     * @param locatorId locator ID of Locatable parent column
      * @param emptyMessage Contents of the empty region
      * @return
      */
-    public static LocatableDynamicForm createEmptyDisplayRow(String locatorId, String emptyMessage) {
-        LocatableDynamicForm row = null;
-        row = new LocatableDynamicForm(locatorId);
+    public static DynamicForm createEmptyDisplayRow(String emptyMessage) {
+        DynamicForm row = null;
+        row = new DynamicForm();
 
         row.setNumCols(3);
         StaticTextItem none = new StaticTextItem();
@@ -458,13 +450,13 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         return item;
     }
 
-    /** Generates a "See more.." link item, using the locatable dynamic form passed in and appends to the VLayout passed in.
+    /** Generates a "See more.." link item, using the dynamic form passed in and appends to the VLayout passed in.
      *
      * @param form
      * @param linkDestination
      * @param column
      */
-    public static void addSeeMoreLink(LocatableDynamicForm form, String linkDestination, VLayout column) {
+    public static void addSeeMoreLink(DynamicForm form, String linkDestination, VLayout column) {
         if ((form != null) && (column != null)) {
             form.setNumCols(1);
             LinkItem link = newLinkItem(SEE_MORE, linkDestination);
@@ -623,26 +615,26 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
             .contains(ResourceTypeFacet.EVENT)));
     }
 
-    public static class ChartViewWindow extends LocatableWindow {
+    public static class ChartViewWindow extends Window {
 
-        public ChartViewWindow(String locatorId, String title) {
-            this(locatorId, title, null);
+        public ChartViewWindow(String title) {
+            this(title, null);
         }
 
-        public ChartViewWindow(String locatorId, String title, String windowTitle) {
-            super(locatorId);
+        public ChartViewWindow(String title, String windowTitle) {
+            super();
             if ((windowTitle != null) && (!windowTitle.trim().isEmpty())) {
                 setTitle(windowTitle + ": " + title);
             } else {
                 setTitle(CHART_TITLE + ": " + title);
             }
-            setShowMinimizeButton(true);
-            setShowMaximizeButton(true);
+            setShowMinimizeButton(false);
+            setShowMaximizeButton(false);
             setShowCloseButton(true);
             setIsModal(true);
             setShowModalMask(true);
-            setWidth(900);
-            setHeight(650);
+            setWidth(950);
+            setHeight(350);
             setShowResizer(true);
             setCanDragResize(true);
             centerInPage();
@@ -661,11 +653,4 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         }
     }
 
-    public static String iframeLink(String destination) {
-        String link = destination;
-        if (destination != null) {
-            link += "&iframe=true";
-        }
-        return link;
-    }
 }

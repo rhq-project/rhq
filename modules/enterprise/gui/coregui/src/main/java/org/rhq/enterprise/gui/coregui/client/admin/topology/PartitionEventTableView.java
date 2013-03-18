@@ -40,6 +40,7 @@ import org.rhq.core.domain.cloud.PartitionEventType;
 import org.rhq.core.domain.criteria.PartitionEventCriteria;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.AuthorizedTableAction;
@@ -50,7 +51,6 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * Shows the table of all partition events.
@@ -84,8 +84,8 @@ public class PartitionEventTableView extends TableSection<PartitionEventDatasour
         }
     }
 
-    public PartitionEventTableView(String locatorId, String tableTitle) {
-        super(locatorId, tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
+    public PartitionEventTableView(String tableTitle) {
+        super(tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
         setHeight100();
         setWidth100();
         setInitialCriteriaFixed(false);
@@ -127,7 +127,7 @@ public class PartitionEventTableView extends TableSection<PartitionEventDatasour
                         }
                         String detailsUrl = "#" + VIEW_PATH + "/" + getId(record);
                         String formattedValue = StringUtility.escapeHtml(value.toString());
-                        return SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
+                        return LinkManager.getHref(detailsUrl, formattedValue);
                     }
                 });
             }
@@ -136,7 +136,7 @@ public class PartitionEventTableView extends TableSection<PartitionEventDatasour
 
     @Override
     public Canvas getDetailsView(Integer id) {
-        return new PartitionEventDetailView(extendLocatorId("detailsView"), id);
+        return new PartitionEventDetailView(id);
     }
 
     private void showActions() {
@@ -146,8 +146,8 @@ public class PartitionEventTableView extends TableSection<PartitionEventDatasour
     }
 
     private void addTableAction(final TableAction action) {
-        addTableAction(extendLocatorId(action.toString()), action.title, null, new AuthorizedTableAction(this,
-            action.enablement, Permission.MANAGE_SETTINGS) {
+        addTableAction(action.title, null, new AuthorizedTableAction(this, action.enablement,
+            Permission.MANAGE_SETTINGS) {
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
                 String eventTypes = getSelectedEventTypes(selections).toString();
                 String message = null;

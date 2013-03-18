@@ -52,7 +52,7 @@ import org.rhq.core.domain.content.ProductVersionPackageVersion;
  */
 @Entity
 @NamedQueries( { @NamedQuery(name = ProductVersion.QUERY_FIND_BY_RESOURCE_TYPE_AND_VERSION, query = "SELECT pv FROM ProductVersion AS pv WHERE pv.resourceType = :resourceType AND pv.version = :version") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_PRD_VER_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_PRD_VER_ID_SEQ", sequenceName = "RHQ_PRD_VER_ID_SEQ")
 @Table(name = "RHQ_PRD_VER")
 public class ProductVersion implements Serializable {
     // Constants  --------------------------------------------
@@ -64,7 +64,7 @@ public class ProductVersion implements Serializable {
     // Attributes --------------------------------------------
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_PRD_VER_ID_SEQ")
     @Id
     private int id;
 

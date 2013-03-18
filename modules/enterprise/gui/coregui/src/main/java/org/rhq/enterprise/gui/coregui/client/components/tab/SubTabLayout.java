@@ -35,18 +35,17 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class SubTabLayout extends LocatableVLayout {
+public class SubTabLayout extends EnhancedVLayout {
 
-    /** maps subTab locator IDs to SubTabs. Unlike names, locatorIDs are qualified by the Tab and therefore unique. */
+    /** maps subTab IDs to SubTabs. Unlike names, IDs are qualified by the Tab and therefore unique. */
     private Map<String, SubTab> subTabs = new LinkedHashMap<String, SubTab>();
-    /** locator IDs of subTabs that are disabled. Unlike names, locator IDs are qualified by the Tab and therefore unique. */
+    /** IDs of subTabs that are disabled. Unlike names, IDs are qualified by the Tab and therefore unique. */
     private Set<String> disabledSubTabs = new HashSet<String>();
 
     private SubTab currentlyDisplayed;
@@ -57,8 +56,8 @@ public class SubTabLayout extends LocatableVLayout {
 
     private SubTab tail;
 
-    public SubTabLayout(String locatorId) {
-        super(locatorId);
+    public SubTabLayout() {
+        super();
         setOverflow(Overflow.AUTO);
     }
 
@@ -71,7 +70,7 @@ public class SubTabLayout extends LocatableVLayout {
         setMargin(0);
         setPadding(0);
 
-        buttonBar = new LocatableToolStrip(extendLocatorId("ButtonBar"));
+        buttonBar = new EnhancedToolStrip();
         buttonBar.setBackgroundColor("grey");
         buttonBar.setWidth100();
         buttonBar.setBorder(null);
@@ -87,11 +86,11 @@ public class SubTabLayout extends LocatableVLayout {
         if (null == currentlySelected) {
             SubTab initial = getDefaultSubTab();
             if (null != initial) {
-                currentlySelected = initial.getLocatorId();
+                currentlySelected = initial.getId();
             }
         }
         if (null != currentlySelected) {
-            selectSubTabByLocatorId(currentlySelected, true);
+            selectSubTabById(currentlySelected, true);
         }
     }
 
@@ -101,7 +100,7 @@ public class SubTabLayout extends LocatableVLayout {
      * @param subTab not null
      */
     public void showSubTab(SubTab subTab) {
-        LocatableButton button = subTab.getButton();
+        Button button = subTab.getButton();
         if (null == button) {
             button = createSubTabButton(subTab);
 
@@ -162,8 +161,8 @@ public class SubTabLayout extends LocatableVLayout {
         return (null != subTab && null != subTab.getButton());
     }
 
-    private LocatableButton createSubTabButton(final SubTab subTab) {
-        LocatableButton button = new LocatableButton(subTab.getLocatorId(), subTab.getTitle());
+    private Button createSubTabButton(final SubTab subTab) {
+        Button button = new Button(subTab.getTitle());
         button.setShowRollOver(false);
         button.setActionType(SelectionType.RADIO);
         button.setRadioGroup("subTabs");
@@ -177,7 +176,7 @@ public class SubTabLayout extends LocatableVLayout {
 
         button.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                SubTabLayout.this.currentlySelected = subTab.getLocatorId();
+                SubTabLayout.this.currentlySelected = subTab.getId();
                 fireSubTabSelection();
                 markForRedraw();
             }
@@ -191,7 +190,7 @@ public class SubTabLayout extends LocatableVLayout {
      */
     public void enableSubTab(SubTab subTab) {
         if (isSubTabVisible(subTab)) {
-            disabledSubTabs.remove(subTab.getLocatorId());
+            disabledSubTabs.remove(subTab.getId());
             subTab.getButton().enable();
             subTab.getButton().show();
         }
@@ -202,7 +201,7 @@ public class SubTabLayout extends LocatableVLayout {
      */
     public void disableSubTab(SubTab subTab) {
         if (isSubTabVisible(subTab)) {
-            disabledSubTabs.add(subTab.getLocatorId());
+            disabledSubTabs.add(subTab.getId());
             subTab.getButton().disable();
             subTab.getButton().show();
         }
@@ -217,15 +216,15 @@ public class SubTabLayout extends LocatableVLayout {
 
     public void registerSubTabs(SubTab... tabs) {
         for (SubTab subTab : tabs) {
-            String locatorId = subTab.getLocatorId();
-            subTabs.put(locatorId, subTab);
+            String id = subTab.getId();
+            subTabs.put(id, subTab);
         }
         buildSubTabList(tabs);
     }
 
     private void buildSubTabList(SubTab[] tabs) {
-//        head = tabs[0];
-//        tail = tabs[tabs.length - 1];
+        //        head = tabs[0];
+        //        tail = tabs[tabs.length - 1];
         SubTab current = tabs[0];
         for (int i = 1; i < tabs.length; ++i) {
             current.setActualNext(tabs[i]);
@@ -233,13 +232,6 @@ public class SubTabLayout extends LocatableVLayout {
             current = tabs[i];
         }
     }
-
-
-//    public void registerSubTab(SubTab subTab) {
-//        String locatorId = subTab.getLocatorId();
-//
-//        subTabs.put(locatorId, subTab);
-//    }
 
     /**
      * Walks the list of visible tabs to find the closest, visible predecessor. Because it
@@ -315,24 +307,24 @@ public class SubTabLayout extends LocatableVLayout {
         if (subTab == null) {
             throw new IllegalArgumentException("subTab is null.");
         }
-        return selectSubTabByLocatorId(subTab.getLocatorId(), showCanvas);
+        return selectSubTabById(subTab.getId(), showCanvas);
     }
 
     /**
-     * @param name locatorId the subtab locatorId
+     * @param Id the subtab Id
      * @param showCanvas if true then ensure the subtab canvas is shown. Otherwise the state is unchanged.
      * @return true if selected successfully, otherwise false
      */
-    public boolean selectSubTabByLocatorId(String locatorId, boolean showCanvas) {
+    public boolean selectSubTabById(String id, boolean showCanvas) {
         boolean foundTab = false;
-        for (String subTabLocatorId : this.subTabs.keySet()) {
-            if (subTabLocatorId.equals(locatorId)) {
-                if (this.disabledSubTabs.contains(subTabLocatorId)) {
+        for (String subTabId : this.subTabs.keySet()) {
+            if (subTabId.equals(id)) {
+                if (this.disabledSubTabs.contains(subTabId)) {
                     // Nice try - user tried to select a disabled tab, probably by going directly to a bookmark URL.
-                    SubTab subTab = this.subTabs.get(subTabLocatorId);
+                    SubTab subTab = this.subTabs.get(subTabId);
                     CoreGUI.getErrorHandler().handleError(MSG.view_subTab_error_disabled(subTab.getTitle()));
                 } else {
-                    this.currentlySelected = subTabLocatorId;
+                    this.currentlySelected = subTabId;
                     foundTab = true;
                 }
                 break;
@@ -347,8 +339,8 @@ public class SubTabLayout extends LocatableVLayout {
     }
 
     public SubTab getSubTabByName(String name) {
-        for (String subTabLocatorId : this.subTabs.keySet()) {
-            SubTab subTab = this.subTabs.get(subTabLocatorId);
+        for (String subTabId : this.subTabs.keySet()) {
+            SubTab subTab = this.subTabs.get(subTabId);
             if (subTab.getName().equals(name)) {
                 return subTab;
             }
@@ -357,10 +349,10 @@ public class SubTabLayout extends LocatableVLayout {
         return null;
     }
 
-    public SubTab getSubTabByLocatorId(String locatorId) {
-        for (String subTabLocatorId : this.subTabs.keySet()) {
-            if (subTabLocatorId.equals(locatorId)) {
-                return this.subTabs.get(subTabLocatorId);
+    public SubTab getSubTabById(String id) {
+        for (String subTabId : this.subTabs.keySet()) {
+            if (subTabId.equals(id)) {
+                return this.subTabs.get(subTabId);
             }
         }
 
@@ -377,12 +369,12 @@ public class SubTabLayout extends LocatableVLayout {
         if (subTab == null) {
             return false;
         } else {
-            if (this.disabledSubTabs.contains(subTab.getLocatorId())) {
+            if (this.disabledSubTabs.contains(subTab.getId())) {
                 // Nice try - user tried to select a disabled tab, probably by going directly to a bookmark URL.
                 CoreGUI.getErrorHandler().handleError(MSG.view_subTab_error_disabled(subTab.getTitle()));
                 return false;
             }
-            this.currentlySelected = subTab.getLocatorId();
+            this.currentlySelected = subTab.getId();
             setCurrentlySelected(showCanvas);
             return true;
         }
@@ -392,7 +384,7 @@ public class SubTabLayout extends LocatableVLayout {
         if (null == currentlySelected) {
             SubTab current = getDefaultSubTab();
             if (null != current) {
-                currentlySelected = current.getLocatorId();
+                currentlySelected = current.getId();
             }
             return current;
         }

@@ -52,10 +52,9 @@ public abstract class AbstractSchedulesView extends Table<SchedulesDataSource> {
 
     protected SchedulesDataSource dataSource;
 
-    public AbstractSchedulesView(String locatorId, String tableTitle, EntityContext entityContext,
-        boolean hasWriteAccess) {
+    public AbstractSchedulesView(String tableTitle, EntityContext entityContext, boolean hasWriteAccess) {
 
-        super(locatorId, tableTitle, SORT_SPECIFIERS);
+        super(tableTitle, SORT_SPECIFIERS);
         this.entityContext = entityContext;
         this.hasWriteAccess = hasWriteAccess;
 
@@ -81,7 +80,7 @@ public abstract class AbstractSchedulesView extends Table<SchedulesDataSource> {
 
     protected void setupTableInteractions(final boolean hasWriteAccess) {
 
-        addTableAction(extendLocatorId("Enable"), MSG.common_button_enable(), null, new TableAction() {
+        addTableAction(MSG.common_button_enable(), null, new TableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
                 return ((selection.length >= 1) && hasWriteAccess);
             }
@@ -90,7 +89,7 @@ public abstract class AbstractSchedulesView extends Table<SchedulesDataSource> {
                 enableSchedules();
             }
         });
-        addTableAction(extendLocatorId("Disable"), MSG.common_button_disable(), null, new TableAction() {
+        addTableAction(MSG.common_button_disable(), null, new TableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
                 return ((selection.length >= 1) && hasWriteAccess);
             }
@@ -99,7 +98,7 @@ public abstract class AbstractSchedulesView extends Table<SchedulesDataSource> {
                 disableSchedules();
             }
         });
-        addExtraWidget(new UpdateCollectionIntervalWidget(this.getLocatorId(), this), true);
+        addExtraWidget(new UpdateCollectionIntervalWidget(this), true);
     }
 
     protected abstract void enableSchedules(int[] measurementDefinitionIds,

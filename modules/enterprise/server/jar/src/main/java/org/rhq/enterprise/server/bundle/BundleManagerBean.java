@@ -254,7 +254,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
         BundleDestination bundleDestination = entityManager.find(BundleDestination.class, bundleDestinationId);
         if (null == bundleDestination) {
-            throw new IllegalArgumentException("Invalid bundleDestinationId: " + bundleVersionId);
+            throw new IllegalArgumentException("Invalid bundleDestinationId: " + bundleDestinationId);
         }
 
         return createBundleDeploymentImpl(subject, bundleVersion, bundleDestination, name, description, configuration);
@@ -271,7 +271,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
         BundleDestination bundleDestination = entityManager.find(BundleDestination.class, bundleDestinationId);
         if (null == bundleDestination) {
-            throw new IllegalArgumentException("Invalid bundleDestinationId: " + bundleVersionId);
+            throw new IllegalArgumentException("Invalid bundleDestinationId: " + bundleDestinationId);
         }
 
         String name = getBundleDeploymentNameImpl(subject, bundleDestination, bundleVersion, null);
@@ -346,7 +346,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         int prevDeploymentId) {
         BundleDestination bundleDestination = entityManager.find(BundleDestination.class, bundleDestinationId);
         if (null == bundleDestination) {
-            throw new IllegalArgumentException("Invalid bundleDestinationId: " + bundleVersionId);
+            throw new IllegalArgumentException("Invalid bundleDestinationId: " + bundleDestinationId);
         }
 
         BundleVersion bundleVersion = null;

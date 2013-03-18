@@ -50,7 +50,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A superclass data source that loads information about all the plugin/resource configuration changes that happened
@@ -196,7 +195,7 @@ public abstract class AbstractConfigurationHistoryDataSource<T extends AbstractR
                 String err = event.getRecord().getAttribute(Field.ERROR_MESSAGE);
                 if (err != null && err.length() > 0) {
                     err = "<pre>" + err + "</pre>";
-                    new ErrorMessageWindow("errWin", MSG.common_severity_error(), err).show();
+                    new ErrorMessageWindow(MSG.common_severity_error(), err).show();
                 }
             }
         });
@@ -227,7 +226,7 @@ public abstract class AbstractConfigurationHistoryDataSource<T extends AbstractR
                 public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                     String url = LinkManager
                         .getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
-                    return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                    return LinkManager.getHref(url, o.toString());
                 }
             });
             resourceNameField.setShowHover(true);

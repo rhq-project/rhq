@@ -145,15 +145,15 @@
                     <artifactId>rss4j</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>jboss</groupId>
-                    <artifactId>jboss-common</artifactId>
+                    <groupId>org.jboss</groupId>
+                    <artifactId>jboss-common-core</artifactId>
                 </exclusion>
                 <exclusion>
                     <groupId>jboss</groupId>
                     <artifactId>jboss-jmx</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>jboss</groupId>
+                    <groupId>org.jboss.remoting</groupId>
                     <artifactId>jboss-remoting</artifactId>
                 </exclusion>
                 <exclusion>

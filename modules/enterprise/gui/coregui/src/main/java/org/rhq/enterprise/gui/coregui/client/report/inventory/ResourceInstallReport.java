@@ -31,7 +31,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A tabular report that shows the types of resources are installed and how many
@@ -39,14 +39,15 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * 
  * @author John Mazzitelli
  */
-public class ResourceInstallReport extends LocatableVLayout implements BookmarkableView, HasViewName {
+public class ResourceInstallReport extends EnhancedVLayout implements BookmarkableView, HasViewName {
 
-    public static final ViewName VIEW_ID = new ViewName("InventorySummary", MSG.common_title_inventorySummary(), IconEnum.INVENTORY_SUMMARY);
+    public static final ViewName VIEW_ID = new ViewName("InventorySummary", MSG.common_title_inventorySummary(),
+        IconEnum.INVENTORY_SUMMARY);
 
     private ResourceSearchView resourceList;
 
-    public ResourceInstallReport(String locatorId ) {
-        super(locatorId);
+    public ResourceInstallReport() {
+        super();
         setHeight100();
         setWidth100();
     }
@@ -72,7 +73,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
     @Override
     protected void onInit() {
         super.onInit();
-        addMember(new InventorySummaryReportTable(extendLocatorId("table")));
+        addMember(new InventorySummaryReportTable());
     }
 
     protected Criteria createResourceSearchViewCriteria(int resourceTypeId) {
@@ -90,7 +91,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
 
     private void showResourceList(Criteria criteria) {
         hideResourceList();
-        resourceList = new ResourceSearchView(extendLocatorId("resourceList"), criteria, true);
+        resourceList = new ResourceSearchView(criteria, true);
         addMember(resourceList);
         markForRedraw();
     }

@@ -508,6 +508,8 @@ public interface ResourceManagerLocal {
      */
     List<Resource> findResourceLineage(Subject subject, int resourceId);
 
+    void uninventoryAllResourcesByAgent(Subject user, Agent doomedAgent);
+
     /**
      * This will uninventory the resources with the given ID along with all of their child resources. This method will not
      * create its own transaction; each individual child resource as well as the top level resources identified with the

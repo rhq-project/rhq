@@ -47,8 +47,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * The group Monitoring>Traits subtab.
@@ -58,8 +56,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 public class TraitsView extends AbstractMeasurementDataTraitListView {
     private int groupId;
 
-    public TraitsView(String locatorId, int groupId) {
-        super(locatorId, new TraitsDataSource(groupId), createCriteria(groupId));
+    public TraitsView(int groupId) {
+        super(new TraitsDataSource(groupId), createCriteria(groupId));
         this.groupId = groupId;
     }
 
@@ -77,7 +75,7 @@ public class TraitsView extends AbstractMeasurementDataTraitListView {
         resourceNameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
-                return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                return LinkManager.getHref(url, o.toString());
             }
         });
         resourceNameField.setShowHover(true);
@@ -93,7 +91,7 @@ public class TraitsView extends AbstractMeasurementDataTraitListView {
 
     @Override
     public Canvas getDetailsView(Integer definitionId) {
-        return new TraitsDetailView(extendLocatorId("Detail"), this.groupId, definitionId);
+        return new TraitsDetailView(this.groupId, definitionId);
     }
 
     private static Criteria createCriteria(int groupId) {
@@ -166,8 +164,8 @@ public class TraitsView extends AbstractMeasurementDataTraitListView {
     }
 
     @Override
-    protected LocatableListGrid decorateLiveDataGrid(List<ListGridRecord> records) {
-        LocatableListGrid liveDataGrid = new LocatableListGrid(extendLocatorId("liveDataListGrid"));
+    protected ListGrid decorateLiveDataGrid(List<ListGridRecord> records) {
+        ListGrid liveDataGrid = new ListGrid();
         liveDataGrid.setShowAllRecords(true);
         liveDataGrid.setData(records.toArray(new ListGridRecord[records.size()]));
         liveDataGrid.setSelectionType(SelectionStyle.NONE);
@@ -179,7 +177,7 @@ public class TraitsView extends AbstractMeasurementDataTraitListView {
         resourceNameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
-                return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                return LinkManager.getHref(url, o.toString());
             }
         });
         resourceNameField.setShowHover(true);

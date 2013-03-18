@@ -20,9 +20,9 @@
 package org.rhq.enterprise.gui.coregui.client;
 
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * Generic window that you can use to popup details. Populate the popup
@@ -30,16 +30,15 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
  * 
  * @author John Mazzitelli
  */
-public class PopupWindow extends LocatableWindow {
+public class PopupWindow extends Window {
     /**
      * Create the popup dialog window.
      * 
-     * @param locatorId
      * @param canvas if not <code>null</code>, this will be added to the window.
      */
-    public PopupWindow(String locatorId, Canvas canvas) {
-        super(locatorId);
-        setTitle(MSG.common_title_details());
+    public PopupWindow(Canvas canvas) {
+        super();
+        setTitle(CoreGUI.getMessages().common_title_details());
         setShowMinimizeButton(false);
         setShowMaximizeButton(true);
         setIsModal(true);

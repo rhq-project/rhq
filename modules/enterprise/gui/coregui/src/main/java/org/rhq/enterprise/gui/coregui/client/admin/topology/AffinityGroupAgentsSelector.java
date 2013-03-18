@@ -25,10 +25,13 @@ package org.rhq.enterprise.gui.coregui.client.admin.topology;
 import static org.rhq.enterprise.gui.coregui.client.admin.topology.AgentDatasourceField.FIELD_NAME;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Window;
@@ -51,8 +54,7 @@ import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelecto
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
 
 /**
  * Component for assigning the agents into affinity group.
@@ -70,12 +72,12 @@ public class AffinityGroupAgentsSelector extends AbstractSelector<Agent, AgentCr
     private List<Integer> originallyAssignedIds;
 
     private AffinityGroupAgentsSelector() {
-        super("");
+        super();
         affinityGroupId = -1;
     }
 
-    private AffinityGroupAgentsSelector(String id, Integer affinityGroupId) {
-        super(id, false);
+    private AffinityGroupAgentsSelector(Integer affinityGroupId) {
+        super(false);
         this.affinityGroupId = affinityGroupId;
         prepareMembers(this);
     }
@@ -83,7 +85,7 @@ public class AffinityGroupAgentsSelector extends AbstractSelector<Agent, AgentCr
     @Override
     protected DynamicForm getAvailableFilterForm() {
         if (availableFilterForm == null) {
-            availableFilterForm = new LocatableDynamicForm(extendLocatorId("AgentSelectAvailFilterForm"));
+            availableFilterForm = new DynamicForm();
             availableFilterForm.setWidth("75%");
             final TextItem search = new TextItem(FIELD_NAME.propertyName(), MSG.common_title_search());
             availableFilterForm.setItems(search);
@@ -114,8 +116,36 @@ public class AffinityGroupAgentsSelector extends AbstractSelector<Agent, AgentCr
     @Override
     protected RPCDataSource<Agent, AgentCriteria> getDataSource() {
         if (datasource == null) {
-            // fetch all available agents by default
-            datasource = new AgentDatasource(null, false);
+            // fetch all available agents without an affinity group
+            datasource = new AgentDatasource(null, false) {
+                @Override
+                protected void executeFetch(final DSRequest request, final DSResponse response, AgentCriteria criteria) {
+                    criteria.fetchAffinityGroup(true);
+                    GWTServiceLookup.getTopologyService().findAgentsByCriteria(criteria,
+                        new AsyncCallback<PageList<Agent>>() {
+                            public void onSuccess(PageList<Agent> result) {
+                                Iterator<Agent> it = result.iterator();
+                                while (it.hasNext()) {
+                                    Agent agent = it.next();
+                                    if (agent.getAffinityGroup() != null) {
+                                        it.remove();
+                                    }
+                                }
+                                response.setData(buildRecords(result));
+                                response.setTotalRows(result.size());
+                                processResponse(request.getRequestId(), response);
+                            }
+
+                            @Override
+                            public void onFailure(Throwable t) {
+                                CoreGUI.getErrorHandler().handleError(
+                                    MSG.view_adminTopology_message_fetchAgents2Fail(), t);
+                                response.setStatus(DSResponse.STATUS_FAILURE);
+                                processResponse(request.getRequestId(), response);
+                            }
+                        });
+                }
+            };
         }
         return datasource;
     }
@@ -160,17 +190,17 @@ public class AffinityGroupAgentsSelector extends AbstractSelector<Agent, AgentCr
         layout.setWidth100();
         layout.setHeight100();
 
-        final AffinityGroupAgentsSelector selector = new AffinityGroupAgentsSelector("assignAgents", affinityGroupId);
+        final AffinityGroupAgentsSelector selector = new AffinityGroupAgentsSelector(affinityGroupId);
         selector.setMargin(10);
         layout.addMember(selector);
 
-        IButton cancel = new LocatableIButton(selector.extendLocatorId("Cancel"), MSG.common_button_cancel());
+        IButton cancel = new EnhancedIButton(MSG.common_button_cancel());
         cancel.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 closeAndRefresh(parrent, false);
             }
         });
-        IButton save = new LocatableIButton(selector.extendLocatorId("Save"), MSG.common_button_save());
+        IButton save = new EnhancedIButton(MSG.common_button_save());
         save.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 List<Integer> actuallySelected = getIdList(selector.getSelectedRecords());

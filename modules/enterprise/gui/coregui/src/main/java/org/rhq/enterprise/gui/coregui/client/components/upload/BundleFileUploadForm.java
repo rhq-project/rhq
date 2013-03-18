@@ -30,10 +30,10 @@ public class BundleFileUploadForm extends FileUploadForm {
 
     private final BundleVersion bundleVersion;
 
-    public BundleFileUploadForm(String locatorId, BundleVersion bundleVersion, String name, boolean showNameLabel,
+    public BundleFileUploadForm(BundleVersion bundleVersion, String name, boolean showNameLabel,
         Boolean isAlreadyUploaded) {
 
-        super(locatorId, name, bundleVersion.getVersion(), showNameLabel, true, isAlreadyUploaded);
+        super(name, bundleVersion.getVersion(), showNameLabel, true, isAlreadyUploaded);
         this.bundleVersion = bundleVersion;
 
         setAction(GWT.getModuleBaseURL() + "BundleFileUploadServlet");

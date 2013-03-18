@@ -25,11 +25,12 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
 
 public class UserPreferencesMeasurementRangeEditor extends AbstractMeasurementRangeEditor {
+    private static final int START_TIME_INDEX = 0;
+    private static final int END_TIME_INDEX = 1;
 
     private MeasurementUserPreferences measurementUserPrefs;
-
-    public UserPreferencesMeasurementRangeEditor(String locatorId) {
-        super(locatorId);
+    public UserPreferencesMeasurementRangeEditor() {
+        super();
         measurementUserPrefs = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
     }
 
@@ -53,4 +54,14 @@ public class UserPreferencesMeasurementRangeEditor extends AbstractMeasurementRa
         measurementUserPrefs.setMetricRangePreferences(prefs);
     }
 
+    public Long getStartTime(){
+        List<Long> beginEndTimes = getBeginEndTimes();
+        return beginEndTimes.get(START_TIME_INDEX);
+
+    }
+    public Long getEndTime(){
+        List<Long> beginEndTimes = getBeginEndTimes();
+        return beginEndTimes.get(END_TIME_INDEX);
+
+    }
 }

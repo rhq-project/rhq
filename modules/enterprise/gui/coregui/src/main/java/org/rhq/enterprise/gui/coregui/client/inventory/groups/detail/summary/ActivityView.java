@@ -53,9 +53,9 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupMetr
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOperationsPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * The content pane for the group Summary>Activity subtab.
@@ -63,7 +63,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Simeon Pinder
  * @author Jay Shaughnessy
  */
-public class ActivityView extends LocatableVLayout implements DashboardContainer, InitializableView {
+public class ActivityView extends EnhancedVLayout implements DashboardContainer, InitializableView {
 
     private static final String DASHBOARD_NAME_PREFIX = "GroupDashboard_";
 
@@ -75,7 +75,7 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
 
     private DashboardView dashboardView;
 
-    private LocatableToolStrip footer;
+    private EnhancedToolStrip footer;
     private IButton editButton;
     private IButton resetButton;
 
@@ -91,9 +91,8 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
     private int rowRight = 0;
     private boolean displayLeft = false;
 
-    public ActivityView(String locatorId, ResourceGroupComposite groupComposite, boolean isAutoCluster,
-        boolean isAutoGroup) {
-        super(locatorId);
+    public ActivityView(ResourceGroupComposite groupComposite, boolean isAutoCluster, boolean isAutoGroup) {
+        super();
         this.groupComposite = groupComposite;
         this.isAutoCluster = isAutoCluster;
         this.isAutoGroup = isAutoGroup;
@@ -142,17 +141,15 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
         //pass in the group information
         EntityContext context = EntityContext.forGroup(groupComposite.getResourceGroup().getId(), isAutoCluster,
             isAutoGroup);
-        dashboardView = new DashboardView(extendLocatorId(dashboard.getName()), this, dashboard, context,
-            groupComposite);
+        dashboardView = new DashboardView(this, dashboard, context, groupComposite);
         addMember(dashboardView);
 
-        footer = new LocatableToolStrip(extendLocatorId("Footer"));
+        footer = new EnhancedToolStrip();
         footer.setPadding(5);
         footer.setWidth100();
         footer.setMembersMargin(15);
 
-        editButton = new LocatableIButton(footer.extendLocatorId("Mode"), editMode ? MSG.common_title_view_mode() : MSG
-            .common_title_edit_mode());
+        editButton = new EnhancedIButton(editMode ? MSG.common_title_view_mode() : MSG.common_title_edit_mode());
         editButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 editMode = !editMode;
@@ -161,7 +158,7 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
             }
         });
 
-        resetButton = new LocatableIButton(footer.extendLocatorId("Reset"), MSG.common_button_reset());
+        resetButton = new EnhancedIButton(MSG.common_button_reset());
         resetButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 String message = MSG.view_summaryDashboard_resetConfirm();

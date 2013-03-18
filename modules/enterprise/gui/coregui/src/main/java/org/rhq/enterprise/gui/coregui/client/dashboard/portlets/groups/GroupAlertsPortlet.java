@@ -36,12 +36,12 @@ public class GroupAlertsPortlet extends AbstractRecentAlertsPortlet {
 
     private int groupId;
 
-    public GroupAlertsPortlet(String locatorId, int groupId) {
+    public GroupAlertsPortlet(int groupId) {
 
         // Since the group id is only used for filtering I don't think it matters whether this is a
         // standard group, autogroup, or autocluster, but if so, we'll have to provide more specific
         // contexts and more specific context handling.
-        super(locatorId, EntityContext.forGroup(groupId));
+        super(EntityContext.forGroup(groupId));
 
         this.groupId = groupId;
     }
@@ -53,13 +53,13 @@ public class GroupAlertsPortlet extends AbstractRecentAlertsPortlet {
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
             if (EntityContext.Type.ResourceGroup != context.getType()) {
                 throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
             }
 
-            return new GroupAlertsPortlet(locatorId, context.getGroupId());
+            return new GroupAlertsPortlet(context.getGroupId());
         }
     }
 

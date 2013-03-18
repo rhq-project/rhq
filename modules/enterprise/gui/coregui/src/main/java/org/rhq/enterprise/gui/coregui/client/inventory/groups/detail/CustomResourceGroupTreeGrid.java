@@ -19,21 +19,21 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
 
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 
 /**
  * Tree grid used to render the left hand group tree.
  * 
  * @author John Mazzitelli
  */
-public class CustomResourceGroupTreeGrid extends LocatableTreeGrid {
+public class CustomResourceGroupTreeGrid extends TreeGrid {
 
-    public CustomResourceGroupTreeGrid(String locatorId) {
-        super(locatorId);
+    public CustomResourceGroupTreeGrid() {
+        super();
     }
 
     @Override

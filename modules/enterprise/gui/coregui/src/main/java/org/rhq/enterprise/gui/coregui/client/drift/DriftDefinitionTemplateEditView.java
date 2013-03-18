@@ -42,15 +42,15 @@ import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyVa
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A view for editing a Resource's configuration.
  *
  * @author Jay Shaughnessy
  */
-public class DriftDefinitionTemplateEditView extends LocatableVLayout implements PropertyValueChangeListener,
+public class DriftDefinitionTemplateEditView extends EnhancedVLayout implements PropertyValueChangeListener,
     RefreshableView {
 
     private int driftTemplateId;
@@ -63,8 +63,8 @@ public class DriftDefinitionTemplateEditView extends LocatableVLayout implements
 
     private boolean refreshing = false;
 
-    public DriftDefinitionTemplateEditView(String locatorId, int driftTemplateId, boolean hasWriteAccess) {
-        super(locatorId);
+    public DriftDefinitionTemplateEditView(int driftTemplateId, boolean hasWriteAccess) {
+        super();
 
         this.driftTemplateId = driftTemplateId;
         this.hasWriteAccess = hasWriteAccess;
@@ -80,7 +80,7 @@ public class DriftDefinitionTemplateEditView extends LocatableVLayout implements
         buttonbar.setMembersMargin(5);
         buttonbar.setLayoutMargin(5);
 
-        this.saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
+        this.saveButton = new EnhancedIButton(MSG.common_button_save());
         this.saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();
@@ -94,8 +94,8 @@ public class DriftDefinitionTemplateEditView extends LocatableVLayout implements
         refresh();
 
         if (!this.hasWriteAccess) {
-            Message message = new Message(MSG.view_configurationDetails_noPermission(), Message.Severity.Info, EnumSet
-                .of(Message.Option.Transient, Message.Option.Sticky));
+            Message message = new Message(MSG.view_configurationDetails_noPermission(), Message.Severity.Info,
+                EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             CoreGUI.getMessageCenter().notify(message);
         }
     }
@@ -124,8 +124,8 @@ public class DriftDefinitionTemplateEditView extends LocatableVLayout implements
 
                     driftTemplate = result.get(0);
 
-                    editor = new ConfigurationEditor(extendLocatorId("Editor"), DriftConfigurationDefinition
-                        .getExistingTemplateInstance(), driftTemplate.getConfiguration());
+                    editor = new ConfigurationEditor(DriftConfigurationDefinition.getExistingTemplateInstance(),
+                        driftTemplate.getConfiguration());
                     editor.setOverflow(Overflow.AUTO);
                     editor.addPropertyValueChangeListener(DriftDefinitionTemplateEditView.this);
                     editor.setReadOnly(!hasWriteAccess || !driftTemplate.isUserDefined());

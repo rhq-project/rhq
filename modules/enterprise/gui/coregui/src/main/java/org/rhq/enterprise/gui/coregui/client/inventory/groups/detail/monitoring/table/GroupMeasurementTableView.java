@@ -27,7 +27,6 @@ import com.smartgwt.client.widgets.grid.events.CellClickEvent;
 import com.smartgwt.client.widgets.grid.events.CellClickHandler;
 
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
-import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
@@ -42,8 +41,8 @@ public class GroupMeasurementTableView extends Table<GroupMeasurementTableDataSo
 
     private final int groupId;
 
-    public GroupMeasurementTableView(String locatorId, ResourceGroupComposite groupComposite, int groupId) {
-        super(locatorId);
+    public GroupMeasurementTableView(ResourceGroupComposite groupComposite, int groupId) {
+        super();
         this.groupId = groupId;
         setDataSource(new GroupMeasurementTableDataSource(groupComposite, groupId));
         //disable fields used when is full screen
@@ -51,6 +50,7 @@ public class GroupMeasurementTableView extends Table<GroupMeasurementTableDataSo
         setTitle(MSG.common_title_numeric_metrics());
     }
 
+    @Override
     protected void configureTable() {
         ArrayList<ListGridField> fields = getDataSource().getListGridFields();
 
@@ -61,17 +61,16 @@ public class GroupMeasurementTableView extends Table<GroupMeasurementTableDataSo
                 Record record = event.getRecord();
                 String title = record.getAttribute(GroupMeasurementTableDataSource.FIELD_METRIC_LABEL);
                 ChartViewWindow window = new ChartViewWindow("MeasurementTableFrame", title);
-                //Ex. /resource/common/monitor/Visibility.do?mode=chartSingleMetricMultiResource&groupId=10141&m=10172
-                //generate and include iframed content
-                String defId = record.getAttribute(GroupMeasurementTableDataSource.FIELD_METRIC_DEF_ID);
-                String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricMultiResource&groupId=";
-                destination += groupId + "&m=" + defId;
-                FullHTMLPane iframe = new FullHTMLPane("MeasurementTableFrameView", destination);
-                window.addItem(iframe);
+                int defId = record.getAttributeAsInt(GroupMeasurementTableDataSource.FIELD_METRIC_DEF_ID);
+
+                CompositeGroupD3GraphListView graph = new CompositeGroupMultiLineGraphListView(groupId, defId);
+                window.addItem(graph);
+                graph.populateData();
                 window.show();
             }
         });
         setListGridFields(fields.toArray(new ListGridField[getDataSource().getListGridFields().size()]));
-        addExtraWidget(new UserPreferencesMeasurementRangeEditor(extendLocatorId("range")), true);
+        addExtraWidget(new UserPreferencesMeasurementRangeEditor(), true);
     }
+
 }

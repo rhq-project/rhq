@@ -20,22 +20,23 @@ package org.rhq.enterprise.gui.coregui.client.components.wizard;
 
 import com.smartgwt.client.widgets.Canvas;
 
-import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
-
 public abstract class AbstractWizardStep implements WizardStep {
 
-    abstract public Canvas getCanvas(Locatable parent);
+    abstract public Canvas getCanvas();
 
     abstract public String getName();
 
+    @Override
     public boolean isNextButtonEnabled() {
         return true;
     }
 
+    @Override
     public boolean nextPage() {
         return true;
     }
 
+    @Override
     public boolean previousPage() {
         return true;
     }

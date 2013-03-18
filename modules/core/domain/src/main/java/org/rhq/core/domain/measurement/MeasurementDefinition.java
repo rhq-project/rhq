@@ -80,7 +80,7 @@ import org.rhq.core.domain.resource.ResourceType;
         + " AND md.resourceType.name = :resourceTypeName"
         + " AND md.resourceType.plugin = :resourceTypePlugin"
         + " AND ((:perMinute = 1 AND md.rawNumericType IS NOT NULL) OR (:perMinute = 0 AND md.rawNumericType IS NULL))") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "id", sequenceName = "RHQ_MEASUREMENT_DEF_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_MEASUREMENT_DEF_ID_SEQ", sequenceName = "RHQ_MEASUREMENT_DEF_ID_SEQ")
 @Table(name = "RHQ_MEASUREMENT_DEF")
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
@@ -118,7 +118,7 @@ public class MeasurementDefinition implements Serializable {
     public static final String AVAILABILITY_DISPLAY_NAME = "Availability";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "id")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_MEASUREMENT_DEF_ID_SEQ")
     @Id
     private int id;
 

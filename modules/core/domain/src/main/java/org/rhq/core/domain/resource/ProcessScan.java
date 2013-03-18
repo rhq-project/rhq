@@ -38,13 +38,13 @@ import javax.persistence.Table;
  * @author John Mazzitelli
  */
 @Entity
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_PROCESS_SCAN_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_PROCESS_SCAN_ID_SEQ", sequenceName = "RHQ_PROCESS_SCAN_ID_SEQ")
 @Table(name = "RHQ_PROCESS_SCAN")
 public class ProcessScan implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_PROCESS_SCAN_ID_SEQ")
     @Id
     private int id;
 

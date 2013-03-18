@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -41,7 +42,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**This portlet allows the end user to customize the Bundle Deployment display
  *
@@ -56,8 +56,8 @@ public class ResourceBundleDeploymentsPortlet extends GroupBundleDeploymentsPort
 
     private int resourceId = -1;
 
-    public ResourceBundleDeploymentsPortlet(String locatorId, int resourceId) {
-        super(locatorId, -1);
+    public ResourceBundleDeploymentsPortlet(int resourceId) {
+        super(-1);
 
         this.resourceId = resourceId;
     }
@@ -65,13 +65,13 @@ public class ResourceBundleDeploymentsPortlet extends GroupBundleDeploymentsPort
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
             if (EntityContext.Type.Resource != context.getType()) {
                 throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
             }
 
-            return new ResourceBundleDeploymentsPortlet(locatorId, context.getResourceId());
+            return new ResourceBundleDeploymentsPortlet(context.getResourceId());
         }
     }
 
@@ -107,7 +107,7 @@ public class ResourceBundleDeploymentsPortlet extends GroupBundleDeploymentsPort
                 @Override
                 public void onFailure(Throwable caught) {
                     Log.debug("Error retrieving installed bundle deployments for resource [" + resourceId + "]:"
-                            + caught.getMessage());
+                        + caught.getMessage());
                     currentlyLoading = false;
                 }
 
@@ -117,9 +117,7 @@ public class ResourceBundleDeploymentsPortlet extends GroupBundleDeploymentsPort
                     column.setHeight(10);
                     if (!result.isEmpty()) {
                         for (BundleDeployment deployment : result) {
-                            LocatableDynamicForm row = new LocatableDynamicForm(recentBundleDeployContent
-                                .extendLocatorId(deployment.getBundleVersion().getName()
-                                    + deployment.getBundleVersion().getVersion()));
+                            DynamicForm row = new DynamicForm();
                             row.setNumCols(3);
 
                             StaticTextItem iconItem = AbstractActivityView.newTextItemIcon(
@@ -137,11 +135,10 @@ public class ResourceBundleDeploymentsPortlet extends GroupBundleDeploymentsPort
                         }
                         //insert see more link
                         //TODO: spinder:2/25/11 (add this later) no current view for seeing all bundle deployments
-                        //                        LocatableDynamicForm row = new LocatableDynamicForm(recentBundleDeployContent.extendLocatorId("RecentBundleContentSeeMore"));
+                        //                        DynamicForm row = new DynamicForm();
                         //                        addSeeMoreLink(row, LinkManager.getResourceGroupLink(groupId) + "/Events/History/", column);
                     } else {
-                        LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(recentBundleDeployContent
-                            .extendLocatorId("None"), MSG.view_portlet_results_empty());
+                        DynamicForm row = AbstractActivityView.createEmptyDisplayRow(MSG.view_portlet_results_empty());
                         column.addMember(row);
                     }
                     //cleanup

@@ -42,8 +42,8 @@ import java.util.List;
 */
 public class InventorySummaryReportTable extends Table<InventorySummaryDataSource> {
 
-    public InventorySummaryReportTable(String locatorId) {
-        super(locatorId);
+    public InventorySummaryReportTable() {
+        super();
         setDataSource(new InventorySummaryDataSource());
     }
 

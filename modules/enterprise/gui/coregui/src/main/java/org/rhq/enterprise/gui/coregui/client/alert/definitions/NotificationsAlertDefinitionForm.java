@@ -51,13 +51,12 @@ import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author John Mazzitelli
  */
-public class NotificationsAlertDefinitionForm extends LocatableVLayout implements EditAlertDefinitionForm {
+public class NotificationsAlertDefinitionForm extends EnhancedVLayout implements EditAlertDefinitionForm {
     private static final String FIELD_OBJECT = "obj";
     private static final String FIELD_SENDER = "sender";
     private static final String FIELD_CONFIGURATION = "configuration";
@@ -69,8 +68,8 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
 
     private Table table;
 
-    public NotificationsAlertDefinitionForm(String locatorId, AlertDefinition alertDefinition) {
-        super(locatorId);
+    public NotificationsAlertDefinitionForm(AlertDefinition alertDefinition) {
+        super();
         this.alertDefinition = alertDefinition;
         extractShallowCopyOfNotifications(this.alertDefinition);
     }
@@ -151,7 +150,7 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
     private void buildForm() {
         if (!formBuilt) {
 
-            table = new NotificationTable(extendLocatorId("notificationsTable"));
+            table = new NotificationTable();
 
             addMember(table);
 
@@ -184,12 +183,12 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
         protected List<DataSourceField> addDataSourceFields() {
             List<DataSourceField> fields = super.addDataSourceFields();
 
-            DataSourceTextField senderField = new DataSourceTextField(FIELD_SENDER, MSG
-                .view_alert_definition_notification_editor_field_sender());
+            DataSourceTextField senderField = new DataSourceTextField(FIELD_SENDER,
+                MSG.view_alert_definition_notification_editor_field_sender());
             fields.add(senderField);
 
-            DataSourceTextField configField = new DataSourceTextField(FIELD_CONFIGURATION, MSG
-                .view_alert_definition_notification_editor_field_configuration());
+            DataSourceTextField configField = new DataSourceTextField(FIELD_CONFIGURATION,
+                MSG.view_alert_definition_notification_editor_field_configuration());
             fields.add(configField);
 
             return fields;
@@ -206,8 +205,8 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
             record.setAttribute(FIELD_OBJECT, from);
             record.setAttribute(FIELD_SENDER, from.getSenderName());
             // our executeFetch will fill in the real value for FIELD_CONFIGURATION
-            record.setAttribute(FIELD_CONFIGURATION, "("
-                + MSG.view_alert_definition_notification_editor_field_configuration_not_loaded() + ")");
+            record.setAttribute(FIELD_CONFIGURATION,
+                "(" + MSG.view_alert_definition_notification_editor_field_configuration_not_loaded() + ")");
             return record;
         }
 
@@ -246,8 +245,8 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
     }
 
     private class NotificationTable extends Table<NotificationDataSource> {
-        public NotificationTable(String locatorId) {
-            super(locatorId);
+        public NotificationTable() {
+            super();
             setShowHeader(false);
 
             final NotificationDataSource dataSource = new NotificationDataSource();
@@ -256,11 +255,11 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
 
         @Override
         protected void configureTable() {
-            ListGridField senderField = new ListGridField(FIELD_SENDER, MSG
-                .view_alert_definition_notification_editor_field_sender());
+            ListGridField senderField = new ListGridField(FIELD_SENDER,
+                MSG.view_alert_definition_notification_editor_field_sender());
             senderField.setWidth("25%");
-            ListGridField configField = new ListGridField(FIELD_CONFIGURATION, MSG
-                .view_alert_definition_notification_editor_field_configuration());
+            ListGridField configField = new ListGridField(FIELD_CONFIGURATION,
+                MSG.view_alert_definition_notification_editor_field_configuration());
             configField.setWidth("75%");
             getListGrid().setFields(senderField, configField);
 
@@ -276,30 +275,28 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
                 }
             });
 
-            addTableAction(this.extendLocatorId("add"), MSG.common_button_add(), null, new AbstractTableAction() {
+            addTableAction(MSG.common_button_add(), null, new AbstractTableAction() {
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     popupNotificationEditor(null);
                 }
             });
 
-            addTableAction(this.extendLocatorId("delete"), MSG.common_button_delete(), MSG
-                .view_alert_definition_notification_editor_delete_confirm(), new AbstractTableAction(
-                TableActionEnablement.ANY) {
-                @Override
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    for (ListGridRecord record : selection) {
-                        AlertNotification notif = (getDataSource()).copyValues(record);
-                        notifications.remove(notif);
+            addTableAction(MSG.common_button_delete(), MSG.view_alert_definition_notification_editor_delete_confirm(),
+                new AbstractTableAction(TableActionEnablement.ANY) {
+                    @Override
+                    public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                        for (ListGridRecord record : selection) {
+                            AlertNotification notif = (getDataSource()).copyValues(record);
+                            notifications.remove(notif);
+                        }
+                        table.refresh();
                     }
-                    table.refresh();
-                }
-            });
+                });
         }
 
         private void popupNotificationEditor(AlertNotification notifToEdit) {
-            final Window winModal = new LocatableWindow(NotificationsAlertDefinitionForm.this
-                .extendLocatorId("notificationEditorWindow"));
+            final Window winModal = new Window();
             if (notifToEdit == null) {
                 winModal.setTitle(MSG.view_alert_definition_notification_editor_title_add());
             } else {
@@ -321,8 +318,8 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
                 }
             });
 
-            NewNotificationEditor newEditor = new NewNotificationEditor(extendLocatorId("newNotificationEditor"),
-                alertDefinition, notifications, notifToEdit, new Runnable() {
+            NewNotificationEditor newEditor = new NewNotificationEditor(alertDefinition, notifications, notifToEdit,
+                new Runnable() {
                     @Override
                     public void run() {
                         winModal.destroy();

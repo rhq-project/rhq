@@ -36,9 +36,9 @@ public class ResourceAlertsPortlet extends AbstractRecentAlertsPortlet {
 
     private int resourceId;
 
-    public ResourceAlertsPortlet(String locatorId, int resourceId) {
+    public ResourceAlertsPortlet(int resourceId) {
 
-        super(locatorId, EntityContext.forResource(resourceId));
+        super(EntityContext.forResource(resourceId));
 
         this.resourceId = resourceId;
     }
@@ -50,13 +50,13 @@ public class ResourceAlertsPortlet extends AbstractRecentAlertsPortlet {
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId, EntityContext context) {
+        public final Portlet getInstance(EntityContext context) {
 
             if (EntityContext.Type.Resource != context.getType()) {
                 throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
             }
 
-            return new ResourceAlertsPortlet(locatorId, context.getResourceId());
+            return new ResourceAlertsPortlet(context.getResourceId());
         }
     }
 

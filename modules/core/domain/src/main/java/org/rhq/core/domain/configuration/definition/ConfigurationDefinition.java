@@ -68,7 +68,7 @@ import org.jetbrains.annotations.Nullable;
         + "WHERE rt.id = :resourceTypeId AND rt.deleted = false"),
     @NamedQuery(name = ConfigurationDefinition.QUERY_FIND_PLUGIN_BY_RESOURCE_TYPE_ID, query = "SELECT cd FROM ResourceType rt JOIN rt.pluginConfigurationDefinition cd "
         + "WHERE rt.id = :resourceTypeId AND rt.deleted = false") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_CONFIG_DEF_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_CONFIG_DEF_ID_SEQ", sequenceName = "RHQ_CONFIG_DEF_ID_SEQ")
 @Table(name = "RHQ_CONFIG_DEF")
 @XmlSeeAlso({ PropertyDefinitionSimple.class, PropertyDefinitionList.class, PropertyDefinitionMap.class })
 public class ConfigurationDefinition implements Serializable {
@@ -79,7 +79,7 @@ public class ConfigurationDefinition implements Serializable {
     public static final String QUERY_FIND_PLUGIN_BY_RESOURCE_TYPE_ID = "ConfigurationDefinition.findPluginByResourceTypeId";
 
     @Column(name = "id")
-    @GeneratedValue(generator = "SEQ", strategy = GenerationType.AUTO)
+    @GeneratedValue(generator = "RHQ_CONFIG_DEF_ID_SEQ", strategy = GenerationType.AUTO)
     @Id
     private int id;
 

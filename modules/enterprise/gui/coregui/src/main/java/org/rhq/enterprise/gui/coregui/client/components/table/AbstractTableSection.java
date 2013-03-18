@@ -22,7 +22,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.table;
 
-import java.util.logging.Logger;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.AnimationEffect;
@@ -41,13 +40,14 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.DetailsView;
 import org.rhq.enterprise.gui.coregui.client.InitializableView;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 
 /**
  * Provides the typical table view with the additional ability of traversing to a "details" view
@@ -70,40 +70,38 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
     private boolean initialDisplay;
     private boolean initialized;
 
-    protected AbstractTableSection(String locatorId, String tableTitle) {
-        super(locatorId, tableTitle);
+    protected AbstractTableSection(String tableTitle) {
+        super(tableTitle);
     }
 
-    protected AbstractTableSection(String locatorId, String tableTitle, Criteria criteria) {
-        super(locatorId, tableTitle, criteria);
+    protected AbstractTableSection(String tableTitle, Criteria criteria) {
+        super(tableTitle, criteria);
     }
 
-    protected AbstractTableSection(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers) {
-        super(locatorId, tableTitle, sortSpecifiers);
+    protected AbstractTableSection(String tableTitle, SortSpecifier[] sortSpecifiers) {
+        super(tableTitle, sortSpecifiers);
     }
 
-    protected AbstractTableSection(String locatorId, String tableTitle, Criteria criteria,
-        SortSpecifier[] sortSpecifiers) {
-        super(locatorId, tableTitle, sortSpecifiers, criteria);
+    protected AbstractTableSection(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers) {
+        super(tableTitle, sortSpecifiers, criteria);
     }
 
-    protected AbstractTableSection(String locatorId, String tableTitle, boolean autoFetchData) {
-        super(locatorId, tableTitle, autoFetchData);
+    protected AbstractTableSection(String tableTitle, boolean autoFetchData) {
+        super(tableTitle, autoFetchData);
     }
 
-    protected AbstractTableSection(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers,
+    protected AbstractTableSection(String tableTitle, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames) {
+        super(tableTitle, null, sortSpecifiers, excludedFieldNames);
+    }
+
+    protected AbstractTableSection(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
         String[] excludedFieldNames) {
-        super(locatorId, tableTitle, null, sortSpecifiers, excludedFieldNames);
+        super(tableTitle, criteria, sortSpecifiers, excludedFieldNames);
     }
 
-    protected AbstractTableSection(String locatorId, String tableTitle, Criteria criteria,
-        SortSpecifier[] sortSpecifiers, String[] excludedFieldNames) {
-        super(locatorId, tableTitle, criteria, sortSpecifiers, excludedFieldNames);
-    }
-
-    protected AbstractTableSection(String locatorId, String tableTitle, Criteria criteria,
-        SortSpecifier[] sortSpecifiers, String[] excludedFieldNames, boolean autoFetchData) {
-        super(locatorId, tableTitle, criteria, sortSpecifiers, excludedFieldNames, autoFetchData);
+    protected AbstractTableSection(String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
+        String[] excludedFieldNames, boolean autoFetchData) {
+        super(tableTitle, criteria, sortSpecifiers, excludedFieldNames, autoFetchData);
     }
 
     @Override
@@ -112,7 +110,7 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
 
         this.initialDisplay = true;
 
-        detailsHolder = new LocatableVLayout(extendLocatorId("tableSection"));
+        detailsHolder = new EnhancedVLayout();
         detailsHolder.setAlign(VerticalAlignment.TOP);
         //detailsHolder.setWidth100();
         //detailsHolder.setHeight100();
@@ -206,7 +204,7 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
                 String detailsUrl = "#" + getBasePath() + "/" + convertIDToCurrentViewPath(recordId);
                 String formattedValue = (escapeHtmlInDetailsLinkColumn) ? StringUtility.escapeHtml(value.toString())
                     : value.toString();
-                return SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
+                return LinkManager.getHref(detailsUrl, formattedValue);
             }
         };
     }
@@ -374,7 +372,7 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
                  * therefore, we need to explicitly destroy what's already there (presumably the detailsView
                  * in create-mode), and then rebuild it (presumably the detailsView in edit-mode).
                  */
-                SeleniumUtility.destroyMembers(detailsHolder);
+                EnhancedUtility.destroyMembers(detailsHolder);
 
                 buildDetailsView();
             }
@@ -389,10 +387,9 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
         if (!isEditable) {
             // Only add the "Back to List" button if the details are definitely not editable, because if they are
             // editable, a Cancel button should already be provided by the details view.
-            BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
-                basePath);
+            BackButton backButton = new BackButton(MSG.view_tableSection_backButton(), basePath);
             detailsHolder.addMember(backButton);
-            VLayout verticalSpacer = new LocatableVLayout(extendLocatorId("verticalSpacer"));
+            VLayout verticalSpacer = new EnhancedVLayout();
             verticalSpacer.setHeight(8);
             detailsHolder.addMember(verticalSpacer);
         }
@@ -421,14 +418,14 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
                 detailsHolder.animateHide(AnimationEffect.WIPE, new AnimationCallback() {
                     @Override
                     public void execute(boolean b) {
-                        SeleniumUtility.destroyMembers(detailsHolder);
+                        EnhancedUtility.destroyMembers(detailsHolder);
 
                         contents.animateShow(AnimationEffect.WIPE);
                     }
                 });
             } else {
                 if (detailsHolder != null) {
-                    SeleniumUtility.destroyMembers(detailsHolder);
+                    EnhancedUtility.destroyMembers(detailsHolder);
                 }
                 contents.animateShow(AnimationEffect.WIPE);
             }

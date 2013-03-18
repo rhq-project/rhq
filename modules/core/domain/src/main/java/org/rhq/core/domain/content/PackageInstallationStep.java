@@ -53,7 +53,7 @@ import org.rhq.core.domain.content.transfer.ContentResponseResult;
         + "WHERE pis.installedPackageHistory.id = :installedPackageHistoryId")
 
 })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_PACKAGE_INST_STEP_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_PACKAGE_INST_STEP_ID_SEQ", sequenceName = "RHQ_PACKAGE_INST_STEP_ID_SEQ")
 @Table(name = "RHQ_PACKAGE_INST_STEP")
 public class PackageInstallationStep implements Serializable {
     // Constants  --------------------------------------------
@@ -69,7 +69,7 @@ public class PackageInstallationStep implements Serializable {
      * Database assigned ID.
      */
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_PACKAGE_INST_STEP_ID_SEQ")
     @Id
     private int id;
 

@@ -29,7 +29,6 @@ import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitListDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * The detail view for the group Monitoring>Traits subtab.
@@ -37,8 +36,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Ian Springer
  */
 public class TraitsDetailView extends AbstractMeasurementDataTraitListDetailView {
-    public TraitsDetailView(String locatorId, int groupId, int definitionId) {
-        super(locatorId, null, new TraitsDataSource(groupId), createCriteria(groupId, definitionId));
+    public TraitsDetailView(int groupId, int definitionId) {
+        super(null, new TraitsDataSource(groupId), createCriteria(groupId, definitionId));
     }
 
     @Override
@@ -51,7 +50,7 @@ public class TraitsDetailView extends AbstractMeasurementDataTraitListDetailView
         resourceNameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
-                return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                return LinkManager.getHref(url, o.toString());
             }
         });
         resourceNameField.setShowHover(true);

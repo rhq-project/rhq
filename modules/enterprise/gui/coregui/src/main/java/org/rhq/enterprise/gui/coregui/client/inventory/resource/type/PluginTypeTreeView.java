@@ -32,17 +32,17 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Greg Hinkle
  */
-public class PluginTypeTreeView extends LocatableVLayout {
+public class PluginTypeTreeView extends EnhancedVLayout {
 
     private ResourceTypeGWTServiceAsync resourceTypeService = GWTServiceLookup.getResourceTypeGWTService();
 
-    public PluginTypeTreeView(String locatorId) {
-        super(locatorId);
+    public PluginTypeTreeView() {
+        super();
         setWidth100();
         setHeight100();
     }

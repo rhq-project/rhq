@@ -51,8 +51,8 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
     private ResourceType resourceType;
     private Set<Permission> globalPermissions;
 
-    public TemplateAlertDefinitionsView(String locatorId, ResourceType resourceType, Set<Permission> globalPermissions) {
-        super(locatorId, getTitle(resourceType), getCriteria(resourceType));
+    public TemplateAlertDefinitionsView(ResourceType resourceType, Set<Permission> globalPermissions) {
+        super(getTitle(resourceType), getCriteria(resourceType));
         this.resourceType = resourceType;
         this.globalPermissions = globalPermissions;
 
@@ -206,7 +206,8 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
     }
 
     @Override
-    protected void commitAlertDefinition(final AlertDefinition alertDefinition, boolean resetMatching, final AsyncCallback<AlertDefinition> resultReceiver) {
+    protected void commitAlertDefinition(final AlertDefinition alertDefinition, boolean resetMatching,
+        final AsyncCallback<AlertDefinition> resultReceiver) {
         if (alertDefinition.getId() == 0) {
             GWTServiceLookup.getAlertTemplateService().createAlertTemplate(alertDefinition,
                 Integer.valueOf(this.resourceType.getId()), new AsyncCallback<Integer>() {

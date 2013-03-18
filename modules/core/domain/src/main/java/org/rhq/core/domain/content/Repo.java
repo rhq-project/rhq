@@ -130,7 +130,7 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = Repo.QUERY_UPDATE_REMOVE_OWNER_FROM_REPOS_OWNED_BY_SUBJECT, query = "" +
         "UPDATE Repo r SET r.owner = null WHERE r.owner.id = :ownerId")
     })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_REPO_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_REPO_ID_SEQ", sequenceName = "RHQ_REPO_ID_SEQ")
 @Table(name = "RHQ_REPO")
 public class Repo implements Serializable {
 
@@ -161,7 +161,7 @@ public class Repo implements Serializable {
     // Attributes  --------------------------------------------
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_REPO_ID_SEQ")
     @Id
     private int id;
 

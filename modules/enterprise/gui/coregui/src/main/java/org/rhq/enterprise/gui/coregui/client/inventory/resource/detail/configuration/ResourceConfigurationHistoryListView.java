@@ -35,16 +35,16 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public class ResourceConfigurationHistoryListView extends AbstractConfigurationHistoryListView<ResourceConfigurationHistoryDataSource>
-    implements HasViewName {
+public class ResourceConfigurationHistoryListView extends
+    AbstractConfigurationHistoryListView<ResourceConfigurationHistoryDataSource> implements HasViewName {
     public static final ViewName VIEW_ID = new ViewName("ConfigurationHistoryView",
-            MSG.view_configurationHistoryList_title(), IconEnum.CONFIGURATION_HISTORY);
+        MSG.view_configurationHistoryList_title(), IconEnum.CONFIGURATION_HISTORY);
 
     /**
      * Use this constructor to view config histories for all viewable Resources.
      */
-    public ResourceConfigurationHistoryListView(String locatorId, boolean hasWritePerm) {
-        super(locatorId, null, hasWritePerm);
+    public ResourceConfigurationHistoryListView(boolean hasWritePerm) {
+        super(null, hasWritePerm);
         ResourceConfigurationHistoryDataSource datasource = new ResourceConfigurationHistoryDataSource();
         setDataSource(datasource);
     }
@@ -54,15 +54,15 @@ public class ResourceConfigurationHistoryListView extends AbstractConfigurationH
      *
      * @param resourceId a Resource ID
      */
-    public ResourceConfigurationHistoryListView(String locatorId, boolean hasWritePerm, int resourceId) {
-        super(locatorId, VIEW_ID.getTitle(), hasWritePerm, resourceId);
+    public ResourceConfigurationHistoryListView(boolean hasWritePerm, int resourceId) {
+        super(VIEW_ID.getTitle(), hasWritePerm, resourceId);
         ResourceConfigurationHistoryDataSource datasource = new ResourceConfigurationHistoryDataSource();
         setDataSource(datasource);
     }
 
     @Override
     public Canvas getDetailsView(Integer id) {
-        ConfigurationHistoryDetailView detailView = new ConfigurationHistoryDetailView(this.getLocatorId());
+        ConfigurationHistoryDetailView detailView = new ConfigurationHistoryDetailView();
         return detailView;
     }
 
@@ -101,7 +101,6 @@ public class ResourceConfigurationHistoryListView extends AbstractConfigurationH
                 }
             });
     }
-
 
     @Override
     public ViewName getViewName() {

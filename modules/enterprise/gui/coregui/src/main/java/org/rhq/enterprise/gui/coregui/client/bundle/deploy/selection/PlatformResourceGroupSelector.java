@@ -8,8 +8,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.Resour
 
 public class PlatformResourceGroupSelector extends ResourceGroupSelector {
 
-    public PlatformResourceGroupSelector(String id) {
-        super(id);
+    public PlatformResourceGroupSelector() {
+        super();
     }
 
     @Override

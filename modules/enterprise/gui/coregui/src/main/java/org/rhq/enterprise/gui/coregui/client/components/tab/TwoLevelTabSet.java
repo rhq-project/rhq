@@ -18,15 +18,15 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.tab;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.History;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
 import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * A tab set where each {@link TwoLevelTab tab} has one or more {@link SubTab subtab}s.
@@ -37,9 +37,9 @@ import java.util.Map;
 public class TwoLevelTabSet extends NamedTabSet implements TabSelectedHandler, TwoLevelTabSelectedHandler {
 
     private Map<String, TwoLevelTab> hiddenTabs = new LinkedHashMap<String, TwoLevelTab>();
-    
+
     private boolean ignoreSelectEvents = false;
-    
+
     private TwoLevelTab head;
 
     /**
@@ -48,8 +48,8 @@ public class TwoLevelTabSet extends NamedTabSet implements TabSelectedHandler, T
      */
     private TwoLevelTab tail;
 
-    public TwoLevelTabSet(String locatorId) {
-        super(locatorId);
+    public TwoLevelTabSet() {
+        super();
         // Need to set destroyPanes property to false so that we do not lose tab
         // content when hiding a tab.
         setDestroyPanes(false);
@@ -61,7 +61,7 @@ public class TwoLevelTabSet extends NamedTabSet implements TabSelectedHandler, T
             tab.getLayout().addTwoLevelTabSelectedHandler(this);
             updateTab(tab, tab.getPane());
         }
-        buildTabList();        
+        buildTabList();
         addTabSelectedHandler(this);
     }
 
@@ -76,7 +76,7 @@ public class TwoLevelTabSet extends NamedTabSet implements TabSelectedHandler, T
         TwoLevelTab[] tabs = getTabs();
         head = tabs[0];
         tail = tabs[tabs.length - 1];
-        TwoLevelTab current = head; 
+        TwoLevelTab current = head;
         for (int i = 1; i < tabs.length; ++i) {
             current.setActualNext(tabs[i]);
             current.setVisibleNext(tabs[i]);
@@ -101,7 +101,7 @@ public class TwoLevelTabSet extends NamedTabSet implements TabSelectedHandler, T
     // the Tab structure in place while removing it from the TabSet
     public void setTabHidden(TwoLevelTab tab, boolean hidden) {
         if (hidden) {
-            if (hiddenTabs.containsKey(tab.getLocatorId())) {
+            if (hiddenTabs.containsKey(tab.getName())) {
                 return;
             }
 
@@ -126,14 +126,14 @@ public class TwoLevelTabSet extends NamedTabSet implements TabSelectedHandler, T
             tab.setVisibleNext(null);
             // Note that removing the tab does *not* destroy its content pane
             // since we set the destroyPanes property to false in the
-            removeTab(tab);            
-            hiddenTabs.put(tab.getLocatorId(), tab);
+            removeTab(tab);
+            hiddenTabs.put(tab.getName(), tab);
         } else {
-            if (!hiddenTabs.containsKey(tab.getLocatorId())) {
+            if (!hiddenTabs.containsKey(tab.getName())) {
                 return;
             }
 
-            hiddenTabs.remove(tab.getLocatorId());
+            hiddenTabs.remove(tab.getName());
             TwoLevelTab successor = findClosestVisibleSuccessor(tab);
             if (successor == null) {
                 // if successor is null then that means we are updating the tail
@@ -159,7 +159,7 @@ public class TwoLevelTabSet extends NamedTabSet implements TabSelectedHandler, T
         if (tab == head) {
             return null;
         }
-        
+
         TwoLevelTab current = head;
         while (current != tab) {
             // if we have reached the visible tail or the immediate predecessor
@@ -193,7 +193,7 @@ public class TwoLevelTabSet extends NamedTabSet implements TabSelectedHandler, T
         // if we reach this point then that means we will be inserting at the tail
         return null;
     }
-    
+
     public void destroyViews() {
         for (TwoLevelTab tab : getTabs()) {
             tab.getLayout().destroyViews();
@@ -259,10 +259,6 @@ public class TwoLevelTabSet extends NamedTabSet implements TabSelectedHandler, T
 
     public TwoLevelTab getTabByTitle(String title) {
         return (TwoLevelTab) super.getTabByTitle(title);
-    }
-
-    public TwoLevelTab getTabByLocatorId(String locatorId) {
-        return (TwoLevelTab) super.getTabByLocatorId(locatorId);
     }
 
     public void setTabEnabled(TwoLevelTab tab, boolean enabled) {

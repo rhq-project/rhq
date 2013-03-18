@@ -124,7 +124,7 @@ import org.rhq.core.domain.configuration.Configuration;
      )
 })
 
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_OPERATION_HISTORY_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_OPERATION_HISTORY_ID_SEQ", sequenceName = "RHQ_OPERATION_HISTORY_ID_SEQ")
 @Table(name = "RHQ_OPERATION_HISTORY")
 public abstract class OperationHistory implements Serializable {
     public static final String QUERY_FIND_BY_JOB_ID = "OperationHistory.findByJobId";
@@ -142,7 +142,7 @@ public abstract class OperationHistory implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Column(name = "ID")
-    @GeneratedValue(generator = "SEQ", strategy = GenerationType.AUTO)
+    @GeneratedValue(generator = "RHQ_OPERATION_HISTORY_ID_SEQ", strategy = GenerationType.AUTO)
     @Id
     private int id;
 

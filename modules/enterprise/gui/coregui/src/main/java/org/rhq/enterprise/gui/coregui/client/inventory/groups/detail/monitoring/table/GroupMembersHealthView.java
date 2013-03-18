@@ -40,8 +40,8 @@ public class GroupMembersHealthView extends MembersView {
     private int groupId;
     private boolean canModifyMembers;
 
-    public GroupMembersHealthView(String locatorId, int groupId, boolean canModifyMembers) {
-        super(locatorId, groupId, false);
+    public GroupMembersHealthView(int groupId, boolean canModifyMembers) {
+        super(groupId, false);
         this.canModifyMembers = canModifyMembers;
         this.groupId = groupId;
         setShowFilterForm(false);
@@ -58,7 +58,7 @@ public class GroupMembersHealthView extends MembersView {
         setListGridFields(fields.toArray(new ListGridField[fields.size()]));
 
         //add chart selected metric action
-        addTableAction(extendLocatorId("chartValues"), MSG.common_title_compare_metrics(), new TableAction() {
+        addTableAction(MSG.common_title_compare_metrics(), new TableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
                 return selection != null && selection.length > 1;
@@ -82,10 +82,9 @@ public class GroupMembersHealthView extends MembersView {
                 for (int rId : resourceIds) {
                     destination += "&r=" + rId;
                 }
-                ChartViewWindow window = new ChartViewWindow(extendLocatorId("CompareWindow"), "", MSG
-                    .common_title_compare_metrics());
+                ChartViewWindow window = new ChartViewWindow("", MSG.common_title_compare_metrics());
                 //generate and include iframed content
-                FullHTMLPane iframe = new FullHTMLPane(extendLocatorId("View"), destination);
+                FullHTMLPane iframe = new FullHTMLPane(destination);
                 window.addItem(iframe);
                 window.show();
                 GroupMembersHealthView.this.refreshTableInfo();

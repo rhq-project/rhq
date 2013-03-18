@@ -39,7 +39,7 @@ import javax.persistence.Table;
         + "       ) "
         + "  FROM Advisory a "
         + "  WHERE a.id = :id ") })
-@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "SEQ", sequenceName = "RHQ_ADVISORY_ID_SEQ")
+@SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_ADVISORY_ID_SEQ", sequenceName = "RHQ_ADVISORY_ID_SEQ")
 @Table(name = "RHQ_ADVISORY")
 public class Advisory implements Serializable {
 
@@ -52,7 +52,7 @@ public class Advisory implements Serializable {
     public static final String QUERY_FIND_BY_ADV_ID = "Advisory.queryFindByAdvId";
 
     @Column(name = "ID", nullable = false)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_ADVISORY_ID_SEQ")
     @Id
     private int id;
 

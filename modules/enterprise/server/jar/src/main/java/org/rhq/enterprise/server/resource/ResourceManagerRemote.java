@@ -27,6 +27,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
+import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceAncestryFormat;
 import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
@@ -103,6 +104,15 @@ public interface ResourceManagerRemote {
      * @return the updated resource
      */
     Resource updateResource(Subject subject, Resource resource);
+
+    /**
+     * This will uninventory all resources managed by the given agent. Since this
+     * also removes the platform resource, this will also remove the given agent as well.
+     *
+     * @param user the logged in user
+     * @param doomedAgent the agent to be deleted and whose resources are to be uninventoried
+     */
+    void uninventoryAllResourcesByAgent(Subject user, Agent doomedAgent);
 
     /**
      * Removes these resources from inventory.  The resources may subsequently be rediscovered.  Note that for

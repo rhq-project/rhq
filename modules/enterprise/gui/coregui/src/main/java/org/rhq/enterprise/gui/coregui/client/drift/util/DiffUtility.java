@@ -21,12 +21,13 @@ package org.rhq.enterprise.gui.coregui.client.drift.util;
 import java.util.List;
 
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.layout.VLayout;
+
 import org.rhq.enterprise.gui.coregui.client.PopupWindow;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * A collection of utility methods for working with unified diffs.
@@ -80,7 +81,7 @@ public class DiffUtility {
      *
      * @return a non-modal window containing unified diff HTML
      */
-    public static LocatableWindow createDiffViewerWindow(String contents, String path, int oldVersion, int newVersion) {
+    public static Window createDiffViewerWindow(String contents, String path, int oldVersion, int newVersion) {
         VLayout layout = new VLayout();
         DynamicForm form = new DynamicForm();
         form.setWidth100();
@@ -99,7 +100,7 @@ public class DiffUtility {
         form.setItems(canvasItem);
         layout.addMember(form);
 
-        PopupWindow window = new PopupWindow("diffViewer", layout);
+        PopupWindow window = new PopupWindow(layout);
         window.setTitle(path + ":" + oldVersion + ":" + newVersion);
         window.setIsModal(false);
 

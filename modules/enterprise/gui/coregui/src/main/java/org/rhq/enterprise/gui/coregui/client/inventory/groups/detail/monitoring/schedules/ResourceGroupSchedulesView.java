@@ -41,9 +41,9 @@ public class ResourceGroupSchedulesView extends AbstractSchedulesView {
     private ResourceGroupComposite resourceGroupComposite;
     private int groupId;
 
-    public ResourceGroupSchedulesView(String locatorId, ResourceGroupComposite resourceGroupComposite) {
-        super(locatorId, TITLE, EntityContext.forGroup(resourceGroupComposite.getResourceGroup().getId()),
-            resourceGroupComposite.getResourcePermission().isMeasure());
+    public ResourceGroupSchedulesView(ResourceGroupComposite resourceGroupComposite) {
+        super(TITLE, EntityContext.forGroup(resourceGroupComposite.getResourceGroup().getId()), resourceGroupComposite
+            .getResourcePermission().isMeasure());
 
         this.resourceGroupComposite = resourceGroupComposite;
         this.groupId = resourceGroupComposite.getResourceGroup().getId();

@@ -56,6 +56,8 @@ public class DataMigrator {
     private static final int MAX_RAW_BATCH_TO_CASSANDRA = 100;
     private static final int MAX_AGGREGATE_BATCH_TO_CASSANDRA = 50;
     private static final int MAX_NUMBER_OF_FAILURES = 5;
+    private static final long NUMBER_OF_BATCHES_FOR_ESTIMATION = 4;
+    private static final double UNDER_ESTIMATION_FACTOR = .10;
 
 
     private enum MigrationQuery {
@@ -106,8 +108,6 @@ public class DataMigrator {
 
     private final Session session;
 
-    private boolean telemetry;
-
     private boolean deleteDataImmediatelyAfterMigration;
     private boolean deleteAllDataAtEndOfMigration;
 
@@ -128,8 +128,6 @@ public class DataMigrator {
         this.run1HAggregateDataMigration = true;
         this.run6HAggregateDataMigration = true;
         this.run1DAggregateDataMigration = true;
-
-        this.telemetry = false;
     }
 
     public void runRawDataMigration(boolean value) {
@@ -164,58 +162,52 @@ public class DataMigrator {
         this.deleteDataImmediatelyAfterMigration = false;
     }
 
-    public void enableTelemetry() {
-        this.telemetry = true;
-    }
-
-    public void disableTelemetry() {
-        this.telemetry = false;
-    }
-
-    public void estimate() throws Exception {
+    public long estimate() throws Exception {
         this.estimation = 0;
         if (runRawDataMigration) {
-            retryOnFailure(new RawDataMigrator(), true);
+            retryOnFailure(new RawDataMigrator(), Task.Estimate);
         }
 
         if (run1HAggregateDataMigration) {
-            retryOnFailure(new AggregateDataMigrator(MetricsTable.ONE_HOUR), true);
+            retryOnFailure(new AggregateDataMigrator(MetricsTable.ONE_HOUR), Task.Estimate);
         }
 
         if (run6HAggregateDataMigration) {
-            retryOnFailure(new AggregateDataMigrator(MetricsTable.SIX_HOUR), true);
+            retryOnFailure(new AggregateDataMigrator(MetricsTable.SIX_HOUR), Task.Estimate);
         }
 
         if (run1DAggregateDataMigration) {
-            retryOnFailure(new AggregateDataMigrator(MetricsTable.TWENTY_FOUR_HOUR), true);
+            retryOnFailure(new AggregateDataMigrator(MetricsTable.TWENTY_FOUR_HOUR), Task.Estimate);
         }
 
         if (deleteAllDataAtEndOfMigration) {
-            retryOnFailure(new DeleteAllData(), true);
+            retryOnFailure(new DeleteAllData(), Task.Estimate);
         }
 
-        log.info("Total estimated time for migration:" + estimation);
+        estimation = (long) (estimation + estimation * UNDER_ESTIMATION_FACTOR);
+
+        return estimation;
     }
 
     public void migrateData() throws Exception {
         if (runRawDataMigration) {
-            retryOnFailure(new RawDataMigrator(), false);
+            retryOnFailure(new RawDataMigrator(), Task.Migrate);
         }
 
         if (run1HAggregateDataMigration) {
-            retryOnFailure(new AggregateDataMigrator(MetricsTable.ONE_HOUR), false);
+            retryOnFailure(new AggregateDataMigrator(MetricsTable.ONE_HOUR), Task.Migrate);
         }
 
         if (run6HAggregateDataMigration) {
-            retryOnFailure(new AggregateDataMigrator(MetricsTable.SIX_HOUR), false);
+            retryOnFailure(new AggregateDataMigrator(MetricsTable.SIX_HOUR), Task.Migrate);
         }
 
         if (run1DAggregateDataMigration) {
-            retryOnFailure(new AggregateDataMigrator(MetricsTable.TWENTY_FOUR_HOUR), false);
+            retryOnFailure(new AggregateDataMigrator(MetricsTable.TWENTY_FOUR_HOUR), Task.Migrate);
         }
 
         if (deleteAllDataAtEndOfMigration) {
-            retryOnFailure(new DeleteAllData(), false);
+            retryOnFailure(new DeleteAllData(), Task.Migrate);
         }
     }
 
@@ -226,7 +218,8 @@ public class DataMigrator {
      * @param migrator
      * @throws Exception
      */
-    private Thread retryOnFailure(final CallableMigrationWorker migrator, final boolean estimate) throws Exception {
+    private Thread retryOnFailure(final CallableMigrationWorker migrator, final Task task)
+        throws Exception {
 
         RunnableWithException runnable = new RunnableWithException() {
             private Exception exception;
@@ -240,7 +233,7 @@ public class DataMigrator {
 
                 while (numberOfFailures < MAX_NUMBER_OF_FAILURES) {
                     try {
-                        if (estimate) {
+                        if (task == Task.Estimate) {
                             estimation += migrator.estimate();
                         } else {
                             migrator.migrate();
@@ -296,7 +289,13 @@ public class DataMigrator {
         return tables;
     }
 
+    enum Task {
+        Migrate, Estimate
+    }
+
     private interface CallableMigrationWorker {
+
+
         long estimate() throws Exception;
 
         void migrate() throws Exception;
@@ -340,15 +339,16 @@ public class DataMigrator {
         @Override
         public long estimate() throws Exception {
             Query nativeQuery = entityManager.createNativeQuery(this.countQuery);
-            long count = Long.parseLong(nativeQuery.getSingleResult().toString());
-            long estimateTimeToMigrate = this.performMigration(5);
+            long recordCount = Long.parseLong(nativeQuery.getSingleResult().toString());
+            long estimatedTimeToMigrate = this.performMigration(Task.Estimate);
 
-            long estimation = (count / MAX_RECORDS_TO_LOAD_FROM_SQL / 5L) * estimateTimeToMigrate;
+            long estimation = (recordCount / (long) MAX_RECORDS_TO_LOAD_FROM_SQL / NUMBER_OF_BATCHES_FOR_ESTIMATION)
+                * estimatedTimeToMigrate;
             return estimation;
         }
 
         public void migrate() throws Exception {
-            performMigration(-1);
+            performMigration(Task.Migrate);
             if (deleteDataImmediatelyAfterMigration) {
                 deleteTableData();
             }
@@ -376,7 +376,7 @@ public class DataMigrator {
         }
 
         @SuppressWarnings("unchecked")
-        private long performMigration(int numberOfBatchesToMigrate) throws Exception {
+        private long performMigration(Task task) throws Exception {
             long migrationStartTime = System.currentTimeMillis();
             long numberOfBatchesMigrated = 0;
 
@@ -415,12 +415,12 @@ public class DataMigrator {
                     }
                 }
 
+                log.info("- " + metricsTable + " - " + lastMigratedRecord + " -");
+
                 numberOfBatchesMigrated++;
-                if (numberOfBatchesToMigrate > 0 && numberOfBatchesMigrated >= numberOfBatchesToMigrate) {
+                if (Task.Estimate.equals(task) && numberOfBatchesMigrated >= NUMBER_OF_BATCHES_FOR_ESTIMATION) {
                     break;
                 }
-
-                log.info("- " + metricsTable + " - " + lastMigratedRecord + " -");
             }
 
             return System.currentTimeMillis() - migrationStartTime;
@@ -493,24 +493,25 @@ public class DataMigrator {
         Queue<String> tablesNotProcessed = new LinkedList<String>(Arrays.asList(getRawDataTables()));
 
         public long estimate() throws Exception {
-            long count = 0;
+            long recordCount = 0;
             for (String table : getRawDataTables()) {
                 String countQuery = String.format(MigrationQuery.COUNT_RAW.toString(), table);
                 Query nativeQuery = entityManager.createNativeQuery(countQuery);
-                count += Long.parseLong(nativeQuery.getSingleResult().toString());
+                recordCount += Long.parseLong(nativeQuery.getSingleResult().toString());
             }
 
-            long estimateTimeToMigrate = this.performMigration(5);
-            long estimation = (count / MAX_RECORDS_TO_LOAD_FROM_SQL / 5L) * estimateTimeToMigrate;
+            long estimatedTimeToMigrate = this.performMigration(Task.Estimate);
+            long estimation = (recordCount / (long) MAX_RECORDS_TO_LOAD_FROM_SQL / NUMBER_OF_BATCHES_FOR_ESTIMATION)
+                * estimatedTimeToMigrate;
             return estimation;
         }
 
         public void migrate() throws Exception {
-            performMigration(-1);
+            performMigration(Task.Migrate);
         }
 
         @SuppressWarnings("unchecked")
-        private long performMigration(int numberOfBatchesToMigrate) throws Exception {
+        private long performMigration(Task task) throws Exception {
             long migrationStartTime = System.currentTimeMillis();
             long numberOfBatchesMigrated = 0;
 
@@ -557,18 +558,18 @@ public class DataMigrator {
                     log.info("- " + table + " - " + lastMigratedRecord + " -");
 
                     numberOfBatchesMigrated++;
-                    if (numberOfBatchesToMigrate > 0 && numberOfBatchesMigrated >= numberOfBatchesToMigrate) {
+                    if (Task.Estimate.equals(task) && numberOfBatchesMigrated >= NUMBER_OF_BATCHES_FOR_ESTIMATION) {
                         break;
                     }
                 }
 
-                if (numberOfBatchesToMigrate <= 0) {
+                if (Task.Migrate.equals(task)) {
                     log.info("Done migrating raw table" + table + "---------------------");
 
                     if (deleteDataImmediatelyAfterMigration) {
                         deleteTableData(table);
                     }
-                } else if (numberOfBatchesMigrated >= numberOfBatchesToMigrate) {
+                } else if (numberOfBatchesMigrated >= NUMBER_OF_BATCHES_FOR_ESTIMATION) {
                     break;
                 }
 
@@ -691,4 +692,5 @@ public class DataMigrator {
         }
     }
 }
+
 

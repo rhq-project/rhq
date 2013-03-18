@@ -21,6 +21,7 @@
 package org.rhq.server.metrics;
 
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -200,7 +201,9 @@ public class DataMigratorRunner {
         migrator.run6HAggregateDataMigration(!disable6H);
         migrator.run1DAggregateDataMigration(!disable1D);
 
-        migrator.estimate();
+        long estimate = migrator.estimate();
+        log.info("The migration process will take approximately: " + TimeUnit.MILLISECONDS.toMinutes(estimate)
+            + " minutes (or " + estimate + " milliseconds)");
         if (!estimateOnly) {
             migrator.migrateData();
         }
@@ -341,6 +344,7 @@ public class DataMigratorRunner {
         }
     }
 
+    @SuppressWarnings("serial")
     private class HelpRequestedException extends Exception {
         public HelpRequestedException() {
             super("Help Requested");

@@ -31,7 +31,7 @@ import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 
-import org.rhq.core.domain.criteria.AvailabilityCriteria;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
@@ -41,7 +41,6 @@ import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -154,38 +153,35 @@ public class D3GraphListView extends AbstractD3GraphListView {
         availabilityGraph.drawJsniChart();
     }
 
-    protected void queryAvailability(final int resourceId, Long startTime, Long endTime, final CountDownLatch countDownLatch) {
+    @Override
+    protected void queryAvailability(final EntityContext context, Long startTime, Long endTime,
+        final CountDownLatch countDownLatch) {
 
         final long timerStart = System.currentTimeMillis();
 
         // now return the availability
-        AvailabilityCriteria c = new AvailabilityCriteria();
-        c.addFilterResourceId(resourceId);
-        c.addFilterInterval(startTime, endTime);
-        c.addSortStartTime(PageOrdering.ASC);
-        GWTServiceLookup.getAvailabilityService().findAvailabilityByCriteria(c,
-                new AsyncCallback<PageList<Availability>>() {
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
-                        if (countDownLatch != null) {
-                            countDownLatch.countDown();
-                        }
+        GWTServiceLookup.getAvailabilityService().getAvailabilitiesForResource(context.getResourceId(), startTime,
+            endTime, new AsyncCallback<List<Availability>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
+                    if (countDownLatch != null) {
+                        countDownLatch.countDown();
                     }
+                }
 
-                    @Override
-                    public void onSuccess(PageList<Availability> availList) {
-                        Log.debug("\nSuccessfully queried availability in: " + (System.currentTimeMillis() - timerStart)
-                                + " ms.");
-                        availabilityList = new PageList<Availability>();
-                        for (Availability availability : availList) {
-                            availabilityList.add(availability);
-                        }
-                        if (countDownLatch != null) {
-                            countDownLatch.countDown();
-                        }
+                @Override
+                public void onSuccess(List<Availability> availList) {
+                    if (Log.isDebugEnabled()) {
+                        Log.debug("\nSuccessfully queried availability in: "
+                            + (System.currentTimeMillis() - timerStart) + " ms.");
                     }
-                });
+                    availabilityList = availList;
+                    if (countDownLatch != null) {
+                        countDownLatch.countDown();
+                    }
+                }
+            });
     }
 
     /**
@@ -195,8 +191,8 @@ public class D3GraphListView extends AbstractD3GraphListView {
     private void buildGraphs() {
         final long startTimer = System.currentTimeMillis();
 
-        queryAvailability(resource.getId(), measurementRangeEditor.getStartTime(),
-                measurementRangeEditor.getEndTime(), null);
+        queryAvailability(EntityContext.forResource(resource.getId()), measurementRangeEditor.getStartTime(),
+            measurementRangeEditor.getEndTime(), null);
 
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
             EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
@@ -271,7 +267,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
 
                 private void queryMetricData(final int[] measDefIdArray, final CountDownLatch countDownLatch) {
                     GWTServiceLookup.getMeasurementDataService().findDataForResource(resource.getId(), measDefIdArray,
-                        measurementRangeEditor.getStartTime(),measurementRangeEditor.getEndTime(), 60,
+                        measurementRangeEditor.getStartTime(), measurementRangeEditor.getEndTime(), 60,
                         new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                             @Override
                             public void onFailure(Throwable caught) {

@@ -28,16 +28,14 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.layout.VLayout;
 
-import org.rhq.core.domain.criteria.AvailabilityCriteria;
-import org.rhq.core.domain.measurement.Availability;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
@@ -95,7 +93,7 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView {
      */
     public void redrawGraphs() {
 
-        queryAvailability(resourceGroup.getId(), measurementRangeEditor.getStartTime(),
+        queryAvailability(EntityContext.forGroup(resourceGroup), measurementRangeEditor.getStartTime(),
             measurementRangeEditor.getEndTime(), null);
 
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(resourceGroup.getResourceType().getId(),
@@ -142,7 +140,7 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView {
                                     for (List<MeasurementDataNumericHighLowComposite> data : result) {
                                         buildIndividualGraph(measurementDefinitions.get(i++), data);
                                     }
-                                    availabilityGraph.setAvailabilityList(availabilityList);
+                                    availabilityGraph.setGroupAvailabilityList(groupAvailabilityList);
                                     availabilityGraph.drawJsniChart();
                                 }
                             }
@@ -152,19 +150,14 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView {
             });
     }
 
-    protected void queryAvailability(final int entityId, Long startTime, Long endTime,
+    protected void queryAvailability(final EntityContext groupContext, Long startTime, Long endTime,
         final CountDownLatch countDownLatch) {
 
         final long timerStart = System.currentTimeMillis();
 
         // now return the availability
-        //@todo: prep for New GroupAvailability SLSB call
-        AvailabilityCriteria c = new AvailabilityCriteria();
-        c.addFilterResourceId(entityId);
-        c.addFilterInterval(startTime, endTime);
-        c.addSortStartTime(PageOrdering.ASC);
-        GWTServiceLookup.getAvailabilityService().findAvailabilityByCriteria(c,
-            new AsyncCallback<PageList<Availability>>() {
+        GWTServiceLookup.getAvailabilityService().getAvailabilitiesForResourceGroup(groupContext.getGroupId(),
+            startTime, endTime, new AsyncCallback<List<ResourceGroupAvailability>>() {
                 @Override
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
@@ -174,18 +167,16 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView {
                 }
 
                 @Override
-                public void onSuccess(PageList<Availability> availList) {
+                public void onSuccess(List<ResourceGroupAvailability> groupAvailList) {
                     Log.debug("\nSuccessfully queried group availability in: "
                         + (System.currentTimeMillis() - timerStart) + " ms.");
-                    availabilityList = new PageList<Availability>();
-                    for (Availability availability : availList) {
-                        availabilityList.add(availability);
-                    }
+                    groupAvailabilityList = groupAvailList;
                     if (countDownLatch != null) {
                         countDownLatch.countDown();
                     }
                 }
             });
+
     }
 
     private void buildIndividualGraph(MeasurementDefinition measurementDefinition,

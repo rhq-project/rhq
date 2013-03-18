@@ -18,11 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
+import java.util.List;
 
 import com.smartgwt.client.widgets.Label;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.Availability;
-import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3Graph;
 import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
@@ -33,9 +35,10 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
  * and User Preferences pickers for the date range.
  */
 public abstract class AbstractD3GraphListView extends EnhancedVLayout {
-    protected PageList<Availability> availabilityList;
+    protected List<Availability> availabilityList;
+    protected List<ResourceGroupAvailability> groupAvailabilityList;
     protected AvailabilityD3Graph availabilityGraph;
-    protected static  Label loadingLabel = new Label(MSG.common_msg_loading());
+    protected static Label loadingLabel = new Label(MSG.common_msg_loading());
     protected UserPreferencesMeasurementRangeEditor measurementRangeEditor;
     protected boolean showAvailabilityGraph = false;
 
@@ -46,6 +49,7 @@ public abstract class AbstractD3GraphListView extends EnhancedVLayout {
 
     public abstract void redrawGraphs();
 
-    protected abstract void queryAvailability(final int resourceId, Long startTime, Long endTime, final CountDownLatch countDownLatch);
+    protected abstract void queryAvailability(final EntityContext context, Long startTime, Long endTime,
+        final CountDownLatch countDownLatch);
 
 }

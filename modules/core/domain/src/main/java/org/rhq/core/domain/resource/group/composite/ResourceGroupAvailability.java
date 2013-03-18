@@ -50,6 +50,12 @@ public class ResourceGroupAvailability implements Serializable {
     private Long startTime;
     private Long endTime;
 
+    /**
+     *  for serialization purposes only, do not use this.
+     */
+    public ResourceGroupAvailability() {
+    }
+
     public ResourceGroupAvailability(int resourceGroupId) {
         this(resourceGroupId, null, null, null);
     }
